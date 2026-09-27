@@ -1,0 +1,82 @@
+name: Foundation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foundation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CGO_ENABLED: '0'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOPROXY: 'off'
+
+jobs:
+  foundation:
+    name: foundation (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - os: windows-2025
+            goos: windows
+            goarch: amd64
+          - os: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+          - os: macos-15
+            goos: darwin
+            goarch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 실행 identity 확인
+        env:
+          EXPECTED_GOOS: ${{ matrix.goos }}
+          EXPECTED_GOARCH: ${{ matrix.goarch }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          $goIdentity = go version
+          if ($LASTEXITCODE -ne 0) { throw 'go version failed' }
+          if ($goIdentity -ne "go version go1.27.1 $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH") { throw 'Go host identity mismatch' }
+          $goIdentity
+          Write-Output "PowerShell=$($PSVersionTable.PSVersion) runner=$env:RUNNER_OS/$env:RUNNER_ARCH image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT event=$env:GITHUB_EVENT_NAME"
+          git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'checkout identity failed' }
+      - name: 형식과 foundation 검사
+        run: |
+          $formatted = gofmt -l src
+          if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
+          go test ./src/... -count=1 -v -timeout 120s
+          if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: Vet와 CGO-free build
+        run: |
+          go vet ./src/...
+          if ($LASTEXITCODE -ne 0) { throw 'vet failed' }
+          go build ./src/...
+          if ($LASTEXITCODE -ne 0) { throw 'build failed' }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw 'tracked source changed' }
