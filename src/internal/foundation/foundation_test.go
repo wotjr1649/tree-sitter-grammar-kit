@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,6 +58,11 @@ func TestNegativeControls(t *testing.T) {
 		{"outside-source", "outside src", func(f fstest.MapFS) { f["leak.go"] = &fstest.MapFile{Data: []byte("package leak\n")} }},
 		{"nested-module", "boundary violation", func(f fstest.MapFS) { f["src/go.mod"] = &fstest.MapFile{Data: []byte("module wrong\n")} }},
 		{"normalized-bytes", "byte preservation missing", func(f fstest.MapFS) { f[".gitattributes"].Data = []byte("* text=auto\n") }},
+		{"symlink-file", "link or special entry", func(f fstest.MapFS) { f["README.md"].Mode = fs.ModeSymlink }},
+		{"symlink-parent", "link or special entry", func(f fstest.MapFS) { f["docs"] = &fstest.MapFile{Mode: fs.ModeSymlink, Data: []byte("../outside")} }},
+		{"hidden-cgo", "forbidden core import", func(f fstest.MapFS) {
+			f["src/hidden.go"] = &fstest.MapFile{Data: []byte("//go:build cgo\n\npackage hidden\nimport \"C\"\n")}
+		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -111,6 +118,7 @@ func TestSourceOnlyDoesNotDiscoverParentGit(t *testing.T) {
 }
 
 func TestCGOFreeDependencies(t *testing.T) {
+	t.Setenv("CGO_ENABLED", "0")
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "go", "list", "-deps", "-test", "-json", "./src/...")
@@ -141,5 +149,29 @@ func TestCGOFreeDependencies(t *testing.T) {
 	if count == 0 {
 		t.Fatal("empty dependency audit")
 	}
-	t.Logf("audited %d dependency records; no CgoFiles/runtime/cgo", count)
+	t.Logf("CGO_ENABLED=0 active closure: %d dependency records; no CgoFiles/runtime/cgo", count)
+}
+
+func TestGitIndexNegativeControls(t *testing.T) {
+	var baseline strings.Builder
+	for _, name := range required {
+		fmt.Fprintf(&baseline, "100644 %s 0\t%s\x00", strings.Repeat("a", 40), name)
+	}
+	if err := checkIndex([]byte(baseline.String())); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"docs/prompts/probe.md", "docs/plans/probe.md", "artifacts/raw.log", "_ref/source.txt", ".work/cache", "go.work"} {
+		t.Run(name, func(t *testing.T) {
+			mutant := baseline.String() + fmt.Sprintf("100644 %s 0\t%s\x00", strings.Repeat("b", 40), name)
+			if err := checkIndex([]byte(mutant)); err == nil || !strings.Contains(err.Error(), "local material tracked") {
+				t.Fatalf("tracked local material was not rejected: %v", err)
+			}
+		})
+	}
+	t.Run("symlink-mode", func(t *testing.T) {
+		mutant := strings.Replace(baseline.String(), "100644", "120000", 1)
+		if err := checkIndex([]byte(mutant)); err == nil || !strings.Contains(err.Error(), "regular files") {
+			t.Fatalf("tracked link was not rejected: %v", err)
+		}
+	})
 }

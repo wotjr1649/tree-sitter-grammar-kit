@@ -5,12 +5,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -45,6 +48,53 @@ func local(name string) bool {
 // CheckFiles never invokes Git or searches a parent directory.
 func CheckFiles(root fs.FS) error {
 	var problems []error
+	var goFiles []string
+	// Validate entries before reading required files; callers own an unchanged tree.
+	err := fs.WalkDir(root, ".", func(name string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if name == ".git" || local(name) {
+			if entry.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		if !entry.IsDir() && !entry.Type().IsRegular() {
+			return fmt.Errorf("link or special entry forbidden: %s", name)
+		}
+		if name == "cmd" || name == "internal" || name == "pkg" || (path.Base(name) == "go.mod" && name != "go.mod") {
+			problems = append(problems, fmt.Errorf("repository boundary violation: %s", name))
+		}
+		if strings.HasSuffix(name, ".go") {
+			if !strings.HasPrefix(name, "src/") {
+				problems = append(problems, fmt.Errorf("Go source outside src: %s", name))
+			} else {
+				goFiles = append(goFiles, name)
+			}
+		}
+		return nil
+	})
+	if err := errors.Join(append(problems, err)...); err != nil {
+		return err
+	}
+	// Inspect repository imports regardless of GOOS/build tags, without executing cgo.
+	for _, name := range goFiles {
+		data, err := fs.ReadFile(root, name)
+		if err != nil {
+			return err
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), name, data, parser.ImportsOnly)
+		if err != nil {
+			return fmt.Errorf("Go import syntax: %s", name)
+		}
+		for _, spec := range file.Imports {
+			value, err := strconv.Unquote(spec.Path.Value)
+			if err != nil || value == "C" || value == "github.com/wotjr1649/go-treesitter" || strings.HasPrefix(value, "github.com/wotjr1649/go-treesitter/") {
+				return fmt.Errorf("forbidden core import: %s", name)
+			}
+		}
+	}
 	contents := make(map[string]string)
 	for _, name := range required {
 		data, err := fs.ReadFile(root, name)
@@ -113,25 +163,7 @@ func CheckFiles(root fs.FS) error {
 			}
 		}
 	}
-	err := fs.WalkDir(root, ".", func(name string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if name == ".git" || local(name) {
-			if entry.IsDir() {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if name == "cmd" || name == "internal" || name == "pkg" || (path.Base(name) == "go.mod" && name != "go.mod") {
-			problems = append(problems, fmt.Errorf("repository boundary violation: %s", name))
-		}
-		if strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, "src/") {
-			problems = append(problems, fmt.Errorf("Go source outside src: %s", name))
-		}
-		return nil
-	})
-	return errors.Join(append(problems, err)...)
+	return errors.Join(problems...)
 }
 
 func gitOutput(root string, args ...string) ([]byte, error) {
@@ -166,12 +198,29 @@ func CheckGit(root string) error {
 	if filepath.Clean(want) != filepath.Clean(got) {
 		return errors.New("Git root differs from explicit checkout")
 	}
-	data, err := gitOutput(root, "ls-files", "-z")
+	data, err := gitOutput(root, "ls-files", "--stage", "-z")
 	if err != nil {
 		return fmt.Errorf("Git index query: %w", err)
 	}
+	if err := checkIndex(data); err != nil {
+		return err
+	}
+	for _, dir := range localDirs {
+		if _, err := gitOutput(root, "check-ignore", "--no-index", "--quiet", "--", dir+"/foundation-probe"); err != nil {
+			return fmt.Errorf("ignore ineffective: %s", dir)
+		}
+	}
+	return nil
+}
+
+func checkIndex(data []byte) error {
 	tracked := make(map[string]bool)
-	for _, name := range strings.Split(string(data), "\x00") {
+	for _, record := range strings.Split(strings.TrimSuffix(string(data), "\x00"), "\x00") {
+		header, name, ok := strings.Cut(record, "\t")
+		fields := strings.Fields(header)
+		if !ok || len(fields) != 3 || (fields[0] != "100644" && fields[0] != "100755") || fields[2] != "0" {
+			return errors.New("index requires regular files at stage zero")
+		}
 		if local(name) {
 			return fmt.Errorf("local material tracked: %s", name)
 		}
@@ -180,11 +229,6 @@ func CheckGit(root string) error {
 	for _, name := range required {
 		if !tracked[name] {
 			return fmt.Errorf("required file untracked: %s", name)
-		}
-	}
-	for _, dir := range localDirs {
-		if _, err := gitOutput(root, "check-ignore", "--no-index", "--quiet", "--", dir+"/foundation-probe"); err != nil {
-			return fmt.Errorf("ignore ineffective: %s", dir)
 		}
 	}
 	return nil

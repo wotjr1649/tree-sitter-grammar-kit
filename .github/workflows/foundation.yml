@@ -55,6 +55,8 @@ jobs:
         env:
           EXPECTED_GOOS: ${{ matrix.goos }}
           EXPECTED_GOARCH: ${{ matrix.goarch }}
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
           $goIdentity = go version
@@ -62,8 +64,10 @@ jobs:
           if ($goIdentity -ne "go version go1.27.1 $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH") { throw 'Go host identity mismatch' }
           $goIdentity
           Write-Output "PowerShell=$($PSVersionTable.PSVersion) runner=$env:RUNNER_OS/$env:RUNNER_ARCH image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT event=$env:GITHUB_EVENT_NAME"
-          git rev-parse HEAD
+          $checkoutSha = git rev-parse HEAD
           if ($LASTEXITCODE -ne 0) { throw 'checkout identity failed' }
+          if ($checkoutSha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$checkoutSha pr_head_sha=$env:PR_HEAD_SHA"
       - name: 형식과 foundation 검사
         run: |
           $formatted = gofmt -l src
