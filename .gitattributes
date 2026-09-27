@@ -1,0 +1,4 @@
+* text=auto eol=lf
+src/testdata/bytes/** -text
+src/testdata/archives/** -text
+src/testdata/malformed/** -text

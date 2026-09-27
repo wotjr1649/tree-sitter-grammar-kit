@@ -1,0 +1,10 @@
+/docs/prompts/
+/docs/plans/
+/artifacts/
+/_ref/
+/.work/
+/bin/
+/dist/
+/coverage/
+/go.work
+/go.work.sum
