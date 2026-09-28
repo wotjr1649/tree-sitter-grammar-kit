@@ -120,11 +120,6 @@ func CheckFiles(root fs.FS) error {
 	if lines > 60 {
 		problems = append(problems, errors.New("AGENTS exceeds 60 nonblank lines"))
 	}
-	for _, entry := range []string{"docs/prompts/", "docs/README.md", "handoff", "src/", "CGO_ENABLED=0", "PowerShell 7", "pwsh"} {
-		if !strings.Contains(agents, entry) {
-			problems = append(problems, fmt.Errorf("AGENTS entry missing: %s", entry))
-		}
-	}
 	for _, dir := range localDirs {
 		if !strings.Contains("\n"+contents[".gitignore"], "\n/"+dir+"/\n") {
 			problems = append(problems, fmt.Errorf("root ignore missing: %s", dir))
@@ -141,14 +136,15 @@ func CheckFiles(root fs.FS) error {
 		}
 	}
 	// ponytail: plain inline file links only; use a Markdown parser if canonical syntax expands.
-	links := regexp.MustCompile(`\[[^\]\n]*\]\(([^)\s]+)\)`)
+	links := regexp.MustCompile(`(!?)\[[^\]\n]*\]\(([^)\s]+)\)`)
 	code := regexp.MustCompile("(?s)`{3}.*?`{3}|`[^`\n]*`")
 	for name, data := range contents {
 		if !strings.HasSuffix(name, ".md") {
 			continue
 		}
+		docMap := false
 		for _, match := range links.FindAllStringSubmatch(code.ReplaceAllString(data, ""), -1) {
-			target := match[1]
+			target := match[2]
 			if strings.HasPrefix(target, "https://") || strings.HasPrefix(target, "#") {
 				continue
 			}
@@ -160,7 +156,12 @@ func CheckFiles(root fs.FS) error {
 			}
 			if _, err := fs.Stat(root, resolved); err != nil {
 				problems = append(problems, fmt.Errorf("broken link in %s: %s", name, target))
+			} else if resolved == "docs/README.md" && match[1] == "" {
+				docMap = true
 			}
+		}
+		if name == "AGENTS.md" && !docMap {
+			problems = append(problems, errors.New("AGENTS requires a link to docs/README.md"))
 		}
 	}
 	return errors.Join(problems...)

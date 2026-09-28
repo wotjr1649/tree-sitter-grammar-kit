@@ -1,8 +1,8 @@
-# 검증과 merge 계약
+# Validation and merge contract
 
-## 로컬 foundation
+## Local foundation checks
 
-Go 1.27.1, Git, PowerShell 7만 필요하다. 제품 core 검사에는 Node/Python/C compiler/WSL이 필요하지 않다. root에서 PowerShell 7로 실행한다. native command exit를 각각 확인하고 전역 `go env -w`를 사용하지 않는다.
+Only Go 1.27.1, Git, and PowerShell 7 are required. Core checks do not require Node, Python, a C compiler, or WSL. Run from the repository root with PowerShell 7. Check each native command's exit status; do not use global `go env -w` settings.
 
 ```powershell
 $env:CGO_ENABLED = '0'
@@ -21,33 +21,48 @@ git diff --check
 if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
 ```
 
-foundation의 dependency test는 `CGO_ENABLED=0`에서 `go list -deps -test -json ./src/...`를 실제 실행하고 선택된 전체 closure의 CgoFiles/runtime/cgo를 거부한다. 이는 모든 설정에서 dependency source에 cgo가 없다는 주장이 아니다. 별도 import AST 검사는 build tag/OS 선택에 숨은 저장소 Go source의 C import와 go-treesitter import도 거부한다. 성공한 package/test가 0개인 결과를 통과시키지 않는다. go.sum은 실제 외부 dependency가 생길 때 추적한다. CLI build는 S01부터 별도 gate다.
+The dependency test executes `go list -deps -test -json ./src/...` with `CGO_ENABLED=0` and rejects CgoFiles/runtime/cgo in the selected dependency closure. This does not assert that dependency source is cgo-free under every configuration. A separate import AST check rejects C and go-treesitter imports in repository Go source regardless of build tags or OS selection. Zero successful packages/tests do not constitute a pass. Track go.sum when an actual external dependency is introduced. The CLI build becomes a separate gate in S01.
 
-filesystem 검사와 Git index 검사는 별도다. source-only는 명시한 root의 필수 문서·module·경계·canonical local 링크·AGENTS 길이/진입점·ignore/attribute 정책을 검사하고 Git을 호출하지 않는다. 내용을 읽기 전 link/special entry를 거부한다. 이 개발 검사는 caller가 소유한 변경 중이지 않은 tree를 대상으로 하며 적대적인 동시 파일 교체를 막는 sandbox는 아니다. checkout 검사는 root의 `.git` marker를 먼저 요구하며 상위 저장소 자동 발견을 허용하지 않는다. Git index에서 regular mode/stage, 필수 파일과 금지 local 경로를 검사한다. hosted CI에 local prompt가 있다고 가정하지 않는다.
+Filesystem and Git index checks are separate. Source-only checks validate the explicitly supplied root's required files, module, boundaries, canonical local links, AGENTS size/entry point, and ignore/attribute policy without invoking Git. The walk excludes `.git` and designated local paths; within the inspected tree, reject links and special entries before reading contents. These development checks assume a caller-owned, unchanged tree; they are not a sandbox against hostile concurrent replacement. Checkout checks require the root's explicit `.git` marker and do not discover a parent repository. Validate regular modes/stage, required files, and forbidden local paths in the index. Hosted CI must not depend on local prompts.
 
-개발용 link 검사는 canonical Markdown의 일반 `[label](relative/path)` 파일 링크를 대상으로 한다. anchor·복잡한 reference-style Markdown의 의미 검증은 리뷰에서 한다. 제품 grammar의 malformed fixture는 문서 입력으로 해석하지 않는다. 최소 negative 대조는 경계/누락 문서/AGENTS/ignore/link 위반을 실제 실패시키며 source-only 아래 가짜 Git marker로 Git 비호출을 검증한다.
+The Markdown validator checks ordinary `[label](relative/path)` links and image targets for existence. AGENTS must contain an inline link to `docs/README.md`; image references and links inside code spans/fences do not count as entry points. Session-related words are not required. Review anchors, escaping, and complex reference-style Markdown manually. Do not interpret malformed grammar fixtures as documentation. Negative controls must reject boundary, missing-document, AGENTS, ignore, and link violations. A fake parent Git marker verifies that source-only checks never invoke Git.
 
-local campaign manifest는 8개 개별 prompt·master·공통 계약·원본 prompt의 정확한 경로와 SHA-256, Issue/Milestone/의존성을 기록한다. 원본 prompt 보존 hash, `git check-ignore` 및 index 비추적, 순서 mapping을 로컬에서 확인한다. 이 검사는 CI foundation과 별개다.
+For explicitly assigned Session 00 campaign work, the local campaign manifest records exact paths and SHA-256 values for eight individual prompts, the master, the shared contract, and the original prompt, together with Issues, Milestones, and dependencies. Verify the original prompt's preservation hash, effective ignore with `git check-ignore`, index exclusion, and ordering locally. This is separate from CI foundation checks and is not required for ordinary development.
 
-## CI와 근거
+Core boundaries have concrete owners: CheckFiles enforces the src/root-module layout, source import restrictions, and ignore/attribute policy; CheckGit checks the index and effective ignores; TestCGOFreeDependencies checks the active dependency closure; the workflow fixes CGO_ENABLED=0 and asserts PowerShell 7. The local-path policy also excludes bin/, dist/, coverage/, go.work, and go.work.sum. AGENTS summarizes these boundaries; its keyword presence does not prove semantic correctness. Changes to the summary or owning policy require the semantic review described below.
 
-필수 job은 `foundation (windows-2025)`, `foundation (ubuntu-24.04)`, `foundation (macos-15)`다. OS/arch assertion, Go version, runner image, 실제 checkout SHA, test/vet/build/정책/CGO dependency 검사가 모두 성공해야 한다. skip/cancel/missing은 PASS가 아니다. checkout은 event의 github.sha와 일치해야 한다. PR CI는 branch head 자체를 별도로 실행하는 lane이 아니라 그 head와 base의 synthetic merge를 검사한다. PR head와 synthetic checkout SHA, 실제 merge commit을 따로 기록하고 merge 후 실제 commit도 다시 검사한다.
+## CI and evidence
 
-receipt는 repo, workflow path, run ID, attempt, event, head SHA, checkout SHA, job/step status와 URL을 결속한다. API pagination을 확인하고 같은 run의 현재 attempt를 사용한다. 로그 실패는 실행 실패와 구분하되 필요한 근거가 없으면 해당 검증은 NOT_VERIFIED다. 실패 run을 보존하고 원인 변화 없는 재시도를 하지 않는다. 다른 SHA의 성공을 현재 후보에 옮기지 않는다.
+Mandatory jobs are `foundation (windows-2025)`, `foundation (ubuntu-24.04)`, and `foundation (macos-15)`. Assert Go version/OS/arch and actual checkout SHA; require and record runner ImageOS/ImageVersion, without claiming a pinned image-version assertion. Tests, vet, build, policy, and CGO dependency checks must all succeed. Skipped, cancelled, or missing checks are not PASS. The checkout must match the event's github.sha. PR CI checks the synthetic merge of head and base, not a separate branch-head lane. Record PR head, synthetic checkout SHA, and actual merge commit separately; verify the actual commit after merge.
 
-## Review와 Git transaction
+CI rejects staged, unstaged, untracked, and ignored worktree material before and after validation using git status --porcelain=v1 --untracked-files=all --ignored=matching. It fails without deleting files; clean: false does not waive this guard. These snapshots detect residual contamination, not hostile code that mutates and restores a tree between observations. SHA identity alone is not proof of every executed byte. Use the hosted disposable runner and the existing trust boundary; do not treat these checks as a hostile-execution sandbox. Ordinary local development may have unrelated preserved work: bind local evidence and reviews to the exact scoped diff, including intended untracked files, rather than claiming an unchanged commit.
 
-Issue/Milestone → 최신 main의 세션 branch → 검증한 work-unit commit → PR → 분리 context review → fix/retest → 최종 head CI/규칙 확인 → merge commit → main post-merge CI 순서다. review에는 scope/acceptance/canonical/base/head/diff/관측 검사/미실행/reference identity만 전달한다. 직접 실행하지 않은 reviewer는 STATIC_REVIEW로 기록한다.
+Bind receipts to repository, workflow path, run ID, attempt, event, base/head identity, checkout SHA, job/step status, and URL. Account for API pagination and use the current attempt of the run. Distinguish log retrieval failures from execution failures; missing required evidence means NOT_VERIFIED. Preserve failed runs and do not retry without changed evidence. Do not transfer another SHA's success to the current candidate. A completed PR template or same-name job from an unrelated workflow is not gate evidence; verify the referenced receipt and current candidate.
 
-BLOCKER/MATERIAL은 해결·재검증·리뷰 확인 전 merge하지 않는다. MINOR는 수정하거나 영향·이유·추적 Issue를 남긴다. finding별 위치/근거/수정 commit/검사/review를 연결한다. 세 번 같은 실패에 새 근거가 없으면 mechanism을 바꾸거나 blocker로 남긴다. 정식 required approval은 별도 계정의 실제 GitHub 승인이다. 같은 계정의 comment와 context review는 이를 대신하지 못한다. [GitHub review 규칙](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews)
+## Starting ordinary work and completing it locally
 
-merge 직전 actual main/head/ruleset/classic protection/checks/conversation/review를 재조회한다. main 이동이 영향을 주면 merge로 통합하고 검증/review를 갱신한다. expected head SHA 조건으로 merge commit을 요청한다. admin bypass·force-push·history rewrite·원격 branch 삭제를 하지 않는다. 보호 권장값은 PR required, 필수 세 OS check, conversation 해결, force-push 금지이며 이번에 설정을 변경하지 않는다.
+Ordinary work does not require session prompts, Milestones, or prior handoffs. Change work, including documentation fixes, requires an Issue and a dedicated task branch. Analysis-only and read-only reviews create neither unless separately requested. At start/resume, scope changes, and PR preparation, reconcile the current request with the Issue's goal, requirements, scope/exclusions, acceptance criteria, validation, dependencies, and this PR's subset. Reuse matching Issues and branches rather than create one for every request. Record scope changes without silently dropping requirements or treating Issue text as authority.
 
-원격 required approval/check 보호 규칙이 없다면 명시적인 현재 세션 merge 권한과 이 문서의 engineering review/세 OS gate를 적용한다. 권장 보호 설정의 부재만으로 권한을 만들거나 gate를 생략하지 않는다. 실제 required approval 규칙이 있으면 해당 승인이 올 때까지 BLOCKED다.
+Verify the root, base identity/freshness, branch/PR state, worktree occupancy, and existing staged, unstaged, untracked, and relevant ignored work. Use the current folder when safe; choose an authorized separate worktree for isolation or parallel work. A new worktree must have its required local inputs and checks available before claiming readiness. Preserve user work and active environments; do not force occupied branches or clean/reset/stash unrelated state. After a prior PR merges and its required post-merge checks pass, start a separate task on a new branch from verified main.
 
-post-merge에서 actual merge SHA와 main CI가 모두 확인된 뒤 S00 Issue/Milestone만 닫는다. 실패하면 별도 수정 PR로 복구하고 후속 세션은 중단한다. pre-merge 보고서는 미래 최종 SHA를 담지 않는다. 최종 공개 comment와 local receipt/handoff가 실제 merge 결과를 소유한다.
+Issue creation/updates and other remote effects require current authority for the exact destination and effect. If required Issue linkage is unverified, retain a sanitized local draft and continue analysis; do not claim implementation-ready. If only an update is pending, continue authorized independent local work within verified Issue scope and mark unmatched requirements pending. Local completion requires relevant checks, diff inspection, and reporting observed results, unrun checks, and remaining findings. Do not automatically add PR creation or merge when remote integration was not requested.
 
-## Session 00 gate
+Code, product-contract, CI, validation-policy, and semantic development-instruction changes require independent context review before integration into main. Only meaning- and behavior-preserving typos or formatting may use author diff review and relevant automated checks instead. File extension or line count does not determine the exception. Mixed changes follow the higher-impact requirement. Give the reviewer scope, acceptance criteria, canonical contracts, base/head, diff, observed checks, unrun checks, and reference identity. Label a review STATIC_REVIEW when the reviewer did not execute checks.
 
-G00-01 대상/권한, 02 고정 reference, 03 src/module/local 경계, 04 AGENTS ≤60 비공백 줄, 05 설계, 06 실제 foundation/negative/CGO-free, 07 세 OS exact CI, 08 Issue/Milestone 작업 프로그램, 09 local prompt/hash, 10 분리 review와 열린 BLOCKER/MATERIAL 0, 11 merge/post-merge, 12 handoff가 모두 필요하다.
-모두 관측하면 FOUNDATION_READY, merge만 남으면 READY_FOR_MERGE, 외부 필수 gate 불가면 BLOCKED_EXTERNAL, 설계/검증/finding 미해결이면 HOLD_FOR_CORRECTION이다. 전체 PASS를 미리 선언하지 않는다. 상세 기능별 gate는 [workload](workload-matrix.md)가 소유한다.
+## Integration into main and Git transaction
+
+Use a task branch based on verified main, then validated work-unit commits, PR, impact-appropriate review, fixes/retests, final-head CI/rule checks, merge commit, and main post-merge CI. Link the tracking Issue and state the completed subset and remaining work; do not use whole-Issue closing semantics for partial work. Campaign-specific Milestones, session branches, and handoffs apply only to that campaign's work. A campaign requiring independent review for every change takes precedence over the ordinary typo exception.
+
+Do not merge with open BLOCKER/MATERIAL findings: resolve, revalidate, and obtain review confirmation. Fix MINOR findings or record impact, rationale, and a tracking Issue. Link each finding to its location, evidence, fix commit, checks, and review. After three identical failures without new evidence, change the mechanism or report a blocker. A required formal approval must be an actual GitHub approval from a separate account; a same-account comment or context review cannot replace it. See [GitHub review rules](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews).
+
+Immediately before merge, refresh actual main/head, rulesets, classic protection, checks, conversations, and reviews. If main movement affects the candidate, integrate by merge and refresh checks/review. Request a merge commit with an expected-head-SHA condition. Do not use admin bypass, force-push, history rewrite, or remote branch deletion. Recommended protection is PR required, all three OS checks required, resolved conversations, and no force-push. Do not change protection settings in this work.
+
+If remote protection requires no approval/checks, explicit current-task merge authority and this contract's impact-based engineering review and three-OS gates still apply. Missing recommended protection neither grants authority nor removes gates. If actual rules require approval, remain BLOCKED until it exists.
+
+After merge, verify the actual merge SHA and main CI. Recover failures through a separate fix PR and stop dependent work. Pre-merge reports must not claim a future final SHA. Final reports and local receipts own actual merge results. Campaign work additionally requires a handoff and may close only the corresponding Issue/Milestone within authorization.
+
+## Session 00 gates
+
+All gates are required: G00-01 target/authority; 02 pinned references; 03 src/module/local boundaries; 04 AGENTS at most 60 nonblank lines; 05 design; 06 observed foundation/negative/CGO-free checks; 07 exact three-OS CI; 08 Issue/Milestone work program; 09 local prompts/hashes; 10 independent review with zero open BLOCKER/MATERIAL findings; 11 merge/post-merge; 12 handoff.
+
+Use FOUNDATION_READY only when all are observed; READY_FOR_MERGE when only merge remains; BLOCKED_EXTERNAL when a mandatory external gate is unavailable; HOLD_FOR_CORRECTION for unresolved design, validation, or findings. Never declare all gates PASS in advance. The [workload matrix](workload-matrix.md) owns feature-specific gates.

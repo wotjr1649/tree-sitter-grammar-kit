@@ -51,6 +51,12 @@ jobs:
         with:
           go-version: '1.27.1'
           cache: false
+      - name: Verify clean validation input
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
+          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
+          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
       - name: 실행 identity 확인
         env:
           EXPECTED_GOOS: ${{ matrix.goos }}
@@ -59,6 +65,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ([string]::IsNullOrWhiteSpace($env:ImageOS) -or [string]::IsNullOrWhiteSpace($env:ImageVersion)) { throw 'Runner image identity missing' }
           $goIdentity = go version
           if ($LASTEXITCODE -ne 0) { throw 'go version failed' }
           if ($goIdentity -ne "go version go1.27.1 $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH") { throw 'Go host identity mismatch' }
@@ -83,4 +90,9 @@ jobs:
           git diff --check
           if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
           git diff --exit-code
-          if ($LASTEXITCODE -ne 0) { throw 'tracked source changed' }
+          if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
+      - name: Verify clean validation output
+        run: |
+          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
+          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
+          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
