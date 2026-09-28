@@ -1,6 +1,22 @@
-# 보안 경계
+# Security policy
 
-현재 구현은 이 저장소의 개발용 foundation 검사다. 임의 grammar를 안전하게 실행하는 sandbox를 제공하지 않는다.
-향후 offline 명령과 generator/native/adapter 실행 경계는 [실행 계약](docs/specs/trust-and-execution.md)이 소유한다. 환경 정리·private cache·resource cap만으로 악성 native 코드를 격리했다고 주장하지 않는다.
+## Current security boundary
 
-민감하지 않은 결함은 재현 범위와 함께 Issue로 보고할 수 있다. secret이나 비공개 입력은 공개 Issue에 올리지 않는다. 별도 private reporting 채널의 활성 상태는 확인하지 않았다.
+The implemented code consists of development foundation checks for this repository. These checks assume a caller-owned tree that is not being modified concurrently. They are not a sandbox for arbitrary grammars or hostile code, and successful CI does not establish that a grammar or native runtime is safe to execute.
+
+The [trust and execution contract](docs/specs/trust-and-execution.md) owns the planned offline, generator, native, and adapter boundaries. Those product capabilities are not implemented yet. Environment cleanup, private caches, and resource caps alone do not isolate malicious native code. Source/tool identities and preserved evidence support traceability; a self-generated fingerprint does not authenticate an input's origin.
+
+## Reporting a concern
+
+Report non-sensitive defects through [GitHub Issues](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues). Include:
+
+- the affected commit or tag and the relevant command;
+- OS/architecture and tool versions;
+- expected and observed behavior, with a minimal non-sensitive reproduction;
+- the affected boundary and impact, if known.
+
+Do not post secrets, credentials, private inputs, personal information, or sensitive exploit details in public Issues or attachments. Private vulnerability reporting, a security email address, and a response SLA are not established by this policy. Before sharing sensitive material, ask the maintainer for a private reporting route using only non-sensitive context; keep the material private until that route is confirmed.
+
+## Support and disclosure limits
+
+This foundation-stage project does not promise a supported-release matrix or response deadline. A report or a passing test is not a guarantee covering every input, platform, or future revision. Keep reports tied to the affected revision and distinguish observed failures from untested risks. Platform and validation claims are defined in the [platform](docs/specs/platform-support.md) and [validation](docs/validation/validation.md) contracts.
