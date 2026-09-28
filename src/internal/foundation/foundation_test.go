@@ -53,6 +53,15 @@ func TestNegativeControls(t *testing.T) {
 		{"long-agents", "60 nonblank", func(f fstest.MapFS) {
 			f["AGENTS.md"].Data = append(f["AGENTS.md"].Data, []byte(strings.Repeat("extra\n", 61))...)
 		}},
+		{"agents-plain-path", "AGENTS requires a link", func(f fstest.MapFS) {
+			f["AGENTS.md"].Data = []byte("Read docs/README.md\n")
+		}},
+		{"agents-code-link", "AGENTS requires a link", func(f fstest.MapFS) {
+			f["AGENTS.md"].Data = []byte("`[map](docs/README.md)`\n\n```text\n[map](docs/README.md)\n```\n")
+		}},
+		{"agents-image-only", "AGENTS requires a link", func(f fstest.MapFS) {
+			f["AGENTS.md"].Data = []byte("# Development\n\n![map](docs/README.md)\n")
+		}},
 		{"missing-ignore", "root ignore missing", func(f fstest.MapFS) { f[".gitignore"].Data = []byte("/bin/\n") }},
 		{"broken-link", "broken link", func(f fstest.MapFS) { f["README.md"].Data = []byte("[missing](docs/missing.md)\n") }},
 		{"outside-source", "outside src", func(f fstest.MapFS) { f["leak.go"] = &fstest.MapFile{Data: []byte("package leak\n")} }},
@@ -99,6 +108,10 @@ func TestSourceOnlyDoesNotDiscoverParentGit(t *testing.T) {
 		}
 		if name == "README.md" {
 			data = append(data, []byte("\n`[inline example](missing.md)`\n\n```text\n[fenced example](missing.md)\n```\n")...)
+		}
+		if name == "AGENTS.md" {
+			// Ordinary development guidance need not mention session artifacts.
+			data = []byte("# Development\n\nRead the [project contracts](./docs/README.md).\n")
 		}
 		target := filepath.Join(export, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(target), 0700); err != nil {

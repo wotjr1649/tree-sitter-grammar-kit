@@ -1,6 +1,6 @@
 # 개발 campaign
 
-전체 추적: [TSGK-C1 #1](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/1). 현재 실행은 Session 00에 한정된다. Session 01~08은 별도 상위 실행 지시 후 순서대로 시작한다. campaign과 release는 별도 결정이다.
+전체 추적: [TSGK-C1 #1](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/1). 현재 campaign 실행은 Session 00에 한정된다. Session 01~08은 별도 상위 실행 지시 후 순서대로 시작한다. 일반 개발의 진입 조건은 [문서 지도](README.md)를 따른다. campaign과 release는 별도 결정이다.
 
 | Session | 범위 | 선행 | Issue | Milestone |
 |---|---|---|---|---|

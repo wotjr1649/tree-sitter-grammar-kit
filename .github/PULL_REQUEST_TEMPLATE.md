@@ -1,13 +1,19 @@
-문제와 변경 후 동작:
+Problem and resulting behavior:
 
-Refs #
+Tracking Issue (required for change work):
 
-범위·계약 변경·제외:
+Scope, acceptance criteria, canonical contracts/reference identity, and exclusions (identify the subset of any linked Issue completed here):
 
-실행한 검사와 결과 / 미실행 및 제한:
+Executed checks and results / unrun checks and limitations:
 
-분리 context review의 대상 SHA·유형·finding 처분:
+Change impact, independent-context-review requirement, and rationale:
 
-최종 head CI run/attempt·실제 보호 규칙·merge 후 확인 계획:
+Reviewed base/head or scoped working-diff identity, review type, reviewer/context, evidence link, and finding disposition (author-review evidence for a typo/formatting exception):
 
-같은 계정의 review comment는 정식 approval이 아니다. local raw·prompt·secret은 게시하지 않는다.
+Final-candidate CI workflow/run URL, attempt, event, base/head, synthetic checkout SHA where applicable, and required job results:
+
+Actual protection requirements, unresolved threads, and formal approval accounts/review URLs/status when required:
+
+Post-merge verification plan (record actual merge SHA and post-merge CI only after they exist):
+
+A same-account review comment is not a formal approval. Missing or stale required evidence is NOT_VERIFIED; completing this template does not satisfy a gate by itself. Do not publish local raw evidence, prompts, or secrets.

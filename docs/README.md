@@ -1,20 +1,42 @@
-# 문서 지도
+# Documentation map
 
-현재 구현은 repository foundation 검사다. 제품 명령과 r0 데이터 계약은 개발 계획이며 구현 완료를 뜻하지 않는다.
+The current implementation consists of repository foundation checks. Product commands and r0 data contracts are planned specifications, not claims of implementation.
 
-| 작업 | canonical 소유 문서 |
+| Task | Canonical owner |
 |---|---|
-| 목적·release 후보 범위 | [scope](specs/scope.md) |
-| 명령·오류·profile 필드 | [CLI/profile](specs/cli-and-profile.md) |
-| fingerprint·manifest·evidence | [identity/evidence](specs/identity-and-evidence.md) |
-| untrusted 입력·path/archive·실행 권한 | [trust/execution](specs/trust-and-execution.md) |
-| ordered CST·query·adapter | [tree/protocol](specs/tree-and-adapter-protocol.md) |
-| OS/arch/capability | [platform](specs/platform-support.md) |
-| 구조·의존·상태 전이 | [architecture](design/architecture.md), [선택 근거](design/decisions/0001-core-and-execution.md) |
-| 외부 고정 기준·license 관측 | [provenance](provenance/upstream-sources.md) |
-| 검사·리뷰·merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
-| 세션 범위·Issue/Milestone | [roadmap](roadmap.md) |
-| 실제 Session 00 결과 | [foundation 보고](reports/session-00-foundation.md) |
+| Purpose and release-candidate scope | [scope](specs/scope.md) |
+| Commands, errors, profile fields | [CLI/profile](specs/cli-and-profile.md) |
+| Fingerprints, manifests, evidence | [identity/evidence](specs/identity-and-evidence.md) |
+| Untrusted inputs, paths/archives, execution authority | [trust/execution](specs/trust-and-execution.md) |
+| Ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md) |
+| OS/arch/capabilities | [platform](specs/platform-support.md) |
+| Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
+| Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
+| Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
+| Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
+| Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 
-현재 작업에 필요한 문서만 읽는다. 지속 규칙의 진입점은 [AGENTS.md](../AGENTS.md)다.
-`docs/prompts/`와 `docs/plans/`는 로컬 실행 자료, `artifacts/`는 보존할 raw와 handoff, `_ref/`는 고정 reference, `.work/`는 재생성 가능한 작업공간이다. 이 경로는 Git에서 제외한다. 공개 acceptance는 이 지도와 Issue에서 독립적으로 이해할 수 있어야 한다.
+Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
+
+## Task-specific development rules
+
+Ordinary development, fixes, and reviews have no session-prompt prerequisite. The [validation contract](validation/validation.md) owns Issue, task-branch/worktree, and completion requirements. Read the affected code, callers, existing checks, and relevant contracts above. A review-only request ends with findings and evidence; it does not expand into modifications or PR creation.
+
+Use the [Issue template](../.github/ISSUE_TEMPLATE/task.md) to record change-work goals and acceptance criteria, and the [PR template](../.github/PULL_REQUEST_TEMPLATE.md) to identify the criteria satisfied by the actual diff and validation. A partial PR must identify remaining work rather than claim whole-Issue completion. Templates capture intent and evidence; they do not authorize remote posting or replace validation gates.
+
+| Change surface | Read or update together |
+|---|---|
+| Go implementation or dependencies | Architecture, affected specs, regression tests, and local foundation checks |
+| CLI/profile/evidence/adapter contracts | Owning spec, examples, consumers, error paths, and corresponding workload checks |
+| Paths/archives or external execution | Trust/execution input boundaries, authority, failure paths, and negative tests |
+| Platforms, CI, or validation policy | Platform and validation contracts, workflow, and policy-violation negative tests |
+| AGENTS or development rules | Applicable task types, entry conditions, canonical ownership, links, and semantic impact |
+| Meaning-preserving documentation typos or formatting | Diff, links, and formatting; the same mandatory CI applies before integration into main |
+
+This map and the canonical documents own task-specific development rules. Do not duplicate them in a separate RULES.md. Foundation/CI checks machine-testable boundaries; review assesses meaning, review applicability, and authority. The AGENTS line limit is a size ceiling, not a quality score.
+
+The shared `development-start` and `pr-review-workflow` skills are optional aids for preparation and PR review. This repository owns its rules and commands; installing skills is not a prerequisite for development or CI. Design command-execution enforcement separately when a concrete prohibited behavior warrants it.
+
+## Campaign material
+
+`docs/prompts/` and `docs/plans/` hold local execution material; `artifacts/` holds retained raw evidence and handoffs; `_ref/` holds pinned references; `.work/` is regenerable workspace. Keep these paths untracked. Public acceptance criteria must be understandable from this map and applicable Issues without local material.

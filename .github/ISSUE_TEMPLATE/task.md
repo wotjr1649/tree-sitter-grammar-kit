@@ -1,16 +1,18 @@
 ---
-name: 작업 또는 결함
-about: 범위와 재현 가능한 acceptance를 기록한다
+name: Task or defect
+about: Record the intended outcome, scope, and observable acceptance criteria.
 ---
 
-목적 / 추적 키:
+Problem, evidence or reproduction, and intended outcome:
 
-선행 Issue·계약 revision:
+Related or prerequisite Issues and applicable contract revisions:
 
-범위 / 제외 / 필요한 capability와 권한:
+In scope / out of scope / required capabilities and authority:
 
-정상·negative·회귀·플랫폼 검증 및 완료 조건:
+Acceptance criteria and validation (normal, negative, regression, and platform checks as applicable):
 
-관측한 source/tool/policy identity, 미검증, blocker:
+Planned PR scope, remaining work, and dependencies (when split across PRs):
 
-secret·개인 경로·원본 local prompt는 게시하지 않는다.
+Observed source/tool/policy identity, unverified assumptions, and blockers:
+
+Do not publish secrets, private paths, or raw local prompts. Creating this Issue does not authorize implementation, publication, or changes to permissions.
