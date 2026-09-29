@@ -96,6 +96,11 @@ function FileIdentity([string]$path){
     if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Input is not a regular file'}
     return @{path=[IO.Path]::GetRelativePath($root,$file.FullName);bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}
 }
+function ReadGrammarName([string]$path){
+    $grammar=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json -AsHashtable
+    if($grammar['name'] -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$'){throw 'Grammar name rejected'}
+    return [string]$grammar['name']
+}
 function CheckJsInputs([string]$entry,[string]$sourceRoot){
     $queue=[Collections.Generic.Queue[string]]::new();$queue.Enqueue($entry)
     $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -322,7 +327,7 @@ try {
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
     if((TextOutput $security) -notmatch 'seccomp.*profile=builtin'){throw 'Default seccomp is unavailable'}
-    Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
+    Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
     Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
     if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
     Require (Native diagnostic 'cli-generate-help' @('/inputs/acquisition/tools/tree-sitter','generate','--help') 10 1048576)
@@ -366,8 +371,7 @@ try {
         $source='/inputs/acquisition/sources/'+$key
         if($route.subdirectory -ne '.'){$source+='/'+$route.subdirectory}
         $localSource=Join-Path $root ('acquisition/sources/'+$key+'/'+$route.subdirectory)
-        $grammar=Get-Content -Raw (Join-Path $localSource 'src/grammar.json')|ConvertFrom-Json
-        if($grammar.name -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$'){throw 'Grammar name rejected'}
+        $grammarName=ReadGrammarName (Join-Path $localSource 'src/grammar.json')
         $generationInputs=if($route.generation -eq 'json'){@(FileIdentity (Join-Path $localSource 'src/grammar.json'))}else{CheckJsInputs (Join-Path $localSource 'grammar.js') (Join-Path $root ('acquisition/sources/'+$key))}
         Record ('generate-'+$route.route+'-inputs') @{files=$generationInputs;runtime='node in pinned image';literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;exact_input_set='inputs.json repositories.files plus npm integrity; observed SHA256 in acquisition receipt';all_source_bytes='verified-source-inputs.json';dynamic_execution_boundary='preflight PASS; network none; read-only pinned sources and image; only task tmpfs writable'}
         $generation=Native generation ('generate-'+$route.route) @('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--js-runtime','node','--output','/work/generated',$(if($route.generation -eq 'json'){$source+'/src/grammar.json'}else{$source+'/grammar.js'})) 300 536870912
@@ -380,7 +384,7 @@ try {
             $buildInputs=@((FileIdentity (Join-Path $parserRoot 'parser.c')),(FileIdentity (Join-Path $parserRoot 'tree_sitter/parser.h')),(FileIdentity (Join-Path $root 'probe.c')))
             if(Test-Path (Join-Path $localSource 'src/scanner.c')){$buildInputs+=FileIdentity (Join-Path $localSource 'src/scanner.c')}
             Record ($label+'-inputs') @{files=$buildInputs;runtime_pin=$inputs.runtime.commit;runtime_byte_manifest='acquisition/records/acquisition.json';compiler_image=$toolchain.image;query_execution=$false}
-            $args=@('/usr/bin/gcc','-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H',('-DLANGUAGE=tree_sitter_'+$grammar.name),('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),('-I'+$parser),('/inputs/probe.c'),($runtime+'/lib/src/lib.c'),($parser+'/parser.c'))
+            $args=@('/usr/bin/gcc','-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H',('-DLANGUAGE=tree_sitter_'+$grammarName),('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),('-I'+$parser),('/inputs/probe.c'),($runtime+'/lib/src/lib.c'),($parser+'/parser.c'))
             if(Test-Path (Join-Path $localSource 'src/scanner.c')){$args+=($source+'/src/scanner.c')}
             $args+=@('-o','/work/probe')
             $build=Native build $label (@('/bin/sh','-ec',$compileAndInspect,'p05-gcc')+$args[1..($args.Count-1)]) 120 134217728
