@@ -14,7 +14,7 @@ type Limits struct {
     Files, FileBytes, TotalBytes, Depth, OutputBytes uint64
 }
 type Selection struct {
-    Grammar string // explicit portable path inside Root; "." selects root grammar
+    Grammar string // exact "." root sentinel, otherwise a portable relative directory
     Files []FileSelection // nil: documented bounded discovery; empty non-nil: invalid
 }
 type FileSelection struct {
@@ -70,6 +70,8 @@ func (e *Error) Unwrap() error
 필드의 문자열 값은 [CLI/profile](cli-and-profile.md)과 [E0/identity](identity-and-evidence.md)의 닫힌 값 집합을 사용한다. `Error.Kind`는 `INVALID_INPUT`, `IO`, `CANCELLED`, `RESOURCE_LIMIT`, `UNSUPPORTED`다. `errors.As`로 `*kit.Error`를 구분하고 취소는 `errors.Is(err, context.Canceled/DeadlineExceeded)`도 보존한다. 오류 문자열은 machine identity가 아니다. 성공한 관측이나 유효한 비교의 불일치는 실행 오류와 구분한다. S02/S03의 verify/schema 함수와 추가 result는 해당 구현 전에 같은 owner에서 별도 revision으로 고정한다.
 
 caller가 명시한 Root와 Selection만 읽는다. 부모 저장소 탐색·Git·Node·shell·compiler·target JS·network·plugin·stdout/stderr·os.Exit·chdir·process 환경 변경·파일 생성은 API 효과에 포함되지 않는다. archive 확장은 S02의 명시된 입력 계약 이전에 지원하지 않는다. `parser.c` 부재는 inspect/identity 자체의 실패 조건이 아니다.
+
+`Selection.Grammar`의 전체 값 `"."`은 이미 확인한 Root 자체를 선택하는 sentinel이다. source 등록부의 `grammar_subdirectory`에도 같은 규칙을 적용한다. sentinel은 파일/member 경로나 내부 segment 허용 규칙이 아니다. `./x`, `x/.`, `x/../y`, 절대·drive·UNC·역슬래시 경로는 거부하고 다른 값은 [portable path 계약](trust-and-execution.md)을 따른다. S01은 root grammar 정상 선택과 이 탈출/alias negative case를 CLI와 직접 API 양쪽에서 검사한다.
 
 모든 Limits 필드는 양수여야 하며 0은 invalid input이다. `nil` context와 deadline 없는 context는 거부한다. deadline과 size/count/depth/output 상한을 함께 적용하며 각 파일 열기 전, bounded read 사이, record 생성 전에 취소를 확인한다. source read 자체가 host I/O에서 멈추는 경우 hard 실시간 취소를 보장하지 않는다. 무한·무제한 fallback은 없다. CLI의 기본 유한 값은 CLI owner가 소유하며 직접 API 호출도 동일 guard를 거친다.
 

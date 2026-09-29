@@ -22,6 +22,8 @@ grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다.
 
 portable path는 UTF-8 상대 경로, `/` separator, 빈 segment/`.`/`..`/제어문자/절대 경로/drive/UNC/역슬래시/ADS `:`를 거부한다. 대소문자 접기 충돌, Windows device basename(CON/PRN/AUX/NUL/COM1~9/LPT1~9 및 확장자 형태), trailing dot/space도 거부한다. Unicode 정규화 충돌은 S02에서 사전 검출 규칙을 고정하고 지원 범위 밖 이름은 명시적으로 거부한다.
 
+grammar 선택의 `Selection.Grammar`와 source 등록부의 `grammar_subdirectory`는 전체 값 `"."`에 한해 별도 root sentinel을 허용한다. 검증된 root를 가리키며 정규화로 다른 문자열을 sentinel로 바꾸지 않는다. 파일/member path와 `./child`·`child/.`·`child/../other`에는 이 예외를 적용하지 않는다.
+
 입력 root 자체의 실제 경로를 먼저 확정하고 내부 member와 구분한다. macOS `/var` → `/private/var` root alias를 archive 탈출로 오판하지 않는다. 내부 symlink/hardlink/junction/reparse point는 r0에서 거부한다. count/file/total/depth/output 제한은 [profile](cli-and-profile.md)이 소유한다. 파일 검사 후 교체 race를 막을 handle 기반 접근이 없으면 그런 capability를 제공한다고 주장하지 않는다.
 
 archive inspection은 extraction과 분리한다. 절대·상위·중복·case collision·file/directory 겹침·link·비정상 metadata·압축/해제 size 한도 초과를 거부하고 실제 읽은 bytes에도 한도를 적용한다. extraction은 필요할 때만 새 caller-owned 빈 directory에서 수행하고 멤버별 no-follow/open 경계를 검증한다. 이름 정규화만으로 TOCTOU를 해결했다고 하지 않는다. 다른 process가 workspace를 적대적으로 변경하는 상황을 지원하려면 OS별 안전한 접근을 별도로 증명해야 한다.
