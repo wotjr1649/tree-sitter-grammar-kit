@@ -91,3 +91,11 @@ run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d26
 `bookworm-r1`은 원래 `inputs.json` image identity를 보존한다. 제안된 `trixie-r1`은 같은 Node24.21.0의 linux/amd64 image `node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492`와 compressed440,298,459bytes를 별도 subject에 결속한다. **새 image의 실제 사용자 승인 전 pull·native 실행은 불가**하다. helper 통합이나 subject 문자열 존재는 승인이 아니다. source/case 원본은 변경하지 않으며 기존 1GiB 취득 상한에서 선택 image 크기를 미리 예약한다. generation/build/header/capture/probe 기록은 선택한 실제 image와 tool bytes를 가리킨다.
 
 승인 후 새 image에서 전체 isolation/capture와 CLI/tool identity를 다시 검증해야 한다. 현재 metadata와 공식 libc 계열만으로 loader 호환성이나 grammar 결과를 PASS로 표시하지 않는다. self-check는 기존 image 동일성, 새 image의 정확한 binding, 빈/이전/다른 profile subject 거부를 검사하며 image를 pull하거나 실행하지 않는다.
+
+## GLIBC 진단과 자체 수직 control
+
+호환성 진단은 전체 source 취득 뒤 선택 image의 실제 digest/platform/storage와 container 설정을 확인한 상태에서 수행한다. 이 helper는 CLI만 먼저 취득하는 경로가 없어 일괄 취득을 유지한다. `tool-environment`는 libc/Node/GCC/linker identity와 CLI ELF header·interpreter·NEEDED·required versions 및 libc provider versions를 CLI 실행과 별도로 보존한다. 이어 `cli-version`과 `cli-generate-help`를 각각 제한 실행한다. 이전 loader 실패가 환경 진단의 출력을 가리지 않도록 한다. 실제 회수·격리8개를 새 image에서 반복한 뒤 upstream generation을 시작한다.
+
+등록57원문과 별도로 소유한 작은 scannerless grammar와 `OWNED-P05-VERTICAL` 입력을 task scratch에 고정한다. 같은 CLI의 ABI15 generation1회, 독립 runtime/GCC build1회, 회수한0755/SHA executable의 새 container parse/edit1회로 수직 경로를 확인한다. 구조 기대는 declaration/name/body identifier의 byte ranges와 brace 손상 오류·복구/incremental/fresh 동일성이다. 이는 product S04/S05/S06 구현이나 upstream57개 지원 근거가 아니다. 자체 G/B/X1회씩은 별도 counter에, 회수는 기존169회 shared cap 안에 기록한다. 나머지 generation6/build11/execution128/diagnostic16 및 개별 timeout/memory/output/transfer/storage 한도는 유지한다.
+
+각 build는 같은 image의 readelf로 실제 ELF/loader/NEEDED/version 원문을 회수한다. 허용한 x86-64 ELF64·image loader·libc closure와 executable mode/hash를 확인한 후 새 container에서 실행한다. 모든57개 input의 baseline/재생성 variant는 final case ledger에 남으며 미실행은 dependency blocker를 명시한다. syntax/구조/negative/recovery/edit의 최종 지원 판정은 해당 원문·tree·feature 사실의 실제 평가가 필요하다.

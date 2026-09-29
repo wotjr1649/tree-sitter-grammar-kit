@@ -43,6 +43,25 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
+foreach($helper in @('CheckElfClosure','CheckOwnedControl')){
+    $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
+    if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
+    . ([scriptblock]::Create($definition[0].Extent.Text))
+}
+$elf="Class: ELF64`nMachine: Advanced Micro Devices X86-64`n[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]`n(NEEDED) Shared library: [libc.so.6]"
+CheckElfClosure $elf
+foreach($invalid in @($elf.Replace('ELF64','ELF32'),$elf.Replace('X86-64','AArch64'),$elf.Replace('/lib64/ld-linux-x86-64.so.2','/unapproved/loader'),$elf.Replace('libc.so.6','unapproved.so'),($elf+"`n(RUNPATH) /unapproved"))){
+    $rejected=$false;try{CheckElfClosure $invalid}catch{$rejected=$true};if(-not $rejected){throw 'Unsafe ELF closure was accepted'}
+}
+$controlTree=@{kind='source_file';children=@(@{kind='declaration';children=@(@{kind='identifier';field='name';start=5;end=9},@{kind='identifier';field='body';start=12;end=17})})}
+$control=@(foreach($stage in @('original','damaged-incremental','damaged-fresh','restored-incremental','restored-fresh')){@{stage=$stage;has_error=$stage.StartsWith('damaged');tree=$controlTree}})+@(@{comparison='damaged';equal=$true},@{comparison='restored';equal=$true})
+CheckOwnedControl $control
+$controlTree.children[0].children[1].field='wrong'
+$rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Wrong owned field was accepted'}
+$controlTree.children[0].children[1].field='body';$control[-1].equal=$false
+$rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Unequal edit trees were accepted'}
+$control[-1].equal=$true;$control[1].has_error=$false
+$rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Missing owned negative error was accepted'}
 $function=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Application'},$true))
 if($function.Count -ne 1){throw 'Application helper identity mismatch'}
 . ([scriptblock]::Create($function[0].Extent.Text))
@@ -112,7 +131,7 @@ foreach($mode in @(493,420)){
         . ([scriptblock]::Create($definition[0].Extent.Text))
     }
     $script:containers=[Collections.Generic.List[string]]::new();$script:containers.Add('owned')
-    $script:captureToolVerified=$true
+    $script:captureToolVerified=$true;$script:captures=0
     # Exercise real receipt naming and lifecycle calls with owned Docker responses.
     function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[switch]$Cleanup){
         Record ('command-'+$label) @{argv=$argv;seconds=$seconds;simulation=$true}
@@ -137,5 +156,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'

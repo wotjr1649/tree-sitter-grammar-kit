@@ -34,6 +34,8 @@ $script:commands=[Collections.Generic.List[object]]::new()
 $script:outcomes=[Collections.Generic.List[object]]::new()
 $script:containers=[Collections.Generic.List[string]]::new()
 $script:counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0}
+$script:ownedCounts=@{generation=0;build=0;execution=0}
+$script:captures=0
 $script:failed=$false
 $script:wall=[Diagnostics.Stopwatch]::StartNew()
 $script:imageSize=2147483648L
@@ -130,7 +132,7 @@ function StopContainer([string]$id,[string]$label){
 }
 function Container([string]$label){
     $args=@('create','--network','none','--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--user','65534:65534','--pids-limit','64','--memory','4g','--memory-swap','4g','--cpus','1','--tmpfs','/work:rw,size=2147483648,mode=1777','--env','HOME=/work','--env','TMPDIR=/work','--env','NODE_PATH=/inputs/npm')
-    foreach($mount in @(@{host=(Join-Path $root 'acquisition');target='/inputs/acquisition'},@{host=(Join-Path $root 'cases');target='/inputs/cases'},@{host=(Join-Path $root 'probe.c');target='/inputs/probe.c'},@{host=(Join-Path $root 'npm');target='/inputs/npm'},@{host=(Join-Path $root 'results');target='/inputs/results'})){
+    foreach($mount in @(@{host=(Join-Path $root 'acquisition');target='/inputs/acquisition'},@{host=(Join-Path $root 'cases');target='/inputs/cases'},@{host=(Join-Path $root 'probe.c');target='/inputs/probe.c'},@{host=(Join-Path $root 'npm');target='/inputs/npm'},@{host=(Join-Path $root 'owned');target='/inputs/owned'},@{host=(Join-Path $root 'results');target='/inputs/results'})){
         $args+=@('--mount',('type=bind,source='+$mount.host+',target='+$mount.target+',readonly'))
     }
     $args+=@('--entrypoint','/bin/sleep',$toolchain.image,'infinity')
@@ -157,6 +159,7 @@ function Freeze([string]$id,[string]$label){
     return (ConfirmFrozenState (TextOutput $state) (TextOutput $top))
 }
 function Snapshot([string]$id,[string]$label,[long]$limit){
+    if(++$script:captures -gt 169){throw 'Capture count budget exceeded'}
     $firstProcessId=Freeze $id $label
     Require (Run ($label+'-unpause') @('unpause',$id) 2)
     if(-not $script:captureToolVerified){
@@ -194,9 +197,11 @@ function UnpackResult([string]$archive,[string]$destination,[long]$limit,[switch
 function CheckRecoveredProof([string]$path){
     if((Get-Item -LiteralPath $path).Length -ne 12 -or [Convert]::ToHexString([IO.File]::ReadAllBytes($path)) -cne '707265736572766564000D0A'){throw 'Recovered binary proof changed'}
 }
-function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit){
+function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
-    if(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
+    if($Owned){
+        if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
+    }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
     $id=Container $label
     try {
         $commandOutputLimit=if($kind -in @('preflight','diagnostic')){1048576}else{8388608}
@@ -205,10 +210,44 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
         UnpackResult $archive $directory $resultLimit -Executable:($kind -eq 'build')
-        $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;result_directory=$label})
+        $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$label;scope=$(if($Owned){'OWNED_VERTICAL_CONTROL'}else{'REGISTERED_P05'})})
         if($result.exit_code -ne 0){$script:failed=$true}
         return $result
     } finally {StopContainer $id $label}
+}
+function CheckElfClosure([string]$elf){
+    $needed=@([regex]::Matches($elf,'Shared library: \[([^\]]+)\]')|ForEach-Object {$_.Groups[1].Value})
+    if($elf -notmatch 'Class:\s+ELF64' -or $elf -notmatch 'Machine:\s+Advanced Micro Devices X86-64' -or $elf -notmatch 'Requesting program interpreter: /lib64/ld-linux-x86-64.so.2' -or $elf -match '\((?:RPATH|RUNPATH)\)' -or $needed.Count -ne 1 -or $needed[0] -cne 'libc.so.6'){throw 'Executable ELF/library closure mismatch'}
+}
+function RecoveredExecutable([string]$label){
+    $binary=Join-Path $root ('results/'+$label+'/probe');$identity=FileIdentity $binary
+    if([int][IO.File]::GetUnixFileMode($binary) -ne 493){throw 'Recovered executable mode mismatch'}
+    $elfPath=Join-Path $root ('results/'+$label+'/probe.elf')
+    CheckElfClosure ([IO.File]::ReadAllText($elfPath))
+    Record ($label+'-executable') @{executable=$identity;elf=(FileIdentity $elfPath);archive_and_recovered_unix_mode='0755';next_use='fresh read-only mount; exact SHA/mode checked before execution';library_closure='readelf verified libc.so.6 and /lib64/ld-linux-x86-64.so.2; providers identified in tool-environment';source_modified=$false}
+    return $identity
+}
+function CheckOwnedControl($events){
+    $stages=@($events|Where-Object stage);$comparisons=@($events|Where-Object comparison)
+    if($stages.Count -ne 5 -or (Compare-Object @($stages.stage) @('original','damaged-incremental','damaged-fresh','restored-incremental','restored-fresh')) -or $comparisons.Count -ne 2 -or @($comparisons|Where-Object {-not $_.equal}).Count){throw 'Owned parse/edit stages mismatch'}
+    foreach($stage in $stages){
+        if($stage.stage.StartsWith('damaged')){if(-not $stage.has_error){throw 'Owned negative did not detect missing brace'};continue}
+        if($stage.has_error -or $stage.tree.kind -cne 'source_file'){throw 'Owned positive syntax mismatch'}
+        $declaration=@($stage.tree.children|Where-Object kind -CEQ declaration)
+        if($declaration.Count -ne 1){throw 'Owned declaration structure mismatch'}
+        foreach($fact in @(@{field='name';start=5;end=9},@{field='body';start=12;end=17})){
+            $node=@($declaration[0].children|Where-Object field -CEQ $fact.field)
+            if($node.Count -ne 1 -or $node[0].kind -cne 'identifier' -or $node[0].start -ne $fact.start -or $node[0].end -ne $fact.end){throw 'Owned field/range mismatch'}
+        }
+    }
+}
+function CaseLedger {
+    return @(foreach($case in $inputs.cases){foreach($variant in @('baseline','regenerated')){
+        if($case.route -ceq 'swift' -and $variant -ceq 'baseline'){continue}
+        $label='case-'+$variant+'-'+$case.id.ToLowerInvariant()
+        $command=@($script:commands|Where-Object label -CEQ $label)
+        @{id=$case.id;route=$case.route;producer=$variant;feature_ids=$case.feature_ids;input_sha256=$case.input_sha256;edit_registered=[bool]$case.edit;state=$(if($command.Count){$command[0].termination}else{'NOT_RUN'});exit_code=$(if($command.Count){$command[0].exit_code}else{$null});dependency=$(if($command.Count){'BUILT_EXECUTABLE_RECOVERED'}else{'generation/build/toolchain or stopped safety prerequisite; inspect raw and summary'});structure_assessment='REVIEW_REQUIRED_NOT_AUTOMATIC_PASS';raw_stdout='raw/'+$label+'.stdout'}
+    }})
 }
 function CheckBuildHeaders([string]$label,[string]$parserRoot){
     $headers=@([IO.File]::ReadAllLines((Join-Path $root ('raw/'+$label+'.stderr')))|ForEach-Object {if($_ -match '^\.+ (/.+)$'){[IO.Path]::GetFullPath($Matches[1])}}|Sort-Object -Unique)
@@ -245,6 +284,11 @@ try {
     if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
     $acquire=Run 'acquisition' $acquireArgs 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'owned'))
+    $ownedGrammar='module.exports = grammar({name: "p05_owned", rules: {source_file: $ => $.declaration, declaration: $ => seq("item", field("name", $.identifier), "{", field("body", $.identifier), ";", "}"), identifier: $ => /[a-z]+/}});' + "`n"
+    [IO.File]::WriteAllText((Join-Path $root 'owned/grammar.js'),$ownedGrammar,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $root 'cases/OWNED-P05-VERTICAL'),"item demo { value; }`n",[Text.UTF8Encoding]::new($false))
+    Record 'owned-control-inputs' @{grammar=(FileIdentity (Join-Path $root 'owned/grammar.js'));input=(FileIdentity (Join-Path $root 'cases/OWNED-P05-VERTICAL'));edit_start=10;edit_old_end=11;expectation='declaration/name identifier bytes5..9; body identifier12..17; missing brace error; restored incremental/fresh original structure';scope='OWNED_PREPARATION_NOT_UPSTREAM57'}
     [void][IO.Directory]::CreateDirectory((Join-Path $root 'npm'))
     foreach($package in $inputs.npm){
         $target=Join-Path $root ('npm/'+$package.package);[void][IO.Directory]::CreateDirectory($target)
@@ -278,6 +322,10 @@ try {
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
     if((TextOutput $security) -notmatch 'seccomp.*profile=builtin'){throw 'Default seccomp is unavailable'}
+    Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
+    Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
+    if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
+    Require (Native diagnostic 'cli-generate-help' @('/inputs/acquisition/tools/tree-sitter','generate','--help') 10 1048576)
     $sentinel=Join-Path $root 'host-only-sentinel'
     [IO.File]::WriteAllText($sentinel,'P05-owned-host-only-marker',[Text.UTF8Encoding]::new($false))
     Record 'host-only-sentinel' @{identity=FileIdentity $sentinel;secret=$false;mounted=$false}
@@ -298,9 +346,20 @@ try {
     Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pidProbe) 10 1048576)
     $timeoutId=Container 'preflight-timeout';$script:counts.preflight++
     try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1 1048576;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
-    Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
     Record 'preflight' @{result='PASS';counts=$script:counts;image=$toolchain.image;limitations='container setting and owned adverse checks; not S04 product supervisor qualification'}
     $runtime='/inputs/acquisition/sources/tree-sitter--tree-sitter--659cda7c7f86ebe31cc825dc5da59e9add172dc7'
+    $compileAndInspect='/usr/bin/gcc "$@"; /usr/bin/readelf -hW -lW -dW -VW /work/probe > /work/probe.elf'
+    $execCheck='expected=$1; shift; test "$(/usr/bin/stat -c %a -- "$1")" = 755 || exit 74; actual=$(/usr/bin/sha256sum -- "$1"); test "${actual%% *}" = "$expected" || exit 74; exec "$@"'
+    Require (Native generation 'owned-generate' @('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--js-runtime','node','--output','/work/generated','/inputs/owned/grammar.js') 300 536870912 -Owned)
+    $ownedParserRoot=Join-Path $root 'results/owned-generate/generated'
+    Record 'owned-build-inputs' @{parser=(FileIdentity (Join-Path $ownedParserRoot 'parser.c'));header=(FileIdentity (Join-Path $ownedParserRoot 'tree_sitter/parser.h'));probe=(FileIdentity (Join-Path $root 'probe.c'));runtime=$inputs.runtime.commit;source='owned-control-inputs.json'}
+    Require (Native build 'owned-build' @('/bin/sh','-ec',$compileAndInspect,'owned-gcc','-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H','-DLANGUAGE=tree_sitter_p05_owned',('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),'-I/inputs/results/owned-generate/generated','/inputs/probe.c',($runtime+'/lib/src/lib.c'),'/inputs/results/owned-generate/generated/parser.c','-o','/work/probe') 120 134217728 -Owned)
+    CheckBuildHeaders 'owned-build' $ownedParserRoot
+    $ownedBinary=RecoveredExecutable 'owned-build'
+    Require (Native execution 'owned-execute' @('/bin/sh','-ec',$execCheck,'owned-exec',$ownedBinary.sha256,'/inputs/results/owned-build/probe','/inputs/cases/OWNED-P05-VERTICAL','10','11') 10 8388608 -Owned)
+    $ownedEvents=@([IO.File]::ReadAllLines((Join-Path $root 'raw/owned-execute.stdout'))|ForEach-Object {$_|ConvertFrom-Json})
+    CheckOwnedControl $ownedEvents
+    Record 'owned-control' @{result='PASS';counts=$script:ownedCounts;source='owned-control-inputs.json';binary=$ownedBinary;fresh_container_mode_hash_verified=$true;parse_edit_events='raw/owned-execute.stdout';syntax_structure_negative_recovery='PASS';product_qualification=$false;upstream_case_count=0}
     foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
         $route=@($inputs.selected_routes|Where-Object route -eq $routeName)[0]
         $key=$route.repository.Replace('/','--')+'--'+$route.commit
@@ -324,16 +383,13 @@ try {
             $args=@('/usr/bin/gcc','-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H',('-DLANGUAGE=tree_sitter_'+$grammar.name),('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),('-I'+$parser),('/inputs/probe.c'),($runtime+'/lib/src/lib.c'),($parser+'/parser.c'))
             if(Test-Path (Join-Path $localSource 'src/scanner.c')){$args+=($source+'/src/scanner.c')}
             $args+=@('-o','/work/probe')
-            $build=Native build $label $args 120 134217728
+            $build=Native build $label (@('/bin/sh','-ec',$compileAndInspect,'p05-gcc')+$args[1..($args.Count-1)]) 120 134217728
             if($build.exit_code -ne 0){continue}
             CheckBuildHeaders $label $parserRoot
-            $binary=Join-Path $root ('results/'+$label+'/probe');$binaryIdentity=FileIdentity $binary
-            if([int][IO.File]::GetUnixFileMode($binary) -ne 493){throw 'Recovered executable mode mismatch'}
-            Record ($label+'-executable') @{executable=$binaryIdentity;archive_and_recovered_unix_mode='0755';next_use='fresh read-only input mount; exact SHA/mode checked before each case';library_closure='pinned official image: GCC default C link, libc and loader identities in tool-identities';source_modified=$false}
+            $binaryIdentity=RecoveredExecutable $label
             foreach($case in $inputs.cases|Where-Object route -eq $route.route){
                 $caseIdentity=FileIdentity (Join-Path $root ('cases/'+$case.id))
                 if($caseIdentity.sha256 -cne $case.input_sha256 -or $caseIdentity.bytes -ne $case.input_bytes){throw 'Case changed before execution'}
-                $execCheck='expected=$1; shift; test "$(/usr/bin/stat -c %a -- "$1")" = 755 || exit 74; actual=$(/usr/bin/sha256sum -- "$1"); test "${actual%% *}" = "$expected" || exit 74; exec "$@"'
                 $args=@('/bin/sh','-ec',$execCheck,'p05-exec',$binaryIdentity.sha256,('/inputs/results/'+$label+'/probe'),('/inputs/cases/'+$case.id))
                 if($case.edit){$args+=@([string]$case.edit.start_byte,[string]$case.edit.old_end_byte)}
                 [void](Native execution ('case-'+$variant+'-'+$case.id.ToLowerInvariant()) $args 10 8388608)
@@ -345,6 +401,7 @@ try {
 finally {
     $cleanupErrors=@(foreach($id in @($script:containers)){try{StopContainer $id ('final-'+$id.Substring(0,12))}catch{@{container=$id;failure_type=$_.Exception.GetType().FullName}}})
     if($cleanupErrors.Count){$verdict='CLEANUP_NOT_VERIFIED';$script:failed=$true}
-    Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count}
+    Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();whole_feature_support=$false}
+    Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count}
 }
 if($script:failed){throw 'Required P05 inputs failed; original evidence retained'}
