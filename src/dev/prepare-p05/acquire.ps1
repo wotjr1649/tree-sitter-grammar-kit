@@ -1,6 +1,7 @@
-param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject)
+param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject, [string]$ToolchainProfile='bookworm-r1', [string]$ToolchainApprovalSubject)
 $ErrorActionPreference = 'Stop'
-& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject
+$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject
+if(-not $toolchain){throw 'Explicit toolchain profile required'}
 if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
 $script:received = 0L
@@ -235,7 +236,7 @@ if ($SelfTest) {
 $inputsPath=Join-Path $PSScriptRoot 'inputs.json'
 if((Get-FileHash $inputsPath).Hash.ToLowerInvariant() -cne 'f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4'){throw 'Approved input projection changed'}
 $inputs=Get-Content -LiteralPath $inputsPath -Raw|ConvertFrom-Json
-$script:imageReserve=[long]$inputs.image_compressed_bytes
+$script:imageReserve=[long]$toolchain.compressed_bytes
 if($script:imageReserve -le 0 -or $script:imageReserve -ge 1073741824){throw 'Image reserve missing'}
 foreach($name in @('archives','sources','tools','records')){[void][IO.Directory]::CreateDirectory((Join-Path $root $name))}
 $results=[Collections.Generic.List[object]]::new(); $state='FAILED'; $failure=$null

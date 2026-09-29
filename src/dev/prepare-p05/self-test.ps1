@@ -14,6 +14,16 @@ foreach($invalidSubject in @('',$subject)){
     $rejected=$false;try{& $approval -Profile pinned-tsql-r1 -Subject $subject -Execution -ExecutionSubject $invalidSubject}catch{$rejected=$true}
     if(-not $rejected){throw 'Old/missing approval authorized new capture'}
 }
+$imageSubject='5dc3d89579acd801130549ba35c989055b8e548d4ba73e51cc365760d9c4ac09'
+$legacy=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile bookworm-r1
+$originalInputs=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'inputs.json') -Raw|ConvertFrom-Json
+if($legacy.image -cne $originalInputs.image -or $legacy.compressed_bytes -ne $originalInputs.image_compressed_bytes){throw 'Original image identity changed'}
+$candidate=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject
+if($candidate.image -cne 'node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492' -or $candidate.compressed_bytes -ne 440298459){throw 'Proposed image identity mismatch'}
+foreach($vector in @(@{ImageProfile='trixie-r1';ImageSubject=''},@{ImageProfile='trixie-r1';ImageSubject=$subject},@{ImageProfile='bookworm-r1';ImageSubject=$imageSubject},@{ImageProfile='unknown';ImageSubject=$imageSubject},@{ImageProfile='';ImageSubject=$imageSubject})){
+    $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject @vector}catch{$rejected=$true}
+    if(-not $rejected){throw 'Unbound image profile/approval was accepted'}
+}
 $root=[IO.Path]::GetFullPath($Destination)
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $prefixes=@([IO.Path]::GetFullPath((Join-Path $repoRoot '.work/campaign-01-prepare-03')))
@@ -127,5 +137,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'

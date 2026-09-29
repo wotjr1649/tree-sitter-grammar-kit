@@ -1,6 +1,7 @@
-param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject)
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject,[string]$ToolchainProfile='bookworm-r1',[string]$ToolchainApprovalSubject)
 $ErrorActionPreference='Stop'
-& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject
+$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject
+if(-not $toolchain){throw 'Explicit toolchain profile required'}
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
@@ -132,7 +133,7 @@ function Container([string]$label){
     foreach($mount in @(@{host=(Join-Path $root 'acquisition');target='/inputs/acquisition'},@{host=(Join-Path $root 'cases');target='/inputs/cases'},@{host=(Join-Path $root 'probe.c');target='/inputs/probe.c'},@{host=(Join-Path $root 'npm');target='/inputs/npm'},@{host=(Join-Path $root 'results');target='/inputs/results'})){
         $args+=@('--mount',('type=bind,source='+$mount.host+',target='+$mount.target+',readonly'))
     }
-    $args+=@('--entrypoint','/bin/sleep',$inputs.image,'infinity')
+    $args+=@('--entrypoint','/bin/sleep',$toolchain.image,'infinity')
     $created=Run ($label+'-create') $args 10;Require $created;$id=(TextOutput $created).Trim()
     if($id -notmatch '^[a-f0-9]{64}$'){throw 'Invalid Docker identity'}
     $script:containers.Add($id);Require (Run ($label+'-start') @('start',$id) 10)
@@ -163,7 +164,7 @@ function Snapshot([string]$id,[string]$label,[long]$limit){
         $tool=Run 'capture-tool-identity' @('exec',$id,'/bin/sh','-ec','/usr/bin/tar --version; /usr/bin/sha256sum -- /usr/bin/tar') 10 1048576;Require $tool
         $digestLines=@((TextOutput $tool) -split "`n"|Where-Object {$_ -match '^[0-9a-f]{64}  /usr/bin/tar$'})
         if($digestLines.Count -ne 1){throw 'Capture tool identity missing'}
-        Record 'capture-tool' @{image=$inputs.image;path='/usr/bin/tar';sha256=$digestLines[0].Substring(0,64);identity_command='command-capture-tool-identity.json';capture_method='quiescent-tar-r1';execution_approval_subject=$ExecutionApprovalSubject}
+        Record 'capture-tool' @{image=$toolchain.image;path='/usr/bin/tar';sha256=$digestLines[0].Substring(0,64);identity_command='command-capture-tool-identity.json';capture_method='quiescent-tar-r1';execution_approval_subject=$ExecutionApprovalSubject}
         $script:captureToolVerified=$true
     }
     $copy=Run ($label+'-copy') @('exec','--env','TAR_OPTIONS=',$id,'/usr/bin/tar','--format=ustar','--create','--file=-','--directory=/work','--one-file-system','.') 10 $limit;Require $copy
@@ -231,14 +232,16 @@ function CheckBuildHeaders([string]$label,[string]$parserRoot){
         $systemHashes=@((TextOutput $diagnostic)-split "`n"|Where-Object {$_}|ForEach-Object {if($_ -notmatch '^([0-9a-f]{64})  (/.+)$'){throw 'Invalid system header digest'};@{path=$Matches[2];sha256=$Matches[1]}})
         if($systemHashes.Count -ne $system.Count+1){throw 'Missing system header identity'}
     }
-    Record ($label+'-headers') @{stage='AFTER_BUILD_BEFORE_EXECUTION';compiler_includes_verified=$true;project_headers=$project;system_headers=$systemHashes;system_image=$inputs.image;raw_compiler_output=('raw/'+$label+'.stderr')}
+    Record ($label+'-headers') @{stage='AFTER_BUILD_BEFORE_EXECUTION';compiler_includes_verified=$true;project_headers=$project;system_headers=$systemHashes;system_image=$toolchain.image;raw_compiler_output=('raw/'+$label+'.stderr')}
 }
 
 $verdict='FAILED';$failure=$null
 try {
     Add-Type -AssemblyName System.Formats.Tar
     Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
-    $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'))
+    Record 'toolchain-profile' @{selected=$toolchain;original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();source_and_cases_changed=$false;actual_tool_identities='tool-identities command; NOT_VERIFIED until executed'}
+    $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'),'-ToolchainProfile',$ToolchainProfile)
+    if($ToolchainApprovalSubject){$acquireArgs+=@('-ToolchainApprovalSubject',$ToolchainApprovalSubject)}
     if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
     $acquire=Run 'acquisition' $acquireArgs 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
@@ -255,22 +258,22 @@ try {
         elseif($item.package){$directory=$item.package+'-'+$item.version}else{continue}
         foreach($file in $item.files){$relative='acquisition/sources/'+$directory+'/'+$file.path;$actual=FileIdentity (Join-Path $root $relative);if($actual.sha256 -cne $file.sha256 -or $actual.bytes -ne $file.bytes){throw 'Source changed after acquisition'};$script:verifiedSource[$relative]=$actual.sha256}
     }
-    Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$inputs.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
+    Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$toolchain.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
     foreach($case in $inputs.cases){
         if($case.id -notmatch '^[A-Z0-9-]+$' -or $case.input_bytes -gt 65536){throw 'Case identity/size mismatch'}
         $path=Join-Path $root ('cases/'+$case.id);[IO.File]::WriteAllText($path,$case.input_utf8,[Text.UTF8Encoding]::new($false))
         if((Get-FileHash $path).Hash.ToLowerInvariant() -cne $case.input_sha256){throw 'Case bytes changed'}
     }
     Require (Run 'docker-version' @('version','--format','{{json .}}') 10 1048576)
-    Require (Run 'image-pull' @('pull','--platform','linux/amd64',$inputs.image) 120)
+    Require (Run 'image-pull' @('pull','--platform','linux/amd64',$toolchain.image) 120)
     if($script:wall.Elapsed.TotalSeconds -gt 600){throw 'Combined acquisition time limit'}
     $receivedUpperBound=(NetworkReceived)-$script:networkStart
     if($receivedUpperBound -gt 1073741824){throw 'Acquisition network budget exceeded'}
     $script:acquiring=$false
-    Record 'download-budget' @{received_network_upper_bound_bytes=$receivedUpperBound;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$inputs.image_compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20}
-    $image=Run 'image-identity' @('image','inspect',$inputs.image) 10;Require $image
+    Record 'download-budget' @{received_network_upper_bound_bytes=$receivedUpperBound;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20}
+    $image=Run 'image-identity' @('image','inspect',$toolchain.image) 10;Require $image
     $im=(TextOutput $image|ConvertFrom-Json)[0]
-    if($im.Os -cne 'linux' -or $im.Architecture -cne 'amd64' -or $inputs.image -notin $im.RepoDigests){throw 'Image digest/platform mismatch'}
+    if($im.Os -cne 'linux' -or $im.Architecture -cne 'amd64' -or $toolchain.image -notin $im.RepoDigests){throw 'Image digest/platform mismatch'}
     $script:imageSize=[long]$im.Size
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
@@ -294,9 +297,9 @@ try {
     $pidProbe='const{spawn}=require("child_process");let cs=[],errors=0,closed=0;for(let i=0;i<70;i++){let c=spawn("/bin/sleep",["5"]);cs.push(c);c.on("error",()=>errors++);c.on("close",()=>closed++);}setTimeout(()=>cs.forEach(c=>c.kill("SIGKILL")),1000);setTimeout(()=>process.exit(errors>0&&closed===70?0:1),2500);'
     Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pidProbe) 10 1048576)
     $timeoutId=Container 'preflight-timeout';$script:counts.preflight++
-    try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
+    try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1 1048576;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
     Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
-    Record 'preflight' @{result='PASS';counts=$script:counts;image=$inputs.image;limitations='container setting and owned adverse checks; not S04 product supervisor qualification'}
+    Record 'preflight' @{result='PASS';counts=$script:counts;image=$toolchain.image;limitations='container setting and owned adverse checks; not S04 product supervisor qualification'}
     $runtime='/inputs/acquisition/sources/tree-sitter--tree-sitter--659cda7c7f86ebe31cc825dc5da59e9add172dc7'
     foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
         $route=@($inputs.selected_routes|Where-Object route -eq $routeName)[0]
@@ -317,7 +320,7 @@ try {
             $parserRoot=if($variant -eq 'baseline'){Join-Path $localSource 'src'}else{Join-Path $root ('results/generate-'+$route.route+'/generated')}
             $buildInputs=@((FileIdentity (Join-Path $parserRoot 'parser.c')),(FileIdentity (Join-Path $parserRoot 'tree_sitter/parser.h')),(FileIdentity (Join-Path $root 'probe.c')))
             if(Test-Path (Join-Path $localSource 'src/scanner.c')){$buildInputs+=FileIdentity (Join-Path $localSource 'src/scanner.c')}
-            Record ($label+'-inputs') @{files=$buildInputs;runtime_pin=$inputs.runtime.commit;runtime_byte_manifest='acquisition/records/acquisition.json';compiler_image=$inputs.image;query_execution=$false}
+            Record ($label+'-inputs') @{files=$buildInputs;runtime_pin=$inputs.runtime.commit;runtime_byte_manifest='acquisition/records/acquisition.json';compiler_image=$toolchain.image;query_execution=$false}
             $args=@('/usr/bin/gcc','-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H',('-DLANGUAGE=tree_sitter_'+$grammar.name),('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),('-I'+$parser),('/inputs/probe.c'),($runtime+'/lib/src/lib.c'),($parser+'/parser.c'))
             if(Test-Path (Join-Path $localSource 'src/scanner.c')){$args+=($source+'/src/scanner.c')}
             $args+=@('-o','/work/probe')

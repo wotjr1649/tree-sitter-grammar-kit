@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 현재 상태는 **계획·정적 관측**이며 신규 upstream 실행 결과가 아니다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 현재 upstream G/B/X는 **NOT_RUN**이며 아래 취득·격리·회수 관측과 구분한다. 기존 26-route/256행 채택은 scope 근거다.
 
 ## 네 단계와 완료 근거
 
@@ -83,3 +83,11 @@ preflight/diagnostic의 stdout+stderr 합산 상한은1 MiB로 supervisor에 전
 회수 canary는 `preserved`와 NUL·CRLF의12 bytes를 `/work`에 쓰고 원 container를 종료하기 전에 회수한다. host의 안전한 tar 추출 뒤 원문 bytes/hash를 확인하며, 정적 self-check는 NUL 삭제·CRLF 변경·같은 길이의 내용 변경을 거부한다. build의 `probe`는 archive mode0755만 허용하고 추출 파일에 같은 mode를 적용·검증한다. 각 등록 case의 새로운 container에서 read-only 입력의 mode와 SHA를 다시 대조한 뒤 실행하며, 불일치는 exit74로 보존한다. canary나 mode 확인만으로 grammar 지원 또는 실제 다음 container 실행 성공을 주장하지 않는다.
 
 회수의 frozen-state 조회와 cleanup의 state 조회는 서로 다른 immutable 명령 이름을 사용한다. lifecycle 회귀 검사는 실제 `Freeze`/`StopContainer`/`Record` 함수에 owned Docker 응답을 공급해 이름 충돌을 검출하며, 실제 Docker 회수·격리·cleanup 성공은 hosted 결과로 별도 확인한다.
+
+## Toolchain loader 경계와 별도 image subject
+
+run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d2647082410에서 등록474파일, canary12bytes/NUL/CRLF 회수, owned isolation8개와 container9개의 종료·PID0·제거를 확인했다. 이후 고정 CLI0.27.0은 기존 bookworm image의 libc에서 `GLIBC_2.39 not found`로 실패했다. 따라서 toolchain preflight는 미완료이며 upstream G/B/X0, 원문57개와 edit6개는 NOT_RUN이다. 이 loader 실패를 grammar 지원 실패로 분류하지 않는다. timeout 반례의 실제 출력은0bytes였지만 direct 호출의 output 상한이 기본8MiB였음도 확인했다. 이 호출을 계약의1MiB로 명시 교정하며 이전 receipt는 보존한다.
+
+`bookworm-r1`은 원래 `inputs.json` image identity를 보존한다. 제안된 `trixie-r1`은 같은 Node24.21.0의 linux/amd64 image `node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492`와 compressed440,298,459bytes를 별도 subject에 결속한다. **새 image의 실제 사용자 승인 전 pull·native 실행은 불가**하다. helper 통합이나 subject 문자열 존재는 승인이 아니다. source/case 원본은 변경하지 않으며 기존 1GiB 취득 상한에서 선택 image 크기를 미리 예약한다. generation/build/header/capture/probe 기록은 선택한 실제 image와 tool bytes를 가리킨다.
+
+승인 후 새 image에서 전체 isolation/capture와 CLI/tool identity를 다시 검증해야 한다. 현재 metadata와 공식 libc 계열만으로 loader 호환성이나 grammar 결과를 PASS로 표시하지 않는다. self-check는 기존 image 동일성, 새 image의 정확한 binding, 빈/이전/다른 profile subject 거부를 검사하며 image를 pull하거나 실행하지 않는다.
