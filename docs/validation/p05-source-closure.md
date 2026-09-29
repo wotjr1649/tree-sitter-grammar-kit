@@ -60,6 +60,10 @@ TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-si
 
 source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속한다. 미래 S05/S06의 제품 native producer나 S08의 78-cell qualification을 여기서 완료했다고 표시하지 않는다.
 
+### 지속 승인과 유한 작업 배치
+
+현재 사용자가 동일 PREPARE의 계속된 개발·검증·CI·고정 입력 실행을 명시 승인한 경우, 과거 총시간·job 횟수의 중단 조건은 그 승인 범위에서 새 배치로 갱신한다. 실제 메시지와 기존 effect subject를 새 승인 기록에 연결하고, 배치마다 목적·입력·작업 횟수·시간/CI/전송/저장 상한과 시작 소비를 먼저 기록한다. 과거 소비와 실패, 불확실 시간은 이월하며 사용자 idle·측정 시간·보수적 reserve·청구 금액을 구분한다. 동일 결정적 실패의 무변경 재실행, 무한/null 한도, 승인되지 않은 후보 교체·grammar patch·scope 축소는 허용하지 않는다. 개별 timeout·memory·output·격리·cleanup 제한은 유지하고 변경이 필요하면 측정 근거와 독립 리뷰를 먼저 확보한다. S01/MASTER 권한은 별도다.
+
 ## 실제 archive 취득 경계
 
 고정 T-SQL archive `443d2bc774f1d779af7dcabcc99160fb24da96e6`에는 `bindings/c/tree-sitter-TSQL.h`와 `tree-sitter-tsql.h` 등 대소문자 충돌 세 쌍이 있다. 실제 두 번째 준비 run은 이를 거부했고 native를 실행하지 않았다. 거부한 archive의 추출과 충돌 검사는 유지한다.
@@ -75,3 +79,5 @@ run36592527846은 별도 승인을 받은 raw 취득으로 등록474파일과 CL
 `quiescent-tar-r1`은 별도 실행 승인 대상이다. pause 상태에서 inspect의 host PID와 `docker top -eo pid,args`의 유일한 `/bin/sleep infinity` PID를 대조한다. 실제 baseline의 두 PID는3253으로 같았다. 불일치/다른 process가 있으면 거부한다. 그 뒤 unpause하여 동일 immutable image의 tar만 실행하고 다시 pause·동일 PID 단독 상태를 확인한다. 원 native를 재실행하지 않으며 network/source/root/cgroup/tmpfs 한도는 유지한다. 첫 tar 사용 전 version/hash를 diagnostic에 기록하고 기존 raw byte 상한과 regular-file/path/link/collision/size 검사를 적용한다. 실제 tmpfs 회수와 전 격리 preflight를 통과해야 upstream generation을 시작할 수 있다. 이 수정의 정적 리뷰와 foundation CI는 해당 native capability의 성공을 대신하지 않는다.
 
 preflight/diagnostic의 stdout+stderr 합산 상한은1 MiB로 supervisor에 전달하며 결과 archive 상한과 각각 적용한다. process-limit probe의 JavaScript 원문은 task 변수에 보관하고 PowerShell의 read-only 자동 변수 `PID`에 대입하지 않는다. 이 두 경로는 이전 run에서 아직 도달하지 않은 실행 경계로, 실제 hosted 성공을 미리 주장하지 않는다.
+
+회수 canary는 `preserved`와 NUL·CRLF의12 bytes를 `/work`에 쓰고 원 container를 종료하기 전에 회수한다. host의 안전한 tar 추출 뒤 원문 bytes/hash를 확인하며, 정적 self-check는 NUL 삭제·CRLF 변경·같은 길이의 내용 변경을 거부한다. build의 `probe`는 archive mode0755만 허용하고 추출 파일에 같은 mode를 적용·검증한다. 각 등록 case의 새로운 container에서 read-only 입력의 mode와 SHA를 다시 대조한 뒤 실행하며, 불일치는 exit74로 보존한다. canary나 mode 확인만으로 grammar 지원 또는 실제 다음 container 실행 성공을 주장하지 않는다.

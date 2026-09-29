@@ -53,6 +53,45 @@ foreach($directory in $directories){
     [IO.File]::WriteAllText($path,"# owned discovery-only fixture`n",[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
+Add-Type -AssemblyName System.Formats.Tar
+foreach($helper in @('UnpackResult','CheckRecoveredProof')){
+    $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $helper},$true))
+    if($definition.Count -ne 1){throw 'Recovery helper identity mismatch'}
+    . ([scriptblock]::Create($definition[0].Extent.Text))
+}
+$proofBytes=[Convert]::FromHexString('707265736572766564000D0A')
+$archive=Join-Path $root 'binary-proof.tar'
+$stream=[IO.File]::Open($archive,[IO.FileMode]::CreateNew)
+$writer=[Formats.Tar.TarWriter]::new($stream)
+$entry=[Formats.Tar.UstarTarEntry]::new([Formats.Tar.TarEntryType]::RegularFile,'./proof')
+$entry.DataStream=[IO.MemoryStream]::new($proofBytes)
+try{$writer.WriteEntry($entry)}finally{$entry.DataStream.Dispose();$writer.Dispose();$stream.Dispose()}
+$recovered=Join-Path $root 'recovered'
+UnpackResult $archive $recovered 1048576
+CheckRecoveredProof (Join-Path $recovered 'proof')
+foreach($altered in @('7072657365727665640D0A','707265736572766564000A','707265736572766564000D0B')){
+    [IO.File]::WriteAllBytes((Join-Path $recovered 'proof'),[Convert]::FromHexString($altered))
+    $rejected=$false;try{CheckRecoveredProof (Join-Path $recovered 'proof')}catch{$rejected=$true}
+    if(-not $rejected){throw 'Changed NUL/CRLF proof was accepted'}
+}
+foreach($mode in @(493,420)){
+    $archive=Join-Path $root "mode-$mode.tar"
+    $stream=[IO.File]::Open($archive,[IO.FileMode]::CreateNew);$writer=[Formats.Tar.TarWriter]::new($stream)
+    $entry=[Formats.Tar.UstarTarEntry]::new([Formats.Tar.TarEntryType]::RegularFile,'./probe')
+    $entry.Mode=[IO.UnixFileMode]$mode;$entry.DataStream=[IO.MemoryStream]::new($proofBytes)
+    try{$writer.WriteEntry($entry)}finally{$entry.DataStream.Dispose();$writer.Dispose();$stream.Dispose()}
+    $modeRoot=Join-Path $root "mode-$mode"
+    if($mode -eq 493){
+        if(-not $IsWindows){
+            UnpackResult $archive $modeRoot 1048576 -Executable
+            CheckRecoveredProof (Join-Path $modeRoot 'probe')
+            if([int][IO.File]::GetUnixFileMode((Join-Path $modeRoot 'probe')) -ne 493){throw 'Allowed executable mode changed'}
+        }
+    }else{
+        $rejected=$false;try{UnpackResult $archive $modeRoot 1048576 -Executable}catch{$rejected=$true}
+        if(-not $rejected){throw 'Unexpected executable mode accepted'}
+    }
+}
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
@@ -63,5 +102,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected');fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'
