@@ -38,6 +38,9 @@ var required = []string{
 	"src/internal/foundation/campaign_test.go",
 	"src/contracts/examples/profile-r0.json",
 	"src/contracts/campaign-01.json", "src/contracts/language-sources.json",
+	".github/workflows/prepare-p05.yml", "src/dev/prepare-p05/inputs.json",
+	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
+	"src/dev/prepare-p05/collect.ps1", "src/dev/prepare-p05/probe.c.in",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}
