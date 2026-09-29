@@ -43,7 +43,7 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
-foreach($helper in @('CheckElfClosure','CheckOwnedControl')){
+foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
@@ -84,6 +84,12 @@ foreach($directory in $directories){
     [IO.File]::WriteAllText($path,"# owned discovery-only fixture`n",[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
+$grammarPath=Join-Path $root 'grammar.json'
+[IO.File]::WriteAllText($grammarPath,'{"name":"TSQL","rules":{"AS":{"type":"STRING","value":"AS"},"as":{"type":"STRING","value":"as"}}}',[Text.UTF8Encoding]::new($false))
+if((ReadGrammarName $grammarPath) -cne 'TSQL'){throw 'Case-distinct grammar keys/name were not preserved'}
+[IO.File]::WriteAllText($grammarPath,'{"name":"invalid-name","rules":{}}',[Text.UTF8Encoding]::new($false))
+$rejected=$false;try{[void](ReadGrammarName $grammarPath)}catch{$rejected=$true}
+if(-not $rejected){throw 'Invalid grammar name was accepted'}
 Add-Type -AssemblyName System.Formats.Tar
 foreach($helper in @('UnpackResult','CheckRecoveredProof')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $helper},$true))
@@ -158,5 +164,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'
