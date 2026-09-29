@@ -1,0 +1,99 @@
+/* PREPARE-only diagnostic template; materialized and built in task scratch. */
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <tree_sitter/api.h>
+#ifndef LANGUAGE
+#error LANGUAGE must name the inspected grammar entry point
+#endif
+extern const TSLanguage *LANGUAGE(void);
+static unsigned nodes;
+static int bounded;
+static void quoted(const char *s) {
+  putchar('"');
+  for (const unsigned char *p=(const unsigned char *)s; *p; ++p) {
+    if (*p=='"' || *p=='\\') printf("\\%c",*p);
+    else if (*p<32) printf("\\u%04x",*p);
+    else putchar(*p);
+  }
+  putchar('"');
+}
+static void dump(TSNode n, unsigned depth, const char *field) {
+  if (++nodes>10000 || depth>256) { bounded=0; return; }
+  printf("{\"kind\":"); quoted(ts_node_type(n));
+  printf(",\"field\":"); quoted(field ? field : "");
+  TSPoint a=ts_node_start_point(n), b=ts_node_end_point(n);
+  printf(",\"start\":%u,\"end\":%u,\"start_point\":[%u,%u],\"end_point\":[%u,%u],\"named\":%s,\"missing\":%s,\"error\":%s,\"extra\":%s,\"children\":[",
+    ts_node_start_byte(n),ts_node_end_byte(n),a.row,a.column,b.row,b.column,
+    ts_node_is_named(n)?"true":"false",ts_node_is_missing(n)?"true":"false",
+    ts_node_is_error(n)?"true":"false",ts_node_is_extra(n)?"true":"false");
+  uint32_t count=ts_node_child_count(n);
+  for(uint32_t i=0;i<count && bounded;++i) {
+    if(i) putchar(',');
+    dump(ts_node_child(n,i),depth+1,ts_node_field_name_for_child(n,i));
+  }
+  printf("]}");
+}
+static int same(TSNode a, TSNode b, unsigned depth) {
+  if(depth>256 || ++nodes>10000) return 0;
+  TSPoint ap=ts_node_start_point(a),bp=ts_node_start_point(b),ae=ts_node_end_point(a),be=ts_node_end_point(b);
+  if(strcmp(ts_node_type(a),ts_node_type(b)) || ts_node_start_byte(a)!=ts_node_start_byte(b) || ts_node_end_byte(a)!=ts_node_end_byte(b) ||
+    ap.row!=bp.row || ap.column!=bp.column || ae.row!=be.row || ae.column!=be.column ||
+    ts_node_is_named(a)!=ts_node_is_named(b) || ts_node_is_extra(a)!=ts_node_is_extra(b) ||
+    ts_node_is_error(a)!=ts_node_is_error(b) || ts_node_is_missing(a)!=ts_node_is_missing(b) ||
+    ts_node_child_count(a)!=ts_node_child_count(b)) return 0;
+  for(uint32_t i=0;i<ts_node_child_count(a);++i) {
+    const char *af=ts_node_field_name_for_child(a,i), *bf=ts_node_field_name_for_child(b,i);
+    if((af==NULL)!=(bf==NULL) || (af && strcmp(af,bf)) || !same(ts_node_child(a,i),ts_node_child(b,i),depth+1)) return 0;
+  }
+  return 1;
+}
+static TSPoint point(const char *s, uint32_t offset) {
+  TSPoint p={0,0};
+  for(uint32_t i=0;i<offset;++i) { if(s[i]=='\n'){++p.row;p.column=0;}else ++p.column; }
+  return p;
+}
+static int emit(TSTree *tree, const char *stage) {
+  if(!tree) return 0;
+  printf("{\"stage\":");quoted(stage);printf(",\"has_error\":%s,\"tree\":",ts_node_has_error(ts_tree_root_node(tree))?"true":"false");
+  nodes=0;bounded=1;dump(ts_tree_root_node(tree),0,NULL);printf("}\n");
+  return bounded;
+}
+int main(int argc, char **argv) {
+  if(argc!=2 && argc!=4) return 64;
+  if(strncmp(argv[1],"/inputs/cases/",14) || strspn(argv[1]+14,"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")!=strlen(argv[1]+14)) return 64;
+  FILE *file=fopen(argv[1],"rb"); if(!file) return 65;
+  char original[65537], damaged[65537];
+  size_t length=fread(original,1,sizeof(original),file); int io=ferror(file); fclose(file);
+  if(io || length>65536) return 66;
+  TSParser *parser=ts_parser_new(), *fresh=ts_parser_new();
+  if(!parser || !fresh || !ts_parser_set_language(parser,LANGUAGE()) || !ts_parser_set_language(fresh,LANGUAGE())) return 67;
+  TSTree *tree=ts_parser_parse_string(parser,NULL,original,(uint32_t)length);
+  if(!tree || !emit(tree,"original")) return 68;
+  TSTree *baseline=ts_tree_copy(tree);
+  if(!baseline) return 68;
+  int failed=ts_node_has_error(ts_tree_root_node(tree));
+  if(argc==4) {
+    char *end1,*end2; unsigned long start=strtoul(argv[2],&end1,10),end=strtoul(argv[3],&end2,10);
+    if(*end1 || *end2 || start>=end || end>length) return 69;
+    memcpy(damaged,original,start); memcpy(damaged+start,original+end,length-end);
+    uint32_t shortened=(uint32_t)(length-(end-start));
+    TSInputEdit edit={(uint32_t)start,(uint32_t)end,(uint32_t)start,point(original,(uint32_t)start),point(original,(uint32_t)end),point(original,(uint32_t)start)};
+    for(int step=0;step<2;++step) {
+      const char *input=step?original:damaged; uint32_t size=step?(uint32_t)length:shortened;
+      if(step) edit=(TSInputEdit){(uint32_t)start,(uint32_t)start,(uint32_t)end,point(damaged,(uint32_t)start),point(damaged,(uint32_t)start),point(original,(uint32_t)end)};
+      ts_tree_edit(tree,&edit);
+      TSTree *next=ts_parser_parse_string(parser,tree,input,size), *reference=ts_parser_parse_string(fresh,NULL,input,size);
+      if(!next || !reference) return 70;
+      nodes=0;int equal=same(ts_tree_root_node(next),ts_tree_root_node(reference),0);
+      if(!emit(next,step?"restored-incremental":"damaged-incremental") || !emit(reference,step?"restored-fresh":"damaged-fresh")) return 71;
+      printf("{\"comparison\":\"%s\",\"equal\":%s}\n",step?"restored":"damaged",equal?"true":"false");
+      if(!equal || (!step && !ts_node_has_error(ts_tree_root_node(next))) || (step && ts_node_has_error(ts_tree_root_node(next)))) failed=1;
+      if(step){nodes=0;if(!same(ts_tree_root_node(baseline),ts_tree_root_node(next),0)) failed=1;}
+      ts_tree_delete(tree);ts_tree_delete(reference);tree=next;
+    }
+  }
+  ts_tree_delete(baseline);ts_tree_delete(tree);ts_parser_delete(parser);ts_parser_delete(fresh);
+  return failed?2:0;
+}

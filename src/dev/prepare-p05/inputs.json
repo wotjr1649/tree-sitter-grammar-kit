@@ -1,0 +1,3791 @@
+{
+  "schema": "tsgk-prepare-p05-inputs/r1",
+  "source_registry_sha256": "7656095fc047aaa2ed55a48ab01983169f1fffed7713f51900b888d80710aa6b",
+  "repositories": [
+    {
+      "commit": "e7bd348c49fdfd5c853a146a670965ba516a6239",
+      "files": [
+        {
+          "bytes": 32582,
+          "path": "grammar.js",
+          "git_blob_sha1": "9d530a1a0b5c00186758499d8cc8a5ceef57ee0a"
+        },
+        {
+          "bytes": 1068,
+          "path": "LICENSE",
+          "git_blob_sha1": "0e31aad2db44f171cd7c0163f8fea1cc0c934b7b"
+        },
+        {
+          "bytes": 55746,
+          "path": "package-lock.json",
+          "git_blob_sha1": "a4d3aab63031bbd4a1f4e85f47f95b6dd7969ddb"
+        },
+        {
+          "bytes": 1248,
+          "path": "package.json",
+          "git_blob_sha1": "0844f28ec47ae098db16b3f465b60d3e5bc87cbf"
+        },
+        {
+          "bytes": 454,
+          "path": "queries/folds.scm",
+          "git_blob_sha1": "e09b5a3366509b2002b89206eb0dc1368ac1690c"
+        },
+        {
+          "bytes": 2184,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "aefb2397b51fe719f91d945d320f1b847412118f"
+        },
+        {
+          "bytes": 238,
+          "path": "README.md",
+          "git_blob_sha1": "5e17ffa955f523debfe2002837238ca2e166a2e6"
+        },
+        {
+          "bytes": 154702,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "2f1cc0881e6ff90f7eb87b6a45891a070af1821a"
+        },
+        {
+          "bytes": 72248,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "a7e7c507c2641488950408ffd7f256ee4d39fd9a"
+        },
+        {
+          "bytes": 4697445,
+          "path": "src/parser.c",
+          "git_blob_sha1": "3a37880c8a2e13547ee381783be9a4876960d205"
+        },
+        {
+          "bytes": 2135,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "96e5db4acda49c1014cea8948d481a92b755ff3e"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13269,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "56fc8cd470996ded64a5452be25e26dbd2aa682a"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 893,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "9100c9c5724dfae9c350fa5478b605ed679eb8ac"
+        }
+      ],
+      "url": "https://codeload.github.com/airbus-cert/tree-sitter-powershell/tar.gz/e7bd348c49fdfd5c853a146a670965ba516a6239",
+      "repository": "airbus-cert/tree-sitter-powershell"
+    },
+    {
+      "commit": "35245fbfee2fccf16273c6f4299438fb76875970",
+      "files": [
+        {
+          "bytes": 75875,
+          "path": "grammar.js",
+          "git_blob_sha1": "3a241912cdb19f457cabf2e3afe1e53e6dff4e3c"
+        },
+        {
+          "bytes": 1068,
+          "path": "LICENSE",
+          "git_blob_sha1": "f158d7005311344ac316830fe68492214e1645e6"
+        },
+        {
+          "bytes": 98777,
+          "path": "package-lock.json",
+          "git_blob_sha1": "85e9004e207c6ba683139d88f63f1c73376e00ab"
+        },
+        {
+          "bytes": 1852,
+          "path": "package.json",
+          "git_blob_sha1": "6d565ed70e58a331fab3a696d63ec86461a956ea"
+        },
+        {
+          "bytes": 978,
+          "path": "queries/folds.scm",
+          "git_blob_sha1": "ca7f72593aa834296c893720a05825f6439726cd"
+        },
+        {
+          "bytes": 4978,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "07033028ee309cb2c4717749c45121be989797cd"
+        },
+        {
+          "bytes": 2496,
+          "path": "queries/indents.scm",
+          "git_blob_sha1": "ec8f8af95c6f8a361f3ef69c06c82617c0d0b7ac"
+        },
+        {
+          "bytes": 216,
+          "path": "queries/injections.scm",
+          "git_blob_sha1": "512cfa0d5223f1e718aa6976139bc77910b31d48"
+        },
+        {
+          "bytes": 421,
+          "path": "queries/locals.scm",
+          "git_blob_sha1": "78032a81810b5f1f7d626b3f8ee33f283d433bc7"
+        },
+        {
+          "bytes": 1017,
+          "path": "queries/outline.scm",
+          "git_blob_sha1": "31fe5d9d4a43c53c004c01bfa6994ab50452b104"
+        },
+        {
+          "bytes": 1214,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "0038571e5d724bf7700bedce5a0e3f06bc2ca596"
+        },
+        {
+          "bytes": 293,
+          "path": "queries/textobjects.scm",
+          "git_blob_sha1": "da689a1b29f605020a3e3b5b1eb838ea1fbf02b1"
+        },
+        {
+          "bytes": 5107,
+          "path": "README.md",
+          "git_blob_sha1": "fa7b4bdeb687835ef81aa1de1339193d9b1c6702"
+        },
+        {
+          "bytes": 275591,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "0c313f43fdcb22ec35d50d202ee82ba13528aba6"
+        },
+        {
+          "bytes": 693370,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "3f7bf898f49dc470f677ca63f61199fa403c09cf"
+        },
+        {
+          "bytes": 36786,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "6d53d68b8a6ccee493e023ad6fd0f7ce3888e011"
+        },
+        {
+          "bytes": 832,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "9497f9f5ce769e2dad324b24c41a729aa59cea1c"
+        }
+      ],
+      "url": "https://codeload.github.com/alex-pinkus/tree-sitter-swift/tar.gz/35245fbfee2fccf16273c6f4299438fb76875970",
+      "repository": "alex-pinkus/tree-sitter-swift"
+    },
+    {
+      "commit": "443d2bc774f1d779af7dcabcc99160fb24da96e6",
+      "files": [
+        {
+          "bytes": 20996,
+          "path": "grammar.js",
+          "git_blob_sha1": "2e9d2d752349e30dec6606584c7daabe2962b90e"
+        },
+        {
+          "bytes": 10512,
+          "path": "grammar/builtins.js",
+          "git_blob_sha1": "3f3af50ebf8c4f699cc6558c0b0500476a9a51ee"
+        },
+        {
+          "bytes": 2598,
+          "path": "grammar/data_types.js",
+          "git_blob_sha1": "211c3b6bf7f979fc161f3b339674ac3895622b57"
+        },
+        {
+          "bytes": 2165,
+          "path": "grammar/functions/aggregate_functions.js",
+          "git_blob_sha1": "ee3909ae03155d29418842db44968a432cf7f40e"
+        },
+        {
+          "bytes": 1631,
+          "path": "grammar/functions/analytic_windowed_functions.js",
+          "git_blob_sha1": "88abdadaeb4568c82757cebb481049f180d7fa4e"
+        },
+        {
+          "bytes": 932,
+          "path": "grammar/functions/bit_manipulation_functions.js",
+          "git_blob_sha1": "a89c799d63e5cd04f557d4410f2ac21150ad0c3b"
+        },
+        {
+          "bytes": 352,
+          "path": "grammar/functions/collation_functions.js",
+          "git_blob_sha1": "664af9e1716f3262e9d6cf742714f794bd17cf7c"
+        },
+        {
+          "bytes": 1059,
+          "path": "grammar/functions/configuration_functions.js",
+          "git_blob_sha1": "ee4e3019e2659237a9f48fd1a49725cf52719e9e"
+        },
+        {
+          "bytes": 572,
+          "path": "grammar/functions/conversion_functions.js",
+          "git_blob_sha1": "d0d77b37b213287da9ee08531c953d86c1dbc9ff"
+        },
+        {
+          "bytes": 2186,
+          "path": "grammar/functions/odbc_scalar_functions.js",
+          "git_blob_sha1": "58d9073bb4240c7707bcbc89a3b9d748ada5d1f6"
+        },
+        {
+          "bytes": 245,
+          "path": "grammar/precedences.js",
+          "git_blob_sha1": "1cb4b779cda43e5cf2a373ad11e2287a118e0f8b"
+        },
+        {
+          "bytes": 388,
+          "path": "grammar/utils.js",
+          "git_blob_sha1": "f6c8c996d252e668a020e2d19d1c588602389609"
+        },
+        {
+          "bytes": 1302,
+          "path": "LICENSE",
+          "git_blob_sha1": "aa55f9f0f3e424628ea296d32742c3b75129468b"
+        },
+        {
+          "bytes": 1130,
+          "path": "package.json",
+          "git_blob_sha1": "6f99bb0eab49a99bfa82eed9fcdb11a56ddaf52d"
+        },
+        {
+          "bytes": 382,
+          "path": "README.md",
+          "git_blob_sha1": "162d472641382ac9f530984018fef800cee2be11"
+        },
+        {
+          "bytes": 199577,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "b7ab7e78619c9dd798cab2c4fc7aec45bffaf810"
+        },
+        {
+          "bytes": 59664,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "ec368bf3b3783d8e3e80323508330248172f6f0c"
+        },
+        {
+          "bytes": 3637965,
+          "path": "src/parser.c",
+          "git_blob_sha1": "8c32f00b831dc4e8d4dfbc3c4a75584e8332a578"
+        },
+        {
+          "bytes": 958,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1f4466d75c40b6e62728b2de94c82c6398e42151"
+        },
+        {
+          "bytes": 10420,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 6988,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "17f0e94bfcf4d8a54615c24fe61820a18e4d1411"
+        }
+      ],
+      "url": "https://codeload.github.com/Crary-Systems/tree-sitter-tsql/tar.gz/443d2bc774f1d779af7dcabcc99160fb24da96e6",
+      "repository": "Crary-Systems/tree-sitter-tsql"
+    },
+    {
+      "commit": "59d0d8cd7506d68de1229fb4bbce838c83b60c8a",
+      "files": [
+        {
+          "bytes": 1503,
+          "path": "LICENSE",
+          "git_blob_sha1": "bb61fcdacee3e5a60516060fcc0f5d64371b23a7"
+        },
+        {
+          "bytes": 20682,
+          "path": "package-lock.json",
+          "git_blob_sha1": "13c459749fc78835033bfda2c4b9e962bf85fa53"
+        },
+        {
+          "bytes": 1999,
+          "path": "package.json",
+          "git_blob_sha1": "6e71404be18711908f69123e4b88f9f7a57143ab"
+        },
+        {
+          "bytes": 245793,
+          "path": "postgres/grammar.js",
+          "git_blob_sha1": "d64898c53d678608f80c5b4a3a578074da76876c"
+        },
+        {
+          "bytes": 8509,
+          "path": "postgres/queries/highlights.scm",
+          "git_blob_sha1": "475ad892b24ffc2c35855aa44b5584c033a2919e"
+        },
+        {
+          "bytes": 16016,
+          "path": "postgres/queries/injections.scm",
+          "git_blob_sha1": "3ce769f363550cdfc7a4654fc8286cf7c0e08c20"
+        },
+        {
+          "bytes": 7689,
+          "path": "postgres/queries/outline.scm",
+          "git_blob_sha1": "cce338e9c80f4e54cc51b2d06b7d2bbfea627e9f"
+        },
+        {
+          "bytes": 1403403,
+          "path": "postgres/src/grammar.json",
+          "git_blob_sha1": "8b297198a60ed5a032f3e6b09128aa6acf246490"
+        },
+        {
+          "bytes": 508227,
+          "path": "postgres/src/node-types.json",
+          "git_blob_sha1": "1365c32f4dabfc446c53737764cb51129634aea6"
+        },
+        {
+          "bytes": 133,
+          "path": "postgres/src/parser.c",
+          "git_blob_sha1": "4cc48c18d4d3010afb9726946934b326b55a03ed"
+        },
+        {
+          "bytes": 3403,
+          "path": "postgres/src/scanner.c",
+          "git_blob_sha1": "70a7a482c421c2246c9dc33406d346471884cc4d"
+        },
+        {
+          "bytes": 985,
+          "path": "postgres/src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13453,
+          "path": "postgres/src/tree_sitter/array.h",
+          "git_blob_sha1": "eba3da4062cb5c384dd5cc57bab16cc2a2da2539"
+        },
+        {
+          "bytes": 7624,
+          "path": "postgres/src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 4132,
+          "path": "README.md",
+          "git_blob_sha1": "db1f7cbe652baa127a848f122af56fd91cead3c7"
+        },
+        {
+          "bytes": 788,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "626eaee64ce5a33c42ef76171c60b476afa7377b"
+        }
+      ],
+      "url": "https://codeload.github.com/gmr/tree-sitter-postgres/tar.gz/59d0d8cd7506d68de1229fb4bbce838c83b60c8a",
+      "repository": "gmr/tree-sitter-postgres"
+    },
+    {
+      "commit": "58a22794466c0fc15b0d3b40531db751593721e8",
+      "files": [
+        {
+          "bytes": 27092,
+          "path": "grammar.js",
+          "git_blob_sha1": "d46c97ad79299ece913cc5991b0f6b08edbbc33e"
+        },
+        {
+          "bytes": 1078,
+          "path": "LICENSE",
+          "git_blob_sha1": "04e174fb42f98e51a3e9fdadc2927f1016d9ab5a"
+        },
+        {
+          "bytes": 12879,
+          "path": "package-lock.json",
+          "git_blob_sha1": "7e572c9a01bd0dcf4ae44e28dbb75a8015f25508"
+        },
+        {
+          "bytes": 1257,
+          "path": "package.json",
+          "git_blob_sha1": "8251616e82655818e658f2919daf036b2481f201"
+        },
+        {
+          "bytes": 2238,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "793a41b46f9edddb81fd84460c3a9eac2132821c"
+        },
+        {
+          "bytes": 410,
+          "path": "queries/locals.scm",
+          "git_blob_sha1": "5d4697a587d3aa435e57ff134c216e2db10d224b"
+        },
+        {
+          "bytes": 620,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "35ca6c03e12c0a120e372a016639d9c3f46eeeb6"
+        },
+        {
+          "bytes": 2242,
+          "path": "README.md",
+          "git_blob_sha1": "1e4e180fab88404bc8bb17d15fb4794a06322b51"
+        },
+        {
+          "bytes": 72445,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "7a92d6f2f3fd98cb9a522d2286ef3c1122c91d93"
+        },
+        {
+          "bytes": 69859,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "c1bfd91f2388d4fee2a29c7423925edb3090e16c"
+        },
+        {
+          "bytes": 4030362,
+          "path": "src/parser.c",
+          "git_blob_sha1": "9725c9b1d42f7b353edafb8e0906eeb4184462ca"
+        },
+        {
+          "bytes": 31117,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "33e5beb340f38a794e949d6fa05ede27a82ea72b"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 943,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "bb540b6fdd91c57bba9239434f63a307e7f2e7f3"
+        }
+      ],
+      "url": "https://codeload.github.com/r-lib/tree-sitter-r/tar.gz/58a22794466c0fc15b0d3b40531db751593721e8",
+      "repository": "r-lib/tree-sitter-r"
+    },
+    {
+      "commit": "3dea6dfa9c0129deb7c4315afbda806c85c41667",
+      "files": [
+        {
+          "bytes": 25319,
+          "path": "grammar.js",
+          "git_blob_sha1": "0e0078abe77e84108c16233d67c4ea5abd2d03db"
+        },
+        {
+          "bytes": 1101,
+          "path": "LICENSE",
+          "git_blob_sha1": "4e8c9b38350135b69d7137e508d29e8980794569"
+        },
+        {
+          "bytes": 56677,
+          "path": "package-lock.json",
+          "git_blob_sha1": "e06468f015d9337b97a8ab4d4f7e92115d7f1952"
+        },
+        {
+          "bytes": 1260,
+          "path": "package.json",
+          "git_blob_sha1": "b332e880dd3fd5d8a666eabc2b5f8d777c5ad9f9"
+        },
+        {
+          "bytes": 1180,
+          "path": "README.md",
+          "git_blob_sha1": "597f1f3ea6df7a63bfb40dd13cd3c507cc4b2bae"
+        },
+        {
+          "bytes": 147560,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "44b7aef230d062e88cd7f25aad9ea83c198fc74a"
+        },
+        {
+          "bytes": 51889,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "09153e35eb9c312e9e8e2cdf74c17b5f586d2b7a"
+        },
+        {
+          "bytes": 22443237,
+          "path": "src/parser.c",
+          "git_blob_sha1": "7c721a6d85b852645b39c2619ae90922265cf4b4"
+        },
+        {
+          "bytes": 15179,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "8f9d287192a70242bf0cbd65b237444346938c17"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 772,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "e06d872498a695dbad71505d92bed028ccaf918c"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-kotlin/tar.gz/3dea6dfa9c0129deb7c4315afbda806c85c41667",
+      "repository": "tree-sitter-grammars/tree-sitter-kotlin"
+    },
+    {
+      "commit": "5000ae8f22d11fbe93939b05c1e37cf21117162d",
+      "files": [
+        {
+          "bytes": 6420,
+          "path": "common/common.mjs",
+          "git_blob_sha1": "436d8140c393b9835668866fb0b31fd8ec463a28"
+        },
+        {
+          "bytes": 4270,
+          "path": "common/scanner.h",
+          "git_blob_sha1": "c2cb1092d121ed64fdf13f122f2ad26bb0ba1fde"
+        },
+        {
+          "bytes": 1058,
+          "path": "LICENSE",
+          "git_blob_sha1": "7094a20529cd00436ad0cab177e635308982b1ef"
+        },
+        {
+          "bytes": 13150,
+          "path": "package-lock.json",
+          "git_blob_sha1": "f4c374051f7297cdf0cfeb0593cb9291ab61bda6"
+        },
+        {
+          "bytes": 1608,
+          "path": "package.json",
+          "git_blob_sha1": "c2e49590a3653e03dd20920a468a291417fff8aa"
+        },
+        {
+          "bytes": 1350,
+          "path": "README.md",
+          "git_blob_sha1": "c0dcb08c082684fddbdb4bd46f19b6221112a32e"
+        },
+        {
+          "bytes": 1239,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "39122f85b36ad97aded8e938d3edcc33e7bb6386"
+        },
+        {
+          "bytes": 3209,
+          "path": "xml/grammar.js",
+          "git_blob_sha1": "c36108c26ee8ee482b6e4d449e09f8e02f0c7721"
+        },
+        {
+          "bytes": 215,
+          "path": "xml/package.json",
+          "git_blob_sha1": "1cee999e0054743e3356a81f28870b1da4ce215c"
+        },
+        {
+          "bytes": 58426,
+          "path": "xml/src/grammar.json",
+          "git_blob_sha1": "27de7f6e1bda850cf154007b60aaea829c6ddc7e"
+        },
+        {
+          "bytes": 17444,
+          "path": "xml/src/node-types.json",
+          "git_blob_sha1": "472c1a83fa2f402b9fe9ea8adda176da09c40b81"
+        },
+        {
+          "bytes": 240381,
+          "path": "xml/src/parser.c",
+          "git_blob_sha1": "a5d58554f61f1eea8cef2b87e934b9531044b987"
+        },
+        {
+          "bytes": 7759,
+          "path": "xml/src/scanner.c",
+          "git_blob_sha1": "4bfe33841baccf8ae62425efd002bb1c5bbf9d1e"
+        },
+        {
+          "bytes": 985,
+          "path": "xml/src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "xml/src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "xml/src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-xml/tar.gz/5000ae8f22d11fbe93939b05c1e37cf21117162d",
+      "repository": "tree-sitter-grammars/tree-sitter-xml"
+    },
+    {
+      "commit": "a1c4812a73ec5e089de8e441fdea3a921e8d5079",
+      "files": [
+        {
+          "bytes": 141,
+          "path": ".gitmodules",
+          "git_blob_sha1": "7804057c12f4d9b4ce7b264123d6ed31700318ca"
+        },
+        {
+          "bytes": 33838,
+          "path": "grammar.js",
+          "git_blob_sha1": "b8b36d075ffab8ac3aaa64d9a1dde547cba05954"
+        },
+        {
+          "bytes": 1105,
+          "path": "LICENSE",
+          "git_blob_sha1": "262eb4627a5a69362c210c270c304e2341591585"
+        },
+        {
+          "bytes": 53013,
+          "path": "package-lock.json",
+          "git_blob_sha1": "5a28d6219b6c8852715929c3f3f4c35d5d86ffa3"
+        },
+        {
+          "bytes": 1399,
+          "path": "package.json",
+          "git_blob_sha1": "b7b5157379d87e132daaca3e01ff034b6a761199"
+        },
+        {
+          "bytes": 962,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "cb9dcc622e353508abc3a1be5d95667bb4da2669"
+        },
+        {
+          "bytes": 1083,
+          "path": "README.md",
+          "git_blob_sha1": "89365a86cb87e44a597654b258e6fa31e346ff81"
+        },
+        {
+          "bytes": 157109,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "ed5b6a41dfad6d139a29450e1116434e4ff56477"
+        },
+        {
+          "bytes": 9026,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "f90f9ef60a89fd326a010f6649db40537ef5dca9"
+        },
+        {
+          "bytes": 1289047,
+          "path": "src/parser.c",
+          "git_blob_sha1": "88fda09465609ddfa7cfa0f7b9fa83cb18650faa"
+        },
+        {
+          "bytes": 51548,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "e13efc587a4ab048db1a1b3a759b38b60c4af6f2"
+        },
+        {
+          "bytes": 6630,
+          "path": "src/schema.core.c",
+          "git_blob_sha1": "ae7812aac4e5d2bd5addd3b3f981da0e8c881e93"
+        },
+        {
+          "bytes": 3065,
+          "path": "src/schema.json.c",
+          "git_blob_sha1": "c47759f75f0b8af5c7f270d01448abb2ba95a640"
+        },
+        {
+          "bytes": 18624,
+          "path": "src/schema.legacy.c",
+          "git_blob_sha1": "7eab95f98324a1e06bf1954c695ad48d5400c34c"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 862,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "467f03c2fe8bb4e645f653f88e395be1dfa0f434"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-yaml/tar.gz/a1c4812a73ec5e089de8e441fdea3a921e8d5079",
+      "repository": "tree-sitter-grammars/tree-sitter-yaml"
+    },
+    {
+      "commit": "a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+      "files": [
+        {
+          "bytes": 30142,
+          "path": "grammar.js",
+          "git_blob_sha1": "513f485278c3fd70092e68991e84f68cc64f1126"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "aa9f858db5722d9576104726471b11cc0e31f131"
+        },
+        {
+          "bytes": 53660,
+          "path": "package-lock.json",
+          "git_blob_sha1": "7df2397078decfd7eee60ae36523b3f4f6e86eb8"
+        },
+        {
+          "bytes": 1292,
+          "path": "package.json",
+          "git_blob_sha1": "6f1fd4b2d808f2b44508aa3872a4c733727c64e6"
+        },
+        {
+          "bytes": 577,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "f33a7c2d3ae8c63364845dbd8cef1242ffa07f04"
+        },
+        {
+          "bytes": 1485,
+          "path": "README.md",
+          "git_blob_sha1": "d051f5bb46c72c8e7db29676f97f00f7266a11fd"
+        },
+        {
+          "bytes": 179629,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "fa9509db1e8f0a86e225b2bff08ed62e6a885183"
+        },
+        {
+          "bytes": 51167,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "8cc6b306194de963a57e236e9deef793e559f550"
+        },
+        {
+          "bytes": 9912254,
+          "path": "src/parser.c",
+          "git_blob_sha1": "4eeb1372288db368b8453d6e8263626269c040aa"
+        },
+        {
+          "bytes": 45602,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "0c3430a7d562182e9e0f6657ffd07cad5392ce06"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 916,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "6dce7a50b438a5d85e41cf814f45398aceb58612"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-bash/tar.gz/a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+      "repository": "tree-sitter/tree-sitter-bash"
+    },
+    {
+      "commit": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "files": [
+        {
+          "bytes": 38242,
+          "path": "grammar.js",
+          "git_blob_sha1": "7cdde6eda5ef2959d2e9d2e99c4591df68475620"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 56141,
+          "path": "package-lock.json",
+          "git_blob_sha1": "7f0af1c0c42e82c45f736ff851f41287c36b3c9d"
+        },
+        {
+          "bytes": 1280,
+          "path": "package.json",
+          "git_blob_sha1": "68fc31b15b6a19fbf3d5d869cdae57f48609e799"
+        },
+        {
+          "bytes": 1432,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "8ee118900ffeb324d36dad5b68f8e0c2107d9b06"
+        },
+        {
+          "bytes": 375,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "9647566560ffaf3028e782e4dfc9698562d61e0f"
+        },
+        {
+          "bytes": 1055,
+          "path": "README.md",
+          "git_blob_sha1": "162d6b41e07969add84946fff5ccbf972e4c1eee"
+        },
+        {
+          "bytes": 237474,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "a3bd880e51c0143905504d6624441870f0c173ec"
+        },
+        {
+          "bytes": 83057,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "6106fcc3f1f3f286a24ee252521e8864e87dac7b"
+        },
+        {
+          "bytes": 3872012,
+          "path": "src/parser.c",
+          "git_blob_sha1": "5032e3d0c39c49445e3ae1c2f6459802ed40f9b3"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13269,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "56fc8cd470996ded64a5452be25e26dbd2aa682a"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 957,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "77a4574d59b6d0a373f29214e3e0769268536bcf"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-c/tar.gz/b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "repository": "tree-sitter/tree-sitter-c"
+    },
+    {
+      "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "files": [
+        {
+          "bytes": 61851,
+          "path": "grammar.js",
+          "git_blob_sha1": "c4fd33dc3090240227b6480941d748eea0e72004"
+        },
+        {
+          "bytes": 1133,
+          "path": "LICENSE",
+          "git_blob_sha1": "c8921f694d834542874bd0403afe97adb8f5dab3"
+        },
+        {
+          "bytes": 55496,
+          "path": "package-lock.json",
+          "git_blob_sha1": "7410ac3aec670579224b620876a3e31a72e2123c"
+        },
+        {
+          "bytes": 1427,
+          "path": "package.json",
+          "git_blob_sha1": "a3d32d9228cd6510e409e61fc0c139cd8767a8b7"
+        },
+        {
+          "bytes": 2794,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "5e2904c9461bd05fd4a42a8b275251f707729570"
+        },
+        {
+          "bytes": 848,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "ffb2dd2392c5ab3559f56f2e7c35620336595a05"
+        },
+        {
+          "bytes": 2118,
+          "path": "README.md",
+          "git_blob_sha1": "998f65b857d1df2371324a53116a0bf09099638b"
+        },
+        {
+          "bytes": 289830,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "672d461b76fb5c786350233aa42b4b811cc74758"
+        },
+        {
+          "bytes": 133257,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "71949396ef786608f08a802a79bc1de1fe0126a6"
+        },
+        {
+          "bytes": 32021728,
+          "path": "src/parser.c",
+          "git_blob_sha1": "3772b5c874104cf7bc24b3f247bc696f7fbcdfb2"
+        },
+        {
+          "bytes": 23064,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "66121a77f3f4dca536b6d8bf5f76a4937d3cdc0c"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 953,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "59dd1e6138edc686017dea03c91cd452a587b400"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-c-sharp/tar.gz/9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "repository": "tree-sitter/tree-sitter-c-sharp"
+    },
+    {
+      "commit": "c009222808634c1014f82438d4883753516a2c24",
+      "files": [
+        {
+          "bytes": 43970,
+          "path": "grammar.js",
+          "git_blob_sha1": "ffbaf0f13b6bfd756635f50a484192f35f6fdd0e"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 55191,
+          "path": "package-lock.json",
+          "git_blob_sha1": "85f932f35d641a72ce0afa67d5bafd76ad450915"
+        },
+        {
+          "bytes": 1320,
+          "path": "package.json",
+          "git_blob_sha1": "51b1e8fc71a083d927bbcced838e862b0518dce8"
+        },
+        {
+          "bytes": 1032,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "e597f6957485c4a5352400d21a4c60c8f9e90927"
+        },
+        {
+          "bytes": 119,
+          "path": "queries/injections.scm",
+          "git_blob_sha1": "6850c953f6e756e983d440b054b3be87f9a46f36"
+        },
+        {
+          "bytes": 668,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "621a97d02fd483423207c6ee23868dbf3b3f5b9d"
+        },
+        {
+          "bytes": 1140,
+          "path": "README.md",
+          "git_blob_sha1": "9e8883e8462567038e1b06e806ed87fa6efda17d"
+        },
+        {
+          "bytes": 458800,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "a091cbff0611375b03e738af6a438df6010ba9c3"
+        },
+        {
+          "bytes": 164416,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "3b108232661687346c0cba8004b61a6299ae3e29"
+        },
+        {
+          "bytes": 25857209,
+          "path": "src/parser.c",
+          "git_blob_sha1": "a19b69ebc206553eb16e2459b4caae62cebca10e"
+        },
+        {
+          "bytes": 5169,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "a1dac441e48319b641dd2a5c518b4fed1320b837"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13720,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "e99918e5d85d8a520c39fc5627b8ddc7c88d2a51"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 1115,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "015cacf1823848ad500b2f1fe523102aca8e1a71"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-cpp/tar.gz/c009222808634c1014f82438d4883753516a2c24",
+      "repository": "tree-sitter/tree-sitter-cpp"
+    },
+    {
+      "commit": "dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+      "files": [
+        {
+          "bytes": 11392,
+          "path": "grammar.js",
+          "git_blob_sha1": "4e7a49d027a6103b7163aa012d3eb4280bf1a5f7"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "971b81f9a86c0c91827e225aeac9159a13bfd3c1"
+        },
+        {
+          "bytes": 55747,
+          "path": "package-lock.json",
+          "git_blob_sha1": "4181ea402d4f0a419467936043e23e9b90e3f7d0"
+        },
+        {
+          "bytes": 1410,
+          "path": "package.json",
+          "git_blob_sha1": "1ff26f1bdb4a24e5ceb91fdb0c4c45e36380f686"
+        },
+        {
+          "bytes": 1177,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "40c658615e59b9769aaa387f34c0870b451a59b6"
+        },
+        {
+          "bytes": 1086,
+          "path": "README.md",
+          "git_blob_sha1": "938c7f42f7c6d731bae6f8cd951bde5465063164"
+        },
+        {
+          "bytes": 55833,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "2ddbc31414ee70be307a5b752d7b5752d35d8ae8"
+        },
+        {
+          "bytes": 43620,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "fc6ace4d7e5fcf316c40da9cf326051c1a990894"
+        },
+        {
+          "bytes": 504262,
+          "path": "src/parser.c",
+          "git_blob_sha1": "ba531b7e4a04a1818e4ebc347b851a4993faf410"
+        },
+        {
+          "bytes": 3469,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "ba7dc652647fe546efba82dcf45a986ff439d51e"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 947,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "e2fa564c987504dd0889c34b0b5ac0d6142e05f1"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-css/tar.gz/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+      "repository": "tree-sitter/tree-sitter-css"
+    },
+    {
+      "commit": "2346a3ab1bb3857b48b29d779a1ef9799a248cd7",
+      "files": [
+        {
+          "bytes": 24321,
+          "path": "grammar.js",
+          "git_blob_sha1": "3648f020c6135294a92cd86c1286d28e4059bfd9"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 53656,
+          "path": "package-lock.json",
+          "git_blob_sha1": "80ddfe70b9d96b1bbc0e1fa52b8fe00433b64bf7"
+        },
+        {
+          "bytes": 1284,
+          "path": "package.json",
+          "git_blob_sha1": "a6f7482f05dbf8f3f6950f98fd87ab063be96818"
+        },
+        {
+          "bytes": 1421,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "6a3c0ac8b821db27582a2f378385a0a1c3a91b0d"
+        },
+        {
+          "bytes": 1097,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "22c92249b77e4c5b769a7217fb9216c78372bc78"
+        },
+        {
+          "bytes": 1012,
+          "path": "README.md",
+          "git_blob_sha1": "67dd63238fe248437972c601b5be295233a0237f"
+        },
+        {
+          "bytes": 198042,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "71b0a160e1a41094eb210e6d2c467c48332b3abe"
+        },
+        {
+          "bytes": 52032,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "4badd1177055294cb0bae3fad8936a62e4b032c8"
+        },
+        {
+          "bytes": 1572685,
+          "path": "src/parser.c",
+          "git_blob_sha1": "e3567a9519739c92ae776060dc8d3b4968bc465f"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 786,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "198091f56c30ff3b91b2956f1ee8b5f53f52be3d"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-go/tar.gz/2346a3ab1bb3857b48b29d779a1ef9799a248cd7",
+      "repository": "tree-sitter/tree-sitter-go"
+    },
+    {
+      "commit": "73a3947324f6efddf9e17c0ea58d454843590cc0",
+      "files": [
+        {
+          "bytes": 2854,
+          "path": "grammar.js",
+          "git_blob_sha1": "657b78d3d642e2274622126a1553d000243fdbc5"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 53215,
+          "path": "package-lock.json",
+          "git_blob_sha1": "c4faa7caeb3aeb5511ae0c0dfaa0c2c0231993e1"
+        },
+        {
+          "bytes": 1480,
+          "path": "package.json",
+          "git_blob_sha1": "219123b0b2b8bec5a9800d20aaca467343c9885c"
+        },
+        {
+          "bytes": 197,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "ea0ff4e30858417100ba96931f7e3a659b27d2a4"
+        },
+        {
+          "bytes": 177,
+          "path": "queries/injections.scm",
+          "git_blob_sha1": "71e7c3aed8f3cc8fb70a538511c1030c9f1fb106"
+        },
+        {
+          "bytes": 1078,
+          "path": "README.md",
+          "git_blob_sha1": "28684b2147b204f145c8066aa34de61aaafa1186"
+        },
+        {
+          "bytes": 10208,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "be7e717ca5ca2c969a5eb0ac9be5ed26fb6b343a"
+        },
+        {
+          "bytes": 5195,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "384ae8700f4e150ae64f5415e2f1a963274ed1be"
+        },
+        {
+          "bytes": 66466,
+          "path": "src/parser.c",
+          "git_blob_sha1": "a342e0c9b190e7a99f6eb8989b21d8fa7f9796ba"
+        },
+        {
+          "bytes": 10796,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "eecef9adebf4249f9859f06f46b4825bbc2a7340"
+        },
+        {
+          "bytes": 8388,
+          "path": "src/tag.h",
+          "git_blob_sha1": "b8dd7ff784d562cc2ca71e0649abb2c4810c6f34"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10420,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 898,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "66ed55e69e963809ac7794ba471e75d89a8b4c2f"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-html/tar.gz/73a3947324f6efddf9e17c0ea58d454843590cc0",
+      "repository": "tree-sitter/tree-sitter-html"
+    },
+    {
+      "commit": "e10607b45ff745f5f876bfa3e94fbcc6b44bdc11",
+      "files": [
+        {
+          "bytes": 32038,
+          "path": "grammar.js",
+          "git_blob_sha1": "a97fd9f10464531973f17e08f45694fd01ba2f6c"
+        },
+        {
+          "bytes": 1069,
+          "path": "LICENSE",
+          "git_blob_sha1": "4e0446f76ca7d380d615e31b5500711df66a9ea2"
+        },
+        {
+          "bytes": 53586,
+          "path": "package-lock.json",
+          "git_blob_sha1": "c6c69d10e61983f25fd46b217769f2b139b0da88"
+        },
+        {
+          "bytes": 1479,
+          "path": "package.json",
+          "git_blob_sha1": "deffc777e582865e804744e69dfab76b39586478"
+        },
+        {
+          "bytes": 2064,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "b13b4f460fa80860b552070d7d9d2f527b164381"
+        },
+        {
+          "bytes": 499,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "3f3eb40aec899b21d8b544ddfbeb84702cf25504"
+        },
+        {
+          "bytes": 1005,
+          "path": "README.md",
+          "git_blob_sha1": "2f888b8182596260a31f44e416611b249ea61bbd"
+        },
+        {
+          "bytes": 186491,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "2b2f18d9e063c8c8161b4335f49cd04d0b39a9d7"
+        },
+        {
+          "bytes": 81249,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "faaf4eeff8ab93cc43e6fb822e83341b01aff3a1"
+        },
+        {
+          "bytes": 2561266,
+          "path": "src/parser.c",
+          "git_blob_sha1": "f4d215f766671257da530a568675046d5e639121"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 889,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "2a35df7c82bd3f1416dbc30a3c2e734726555301"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-java/tar.gz/e10607b45ff745f5f876bfa3e94fbcc6b44bdc11",
+      "repository": "tree-sitter/tree-sitter-java"
+    },
+    {
+      "commit": "58404d8cf191d69f2674a8fd507bd5776f46cb11",
+      "files": [
+        {
+          "bytes": 32948,
+          "path": "grammar.js",
+          "git_blob_sha1": "7ca23ffb2db9143e78cc04bb53072d7bb124b3f1"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 55628,
+          "path": "package-lock.json",
+          "git_blob_sha1": "11f5751250e8ed751898bb0f6480701b184364b8"
+        },
+        {
+          "bytes": 1316,
+          "path": "package.json",
+          "git_blob_sha1": "0ddac43adc84b9f9701f1301f9be2f57d47fbea3"
+        },
+        {
+          "bytes": 437,
+          "path": "queries/highlights-jsx.scm",
+          "git_blob_sha1": "0bdd886ad2e96d195ad7278070ba1394635072f0"
+        },
+        {
+          "bytes": 293,
+          "path": "queries/highlights-params.scm",
+          "git_blob_sha1": "95ffc72485b5f20bd18c0bc2f48bfd467e53236b"
+        },
+        {
+          "bytes": 2739,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "9312d68288070c3c2b90eb8275e8031661c95850"
+        },
+        {
+          "bytes": 889,
+          "path": "queries/injections.scm",
+          "git_blob_sha1": "eb4c83635e7262ceab6ee41c6b8387e195f813bd"
+        },
+        {
+          "bytes": 336,
+          "path": "queries/locals.scm",
+          "git_blob_sha1": "fa1a9677ffc424da506da3e1bb9cd9ab480c6c26"
+        },
+        {
+          "bytes": 2218,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "7a156e7ee4ca3cdaedd2ddb15b17d8f6be29317d"
+        },
+        {
+          "bytes": 1534,
+          "path": "README.md",
+          "git_blob_sha1": "663e94b9694906654ee98f5b225485542ca9b11b"
+        },
+        {
+          "bytes": 174998,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "8623996a8f89582ec7e0f2d3f161f09ae96bb4c9"
+        },
+        {
+          "bytes": 64022,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "e508ff19eb32ec4096dc43968791b721329370f0"
+        },
+        {
+          "bytes": 2855934,
+          "path": "src/parser.c",
+          "git_blob_sha1": "94f8c346cda32ef7b22af38bb7ff8c4128af2b61"
+        },
+        {
+          "bytes": 10576,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "795916dd3203674b50d491b198bd01e70b91031b"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 1024,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "a0692f8e1ccc75f3a622dbf63e241816d922e7a2"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/58404d8cf191d69f2674a8fd507bd5776f46cb11",
+      "repository": "tree-sitter/tree-sitter-javascript"
+    },
+    {
+      "commit": "254c42a6476413b776221e03982ac8ae159eeb72",
+      "files": [
+        {
+          "bytes": 2393,
+          "path": "grammar.js",
+          "git_blob_sha1": "c110e12ffacafd618a510a7443d30e00dbcc79d6"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "4b52d191cead337b11e274b79459a86f1b5a7779"
+        },
+        {
+          "bytes": 53586,
+          "path": "package-lock.json",
+          "git_blob_sha1": "da480d35027c44684af253e0f59efcbc559a21c2"
+        },
+        {
+          "bytes": 1259,
+          "path": "package.json",
+          "git_blob_sha1": "2a04fd13c969944e8b2eb687b3405a527c6b2a49"
+        },
+        {
+          "bytes": 172,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "ece8392f0bcc01894838fe3dde5e3806b370d0ce"
+        },
+        {
+          "bytes": 1004,
+          "path": "README.md",
+          "git_blob_sha1": "65cde979675bb30a85eaea3250b3cb49ff1d1805"
+        },
+        {
+          "bytes": 13683,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "626e88d5151410a105530e32588387e21db8783c"
+        },
+        {
+          "bytes": 2698,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "dfd06ea1cc84f78d56b31bfc5fc7f8620888785d"
+        },
+        {
+          "bytes": 27700,
+          "path": "src/parser.c",
+          "git_blob_sha1": "521fce0f9608d69c0c7fb8e29adf3ae57fff7cc5"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10420,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 676,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "9d033942c22160b8173cc2e7c1a10ec2235faf0d"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-json/tar.gz/254c42a6476413b776221e03982ac8ae159eeb72",
+      "repository": "tree-sitter/tree-sitter-json"
+    },
+    {
+      "commit": "92b5271b60bec77fb65b5e5bc41561e8dac81299",
+      "files": [
+        {
+          "bytes": 46989,
+          "path": "common/define-grammar.js",
+          "git_blob_sha1": "f054aa731c318c4728f81f035e1eb625f8888942"
+        },
+        {
+          "bytes": 16202,
+          "path": "common/scanner.h",
+          "git_blob_sha1": "f896bb9c4e3bcdeb9fd4ce6b3cc6c68cc800301d"
+        },
+        {
+          "bytes": 1166,
+          "path": "LICENSE",
+          "git_blob_sha1": "513857dd3fbca4e33bb8ee0d70cd5c2aee163eae"
+        },
+        {
+          "bytes": 56186,
+          "path": "package-lock.json",
+          "git_blob_sha1": "a9bf13258c94d91d39180e00d9d2a732edda2f0a"
+        },
+        {
+          "bytes": 1663,
+          "path": "package.json",
+          "git_blob_sha1": "17d84eddcff4fd024e622202d5edbf5209362b52"
+        },
+        {
+          "bytes": 102,
+          "path": "php/grammar.js",
+          "git_blob_sha1": "2bb3666087f38327254e6a63de5ca8862b8c1c1f"
+        },
+        {
+          "bytes": 195,
+          "path": "php/package.json",
+          "git_blob_sha1": "5edc197ed5a3ced23e1b5761fc0a408f0ac7e011"
+        },
+        {
+          "bytes": 233342,
+          "path": "php/src/grammar.json",
+          "git_blob_sha1": "7953e882808268eb7e49633ca25fed0bb90af00f"
+        },
+        {
+          "bytes": 115690,
+          "path": "php/src/node-types.json",
+          "git_blob_sha1": "427d3aa3e383efa17453eaf1df27ea3c876d18cd"
+        },
+        {
+          "bytes": 7287175,
+          "path": "php/src/parser.c",
+          "git_blob_sha1": "74b82393c8b0937611f585bf2b7270ee35cde28d"
+        },
+        {
+          "bytes": 595,
+          "path": "php/src/scanner.c",
+          "git_blob_sha1": "1d9b7fb616e9d8ce5a5e73cc2ce82b1433eeda36"
+        },
+        {
+          "bytes": 985,
+          "path": "php/src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13453,
+          "path": "php/src/tree_sitter/array.h",
+          "git_blob_sha1": "eba3da4062cb5c384dd5cc57bab16cc2a2da2539"
+        },
+        {
+          "bytes": 7624,
+          "path": "php/src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 995,
+          "path": "README.md",
+          "git_blob_sha1": "7b273e9ae3b6e71acd9862e28e2797e3d3c8a52c"
+        },
+        {
+          "bytes": 1583,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "8ef499b7ee85b7436767a3ecea32a39f1523eb74"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-php/tar.gz/92b5271b60bec77fb65b5e5bc41561e8dac81299",
+      "repository": "tree-sitter/tree-sitter-php"
+    },
+    {
+      "commit": "26855eabccb19c6abf499fbc5b8dc7cc9ab8bc64",
+      "files": [
+        {
+          "bytes": 26889,
+          "path": "grammar.js",
+          "git_blob_sha1": "6d830e1c582bbe0265bc02e36dcf30ed72648bb3"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "ff8ed93cb0dd57d68feeefe4829dbc9083584b5e"
+        },
+        {
+          "bytes": 39254,
+          "path": "package-lock.json",
+          "git_blob_sha1": "99d1a8badbfb908748f913d1982b6dbe419949c1"
+        },
+        {
+          "bytes": 1301,
+          "path": "package.json",
+          "git_blob_sha1": "3ee73fd7408e03ab0777df6efc31a91b1991bc6c"
+        },
+        {
+          "bytes": 1957,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "af744484432eee56bd662b959b33f28848c74dbf"
+        },
+        {
+          "bytes": 350,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "4fe365523c0b9ee9b1f7a6805e7f9aa44f28e1d7"
+        },
+        {
+          "bytes": 1201,
+          "path": "README.md",
+          "git_blob_sha1": "eaf2caf79caf7c6d8791bb1bb3f7919867d3c56f"
+        },
+        {
+          "bytes": 145707,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "ee72fe78e2c1f2cb20ee09b96cf7004bee935575"
+        },
+        {
+          "bytes": 65198,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "2d6ffa7cc8dad5c0a565f2400d6af56ee292c43c"
+        },
+        {
+          "bytes": 3448505,
+          "path": "src/parser.c",
+          "git_blob_sha1": "2dfc1f34b2587ef2f3d10940ef00c63c455805ed"
+        },
+        {
+          "bytes": 15470,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "1fc77cdbdee6c7d33c183dc8c2bc3b64c9b0a410"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 837,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "0b56df0786ededc8c1a6bb3bc7358bd9d67caede"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-python/tar.gz/26855eabccb19c6abf499fbc5b8dc7cc9ab8bc64",
+      "repository": "tree-sitter/tree-sitter-python"
+    },
+    {
+      "commit": "ad907a69da0c8a4f7a943a7fe012712208da6dee",
+      "files": [
+        {
+          "bytes": 35373,
+          "path": "grammar.js",
+          "git_blob_sha1": "caee29ea3e633a56d0d0dedfcb942670c5d26ff5"
+        },
+        {
+          "bytes": 1075,
+          "path": "LICENSE",
+          "git_blob_sha1": "2a79f435f473717691c5e2b356fbf3e758ba930d"
+        },
+        {
+          "bytes": 54111,
+          "path": "package-lock.json",
+          "git_blob_sha1": "9dfd255aa6accd197aa57304688bc4243128db08"
+        },
+        {
+          "bytes": 1599,
+          "path": "package.json",
+          "git_blob_sha1": "07a54f7ad935fb1b7e76eeff4b5a004953a24e24"
+        },
+        {
+          "bytes": 2377,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "dd1c91394917f71550075db236048a700ae332c0"
+        },
+        {
+          "bytes": 895,
+          "path": "queries/locals.scm",
+          "git_blob_sha1": "393caafd92cbda0054e2ba493144e3d49953d498"
+        },
+        {
+          "bytes": 1087,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "47ba1eb5840d9d83bd0f186597b057ff92706017"
+        },
+        {
+          "bytes": 1131,
+          "path": "README.md",
+          "git_blob_sha1": "b9f9a42be6f2e55f4c3c99684dce8b96a94acddd"
+        },
+        {
+          "bytes": 192934,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "35f69d4e5bc5baa3f5df47d9aa75f1bd5c2e151f"
+        },
+        {
+          "bytes": 70025,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "c2d953ccc163e2830b3415e61ac9cdcfa25ab9dd"
+        },
+        {
+          "bytes": 15277808,
+          "path": "src/parser.c",
+          "git_blob_sha1": "aed9e99c0a8c6bf7166e7cb5db584c24d87c737e"
+        },
+        {
+          "bytes": 37383,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "d5835856a17e82c73ea55d01766105f2946f644b"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10420,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 7039,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 911,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "2752edf436d1a1885e7aeef6cc2ec97354db1fac"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-ruby/tar.gz/ad907a69da0c8a4f7a943a7fe012712208da6dee",
+      "repository": "tree-sitter/tree-sitter-ruby"
+    },
+    {
+      "commit": "77a3747266f4d621d0757825e6b11edcbf991ca5",
+      "files": [
+        {
+          "bytes": 38804,
+          "path": "grammar.js",
+          "git_blob_sha1": "4a0ff4b6c3018afe465441fe7283db0894813f73"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "ceaf3c9adca54f7d3242593dd4db8065b1611699"
+        },
+        {
+          "bytes": 53782,
+          "path": "package-lock.json",
+          "git_blob_sha1": "81bcc1525d5b4aa580e8c5000c13e2b20e610462"
+        },
+        {
+          "bytes": 1374,
+          "path": "package.json",
+          "git_blob_sha1": "e93e25efaed237c8621fcfb81cea2faa3c09e532"
+        },
+        {
+          "bytes": 3527,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "48c7284ec2b1cbd57406b24e30c4cb238be6b590"
+        },
+        {
+          "bytes": 247,
+          "path": "queries/injections.scm",
+          "git_blob_sha1": "6035d4189ba96be775e52db39e4db4bb87f6e4ed"
+        },
+        {
+          "bytes": 1194,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "943f46bd037d4f971b0cea8d890e81a25fadacf8"
+        },
+        {
+          "bytes": 2066,
+          "path": "README.md",
+          "git_blob_sha1": "6d0f2e5ca720e4734890e963bf030dfcd3a63021"
+        },
+        {
+          "bytes": 224430,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "ca2fac837f0183328d7b15891556cac9e6cf2f80"
+        },
+        {
+          "bytes": 99023,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "2a72d8c1f0b197584577f060571efaedacb69617"
+        },
+        {
+          "bytes": 6505510,
+          "path": "src/parser.c",
+          "git_blob_sha1": "266a09eaf8d9bf7ed6813635a852776fdf4a03e7"
+        },
+        {
+          "bytes": 12588,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "b36fc2092e1f89543373f2b60afa77468ec4d5d5"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13269,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "56fc8cd470996ded64a5452be25e26dbd2aa682a"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 1018,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "0fa91c0124be6b989e271189933732a7ca7db63c"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-rust/tar.gz/77a3747266f4d621d0757825e6b11edcbf991ca5",
+      "repository": "tree-sitter/tree-sitter-rust"
+    },
+    {
+      "commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+      "files": [
+        {
+          "bytes": 33533,
+          "path": "common/define-grammar.js",
+          "git_blob_sha1": "efb0b76abd5dc80b5e1d0e86042d1adb8f344348"
+        },
+        {
+          "bytes": 10097,
+          "path": "common/scanner.h",
+          "git_blob_sha1": "23b78b5bc53dace668064eb952dff903022154aa"
+        },
+        {
+          "bytes": 1080,
+          "path": "LICENSE",
+          "git_blob_sha1": "aa9f858db5722d9576104726471b11cc0e31f131"
+        },
+        {
+          "bytes": 54720,
+          "path": "package-lock.json",
+          "git_blob_sha1": "a5cdbeef4c37eade3a0030855aea7213801a09c4"
+        },
+        {
+          "bytes": 1373,
+          "path": "package.json",
+          "git_blob_sha1": "58671921351db62affd3d1f55256a964608f90fb"
+        },
+        {
+          "bytes": 1608,
+          "path": "README.md",
+          "git_blob_sha1": "d7d2b34282be1029ff65d27a21fabd8e4d1395e1"
+        },
+        {
+          "bytes": 2793,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "4117de74594a37331c950be5296a8ca87671b5d1"
+        },
+        {
+          "bytes": 99,
+          "path": "tsx/grammar.js",
+          "git_blob_sha1": "e31c3c6de8891427510a602da6225ea06bc408a6"
+        },
+        {
+          "bytes": 195,
+          "path": "tsx/package.json",
+          "git_blob_sha1": "a063619b20b3a9183241b7cc1f5b0b3aff26b809"
+        },
+        {
+          "bytes": 281578,
+          "path": "tsx/src/grammar.json",
+          "git_blob_sha1": "794ae1e52a83e4413686a5f13ccfc6be715abed9"
+        },
+        {
+          "bytes": 113345,
+          "path": "tsx/src/node-types.json",
+          "git_blob_sha1": "34251f886f03afe3f05d08564330c5dd90c6510f"
+        },
+        {
+          "bytes": 8769870,
+          "path": "tsx/src/parser.c",
+          "git_blob_sha1": "faa8aa40839fe3c48974c474c3209abfb3f5b7b5"
+        },
+        {
+          "bytes": 538,
+          "path": "tsx/src/scanner.c",
+          "git_blob_sha1": "ac3f57ce5a3b21fc1b9d7ca2358b4b5a2c7dfc2d"
+        },
+        {
+          "bytes": 985,
+          "path": "tsx/src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10420,
+          "path": "tsx/src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 7039,
+          "path": "tsx/src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        },
+        {
+          "bytes": 106,
+          "path": "typescript/grammar.js",
+          "git_blob_sha1": "4acf4a5867356d8cce34bc0e4abf3d479653e243"
+        },
+        {
+          "bytes": 202,
+          "path": "typescript/package.json",
+          "git_blob_sha1": "c95deca462245bab0b79318d10e6dd6f10663d78"
+        },
+        {
+          "bytes": 281518,
+          "path": "typescript/src/grammar.json",
+          "git_blob_sha1": "3ac060d9898d3b0a449c2114d2f2a3da3f639ffc"
+        },
+        {
+          "bytes": 108583,
+          "path": "typescript/src/node-types.json",
+          "git_blob_sha1": "cc98309cf0e1f0d9feef2c4deb099cfa1b24d891"
+        },
+        {
+          "bytes": 8745894,
+          "path": "typescript/src/parser.c",
+          "git_blob_sha1": "a88f8e155319a834b11fa96f13821de99f7d64f2"
+        },
+        {
+          "bytes": 573,
+          "path": "typescript/src/scanner.c",
+          "git_blob_sha1": "ebdb193eaf11c48d7e9d1e75c796f43fdb989278"
+        },
+        {
+          "bytes": 985,
+          "path": "typescript/src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10420,
+          "path": "typescript/src/tree_sitter/array.h",
+          "git_blob_sha1": "15a3b233bbb8760a5d87089b259fe0122da75c8a"
+        },
+        {
+          "bytes": 7039,
+          "path": "typescript/src/tree_sitter/parser.h",
+          "git_blob_sha1": "799f599bd4e292e95565f90733c59fa422899eae"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/75b3874edb2dc714fb1fd77a32013d0f8699989f",
+      "repository": "tree-sitter/tree-sitter-typescript"
+    },
+    {
+      "commit": "be07cf7118d3dba06236a3f19541685a68209934",
+      "files": [
+        {
+          "bytes": 104,
+          "path": ".gitmodules",
+          "git_blob_sha1": "94ba3e0f391b438e9f834f124f532fa940b7f0e3"
+        },
+        {
+          "bytes": 106386,
+          "path": "grammar.js",
+          "git_blob_sha1": "80565ec803e9aee35cc5fccd54e6f6c9ec5f2b2c"
+        },
+        {
+          "bytes": 1071,
+          "path": "LICENSE",
+          "git_blob_sha1": "9633f23d30fc86c9ee3914c25ae356a92c8a191c"
+        },
+        {
+          "bytes": 1977,
+          "path": "package.json",
+          "git_blob_sha1": "3c3306d58ce80e02151e8c1e757935dac8a08833"
+        },
+        {
+          "bytes": 4622,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "dbacad4ea4e2db499988296c0b2b71ae37aa5444"
+        },
+        {
+          "bytes": 1948,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "35ebc996c9957fe968fe413d60e6da998ecb92d1"
+        },
+        {
+          "bytes": 22,
+          "path": "queries/test.scm",
+          "git_blob_sha1": "92a8daa71eda5afe3ade091fec98a576be154c72"
+        },
+        {
+          "bytes": 964,
+          "path": "README.md",
+          "git_blob_sha1": "371571dc7768ac4331d05134b14cff8a050026df"
+        },
+        {
+          "bytes": 311142,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "e36c12221e52398239fbcda11cc300d3857d922d"
+        },
+        {
+          "bytes": 314023,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "ca50cb26a012c0fc61d305bcabd7046387e390ad"
+        },
+        {
+          "bytes": 7136472,
+          "path": "src/parser.c",
+          "git_blob_sha1": "868f153d3d9e0cfc568947cc6a7ceedd0d2459aa"
+        },
+        {
+          "bytes": 3839,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "e736bc9b4aea12498d630de4a48d7a7f466703e2"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 13269,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "56fc8cd470996ded64a5452be25e26dbd2aa682a"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 453,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "654134cf8ecbc2d6c9fc9a1f48e919b85e4508fa"
+        }
+      ],
+      "url": "https://codeload.github.com/UserNobody14/tree-sitter-dart/tar.gz/be07cf7118d3dba06236a3f19541685a68209934",
+      "repository": "UserNobody14/tree-sitter-dart"
+    }
+  ],
+  "runtime": {
+    "commit": "659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+    "files": [
+      {
+        "path": "LICENSE",
+        "sha256": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+        "bytes": 1080
+      },
+      {
+        "path": "lib/include/tree_sitter/api.h",
+        "sha256": "efe63c187bb941be6e36dfb0597846bfe1976a0917c04a16e3edf6ee7cf6f9b7",
+        "bytes": 49952
+      },
+      {
+        "path": "lib/src/alloc.c",
+        "sha256": "c7d15b9015568f439af4adf28ead9e2bd14901221819276727c11227a29576da",
+        "bytes": 1542
+      },
+      {
+        "path": "lib/src/alloc.h",
+        "sha256": "6a59c4997fe6df7fa2c00fcaff9cf0882e26309d1743bea05983ea56e0ca0c91",
+        "bytes": 917
+      },
+      {
+        "path": "lib/src/array.h",
+        "sha256": "3a66fd611d88de00207bf40466b2393170c2110b17ce0d16e3716ef3a00e3d8e",
+        "bytes": 13467
+      },
+      {
+        "path": "lib/src/atomic.h",
+        "sha256": "bbc630cb913ac64274ce4412bc9d504174220323993f306ded74abe502867e74",
+        "bytes": 1384
+      },
+      {
+        "path": "lib/src/error_costs.h",
+        "sha256": "0e8d1a21e0d60981e762989108231df6610d95591892f631c6c78a9ef831a2ab",
+        "bytes": 294
+      },
+      {
+        "path": "lib/src/get_changed_ranges.c",
+        "sha256": "6fcee7d2663ac67d88b9e79a03ff4854dde1e8d30d3c985d945bad8017532c52",
+        "bytes": 17733
+      },
+      {
+        "path": "lib/src/get_changed_ranges.h",
+        "sha256": "f394bd0b6fce006be460fd16cbea3cc96e248c810a4d97e8830463c29c85e4a5",
+        "bytes": 836
+      },
+      {
+        "path": "lib/src/host.h",
+        "sha256": "e1982b9795b9c52b5ab564d8b9876189d65a97ca02f78351e1740b0985992fd2",
+        "bytes": 520
+      },
+      {
+        "path": "lib/src/language.c",
+        "sha256": "16ca0511cd57ff301c63a19b4f10821552153224affa23908d4fc0d2bbca353e",
+        "bytes": 11440
+      },
+      {
+        "path": "lib/src/language.h",
+        "sha256": "9371240c2060bd7c145b41a32b2535bbca3c3ac1713a4684e272e268ac924c22",
+        "bytes": 9030
+      },
+      {
+        "path": "lib/src/length.h",
+        "sha256": "7fc186fb4bf50233059e8be9ca68efe95e66d34ced4b8a8f38f14497352faeb1",
+        "bytes": 1275
+      },
+      {
+        "path": "lib/src/lexer.c",
+        "sha256": "eb6ca639beaea9fb99bfb0faa0bd0f8e8df785a52dc09321582dc858a448eb34",
+        "bytes": 16062
+      },
+      {
+        "path": "lib/src/lexer.h",
+        "sha256": "7d76308f7a2d3246a3e28fb27698be928f848130d1bfacc39f9f623127671b74",
+        "bytes": 1263
+      },
+      {
+        "path": "lib/src/lib.c",
+        "sha256": "a9830f5a1e72db564afef45f690510cf0aa751075ed855789e26c9f25f087b80",
+        "bytes": 405
+      },
+      {
+        "path": "lib/src/node.c",
+        "sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
+        "bytes": 25151
+      },
+      {
+        "path": "lib/src/parser.c",
+        "sha256": "97a49276242294bc1b1a22908671a202f92d2a213a872edbe467a9e121822615",
+        "bytes": 79954
+      },
+      {
+        "path": "lib/src/parser.h",
+        "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+        "bytes": 7624
+      },
+      {
+        "path": "lib/src/point.c",
+        "sha256": "04a101f16f40a651814c0f307fadf3f351d0f24013fa6d8b89c85bf1c6a5e717",
+        "bytes": 547
+      },
+      {
+        "path": "lib/src/point.h",
+        "sha256": "0929027be2ff54627be560f3bafc1af59e81ac6d5a8d5864455601a0dbee50ff",
+        "bytes": 1307
+      },
+      {
+        "path": "lib/src/portable/endian.h",
+        "sha256": "528ca0666737e1a66218e2179004d5af2154393c6564ac9c57c110c5d8f57f85",
+        "bytes": 7325
+      },
+      {
+        "path": "lib/src/query.c",
+        "sha256": "f7e9b04c50f9d5bae3c01cf5860fd45d24d89b2d2e5748de758b0a39bc146c83",
+        "bytes": 171255
+      },
+      {
+        "path": "lib/src/reduce_action.h",
+        "sha256": "8f40396e431d7ff558694ca248eed1332b6cf6f7e6255f06cddfde78020bd308",
+        "bytes": 772
+      },
+      {
+        "path": "lib/src/reusable_node.h",
+        "sha256": "10be747ea4c733ca181dc43d55d155ac8e5b8caa247079621cca0ce633347bfb",
+        "bytes": 2747
+      },
+      {
+        "path": "lib/src/stack.c",
+        "sha256": "f70b7e5823e82901801193562908037db4c1a73721e48da0fe54cdb2a6b5856d",
+        "bytes": 28636
+      },
+      {
+        "path": "lib/src/stack.h",
+        "sha256": "dea9df947fa871b253528dca48611aa174181a286ec2734c16d4038e040834f6",
+        "bytes": 4872
+      },
+      {
+        "path": "lib/src/subtree.c",
+        "sha256": "ec4d623ca1c290f6c1fb8a9dcfc08dcc5fc2a452fa1b27587b9a73c1a74438b0",
+        "bytes": 36750
+      },
+      {
+        "path": "lib/src/subtree.h",
+        "sha256": "552633ba7b8be2d266031bb04776c17ba7bc5fe270d1afd5203eb4889e8b7f09",
+        "bytes": 12548
+      },
+      {
+        "path": "lib/src/tree.c",
+        "sha256": "a0f63bc46fc4fcb88d35caa6fe89d7fc18edb895bc781db20f11d5c58988fb06",
+        "bytes": 5144
+      },
+      {
+        "path": "lib/src/tree.h",
+        "sha256": "628701f470166ad550471a673dce078f28a7851193939f02a342c30c3a8ef39c",
+        "bytes": 915
+      },
+      {
+        "path": "lib/src/tree_cursor.c",
+        "sha256": "5638f6702b6d0b40755fcba32d85ca0fc44ab51bd3546525b4787a304a7b503c",
+        "bytes": 23140
+      },
+      {
+        "path": "lib/src/tree_cursor.h",
+        "sha256": "3e8d9671ab1397bcaeb3e0cbf153a61a99e214782b43c09e5cde5a01e8283a1a",
+        "bytes": 1285
+      },
+      {
+        "path": "lib/src/ts_assert.h",
+        "sha256": "ac1ec4b7ba388a9d8708feeb6c5c766b2927cecfd6db644b939772e1dc086526",
+        "bytes": 205
+      },
+      {
+        "path": "lib/src/unicode.h",
+        "sha256": "968175f1e018e4130c403fe08d12b4d103e6fe6c1dbbf658e58ab9af378530a4",
+        "bytes": 2084
+      },
+      {
+        "path": "lib/src/unicode/ICU_SHA",
+        "sha256": "2879b4cf5a2c625c6509c26e341b9c8b0c50fde284113b449e00567bdf4e593c",
+        "bytes": 41
+      },
+      {
+        "path": "lib/src/unicode/LICENSE",
+        "sha256": "6a18c5fac70d7860b57f5b72b4e2c9a1ba6b3d2741eef7ff9767c5379364f10d",
+        "bytes": 21001
+      },
+      {
+        "path": "lib/src/unicode/README.md",
+        "sha256": "73bbccbcf2e6648385d188d914b16ae56b4553a0f1efb033e6b6d6242e41df1d",
+        "bytes": 1270
+      },
+      {
+        "path": "lib/src/unicode/ptypes.h",
+        "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+        "bytes": 72
+      },
+      {
+        "path": "lib/src/unicode/umachine.h",
+        "sha256": "2d79c0903d9e73e247b948bc0a12b6a785257ca0273bddab56fb59561f8d7391",
+        "bytes": 14865
+      },
+      {
+        "path": "lib/src/unicode/urename.h",
+        "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+        "bytes": 72
+      },
+      {
+        "path": "lib/src/unicode/utf.h",
+        "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+        "bytes": 72
+      },
+      {
+        "path": "lib/src/unicode/utf16.h",
+        "sha256": "c370d9069f37fad2b53981c06dc648bbc21923db1655517a31bb237df4fba041",
+        "bytes": 23878
+      },
+      {
+        "path": "lib/src/unicode/utf8.h",
+        "sha256": "39651224b2ca2452359c7f3339f3cc0a841fe7db64f8a00c9c5ec19c0389645c",
+        "bytes": 31698
+      },
+      {
+        "path": "lib/src/wasm-stdlib/README.md",
+        "sha256": "37bb3e39b390ed1cedf9127edb00bf2baf896f277ca34a8722694aa41fb3546a",
+        "bytes": 1255
+      },
+      {
+        "path": "lib/src/wasm-stdlib/external_scanner_allocator.c",
+        "sha256": "b13eb3c31b8b952578260b858462e821985d347d1dae186e71566ff36d875b1f",
+        "bytes": 4275
+      },
+      {
+        "path": "lib/src/wasm-stdlib/external_scanner_stdlib.h",
+        "sha256": "462bb994df614cb18899b03b1435f2749414e4722ba8cf450266a149426cea0c",
+        "bytes": 107108
+      },
+      {
+        "path": "lib/src/wasm-stdlib/imports.txt",
+        "sha256": "4fb97410d22925f88857d9adfecc2b955c08819e7d55de4e460d417bf1a2215d",
+        "bytes": 276
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc.c",
+        "sha256": "1b70f41eda904b816e641d5841c7ad0b637cf5bc637e1f3d0965f75789711ff5",
+        "bytes": 1346
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/LICENSE",
+        "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+        "bytes": 6204
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/README.md",
+        "sha256": "a5714bd844b272c950cb055fcabbd04e4da0ee02f35e5d5340caa4f3af9626fb",
+        "bytes": 685
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/alpha.h",
+        "sha256": "bf14a0a8e2e3722e8d618d00f903be102a0214c4ab30d96dc8d7f3e15c5106e7",
+        "bytes": 12783
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/casemap.h",
+        "sha256": "e69896dc36e5b1c0f0f30917cad6dcda2f55c2d691be1b84625880ebf22fb618",
+        "bytes": 16079
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/isblank.c",
+        "sha256": "2fe71bd5c48604d04f2582e35e1230c2c302bd175ebcfa3c7ed15cf191156bd3",
+        "bytes": 173
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswalnum.c",
+        "sha256": "647f8fc54b33790c1de8a26acd2f5b7212952c2e60db0ada433f9ddd639ce186",
+        "bytes": 191
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswalpha.c",
+        "sha256": "c22480b08b6943bbecfb6e0ab6677bf3b41c0371d5df51286f437b3cb37c130e",
+        "bytes": 333
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswblank.c",
+        "sha256": "6f3a3161506c01d7a425c766e6de722101618d14548b56998bc147e86077e744",
+        "bytes": 193
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswdigit.c",
+        "sha256": "d7e9bda18ff14bd8ace47884d8bd021130e95c69a2dc747f83effc1a2714895b",
+        "bytes": 201
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswlower.c",
+        "sha256": "e51bb97002c407e416bfca5689abef2e9b9dc625bef19ae684753722e98d0392",
+        "bytes": 181
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswpunct.c",
+        "sha256": "6bc6c0a07485c87aa556c265f37968c42d635e4a2fd89e701efdb57f8a111b66",
+        "bytes": 303
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswspace.c",
+        "sha256": "c8592c0fb5463b314c38926e3df26b9efdfe5f1437958ba20c7c36f81facba80",
+        "bytes": 616
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswupper.c",
+        "sha256": "f6b68aa9983a6fb5c09479e1349a2b35721cb7aef308192584fdea5585032cd8",
+        "bytes": 181
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/iswxdigit.c",
+        "sha256": "1f6dc78efe7c313ddcf47401101f903ce194af5dacd89922f483a995075f52cb",
+        "bytes": 222
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/punct.h",
+        "sha256": "45382a2b630fc896057871ac9abe9e3f1580048f1f3b1c96505aaf3dc522832d",
+        "bytes": 10440
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/ctype/towctrans.c",
+        "sha256": "43f4374b7dfcd24a957b4be4cfa304611e24912529183174ec724fcbaedf82cd",
+        "bytes": 1715
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/memchr.c",
+        "sha256": "1ea082084a8cfcc6aee5dc962e0ddd2167d2ce38e529a22d138bdfaab83c223a",
+        "bytes": 2818
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/memcmp.c",
+        "sha256": "44ec5045d00709ddd9ae59b4b0e7ac7e78a8401d27acc4cb95bb46acb2d103f2",
+        "bytes": 1413
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/memcpy.c",
+        "sha256": "4ad219f8d43467d894ef2cfd3d6d17ae958710c689097c15d41b68ee99c74769",
+        "bytes": 2756
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/memmove.c",
+        "sha256": "202adc3108340168e8604c1ed848e84df51a806726ebc992b597218a50c9a8d9",
+        "bytes": 965
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/memset.c",
+        "sha256": "a7a8ff014b6a196342bbe3e8bdd7ae7ee91f0003f96e328d915f1af13066dad8",
+        "bytes": 2324
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/stpncpy.c",
+        "sha256": "12f0e4fd1005104a6c1200af5b90e1694d75ad0fb2586305b560341be0ef6481",
+        "bytes": 819
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strchr.c",
+        "sha256": "629d401b95d07ddff9560eb5a9cfbda1652caaec273dc6a79013a56b1790af53",
+        "bytes": 147
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strchrnul.c",
+        "sha256": "3eaa363698e2dfb472a59ed35c445d970a06d4da9d94a47eb918c0a3e2f74e7b",
+        "bytes": 2295
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strcmp.c",
+        "sha256": "3e1793ea2dd358e5c884c4dd232083605d0f6775f7ebe19d03d64fe97068a78f",
+        "bytes": 150
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strlen.c",
+        "sha256": "767f030f94a4868eb88c8b28e0aa535f53deb2f23b79ba5627d6d8ba6b460d7d",
+        "bytes": 2036
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strncat.c",
+        "sha256": "784dbc83b122671f97711ab6cbcb1ee871513e8d0da3462a8ce267e1367353af",
+        "bytes": 179
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strncmp.c",
+        "sha256": "df801c43304b27dcda67f219a7a3ca34a8fb06f4e63d21e8a6bcb36b03c3c012",
+        "bytes": 220
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/strncpy.c",
+        "sha256": "88301f7a48004250e1833e9155c7d2fa607ffdddca3b1b1804774d93c82acb96",
+        "bytes": 123
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/wcschr.c",
+        "sha256": "c9ac14e131c281bef6ab9228ae4e0aea824b3b96c32ed4c2b1a573d7529e7194",
+        "bytes": 171
+      },
+      {
+        "path": "lib/src/wasm-stdlib/libc/string/wcslen.c",
+        "sha256": "4baada75103e9906fa85dd6650c07752c1803b36cbdfc1b5e0678c5e3f3223a6",
+        "bytes": 109
+      },
+      {
+        "path": "lib/src/wasm-stdlib/stdio.c",
+        "sha256": "463ff7c94b4f9df0164aa3d966eeb5765a7f9acecdf477119e2fe54891e34b0e",
+        "bytes": 6791
+      },
+      {
+        "path": "lib/src/wasm_store.c",
+        "sha256": "e630e55f3984cc9111646a719f793f5b7b4823632767129c4583aa2b1521e746",
+        "bytes": 70668
+      },
+      {
+        "path": "lib/src/wasm_store.h",
+        "sha256": "4f70d0500b0775e5d862a8e7d191b3853d73378c65e020e01767838a18debe0e",
+        "bytes": 1137
+      }
+    ],
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+    "repository": "tree-sitter/tree-sitter"
+  },
+  "npm": [
+    {
+      "version": "0.23.1",
+      "url": "https://registry.npmjs.org/tree-sitter-javascript/-/tree-sitter-javascript-0.23.1.tgz",
+      "package": "tree-sitter-javascript",
+      "integrity": "sha512-/bnhbrTD9frUYHQTiYnPcxyHORIw157ERBa6dqzaKxvR/x3PC4Yzd+D1pZIMS6zNg2v3a8BZ0oK7jHqsQo9fWA=="
+    },
+    {
+      "version": "0.24.1",
+      "url": "https://registry.npmjs.org/tree-sitter-c/-/tree-sitter-c-0.24.1.tgz",
+      "package": "tree-sitter-c",
+      "integrity": "sha512-lkYwWN3SRecpvaeqmFKkuPNR3ZbtnvHU+4XAEEkJdrp3JfSp2pBrhXOtvfsENUneye76g889Y0ddF2DM0gEDpA=="
+    }
+  ],
+  "cli": {
+    "bytes": 8594290,
+    "url": "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-linux-x64.gz",
+    "sha256": "20a1f39ec1c45f2211492dcb8881c802b643b554bb196869a29ac3778277fa77"
+  },
+  "image": "node@sha256:5a750d3be5e5c80275f8c9a5367c3aed99c2875656590c8d0701c7ee687f5f0a",
+  "selected_routes": [
+    {
+      "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "subdirectory": ".",
+      "route": "csharp",
+      "generation": "js",
+      "repository": "tree-sitter/tree-sitter-c-sharp"
+    },
+    {
+      "commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+      "subdirectory": "typescript",
+      "route": "typescript",
+      "generation": "js",
+      "repository": "tree-sitter/tree-sitter-typescript"
+    },
+    {
+      "commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+      "subdirectory": "tsx",
+      "route": "tsx",
+      "generation": "js",
+      "repository": "tree-sitter/tree-sitter-typescript"
+    },
+    {
+      "commit": "35245fbfee2fccf16273c6f4299438fb76875970",
+      "subdirectory": ".",
+      "route": "swift",
+      "generation": "js",
+      "repository": "alex-pinkus/tree-sitter-swift"
+    },
+    {
+      "commit": "443d2bc774f1d779af7dcabcc99160fb24da96e6",
+      "subdirectory": ".",
+      "route": "tsql",
+      "generation": "js",
+      "repository": "Crary-Systems/tree-sitter-tsql"
+    },
+    {
+      "commit": "59d0d8cd7506d68de1229fb4bbce838c83b60c8a",
+      "subdirectory": "postgres",
+      "route": "postgresql-sql",
+      "generation": "json",
+      "repository": "gmr/tree-sitter-postgres"
+    }
+  ],
+  "cases": [
+    {
+      "route": "csharp",
+      "id": "P05-CS-ID-ASYNC",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class async { int value; }\n",
+      "input_bytes": 27,
+      "input_sha256": "e364d9ad635a78d72a0a8d61495f4a96e586a3e1e9ea480ac3188cd34044c896",
+      "expected": {
+        "facts": "async는 type 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 12,
+        "restore_utf8": "{",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 13,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 13,
+          "error_near_start": 11,
+          "damaged_sha256": "767de2e4f1a82f5035760fecb185746fa1ac3c50fbbd560ebce72be5d4b68e06",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class async  int value; }\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-ID-AWAIT",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { int await; void M() { int await = 1; } }\n",
+      "input_bytes": 51,
+      "input_sha256": "a61663218fb68dc8641625c84cdc3e2f0db85d97770d6948c3116e7e1d0efca0",
+      "expected": {
+        "facts": "await는 field/local 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-ID-VAR",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class var { }\nclass C { void M() { int var = 1; } }\n",
+      "input_bytes": 52,
+      "input_sha256": "250804a70b35d0d23603dde3daedbcea5a3a0c7986db674cb6f8e1578b496935",
+      "expected": {
+        "facts": "var는 type/local 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-SHEBANG",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#!/usr/bin/dotnet run\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 51,
+      "input_sha256": "57f057c874507f3c51eddd642fd8db635d248110fa6565aca48e3649f563b150",
+      "expected": {
+        "facts": "첫 행 shebang과 후속 invocation",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-PROPERTY",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:property TargetFramework=net10.0\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 64,
+      "input_sha256": "19de16897c74826f7d69b98db19e2d49dcbf86810a7c32288ce19483c8066707",
+      "expected": {
+        "facts": "directive 이름/인수/행과 후속 invocation",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-PACKAGE",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:package Example.Package@1.0.0\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 61,
+      "input_sha256": "437a7169a0e0b8528dfe6989d792e8f226c89d17ce463221cbe2ee3dc4891314",
+      "expected": {
+        "facts": "package 인수는 source text만 보존",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-SDK",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:sdk Microsoft.NET.Sdk.Web\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 57,
+      "input_sha256": "da8de53d77b26a6dcdfc33e53f5dae8a8d6c3e17ddb902165c7f78dc673192da",
+      "expected": {
+        "facts": "sdk 인수와 후속 statement",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-PROJECT",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:project ./Library.csproj\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 56,
+      "input_sha256": "bacf7c9760ccdbcb5d99a928af595d485fd08ca5338be0edd83daa546183f421",
+      "expected": {
+        "facts": "project 상대 경로 text와 후속 statement",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-INCLUDE",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:include helpers.cs\nSystem.Console.WriteLine(1);\n",
+      "input_bytes": 50,
+      "input_sha256": "c02c5338a854ccc13235976c58cc1c1b32af39238cce92ea72946ed0066fc608",
+      "expected": {
+        "facts": "승인된 source-only 범위: include 이름/경로/행과 후속 statement, 파일 읽기 없음",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "ADOPTED_SDK10_0_300_SOURCE_ONLY",
+      "edit": null
+    },
+    {
+      "route": "csharp",
+      "id": "P05-CS-DIRECTIVE-RAW",
+      "feature_ids": [
+        "csharp-B01",
+        "csharp-V11"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { string s = \"\"\"\n#:include helpers.cs\n\"\"\"; }\n",
+      "input_bytes": 53,
+      "input_sha256": "2feee5fbf505483331586ac6cfca70990402b6f4e0b71c035694a794f717921c",
+      "expected": {
+        "facts": "raw string 내부는 directive로 분류하지 않음",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "typescript",
+      "id": "P05-TS-DEFER",
+      "feature_ids": [
+        "typescript-V59"
+      ],
+      "kind": "P",
+      "input_utf8": "import defer * as m from \"m\";\nconst n: number = 1;\n",
+      "input_bytes": 51,
+      "input_sha256": "caa93703ed5fba971d4b57b7830996717098f099ba2a4cb526c2a6bd71ae719f",
+      "expected": {
+        "facts": "import의 defer/namespace/name/string과 typed declaration",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 15,
+        "restore_utf8": "a",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 16,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 16,
+          "error_near_start": 14,
+          "damaged_sha256": "008ce97722840a20eeafa0c00bd291fdd177cd9a054487305ee2302cf738b08e",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "import defer * s m from \"m\";\nconst n: number = 1;\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "route": "typescript",
+      "id": "P05-TS-DEFER-LEGACY",
+      "feature_ids": [
+        "typescript-V59"
+      ],
+      "kind": "P",
+      "input_utf8": "import * as m from \"m\";\nconst n: number = 1;\n",
+      "input_bytes": 45,
+      "input_sha256": "6a76efbae3de20f1b205ea9a55d71177e2ed9693397d6fa217d90cd4c4fde41b",
+      "expected": {
+        "facts": "일반 namespace import legacy 대조",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-DEFER",
+      "feature_ids": [
+        "tsx-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "import defer * as m from \"m\";\nconst view: JSX.Element = <Box value={m.x} />;\n",
+      "input_bytes": 77,
+      "input_sha256": "b6816af1dcd8c0f7739def0f430237337535d37b68156e1b6eff3425e6ef2f98",
+      "expected": {
+        "facts": "TSX producer의 import defer와 typed JSX body",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 67,
+        "restore_utf8": "{",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 68,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 68,
+          "error_near_start": 66,
+          "damaged_sha256": "7c8715a2210d7e9ede027ac22b5128165860264cf71f94cfe420dca4febf73a0",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "import defer * as m from \"m\";\nconst view: JSX.Element = <Box value=m.x} />;\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-AMBIGUITY-COMMA",
+      "feature_ids": [
+        "tsx-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "const id = <T,>(x: T) => x;\n",
+      "input_bytes": 28,
+      "input_sha256": "88c12e40c74dfdc190d57e775ecb3de37edbe33e89c2f63e687ae52cf63a95d8",
+      "expected": {
+        "facts": "T는 type parameter, arrow body는 x",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-AMBIGUITY-EXTENDS",
+      "feature_ids": [
+        "tsx-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "const id = <T extends {}>(x: T) => x;\n",
+      "input_bytes": 38,
+      "input_sha256": "3d97da39b79d65d3d51a43b5c00a2d2b19db72bef43e0d60afdc101080efd663",
+      "expected": {
+        "facts": "extends bound와 arrow parameter",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-AMBIGUITY-GENERIC-JSX",
+      "feature_ids": [
+        "tsx-V29"
+      ],
+      "kind": "P",
+      "input_utf8": "const view = <Box<number> value={1} />;\n",
+      "input_bytes": 40,
+      "input_sha256": "14d8581002551fa1d861a625c7dd245b2c44ebd27ed863539b7ec31aa5e7e39f",
+      "expected": {
+        "facts": "Box tag와 number type argument",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-AMBIGUITY-FRAGMENT",
+      "feature_ids": [
+        "tsx-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "const view = <><Box value=\"x\" /></>;\n",
+      "input_bytes": 37,
+      "input_sha256": "4744a56a75ab1dbbb6507ef8f8cdabb5cca9ee3468c3d233c5c4b9ffad675636",
+      "expected": {
+        "facts": "fragment와 self-closing element/attribute/string",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsx",
+      "id": "P05-TSX-AMBIGUITY-RELATIONAL",
+      "feature_ids": [
+        "tsx-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "const less = a < b;\nconst value = a as number;\n",
+      "input_bytes": 47,
+      "input_sha256": "352ca03d5f45de6313a4625d5bcc0afa117111b0c2b4395bacf64dfddba6ac76",
+      "expected": {
+        "facts": "relational operator와 as assertion, tag 아님",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-ID-BARE",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT a FROM t;\n",
+      "input_bytes": 17,
+      "input_sha256": "e80e5bdc69b28e73f63aa0a4eabdf0ad5c23324a944b9e78a19ec069fa755c11",
+      "expected": {
+        "facts": "한 글자 column/table identifier",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 7,
+        "restore_utf8": "a",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 8,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 8,
+          "error_near_start": 6,
+          "damaged_sha256": "6917d84a55fe6b4443d9b092c4e42a4837b9b7ed32ff586c15d2ffbf3e7bbc69",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "SELECT  FROM t;\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-ID-BRACKET",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT [a] FROM [t];\n",
+      "input_bytes": 21,
+      "input_sha256": "0cdb1cbb952b2cdd8703b69cad1752d59a5a18cdad2e11f101d8f2e515576fa0",
+      "expected": {
+        "facts": "한 글자 bracket identifier",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-ID-ESCAPED",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT [a]]b] FROM [t];\n",
+      "input_bytes": 24,
+      "input_sha256": "aaa6f49547ce9a9a5bb4ea986f16963062143124cdf7872d6b2f6779bd4fd30f",
+      "expected": {
+        "facts": "escaped closing bracket는 identifier 내부",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-CASE-UPPER",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT @@VERSION;\n",
+      "input_bytes": 18,
+      "input_sha256": "24a4c282c25456e695b58f471124ca9c6002b460c2482c121233676d00eab16a",
+      "expected": {
+        "facts": "configuration variable 수용/분류",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-CASE-LOWER",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "select @@version;\n",
+      "input_bytes": 18,
+      "input_sha256": "274d9b54548c2ed8d0d0448b9e45b31b39660eb0acf01fef895f25ffbfd7bf72",
+      "expected": {
+        "facts": "case-insensitive 수용과 node 분류를 따로 대조",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-CREATE",
+      "feature_ids": [
+        "tsql-B03"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a int);\n",
+      "input_bytes": 24,
+      "input_sha256": "25312a357ba5c43fcf8242755b307bf3c82a057fcc4c030926b979b34cca9bc8",
+      "expected": {
+        "facts": "CREATE target/column/type",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-INSERT",
+      "feature_ids": [
+        "tsql-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "INSERT INTO t (a) VALUES (1);\n",
+      "input_bytes": 30,
+      "input_sha256": "a1dc7d81f46c81e97efb456f072f9860f722b8b6ece525a61e779dc897ecb2f9",
+      "expected": {
+        "facts": "INSERT target/column/value",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-UPDATE",
+      "feature_ids": [
+        "tsql-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "UPDATE t SET a = 2;\n",
+      "input_bytes": 20,
+      "input_sha256": "c4193ba3788259c8f03cf39ccb16ba1eb72f0df233b24af57202ebc52a5f51b4",
+      "expected": {
+        "facts": "UPDATE target/assignment",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-DELETE",
+      "feature_ids": [
+        "tsql-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "DELETE FROM t WHERE a = 2;\n",
+      "input_bytes": 27,
+      "input_sha256": "ed15b96c5ab140a40392e29db64afea6e088e26cd17b52bb0da00f0d5973bbd1",
+      "expected": {
+        "facts": "DELETE target/predicate",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-CTE",
+      "feature_ids": [
+        "tsql-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "WITH q AS (SELECT 1 AS a) SELECT a FROM q;\n",
+      "input_bytes": 43,
+      "input_sha256": "9d4c72f5e8926451a34f1363090b042f72ddfb1ef9239ee11a4851298d785704",
+      "expected": {
+        "facts": "CTE name/body와 뒤 SELECT",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-PROC",
+      "feature_ids": [
+        "tsql-B04"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE PROCEDURE p AS BEGIN SELECT 1; END;\n",
+      "input_bytes": 43,
+      "input_sha256": "292659771449278a8f4d8a78642f80082fbfcf3436b44cf87b329a1466cdf9a6",
+      "expected": {
+        "facts": "procedure 이름/body/block",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-TRANSACTION",
+      "feature_ids": [
+        "tsql-B03"
+      ],
+      "kind": "P",
+      "input_utf8": "BEGIN TRANSACTION; COMMIT TRANSACTION;\n",
+      "input_bytes": 39,
+      "input_sha256": "4e4be53695e8a035e6b685ef2ab73cb2b9718740b5ebdb921b4662db19bff08e",
+      "expected": {
+        "facts": "두 transaction statement",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-FOR-JSON",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT 1 AS a FOR JSON PATH;\n",
+      "input_bytes": 29,
+      "input_sha256": "a8e78f8a2887e76ebb3a527e2f6263739f8375bbd235b9763277df1fcd9f9598",
+      "expected": {
+        "facts": "FOR JSON clause",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-OPENJSON",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT value FROM OPENJSON(N'[1]');\n",
+      "input_bytes": 36,
+      "input_sha256": "fe0e2488db612c6c0d35bb710c80105dee093e8436e99e6e20a284f730f0659f",
+      "expected": {
+        "facts": "OPENJSON call/table source와 N-string",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-TEMPORAL-DDL",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a int PRIMARY KEY, s datetime2 GENERATED ALWAYS AS ROW START NOT NULL, e datetime2 GENERATED ALWAYS AS ROW END NOT NULL, PERIOD FOR SYSTEM_TIME (s,e)) WITH (SYSTEM_VERSIONING = ON);\n",
+      "input_bytes": 198,
+      "input_sha256": "d107b2af92a7a871ea016df622eb4af36361eb4190d657b7873a9d62d72f6c63",
+      "expected": {
+        "facts": "period columns와 SYSTEM_VERSIONING table option",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-TEMPORAL-SELECT",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT a FROM t FOR SYSTEM_TIME AS OF '2020-01-01';\n",
+      "input_bytes": 52,
+      "input_sha256": "a1d19bcd6aad9a61a8e88a946a44f18f13ef1181b3c37086f8c61db76588cb5e",
+      "expected": {
+        "facts": "FOR SYSTEM_TIME 절과 timestamp literal",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-DROP",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "DROP TABLE IF EXISTS t;\n",
+      "input_bytes": 24,
+      "input_sha256": "0b004b7a583db07a8d2c64357cc1ff1f016bda976abfcedf99e6ad38843cfebf",
+      "expected": {
+        "facts": "DROP/IF EXISTS/대상",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-CREATE-OR-ALTER",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE OR ALTER PROCEDURE p AS SELECT 1;\n",
+      "input_bytes": 41,
+      "input_sha256": "3c84237837e9881183f202eedc46a7b2958fcca9c82245beafb20dcd05c4cf59",
+      "expected": {
+        "facts": "CREATE OR ALTER와 procedure body",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-NODE",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE n (a int) AS NODE;\n",
+      "input_bytes": 32,
+      "input_sha256": "f392eb679216335c4ee17689055cd1c372c361ba49a755ad6d381feabca6b78b",
+      "expected": {
+        "facts": "AS NODE clause",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-EDGE",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE e (a int) AS EDGE;\n",
+      "input_bytes": 32,
+      "input_sha256": "05b1f5c94ad6445cfa302c9d7b18c574a8db655252f7ca2a2e9b6c1f93601d7a",
+      "expected": {
+        "facts": "AS EDGE clause",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-MATCH",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT n1.a FROM n AS n1, e, n AS n2 WHERE MATCH(n1-(e)->n2);\n",
+      "input_bytes": 62,
+      "input_sha256": "f3130429b2d5658b56c09f7b595d138fdf78d482b1676dd9d2717574d6e7833e",
+      "expected": {
+        "facts": "graph MATCH path와 aliases",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-WINDOW",
+      "feature_ids": [
+        "tsql-V22"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT SUM(a) OVER w FROM t WINDOW w AS (ORDER BY a);\n",
+      "input_bytes": 54,
+      "input_sha256": "7bec504279362f3d87e750a090a913766b69ba7bdd56ab817b5bda7ae9c8e049",
+      "expected": {
+        "facts": "named WINDOW definition/reference",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-DISTINCT",
+      "feature_ids": [
+        "tsql-V22"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT a FROM t WHERE a IS DISTINCT FROM 1;\n",
+      "input_bytes": 44,
+      "input_sha256": "957375d59f794a9c344ffb24b6f035eed4ee4e621e48a4d280dfb7eba66626a4",
+      "expected": {
+        "facts": "IS DISTINCT FROM predicate",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-JSON-TYPE",
+      "feature_ids": [
+        "tsql-V22"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a json);\n",
+      "input_bytes": 25,
+      "input_sha256": "b63fcf956428de3dba862692deb55a2924614270c6650d118c441264e081bef4",
+      "expected": {
+        "facts": "JSON type token/source 위치",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-VECTOR",
+      "feature_ids": [
+        "tsql-V22"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a VECTOR(3));\n",
+      "input_bytes": 30,
+      "input_sha256": "1c850beafda42af8cadca262b17f56b0ea2aeb2b58f6177390955eb618af5c6f",
+      "expected": {
+        "facts": "VECTOR type와 dimension",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-STATEMENTS-LEDGER",
+      "feature_ids": [
+        "tsql-V22"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a int) WITH (LEDGER = ON (APPEND_ONLY = ON));\n",
+      "input_bytes": 62,
+      "input_sha256": "d203f737e11398ee1d9795b3e4fa33e13bef05e1469e313f4285fb30a4d01fdf",
+      "expected": {
+        "facts": "nested LEDGER/APPEND_ONLY options",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-GO-BATCH",
+      "feature_ids": [
+        "tsql-B05"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT 1;\nGO 2\nSELECT 2;\n",
+      "input_bytes": 25,
+      "input_sha256": "d39758a01834a8ba83facc821a84e5b7d366070c87e0e0e6acdf8c1eb39b0464",
+      "expected": {
+        "facts": "독립 client batch와 repeat count",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null,
+      "source_profile": {
+        "separator": "GO",
+        "repeat_count": 2,
+        "server_execution": false,
+        "expectation": "전체 script source에서 batch separator와 두 SELECT를 구별; 서버 SQL keyword라는 주장 없음",
+        "kind": "client_script",
+        "raw_source_preserved": true
+      }
+    },
+    {
+      "route": "tsql",
+      "id": "P05-TSQL-GO-LITERAL",
+      "feature_ids": [
+        "tsql-B05"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT 'GO' AS [GO];\n",
+      "input_bytes": 21,
+      "input_sha256": "1bf9972be0ab2c5078a2bbac3ff78177f892508a2ced4c692d2b0391aa9439be",
+      "expected": {
+        "facts": "문자열·identifier 내부 GO는 batch 아님",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-LEGACY-OIDS",
+      "feature_ids": [
+        "postgresql-sql-L01"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a integer) WITH OIDS;\n",
+      "input_bytes": 38,
+      "input_sha256": "4a80cd888ca9996d33de5bb14a320d41366e6913bf8cd8358faf4f83dd599006",
+      "expected": {
+        "facts": "9.6 legacy WITH OIDS option",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 15,
+        "restore_utf8": "(",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 16,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 16,
+          "error_near_start": 14,
+          "damaged_sha256": "b5fe59ec09a44c1d9defb62440b4434d3f921555177a6452c40aae67d6621437",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "CREATE TABLE t a integer) WITH OIDS;\n",
+          "preserve_following_source": true
+        }
+      },
+      "source_profile": {
+        "syntax_valid_through": "11",
+        "native_expected": "9.6~18에서 유효했던 구문의 합집합에 포함된 positive",
+        "removed_in": "12",
+        "kind": "adopted_legacy_union",
+        "modern_server_acceptance_claim": false,
+        "syntax_valid_from": "9.6"
+      }
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-LEGACY-QUOTED",
+      "feature_ids": [
+        "postgresql-sql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT \"a\" FROM \"t\";\n",
+      "input_bytes": 21,
+      "input_sha256": "bd5d6be8e2bd0919ce703559912ca4a4c9a5af810a1462aa7d23fad44b600baf",
+      "expected": {
+        "facts": "quoted identifier, string 아님",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-LEGACY-DOLLAR",
+      "feature_ids": [
+        "postgresql-sql-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "SELECT $tag$BEGIN; SELECT 1;$tag$;\n",
+      "input_bytes": 35,
+      "input_sha256": "ff034e1df273fe9ffa34b6d864547c1194962b4e9fc6639743a5769019be23db",
+      "expected": {
+        "facts": "dollar string body 내부 SQL은 별도 statement 아님",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-LEGACY-CONFLICT",
+      "feature_ids": [
+        "postgresql-sql-B02"
+      ],
+      "kind": "P",
+      "input_utf8": "INSERT INTO t(a) VALUES (1) ON CONFLICT (a) DO NOTHING;\n",
+      "input_bytes": 56,
+      "input_sha256": "88bc87d8a2dac6fd32c61136849b315a693e3f61455f61321890dba69d441973",
+      "expected": {
+        "facts": "INSERT와 ON CONFLICT clause",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-18-VIRTUAL",
+      "feature_ids": [
+        "postgresql-sql-V18"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a + 1) VIRTUAL);\n",
+      "input_bytes": 67,
+      "input_sha256": "2a0b821f7d9b4d4c20974362e941e4dd5b62e15fc94eb725515ad05d496f1656",
+      "expected": {
+        "facts": "generated expression과 VIRTUAL",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-18-OVERLAPS",
+      "feature_ids": [
+        "postgresql-sql-V18"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE t (a int, valid_at daterange, PRIMARY KEY (a, valid_at WITHOUT OVERLAPS));\n",
+      "input_bytes": 88,
+      "input_sha256": "9a4525716bf4b5aa595fb1e77438e3c0aed6dc3725cbe7462846e0d86f1971d8",
+      "expected": {
+        "facts": "temporal primary key와 WITHOUT OVERLAPS",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-18-PERIOD",
+      "feature_ids": [
+        "postgresql-sql-V18"
+      ],
+      "kind": "P",
+      "input_utf8": "CREATE TABLE c (a int, valid_at daterange, FOREIGN KEY (a, PERIOD valid_at) REFERENCES t (a, PERIOD valid_at));\n",
+      "input_bytes": 112,
+      "input_sha256": "172bfe35b7cb225a8512980dc9f34cd371814eeb0a0cdb47ffebc93d12d53354",
+      "expected": {
+        "facts": "두 PERIOD key 위치",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "postgresql-sql",
+      "id": "P05-PG-18-RETURNING",
+      "feature_ids": [
+        "postgresql-sql-V18"
+      ],
+      "kind": "P",
+      "input_utf8": "UPDATE t SET a = a + 1 RETURNING WITH (OLD AS o, NEW AS n) o.a, n.a;\n",
+      "input_bytes": 69,
+      "input_sha256": "f6d4ca675f590c2ebbe375637f963fb9b6afc2c6a2cb45a10d1357148eea6b36",
+      "expected": {
+        "facts": "OLD/NEW alias namespace와 반환 expression",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "swift",
+      "id": "P05-SWIFT-GENERATION-LEGACY",
+      "feature_ids": [
+        "swift-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "func id<T>(_ x: T) -> T { return x }\n",
+      "input_bytes": 37,
+      "input_sha256": "c7ae103f0baa9df36bf28580c9bb023f70bcfe59c7eda100ec899710d3b5fad7",
+      "expected": {
+        "facts": "Swift5 generic function/parameter/return/body",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": {
+        "start_byte": 10,
+        "restore_utf8": "(",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 11,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 11,
+          "error_near_start": 9,
+          "damaged_sha256": "5da801b1b3377591820e30b9255c069ba502431a2c08a950f5ff60bc0812d0f8",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "func id<T>_ x: T) -> T { return x }\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "route": "swift",
+      "id": "P05-SWIFT-GENERATION-INLINE",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: [3 of Int] = [1, 2, 3]\n",
+      "input_bytes": 35,
+      "input_sha256": "31f86e1aae6defc72707343a07a8241e1d17a01eff5fe5a56d3f9e9102a139e1",
+      "expected": {
+        "facts": "integer size와 inline array type",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    },
+    {
+      "route": "swift",
+      "id": "P05-SWIFT-GENERATION-SELECTOR",
+      "feature_ids": [
+        "swift-V64"
+      ],
+      "kind": "P",
+      "input_utf8": "let value = Swift::Int(1)\n",
+      "input_bytes": 26,
+      "input_sha256": "3311b73e705149ffcd9c29e0f6d9f2f8399341bbc69c081380b97883a3010ce3",
+      "expected": {
+        "facts": "module selector와 type/call source",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "mapping_review": "PRIMARY_SYNTAX_REVIEWED_NATIVE_STRUCTURE_PENDING",
+      "scope_status": "EXISTING_ADOPTED_FEATURE",
+      "edit": null
+    }
+  ],
+  "case_count": 57,
+  "status": "APPROVED_EFFECTS_INPUT_AND_ISOLATION_GATES_REQUIRED",
+  "scope": "PREPARE_ONLY",
+  "image_compressed_bytes": 409764189,
+  "destinations": {
+    "local_relative_prefix": ".work/campaign-01-prepare-03/",
+    "hosted_relative_prefix": "tsgk-p05-"
+  }
+}
