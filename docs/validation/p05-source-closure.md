@@ -81,3 +81,5 @@ run36592527846은 별도 승인을 받은 raw 취득으로 등록474파일과 CL
 preflight/diagnostic의 stdout+stderr 합산 상한은1 MiB로 supervisor에 전달하며 결과 archive 상한과 각각 적용한다. process-limit probe의 JavaScript 원문은 task 변수에 보관하고 PowerShell의 read-only 자동 변수 `PID`에 대입하지 않는다. 이 두 경로는 이전 run에서 아직 도달하지 않은 실행 경계로, 실제 hosted 성공을 미리 주장하지 않는다.
 
 회수 canary는 `preserved`와 NUL·CRLF의12 bytes를 `/work`에 쓰고 원 container를 종료하기 전에 회수한다. host의 안전한 tar 추출 뒤 원문 bytes/hash를 확인하며, 정적 self-check는 NUL 삭제·CRLF 변경·같은 길이의 내용 변경을 거부한다. build의 `probe`는 archive mode0755만 허용하고 추출 파일에 같은 mode를 적용·검증한다. 각 등록 case의 새로운 container에서 read-only 입력의 mode와 SHA를 다시 대조한 뒤 실행하며, 불일치는 exit74로 보존한다. canary나 mode 확인만으로 grammar 지원 또는 실제 다음 container 실행 성공을 주장하지 않는다.
+
+회수의 frozen-state 조회와 cleanup의 state 조회는 서로 다른 immutable 명령 이름을 사용한다. lifecycle 회귀 검사는 실제 `Freeze`/`StopContainer`/`Record` 함수에 owned Docker 응답을 공급해 이름 충돌을 검출하며, 실제 Docker 회수·격리·cleanup 성공은 hosted 결과로 별도 확인한다.

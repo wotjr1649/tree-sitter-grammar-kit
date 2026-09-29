@@ -92,6 +92,31 @@ foreach($mode in @(493,420)){
         if(-not $rejected){throw 'Unexpected executable mode accepted'}
     }
 }
+& {
+    param($sourceAst,$caseRoot)
+    $root=Join-Path $caseRoot 'command-lifecycle'
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'records'))
+    foreach($helper in @('Record','Require','ConfirmFrozenState','Freeze','Snapshot','StopContainer')){
+        $definition=@($sourceAst.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $helper},$true))
+        if($definition.Count -ne 1){throw 'Lifecycle helper identity mismatch'}
+        . ([scriptblock]::Create($definition[0].Extent.Text))
+    }
+    $script:containers=[Collections.Generic.List[string]]::new();$script:containers.Add('owned')
+    $script:captureToolVerified=$true
+    # Exercise real receipt naming and lifecycle calls with owned Docker responses.
+    function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[switch]$Cleanup){
+        Record ('command-'+$label) @{argv=$argv;seconds=$seconds;simulation=$true}
+        $text=if($argv[0] -eq 'top'){"PID COMMAND`n3253 /bin/sleep infinity"}
+            elseif($label.EndsWith('-stopped')){'false 0'}
+            elseif($argv.Count -gt 2 -and $argv[2].Contains('.State.Pid')){'true true 3253'}
+            else{'true true'}
+        return @{label=$label;exit_code=0;termination='EXITED';text=$text}
+    }
+    function TextOutput($result){return $result.text}
+    [void](Snapshot 'owned' 'operation' 1048576)
+    StopContainer 'owned' 'operation'
+    if($script:containers.Count){throw 'Lifecycle receipt fixture incomplete'}
+} $ast $root
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
@@ -102,5 +127,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'

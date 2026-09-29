@@ -116,14 +116,14 @@ function CheckJsInputs([string]$entry,[string]$sourceRoot){
     return ,$files.ToArray()
 }
 function StopContainer([string]$id,[string]$label){
-    $inspect=Run ($label+'-state') @('inspect','--format','{{.State.Running}} {{.State.Paused}}',$id) 2 -Cleanup
+    $inspect=Run ($label+'-cleanup-state') @('inspect','--format','{{.State.Running}} {{.State.Paused}}',$id) 2 -Cleanup
     Require $inspect
     $state=(TextOutput $inspect).Trim()
-    if($state -eq 'true true'){Require (Run ($label+'-unpause') @('unpause',$id) 2 -Cleanup)}
-    if($state.StartsWith('true')){Require (Run ($label+'-kill') @('kill','--signal','KILL',$id) 2 -Cleanup)}
-    $stopped=Run ($label+'-stopped') @('inspect','--format','{{.State.Running}} {{.State.Pid}}',$id) 2 -Cleanup;Require $stopped
+    if($state -eq 'true true'){Require (Run ($label+'-cleanup-unpause') @('unpause',$id) 2 -Cleanup)}
+    if($state.StartsWith('true')){Require (Run ($label+'-cleanup-kill') @('kill','--signal','KILL',$id) 2 -Cleanup)}
+    $stopped=Run ($label+'-cleanup-stopped') @('inspect','--format','{{.State.Running}} {{.State.Pid}}',$id) 2 -Cleanup;Require $stopped
     if((TextOutput $stopped).Trim() -cne 'false 0'){throw 'Container child cleanup unverified'}
-    Require (Run ($label+'-remove') @('rm',$id) 2 -Cleanup)
+    Require (Run ($label+'-cleanup-remove') @('rm',$id) 2 -Cleanup)
     [void]$script:containers.Remove($id)
     Record ($label+'-cleanup') @{container=$id;running=$false;host_pid=0;removed=$true}
 }
