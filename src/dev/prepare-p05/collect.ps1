@@ -5,7 +5,7 @@ $task=[IO.Path]::GetFullPath($Root)
 $prefix=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
 if(-not $task.StartsWith($prefix,[StringComparison]::Ordinal) -or $task.Substring($prefix.Length) -notmatch '^tsgk-p05-[0-9]+-[0-9]+$'){throw 'Unexpected evidence root'}
 if(-not (Test-Path -LiteralPath $task)){throw 'Task evidence missing'}
-$files=@(foreach($directory in @('raw','records','cases','acquisition/archives','acquisition/records','acquisition/sources/Crary-Systems--tree-sitter-tsql--443d2bc774f1d779af7dcabcc99160fb24da96e6')){
+$files=@(foreach($directory in @('raw','records','cases','owned','acquisition/archives','acquisition/records','acquisition/sources/Crary-Systems--tree-sitter-tsql--443d2bc774f1d779af7dcabcc99160fb24da96e6')){
     $path=Join-Path $task $directory
     if(Test-Path -LiteralPath $path){Get-ChildItem -LiteralPath $path -File -Recurse|Where-Object {-not $_.Name.EndsWith('.tar')} }
 })
