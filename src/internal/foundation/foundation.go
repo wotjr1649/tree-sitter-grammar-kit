@@ -29,6 +29,7 @@ var required = []string{
 	"docs/specs/platform-support.md", "docs/design/architecture.md",
 	"docs/specs/public-go-api.md", "docs/validation/language-feature-scope.md",
 	"docs/validation/language-feature-disposition.md", "docs/validation/source-feature-feasibility.md",
+	"docs/validation/p05-source-closure.md",
 	"docs/reports/campaign-01-2026-09-29-preparation.md",
 	"docs/design/decisions/0001-core-and-execution.md",
 	"docs/provenance/upstream-sources.md", "docs/validation/validation.md",
