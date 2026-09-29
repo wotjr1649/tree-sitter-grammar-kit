@@ -297,7 +297,7 @@ try {
     $pidProbe='const{spawn}=require("child_process");let cs=[],errors=0,closed=0;for(let i=0;i<70;i++){let c=spawn("/bin/sleep",["5"]);cs.push(c);c.on("error",()=>errors++);c.on("close",()=>closed++);}setTimeout(()=>cs.forEach(c=>c.kill("SIGKILL")),1000);setTimeout(()=>process.exit(errors>0&&closed===70?0:1),2500);'
     Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pidProbe) 10 1048576)
     $timeoutId=Container 'preflight-timeout';$script:counts.preflight++
-    try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
+    try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1 1048576;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
     Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
     Record 'preflight' @{result='PASS';counts=$script:counts;image=$toolchain.image;limitations='container setting and owned adverse checks; not S04 product supervisor qualification'}
     $runtime='/inputs/acquisition/sources/tree-sitter--tree-sitter--659cda7c7f86ebe31cc825dc5da59e9add172dc7'

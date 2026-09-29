@@ -86,7 +86,7 @@ preflight/diagnostic의 stdout+stderr 합산 상한은1 MiB로 supervisor에 전
 
 ## Toolchain loader 경계와 별도 image subject
 
-run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d2647082410에서 등록474파일, canary12bytes/NUL/CRLF 회수, owned isolation8개와 container9개의 종료·PID0·제거를 확인했다. 이후 고정 CLI0.27.0은 기존 bookworm image의 libc에서 `GLIBC_2.39 not found`로 실패했다. 따라서 toolchain preflight는 미완료이며 upstream G/B/X0, 원문57개와 edit6개는 NOT_RUN이다. 이 loader 실패를 grammar 지원 실패로 분류하지 않는다.
+run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d2647082410에서 등록474파일, canary12bytes/NUL/CRLF 회수, owned isolation8개와 container9개의 종료·PID0·제거를 확인했다. 이후 고정 CLI0.27.0은 기존 bookworm image의 libc에서 `GLIBC_2.39 not found`로 실패했다. 따라서 toolchain preflight는 미완료이며 upstream G/B/X0, 원문57개와 edit6개는 NOT_RUN이다. 이 loader 실패를 grammar 지원 실패로 분류하지 않는다. timeout 반례의 실제 출력은0bytes였지만 direct 호출의 output 상한이 기본8MiB였음도 확인했다. 이 호출을 계약의1MiB로 명시 교정하며 이전 receipt는 보존한다.
 
 `bookworm-r1`은 원래 `inputs.json` image identity를 보존한다. 제안된 `trixie-r1`은 같은 Node24.21.0의 linux/amd64 image `node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492`와 compressed440,298,459bytes를 별도 subject에 결속한다. **새 image의 실제 사용자 승인 전 pull·native 실행은 불가**하다. helper 통합이나 subject 문자열 존재는 승인이 아니다. source/case 원본은 변경하지 않으며 기존 1GiB 취득 상한에서 선택 image 크기를 미리 예약한다. generation/build/header/capture/probe 기록은 선택한 실제 image와 tool bytes를 가리킨다.
 
