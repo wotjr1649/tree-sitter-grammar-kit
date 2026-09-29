@@ -23,6 +23,10 @@ on:
         description: Separate immutable approval subject for pinned-tsql-r1
         required: false
         type: string
+      execution_approval_subject:
+        description: Separate immutable approval subject for quiescent tmpfs capture
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -62,9 +66,10 @@ jobs:
         env:
           ACQUISITION_PROFILE: ${{ inputs.acquisition_profile }}
           ACQUISITION_APPROVAL_SUBJECT: ${{ inputs.acquisition_approval_subject }}
+          EXECUTION_APPROVAL_SUBJECT: ${{ inputs.execution_approval_subject }}
         run: |
           $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT
+          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT
       - name: 원본 근거를 유한 artifact로 묶기
         if: always()
         run: |

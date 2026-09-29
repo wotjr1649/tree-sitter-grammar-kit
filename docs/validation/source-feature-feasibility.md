@@ -9,7 +9,7 @@
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
 - `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. **현재 26 upstream route에 이 등급의 기록은 0개**다.
 
-모든 행의 native 상태는 `NOT_RUN`, 전체 source closure는 `CONTENT_REVIEW_PENDING`이다. metadata/file-list 관측, 일부 source 정적 열람, executable closure의 완전한 검토는 서로 다르다. 후보의 설치 script는 실행하지 않았다. 과거 owned scannerless/stateful 7회 probe는 공통 CLI/GCC/runtime 경로의 근거이며 이 26행의 지원 성공을 대신하지 않는다.
+모든 행의 upstream generation/build/parse 상태는 `NOT_RUN`이다. PREPARE-03 run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했다. 선택 목록의 byte 검증은 전체 feature 지원이나 모든 단계의 executable closure 완료를 뜻하지 않는다. owned 격리 preflight4회 뒤 tmpfs 결과 회수가 실패해 upstream native는 시작하지 않았다. metadata/file-list 관측, source bytes, executable closure의 완전한 검토를 구분한다. 후보의 설치 script는 실행하지 않았다. 과거 owned scannerless/stateful7회도 이26행의 지원 성공을 대신하지 않는다.
 
 ## 26 route 위험 매핑
 
@@ -85,5 +85,7 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.
 
 현재 P05가 남는 이유는 (1) C#의 문서상 필수 gap, (2) T-SQL의 정적 필수 source gap, (3) 26개 executable source closure 및 선택 high-risk native 경로의 미확인이다. TS/TSX import-defer source 위험도 남는다. exact candidate 유지와 요구 유지 조건 아래 이 gap을 무조건 해결됐다고 할 수 없다.
+
+위 수치는 최초 B 승인 당시 envelope다. 이후 수동 job2회 및3회째와 T-SQL raw 취득의 별도 승인을 각각 소비했으며, 현재 source HTTP 누적52회·image pull1회·owned isolation preflight4회다. 실패 job14+14+66초와 전송/CI를 누적 ledger에 유지한다. 4회째 job이나 새 tmpfs 회수 방식은 추가 승인 전 실행할 수 없다. 현재 실제 장애와 회수 계획은 [source closure](p05-source-closure.md)의 tmpfs capability 절을 따른다.
 
 담당은 PREPARE/#20, 기한은 S01 readiness 전이다. 추가 source acquisition/native 효과가 필요해지면 source set·destination·isolation·횟수·입출력/시간/memory/저장 한도를 구체화해 먼저 승인받는다. 환경변수 제거는 hostile native network/filesystem isolation의 증거가 아니다. 다른 grammar 채택·다른 repo 수정·기대값 완화·알려진 gap을 안고 구현을 시작하는 예외는 각각 별도 결정이며 이번 문서가 부여하지 않는다. 이 조건을 해결하기 전 verdict는 `ADOPTED_PENDING_INPUTS`와 `BLOCKED_EXTERNAL` 사유를 유지한다.

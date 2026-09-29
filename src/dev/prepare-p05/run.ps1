@@ -1,6 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject)
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject)
 $ErrorActionPreference='Stop'
-& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject
+& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
@@ -37,6 +37,7 @@ $script:failed=$false
 $script:wall=[Diagnostics.Stopwatch]::StartNew()
 $script:imageSize=2147483648L
 $script:acquiring=$true
+$script:captureToolVerified=$false
 function NetworkReceived { return [long]((Get-ChildItem -Path '/sys/class/net/*/statistics/rx_bytes' | ForEach-Object {[long][IO.File]::ReadAllText($_.FullName)})|Measure-Object -Sum).Sum }
 $script:networkStart=NetworkReceived
 function Record([string]$name,$value){$path=Join-Path $root ('records/'+$name+'.json');if(Test-Path $path){throw 'Record exists'};$value|ConvertTo-Json -Depth 40|Set-Content -LiteralPath $path -Encoding utf8NoBOM}
@@ -140,12 +141,33 @@ function Container([string]$label){
     if($observed.HostConfig.NetworkMode -cne 'none' -or $observed.HostConfig.IpcMode -cne 'none' -or $observed.HostConfig.PidMode -eq 'host' -or $observed.HostConfig.Privileged -or -not $observed.HostConfig.ReadonlyRootfs -or $observed.HostConfig.Memory -ne 4294967296 -or $observed.HostConfig.MemorySwap -ne 4294967296 -or $observed.HostConfig.NanoCpus -ne 1000000000 -or $observed.HostConfig.PidsLimit -ne 64 -or 'ALL' -notin $observed.HostConfig.CapDrop -or 'no-new-privileges' -notin $observed.HostConfig.SecurityOpt -or $observed.Config.User -cne '65534:65534' -or @($observed.Mounts|Where-Object {$_.Type -eq 'bind' -and $_.RW}).Count){throw 'Container boundary mismatch'}
     return $id
 }
-function Snapshot([string]$id,[string]$label,[long]$limit){
+function ConfirmFrozenState([string]$state,[string]$top){
+    if($state.Trim() -cnotmatch '^true true ([1-9][0-9]*)$'){throw 'Container is not running and frozen'}
+    $expectedProcessId=[long]$Matches[1]
+    $lines=@($top -split "`n"|Where-Object {$_.Trim()})
+    if($lines.Count -ne 2 -or $lines[0].Trim() -cnotmatch '^PID\s+COMMAND$' -or $lines[1] -cnotmatch '^\s*([1-9][0-9]*)\s+/bin/sleep infinity\s*$'){throw 'Unexpected descendant remains at freeze'}
+    if([long]$Matches[1] -ne $expectedProcessId){throw 'Frozen init process identity mismatch'}
+    return $expectedProcessId
+}
+function Freeze([string]$id,[string]$label){
     Require (Run ($label+'-pause') @('pause',$id) 2)
+    $state=Run ($label+'-state') @('inspect','--format','{{.State.Running}} {{.State.Paused}} {{.State.Pid}}',$id) 2;Require $state
     $top=Run ($label+'-top') @('top',$id,'-eo','pid,args') 2;Require $top
-    $lines=@((TextOutput $top)-split "`n"|Where-Object {$_.Trim()})
-    if($lines.Count -ne 2 -or $lines[1] -notmatch '/bin/sleep infinity'){throw 'Unexpected descendant remains at freeze'}
-    $copy=Run ($label+'-copy') @('cp',($id+':/work/.'),'-') 10 $limit;Require $copy
+    return (ConfirmFrozenState (TextOutput $state) (TextOutput $top))
+}
+function Snapshot([string]$id,[string]$label,[long]$limit){
+    $firstProcessId=Freeze $id $label
+    Require (Run ($label+'-unpause') @('unpause',$id) 2)
+    if(-not $script:captureToolVerified){
+        if(++$script:counts.diagnostic -gt 16){throw 'Capture diagnostic budget exceeded'}
+        $tool=Run 'capture-tool-identity' @('exec',$id,'/bin/sh','-ec','/usr/bin/tar --version; /usr/bin/sha256sum -- /usr/bin/tar') 10 1048576;Require $tool
+        $digestLines=@((TextOutput $tool) -split "`n"|Where-Object {$_ -match '^[0-9a-f]{64}  /usr/bin/tar$'})
+        if($digestLines.Count -ne 1){throw 'Capture tool identity missing'}
+        Record 'capture-tool' @{image=$inputs.image;path='/usr/bin/tar';sha256=$digestLines[0].Substring(0,64);identity_command='command-capture-tool-identity.json';capture_method='quiescent-tar-r1';execution_approval_subject=$ExecutionApprovalSubject}
+        $script:captureToolVerified=$true
+    }
+    $copy=Run ($label+'-copy') @('exec','--env','TAR_OPTIONS=',$id,'/usr/bin/tar','--format=ustar','--create','--file=-','--directory=/work','--one-file-system','.') 10 $limit;Require $copy
+    if((Freeze $id ($label+'-after-copy')) -ne $firstProcessId){throw 'Init process changed during capture'}
     return (Join-Path $root ('raw/'+$copy.label+'.stdout'))
 }
 function UnpackResult([string]$archive,[string]$destination,[long]$limit){
