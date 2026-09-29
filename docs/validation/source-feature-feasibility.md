@@ -67,6 +67,8 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 |---|---|---|---|
 | P05-CS-ID | csharp-B01 | class/field/local 이름에 async/await/var를 놓은 공식 valid context 여러 개; identifier와 modifier 분리 | PLANNED_NOT_RUN; README의 일부 예외를 특정 한 예제 실패로 단정하지 않음 |
 | P05-CS-DIRECTIVE | csharp-V14c | #:property TargetFramework=net10.0 뒤 일반 .cs; 나머지 세 directive도 각각 등록 | PLANNED_NOT_RUN; directive 행과 후속 statement 보존 |
+| P05-CS-DIRECTIVE-INCLUDE | csharp-V14c | SDK10.0.300의 `#:include helpers.cs` 뒤 일반 .cs; 이름·인수·행 경계와 후속 statement 보존 | PLANNED_NOT_RUN; 좁은 scope 보완 채택. 기존 README의 네 directive 선언과 별도 사양 대비 항목이며 native 실패는 미재현 |
+| P05-TS-DEFER | typescript-V59 | `import defer * as m from "m";`와 typed declaration; 일반 namespace import legacy 대조 | PLANNED_NOT_RUN; 이미 채택된 TS feature의 .ts probe이며 TSX producer와 별도 |
 | P05-TSX-AMBIGUITY | tsx-B02,tsx-V29 | `const id = <T,>(x: T) => x;`와 generic JSX/self-closing/fragment/relational expression | PLANNED_NOT_RUN; generic parameter/tag/query field 구분 |
 | P05-TSX-DEFER | tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | PLANNED_NOT_RUN; TS-1의 common factory 관찰을 TSX producer로 별도 확인하며 .ts 증거로 대체하지 않음 |
 | P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | PLANNED_NOT_RUN; 둘의 syntax 수용과 node 분류를 각각 비교 |
@@ -74,6 +76,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 | P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | PLANNED_NOT_RUN; client separator 경계 |
 | P05-PG-LEGACY | postgresql-sql-B01,postgresql-sql-L01 | 9.6 WITH OIDS/quoted identifier/dollar string/ON CONFLICT와 18 counterpart | PLANNED_NOT_RUN; 유효 legacy source가 보존되는지 |
 | P05-PG-18 | postgresql-sql-V18 | VIRTUAL generated column, WITHOUT OVERLAPS/PERIOD key, RETURNING OLD/NEW | PLANNED_NOT_RUN; clause/body/identifier 구조 |
+| P05-SWIFT-GENERATION | swift-B01,swift-V62,swift-V64 | 고정 grammar generation과 Swift5 generic function/inline array/module selector source의 구분된 입력 | PLANNED_NOT_RUN; generation과 syntax 결과를 분리하며 새 syntax 범위 채택이 아님 |
 
 ## 남은 승인과 readiness
 
