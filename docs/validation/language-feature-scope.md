@@ -45,7 +45,7 @@ route마다 legacy 기본 syntax와 상한까지 추가·변경·제거된 synta
 
 검사군은 inventory/identity(S01), strict artifact selection(S02), static schema(S03), reproduction(S04), feature/recovery/edit(S05), query/API(S06), evidence/replay(S07), 현재 후보의 전체 실행·실사용·cross-OS(S08)다. N/A는 실행 전 근거로 등록하며 필수 실패 뒤 분류를 바꾸지 않는다. 모든 feature에 임의로 같은 fixture 개수를 요구하지 않는다.
 
-실제 feature 등록과 전수 처분의 완료 여부는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)에 기록한다. 숫자 상한 대조만 끝난 상태는 feature scope 완료가 아니다. 미확인 항목·미승인 범위는 P04를 막고 master는 시작하지 않는다.
+실제 feature·구조 목표·case kind·제외·담당은 [feature disposition](language-feature-disposition.md), source 위험의 관측 등급과 feature 매핑은 [P05 feasibility](source-feature-feasibility.md)가 소유한다. 채택·전수 처분의 완료 여부는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)와 hash가 연결된 실제 receipt에 기록한다. 숫자 상한 대조나 feature 행의 존재만으로 scope 완료가 되지 않는다. 미확인 항목·미승인 범위는 P04를 막고 master는 시작하지 않는다.
 
 ## Source feasibility와 네 역할
 

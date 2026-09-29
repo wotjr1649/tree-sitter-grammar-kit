@@ -148,11 +148,139 @@ func checkSources(registry sourceRegistry, routes []string, scope string) error 
 		if r.RouteID == "csharp" {
 			wantSupport = "KNOWN_REQUIRED_SUPPORT_GAP"
 		}
+		if r.RouteID == "tsql" {
+			wantSupport = "STATIC_REQUIRED_SOURCE_GAP"
+		}
 		if r.FeatureSupport != wantSupport || ((r.RouteID == "csharp" || r.RouteID == "swift" || r.RouteID == "tsql" || r.RouteID == "postgresql-sql") && len(r.KnownGaps) == 0) {
 			return fmt.Errorf("source known gap/support mismatch: %s", r.RouteID)
 		}
 	}
 	return nil
+}
+
+// Check public registry shape and references, not linguistic completeness or adoption.
+func checkFeatureDisposition(routes []string, inventory, risks string) error {
+	features := map[string]bool{}
+	counts := map[string]map[string]int{}
+	want := map[string]bool{}
+	for _, route := range routes {
+		want[route] = true
+		counts[route] = map[string]int{}
+		if strings.Count(inventory, "\n## "+route+"\n") != 1 {
+			return fmt.Errorf("feature route section mismatch: %s", route)
+		}
+	}
+	rowID := regexp.MustCompile(`^([a-z-]+)-[A-Z][0-9]+[a-z]*$`)
+	for _, line := range strings.Split(inventory, "\n") {
+		if !strings.HasPrefix(line, "| ") {
+			continue
+		}
+		fields := strings.Split(line, "|")
+		id := strings.TrimSpace(fields[1])
+		match := rowID.FindStringSubmatch(id)
+		if match == nil {
+			for _, route := range routes {
+				if strings.HasPrefix(id, route+"-") {
+					return fmt.Errorf("invalid feature identity: %s", id)
+				}
+			}
+			continue
+		}
+		if len(fields) != 8 || !want[match[1]] || features[id] {
+			return fmt.Errorf("feature identity/columns mismatch: %s", id)
+		}
+		features[id] = true
+		for i := 2; i <= 6; i++ {
+			fields[i] = strings.TrimSpace(fields[i])
+			if fields[i] == "" {
+				return fmt.Errorf("empty feature field: %s", id)
+			}
+		}
+		disposition := fields[3]
+		if disposition != "REQ" && disposition != "SEM" && disposition != "RUN" && disposition != "EXT" {
+			return fmt.Errorf("unresolved feature disposition: %s", id)
+		}
+		counts[match[1]][disposition]++
+		if disposition == "REQ" {
+			seen := map[string]bool{}
+			for _, kind := range strings.Split(fields[6], ",") {
+				if !strings.Contains("PNREQW", kind) || len(kind) != 1 || seen[kind] {
+					return fmt.Errorf("invalid feature case kind: %s", id)
+				}
+				seen[kind] = true
+				counts[match[1]][kind]++
+			}
+			if !seen["P"] {
+				return fmt.Errorf("required feature without positive case: %s", id)
+			}
+		} else if fields[6] != "-" {
+			return fmt.Errorf("excluded feature has parser cases: %s", id)
+		}
+	}
+	for _, route := range routes {
+		for _, key := range []string{"REQ", "SEM", "RUN", "EXT", "P", "N", "R", "E", "Q", "W"} {
+			if counts[route][key] == 0 {
+				return fmt.Errorf("feature coverage missing: %s/%s", route, key)
+			}
+		}
+		prefix := "| " + route + " | "
+		if strings.Count(risks, prefix) != 1 {
+			return fmt.Errorf("source risk route mismatch: %s", route)
+		}
+		for _, line := range strings.Split(risks, "\n") {
+			if !strings.HasPrefix(line, prefix) {
+				continue
+			}
+			fields := strings.Split(line, "|")
+			if len(fields) != 7 {
+				return fmt.Errorf("source risk columns mismatch: %s", route)
+			}
+			kind := strings.TrimSpace(fields[2])
+			if kind != "UPSTREAM_DECLARED" && kind != "STATIC_SOURCE_OBSERVATION" && kind != "UNVERIFIED_SUPPORT" {
+				return fmt.Errorf("unobserved source risk claim: %s", route)
+			}
+			for _, id := range strings.Split(strings.TrimSpace(fields[3]), ",") {
+				if !features[id] || !strings.HasPrefix(id, route+"-") {
+					return fmt.Errorf("unknown source risk feature: %s", id)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func TestFeatureDisposition(t *testing.T) {
+	read := func(path string) []byte {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(repository(t), filepath.FromSlash(path)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return data
+	}
+	var campaign campaignDefinition
+	if err := json.Unmarshal(read("src/contracts/campaign-01.json"), &campaign); err != nil {
+		t.Fatal(err)
+	}
+	inventory := string(read("docs/validation/language-feature-disposition.md"))
+	risks := string(read("docs/validation/source-feature-feasibility.md"))
+	if err := checkFeatureDisposition(campaign.Routes, inventory, risks); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, inventory, risks, diagnostic string }{
+		{"missing-route", strings.Replace(inventory, "## tsx\n", "## removed\n", 1), risks, "route section"},
+		{"unresolved-scope", strings.Replace(inventory, "| REQ |", "| UNRESOLVED |", 1), risks, "unresolved feature"},
+		{"missing-positive", strings.Replace(inventory, "| P,N,R,E |", "| N,R,E |", 1), risks, "without positive"},
+		{"invented-reproduction", inventory, strings.Replace(risks, "| UPSTREAM_DECLARED |", "| REPRODUCED_FAILURE |", 1), "unobserved source"},
+		{"unknown-feature", inventory, strings.Replace(risks, "csharp-B01,csharp-V14c", "csharp-MISSING", 1), "unknown source risk"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkFeatureDisposition(campaign.Routes, tc.inventory, tc.risks)
+			if err == nil || !strings.Contains(err.Error(), tc.diagnostic) {
+				t.Fatalf("mutation not detected as %q: %v", tc.diagnostic, err)
+			}
+		})
+	}
 }
 
 func TestCampaignDefinitions(t *testing.T) {

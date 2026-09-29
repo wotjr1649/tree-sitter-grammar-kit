@@ -102,7 +102,7 @@ PREPARE는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)�
 | P13 | 실제 operational manifest/immutable receipt/승인 budget/hash/tracking의 일치 | template/null approval/변경된 prompt는 S01을 활성화하지 않음 |
 | P14 | 한국어 handoff의 실제 판정·미실행·한도·정확한 재개 entry | PREPARE에서 S01 또는 release를 시작하지 않음 |
 
-source 등록부의 개발 검사는 현재 후보 metadata의 필수 값·상태·portable path와 공개 26-route 표의 전수성을 확인한다. 실제 upstream bytes/closure 또는 지원 성공은 primary 조사와 해당 native receipt가 검증하며, 이 정적 검사만으로 성립하지 않는다.
+source 등록부의 개발 검사는 현재 후보 metadata의 필수 값·상태·portable path와 공개 26-route 표의 전수성을 확인한다. feature 개발 검사는 [disposition](language-feature-disposition.md)의 route/ID/처분/case 종류와 [source 위험](source-feature-feasibility.md)의 feature 참조를 확인하고, 미정 scope·없는 feature·재현하지 않은 실패 등급을 넣은 negative control을 거절한다. 문법 목록의 의미상 완전성·사용자 채택·실제 upstream bytes/closure·지원 성공은 독립 리뷰/실제 답변/primary 조사/native receipt가 검증하며, 정적 행 검사가 이를 대신하지 않는다.
 
 필수 입력이 남은 계약 통합은 ADOPTED_PENDING_INPUTS, 필수 외부 격차는 BLOCKED_EXTERNAL, 미처리 finding은 HOLD_FOR_CORRECTION이다. 검증·리뷰가 완료되고 통합만 남으면 READY_FOR_INTEGRATION이다. PREPARATION_READY는 P01~P14와 필수 scope/효과/예산이 확인된 경우만 사용하고 S01 실행은 별도 live 지시를 요구한다. 준비 Issue는 전체 기준 충족 후에만 완료 처리하며 Parent/#3~#10/MS2~9는 PREPARE에서 닫지 않는다.
 

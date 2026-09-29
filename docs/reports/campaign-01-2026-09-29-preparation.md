@@ -32,9 +32,11 @@
 
 26개 후보의 공개 commit과 실제 grammar subdir·generated 파일·scanner/shared file 목록을 [등록부](../../src/contracts/language-sources.json)에 기록했다. metadata 존재는 full source closure 검토나 언어 지원 성공이 아니다. Swift 후보의 고정 source에는 `parser.c`가 없어 generation 준비가 필요하다. T-SQL과 PostgreSQL은 서로 다른 dialect 후보로 유지한다.
 
-공식 stable 상한 대조와 사용자가 채택한 26개 숫자/모드는 [scope 표](../validation/language-feature-scope.md)에 있다. 모든 사양 장·버전별 syntax 변화의 전수 disposition, candidate 구조 mapping·required case 종류는 아직 완료로 판정하지 않는다. fixture/expected tree를 생성하거나 검사 대상의 출력을 golden으로 채택하지 않았다.
+공식 stable 상한 대조와 사용자가 채택한 26개 숫자/모드는 [scope 표](../validation/language-feature-scope.md)에 있다. PR #21 checkpoint 당시 feature disposition은 26개 route placeholder와 C#14 일부 항목만 있어 P04가 남았다. 후속 PREPARE의 [feature disposition](../validation/language-feature-disposition.md)은 26개 기본 구문 계열·중간 version delta·legacy 보존·syntax/semantic/runtime/extension 구분·구조 목표·case 종류·담당과 기한을 등록한다. 독립 리뷰와 이 정확한 내용의 사용자 채택은 별도 실제 receipt로 확인한다. candidate node/field mapping과 상세 fixture/expected tree는 담당 S03/S05/S06/S08 산출물이며 지금 생성하거나 parser 출력으로 golden을 채택하지 않았다.
 
-확인한 필수 위험은 C# 후보의 file-based app directives 미지원과 완전한 dialect/latest-feature 지원의 미확인이다. [후보 C# 문서](https://github.com/tree-sitter/tree-sitter-c-sharp/tree/9150f7d56bb47f1a809fa23623f1ba1413e93fa9)는 지원 예외를 공개한다. 일반 `sql` grammar나 기본 smoke 성공으로 이 격차를 해소했다고 기록하지 않는다. upstream 수정·scope 축소·미해결 격차를 안고 S01 진행하는 결정은 이번 PREPARE가 자동 수행하지 않는다.
+확인한 필수 위험은 C# 후보의 contextual identifier/file-based directives 문서상 격차, T-SQL 고정 grammar source의 SELECT/EXEC 중심 경로와 DDL/다른 DML/CTE TODO, TS/TSX import-defer 및 dependency closure, PG19 기반 후보의 채택 9.6~18 legacy 지원 미확인이다. [P05 관측표](../validation/source-feature-feasibility.md)는 26개 행을 feature ID에 연결하고 upstream 선언·정적 관측·지원 미확인·실제 재현 실패를 분리한다. 현재 upstream의 재현 실패 receipt는 0개이며 native는 미실행이다. generic SQL/smoke로 격차를 대체하지 않는다. upstream 수정·다른 grammar·scope 축소·미해결 gap을 안고 S01 진행하는 결정은 자동 수행하지 않는다.
+
+후속 착수 시 PR [#21](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/21)은 MERGED, main은 `0406b7c9c53e062abab73682b1be80baea68372b`, tree는 `9c68da29a02273e7eb0e9ba7299f1f8c85fe92c3`로 확인했다. 이전 immutable receipt·소모 ledger·46개 공급 파일·14개 역사적 identity가 일치했다. 재개는 Issue #20의 `campaign/01-20260929-prepare-p04-p05`에서 수행한다. 이전 checkpoint를 덮어쓰지 않고 새 receipt가 이전 receipt와 변경 전 operational manifest를 연결한다. 새 transaction의 실제 merge/CI/readback은 그 후속 receipt가 소유한다.
 
 현재 요청에서 kit Git transaction과 지정 tracking 쓰기를 승인했고, 후속 답변으로 기존 CLI/GCC/runtime을 사용한 owned probe와 유한 예산을 승인했다. PREPARE는 승인 후 누적 4시간, 저장 2 GiB, CI 120 job-minutes, 새 다운로드 0 bytes, 유료 KRW0이다. campaign envelope는 64시간/CI1,440분/native20,000회/다운로드2 GiB/보관20 GiB/KRW0, 각 Session은 8시간/CI180분/native2,500회/2.5 GiB다. 세부 연산의 null 한도는 담당 효과 전에 채택해야 하며 이 숫자 승인으로 master 실행 권한이 생기지 않는다.
 

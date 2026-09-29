@@ -1,0 +1,475 @@
+# Campaign 01 feature disposition
+
+기준일 `2026-09-29`, 추적 [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). [채택된 version/mode](language-feature-scope.md)의 구문 요구를 아래에서 처분한다. 후보는 [고정 source 등록부](../../src/contracts/language-sources.json)의 동일 route를 사용한다. **목록 채택은 candidate 지원·실행 성공·S01 착수 승인이 아니다.** 채택 상태와 그때의 파일 hash는 준비 receipt와 Issue #20에서 확인한다.
+
+## 읽는 법과 완료 경계
+
+표의 한 행은 사양의 이름 있는 production 계열이다. `구문 사실`에 나열한 항목 각각과 `근거 장`의 해당 production 대안 전부가 범위다. 예시 하나만 통과해 계열 전체를 완료 처리하지 않는다. 기본 계열과 version delta의 합집합으로 하한에서 유효했던 구문도 보존한다. delta는 기본 계열에 더해지는 명시적 추적 항목이며 중복 fixture를 강제하지 않는다. 문법상 허용 여부와 binding/type checking/실행 결과는 별도로 다룬다.
+
+- `REQ` = `REQUIRED_SYNTAX`, `SEM` = `SEMANTIC_ONLY`, `RUN` = `LIBRARY_RUNTIME_ONLY`, `EXT` = `EXCLUDED_EXTENSION`. 제외 이유는 해당 행에 있다. 후보의 미지원은 EXT 사유가 아니다.
+- `P` valid syntax, `N` 문법 위반 negative, `R` 손상 후 recovery, `E` 실제 old-tree edit/fresh 비교, `Q` node/field/query 구조, `W` 실사용 source. N은 type error를 syntax error로 바꾸지 않는다. 표의 case 종류는 필수이며 한 case가 여러 항목을 덮을 수 있다. 임의의 동일 개수 quota는 없다.
+- 모든 REQ의 공통 assertion은 원본 byte/point 범위·자식 순서·구문 경계다. 표의 구조 목표를 더하며, 사양에 없는 Tree-sitter node 이름이나 전체 AST 동일성은 지금 확정하지 않는다. 잘못된 delimiter/토큰의 N/R에는 오류 위치·복구 후 유효한 후속 구문의 보존 목표를 붙인다.
+- 담당/기한: scope·case kind 채택은 **PREPARE/#20, S01 전**; 각 REQ의 candidate node/field mapping은 **S03/#5, S03 종료 전**; P/N/R/E의 fixture bytes·검토된 기대값은 **S05/#7, 해당 실행 전**; Q는 **S06/#8, 해당 query 전**; W와 세 OS 실행은 **S08/#10, qualification 전**. 증거 저장/재현은 S07/#9다. SEM/RUN/EXT의 분류 변경은 PREPARE scope 변경으로 재검토한다.
+- 현재 candidate mapping은 전 행 `PENDING_S03`, fixture/golden/native receipt는 `NOT_RUN`이다. 이 예정 상태는 scope 처분의 미정과 구별한다. 기대값은 공식 구문 사실 및 독립 구조 리뷰를 먼저 통과해야 한다. 대상 parser 출력 자체를 정답으로 채택하지 않는다.
+- 보조 parser는 전 행 기본 `NOT_REQUIRED`: 공식 사양+검토된 구조로 시작한다. type/context 경계 등 D7의 실제 불확실성을 해결할 때만 별도 case·효과 승인 후 등록한다. SDK/server 설치를 암묵적으로 요구하지 않는다.
+- 구체적인 source/content closure 및 지원 위험은 [P05 관측표](source-feature-feasibility.md)가 소유한다. scope에서 미정 항목이 발견되면 stable ID를 `UNRESOLVED`로 별도 등록하고 P04를 다시 보류한다. 이후 발견을 기존 성공이나 제외로 숨기지 않는다.
+
+표의 `기본`은 해당 route의 채택 하한부터 상한까지 유지되는 계열, `누적`은 그 범위 내 version별 변화의 합집합이다. 범위보다 최신 문법을 허용하는 superset 자체는 실패가 아니다. 엄격한 version rejection을 별도로 약속한 case에서만 rejection을 요구한다.
+
+## csharp
+
+근거: [C# 문법](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/grammar), [7.3~14 변경](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history), [14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives). mode는 일반 `.cs`, 고정 preprocessor symbols, legacy/modern 및 ASP.NET `.cs` source다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| csharp-B01 | 기본 | REQ | Lexical: identifier/escaped/contextual keyword, literal, comment, string/interpolation, directive | identifier와 keyword·문자열 경계 구분 | P,N,R,E |
+| csharp-B02 | 기본 | REQ | Types/variables: nullable, array, pointer, tuple, generic arguments/constraints, ref/out/in | type/argument/ref modifier 순서 | P,N,Q |
+| csharp-B03 | 기본 | REQ | Expressions: operator/assignment, invocation/member/index, cast, lambda, anonymous object, LINQ query, await | precedence와 query clause/lambda body | P,N,R,E,Q |
+| csharp-B04 | 기본 | REQ | Statements: block/selection/loop/jump, try/catch/filter/finally, using/lock/fixed/unsafe, local function | body/handler 및 local declaration | P,N,R,E,W |
+| csharp-B05 | 기본 | REQ | Namespaces/types/members: class/struct/interface/enum/delegate, method/constructor/destructor/property/indexer/event/operator, attributes | declaration/member/accessor/attribute 경계 | P,N,Q,W |
+| csharp-V73 | 7.3 | REQ | ref 재할당, stackalloc initializer, unmanaged/Enum/Delegate constraint, backing-field attribute target | ref·initializer·constraint·target 구분 | P,N,Q |
+| csharp-V08 | 8 | REQ | switch/property/tuple/positional pattern, using declaration, readonly/default interface member, static local function, nullable annotation, async stream, index/range, ??= | pattern/arm·range operand·declaration | P,N,R,E,Q |
+| csharp-V09 | 9 | REQ | record/init/top-level, relational/logical/parenthesized pattern, target-typed new, nint/nuint, function pointer, static lambda/discard, extended partial/local-function attributes | record·pointer convention·pattern nesting | P,N,R,E,Q |
+| csharp-V10 | 10 | REQ | record struct, global using, file-scoped namespace, extended property pattern, lambda attribute/return type, mixed deconstruction, enhanced #line | file scope·lambda signature·directive span | P,N,E,Q |
+| csharp-V11 | 11 | REQ | raw/u8 string, interpolation newline, list pattern, file type, required/generic attribute, ref field/scoped, static abstract/checked operator, >>> | raw delimiter·pattern slice·modifier | P,N,R,E,Q |
+| csharp-V12 | 12 | REQ | primary constructor, collection expression/spread, lambda default, ref readonly parameter, alias any type | constructor parameters·spread·alias target | P,N,R,E,Q |
+| csharp-V13 | 13 | REQ | params collection, \e escape, index-from-end initializer, allows ref struct, partial property/indexer | constraint·escape·accessor shape | P,N,E,Q |
+| csharp-V14a | 14 | REQ | extension block/member, null-conditional assignment, nameof unbound generic, lambda parameter modifiers | receiver/member·assignment target·generic arity | P,N,R,E,Q |
+| csharp-V14b | 14 | REQ | contextual field in property, partial event/constructor, user-defined compound assignment | field access·partial member·operator declaration | P,N,E,Q |
+| csharp-V14c | 14/file-based .cs | REQ | shebang와 #:property/package/sdk/project source directives | directive 이름/값/행 경계; 실행 없음 | P,N,R,E |
+| csharp-S01 | 누적 | SEM | tuple equality, overload/inference, nullable flow, covariance, Span conversion, generic math, lock lowering, inline-array/handler attribute의 실행 의미 | source token은 위 REQ, compiler 판정 제외 | - |
+| csharp-R01 | net461/net10 | RUN | framework/API/ASP.NET 서버·DI·HTTP·NuGet restore는 source parser 대상 밖 | 빌드·서버 성공 미주장 | - |
+| csharp-X01 | 범위 밖 | EXT | Razor, .csx 별도 host, preview/interceptors는 채택된 일반 .cs stable 범위 밖 | 파일/모드 경계 유지 | - |
+
+이전 부분 목록의 C#14 9개 항목은 V14a/b/c와 S01에 대응한다. 기존 기록은 삭제하지 않는다. `async/var/await` identifier 및 V14c의 후보 문서상 격차는 B01/V14c의 REQ를 그대로 유지한다.
+
+## go
+
+근거: [Go 1.27 specification](https://go.dev/ref/spec)의 Lexical elements, Types, Expressions, Statements, Declarations, Packages, Language versions. `.go` source이며 kit 자체의 compiler pin과 독립적이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| go-B01 | 기본 | REQ | lexical tokens, semicolon insertion, identifiers/keywords, numeric/rune/raw/interpreted literals/comments | newline 삽입과 literal byte 경계 | P,N,R,E |
+| go-B02 | 기본 | REQ | named/array/slice/struct/pointer/function/interface/map/channel types, tags, const/var/type/function/method declarations | type/member/receiver/tag | P,N,Q,W |
+| go-B03 | 기본 | REQ | unary/binary, conversion, composite literal, selector/index/slice/assertion/call, function literal | expression 결합·literal key/value | P,N,R,E,Q |
+| go-B04 | 기본 | REQ | assignment/short declaration, if/switch/type switch/for/range/select, send/go/defer/return/labels, package/import | statement/body/case·import alias | P,N,R,E,W |
+| go-V18 | 1.18~1.27 | REQ | type parameters/arguments, interface union/~ terms, generic declarations; 1.24 generic alias | type set와 expression operator 구분 | P,N,E,Q |
+| go-V27 | 1.27 | REQ | generic method와 struct literal의 field-selector key | method type parameter·selector key | P,N,E,Q |
+| go-S01 | 1.17~1.27 | SEM | slice/array conversion, comparable/inference, range integer/function, loop variable lifetime; min/max/clear는 기존 call syntax | 새 spelling의 source는 B03/B04, type/iteration 의미 제외 | - |
+| go-R01 | 누적 | RUN | runtime/GC/stdlib/toolchain 변화는 parser 실행 요구가 아님 | API call은 B03 | - |
+| go-X01 | 범위 밖 | EXT | cgo preamble의 C 해석, compiler 내부 directive 의미, 제안 문법 제외 | comment/directive bytes 보존 | - |
+
+## python
+
+근거: [3.14 grammar](https://docs.python.org/3.14/reference/grammar.html), [lexical](https://docs.python.org/3.14/reference/lexical_analysis.html), [3.8](https://docs.python.org/3.8/whatsnew/3.8.html), [3.9~3.14 변경 index](https://docs.python.org/3.14/whatsnew/index.html). module/script/async이며 REPL/eval entry의 별도 host는 포함하지 않는다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| python-B01 | 기본 | REQ | NEWLINE/INDENT/DEDENT, continuation, encoding comment, identifiers, number/string/bytes/f-string | indentation와 interpolation 경계 | P,N,R,E |
+| python-B02 | 기본 | REQ | atoms, call/index/slice, comprehensions, lambda, unpacking, await/yield, operators | precedence·generator/comprehension clauses | P,N,R,E,Q |
+| python-B03 | 기본 | REQ | simple statements/imports/assignment/annotation/assert, compound if/for/while/try/with, async variants, def/class/decorator | suite/handler/signature/decorator | P,N,R,E,Q,W |
+| python-V38 | 3.8 | REQ | :=, positional-only /, f-string debug = | named expression·parameter separator | P,N,E,Q |
+| python-V39 | 3.9 | REQ | decorator의 일반 assignment expression 허용 | decorator expression 경계 | P,N,Q |
+| python-V310 | 3.10 | REQ | match/case pattern 전 계열 및 guard, parenthesized with items | soft keyword·pattern/guard 구분 | P,N,R,E,Q |
+| python-V311 | 3.11 | REQ | except*, starred type/variadic unpacking 문맥 | handler와 starred operand | P,N,R,Q |
+| python-V312 | 3.12 | REQ | type alias/type parameter (TypeVar/tuple/ParamSpec), PEP701 f-string | type parameter·중첩 quote/comment | P,N,R,E,Q |
+| python-V313 | 3.13 | REQ | type parameter default | bound/default 구분 | P,N,Q |
+| python-V314 | 3.14 | REQ | t-string, 괄호 없는 복수 except/except* type | prefix/interpolation·exception list | P,N,R,E,Q |
+| python-S01 | 누적 | SEM | annotation 지연 평가, type inference/variance, exception runtime 선택 | 문법 노드는 유지, 평가 제외 | - |
+| python-R01 | 누적 | RUN | GIL/JIT/stdlib/packaging/성능 변화 제외 | parser 대상 아님 | - |
+| python-X01 | 범위 밖 | EXT | Python2, notebook magic, 3.15 prerelease 제외 | 채택된 module syntax 밖 | - |
+
+## javascript
+
+근거: [ES5.1](https://262.ecma-international.org/5.1/), [ECMA-262 17판](https://ecma-international.org/publications-and-standards/standards/ecma-262/), [TC39 완료 제안의 publication 연도](https://github.com/tc39/proposals/blob/main/finished-proposals.md). lexical/expressions/statements/declarations/scripts/modules 및 RegExp grammar가 기준이다. 17판 대형 단일 페이지는 연구 도구의 크기 한도로 본문 추출되지 않았고 edition·완료 제안 원문을 함께 사용했다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| javascript-B01 | ES5.1~2026 | REQ | lexical/ASI, identifiers/literals/regexp, expression/operator, statements/control/exception, function/var/object/accessor | slash regexp/division·ASI·precedence | P,N,R,E,Q,W |
+| javascript-V15 | ES2015 | REQ | let/const/class/super, arrow, template, destructuring/rest/spread, generator, for-of, import/export, new.target | declaration·binding·template substitution | P,N,R,E,Q |
+| javascript-V16 | ES2016~2019 | REQ | exponentiation, async/await/generator/iteration, trailing parameter comma, object rest/spread, optional catch binding, JSON-superset strings | async/body·spread·catch boundary | P,N,R,E,Q |
+| javascript-V20 | ES2020~2021 | REQ | BigInt, optional chaining, nullish coalescing/logical assignment, numeric separator, dynamic import/import.meta | chain·assignment·numeric token | P,N,R,E,Q |
+| javascript-V22 | ES2022~2025 | REQ | public/private class fields/methods, static blocks, top-level await, hashbang, import attributes | class element·module attribute | P,N,R,E,Q |
+| javascript-B02 | ES2018~2025 | REQ | regexp named/lookbehind/property escapes/dotAll, d/v flags, set notation, duplicate names의 허용 문맥, modifier groups | pattern literal 경계와 flags; 별도 engine AST 요구 없음 | P,N,R,E |
+| javascript-L01 | script/Annex B | REQ | legacy octal/escape, HTML-like comment, web legacy function declaration를 Annex B case로 명시 | strict/module과 구분, source 보존 | P,N,R,E |
+| javascript-S01 | 누적 | SEM | early errors, scope/binding, coercion, regexp match 결과는 CST 이상 의미 | syntax token은 REQ에 포함 | - |
+| javascript-R01 | ES2026 등 | RUN | Map upsert/Iterator/JSON.parse source access/Array.fromAsync/Math/Error/base64 등 API·runtime 변경 | 호출 syntax는 B01, API 실행 제외 | - |
+| javascript-X01 | 범위 밖 | EXT | TC39 표에서 2027 publication인 explicit resource management/Temporal 및 미완료 proposal, TypeScript/decorator 확장 제외 | TS using 요구와 구분 | - |
+
+## jsx
+
+근거: [고정 JSX spec.emu](https://github.com/react/jsx/blob/d614ce76e6ea996ea6dfa122f2a7be71ed96e6eb/spec.emu)의 JSX Elements/Attributes/Children/Strings/Fragments. host JS는 위 javascript REQ 계열을 함께 적용하되 JSX 전용 receipt를 만든다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| jsx-B01 | 고정 JSX/JS | REQ | paired/self-closing element, identifier/member/namespaced name | opening/closing name·nesting | P,N,R,E,Q,W |
+| jsx-B02 | 고정 JSX/JS | REQ | boolean/string/expression/element attribute와 spread attribute | attribute name/value/spread 순서 | P,N,R,E,Q |
+| jsx-B03 | 고정 JSX/JS | REQ | text/entity, empty/expression/spread child, nested element/fragment | raw text와 JS container 전환 | P,N,R,E,Q |
+| jsx-B04 | 고정 JSX/JS | REQ | javascript REQ 전체를 host로 합성: expression·statement 안 JSX | JSX와 relational expression 경계 | P,N,R,E,W |
+| jsx-S01 | 고정 JSX | SEM | 이름 대응·entity 해석의 의미와 JSX transform 정책 | bytes/nesting은 REQ, runtime 의미 제외 | - |
+| jsx-R01 | 범위 밖 | RUN | React rendering/hooks/DOM 실행 제외 | JSX는 React SDK 성공 증거 아님 | - |
+| jsx-X01 | 범위 밖 | EXT | TS annotation, Vue/Svelte/template DSL 제외 | 별도 route로 대체 금지 | - |
+
+## typescript
+
+근거: [Handbook](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html), release notes [2.8](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html), [3.0](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-0.html), [4.0](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-0.html), [5.0](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html), [5.9](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html), [6.0](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), [7.0](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/). 각 release-notes의 해당 minor 문법 항목을 누적하며 `.ts`/`.d.ts`, legacy/standard decorator를 구분한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| typescript-B01 | 2.8~7.0 .ts | REQ | host JS 계열, type annotation/alias/interface/enum/namespace, generic, overload, access modifier/parameter property, angle/as assertion/nonnull | type-vs-expression·declaration/member | P,N,R,E,Q,W |
+| typescript-B02 | .d.ts/ambient | REQ | declare/global/module augmentation, import=/export=, triple-slash comment, callable/construct/index signatures | ambient/export/signature boundaries | P,N,Q,W |
+| typescript-V28 | 2.8~2.9 | REQ | conditional/infer type, mapped +/- modifier, import type, generic tagged template | condition/branch·mapping key/modifier | P,N,E,Q |
+| typescript-V3 | 3.0~3.9 | REQ | tuple rest/optional, unknown, readonly tuple/array/as const, optional chain/??, asserts signature, type-only import/export, private field | tuple positions·predicate·type-only flag | P,N,R,E,Q |
+| typescript-V40 | 4.0~4.4 | REQ | variadic/labeled tuple, template literal type/key remap, abstract construct signature, override, getter/setter, symbol/template index signatures | type template/key·member modifier | P,N,E,Q |
+| typescript-V45 | 4.5~4.9 | REQ | per-specifier type modifier, import assertion, instantiation expression, in/out variance, constrained infer, satisfies | type arguments·constraint·satisfies expression | P,N,R,E,Q |
+| typescript-V50 | 5.0~5.4 | REQ | const type parameter, standard decorator, using/await using, import attributes, type-only export * | resource declaration·decorator·attribute clause | P,N,R,E,Q |
+| typescript-V59 | 5.5~7.0 | REQ | 5.9 import defer; 누적 syntax 보존. 6.0/7.0의 legacy module namespace/import assertion 폐기 전 형태도 legacy case | namespace/ambient module·assert/with·defer 구분 | P,N,R,E,Q |
+| typescript-S01 | 누적 | SEM | inference/predicate inference/control flow/assignability, decorator checking, compiler option defaults/deprecations | 타입 판정·설정은 구문 성공 아님 | - |
+| typescript-R01 | 7.0 | RUN | native compiler port/속도/API 제공 여부·emit·module loader 제외 | compiler 실행 없이 source 요구 유지 | - |
+| typescript-X01 | .ts | EXT | JSX는 별도 jsx/tsx route, 미채택 proposal 제외 | TS parser 성공으로 TSX 대체 금지 | - |
+
+## tsx
+
+근거: 위 TypeScript/JSX와 [TypeScript JSX handbook](https://www.typescriptlang.org/docs/handbook/jsx.html). 동일 repo여도 `tsx` subdir/producer identity를 사용한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| tsx-B01 | 2.8~7.0 .tsx | REQ | TypeScript의 B/V 계열 전체에서 JSX와 충돌하지 않는 선언/type/표현식; JSX element/attribute/children/fragment 합성 | typed function body 안 JSX 및 타입 | P,N,R,E,Q,W |
+| tsx-B02 | .tsx ambiguity | REQ | generic arrow의 trailing comma/extends, relational expression, JSX opening tag 구분; angle type assertion 대신 as | type parameter와 tag 및 assertion 경계 | P,N,R,E,Q |
+| tsx-V29 | 2.9~7.0 .tsx | REQ | JSX element type argument, namespaced attributes, spread/empty expression, fragment 안 typed JS expression | component type arguments·attribute/container | P,N,R,E,Q |
+| tsx-S01 | 누적 | SEM | JSX.Element/IntrinsicElements/component type checking은 syntax 밖 | node/field는 B01~V29 | - |
+| tsx-R01 | 누적 | RUN | React/JSX transform/rendering/compiler 속도 제외 | render 결과를 golden으로 쓰지 않음 | - |
+| tsx-X01 | 범위 밖 | EXT | 일반 .ts의 angle assertion을 .tsx valid case로 넣지 않음; framework DSL 제외 | mode-specific N case는 B02 | - |
+
+## java
+
+근거: [JLS27 grammar](https://docs.oracle.com/javase/specs/jls/se27/html/jls-19.html), [8~27 언어 변경](https://docs.oracle.com/en/java/javase/27/language/java-language-changes-summary.html). preview 없이 정식 source다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| java-B01 | Java8 기본 | REQ | JLS lexical/types/names/packages; class/interface/enum/annotation/generic; expressions/lambda/method reference; statements/try resources | declaration/type·lambda·resource | P,N,R,E,Q,W |
+| java-V9 | 9~11 | REQ | module declarations, private interface member, try resource variable, anonymous diamond, local var/lambda var | module directive·resource·var parameter | P,N,E,Q |
+| java-V14 | 14~17 | REQ | switch expression/yield, text block, record, instanceof pattern, sealed/non-sealed/permits | switch arm·record component·permits | P,N,R,E,Q |
+| java-V21 | 21~22 | REQ | record/switch pattern, guard, unnamed variable/pattern | nested pattern/guard·unnamed binding | P,N,R,E,Q |
+| java-V25 | 25~27 | REQ | module import, compact source/instance main, flexible constructor body; 26/27의 permanent 추가 없음 | compilation unit·constructor prologue | P,N,R,E,Q |
+| java-S01 | 누적 | SEM | definite assignment/exhaustiveness/overload/primitive conversion·JMM | syntax만 위 REQ | - |
+| java-R01 | 누적 | RUN | JDK library/JVM/GC/module resolution 실행 제외 | classpath 다운로드 없음 | - |
+| java-X01 | preview | EXT | primitive patterns, 폐기된 string templates 등 preview는 채택 범위 밖 | preview를 정식으로 승격 금지 | - |
+
+## kotlin
+
+근거: [문법](https://kotlinlang.org/spec/syntax-and-grammar.html), [기능 상태](https://kotlinlang.org/docs/kotlin-language-features-and-proposals.html), [2.4](https://kotlinlang.org/docs/whatsnew24.html). `.kt`/명시 `.kts`, stable syntax다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| kotlin-B01 | 1.3 기본 | REQ | tokens/newline/string template, package/import, class/object/interface/enum/annotation, property/accessor/delegate, function/constructor/typealias/generic | declaration/receiver/delegation | P,N,R,E,Q,W |
+| kotlin-B02 | 1.3 기본 | REQ | expression/control/when/try/loop/jump, lambda/destructuring, nullable/safe-call/Elvis, suspend/function type, annotation use-site | expression body·type·label | P,N,R,E,Q |
+| kotlin-V14 | 1.4~1.9 | REQ | fun interface/trailing comma/value class, T & Any, data object, ..< | modifier/type intersection/range | P,N,E,Q |
+| kotlin-V22 | 2.0~2.3 stable | REQ | when guard, multi-dollar interpolation; 2.3 nested non-capturing typealias | guard/string threshold·nested alias | P,N,R,E,Q |
+| kotlin-V24 | 2.4 stable | REQ | context parameters, @all use-site target, explicit backing field | context parameter·annotation target·field | P,N,R,E,Q |
+| kotlin-S01 | 누적 | SEM | smart cast/inference, non-local break/continue 허용 문맥, exhaustiveness, annotation defaulting | token은 B/V, 분석 결과 제외 | - |
+| kotlin-R01 | 누적 | RUN | JVM/JS/Native/KMP backend·stdlib/UUID/Instant 제외 | platform build 미주장 | - |
+| kotlin-X01 | experimental | EXT | collection literals, name-based destructuring, explicit context arguments, context-sensitive resolution, 폐기 context receivers | stable 채택과 구별 | - |
+
+## c
+
+근거: WG14 [C99+TC3 N1256](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf), [C11 N1570](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf), [C23 N3096](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf) §6/Annex A grammar. 공개 draft는 ISO 최종판 원본과 동일 bytes라는 주장이 아니다. ISO C translation unit/preprocessor source다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| c-B01 | C99 기본 | REQ | §6 lexical/type/declarator/initializer/expression/statement/external definition; VLA, designated init, compound literal, restrict/inline, complex/bool, hex float | declaration-vs-expression·declarator 결합 | P,N,R,E,Q,W |
+| c-B02 | C99~C23 preprocessor | REQ | §6.10 directive/macro/function macro/variadic/stringify/paste/conditional/include/line/pragma; inactive branch source | directive logical line·tokens 보존 | P,N,R,E |
+| c-V11 | C11/C17 | REQ | _Generic/_Atomic/_Alignas/_Alignof/_Static_assert/_Thread_local, anonymous struct/union; C17 defect 수정 | selection/type qualifier·member | P,N,E,Q |
+| c-V23 | C23 | REQ | attributes, binary/digit separator, typeof/typeof_unqual, constexpr/auto inference, _BitInt, bool/true/false/nullptr와 새 keyword spellings, empty initializer | attribute/type/initializer·literal | P,N,R,E,Q |
+| c-V23pp | C23 preprocessor | REQ | #embed/#elifdef/#elifndef/__VA_OPT__, u8 문자 계열 | directive payload·macro token group | P,N,R,E |
+| c-L01 | legacy union | REQ | C99에서 유효한 old-style function definition/declaration와 C23 제거 경계 | legacy declarator/parameter list 보존 | P,N,Q |
+| c-S01 | 누적 | SEM | typedef name 해석, macro expansion, constant evaluation, constraint/UB/ABI, empty-parameter 의미 | source structure와 compiler 의미 분리 | - |
+| c-R01 | 누적 | RUN | libc/threads/atomics 실행과 linking 제외 | call syntax는 B01 | - |
+| c-X01 | 범위 밖 | EXT | GNU/MS extension, C89-only/비표준 K&R forms 제외; C99에서 유효한 L01은 제외하지 않음 | 표준별 허용 경계 | - |
+
+## cpp
+
+근거: WG21 공개 drafts [C++11 N3337](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf), [C++14 N4140](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4140.pdf), [C++17 N4659](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf), [C++20 N4861](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf), [C++23 N4950](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf). lexical/expressions/statements/declarations/modules/classes/templates/exceptions/preprocessing 및 Annex A/C가 기준이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| cpp-B01 | C++11 기본 | REQ | lexical/type/declaration/expression/statement/class/template/exception/namespace, preprocessor; lambda/decltype/rvalue ref/list-init/pack/alias/noexcept/constexpr/raw+UDL/attributes/range-for | template-vs-operator·declarator·lambda | P,N,R,E,Q,W |
+| cpp-V14 | C++14 | REQ | generic lambda/init capture, decltype(auto), variable template, binary literal/digit separator | lambda capture/type/token | P,N,E,Q |
+| cpp-V17 | C++17 | REQ | structured binding/fold/if constexpr/if-switch init/inline variable/nested namespace, deduction guide | binding/fold·guide·initializer | P,N,R,E,Q |
+| cpp-V20 | C++20 | REQ | concepts/requires, modules/import, coroutine, <=>, designated init, template lambda, consteval/constinit, expanded attributes | requirement·module·suspension syntax | P,N,R,E,Q |
+| cpp-V23 | C++23 | REQ | explicit object parameter, static call/subscript, multi-argument subscript, if consteval, size suffix, auto(x), lambda attribute placement, #elifdef/#elifndef | parameter·subscript operands·conditional | P,N,R,E,Q |
+| cpp-L01 | legacy union | REQ | dynamic exception specification, register, trigraph 등 하한에서 유효했다가 제거된 Annex C forms | version-labelled source 보존 | P,N,E |
+| cpp-S01 | 누적 | SEM | template instantiation/lookup/SFINAE/CTAD/constant evaluation/overload/ODR/ABI | 사양상 syntax 구조만 검증 | - |
+| cpp-R01 | 누적 | RUN | STL/allocators/threads/modules build/runtime 제외 | compiler/library 설치 불필요 | - |
+| cpp-X01 | 범위 밖 | EXT | C++26 draft, GNU/MS extensions 제외 | 채택 ISO 범위 고정 | - |
+
+## rust
+
+근거: [1.98.1 Reference](https://doc.rust-lang.org/reference/), [edition guide](https://doc.rust-lang.org/edition-guide/), [release notes](https://doc.rust-lang.org/stable/releases.html). edition 2015/2018/2021/2024는 별도 profile이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| rust-B01 | 2015~2024 | REQ | tokens/lifetimes/literals/paths/visibility/attributes; items/module/use/struct/enum/union/trait/impl/function/extern; type/generic/where | lifetime-vs-char·item·bound | P,N,R,E,Q,W |
+| rust-B02 | 누적 | REQ | expression/operator/closure/control/match/pattern, block/statement, macro_rules/token tree/metavariable | delimiter nesting·pattern/expression | P,N,R,E,Q |
+| rust-V18 | 2018 이후 stable | REQ | async/await, dyn/impl Trait, raw identifier, use tree, const generic/GAT, let-else/inline const, C string/raw borrow | item/type·async block·literal prefix | P,N,R,E,Q |
+| rust-V24 | 2024/1.98.1까지 | REQ | unsafe extern/unsafe attribute, safe item in extern, precise capture use<...>, async closure, let chains, edition macro expr/expr_2021·pat fragments | attribute/extern·capture·chain | P,N,R,E,Q |
+| rust-L01 | edition/version 경계 | REQ | gen/guarded-string 예약, or-pattern 문맥, 1.98의 where Type = Type / == Type syntax 제거와 과거 형태 구별, 1.97 trailing self import | keyword·where·import tree | P,N,R,E |
+| rust-S01 | 누적 | SEM | borrow/lifetime/inference/const legality, match ergonomics/drop order, 1.98 lifetime coercion/lints | source 보존, rustc 의미 재현 제외 | - |
+| rust-R01 | 누적 | RUN | std/Cargo/target/backend·1.98.1 vtable 수정 제외 | runtime 성공 미주장 | - |
+| rust-X01 | 범위 밖 | EXT | nightly/unstable feature와 proc-macro 확장 실행 제외 | token-tree source는 B02 | - |
+
+## swift
+
+근거: [The Swift Programming Language](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/), [Swift Evolution](https://www.swift.org/swift-evolution/), [6.1](https://www.swift.org/blog/swift-6.1-released/), [6.2](https://www.swift.org/blog/swift-6.2-released/), [6.3](https://www.swift.org/blog/swift-6.3-released/), [6.4](https://www.swift.org/blog/swift-6.4-released/). language mode 5/6과 compiler minor는 별도다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| swift-B01 | 5.0 기본 | REQ | lexical/operators/literals/interpolation, declarations/import/typealias/function/type/protocol/extension/subscript/accessor, generics/where/attributes | operator fixity·declaration·type | P,N,R,E,Q,W |
+| swift-B02 | 5.0 기본 | REQ | expressions/closures/key paths, patterns/statements/control/guard/defer/do-catch, optional chaining, #if/#available | closure capture·pattern·conditional source | P,N,R,E,Q |
+| swift-V51 | 5.0~5.4 | REQ | raw string, some opaque type, property wrapper, multiple trailing closure, result-builder attribute | delimiter·opaque type·trailing label | P,N,R,E,Q |
+| swift-V55 | 5.5~5.8 | REQ | async/await/actor, any existential, primary associated type, shorthand optional binding, regex literal, distributed actor | concurrency modifier·type·regex boundary | P,N,R,E,Q |
+| swift-V59 | 5.9~6.1 | REQ | if/switch expression, macro declaration/use, parameter pack each/repeat, noncopyable ~Copyable/ownership, typed throws, sending, pack iteration | expression branch·pack·throws type | P,N,R,E,Q |
+| swift-V62 | 6.2 | REQ | inline array [N of T]/integer generic argument, raw identifier, @concurrent 및 strict-memory-safety source 표시 | type size·identifier·attribute | P,N,R,E,Q |
+| swift-V64 | 6.3~6.4 | REQ | @c/@implementation, optional some/any without parentheses, @diagnose, module selector ::, borrow/mutate accessor, await in defer | module selector·accessor·attribute arguments | P,N,R,E,Q |
+| swift-S01 | 누적 | SEM | isolation/Sendable/ownership/overload/conformance, actor default와 data-race checking | source 표시는 REQ, compiler 의미 제외 | - |
+| swift-R01 | 누적 | RUN | SwiftPM/SDK/Android/Wasm/Foundation/Subprocess/Span 실행 제외 | build/runtime 성공 미주장 | - |
+| swift-X01 | 범위 밖 | EXT | 미정식 Evolution proposal/experimental flag, Objective-C/C++ body 해석 제외 | stable Swift source만 | - |
+
+## dart
+
+근거: [language specification](https://dart.dev/resources/language/spec), [2.12~3.13 evolution](https://dart.dev/resources/language/evolution), [language](https://dart.dev/language). specification에 아직 반영되지 않은 정식 기능은 해당 release/feature specification을 함께 사용한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| dart-B01 | 2.12 기본 | REQ | tokens/string/interpolation, type/generic/nullability, variable/function/class/mixin/enum/extension/constructor/member, library/import/export/part/metadata | nullable marker·constructor·directive | P,N,R,E,Q,W |
+| dart-B02 | 2.12 기본 | REQ | expression/statement, cascade/?. /??, collection if/for/spread, async/await/yield, control/try, late/required | collection element·cascade·body | P,N,R,E,Q |
+| dart-V213 | 2.13~2.19 | REQ | non-function typedef, >>>, generic metadata/function types, constructor tear-off, enhanced enum/super parameter/interleaved named arguments, unnamed library | type alias·constructor reference·argument order | P,N,E,Q |
+| dart-V30 | 3.0~3.3 | REQ | pattern 전 계열, record, switch expression/if-case/guard, class modifiers, extension type | destructuring·record fields·extension representation | P,N,R,E,Q |
+| dart-V36 | 3.6~3.9 | REQ | digit separator, wildcard variable/parameter, null-aware collection elements | numeric token·wildcard·element prefix | P,N,E,Q |
+| dart-V310 | 3.10~3.13 | REQ | dot shorthand, private named initializing formal, primary/concise constructor | shorthand receiver·formal·constructor body | P,N,R,E,Q |
+| dart-L01 | 2.12~2.19 legacy | REQ | optional named parameter의 colon default 등 3.0 제거 전 문법 | legacy default separator 보존 | P,N,Q |
+| dart-S01 | 누적 | SEM | null safety/flow promotion/inference/mixin legality; 3.1/3.11 등 문법 추가 없는 release | token/structure는 REQ | - |
+| dart-R01 | 누적 | RUN | Dart VM/Flutter/FFI/SDK 및 library 실행 제외 | app build 미주장 | - |
+| dart-X01 | 범위 밖 | EXT | pre-2.12 opt-out source, experimental proposals 제외 | 채택 null-safe floor 유지 | - |
+
+## php
+
+근거: [language reference](https://www.php.net/manual/en/langref.php), [migration index](https://www.php.net/manual/en/appendices.php)의 5.6~8.5, [8.4](https://www.php.net/manual/en/migration84.new-features.php), [8.5](https://www.php.net/manual/en/migration85.new-features.php). PHP-only 내용과 mixed HTML 파일을 구별하되 후보 selector `php`를 바꾸지 않는다. PHP-only case에도 PHP opening tag를 두어 같은 grammar의 입력으로 만든다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| php-B01 | 5.6 기본/PHP·mixed | REQ | PHP open/close/echo tags, comment/string/heredoc/nowdoc, variable/type/constant/operator/expression, control/alternative syntax, function/class/interface/trait/namespace/use | PHP/HTML 경계·variable·declaration | P,N,R,E,Q,W |
+| php-V56 | 5.6~7.1 | REQ | variadic/unpack/**, scalar/return/nullable/void/iterable type, ??/<=>, anonymous class, grouped use, multicatch | type·unpack·catch type list | P,N,R,E,Q |
+| php-V72 | 7.2~7.4 | REQ | object type, flexible heredoc, trailing call comma, typed property/arrow/??=/array spread | heredoc indent·arrow·property type | P,N,R,E,Q |
+| php-V80 | 8.0~8.1 | REQ | named argument/attribute/promotion/union/match/nullsafe/throw expression, enum/readonly/intersection/first-class callable | named argument·match arm·callable placeholder | P,N,R,E,Q |
+| php-V82 | 8.2~8.3 | REQ | readonly class/DNF type/literal types, typed class constant, dynamic class-constant fetch | parenthesized type·constant name expression | P,N,E,Q |
+| php-V84 | 8.4~8.5 | REQ | property hook/asymmetric visibility/new without enclosing parentheses, pipe operator, closure/callable constant contexts, clone call form | hook/access modifier·pipe·call nesting | P,N,R,E,Q |
+| php-L01 | legacy union | REQ | removed curly-brace offset, legacy interpolation/tag/context forms that were valid within 5.6~8.x | legacy span을 version 표시해 보존 | P,N,R,E |
+| php-S01 | 누적 | SEM | coercion/constant legality/readonly/hook semantics/clone property reassignment | source syntax만 REQ | - |
+| php-R01 | 누적 | RUN | PHP extensions/webserver/Composer/standard library 실행 제외 | dependency 설치 없음 | - |
+| php-X01 | 범위 밖 | EXT | Hack/Blade, 별도 php_only grammar 자동 채택 제외 | 다른 grammar로 mode 보완 금지 | - |
+
+## ruby
+
+근거: [4.0 syntax reference](https://docs.ruby-lang.org/en/4.0/syntax_rdoc.html), [2.7 NEWS](https://docs.ruby-lang.org/en/2.7.0/NEWS.html), [4.0 NEWS](https://docs.ruby-lang.org/en/4.0/NEWS_md.html) 및 3.0~3.4 각 NEWS의 Language changes. `.rb` source다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| ruby-B01 | 2.7 기본 | REQ | lexical/literal/regexp/heredoc/interpolation/symbol, variables/constants/assignment/operators/range, call/block/lambda | call-vs-local·heredoc·block binding | P,N,R,E,Q,W |
+| ruby-B02 | 2.7 기본 | REQ | def/class/module/singleton, parameters/keywords/splat/block arg, condition/loop/case/rescue/ensure/BEGIN/END/alias/undef | method signature·exception/control nesting | P,N,R,E,Q |
+| ruby-V27 | 2.7~3.0 | REQ | in/pattern 전 계열, numbered block parameter, argument forwarding ..., endless method, rightward assignment, beginless range | pattern binding·forwarding·method body | P,N,R,E,Q |
+| ruby-V31 | 3.1~3.4 | REQ | omitted hash value, anonymous block/rest/keyword-rest forwarding, it block parameter | implicit parameter·hash shorthand·forwarded argument | P,N,E,Q |
+| ruby-V40 | 4.0 | REQ | 새 행 앞 logical binary operator가 앞 행을 이어감 | newline·operator continuation | P,N,R,E |
+| ruby-S01 | 누적 | SEM | keyword separation/type conversion, *nil 변경, pattern match semantics | source shape 유지 | - |
+| ruby-R01 | 누적 | RUN | Prism/YJIT/Ractor/gem/core class API/GC 변화 제외 | API·VM 성공 미주장 | - |
+| ruby-X01 | 범위 밖 | EXT | ERB/RBS 및 experimental dialect 제외 | ruby source만 | - |
+
+## r
+
+근거: [R Language Definition](https://cran.r-project.org/doc/manuals/r-release/R-lang.html) §10 Parser, [R NEWS](https://cran.r-project.org/doc/manuals/r-release/NEWS.html)의 3.6~4.6 language 항목. Rscript는 추가 route가 아니다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| r-B01 | 3.6 기본 | REQ | identifier/backtick/reserved/literal/comment/separator, function/formals/call/argument/ellipsis, namespace/index/member/assignment/formula/operator | named/missing argument·operator precedence | P,N,R,E,Q,W |
+| r-B02 | 3.6 기본 | REQ | compound expression, if/else/for/while/repeat/break/next, function body | newline-sensitive else·block boundaries | P,N,R,E |
+| r-V40 | 4.0~4.1 | REQ | raw character string, backslash lambda, native pipe | raw delimiter·lambda formal·pipe RHS | P,N,R,E,Q |
+| r-V42 | 4.2~4.6 | REQ | pipe _ placeholder와 extraction-chain 허용 문맥; 현행 §10의 token/grammar 대안 | placeholder·extraction nesting | P,N,R,E,Q |
+| r-S01 | 누적 | SEM | evaluation/promise/recycling/S3-S4 dispatch, pipe substitution 의미 | 구문 자체와 evaluator 분리 | - |
+| r-R01 | 누적 | RUN | base/statistics/graphics/BLAS/package/tool 개선 제외 | function call은 B01 | - |
+| r-X01 | 범위 밖 | EXT | Rd macro, R Markdown/Sweave, 외부 DSL 제외 | 4.6 Rd 개선을 R 구문으로 분류하지 않음 | - |
+
+## bash
+
+근거: [GNU Bash 5.3 manual](https://www.gnu.org/s/bash/manual/html_node/index.html)의 Shell Syntax/Commands/Functions/Parameters/Expansions/Redirections/Conditional/Arithmetic, [5.3 command substitution](https://www.gnu.org/s/bash/manual/html_node/Command-Substitution.html). Bash source이며 POSIX mode case는 명시 표시한다. 입력 shell을 실행하지 않는다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| bash-B01 | 3.2 기본 | REQ | quoting/escape/comment, words/assignments/arrays, parameter/arithmetic/command/process substitution, brace/tilde expansion, heredoc/here-string/redirection | quote·expansion·heredoc delimiter state | P,N,R,E,Q,W |
+| bash-B02 | 3.2 기본 | REQ | simple/compound commands, pipeline/list/subshell/group, if/case/for/select/while/until, function, [[ ]] / (( )) | command-vs-word·compound terminator | P,N,R,E,Q |
+| bash-V4 | 4.x~5.2 | REQ | coproc, ;& / ;;& case termination, &#124;& / &>> redirection, associative subscript, parameter transformations @Q 등 | operator·case fallthrough·subscript | P,N,R,E,Q |
+| bash-V53 | 5.3 | REQ | current-environment ${ command; } 및 ${&#124; command; } substitution | opening blank/pipe·closing brace·body 경계 | P,N,R,E |
+| bash-S01 | 누적/POSIX | SEM | expansion result, word splitting/globbing, shopt/POSIX behavior, parameter 값 | source tokens는 REQ | - |
+| bash-R01 | 누적 | RUN | job control/readline/builtin/system command 실행 제외 | shell 실행권한으로 해석 금지 | - |
+| bash-X01 | 범위 밖 | EXT | zsh/fish/ksh 고유 확장 제외 | POSIX mode는 Bash 표기 유지 | - |
+
+## powershell
+
+근거: [language specification](https://learn.microsoft.com/en-us/powershell/scripting/lang-spec/chapter-15?view=powershell-7.6), [5.1과 7.x 차이](https://learn.microsoft.com/en-us/powershell/scripting/whats-new/differences-from-windows-powershell?view=powershell-7.6), [keywords](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_language_keywords?view=powershell-7.6). host 실행은 항상 pwsh7이고 5.1은 입력 syntax profile이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| powershell-B01 | 5.1 기본 | REQ | token/quote/here-string/interpolation/variable/scope, expression-vs-argument mode, command/pipeline/redirection/member/index/type/cast/operators/hashtable/array | command argument·string·pipeline 경계 | P,N,R,E,Q,W |
+| powershell-B02 | 5.1 기본 | REQ | param/attribute/scriptblock, function/filter/class/enum/using/data, begin/process/end/dynamicparam, control/try/trap | named block·type member·parameter attribute | P,N,R,E,Q |
+| powershell-L01 | 5.1 legacy | REQ | workflow/configuration source와 이후 runtime 미지원 구분 | legacy declaration 및 nested block | P,N,R,E |
+| powershell-V7 | 6.0~7.6 | REQ | background &, ternary, ??/??=, pipeline &&/&#124;&#124;, null conditional ?./?[], 7.3 clean block | operator·pipeline chain·clean body | P,N,R,E,Q |
+| powershell-S01 | 누적 | SEM | command binding/conversion, native argument passing/redirect encoding, constrained-language 의미 | syntax/host policy 분리 | - |
+| powershell-R01 | 누적 | RUN | remoting/.NET/cmdlet/provider/module/installer 실행 제외 | Windows PowerShell5 실행 없음 | - |
+| powershell-X01 | 범위 밖 | EXT | experimental syntax flag, DSC resource 실행·별도 DSL 제외 | legacy source 요구 L01은 유지 | - |
+
+## html
+
+근거: [HTML5 REC2014](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html), [WHATWG 2026-09-28 고정 source](https://github.com/whatwg/html/tree/b346db728f365e89bca1fafc4789acf6296571d4), [Syntax 장](https://html.spec.whatwg.org/multipage/syntax.html). document와 명시 context의 fragment를 구별한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| html-B01 | REC~고정 LS/document | REQ | doctype/comment, element/tag/attribute/value/character reference, void/optional tag, text | source tag·attribute·raw range | P,N,R,E,Q,W |
+| html-B02 | raw-text/fragment | REQ | script/style raw-text, title/textarea RCDATA, foreign SVG/MathML integration, fragment context, malformed nesting/end tag | mode 전환·source recovery·후속 element | P,N,R,E,Q |
+| html-B03 | 누적 syntax | REQ | Syntax 장 tokenization의 각 state와 tag/attribute 대안; template/custom element도 source element로 보존 | source CST 범위; DOM 재구성 동일성 아님 | P,N,R,E,Q |
+| html-S01 | 누적 | SEM | HTML tree-builder insertion mode의 DOM 보정, content-model validation, element 의미 | source recovery와 DOM 의미 구별 | - |
+| html-R01 | 누적 | RUN | browser/rendering/script/network/custom-element lifecycle 제외 | foreign/raw text 실행 없음 | - |
+| html-X01 | 범위 밖 | EXT | JSX/template directive/XHTML XML mode 제외 | 별도 route와 섞지 않음 | - |
+
+## css
+
+근거: [고정 Snapshot2026](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) §2.1/2.2 및 그 References에 기록된 module revision. 아래 모듈별 행은 해당 revision의 grammar/at-rule/selector/property/value syntax를 모두 포함한다. 값 문법의 숫자 범위·computed value·layout 의미는 S01로 분리한다. 상위 module이 대체한 기본 문법의 legacy forms도 남긴다. §2.3/2.4와 §4의 pre-CR exceptions는 기존 채택 범위 밖이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| css-B01 | CSS2.1/2011-06-07 | REQ | core stylesheet/rule/declaration/selector/value/at-rule와 CSS2.1 전 property 문법 | selector/declaration/value 경계 | P,N,R,E,Q,W |
+| css-M01 | Syntax3/2021-12-24 | REQ | tokenizer/escape/comment/string/url/number/dimension, block/function, bad-token recovery | token·balanced block·recovery | P,N,R,E |
+| css-M02 | Style Attributes/2013-11-07 | REQ | style attribute declaration-list | fragment entry와 declaration 범위 | P,N,R,E |
+| css-M03 | Media Queries3/2024-05-21 | REQ | media type/feature/query list | media prelude·condition | P,N,E,Q |
+| css-M04 | Conditional Rules3 | REQ | @media/@supports 및 nested conditional rule | condition·nested rule | P,N,R,E,Q |
+| css-M05 | Selectors3/2018-11-06 | REQ | selector group/combinator/simple/attribute/pseudo class/element | selector 관계와 argument | P,N,E,Q |
+| css-M06 | Namespaces3/2014-03-20 | REQ | @namespace 및 qualified selector | prefix/namespace token | P,N,Q |
+| css-M07 | Cascade4 | REQ | @import 조건과 cascade-wide keyword syntax | import prelude·keyword value | P,N,Q |
+| css-M08 | Values3/2024-03-22 | REQ | numeric/dimension/percentage/string/url/function/calc value syntax | value function과 연산 결합 | P,N,E,Q |
+| css-M09 | Variables1/2022-06-16 | REQ | custom property/var fallback와 token stream | custom name·fallback 범위 | P,N,R,E,Q |
+| css-M10 | Box3 | REQ | box margin/padding property/value grammar | declaration의 value list | P,N,Q |
+| css-M11 | Color4 | REQ | color 함수/space/alpha/channel 문법 | channel separator·function | P,N,R,E,Q |
+| css-M12 | Backgrounds3 | REQ | layered background/border/image/shadow syntax | layer/list/slash grouping | P,N,Q |
+| css-M13 | Images3/2023-12-18 | REQ | image/gradient와 sizing property values | gradient stop/list/function | P,N,E,Q |
+| css-M14 | Fonts3/2018-09-20 | REQ | font properties/@font-face/descriptors/feature values | at-rule·descriptor | P,N,Q,W |
+| css-M15 | Writing Modes3/2019-12-10 | REQ | direction/writing-mode/text-orientation 문법 | property/value | P,N,Q |
+| css-M16 | Multicol1/2024-05-16 | REQ | columns/gap/rule/span/fill syntax | shorthand/value | P,N,Q |
+| css-M17 | Flexbox1/2025-10-14 | REQ | flex container/item properties와 shorthand | ordered values | P,N,Q |
+| css-M18 | UI3/2026-04-07 | REQ | cursor/outline/resize/box-sizing 등 해당 module grammar | url/list/keyword values | P,N,Q |
+| css-M19 | Containment1 | REQ | contain property 문법 | keyword combination | P,N,Q |
+| css-M20 | Transforms1/2019-02-14 | REQ | transform list/origin/2D functions | function arguments/order | P,N,E,Q |
+| css-M21 | Compositing1 | REQ | blending/compositing/isolation property grammar | property/value | P,N,Q |
+| css-M22 | Easing1/2023-02-13 | REQ | easing keyword/cubic-bezier/steps function | function argument list | P,N,Q |
+| css-M23 | Counter Styles3/2021-07-27 | REQ | @counter-style/system/symbols/additive-symbols/descriptors | descriptor sequence | P,N,R,Q |
+| css-M24 | Media Queries4 | REQ | range/boolean media conditions | comparison·condition grouping | P,N,E,Q |
+| css-M25 | Scroll Snap1/2021-03-11 | REQ | snap/scroll-margin/scroll-padding syntax | axis/strictness/value | P,N,Q |
+| css-M26 | Scrollbars1/2021-12-09 | REQ | scrollbar color/width grammar | color pair/keyword | P,N,Q |
+| css-M27 | Grid1/2/2025-03-26 | REQ | tracks/line names/repeat/minmax/areas/placement/subgrid | bracket name·track function·subgrid | P,N,R,E,Q,W |
+| css-M28 | Cascade5/2022-01-13 | REQ | @layer and layered @import | layer name/order/block | P,N,R,E,Q |
+| css-M29 | Color Adjustment1/2025-12-16 | REQ | color-scheme/forced/print-color-adjust grammar | declaration values | P,N,Q |
+| css-M30 | Conditional4/2025-09-04 | REQ | selector() in @supports | selector inside condition | P,N,R,E,Q |
+| css-S01 | 누적 | SEM | cascade/inheritance/specificity, computed value/range validity/layout/paint/animation 결과 | syntax tokens와 계산을 분리 | - |
+| css-R01 | 누적 | RUN | CSSOM/browser/font/image/network resource 실행 제외 | URL은 읽지 않음 | - |
+| css-X01 | 채택 밖 module | EXT | Snapshot §2.3/2.4·pre-CR만의 문법, Sass/Less/vendor extension 제외; 해당 source를 지원해도 필수 성공 대체 아님 | Selectors4/nesting/@container 등 자동 범위 확대 금지 | - |
+
+revision 날짜가 표에 생략된 행도 floating latest가 아니다. 위 고정 Snapshot의 해당 reference entry에 기록된 Level/revision이 선택값이다.
+
+## json
+
+근거: [RFC8259](https://www.rfc-editor.org/rfc/rfc8259) §2~7 grammar, §8~12 interoperability/security, [ECMA-404 2판](https://ecma-international.org/publications-and-standards/standards/ecma-404/). strict JSON text다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| json-B01 | RFC8259/strict | REQ | object/member/array/value의 여섯 종류, scalar root, whitespace | ordered member/value·nesting | P,N,R,E,Q,W |
+| json-B02 | RFC8259/strict | REQ | number sign/integer/fraction/exponent, string/escape/Unicode escape, true/false/null | number·string token 범위; trailing garbage 검출 | P,N,R,E |
+| json-S01 | RFC8259 | SEM | duplicate key 처리/순서 의미, numeric precision/Unicode scalar interoperability | 중복 member를 구문 오류로 조작하지 않음 | - |
+| json-R01 | RFC8259 | RUN | consumer object materialization·schema validation 제외 | JSON Schema 별도 언어 아님 | - |
+| json-X01 | 범위 밖 | EXT | JSONC/JSON5 comment/trailing comma/unquoted key 제외 | N case로 경계 검증 | - |
+
+## yaml
+
+근거: [YAML1.1](https://yaml.org/spec/1.1/) 및 [YAML1.2.2](https://yaml.org/spec/1.2.2/) §5 Character/§6 Basic structures/§7 Flow/§8 Block/§9 Documents/§10 Schemas. version directive별 source를 구별한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| yaml-B01 | 1.1~1.2.2 | REQ | stream/document marker/directive, comment/separation/indent, tag/anchor/alias | document·indent·node property | P,N,R,E,Q,W |
+| yaml-B02 | 1.1~1.2.2 | REQ | plain/single/double quoted/flow scalar, flow sequence/map/pair/explicit key | colon/question/quote 경계 | P,N,R,E,Q |
+| yaml-B03 | 1.1~1.2.2 | REQ | block sequence/map, literal/folded scalar, indent/chomping indicator/empty line | block scalar state·collection nesting | P,N,R,E,Q |
+| yaml-V12 | version boundary | REQ | directive별 lexical/escape/line-break/JSON-compatibility 차이와 허용 plain scalar 문맥 | version 표시·escape/flow boundary | P,N,R,E |
+| yaml-S01 | 1.1/1.2 schemas | SEM | bool/number/timestamp/tag resolution, merge-key 관례/alias graph/cycles | source key/tag는 보존, 객체 의미 제외 | - |
+| yaml-R01 | 누적 | RUN | serializer/object constructor/custom tag 실행 제외 | 외부 object 생성 없음 | - |
+| yaml-X01 | 범위 밖 | EXT | template tags/Helm/Jinja/custom dialect 제외 | custom tag spelling은 B01, 실행만 제외 | - |
+
+## xml
+
+근거: [XML1.0 5판](https://www.w3.org/TR/2008/REC-xml-20081126/) 및 [XML1.1 2판](https://www.w3.org/TR/2006/REC-xml11-20060816/) §2~4/§6 Notation, [Namespaces](https://www.w3.org/TR/xml-names/). 두 XML version을 별도 profile로 기록한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| xml-B01 | 1.0/1.1 document | REQ | XML declaration/prolog/doctype, element/start/end/empty tag, attribute/value/name/QName/namespace, character/entity reference | name/attribute·document/element order | P,N,R,E,Q,W |
+| xml-B02 | 1.0/1.1 content | REQ | text/comment/PI/CDATA, whitespace, internal DTD element/attlist/entity/notation/parameter entity declarations | markup-vs-text·DTD declaration | P,N,R,E,Q |
+| xml-V11 | version boundary | REQ | Char/Name·line-ending·restricted-character reference의 version 차이 | version/character range 표시 | P,N,R,E |
+| xml-S01 | 누적 | SEM | well-formedness의 name match/namespace binding/DTD validity와 entity expansion 결과 | CST nesting 검증과 semantic validity 구분 | - |
+| xml-R01 | 누적 | RUN | external DTD/entity/network resolution 및 schema/DOM construction 제외 | 외부 URI를 열지 않음 | - |
+| xml-X01 | 범위 밖 | EXT | XSD/XSLT/XQuery/DTD-only route 별도 채택 없음 | 내부 DTD source B02는 필수 | - |
+
+## tsql
+
+근거: [T-SQL language reference, ver17](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17)의 SQL Server 대상 Syntax 전 항목, [SQL Server2025 변경](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025?view=sql-server-ver17). 2012/compat110~2025/compat170 SQL Server source를 합집합으로 유지한다. Azure/Synapse/Fabric 전용 alternative는 X01이다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| tsql-B01 | 2012~2025/script | REQ | identifier/bracket/quoted identifier, @/@@ variable, string/N-string/number/binary/comment, expression/operator/predicate/type/function call | quoted-vs-string·case-insensitive name·precedence | P,N,R,E,Q,W |
+| tsql-B02 | query/DML | REQ | SELECT/CTE/JOIN/APPLY/PIVOT/UNPIVOT/set operation/TOP/OFFSET/FETCH/window/order; INSERT/UPDATE/DELETE/MERGE/OUTPUT | clause/order·join·DML target/source/output | P,N,R,E,Q,W |
+| tsql-B03 | DDL/security/transaction | REQ | CREATE/ALTER/DROP 대상별 syntax, constraints/index/view/sequence/schema/type, GRANT/DENY/REVOKE, BEGIN/COMMIT/ROLLBACK/SAVE | object/constraint·transaction/security statement | P,N,R,E,Q |
+| tsql-B04 | procedural/admin | REQ | procedure/function/trigger/cursor, DECLARE/SET/EXEC/control/TRY-CATCH/THROW/RAISERROR/RETURN, USE/DBCC/BACKUP/RESTORE/BULK/WAITFOR 및 reference의 관리 statement alternatives | parameter/control/body·admin option | P,N,R,E,Q |
+| tsql-B05 | client batch | REQ | GO와 선택 repeat count는 client separator로 등록, T-SQL keyword 아님; quoted identifier ON/OFF source context | batch delimiter·mode-sensitive quoting | P,N,R,E |
+| tsql-V16 | 2016~2019 | REQ | FOR JSON/OPENJSON, temporal SYSTEM_VERSIONING/FOR SYSTEM_TIME, DROP IF EXISTS/CREATE OR ALTER, graph NODE/EDGE/MATCH | clause/table option·graph pattern | P,N,R,E,Q |
+| tsql-V22 | 2022~2025 | REQ | IS [NOT] DISTINCT FROM, WINDOW clause, ledger/table options, JSON/vector type와 2025 SQL Server 문법 alternatives | predicate/window/type·DDL option | P,N,R,E,Q |
+| tsql-S01 | 누적 | SEM | collation/configuration/compatibility behavior, function result/type checking/query plan, JSON path 문자열의 평가 | lexical string은 B01, engine 판정 제외 | - |
+| tsql-R01 | 누적 | RUN | database/server/auth/backup/network/extension 실행 제외 | 위험 statement도 source text만 | - |
+| tsql-X01 | 범위 밖 | EXT | SQLCMD :r/:setvar, Azure-only/Fabric/Synapse syntax, embedded host 언어 제외 | GO는 B05의 명시된 예외 | - |
+
+각 statement 계열은 reference의 SQL Server 적용 표시가 있는 Syntax alternatives를 모두 포함한다. 기본 SELECT 한 건으로 DDL/procedural/관리 syntax의 지원을 대체하지 않는다. configuration 함수가 LOCAL_ID로 분류된다는 upstream errata는 B01의 구조 목표와 연결하되 실제 parse 실패로 기록하지 않는다.
+
+## postgresql-sql
+
+근거: PostgreSQL [9.6 SQL](https://www.postgresql.org/docs/9.6/sql.html), [18 SQL](https://www.postgresql.org/docs/18/sql.html), [18 SQL commands](https://www.postgresql.org/docs/18/sql-commands.html), [release notes](https://www.postgresql.org/docs/18/release.html), [18 변경](https://www.postgresql.org/docs/18/release-18.html). §4 lexical/value expressions, §5~7 DDL/DML/query, §8 datatype spelling, Part VI SQL command syntax 및 9.6~18의 각 중간 major syntax delta를 합집합으로 사용한다.
+
+| ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case |
+|---|---|---|---|---|---|
+| postgresql-sql-B01 | 9.6~18 | REQ | identifier/quoted name, dollar/E/U& string, bit/hex/numeric/parameter/operator, cast/type/array/row/value expression/function/window | dollar delimiter·operator·cast·type | P,N,R,E,Q,W |
+| postgresql-sql-B02 | query/DML | REQ | SELECT/JOIN/LATERAL/CTE/recursive/set operation/window/VALUES/ORDER/LIMIT/FETCH/locking, INSERT/ON CONFLICT/UPDATE/DELETE/RETURNING | query clause·conflict action·returning | P,N,R,E,Q,W |
+| postgresql-sql-B03 | DDL/security/transaction | REQ | CREATE/ALTER/DROP 전 SQL object alternatives, constraints/index/schema/view/type/domain/sequence/function/trigger/policy/publication, GRANT/REVOKE, transaction/savepoint/prepared transaction | object/constraint/options·transaction | P,N,R,E,Q |
+| postgresql-sql-B04 | utility/SQL body | REQ | SQL command reference의 CALL/DO/COPY/EXPLAIN/VACUUM/ANALYZE/SET/SHOW/RESET/LISTEN/NOTIFY/UNLISTEN/LOCK/REINDEX/CLUSTER/REFRESH/PREPARE/EXECUTE/DEALLOCATE/DECLARE/FETCH/MOVE/CLOSE/DISCARD/CHECKPOINT/IMPORT/SECURITY LABEL/COMMENT | utility options·SQL routine body·literal foreign body 경계 | P,N,R,E,Q |
+| postgresql-sql-V10 | 10~12 | REQ | identity/partition, CREATE PROCEDURE/CALL, generated STORED, CTE MATERIALIZED/NOT MATERIALIZED | column generation·partition·routine | P,N,R,E,Q |
+| postgresql-sql-V13 | 13~15 | REQ | FETCH WITH TIES, SEARCH/CYCLE, multirange type spelling, SQL-standard BEGIN ATOMIC body, MERGE, NULLS NOT DISTINCT | CTE clause·body·merge action·constraint | P,N,R,E,Q |
+| postgresql-sql-V16 | 16~17 | REQ | SQL/JSON constructors/predicates, JSON_TABLE, MERGE RETURNING 및 해당 release의 command options | JSON clause·column tree·returning | P,N,R,E,Q |
+| postgresql-sql-V18 | 18 | REQ | GENERATED VIRTUAL, temporal WITHOUT OVERLAPS/PERIOD constraints, RETURNING OLD/NEW/alias, 해당 release의 COPY/utility options | temporal key·returning namespace·option | P,N,R,E,Q |
+| postgresql-sql-L01 | legacy union | REQ | WITH OIDS 등 9.6~17에서 유효했다가 제거된 command alternatives | legacy option을 profile와 함께 보존 | P,N,E,Q |
+| postgresql-sql-S01 | 누적 | SEM | operator/type/function resolution·privilege·planner/temporal enforcement·SQL/JSON evaluation | syntax와 engine 결과 분리 | - |
+| postgresql-sql-R01 | 누적 | RUN | DB server/storage/AIO/OAuth/replication/extension 실행 제외 | source만 검사 | - |
+| postgresql-sql-X01 | 범위 밖 | EXT | PostgreSQL19 beta, PL/pgSQL/extension 언어·psql backslash command 제외 | function의 quoted foreign body는 B01/B04 | - |
+
+후보가 PostgreSQL19 기반이라는 사실은 9.6~18 지원 성공도 실패도 아니다. legacy command 누락과 새 구문 수용은 서로 다른 관측으로 남긴다.
+
+## 미해결 항목과 승격 조건
+
+현재 이 목록은 채택된 mode의 **구문 계열 처분안**이다. 독립 리뷰와 명시 채택 전에는 P04를 PASS로 기록하지 않는다. 계열별 세부 fixture를 담당 Session에서 분해할 때 사양 항목→stable ID→case의 역방향 coverage를 기록한다. 새 요구가 발견되면 scope/기대값을 낮추지 않고 기존 ID의 누락 또는 새 ID로 기록해 scope 승인을 재평가한다.
+
+| 미해결 항목 | 분류 | 담당/기한 | 완료 증거 |
+|---|---|---|---|
+| 이 목록·case kind의 사용자 채택 | scope adoption | PREPARE #20 / S01 전 | 대상 hash와 실제 사용자 답변 |
+| 26 candidate의 source closure와 feature 지원 | P05 feasibility | PREPARE #20 / readiness 전 | 고정 bytes 검토·허용된 risk probe 또는 근거 있는 disposition |
+| candidate node/field 이름과 기대 구조 세부 | 계획된 후속 산출물 | S03 #5 / S03 종료 | 사양과 node-types의 대응 및 구조 리뷰 |
+| fixture bytes/negative recovery/edit/query/real-world receipts | 계획된 후속 산출물 | S05/S06/S08 / 각 실행 전·종료 | 승인된 case manifest/검토/실행 결과 |
+
+후속 산출물은 현재 product 구현 완료로 표시하지 않는다. 필수 외부 gap이 해소되지 않으면 P05와 무조건적 readiness는 계속 보류한다.
