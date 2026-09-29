@@ -94,7 +94,7 @@ run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d26
 
 ## GLIBC 진단과 자체 수직 control
 
-호환성 진단은 전체 source 취득 뒤 선택 image의 실제 digest/platform/storage와 container 설정을 확인한 상태에서 수행한다. 이 helper는 CLI만 먼저 취득하는 경로가 없어 일괄 취득을 유지한다. `tool-environment`는 libc/Node/GCC/linker identity와 CLI ELF header·interpreter·NEEDED·required versions 및 libc provider versions를 CLI 실행과 별도로 보존한다. 이어 `cli-version`과 `cli-generate-help`를 각각 제한 실행한다. 이전 loader 실패가 환경 진단의 출력을 가리지 않도록 한다. 실제 회수·격리8개를 새 image에서 반복한 뒤 upstream generation을 시작한다.
+호환성 진단은 전체 source 취득 뒤 선택 image의 실제 digest/platform/storage와 container 설정을 확인한 상태에서 수행한다. 이 helper는 CLI만 먼저 취득하는 경로가 없어 일괄 취득을 유지한다. `tool-environment`는 libc/Node/GCC/linker identity와 CLI ELF header·interpreter·NEEDED·required versions 및 libc/libm/libgcc/loader provider versions·SHA를 CLI 실행과 별도로 보존한다. 이어 `cli-version`과 `cli-generate-help`를 각각 제한 실행한다. 이전 loader 실패가 환경 진단의 출력을 가리지 않도록 한다. 실제 회수·격리8개를 새 image에서 반복한 뒤 upstream generation을 시작한다.
 
 등록57원문과 별도로 소유한 작은 scannerless grammar와 `OWNED-P05-VERTICAL` 입력을 task scratch에 고정한다. 같은 CLI의 ABI15 generation1회, 독립 runtime/GCC build1회, 회수한0755/SHA executable의 새 container parse/edit1회로 수직 경로를 확인한다. 구조 기대는 declaration/name/body identifier의 byte ranges와 brace 손상 오류·복구/incremental/fresh 동일성이다. 이는 product S04/S05/S06 구현이나 upstream57개 지원 근거가 아니다. 자체 G/B/X1회씩은 별도 counter에, 회수는 기존169회 shared cap 안에 기록한다. 나머지 generation6/build11/execution128/diagnostic16 및 개별 timeout/memory/output/transfer/storage 한도는 유지한다.
 
