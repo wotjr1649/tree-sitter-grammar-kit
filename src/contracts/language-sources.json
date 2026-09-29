@@ -2,6 +2,7 @@
   "schema": "tsgk-language-candidates/r1",
   "observed_date": "2026-09-29",
   "status": "CANDIDATE_METADATA_NOT_SUPPORT_PROOF",
+  "feature_evidence": "docs/validation/source-feature-feasibility.md",
   "routes": [
     {
       "route_id": "csharp",
@@ -593,9 +594,11 @@
       "submodules": [],
       "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
       "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "UNRESOLVED",
+      "feature_support": "STATIC_REQUIRED_SOURCE_GAP",
       "known_gaps": [
-        "upstream Errata: configuration function 대소문자 분류 제약; 채택 dialect feature와의 영향 검토 필요"
+        "UPSTREAM_DECLARED: configuration function 대소문자에 따른 LOCAL_ID 분류 errata; tsql-B01, native NOT_RUN",
+        "STATIC_SOURCE_OBSERVATION: 고정 grammar.js의 sql_clauses/dml_clause/another_statement는 SELECT/EXEC 중심이며 DDL/다른 DML/CTE 경로 TODO; tsql-B02/B03/B04 필수 source 격차, generated 대응과 native 실패는 미검증",
+        "generation closure에 grammar/precedences.js, grammar/builtins.js, grammar/functions 및 grammar/data_types.js 필요; scanner/header metadata만으로 source closure 완료 아님"
       ]
     },
     {

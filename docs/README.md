@@ -14,7 +14,7 @@ The current implementation consists of repository foundation checks. Product com
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
-| Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md) |
+| Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md), [disposition](validation/language-feature-disposition.md), [source risks](validation/source-feature-feasibility.md) |
 | Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
