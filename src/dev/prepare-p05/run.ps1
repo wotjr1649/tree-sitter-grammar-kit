@@ -1,5 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1')
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject)
 $ErrorActionPreference='Stop'
+& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
@@ -209,7 +210,7 @@ try {
     Add-Type -AssemblyName System.Formats.Tar
     Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
     $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'))
-    if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+='-PinnedTsql'}
+    if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
     $acquire=Run 'acquisition' $acquireArgs 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
     [void][IO.Directory]::CreateDirectory((Join-Path $root 'npm'))

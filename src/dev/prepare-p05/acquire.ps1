@@ -1,5 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql)
+param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject)
 $ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject
 if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
 $script:received = 0L
