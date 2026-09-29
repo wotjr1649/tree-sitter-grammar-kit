@@ -237,13 +237,16 @@ try {
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
     if((TextOutput $security) -notmatch 'seccomp.*profile=builtin'){throw 'Default seccomp is unavailable'}
+    $sentinel=Join-Path $root 'host-only-sentinel'
+    [IO.File]::WriteAllText($sentinel,'P05-owned-host-only-marker',[Text.UTF8Encoding]::new($false))
+    Record 'host-only-sentinel' @{identity=FileIdentity $sentinel;secret=$false;mounted=$false}
     $checks=@(
         'test "$(id -u)" = 65534; grep -q "NoNewPrivs:[[:space:]]*1" /proc/self/status; grep -q "CapEff:[[:space:]]*0000000000000000" /proc/self/status',
         'test "$(cat /sys/fs/cgroup/memory.max)" = 4294967296; test "$(cat /sys/fs/cgroup/pids.max)" = 64',
         'if touch /inputs/cases/unapproved 2>/dev/null; then exit 1; fi; if touch /root/unapproved 2>/dev/null; then exit 1; fi',
-        'test ! -S /var/run/docker.sock; test ! -e /home/runner/work; test ! -e /github/workspace; test "$(stat -f -c %S /work)" -gt 0; printf preserved > /work/proof'
+        'test ! -S /var/run/docker.sock; test ! -e /home/runner/work; test ! -e /github/workspace; test ! -e "$1"; test "$(stat -f -c %S /work)" -gt 0; printf preserved > /work/proof'
     )
-    for($i=0;$i -lt $checks.Count;$i++){Require (Native preflight ('preflight-'+$i) @('/bin/sh','-ec',$checks[$i]) 10 1048576)}
+    for($i=0;$i -lt $checks.Count;$i++){Require (Native preflight ('preflight-'+$i) @('/bin/sh','-ec',$checks[$i],'preflight',$sentinel) 10 1048576)}
     if([IO.File]::ReadAllText((Join-Path $root 'results/preflight-3/proof')) -cne 'preserved'){throw 'Paused tmpfs snapshot failed'}
     Require (Native preflight 'preflight-tmpfs' @('/usr/local/bin/node','-e','let s=require("fs").statfsSync("/work");process.exit(s.bsize*s.blocks===2147483648?0:1)') 10 1048576)
     $network='const net=require("net");let s=net.connect({host:"1.1.1.1",port:443});s.on("connect",()=>process.exit(1));s.on("error",e=>process.exit(e.code==="ENETUNREACH"?0:2));setTimeout(()=>process.exit(3),2000);'
