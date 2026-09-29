@@ -31,3 +31,9 @@ identity에는 source snapshot/artifact set, generator/runtime/compiler·옵션�
 BrightScript v0.1.2는 historical raw replay 기준이다. 그 로그 파생값의 2 ULP 정책과 expected count는 해당 workload adapter에만 속한다. kit의 전역 상수로 복사하지 않는다. S07에서 raw/type/threshold/verdict, signed zero, 경계와 max winner fixture를 고정하고 원 verifier·FAIL·측정을 보존한다. archived Python 실행이 필요하면 EXEC_ADAPTER이며 offline READ_DATA가 아니다.
 
 source package는 추적 blob/mode allowlist, verification package는 별도 등록 manifest에서 구성한다. local 폴더 전체 ZIP은 허용하지 않는다. 작은 추적 manifest/요약 보고와 별도 raw 자산을 연결하되 이번 campaign에서 publication을 자동 수행하지 않는다.
+
+## 준비 tracking의 적용 대상과 보존 결과
+
+PREPARE tracking receipt의 객체별 S00 보존은 `s00_object_preservation.applicable`과 `status`를 구별한다. 대상은 `issue:2`와 `milestone:1`이며 실제 원본 body/description·title·state·관계 대조 결과를 `PRESERVED` 또는 `MISMATCH`로 기록한다. 다른 객체의 상태는 `NOT_APPLICABLE`이다. 별도 `tracking_readback`은 intended object와 실제 readback의 `MATCH`/`MISMATCH`를 기록한다. Parent #1은 S00 객체가 아니므로 그 안의 S00 완료 이력 section을 별도로 대조한다.
+
+과거 prepare-02의 `s00_preserved`는 generator가 S00 객체 predicate를 직렬화한 필드다. non-S00의 false는 실제 보존 실패 판정이 아니며 모두 true로 교체하지 않는다. immutable 원본·generator·관측 시각을 보존하고 새 checkpoint에서 의미와 실제 대조 근거를 연결한다. 수정된 receipt만으로 과거 미실행 검증을 소급 PASS로 만들지 않는다.
