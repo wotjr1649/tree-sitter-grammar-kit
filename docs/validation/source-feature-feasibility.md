@@ -42,7 +42,7 @@
 | yaml | UNVERIFIED_SUPPORT | yaml-B01,yaml-B03,yaml-V12 | schema별 generated variants·scanner와 test-suite submodule 존재 | 등록부; 선택 root grammar의 closure, variant 자동 변경 금지 |
 | xml | UNVERIFIED_SUPPORT | xml-B01,xml-B02,xml-V11 | xml/common/dtd source 관계와 scanner/1.1 문자 경계 미검증 | 등록부; DTD 별도 route 자동 채택 금지 |
 | tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05 | SELECT/EXEC 중심 production, DDL/다른 DML/CTE TODO, identifier regex 제한; README의 config-function 대소문자 errata도 있음 | SQL-1/SQL-2; 알려진 필수 source 격차, native NOT_RUN |
-| postgresql-sql | UPSTREAM_DECLARED | postgresql-sql-B01,postgresql-sql-V18,postgresql-sql-L01 | 후보의 생성 기반은 PG19 post-beta3; 채택 9.6~18 legacy 누적 지원 미검증 | PG-1; 19 superset 수용 자체는 실패 아님 |
+| postgresql-sql | UNVERIFIED_SUPPORT | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 후보의 생성 기반은 PG19 post-beta3; 채택 9.6~18 query/DML/DDL/utility·legacy 누적 지원 미검증 | PG-1은 생성 기반 선언이며 미지원 선언 아님; 19 superset 수용 자체는 실패 아님 |
 
 ## 읽은 고정 source와 판정 한계
 
@@ -68,7 +68,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 | P05-CS-ID | csharp-B01 | class/field/local 이름에 async/await/var를 놓은 공식 valid context 여러 개; identifier와 modifier 분리 | PLANNED_NOT_RUN; README의 일부 예외를 특정 한 예제 실패로 단정하지 않음 |
 | P05-CS-DIRECTIVE | csharp-V14c | #:property TargetFramework=net10.0 뒤 일반 .cs; 나머지 세 directive도 각각 등록 | PLANNED_NOT_RUN; directive 행과 후속 statement 보존 |
 | P05-TSX-AMBIGUITY | tsx-B02,tsx-V29 | `const id = <T,>(x: T) => x;`와 generic JSX/self-closing/fragment/relational expression | PLANNED_NOT_RUN; generic parameter/tag/query field 구분 |
-| P05-TSX-DEFER | typescript-V59,tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | PLANNED_NOT_RUN; source rule 관찰만 존재 |
+| P05-TSX-DEFER | tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | PLANNED_NOT_RUN; TS-1의 common factory 관찰을 TSX producer로 별도 확인하며 .ts 증거로 대체하지 않음 |
 | P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | PLANNED_NOT_RUN; 둘의 syntax 수용과 node 분류를 각각 비교 |
 | P05-TSQL-STATEMENTS | tsql-B02,tsql-B03,tsql-B04 | 한 글자 identifier의 CREATE TABLE/INSERT, CTE/SELECT, procedure/transaction, modern DDL | PLANNED_NOT_RUN; unrelated ERROR-free SELECT로 대체 금지 |
 | P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | PLANNED_NOT_RUN; client separator 경계 |
@@ -77,7 +77,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 ## 남은 승인과 readiness
 
-기존 승인 중 남은 native 13회는 **owned fixtures만** 대상으로 한다. 이 표의 upstream probe에 전용할 수 없다. 새 source/tool artifact 다운로드 한도는 0 bytes다. 공개 primary 문서·source의 읽기 전용 조사는 이 실행/다운로드 한도를 확대하지 않는다. 이번 후속 준비에서는 upstream generation/build/parse/edit를 0회 수행했다.
+기존 native 승인은 **owned fixtures만** 대상으로 한다. 이 표의 upstream probe에 전용할 수 없다. 실제 잔여 횟수·시간·CI·보관량은 immutable 승인 기록에 연결된 누적 ledger와 새 checkpoint에서 대조한다. 새 source/tool artifact 다운로드 한도는 0 bytes다. 공개 primary 문서·source의 읽기 전용 조사는 이 실행/다운로드 한도를 확대하지 않는다. 이번 후속 준비에서는 upstream generation/build/parse/edit를 0회 수행했다.
 
 현재 P05가 남는 이유는 (1) C#의 문서상 필수 gap, (2) T-SQL의 정적 필수 source gap, (3) 26개 executable source closure 및 선택 high-risk native 경로의 미확인이다. TS/TSX import-defer source 위험도 남는다. exact candidate 유지와 요구 유지 조건 아래 이 gap을 무조건 해결됐다고 할 수 없다.
 

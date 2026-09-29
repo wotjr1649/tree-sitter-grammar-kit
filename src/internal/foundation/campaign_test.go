@@ -186,15 +186,18 @@ func checkFeatureDisposition(routes []string, inventory, risks string) error {
 			}
 			continue
 		}
-		if len(fields) != 8 || !want[match[1]] || features[id] {
+		if len(fields) != 9 || !want[match[1]] || features[id] {
 			return fmt.Errorf("feature identity/columns mismatch: %s", id)
 		}
 		features[id] = true
-		for i := 2; i <= 6; i++ {
+		for i := 2; i <= 7; i++ {
 			fields[i] = strings.TrimSpace(fields[i])
 			if fields[i] == "" {
 				return fmt.Errorf("empty feature field: %s", id)
 			}
+		}
+		if !strings.Contains(fields[7], "](https://") {
+			return fmt.Errorf("missing feature primary reference: %s", id)
 		}
 		disposition := fields[3]
 		if disposition != "REQ" && disposition != "SEM" && disposition != "RUN" && disposition != "EXT" {
@@ -271,6 +274,7 @@ func TestFeatureDisposition(t *testing.T) {
 		{"missing-route", strings.Replace(inventory, "## tsx\n", "## removed\n", 1), risks, "route section"},
 		{"unresolved-scope", strings.Replace(inventory, "| REQ |", "| UNRESOLVED |", 1), risks, "unresolved feature"},
 		{"missing-positive", strings.Replace(inventory, "| P,N,R,E |", "| N,R,E |", 1), risks, "without positive"},
+		{"missing-reference", strings.Replace(inventory, "[spec Lexical structure](", "section(", 1), risks, "primary reference"},
 		{"invented-reproduction", inventory, strings.Replace(risks, "| UPSTREAM_DECLARED |", "| REPRODUCED_FAILURE |", 1), "unobserved source"},
 		{"unknown-feature", inventory, strings.Replace(risks, "csharp-B01,csharp-V14c", "csharp-MISSING", 1), "unknown source risk"},
 	} {
