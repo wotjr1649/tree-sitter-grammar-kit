@@ -6,6 +6,7 @@ The current implementation consists of repository foundation checks. Product com
 |---|---|
 | Purpose and release-candidate scope | [scope](specs/scope.md) |
 | Commands, errors, profile fields | [CLI/profile](specs/cli-and-profile.md) |
+| Public offline Go API, ownership, external consumers | [public API](specs/public-go-api.md) |
 | Fingerprints, manifests, evidence | [identity/evidence](specs/identity-and-evidence.md) |
 | Untrusted inputs, paths/archives, execution authority | [trust/execution](specs/trust-and-execution.md) |
 | Ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md) |
@@ -13,8 +14,10 @@ The current implementation consists of repository foundation checks. Product com
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
+| Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md) |
 | Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
+| Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
 

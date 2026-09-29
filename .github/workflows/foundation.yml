@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: foundation-${{ github.workflow }}-${{ github.ref }}
+  group: tsgk-campaign-heavy
   cancel-in-progress: false
 
 env:

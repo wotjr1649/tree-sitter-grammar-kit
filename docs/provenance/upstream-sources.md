@@ -31,3 +31,13 @@ stable → 개발 snapshot compare API는 12 commits와 변경 20개를 보고�
 | Go API | [internal layout](https://go.dev/doc/modules/layout), [CGO_ENABLED](https://pkg.go.dev/cmd/cgo), [encoding/json](https://pkg.go.dev/encoding/json)을 확인. mutable 문서는 구현 시 해당 버전으로 다시 대조 |
 
 Actions의 공식 release·manifest·입력과 실행 효과를 검토했으며 전 의존 코드의 보안 감사는 수행하지 않았다. workflow는 read-only token, credential persistence off, exact SHA, bounded timeout으로 사용 범위를 제한한다. 다운로드/Actions 준비는 CI 개발환경 단계이며 제품 offline claim과 별개다.
+
+## Campaign 01 PREPARE의 추가 관측
+
+위 S00의 v0.1.3/v0.1.2/development와 실패 이력은 원래 identity로 보존한다. 2026-09-29 준비에서는 이미 보관된 [BrightScript v0.1.4](https://github.com/wotjr1649/tree-sitter-brightscript/releases/tag/v0.1.4)를 maintained reference 후보로 연결했다. tag object `33898125ef163487407a60d17608efad32e6a872`, release commit `e47cf8072538d1360256da975716ad552418c286`, tree `dc9e6f4d158926234b77f69f143f799d7d586a2f`다. source ZIP은 6,612,139 bytes, SHA-256 `965d57cb5f71f5307ea83276701e738ce3f14dc8ab0512eeac136757332e4e39`이며 기존 보관 bytes를 다시 확인한다. 이전 qualification/report는 kit의 NEW_RUN으로 승계하지 않는다.
+
+[26-route 후보 등록부](../../src/contracts/language-sources.json)는 기준일의 immutable commit, grammar subdirectory, scanner/shared path, generated artifact 존재와 license metadata를 기록한다. 실제 metadata/source 실행 검증 상태는 분리한다. 후보 SHA는 완전한 JS dependency closure나 legacy~stable feature 지원 증거가 아니며, 실제 dependent operation 전에 필요한 모든 bytes·lock/helper/scanner/query를 검토하고 source manifest로 결속한다.
+
+PREPARE owned fixture는 기존 Tree-sitter CLI 0.27.0(ABI15), UCRT64 GCC16.2.0, 별도 고정 runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`(header 허용 ABI13~15)을 사용한다. 이 runtime commit을 v0.27.0 release라고 부르지 않는다. CLI v0.27.0 tag object는 `3e719425fc48f5b4cdb25c580e44023882f5e2a7`, peeled commit은 `6070dbfefd326bd735e5683eb128cc1b57dad0c0`이며 runtime 후보와 unicode/header 관련 변경이 있다. 각 identity와 실제 build/parse 결과를 따로 기록한다. 원본 checkout은 변경하지 않고 승인한 새 scratch의 복사본에서 검사한다.
+
+언어별 SDK·DB server·전역 tool·새 Go dependency는 추가하지 않는다. maintainer README의 지원 문구와 release 여부는 출처 관측이며 full conformance나 법적 license 검토로 확대하지 않는다. [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)가 실제 미해결 입력과 준비 상태를 연결한다.

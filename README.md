@@ -1,12 +1,14 @@
 # tree-sitter-grammar-kit
 
-A Go project for a planned CGO-free CLI, `tsgk`, that ties Tree-sitter grammar artifacts, structure, validation evidence, and runtime results to reproducible identities.
+A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go API that share grammar inspection, comparison, and evidence checks. The first use case is grammar adoption and updates; consumer conversion, scanners, runtime, and adoption remain separate responsibilities.
 
 ## Status and scope
 
 Only repository foundation checks are implemented. They validate the source/module layout, canonical documentation links, Git tracking/ignore policy, and the CGO-free core boundary. There is no usable `tsgk` executable yet.
 
-Offline inspection, identity, verification, and schema commands are planned; generator, native runtime, and adapter execution are also unimplemented. Specifications describe intended contracts, not available features. See the [scope](docs/specs/scope.md) and [roadmap](docs/roadmap.md).
+Offline inspection, identity, verification, and schema commands/API are planned; generator, native runtime, and adapter execution are also unimplemented. The [public API contract](docs/specs/public-go-api.md) selects `src/kit` in the existing root module. Specifications describe intended contracts, not available features. See the [scope](docs/specs/scope.md) and [roadmap](docs/roadmap.md).
+
+Campaign qualification requires [26 syntax routes](docs/validation/language-feature-scope.md) on three platforms, with registered legacy and modern features. This is a development acceptance scope, not a claim that the current product or every candidate grammar supports them. Users can use verified offline operations independently; they need not install all grammars or invoke the kit in their application runtime.
 
 Foundation CI runs on Windows amd64, Linux amd64, and macOS Apple Silicon arm64. Its success does not establish product/native support or cross-platform semantic parity. The [platform contract](docs/specs/platform-support.md) defines those separate claims. Versioned [foundation results](docs/reports/session-00-foundation.md) describe their own tested revision; use the [Foundation workflow](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/workflows/foundation.yml) for later runs.
 

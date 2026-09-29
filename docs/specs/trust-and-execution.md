@@ -31,3 +31,11 @@ archive inspection은 extraction과 분리한다. 절대·상위·중복·case c
 caller-owned 새 workspace에서 snapshot을 읽고 실행한다. cache key는 source/tool/compiler/options/policy identity 전체를 포함하고 불일치 cache를 거부한다. timeout/output cap/메모리 종류/process-tree cleanup을 각 backend에서 실제 검증한다. parent 종료만으로 child 종료를 주장하지 않는다. cap/cleanup 확인이 불가능하면 엄격 profile은 BLOCKED다.
 
 환경 정리와 private cache는 보안 sandbox가 아니다. 신뢰하지 못하는 native 코드 실행은 별도 격리 환경과 정확한 승인이 필요하다. offline 경로와 실행 backend, archive/path 처리, dependency 도입 변경은 full boundary review와 정상/adversarial 검사를 요구한다. raw 실패·취소·partial 출력은 failure evidence로 남기고 성공 manifest를 쓰지 않는다.
+
+## Campaign 준비와 실행값
+
+source/tool 확보와 offline 제품 호출을 분리한다. 승인 기록은 공급 URL/provider, immutable revision/digest, 실제 executable/dependency/header/compiler closure, 대상 위치, 허용 fetch/unpack/lifecycle/build/run 효과, 유한 한도와 cleanup 책임을 구분한다. 다운로드 승인은 script/native 실행 승인으로 확대되지 않는다. 기존 reference와 다른 저장소는 읽기 전용이며 새 복사본은 정확한 준비 승인 안에서만 만든다.
+
+새 Go dependency는 필요한 이유·source/version/license·전이 dependency·CGO·script·호환성과 실행 효과를 검토한 뒤 준비 목록에 승인 등록한다. `x/sys`도 자동 허용하지 않지만 dependency 수를 줄이기 위해 위험한 unsafe OS API를 새로 구현하지 않는다. 언어별 SDK/DB server·전역 PATH·WSL·PowerShell 5·유료 모델 호출은 기본 준비 효과가 아니다.
+
+모든 연산은 input files/bytes/depth, decoded/archive 누적량, output/records/nodes/captures, wall time, storage와 지원 가능한 memory/process control을 명시한다. 0/null은 무제한 승인이나 capability 증거가 아니다. sampled memory 관측은 hard cap이 아니며 필요한 cap이 없으면 해당 strict operation이 BLOCKED다. 상세 실행값과 소모량은 승인된 준비/Session receipt가 소유하며 공개 제품 동작은 local prompt를 읽지 않는다.

@@ -79,7 +79,19 @@ Immediately before each mutation, recheck identities, tips, worktree contents, a
 
 Keep a local receipt of removed/retained targets, preserved material, checks, failures, and revisit conditions. Record archive size and a review date; age or disk pressure alone never authorizes deletion. Worktree counts are review signals, not hard limits or automatic deletion triggers. `git worktree prune` removes stale administrative entries, not existing workspaces; it is not a substitute for safe removal. Tag creation/push, Release, and package publication remain separate work. This contract defines future cleanup conditions, not permission to delete existing workspaces while editing the contract.
 
-## Session 00 gates
+## Campaign 01 준비와 후속 단계
+
+PREPARE는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)의 D1~D13 소유와 [26 route/feature 범위](language-feature-scope.md)를 채택한다. 공급 prompt와 역사적 S00/r2는 서로 다른 revision으로 보존한다. local hash/receipt는 권한이나 성공을 만들어내지 않으며 CI와 공개 API는 local prompt 없이 동작해야 한다.
+
+P01 root/remote/변경 보존, P02 공급/역사적 hash, P03 D1~D13 정합화, P04 명시적 26-route scope/feature 채택, P05 source/tool feasibility와 격차, P06 허용 효과/유한 한도/probe, P07 공개 API/module/source 경계, P08 현재 후보 foundation, P09 분리 context 의미 리뷰, P10 실제 PR의 세 OS CI, P11 actual merge/post-merge, P12 Parent/8개 Issue/8개 Milestone readback, P13 operational manifest/receipt/승인 예산 일치, P14 한국어 readiness/handoff가 모두 준비 gate다. 각 gate에는 실제 근거와 미실행 이유를 연결한다.
+
+필수 입력이 남은 계약 통합은 ADOPTED_PENDING_INPUTS, 필수 외부 격차는 BLOCKED_EXTERNAL, 미처리 finding은 HOLD_FOR_CORRECTION이다. 검증·리뷰가 완료되고 통합만 남으면 READY_FOR_INTEGRATION이다. PREPARATION_READY는 P01~P14와 필수 scope/효과/예산이 확인된 경우만 사용하고 S01 실행은 별도 live 지시를 요구한다. 준비 Issue는 전체 기준 충족 후에만 완료 처리하며 Parent/#3~#10/MS2~9는 PREPARE에서 닫지 않는다.
+
+S01~S03은 공개 offline API/CLI equivalence와 직접 API guard, checkout 밖 별도 consumer module을 검사한다. S04의 한 runner, S05 최소 native producer, S06 동일 producer 확장, S07 등록 reducer를 영향별 회귀로 검증한다. S08 최종 78칸은 새 현재 후보의 실제 세 host native 근거가 필요하다. PR synthetic tree와 actual merge tree가 동일하면 관계를 기록하고 필수 post-merge 검증을 수행하며, 다르면 영향 검사를 다시 수행한다. source-export/versioned local module-proxy 소비도 S08에 확인한다.
+
+시간/입력/출력/저장/지원되는 memory·process 한도와 campaign/session 소모량을 등록한다. local heavy는 1, campaign heavy CI는 겹치는 workflow 전체를 합쳐 최대 3이다. 현재 Foundation은 workflow 전체의 공통 concurrency group과 matrix max-parallel3으로 직렬 run을 보장한다. 이후 native workflow도 같은 공유 lane을 사용하거나 동등한 scheduler 근거를 갖춰야 한다. 무변경 재시도는 원인이 확인된 일시적 infrastructure 오류에 한해 1회이며 제품 수정은 새 후보·남은 예산으로 검증한다. null/0을 무제한으로 해석하거나 한도·golden·필수 범위를 자동 완화하지 않는다.
+
+## Session 00 gates — 보존된 완료 기준
 
 All gates are required: G00-01 target/authority; 02 pinned references; 03 src/module/local boundaries; 04 AGENTS at most 60 nonblank lines; 05 design; 06 observed foundation/negative/CGO-free checks; 07 exact three-OS CI; 08 Issue/Milestone work program; 09 local prompts/hashes; 10 independent review with zero open BLOCKER/MATERIAL findings; 11 merge/post-merge; 12 handoff.
 
