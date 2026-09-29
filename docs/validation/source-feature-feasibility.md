@@ -9,7 +9,7 @@
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
 - `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. **현재 26 upstream route에 이 등급의 기록은 0개**다.
 
-모든 행의 upstream generation/build/parse 상태는 `NOT_RUN`이다. PREPARE-03 run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했다. 선택 목록의 byte 검증은 전체 feature 지원이나 모든 단계의 executable closure 완료를 뜻하지 않는다. owned 격리 preflight4회 뒤 tmpfs 결과 회수가 실패해 upstream native는 시작하지 않았다. metadata/file-list 관측, source bytes, executable closure의 완전한 검토를 구분한다. 후보의 설치 script는 실행하지 않았다. 과거 owned scannerless/stateful7회도 이26행의 지원 성공을 대신하지 않는다.
+모든 행의 upstream generation/build/parse 상태는 `NOT_RUN`이다. PREPARE-03 run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했다. 선택 목록의 byte 검증은 전체 feature 지원이나 모든 단계의 executable closure 완료를 뜻하지 않는다. 당시 owned 격리 preflight4회 뒤 tmpfs 결과 회수가 실패했다. 후속 run36606981293/attempt1은 같은474파일을 검증하고 canary12bytes 회수·owned isolation8개·container9개 cleanup을 확인했으나, 기존 image에서 CLI의 `GLIBC_2.39` loader 실패로 중단했다. toolchain preflight 미완료, upstream G/B/X0이며 grammar 실패를 재현한 것이 아니다. metadata/file-list 관측, source bytes, executable closure의 완전한 검토를 구분한다. 후보의 설치 script는 실행하지 않았다. 과거 owned scannerless/stateful7회도 이26행의 지원 성공을 대신하지 않는다.
 
 ## 26 route 위험 매핑
 
@@ -86,6 +86,6 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 
 현재 P05가 남는 이유는 (1) C#의 문서상 필수 gap, (2) T-SQL의 정적 필수 source gap, (3) 26개 executable source closure 및 선택 high-risk native 경로의 미확인이다. TS/TSX import-defer source 위험도 남는다. exact candidate 유지와 요구 유지 조건 아래 이 gap을 무조건 해결됐다고 할 수 없다.
 
-위 수치는 최초 B 승인 당시 envelope다. 이후 수동 job2회 및3회째와 T-SQL raw 취득의 별도 승인을 각각 소비했으며, 현재 source HTTP 누적52회·image pull1회·owned isolation preflight4회다. 실패 job14+14+66초와 전송/CI를 누적 ledger에 유지한다. 4회째 job이나 새 tmpfs 회수 방식은 추가 승인 전 실행할 수 없다. 현재 실제 장애와 회수 계획은 [source closure](p05-source-closure.md)의 tmpfs capability 절을 따른다.
+위 수치는 최초 B 승인 당시 envelope다. 이후 수동 job2회 및3회째와 T-SQL raw 취득의 별도 승인을 각각 소비했다. 2026-09-30 현재 사용자는 동일 PREPARE 개발·검증·CI·기존 고정 입력의 추가 job과 `quiescent-tar-r1`을 지속 승인했다. 과거 총시간/3회 quota만으로 재승인을 요구하지 않고 유한 배치별 한도를 기록하며 모든 이전 소비·실패를 이월한다. 다섯 번째 job까지 source HTTP 누적150회·image pull3회·owned isolation13회, upstream G/B/X0이다. 최초 세 job14+14+66초와 후속66+65초를 보존한다. 새 image artifact는 고정 입력 승인에 자동 포함되지 않으며 별도 exact effect 승인이 필요하다. 현재 loader 장애와 image 보완 조건은 [source closure](p05-source-closure.md)를 따른다.
 
 담당은 PREPARE/#20, 기한은 S01 readiness 전이다. 추가 source acquisition/native 효과가 필요해지면 source set·destination·isolation·횟수·입출력/시간/memory/저장 한도를 구체화해 먼저 승인받는다. 환경변수 제거는 hostile native network/filesystem isolation의 증거가 아니다. 다른 grammar 채택·다른 repo 수정·기대값 완화·알려진 gap을 안고 구현을 시작하는 예외는 각각 별도 결정이며 이번 문서가 부여하지 않는다. 이 조건을 해결하기 전 verdict는 `ADOPTED_PENDING_INPUTS`와 `BLOCKED_EXTERNAL` 사유를 유지한다.
