@@ -229,7 +229,7 @@ function RecoveredExecutable([string]$label){
 }
 function CheckOwnedControl($events){
     $stages=@($events|Where-Object stage);$comparisons=@($events|Where-Object comparison)
-    if($stages.Count -ne 5 -or (Compare-Object @($stages.stage) @('original','damaged-incremental','damaged-fresh','restored-incremental','restored-fresh')) -or $comparisons.Count -ne 2 -or @($comparisons|Where-Object {-not $_.equal}).Count){throw 'Owned parse/edit stages mismatch'}
+    if($stages.Count -ne 5 -or (Compare-Object @($stages.stage) @('original','damaged-incremental','damaged-fresh','restored-incremental','restored-fresh')) -or $comparisons.Count -ne 2 -or (Compare-Object @($comparisons.comparison) @('damaged','restored')) -or @($comparisons|Where-Object {-not $_.equal}).Count){throw 'Owned parse/edit stages mismatch'}
     foreach($stage in $stages){
         if($stage.stage.StartsWith('damaged')){if(-not $stage.has_error){throw 'Owned negative did not detect missing brace'};continue}
         if($stage.has_error -or $stage.tree.kind -cne 'source_file'){throw 'Owned positive syntax mismatch'}

@@ -62,6 +62,8 @@ $controlTree.children[0].children[1].field='body';$control[-1].equal=$false
 $rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Unequal edit trees were accepted'}
 $control[-1].equal=$true;$control[1].has_error=$false
 $rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Missing owned negative error was accepted'}
+$control[1].has_error=$true;$control[-1].comparison='damaged'
+$rejected=$false;try{CheckOwnedControl $control}catch{$rejected=$true};if(-not $rejected){throw 'Missing restored comparison was accepted'}
 $function=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Application'},$true))
 if($function.Count -ne 1){throw 'Application helper identity mismatch'}
 . ([scriptblock]::Create($function[0].Extent.Text))
