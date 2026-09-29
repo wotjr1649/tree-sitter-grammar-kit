@@ -81,6 +81,10 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
           go test ./src/... -count=1 -v -timeout 120s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: P05 도구 경로 회귀 검사
+        run: |
+          $taskTestRoot = Join-Path $env:RUNNER_TEMP "p05-tool-check-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/prepare-p05/self-test.ps1 -Destination $taskTestRoot
       - name: Vet와 CGO-free build
         run: |
           go vet ./src/...

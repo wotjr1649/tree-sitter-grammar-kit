@@ -21,8 +21,13 @@ foreach($group in $routeGroups){if($caseReview.route_counts.($group.Name) -ne $g
 $editIds=@($inputs.cases|Where-Object edit|ForEach-Object id)
 if($editIds.Count -ne 6 -or (Compare-Object $editIds @($caseReview.edit_ids))){throw 'Reviewed edit set changed'}
 foreach($case in $inputs.cases){if(-not $case.feature_ids.Count -or -not $case.expected.facts -or ($case.edit -and -not $case.edit.negative_expected)){throw 'Missing reviewed feature/fact/negative expectation'}}
-$docker=(Get-Command docker -CommandType Application).Source
-$pwsh=(Get-Command pwsh -CommandType Application).Source
+function Application([string]$name){
+    $command=Get-Command -Name $name -CommandType Application -ErrorAction Stop|Select-Object -First 1
+    if(-not $command.Source -or -not (Test-Path -LiteralPath $command.Source -PathType Leaf)){throw 'Application path unavailable'}
+    return [string]$command.Source
+}
+$docker=Application docker
+$pwsh=Application pwsh
 $script:commands=[Collections.Generic.List[object]]::new()
 $script:outcomes=[Collections.Generic.List[object]]::new()
 $script:containers=[Collections.Generic.List[string]]::new()
@@ -37,6 +42,7 @@ function Record([string]$name,$value){$path=Join-Path $root ('records/'+$name+'.
 function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[string]$executable=$docker,[switch]$Cleanup){
     $deadline=if($Cleanup){4560}else{4500}
     if($label -notmatch '^[a-z0-9-]+$' -or $script:wall.Elapsed.TotalSeconds+$seconds -gt $deadline){throw 'Operation label/job time limit'}
+    $toolDigest=(Get-FileHash -LiteralPath $executable).Hash.ToLowerInvariant()
     $stored=(Get-ChildItem -LiteralPath $root -File -Recurse|Measure-Object Length -Sum).Sum
     if($stored+$script:imageSize+2*$limit+536870912 -gt 8589934592){throw 'Runner storage reserve exceeded'}
     $paths=@((Join-Path $root "raw/$label.stdout"),(Join-Path $root "raw/$label.stderr"))
@@ -72,7 +78,7 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
         if(-not $cleanupVerified){$reason='UNKNOWN_CLEANUP'}
         foreach($file in $files){$file.Dispose()};$timer.Stop();$process.Dispose()
         $storedOut=(Get-Item -LiteralPath $paths[0]).Length;$storedErr=(Get-Item -LiteralPath $paths[1]).Length
-        $receipt=@{label=$label;tool=$executable;tool_sha256=(Get-FileHash $executable).Hash.ToLowerInvariant();argv=$argv;seconds_limit=$seconds;wall_seconds=$timer.Elapsed.TotalSeconds;output_limit=$limit;observed_bytes=$total;stored_stdout_bytes=$storedOut;stored_stderr_bytes=$storedErr;unstored_observed_bytes=($total-$storedOut-$storedErr);partial_output=($reason -ne 'EXITED');host_cleanup_verified=$cleanupVerified;termination=$reason;exit_code=$exitCode;stdout_sha256=(Get-FileHash $paths[0]).Hash.ToLowerInvariant();stderr_sha256=(Get-FileHash $paths[1]).Hash.ToLowerInvariant()}
+        $receipt=@{label=$label;tool=$executable;tool_sha256=$toolDigest;argv=$argv;seconds_limit=$seconds;wall_seconds=$timer.Elapsed.TotalSeconds;output_limit=$limit;observed_bytes=$total;stored_stdout_bytes=$storedOut;stored_stderr_bytes=$storedErr;unstored_observed_bytes=($total-$storedOut-$storedErr);partial_output=($reason -ne 'EXITED');host_cleanup_verified=$cleanupVerified;termination=$reason;exit_code=$exitCode;stdout_sha256=(Get-FileHash $paths[0]).Hash.ToLowerInvariant();stderr_sha256=(Get-FileHash $paths[1]).Hash.ToLowerInvariant()}
         $script:commands.Add($receipt);Record ('command-'+$label) $receipt
     }
     if(-not $cleanupVerified){throw 'Host command cleanup unverified; receipt retained'}
