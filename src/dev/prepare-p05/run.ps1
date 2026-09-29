@@ -74,7 +74,8 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
                 }
             }
             if($reason -ne 'EXITED'){break}
-            if(-not $process.HasExited){[void]$process.WaitForExit(20)}else{[Threading.Thread]::Sleep(20)}
+            $reads=[Threading.Tasks.Task[]]@($pending|Where-Object {$_})
+            if($reads.Count){[void][Threading.Tasks.Task]::WaitAny($reads,20)}elseif(-not $process.HasExited){[void]$process.WaitForExit(20)}
         }
         if(-not $process.HasExited){$process.Kill($true);if(-not $process.WaitForExit(2000)){throw 'Host command cleanup unverified'}}
         $exitCode=$process.ExitCode

@@ -154,6 +154,24 @@ foreach($mode in @(493,420)){
     StopContainer 'owned' 'operation'
     if($script:containers.Count){throw 'Lifecycle receipt fixture incomplete'}
 } $ast $root
+$supervisorBurst=& {
+    param($sourceAst,$caseRoot)
+    $root=Join-Path $caseRoot 'supervisor-burst'
+    foreach($directory in @('records','raw','home')){[void][IO.Directory]::CreateDirectory((Join-Path $root $directory))}
+    foreach($helper in @('Run','Record','Require')){
+        $definition=@($sourceAst.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
+        if($definition.Count -ne 1){throw 'Supervisor helper identity mismatch'}
+        . ([scriptblock]::Create($definition[0].Extent.Text))
+    }
+    $script:commands=[Collections.Generic.List[object]]::new();$script:wall=[Diagnostics.Stopwatch]::StartNew()
+    $script:imageSize=0L;$script:acquiring=$false;$runnerRoot=$root
+    $burst='$s=[Console]::OpenStandardOutput();$b=[byte[]]::new(65536);for($i=0;$i -lt 128;$i++){$s.Write($b,0,$b.Length)};$s.Flush()'
+    $result=Run 'burst' @('-NoLogo','-NoProfile','-Command',$burst) 2 8388608 -executable (Application pwsh)
+    Require $result
+    $expected=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([byte[]]::new(8388608))).ToLowerInvariant()
+    if($result.observed_bytes -ne 8388608 -or $result.stored_stdout_bytes -ne 8388608 -or $result.stored_stderr_bytes -ne 0 -or $result.stdout_sha256 -cne $expected -or -not $result.host_cleanup_verified){throw 'Bounded supervisor burst lost bytes or cleanup'}
+    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=1;native=$false}
+} $ast $root
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
@@ -164,5 +182,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
-Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=1;native_fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+Write-Output 'P05 self-check PASS; owned supervisor burst1, native fixture execution0'

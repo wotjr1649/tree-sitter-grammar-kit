@@ -101,3 +101,5 @@ run36606981293/attempt1은 PR #29의 actual main3099b294e8b8bf960c21a0a25c454d26
 각 build는 같은 image의 readelf로 실제 ELF/loader/NEEDED/version 원문을 회수한다. 허용한 x86-64 ELF64·image loader·libc closure와 executable mode/hash를 확인한 후 새 container에서 실행한다. 모든57개 input의 baseline/재생성 variant는 final case ledger에 남으며 미실행은 dependency blocker를 명시한다. syntax/구조/negative/recovery/edit의 최종 지원 판정은 해당 원문·tree·feature 사실의 실제 평가가 필요하다.
 
 upstream `grammar.json`의 rule key는 대소문자를 구별한다. grammar entry-point 이름은 case-sensitive hashtable로 읽고 기존 C identifier 제한을 적용한다. run36644794802는 새 image의 CLI/libc·격리8개·자체 G/B/X control을 통과한 뒤 T-SQL의 `AS`/`as`를 기본 PowerShell JSON object로 읽다가 중단했다. upstream G/B/X0이며 grammar 구문 실패가 아니다. 원본 source를 고치거나 key를 정규화하지 않고 reader를 교정하고 case-distinct key와 잘못된 entry-point 이름을 회귀 검사한다.
+
+원격 command supervisor는 준비된 stdout/stderr를 drain하고 다음 read task 중 하나가 완료될 때까지 최대20ms만 기다린다. 출력 준비와 무관하게 매65,536bytes read마다20ms를 기다리던 이전 동작은 run36646415814에서 C# generation exit0 뒤 회수10초 동안32,305,152bytes만 읽고 timeout됐다. partial tar·명령·cleanup77개와 T-SQL의 이미 실행된56개 producer 결과를 보존한다. 회수10초·archive/output·storage 한도를 늘리지 않으며 큰 회수의 완료는 새 native 관측으로 확인한다.
