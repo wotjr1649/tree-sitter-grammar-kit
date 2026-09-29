@@ -79,7 +79,38 @@ Immediately before each mutation, recheck identities, tips, worktree contents, a
 
 Keep a local receipt of removed/retained targets, preserved material, checks, failures, and revisit conditions. Record archive size and a review date; age or disk pressure alone never authorizes deletion. Worktree counts are review signals, not hard limits or automatic deletion triggers. `git worktree prune` removes stale administrative entries, not existing workspaces; it is not a substitute for safe removal. Tag creation/push, Release, and package publication remain separate work. This contract defines future cleanup conditions, not permission to delete existing workspaces while editing the contract.
 
-## Session 00 gates
+## Campaign 01 준비와 후속 단계
+
+PREPARE는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)의 D1~D13 소유와 [26 route/feature 범위](language-feature-scope.md)를 채택한다. 공급 prompt와 역사적 S00/r2는 서로 다른 revision으로 보존한다. local hash/receipt는 권한이나 성공을 만들어내지 않으며 CI와 공개 API는 local prompt 없이 동작해야 한다.
+
+아래 표가 공개 PREPARE acceptance의 소유자다. 로컬 prompt나 template은 이 정의를 대신하지 않는다. gate status는 관측 receipt에 기록하며 테스트가 ID나 행을 확인한 것만으로 PASS가 되지 않는다.
+
+| ID | PASS에 필요한 근거 | 필수 반례/미충족 판정 |
+|---|---|---|
+| P01 | 정확한 root/remote/worktree/base와 live 권한, 시작 diff/보존 inventory | 다른 root 또는 관련 없는 기존 변경을 덮어쓰지 않음 |
+| P02 | 공급 파일 집합과 역사적 원본의 recorded size/hash 대조 | 누락/변경 prompt를 자체 rehash로 승인하지 않음 |
+| P03 | 준비 보고서의 D1~D13 owner와 Session acceptance 정합화 | 폐기한 S05 CLI-only/S06 별도 driver/S08 축소/API 비공개 계약이 활성 상태로 남지 않음 |
+| P04 | 26 route의 version/dialect/mode와 완전한 feature inventory 명시 채택 | 빈 목록/global latest/미승인 하한/누락 mode/미완료 feature는 미충족 |
+| P05 | 26 source/tool feasibility 행의 관측·unknown·gap과 primary 근거 | repo/README 존재만으로 full support를 주장하지 않음 |
+| P06 | 정확한 준비 효과/유한 한도 승인과 선택 probe의 command/input/tool/result | version 조회를 build로 표시하거나 denied effect를 우회하지 않음 |
+| P07 | 공개 API·root module·src 경계·ordinary 진입 계약과 source/link 검사 | tracked nested module 또는 ignored prompt에 의존하는 canonical 계약 금지 |
+| P08 | 현재 후보의 영향별 foundation/format/test/vet/build/dependency 검사 | 과거 S00 CI 승계/zero tests/미실행을 PASS로 표시하지 않음 |
+| P09 | 정확한 diff/head의 분리 context 의미 리뷰와 finding 처분 | open BLOCKER/MATERIAL, self-review 또는 same-account comment를 formal approval로 대체 불가 |
+| P10 | 실제 PR의 base/head/synthetic checkout/run/attempt/job와 세 OS 필수 CI | wrong SHA/attempt, skipped/missing job은 NOT_VERIFIED |
+| P11 | 허용된 actual merge commit/tree와 main post-merge 검증 | 예정 SHA 또는 PR CI만으로 actual merge 검증 완료 처리 불가 |
+| P12 | Parent #1/Issue #3~#10/Milestone 2~9의 intended body/state readback | 동시 사용자 변경 보존, 부분 API 성공이면 pending 유지 |
+| P13 | 실제 operational manifest/immutable receipt/승인 budget/hash/tracking의 일치 | template/null approval/변경된 prompt는 S01을 활성화하지 않음 |
+| P14 | 한국어 handoff의 실제 판정·미실행·한도·정확한 재개 entry | PREPARE에서 S01 또는 release를 시작하지 않음 |
+
+source 등록부의 개발 검사는 현재 후보 metadata의 필수 값·상태·portable path와 공개 26-route 표의 전수성을 확인한다. 실제 upstream bytes/closure 또는 지원 성공은 primary 조사와 해당 native receipt가 검증하며, 이 정적 검사만으로 성립하지 않는다.
+
+필수 입력이 남은 계약 통합은 ADOPTED_PENDING_INPUTS, 필수 외부 격차는 BLOCKED_EXTERNAL, 미처리 finding은 HOLD_FOR_CORRECTION이다. 검증·리뷰가 완료되고 통합만 남으면 READY_FOR_INTEGRATION이다. PREPARATION_READY는 P01~P14와 필수 scope/효과/예산이 확인된 경우만 사용하고 S01 실행은 별도 live 지시를 요구한다. 준비 Issue는 전체 기준 충족 후에만 완료 처리하며 Parent/#3~#10/MS2~9는 PREPARE에서 닫지 않는다.
+
+S01~S03은 공개 offline API/CLI equivalence와 직접 API guard, checkout 밖 별도 consumer module을 검사한다. S04의 한 runner, S05 최소 native producer, S06 동일 producer 확장, S07 등록 reducer를 영향별 회귀로 검증한다. S08 최종 78칸은 새 현재 후보의 실제 세 host native 근거가 필요하다. PR synthetic tree와 actual merge tree가 동일하면 관계를 기록하고 필수 post-merge 검증을 수행하며, 다르면 영향 검사를 다시 수행한다. source-export/versioned local module-proxy 소비도 S08에 확인한다.
+
+시간/입력/출력/저장/지원되는 memory·process 한도와 campaign/session 소모량을 등록한다. local heavy는 1, campaign heavy CI는 겹치는 workflow 전체를 합쳐 최대 3이다. 현재 Foundation은 workflow 전체의 공통 concurrency group과 matrix max-parallel3으로 직렬 run을 보장한다. 이후 native workflow도 같은 공유 lane을 사용하거나 동등한 scheduler 근거를 갖춰야 한다. 무변경 재시도는 원인이 확인된 일시적 infrastructure 오류에 한해 1회이며 제품 수정은 새 후보·남은 예산으로 검증한다. null/0을 무제한으로 해석하거나 한도·golden·필수 범위를 자동 완화하지 않는다.
+
+## Session 00 gates — 보존된 완료 기준
 
 All gates are required: G00-01 target/authority; 02 pinned references; 03 src/module/local boundaries; 04 AGENTS at most 60 nonblank lines; 05 design; 06 observed foundation/negative/CGO-free checks; 07 exact three-OS CI; 08 Issue/Milestone work program; 09 local prompts/hashes; 10 independent review with zero open BLOCKER/MATERIAL findings; 11 merge/post-merge; 12 handoff.
 

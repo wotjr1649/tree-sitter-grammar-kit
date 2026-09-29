@@ -1,11 +1,11 @@
 # 개발 campaign
 
-전체 추적: [TSGK-C1 #1](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/1). 현재 campaign 실행은 Session 00에 한정된다. Session 01~08은 별도 상위 실행 지시 후 순서대로 시작한다. 일반 개발의 진입 조건은 [문서 지도](README.md)를 따른다. campaign과 release는 별도 결정이다.
+전체 추적: [TSGK-C1 #1](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/1). Session 00의 완료와 PR13/15/19 후속 계약을 보존한다. [PREPARE #20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20)은 D1~D13 채택과 실제 준비 상태를 정합화하며 S01 앞에서 종료한다. Session 01~08은 PREPARATION_READY 및 별도 상위 실행 지시 후 순서대로 시작한다. 일반 개발의 진입 조건은 [문서 지도](README.md)를 따른다. campaign과 release는 별도 결정이다.
 
 | Session | 범위 | 선행 | Issue | Milestone |
 |---|---|---|---|---|
 | 00 | Foundation / Architecture / Campaign Design | 없음 | [#2](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/2) | [1](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/1) |
-| 01 | Inventory & Identity | 00 | [#3](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/3) | [2](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/2) |
+| 01 | Inventory & Identity | PREPARE + 00 | [#3](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/3) | [2](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/2) |
 | 02 | Strict Profile & Verification | 01 | [#4](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/4) | [3](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/3) |
 | 03 | Schema Contract | 02 | [#5](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/5) | [4](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/4) |
 | 04 | Reproducibility & Runner | 03 | [#6](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/6) | [5](https://github.com/wotjr1649/tree-sitter-grammar-kit/milestone/5) |
@@ -26,9 +26,9 @@ branch: `session/00-foundation-architecture`. 계약: [architecture.md](design/a
 
 ## Session 01
 
-inspect와 filesystem identity를 구현한다.
+inspect와 filesystem identity, CLI와 같은 코어를 쓰는 작은 공개 offline API를 구현한다.
 
-완료 조건: zero-config discovery는 grammar.js를 데이터로만 읽는다. legacy/unknown layout과 누락 metadata는 관측으로 보고한다. manifest r0의 path/role/mode/size/SHA-256 및 deterministic report를 출력한다. 최초 fingerprint를 출처 인증으로 부르지 않는다. 최소 path/link/size guard를 이번에 구현한다.
+완료 조건: zero-config discovery는 grammar.js를 데이터로만 읽는다. legacy/unknown layout과 누락 metadata는 관측으로 보고한다. 26개 route의 multi-grammar/shared source 선택을 조사하고 manifest r1의 path/role/mode/provenance/size/SHA-256와 E0를 출력한다. 최초 fingerprint를 출처 인증으로 부르지 않는다. 최소 path/link/size/cancellation guard와 직접 API 호출·checkout 밖 외부 module 시험을 포함한다.
 
 제외: strict profile/archive extraction/schema/native 실행.
 
@@ -66,19 +66,19 @@ branch: `session/04-reproducibility`. 계약: [platform-support.md](specs/platfo
 
 ## Session 05
 
-고정 CLI adapter로 각 edit 직후 incremental/fresh 결과를 비교한다.
+최소 native driver와 하나의 edit/comparison engine으로 각 edit 직후 incremental/fresh 결과를 비교한다.
 
-완료 조건: S04의 native supervision을 먼저 검증한다. 명시적 BUILD_NATIVE/EXEC_NATIVE 권한과 pinned CLI가 필요하다. edit열의 모든 중간 단계·inverse repair·malformed 상태를 대조하고 CLI 출력이 표현하지 않는 canonical 필드는 UNSUPPORTED로 남긴다. S06 연결을 위한 최소 adapter seam만 둔다.
+완료 조건: S04의 native supervision을 재사용한다. 명시적 BUILD_NATIVE/EXEC_NATIVE 권한과 pinned runtime/header/compiler/parser/scanner closure를 결속한다. binary-safe request와 실제 ordered tree를 생성하고 이전 tree의 edit/전달 경로를 독립 검증한다. 모든 중간 상태·inverse repair·malformed·stateful-scanner·byte encoding을 비교한다. 26개 route의 등록 edit/feature case와 필수 세 OS 결과를 확인한다. Query는 S06 전까지 unsupported다.
 
-제외: 미구현 S06 C driver 의존·unsupported 필드 추정.
+제외: 임시 CLI-output parser 중복 구현·query 엔진·unsupported 필드 추정.
 
 branch: `session/05-incremental`. 계약: [tree-and-adapter-protocol.md](specs/tree-and-adapter-protocol.md).
 
 ## Session 06
 
-별도 generic C driver와 language shim으로 ordered CST/query/API oracle을 구현한다.
+S05의 동일 driver/protocol을 query/API 관측과 native oracle 기록으로 확장한다.
 
-완료 조건: runtime/parser/scanner/compiler/source closure/executable identity를 기록한다. r0 tree의 ordered nodes·field/range/error/missing/query 순서를 손실 없이 표현한다. S05 edit engine을 공통 protocol에 연결해 기존 회귀를 재실행한다. OS별 build/native/supervision capability를 따로 검사한다.
+완료 조건: runtime/parser/scanner/compiler/source closure/executable identity를 기록한다. ordered nodes·field/range/error/missing/query 순서와 duplicate node/capture를 보존한다. predicate/directive 지원 범위와 executed-empty/unsupported/not-run을 구분한다. 같은 S05 edit engine의 회귀와 26개 route의 세 OS 등록 case를 검증한다. 다른 runner/driver로 교체하지 않는다.
 
 제외: CGO/FFI·go-treesitter 구현·임의 runtime bundle.
 
@@ -88,7 +88,7 @@ branch: `session/06-native-oracle`. 계약: [tree-and-adapter-protocol.md](specs
 
 versioned evidence·raw 재판정·제한적 승계를 구현한다.
 
-완료 조건: execution_status/evidence_mode/assessment를 분리한다. registered workload의 raw 소비 전수성·중복·누락·미사용·stale identity·승계 영향 범위를 검사한다. BrightScript v0.1.2 historical fixture와 교차 비교하고 원 FAIL/raw를 보존한다. Python 실행은 별도 EXEC_ADAPTER다.
+완료 조건: S01 E0의 execution_status/evidence_mode/assessment를 확장한다. 등록된 data-only reducer로 raw 소비 전수성·중복·누락·미사용·stale identity·승계 영향 범위를 검사한다. 선택한 BrightScript historical subset과 원 FAIL/raw를 보존하고 지원하지 않는 reducer를 replay PASS로 만들지 않는다. Python verifier 진단은 별도 EXEC_ADAPTER이며 offline product replay에 포함하지 않는다.
 
 제외: 일반 임의 verifier 실행·전역 2 ULP/8875 상수·새 측정으로 relabel.
 
@@ -96,14 +96,14 @@ branch: `session/07-evidence-replay`. 계약: [identity-and-evidence.md](specs/i
 
 ## Session 08
 
-고정 실사용 자료와 자체 fixture로 범용성·적용 가능한 세 OS qualification을 평가한다.
+26개 필수 구문 route 전체의 현재 후보 qualification을 세 OS에서 수행한다.
 
-완료 조건: 고정 BrightScript, Cooklang legacy audit, 자체 scannerless/stateful-scanner fixture를 사용한다. exact source/input/profile/protocol/run attempt별 필수 OS 결과를 집계하고 semantic 필드 parity와 host 관측을 분리한다. 사용자 문서·지원 한계·release candidate 평가만 작성한다.
+완료 조건: 승인된 legacy~stable feature/fixture/check를 가진 78개 route×OS 요약 칸과 maintained BrightScript/historical audit/owned fixture를 구분한다. exact source/input/profile/protocol/comparator/run attempt의 새 native 실행을 집계하고 semantic parity와 host 관측을 분리한다. historical/replay/다른 후보의 PASS는 대체 근거가 아니다. CLI grammar-update와 공개 API의 versioned external consumer 사용을 검증하고 실제 지원 한계를 문서화한다.
 
 제외: 자동 tag/Release/package·Go adapter·추가 플랫폼 지원 추정.
 
 branch: `session/08-real-world-qualification`. 계약: [platform-support.md](specs/platform-support.md).
 
-S00 branch는 `session/00-foundation-architecture`를 사용한다. 이후 branch는 직전 merge/post-merge CI 확인 후 최신 main에서 하나씩 만든다. S05는 S04 supervision과 CLI adapter를 사용하고 S06 generic driver를 선행 의존하지 않는다. S06에서 공통 protocol로 연결 후 S05 회귀를 다시 실행한다. go-treesitter adapter와 tag/Release/package publication은 이 campaign 밖이다.
+S00 branch는 `session/00-foundation-architecture`의 역사적 기록이다. 이후 branch는 직전 merge/post-merge CI 확인 후 최신 main에서 하나씩 만든다. S01 E0 → S04 runner → S05 최소 native driver/edit → S06 동일 producer 확장 → S07 shared evidence 순서다. go-treesitter adapter와 tag/Release/package publication은 이 campaign 밖이다. [기계 정의](../src/contracts/campaign-01.json)가 branch/Issue/Milestone/acceptance ID를 연결한다.
 
 공통 종료 절차는 [validation](validation/validation.md), 기능별 정상/negative/mutant acceptance는 [workload](validation/workload-matrix.md)가 소유한다. 로컬 prompt는 실행 자료이며 공개 acceptance의 유일한 근거가 아니다.

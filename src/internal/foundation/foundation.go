@@ -27,11 +27,15 @@ var required = []string{
 	"docs/specs/cli-and-profile.md", "docs/specs/identity-and-evidence.md",
 	"docs/specs/trust-and-execution.md", "docs/specs/tree-and-adapter-protocol.md",
 	"docs/specs/platform-support.md", "docs/design/architecture.md",
+	"docs/specs/public-go-api.md", "docs/validation/language-feature-scope.md",
+	"docs/reports/campaign-01-2026-09-29-preparation.md",
 	"docs/design/decisions/0001-core-and-execution.md",
 	"docs/provenance/upstream-sources.md", "docs/validation/validation.md",
 	"docs/validation/workload-matrix.md", "docs/reports/session-00-foundation.md",
 	"src/internal/foundation/foundation.go", "src/internal/foundation/foundation_test.go",
+	"src/internal/foundation/campaign_test.go",
 	"src/contracts/examples/profile-r0.json",
+	"src/contracts/campaign-01.json", "src/contracts/language-sources.json",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}
