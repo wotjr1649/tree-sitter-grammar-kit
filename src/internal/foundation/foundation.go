@@ -41,6 +41,7 @@ var required = []string{
 	".github/workflows/prepare-p05.yml", "src/dev/prepare-p05/inputs.json",
 	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
 	"src/dev/prepare-p05/collect.ps1", "src/dev/prepare-p05/probe.c.in",
+	"src/dev/prepare-p05/case-review.json",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

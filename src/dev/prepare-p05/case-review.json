@@ -1,0 +1,28 @@
+{
+  "schema": "tsgk-p05-case-review/r1",
+  "inputs_sha256": "f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4",
+  "reviewer": "/root/prepare_feature_review",
+  "mode": "STATIC_REVIEW",
+  "review_receipt_sha256": "3a1da3e772db71db63db9a76aa4ea9455fb6c42371258b53e56f1c9d8e78a45d",
+  "case_count": 57,
+  "route_counts": {
+    "csharp": 10,
+    "postgresql-sql": 8,
+    "swift": 3,
+    "tsql": 28,
+    "tsx": 6,
+    "typescript": 2
+  },
+  "edit_ids": [
+    "P05-CS-ID-ASYNC",
+    "P05-TS-DEFER",
+    "P05-TSX-DEFER",
+    "P05-TSQL-ID-BARE",
+    "P05-PG-LEGACY-OIDS",
+    "P05-SWIFT-GENERATION-LEGACY"
+  ],
+  "expected_facts_review": "PRIMARY_SYNTAX_FEATURE_FACTS_AND_DAMAGE_EXPECTATIONS_REVIEWED",
+  "native_mapping_result": "NOT_RUN",
+  "open_blocker_material": 0,
+  "note": "사전 기대는 각 case의 feature ID, official syntax, expected.facts, 손상/복구 조건이다. candidate node 이름을 golden으로 채택하거나 native 결과를 미리 PASS로 만들지 않는다."
+}

@@ -11,6 +11,16 @@ foreach($d in @('raw','records','cases','results','home')){[void][IO.Directory]:
 $inputsPath=Join-Path $PSScriptRoot 'inputs.json'
 if((Get-FileHash $inputsPath).Hash.ToLowerInvariant() -cne 'f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4'){throw 'Approved input projection changed'}
 $inputs=Get-Content -Raw $inputsPath|ConvertFrom-Json
+$reviewPath=Join-Path $PSScriptRoot 'case-review.json'
+if((Get-FileHash -LiteralPath $reviewPath).Hash.ToLowerInvariant() -cne 'f3ad556cb3a525f23a3bddc927902e88acad08ca6c6d1b84559b329baf751554'){throw 'Independent case review changed'}
+$caseReview=Get-Content -Raw -LiteralPath $reviewPath|ConvertFrom-Json
+if($caseReview.inputs_sha256 -cne (Get-FileHash $inputsPath).Hash.ToLowerInvariant() -or $caseReview.open_blocker_material -ne 0 -or $caseReview.case_count -ne 57 -or $inputs.cases.Count -ne 57 -or @($inputs.cases.id|Sort-Object -Unique).Count -ne 57 -or $caseReview.expected_facts_review -cne 'PRIMARY_SYNTAX_FEATURE_FACTS_AND_DAMAGE_EXPECTATIONS_REVIEWED'){throw 'Case/spec review gate mismatch'}
+$routeGroups=@($inputs.cases|Group-Object route)
+if($routeGroups.Count -ne 6 -or @($caseReview.route_counts.PSObject.Properties).Count -ne 6){throw 'Reviewed route count mismatch'}
+foreach($group in $routeGroups){if($caseReview.route_counts.($group.Name) -ne $group.Count){throw 'Reviewed route case count mismatch'}}
+$editIds=@($inputs.cases|Where-Object edit|ForEach-Object id)
+if($editIds.Count -ne 6 -or (Compare-Object $editIds @($caseReview.edit_ids))){throw 'Reviewed edit set changed'}
+foreach($case in $inputs.cases){if(-not $case.feature_ids.Count -or -not $case.expected.facts -or ($case.edit -and -not $case.edit.negative_expected)){throw 'Missing reviewed feature/fact/negative expectation'}}
 $docker=(Get-Command docker -CommandType Application).Source
 $pwsh=(Get-Command pwsh -CommandType Application).Source
 $script:commands=[Collections.Generic.List[object]]::new()
@@ -19,7 +29,7 @@ $script:containers=[Collections.Generic.List[string]]::new()
 $script:counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0}
 $script:failed=$false
 $script:wall=[Diagnostics.Stopwatch]::StartNew()
-$script:imageSize=0L
+$script:imageSize=2147483648L
 $script:acquiring=$true
 function NetworkReceived { return [long]((Get-ChildItem -Path '/sys/class/net/*/statistics/rx_bytes' | ForEach-Object {[long][IO.File]::ReadAllText($_.FullName)})|Measure-Object -Sum).Sum }
 $script:networkStart=NetworkReceived
@@ -37,7 +47,7 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
     foreach($arg in $argv){$start.ArgumentList.Add($arg)}
     $start.Environment.Clear();$start.Environment['PATH']='/usr/local/bin:/usr/bin:/bin';$start.Environment['HOME']=(Join-Path $root 'home');$start.Environment['TMPDIR']=$root;$start.Environment['RUNNER_TEMP']=$runnerRoot
     $process=[Diagnostics.Process]::new();$process.StartInfo=$start
-    $timer=[Diagnostics.Stopwatch]::StartNew();$reason='EXITED';$total=0L;$exitCode=$null;$started=$false
+    $timer=[Diagnostics.Stopwatch]::StartNew();$reason='EXITED';$total=0L;$exitCode=$null;$started=$false;$cleanupVerified=$true
     try {
         $started=$process.Start();if(-not $started){throw 'Process start failed'}
         $streams=@($process.StandardOutput.BaseStream,$process.StandardError.BaseStream);$buffers=@([byte[]]::new(65536),[byte[]]::new(65536))
@@ -58,11 +68,14 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
         if(-not $process.HasExited){$process.Kill($true);if(-not $process.WaitForExit(2000)){throw 'Host command cleanup unverified'}}
         $exitCode=$process.ExitCode
     } catch {$reason='SUPERVISOR_ERROR';throw} finally {
-        if($started -and -not $process.HasExited){$process.Kill($true);if(-not $process.WaitForExit(2000)){throw 'Host command cleanup unverified'}}
+        try {if($started -and -not $process.HasExited){$process.Kill($true);$cleanupVerified=$process.WaitForExit(2000)}}catch{$cleanupVerified=$false}
+        if(-not $cleanupVerified){$reason='UNKNOWN_CLEANUP'}
         foreach($file in $files){$file.Dispose()};$timer.Stop();$process.Dispose()
-        $receipt=@{label=$label;tool=$executable;tool_sha256=(Get-FileHash $executable).Hash.ToLowerInvariant();argv=$argv;seconds_limit=$seconds;wall_seconds=$timer.Elapsed.TotalSeconds;output_limit=$limit;observed_bytes=$total;termination=$reason;exit_code=$exitCode;stdout_sha256=(Get-FileHash $paths[0]).Hash.ToLowerInvariant();stderr_sha256=(Get-FileHash $paths[1]).Hash.ToLowerInvariant()}
+        $storedOut=(Get-Item -LiteralPath $paths[0]).Length;$storedErr=(Get-Item -LiteralPath $paths[1]).Length
+        $receipt=@{label=$label;tool=$executable;tool_sha256=(Get-FileHash $executable).Hash.ToLowerInvariant();argv=$argv;seconds_limit=$seconds;wall_seconds=$timer.Elapsed.TotalSeconds;output_limit=$limit;observed_bytes=$total;stored_stdout_bytes=$storedOut;stored_stderr_bytes=$storedErr;unstored_observed_bytes=($total-$storedOut-$storedErr);partial_output=($reason -ne 'EXITED');host_cleanup_verified=$cleanupVerified;termination=$reason;exit_code=$exitCode;stdout_sha256=(Get-FileHash $paths[0]).Hash.ToLowerInvariant();stderr_sha256=(Get-FileHash $paths[1]).Hash.ToLowerInvariant()}
         $script:commands.Add($receipt);Record ('command-'+$label) $receipt
     }
+    if(-not $cleanupVerified){throw 'Host command cleanup unverified; receipt retained'}
     return $receipt
 }
 function Require($result){if($result.exit_code -ne 0 -or $result.termination -ne 'EXITED'){throw ('Command failed: '+$result.label)}}
@@ -80,6 +93,7 @@ function CheckJsInputs([string]$entry,[string]$sourceRoot){
         $path=[IO.Path]::GetFullPath($queue.Dequeue());if(-not $seen.Add($path)){continue}
         if(-not $path.StartsWith($sourceRoot+'/',[StringComparison]::Ordinal) -and -not $path.StartsWith((Join-Path $root 'npm')+'/',[StringComparison]::Ordinal)){throw 'JS dependency outside pinned inputs'}
         $files.Add((FileIdentity $path));$source=[IO.File]::ReadAllText($path)
+        if($source -match '\b(?:createRequire|eval|Function)\s*\(' -or $source -match '\b(?:const|let|var)\s+\w+\s*=\s*require\b(?!\s*\()'){throw 'Unreviewed JS loader/evaluation'}
         $imports=[regex]::Matches($source,'\brequire\s*\(\s*["'']([^"'']+)["'']\s*\)')
         if([regex]::Matches($source,'\brequire\s*\(').Count -ne $imports.Count -or $source -match '\bimport\s*(?:\(|["''])'){throw 'Unresolved dynamic/ES module dependency'}
         foreach($match in $imports){
@@ -159,10 +173,35 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
         return $result
     } finally {StopContainer $id $label}
 }
+function CheckBuildHeaders([string]$label,[string]$parserRoot){
+    $headers=@([IO.File]::ReadAllLines((Join-Path $root ('raw/'+$label+'.stderr')))|ForEach-Object {if($_ -match '^\.+ (/.+)$'){[IO.Path]::GetFullPath($Matches[1])}}|Sort-Object -Unique)
+    if(-not $headers.Count -or $headers.Count -gt 512){throw 'Compiler header closure unavailable'}
+    $project=[Collections.Generic.List[object]]::new();$system=[Collections.Generic.List[string]]::new()
+    foreach($header in $headers){
+        if($header -notmatch '^/[a-zA-Z0-9_./+\-]+$'){throw 'Unsafe compiler header path'}
+        if($header.StartsWith('/inputs/')){
+            $relative=$header.Substring(8);$local=Join-Path $root $relative
+            $identity=FileIdentity $local
+            if($header.StartsWith('/inputs/acquisition/sources/')){
+                if(-not $script:verifiedSource.ContainsKey($relative) -or $script:verifiedSource[$relative] -cne $identity.sha256){throw 'Unpinned project header'}
+            }elseif(-not $local.StartsWith($parserRoot+'/',[StringComparison]::Ordinal)){throw 'Header outside this generated parser'}
+            $project.Add($identity)
+        }elseif($header.StartsWith('/usr/include/') -or $header.StartsWith('/usr/local/include/') -or $header.StartsWith('/usr/lib/gcc/')){$system.Add($header)}
+        else{throw 'Compiler header outside pinned source/image roots'}
+    }
+    $systemHashes=@()
+    if($system.Count){
+        $diagnostic=Native diagnostic ($label+'-headers') (@('/usr/bin/sha256sum','--','/usr/bin/sha256sum')+$system.ToArray()) 10 1048576;Require $diagnostic
+        $systemHashes=@((TextOutput $diagnostic)-split "`n"|Where-Object {$_}|ForEach-Object {if($_ -notmatch '^([0-9a-f]{64})  (/.+)$'){throw 'Invalid system header digest'};@{path=$Matches[2];sha256=$Matches[1]}})
+        if($systemHashes.Count -ne $system.Count+1){throw 'Missing system header identity'}
+    }
+    Record ($label+'-headers') @{stage='AFTER_BUILD_BEFORE_EXECUTION';compiler_includes_verified=$true;project_headers=$project;system_headers=$systemHashes;system_image=$inputs.image;raw_compiler_output=('raw/'+$label+'.stderr')}
+}
 
 $verdict='FAILED';$failure=$null
 try {
     Add-Type -AssemblyName System.Formats.Tar
+    Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
     $acquire=Run 'acquisition' @('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition')) 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
     [void][IO.Directory]::CreateDirectory((Join-Path $root 'npm'))
@@ -172,10 +211,11 @@ try {
     }
     $acquisition=Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json
     if($acquisition.state -cne 'COMPLETED'){throw 'Acquisition incomplete'}
+    $script:verifiedSource=@{}
     foreach($item in $acquisition.identities){
         if($item.repository){$directory=$item.repository.Replace('/','--')+'--'+$item.commit}
         elseif($item.package){$directory=$item.package+'-'+$item.version}else{continue}
-        foreach($file in $item.files){$actual=FileIdentity (Join-Path $root ('acquisition/sources/'+$directory+'/'+$file.path));if($actual.sha256 -cne $file.sha256 -or $actual.bytes -ne $file.bytes){throw 'Source changed after acquisition'}}
+        foreach($file in $item.files){$relative='acquisition/sources/'+$directory+'/'+$file.path;$actual=FileIdentity (Join-Path $root $relative);if($actual.sha256 -cne $file.sha256 -or $actual.bytes -ne $file.bytes){throw 'Source changed after acquisition'};$script:verifiedSource[$relative]=$actual.sha256}
     }
     Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$inputs.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
     foreach($case in $inputs.cases){
@@ -224,7 +264,7 @@ try {
         $grammar=Get-Content -Raw (Join-Path $localSource 'src/grammar.json')|ConvertFrom-Json
         if($grammar.name -notmatch '^[a-z][a-z0-9_]{0,63}$'){throw 'Grammar name rejected'}
         $generationInputs=if($route.generation -eq 'json'){@(FileIdentity (Join-Path $localSource 'src/grammar.json'))}else{CheckJsInputs (Join-Path $localSource 'grammar.js') (Join-Path $root ('acquisition/sources/'+$key))}
-        Record ('generate-'+$route.route+'-inputs') @{files=$generationInputs;runtime='node in pinned image';literal_dependencies_verified=$true;all_source_bytes='verified-source-inputs.json';dynamic_execution_boundary='preflight PASS; network none; read-only source; only task tmpfs writable'}
+        Record ('generate-'+$route.route+'-inputs') @{files=$generationInputs;runtime='node in pinned image';literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;exact_input_set='inputs.json repositories.files plus npm integrity; observed SHA256 in acquisition receipt';all_source_bytes='verified-source-inputs.json';dynamic_execution_boundary='preflight PASS; network none; read-only pinned sources and image; only task tmpfs writable'}
         $generation=Native generation ('generate-'+$route.route) @('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--js-runtime','node','--output','/work/generated',$(if($route.generation -eq 'json'){$source+'/src/grammar.json'}else{$source+'/grammar.js'})) 300 536870912
         foreach($variant in @('baseline','regenerated')){
             if($variant -eq 'baseline' -and $route.route -eq 'swift'){continue}
@@ -240,6 +280,7 @@ try {
             $args+=@('-o','/work/probe')
             $build=Native build $label $args 120 134217728
             if($build.exit_code -ne 0){continue}
+            CheckBuildHeaders $label $parserRoot
             $binary=Join-Path $root ('results/'+$label+'/probe');[IO.File]::SetUnixFileMode($binary,[IO.UnixFileMode]493)
             Record ($label+'-executable') @{executable=FileIdentity $binary;library_closure='pinned official image: GCC default C link, libc and loader identities in tool-identities';source_modified=$false}
             foreach($case in $inputs.cases|Where-Object route -eq $route.route){

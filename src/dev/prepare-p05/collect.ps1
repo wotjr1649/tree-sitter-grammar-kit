@@ -9,7 +9,7 @@ $files=@(foreach($directory in @('raw','records','cases','acquisition/archives',
     $path=Join-Path $task $directory
     if(Test-Path -LiteralPath $path){Get-ChildItem -LiteralPath $path -File -Recurse|Where-Object {-not $_.Name.EndsWith('.tar')} }
 })
-$files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'inputs.json'),(Join-Path $PSScriptRoot 'probe.c.in')
+$files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'inputs.json'),(Join-Path $PSScriptRoot 'case-review.json'),(Join-Path $PSScriptRoot 'probe.c.in')
 if($files.Count -gt 10000){throw 'Evidence file count limit'}
 $manifest=@(foreach($file in $files){
     if($file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Evidence link rejected'}
