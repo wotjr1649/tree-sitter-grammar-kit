@@ -1,6 +1,14 @@
 param([Parameter(Mandatory)][string]$Destination)
 $ErrorActionPreference='Stop'
 if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}
+$approval=Join-Path $PSScriptRoot 'approval.ps1'
+$subject='9e07792474be6b96406cba915c30c90696a42299ffa9dd8ac60324b3b7a69367'
+& $approval -Profile archive-r1
+& $approval -Profile pinned-tsql-r1 -Subject $subject
+foreach($vector in @(@{Profile='pinned-tsql-r1';Subject=''},@{Profile='pinned-tsql-r1';Subject='b28d726cf456472b8d37117818930500188f730aafb18bcb6b636214d34ec752'},@{Profile='archive-r1';Subject=$subject},@{Profile='unknown';Subject=$subject})){
+    $rejected=$false;try{& $approval @vector}catch{$rejected=$true}
+    if(-not $rejected){throw 'Unbound acquisition profile/approval was accepted'}
+}
 $root=[IO.Path]::GetFullPath($Destination)
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $prefixes=@([IO.Path]::GetFullPath((Join-Path $repoRoot '.work/campaign-01-prepare-03')))
@@ -32,5 +40,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected');fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
-Write-Output 'P05 application discovery self-check PASS; fixture execution 0'
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate pinned acquisition subject required','empty, old B, mismatched and unknown profiles rejected');fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'

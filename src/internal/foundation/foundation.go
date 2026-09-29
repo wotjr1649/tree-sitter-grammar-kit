@@ -42,6 +42,7 @@ var required = []string{
 	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
 	"src/dev/prepare-p05/collect.ps1", "src/dev/prepare-p05/probe.c.in",
 	"src/dev/prepare-p05/case-review.json",
+	"src/dev/prepare-p05/approval.ps1",
 	"src/dev/prepare-p05/self-test.ps1",
 }
 

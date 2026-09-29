@@ -1,5 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination)
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject)
 $ErrorActionPreference='Stop'
+& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
@@ -208,7 +209,9 @@ $verdict='FAILED';$failure=$null
 try {
     Add-Type -AssemblyName System.Formats.Tar
     Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
-    $acquire=Run 'acquisition' @('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition')) 600 8388608 $pwsh;Require $acquire
+    $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'))
+    if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
+    $acquire=Run 'acquisition' $acquireArgs 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
     [void][IO.Directory]::CreateDirectory((Join-Path $root 'npm'))
     foreach($package in $inputs.npm){
@@ -271,7 +274,7 @@ try {
         if($route.subdirectory -ne '.'){$source+='/'+$route.subdirectory}
         $localSource=Join-Path $root ('acquisition/sources/'+$key+'/'+$route.subdirectory)
         $grammar=Get-Content -Raw (Join-Path $localSource 'src/grammar.json')|ConvertFrom-Json
-        if($grammar.name -notmatch '^[a-z][a-z0-9_]{0,63}$'){throw 'Grammar name rejected'}
+        if($grammar.name -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$'){throw 'Grammar name rejected'}
         $generationInputs=if($route.generation -eq 'json'){@(FileIdentity (Join-Path $localSource 'src/grammar.json'))}else{CheckJsInputs (Join-Path $localSource 'grammar.js') (Join-Path $root ('acquisition/sources/'+$key))}
         Record ('generate-'+$route.route+'-inputs') @{files=$generationInputs;runtime='node in pinned image';literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;exact_input_set='inputs.json repositories.files plus npm integrity; observed SHA256 in acquisition receipt';all_source_bytes='verified-source-inputs.json';dynamic_execution_boundary='preflight PASS; network none; read-only pinned sources and image; only task tmpfs writable'}
         $generation=Native generation ('generate-'+$route.route) @('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--js-runtime','node','--output','/work/generated',$(if($route.generation -eq 'json'){$source+'/src/grammar.json'}else{$source+'/grammar.js'})) 300 536870912

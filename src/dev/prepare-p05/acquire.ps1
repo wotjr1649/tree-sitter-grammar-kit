@@ -1,5 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest)
+param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject)
 $ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject
 if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
 $script:received = 0L
@@ -7,6 +8,7 @@ $script:expanded = 0L
 $script:requests = 0
 $script:filesWritten = 0
 $script:imageReserve = 0L
+$script:httpLimit=if($PinnedTsql){52}else{32}
 $script:clock = [Diagnostics.Stopwatch]::StartNew()
 $script:receipts = [Collections.Generic.List[object]]::new()
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
@@ -47,6 +49,7 @@ function SaveReceipt([string]$path, $value) {
 }
 function Fetch([string]$url, [string]$target, [long]$limit) {
     $allowed = @('codeload.github.com','github.com','release-assets.githubusercontent.com','objects.githubusercontent.com','registry.npmjs.org')
+    if($PinnedTsql){$allowed+='raw.githubusercontent.com'}
     $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect = $false
     $handler.UseProxy=$false;$handler.UseDefaultCredentials=$false;$handler.UseCookies=$false
     $client = [Net.Http.HttpClient]::new($handler)
@@ -59,7 +62,7 @@ function Fetch([string]$url, [string]$target, [long]$limit) {
         $uri = [Uri]$url
         while ($true) {
             if ($uri.Scheme -cne 'https' -or $uri.DnsSafeHost -notin $allowed -or $uri.Port -ne 443 -or $uri.UserInfo) { throw 'Unapproved download destination' }
-            if (++$script:requests -gt 32 -or $script:clock.Elapsed.TotalSeconds -gt 600) { throw 'Acquisition count/time limit' }
+            if (++$script:requests -gt $script:httpLimit -or $script:clock.Elapsed.TotalSeconds -gt 600) { throw 'Acquisition count/time limit' }
             $response = $client.GetAsync($uri, [Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cancel.Token).GetAwaiter().GetResult()
             if ([int]$response.StatusCode -in @(301,302,303,307,308)) {
                 if ($redirects.Count -ge 5 -or -not $response.Headers.Location) { throw 'Redirect limit' }
@@ -187,6 +190,17 @@ function Materialize([string]$archive, $expected, [string]$destination, [string]
     return ,$result.ToArray()
 }
 function MapFiles($files) { $map=[Collections.Generic.Dictionary[string,object]]::new([StringComparer]::Ordinal); foreach($f in $files){Portable $f.path; if($map.ContainsKey($f.path)){throw 'Duplicate pinned path'}; $map[$f.path]=$f}; return ,$map }
+function VerifyRegularFile([string]$path,$pin){
+    $item=Get-Item -LiteralPath $path -Force
+    if($item.PSIsContainer -or $item.Attributes -band [IO.FileAttributes]::ReparsePoint -or $item.Length -ne $pin.bytes -or $item.Length -gt 67108864){throw 'Pinned regular file size/type mismatch'}
+    $hash=[Security.Cryptography.IncrementalHash]::CreateHash([Security.Cryptography.HashAlgorithmName]::SHA1)
+    $hash.AppendData([Text.Encoding]::UTF8.GetBytes("blob $($item.Length)"+[char]0))
+    $stream=[IO.File]::OpenRead($path)
+    try{$buffer=[byte[]]::new(65536);while(($n=$stream.Read($buffer,0,$buffer.Length)) -gt 0){$hash.AppendData($buffer,0,$n)};$blob=[Convert]::ToHexString($hash.GetHashAndReset()).ToLowerInvariant()}finally{$stream.Dispose();$hash.Dispose()}
+    $digest=(Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()
+    if($blob -cne $pin.git_blob_sha1 -or ($pin.sha256 -and $digest -cne $pin.sha256)){throw 'Pinned regular file identity mismatch'}
+    return @{path=$pin.path;bytes=$item.Length;git_blob_sha1=$blob;sha256=$digest}
+}
 
 $root=FreshRoot $Destination
 if ($SelfTest) {
@@ -213,6 +227,8 @@ if ($SelfTest) {
     $copy=Join-Path $root 'materialize.tgz';[IO.File]::Copy((Join-Path $root 'safe.tgz'),$copy)
     $files=Materialize $copy (MapFiles @(@{path='x';bytes=1;git_blob_sha1=$blob;sha256=(Get-FileHash $vector).Hash.ToLowerInvariant()})) (Join-Path $root 'materialized')
     if($files.Count -ne 1 -or $files[0].git_blob_sha1 -cne $blob){throw 'Materialization vector failed'}
+    [void](VerifyRegularFile $vector @{path='x';bytes=1;git_blob_sha1=$blob})
+    $rejected=$false;try{[void](VerifyRegularFile $vector @{path='x';bytes=1;git_blob_sha1=('0'*40)})}catch{$rejected=$true};if(-not $rejected){throw 'Wrong raw file pin accepted'}
     SaveReceipt (Join-Path $root 'self-test.json') @{result='PASS';checks='portable paths, regular tar, link/traversal/case collision rejection';network_requests=0}
     Write-Output 'P05 acquisition self-check PASS'; return
 }
@@ -226,6 +242,22 @@ $results=[Collections.Generic.List[object]]::new(); $state='FAILED'; $failure=$n
 try {
     foreach($repo in @($inputs.repositories)+@($inputs.runtime)) {
         $key=$repo.repository.Replace('/','--')+'--'+$repo.commit
+        if($PinnedTsql -and $repo.repository -ceq 'Crary-Systems/tree-sitter-tsql'){
+            if($repo.commit -cne '443d2bc774f1d779af7dcabcc99160fb24da96e6' -or $repo.files.Count -ne 21){throw 'Pinned TSQL input set changed'}
+            $expected=MapFiles $repo.files
+            $portableSet=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+            foreach($path in $expected.Keys){if(-not $portableSet.Add($path)){throw 'Pinned file case collision'}}
+            $targetRoot=FreshRoot (Join-Path $root ('sources/'+$key));$files=@()
+            foreach($pin in $repo.files){
+                $url='https://raw.githubusercontent.com/Crary-Systems/tree-sitter-tsql/443d2bc774f1d779af7dcabcc99160fb24da96e6/'+(($pin.path.Split('/')|ForEach-Object {[Uri]::EscapeDataString($_)}) -join '/')
+                $target=Join-Path $targetRoot $pin.path;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))
+                if(++$script:filesWritten -gt 5000){throw 'Selected file count limit'}
+                [void](Fetch $url $target ([long]$pin.bytes))
+                $files+=VerifyRegularFile $target $pin
+            }
+            $results.Add(@{repository=$repo.repository;commit=$repo.commit;transport='PINNED_RAW_REGULAR_FILES';archive=$null;files=$files;rejected_archive_not_extracted=$true})
+            continue
+        }
         $archive=Join-Path $root ('archives/'+$key+'.tgz')
         $download=Fetch $repo.url $archive 67108864
         $files=Materialize $archive (MapFiles $repo.files) (Join-Path $root ('sources/'+$key))
@@ -251,5 +283,5 @@ try {
 } catch { $failure=$_.Exception.GetType().FullName; throw }
 finally {
     $retained=@(Get-ChildItem -LiteralPath $root -File -Recurse|ForEach-Object {@{path=[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}})
-    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;native_invocations=0;install_scripts=0}
+    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;http_limit=$script:httpLimit;pinned_tsql_profile=$PinnedTsql.IsPresent;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;native_invocations=0;install_scripts=0}
 }

@@ -59,3 +59,11 @@ TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-si
 7. 현재 P01~P14, 실제 PR/CI/merge/post-merge, tracking과 immutable checkpoint를 대조한다. 알려진 필수 gap이나 누락 권한/능력이 남으면 exact blocker를 기록하고 #20을 OPEN으로 유지한다.
 
 source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속한다. 미래 S05/S06의 제품 native producer나 S08의 78-cell qualification을 여기서 완료했다고 표시하지 않는다.
+
+## 실제 archive 취득 경계
+
+고정 T-SQL archive `443d2bc774f1d779af7dcabcc99160fb24da96e6`에는 `bindings/c/tree-sitter-TSQL.h`와 `tree-sitter-tsql.h` 등 대소문자 충돌 세 쌍이 있다. 실제 두 번째 준비 run은 이를 거부했고 native를 실행하지 않았다. 거부한 archive의 추출과 충돌 검사는 유지한다.
+
+별도 `pinned-tsql-r1` 취득 profile은 원 pin의 등록된 충돌 없는21개 regular file만 정확한 raw URL로 받아 Git blob/size와 대조하고 원본 bytes를 보존하는 제안이다. 이는 별도 source 취득 효과·HTTP 횟수·수동 job 승인이 있어야 실행한다. 기존 archive profile과 source/case/grammar 기대는 바꾸지 않는다. 고정 grammar의 이름은 `TSQL`이므로 C entry-point 식별자는 대소문자를 보존한다. archive 거부는 구문 미지원 재현이나 후보 교체 근거가 아니다.
+
+workflow와 직접 취득 진입점은 `approval.ps1`의 profile별 subject 검사를 거친다. 새 profile은 기존 B reference만으로 실행할 수 없다. 별도 제안의 immutable hash는21개 URL·input SHA·HTTP52/누적55·추가 job1/누적3·누적 전송/CI 예산을 결속한다. hash 값은 승인 증거가 아니며 실행 담당자가 실제 사용자 acceptance와 exact main/dispatch receipt를 함께 확인한다. 빈 값·기존 B 값·다른 profile 조합의 거부는 기존 foundation self-check에서 검사한다.
