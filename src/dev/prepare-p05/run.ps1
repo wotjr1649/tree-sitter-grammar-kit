@@ -192,7 +192,8 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
     if(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
     $id=Container $label
     try {
-        $result=Run $label (@('exec',$id)+$argv) $seconds
+        $commandOutputLimit=if($kind -in @('preflight','diagnostic')){1048576}else{8388608}
+        $result=Run $label (@('exec',$id)+$argv) $seconds $commandOutputLimit
         if($result.termination -ne 'EXITED'){throw ('Native resource limit: '+$label)}
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
@@ -282,8 +283,8 @@ try {
     Require (Native preflight 'preflight-tmpfs' @('/usr/local/bin/node','-e','let s=require("fs").statfsSync("/work");process.exit(s.bsize*s.blocks===2147483648?0:1)') 10 1048576)
     $network='const net=require("net");let s=net.connect({host:"1.1.1.1",port:443});s.on("connect",()=>process.exit(1));s.on("error",e=>process.exit(e.code==="ENETUNREACH"?0:2));setTimeout(()=>process.exit(3),2000);'
     Require (Native preflight 'preflight-network' @('/usr/local/bin/node','-e',$network) 10 1048576)
-    $pid='const{spawn}=require("child_process");let cs=[],errors=0,closed=0;for(let i=0;i<70;i++){let c=spawn("/bin/sleep",["5"]);cs.push(c);c.on("error",()=>errors++);c.on("close",()=>closed++);}setTimeout(()=>cs.forEach(c=>c.kill("SIGKILL")),1000);setTimeout(()=>process.exit(errors>0&&closed===70?0:1),2500);'
-    Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pid) 10 1048576)
+    $pidProbe='const{spawn}=require("child_process");let cs=[],errors=0,closed=0;for(let i=0;i<70;i++){let c=spawn("/bin/sleep",["5"]);cs.push(c);c.on("error",()=>errors++);c.on("close",()=>closed++);}setTimeout(()=>cs.forEach(c=>c.kill("SIGKILL")),1000);setTimeout(()=>process.exit(errors>0&&closed===70?0:1),2500);'
+    Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pidProbe) 10 1048576)
     $timeoutId=Container 'preflight-timeout';$script:counts.preflight++
     try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
     Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6') 10 1048576)

@@ -24,6 +24,15 @@ while($ancestor){if($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint
 $errors=$null;$tokens=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'run.ps1'),[ref]$tokens,[ref]$errors)
 if($errors){throw 'Harness parse failed'}
+function RejectReadOnlyAssignments($candidate){
+    $protected=@(Get-Variable|Where-Object {$_.Options -band ([Management.Automation.ScopedItemOptions]::ReadOnly -bor [Management.Automation.ScopedItemOptions]::Constant)}|ForEach-Object Name)
+    foreach($assignment in $candidate.FindAll({param($n) $n -is [Management.Automation.Language.AssignmentStatementAst] -and $n.Left -is [Management.Automation.Language.VariableExpressionAst]},$true)){
+        if(($assignment.Left.VariablePath.UserPath -split ':')[-1] -in $protected){throw 'Read-only PowerShell variable assignment'}
+    }
+}
+RejectReadOnlyAssignments $ast
+$rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
+if(-not $rejected){throw 'Read-only assignment negative case failed'}
 $function=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Application'},$true))
 if($function.Count -ne 1){throw 'Application helper identity mismatch'}
 . ([scriptblock]::Create($function[0].Extent.Text))
