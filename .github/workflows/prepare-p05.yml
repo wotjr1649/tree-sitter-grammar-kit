@@ -1,0 +1,70 @@
+name: PREPARE P05
+
+on:
+  workflow_dispatch:
+    inputs:
+      approval_reference:
+        description: Approved PREPARE-03 receipt SHA-256
+        required: true
+        type: string
+      reviewed_commit:
+        description: Verified main commit for this execution
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tsgk-campaign-heavy
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - name: 승인과 실제 checkout 확인
+        env:
+          APPROVAL_REFERENCE: ${{ inputs.approval_reference }}
+          EXPECTED_SHA: ${{ github.sha }}
+          REVIEWED_SHA: ${{ inputs.reviewed_commit }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($env:APPROVAL_REFERENCE -cne 'b28d726cf456472b8d37117818930500188f730aafb18bcb6b636214d34ec752') { throw 'Approved receipt reference mismatch' }
+          if ($env:REVIEWED_SHA -notmatch '^[0-9a-f]{40}$' -or $env:EXPECTED_SHA -cne $env:REVIEWED_SHA) { throw 'Reviewed main commit mismatch' }
+          if ((git rev-parse HEAD) -cne $env:EXPECTED_SHA -or $LASTEXITCODE -ne 0) { throw 'Checkout mismatch' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'Checkout is not clean' }
+          if (-not $env:ImageOS -or -not $env:ImageVersion) { throw 'Runner identity unavailable' }
+          Write-Output "checkout=$env:EXPECTED_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT pwsh=$($PSVersionTable.PSVersion)"
+      - name: 승인한 취득과 격리 P05 실행
+        run: |
+          $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot
+      - name: 원본 근거를 유한 artifact로 묶기
+        if: always()
+        run: |
+          $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/prepare-p05/collect.ps1 -Root $taskRoot
+      - name: 해당 run의 근거 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p05-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tsgk-p05-${{ github.run_id }}-${{ github.run_attempt }}/evidence.zip
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: 실제 checkout 보존 확인
+        if: always()
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'Checkout changed' }
