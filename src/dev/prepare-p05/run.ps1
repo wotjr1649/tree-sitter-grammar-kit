@@ -170,7 +170,7 @@ function Snapshot([string]$id,[string]$label,[long]$limit){
     if((Freeze $id ($label+'-after-copy')) -ne $firstProcessId){throw 'Init process changed during capture'}
     return (Join-Path $root ('raw/'+$copy.label+'.stdout'))
 }
-function UnpackResult([string]$archive,[string]$destination,[long]$limit){
+function UnpackResult([string]$archive,[string]$destination,[long]$limit,[switch]$Executable){
     [void][IO.Directory]::CreateDirectory($destination)
     $stream=[IO.File]::OpenRead($archive);$reader=[Formats.Tar.TarReader]::new($stream);$seen=@{};$total=0L;$count=0
     try {
@@ -181,11 +181,17 @@ function UnpackResult([string]$archive,[string]$destination,[long]$limit){
             $seen[$name]=$true
             if($entry.EntryType -eq [Formats.Tar.TarEntryType]::Directory){continue}
             if($entry.EntryType -notin @([Formats.Tar.TarEntryType]::RegularFile,[Formats.Tar.TarEntryType]::V7RegularFile) -or ++$count -gt 100 -or $entry.Length -gt $limit){throw 'Unexpected result entry'}
+            $isProbe=$Executable -and $name -ceq 'probe'
+            if($isProbe -and [int]$entry.Mode -ne 493){throw 'Unexpected executable archive mode'}
             $total+=$entry.Length;if($total -gt $limit){throw 'Result size limit'}
             $path=Join-Path $destination $name;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path));$file=[IO.File]::Open($path,[IO.FileMode]::CreateNew)
             try {$entry.DataStream.CopyTo($file)}finally{$file.Dispose()}
+            if($isProbe){[IO.File]::SetUnixFileMode($path,$entry.Mode)}
         }
     } finally {$reader.Dispose();$stream.Dispose()}
+}
+function CheckRecoveredProof([string]$path){
+    if((Get-Item -LiteralPath $path).Length -ne 12 -or [Convert]::ToHexString([IO.File]::ReadAllBytes($path)) -cne '707265736572766564000D0A'){throw 'Recovered binary proof changed'}
 }
 function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
@@ -197,7 +203,7 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
         if($result.termination -ne 'EXITED'){throw ('Native resource limit: '+$label)}
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
-        UnpackResult $archive $directory $resultLimit
+        UnpackResult $archive $directory $resultLimit -Executable:($kind -eq 'build')
         $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;result_directory=$label})
         if($result.exit_code -ne 0){$script:failed=$true}
         return $result
@@ -276,10 +282,12 @@ try {
         'test "$(id -u)" = 65534; grep -q "NoNewPrivs:[[:space:]]*1" /proc/self/status; grep -q "CapEff:[[:space:]]*0000000000000000" /proc/self/status',
         'test "$(cat /sys/fs/cgroup/memory.max)" = 4294967296; test "$(cat /sys/fs/cgroup/pids.max)" = 64',
         'if touch /inputs/cases/unapproved 2>/dev/null; then exit 1; fi; if touch /root/unapproved 2>/dev/null; then exit 1; fi',
-        'test ! -S /var/run/docker.sock; test ! -e /home/runner/work; test ! -e /github/workspace; test ! -e "$1"; test "$(stat -f -c %S /work)" -gt 0; printf preserved > /work/proof'
+        'test ! -S /var/run/docker.sock; test ! -e /home/runner/work; test ! -e /github/workspace; test ! -e "$1"; test "$(stat -f -c %S /work)" -gt 0; printf "preserved\000\r\n" > /work/proof'
     )
     for($i=0;$i -lt $checks.Count;$i++){Require (Native preflight ('preflight-'+$i) @('/bin/sh','-ec',$checks[$i],'preflight',$sentinel) 10 1048576)}
-    if([IO.File]::ReadAllText((Join-Path $root 'results/preflight-3/proof')) -cne 'preserved'){throw 'Paused tmpfs snapshot failed'}
+    $proof=Join-Path $root 'results/preflight-3/proof'
+    CheckRecoveredProof $proof
+    Record 'recovered-proof' @{result='PASS';file=FileIdentity $proof;expected_hex='707265736572766564000d0a';capture='quiescent-tar-r1';container_destroyed_after_capture=$true}
     Require (Native preflight 'preflight-tmpfs' @('/usr/local/bin/node','-e','let s=require("fs").statfsSync("/work");process.exit(s.bsize*s.blocks===2147483648?0:1)') 10 1048576)
     $network='const net=require("net");let s=net.connect({host:"1.1.1.1",port:443});s.on("connect",()=>process.exit(1));s.on("error",e=>process.exit(e.code==="ENETUNREACH"?0:2));setTimeout(()=>process.exit(3),2000);'
     Require (Native preflight 'preflight-network' @('/usr/local/bin/node','-e',$network) 10 1048576)
@@ -287,7 +295,7 @@ try {
     Require (Native preflight 'preflight-pids' @('/usr/local/bin/node','-e',$pidProbe) 10 1048576)
     $timeoutId=Container 'preflight-timeout';$script:counts.preflight++
     try {$timeout=Run 'preflight-timeout' @('exec',$timeoutId,'/bin/sh','-c','sleep 30 & wait') 1;if($timeout.termination -ne 'TIMEOUT'){throw 'Timeout preflight failed'}}finally{StopContainer $timeoutId 'preflight-timeout'}
-    Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6') 10 1048576)
+    Require (Native diagnostic 'tool-identities' @('/bin/sh','-ec','/inputs/acquisition/tools/tree-sitter --version; node --version; gcc --version; ld --version; getconf GNU_LIBC_VERSION; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
     Record 'preflight' @{result='PASS';counts=$script:counts;image=$inputs.image;limitations='container setting and owned adverse checks; not S04 product supervisor qualification'}
     $runtime='/inputs/acquisition/sources/tree-sitter--tree-sitter--659cda7c7f86ebe31cc825dc5da59e9add172dc7'
     foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
@@ -316,12 +324,14 @@ try {
             $build=Native build $label $args 120 134217728
             if($build.exit_code -ne 0){continue}
             CheckBuildHeaders $label $parserRoot
-            $binary=Join-Path $root ('results/'+$label+'/probe');[IO.File]::SetUnixFileMode($binary,[IO.UnixFileMode]493)
-            Record ($label+'-executable') @{executable=FileIdentity $binary;library_closure='pinned official image: GCC default C link, libc and loader identities in tool-identities';source_modified=$false}
+            $binary=Join-Path $root ('results/'+$label+'/probe');$binaryIdentity=FileIdentity $binary
+            if([int][IO.File]::GetUnixFileMode($binary) -ne 493){throw 'Recovered executable mode mismatch'}
+            Record ($label+'-executable') @{executable=$binaryIdentity;archive_and_recovered_unix_mode='0755';next_use='fresh read-only input mount; exact SHA/mode checked before each case';library_closure='pinned official image: GCC default C link, libc and loader identities in tool-identities';source_modified=$false}
             foreach($case in $inputs.cases|Where-Object route -eq $route.route){
                 $caseIdentity=FileIdentity (Join-Path $root ('cases/'+$case.id))
                 if($caseIdentity.sha256 -cne $case.input_sha256 -or $caseIdentity.bytes -ne $case.input_bytes){throw 'Case changed before execution'}
-                $args=@('/inputs/results/'+$label+'/probe','/inputs/cases/'+$case.id)
+                $execCheck='expected=$1; shift; test "$(/usr/bin/stat -c %a -- "$1")" = 755 || exit 74; actual=$(/usr/bin/sha256sum -- "$1"); test "${actual%% *}" = "$expected" || exit 74; exec "$@"'
+                $args=@('/bin/sh','-ec',$execCheck,'p05-exec',$binaryIdentity.sha256,('/inputs/results/'+$label+'/probe'),('/inputs/cases/'+$case.id))
                 if($case.edit){$args+=@([string]$case.edit.start_byte,[string]$case.edit.old_end_byte)}
                 [void](Native execution ('case-'+$variant+'-'+$case.id.ToLowerInvariant()) $args 10 8388608)
             }
