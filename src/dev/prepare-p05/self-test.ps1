@@ -9,6 +9,11 @@ foreach($vector in @(@{Profile='pinned-tsql-r1';Subject=''},@{Profile='pinned-ts
     $rejected=$false;try{& $approval @vector}catch{$rejected=$true}
     if(-not $rejected){throw 'Unbound acquisition profile/approval was accepted'}
 }
+& $approval -Profile pinned-tsql-r1 -Subject $subject -Execution -ExecutionSubject '1cdf1711088ebaba3347ce617ddfc733b0e4323a401a6c9efe50c37cf1deb42e'
+foreach($invalidSubject in @('',$subject)){
+    $rejected=$false;try{& $approval -Profile pinned-tsql-r1 -Subject $subject -Execution -ExecutionSubject $invalidSubject}catch{$rejected=$true}
+    if(-not $rejected){throw 'Old/missing approval authorized new capture'}
+}
 $root=[IO.Path]::GetFullPath($Destination)
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $prefixes=@([IO.Path]::GetFullPath((Join-Path $repoRoot '.work/campaign-01-prepare-03')))
@@ -22,6 +27,15 @@ if($errors){throw 'Harness parse failed'}
 $function=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Application'},$true))
 if($function.Count -ne 1){throw 'Application helper identity mismatch'}
 . ([scriptblock]::Create($function[0].Extent.Text))
+$freezeFunction=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'ConfirmFrozenState'},$true))
+if($freezeFunction.Count -ne 1){throw 'Freeze helper identity mismatch'}
+. ([scriptblock]::Create($freezeFunction[0].Extent.Text))
+$validTop="PID COMMAND`n3253 /bin/sleep infinity`n"
+if((ConfirmFrozenState 'true true 3253' $validTop) -ne 3253){throw 'Frozen init positive case failed'}
+foreach($vector in @(@('true false 3253',$validTop),@('false true 3253',$validTop),@('true true 1',$validTop),@('true true 3253',"PID COMMAND`n3253 /bin/sleep infinity`n3254 child"),@('true true 3253',"PID COMMAND`n3253 forged /bin/sleep infinity"),@('true true 3253',"PID COMMAND`n1 /bin/sleep infinity"))){
+    $rejected=$false;try{[void](ConfirmFrozenState $vector[0] $vector[1])}catch{$rejected=$true}
+    if(-not $rejected){throw 'Unsafe/nonquiescent container was accepted'}
+}
 $name=if($IsWindows){'p05-tool-check.cmd'}else{'p05-tool-check'}
 $directories=@((Join-Path $root 'first'),(Join-Path $root 'second'))
 foreach($directory in $directories){
@@ -40,5 +54,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate pinned acquisition subject required','empty, old B, mismatched and unknown profiles rejected');fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition and capture subjects required','empty, old B, mismatched and unknown profiles rejected','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected');fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
 Write-Output 'P05 application discovery and acquisition approval self-check PASS; fixture execution 0'

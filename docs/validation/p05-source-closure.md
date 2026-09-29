@@ -67,3 +67,9 @@ source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속�
 별도 `pinned-tsql-r1` 취득 profile은 원 pin의 등록된 충돌 없는21개 regular file만 정확한 raw URL로 받아 Git blob/size와 대조하고 원본 bytes를 보존하는 제안이다. 이는 별도 source 취득 효과·HTTP 횟수·수동 job 승인이 있어야 실행한다. 기존 archive profile과 source/case/grammar 기대는 바꾸지 않는다. 고정 grammar의 이름은 `TSQL`이므로 C entry-point 식별자는 대소문자를 보존한다. archive 거부는 구문 미지원 재현이나 후보 교체 근거가 아니다.
 
 workflow와 직접 취득 진입점은 `approval.ps1`의 profile별 subject 검사를 거친다. 새 profile은 기존 B reference만으로 실행할 수 없다. 별도 제안의 immutable hash는21개 URL·input SHA·HTTP52/누적55·추가 job1/누적3·누적 전송/CI 예산을 결속한다. hash 값은 승인 증거가 아니며 실행 담당자가 실제 사용자 acceptance와 exact main/dispatch receipt를 함께 확인한다. 빈 값·기존 B 값·다른 profile 조합의 거부는 기존 foundation self-check에서 검사한다.
+
+## tmpfs 회수 capability
+
+run36592527846은 별도 승인을 받은 raw 취득으로 등록474파일과 CLI/image를 확인했으나 owned preflight4회 후 중단했다. `/work/proof` 생성과 `docker cp`는 exit0이었지만 회수 tar에는 빈 `./`만 있었다. generation/build/parse는0회이며 네 container cleanup은 확인했다. [Docker 공식 문서](https://docs.docker.com/reference/cli/docker/container/cp/#corner-cases)는 tmpfs를 `docker cp`로 회수할 수 없다고 명시한다.
+
+`quiescent-tar-r1`은 별도 실행 승인 대상이다. pause 상태에서 inspect의 host PID와 `docker top -eo pid,args`의 유일한 `/bin/sleep infinity` PID를 대조한다. 실제 baseline의 두 PID는3253으로 같았다. 불일치/다른 process가 있으면 거부한다. 그 뒤 unpause하여 동일 immutable image의 tar만 실행하고 다시 pause·동일 PID 단독 상태를 확인한다. 원 native를 재실행하지 않으며 network/source/root/cgroup/tmpfs 한도는 유지한다. 첫 tar 사용 전 version/hash를 diagnostic에 기록하고 기존 raw byte 상한과 regular-file/path/link/collision/size 검사를 적용한다. 실제 tmpfs 회수와 전 격리 preflight를 통과해야 upstream generation을 시작할 수 있다. 이 수정의 정적 리뷰와 foundation CI는 해당 native capability의 성공을 대신하지 않는다.
