@@ -65,6 +65,13 @@ function NetworkBudgetReceipt {
     } catch {return @{state='NOT_VERIFIED';start_counter_bytes=$script:networkStart;end_counter_bytes=$null;received_counter_bytes=$null;limit_bytes=1073741824;failure_type=$_.Exception.GetType().FullName}}
 }
 function Record([string]$name,$value){$path=Join-Path $root ('records/'+$name+'.json');if(Test-Path $path){throw 'Record exists'};$value|ConvertTo-Json -Depth 40|Set-Content -LiteralPath $path -Encoding utf8NoBOM}
+function CompleteAcquisition {
+    $snapshot=NetworkBudgetReceipt
+    if($snapshot.state -cne 'OBSERVED' -or $snapshot.received_counter_bytes -lt 0){throw 'Acquisition network counter not verified'}
+    if($snapshot.received_counter_bytes -gt 1073741824){throw 'Acquisition network budget exceeded'}
+    Record 'download-budget' @{received_network_upper_bound_bytes=$snapshot.received_counter_bytes;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20;final_snapshot=$snapshot}
+    $script:acquiring=$false
+}
 function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[string]$executable=$docker,[switch]$Cleanup){
     $deadline=if($Cleanup){4560}else{4500}
     if($label -notmatch '^[a-z0-9-]+$' -or $script:wall.Elapsed.TotalSeconds+$seconds -gt $deadline){throw 'Operation label/job time limit'}
@@ -391,10 +398,7 @@ try {
     }
     Require (Run 'image-pull' @('pull','--platform','linux/amd64',$toolchain.image) 120)
     if($script:wall.Elapsed.TotalSeconds -gt 600){throw 'Combined acquisition time limit'}
-    $receivedUpperBound=(NetworkReceived)-$script:networkStart
-    if($receivedUpperBound -gt 1073741824){throw 'Acquisition network budget exceeded'}
-    $script:acquiring=$false
-    Record 'download-budget' @{received_network_upper_bound_bytes=$receivedUpperBound;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20}
+    CompleteAcquisition
     $image=Run 'image-identity' @('image','inspect',$toolchain.image) 10;Require $image
     $im=(TextOutput $image|ConvertFrom-Json)[0]
     if($im.Os -cne 'linux' -or $im.Architecture -cne 'amd64' -or $toolchain.image -notin $im.RepoDigests){throw 'Image digest/platform mismatch'}

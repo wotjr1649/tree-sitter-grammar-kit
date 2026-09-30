@@ -298,7 +298,7 @@ $supervisorBurst=& {
     param($sourceAst,$caseRoot)
     $root=Join-Path $caseRoot 'supervisor-burst'
     foreach($directory in @('records','raw','home')){[void][IO.Directory]::CreateDirectory((Join-Path $root $directory))}
-    foreach($helper in @('Run','Record','Require','NetworkBudgetReceipt')){
+    foreach($helper in @('Run','Record','Require','NetworkBudgetReceipt','CompleteAcquisition')){
         $definition=@($sourceAst.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
         if($definition.Count -ne 1){throw 'Supervisor helper identity mismatch'}
         . ([scriptblock]::Create($definition[0].Extent.Text))
@@ -331,7 +331,18 @@ $supervisorBurst=& {
     if((NetworkBudgetReceipt).state -cne 'NOT_VERIFIED'){throw 'Unavailable counter fabricated an observation'}
     function NetworkReceived {return 99L}
     if((NetworkBudgetReceipt).state -cne 'NOT_VERIFIED'){throw 'Regressed counter fabricated an observation'}
-    $script:acquiring=$false
+    $rejected=$false;try{CompleteAcquisition}catch{$rejected=$true}
+    if(-not $rejected -or -not $script:acquiring -or (Test-Path -LiteralPath (Join-Path $root 'records/download-budget.json'))){throw 'Regressed final counter released acquisition gate'}
+    function NetworkReceived {return 1073741941L}
+    $rejected=$false;try{CompleteAcquisition}catch{$rejected=$true}
+    if(-not $rejected -or -not $script:acquiring){throw 'Exceeded final counter released acquisition gate'}
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'acquisition/records'))
+    [IO.File]::WriteAllText((Join-Path $root 'acquisition/records/acquisition.json'),'{"download_bytes":0}',[Text.UTF8Encoding]::new($false))
+    $toolchain=@{compressed_bytes=0}
+    function NetworkReceived {return 117L}
+    CompleteAcquisition
+    $final=Get-Content -LiteralPath (Join-Path $root 'records/download-budget.json') -Raw|ConvertFrom-Json
+    if($script:acquiring -or $final.received_network_upper_bound_bytes -ne 17 -or $final.final_snapshot.state -cne 'OBSERVED'){throw 'Verified final counter transition/receipt failed'}
     return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=4;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';upstream_native=$false}
 } $ast $root
 $savedPath=$env:PATH
