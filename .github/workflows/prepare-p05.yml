@@ -39,6 +39,10 @@ on:
         description: Separate GLIBC image subject required for trixie-r1
         required: false
         type: string
+      tsql_prior_evidence_subject:
+        description: Verified immutable run36646415814 observations; retain failed scope without repeating identical TSQL probes
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -81,9 +85,10 @@ jobs:
           EXECUTION_APPROVAL_SUBJECT: ${{ inputs.execution_approval_subject }}
           TOOLCHAIN_PROFILE: ${{ inputs.toolchain_profile }}
           TOOLCHAIN_APPROVAL_SUBJECT: ${{ inputs.toolchain_approval_subject }}
+          TSQL_PRIOR_EVIDENCE_SUBJECT: ${{ inputs.tsql_prior_evidence_subject }}
         run: |
           $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT -ToolchainProfile $env:TOOLCHAIN_PROFILE -ToolchainApprovalSubject $env:TOOLCHAIN_APPROVAL_SUBJECT
+          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT -ToolchainProfile $env:TOOLCHAIN_PROFILE -ToolchainApprovalSubject $env:TOOLCHAIN_APPROVAL_SUBJECT -TsqlPriorEvidenceSubject $env:TSQL_PRIOR_EVIDENCE_SUBJECT
       - name: 원본 근거를 유한 artifact로 묶기
         if: always()
         run: |

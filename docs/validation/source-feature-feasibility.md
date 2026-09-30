@@ -7,11 +7,13 @@
 - `UPSTREAM_DECLARED`: 고정 upstream 문서가 선언한 제한. local 재현 없이도 알려진 위험이지만 실패 receipt라고 부르지 않는다.
 - `STATIC_SOURCE_OBSERVATION`: 고정 source/layout에서 실제 읽은 경로·rule·누락. 실행 성공/실패로 승격하지 않는다.
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
-- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. **현재 26 upstream route에 이 등급의 기록은 0개**다.
+- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. run36646415814에서 T-SQL 한 route의 필수 구문 실패가 baseline/재생성 producer별로 재현됐다. 다른 route의 미실행을 실패로 바꾸지 않는다.
 
-모든 행의 upstream generation/build/parse 상태는 `NOT_RUN`이다. PREPARE-03 run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했다. 선택 목록의 byte 검증은 전체 feature 지원이나 모든 단계의 executable closure 완료를 뜻하지 않는다. 당시 owned 격리 preflight4회 뒤 tmpfs 결과 회수가 실패했다. 후속 run36606981293/attempt1은 같은474파일을 검증하고 canary12bytes 회수·owned isolation8개·container9개 cleanup을 확인했으나, 기존 image에서 CLI의 `GLIBC_2.39` loader 실패로 중단했다. toolchain preflight 미완료, upstream G/B/X0이며 grammar 실패를 재현한 것이 아니다. metadata/file-list 관측, source bytes, executable closure의 완전한 검토를 구분한다. 후보의 설치 script는 실행하지 않았다. 과거 owned scannerless/stateful7회도 이26행의 지원 성공을 대신하지 않는다.
+과거 PREPARE-04까지 upstream G/B/X는0회였다. run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했고 owned 격리4회 뒤 tmpfs 회수가 실패했다. run36606981293은 같은474파일·canary12bytes·owned isolation8개·container9개 cleanup 뒤 기존 image의 `GLIBC_2.39` loader 실패로 중단됐다. 두 기록은 grammar 실패가 아니다. 명시 승인한 Trixie의 run36644794802는 toolchain/격리/자체 G/B/X를 통과한 뒤 JSON reader에서 멈췄다. 수정한 run36646415814는 T-SQL G1/B2/X56을 실행했으며 C# generation exit0 뒤 큰 결과 회수가 timeout됐다. 나머지 selected route의 G/B/X는 그 run에서 NOT_RUN이다. byte 검증, 실행 closure, 실제 source 지원을 구분하며 npm install script와 과거 owned fixture7회를 지원 근거로 대신하지 않는다.
 
 ## 26 route 위험 매핑
+
+이 표의 등급은 고정 source에서 얻은 근거의 종류를 유지한다. 승인 후 실제 실행의 REPRODUCED_FAILURE는 아래 native 관측 절과 immutable run receipt에 별도로 기록하며, source의 선언·정적 관찰을 실행 결과로 덮어쓰지 않는다.
 
 `근거`의 등록부는 고정 repository commit의 tree/file metadata를 뜻한다. 이 표에서 source가 직접 연결된 경우에만 그 부분의 정적 내용을 관측했다. 최신 feature의 미확인은 grammar에 그 기능이 없다는 단정이 아니다.
 
@@ -41,7 +43,7 @@
 | json | UNVERIFIED_SUPPORT | json-B01,json-B02 | scannerless parser 존재; strict token/negative/edit 실제 실행 미검증 | 등록부; JSONC 허용을 strict PASS로 대체 금지 |
 | yaml | UNVERIFIED_SUPPORT | yaml-B01,yaml-B03,yaml-V12 | schema별 generated variants·scanner와 test-suite submodule 존재 | 등록부; 선택 root grammar의 closure, variant 자동 변경 금지 |
 | xml | UNVERIFIED_SUPPORT | xml-B01,xml-B02,xml-V11 | xml/common/dtd source 관계와 scanner/1.1 문자 경계 미검증 | 등록부; DTD 별도 route 자동 채택 금지 |
-| tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | SELECT/EXEC 중심 production, DDL/다른 DML/CTE TODO, identifier regex 제한; V16/V22의 JSON/temporal/DROP IF EXISTS/CREATE OR ALTER/graph/window/vector/ledger 요구도 해당 statement 경로에 연결되며 개별 지원은 미확인; native 실패는 미재현; README config-function 분류 errata | SQL-1/SQL-2; 알려진 필수 source 격차, native NOT_RUN |
+| tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | 고정 source의 baseline/재생성 각각28개 중23개에서 ERROR/MISSING. bare/escaped identifier, DDL/DML/CTE/procedure/transaction와 등록 modern 절의 실패 재현; lowercase @@version은 syntax 수용과 분류 차이를 별도 관측 | SQL-1/SQL-2의 source 등급 유지; 별도 native 절은 REPRODUCED_FAILURE이며 remedy 결정 필요 |
 | postgresql-sql | UNVERIFIED_SUPPORT | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 후보의 생성 기반은 PG19 post-beta3; 채택 9.6~18 query/DML/DDL/utility·legacy 누적 지원 미검증 | PG-1은 생성 기반 선언이며 미지원 선언 아님; 19 superset 수용 자체는 실패 아님 |
 
 ## 읽은 고정 source와 판정 한계
@@ -85,6 +87,21 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.
 
 현재 P05가 남는 이유는 (1) C#의 문서상 필수 gap, (2) T-SQL의 정적 필수 source gap, (3) 26개 executable source closure 및 선택 high-risk native 경로의 미확인이다. TS/TSX import-defer source 위험도 남는다. exact candidate 유지와 요구 유지 조건 아래 이 gap을 무조건 해결됐다고 할 수 없다.
+
+## Trixie의 첫 upstream native 관측
+
+[run36646415814/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36646415814)은 고정 `Crary-Systems/tree-sitter-tsql@443d2bc774f1d779af7dcabcc99160fb24da96e6`을 CLI0.27.0/ABI15로 재생성하고 원 parser와 별도로 빌드했다. 두 producer에서 등록28개 입력씩 총56회를 실행했다. 원문 bytes/구문 기대를 고치지 않았다.
+
+| 등록 case | 각 producer의 관측 | required 사실과 판정 |
+|---|---|---|
+| P05-TSQL-ID-BARE/ESCAPED | ERROR/MISSING | 한 글자 bare·escaped bracket identifier 미충족 |
+| P05-TSQL-STATEMENTS의21개 입력 | ERROR/MISSING | tsql-B02/B03/B04/V16/V22의 등록 statement/절 미충족; 다른 SELECT로 대체 불가 |
+| P05-TSQL-ID-BRACKET | syntax 수용 | column `[a]`의 full_column_name/id_ 범위7..10, table `[t]`의 full_table_name/table 범위16..19 확인 |
+| P05-TSQL-CASE-UPPER/LOWER | 둘 다 syntax 수용 | `@@VERSION`은 configuration_functions/version_, `@@version`은 primitive_expression/LOCAL_ID_; 같은7..16 범위지만 분류 차이가 실제 재현됨. 이 분류 관측은 syntax 실패와 구분 |
+| P05-TSQL-GO-BATCH/LITERAL | syntax 수용 | GO 범위10..14·count13..14·두 SELECT0..8/15..23, literal/alias 내부 GO에 go_statement 없음 확인 |
+| P05-TSQL-ID-BARE edit | 손상/복구 incremental=fresh | original/restored에도 ERROR가 남아 required positive/recovery PASS가 아님 |
+
+G1/B2/X56과23×2 syntax 실패를 확인했어도 T-SQL 전체 범위의 전수 qualification은 아니다. C# generation은5.216초/exit0이나 회수는10.052초에32,305,152bytes에서 timeout돼 build/execution으로 진행하지 않았다. cleanup77개가 확인됐고 원 partial tar와 명령·output·limits를 보존했다. 이 회수 helper 실패는 C# grammar 실패가 아니다. 나머지 C#/TS/TSX/PG/Swift input과 edit는 해당 run에서 미실행으로 기록한다.
 
 위 수치는 최초 B 승인 당시 envelope다. 이후 수동 job2회 및3회째와 T-SQL raw 취득의 별도 승인을 각각 소비했다. 2026-09-30 현재 사용자는 동일 PREPARE 개발·검증·CI·기존 고정 입력의 추가 job과 `quiescent-tar-r1`을 지속 승인했다. 과거 총시간/3회 quota만으로 재승인을 요구하지 않고 유한 배치별 한도를 기록하며 모든 이전 소비·실패를 이월한다. 다섯 번째 job까지 source HTTP 누적150회·image pull3회·owned isolation13회, upstream G/B/X0이다. 최초 세 job14+14+66초와 후속66+65초를 보존한다. 새 image artifact는 고정 입력 승인에 자동 포함되지 않으며 별도 exact effect 승인이 필요하다. 현재 loader 장애와 image 보완 조건은 [source closure](p05-source-closure.md)를 따른다.
 
