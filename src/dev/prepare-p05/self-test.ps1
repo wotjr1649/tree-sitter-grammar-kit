@@ -43,18 +43,28 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
-foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckTsqlPriorEvidence')){
+foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckPriorEvidenceSubjects','FileIdentity','CheckJsInputs','CaseLedger')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
 }
 $priorTsql='5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458'
-CheckTsqlPriorEvidence '' 'bookworm-r1'
-CheckTsqlPriorEvidence $priorTsql 'trixie-r1'
-foreach($vector in @(@('unknown','trixie-r1'),@($priorTsql,'bookworm-r1'))){
-    $rejected=$false;try{CheckTsqlPriorEvidence $vector[0] $vector[1]}catch{$rejected=$true}
-    if(-not $rejected){throw 'Mismatched prior TSQL evidence/image accepted'}
+$priorCsharp='98590999770a8681c3c3347dc61b3aae81dd30e3b26629a66e49b4c706d3be79'
+CheckPriorEvidenceSubjects '' '' 'bookworm-r1'
+CheckPriorEvidenceSubjects $priorTsql $priorCsharp 'trixie-r1'
+foreach($vector in @(@('unknown','','trixie-r1'),@($priorTsql,'','bookworm-r1'),@('','unknown','trixie-r1'),@('',$priorCsharp,'bookworm-r1'))){
+    $rejected=$false;try{CheckPriorEvidenceSubjects $vector[0] $vector[1] $vector[2]}catch{$rejected=$true}
+    if(-not $rejected){throw 'Mismatched prior observation/image accepted'}
 }
+& {
+    param($caseInputs,$tsql,$csharp)
+    $inputs=$caseInputs;$TsqlPriorEvidenceSubject=$tsql;$CsharpPriorEvidenceSubject=$csharp
+    $script:commands=[Collections.Generic.List[object]]::new()
+    $ledger=CaseLedger
+    $prior=@($ledger|Where-Object prior_evidence_subject)
+    if($ledger.Count -ne 111 -or $prior.Count -ne 76 -or @($ledger|Where-Object state -CEQ 'NOT_RUN').Count -ne 35 -or @($prior|Where-Object {$null -ne $_.exit_code -or $null -ne $_.raw_stdout}).Count -or @($prior|Where-Object edit_registered).Count -ne 4){throw 'Prior observations lost, relabelled current, or altered case scope'}
+    if(@($prior|Where-Object {$_.state -cne 'NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED' -or ($_.route -ceq 'tsql' -and $_.prior_evidence_subject -cne $tsql) -or ($_.route -ceq 'csharp' -and $_.prior_evidence_subject -cne $csharp) -or $_.route -cnotin @('tsql','csharp')}).Count){throw 'Prior route/subject/state mapping changed'}
+} $originalInputs $priorTsql $priorCsharp
 $elf="Class: ELF64`nMachine: Advanced Micro Devices X86-64`n[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]`n(NEEDED) Shared library: [libc.so.6]"
 CheckElfClosure $elf
 foreach($invalid in @($elf.Replace('ELF64','ELF32'),$elf.Replace('X86-64','AArch64'),$elf.Replace('/lib64/ld-linux-x86-64.so.2','/unapproved/loader'),$elf.Replace('libc.so.6','unapproved.so'),($elf+"`n(RUNPATH) /unapproved"))){
@@ -92,6 +102,25 @@ foreach($directory in $directories){
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
 $grammarPath=Join-Path $root 'grammar.json'
+& {
+    param($caseRoot)
+    $root=Join-Path $caseRoot 'js-closure';$sourceRoot=Join-Path $root 'source'
+    [void][IO.Directory]::CreateDirectory($sourceRoot)
+    $entry=Join-Path $sourceRoot 'grammar.js';$dependency=Join-Path $sourceRoot 'dependency.js'
+    [IO.File]::WriteAllText($dependency,'module.exports = {};',[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($entry,"const grammar = require('./dependency'); module.exports = grammar;",[Text.UTF8Encoding]::new($false))
+    $closure=CheckJsInputs $entry $sourceRoot
+    if($closure.Count -ne 2){throw 'Literal JS closure incomplete'}
+    foreach($invalid in @("import('unregistered');","import 'unregistered';","const grammar = require(name);","const load = require;","eval('unregistered');","// foo: import('x').y.z;","const token = 'import';")){
+        [IO.File]::WriteAllText($entry,$invalid,[Text.UTF8Encoding]::new($false))
+        $rejected=$false;try{$null=CheckJsInputs $entry $sourceRoot}catch{$rejected=$true}
+        if(-not $rejected){throw 'Unregistered loader or unreviewed import occurrence accepted'}
+    }
+    [IO.File]::WriteAllText($entry,"require('../outside');",[Text.UTF8Encoding]::new($false))
+    $outside=Join-Path $root 'outside.js';[IO.File]::WriteAllText($outside,'module.exports = {};',[Text.UTF8Encoding]::new($false))
+    $rejected=$false;try{$null=CheckJsInputs $entry $sourceRoot}catch{$rejected=$true}
+    if(-not $rejected){throw 'JS source-root escape accepted'}
+} $root
 [IO.File]::WriteAllText($grammarPath,'{"name":"TSQL","rules":{"AS":{"type":"STRING","value":"AS"},"as":{"type":"STRING","value":"as"}}}',[Text.UTF8Encoding]::new($false))
 if((ReadGrammarName $grammarPath) -cne 'TSQL'){throw 'Case-distinct grammar keys/name were not preserved'}
 [IO.File]::WriteAllText($grammarPath,'{"name":"invalid-name","rules":{}}',[Text.UTF8Encoding]::new($false))

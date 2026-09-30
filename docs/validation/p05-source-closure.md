@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 현재 upstream G/B/X는 **NOT_RUN**이며 아래 취득·격리·회수 관측과 구분한다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. run36646415814의 T-SQL G1/B2/X56과 run36651074932의 C# G1/B2/X20을 관측했다. 두 route의 필수 구문 실패는 보존하며, TS/TSX/PG/Swift native는 아직 NOT_RUN이다. 기존 26-route/256행 채택은 scope 근거다.
 
 ## 네 단계와 완료 근거
 
@@ -47,6 +47,12 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | postgresql-sql | postgres/grammar.js/json, node-types | postgres parser/scanner/headers | P05-PG-LEGACY/18; PG19 기반 선언은 미지원 선언 아님 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
+
+## 고정 JS closure의 실제 import 분류
+
+run36651074932는 C# G1/B2/X20 및 큰 archive 회수 후 TS closure 검사에서 중단됐다. `common/define-grammar.js` SHA-256 `c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f`의 두 `'import'` grammar 토큰과 `// foo: import('x').y.z;` 설명 주석, npm JS0.23.1 `grammar.js` SHA-256 `230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc`의 세 `'import'` 토큰을 실행 import로 오인한 helper 실패다. 실제 추가 dependency나 TS 구문 실패 근거가 아니다.
+
+원문 archive와 selected-file SHA를 대조하고 해당 두 파일의 정확한 SHA 및 여섯 match 위치/값만 비실행 관측으로 결속한다. source text를 삭제·정규화하거나 실행 bytes를 수정하지 않는다. 다른 digest/위치/추가 import, dynamic require·eval·별칭 loader·등록 밖 dependency와 root 탈출은 계속 거부한다. 자체 literal closure와 해당 반례를 실제 helper로 검사하고, 고정 원문 closure는 별도 로컬 정적 검사 및 새 hosted generation으로 확인한다. arbitrary JavaScript의 모든 동작을 증명한다는 주장은 유지하지 않는다.
 
 ## 승인 후 실행 순서와 멈춤 조건
 
@@ -104,4 +110,8 @@ upstream `grammar.json`의 rule key는 대소문자를 구별한다. grammar ent
 
 원격 command supervisor는 준비된 stdout/stderr를 drain하고 다음 read task 중 하나가 완료될 때까지 최대20ms만 기다린다. 출력 준비와 무관하게 매65,536bytes read마다20ms를 기다리던 이전 동작은 run36646415814에서 C# generation exit0 뒤 회수10초 동안32,305,152bytes만 읽고 timeout됐다. partial tar·명령·cleanup77개와 T-SQL의 이미 실행된56개 producer 결과를 보존한다. 회수10초·archive/output·storage 한도를 늘리지 않으며 큰 회수의 완료는 새 native 관측으로 확인한다.
 
-동일 T-SQL source의 이미 완료한56개 producer 관측은 `tsql_prior_evidence_subject`의 고정 immutable receipt에 결속해 재실행하지 않을 수 있다. caller는 실제 run36646415814·원57input projection·같은 CLI/runtime/Trixie·28원문/2producer edit·46syntax 실패와 원출력을 먼저 검증한다. subject는 실행 허가나 지원 PASS가 아니다. 새 run은 원본 전체57case ledger를 유지하고 해당56행을 `NOT_REEXECUTED_PRIOR_OBSERVED_FAILURES_RETAINED`로 표시하며, 나머지5route/55producer와 자체 control을 실행한다. 과거 T-SQL 결과와 새 결과를 함께 평가하고 required scope 실패를 유지한다. source/tool/image/input이 달라지면 이 이월은 적용할 수 없다.
+동일 T-SQL source의 이미 완료한56개 producer 관측은 `tsql_prior_evidence_subject`의 고정 immutable receipt에 결속해 재실행하지 않을 수 있다. caller는 실제 run36646415814·원57input projection·같은 CLI/runtime/Trixie·28원문/2producer edit·46syntax 실패와 원출력을 먼저 검증한다. subject는 실행 허가나 지원 PASS가 아니다. 원본 전체57case ledger를 유지하며 현재 통합 helper의 prior 상태는 `NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED`다. 앞선 run36651074932의 이전 `NOT_REEXECUTED_PRIOR_OBSERVED_FAILURES_RETAINED` 원 ledger도 보존한다. T-SQL만 이월한 그 run은 나머지5route/55producer를 계획했으며 C#20개 완료 후 중단됐다. 과거 결과와 새 결과를 함께 평가하고 required scope 실패를 유지한다. source/tool/image/input이 달라지면 이 이월은 적용할 수 없다.
+
+run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생성 archive32,522,240bytes는 수정한 supervisor가0.148초에 정확히 회수했고 container40개의 종료·PID0·제거를 확인했다. 등록된 다섯 `#:` directive는 각각 두 producer에서 실패했으며 좁은 identifier/shebang/raw string 성공은 넓은 declared gap을 해소하지 않는다.
+
+후속 실행은 `csharp_prior_evidence_subject`의 고정 receipt에도 같은 source/input/CLI/runtime/image 검증을 적용한다. TSQL56행/2edit와 C#20행/2edit를 원 관측으로 보존하고 TS/TSX/PG/Swift의 나머지35producer/7edit를 새로 실행한다. 전체111행의 prior 상태는 `NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED`, 현재 raw/exit는 null이며 어느 prior subject도 scope PASS나 권한이 아니다. 기본 빈 subject는 원래 경로를 유지하고 잘못된 subject/legacy image는 효과 전에 거부한다.

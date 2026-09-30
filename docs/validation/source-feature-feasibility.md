@@ -7,7 +7,7 @@
 - `UPSTREAM_DECLARED`: 고정 upstream 문서가 선언한 제한. local 재현 없이도 알려진 위험이지만 실패 receipt라고 부르지 않는다.
 - `STATIC_SOURCE_OBSERVATION`: 고정 source/layout에서 실제 읽은 경로·rule·누락. 실행 성공/실패로 승격하지 않는다.
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
-- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. run36646415814에서 T-SQL 한 route의 필수 구문 실패가 baseline/재생성 producer별로 재현됐다. 다른 route의 미실행을 실패로 바꾸지 않는다.
+- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. run36646415814에서 T-SQL, run36651074932에서 C#의 필수 구문 실패가 baseline/재생성 producer별로 재현됐다. 다른 route의 미실행을 실패로 바꾸지 않는다.
 
 과거 PREPARE-04까지 upstream G/B/X는0회였다. run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했고 owned 격리4회 뒤 tmpfs 회수가 실패했다. run36606981293은 같은474파일·canary12bytes·owned isolation8개·container9개 cleanup 뒤 기존 image의 `GLIBC_2.39` loader 실패로 중단됐다. 두 기록은 grammar 실패가 아니다. 명시 승인한 Trixie의 run36644794802는 toolchain/격리/자체 G/B/X를 통과한 뒤 JSON reader에서 멈췄다. 수정한 run36646415814는 T-SQL G1/B2/X56을 실행했으며 C# generation exit0 뒤 큰 결과 회수가 timeout됐다. 나머지 selected route의 G/B/X는 그 run에서 NOT_RUN이다. byte 검증, 실행 closure, 실제 source 지원을 구분하며 npm install script와 과거 owned fixture7회를 지원 근거로 대신하지 않는다.
 
@@ -50,7 +50,7 @@
 
 | 근거 ID | 고정 primary source | 관측 | 판정 |
 |---|---|---|---|
-| CS-1 | [README Status](https://github.com/tree-sitter/tree-sitter-c-sharp/blob/9150f7d56bb47f1a809fa23623f1ba1413e93fa9/README.md#status) | contextual identifier의 유효 문맥 일부에 예외 명시 | 어느 예제가 실패하는지는 미재현 |
+| CS-1 | [README Status](https://github.com/tree-sitter/tree-sitter-c-sharp/blob/9150f7d56bb47f1a809fa23623f1ba1413e93fa9/README.md#status) | contextual identifier의 유효 문맥 일부에 예외 명시 | 등록3개 좁은 문맥은 수용; 넓은 예외와 그 실패 문맥은 미해소 |
 | CS-2 | 같은 README | #:property/package/sdk/project 미인식 명시 | csharp-V14c의 required gap; 요구 제외 불가 |
 | TS-1 | [tsx/grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/tsx/grammar.js), [common/define-grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/common/define-grammar.js) | common factory의 tsx 분기/JSX conflicts/typed JSX·type assertion 배제; import_statement는 type/typeof 후 기존 clause만 명시 | import defer가 이 source rule에 없음. generated parser 일치/실패는 아직 미검증 |
 | TS-2 | [package.json](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/package.json) | tree-sitter-javascript ^0.23.1 dependency, node-gyp-build install script | range는 immutable 실행 bytes가 아님; JS route pin과 자동 동일시 금지; npm install 미실행 |
@@ -63,19 +63,19 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 ## 필요한 고위험 case의 내용
 
-아래는 **미실행 검증 설계**다. 예상 tree 또는 가공한 PASS/FAIL 출력이 아니다. 각 입력은 source bytes로만 취급하며 C#/shell/SQL application을 실행하지 않는다. N/R/E는 valid counterpart를 확정한 뒤 delimiter 손상·수정 순서를 추가한다.
+아래는 등록된 검증 설계와 현재 관측의 대응이다. 실제 tree는 아래 native 절과 원 receipt로 구분하며 가공한 golden을 사용하지 않는다. 각 입력은 source bytes로만 취급하며 C#/shell/SQL application을 실행하지 않는다. 등록된 N/R/E의 손상·복구도 원 bytes/기대에 결속한다.
 
 | Case ID | Feature | 입력 골격·검증할 사실 | 상태 |
 |---|---|---|---|
-| P05-CS-ID | csharp-B01 | class/field/local 이름에 async/await/var를 놓은 공식 valid context 여러 개; identifier와 modifier 분리 | PLANNED_NOT_RUN; README의 일부 예외를 특정 한 예제 실패로 단정하지 않음 |
-| P05-CS-DIRECTIVE | csharp-V14c | #:property TargetFramework=net10.0 뒤 일반 .cs; 나머지 세 directive도 각각 등록 | PLANNED_NOT_RUN; directive 행과 후속 statement 보존 |
-| P05-CS-DIRECTIVE-INCLUDE | csharp-V14c | SDK10.0.300의 `#:include helpers.cs` 뒤 일반 .cs; 이름·인수·행 경계와 후속 statement 보존 | PLANNED_NOT_RUN; 좁은 scope 보완 채택. 기존 README의 네 directive 선언과 별도 사양 대비 항목이며 native 실패는 미재현 |
+| P05-CS-ID | csharp-B01 | class/field/local 이름에 async/await/var를 놓은 공식 valid context 여러 개; identifier와 modifier 분리 | OBSERVED_BOUNDED_POSITIVES; 두 producer의 등록3case 수용, 넓은 README 예외는 유지 |
+| P05-CS-DIRECTIVE | csharp-V14c | #:property TargetFramework=net10.0 뒤 일반 .cs; 나머지 세 directive도 각각 등록 | REPRODUCED_FAILURE; 네 #: directive 모두 두 producer에서 오류, shebang/raw 대조와 구분 |
+| P05-CS-DIRECTIVE-INCLUDE | csharp-V14c | SDK10.0.300의 `#:include helpers.cs` 뒤 일반 .cs; 이름·인수·행 경계와 후속 statement 보존 | REPRODUCED_FAILURE; 두 producer 모두 실패, 기존 네 directive의 upstream 선언과 별도 구체 관측 |
 | P05-TS-DEFER | typescript-V59 | `import defer * as m from "m";`와 typed declaration; 일반 namespace import legacy 대조 | PLANNED_NOT_RUN; 이미 채택된 TS feature의 .ts probe이며 TSX producer와 별도 |
 | P05-TSX-AMBIGUITY | tsx-B02,tsx-V29 | `const id = <T,>(x: T) => x;`와 generic JSX/self-closing/fragment/relational expression | PLANNED_NOT_RUN; generic parameter/tag/query field 구분 |
 | P05-TSX-DEFER | tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | PLANNED_NOT_RUN; TS-1의 common factory 관찰을 TSX producer로 별도 확인하며 .ts 증거로 대체하지 않음 |
-| P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | PLANNED_NOT_RUN; 둘의 syntax 수용과 node 분류를 각각 비교 |
-| P05-TSQL-STATEMENTS | tsql-B02,tsql-B03,tsql-B04,tsql-V16,tsql-V22 | 한 글자 identifier의 CREATE TABLE/INSERT, CTE/SELECT, procedure/transaction; FOR JSON/OPENJSON, FOR SYSTEM_TIME/SYSTEM_VERSIONING, DROP IF EXISTS와 CREATE OR ALTER의 별도 source case, AS NODE/EDGE/MATCH, WINDOW/IS DISTINCT FROM, JSON/VECTOR type, LEDGER table option의 각 source case | PLANNED_NOT_RUN; unrelated ERROR-free SELECT로 대체 금지 |
-| P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | PLANNED_NOT_RUN; client separator 경계 |
+| P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | OBSERVED_CLASSIFICATION_DIVERGENCE; 둘의 syntax 수용과 configuration_functions/LOCAL_ID_ 분류 차이를 별도 보존 |
+| P05-TSQL-STATEMENTS | tsql-B02,tsql-B03,tsql-B04,tsql-V16,tsql-V22 | 한 글자 identifier의 CREATE TABLE/INSERT, CTE/SELECT, procedure/transaction; FOR JSON/OPENJSON, FOR SYSTEM_TIME/SYSTEM_VERSIONING, DROP IF EXISTS와 CREATE OR ALTER의 별도 source case, AS NODE/EDGE/MATCH, WINDOW/IS DISTINCT FROM, JSON/VECTOR type, LEDGER table option의 각 source case | REPRODUCED_FAILURE;21case 모두 두 producer에서 오류, unrelated SELECT로 대체 금지 |
+| P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | OBSERVED_BOUNDED_POSITIVES; 등록 separator/count와 문자열 대조의 구조 확인 |
 | P05-PG-LEGACY | postgresql-sql-B01,postgresql-sql-L01 | 9.6 WITH OIDS/quoted identifier/dollar string/ON CONFLICT와 18 counterpart | PLANNED_NOT_RUN; 유효 legacy source가 보존되는지 |
 | P05-PG-18 | postgresql-sql-V18 | VIRTUAL generated column, WITHOUT OVERLAPS/PERIOD key, RETURNING OLD/NEW | PLANNED_NOT_RUN; clause/body/identifier 구조 |
 | P05-SWIFT-GENERATION | swift-B01,swift-V62,swift-V64 | 고정 grammar generation과 Swift5 generic function/inline array/module selector source의 구분된 입력 | PLANNED_NOT_RUN; generation과 syntax 결과를 분리하며 새 syntax 범위 채택이 아님 |
@@ -86,7 +86,22 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.
 
-현재 P05가 남는 이유는 (1) C#의 문서상 필수 gap, (2) T-SQL의 정적 필수 source gap, (3) 26개 executable source closure 및 선택 high-risk native 경로의 미확인이다. TS/TSX import-defer source 위험도 남는다. exact candidate 유지와 요구 유지 조건 아래 이 gap을 무조건 해결됐다고 할 수 없다.
+현재 P05가 남는 이유는 (1) C#의 넓은 declared identifier gap과 재현한 다섯 directive 실패, (2) T-SQL의 재현한 statement/identifier 및 분류 격차, (3) TS/TSX/PG/Swift native와 각 26route의 단계별 남은 입력이다. TS/TSX import-defer source 위험도 남는다. exact candidate와 요구 유지 조건 아래 이 gap을 해결됐다고 할 수 없다. 지속 승인으로 유한 동일 범위 배치를 갱신하며 옛 누적 시간/job quota를 새 권한 질문으로 반복하지 않는다.
+
+## C#의 실제 baseline/재생성 관측
+
+[run36651074932/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36651074932)은 같은 승인 Trixie/CLI0.27.0/runtime659cda7 및 고정 C#9150f7d에서 G1/B2/X20을 수행했다. 10개 원문 각각의 baseline/regenerated stdout SHA와 ordered facts가 동일하며, generation/build 및 20개 command의 종료·회수·cleanup을 확인했다. 전체 run은 이후 JS closure helper에서 FAILED이고 whole_feature_support/product_qualification은 false다.
+
+| 등록 case | 실제 syntax·구조·negative/recovery 사실 | 판정의 범위 |
+|---|---|---|
+| P05-CS-ID-ASYNC | class name identifier/name6..11, field name18..23, declaration_list/body12..26; `{` 삭제 후 ERROR13..22/24..25와 후속 bytes, damaged incremental/fresh 동일; 복구 후 원27bytes의 point/order/구조 및 fresh/incremental 동일 | 등록 type-name 문맥과 두 producer edit만 확인; 넓은 identifier 선언 gap 유지 |
+| P05-CS-ID-AWAIT | field identifier/name14..19 및 local name36..41, method/body30..48; 오류·누락 없음 | 등록 field/local 문맥만 확인 |
+| P05-CS-ID-VAR | 첫 class name6..9 및 둘째 class local name39..42, 같은 범위의 var token child; 오류·누락 없음 | 등록 type/local 문맥만 확인 |
+| P05-CS-DIRECTIVE-SHEBANG | shebang_directive0..21, 다음 행 global_statement22..50와 invocation22..49 | shebang 대조 성공이며 #: directive 대체 근거가 아님 |
+| P05-CS-DIRECTIVE-PROPERTY/PACKAGE/SDK/PROJECT/INCLUDE | 각각 두 producer에서 exit2/ERROR; directive 이름이 type 등으로 오분류되고 행/후속 구조가 합쳐짐. package에는 후속 정상 global_statement32..60이 남지만 directive 자체는 실패 | csharp-V14c의 다섯 required directive 실패. include는 별도 채택 사실의 실제 재현 |
+| P05-CS-DIRECTIVE-RAW | raw_string_literal21..49, content24..46에 include text 보존, class/body/후속 byte·point/order와 오류 없음 | raw 내부 text는 directive로 분류하지 않음; include 지원 주장이 아님 |
+
+3개 identifier의 좁은 positive는 upstream의 모든 유효 contextual 문맥을 검증하지 않는다. 원 실패를 보존하고 실제 grammar remedy/후보 결정은 별도 승인이 필요하다. TS/TSX/PG/Swift는 이 run에서 NOT_RUN이며 dependency 분류 오류를 language 실패로 표시하지 않는다.
 
 ## Trixie의 첫 upstream native 관측
 
