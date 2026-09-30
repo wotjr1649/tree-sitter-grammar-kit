@@ -13,6 +13,8 @@
 
 ## 26 route 위험 매핑
 
+이 표의 등급은 고정 source에서 얻은 근거의 종류를 유지한다. 승인 후 실제 실행의 REPRODUCED_FAILURE는 아래 native 관측 절과 immutable run receipt에 별도로 기록하며, source의 선언·정적 관찰을 실행 결과로 덮어쓰지 않는다.
+
 `근거`의 등록부는 고정 repository commit의 tree/file metadata를 뜻한다. 이 표에서 source가 직접 연결된 경우에만 그 부분의 정적 내용을 관측했다. 최신 feature의 미확인은 grammar에 그 기능이 없다는 단정이 아니다.
 
 | Route | 등급 | Required feature ID | 관측·남은 위험 | 근거·다음 증거 |
@@ -41,7 +43,7 @@
 | json | UNVERIFIED_SUPPORT | json-B01,json-B02 | scannerless parser 존재; strict token/negative/edit 실제 실행 미검증 | 등록부; JSONC 허용을 strict PASS로 대체 금지 |
 | yaml | UNVERIFIED_SUPPORT | yaml-B01,yaml-B03,yaml-V12 | schema별 generated variants·scanner와 test-suite submodule 존재 | 등록부; 선택 root grammar의 closure, variant 자동 변경 금지 |
 | xml | UNVERIFIED_SUPPORT | xml-B01,xml-B02,xml-V11 | xml/common/dtd source 관계와 scanner/1.1 문자 경계 미검증 | 등록부; DTD 별도 route 자동 채택 금지 |
-| tsql | STATIC_SOURCE_OBSERVATION + REPRODUCED_FAILURE | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | 고정 source의 baseline/재생성 각각28개 중23개에서 ERROR/MISSING. bare/escaped identifier, DDL/DML/CTE/procedure/transaction와 등록 modern 절의 실패 재현; lowercase @@version은 syntax 수용과 분류 차이를 별도 관측 | SQL-1/SQL-2 및 아래 native 관측; source/기대 유지, remedy 결정 필요 |
+| tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | 고정 source의 baseline/재생성 각각28개 중23개에서 ERROR/MISSING. bare/escaped identifier, DDL/DML/CTE/procedure/transaction와 등록 modern 절의 실패 재현; lowercase @@version은 syntax 수용과 분류 차이를 별도 관측 | SQL-1/SQL-2의 source 등급 유지; 별도 native 절은 REPRODUCED_FAILURE이며 remedy 결정 필요 |
 | postgresql-sql | UNVERIFIED_SUPPORT | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 후보의 생성 기반은 PG19 post-beta3; 채택 9.6~18 query/DML/DDL/utility·legacy 누적 지원 미검증 | PG-1은 생성 기반 선언이며 미지원 선언 아님; 19 superset 수용 자체는 실패 아님 |
 
 ## 읽은 고정 source와 판정 한계
