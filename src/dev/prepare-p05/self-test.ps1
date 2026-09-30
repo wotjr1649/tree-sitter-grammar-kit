@@ -207,6 +207,23 @@ $grammarPath=Join-Path $root 'grammar.json'
         $rejected=$false;try{$null=CheckRemedyQuotedIncludes @($parser) $parserRoot}catch{$rejected=$true}
         if(-not $rejected){throw 'Missing or unpinned quoted include accepted'}
     }
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'records'))
+    $script:remedyRows=NewRemedyRows 'patch-r1' $originalInputs.cases $remedySubjects.cases.cases
+    $script:failed=$false
+    $recordDefinition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'Record'},$true))
+    . ([scriptblock]::Create($recordDefinition[0].Extent.Text))
+    [IO.File]::WriteAllText($parser,'#include "missing.h"',[Text.UTF8Encoding]::new($false))
+    $blocked=TryRemedyPrecheck 'csharp-original' 'build' {CheckRemedyQuotedIncludes @($parser) $parserRoot}
+    $own=@($script:remedyRows|Where-Object producer -CEQ 'csharp-original');$others=@($script:remedyRows|Where-Object producer -CNE 'csharp-original')
+    if($blocked.passed -or -not $script:failed -or @($own|Where-Object dependency -CNE 'PRECHECK_FAILED_BUILD').Count -or @($others|Where-Object dependency -CNE 'GENERATION_BUILD_AND_SAFETY_PREREQUISITES').Count){throw 'Producer closure failure stopped or relabelled unrelated work'}
+    [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false))
+    $passed=TryRemedyPrecheck 'csharp-candidate' 'build' {CheckRemedyQuotedIncludes @($parser) $parserRoot}
+    if(-not $passed.passed -or $passed.value.Count -ne 2){throw 'Independent producer closure did not continue'}
+    foreach($failure in @('Quoted include bytes changed','Project header bytes changed','Container child cleanup unverified','Native operation budget exceeded','Input is not a regular file')){
+        $rejected=$false;try{$null=TryRemedyPrecheck 'swift-candidate' 'build' {throw $failure}}catch{$rejected=$true}
+        if(-not $rejected){throw 'Shared integrity, cleanup or budget failure was swallowed'}
+    }
+    $script:remedyRows=$null;$script:failed=$false
 } $root
 [IO.File]::WriteAllText($grammarPath,'{"name":"TSQL","rules":{"AS":{"type":"STRING","value":"AS"},"as":{"type":"STRING","value":"as"}}}',[Text.UTF8Encoding]::new($false))
 if((ReadGrammarName $grammarPath) -cne 'TSQL'){throw 'Case-distinct grammar keys/name were not preserved'}

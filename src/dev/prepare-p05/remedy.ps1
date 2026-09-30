@@ -52,6 +52,19 @@ function NewRemedyRows([string]$stage,$original,$additional){
     if($rows.Count -ne $expected -or @($rows.command_label|Sort-Object -Unique).Count -ne $expected){throw 'Remedy producer/case plan mismatch'}
     return ,$rows.ToArray()
 }
+function TryRemedyPrecheck([string]$producer,[string]$stage,[scriptblock]$check){
+    try{return @{passed=$true;value=(& $check)}}catch{
+        # Only diagnosed producer input/closure failures are recoverable here.
+        # Identity, authority, native limits, isolation and cleanup failures propagate.
+        $known=@('Unreviewed JS loader/evaluation','Unresolved dynamic/ES module dependency','Unregistered JS dependency','Unreviewed SQL loader/evaluation','Unresolved SQL ESM import','Unregistered SQL dependency','Quoted include input missing before build','Quoted include count limit','Unpinned quoted include input','Parser ABI unavailable before build','Parser ABI outside fixed runtime range','Grammar name rejected','SQL candidate license mismatch','Compiler header closure unavailable','Unpinned project header','Executable ELF/library closure mismatch','Recovered executable mode mismatch')
+        if($_.Exception.Message -notin $known -and $_.Exception.Message -cnotmatch '^Required (JS dependency|SQL dependency|generated parser|recovered executable|ELF report) unavailable: [A-Za-z0-9_./-]+$'){throw}
+        $failure=@{producer=$producer;stage=$stage;failure_type=$_.Exception.GetType().FullName;reason=$_.Exception.Message;operation='BOUNDED_PRODUCER_PRECHECK';state='NOT_RUN';native_rerun=$false}
+        Record ('blocked-'+$producer+'-'+$stage) $failure
+        foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.state='NOT_RUN';$row.dependency='PRECHECK_FAILED_'+$stage.ToUpperInvariant();$row['precheck_failure']=$failure}
+        $script:failed=$true
+        return @{passed=$false;value=$null}
+    }
+}
 function PrepareRemedyInputs($subjects){
     Record 'remedy-authority-binding' @{stage=$RemedyStage;subject=$RemedyApprovalSubject;actual_user_authority='caller acceptance record separately required; subject alone is not permission';original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();prior_aggregate_sha256='68053aac3fc0dab788b48d9c78cbd577a3f182dfb7f2e092f4d0f944f64de274';prior_execution_is_not_current=$true;conditional_registration='NOT_ADOPTED';source_application_execution=$false}
     foreach($identity in @($acquisition.remedy_identities)){
@@ -94,8 +107,10 @@ function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
     while($queue.Count){
         $path=[IO.Path]::GetFullPath($queue.Dequeue());if(-not $seen.Add($path)){continue}
         if(-not $path.StartsWith($prefix,[StringComparison]::Ordinal)){throw 'SQL import outside fixed root'}
+        if(-not (Test-Path -LiteralPath $path -PathType Leaf)){throw ('Required SQL dependency unavailable: '+[IO.Path]::GetRelativePath($root,$path).Replace('\','/'))}
         $identity=FileIdentity $path
-        if(-not $script:verifiedSource.ContainsKey($identity.path) -or $script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'SQL dependency not in fixed30 files'}
+        if(-not $script:verifiedSource.ContainsKey($identity.path)){throw 'Unregistered SQL dependency'}
+        if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'SQL dependency bytes changed'}
         $source=[IO.File]::ReadAllText($path)
         if($source -match '\b(?:require|createRequire|eval|Function)\b'){throw 'Unreviewed SQL loader/evaluation'}
         $imports=[regex]::Matches($source,'(?m)^\s*import\s+(?:[A-Za-z_$][\w$]*|\{[\w\s,$]*\})\s+from\s+["''](\.{1,2}/[A-Za-z0-9_./-]+\.js)["''];?\s*$')
@@ -113,6 +128,8 @@ function CheckRemedyQuotedIncludes([string[]]$entries,[string]$parserRoot){
     while($queue.Count){
         $path=[IO.Path]::GetFullPath($queue.Dequeue());if(-not $seen.Add($path)){continue}
         if($seen.Count -gt 512){throw 'Quoted include count limit'}
+        $taskPrefix=[IO.Path]::GetFullPath($root).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
+        if(-not $path.StartsWith($taskPrefix,[StringComparison]::Ordinal)){throw 'Quoted include outside task root'}
         $identity=FileIdentity $path
         if($path -cne (Join-Path $root 'probe.c') -and -not $script:verifiedSource.ContainsKey($identity.path) -and -not $path.StartsWith($parserPrefix,[StringComparison]::Ordinal)){throw 'Unpinned quoted include input'}
         if($script:verifiedSource.ContainsKey($identity.path) -and $script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'Quoted include bytes changed'}
@@ -134,6 +151,8 @@ function InvokeRemedyBuildAndCases([string]$producer,[string]$grammarName,[strin
     $label='build-'+$producer
     $entries=@((Join-Path $parserRoot 'parser.c'),(Join-Path $root 'probe.c'))
     if($scanner){$entries+=Join-Path $root $scannerRoot}
+    $precheck=TryRemedyPrecheck $producer 'build' {
+    if(-not (Test-Path -LiteralPath (Join-Path $parserRoot 'parser.c') -PathType Leaf)){throw ('Required generated parser unavailable: '+[IO.Path]::GetRelativePath($root,(Join-Path $parserRoot 'parser.c')).Replace('\','/'))}
     $closure=CheckRemedyQuotedIncludes $entries $parserRoot
     $parserText=[IO.File]::ReadAllText((Join-Path $parserRoot 'parser.c'))
     if($parserText -cnotmatch '(?m)^#define LANGUAGE_VERSION ([0-9]+)\s*$'){throw 'Parser ABI unavailable before build'}
@@ -143,13 +162,21 @@ function InvokeRemedyBuildAndCases([string]$producer,[string]$grammarName,[strin
     if($runtimeApi -cnotmatch '(?m)^#define TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION ([0-9]+)\s*$'){throw 'Runtime minimum ABI unavailable'};$minAbi=[int]$Matches[1]
     if($languageAbi -lt $minAbi -or $languageAbi -gt $maxAbi){throw 'Parser ABI outside fixed runtime range'}
     Record ($label+'-inputs') @{before_build=$true;files=$closure;parser_abi=$languageAbi;runtime_abi_min=$minAbi;runtime_abi_max=$maxAbi;runtime_commit=$inputs.runtime.commit;compiler_image=$toolchain.image;scanner=$scanner;source_or_candidate_identity_preserved=$true}
+    }
+    if(-not $precheck.passed){return}
     $arguments=@('-std=c11','-D_DEFAULT_SOURCE','-O0','-Wall','-Wextra','-H',('-DLANGUAGE=tree_sitter_'+$grammarName),('-I'+$runtime+'/lib/include'),('-I'+$runtime+'/lib/src'),('-I'+$parser),'/inputs/probe.c',($runtime+'/lib/src/lib.c'),($parser+'/parser.c'))
     if($scanner){$arguments+=$scanner}
     $arguments+=@('-o','/work/probe')
     $build=Native build $label (@('/bin/sh','-ec',$compileAndInspect,'p05-remedy-gcc')+$arguments) 120 134217728
-    if($build.exit_code -ne 0){foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.dependency='BUILD_FAILED'};return}
-    CheckBuildHeaders $label $parserRoot
-    $binary=RecoveredExecutable $label
+    if($build.termination -cne 'EXITED' -or $build.exit_code -ne 0){foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.dependency='BUILD_FAILED';$row['blocked_by']=@{command=$label;termination=$build.termination;exit_code=$build.exit_code}};return}
+    $precheck=TryRemedyPrecheck $producer 'executable' {
+        foreach($file in @(@{name='probe';kind='recovered executable'},@{name='probe.elf';kind='ELF report'})){
+            $relative='results/'+$label+'/'+$file.name
+            if(-not (Test-Path -LiteralPath (Join-Path $root $relative) -PathType Leaf)){throw ('Required '+$file.kind+' unavailable: '+$relative)}
+        }
+        CheckBuildHeaders $label $parserRoot;RecoveredExecutable $label
+    }
+    if(-not $precheck.passed){return};$binary=$precheck.value
     foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){
         $case=$row.case;$identity=FileIdentity (Join-Path $root ('cases/'+$case.id))
         AssertRemedyObject $identity.bytes $identity.sha256 @{bytes=$case.input_bytes;sha256=$case.input_sha256}
@@ -163,13 +190,14 @@ function InvokeRemedyBuildAndCases([string]$producer,[string]$grammarName,[strin
 function InvokeRemedyGeneration([string]$producer,[string]$grammarPath,[string]$sourceRoot,[switch]$Sql,[switch]$Postgres){
     $label='generate-'+$producer
     $localGrammar=Join-Path $root $grammarPath
-    $files=if($Postgres){@(FileIdentity $localGrammar)}elseif($Sql){CheckSqlJsInputs $localGrammar $sourceRoot}else{CheckJsInputs $localGrammar $sourceRoot}
+    $precheck=TryRemedyPrecheck $producer 'generation' {if($Postgres){@(FileIdentity $localGrammar)}elseif($Sql){CheckSqlJsInputs $localGrammar $sourceRoot}else{CheckJsInputs $localGrammar $sourceRoot}}
+    if(-not $precheck.passed){return $null};$files=$precheck.value
     Record ($label+'-inputs') @{files=$files;before_generation=$true;literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;options=$(if($Postgres){'--disable-optimizations'}else{'--js-runtime node'});toolchain_image=$toolchain.image}
     $arguments=@('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--output','/work/generated')
     if($Postgres){$arguments+='--disable-optimizations'}else{$arguments+=@('--js-runtime','node')}
     $arguments+=('/inputs/'+$grammarPath)
     $result=Native generation $label $arguments 300 536870912 -MemoryEvents:$Postgres
-    if($result.exit_code -ne 0){foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.dependency='GENERATION_FAILED'};return $null}
+    if($result.termination -cne 'EXITED' -or $result.exit_code -ne 0){foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.dependency='GENERATION_FAILED';$row['blocked_by']=@{command=$label;termination=$result.termination;exit_code=$result.exit_code}};return $null}
     return 'results/'+$label+'/generated'
 }
 function InvokeRemedyProducers($subjects){
@@ -181,27 +209,26 @@ function InvokeRemedyProducers($subjects){
             $patch=@($subjects.patches.patches|Where-Object repository -CEQ $route.repository)[0]
             $candidateRoot='candidates/'+$patch.id
             $selector=if($route.subdirectory -ceq '.') {''}else{'/'+$route.subdirectory}
-            $grammarName=ReadGrammarName (Join-Path $root ($originalRoot+$selector+'/src/grammar.json'))
-            $producer=$routeName+'-original'
-            $parser=if($routeName -ceq 'swift'){InvokeRemedyGeneration $producer ($originalRoot+$selector+'/grammar.js') (Join-Path $root $originalRoot)}else{$originalRoot+$selector+'/src'}
-            if($parser){
-                $scanner=if(Test-Path (Join-Path $root ($originalRoot+$selector+'/src/scanner.c'))){$originalRoot+$selector+'/src/scanner.c'}else{''}
-                InvokeRemedyBuildAndCases $producer $grammarName ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner
-            }
-            $producer=$routeName+'-candidate'
-            $parser=InvokeRemedyGeneration $producer ($candidateRoot+$selector+'/grammar.js') (Join-Path $root $candidateRoot)
-            if($parser){
-                $scanner=if(Test-Path (Join-Path $root ($candidateRoot+$selector+'/src/scanner.c'))){$candidateRoot+$selector+'/src/scanner.c'}else{''}
-                InvokeRemedyBuildAndCases $producer $grammarName ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner
+            foreach($variant in @('original','candidate')){
+                $producer=$routeName+'-'+$variant
+                $sourceRoot=if($variant -ceq 'candidate'){$candidateRoot}else{$originalRoot}
+                $name=TryRemedyPrecheck $producer 'name' {ReadGrammarName (Join-Path $root ($sourceRoot+$selector+'/src/grammar.json'))}
+                if(-not $name.passed){continue}
+                $parser=if($variant -ceq 'candidate' -or $routeName -ceq 'swift'){InvokeRemedyGeneration $producer ($sourceRoot+$selector+'/grammar.js') (Join-Path $root $sourceRoot)}else{$sourceRoot+$selector+'/src'}
+                if($parser){
+                    $scanner=if(Test-Path (Join-Path $root ($sourceRoot+$selector+'/src/scanner.c'))){$sourceRoot+$selector+'/src/scanner.c'}else{''}
+                    InvokeRemedyBuildAndCases $producer $name.value ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner
+                }
             }
         }
     }else{
         $sqlRoot='candidate-evaluation/derek-sql-97614d0'
-        $license=[IO.File]::ReadAllText((Join-Path $root ($sqlRoot+'/LICENSE')))
-        if($license -notmatch 'MIT License' -or $license -notmatch 'Permission is hereby granted'){throw 'SQL candidate license mismatch'}
+        $licenseCheck=TryRemedyPrecheck 'derek-sql-candidate' 'license' {$license=[IO.File]::ReadAllText((Join-Path $root ($sqlRoot+'/LICENSE')));if($license -notmatch 'MIT License' -or $license -notmatch 'Permission is hereby granted'){throw 'SQL candidate license mismatch'}}
+        if($licenseCheck.passed){
         Record 'sql-license' @{identity=(FileIdentity (Join-Path $root ($sqlRoot+'/LICENSE')));license='MIT';adoption_authorized=$false}
         $parser=InvokeRemedyGeneration 'derek-sql-candidate' ($sqlRoot+'/grammar.js') (Join-Path $root $sqlRoot) -Sql
-        if($parser){$grammarName=ReadGrammarName (Join-Path $root ($parser+'/grammar.json'));InvokeRemedyBuildAndCases 'derek-sql-candidate' $grammarName ('/inputs/'+$parser) (Join-Path $root $parser) ('/inputs/'+$sqlRoot+'/src/scanner.c') ($sqlRoot+'/src/scanner.c')}
+        if($parser){$name=TryRemedyPrecheck 'derek-sql-candidate' 'name' {ReadGrammarName (Join-Path $root ($parser+'/grammar.json'))};if($name.passed){InvokeRemedyBuildAndCases 'derek-sql-candidate' $name.value ('/inputs/'+$parser) (Join-Path $root $parser) ('/inputs/'+$sqlRoot+'/src/scanner.c') ($sqlRoot+'/src/scanner.c')}}
+        }
         $pgRoot='acquisition/sources/gmr--tree-sitter-postgres--59d0d8cd7506d68de1229fb4bbce838c83b60c8a/postgres'
         $pgParser='materialized-lfs/postgres/src'
         foreach($name in @('parser.h','alloc.h','array.h')){
@@ -211,10 +238,12 @@ function InvokeRemedyProducers($subjects){
             $originalId=FileIdentity $original;$identity=FileIdentity $target
             if($originalId.sha256 -cne $identity.sha256 -or $script:verifiedSource[$originalId.path] -cne $identity.sha256){throw 'LFS companion header changed'};$script:verifiedSource[$identity.path]=$identity.sha256
         }
-        $grammarName=ReadGrammarName (Join-Path $root ($pgRoot+'/src/grammar.json'))
         $scanner=$pgRoot+'/src/scanner.c';if(-not (Test-Path (Join-Path $root $scanner))){$scanner=''}
-        InvokeRemedyBuildAndCases 'postgresql-lfs-baseline' $grammarName ('/inputs/'+$pgParser) (Join-Path $root $pgParser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner
-        $parser=InvokeRemedyGeneration 'postgresql-noopt-regenerated' ($pgRoot+'/src/grammar.json') (Join-Path $root $pgRoot) -Postgres
-        if($parser){InvokeRemedyBuildAndCases 'postgresql-noopt-regenerated' $grammarName ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner}
+        foreach($producer in @('postgresql-lfs-baseline','postgresql-noopt-regenerated')){
+            $name=TryRemedyPrecheck $producer 'name' {ReadGrammarName (Join-Path $root ($pgRoot+'/src/grammar.json'))}
+            if(-not $name.passed){continue}
+            $parser=if($producer -ceq 'postgresql-lfs-baseline'){$pgParser}else{InvokeRemedyGeneration $producer ($pgRoot+'/src/grammar.json') (Join-Path $root $pgRoot) -Postgres}
+            if($parser){InvokeRemedyBuildAndCases $producer $name.value ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner}
+        }
     }
 }

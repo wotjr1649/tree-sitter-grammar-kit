@@ -139,6 +139,7 @@ function CheckJsInputs([string]$entry,[string]$sourceRoot){
         $sourcePrefix=[IO.Path]::GetFullPath($sourceRoot).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
         $npmPrefix=[IO.Path]::GetFullPath((Join-Path $root 'npm')).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
         if(-not $path.StartsWith($sourcePrefix,[StringComparison]::Ordinal) -and -not $path.StartsWith($npmPrefix,[StringComparison]::Ordinal)){throw 'JS dependency outside pinned inputs'}
+        if(-not (Test-Path -LiteralPath $path -PathType Leaf)){throw ('Required JS dependency unavailable: '+[IO.Path]::GetRelativePath($root,$path).Replace('\','/'))}
         $identity=FileIdentity $path;$files.Add($identity);$source=[IO.File]::ReadAllText($path)
         if($source -match '\b(?:createRequire|eval|Function)\s*\(' -or $source -match '\b(?:const|let|var)\s+\w+\s*=\s*require\b(?!\s*\()'){throw 'Unreviewed JS loader/evaluation'}
         $imports=[regex]::Matches($source,'\brequire\s*\(\s*["'']([^"'']+)["'']\s*\)')
@@ -254,7 +255,12 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
             if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
             Require (Run ($label+'-memory-after') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.events') 10 1048576)
         }
-        if($result.termination -ne 'EXITED'){throw ('Native resource limit: '+$label)}
+        if($result.termination -ne 'EXITED'){
+            if(-not $RemedyStage -or $Owned -or $kind -notin @('generation','build','execution')){throw ('Native resource limit: '+$label)}
+            $script:failed=$true
+            $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$null;scope='REGISTERED_P05_REMEDY';partial_output_retained=$true;capture='NOT_RUN_AFTER_RESOURCE_LIMIT'})
+            return $result
+        }
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
         UnpackResult $archive $directory $resultLimit -Executable:($kind -eq 'build')
@@ -311,7 +317,8 @@ function CheckBuildHeaders([string]$label,[string]$parserRoot){
             $relative=$header.Substring(8);$local=Join-Path $root $relative
             $identity=FileIdentity $local
             if($header.StartsWith('/inputs/acquisition/sources/') -or $header.StartsWith('/inputs/candidates/') -or $header.StartsWith('/inputs/candidate-evaluation/') -or $header.StartsWith('/inputs/materialized-lfs/')){
-                if(-not $script:verifiedSource.ContainsKey($relative) -or $script:verifiedSource[$relative] -cne $identity.sha256){throw 'Unpinned project header'}
+                if(-not $script:verifiedSource.ContainsKey($relative)){throw 'Unpinned project header'}
+                if($script:verifiedSource[$relative] -cne $identity.sha256){throw 'Project header bytes changed'}
             }elseif(-not $local.StartsWith($parserRoot+'/',[StringComparison]::Ordinal)){throw 'Header outside this generated parser'}
             $project.Add($identity)
         }elseif($header.StartsWith('/usr/include/') -or $header.StartsWith('/usr/local/include/') -or $header.StartsWith('/usr/lib/gcc/')){$system.Add($header)}
