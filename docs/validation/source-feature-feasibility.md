@@ -7,7 +7,7 @@
 - `UPSTREAM_DECLARED`: 고정 upstream 문서가 선언한 제한. local 재현 없이도 알려진 위험이지만 실패 receipt라고 부르지 않는다.
 - `STATIC_SOURCE_OBSERVATION`: 고정 source/layout에서 실제 읽은 경로·rule·누락. 실행 성공/실패로 승격하지 않는다.
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
-- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. run36646415814에서 T-SQL, run36651074932에서 C#의 필수 구문 실패가 baseline/재생성 producer별로 재현됐다. 다른 route의 미실행을 실패로 바꾸지 않는다.
+- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. T-SQL/C#과 TS/TSX의 필수 구문 실패는 baseline/재생성 producer별로, Swift는 실제 regeneration producer에서 재현됐다. PG의 미실행을 구문 실패로 바꾸지 않는다.
 
 과거 PREPARE-04까지 upstream G/B/X는0회였다. run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했고 owned 격리4회 뒤 tmpfs 회수가 실패했다. run36606981293은 같은474파일·canary12bytes·owned isolation8개·container9개 cleanup 뒤 기존 image의 `GLIBC_2.39` loader 실패로 중단됐다. 두 기록은 grammar 실패가 아니다. 명시 승인한 Trixie의 run36644794802는 toolchain/격리/자체 G/B/X를 통과한 뒤 JSON reader에서 멈췄다. 수정한 run36646415814는 T-SQL G1/B2/X56을 실행했으며 C# generation exit0 뒤 큰 결과 회수가 timeout됐다. 나머지 selected route의 G/B/X는 그 run에서 NOT_RUN이다. byte 검증, 실행 closure, 실제 source 지원을 구분하며 npm install script와 과거 owned fixture7회를 지원 근거로 대신하지 않는다.
 
@@ -31,7 +31,7 @@
 | c | UNVERIFIED_SUPPORT | c-B02,c-V23,c-V23pp,c-L01 | C23와 legacy declarator/preprocessor 범위 미검증 | 등록부; macro source·compiler 의미 구별 |
 | cpp | UNVERIFIED_SUPPORT | cpp-V20,cpp-V23,cpp-L01 | scanner/grammar dependency 및 최신/제거된 구문 합집합 미검증 | 등록부; generator dependency closure 필요 |
 | rust | UNVERIFIED_SUPPORT | rust-B02,rust-V24,rust-L01 | scanner/token-tree·edition 문맥 미검증 | 등록부; edition/capture/let-chain cases |
-| swift | STATIC_SOURCE_OBSERVATION | swift-V62,swift-V64 | 고정 tree에는 parser.c 없음; generation 경로와 최신 source syntax 미검증 | 등록부; generation 효과·closure를 별도 승인 후 검증 |
+| swift | STATIC_SOURCE_OBSERVATION | swift-V62,swift-V64 | 고정 tree에 baseline parser.c 없음; 실제 generation/build 성공 후 inline array/module selector 실패 재현 | 아래 run36660558049; legacy generic 대조는 full scope 근거가 아님 |
 | dart | UNVERIFIED_SUPPORT | dart-V30,dart-V310 | scanner/Tree-sitter submodule과 3.13 constructor 구문 미검증 | 등록부; submodule 실행 필요성·closure 분류 |
 | php | STATIC_SOURCE_OBSERVATION | php-B01,php-V84,php-L01 | php grammar는 common factory를 사용; php_only와 mode/산출물 다름 | PHP-1; selector 고정·mixed boundary/8.5 지원 미검증 |
 | ruby | UNVERIFIED_SUPPORT | ruby-B01,ruby-V31,ruby-V40 | scanner state/heredoc 및 4.0 newline continuation 미검증 | 등록부; raw bytes·edit cases |
@@ -52,11 +52,11 @@
 |---|---|---|---|
 | CS-1 | [README Status](https://github.com/tree-sitter/tree-sitter-c-sharp/blob/9150f7d56bb47f1a809fa23623f1ba1413e93fa9/README.md#status) | contextual identifier의 유효 문맥 일부에 예외 명시 | 등록3개 좁은 문맥은 수용; 넓은 예외와 그 실패 문맥은 미해소 |
 | CS-2 | 같은 README | #:property/package/sdk/project 미인식 명시 | csharp-V14c의 required gap; 요구 제외 불가 |
-| TS-1 | [tsx/grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/tsx/grammar.js), [common/define-grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/common/define-grammar.js) | common factory의 tsx 분기/JSX conflicts/typed JSX·type assertion 배제; import_statement는 type/typeof 후 기존 clause만 명시 | import defer가 이 source rule에 없음. generated parser 일치/실패는 아직 미검증 |
+| TS-1 | [tsx/grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/tsx/grammar.js), [common/define-grammar.js](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/common/define-grammar.js) | common factory의 tsx 분기/JSX conflicts/typed JSX·type assertion 배제; import_statement는 type/typeof 후 기존 clause만 명시 | source의 defer 부재 관측과 두 producer의 실제 실패를 별도 보존 |
 | TS-2 | [package.json](https://github.com/tree-sitter/tree-sitter-typescript/blob/75b3874edb2dc714fb1fd77a32013d0f8699989f/package.json) | tree-sitter-javascript ^0.23.1 dependency, node-gyp-build install script | range는 immutable 실행 bytes가 아님; JS route pin과 자동 동일시 금지; npm install 미실행 |
 | PHP-1 | [php/grammar.js](https://github.com/tree-sitter/tree-sitter-php/blob/92b5271b60bec77fb65b5e5bc41561e8dac81299/php/grammar.js) | common/define-grammar의 php selector 사용 | php_only의 결과로 php route를 대체하지 않음 |
 | SQL-1 | [README Errata](https://github.com/Crary-Systems/tree-sitter-tsql/blob/443d2bc774f1d779af7dcabcc99160fb24da96e6/README.md#errata) | uppercase가 아닌 configuration function이 LOCAL_ID로 분류될 수 있음 | node 분류 위험이며 syntax rejection 관측 아님 |
-| SQL-2 | [grammar.js](https://github.com/Crary-Systems/tree-sitter-tsql/blob/443d2bc774f1d779af7dcabcc99160fb24da96e6/grammar.js) | sql_clauses→dml_clause/another_statement, 각각 SELECT/EXEC만; CTE/DDL/다른 DML 경로 TODO. ID/대괄호 identifier regex도 제한적 | 문법 source상 필수 지원 격차. source/generated artifact correspondence와 runtime 실패는 아직 미검증 |
+| SQL-2 | [grammar.js](https://github.com/Crary-Systems/tree-sitter-tsql/blob/443d2bc774f1d779af7dcabcc99160fb24da96e6/grammar.js) | sql_clauses→dml_clause/another_statement, 각각 SELECT/EXEC만; CTE/DDL/다른 DML 경로 TODO. ID/대괄호 identifier regex도 제한적 | source 등급은 정적 관측이며 두 producer의23/28 syntax 실패는 별도 native 근거 |
 | PG-1 | [README Features/Design](https://github.com/gmr/tree-sitter-postgres/blob/59d0d8cd7506d68de1229fb4bbce838c83b60c8a/README.md) | REL_19_STABLE b368bdd2301에서 생성했다고 선언, 별도 PL/pgSQL grammar 및 generation scripts | PG18/legacy 지원은 별도 확인. regeneration/script 실행 미승인 |
 
 T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `grammar/functions/*`, `grammar/data_types.js`는 scanner/header 목록만으로 닫히지 않는 generation input이다. TS/TSX의 npm JavaScript grammar, CPP의 generation dependency, Dart/YAML의 submodule도 해당 연산에 실제 필요한지 분류하고 bytes를 pin해야 한다. 이미 생성된 grammar.json/parser.c를 읽는 연산과 grammar.js를 실행하는 재생성 연산의 closure는 같지 않다. 26행의 단계별 입력·검증 기한과 실행 순서는 [P05 source closure](p05-source-closure.md)를 따른다.
@@ -78,7 +78,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 | P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | OBSERVED_BOUNDED_POSITIVES; 등록 separator/count와 문자열 대조의 구조 확인 |
 | P05-PG-LEGACY | postgresql-sql-B01,postgresql-sql-L01 | 9.6 WITH OIDS/quoted identifier/dollar string/ON CONFLICT와 18 counterpart | PLANNED_NOT_RUN; 유효 legacy source가 보존되는지 |
 | P05-PG-18 | postgresql-sql-V18 | VIRTUAL generated column, WITHOUT OVERLAPS/PERIOD key, RETURNING OLD/NEW | PLANNED_NOT_RUN; clause/body/identifier 구조 |
-| P05-SWIFT-GENERATION | swift-B01,swift-V62,swift-V64 | 고정 grammar generation과 Swift5 generic function/inline array/module selector source의 구분된 입력 | PLANNED_NOT_RUN; generation과 syntax 결과를 분리하며 새 syntax 범위 채택이 아님 |
+| P05-SWIFT-GENERATION | swift-B01,swift-V62,swift-V64 | 고정 grammar generation과 Swift5 generic function/inline array/module selector source의 구분된 입력 | OBSERVED_GENERATION_BUILD_WITH_MODERN_FAILURES; G/B와 legacy edit 성공, 두 modern syntax 실패 |
 
 ## 남은 승인과 readiness
 
@@ -86,7 +86,13 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.
 
-현재 P05가 남는 이유는 (1) C#의 넓은 declared identifier gap과 재현한 다섯 directive 실패, (2) T-SQL의 재현한 statement/identifier 및 분류 격차, (3) TS/TSX import defer의 실제 실패, (4) PG artifact/generation 차단과 Swift native 미실행 및 각26route의 단계별 남은 입력이다. exact candidate와 요구 유지 조건 아래 이 gap을 해결됐다고 할 수 없다. 지속 승인으로 유한 동일 범위 배치를 갱신하며 옛 누적 시간/job quota를 새 권한 질문으로 반복하지 않는다.
+현재 P05가 남는 이유는 (1) C#의 넓은 declared identifier gap과 재현한 다섯 directive 실패, (2) T-SQL의 재현한 statement/identifier 및 분류 격차, (3) TS/TSX import defer의 실제 실패, (4) Swift inline array/module selector의 실제 실패, (5) PG artifact/generation 차단과 각26route의 단계별 남은 입력이다. exact candidate와 요구 유지 조건 아래 이 gap을 해결됐다고 할 수 없다. 지속 승인으로 유한 동일 범위 배치를 갱신하며 옛 누적 시간/job quota를 새 권한 질문으로 반복하지 않는다.
+
+## Swift의 실제 generation과 required modern 실패
+
+[run36660558049/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36660558049)은 고정 Swift35245/CLI0.27.0/runtime659cda7/Trixie에서 G1/B1/X3를 수행했다. legacy generic function의 name5..7/type_parameters7..10/parameter11..17/return type22..23/body24..36을 오류 없이 관측했다. 등록 `(` 삭제 후 ERROR와 후속 lambda source 보존,5stage/2comparison,복구 후 원본 구조 및 incremental/fresh 일치를 확인했다.
+
+inline array의 size13..14는 남지만 type 위치 ERROR10..22와 `of Int`15..21이 해소되지 않았다. module selector는 `Swift`12..17과 call suffix22..25/argument23..24가 남고 `::Int`17..22가 ERROR였다. 두 case는 exit2이며 등록 edit가 없어 그 case의 recovery/edit 근거를 주장하지 않는다. generated parser 부재는 baseline 부재로, 앞선 token-classifier 문제는 helper로, 이 두 실패는 required source syntax로 각각 분류한다. raw lengths/SHA와 종료가 일치하고 container21개 cleanup을 확인했다. 전체95개 producer 관측의62 syntax 실패와33 오류 부재를 full language-support PASS로 바꾸지 않는다.
 
 ## TS/TSX의 실제 native와 PG 단계 차단
 
