@@ -24,8 +24,8 @@
 | python | UNVERIFIED_SUPPORT | python-B01,python-V312,python-V314 | scanner 의존 indent/f-string/t-string과 recovery/edit 경계 | 등록부; scanner closure·version별 case |
 | javascript | UNVERIFIED_SUPPORT | javascript-B01,javascript-V22,javascript-B02 | shared scanner/regexp·ASI·module 문법 누적 범위 미검증 | 등록부; script/module·regex boundary |
 | jsx | UNVERIFIED_SUPPORT | jsx-B01,jsx-B02,jsx-B03 | javascript와 같은 pin이어도 JSX 태그/문자열 mode 전환 별도 검증 필요 | 등록부; JSX 전용 source/case identity |
-| typescript | STATIC_SOURCE_OBSERVATION | typescript-V50,typescript-V59 | common grammar가 JS npm dependency를 상속; import rule에 defer 선택이 보이지 않음 | TS-1/TS-2; closure 및 generated artifact 대응 미확인 |
-| tsx | STATIC_SOURCE_OBSERVATION | tsx-B01,tsx-B02,tsx-V29 | dialect 분기·JSX/type-parameter conflicts는 있음; TS7/5.9 누적 및 ambiguity native 미검증 | TS-1/TS-2; exact tsx producer로 확인 |
+| typescript | STATIC_SOURCE_OBSERVATION | typescript-V50,typescript-V59 | common grammar가 JS npm dependency를 상속; 두 producer의 import defer 오류와 legacy namespace import 수용 관측 | TS-1/TS-2와 아래 run36657324824; required defer remedy 필요 |
+| tsx | STATIC_SOURCE_OBSERVATION | tsx-B01,tsx-B02,tsx-V29 | 두 producer의 import defer 오류; 등록 generic/JSX/fragment/relational5개 수용. 전체 TS7/5.9 지원 주장은 아님 | TS-1/TS-2와 아래 native 절; TS producer와 별도 관측 |
 | java | UNVERIFIED_SUPPORT | java-V21,java-V25 | parser 존재는 25 compact source/module import/flexible constructor 지원 증거 아님 | 등록부; 해당 syntax와 Java8 legacy case |
 | kotlin | UNVERIFIED_SUPPORT | kotlin-V22,kotlin-V24 | scanner와 2.4 context/field/@all 지원 미검증 | 등록부; stable와 experimental case 분리 |
 | c | UNVERIFIED_SUPPORT | c-B02,c-V23,c-V23pp,c-L01 | C23와 legacy declarator/preprocessor 범위 미검증 | 등록부; macro source·compiler 의미 구별 |
@@ -44,7 +44,7 @@
 | yaml | UNVERIFIED_SUPPORT | yaml-B01,yaml-B03,yaml-V12 | schema별 generated variants·scanner와 test-suite submodule 존재 | 등록부; 선택 root grammar의 closure, variant 자동 변경 금지 |
 | xml | UNVERIFIED_SUPPORT | xml-B01,xml-B02,xml-V11 | xml/common/dtd source 관계와 scanner/1.1 문자 경계 미검증 | 등록부; DTD 별도 route 자동 채택 금지 |
 | tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | 고정 source의 baseline/재생성 각각28개 중23개에서 ERROR/MISSING. bare/escaped identifier, DDL/DML/CTE/procedure/transaction와 등록 modern 절의 실패 재현; lowercase @@version은 syntax 수용과 분류 차이를 별도 관측 | SQL-1/SQL-2의 source 등급 유지; 별도 native 절은 REPRODUCED_FAILURE이며 remedy 결정 필요 |
-| postgresql-sql | UNVERIFIED_SUPPORT | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 후보의 생성 기반은 PG19 post-beta3; 채택 9.6~18 query/DML/DDL/utility·legacy 누적 지원 미검증 | PG-1은 생성 기반 선언이며 미지원 선언 아님; 19 superset 수용 자체는 실패 아님 |
+| postgresql-sql | STATIC_SOURCE_OBSERVATION | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 생성 기반 PG19와 별개로 baseline parser는 LFS pointer. generation exit137 뒤 legacy/18 모두 NOT_RUN | PG-1은 미지원 선언 아님; 실제 LFS object·generation capability 확인 필요 |
 
 ## 읽은 고정 source와 판정 한계
 
@@ -70,9 +70,9 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 | P05-CS-ID | csharp-B01 | class/field/local 이름에 async/await/var를 놓은 공식 valid context 여러 개; identifier와 modifier 분리 | OBSERVED_BOUNDED_POSITIVES; 두 producer의 등록3case 수용, 넓은 README 예외는 유지 |
 | P05-CS-DIRECTIVE | csharp-V14c | #:property TargetFramework=net10.0 뒤 일반 .cs; 나머지 세 directive도 각각 등록 | REPRODUCED_FAILURE; 네 #: directive 모두 두 producer에서 오류, shebang/raw 대조와 구분 |
 | P05-CS-DIRECTIVE-INCLUDE | csharp-V14c | SDK10.0.300의 `#:include helpers.cs` 뒤 일반 .cs; 이름·인수·행 경계와 후속 statement 보존 | REPRODUCED_FAILURE; 두 producer 모두 실패, 기존 네 directive의 upstream 선언과 별도 구체 관측 |
-| P05-TS-DEFER | typescript-V59 | `import defer * as m from "m";`와 typed declaration; 일반 namespace import legacy 대조 | PLANNED_NOT_RUN; 이미 채택된 TS feature의 .ts probe이며 TSX producer와 별도 |
-| P05-TSX-AMBIGUITY | tsx-B02,tsx-V29 | `const id = <T,>(x: T) => x;`와 generic JSX/self-closing/fragment/relational expression | PLANNED_NOT_RUN; generic parameter/tag/query field 구분 |
-| P05-TSX-DEFER | tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | PLANNED_NOT_RUN; TS-1의 common factory 관찰을 TSX producer로 별도 확인하며 .ts 증거로 대체하지 않음 |
+| P05-TS-DEFER | typescript-V59 | `import defer * as m from "m";`와 typed declaration; 일반 namespace import legacy 대조 | REPRODUCED_FAILURE; 두 producer의 defer 오류와 typed 후속 구조, legacy 수용 구분 |
+| P05-TSX-AMBIGUITY | tsx-B02,tsx-V29 | `const id = <T,>(x: T) => x;`와 generic JSX/self-closing/fragment/relational expression | OBSERVED_BOUNDED_POSITIVES;5개 대조의 parameter/tag/fragment/operator 구조 확인 |
+| P05-TSX-DEFER | tsx-B01 | `import defer * as m from "m";` + typed declaration/JSX body | REPRODUCED_FAILURE; exact TSX 두 producer에서 defer 오류, 뒤 JSX 보존·edit 복구 확인 |
 | P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | OBSERVED_CLASSIFICATION_DIVERGENCE; 둘의 syntax 수용과 configuration_functions/LOCAL_ID_ 분류 차이를 별도 보존 |
 | P05-TSQL-STATEMENTS | tsql-B02,tsql-B03,tsql-B04,tsql-V16,tsql-V22 | 한 글자 identifier의 CREATE TABLE/INSERT, CTE/SELECT, procedure/transaction; FOR JSON/OPENJSON, FOR SYSTEM_TIME/SYSTEM_VERSIONING, DROP IF EXISTS와 CREATE OR ALTER의 별도 source case, AS NODE/EDGE/MATCH, WINDOW/IS DISTINCT FROM, JSON/VECTOR type, LEDGER table option의 각 source case | REPRODUCED_FAILURE;21case 모두 두 producer에서 오류, unrelated SELECT로 대체 금지 |
 | P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | OBSERVED_BOUNDED_POSITIVES; 등록 separator/count와 문자열 대조의 구조 확인 |
@@ -86,7 +86,15 @@ PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool art
 
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.
 
-현재 P05가 남는 이유는 (1) C#의 넓은 declared identifier gap과 재현한 다섯 directive 실패, (2) T-SQL의 재현한 statement/identifier 및 분류 격차, (3) TS/TSX/PG/Swift native와 각 26route의 단계별 남은 입력이다. TS/TSX import-defer source 위험도 남는다. exact candidate와 요구 유지 조건 아래 이 gap을 해결됐다고 할 수 없다. 지속 승인으로 유한 동일 범위 배치를 갱신하며 옛 누적 시간/job quota를 새 권한 질문으로 반복하지 않는다.
+현재 P05가 남는 이유는 (1) C#의 넓은 declared identifier gap과 재현한 다섯 directive 실패, (2) T-SQL의 재현한 statement/identifier 및 분류 격차, (3) TS/TSX import defer의 실제 실패, (4) PG artifact/generation 차단과 Swift native 미실행 및 각26route의 단계별 남은 입력이다. exact candidate와 요구 유지 조건 아래 이 gap을 해결됐다고 할 수 없다. 지속 승인으로 유한 동일 범위 배치를 갱신하며 옛 누적 시간/job quota를 새 권한 질문으로 반복하지 않는다.
+
+## TS/TSX의 실제 native와 PG 단계 차단
+
+[run36657324824/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36657324824)은 같은 source75b387/npmJS0.23.1/CLI0.27.0/runtime659cda7/Trixie에서 TS/TSX G2/B4/X16을 실행했다.8개 원문 각각의 baseline/regenerated raw SHA가 같았다. 두 route의 `import defer`는 각각 ERROR7..12/exit2이며 typed declaration와 TSX JSX body는 후속 구조로 보존됐다. legacy namespace import와5개 TSX ambiguity 대조는 두 producer에서 오류 없이 등록한 구조를 관측했다.
+
+TS defer의 `as` 손상과 TSX defer의 JSX `{` 삭제는 각각 등록 negative 오류를 남겼다. 네 producer edit의5stage/2comparison과 damaged/restored incremental-fresh 동일성, 복구 뒤 원 ordered facts 일치를 확인했다. 복구 후에도 원래 defer 오류가 남으므로 지원 PASS가 아니다. source bytes·comparator·기대는 변경하지 않았다.
+
+PG G1은92.265초 후 exit137/출력0bytes였고 원인은 아직 확정하지 않았다. B1은133bytes의 Git LFS pointer를 C로 컴파일하다 exit1이었다. 실제 object는97,664,793bytes/SHA-256 `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`이며 새 취득 효과·단일 파일 한도의 추가 승인 없이는 받을 수 없다.8개 PG 원문/두 producer의 syntax·negative/recovery/edit는 모두 NOT_RUN이다. Swift는 고정 grammar의 `"import"` 토큰을 module import로 오인한 helper 검사에서 NOT_RUN이다. 이 둘을 source syntax failure로 기록하지 않는다. container43개의 종료·PID0·제거를 확인했고 전체 run은 FAILED다.
 
 ## C#의 실제 baseline/재생성 관측
 

@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. run36646415814의 T-SQL G1/B2/X56과 run36651074932의 C# G1/B2/X20을 관측했다. 두 route의 필수 구문 실패는 보존하며, TS/TSX/PG/Swift native는 아직 NOT_RUN이다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. run36646415814의 T-SQL G1/B2/X56, run36651074932의 C# G1/B2/X20, run36657324824의 TS/TSX G2/B4/X16을 관측했다. 필수 구문 실패를 보존한다. PG는 generation exit137과 LFS pointer build 실패로 syntax NOT_RUN이며 Swift는 helper 검사에서 아직 NOT_RUN이다. 기존 26-route/256행 채택은 scope 근거다.
 
 ## 네 단계와 완료 근거
 
@@ -44,7 +44,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
 | tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
-| postgresql-sql | postgres/grammar.js/json, node-types | postgres parser/scanner/headers | P05-PG-LEGACY/18; PG19 기반 선언은 미지원 선언 아님 |
+| postgresql-sql | postgres/grammar.js/json, node-types | postgres parser는 LFS pointer; 실제 object와 scanner/headers 필요 | P05-PG-LEGACY/18은 NOT_RUN; 실제 object 취득 추가 승인 및 generation exit137 원인 확인 필요 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
 
@@ -53,6 +53,14 @@ TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-si
 run36651074932는 C# G1/B2/X20 및 큰 archive 회수 후 TS closure 검사에서 중단됐다. `common/define-grammar.js` SHA-256 `c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f`의 두 `'import'` grammar 토큰과 `// foo: import('x').y.z;` 설명 주석, npm JS0.23.1 `grammar.js` SHA-256 `230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc`의 세 `'import'` 토큰을 실행 import로 오인한 helper 실패다. 실제 추가 dependency나 TS 구문 실패 근거가 아니다.
 
 원문 archive와 selected-file SHA를 대조하고 해당 두 파일의 정확한 SHA 및 여섯 match 위치/값만 비실행 관측으로 결속한다. source text를 삭제·정규화하거나 실행 bytes를 수정하지 않는다. 다른 digest/위치/추가 import, dynamic require·eval·별칭 loader·등록 밖 dependency와 root 탈출은 계속 거부한다. 자체 literal closure와 해당 반례를 실제 helper로 검사하고, 고정 원문 closure는 별도 로컬 정적 검사 및 새 hosted generation으로 확인한다. arbitrary JavaScript의 모든 동작을 증명한다는 주장은 유지하지 않는다.
+
+run36657324824에서 수정한 TS/TSX closure와 G2/B4/X16을 실제 실행했다. 두 producer 모두 `import defer`는 실패했고 legacy/ambiguity 대조는 수용했다. Swift 고정 grammar SHA-256 `e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b`의 `"import"` 토큰(char50974)도 같은 검사에서 module import로 오인됐다. 추가 dependency나 Swift syntax 실패가 아니다. 같은 exact SHA와 단일 occurrence만 shared 검사에 결속하고 원문을 보존한다. 빈/틀린 digest·위치·추가 occurrence 거부, 고정 원문 정적 closure와 실제 hosted generation은 서로 다른 검증이다.
+
+## PostgreSQL artifact와 generation 차단
+
+같은 run의 PG generation은 고정 JSON/CLI/ABI15/4GiB에서92.265초 후 exit137, stdout/stderr0bytes였다. kill 원인을 입증할 memory event가 없어 OOM이라고 확정하지 않는다. baseline `postgres/src/parser.c`는133bytes의 Git LFS pointer이며 compiler가 첫 `version https://git-lfs.github.com/spec/v1` 행을 거부했다. pointer의 SHA-256은 `9b714c169bc14fb13b23374f344fe1bd20b7db4a07546b2b671d644fe374bcc3`, 실제 object는 SHA-256 `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`/97,664,793bytes다.
+
+selected pointer bytes의 정합성은 실제 generated C artifact 확보를 뜻하지 않는다. LFS object provider·취득과 기존64MiB보다 큰 단일 파일 한도는 별도 승인 대상이다. generation 실패와16개 미실행 producer/등록 PG edit를 보존하고 PG9.6/18 구문 지원을 실패나 PASS로 재분류하지 않는다. 같은 실패의 무변경 반복, memory cap 증가, source replacement는 하지 않는다.
 
 ## 승인 후 실행 순서와 멈춤 조건
 
@@ -115,3 +123,5 @@ upstream `grammar.json`의 rule key는 대소문자를 구별한다. grammar ent
 run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생성 archive32,522,240bytes는 수정한 supervisor가0.148초에 정확히 회수했고 container40개의 종료·PID0·제거를 확인했다. 등록된 다섯 `#:` directive는 각각 두 producer에서 실패했으며 좁은 identifier/shebang/raw string 성공은 넓은 declared gap을 해소하지 않는다.
 
 후속 실행은 `csharp_prior_evidence_subject`의 고정 receipt에도 같은 source/input/CLI/runtime/image 검증을 적용한다. TSQL56행/2edit와 C#20행/2edit를 원 관측으로 보존하고 TS/TSX/PG/Swift의 나머지35producer/7edit를 새로 실행한다. 전체111행의 prior 상태는 `NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED`, 현재 raw/exit는 null이며 어느 prior subject도 scope PASS나 권한이 아니다. 기본 빈 subject는 원래 경로를 유지하고 잘못된 subject/legacy image는 효과 전에 거부한다.
+
+run36657324824의 결과는 `ts_pg_stage_evidence_subject`로 별도 immutable 관측에 결속한다. TS/TSX16행/4edit는 실행된 관측으로, PG16행/2개 producer edit는 `NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED`로 이월한다. PG syntax는 NOT_RUN이다. caller는 해당32행·원 input projection·같은 source/CLI/runtime/Trixie·원출력과 단계 차단을 먼저 대조한다. C#/TSQL까지 포함하면 prior108행 중92행이 실행됐고16행은 미실행이다. 남은 Swift3행/1edit와 전체111행/57원문/6edit 등록을 유지한다. 새 run의 성공 exit도 prior 필수 실패나 PG blocker를 해소하지 않는다.

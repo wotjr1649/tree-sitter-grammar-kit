@@ -43,15 +43,27 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
-foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckPriorEvidenceSubjects','FileIdentity','CheckJsInputs','CaseLedger')){
+foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckPriorEvidenceSubjects','FileIdentity','CheckInertImports','CheckJsInputs','CaseLedger')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
 }
+$swiftSource='e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'
+CheckInertImports $swiftSource '50974:import"'
+foreach($vector in @(@($swiftSource,'50975:import"'),@($swiftSource,'50974:import";50980:import('),@('unreviewed','50974:import"'))){
+    $rejected=$false;try{CheckInertImports $vector[0] $vector[1]}catch{$rejected=$true}
+    if(-not $rejected){throw 'Unreviewed Swift import occurrence accepted'}
+}
 $priorTsql='5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458'
 $priorCsharp='98590999770a8681c3c3347dc61b3aae81dd30e3b26629a66e49b4c706d3be79'
+$priorTsPg='7b47cfe79823f84575cc981578f8c9024ff7f6821edb3b852656a5cc58c43bb9'
 CheckPriorEvidenceSubjects '' '' 'bookworm-r1'
 CheckPriorEvidenceSubjects $priorTsql $priorCsharp 'trixie-r1'
+CheckPriorEvidenceSubjects $priorTsql $priorCsharp 'trixie-r1' $priorTsPg
+foreach($vector in @(@('trixie-r1','unknown'),@('bookworm-r1',$priorTsPg))){
+    $rejected=$false;try{CheckPriorEvidenceSubjects $priorTsql $priorCsharp $vector[0] $vector[1]}catch{$rejected=$true}
+    if(-not $rejected){throw 'Mismatched TS/PG stage observation accepted'}
+}
 foreach($vector in @(@('unknown','','trixie-r1'),@($priorTsql,'','bookworm-r1'),@('','unknown','trixie-r1'),@('',$priorCsharp,'bookworm-r1'))){
     $rejected=$false;try{CheckPriorEvidenceSubjects $vector[0] $vector[1] $vector[2]}catch{$rejected=$true}
     if(-not $rejected){throw 'Mismatched prior observation/image accepted'}
@@ -65,6 +77,19 @@ foreach($vector in @(@('unknown','','trixie-r1'),@($priorTsql,'','bookworm-r1'),
     if($ledger.Count -ne 111 -or $prior.Count -ne 76 -or @($ledger|Where-Object state -CEQ 'NOT_RUN').Count -ne 35 -or @($prior|Where-Object {$null -ne $_.exit_code -or $null -ne $_.raw_stdout}).Count -or @($prior|Where-Object edit_registered).Count -ne 4){throw 'Prior observations lost, relabelled current, or altered case scope'}
     if(@($prior|Where-Object {$_.state -cne 'NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED' -or ($_.route -ceq 'tsql' -and $_.prior_evidence_subject -cne $tsql) -or ($_.route -ceq 'csharp' -and $_.prior_evidence_subject -cne $csharp) -or $_.route -cnotin @('tsql','csharp')}).Count){throw 'Prior route/subject/state mapping changed'}
 } $originalInputs $priorTsql $priorCsharp
+& {
+    param($caseInputs,$tsql,$csharp,$tsPg)
+    $inputs=$caseInputs;$TsqlPriorEvidenceSubject=$tsql;$CsharpPriorEvidenceSubject=$csharp;$TsPgStageEvidenceSubject=$tsPg
+    $script:commands=[Collections.Generic.List[object]]::new()
+    $ledger=CaseLedger;$prior=@($ledger|Where-Object prior_evidence_subject)
+    $blocked=@($prior|Where-Object state -CEQ 'NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED')
+    if($ledger.Count -ne 111 -or $prior.Count -ne 108 -or $blocked.Count -ne 16 -or @($ledger|Where-Object state -CEQ 'NOT_RUN').Count -ne 3 -or @($prior|Where-Object {$null -ne $_.exit_code -or $null -ne $_.raw_stdout}).Count -or @($prior|Where-Object edit_registered).Count -ne 10){throw 'Prior executed rows or unrun stage blockers lost or promoted'}
+    foreach($row in $prior){
+        $subject=if($row.route -ceq 'tsql'){$tsql}elseif($row.route -ceq 'csharp'){$csharp}else{$tsPg}
+        $state=if($row.route -ceq 'postgresql-sql'){'NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED'}else{'NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED'}
+        if($row.route -cnotin @('tsql','csharp','typescript','tsx','postgresql-sql') -or $row.prior_evidence_subject -cne $subject -or $row.state -cne $state){throw 'Prior route/subject/stage state mapping changed'}
+    }
+} $originalInputs $priorTsql $priorCsharp $priorTsPg
 $elf="Class: ELF64`nMachine: Advanced Micro Devices X86-64`n[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]`n(NEEDED) Shared library: [libc.so.6]"
 CheckElfClosure $elf
 foreach($invalid in @($elf.Replace('ELF64','ELF32'),$elf.Replace('X86-64','AArch64'),$elf.Replace('/lib64/ld-linux-x86-64.so.2','/unapproved/loader'),$elf.Replace('libc.so.6','unapproved.so'),($elf+"`n(RUNPATH) /unapproved"))){
