@@ -112,11 +112,19 @@ function CheckJsInputs([string]$entry,[string]$sourceRoot){
     $files=[Collections.Generic.List[object]]::new()
     while($queue.Count){
         $path=[IO.Path]::GetFullPath($queue.Dequeue());if(-not $seen.Add($path)){continue}
-        if(-not $path.StartsWith($sourceRoot+'/',[StringComparison]::Ordinal) -and -not $path.StartsWith((Join-Path $root 'npm')+'/',[StringComparison]::Ordinal)){throw 'JS dependency outside pinned inputs'}
-        $files.Add((FileIdentity $path));$source=[IO.File]::ReadAllText($path)
+        $sourcePrefix=[IO.Path]::GetFullPath($sourceRoot).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
+        $npmPrefix=[IO.Path]::GetFullPath((Join-Path $root 'npm')).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
+        if(-not $path.StartsWith($sourcePrefix,[StringComparison]::Ordinal) -and -not $path.StartsWith($npmPrefix,[StringComparison]::Ordinal)){throw 'JS dependency outside pinned inputs'}
+        $identity=FileIdentity $path;$files.Add($identity);$source=[IO.File]::ReadAllText($path)
         if($source -match '\b(?:createRequire|eval|Function)\s*\(' -or $source -match '\b(?:const|let|var)\s+\w+\s*=\s*require\b(?!\s*\()'){throw 'Unreviewed JS loader/evaluation'}
         $imports=[regex]::Matches($source,'\brequire\s*\(\s*["'']([^"'']+)["'']\s*\)')
-        if([regex]::Matches($source,'\brequire\s*\(').Count -ne $imports.Count -or $source -match '\bimport\s*(?:\(|["''])'){throw 'Unresolved dynamic/ES module dependency'}
+        $importOccurrences=([regex]::Matches($source,'\bimport\s*(?:\(|["''])')|ForEach-Object {"$($_.Index):$($_.Value)"}) -join ';'
+        # Exact pinned token strings/comment; original JavaScript bytes are never rewritten.
+        $inertImports=@{
+            'c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f'="10284:import';18275:import';21124:import("
+            '230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc'="4409:import';4459:import';27565:import'"
+        }
+        if([regex]::Matches($source,'\brequire\s*\(').Count -ne $imports.Count -or ($importOccurrences -and $inertImports[$identity.sha256] -cne $importOccurrences)){throw 'Unresolved dynamic/ES module dependency'}
         foreach($match in $imports){
             $name=$match.Groups[1].Value
             if($name.StartsWith('.')){$next=Join-Path ([IO.Path]::GetDirectoryName($path)) $name}

@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 현재 upstream G/B/X는 **NOT_RUN**이며 아래 취득·격리·회수 관측과 구분한다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. run36646415814의 T-SQL G1/B2/X56과 run36651074932의 C# G1/B2/X20을 관측했다. 두 route의 필수 구문 실패는 보존하며, TS/TSX/PG/Swift native는 아직 NOT_RUN이다. 기존 26-route/256행 채택은 scope 근거다.
 
 ## 네 단계와 완료 근거
 
@@ -47,6 +47,12 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | postgresql-sql | postgres/grammar.js/json, node-types | postgres parser/scanner/headers | P05-PG-LEGACY/18; PG19 기반 선언은 미지원 선언 아님 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
+
+## 고정 JS closure의 실제 import 분류
+
+run36651074932는 C# G1/B2/X20 및 큰 archive 회수 후 TS closure 검사에서 중단됐다. `common/define-grammar.js` SHA-256 `c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f`의 두 `'import'` grammar 토큰과 `// foo: import('x').y.z;` 설명 주석, npm JS0.23.1 `grammar.js` SHA-256 `230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc`의 세 `'import'` 토큰을 실행 import로 오인한 helper 실패다. 실제 추가 dependency나 TS 구문 실패 근거가 아니다.
+
+원문 archive와 selected-file SHA를 대조하고 해당 두 파일의 정확한 SHA 및 여섯 match 위치/값만 비실행 관측으로 결속한다. source text를 삭제·정규화하거나 실행 bytes를 수정하지 않는다. 다른 digest/위치/추가 import, dynamic require·eval·별칭 loader·등록 밖 dependency와 root 탈출은 계속 거부한다. 자체 literal closure와 해당 반례를 실제 helper로 검사하고, 고정 원문 closure는 별도 로컬 정적 검사 및 새 hosted generation으로 확인한다. arbitrary JavaScript의 모든 동작을 증명한다는 주장은 유지하지 않는다.
 
 ## 승인 후 실행 순서와 멈춤 조건
 

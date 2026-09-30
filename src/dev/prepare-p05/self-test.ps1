@@ -43,7 +43,7 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
-foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckTsqlPriorEvidence')){
+foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckTsqlPriorEvidence','FileIdentity','CheckJsInputs')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
@@ -92,6 +92,25 @@ foreach($directory in $directories){
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
 $grammarPath=Join-Path $root 'grammar.json'
+& {
+    param($caseRoot)
+    $root=Join-Path $caseRoot 'js-closure';$sourceRoot=Join-Path $root 'source'
+    [void][IO.Directory]::CreateDirectory($sourceRoot)
+    $entry=Join-Path $sourceRoot 'grammar.js';$dependency=Join-Path $sourceRoot 'dependency.js'
+    [IO.File]::WriteAllText($dependency,'module.exports = {};',[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($entry,"const grammar = require('./dependency'); module.exports = grammar;",[Text.UTF8Encoding]::new($false))
+    $closure=CheckJsInputs $entry $sourceRoot
+    if($closure.Count -ne 2){throw 'Literal JS closure incomplete'}
+    foreach($invalid in @("import('unregistered');","import 'unregistered';","const grammar = require(name);","const load = require;","eval('unregistered');","// foo: import('x').y.z;","const token = 'import';")){
+        [IO.File]::WriteAllText($entry,$invalid,[Text.UTF8Encoding]::new($false))
+        $rejected=$false;try{$null=CheckJsInputs $entry $sourceRoot}catch{$rejected=$true}
+        if(-not $rejected){throw 'Unregistered loader or unreviewed import occurrence accepted'}
+    }
+    [IO.File]::WriteAllText($entry,"require('../outside');",[Text.UTF8Encoding]::new($false))
+    $outside=Join-Path $root 'outside.js';[IO.File]::WriteAllText($outside,'module.exports = {};',[Text.UTF8Encoding]::new($false))
+    $rejected=$false;try{$null=CheckJsInputs $entry $sourceRoot}catch{$rejected=$true}
+    if(-not $rejected){throw 'JS source-root escape accepted'}
+} $root
 [IO.File]::WriteAllText($grammarPath,'{"name":"TSQL","rules":{"AS":{"type":"STRING","value":"AS"},"as":{"type":"STRING","value":"as"}}}',[Text.UTF8Encoding]::new($false))
 if((ReadGrammarName $grammarPath) -cne 'TSQL'){throw 'Case-distinct grammar keys/name were not preserved'}
 [IO.File]::WriteAllText($grammarPath,'{"name":"invalid-name","rules":{}}',[Text.UTF8Encoding]::new($false))
