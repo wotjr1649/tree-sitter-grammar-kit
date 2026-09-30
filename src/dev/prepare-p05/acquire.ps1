@@ -1,6 +1,6 @@
-param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject, [string]$ToolchainProfile='bookworm-r1', [string]$ToolchainApprovalSubject)
+param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$PinnedTsql, [string]$AcquisitionApprovalSubject, [string]$ToolchainProfile='bookworm-r1', [string]$ToolchainApprovalSubject, [string]$RemedyStage, [string]$RemedyApprovalSubject)
 $ErrorActionPreference = 'Stop'
-$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject
+$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
 if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
@@ -21,10 +21,16 @@ if($IsLinux -and $env:RUNNER_TEMP){
     $runnerPrefix=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
     if($resolvedDestination.StartsWith($runnerPrefix,[StringComparison]::Ordinal)){
         $relative=$resolvedDestination.Substring($runnerPrefix.Length)
-        $hostedAllowed=$relative -match '^tsgk-p05-[0-9]+-[0-9]+/acquisition$'
+        $pattern=if($RemedyStage){'^tsgk-p05-remedy-[0-9]+-[0-9]+/acquisition$'}else{'^tsgk-p05-[0-9]+-[0-9]+/acquisition$'}
+        $hostedAllowed=$relative -match $pattern
     }
 }
 if(-not ($localAllowed -or $hostedAllowed)){throw 'Destination outside approved task roots'}
+if($RemedyStage){
+    if(-not $hostedAllowed -and -not $SelfTest){throw 'Remedy acquisition requires fresh hosted task root'}
+    . (Join-Path $PSScriptRoot 'remedy.ps1')
+    $remedy=ReadRemedySubjects
+}
 function Portable([string]$name) {
     if (-not $name -or $name.Length -gt 1024 -or $name -match '[\\:\x00-\x1f\x7f]' -or $name -ne $name.Normalize([Text.NormalizationForm]::FormC)) { throw 'Unsafe member name' }
     foreach ($part in $name.Split('/')) {
@@ -51,6 +57,7 @@ function SaveReceipt([string]$path, $value) {
 function Fetch([string]$url, [string]$target, [long]$limit) {
     $allowed = @('codeload.github.com','github.com','release-assets.githubusercontent.com','objects.githubusercontent.com','registry.npmjs.org')
     if($PinnedTsql){$allowed+='raw.githubusercontent.com'}
+    if($RemedyStage -ceq 'sql-pg-r1' -and $url -ceq $remedy.sources.postgresql.provider){$allowed+='media.githubusercontent.com'}
     $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect = $false
     $handler.UseProxy=$false;$handler.UseDefaultCredentials=$false;$handler.UseCookies=$false
     $client = [Net.Http.HttpClient]::new($handler)
@@ -239,7 +246,7 @@ $inputs=Get-Content -LiteralPath $inputsPath -Raw|ConvertFrom-Json
 $script:imageReserve=[long]$toolchain.compressed_bytes
 if($script:imageReserve -le 0 -or $script:imageReserve -ge 1073741824){throw 'Image reserve missing'}
 foreach($name in @('archives','sources','tools','records')){[void][IO.Directory]::CreateDirectory((Join-Path $root $name))}
-$results=[Collections.Generic.List[object]]::new(); $state='FAILED'; $failure=$null
+$results=[Collections.Generic.List[object]]::new(); $extraInputs=@(); $state='FAILED'; $failure=$null
 try {
     foreach($repo in @($inputs.repositories)+@($inputs.runtime)) {
         $key=$repo.repository.Replace('/','--')+'--'+$repo.commit
@@ -280,9 +287,25 @@ try {
     try {$count=0L;$buffer=[byte[]]::new(65536);while(($n=$gzip.Read($buffer,0,$buffer.Length)) -gt 0){$count+=$n;if($count -gt 67108864){throw 'CLI expansion limit'};$output.Write($buffer,0,$n)}}finally{$output.Dispose();$gzip.Dispose();$input.Dispose()}
     if(-not $IsWindows){[IO.File]::SetUnixFileMode((Join-Path $root 'tools/tree-sitter'),[IO.UnixFileMode]493)}
     $results.Add(@{tool='tree-sitter';archive=$download;executable_sha256=(Get-FileHash (Join-Path $root 'tools/tree-sitter')).Hash.ToLowerInvariant()})
+    if($RemedyStage -ceq 'sql-pg-r1'){
+        $taskRoot=[IO.Path]::GetDirectoryName($root)
+        $sql=$remedy.sources.sql
+        $archive=Join-Path $root 'archives/derek-sql-97614d0.tgz'
+        $download=Fetch $sql.provider $archive 8388608
+        $files=Materialize $archive (MapFiles $sql.selected_regular_files) (Join-Path $taskRoot 'candidate-evaluation/derek-sql-97614d0')
+        $extraInputs+=@{repository=$sql.repository;commit=$sql.revision;task_relative_source_root='candidate-evaluation/derek-sql-97614d0';files=$files;archive=$download;purpose='EVALUATION_ONLY_NO_ADOPTION'}
+        $pg=$remedy.sources.postgresql
+        $lfsRoot=FreshRoot (Join-Path $taskRoot 'materialized-lfs/postgres')
+        [void][IO.Directory]::CreateDirectory((Join-Path $lfsRoot 'src'))
+        $objectPath=Join-Path $lfsRoot 'src/parser.c'
+        $object=Fetch $pg.provider $objectPath 104857600
+        AssertRemedyObject $object.bytes $object.sha256 $pg
+        if(++$script:filesWritten -gt 5000){throw 'Selected file count limit'}
+        $extraInputs+=@{repository=$pg.repository;commit=$pg.revision;task_relative_source_root='materialized-lfs/postgres';files=@(@{path='src/parser.c';bytes=$object.bytes;sha256=$object.sha256});purpose='EXACT_LFS_OBJECT_ORIGINAL_POINTER_PRESERVED'}
+    }
     $state='COMPLETED'
 } catch { $failure=$_.Exception.GetType().FullName; throw }
 finally {
     $retained=@(Get-ChildItem -LiteralPath $root -File -Recurse|ForEach-Object {@{path=[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}})
-    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;http_limit=$script:httpLimit;pinned_tsql_profile=$PinnedTsql.IsPresent;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;native_invocations=0;install_scripts=0}
+    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;http_limit=$script:httpLimit;pinned_tsql_profile=$PinnedTsql.IsPresent;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;remedy_identities=$extraInputs;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;native_invocations=0;install_scripts=0}
 }

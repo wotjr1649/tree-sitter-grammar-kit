@@ -1,0 +1,239 @@
+{
+  "schema": "tsgk.p05.remedy-source-facts.proposal.v1",
+  "status": "PROPOSED_NATIVE_NOT_RUN",
+  "directive_oracles": [
+    {
+      "id": "P05-CS-DIRECTIVE-PROPERTY",
+      "input_sha256": "19de16897c74826f7d69b98db19e2d49dcbf86810a7c32288ce19483c8066707",
+      "input_bytes": 64,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 34,
+      "name": {
+        "text": "property",
+        "start_byte": 2,
+        "end_byte": 10
+      },
+      "argument": {
+        "text": "TargetFramework=net10.0",
+        "start_byte": 11,
+        "end_byte": 34
+      },
+      "following_statement_start": 35,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-PACKAGE",
+      "input_sha256": "437a7169a0e0b8528dfe6989d792e8f226c89d17ce463221cbe2ee3dc4891314",
+      "input_bytes": 61,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 31,
+      "name": {
+        "text": "package",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": {
+        "text": "Example.Package@1.0.0",
+        "start_byte": 10,
+        "end_byte": 31
+      },
+      "following_statement_start": 32,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-SDK",
+      "input_sha256": "da8de53d77b26a6dcdfc33e53f5dae8a8d6c3e17ddb902165c7f78dc673192da",
+      "input_bytes": 57,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 27,
+      "name": {
+        "text": "sdk",
+        "start_byte": 2,
+        "end_byte": 5
+      },
+      "argument": {
+        "text": "Microsoft.NET.Sdk.Web",
+        "start_byte": 6,
+        "end_byte": 27
+      },
+      "following_statement_start": 28,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-PROJECT",
+      "input_sha256": "bacf7c9760ccdbcb5d99a928af595d485fd08ca5338be0edd83daa546183f421",
+      "input_bytes": 56,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 26,
+      "name": {
+        "text": "project",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": {
+        "text": "./Library.csproj",
+        "start_byte": 10,
+        "end_byte": 26
+      },
+      "following_statement_start": 27,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-INCLUDE",
+      "input_sha256": "c02c5338a854ccc13235976c58cc1c1b32af39238cce92ea72946ed0066fc608",
+      "input_bytes": 50,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 20,
+      "name": {
+        "text": "include",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": {
+        "text": "helpers.cs",
+        "start_byte": 10,
+        "end_byte": 20
+      },
+      "following_statement_start": 21,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-CRLF",
+      "input_sha256": "a9669a0fd161759524361e38895c3c8be3a1b2766ab3a4b779716a2a2e355c38",
+      "input_bytes": 47,
+      "directive_prefix_start": 2,
+      "directive_end_excludes_eol": 22,
+      "name": {
+        "text": "include",
+        "start_byte": 4,
+        "end_byte": 11
+      },
+      "argument": {
+        "text": "helpers.cs",
+        "start_byte": 12,
+        "end_byte": 22
+      },
+      "following_statement_start": 24,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-EOF",
+      "input_sha256": "21e6e4c1ee0d8e56de64132a47766a1682f5cd351d12a32b0e6ccf99b4d5a42a",
+      "input_bytes": 20,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 20,
+      "name": {
+        "text": "include",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": {
+        "text": "helpers.cs",
+        "start_byte": 10,
+        "end_byte": 20
+      },
+      "following_statement_start": null,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-NO-ARG-LANGUAGE",
+      "input_sha256": "54db733deec1ac360450a93a9b1420e8d40dd42ec0132049a0c4549b8d2579cd",
+      "input_bytes": 32,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 9,
+      "name": {
+        "text": "include",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": null,
+      "following_statement_start": 10,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    },
+    {
+      "id": "P05-REMEDY-CS-UNKNOWN-IGNORED",
+      "input_sha256": "901892bec127297e1a9009b1749d0ccf70f847ef02862be0c22bca4ce3ffe270",
+      "input_bytes": 38,
+      "directive_prefix_start": 0,
+      "directive_end_excludes_eol": 15,
+      "name": {
+        "text": "unknown",
+        "start_byte": 2,
+        "end_byte": 9
+      },
+      "argument": {
+        "text": "value",
+        "start_byte": 10,
+        "end_byte": 15
+      },
+      "following_statement_start": 16,
+      "required_source_facts": "name/argument field와 원 bytes/range/order·행 경계·후속 statement 대조",
+      "sdk_validation": "EXCLUDED_ALREADY_ADOPTED",
+      "origin": "원 input에서 독립 산출, candidate tree/golden 미사용"
+    }
+  ],
+  "typescript_original_namespace_positives": [
+    {
+      "id": "P05-TS-DEFER",
+      "input_sha256": "caa93703ed5fba971d4b57b7830996717098f099ba2a4cb526c2a6bd71ae719f",
+      "input_utf8": "import defer * as m from \"m\";\nconst n: number = 1;\n",
+      "required_expected": {
+        "facts": "import의 defer/namespace/name/string과 typed declaration",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      }
+    },
+    {
+      "id": "P05-TSX-DEFER",
+      "input_sha256": "b6816af1dcd8c0f7739def0f430237337535d37b68156e1b6eff3425e6ef2f98",
+      "input_utf8": "import defer * as m from \"m\";\nconst view: JSX.Element = <Box value={m.x} />;\n",
+      "required_expected": {
+        "facts": "TSX producer의 import defer와 typed JSX body",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      }
+    }
+  ],
+  "primary_sources": [
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives",
+      "observed_on": "2026-09-30",
+      "facts": "compiler는 #:와#!를 ignored source로 취급하고 directive는 한 행의 유일한 instruction이다. 이름/값의 SDK build-system 판단은 source parser 범위와 분리한다."
+    },
+    {
+      "url": "https://github.com/swiftlang/swift-evolution/blob/main/proposals/0452-integer-generic-parameters.md",
+      "observed_on": "2026-09-30",
+      "facts": "Swift6.2 generic argument 문법에 optional minus와 integer literal이 추가된다. 일반 generic type에 적용하며 type/value parameter binding 오류는 semantic 판정이다. literal expression 확장/experimental 효과는 채택하지 않는다."
+    }
+  ],
+  "scope_change": false,
+  "native_support": false,
+  "review_dispositions": [
+    "namespace-defer positive는 원21 candidate case에 포함",
+    "Swift general integer argument는 adopted V62 syntax, signed 누락은r2 보완",
+    "C# missing SDK argument/unknown tool name을 language ERROR로 기대하지 않음; 원 다섯 directive positive 기대 불변",
+    "G conflict 검증은 승인 후 finite gate; 성공 추정/임의 conflict patch 없음"
+  ],
+  "predecessor": {
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-05/remedy-fact-oracles-proposed-r1.json",
+    "bytes": 9186,
+    "sha256": "bcd3b24683057ff9e9115d02ba8645161dfb48c477c9513474fdedf059e77bfc"
+  },
+  "correction": "후속 statement의 member Console offset을 사용한5개 원 directive oracle 버그 수정; System을 포함한 실제 첫 token 좌표. 원 기대·source bytes·range 엄격도 불변"
+}

@@ -80,6 +80,18 @@ source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속�
 
 현재 사용자가 동일 PREPARE의 계속된 개발·검증·CI·고정 입력 실행을 명시 승인한 경우, 과거 총시간·job 횟수의 중단 조건은 그 승인 범위에서 새 배치로 갱신한다. 실제 메시지와 기존 effect subject를 새 승인 기록에 연결하고, 배치마다 목적·입력·작업 횟수·시간/CI/전송/저장 상한과 시작 소비를 먼저 기록한다. 과거 소비와 실패, 불확실 시간은 이월하며 사용자 idle·측정 시간·보수적 reserve·청구 금액을 구분한다. 동일 결정적 실패의 무변경 재실행, 무한/null 한도, 승인되지 않은 후보 교체·grammar patch·scope 축소는 허용하지 않는다. 개별 timeout·memory·output·격리·cleanup 제한은 유지하고 변경이 필요하면 측정 근거와 독립 리뷰를 먼저 확보한다. S01/MASTER 권한은 별도다.
 
+### 별도 승인된 exact remedy 경로
+
+후속 [remedy workflow](../../.github/workflows/prepare-p05-remedy.yml)는 명시 `pinned-tsql-r1`/`trixie-r1`과 별도 remedy subject를 요구한다. subject는 승인 제안의 identity이며 실제 사용자 acceptance·현재 main·유한 batch를 caller가 먼저 확인한다. [literal patch](../../src/dev/prepare-p05/remedy-patches.json), [추가 회귀](../../src/dev/prepare-p05/remedy-cases.json), [독립 source 사실](../../src/dev/prepare-p05/remedy-fact-oracles.json), [추가 공급 입력](../../src/dev/prepare-p05/remedy-sources.json)을 hash로 결속하며 원57입력/6edit와 실패를 유지한다. 제안 파일의 역사적 PROPOSED 상태를 실행 성공이나 채택으로 해석하지 않는다.
+
+승인 원본 JSON은 그대로 보존하고 tracked delivery는 기존 UTF-8/LF 정책에 맞게 문서 바깥 whitespace만 LF로 기록한다. 별도 delivery SHA와 parsed 값 동일성을 대조하며 literal patch·grammar 결과 SHA·input UTF-8/CRLF bytes는 변경하지 않는다. 자체 supervisor 회귀는 필수 Go 도구로 만든 출력 전용 fixture의8MiB를 기존2초 안에 정확히 회수한다. compiler30초/CGO0/offline/task cache, fixture source/compiler/EXE hash와 cleanup을 기록하며 upstream grammar 실행과 구분한다.
+
+supervisor는 ready stream의 완료 read를 즉시 drain하되 매 read의 time/network/output cap을 유지한다. 자체 output-limit와 timeout 반례는 partial 출력/종료/cleanup을 실제 확인한다. 각 fixture build1/execute3은 별도 소유한 검증 소비이며 원 upstream case 또는 제품 native qualification으로 세지 않는다.
+
+`patch-r1`은 별도 scratch의 C#/TS/TSX/Swift 네 파일에 exact literal patch만 적용한다. 원본 producer에는 추가32입력만, 후보에는 원21+추가32입력을 계획한다(G5/B8/X85, producer edit16). `sql-pg-r1`은 Derek 고정30파일의 **평가만** 수행하고 TSQL28+negative2, PG exact LFS baseline8 및 옵션 변경 regeneration8을 계획한다(G2/B3/X46, edit3). SQL 채택/교체/patch와 다음 grammar patch는 자동 승인되지 않는다. PG object는97,664,793bytes/SHA-256과100MiB 단일 파일 예외를 대조하며 원 pointer를 보존한다. PG generation의 `--disable-optimizations` 및 같은 container의 `memory.events` 전후 관측은 기존 exit137의 무변경 반복과 구별한다.
+
+기존 supervisor·회수·전체8개 isolation·자체 G/B/X·새 container의 EXE/ELF/hash 확인·cleanup과 개별 limits를 재사용한다. 각 stage의 더 작은 G/B/X 상한을 적용하고 quoted include/ABI를 build 전에 검사한다. 실패한 producer는 후속 NOT_RUN을 남기며 독립 producer는 안전한 한도 안에서 계속한다. 원 probe/comparator와 구문 기대는 변경하지 않는다. negative의 ERROR도 원 exit2로 보존하므로 job의 성공/실패 표시는 최종 지원 판정을 대신하지 않는다. 후보별 required syntax·구조·negative·legacy/recovery/edit 검증과 독립 리뷰를 통과하기 전 kit source 등록부에 채택하지 않는다.
+
 ## 실제 archive 취득 경계
 
 고정 T-SQL archive `443d2bc774f1d779af7dcabcc99160fb24da96e6`에는 `bindings/c/tree-sitter-TSQL.h`와 `tree-sitter-tsql.h` 등 대소문자 충돌 세 쌍이 있다. 실제 두 번째 준비 run은 이를 거부했고 native를 실행하지 않았다. 거부한 archive의 추출과 충돌 검사는 유지한다.

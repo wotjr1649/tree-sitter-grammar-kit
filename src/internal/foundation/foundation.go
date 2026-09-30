@@ -44,6 +44,9 @@ var required = []string{
 	"src/dev/prepare-p05/case-review.json",
 	"src/dev/prepare-p05/approval.ps1",
 	"src/dev/prepare-p05/self-test.ps1",
+	".github/workflows/prepare-p05-remedy.yml", "src/dev/prepare-p05/remedy.ps1",
+	"src/dev/prepare-p05/remedy-patches.json", "src/dev/prepare-p05/remedy-cases.json",
+	"src/dev/prepare-p05/remedy-fact-oracles.json", "src/dev/prepare-p05/remedy-sources.json",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

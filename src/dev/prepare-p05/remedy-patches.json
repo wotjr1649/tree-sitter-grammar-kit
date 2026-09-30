@@ -1,0 +1,200 @@
+{
+  "schema": "tsgk.p05.literal-patches.proposal.v1",
+  "status": "PROPOSED_NOT_AUTHORIZED_NOT_APPLIED",
+  "original_repositories_mutated": false,
+  "original_files_written": false,
+  "candidate_files_written": false,
+  "source_identity_rule": "고정 원본 hash와 literal occurrence count를 검증한 뒤 승인된 kit scratch copy에만 적용; 결과 hash 대조",
+  "patches": [
+    {
+      "id": "P05-CS-REMEDY-r1",
+      "repository": "tree-sitter/tree-sitter-c-sharp",
+      "base_commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "feature_ids": [
+        "csharp-B01",
+        "csharp-V14c"
+      ],
+      "candidate_comparison": "PR442@8f21f2f5a7b6bc568202c738d17a6f47d65e9e09 grammar-only; foreign generated parser/array.h 제외",
+      "limitations": "async와 다섯 directive는 검증 대상; broad await/var 선언은 새 반례로 개별 disposition하며 좁은 PASS로 선언을 지우지 않음",
+      "files": [
+        {
+          "target": "grammar.js",
+          "original_path": ".work/campaign-01-prepare-05/remedy-originals/csharp/grammar.js",
+          "original_bytes": 61851,
+          "original_sha256": "63d357e04fdbe05f424463f365fb595f8f05866711cc279f85a7288638e753bd",
+          "operations": [
+            {
+              "occurrences": 1,
+              "location": "_local_function_declaration, upstream PR442 grammar-only",
+              "before": "    _local_function_declaration: $ => seq(\n      repeat($._attribute_list),\n      repeat($.modifier),\n      field('type', $.type),\n      field('name', $.identifier),\n      field('type_parameters', optional($.type_parameter_list)),\n      field('parameters', $.parameter_list),\n    ),",
+              "after": "    _local_function_declaration: $ => seq(\n      repeat($._attribute_list),\n      choice(\n        prec(2, seq(\n          alias('async', $.modifier),\n          repeat($.modifier),\n          field('type', $.type),\n          field('name', $.identifier),\n          field('type_parameters', optional($.type_parameter_list)),\n          field('parameters', $.parameter_list),\n        )),\n        seq(\n          repeat($.modifier),\n          field('type', $.type),\n          field('name', $.identifier),\n          field('type_parameters', optional($.type_parameter_list)),\n          field('parameters', $.parameter_list),\n        ),\n      ),\n    ),"
+            },
+            {
+              "occurrences": 2,
+              "location": "_lambda_expression_init/anonymous_method_expression, PR442",
+              "before": "repeat(prec(-1, alias(choice('static', 'async'), $.modifier)))",
+              "after": "repeat(prec(1, alias(choice('static', 'async'), $.modifier)))"
+            },
+            {
+              "occurrences": 1,
+              "location": "_reserved_identifier, PR442",
+              "before": "    _reserved_identifier: _ => choice(\n      'alias',",
+              "after": "    _reserved_identifier: _ => choice(\n      'alias',\n      'async',"
+            },
+            {
+              "occurrences": 1,
+              "location": "externals token append",
+              "before": "    $._lambda_paren_open,\n  ],",
+              "after": "    $._lambda_paren_open,\n    $._file_based_app_start,\n  ],"
+            },
+            {
+              "occurrences": 1,
+              "location": "compilation_unit/directive fields",
+              "before": "    compilation_unit: $ => seq(\n      optional($.shebang_directive),\n      repeat($._top_level_item),\n    ),",
+              "after": "    compilation_unit: $ => seq(\n      optional($.shebang_directive),\n      repeat($.file_based_app_directive),\n      repeat($._top_level_item),\n    ),\n\n    file_based_app_directive: $ => seq(\n      $._file_based_app_start,\n      field('name', alias(token.immediate(/[A-Za-z_][A-Za-z0-9_]*/), $.identifier)),\n      optional(seq(\n        token.immediate(/[ \\t]+/),\n        field('argument', alias(token.immediate(/[^\\r\\n]+/), $.preproc_arg)),\n      )),\n    ),"
+            }
+          ],
+          "proposed_result_bytes": 62600,
+          "proposed_result_sha256": "8178c3e21ace71e2b36cf1c21497724edc4cf80049fe839a01fe0055ac52b177",
+          "candidate_file_written": false,
+          "applied": false,
+          "generated": false,
+          "built": false,
+          "executed": false
+        },
+        {
+          "target": "src/scanner.c",
+          "original_path": ".work/campaign-01-prepare-05/remedy-originals/csharp/src/scanner.c",
+          "original_bytes": 23064,
+          "original_sha256": "2ee1241a6a275e72a06838f5df927700bd405c16b48f986e2c33d1264cae4818",
+          "operations": [
+            {
+              "occurrences": 1,
+              "location": "TokenType append preserving existing order",
+              "before": "    LAMBDA_PAREN_OPEN,\n};",
+              "after": "    LAMBDA_PAREN_OPEN,\n    FILE_BASED_APP_START,\n};"
+            },
+            {
+              "occurrences": 1,
+              "location": "scan prefix before other handlers; skip-only fallthrough",
+              "before": "    Scanner *scanner = (Scanner *)payload;\n\n    uint8_t brace_advanced = 0;",
+              "after": "    Scanner *scanner = (Scanner *)payload;\n\n    if (valid_symbols[FILE_BASED_APP_START] && scanner->quote_count == 0 &&\n        scanner->interpolation_stack.size == 0) {\n        bool line_start = lexer->get_column(lexer) == 0;\n        while (iswspace(lexer->lookahead)) {\n            if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {\n                line_start = true;\n            }\n            skip(lexer);\n        }\n        if (lexer->lookahead == '#') {\n            if (!line_start) {\n                return false;\n            }\n            advance(lexer);\n            if (lexer->lookahead != ':') {\n                return false;\n            }\n            advance(lexer);\n            lexer->mark_end(lexer);\n            lexer->result_symbol = FILE_BASED_APP_START;\n            return true;\n        }\n        // Only whitespace was skipped; other handlers retain their original path.\n    }\n\n    uint8_t brace_advanced = 0;"
+            }
+          ],
+          "proposed_result_bytes": 23949,
+          "proposed_result_sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
+          "candidate_file_written": false,
+          "applied": false,
+          "generated": false,
+          "built": false,
+          "executed": false
+        }
+      ]
+    },
+    {
+      "id": "P05-TS-TSX-REMEDY-r1",
+      "repository": "tree-sitter/tree-sitter-typescript",
+      "base_commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+      "feature_ids": [
+        "typescript-V59",
+        "tsx-B01"
+      ],
+      "files": [
+        {
+          "target": "common/define-grammar.js",
+          "original_path": ".work/campaign-01-prepare-05/dependency-originals/typescript/common/define-grammar.js",
+          "original_bytes": 33533,
+          "original_sha256": "c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f",
+          "operations": [
+            {
+              "occurrences": 1,
+              "location": "shared import_statement, preserve legacy branch",
+              "before": "        optional(choice('type', 'typeof')),\n        choice(\n          seq($.import_clause, $._from_clause),\n          $.import_require_clause,\n          field('source', $.string),\n        ),",
+              "after": "        choice(\n          seq('defer', $.namespace_import, $._from_clause),\n          seq(\n            optional(choice('type', 'typeof')),\n            choice(\n              seq($.import_clause, $._from_clause),\n              $.import_require_clause,\n              field('source', $.string),\n            ),\n          ),\n        ),"
+            }
+          ],
+          "proposed_result_bytes": 33672,
+          "proposed_result_sha256": "ea0bed0718ca8db1f69c826a41776bff98488afc451c57b2994529dcb6f4b593",
+          "candidate_file_written": false,
+          "applied": false,
+          "generated": false,
+          "built": false,
+          "executed": false
+        }
+      ],
+      "dependency_change": false,
+      "npm": "tree-sitter-javascript@0.23.1 unchanged",
+      "limitations": "기존 default named defer는 legacy branch; defer namespace 전용 구문과 malformed named import를 판정"
+    },
+    {
+      "id": "P05-SWIFT-REMEDY-r1",
+      "repository": "alex-pinkus/tree-sitter-swift",
+      "base_commit": "35245fbfee2fccf16273c6f4299438fb76875970",
+      "feature_ids": [
+        "swift-V62",
+        "swift-V64"
+      ],
+      "files": [
+        {
+          "target": "grammar.js",
+          "original_path": ".work/campaign-01-prepare-05/remedy-originals/swift/grammar.js",
+          "original_bytes": 75875,
+          "original_sha256": "e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b",
+          "operations": [
+            {
+              "occurrences": 1,
+              "location": "_unannotated_type inline arrays",
+              "before": "          $.array_type,\n          $.dictionary_type,",
+              "after": "          $.array_type,\n          $.inline_array_type,\n          $.dictionary_type,"
+            },
+            {
+              "occurrences": 1,
+              "location": "user_type module selector prefix",
+              "before": "    user_type: ($) => sep1($._simple_user_type, $._dot),",
+              "after": "    user_type: ($) => seq(optional($.module_selector), sep1($._simple_user_type, $._dot)),\n    module_selector: ($) => seq(field(\"module\", $.simple_identifier), \"::\"),"
+            },
+            {
+              "occurrences": 1,
+              "location": "inline_array_type count/element",
+              "before": "    array_type: ($) => seq(\"[\", field(\"element\", $._type), \"]\"),",
+              "after": "    array_type: ($) => seq(\"[\", field(\"element\", $._type), \"]\"),\n    inline_array_type: ($) => seq(\"[\", field(\"size\", choice(seq(optional(\"-\"), $.integer_literal), $.simple_identifier)), \"of\", field(\"element\", $._type), \"]\"),"
+            },
+            {
+              "occurrences": 1,
+              "location": "_expression module qualified expression",
+              "before": "          $.simple_identifier,\n          $._unary_expression,",
+              "after": "          $.simple_identifier,\n          $.module_qualified_expression,\n          $._unary_expression,"
+            },
+            {
+              "occurrences": 1,
+              "location": "module qualified expression member/callee",
+              "before": "    // Unary expressions",
+              "after": "    module_qualified_expression: ($) => prec.right(PRECS.navigation, seq(\n      $.module_selector,\n      field(\"name\", $.simple_identifier),\n      optional($.type_arguments)\n    )),\n    // Unary expressions"
+            },
+            {
+              "occurrences": 1,
+              "location": "type_arguments integer arguments",
+              "before": "    type_arguments: ($) => prec.left(seq(\"<\", sep1Opt($._type, \",\"), \">\")),",
+              "after": "    type_arguments: ($) => prec.left(seq(\"<\", sep1Opt(choice($._type, seq(optional(\"-\"), $.integer_literal)), \",\"), \">\")),"
+            }
+          ],
+          "proposed_result_bytes": 76448,
+          "proposed_result_sha256": "bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512",
+          "candidate_file_written": false,
+          "applied": false,
+          "generated": false,
+          "built": false,
+          "executed": false
+        }
+      ],
+      "scanner_change": false,
+      "candidate_comparison": "187fd4d3는 baseline보다1commit 뒤진 후보로 modern remedy 근거 없음",
+      "limitations": "승인 후 G/B/X 검증 대상; module prefix는 type/expression, signed integer argument와 inline generic size source 포함; binding/type-check/negative length 의미는 제외; G conflict면 원 결과 보존 후 exact 보완 결정"
+    }
+  ],
+  "predecessor": {
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-05/remedy-patches-proposed-r1.json",
+    "bytes": 12112,
+    "sha256": "7e728ee70211078e51d232b062788df68619b021e317b5c1068c35aaf2785b20"
+  }
+}
