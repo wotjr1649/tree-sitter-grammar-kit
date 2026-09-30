@@ -5,6 +5,7 @@ function ReadRemedySubjects {
         'remedy-cases.json'='d29fb48c55cbadc3d584e02246af06937744c16524379cdd48d595f459cd4903'
         'remedy-fact-oracles.json'='af130694ac859f9d32a867af45cccfbcfdea3655d716ba4c2e8285744a3285c4'
         'remedy-sources.json'='f2c26f754bd80ee58719d5b2d12271d338938ebaed6f952a3499faf774e76bc6'
+        'remedy-r2.json'='389803c2d8f9da35a5ff913b2748c59e7a0504322bd09c1ee2f004aa283ae6cc'
     }
     $result=@{}
     foreach($name in $pins.Keys){
@@ -13,7 +14,23 @@ function ReadRemedySubjects {
         $result[$name.Replace('remedy-','').Replace('.json','')]=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json -AsHashtable
     }
     if($result.cases.cases.Count -ne 34 -or @($result.cases.cases|Where-Object edit).Count -ne 6 -or $result.patches.patches.Count -ne 3 -or $result.sources.sql.selected_regular_files.Count -ne 30 -or $result.sources.sql.adoption_authorized -or $result.sources.sql.grammar_patch_authorized){throw 'Remedy scope changed'}
+    if($result.r2.schema -cne 'tsgk.p05.exact-remedy-proposal.r2' -or $result.r2.cases.Count -ne 39 -or $result.r2.patches.Count -ne 2 -or $result.r2.candidate_adoption){throw 'Exact r2 scope changed'}
+    # Repository LF projection reconstructs the immutable approved CRLF JSON exactly.
+    $projection=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'remedy-r2.json'))
+    $original=[Text.Encoding]::UTF8.GetBytes($projection.Substring(0,$projection.Length-1).Replace("`n","`r`n")+"`n")
+    AssertRemedyObject $original.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($original)).ToLowerInvariant()) @{bytes=31295;sha256='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2'}
     return $result
+}
+function EqualRemedyData($a,$b){
+    if($a -is [Collections.IDictionary]){
+        if($b -isnot [Collections.IDictionary] -or $a.Count -ne $b.Count){return $false}
+        foreach($key in $a.Keys){if(-not $b.Contains($key) -or -not (EqualRemedyData $a[$key] $b[$key])){return $false}};return $true
+    }
+    if($a -is [array]){
+        if($b -isnot [array] -or $a.Count -ne $b.Count){return $false}
+        for($i=0;$i -lt $a.Count;$i++){if(-not (EqualRemedyData $a[$i] $b[$i])){return $false}};return $true
+    }
+    return $a -ceq $b
 }
 function AssertRemedyObject([long]$bytes,[string]$sha256,$pin){
     if($bytes -ne $pin.bytes -or $sha256 -cne $pin.sha256){throw 'Exact remedy object identity mismatch'}
@@ -40,7 +57,18 @@ function NewRemedyRows([string]$stage,$original,$additional){
             }
         }
         $expected=85
-    }elseif($stage -ceq 'sql-pg-r1'){
+    }elseif($stage -ceq 'patch-r2'){
+        $r2=(ReadRemedySubjects).r2
+        foreach($registered in $r2.cases){
+            $matches=@(@($original)+@($additional)|Where-Object id -CEQ $registered.id)
+            if($matches.Count -ne 1 -or $registered.route -cnotin @('csharp','typescript','tsx') -or $registered.producer -cne ($registered.route+'-candidate-r2')){throw 'Exact r2 case mapping mismatch'}
+            $case=$matches[0]|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
+            foreach($key in @('id','route','input_bytes','input_sha256','feature_ids','expected','edit')){if(-not (EqualRemedyData $case.$key $registered.$key)){throw 'Exact r2 input/expectation/edit changed'}}
+            $rows.Add(@{id=$case.id;route=$case.route;producer=$registered.producer;case=$case;state='NOT_RUN';dependency='GENERATION_BUILD_AND_SAFETY_PREREQUISITES';command_label=('case-'+$registered.producer+'-'+$case.id.ToLowerInvariant());raw_stdout=$null;exit_code=$null})
+        }
+        if(@($rows|Where-Object {$_.case.edit}).Count -ne 7){throw 'Exact r2 edit count changed'}
+        $expected=39
+    }elseif($stage -cin @('sql-pg-r1','sql-pg-r2')){
         foreach($producer in @('derek-sql-candidate','postgresql-lfs-baseline','postgresql-noopt-regenerated')){
             $route=if($producer -ceq 'derek-sql-candidate'){'tsql'}else{'postgresql-sql'}
             $cases=@($original|Where-Object route -CEQ $route)
@@ -75,8 +103,9 @@ function PrepareRemedyInputs($subjects){
             $script:verifiedSource[$relative]=$actual.sha256
         }
     }
-    if($RemedyStage -cne 'patch-r1'){return}
+    if($RemedyStage -cnotin @('patch-r1','patch-r2')){return}
     foreach($patch in $subjects.patches.patches){
+        if($RemedyStage -ceq 'patch-r2' -and $patch.repository -ceq 'alex-pinkus/tree-sitter-swift'){continue}
         $key=$patch.repository.Replace('/','--')+'--'+$patch.base_commit
         $sourceRoot=Join-Path $root ('acquisition/sources/'+$key)
         $candidateRoot=Join-Path $root ('candidates/'+$patch.id)
@@ -98,6 +127,26 @@ function PrepareRemedyInputs($subjects){
         }
         if(@($records|Where-Object patched).Count -ne $patch.files.Count){throw 'Missing literal patch target'}
         Record ('candidate-'+$patch.id.ToLowerInvariant()) @{proposal_id=$patch.id;original_repository=$patch.repository;original_commit=$patch.base_commit;files=$records;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
+        if($RemedyStage -ceq 'patch-r2'){
+            $next=@($subjects.r2.patches|Where-Object repository -CEQ $patch.repository)
+            if($next.Count -ne 1 -or $next[0].base_commit -cne $patch.base_commit){throw 'Exact r2 predecessor mismatch'}
+            $next=$next[0];$nextRoot=Join-Path $root ('candidates/'+$next.id)
+            if(Test-Path -LiteralPath $nextRoot){throw 'r2 candidate already exists'}
+            $pin=$next.file.Clone();$pin.original_bytes=$pin.base_result_bytes;$pin.original_sha256=$pin.base_result_sha256
+            $nextRecords=@()
+            foreach($file in Get-ChildItem -LiteralPath $candidateRoot -File -Recurse){
+                $identity=FileIdentity $file.FullName
+                if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'r1 candidate changed before r2'}
+                $relative=[IO.Path]::GetRelativePath($candidateRoot,$file.FullName).Replace('\','/')
+                $target=Join-Path $nextRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))
+                $patched=$relative -ceq $pin.target
+                if($patched){[IO.File]::WriteAllText($target,(ApplyLiteralPatch ([IO.File]::ReadAllText($file.FullName)) $pin),[Text.UTF8Encoding]::new($false))}else{[IO.File]::Copy($file.FullName,$target)}
+                $candidate=FileIdentity $target;$script:verifiedSource[$candidate.path]=$candidate.sha256
+                $nextRecords+=@{predecessor=$identity;candidate=$candidate;patched=$patched}
+            }
+            if(@($nextRecords|Where-Object patched).Count -ne 1){throw 'Exact r2 patch target missing'}
+            Record ('candidate-'+$next.id.ToLowerInvariant()) @{proposal_id=$next.id;predecessor=$patch.id;machine_subject='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2';files=$nextRecords;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
+        }
     }
 }
 function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
@@ -201,20 +250,23 @@ function InvokeRemedyGeneration([string]$producer,[string]$grammarPath,[string]$
     return 'results/'+$label+'/generated'
 }
 function InvokeRemedyProducers($subjects){
-    if($RemedyStage -ceq 'patch-r1'){
+    if($RemedyStage -cin @('patch-r1','patch-r2')){
         foreach($routeName in @('csharp','typescript','tsx','swift')){
+            if($RemedyStage -ceq 'patch-r2' -and $routeName -ceq 'swift'){continue}
             $route=@($inputs.selected_routes|Where-Object route -CEQ $routeName)[0]
             $key=$route.repository.Replace('/','--')+'--'+$route.commit
             $originalRoot='acquisition/sources/'+$key
-            $patch=@($subjects.patches.patches|Where-Object repository -CEQ $route.repository)[0]
+            $patches=if($RemedyStage -ceq 'patch-r2'){$subjects.r2.patches}else{$subjects.patches.patches}
+            $patch=@($patches|Where-Object repository -CEQ $route.repository)[0]
             $candidateRoot='candidates/'+$patch.id
             $selector=if($route.subdirectory -ceq '.') {''}else{'/'+$route.subdirectory}
-            foreach($variant in @('original','candidate')){
+            $variants=if($RemedyStage -ceq 'patch-r2'){@('candidate-r2')}else{@('original','candidate')}
+            foreach($variant in $variants){
                 $producer=$routeName+'-'+$variant
-                $sourceRoot=if($variant -ceq 'candidate'){$candidateRoot}else{$originalRoot}
+                $sourceRoot=if($variant.StartsWith('candidate')){$candidateRoot}else{$originalRoot}
                 $name=TryRemedyPrecheck $producer 'name' {ReadGrammarName (Join-Path $root ($sourceRoot+$selector+'/src/grammar.json'))}
                 if(-not $name.passed){continue}
-                $parser=if($variant -ceq 'candidate' -or $routeName -ceq 'swift'){InvokeRemedyGeneration $producer ($sourceRoot+$selector+'/grammar.js') (Join-Path $root $sourceRoot)}else{$sourceRoot+$selector+'/src'}
+                $parser=if($variant.StartsWith('candidate') -or $routeName -ceq 'swift'){InvokeRemedyGeneration $producer ($sourceRoot+$selector+'/grammar.js') (Join-Path $root $sourceRoot)}else{$sourceRoot+$selector+'/src'}
                 if($parser){
                     $scanner=if(Test-Path (Join-Path $root ($sourceRoot+$selector+'/src/scanner.c'))){$sourceRoot+$selector+'/src/scanner.c'}else{''}
                     InvokeRemedyBuildAndCases $producer $name.value ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner

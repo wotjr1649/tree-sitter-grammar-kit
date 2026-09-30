@@ -2,6 +2,7 @@ param([Parameter(Mandatory)][string]$Destination, [switch]$SelfTest, [switch]$Pi
 $ErrorActionPreference = 'Stop'
 $toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
+$script:acquisitionLimit=[long]$toolchain.acquisition_limit_bytes
 if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
 $script:received = 0L
@@ -57,7 +58,7 @@ function SaveReceipt([string]$path, $value) {
 function Fetch([string]$url, [string]$target, [long]$limit) {
     $allowed = @('codeload.github.com','github.com','release-assets.githubusercontent.com','objects.githubusercontent.com','registry.npmjs.org')
     if($PinnedTsql){$allowed+='raw.githubusercontent.com'}
-    if($RemedyStage -ceq 'sql-pg-r1' -and $url -ceq $remedy.sources.postgresql.provider){$allowed+='media.githubusercontent.com'}
+    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2') -and $url -ceq $remedy.sources.postgresql.provider){$allowed+='media.githubusercontent.com'}
     $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect = $false
     $handler.UseProxy=$false;$handler.UseDefaultCredentials=$false;$handler.UseCookies=$false
     $client = [Net.Http.HttpClient]::new($handler)
@@ -88,8 +89,8 @@ function Fetch([string]$url, [string]$target, [long]$limit) {
         $buffer = [byte[]]::new(65536)
         while (($n = $stream.ReadAsync($buffer,0,$buffer.Length,$cancel.Token).GetAwaiter().GetResult()) -gt 0) {
             $count += $n; $script:received += $n
-            # Reserve the approved image's exact compressed size in the shared 1 GiB envelope.
-            if ($count -gt $limit -or $script:received + $script:imageReserve -gt 1073741824 -or $script:clock.Elapsed.TotalSeconds -gt 600) { throw 'Acquisition byte/time limit' }
+            # The bound stage selects the shared source/image envelope before effects.
+            if ($count -gt $limit -or $script:received + $script:imageReserve -gt $script:acquisitionLimit -or $script:clock.Elapsed.TotalSeconds -gt 600) { throw 'Acquisition byte/time limit' }
             $file.Write($buffer,0,$n)
         }
         $completed = $true
@@ -244,7 +245,7 @@ $inputsPath=Join-Path $PSScriptRoot 'inputs.json'
 if((Get-FileHash $inputsPath).Hash.ToLowerInvariant() -cne 'f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4'){throw 'Approved input projection changed'}
 $inputs=Get-Content -LiteralPath $inputsPath -Raw|ConvertFrom-Json
 $script:imageReserve=[long]$toolchain.compressed_bytes
-if($script:imageReserve -le 0 -or $script:imageReserve -ge 1073741824){throw 'Image reserve missing'}
+if($script:imageReserve -le 0 -or $script:imageReserve -ge $script:acquisitionLimit){throw 'Image reserve missing'}
 foreach($name in @('archives','sources','tools','records')){[void][IO.Directory]::CreateDirectory((Join-Path $root $name))}
 $results=[Collections.Generic.List[object]]::new(); $extraInputs=@(); $state='FAILED'; $failure=$null
 try {
@@ -287,7 +288,7 @@ try {
     try {$count=0L;$buffer=[byte[]]::new(65536);while(($n=$gzip.Read($buffer,0,$buffer.Length)) -gt 0){$count+=$n;if($count -gt 67108864){throw 'CLI expansion limit'};$output.Write($buffer,0,$n)}}finally{$output.Dispose();$gzip.Dispose();$input.Dispose()}
     if(-not $IsWindows){[IO.File]::SetUnixFileMode((Join-Path $root 'tools/tree-sitter'),[IO.UnixFileMode]493)}
     $results.Add(@{tool='tree-sitter';archive=$download;executable_sha256=(Get-FileHash (Join-Path $root 'tools/tree-sitter')).Hash.ToLowerInvariant()})
-    if($RemedyStage -ceq 'sql-pg-r1'){
+    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2')){
         $taskRoot=[IO.Path]::GetDirectoryName($root)
         $sql=$remedy.sources.sql
         $archive=Join-Path $root 'archives/derek-sql-97614d0.tgz'
@@ -307,5 +308,5 @@ try {
 } catch { $failure=$_.Exception.GetType().FullName; throw }
 finally {
     $retained=@(Get-ChildItem -LiteralPath $root -File -Recurse|ForEach-Object {@{path=[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}})
-    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;http_limit=$script:httpLimit;pinned_tsql_profile=$PinnedTsql.IsPresent;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;remedy_identities=$extraInputs;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;native_invocations=0;install_scripts=0}
+    SaveReceipt (Join-Path $root 'records/acquisition.json') @{state=$state;failure_type=$failure;http_requests=$script:requests;http_limit=$script:httpLimit;pinned_tsql_profile=$PinnedTsql.IsPresent;download_bytes=$script:received;expanded_archive_bytes=$script:expanded;selected_files=$script:filesWritten;wall_seconds=$script:clock.Elapsed.TotalSeconds;downloads=$script:receipts;identities=$results;remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;remedy_identities=$extraInputs;retained_files=$retained;partial_materialization_verified=($state -eq 'COMPLETED');source_pin='Git blob SHA-1 + exact size; observed SHA-256';runtime_pin='prior SHA-256 + size';image_compressed_reserve=$script:imageReserve;acquisition_limit_bytes=$script:acquisitionLimit;native_invocations=0;install_scripts=0}
 }
