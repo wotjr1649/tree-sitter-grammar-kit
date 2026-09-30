@@ -43,10 +43,17 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
-foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName')){
+foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckTsqlPriorEvidence')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
+}
+$priorTsql='5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458'
+CheckTsqlPriorEvidence '' 'bookworm-r1'
+CheckTsqlPriorEvidence $priorTsql 'trixie-r1'
+foreach($vector in @(@('unknown','trixie-r1'),@($priorTsql,'bookworm-r1'))){
+    $rejected=$false;try{CheckTsqlPriorEvidence $vector[0] $vector[1]}catch{$rejected=$true}
+    if(-not $rejected){throw 'Mismatched prior TSQL evidence/image accepted'}
 }
 $elf="Class: ELF64`nMachine: Advanced Micro Devices X86-64`n[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]`n(NEEDED) Shared library: [libc.so.6]"
 CheckElfClosure $elf
