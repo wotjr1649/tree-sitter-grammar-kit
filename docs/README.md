@@ -15,6 +15,7 @@ The current implementation consists of repository foundation checks. Product com
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
 | Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md), [disposition](validation/language-feature-disposition.md), [source risks](validation/source-feature-feasibility.md) |
+| NET461 WinForms/DevExpress 20.2/WCF workload and bounded .svc format | [업무 workload/format 등록부](validation/net461-workload.md) |
 | Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
