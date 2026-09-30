@@ -148,4 +148,4 @@ remedy 실행에서 확인한 producer별 import/include·ABI·entry-point·ELF 
 
 ### Docker daemon 사전 조회 순서
 
-`docker version`과 `docker info --format '{{json .SecurityOptions}}'`를 source/image 취득 전에 각각10초/1MiB로 조회한다. 실제 builtin seccomp 응답이 없으면 취득·container·G/B/X를 시작하지 않는다. 조회 실패의 원인과 CLI client/plugin/server 단계를 구분하며 timeout을 grammar 실패로 분류하지 않는다. 이 순서 보완은 성공 응답을 보장하지 않는다. 응답을 바꾸는 fallback·자동 retry·시간 확대 없이 기존 전체 isolation/capture/cleanup 검사와 native 한도를 유지한다.
+`docker version`과 `docker info --format '{{json .SecurityOptions}}'`를 source/image 취득 전에 각각10초/1MiB로 조회한다. 실제 builtin seccomp 응답이 없으면 취득·container·G/B/X를 시작하지 않는다. command-level receipt와 raw stdout/stderr를 보존하고 timeout을 grammar 실패와 분리한다. Docker 내부 원인과 client/plugin/server 단계는 별도 근거가 없으면 `NOT_VERIFIED`다. 조기 host 조회의 시간과 관측 traffic도 기존 combined acquisition600초/1GiB accounting에 보수적으로 포함한다. 이 순서 보완은 성공 응답을 보장하지 않는다. 응답을 바꾸는 fallback·자동 retry·시간 확대 없이 기존 전체 isolation/capture/cleanup 검사와 native 한도를 유지한다.
