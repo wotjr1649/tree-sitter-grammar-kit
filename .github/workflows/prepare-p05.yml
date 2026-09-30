@@ -47,6 +47,10 @@ on:
         description: Verified immutable run36651074932 observations; retain failed directives and broader declared identifier gap
         required: false
         type: string
+      ts_pg_stage_evidence_subject:
+        description: Verified run36657324824 TS/TSX results and unrun PG stage blockers; no unchanged repeat
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -91,9 +95,10 @@ jobs:
           TOOLCHAIN_APPROVAL_SUBJECT: ${{ inputs.toolchain_approval_subject }}
           TSQL_PRIOR_EVIDENCE_SUBJECT: ${{ inputs.tsql_prior_evidence_subject }}
           CSHARP_PRIOR_EVIDENCE_SUBJECT: ${{ inputs.csharp_prior_evidence_subject }}
+          TS_PG_STAGE_EVIDENCE_SUBJECT: ${{ inputs.ts_pg_stage_evidence_subject }}
         run: |
           $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT -ToolchainProfile $env:TOOLCHAIN_PROFILE -ToolchainApprovalSubject $env:TOOLCHAIN_APPROVAL_SUBJECT -TsqlPriorEvidenceSubject $env:TSQL_PRIOR_EVIDENCE_SUBJECT -CsharpPriorEvidenceSubject $env:CSHARP_PRIOR_EVIDENCE_SUBJECT
+          & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT -ToolchainProfile $env:TOOLCHAIN_PROFILE -ToolchainApprovalSubject $env:TOOLCHAIN_APPROVAL_SUBJECT -TsqlPriorEvidenceSubject $env:TSQL_PRIOR_EVIDENCE_SUBJECT -CsharpPriorEvidenceSubject $env:CSHARP_PRIOR_EVIDENCE_SUBJECT -TsPgStageEvidenceSubject $env:TS_PG_STAGE_EVIDENCE_SUBJECT
       - name: 원본 근거를 유한 artifact로 묶기
         if: always()
         run: |
