@@ -298,7 +298,7 @@ $supervisorBurst=& {
     param($sourceAst,$caseRoot)
     $root=Join-Path $caseRoot 'supervisor-burst'
     foreach($directory in @('records','raw','home')){[void][IO.Directory]::CreateDirectory((Join-Path $root $directory))}
-    foreach($helper in @('Run','Record','Require')){
+    foreach($helper in @('Run','Record','Require','NetworkBudgetReceipt','CompleteAcquisition')){
         $definition=@($sourceAst.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
         if($definition.Count -ne 1){throw 'Supervisor helper identity mismatch'}
         . ([scriptblock]::Create($definition[0].Extent.Text))
@@ -323,7 +323,27 @@ $supervisorBurst=& {
     if($limited.termination -cne 'OUTPUT_LIMIT' -or $limited.stored_stdout_bytes+$limited.stored_stderr_bytes -gt 131072 -or -not $limited.host_cleanup_verified){throw 'Output limit/cleanup negative failed'}
     $timeout=Run 'burst-timeout' @('wait') 1 1048576 -executable $binary
     if($timeout.termination -cne 'TIMEOUT' -or -not $timeout.host_cleanup_verified){throw 'Timeout/cleanup negative failed'}
-    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=3;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';upstream_native=$false}
+    $script:acquiring=$true;$script:networkStart=100L
+    function NetworkReceived {return 1073741941L}
+    $networkLimited=Run 'burst-download-limit' @('wait') 1 1048576 -executable $binary
+    if($networkLimited.termination -cne 'DOWNLOAD_LIMIT' -or -not $networkLimited.host_cleanup_verified -or $networkLimited.acquisition_network.state -cne 'OBSERVED' -or $networkLimited.acquisition_network.received_counter_bytes -ne 1073741841L){throw 'Download-limit counter/cleanup receipt lost'}
+    function NetworkReceived {throw 'Owned counter-unavailable negative'}
+    if((NetworkBudgetReceipt).state -cne 'NOT_VERIFIED'){throw 'Unavailable counter fabricated an observation'}
+    function NetworkReceived {return 99L}
+    if((NetworkBudgetReceipt).state -cne 'NOT_VERIFIED'){throw 'Regressed counter fabricated an observation'}
+    $rejected=$false;try{CompleteAcquisition}catch{$rejected=$true}
+    if(-not $rejected -or -not $script:acquiring -or (Test-Path -LiteralPath (Join-Path $root 'records/download-budget.json'))){throw 'Regressed final counter released acquisition gate'}
+    function NetworkReceived {return 1073741941L}
+    $rejected=$false;try{CompleteAcquisition}catch{$rejected=$true}
+    if(-not $rejected -or -not $script:acquiring){throw 'Exceeded final counter released acquisition gate'}
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'acquisition/records'))
+    [IO.File]::WriteAllText((Join-Path $root 'acquisition/records/acquisition.json'),'{"download_bytes":0}',[Text.UTF8Encoding]::new($false))
+    $toolchain=@{compressed_bytes=0}
+    function NetworkReceived {return 117L}
+    CompleteAcquisition
+    $final=Get-Content -LiteralPath (Join-Path $root 'records/download-budget.json') -Raw|ConvertFrom-Json
+    if($script:acquiring -or $final.received_network_upper_bound_bytes -ne 17 -or $final.final_snapshot.state -cne 'OBSERVED'){throw 'Verified final counter transition/receipt failed'}
+    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=4;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';upstream_native=$false}
 } $ast $root
 $savedPath=$env:PATH
 try {
@@ -335,5 +355,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('exact remedy subject/stage/image mismatches rejected','patch stage85/edit16 and SQL-PG46/edit3; no identical original baseline scheduled','literal original/count/output digest mismatches rejected; 34 inputs exact bytes','ESM dynamic/package/root escape and missing/unpinned quoted includes rejected','duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=3;native_fixture_processes_executed=3;upstream_native_invocations=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
-Write-Output 'P05 self-check PASS; owned Go supervisor fixture build1/execute3, upstream native0'
+@{result='PASS';checks=@('exact remedy subject/stage/image mismatches rejected','patch stage85/edit16 and SQL-PG46/edit3; no identical original baseline scheduled','literal original/count/output digest mismatches rejected; 34 inputs exact bytes','ESM dynamic/package/root escape and missing/unpinned quoted includes rejected','duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup','failed acquisition retains observed counter; unavailable/regressed counter remains NOT_VERIFIED');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=4;native_fixture_processes_executed=4;upstream_native_invocations=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+Write-Output 'P05 self-check PASS; owned Go supervisor fixture build1/execute4, upstream native0'

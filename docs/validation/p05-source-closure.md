@@ -44,7 +44,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
 | tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
-| postgresql-sql | postgres/grammar.js/json, node-types | postgres parser는 LFS pointer; 실제 object와 scanner/headers 필요 | P05-PG-LEGACY/18은 NOT_RUN; 실제 object 취득 추가 승인 및 generation exit137 원인 확인 필요 |
+| postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36745186550에서 object bytes/SHA 검증; P05-PG-LEGACY/18 G/B/X는 취득 guard 중단으로 NOT_RUN, generation exit137 원인 미확정 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
 
@@ -149,3 +149,15 @@ remedy 실행에서 확인한 producer별 import/include·ABI·entry-point·ELF 
 ### Docker daemon 사전 조회 순서
 
 `docker version`과 `docker info --format '{{json .SecurityOptions}}'`를 source/image 취득 전에 각각10초/1MiB로 조회한다. 실제 builtin seccomp 응답이 없으면 취득·container·G/B/X를 시작하지 않는다. command-level receipt와 raw stdout/stderr를 보존하고 timeout을 grammar 실패와 분리한다. Docker 내부 원인과 client/plugin/server 단계는 별도 근거가 없으면 `NOT_VERIFIED`다. 조기 host 조회의 시간과 관측 traffic도 기존 combined acquisition600초/1GiB accounting에 보수적으로 포함한다. 이 순서 보완은 성공 응답을 보장하지 않는다. 응답을 바꾸는 fallback·자동 retry·시간 확대 없이 기존 전체 isolation/capture/cleanup 검사와 native 한도를 유지한다.
+
+### 실제 remedy 실행과 취득 실패의 분리
+
+[run36741763343](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36741763343)은 main `ee92eae8cd1f7a16f5e00834023da1d44c991536`의 `patch-r1`에서 upstream G5/B8/X85, producer edit16, 자체 G/B/X 각1, isolation8, capture120을 실행했다. exact 생성·빌드 결과를 새 container에서 실행했고121개 container의 종료/PID0/제거와2054개 host command의 root 종료를 확인했다. 조기 Docker security 조회는 성공했으며 앞선 timeout의 원인이 확정됐다는 뜻은 아니다.
+
+r1 후보는 C# directive9개와 제한 Swift14개 source facts를 수용했지만 C# `F(await)` 호출 구조 및 named type `var` 분류가 충족되지 않았고 TS/TSX default binding `defer`2개가 ERROR였다. 모든 원본/r1 raw와 original57/6·추가34개 expectation을 보존한다.16개 edit는 damaged/restored incremental=fresh와 원 tree 복구가 일치했지만 broad ERROR의 손상 범위를 좁은 복구로 과장하거나 damaged 후속 AST가 항상 유지됐다고 주장하지 않는다. 이 관측만으로 후보 채택·whole feature support·제품 qualification을 표시하지 않는다.
+
+[run36745186550](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36745186550)은 같은 main의 `sql-pg-r1`에서 SQL 고정30파일과 PG LFS97,664,793bytes/SHA `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`를 취득·검증했다. HTTP51회/source124,365,296bytes 후 image pull이 기존 combined1GiB guard의 `DOWNLOAD_LIMIT`로 중단됐다. upstream·자체 G/B/X, isolation, capture는 모두0이며 SQL/PG46행/3producer edit는 NOT_RUN이다. native container0과 host command4개의 root 종료를 확인했다. partial Docker pull의 daemon quiescence까지 검증됐다고 표시하지 않는다.
+
+이 revision은 실패 final 수신 counter를 기록하지 않아 초과량은 미관측이다. 알려진 값은 guard threshold1,073,741,824bytes 초과이며 실제 전송 upper/partial image payload/청구량으로 환산하지 않는다. 새 기록 helper는 acquisition 중 각 command의 host root 종료 뒤 `acquisition_network` snapshot과 최종 `download-budget-incomplete`를 남긴다. counter가 unavailable/시작값보다 감소하면 수치 PASS를 만들지 않고 `NOT_VERIFIED`로 보존하며 정상 command도 실패로 처리한다. 취득 완료도 같은 단일 snapshot이 OBSERVED/비음수/1GiB 이내이고 record를 남긴 뒤에만 acquiring을 해제한다. 기존 TIMEOUT/DOWNLOAD_LIMIT/UNKNOWN_CLEANUP 사유를 counter 관측 실패로 덮지 않는다. 이 교정은 이전 미관측 counter를 복원하거나 cap을 늘리지 않는다. 자체 controlled-counter 중단·unavailable·regression과 완료 전환 반례는 기록 경로의 검증이며 실제 host traffic/daemon 종료 증거와 구분한다.
+
+후속 C#/TS/TSX exact 추가 patch와 SQLPG-only1.5GiB cap은 새 결정 대상이다. 현재 일반1GiB guard·52HTTP/600초·image1회·개별 native/격리/회수/저장 한도와 SQL 평가만의 범위를 유지한다. 승인된 r1 owned-fixture/취득 효과나 같은 범위의 지속 개발/CI 승인을 새 grammar patch·개별cap 확대·SQL 교체로 해석하지 않는다. 같은 결정적 실패를 무변경 dispatch하지 않는다.

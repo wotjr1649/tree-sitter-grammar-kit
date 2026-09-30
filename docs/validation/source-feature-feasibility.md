@@ -82,6 +82,22 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 ## 남은 승인과 readiness
 
+### PREPARE-05의 추가 관측
+
+[patch-r1 run36741763343](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36741763343)의85개 producer 입력과16개 edit를 원 frozen expectation·source bytes/범위/필드/순서에 대조했다. 기존 source의 실패와 별도 derived 후보의 결과는 서로 다른 evidence다. 후보 G/B 성공 또는 오류 없는 parse를 필수 구조 지원으로 대체하지 않는다.
+
+| Route/feature | 구체 관측 | 현재 준비 처분 |
+|---|---|---|
+| C# `csharp-V14c` | r1 후보의 원5개 directive와 CRLF/EOF/no-argument/unknown 대조4개에서 name/argument/행 범위/후속 statement를 확인. raw/interpolated string은 directive로 분류하지 않음 | 제한 source 사실 검증; SDK 파일 읽기/glob/MSBuild/restore/runtime은 기존 제외 |
+| C# `csharp-B01` | `P05-REMEDY-CS-ASYNC-ARG`는 r1에서 invocation/argument로 개선. `P05-REMEDY-CS-AWAIT-ARG`는 원본/r1 모두 `F(await)`를 tuple local declaration으로 오분류. `P05-REMEDY-CS-VAR-TYPE`는 반환/new type을 implicit_type으로 분류 | 재현된 구조 gap; 새 exact patch 결정과 회귀 필요. 넓은 upstream contextual identifier 제한 유지 |
+| TS/TSX `typescript-V59`/`tsx-B01` | namespace defer와 typed/JSX 후속 source는 r1에서 수용. 기존 default binding `defer`2개는 원본 수용/r1 ERROR. invalid named 형태는 reject. 기존 TSX ambiguity5개 구조 수용 | 제한 remedy가 regression을 만들었으므로 채택 안 함; shared import identifier 보완 필요 |
+| Swift `swift-B01`/`swift-V62`/`swift-V64` | r1 후보14개: legacy generic/array/dictionary, inline literal/parameter size, 일반·signed integer generic, module type/expression과2개 negative의 원 구조/값·3개 edit 확인 | 제한 회귀의 검증된 관측; language 전체 지원이나 미래 fixture/query/78-cell qualification PASS가 아님 |
+| TSQL/PG | [SQLPG run36745186550](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36745186550)에서 exact SQL30파일/PG LFS object 취득 뒤 image pull1GiB guard 중단. G/B/X0,46행/3edit NOT_RUN | grammar 결과 미관측; SQL 후보 평가·PG legacy9.6/18 실행이 남음. SQL 교체·patch·기대 축소 없음 |
+
+16개 producer edit는5stage/2comparison이 일치했고 restored tree가 original과 같았다. damaged source bytes와 ERROR/MISSING의 등록 window 교차를 확인했다. broad ERROR span은 좁은 error locality나 damaged 후속 AST 보존을 입증하지 않으며, original 구조가 잘못된 case의 동일 복구도 required support PASS가 아니다.85행의 syntax 실패13개(원본11/후보2)와 별도의 C# 구조 실패를 유지한다.
+
+새 C#/TS/TSX patch·SQLPG-only transfer cap 확대는 사용자 별도 결정 전 미실행이다. 이미 채택한26route/256행과 version/mode를 다시 결정하거나 범위를 줄이지 않는다. P05는 알려진 required gap의 검증된 처분과 미실행 SQL/PG 근거가 갖춰질 때까지 준비 완료로 표시하지 않는다. P06의 실제 Trixie/CLI/runtime/isolation·회수/새 실행 성공과 별개의 grammar gap을 혼동하지 않되 해당 SQL/PG job의 acquisition·전체 preflight 미완료는 남긴다.
+
 PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool artifact 다운로드 한도는 0 bytes였고 upstream generation/build/parse/edit는 0회였다. 이 이전 기록과 소비는 보존한다.
 
 후속 PREPARE-03에서 사용자는 명시한 source/tool acquisition과 격리 upstream probe를 별도로 승인했다. [고정 입력](../../src/dev/prepare-p05/inputs.json)과 [수동 workflow](../../.github/workflows/prepare-p05.yml)는 그 승인에 연결된 실행 대상이다. 상한은 HTTP32회·download1 GiB·generation6회·build11회·parse/edit128회·preflight8회·diagnostic16회, 수동 native job1회/80분, artifact256 MiB/7일이다. PREPARE 시간은 과거 소비를 포함한 누적28,800초이며 CI120 job-minutes·유료KRW0이다. 승인은 실행 성공이나 잔여량을 뜻하지 않는다. 실제 commit/review/CI/main, 선행 input·격리 검증, 누적 ledger와 실행·cleanup receipt를 확인한 뒤 각 연산을 시작한다.

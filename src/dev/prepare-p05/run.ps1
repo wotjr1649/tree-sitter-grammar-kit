@@ -57,7 +57,21 @@ $script:acquiring=$true
 $script:captureToolVerified=$false
 function NetworkReceived { return [long]((Get-ChildItem -Path '/sys/class/net/*/statistics/rx_bytes' | ForEach-Object {[long][IO.File]::ReadAllText($_.FullName)})|Measure-Object -Sum).Sum }
 $script:networkStart=NetworkReceived
+function NetworkBudgetReceipt {
+    try {
+        $end=NetworkReceived
+        if($end -lt $script:networkStart){throw 'Acquisition network counter regressed'}
+        return @{state='OBSERVED';start_counter_bytes=$script:networkStart;end_counter_bytes=$end;received_counter_bytes=($end-$script:networkStart);limit_bytes=1073741824;sample_ms=20;observation='AFTER_HOST_ROOT_CLEANUP_DOCKER_DAEMON_QUIESCENCE_NOT_PROVEN'}
+    } catch {return @{state='NOT_VERIFIED';start_counter_bytes=$script:networkStart;end_counter_bytes=$null;received_counter_bytes=$null;limit_bytes=1073741824;failure_type=$_.Exception.GetType().FullName}}
+}
 function Record([string]$name,$value){$path=Join-Path $root ('records/'+$name+'.json');if(Test-Path $path){throw 'Record exists'};$value|ConvertTo-Json -Depth 40|Set-Content -LiteralPath $path -Encoding utf8NoBOM}
+function CompleteAcquisition {
+    $snapshot=NetworkBudgetReceipt
+    if($snapshot.state -cne 'OBSERVED' -or $snapshot.received_counter_bytes -lt 0){throw 'Acquisition network counter not verified'}
+    if($snapshot.received_counter_bytes -gt 1073741824){throw 'Acquisition network budget exceeded'}
+    Record 'download-budget' @{received_network_upper_bound_bytes=$snapshot.received_counter_bytes;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20;final_snapshot=$snapshot}
+    $script:acquiring=$false
+}
 function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[string]$executable=$docker,[switch]$Cleanup){
     $deadline=if($Cleanup){4560}else{4500}
     if($label -notmatch '^[a-z0-9-]+$' -or $script:wall.Elapsed.TotalSeconds+$seconds -gt $deadline){throw 'Operation label/job time limit'}
@@ -102,6 +116,13 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
         foreach($file in $files){$file.Dispose()};$timer.Stop();$process.Dispose()
         $storedOut=(Get-Item -LiteralPath $paths[0]).Length;$storedErr=(Get-Item -LiteralPath $paths[1]).Length
         $receipt=@{label=$label;tool=$executable;tool_sha256=$toolDigest;argv=$argv;seconds_limit=$seconds;wall_seconds=$timer.Elapsed.TotalSeconds;output_limit=$limit;observed_bytes=$total;stored_stdout_bytes=$storedOut;stored_stderr_bytes=$storedErr;unstored_observed_bytes=($total-$storedOut-$storedErr);partial_output=($reason -ne 'EXITED');host_cleanup_verified=$cleanupVerified;termination=$reason;exit_code=$exitCode;stdout_sha256=(Get-FileHash $paths[0]).Hash.ToLowerInvariant();stderr_sha256=(Get-FileHash $paths[1]).Hash.ToLowerInvariant()}
+        if($script:acquiring){
+            $receipt.acquisition_network=NetworkBudgetReceipt
+            if($receipt.acquisition_network.state -cne 'OBSERVED'){
+                if($reason -ceq 'EXITED'){$reason='NETWORK_COUNTER_NOT_VERIFIED';$receipt.termination=$reason}
+                $receipt.partial_output=$true
+            }
+        }
         $script:commands.Add($receipt);Record ('command-'+$label) $receipt
     }
     if(-not $cleanupVerified){throw 'Host command cleanup unverified; receipt retained'}
@@ -377,10 +398,7 @@ try {
     }
     Require (Run 'image-pull' @('pull','--platform','linux/amd64',$toolchain.image) 120)
     if($script:wall.Elapsed.TotalSeconds -gt 600){throw 'Combined acquisition time limit'}
-    $receivedUpperBound=(NetworkReceived)-$script:networkStart
-    if($receivedUpperBound -gt 1073741824){throw 'Acquisition network budget exceeded'}
-    $script:acquiring=$false
-    Record 'download-budget' @{received_network_upper_bound_bytes=$receivedUpperBound;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20}
+    CompleteAcquisition
     $image=Run 'image-identity' @('image','inspect',$toolchain.image) 10;Require $image
     $im=(TextOutput $image|ConvertFrom-Json)[0]
     if($im.Os -cne 'linux' -or $im.Architecture -cne 'amd64' -or $toolchain.image -notin $im.RepoDigests){throw 'Image digest/platform mismatch'}
@@ -467,6 +485,11 @@ try {
 finally {
     $cleanupErrors=@(foreach($id in @($script:containers)){try{StopContainer $id ('final-'+$id.Substring(0,12))}catch{@{container=$id;failure_type=$_.Exception.GetType().FullName}}})
     if($cleanupErrors.Count){$verdict='CLEANUP_NOT_VERIFIED';$script:failed=$true}
+    if($script:acquiring){
+        $network=NetworkBudgetReceipt
+        Record 'download-budget-incomplete' $network
+        if($network.state -cne 'OBSERVED'){$script:failed=$true}
+    }
     Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;whole_feature_support=$false}
     Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count}
 }
