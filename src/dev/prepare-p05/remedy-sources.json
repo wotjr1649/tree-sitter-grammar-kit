@@ -1,0 +1,241 @@
+{
+  "schema": "tsgk.p05.remedy-sources.v1",
+  "approval_subject": "42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4",
+  "sql": {
+    "id": "SQL_EXISTING_CANDIDATE_EVALUATION_ONLY",
+    "authorization_required": true,
+    "repository": "DerekStride/tree-sitter-sql",
+    "revision": "97614d051eebfd3bc5d97c0bdb5a1638719ca811",
+    "provider": "https://codeload.github.com/DerekStride/tree-sitter-sql/tar.gz/97614d051eebfd3bc5d97c0bdb5a1638719ca811",
+    "archive_limit_bytes": 8388608,
+    "selected_regular_files": [
+      {
+        "path": "LICENSE",
+        "mode": "100644",
+        "git_blob_sha1": "b976c9b4c70b2aad4bb31de3d6504193dc0be83c",
+        "bytes": 1069
+      },
+      {
+        "path": "grammar.js",
+        "mode": "100644",
+        "git_blob_sha1": "eea8deca823c6e937b2204cc42405c350499aa48",
+        "bytes": 1945
+      },
+      {
+        "path": "grammar/column-lists.js",
+        "mode": "100644",
+        "git_blob_sha1": "55d257d70e83c364d875494961944439118fd8b5",
+        "bytes": 4168
+      },
+      {
+        "path": "grammar/expressions.js",
+        "mode": "100644",
+        "git_blob_sha1": "5d49ccb50c83ba182566a8100709936d05ec36ed",
+        "bytes": 9652
+      },
+      {
+        "path": "grammar/helpers.js",
+        "mode": "100644",
+        "git_blob_sha1": "6f29664f8b0d97fc12eb729c17b73aede64ad576",
+        "bytes": 792
+      },
+      {
+        "path": "grammar/keywords.js",
+        "mode": "100644",
+        "git_blob_sha1": "6be9e8940972d69a3c5804cce56666e59be23fd2",
+        "bytes": 20042
+      },
+      {
+        "path": "grammar/statements/alter.js",
+        "mode": "100644",
+        "git_blob_sha1": "7646598a4b8db56ff8f0dd42812a4226120e8d5b",
+        "bytes": 11138
+      },
+      {
+        "path": "grammar/statements/comment.js",
+        "mode": "100644",
+        "git_blob_sha1": "ec4320f1c1844e3917638036332ae964332a35ad",
+        "bytes": 1688
+      },
+      {
+        "path": "grammar/statements/copy.js",
+        "mode": "100644",
+        "git_blob_sha1": "647fcd322d13f43c81e8eb079d9c7a7fbe1a067a",
+        "bytes": 1521
+      },
+      {
+        "path": "grammar/statements/create-function.js",
+        "mode": "100644",
+        "git_blob_sha1": "283881a5d43e08f360aba4099f684a1242beaf14",
+        "bytes": 5272
+      },
+      {
+        "path": "grammar/statements/create-procedure.js",
+        "mode": "100644",
+        "git_blob_sha1": "5e846c3c9dcc3e4727ab1b9bd878caf62e54c4d7",
+        "bytes": 2220
+      },
+      {
+        "path": "grammar/statements/create.js",
+        "mode": "100644",
+        "git_blob_sha1": "41f54a244e283c38b7fec7b1f1d6e5e8f595e8a8",
+        "bytes": 15414
+      },
+      {
+        "path": "grammar/statements/delete.js",
+        "mode": "100644",
+        "git_blob_sha1": "97bad160d9445e299978bb2a95b8b7116343d74f",
+        "bytes": 401
+      },
+      {
+        "path": "grammar/statements/drop.js",
+        "mode": "100644",
+        "git_blob_sha1": "48e10baa69aaa8e4fa8cd1bff7e1b98b99c041c3",
+        "bytes": 2554
+      },
+      {
+        "path": "grammar/statements/index.js",
+        "mode": "100644",
+        "git_blob_sha1": "94f0ec628add92d8a258f3441dbc85e551290dec",
+        "bytes": 3601
+      },
+      {
+        "path": "grammar/statements/insert.js",
+        "mode": "100644",
+        "git_blob_sha1": "f241d126b4a5bfcccaad193ca956ccbefa2ae1a6",
+        "bytes": 1853
+      },
+      {
+        "path": "grammar/statements/merge.js",
+        "mode": "100644",
+        "git_blob_sha1": "38d827074c5abcc8361d856c7d0d746de8f377e8",
+        "bytes": 880
+      },
+      {
+        "path": "grammar/statements/optimize.js",
+        "mode": "100644",
+        "git_blob_sha1": "2c5de9e414cb53ed19781cd7e797e5a5bc9e1e9b",
+        "bytes": 2670
+      },
+      {
+        "path": "grammar/statements/refresh.js",
+        "mode": "100644",
+        "git_blob_sha1": "1cc849435c38c6a8d2b89e0f4061cb56bbc40ec4",
+        "bytes": 483
+      },
+      {
+        "path": "grammar/statements/rename.js",
+        "mode": "100644",
+        "git_blob_sha1": "8b2d05cc0da36da1d497d40219d7bd124cc0de8c",
+        "bytes": 609
+      },
+      {
+        "path": "grammar/statements/select.js",
+        "mode": "100644",
+        "git_blob_sha1": "69629c82346551a41689f2c3f5f4301875a84e17",
+        "bytes": 8035
+      },
+      {
+        "path": "grammar/statements/set.js",
+        "mode": "100644",
+        "git_blob_sha1": "e916bc747456b20d8e24480e0f08c4a65fc2a471",
+        "bytes": 1903
+      },
+      {
+        "path": "grammar/statements/truncate.js",
+        "mode": "100644",
+        "git_blob_sha1": "9c1df6d2815a0354da1a63af130213fde3dcab12",
+        "bytes": 258
+      },
+      {
+        "path": "grammar/statements/update.js",
+        "mode": "100644",
+        "git_blob_sha1": "4f30d86b06b9778f6ae051b7635b4a6879632f2a",
+        "bytes": 604
+      },
+      {
+        "path": "grammar/transactions.js",
+        "mode": "100644",
+        "git_blob_sha1": "a8e66d080ff4e501252fda31fd99b1b2dcf3320e",
+        "bytes": 471
+      },
+      {
+        "path": "grammar/types.js",
+        "mode": "100644",
+        "git_blob_sha1": "ea16931dcfcc0cb2401ea396b75ca0354c20ffbc",
+        "bytes": 5115
+      },
+      {
+        "path": "package-lock.json",
+        "mode": "100644",
+        "git_blob_sha1": "ae448e31c42b6df1ae31b3ff65e770d727bd2c70",
+        "bytes": 99784
+      },
+      {
+        "path": "package.json",
+        "mode": "100644",
+        "git_blob_sha1": "74485378347afa8feaa765594ca535f0449538f4",
+        "bytes": 1648
+      },
+      {
+        "path": "src/scanner.c",
+        "mode": "100644",
+        "git_blob_sha1": "3cb1a06152f6255d790c84f8602df5f8893dbf85",
+        "bytes": 4873
+      },
+      {
+        "path": "tree-sitter.json",
+        "mode": "100644",
+        "git_blob_sha1": "9a854ba57ef75074720f6f9944ee53ef9ce248df",
+        "bytes": 652
+      }
+    ],
+    "metadata": {
+      "path": "artifacts/sessions/campaign-01-2026-09-29/preparation/20260930-prepare-05/sql-candidate-exact-file-metadata.json",
+      "bytes": 5478,
+      "sha256": "5505d35dbe4bb4733db4b1791c8b5952bfe9d92f494bca1f6b01fa64699a4130"
+    },
+    "destination": "RUNNER_TEMP/tsgk-p05-remedy-<run>-<attempt>/candidate-evaluation/derek-sql-97614d0",
+    "effects": [
+      "bounded public archive acquisition",
+      "allowlist regular-file extraction",
+      "literal recursive ESM import/include closure inspection",
+      "generation",
+      "native build",
+      "registered TSQL28 + negative2 parse/edit"
+    ],
+    "before_G": "30개 bytes/Git blob/size/SHA, 전체 relative imports와 LICENSE 검토; 미등록 dependency 있으면G중단",
+    "before_B": "생성된 headers + 고정 scanner의 quoted include closure를 확인",
+    "adoption_authorized": false,
+    "replacement_authorized": false,
+    "grammar_patch_authorized": false,
+    "original_crary_source_preserved": true
+  },
+  "postgresql": {
+    "id": "PG_EXACT_LFS_OBJECT_AND_SINGLE_FILE_CAP",
+    "authorization_required": true,
+    "repository": "gmr/tree-sitter-postgres",
+    "revision": "59d0d8cd7506d68de1229fb4bbce838c83b60c8a",
+    "target": "postgres/src/parser.c",
+    "provider": "https://media.githubusercontent.com/media/gmr/tree-sitter-postgres/59d0d8cd7506d68de1229fb4bbce838c83b60c8a/postgres/src/parser.c",
+    "sha256": "a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5",
+    "bytes": 97664793,
+    "single_file_limit_bytes": 104857600,
+    "original_pointer_sha256": "9b714c169bc14fb13b23374f344fe1bd20b7db4a07546b2b671d644fe374bcc3",
+    "original_pointer_preserved": true,
+    "destination": "RUNNER_TEMP/tsgk-p05-remedy-<run>-<attempt>/materialized-lfs/postgres/src/parser.c",
+    "effects": [
+      "one exact public HTTP object acquisition",
+      "C artifact/hash/header/ABI inspection",
+      "contained baseline build",
+      "registered PG8/edit execution",
+      "one changed-option generation diagnostic and regenerated build/PG8 if success"
+    ],
+    "before_B": "97,664,793bytes와 LFS SHA-256 일치를 확인; 원 pointer를 C artifact라고 부르지 않음",
+    "regeneration_option": "--disable-optimizations",
+    "original_generation_exit137_preserved": true,
+    "memory_limit_increase": false,
+    "kill_cause": "NOT_ESTABLISHED; cgroup memory.events 전후를 diagnostic 한도 안에서 보존",
+    "converter_or_postgres_application_execution": false
+  }
+}

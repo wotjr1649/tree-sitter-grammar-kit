@@ -20,6 +20,14 @@ $originalInputs=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'inputs.json')
 if($legacy.image -cne $originalInputs.image -or $legacy.compressed_bytes -ne $originalInputs.image_compressed_bytes){throw 'Original image identity changed'}
 $candidate=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject
 if($candidate.image -cne 'node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492' -or $candidate.compressed_bytes -ne 440298459){throw 'Proposed image identity mismatch'}
+$remedySubject='42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'
+foreach($stage in @('patch-r1','sql-pg-r1')){$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $remedySubject}
+foreach($vector in @(@{RemedyStage='patch-r1';RemedySubject=''},@{RemedyStage='patch-r1';RemedySubject=$subject},@{RemedyStage='unknown';RemedySubject=$remedySubject},@{RemedyStage='';RemedySubject=$remedySubject})){
+    $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject @vector}catch{$rejected=$true}
+    if(-not $rejected){throw 'Unbound remedy stage/subject accepted'}
+}
+$rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile bookworm-r1 -RemedyStage patch-r1 -RemedySubject $remedySubject}catch{$rejected=$true}
+if(-not $rejected){throw 'Legacy image authorized remedy work'}
 foreach($vector in @(@{ImageProfile='trixie-r1';ImageSubject=''},@{ImageProfile='trixie-r1';ImageSubject=$subject},@{ImageProfile='bookworm-r1';ImageSubject=$imageSubject},@{ImageProfile='unknown';ImageSubject=$imageSubject},@{ImageProfile='';ImageSubject=$imageSubject})){
     $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject @vector}catch{$rejected=$true}
     if(-not $rejected){throw 'Unbound image profile/approval was accepted'}
@@ -43,6 +51,29 @@ function RejectReadOnlyAssignments($candidate){
 RejectReadOnlyAssignments $ast
 $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').Ast)}catch{$rejected=$true}
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
+. (Join-Path $PSScriptRoot 'remedy.ps1')
+$remedySubjects=ReadRemedySubjects
+foreach($stage in @('patch-r1','sql-pg-r1')){
+    $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    if($rows.Count -ne $(if($stage -ceq 'patch-r1'){85}else{46}) -or @($rows|Where-Object {$_.case.edit}).Count -ne $(if($stage -ceq 'patch-r1'){16}else{3})){throw 'Remedy rows/edit budget mismatch'}
+    if($stage -ceq 'patch-r1' -and @($rows|Where-Object {$_.producer.EndsWith('-original') -and $_.id -cnotlike 'P05-REMEDY-*'}).Count){throw 'Identical failing baseline scheduled again'}
+}
+$rejected=$false;try{$null=NewRemedyRows 'unknown' $originalInputs.cases $remedySubjects.cases.cases}catch{$rejected=$true}
+if(-not $rejected){throw 'Unknown remedy stage scheduled'}
+foreach($case in $remedySubjects.cases.cases){
+    $bytes=[Text.Encoding]::UTF8.GetBytes($case.input_utf8)
+    AssertRemedyObject $bytes.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()) @{bytes=$case.input_bytes;sha256=$case.input_sha256}
+    if($case.edit -and ($case.edit.start_byte -ge $case.edit.old_end_byte -or $case.edit.old_end_byte -gt $bytes.Length)){throw 'New edit outside original source'}
+}
+$fixture='before';$changed='after'
+$pin=@{original_bytes=6;original_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($fixture))).ToLowerInvariant();operations=@(@{before=$fixture;after=$changed;occurrences=1});proposed_result_bytes=5;proposed_result_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($changed))).ToLowerInvariant()}
+if((ApplyLiteralPatch $fixture $pin) -cne $changed){throw 'Owned literal patch failed'}
+foreach($kind in @('source','count','output')){
+    $bad=$pin.Clone();$bad.operations=@(@{before=$fixture;after=$changed;occurrences=$(if($kind -ceq 'count'){2}else{1})})
+    if($kind -ceq 'output'){$bad.proposed_result_sha256='0'*64}
+    $rejected=$false;try{$null=ApplyLiteralPatch $(if($kind -ceq 'source'){'Before'}else{$fixture}) $bad}catch{$rejected=$true}
+    if(-not $rejected){throw 'Changed source/count/output patch accepted'}
+}
 foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','CheckPriorEvidenceSubjects','FileIdentity','CheckInertImports','CheckJsInputs','CaseLedger')){
     $definition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $helper},$true))
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
@@ -53,6 +84,11 @@ CheckInertImports $swiftSource '50974:import"'
 foreach($vector in @(@($swiftSource,'50975:import"'),@($swiftSource,'50974:import";50980:import('),@('unreviewed','50974:import"'))){
     $rejected=$false;try{CheckInertImports $vector[0] $vector[1]}catch{$rejected=$true}
     if(-not $rejected){throw 'Unreviewed Swift import occurrence accepted'}
+}
+foreach($binding in @(@('ea0bed0718ca8db1f69c826a41776bff98488afc451c57b2994529dcb6f4b593',"10284:import';18414:import';21263:import("),@('bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512','51547:import"'))){
+    CheckInertImports $binding[0] $binding[1]
+    $rejected=$false;try{CheckInertImports $binding[0] ($binding[1]+';1:import(')}catch{$rejected=$true}
+    if(-not $rejected){throw 'Extra import in approved candidate accepted'}
 }
 $priorTsql='5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458'
 $priorCsharp='98590999770a8681c3c3347dc61b3aae81dd30e3b26629a66e49b4c706d3be79'
@@ -146,6 +182,49 @@ $grammarPath=Join-Path $root 'grammar.json'
     $rejected=$false;try{$null=CheckJsInputs $entry $sourceRoot}catch{$rejected=$true}
     if(-not $rejected){throw 'JS source-root escape accepted'}
 } $root
+& {
+    param($caseRoot)
+    $root=Join-Path $caseRoot 'remedy-closure';$sourceRoot=Join-Path $root 'source';$parserRoot=Join-Path $root 'generated'
+    [void][IO.Directory]::CreateDirectory($sourceRoot);[void][IO.Directory]::CreateDirectory($parserRoot)
+    $script:verifiedSource=@{}
+    $entry=Join-Path $sourceRoot 'grammar.js';$dependency=Join-Path $sourceRoot 'dependency.js'
+    [IO.File]::WriteAllText($dependency,'export default {};',[Text.UTF8Encoding]::new($false))
+    function PinFixture([string]$path){$identity=FileIdentity $path;$script:verifiedSource[$identity.path]=$identity.sha256}
+    PinFixture $dependency
+    [IO.File]::WriteAllText($entry,"import rules from './dependency.js';`nexport default rules;",[Text.UTF8Encoding]::new($false));PinFixture $entry
+    if((CheckSqlJsInputs $entry $sourceRoot).Count -ne 2){throw 'Owned literal ESM closure incomplete'}
+    foreach($source in @("import rules from 'unregistered';","import('./dependency.js');","const load = require;","import rules from '../outside.js';")){
+        [IO.File]::WriteAllText($entry,$source,[Text.UTF8Encoding]::new($false));PinFixture $entry
+        $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{$rejected=$true}
+        if(-not $rejected){throw 'Unresolved, dynamic, package or escaped SQL import accepted'}
+    }
+    $parser=Join-Path $parserRoot 'parser.c';$header=Join-Path $parserRoot 'header.h'
+    [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($header,'/* owned header */',[Text.UTF8Encoding]::new($false))
+    if((CheckRemedyQuotedIncludes @($parser) $parserRoot).Count -ne 2){throw 'Owned quoted includes incomplete'}
+    foreach($name in @('missing.h','../outside.h')){
+        [IO.File]::WriteAllText($parser,('#include "'+$name+'"'),[Text.UTF8Encoding]::new($false))
+        if($name.StartsWith('..')){[IO.File]::WriteAllText((Join-Path $root 'outside.h'),'/* unpinned */',[Text.UTF8Encoding]::new($false))}
+        $rejected=$false;try{$null=CheckRemedyQuotedIncludes @($parser) $parserRoot}catch{$rejected=$true}
+        if(-not $rejected){throw 'Missing or unpinned quoted include accepted'}
+    }
+    [void][IO.Directory]::CreateDirectory((Join-Path $root 'records'))
+    $script:remedyRows=NewRemedyRows 'patch-r1' $originalInputs.cases $remedySubjects.cases.cases
+    $script:failed=$false
+    $recordDefinition=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'Record'},$true))
+    . ([scriptblock]::Create($recordDefinition[0].Extent.Text))
+    [IO.File]::WriteAllText($parser,'#include "missing.h"',[Text.UTF8Encoding]::new($false))
+    $blocked=TryRemedyPrecheck 'csharp-original' 'build' {CheckRemedyQuotedIncludes @($parser) $parserRoot}
+    $own=@($script:remedyRows|Where-Object producer -CEQ 'csharp-original');$others=@($script:remedyRows|Where-Object producer -CNE 'csharp-original')
+    if($blocked.passed -or -not $script:failed -or @($own|Where-Object dependency -CNE 'PRECHECK_FAILED_BUILD').Count -or @($others|Where-Object dependency -CNE 'GENERATION_BUILD_AND_SAFETY_PREREQUISITES').Count){throw 'Producer closure failure stopped or relabelled unrelated work'}
+    [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false))
+    $passed=TryRemedyPrecheck 'csharp-candidate' 'build' {CheckRemedyQuotedIncludes @($parser) $parserRoot}
+    if(-not $passed.passed -or $passed.value.Count -ne 2){throw 'Independent producer closure did not continue'}
+    foreach($failure in @('Quoted include bytes changed','Project header bytes changed','Container child cleanup unverified','Native operation budget exceeded','Input is not a regular file')){
+        $rejected=$false;try{$null=TryRemedyPrecheck 'swift-candidate' 'build' {throw $failure}}catch{$rejected=$true}
+        if(-not $rejected){throw 'Shared integrity, cleanup or budget failure was swallowed'}
+    }
+    $script:remedyRows=$null;$script:failed=$false
+} $root
 [IO.File]::WriteAllText($grammarPath,'{"name":"TSQL","rules":{"AS":{"type":"STRING","value":"AS"},"as":{"type":"STRING","value":"as"}}}',[Text.UTF8Encoding]::new($false))
 if((ReadGrammarName $grammarPath) -cne 'TSQL'){throw 'Case-distinct grammar keys/name were not preserved'}
 [IO.File]::WriteAllText($grammarPath,'{"name":"invalid-name","rules":{}}',[Text.UTF8Encoding]::new($false))
@@ -226,12 +305,25 @@ $supervisorBurst=& {
     }
     $script:commands=[Collections.Generic.List[object]]::new();$script:wall=[Diagnostics.Stopwatch]::StartNew()
     $script:imageSize=0L;$script:acquiring=$false;$runnerRoot=$root
-    $burst='$s=[Console]::OpenStandardOutput();$b=[byte[]]::new(65536);for($i=0;$i -lt 128;$i++){$s.Write($b,0,$b.Length)};$s.Flush()'
-    $result=Run 'burst' @('-NoLogo','-NoProfile','-Command',$burst) 2 8388608 -executable (Application pwsh)
+    $source=Join-Path $root 'burst.go';$binary=Join-Path $root $(if($IsWindows){'burst.exe'}else{'burst'})
+    [IO.File]::WriteAllText($source,('package main; import ("os"; "time"); func main() { if len(os.Args) > 1 { time.Sleep(3 * time.Second); return }; b := make([]byte, 65536); for i := 0; i < 128; i++ { n, e := os.Stdout.Write(b); if e != nil || n != len(b) { os.Exit(1) } } }'+"`n"),[Text.UTF8Encoding]::new($false))
+    $build=[Diagnostics.ProcessStartInfo]::new();$build.FileName=Application go;$build.UseShellExecute=$false;$build.CreateNoWindow=$true;$build.WorkingDirectory=$root
+    foreach($argument in @('build','-o',$binary,$source)){$build.ArgumentList.Add($argument)}
+    $build.Environment.Clear()
+    foreach($key in @('PATH','SystemRoot','WINDIR','COMSPEC','PATHEXT')){if([Environment]::GetEnvironmentVariable($key)){$build.Environment[$key]=[Environment]::GetEnvironmentVariable($key)}}
+    foreach($key in @('HOME','USERPROFILE','TMPDIR','TEMP','TMP','GOCACHE','GOTMPDIR')){$build.Environment[$key]=$root}
+    foreach($setting in @{CGO_ENABLED='0';GOENV='off';GOWORK='off';GOTOOLCHAIN='local';GOPROXY='off';GOSUMDB='off'}.GetEnumerator()){$build.Environment[$setting.Key]=$setting.Value}
+    $compiler=[Diagnostics.Process]::new();$compiler.StartInfo=$build
+    try{if(-not $compiler.Start()){throw 'Owned Go fixture build start failed'};if(-not $compiler.WaitForExit(30000)){$compiler.Kill($true);if(-not $compiler.WaitForExit(2000)){throw 'Owned fixture compiler cleanup unknown'};throw 'Owned fixture build timeout'};if($compiler.ExitCode -ne 0){throw 'Owned fixture build failed'}}finally{$compiler.Dispose()}
+    $result=Run 'burst' @() 2 8388608 -executable $binary
     Require $result
     $expected=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([byte[]]::new(8388608))).ToLowerInvariant()
     if($result.observed_bytes -ne 8388608 -or $result.stored_stdout_bytes -ne 8388608 -or $result.stored_stderr_bytes -ne 0 -or $result.stdout_sha256 -cne $expected -or -not $result.host_cleanup_verified){throw 'Bounded supervisor burst lost bytes or cleanup'}
-    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=1;native=$false}
+    $limited=Run 'burst-output-limit' @() 2 131072 -executable $binary
+    if($limited.termination -cne 'OUTPUT_LIMIT' -or $limited.stored_stdout_bytes+$limited.stored_stderr_bytes -gt 131072 -or -not $limited.host_cleanup_verified){throw 'Output limit/cleanup negative failed'}
+    $timeout=Run 'burst-timeout' @('wait') 1 1048576 -executable $binary
+    if($timeout.termination -cne 'TIMEOUT' -or -not $timeout.host_cleanup_verified){throw 'Timeout/cleanup negative failed'}
+    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=3;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';upstream_native=$false}
 } $ast $root
 $savedPath=$env:PATH
 try {
@@ -243,5 +335,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=1;native_fixture_processes_executed=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
-Write-Output 'P05 self-check PASS; owned supervisor burst1, native fixture execution0'
+@{result='PASS';checks=@('exact remedy subject/stage/image mismatches rejected','patch stage85/edit16 and SQL-PG46/edit3; no identical original baseline scheduled','literal original/count/output digest mismatches rejected; 34 inputs exact bytes','ESM dynamic/package/root escape and missing/unpinned quoted includes rejected','duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=3;native_fixture_processes_executed=3;upstream_native_invocations=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+Write-Output 'P05 self-check PASS; owned Go supervisor fixture build1/execute3, upstream native0'

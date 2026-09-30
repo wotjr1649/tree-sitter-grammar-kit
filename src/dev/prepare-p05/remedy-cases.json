@@ -1,0 +1,761 @@
+{
+  "schema": "tsgk.p05.regression-cases.proposal.v1",
+  "status": "PROPOSED_NOT_AUTHORIZED_NOT_EXECUTED",
+  "original57_unchanged": true,
+  "original6_edits_unchanged": true,
+  "new_case_count": 34,
+  "new_edit_variants": 6,
+  "features_newly_adopted": 0,
+  "cases": [
+    {
+      "id": "P05-REMEDY-CS-ASYNC-ARG",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M(int async) { F(async); } void F(int x) {} }\n",
+      "input_bytes": 61,
+      "input_sha256": "5da3ee047a35361274b3dbde8c3a748296b2fb2d7f869b721e78c3e0ba372462",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "parameter/invocation argument async는 identifier; 진짜 async modifier와 분리",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-AWAIT-ARG",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M(int await) { F(await); } void F(int x) {} }\n",
+      "input_bytes": 61,
+      "input_sha256": "fbcc0bafaa43d530edecbe988c05b7d665c71dfe83f6ba547f4d3c6fb4de1a45",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "non-async method의 parameter/invocation await identifier",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-VAR-ARG",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M(int var) { F(var); } void F(int x) {} }\n",
+      "input_bytes": 57,
+      "input_sha256": "60f17aa51b051248be05b58fad25b2fc6bc7c2949f27354d885b38cfc9a19970",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "parameter/invocation var identifier; implicit_type과 분리",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-VAR-TYPE",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class var {} class C { var M() { return new var(); } }\n",
+      "input_bytes": 55,
+      "input_sha256": "83689d329d9bea619a53c5e56d5a08bddc2806216212444b3dab84a62ad39344",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "var declaration/return/constructed type 이름 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-METHOD",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { async Task<int> M() { return await F(); } }\n",
+      "input_bytes": 54,
+      "input_sha256": "9eb9e3811bc7d757b63082d6e8c775630704a2d9310ef8ecf2f9452575304fdc",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "method async modifier와 await_expression 유지; symbol lookup/runtime 제외",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-LOCAL",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M() { async Task<int> Local() { return await F(); } } }\n",
+      "input_bytes": 71,
+      "input_sha256": "a8b6db79d60ed39e0c985d983c65e3cbb9f4407d7db29333233505a7a302deb3",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "local function async modifier/type/name/parameters/body 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 43,
+        "old_end_byte": 44,
+        "replacement_utf8": "",
+        "restore_utf8": ")",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { async Task<int> Local( { return await F(); } } }\n",
+          "damaged_sha256": "accf90f3325d01c9b8d2b57dfd3a9d79b315904feeff73633967405990e3ceb6",
+          "error_near_start": 41,
+          "error_near_end": 47,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-LAMBDA",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M() { var f = async () => await F(); } }\n",
+      "input_bytes": 56,
+      "input_sha256": "624f29c993eab8d7e8c09b0c8fc0379cf69a29befa871380c75d358bbc6789c7",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "lambda async modifier/parameters/body/await 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 36,
+        "old_end_byte": 37,
+        "replacement_utf8": "",
+        "restore_utf8": ")",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { var f = async ( => await F(); } }\n",
+          "damaged_sha256": "95bd1312f1e65a31c19c9b5f8748bab00ca17d5341ad820d6b0a15ad0a2ee463",
+          "error_near_start": 34,
+          "error_near_end": 40,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-DELEGATE",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "class C { void M() { var f = async delegate { await F(); }; } }\n",
+      "input_bytes": 64,
+      "input_sha256": "a70083b76c3fb6b4877bfe47d90c1826d1e601fc00495f1c9a6591be2be8e596",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "anonymous method async modifier와 block/await 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 44,
+        "old_end_byte": 45,
+        "replacement_utf8": "",
+        "restore_utf8": "{",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { var f = async delegate  await F(); }; } }\n",
+          "damaged_sha256": "f9d4985798ff970534f5965b3b9f8befc0af4340a1d084c3d714792a971d4c41",
+          "error_near_start": 42,
+          "error_near_end": 48,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-CRLF",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "  #:include helpers.cs\r\nConsole.WriteLine(1);\r\n",
+      "input_bytes": 47,
+      "input_sha256": "a9669a0fd161759524361e38895c3c8be3a1b2766ab3a4b779716a2a2e355c38",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "leading horizontal whitespace/CRLF, include 이름·argument·행 경계와 다음 statement 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 3,
+        "old_end_byte": 4,
+        "replacement_utf8": "",
+        "restore_utf8": ":",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "  #include helpers.cs\r\nConsole.WriteLine(1);\r\n",
+          "damaged_sha256": "6416d7294484fa10e226d97639a60dd508b8eb1be09cd75c6fd8bced55b4afc1",
+          "error_near_start": 2,
+          "error_near_end": 12,
+          "preserve_following_source": true
+        },
+        "expected": "CRLF bytes 그대로5stage/2comparison; damaged/restored incremental=fresh; restored 원 directive·후속 statement 구조 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-EOF",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:include helpers.cs",
+      "input_bytes": 20,
+      "input_sha256": "21e6e4c1ee0d8e56de64132a47766a1682f5cd351d12a32b0e6ccf99b4d5a42a",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "EOF에서 이름·argument·directive 전체 source 범위",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-DIRECTIVE-SAMELINE",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "N",
+      "input_utf8": "Console.WriteLine(1); #:include helpers.cs\n",
+      "input_bytes": 43,
+      "input_sha256": "622f3ca6d59d4de4b7032b6314dd4b966946aeea9a8472d50d17d6c0e7503773",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "directive는 whitespace를 제외한 행 시작; same-line prefix 오류와 앞 statement 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-TOPLEVEL-RAW",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "var text = \"\"\"#:include helpers.cs\"\"\";\n",
+      "input_bytes": 39,
+      "input_sha256": "ee5faf39bf423b174575f306391808d9a9379b0c5ba473ff541e43969f244777",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "top-level raw string content는 directive가 아니며 기존 scanner path 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TYPESCRIPT-DEFER-DEFAULT",
+      "route": "typescript",
+      "feature_ids": [
+        "typescript-V59"
+      ],
+      "kind": "P",
+      "input_utf8": "import defer from \"m\";\nconst value: unknown = defer;\n",
+      "input_bytes": 53,
+      "input_sha256": "b2e70cb02133dc2569a6378048d729834b538637fa42f35f12fda22db3a3a9e4",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "legacy default binding defer는 phase defer keyword로 오분류하지 않음",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TYPESCRIPT-DEFER-NAMED",
+      "route": "typescript",
+      "feature_ids": [
+        "typescript-V59"
+      ],
+      "kind": "N",
+      "input_utf8": "import defer { x } from \"m\";\n",
+      "input_bytes": 29,
+      "input_sha256": "2131883e45be5efad7bee47af5942b158ce536d62913a59b4ad787bbd628e9dc",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "defer import는 namespace-only; named 형태 오류 경계",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TSX-DEFER-DEFAULT",
+      "route": "tsx",
+      "feature_ids": [
+        "tsx-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "import defer from \"m\";\nconst node = <div>{defer}</div>;\n",
+      "input_bytes": 56,
+      "input_sha256": "3c3aa6605437ca8ae61a2d8b412362cfe3ad6293a8750cf643cd94916aa53348",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "legacy default binding defer는 phase defer keyword로 오분류하지 않음",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TSX-DEFER-NAMED",
+      "route": "tsx",
+      "feature_ids": [
+        "tsx-B01"
+      ],
+      "kind": "N",
+      "input_utf8": "import defer { x } from \"m\";\n",
+      "input_bytes": 29,
+      "input_sha256": "2131883e45be5efad7bee47af5942b158ce536d62913a59b4ad787bbd628e9dc",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "defer import는 namespace-only; named 형태 오류 경계",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-ARRAY",
+      "route": "swift",
+      "feature_ids": [
+        "swift-B01",
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: [Int] = [1, 2, 3]\n",
+      "input_bytes": 30,
+      "input_sha256": "dd4adb73b9aa301558b22053ba1fe7d85caaf49a3c0e46258eb155b89f65316a",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "legacy array type/literal 구조 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-DICT",
+      "route": "swift",
+      "feature_ids": [
+        "swift-B01",
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: [String: Int] = [\"x\": 1]\n",
+      "input_bytes": 37,
+      "input_sha256": "4d1f15e1e712a0b9df59e1d4879ee2ef3d39d488e411136517e22b9085370237",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "legacy dictionary key/value와 literal 구조 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-INTEGER-GENERIC",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: InlineArray<3, Int> = [1, 2, 3]\n",
+      "input_bytes": 44,
+      "input_sha256": "27776f5b0af19fa4ae001f73489b6f81ba18e3d94dd610a673dde70bf6801b6b",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "integer generic argument3과 element type Int, array literal 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-MODULE-TYPE",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V64"
+      ],
+      "kind": "P",
+      "input_utf8": "let value: Swift::Int = 1\n",
+      "input_bytes": 26,
+      "input_sha256": "cabfbe1041358f35dc377a2ec11052f64c7759cbd3e47f72656777858d632fcf",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "type 위치 module selector Swift/::/selected type Int와 initializer",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-INLINE-NO-SIZE",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "N",
+      "input_utf8": "let values: [of Int] = [1, 2, 3]\n",
+      "input_bytes": 33,
+      "input_sha256": "82a0e2ef18d341915c7fa3ae51be1bed1ec810f1e1389a0c89ac8df8fa1b3646",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "size 누락 ERROR/MISSING 및 후속 array source 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-MODULE-NO-MEMBER",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V64"
+      ],
+      "kind": "N",
+      "input_utf8": "let value = Swift::(1)\n",
+      "input_bytes": 23,
+      "input_sha256": "00bf946972b5f3dbb605c05069a80235a6954f9fed678348339826443a664f91",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "selected member 누락 ERROR/MISSING 및 argument source 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-INLINE-EDIT",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: [3 of Int] = [1, 2, 3]\n",
+      "input_bytes": 35,
+      "input_sha256": "31f86e1aae6defc72707343a07a8241e1d17a01eff5fe5a56d3f9e9102a139e1",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "등록 modern 원문 그대로의 별도 remedy edit variant; 원 positive와 size/module/member 구조 복구",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 15,
+        "old_end_byte": 17,
+        "replacement_utf8": "",
+        "restore_utf8": "of",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "let values: [3  Int] = [1, 2, 3]\n",
+          "damaged_sha256": "bc0e63863a5af9c8a1acfe7a0a44d18f224128212dd983a9e7549a6d4e6718d6",
+          "error_near_start": 13,
+          "error_near_end": 20,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; restored 원 syntax/ordered facts 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-MODULE-EDIT",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V64"
+      ],
+      "kind": "P",
+      "input_utf8": "let value = Swift::Int(1)\n",
+      "input_bytes": 26,
+      "input_sha256": "3311b73e705149ffcd9c29e0f6d9f2f8399341bbc69c081380b97883a3010ce3",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "등록 modern 원문 그대로의 별도 remedy edit variant; 원 positive와 size/module/member 구조 복구",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": {
+        "start_byte": 17,
+        "old_end_byte": 18,
+        "replacement_utf8": "",
+        "restore_utf8": ":",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "let value = Swift:Int(1)\n",
+          "damaged_sha256": "27319df8ee35bcb8021b81cd831dc90437ec5bc9c2b37f8104d4a953cf8c431c",
+          "error_near_start": 15,
+          "error_near_end": 21,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; restored 원 syntax/ordered facts 동일"
+      },
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TSQL-BRACKET-NEGATIVE",
+      "route": "tsql",
+      "feature_ids": [
+        "tsql-B01"
+      ],
+      "kind": "N",
+      "input_utf8": "SELECT [a FROM [t];\n",
+      "input_bytes": 20,
+      "input_sha256": "e463eaca690b7fecf4623f60583349b6fd6ab0b2fcc1412aa8dc0afdfac9c02d",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "unterminated bracket identifier 오류 및 후속 source 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-TSQL-SELECT-NEGATIVE",
+      "route": "tsql",
+      "feature_ids": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "kind": "N",
+      "input_utf8": "SELECT (1;\n",
+      "input_bytes": 11,
+      "input_sha256": "ae33dca357ba00976b0d554659319dde039a4ba8d88be46e9cbd8f2537c6a85e",
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "unclosed parenthesis ERROR/MISSING; permissive parse로 negative를 PASS 처리하지 않음",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-REGULAR",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "var text = $\"#:include {1}\";\n",
+      "input_bytes": 29,
+      "input_sha256": "189b9a9b06a1210f61b2a79fa6706efda3801fde321ec3c64c2c3ca395831d3c",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "regular interpolation 내용은 directive가 아님; string text와 interpolation expression1/경계 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-VERBATIM",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "var text = $@\"\n#:include {1}\";\n",
+      "input_bytes": 31,
+      "input_sha256": "c5d2ad9582f67ec9e0746bc61374f1eef7e8d5edc08d6fe341eaf6bd07d4f7bd",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "verbatim interpolation의 다음 행 #:include는 string content; directive node0, expression1/경계 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-RAW",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "kind": "P",
+      "input_utf8": "var text = $\"\"\"\n#:include {1}\n\"\"\";\n",
+      "input_bytes": 35,
+      "input_sha256": "97c5850d651b74a19bb9058cbf313b8448b9dd9e736b91ecec5278d7f593825a",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "raw interpolation의 행 시작 #:include는 content; directive node0, expression1/quote/행 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-NO-ARG-LANGUAGE",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:include\nConsole.WriteLine(1);\n",
+      "input_bytes": 32,
+      "input_sha256": "54db733deec1ac360450a93a9b1420e8d40dd42ec0132049a0c4549b8d2579cd",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "언어는 #:를 ignored directive로 보존; name include/argument 부재/다음 statement 확인. SDK의 missing argument 판정은 기존 제외, required 다섯 원 positive의 argument 기대는 그대로",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-CS-UNKNOWN-IGNORED",
+      "route": "csharp",
+      "feature_ids": [
+        "csharp-B01",
+        "csharp-V14c"
+      ],
+      "kind": "P",
+      "input_utf8": "#:unknown value\nConsole.WriteLine(1);\n",
+      "input_bytes": 38,
+      "input_sha256": "901892bec127297e1a9009b1749d0ccf70f847ef02862be0c22bca4ce3ffe270",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "unknown tool name도 #: ignored source; name/argument/행/후속 보존. SDK가 unknown을 인정한다는 주장이 아님",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-GENERIC-GENERAL",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let value: Vector<3, Int> = source\n",
+      "input_bytes": 35,
+      "input_sha256": "98472aa761367f34e243e7621e55ee44c88886bbb9df82e8a6bee57a75b45e60",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "일반 generic type의 integer argument3/source 구조; symbol binding은 기존 semantic 제외",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-GENERIC-SIGNED",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let value: Vector<-2, Int> = source\n",
+      "input_bytes": 36,
+      "input_sha256": "383c9a9aea0e8a9fa72e5d7a850b3f6d21496f6982fc90855cadfccedb84174f",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "generic signed integer argument -2/element type Int/source 경계; value/type parameter binding 판정 제외",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    },
+    {
+      "id": "P05-REMEDY-SWIFT-INLINE-GENERIC-SIZE",
+      "route": "swift",
+      "feature_ids": [
+        "swift-V62"
+      ],
+      "kind": "P",
+      "input_utf8": "let values: [count of Int] = source\n",
+      "input_bytes": 36,
+      "input_sha256": "a9d2bb0e800951fe5c801fc3824f2d8ce7220ed48e0a968d2a86171d287cbe56",
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "inline array size parameter reference count/of/Int와 source 경계; count lookup/값의 의미 제외",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "edit": null,
+      "status": "PROPOSED_SYNTAX_FACT_REVIEW_REQUIRED",
+      "scope_status": "EXISTING_ADOPTED_FEATURE_REGRESSION_ONLY"
+    }
+  ],
+  "predecessor": {
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-05/remedy-cases-proposed-r2.json",
+    "bytes": 21307,
+    "sha256": "98a74d950cf8569810aa0b37ad0e2af71623b258e85920c3807a83f0aad127dc"
+  },
+  "amendment": "C# 세 async 경로 edit/interpolation3개/ignored language 경계와 Swift signed/general generic/inline size 회귀 보완; 원57/6edit/256feature/version/mode 그대로"
+}

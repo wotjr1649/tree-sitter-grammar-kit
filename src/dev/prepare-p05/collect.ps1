@@ -3,13 +3,20 @@ $ErrorActionPreference='Stop'
 if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}
 $task=[IO.Path]::GetFullPath($Root)
 $prefix=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
-if(-not $task.StartsWith($prefix,[StringComparison]::Ordinal) -or $task.Substring($prefix.Length) -notmatch '^tsgk-p05-[0-9]+-[0-9]+$'){throw 'Unexpected evidence root'}
+if(-not $task.StartsWith($prefix,[StringComparison]::Ordinal) -or $task.Substring($prefix.Length) -notmatch '^tsgk-p05-(?:remedy-)?[0-9]+-[0-9]+$'){throw 'Unexpected evidence root'}
 if(-not (Test-Path -LiteralPath $task)){throw 'Task evidence missing'}
 $files=@(foreach($directory in @('raw','records','cases','owned','acquisition/archives','acquisition/records','acquisition/sources/Crary-Systems--tree-sitter-tsql--443d2bc774f1d779af7dcabcc99160fb24da96e6')){
     $path=Join-Path $task $directory
     if(Test-Path -LiteralPath $path){Get-ChildItem -LiteralPath $path -File -Recurse|Where-Object {-not $_.Name.EndsWith('.tar')} }
 })
 $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'inputs.json'),(Join-Path $PSScriptRoot 'case-review.json'),(Join-Path $PSScriptRoot 'probe.c.in')
+if($task.Substring($prefix.Length).StartsWith('tsgk-p05-remedy-')){
+    $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-patches.json'),(Join-Path $PSScriptRoot 'remedy-cases.json'),(Join-Path $PSScriptRoot 'remedy-fact-oracles.json'),(Join-Path $PSScriptRoot 'remedy-sources.json')
+    foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){
+        $path=Join-Path $task $directory
+        if(Test-Path -LiteralPath $path){$files+=Get-ChildItem -LiteralPath $path -File -Recurse}
+    }
+}
 if($files.Count -gt 10000){throw 'Evidence file count limit'}
 $manifest=@(foreach($file in $files){
     if($file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Evidence link rejected'}

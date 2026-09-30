@@ -1,11 +1,12 @@
-param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject,[string]$ToolchainProfile='bookworm-r1',[string]$ToolchainApprovalSubject,[string]$TsqlPriorEvidenceSubject,[string]$CsharpPriorEvidenceSubject,[string]$TsPgStageEvidenceSubject)
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject,[string]$ToolchainProfile='bookworm-r1',[string]$ToolchainApprovalSubject,[string]$TsqlPriorEvidenceSubject,[string]$CsharpPriorEvidenceSubject,[string]$TsPgStageEvidenceSubject,[string]$RemedyStage,[string]$RemedyApprovalSubject)
 $ErrorActionPreference='Stop'
-$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject
+$toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
-if(-not $root.StartsWith($runnerRoot,[StringComparison]::Ordinal) -or $root.Substring($runnerRoot.Length) -notmatch '^tsgk-p05-[0-9]+-[0-9]+$' -or (Test-Path -LiteralPath $root)){throw 'Fresh runner task root required'}
+$rootPattern=if($RemedyStage){'^tsgk-p05-remedy-[0-9]+-[0-9]+$'}else{'^tsgk-p05-[0-9]+-[0-9]+$'}
+if(-not $root.StartsWith($runnerRoot,[StringComparison]::Ordinal) -or $root.Substring($runnerRoot.Length) -notmatch $rootPattern -or (Test-Path -LiteralPath $root)){throw 'Fresh runner task root required'}
 $ancestor=Get-Item -LiteralPath $runnerRoot -Force
 while($ancestor){if($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Reparse runner ancestor'};$ancestor=$ancestor.Parent}
 [void][IO.Directory]::CreateDirectory($root)
@@ -23,6 +24,13 @@ foreach($group in $routeGroups){if($caseReview.route_counts.($group.Name) -ne $g
 $editIds=@($inputs.cases|Where-Object edit|ForEach-Object id)
 if($editIds.Count -ne 6 -or (Compare-Object $editIds @($caseReview.edit_ids))){throw 'Reviewed edit set changed'}
 foreach($case in $inputs.cases){if(-not $case.feature_ids.Count -or -not $case.expected.facts -or ($case.edit -and -not $case.edit.negative_expected)){throw 'Missing reviewed feature/fact/negative expectation'}}
+if($RemedyStage){
+    if($TsqlPriorEvidenceSubject -or $CsharpPriorEvidenceSubject -or $TsPgStageEvidenceSubject){throw 'Legacy route skipping cannot select remedy work'}
+    . (Join-Path $PSScriptRoot 'remedy.ps1')
+    $remedy=ReadRemedySubjects
+    $script:remedyRows=NewRemedyRows $RemedyStage $inputs.cases $remedy.cases.cases
+    foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){[void][IO.Directory]::CreateDirectory((Join-Path $root $directory))}
+}
 function Application([string]$name){
     $command=Get-Command -Name $name -CommandType Application -ErrorAction Stop|Select-Object -First 1
     if(-not $command.Source -or -not (Test-Path -LiteralPath $command.Source -PathType Leaf)){throw 'Application path unavailable'}
@@ -73,11 +81,14 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
             if($timer.Elapsed.TotalSeconds -gt $seconds){$reason='TIMEOUT';break}
             if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt 1073741824){$reason='DOWNLOAD_LIMIT';break}
             for($i=0;$i -lt 2;$i++){
-                if($pending[$i] -and $pending[$i].IsCompleted){
+                while($pending[$i] -and $pending[$i].IsCompleted){
+                    if($timer.Elapsed.TotalSeconds -gt $seconds){$reason='TIMEOUT';break}
+                    if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt 1073741824){$reason='DOWNLOAD_LIMIT';break}
                     $n=$pending[$i].GetAwaiter().GetResult();$total+=$n
                     if($total -gt $limit){$reason='OUTPUT_LIMIT';break}
                     if($n){$files[$i].Write($buffers[$i],0,$n);$pending[$i]=$streams[$i].ReadAsync($buffers[$i],0,65536)}else{$pending[$i]=$null}
                 }
+                if($reason -ne 'EXITED'){break}
             }
             if($reason -ne 'EXITED'){break}
             $reads=[Threading.Tasks.Task[]]@($pending|Where-Object {$_})
@@ -101,7 +112,7 @@ function TextOutput($result){return [IO.File]::ReadAllText((Join-Path $root ('ra
 function FileIdentity([string]$path){
     $file=Get-Item -LiteralPath $path -Force
     if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Input is not a regular file'}
-    return @{path=[IO.Path]::GetRelativePath($root,$file.FullName);bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}
+    return @{path=[IO.Path]::GetRelativePath($root,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}
 }
 function ReadGrammarName([string]$path){
     $grammar=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json -AsHashtable
@@ -114,6 +125,8 @@ function CheckInertImports([string]$sha256,[string]$occurrences){
         'c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f'="10284:import';18275:import';21124:import("
         '230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc'="4409:import';4459:import';27565:import'"
         'e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'='50974:import"'
+        'ea0bed0718ca8db1f69c826a41776bff98488afc451c57b2994529dcb6f4b593'="10284:import';18414:import';21263:import("
+        'bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512'='51547:import"'
     }
     if($occurrences -and $known[$sha256] -cne $occurrences){throw 'Unresolved dynamic/ES module dependency'}
 }
@@ -126,6 +139,7 @@ function CheckJsInputs([string]$entry,[string]$sourceRoot){
         $sourcePrefix=[IO.Path]::GetFullPath($sourceRoot).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
         $npmPrefix=[IO.Path]::GetFullPath((Join-Path $root 'npm')).TrimEnd('/','\')+[IO.Path]::DirectorySeparatorChar
         if(-not $path.StartsWith($sourcePrefix,[StringComparison]::Ordinal) -and -not $path.StartsWith($npmPrefix,[StringComparison]::Ordinal)){throw 'JS dependency outside pinned inputs'}
+        if(-not (Test-Path -LiteralPath $path -PathType Leaf)){throw ('Required JS dependency unavailable: '+[IO.Path]::GetRelativePath($root,$path).Replace('\','/'))}
         $identity=FileIdentity $path;$files.Add($identity);$source=[IO.File]::ReadAllText($path)
         if($source -match '\b(?:createRequire|eval|Function)\s*\(' -or $source -match '\b(?:const|let|var)\s+\w+\s*=\s*require\b(?!\s*\()'){throw 'Unreviewed JS loader/evaluation'}
         $imports=[regex]::Matches($source,'\brequire\s*\(\s*["'']([^"'']+)["'']\s*\)')
@@ -160,6 +174,7 @@ function Container([string]$label){
     foreach($mount in @(@{host=(Join-Path $root 'acquisition');target='/inputs/acquisition'},@{host=(Join-Path $root 'cases');target='/inputs/cases'},@{host=(Join-Path $root 'probe.c');target='/inputs/probe.c'},@{host=(Join-Path $root 'npm');target='/inputs/npm'},@{host=(Join-Path $root 'owned');target='/inputs/owned'},@{host=(Join-Path $root 'results');target='/inputs/results'})){
         $args+=@('--mount',('type=bind,source='+$mount.host+',target='+$mount.target+',readonly'))
     }
+    if($RemedyStage){foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){$args+=@('--mount',('type=bind,source='+(Join-Path $root $directory)+',target=/inputs/'+$directory+',readonly'))}}
     $args+=@('--entrypoint','/bin/sleep',$toolchain.image,'infinity')
     $created=Run ($label+'-create') $args 10;Require $created;$id=(TextOutput $created).Trim()
     if($id -notmatch '^[a-f0-9]{64}$'){throw 'Invalid Docker identity'}
@@ -222,16 +237,30 @@ function UnpackResult([string]$archive,[string]$destination,[long]$limit,[switch
 function CheckRecoveredProof([string]$path){
     if((Get-Item -LiteralPath $path).Length -ne 12 -or [Convert]::ToHexString([IO.File]::ReadAllBytes($path)) -cne '707265736572766564000D0A'){throw 'Recovered binary proof changed'}
 }
-function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned){
+function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned,[switch]$MemoryEvents){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
+    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
     if($Owned){
         if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
     }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
     $id=Container $label
     try {
+        if($MemoryEvents){
+            if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
+            Require (Run ($label+'-memory-before') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.events') 10 1048576)
+        }
         $commandOutputLimit=if($kind -in @('preflight','diagnostic')){1048576}else{8388608}
         $result=Run $label (@('exec',$id)+$argv) $seconds $commandOutputLimit
-        if($result.termination -ne 'EXITED'){throw ('Native resource limit: '+$label)}
+        if($MemoryEvents){
+            if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
+            Require (Run ($label+'-memory-after') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.events') 10 1048576)
+        }
+        if($result.termination -ne 'EXITED'){
+            if(-not $RemedyStage -or $Owned -or $kind -notin @('generation','build','execution')){throw ('Native resource limit: '+$label)}
+            $script:failed=$true
+            $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$null;scope='REGISTERED_P05_REMEDY';partial_output_retained=$true;capture='NOT_RUN_AFTER_RESOURCE_LIMIT'})
+            return $result
+        }
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
         UnpackResult $archive $directory $resultLimit -Executable:($kind -eq 'build')
@@ -267,6 +296,7 @@ function CheckOwnedControl($events){
     }
 }
 function CaseLedger {
+    if($RemedyStage){return ,$script:remedyRows}
     return @(foreach($case in $inputs.cases){foreach($variant in @('baseline','regenerated')){
         if($case.route -ceq 'swift' -and $variant -ceq 'baseline'){continue}
         $label='case-'+$variant+'-'+$case.id.ToLowerInvariant()
@@ -286,8 +316,9 @@ function CheckBuildHeaders([string]$label,[string]$parserRoot){
         if($header.StartsWith('/inputs/')){
             $relative=$header.Substring(8);$local=Join-Path $root $relative
             $identity=FileIdentity $local
-            if($header.StartsWith('/inputs/acquisition/sources/')){
-                if(-not $script:verifiedSource.ContainsKey($relative) -or $script:verifiedSource[$relative] -cne $identity.sha256){throw 'Unpinned project header'}
+            if($header.StartsWith('/inputs/acquisition/sources/') -or $header.StartsWith('/inputs/candidates/') -or $header.StartsWith('/inputs/candidate-evaluation/') -or $header.StartsWith('/inputs/materialized-lfs/')){
+                if(-not $script:verifiedSource.ContainsKey($relative)){throw 'Unpinned project header'}
+                if($script:verifiedSource[$relative] -cne $identity.sha256){throw 'Project header bytes changed'}
             }elseif(-not $local.StartsWith($parserRoot+'/',[StringComparison]::Ordinal)){throw 'Header outside this generated parser'}
             $project.Add($identity)
         }elseif($header.StartsWith('/usr/include/') -or $header.StartsWith('/usr/local/include/') -or $header.StartsWith('/usr/lib/gcc/')){$system.Add($header)}
@@ -313,6 +344,7 @@ try {
     $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'),'-ToolchainProfile',$ToolchainProfile)
     if($ToolchainApprovalSubject){$acquireArgs+=@('-ToolchainApprovalSubject',$ToolchainApprovalSubject)}
     if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
+    if($RemedyStage){$acquireArgs+=@('-RemedyStage',$RemedyStage,'-RemedyApprovalSubject',$RemedyApprovalSubject)}
     $acquire=Run 'acquisition' $acquireArgs 600 8388608 $pwsh;Require $acquire
     [IO.File]::Copy((Join-Path $PSScriptRoot 'probe.c.in'),(Join-Path $root 'probe.c'))
     [void][IO.Directory]::CreateDirectory((Join-Path $root 'owned'))
@@ -333,8 +365,9 @@ try {
         elseif($item.package){$directory=$item.package+'-'+$item.version}else{continue}
         foreach($file in $item.files){$relative='acquisition/sources/'+$directory+'/'+$file.path;$actual=FileIdentity (Join-Path $root $relative);if($actual.sha256 -cne $file.sha256 -or $actual.bytes -ne $file.bytes){throw 'Source changed after acquisition'};$script:verifiedSource[$relative]=$actual.sha256}
     }
+    if($RemedyStage){PrepareRemedyInputs $remedy}
     Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$toolchain.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
-    foreach($case in $inputs.cases){
+    foreach($case in @($inputs.cases)+$(if($RemedyStage){@($remedy.cases.cases)}else{@()})){
         if($case.id -notmatch '^[A-Z0-9-]+$' -or $case.input_bytes -gt 65536){throw 'Case identity/size mismatch'}
         $path=Join-Path $root ('cases/'+$case.id);[IO.File]::WriteAllText($path,$case.input_utf8,[Text.UTF8Encoding]::new($false))
         if((Get-FileHash $path).Hash.ToLowerInvariant() -cne $case.input_sha256){throw 'Case bytes changed'}
@@ -391,7 +424,7 @@ try {
     $ownedEvents=@([IO.File]::ReadAllLines((Join-Path $root 'raw/owned-execute.stdout'))|ForEach-Object {$_|ConvertFrom-Json})
     CheckOwnedControl $ownedEvents
     Record 'owned-control' @{result='PASS';counts=$script:ownedCounts;source='owned-control-inputs.json';binary=$ownedBinary;fresh_container_mode_hash_verified=$true;parse_edit_events='raw/owned-execute.stdout';syntax_structure_negative_recovery='PASS';product_qualification=$false;upstream_case_count=0}
-    foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
+    if($RemedyStage){InvokeRemedyProducers $remedy}else{foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
         if($routeName -ceq 'tsql' -and $TsqlPriorEvidenceSubject){continue}
         if($routeName -ceq 'csharp' -and $CsharpPriorEvidenceSubject){continue}
         if($routeName -cin @('typescript','tsx','postgresql-sql') -and $TsPgStageEvidenceSubject){continue}
@@ -428,13 +461,13 @@ try {
                 [void](Native execution ('case-'+$variant+'-'+$case.id.ToLowerInvariant()) $args 10 8388608)
             }
         }
-    }
+    }}
     $verdict=if($script:failed){'REPRODUCED_FAILURES'}elseif($TsPgStageEvidenceSubject){'REMAINING_INPUTS_COMPLETED_PRIOR_FAILURES_AND_STAGE_BLOCKERS_RETAINED'}elseif($TsqlPriorEvidenceSubject -or $CsharpPriorEvidenceSubject){'REMAINING_INPUTS_COMPLETED_PRIOR_FAILURES_RETAINED'}else{'BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'}
 } catch {$failure=$_.Exception.GetType().FullName;throw}
 finally {
     $cleanupErrors=@(foreach($id in @($script:containers)){try{StopContainer $id ('final-'+$id.Substring(0,12))}catch{@{container=$id;failure_type=$_.Exception.GetType().FullName}}})
     if($cleanupErrors.Count){$verdict='CLEANUP_NOT_VERIFIED';$script:failed=$true}
-    Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();whole_feature_support=$false}
+    Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;whole_feature_support=$false}
     Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count}
 }
 if($script:failed){throw 'Required P05 inputs failed; original evidence retained'}
