@@ -338,6 +338,9 @@ try {
     Add-Type -AssemblyName System.Formats.Tar
     Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
     Record 'toolchain-profile' @{selected=$toolchain;original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();source_and_cases_changed=$false;actual_tool_identities='tool-identities command; NOT_VERIFIED until executed'}
+    Require (Run 'docker-version' @('version','--format','{{json .}}') 10 1048576)
+    $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
+    if((TextOutput $security) -notmatch 'seccomp.*profile=builtin'){throw 'Default seccomp is unavailable'}
     if($TsqlPriorEvidenceSubject){Record 'prior-tsql-evidence' @{subject=$TsqlPriorEvidenceSubject;run=36646415814;producer_inputs=56;original_inputs=28;producer_edits=2;syntax_failures=46;classification_divergence=2;required_scope_pass=$false;current_run_execution=$false;input_projection_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();basis='caller-verified immutable same-source/tool/image observation; not permission or PASS'}}
     if($CsharpPriorEvidenceSubject){Record 'prior-csharp-evidence' @{subject=$CsharpPriorEvidenceSubject;run=36651074932;producer_inputs=20;original_inputs=10;producer_edits=2;syntax_failures=10;required_scope_pass=$false;current_run_execution=$false;input_projection_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();basis='caller-verified immutable same-source/tool/image observation; broad declared identifier gap retained'}}
     if($TsPgStageEvidenceSubject){Record 'prior-ts-pg-stage-evidence' @{subject=$TsPgStageEvidenceSubject;run=36657324824;executed_producer_inputs=16;producer_edits=4;syntax_failures=4;unrun_pg_producer_inputs=16;postgresql_generation_exit=137;postgresql_baseline='Git LFS pointer, not generated C';required_scope_pass=$false;current_run_execution=$false;input_projection_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();basis='caller-verified same-source/tool/image TS/TSX observations and PG stage blockers; PG syntax remains NOT_RUN'}}
@@ -372,7 +375,6 @@ try {
         $path=Join-Path $root ('cases/'+$case.id);[IO.File]::WriteAllText($path,$case.input_utf8,[Text.UTF8Encoding]::new($false))
         if((Get-FileHash $path).Hash.ToLowerInvariant() -cne $case.input_sha256){throw 'Case bytes changed'}
     }
-    Require (Run 'docker-version' @('version','--format','{{json .}}') 10 1048576)
     Require (Run 'image-pull' @('pull','--platform','linux/amd64',$toolchain.image) 120)
     if($script:wall.Elapsed.TotalSeconds -gt 600){throw 'Combined acquisition time limit'}
     $receivedUpperBound=(NetworkReceived)-$script:networkStart
@@ -384,8 +386,6 @@ try {
     if($im.Os -cne 'linux' -or $im.Architecture -cne 'amd64' -or $toolchain.image -notin $im.RepoDigests){throw 'Image digest/platform mismatch'}
     $script:imageSize=[long]$im.Size
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
-    $security=Run 'docker-security' @('info','--format','{{json .SecurityOptions}}') 10 1048576;Require $security
-    if((TextOutput $security) -notmatch 'seccomp.*profile=builtin'){throw 'Default seccomp is unavailable'}
     Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
     Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
     if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
