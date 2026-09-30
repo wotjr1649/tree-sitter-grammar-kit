@@ -54,7 +54,7 @@ CheckPriorEvidenceSubjects '' '' 'bookworm-r1'
 CheckPriorEvidenceSubjects $priorTsql $priorCsharp 'trixie-r1'
 foreach($vector in @(@('unknown','','trixie-r1'),@($priorTsql,'','bookworm-r1'),@('','unknown','trixie-r1'),@('',$priorCsharp,'bookworm-r1'))){
     $rejected=$false;try{CheckPriorEvidenceSubjects $vector[0] $vector[1] $vector[2]}catch{$rejected=$true}
-    if(-not $rejected){throw 'Mismatched prior TSQL evidence/image accepted'}
+    if(-not $rejected){throw 'Mismatched prior observation/image accepted'}
 }
 & {
     param($caseInputs,$tsql,$csharp)
@@ -63,6 +63,7 @@ foreach($vector in @(@('unknown','','trixie-r1'),@($priorTsql,'','bookworm-r1'),
     $ledger=CaseLedger
     $prior=@($ledger|Where-Object prior_evidence_subject)
     if($ledger.Count -ne 111 -or $prior.Count -ne 76 -or @($ledger|Where-Object state -CEQ 'NOT_RUN').Count -ne 35 -or @($prior|Where-Object {$null -ne $_.exit_code -or $null -ne $_.raw_stdout}).Count -or @($prior|Where-Object edit_registered).Count -ne 4){throw 'Prior observations lost, relabelled current, or altered case scope'}
+    if(@($prior|Where-Object {$_.state -cne 'NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED' -or ($_.route -ceq 'tsql' -and $_.prior_evidence_subject -cne $tsql) -or ($_.route -ceq 'csharp' -and $_.prior_evidence_subject -cne $csharp) -or $_.route -cnotin @('tsql','csharp')}).Count){throw 'Prior route/subject/state mapping changed'}
 } $originalInputs $priorTsql $priorCsharp
 $elf="Class: ELF64`nMachine: Advanced Micro Devices X86-64`n[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]`n(NEEDED) Shared library: [libc.so.6]"
 CheckElfClosure $elf
