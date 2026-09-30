@@ -111,3 +111,7 @@ upstream `grammar.json`의 rule key는 대소문자를 구별한다. grammar ent
 원격 command supervisor는 준비된 stdout/stderr를 drain하고 다음 read task 중 하나가 완료될 때까지 최대20ms만 기다린다. 출력 준비와 무관하게 매65,536bytes read마다20ms를 기다리던 이전 동작은 run36646415814에서 C# generation exit0 뒤 회수10초 동안32,305,152bytes만 읽고 timeout됐다. partial tar·명령·cleanup77개와 T-SQL의 이미 실행된56개 producer 결과를 보존한다. 회수10초·archive/output·storage 한도를 늘리지 않으며 큰 회수의 완료는 새 native 관측으로 확인한다.
 
 동일 T-SQL source의 이미 완료한56개 producer 관측은 `tsql_prior_evidence_subject`의 고정 immutable receipt에 결속해 재실행하지 않을 수 있다. caller는 실제 run36646415814·원57input projection·같은 CLI/runtime/Trixie·28원문/2producer edit·46syntax 실패와 원출력을 먼저 검증한다. subject는 실행 허가나 지원 PASS가 아니다. 새 run은 원본 전체57case ledger를 유지하고 해당56행을 `NOT_REEXECUTED_PRIOR_OBSERVED_FAILURES_RETAINED`로 표시하며, 나머지5route/55producer와 자체 control을 실행한다. 과거 T-SQL 결과와 새 결과를 함께 평가하고 required scope 실패를 유지한다. source/tool/image/input이 달라지면 이 이월은 적용할 수 없다.
+
+run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생성 archive32,522,240bytes는 수정한 supervisor가0.148초에 정확히 회수했고 container40개의 종료·PID0·제거를 확인했다. 등록된 다섯 `#:` directive는 각각 두 producer에서 실패했으며 좁은 identifier/shebang/raw string 성공은 넓은 declared gap을 해소하지 않는다.
+
+후속 실행은 `csharp_prior_evidence_subject`의 고정 receipt에도 같은 source/input/CLI/runtime/image 검증을 적용한다. TSQL56행/2edit와 C#20행/2edit를 원 관측으로 보존하고 TS/TSX/PG/Swift의 나머지35producer/7edit를 새로 실행한다. 전체111행의 prior 상태는 `NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED`, 현재 raw/exit는 null이며 어느 prior subject도 scope PASS나 권한이 아니다. 기본 빈 subject는 원래 경로를 유지하고 잘못된 subject/legacy image는 효과 전에 거부한다.

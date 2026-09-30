@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject,[string]$ToolchainProfile='bookworm-r1',[string]$ToolchainApprovalSubject,[string]$TsqlPriorEvidenceSubject)
+param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinned-tsql-r1')][string]$AcquisitionProfile='archive-r1',[string]$AcquisitionApprovalSubject,[string]$ExecutionApprovalSubject,[string]$ToolchainProfile='bookworm-r1',[string]$ToolchainApprovalSubject,[string]$TsqlPriorEvidenceSubject,[string]$CsharpPriorEvidenceSubject)
 $ErrorActionPreference='Stop'
 $toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
@@ -28,10 +28,12 @@ function Application([string]$name){
     if(-not $command.Source -or -not (Test-Path -LiteralPath $command.Source -PathType Leaf)){throw 'Application path unavailable'}
     return [string]$command.Source
 }
-function CheckTsqlPriorEvidence([string]$subject,[string]$imageProfile){
-    if($subject -and ($subject -cne '5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458' -or $imageProfile -cne 'trixie-r1')){throw 'Prior TSQL evidence/image mismatch'}
+function CheckPriorEvidenceSubjects([string]$tsql,[string]$csharp,[string]$imageProfile){
+    foreach($binding in @(@{actual=$tsql;expected='5774bbd37ae4a3eebf4228fa61e9600a10f6c822317e394d950d9f7caa63f458'},@{actual=$csharp;expected='98590999770a8681c3c3347dc61b3aae81dd30e3b26629a66e49b4c706d3be79'})){
+        if($binding.actual -and ($binding.actual -cne $binding.expected -or $imageProfile -cne 'trixie-r1')){throw 'Prior observation/image mismatch'}
+    }
 }
-CheckTsqlPriorEvidence $TsqlPriorEvidenceSubject $ToolchainProfile
+CheckPriorEvidenceSubjects $TsqlPriorEvidenceSubject $CsharpPriorEvidenceSubject $ToolchainProfile
 $docker=Application docker
 $pwsh=Application pwsh
 $script:commands=[Collections.Generic.List[object]]::new()
@@ -264,8 +266,9 @@ function CaseLedger {
         if($case.route -ceq 'swift' -and $variant -ceq 'baseline'){continue}
         $label='case-'+$variant+'-'+$case.id.ToLowerInvariant()
         $command=@($script:commands|Where-Object label -CEQ $label)
-        $prior=$case.route -ceq 'tsql' -and [bool]$TsqlPriorEvidenceSubject
-        @{id=$case.id;route=$case.route;producer=$variant;feature_ids=$case.feature_ids;input_sha256=$case.input_sha256;edit_registered=[bool]$case.edit;state=$(if($command.Count){$command[0].termination}elseif($prior){'NOT_REEXECUTED_PRIOR_OBSERVED_FAILURES_RETAINED'}else{'NOT_RUN'});exit_code=$(if($command.Count){$command[0].exit_code}else{$null});dependency=$(if($command.Count){'BUILT_EXECUTABLE_RECOVERED'}elseif($prior){'prior run36646415814; completed56 observations; required scope FAILED'}else{'generation/build/toolchain or stopped safety prerequisite; inspect raw and summary'});prior_evidence_subject=$(if($prior){$TsqlPriorEvidenceSubject}else{$null});structure_assessment='REVIEW_REQUIRED_NOT_AUTOMATIC_PASS';raw_stdout=$(if($prior){$null}else{'raw/'+$label+'.stdout'})}
+        $priorSubject=if($case.route -ceq 'tsql'){$TsqlPriorEvidenceSubject}elseif($case.route -ceq 'csharp'){$CsharpPriorEvidenceSubject}else{''}
+        $priorRun=if($case.route -ceq 'tsql'){36646415814}else{36651074932}
+        @{id=$case.id;route=$case.route;producer=$variant;feature_ids=$case.feature_ids;input_sha256=$case.input_sha256;edit_registered=[bool]$case.edit;state=$(if($command.Count){$command[0].termination}elseif($priorSubject){'NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED'}else{'NOT_RUN'});exit_code=$(if($command.Count){$command[0].exit_code}else{$null});dependency=$(if($command.Count){'BUILT_EXECUTABLE_RECOVERED'}elseif($priorSubject){"prior run$priorRun; completed observations; required scope FAILED"}else{'generation/build/toolchain or stopped safety prerequisite; inspect raw and summary'});prior_evidence_subject=$(if($priorSubject){$priorSubject}else{$null});structure_assessment='REVIEW_REQUIRED_NOT_AUTOMATIC_PASS';raw_stdout=$(if($priorSubject){$null}else{'raw/'+$label+'.stdout'})}
     }})
 }
 function CheckBuildHeaders([string]$label,[string]$parserRoot){
@@ -299,6 +302,7 @@ try {
     Record 'case-review-gate' @{result='PASS';review_sha256=(Get-FileHash $reviewPath).Hash.ToLowerInvariant();review=$caseReview;native_support_result='NOT_RUN'}
     Record 'toolchain-profile' @{selected=$toolchain;original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();source_and_cases_changed=$false;actual_tool_identities='tool-identities command; NOT_VERIFIED until executed'}
     if($TsqlPriorEvidenceSubject){Record 'prior-tsql-evidence' @{subject=$TsqlPriorEvidenceSubject;run=36646415814;producer_inputs=56;original_inputs=28;producer_edits=2;syntax_failures=46;classification_divergence=2;required_scope_pass=$false;current_run_execution=$false;input_projection_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();basis='caller-verified immutable same-source/tool/image observation; not permission or PASS'}}
+    if($CsharpPriorEvidenceSubject){Record 'prior-csharp-evidence' @{subject=$CsharpPriorEvidenceSubject;run=36651074932;producer_inputs=20;original_inputs=10;producer_edits=2;syntax_failures=10;required_scope_pass=$false;current_run_execution=$false;input_projection_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();basis='caller-verified immutable same-source/tool/image observation; broad declared identifier gap retained'}}
     $acquireArgs=@('-NoProfile','-File',(Join-Path $PSScriptRoot 'acquire.ps1'),'-Destination',(Join-Path $root 'acquisition'),'-ToolchainProfile',$ToolchainProfile)
     if($ToolchainApprovalSubject){$acquireArgs+=@('-ToolchainApprovalSubject',$ToolchainApprovalSubject)}
     if($AcquisitionProfile -eq 'pinned-tsql-r1'){$acquireArgs+=@('-PinnedTsql','-AcquisitionApprovalSubject',$AcquisitionApprovalSubject)}
@@ -382,6 +386,7 @@ try {
     Record 'owned-control' @{result='PASS';counts=$script:ownedCounts;source='owned-control-inputs.json';binary=$ownedBinary;fresh_container_mode_hash_verified=$true;parse_edit_events='raw/owned-execute.stdout';syntax_structure_negative_recovery='PASS';product_qualification=$false;upstream_case_count=0}
     foreach($routeName in @('tsql','csharp','typescript','tsx','postgresql-sql','swift')){
         if($routeName -ceq 'tsql' -and $TsqlPriorEvidenceSubject){continue}
+        if($routeName -ceq 'csharp' -and $CsharpPriorEvidenceSubject){continue}
         $route=@($inputs.selected_routes|Where-Object route -eq $routeName)[0]
         $key=$route.repository.Replace('/','--')+'--'+$route.commit
         $source='/inputs/acquisition/sources/'+$key
@@ -416,7 +421,7 @@ try {
             }
         }
     }
-    $verdict=if($script:failed){'REPRODUCED_FAILURES'}elseif($TsqlPriorEvidenceSubject){'REMAINING_INPUTS_COMPLETED_PRIOR_TSQL_FAILURES_RETAINED'}else{'BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'}
+    $verdict=if($script:failed){'REPRODUCED_FAILURES'}elseif($TsqlPriorEvidenceSubject -or $CsharpPriorEvidenceSubject){'REMAINING_INPUTS_COMPLETED_PRIOR_FAILURES_RETAINED'}else{'BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'}
 } catch {$failure=$_.Exception.GetType().FullName;throw}
 finally {
     $cleanupErrors=@(foreach($id in @($script:containers)){try{StopContainer $id ('final-'+$id.Substring(0,12))}catch{@{container=$id;failure_type=$_.Exception.GetType().FullName}}})
