@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. run36646415814의 T-SQL G1/B2/X56, run36651074932의 C# G1/B2/X20, run36657324824의 TS/TSX G2/B4/X16을 관측했다. 필수 구문 실패를 보존한다. PG는 generation exit137과 LFS pointer build 실패로 syntax NOT_RUN이며 Swift는 helper 검사에서 아직 NOT_RUN이다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3를 관측했다. 서로 다른 실제 run과 producer를 합쳐95개 실행 결과와 PG16개 미실행을 유지한다. 필수 구문 실패와 PG generation exit137/LFS pointer build 차단이 남는다. 기존 26-route/256행 채택은 scope 근거다.
 
 ## 네 단계와 완료 근거
 
@@ -31,7 +31,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | c | root grammar.js/json, node-types | parser.c, headers; scanner 없음 | legacy/C23 preprocessor/declarator source |
 | cpp | root grammar.js/json; npm C0.24.1 | parser.c, scanner.c, headers | C dependency는 G용; B에 npm lifecycle 불필요 |
 | rust | root grammar.js/json, node-types | parser.c, scanner.c, headers | token-tree/edition/let-chain case |
-| swift | root grammar.js/json; parser.c 부재 | **generation 뒤** parser/header + 고정 scanner.c | P05-SWIFT-GENERATION; 생성 실패와 syntax 실패 분리 |
+| swift | root grammar.js/json; baseline parser.c 부재 | 실제 재생성 parser/header + 고정 scanner.c의 B1 완료 | P05-SWIFT-GENERATION; legacy 수용과 inline/module selector 실패 구분 |
 | dart | root grammar.js/json, node-types | parser.c, scanner.c, headers | tree_sitter submodule은 관련 binding/test 실행 전 필요성 판단 |
 | php | php/grammar.js/json; common/define-grammar.js | php/src parser/scanner, common/scanner.h, headers | mixed PHP source; php_only 결과 자동 대체 금지 |
 | ruby | root grammar.js/json, node-types | parser.c, scanner.c, headers | heredoc/state/newline/edit case |
@@ -55,6 +55,8 @@ run36651074932는 C# G1/B2/X20 및 큰 archive 회수 후 TS closure 검사에�
 원문 archive와 selected-file SHA를 대조하고 해당 두 파일의 정확한 SHA 및 여섯 match 위치/값만 비실행 관측으로 결속한다. source text를 삭제·정규화하거나 실행 bytes를 수정하지 않는다. 다른 digest/위치/추가 import, dynamic require·eval·별칭 loader·등록 밖 dependency와 root 탈출은 계속 거부한다. 자체 literal closure와 해당 반례를 실제 helper로 검사하고, 고정 원문 closure는 별도 로컬 정적 검사 및 새 hosted generation으로 확인한다. arbitrary JavaScript의 모든 동작을 증명한다는 주장은 유지하지 않는다.
 
 run36657324824에서 수정한 TS/TSX closure와 G2/B4/X16을 실제 실행했다. 두 producer 모두 `import defer`는 실패했고 legacy/ambiguity 대조는 수용했다. Swift 고정 grammar SHA-256 `e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b`의 `"import"` 토큰(char50974)도 같은 검사에서 module import로 오인됐다. 추가 dependency나 Swift syntax 실패가 아니다. 같은 exact SHA와 단일 occurrence만 shared 검사에 결속하고 원문을 보존한다. 빈/틀린 digest·위치·추가 occurrence 거부, 고정 원문 정적 closure와 실제 hosted generation은 서로 다른 검증이다.
+
+수정 후 run36660558049에서 Swift G1/B1/X3를 실제 수행했다. 고정 source와 scanner를 유지한 regeneration producer에서 legacy generic function과 등록 edit는 통과했고 inline array/module selector는 ERROR였다. baseline parser 부재를 실패로 세지 않는다. 전체 격리8개·자체 G/B/X·회수/새 container 실행·container21개 종료/PID0/제거를 확인했다. 이 구문 실패는 앞선 helper 오류의 재발이 아니다.
 
 ## PostgreSQL artifact와 generation 차단
 
@@ -125,3 +127,5 @@ run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생�
 후속 실행은 `csharp_prior_evidence_subject`의 고정 receipt에도 같은 source/input/CLI/runtime/image 검증을 적용한다. TSQL56행/2edit와 C#20행/2edit를 원 관측으로 보존하고 TS/TSX/PG/Swift의 나머지35producer/7edit를 새로 실행한다. 전체111행의 prior 상태는 `NOT_REEXECUTED_PRIOR_OBSERVED_RESULTS_RETAINED`, 현재 raw/exit는 null이며 어느 prior subject도 scope PASS나 권한이 아니다. 기본 빈 subject는 원래 경로를 유지하고 잘못된 subject/legacy image는 효과 전에 거부한다.
 
 run36657324824의 결과는 `ts_pg_stage_evidence_subject`로 별도 immutable 관측에 결속한다. TS/TSX16행/4edit는 실행된 관측으로, PG16행/2개 producer edit는 `NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED`로 이월한다. PG syntax는 NOT_RUN이다. caller는 해당32행·원 input projection·같은 source/CLI/runtime/Trixie·원출력과 단계 차단을 먼저 대조한다. C#/TSQL까지 포함하면 prior108행 중92행이 실행됐고16행은 미실행이다. 남은 Swift3행/1edit와 전체111행/57원문/6edit 등록을 유지한다. 새 run의 성공 exit도 prior 필수 실패나 PG blocker를 해소하지 않는다.
+
+최신 Swift 관측을 합치면49개 원문/95개 producer와5개 원 edit/9개 producer edit를 실행했고, PG8개 원문/16개 producer와1개 원 edit/2개 producer edit는 미실행이다.95행 중62행에 원본 ERROR/MISSING,33행에 원본 오류 부재를 관측했다. T-SQL lowercase configuration 분류 차이와 broad C# 선언 gap도 유지한다. 숫자는 관측 집계이며 P05 scope PASS나 S08의78-cell qualification 완료가 아니다. 알려진 required gap의 실제 remedy와 PG 입력/capability를 별도 결정·검증해야 한다.
