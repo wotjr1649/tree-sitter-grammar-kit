@@ -28,13 +28,15 @@
 
 ## 채택값·관측·남은 입력
 
+이 절의 PR #21/#22 초기 checkpoint 관측과 수치 예산은 역사적 기록이다. 후속 승인·실제 A/B r2·SQL30·PG baseline/noopt 결과와 현재 필수 격차는 [P05 관측표](../validation/source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)와 [source closure](../validation/p05-source-closure.md)를 따른다. 새 [NET461 업무 계약](../validation/net461-workload.md)은 기존 scope에 연결한 별도 workload/format이며 전체 corpus·제품·78셀은 NOT_RUN이다.
+
 공개 entry는 단일 root module의 `src/kit`이다. 첫 Inspect/Identity request/result/error·소유권·취소·한도를 설계했으며 구현과 external-consumer 실행은 S01에 속한다. E0/manifest r1은 mode provenance와 관측 전용 assessment를 명시한다. S05는 base64 bytes를 사용하는 bounded JSON transport와 실제 old-tree edit 경로를 소유하며 S06이 같은 producer를 확장한다.
 
 26개 후보의 공개 commit과 실제 grammar subdir·generated 파일·scanner/shared file 목록을 [등록부](../../src/contracts/language-sources.json)에 기록했다. metadata 존재는 full source closure 검토나 언어 지원 성공이 아니다. Swift 후보의 고정 source에는 `parser.c`가 없어 generation 준비가 필요하다. T-SQL과 PostgreSQL은 서로 다른 dialect 후보로 유지한다.
 
 공식 stable 상한 대조와 사용자가 채택한 26개 숫자/모드는 [scope 표](../validation/language-feature-scope.md)에 있다. PR #21 checkpoint 당시 feature disposition은 26개 route placeholder와 C#14 일부 항목만 있어 P04가 남았다. 후속 PREPARE의 [feature disposition](../validation/language-feature-disposition.md)은 26개 기본 구문 계열·중간 version delta·legacy 보존·syntax/semantic/runtime/extension 구분·구조 목표·case 종류·담당과 기한을 등록한다. 독립 리뷰와 이 정확한 내용의 사용자 채택은 별도 실제 receipt로 확인한다. candidate node/field mapping과 상세 fixture/expected tree는 담당 S03/S05/S06/S08 산출물이며 지금 생성하거나 parser 출력으로 golden을 채택하지 않았다.
 
-확인한 필수 위험은 C# 후보의 contextual identifier/file-based directives 문서상 격차, T-SQL 고정 grammar source의 SELECT/EXEC 중심 경로와 DDL/다른 DML/CTE TODO, TS/TSX import-defer 및 dependency closure, PG19 기반 후보의 채택 9.6~18 legacy 지원 미확인이다. [P05 관측표](../validation/source-feature-feasibility.md)는 26개 행을 feature ID에 연결하고 upstream 선언·정적 관측·지원 미확인·실제 재현 실패를 분리한다. 현재 upstream의 재현 실패 receipt는 0개이며 native는 미실행이다. generic SQL/smoke로 격차를 대체하지 않는다. upstream 수정·다른 grammar·scope 축소·미해결 gap을 안고 S01 진행하는 결정은 자동 수행하지 않는다.
+초기 checkpoint에서 확인한 필수 위험은 C# 후보의 contextual identifier/file-based directives 문서상 격차, T-SQL 고정 grammar source의 SELECT/EXEC 중심 경로와 DDL/다른 DML/CTE TODO, TS/TSX import-defer 및 dependency closure, PG19 기반 후보의 채택 9.6~18 legacy 지원 미확인이었다. [P05 관측표](../validation/source-feature-feasibility.md)는 26개 행을 feature ID에 연결하고 upstream 선언·정적 관측·지원 미확인·실제 재현 실패를 분리한다. 그 초기 checkpoint의 upstream 재현 실패 receipt는0개이며 native는 미실행이었다. 이후 실제 run을 당시 기록에 소급 적용하지 않으며 generic SQL/smoke로 격차를 대체하지 않는다. upstream 수정·다른 grammar·scope 축소·미해결 gap을 안고 S01 진행하는 결정은 자동 수행하지 않는다.
 
 후속 착수 시 PR [#21](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/21)은 MERGED, main은 `0406b7c9c53e062abab73682b1be80baea68372b`, tree는 `9c68da29a02273e7eb0e9ba7299f1f8c85fe92c3`로 확인했다. 이전 immutable receipt·소모 ledger·46개 공급 파일·14개 역사적 identity가 일치했다. 재개는 Issue #20의 `campaign/01-20260929-prepare-p04-p05`에서 수행한다. 이전 checkpoint를 덮어쓰지 않고 새 receipt가 이전 receipt와 변경 전 operational manifest를 연결한다. 새 transaction의 실제 merge/CI/readback은 그 후속 receipt가 소유한다.
 

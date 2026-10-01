@@ -1,6 +1,6 @@
 # P05 source closure 실행 순서
 
-소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3를 관측했다. 서로 다른 실제 run과 producer를 합쳐95개 실행 결과와 PG16개 미실행을 유지한다. 필수 구문 실패와 PG generation exit137/LFS pointer build 차단이 남는다. 기존 26-route/256행 채택은 scope 근거다.
+소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 초기 T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3의95개 실행 결과와 당시 PG16개 미실행은 보존된 역사적 관측이다. 후속 original/r1/r2 및 실제 PG/SQL 결과는 아래 run별로 구분한다. 기존 26-route/256행 채택은 scope 근거이며 source 지원 근거가 아니다.
 
 ## 네 단계와 완료 근거
 
@@ -44,7 +44,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
 | tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
-| postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36745186550에서 object bytes/SHA 검증; P05-PG-LEGACY/18 G/B/X는 취득 guard 중단으로 NOT_RUN, generation exit137 원인 미확정 |
+| postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36796853218 baseline8 실행, WITH OIDS 실패/구조7개 관측; noopt state overflow로 재생성8개 NOT_RUN, 과거 exit137 원인 미확정 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
 
@@ -140,7 +140,7 @@ run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생�
 
 run36657324824의 결과는 `ts_pg_stage_evidence_subject`로 별도 immutable 관측에 결속한다. TS/TSX16행/4edit는 실행된 관측으로, PG16행/2개 producer edit는 `NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED`로 이월한다. PG syntax는 NOT_RUN이다. caller는 해당32행·원 input projection·같은 source/CLI/runtime/Trixie·원출력과 단계 차단을 먼저 대조한다. C#/TSQL까지 포함하면 prior108행 중92행이 실행됐고16행은 미실행이다. 남은 Swift3행/1edit와 전체111행/57원문/6edit 등록을 유지한다. 새 run의 성공 exit도 prior 필수 실패나 PG blocker를 해소하지 않는다.
 
-최신 Swift 관측을 합치면49개 원문/95개 producer와5개 원 edit/9개 producer edit를 실행했고, PG8개 원문/16개 producer와1개 원 edit/2개 producer edit는 미실행이다.95행 중62행에 원본 ERROR/MISSING,33행에 원본 오류 부재를 관측했다. T-SQL lowercase configuration 분류 차이와 broad C# 선언 gap도 유지한다. 숫자는 관측 집계이며 P05 scope PASS나 S08의78-cell qualification 완료가 아니다. 알려진 required gap의 실제 remedy와 PG 입력/capability를 별도 결정·검증해야 한다.
+run36660558049의 Swift 관측까지 합친 당시 집계는49개 원문/95개 producer와5개 원 edit/9개 producer edit 실행, PG8개 원문/16개 producer와1개 원 edit/2개 producer edit 미실행이었다.95행 중62행에 원본 ERROR/MISSING,33행에 원본 오류 부재를 관측했다. 당시 T-SQL lowercase configuration 분류 차이와 broad C# 선언 gap도 보존한다. 이 역사적 집계는 P05 scope PASS나 S08의78-cell qualification 완료가 아니다. 후속 run36796853218에서 PG baseline8개를 실제 실행했으며 WITH OIDS 실패와 나머지7개 fact 관측, noopt 생성 실패로 인한 재생성8개 NOT_RUN은 아래 해당 run 결과를 따른다.
 
 remedy 실행에서 확인한 producer별 import/include·ABI·entry-point·ELF closure 실패는 해당 producer의 전체 dependent row를 구체적 이유와 함께 `NOT_RUN`으로 남기고 독립 producer를 계속한다. generation/build의 exit 및 resource termination도 별도로 연결한다. 개별 native 한도 실패 뒤에는 원 partial output을 보존하고 실제 container cleanup을 검증한 뒤에만 진행한다. 승인·bytes identity·공유 한도·격리·capture·cleanup 오류와 예상하지 않은 예외는 전체 실행을 중단한다. 자체 input closure 반례는 한 producer의 실패가 다른 row를 바꾸지 않는지, 공유 안전 실패가 전파되는지 검사한다.
 
@@ -178,4 +178,12 @@ source/image receive-counter는 `approval.ps1`이 효과 전에 선택한다. �
 
 `sql-only-r2`는 승인 B에서 아직 native0인 동일 Derek source30파일·TSQL30개·edit1의 재개다. G1/B1/X30 상한, `pinned-tsql-r1`/`trixie-r1`과 동일 A/B subject를 사용한다. PG LFS 취득·PG 생성/빌드/실행은 하지 않으며 이미 회수한 B의 별도 PG 결과에 연결한다. combined source/image counter는 일반1GiB이고 SQLPG-only1.5GiB를 다른 경로에 적용하지 않는다. baseline/실패 원문·기대값·검사기는 유지한다.
 
-B의 PG LFS parser97,664,793bytes/SHA `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`는 실제 native baseline이다. baseline8개 중 legacy `WITH OIDS`는 required syntax ERROR이며 나머지7개는 syntax 관측 후 별도 구조 판정을 요구한다. noopt 재생성은 state387,042가 ABI/parser16-bit 최대65,535를 초과해 exit1이며8개 NOT_RUN이다. 과거 optimized exit137과 이번 명시적 state overflow를 구분하고 같은 noopt 생성을 반복하지 않는다. 각 remedy의 채택/추가 patch/생성 옵션 결정은 실패와 회귀 범위를 묶어 별도로 확인한다.
+B의 PG LFS parser97,664,793bytes/SHA `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`는 실제 native baseline이다. baseline8개 중 legacy `WITH OIDS`는 required syntax ERROR이며 나머지7개는 quoted identifier/dollar string/ON CONFLICT 및 네 PG18 case의 등록 구조를 별도 raw 대조로 확인했다. noopt 재생성은 state387,042가 ABI/parser16-bit 최대65,535를 초과해 exit1이며8개 NOT_RUN이다. 과거 optimized exit137과 이번 명시적 state overflow를 구분하고 같은 noopt 생성을 반복하지 않는다. 각 remedy의 채택/추가 patch/생성 옵션 결정은 실패와 회귀 범위를 묶어 별도로 확인한다.
+
+## SQL-only 실행 후 source 처분
+
+[run36803412644](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36803412644)은 reviewed/merged main `b640b0ad3f2c092eed3c782a9824058368e49139`의 fresh `sql-only-r2` dispatch다. exact DerekStride97614d0 source·고정 runtime/CLI·ABI15로 G1/B1/X30/edit1을 수행했다. generated parser41,602,006bytes/SHA `36ffce6999124e9762054f9bfe2cd3778db05288feb33a4e150dc17df2e73026`와 실행 probe11,395,032bytes/SHA `c13d9ecf141548cab10d95901a88f29eb8529342eea0770ca2c3d1320798eebc`를 사용 전 대조했다. 회수한 evidence는 명령·입력·출력·생성물/EXE identity를 보존하며 생성물 전체 파일의 장기 보관이나 타 플랫폼 재생성은 주장하지 않는다.
+
+전체8개 isolation과 owned vertical control,48개 exact container의 종료/PID0/제거,813개 host command root 종료를 확인했다. 실제 source HTTP50회/26,700,503bytes, source/image receive-counter949,981,821bytes는 해당1GiB threshold 이내였다. daemon quiescence는 NOT_PROVEN이며 과거 UNKNOWN/overshoot를 소급 복원하지 않는다.
+
+[등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, negative 거부2개, 구조 실패2개, mapping 미해결2개다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
