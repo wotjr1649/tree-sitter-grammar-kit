@@ -14,7 +14,7 @@
 - Write skills and instructions in English. Write plans, progress reports, questions, new explanatory documents, handoffs, and final responses in Korean; preserve code, commands, paths, and identifiers.
 
 ## Changes and completion
-- Link change work, including documentation fixes, to an Issue and a dedicated task branch. Reuse matching work; choose a separate worktree when needed to preserve existing work. Analysis-only and read-only reviews do not require new tracking or branches.
+- Link change work, including documentation fixes, to an Issue and a dedicated task branch. Analysis-only and read-only reviews do not require new tracking or branches.
 - Update the owning canonical contract and relevant checks in the same work unit as a behavior or contract change. Use the documentation map to select the task's reading and validation scope.
 - Local completion and integration into main are separate. Follow the [validation and merge contract](docs/validation/validation.md) for impact-based checks/review and record unrun checks.
-- Integration into main requires a PR, mandatory CI, finding disposition, and authority for the remote operation. Campaign-specific gates apply only to the corresponding campaign work.
+- Integration into main requires a PR, mandatory CI, and finding disposition. Campaign-specific gates apply only to the corresponding campaign work.
