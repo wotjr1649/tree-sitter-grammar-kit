@@ -30,6 +30,7 @@ var required = []string{
 	"docs/specs/public-go-api.md", "docs/validation/language-feature-scope.md",
 	"docs/validation/language-feature-disposition.md", "docs/validation/source-feature-feasibility.md",
 	"docs/validation/p05-source-closure.md",
+	"docs/validation/net461-workload.md",
 	"docs/reports/campaign-01-2026-09-29-preparation.md",
 	"docs/design/decisions/0001-core-and-execution.md",
 	"docs/provenance/upstream-sources.md", "docs/validation/validation.md",
@@ -47,6 +48,7 @@ var required = []string{
 	".github/workflows/prepare-p05-remedy.yml", "src/dev/prepare-p05/remedy.ps1",
 	"src/dev/prepare-p05/remedy-patches.json", "src/dev/prepare-p05/remedy-cases.json",
 	"src/dev/prepare-p05/remedy-fact-oracles.json", "src/dev/prepare-p05/remedy-sources.json",
+	"src/dev/prepare-p05/remedy-r2.json",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

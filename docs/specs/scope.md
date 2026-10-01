@@ -1,5 +1,7 @@
 # 제품 범위
 
+Campaign의 추가 `NET461-WINFORMS-DX202-WCF` 업무 profile은 [업무 workload/format 등록부](../validation/net461-workload.md)가 소유한다. net461/C# 7.3·WinForms·DevExpress 20.2·Framework WCF/.svc의 소스 검증과 build/runtime/designer 검증을 구분하며 기존 일반 언어 profile과 별도로 기록한다.
+
 `tree-sitter-grammar-kit`의 CLI `tsgk`와 작은 공개 offline Go API는 같은 코어로 grammar의 파일·생성물·구조·실행 결과와 그 근거를 검사·비교한다. 첫 사용자는 `go-treesitter`의 grammar 도입·업데이트 담당자다. 제품은 독립 도구이며 소비자의 Go 변환·scanner 이식·runtime·최종 채택 판단을 소유하지 않는다. 일반 application 파싱 경로에 kit 실행을 요구하지 않는다.
 
 첫 release 후보의 최소 범위는 검증된 offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API다. Session 01~08 campaign은 그 위에 reproduction·incremental·native oracle·bounded replay·qualification을 순차 개발한다. 독립 offline 기능의 사용 가능성과 campaign 전체 목표 충족은 구분한다. campaign 완료는 release 승인이 아니다. 현재는 foundation 검사만 구현했다.

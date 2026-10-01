@@ -1,5 +1,7 @@
 # Tree와 adapter — draft/r0
 
+등록된 `.svc`는 [SVC-SERVICEHOST-r1](../validation/net461-workload.md)의 composite result를 사용한다. directive 관측과 inline C# local tree를 전체 원본 identity·byte/point mapping으로 결속하며 segment PASS를 전체 파일 PASS로 바꾸지 않는다. 이 계약은 계획이며 format 구현은 NOT_RUN이다.
+
 S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 주장이다. schema 일치, ordered CST 일치, query 일치, 언어 사양 적합성은 서로 대체하지 않는다. 아래 형식은 experimental이며 실제 native/두 번째 grammar/consumer 검증 전에 안정 API로 고정하지 않는다.
 
 ## Ordered tree

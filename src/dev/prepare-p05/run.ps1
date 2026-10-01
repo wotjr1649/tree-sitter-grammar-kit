@@ -2,6 +2,7 @@ param([Parameter(Mandatory)][string]$Destination,[ValidateSet('archive-r1','pinn
 $ErrorActionPreference='Stop'
 $toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
+$script:acquisitionLimit=[long]$toolchain.acquisition_limit_bytes
 if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
@@ -61,15 +62,15 @@ function NetworkBudgetReceipt {
     try {
         $end=NetworkReceived
         if($end -lt $script:networkStart){throw 'Acquisition network counter regressed'}
-        return @{state='OBSERVED';start_counter_bytes=$script:networkStart;end_counter_bytes=$end;received_counter_bytes=($end-$script:networkStart);limit_bytes=1073741824;sample_ms=20;observation='AFTER_HOST_ROOT_CLEANUP_DOCKER_DAEMON_QUIESCENCE_NOT_PROVEN'}
-    } catch {return @{state='NOT_VERIFIED';start_counter_bytes=$script:networkStart;end_counter_bytes=$null;received_counter_bytes=$null;limit_bytes=1073741824;failure_type=$_.Exception.GetType().FullName}}
+        return @{state='OBSERVED';start_counter_bytes=$script:networkStart;end_counter_bytes=$end;received_counter_bytes=($end-$script:networkStart);limit_bytes=$script:acquisitionLimit;sample_ms=20;observation='AFTER_HOST_ROOT_CLEANUP_DOCKER_DAEMON_QUIESCENCE_NOT_PROVEN'}
+    } catch {return @{state='NOT_VERIFIED';start_counter_bytes=$script:networkStart;end_counter_bytes=$null;received_counter_bytes=$null;limit_bytes=$script:acquisitionLimit;failure_type=$_.Exception.GetType().FullName}}
 }
 function Record([string]$name,$value){$path=Join-Path $root ('records/'+$name+'.json');if(Test-Path $path){throw 'Record exists'};$value|ConvertTo-Json -Depth 40|Set-Content -LiteralPath $path -Encoding utf8NoBOM}
 function CompleteAcquisition {
     $snapshot=NetworkBudgetReceipt
     if($snapshot.state -cne 'OBSERVED' -or $snapshot.received_counter_bytes -lt 0){throw 'Acquisition network counter not verified'}
-    if($snapshot.received_counter_bytes -gt 1073741824){throw 'Acquisition network budget exceeded'}
-    Record 'download-budget' @{received_network_upper_bound_bytes=$snapshot.received_counter_bytes;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=1073741824;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20;final_snapshot=$snapshot}
+    if($snapshot.received_counter_bytes -gt $script:acquisitionLimit){throw 'Acquisition network budget exceeded'}
+    Record 'download-budget' @{received_network_upper_bound_bytes=$snapshot.received_counter_bytes;source_http_bytes=(Get-Content -Raw (Join-Path $root 'acquisition/records/acquisition.json')|ConvertFrom-Json).download_bytes;image_manifest_compressed_bytes=$toolchain.compressed_bytes;limit_bytes=$script:acquisitionLimit;measurement='host network receive counters include protocol/runner traffic; sampled while acquisition is active';sample_ms=20;final_snapshot=$snapshot}
     $script:acquiring=$false
 }
 function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[string]$executable=$docker,[switch]$Cleanup){
@@ -93,11 +94,11 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
         $pending=@($streams[0].ReadAsync($buffers[0],0,65536),$streams[1].ReadAsync($buffers[1],0,65536))
         while(-not $process.HasExited -or $pending[0] -or $pending[1]){
             if($timer.Elapsed.TotalSeconds -gt $seconds){$reason='TIMEOUT';break}
-            if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt 1073741824){$reason='DOWNLOAD_LIMIT';break}
+            if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt $script:acquisitionLimit){$reason='DOWNLOAD_LIMIT';break}
             for($i=0;$i -lt 2;$i++){
                 while($pending[$i] -and $pending[$i].IsCompleted){
                     if($timer.Elapsed.TotalSeconds -gt $seconds){$reason='TIMEOUT';break}
-                    if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt 1073741824){$reason='DOWNLOAD_LIMIT';break}
+                    if($script:acquiring -and (NetworkReceived)-$script:networkStart -gt $script:acquisitionLimit){$reason='DOWNLOAD_LIMIT';break}
                     $n=$pending[$i].GetAwaiter().GetResult();$total+=$n
                     if($total -gt $limit){$reason='OUTPUT_LIMIT';break}
                     if($n){$files[$i].Write($buffers[$i],0,$n);$pending[$i]=$streams[$i].ReadAsync($buffers[$i],0,65536)}else{$pending[$i]=$null}
@@ -143,6 +144,7 @@ function ReadGrammarName([string]$path){
 function CheckInertImports([string]$sha256,[string]$occurrences){
     # Exact pinned token strings/comment; original JavaScript bytes are never rewritten.
     $known=@{
+        '21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846'="10301:import';18431:import';21280:import("
         'c2ac6894e0db6164f56dc339788d9da2da60ce1f81d888e6b74a74fc81db818f'="10284:import';18275:import';21124:import("
         '230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc'="4409:import';4459:import';27565:import'"
         'e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'='50974:import"'
@@ -260,7 +262,7 @@ function CheckRecoveredProof([string]$path){
 }
 function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned,[switch]$MemoryEvents){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
-    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
+    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
     if($Owned){
         if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
     }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
@@ -491,6 +493,6 @@ finally {
         if($network.state -cne 'OBSERVED'){$script:failed=$true}
     }
     Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;whole_feature_support=$false}
-    Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count}
+    Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count;remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;acquisition_limit_bytes=$script:acquisitionLimit}
 }
 if($script:failed){throw 'Required P05 inputs failed; original evidence retained'}

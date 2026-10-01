@@ -11,7 +11,7 @@ $files=@(foreach($directory in @('raw','records','cases','owned','acquisition/ar
 })
 $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'inputs.json'),(Join-Path $PSScriptRoot 'case-review.json'),(Join-Path $PSScriptRoot 'probe.c.in')
 if($task.Substring($prefix.Length).StartsWith('tsgk-p05-remedy-')){
-    $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-patches.json'),(Join-Path $PSScriptRoot 'remedy-cases.json'),(Join-Path $PSScriptRoot 'remedy-fact-oracles.json'),(Join-Path $PSScriptRoot 'remedy-sources.json')
+    $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-patches.json'),(Join-Path $PSScriptRoot 'remedy-cases.json'),(Join-Path $PSScriptRoot 'remedy-fact-oracles.json'),(Join-Path $PSScriptRoot 'remedy-sources.json'),(Join-Path $PSScriptRoot 'remedy-r2.json')
     foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){
         $path=Join-Path $task $directory
         if(Test-Path -LiteralPath $path){$files+=Get-ChildItem -LiteralPath $path -File -Recurse}

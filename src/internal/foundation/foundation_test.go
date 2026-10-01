@@ -49,6 +49,7 @@ func TestNegativeControls(t *testing.T) {
 		mutate           func(fstest.MapFS)
 	}{
 		{"missing-doc", "required file docs/specs/scope.md", func(f fstest.MapFS) { delete(f, "docs/specs/scope.md") }},
+		{"missing-r2-input", "required file src/dev/prepare-p05/remedy-r2.json", func(f fstest.MapFS) { delete(f, "src/dev/prepare-p05/remedy-r2.json") }},
 		{"wrong-module", "module identity", func(f fstest.MapFS) { f["go.mod"].Data = []byte("module example.org/wrong\n") }},
 		{"long-agents", "60 nonblank", func(f fstest.MapFS) {
 			f["AGENTS.md"].Data = append(f["AGENTS.md"].Data, []byte(strings.Repeat("extra\n", 61))...)

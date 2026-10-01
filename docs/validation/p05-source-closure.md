@@ -160,4 +160,12 @@ r1 후보는 C# directive9개와 제한 Swift14개 source facts를 수용했지�
 
 이 revision은 실패 final 수신 counter를 기록하지 않아 초과량은 미관측이다. 알려진 값은 guard threshold1,073,741,824bytes 초과이며 실제 전송 upper/partial image payload/청구량으로 환산하지 않는다. 새 기록 helper는 acquisition 중 각 command의 host root 종료 뒤 `acquisition_network` snapshot과 최종 `download-budget-incomplete`를 남긴다. counter가 unavailable/시작값보다 감소하면 수치 PASS를 만들지 않고 `NOT_VERIFIED`로 보존하며 정상 command도 실패로 처리한다. 취득 완료도 같은 단일 snapshot이 OBSERVED/비음수/1GiB 이내이고 record를 남긴 뒤에만 acquiring을 해제한다. 기존 TIMEOUT/DOWNLOAD_LIMIT/UNKNOWN_CLEANUP 사유를 counter 관측 실패로 덮지 않는다. 이 교정은 이전 미관측 counter를 복원하거나 cap을 늘리지 않는다. 자체 controlled-counter 중단·unavailable·regression과 완료 전환 반례는 기록 경로의 검증이며 실제 host traffic/daemon 종료 증거와 구분한다.
 
-후속 C#/TS/TSX exact 추가 patch와 SQLPG-only1.5GiB cap은 새 결정 대상이다. 현재 일반1GiB guard·52HTTP/600초·image1회·개별 native/격리/회수/저장 한도와 SQL 평가만의 범위를 유지한다. 승인된 r1 owned-fixture/취득 효과나 같은 범위의 지속 개발/CI 승인을 새 grammar patch·개별cap 확대·SQL 교체로 해석하지 않는다. 같은 결정적 실패를 무변경 dispatch하지 않는다.
+이전 checkpoint에서 후속 C#/TS/TSX exact 추가 patch와 SQLPG-only1.5GiB cap은 미승인 결정으로 남았다. 2026-10-01 실제 사용자 통합 지시가 human12553bytes/SHA `a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e`와 machine31295bytes/SHA `a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2`의 A/B를 명시 승인했다. 현재 일반1GiB guard·52HTTP/600초·image1회·개별 native/격리/회수/저장 한도와 SQL 평가만의 범위를 유지한다. 승인된 r1 owned-fixture/취득 효과나 같은 범위의 지속 개발/CI 승인을 새 grammar patch·개별cap 확대·SQL 교체로 해석하지 않는다. 같은 결정적 실패를 무변경 dispatch하지 않는다.
+
+## A/B r2 실행 계약
+
+`patch-r2`는 exact r1→r2 C#/TS/TSX 별도 후보만 G3/B3/X39·7producer edit로 실행하며 original/r1/Swift를 무변경 재실행하지 않는다. r1 scanner·고정 npm/runtime/CLI·input/expectation을 유지하고 r2 source의 literal import occurrence도 exact SHA/offset으로 검증한다. `sql-pg-r2`는 동일 SQL30행과 PG baseline/noopt16행의 G2/B3/X46·3edit만 실행한다. 두 stage는 새 reviewed/merged main dispatch의 `pinned-tsql-r1`·`trixie-r1`·정확한 새 subject에 결속한다.
+
+source/image receive-counter는 `approval.ps1`이 효과 전에 선택한다. 새 `sql-pg-r2`만1,610,612,736bytes이고 다른 stage/일반경로는1,073,741,824bytes다. source+image 예약·polling·완료 snapshot·실패 snapshot·요약이 동일 stage bound를 쓰며 unknown/regressed/negative/over-cap 거부를 유지한다. HTTP52/600초·일반파일64MiB·PG exact100MiB 예외와 기존 native memory/시간/output/isolation/capture/cleanup 한도는 변하지 않는다. 과거 실패의 미기록 counter·UNKNOWN에 새 cap을 소급 적용하지 않는다.
+
+실제 G/B/X와 등록 syntax·구조·negative·recovery·edit를 별도 판정한다. job 성공·ERROR 부재·같은 tree 복구만으로 요구 지원을 주장하지 않으며 candidate 시험은 최종 provider 채택이 아니다. 새 [NET461 업무 계약](net461-workload.md)은 별도 case/owner/effect 경로이며 A/B 입력 집합에 포함하지 않는다.

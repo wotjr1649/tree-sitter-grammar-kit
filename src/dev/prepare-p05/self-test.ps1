@@ -21,6 +21,15 @@ if($legacy.image -cne $originalInputs.image -or $legacy.compressed_bytes -ne $or
 $candidate=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject
 if($candidate.image -cne 'node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492' -or $candidate.compressed_bytes -ne 440298459){throw 'Proposed image identity mismatch'}
 $remedySubject='42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'
+$r2Subject='a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e'
+foreach($stage in @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2')){
+    $binding=if($stage.EndsWith('r2')){$r2Subject}else{$remedySubject}
+    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $binding
+    if($selected.acquisition_limit_bytes -ne $(if($stage -ceq 'sql-pg-r2'){1610612736L}else{1073741824L})){throw 'Stage cap leaked into another route'}
+    $wrong=if($stage.EndsWith('r2')){$remedySubject}else{$r2Subject}
+    $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
+    if(-not $rejected){throw 'Old/new remedy subject cross-binding accepted'}
+}
 foreach($stage in @('patch-r1','sql-pg-r1')){$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $remedySubject}
 foreach($vector in @(@{RemedyStage='patch-r1';RemedySubject=''},@{RemedyStage='patch-r1';RemedySubject=$subject},@{RemedyStage='unknown';RemedySubject=$remedySubject},@{RemedyStage='';RemedySubject=$remedySubject})){
     $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject @vector}catch{$rejected=$true}
@@ -58,6 +67,14 @@ foreach($stage in @('patch-r1','sql-pg-r1')){
     if($rows.Count -ne $(if($stage -ceq 'patch-r1'){85}else{46}) -or @($rows|Where-Object {$_.case.edit}).Count -ne $(if($stage -ceq 'patch-r1'){16}else{3})){throw 'Remedy rows/edit budget mismatch'}
     if($stage -ceq 'patch-r1' -and @($rows|Where-Object {$_.producer.EndsWith('-original') -and $_.id -cnotlike 'P05-REMEDY-*'}).Count){throw 'Identical failing baseline scheduled again'}
 }
+$r2Rows=NewRemedyRows 'patch-r2' $originalInputs.cases $remedySubjects.cases.cases
+if($r2Rows.Count -ne 39 -or @($r2Rows|Where-Object {$_.case.edit}).Count -ne 7 -or @($r2Rows|Where-Object {$_.route -ceq 'csharp'}).Count -ne 27 -or @($r2Rows|Where-Object {$_.route -ceq 'typescript'}).Count -ne 4 -or @($r2Rows|Where-Object {$_.route -ceq 'tsx'}).Count -ne 8 -or @($r2Rows|Where-Object {$_.producer -cnotlike '*-candidate-r2'}).Count){throw 'Exact r2 producer budget mismatch'}
+$sqlRows=NewRemedyRows 'sql-pg-r2' $originalInputs.cases $remedySubjects.cases.cases
+if($sqlRows.Count -ne 46 -or @($sqlRows|Where-Object {$_.case.edit}).Count -ne 3){throw 'SQLPG row/edit identity changed'}
+$altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
+@($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
+$rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
+if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
 $rejected=$false;try{$null=NewRemedyRows 'unknown' $originalInputs.cases $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Unknown remedy stage scheduled'}
 foreach($case in $remedySubjects.cases.cases){
@@ -85,7 +102,7 @@ foreach($vector in @(@($swiftSource,'50975:import"'),@($swiftSource,'50974:impor
     $rejected=$false;try{CheckInertImports $vector[0] $vector[1]}catch{$rejected=$true}
     if(-not $rejected){throw 'Unreviewed Swift import occurrence accepted'}
 }
-foreach($binding in @(@('ea0bed0718ca8db1f69c826a41776bff98488afc451c57b2994529dcb6f4b593',"10284:import';18414:import';21263:import("),@('bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512','51547:import"'))){
+foreach($binding in @(@('ea0bed0718ca8db1f69c826a41776bff98488afc451c57b2994529dcb6f4b593',"10284:import';18414:import';21263:import("),@('21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846',"10301:import';18431:import';21280:import("),@('bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512','51547:import"'))){
     CheckInertImports $binding[0] $binding[1]
     $rejected=$false;try{CheckInertImports $binding[0] ($binding[1]+';1:import(')}catch{$rejected=$true}
     if(-not $rejected){throw 'Extra import in approved candidate accepted'}
@@ -304,7 +321,7 @@ $supervisorBurst=& {
         . ([scriptblock]::Create($definition[0].Extent.Text))
     }
     $script:commands=[Collections.Generic.List[object]]::new();$script:wall=[Diagnostics.Stopwatch]::StartNew()
-    $script:imageSize=0L;$script:acquiring=$false;$runnerRoot=$root
+    $script:imageSize=0L;$script:acquiring=$false;$runnerRoot=$root;$script:acquisitionLimit=1073741824L
     $source=Join-Path $root 'burst.go';$binary=Join-Path $root $(if($IsWindows){'burst.exe'}else{'burst'})
     [IO.File]::WriteAllText($source,('package main; import ("os"; "time"); func main() { if len(os.Args) > 1 { time.Sleep(3 * time.Second); return }; b := make([]byte, 65536); for i := 0; i < 128; i++ { n, e := os.Stdout.Write(b); if e != nil || n != len(b) { os.Exit(1) } } }'+"`n"),[Text.UTF8Encoding]::new($false))
     $build=[Diagnostics.ProcessStartInfo]::new();$build.FileName=Application go;$build.UseShellExecute=$false;$build.CreateNoWindow=$true;$build.WorkingDirectory=$root
@@ -327,6 +344,11 @@ $supervisorBurst=& {
     function NetworkReceived {return 1073741941L}
     $networkLimited=Run 'burst-download-limit' @('wait') 1 1048576 -executable $binary
     if($networkLimited.termination -cne 'DOWNLOAD_LIMIT' -or -not $networkLimited.host_cleanup_verified -or $networkLimited.acquisition_network.state -cne 'OBSERVED' -or $networkLimited.acquisition_network.received_counter_bytes -ne 1073741841L){throw 'Download-limit counter/cleanup receipt lost'}
+    $script:acquisitionLimit=1610612736L
+    $sqlAllowed=Run 'burst-sqlpg-counter' @() 2 8388608 -executable $binary
+    Require $sqlAllowed
+    if($sqlAllowed.acquisition_network.limit_bytes -ne 1610612736L -or $sqlAllowed.acquisition_network.received_counter_bytes -ne 1073741841L -or -not $sqlAllowed.host_cleanup_verified){throw 'SQLPG supervisor used another stage cap'}
+    $script:acquisitionLimit=1073741824L
     function NetworkReceived {throw 'Owned counter-unavailable negative'}
     if((NetworkBudgetReceipt).state -cne 'NOT_VERIFIED'){throw 'Unavailable counter fabricated an observation'}
     function NetworkReceived {return 99L}
@@ -343,7 +365,22 @@ $supervisorBurst=& {
     CompleteAcquisition
     $final=Get-Content -LiteralPath (Join-Path $root 'records/download-budget.json') -Raw|ConvertFrom-Json
     if($script:acquiring -or $final.received_network_upper_bound_bytes -ne 17 -or $final.final_snapshot.state -cne 'OBSERVED'){throw 'Verified final counter transition/receipt failed'}
-    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=4;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';upstream_native=$false}
+    $savedRoot=$root
+    foreach($cap in @(1073741824L,1610612736L)){
+        $script:acquisitionLimit=$cap
+        foreach($delta in @(-1L,0L,1L)){
+            $root=Join-Path $savedRoot ('cap-'+$cap+'-'+($delta+1))
+            foreach($dir in @('records','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $root $dir))}
+            [IO.File]::WriteAllText((Join-Path $root 'acquisition/records/acquisition.json'),'{"download_bytes":0}',[Text.UTF8Encoding]::new($false))
+            $script:acquiring=$true;$script:networkStart=100L
+            function NetworkReceived {return 100L+$script:acquisitionLimit+$delta}
+            $rejected=$false;try{CompleteAcquisition}catch{$rejected=$true}
+            if($rejected -ne ($delta -gt 0) -or $script:acquiring -ne ($delta -gt 0)){throw 'Stage cap boundary/transition failed'}
+            if($delta -le 0){$r=Get-Content -Raw (Join-Path $root 'records/download-budget.json')|ConvertFrom-Json;if($r.limit_bytes -ne $cap -or $r.final_snapshot.limit_bytes -ne $cap){throw 'Stage cap receipt mismatch'}}
+        }
+    }
+    $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
+    return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=5;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';both_stage_cap_boundaries='PASS';sqlpg_polling_cap='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';upstream_native=$false}
 } $ast $root
 $savedPath=$env:PATH
 try {
@@ -355,5 +392,5 @@ try {
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
-@{result='PASS';checks=@('exact remedy subject/stage/image mismatches rejected','patch stage85/edit16 and SQL-PG46/edit3; no identical original baseline scheduled','literal original/count/output digest mismatches rejected; 34 inputs exact bytes','ESM dynamic/package/root escape and missing/unpinned quoted includes rejected','duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup','failed acquisition retains observed counter; unavailable/regressed counter remains NOT_VERIFIED');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=4;native_fixture_processes_executed=4;upstream_native_invocations=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
-Write-Output 'P05 self-check PASS; owned Go supervisor fixture build1/execute4, upstream native0'
+@{result='PASS';checks=@('exact remedy subject/stage/image mismatches rejected','patch-r1 rows85/edit16; patch-r2 C#27+TS4+TSX8=39/edit7; SQL-PG r1/r2 rows46/edit3; no identical original baseline scheduled','both stage caps: reservation/polling/completion and below/equal/above transitions; unavailable/negative/regressed counters rejected','literal original/count/output digest mismatches rejected; 34 inputs exact bytes','ESM dynamic/package/root escape and missing/unpinned quoted includes rejected','duplicate PATH applications choose first exact path','missing application rejected','separate acquisition, capture and image subjects required','empty, old B, mismatched and unknown profiles rejected','original image identity preserved; new image bound to separate subject','case-distinct grammar keys accepted and exact name retained; invalid name rejected','ELF arch/loader/library/RUNPATH mismatches rejected','owned structure/edit checker rejects wrong fields, unequal trees and missing negative error','frozen init exact identity; live/stopped/child/PID mismatch/forged command rejected','NUL/CRLF tar recovery preserves bytes; deleted/replaced bytes rejected','executable archive mode mismatch rejected','real Freeze/StopContainer receipt names stay unique with owned responses','actual supervisor recovers exact8MiB owned burst within2seconds and verifies cleanup','failed acquisition retains observed counter; unavailable/regressed counter remains NOT_VERIFIED');unix_mode_roundtrip=$(if($IsWindows){'NOT_APPLICABLE'}else{'PASS'});supervisor_burst=$supervisorBurst;fixture_processes_executed=5;native_fixture_processes_executed=5;upstream_native_invocations=0;run_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run.ps1')).Hash.ToLowerInvariant();approval_sha256=(Get-FileHash -LiteralPath $approval).Hash.ToLowerInvariant()}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $root 'self-test.json') -Encoding utf8NoBOM
+Write-Output 'P05 self-check PASS; owned Go supervisor fixture build1/execute5, upstream native0'
