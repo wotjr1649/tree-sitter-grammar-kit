@@ -6,8 +6,8 @@ if($Profile -ceq 'pinned-tsql-r1'){
 } elseif($Profile -cne 'archive-r1' -or $Subject){throw 'Acquisition profile/approval mismatch'}
 if($Execution -and $ExecutionSubject -cne '1cdf1711088ebaba3347ce617ddfc733b0e4323a401a6c9efe50c37cf1deb42e'){throw 'Separate tmpfs capture approval subject mismatch'}
 if($RemedyStage){
-    $expected=if($RemedyStage -cin @('patch-r2','sql-pg-r2')){'a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e'}else{'42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'}
-    if($RemedyStage -cnotin @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2') -or $RemedySubject -cne $expected -or $Profile -cne 'pinned-tsql-r1' -or $ImageProfile -cne 'trixie-r1'){throw 'Separate exact remedy approval subject/profile mismatch'}
+    $expected=if($RemedyStage -cin @('patch-r2','sql-pg-r2','sql-only-r2')){'a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e'}else{'42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'}
+    if($RemedyStage -cnotin @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2','sql-only-r2') -or $RemedySubject -cne $expected -or $Profile -cne 'pinned-tsql-r1' -or $ImageProfile -cne 'trixie-r1'){throw 'Separate exact remedy approval subject/profile mismatch'}
 }elseif($RemedySubject){throw 'Remedy subject without stage'}
 $acquisitionLimit=if($RemedyStage -ceq 'sql-pg-r2'){1610612736L}else{1073741824L}
 if($ImageProfile -ceq 'trixie-r1'){

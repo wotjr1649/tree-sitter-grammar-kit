@@ -68,14 +68,15 @@ function NewRemedyRows([string]$stage,$original,$additional){
         }
         if(@($rows|Where-Object {$_.case.edit}).Count -ne 7){throw 'Exact r2 edit count changed'}
         $expected=39
-    }elseif($stage -cin @('sql-pg-r1','sql-pg-r2')){
-        foreach($producer in @('derek-sql-candidate','postgresql-lfs-baseline','postgresql-noopt-regenerated')){
+    }elseif($stage -cin @('sql-pg-r1','sql-pg-r2','sql-only-r2')){
+        $producers=if($stage -ceq 'sql-only-r2'){@('derek-sql-candidate')}else{@('derek-sql-candidate','postgresql-lfs-baseline','postgresql-noopt-regenerated')}
+        foreach($producer in $producers){
             $route=if($producer -ceq 'derek-sql-candidate'){'tsql'}else{'postgresql-sql'}
             $cases=@($original|Where-Object route -CEQ $route)
             if($route -ceq 'tsql'){$cases+=@($additional|Where-Object route -CEQ $route)}
             foreach($case in $cases){$rows.Add(@{id=$case.id;route=$route;producer=$producer;case=$case;state='NOT_RUN';dependency='GENERATION_BUILD_AND_SAFETY_PREREQUISITES';command_label=('case-'+$producer+'-'+$case.id.ToLowerInvariant());raw_stdout=$null;exit_code=$null})}
         }
-        $expected=46
+        $expected=if($stage -ceq 'sql-only-r2'){30}else{46}
     }else{throw 'Unknown exact remedy stage'}
     if($rows.Count -ne $expected -or @($rows.command_label|Sort-Object -Unique).Count -ne $expected){throw 'Remedy producer/case plan mismatch'}
     return ,$rows.ToArray()
@@ -161,7 +162,8 @@ function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
         if(-not $script:verifiedSource.ContainsKey($identity.path)){throw 'Unregistered SQL dependency'}
         if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'SQL dependency bytes changed'}
         $source=[IO.File]::ReadAllText($path)
-        if($source -match '\b(?:require|createRequire|eval|Function)\b'){throw 'Unreviewed SQL loader/evaluation'}
+        # JavaScript identifiers are case-sensitive: function is not the Function constructor.
+        if($source -cmatch '\b(?:require|createRequire|eval|Function)\b'){throw 'Unreviewed SQL loader/evaluation'}
         $imports=[regex]::Matches($source,'(?m)^\s*import\s+(?:[A-Za-z_$][\w$]*|\{[\w\s,$]*\})\s+from\s+["''](\.{1,2}/[A-Za-z0-9_./-]+\.js)["''];?\s*$')
         if([regex]::Matches($source,'\bimport\b').Count -ne $imports.Count){throw 'Unresolved SQL ESM import'}
         foreach($import in $imports){$queue.Enqueue((Join-Path ([IO.Path]::GetDirectoryName($path)) $import.Groups[1].Value))}
@@ -281,6 +283,7 @@ function InvokeRemedyProducers($subjects){
         $parser=InvokeRemedyGeneration 'derek-sql-candidate' ($sqlRoot+'/grammar.js') (Join-Path $root $sqlRoot) -Sql
         if($parser){$name=TryRemedyPrecheck 'derek-sql-candidate' 'name' {ReadGrammarName (Join-Path $root ($parser+'/grammar.json'))};if($name.passed){InvokeRemedyBuildAndCases 'derek-sql-candidate' $name.value ('/inputs/'+$parser) (Join-Path $root $parser) ('/inputs/'+$sqlRoot+'/src/scanner.c') ($sqlRoot+'/src/scanner.c')}}
         }
+        if($RemedyStage -ceq 'sql-only-r2'){return}
         $pgRoot='acquisition/sources/gmr--tree-sitter-postgres--59d0d8cd7506d68de1229fb4bbce838c83b60c8a/postgres'
         $pgParser='materialized-lfs/postgres/src'
         foreach($name in @('parser.h','alloc.h','array.h')){

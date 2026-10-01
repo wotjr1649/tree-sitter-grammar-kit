@@ -17,6 +17,8 @@
 
 실제 20.2.x·사용 component·compiler·LangVersion은 caller가 읽기를 허용한 metadata에서 확인하고 미확인 값은 UNKNOWN이다. project 설정을 변경하지 않는다. 역할의 실제 파일이 제공 corpus에 없으면 NOT_PROVIDED이며 요구는 유지한다. 소스 구문/구조, net461 build, Framework runtime 실행, designer/WCF 통합은 별도 축이다. IIS/WCF endpoint·폼·component·designer 실행, SDK 설치·restore·MSBuild target·svcutil·runtime downgrade는 승인되지 않았다.
 
+요구의 기존 feature 연결은 C# lexical `csharp-B01`, type `csharp-B02`, expression `csharp-B03`, statement `csharp-B04`, member/attribute `csharp-B05`, 채택 C#7.3 경계 `csharp-V73`이다. XML 파일은 `xml-B01`/`xml-B02`와 등록된 version 경계 `xml-V11`을 사용한다. WSDL/XSD는 XML source이며 별도 XSD language route를 추가하지 않는다. `.svc` composite case는 아래 별도 format 등록부에서 C#/XML의 적용 segment와 coverage를 연결하며 기존256행을 늘리거나 줄이지 않는다.
+
 ## `SVC-SERVICEHOST-r1` 형식과 위치
 
 일반 XML/C# PASS는 `.svc` 전체 지원 근거가 아니다. [공식 ServiceHost 정의](https://learn.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/wcf-directive/servicehost)의 `Service`, `Factory`, `Debug`, `Language`, `CodeBehind`를 이름·값·quote·구분자·원문 span으로 보존한다. Factory/Language 생략도 등록한다. [공식 배치 설명](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/deploying-an-internet-information-services-hosted-wcf-service)은 directive 뒤 inline source와 별도 구현 파일을 구분한다.
@@ -26,6 +28,7 @@
 * inline이 있고 Language가 등록된 `C#`/`c#`일 때만 기존 C# producer를 재사용한다. inline Language 생략은 UNRESOLVED_LANGUAGE, VB/JS/기타는 UNSUPPORTED_LANGUAGE이며 C# PASS가 아니다. inline 없는 Language 생략 directive 관측과 구분한다.
 * UTF-8(유효 bytes, BOM 유무)은 원본 slice와 offset mapping을 기록한다. UTF-16 LE/BE는 BOM과 caller의 encoding 등록을 확인한 뒤에만 lossless UTF-8 변환을 허용하며 원본↔변환 byte/point 경계 mapping을 결속한다. 불명 encoding·손상 sequence·mapping 불가능 경계는 BLOCKED다. charset 추정·newline 정규화·directive 삭제 후 전체 원본 PASS·임의 wrapper 삽입은 금지한다.
 * composite result는 전체 원본 identity, format revision, directive 관측, inline 언어/slice, 변환/mapping identity, C# producer/source/tool, 원본에 대응한 node/capture span과 coverage를 결속한다. producer local span도 보존한다. point는 [tree 계약](../specs/tree-and-adapter-protocol.md)의 0-based row와 byte column이다. mapping 없이는 전체 `.svc` 지원을 주장하지 않는다.
+* 변환한 UTF-8 producer의 local point와 UTF-16 원본 point를 구분한다. 원본 row는 등록 encoding에서 해석한 LF 경계로 세며 column은 원본의 행 시작부터 실제 byte 수다. UTF-16 code unit 내부의 단독 `0x0A` byte를 줄바꿈으로 오인하지 않는다. BOM·CRLF·segment offset을 포함한 byte 경계 mapping으로 원본 point를 재계산하고 producer 좌표를 원본 좌표로 그대로 복사하지 않는다.
 * 원본 byte 좌표 edit마다 directive/inline 경계와 mapping을 재계산한다. damaged incremental/fresh, restored incremental/fresh, original syntax/구조를 각각 대조한다. segment/language 변경을 기록한다. 동일한 잘못된 tree의 복구는 지원 PASS가 아니다.
 
 XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 entity/schema 취득, ResXFileRef·config/WSDL/XSD 참조 자동 접근을 수행하지 않는다. 기존 C#/XML 경로와 제한된 format 처리를 재사용하며 범용 ASP.NET/Razor compiler나 새 parser runtime을 만들지 않는다.
