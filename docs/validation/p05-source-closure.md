@@ -27,7 +27,9 @@ C# 펼침192 MiB·outer/inner64 MiB·회수/collector120초·일반 파일64 MiB
 로컬 finite-batch/dispatch guard와 회수 helper가 승인 subject를 대조하고 실행 전 공간을 예약한다.
 hosted workflow/collector의 runner 한도와 별개이며, 해당 로컬 guard의 검증·독립 리뷰 전에는 native dispatch하지 않는다.
 회수 전에 실제 보존량 + outer 실제 크기 + inner 최대64 MiB + stage expanded 한도 + 기록64 MiB를 예약하고
-manifest 확인 후 다시 대조한다. runner8 GiB, PG generation-only6 GiB, 다른 native4 GiB 및 모든 개별 실행·격리 한도는 그대로다.
+C# r5는 승인 machine의 추가64 MiB 여유를 포함한 469,762,048 bytes를 실행 전에 예약한다.
+MSSQL의 기존 예약은 402,653,184 bytes다. manifest 확인 후 실제 보존량을 다시 대조한다.
+runner8 GiB, PG generation-only6 GiB, 다른 native4 GiB 및 모든 개별 실행·격리 한도는 그대로다.
 과거 한도 초과·소비량·UNKNOWN을 새 상한으로 소급 수정하지 않는다.
 
 # PREPARE-06 후속 exact R2 실행 계약
