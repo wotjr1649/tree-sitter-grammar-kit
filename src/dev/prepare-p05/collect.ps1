@@ -79,7 +79,7 @@ if($exactLimits){
     }
     $exportRecord=Join-Path $task 'records/generated-artifacts.json'
     $stream=[IO.File]::Open($exportRecord,[IO.FileMode]::CreateNew)
-    try{$bytes=[Text.Encoding]::UTF8.GetBytes(($exports|ConvertTo-Json -Depth 10 -AsArray));$stream.Write($bytes)}finally{$stream.Dispose()}
+    try{$bytes=[Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $exports -Depth 10));$stream.Write($bytes)}finally{$stream.Dispose()}
     $files+=Get-Item -LiteralPath $exportRecord
 }
 if($files.Count -gt 10000){throw 'Evidence file count limit'}
