@@ -7,7 +7,7 @@
 - `UPSTREAM_DECLARED`: 고정 upstream 문서가 선언한 제한. local 재현 없이도 알려진 위험이지만 실패 receipt라고 부르지 않는다.
 - `STATIC_SOURCE_OBSERVATION`: 고정 source/layout에서 실제 읽은 경로·rule·누락. 실행 성공/실패로 승격하지 않는다.
 - `UNVERIFIED_SUPPORT`: 공식 required feature와 후보 간 검증이 남음. README의 지원 문구나 파일 존재로 PASS가 되지 않는다.
-- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. T-SQL/C#과 TS/TSX의 필수 구문 실패는 baseline/재생성 producer별로, Swift는 실제 regeneration producer에서 재현됐다. PG의 미실행을 구문 실패로 바꾸지 않는다.
+- `REPRODUCED_FAILURE`: 승인된 동일 source/input/tool/한도 실행 receipt가 실제 실패를 관측한 경우만 사용한다. T-SQL/C#과 TS/TSX의 필수 구문 실패는 baseline/재생성 producer별로, Swift는 실제 regeneration producer에서 재현됐다. PG는 실제 LFS baseline의 `WITH OIDS` 실패와 noopt generation 실패를 구분하고 미실행 producer를 구문 실패로 바꾸지 않는다.
 
 과거 PREPARE-04까지 upstream G/B/X는0회였다. run36592527846에서 등록된24 repo·runtime83개·npm6개를 합친474파일과 CLI의 exact bytes를 확인했고 owned 격리4회 뒤 tmpfs 회수가 실패했다. run36606981293은 같은474파일·canary12bytes·owned isolation8개·container9개 cleanup 뒤 기존 image의 `GLIBC_2.39` loader 실패로 중단됐다. 두 기록은 grammar 실패가 아니다. 명시 승인한 Trixie의 run36644794802는 toolchain/격리/자체 G/B/X를 통과한 뒤 JSON reader에서 멈췄다. 수정한 run36646415814는 T-SQL G1/B2/X56을 실행했으며 C# generation exit0 뒤 큰 결과 회수가 timeout됐다. 나머지 selected route의 G/B/X는 그 run에서 NOT_RUN이다. byte 검증, 실행 closure, 실제 source 지원을 구분하며 npm install script와 과거 owned fixture7회를 지원 근거로 대신하지 않는다.
 
@@ -44,7 +44,7 @@
 | yaml | UNVERIFIED_SUPPORT | yaml-B01,yaml-B03,yaml-V12 | schema별 generated variants·scanner와 test-suite submodule 존재 | 등록부; 선택 root grammar의 closure, variant 자동 변경 금지 |
 | xml | UNVERIFIED_SUPPORT | xml-B01,xml-B02,xml-V11 | xml/common/dtd source 관계와 scanner/1.1 문자 경계 미검증 | 등록부; DTD 별도 route 자동 채택 금지 |
 | tsql | STATIC_SOURCE_OBSERVATION | tsql-B01,tsql-B02,tsql-B03,tsql-B04,tsql-B05,tsql-V16,tsql-V22 | 고정 source의 baseline/재생성 각각28개 중23개에서 ERROR/MISSING. bare/escaped identifier, DDL/DML/CTE/procedure/transaction와 등록 modern 절의 실패 재현; lowercase @@version은 syntax 수용과 분류 차이를 별도 관측 | SQL-1/SQL-2의 source 등급 유지; 별도 native 절은 REPRODUCED_FAILURE이며 remedy 결정 필요 |
-| postgresql-sql | STATIC_SOURCE_OBSERVATION | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 생성 기반 PG19와 별개로 baseline parser는 LFS pointer. generation exit137 뒤 legacy/18 모두 NOT_RUN | PG-1은 미지원 선언 아님; 실제 LFS object·generation capability 확인 필요 |
+| postgresql-sql | STATIC_SOURCE_OBSERVATION | postgresql-sql-B01,postgresql-sql-B02,postgresql-sql-B03,postgresql-sql-B04,postgresql-sql-V18,postgresql-sql-L01 | 원 LFS pointer와 실제 취득 baseline을 구분. baseline8 중 legacy WITH OIDS 실패, 나머지7개 등록 구조 관측; noopt state overflow로 재생성8개 NOT_RUN | PG-1의 source 등급 유지; 아래 PREPARE-06은 별도 native 근거이며 generation/remedy 결정 필요 |
 
 ## 읽은 고정 source와 판정 한계
 
@@ -76,11 +76,27 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 | P05-TSQL-CASE | tsql-B01 | `SELECT @@VERSION;`와 lowercase spelling | OBSERVED_CLASSIFICATION_DIVERGENCE; 둘의 syntax 수용과 configuration_functions/LOCAL_ID_ 분류 차이를 별도 보존 |
 | P05-TSQL-STATEMENTS | tsql-B02,tsql-B03,tsql-B04,tsql-V16,tsql-V22 | 한 글자 identifier의 CREATE TABLE/INSERT, CTE/SELECT, procedure/transaction; FOR JSON/OPENJSON, FOR SYSTEM_TIME/SYSTEM_VERSIONING, DROP IF EXISTS와 CREATE OR ALTER의 별도 source case, AS NODE/EDGE/MATCH, WINDOW/IS DISTINCT FROM, JSON/VECTOR type, LEDGER table option의 각 source case | REPRODUCED_FAILURE;21case 모두 두 producer에서 오류, unrelated SELECT로 대체 금지 |
 | P05-TSQL-GO | tsql-B05 | batch 사이 독립 행 GO 및 quoted/string 내부 GO 대조 | OBSERVED_BOUNDED_POSITIVES; 등록 separator/count와 문자열 대조의 구조 확인 |
-| P05-PG-LEGACY | postgresql-sql-B01,postgresql-sql-L01 | 9.6 WITH OIDS/quoted identifier/dollar string/ON CONFLICT와 18 counterpart | PLANNED_NOT_RUN; 유효 legacy source가 보존되는지 |
-| P05-PG-18 | postgresql-sql-V18 | VIRTUAL generated column, WITHOUT OVERLAPS/PERIOD key, RETURNING OLD/NEW | PLANNED_NOT_RUN; clause/body/identifier 구조 |
+| P05-PG-LEGACY | postgresql-sql-B01,postgresql-sql-L01 | 9.6 WITH OIDS/quoted identifier/dollar string/ON CONFLICT와 18 counterpart | REPRODUCED_FAILURE_WITH_BOUNDED_POSITIVES; baseline WITH OIDS 실패, 나머지3개 구조 관측; noopt4개 NOT_RUN |
+| P05-PG-18 | postgresql-sql-V18 | VIRTUAL generated column, WITHOUT OVERLAPS/PERIOD key, RETURNING OLD/NEW | OBSERVED_BOUNDED_POSITIVES; baseline4개 등록 구조 관측, noopt4개 NOT_RUN |
 | P05-SWIFT-GENERATION | swift-B01,swift-V62,swift-V64 | 고정 grammar generation과 Swift5 generic function/inline array/module selector source의 구분된 입력 | OBSERVED_GENERATION_BUILD_WITH_MODERN_FAILURES; G/B와 legacy edit 성공, 두 modern syntax 실패 |
 
 ## 남은 승인과 readiness
+
+### PREPARE-06의 실제 A/B 및 SQL 결과
+
+실제 사용자 A/B 승인은 기존 정확한 r2 후보 시험과 SQLPG-only counter 한도에 연결됐다. 아래 결과는 그 실행이며 최종 provider 채택은 여전히 별도 결정이다. 과거 원본/r1 실패와 미실행을 유지한다.
+
+| 실행 / source | 등록 사실과 판정 | 남은 처분 |
+|---|---|---|
+| [A run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494), C# r2 / TS r2 / TSX r2 | G3/B2/X12/edit2. C#은 `new var` 생성 conflict로27개 NOT_RUN. TS4/TSX8은 positive 구조10개와 negative 거부2개, edit2의 incremental/fresh·원본 복원 확인 | C# 정확한 추가 conflict/remedy 결정과 회귀 필요. TS/TSX bounded remedy 관측은 원본/r1의 기존 실패를 덮지 않음 |
+| [B run36796853218](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36796853218), PG LFS baseline / noopt | G1/B1/X8/edit1. `WITH OIDS` required syntax 실패, quoted/dollar/ON CONFLICT 및 PG18 네 case의 등록 구조7개 확인. noopt387042 states >65535로8개 NOT_RUN | legacy remedy와 generation 경로 결정. OIDS edit의 동일 복구도 원본 syntax 실패를 해소하지 않음. 과거 exit137 원인은 UNKNOWN 유지 |
+| [SQL run36803412644](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36803412644), DerekStride97614d0 regeneration | G1/B1/X30/edit1. 필수 syntax 실패13개, bounded positive 구조11개, 올바른 negative 거부2개, transaction/MATCH 구조 실패2개, configuration mapping 미해결2개 | 후보의 실제 gap. 기존 Crary source의56행/46실패와 별도로 보존. 다른 후보의 정적 비교는 새 취득/native/provider 채택 근거가 아님 |
+
+SQL의 ERROR 없는15개를15개 지원 PASS로 계산하지 않는다. `@@VERSION`/`@@version`은 동일 generic unary-expression/identifier 분류라 검토된 configuration-variable mapping이 남는다. transaction은 BEGIN/COMMIT를 단일 block으로 묶고 MATCH는 graph path를 일반 invocation/arithmetic/operator로 해석한다. 다른 provider의 node 이름을 강제하지 않으며 해당 후보의 primary rule·역할·원문 범위로 판정한다.
+
+`P05-TSQL-ID-BARE` 원본의 identifier 구조는 확인했으나 등록 손상 `SELECT  FROM t;`를 ERROR 없이 수용했다. damaged/restored incremental=fresh 및 원본 복원은 일치해도 등록 negative/recovery는 실패다. 원본 positive와 negative 두 건을 포함한 전체 등록 case의 통과는12/30이며 전체 언어·feature 지원 수치가 아니다. source text·기대값·comparator·범위를 결과에 맞춰 바꾸지 않았다.
+
+각 새 run의 toolchain·전체8개 isolation·owned G→B→회수→fresh-container X와 exact container 종료/PID0/제거를 확인했다. host root cleanup과 Docker daemon quiescence는 다르며 후자는 NOT_PROVEN이다. P06의 승인·실행 경계 관측은 P05의 필수 grammar gap 또는 최종 source 채택을 대신하지 않는다. 업무/.svc 제품·전체 corpus·다른20route의 미래 native·S08 78셀은 NOT_RUN이다. [NET461 준비 계약](net461-workload.md)은 별도 scope/roles/format/owner 경로다.
 
 ### PREPARE-05의 추가 관측
 
@@ -96,7 +112,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 16개 producer edit는5stage/2comparison이 일치했고 restored tree가 original과 같았다. damaged source bytes와 ERROR/MISSING의 등록 window 교차를 확인했다. broad ERROR span은 좁은 error locality나 damaged 후속 AST 보존을 입증하지 않으며, original 구조가 잘못된 case의 동일 복구도 required support PASS가 아니다.85행의 syntax 실패13개(원본11/후보2)와 별도의 C# 구조 실패를 유지한다.
 
-새 C#/TS/TSX patch·SQLPG-only transfer cap 확대는 사용자 별도 결정 전 미실행이다. 이미 채택한26route/256행과 version/mode를 다시 결정하거나 범위를 줄이지 않는다. P05는 알려진 required gap의 검증된 처분과 미실행 SQL/PG 근거가 갖춰질 때까지 준비 완료로 표시하지 않는다. P06의 실제 Trixie/CLI/runtime/isolation·회수/새 실행 성공과 별개의 grammar gap을 혼동하지 않되 해당 SQL/PG job의 acquisition·전체 preflight 미완료는 남긴다.
+PREPARE-05 checkpoint 당시 새 C#/TS/TSX patch·SQLPG-only transfer cap 확대는 사용자 별도 결정 전 미실행이었다. 이후 승인과 실행은 위 PREPARE-06에 연결하며 당시 실패/NOT_RUN을 소급 변경하지 않는다. 이미 채택한26route/256행과 version/mode를 다시 결정하거나 범위를 줄이지 않는다. P05는 알려진 required gap의 검증된 처분과 최종 source 채택이 갖춰질 때까지 준비 완료로 표시하지 않는다.
 
 PR #22/prepare-02 당시 native 승인은 **owned fixtures만**, source/tool artifact 다운로드 한도는 0 bytes였고 upstream generation/build/parse/edit는 0회였다. 이 이전 기록과 소비는 보존한다.
 
