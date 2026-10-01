@@ -576,6 +576,15 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
         if($field -ceq 'bytes'){$member.bytes++}else{$member.sha256='0'*64};$rejected=$false;try{$null=AssertLosslessCsharpManifest $drift $match 201326592}catch{$rejected=$_.Exception.Message -ceq 'Lossless source final manifest identity mismatch'};if(-not $rejected){throw 'Final manifest source drift accepted'}
     }
     & {
+        param($manifest,$sourceProof,$collectorAst)
+        $summary=@{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()};$exactLimits=@{local_expanded_max_bytes=201326592}
+        $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$sourceExpansion=AssertLosslessCsharpManifest',[StringComparison]::Ordinal)},$true))
+        if($guard.Count -ne 1){throw 'Actual source manifest catch guard unavailable'}
+        $records=[Collections.Generic.List[object]]::new();$rejected=$false
+        try{& ([scriptblock]::Create($guard[0].Extent.Text))|ForEach-Object {$records.Add($_)}}catch{$rejected=$_.Exception.Message -ceq 'Lossless source final manifest identity mismatch'}
+        if(-not $rejected -or $records.Count -ne 1 -or ($records[0]|ConvertFrom-Json).failure -cne 'LOSSLESS_SOURCE_IDENTITY_FAILURE'){throw 'Source identity failure misclassified as budget overflow'}
+    } $drift $match $exportAst
+    & {
         param($fallbackRoot,$collectorAst,$originalFiles,$copyRoot)
         [void][IO.Directory]::CreateDirectory((Join-Path $fallbackRoot 'records'));$files=@()
         foreach($file in $originalFiles){$relative=[IO.Path]::GetRelativePath($copyRoot,$file.FullName);$target=Join-Path $fallbackRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target));[IO.File]::WriteAllBytes($target,[IO.File]::ReadAllBytes($file.FullName));$files+=Get-Item -LiteralPath $target}
@@ -615,7 +624,7 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
     } $largeFiles[0].FullName
     $script:collectionClock=[pscustomobject]@{Elapsed=[TimeSpan]::FromSeconds(121)};$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Lossless source total deadline ignored'}
     $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
-    @{result='PASS';original_copies=4;unique_objects=1;original_bytes=4*$data.Length;compressed_bytes=$encoded.Length;NUL_CRLF_roundtrip='PASS';negative_controls=33;actual_stage_overflow_fixture_bytes=268435456;original_files_retained=$true;raw_unchanged=$true;post_store_corruption_fallback='PASS';upstream_native=$false}|ConvertTo-Json -Compress
+    @{result='PASS';original_copies=4;unique_objects=1;original_bytes=4*$data.Length;compressed_bytes=$encoded.Length;NUL_CRLF_roundtrip='PASS';negative_controls=34;actual_stage_overflow_fixture_bytes=268435456;original_files_retained=$true;raw_unchanged=$true;post_store_corruption_fallback='PASS';upstream_native=$false}|ConvertTo-Json -Compress
 } $root
 $bindingRoot=Join-Path $root 'owned-followup-binding'
 foreach($directory in @('records','raw','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $bindingRoot $directory))}

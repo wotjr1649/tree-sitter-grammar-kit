@@ -298,7 +298,11 @@ $manifest=@(foreach($file in $files){
 })
 if($RemedyStage -ceq 'csharp-r4' -and $sourceProof.result -ceq 'MATCH'){
     try{$sourceExpansion=AssertLosslessCsharpManifest $manifest $sourceProof $exactLimits.local_expanded_max_bytes}
-    catch{ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress;throw}
+    catch{
+        if($_.Exception.Message -ceq 'Lossless source stage expanded reserve exceeded'){ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress}
+        else{@{failure='LOSSLESS_SOURCE_IDENTITY_FAILURE';reason=$_.Exception.Message;support_assessment='NOT_VERIFIED'}|ConvertTo-Json -Compress}
+        throw
+    }
 }
 if($exactLimits -and ($manifest|Measure-Object bytes -Sum).Sum+8388608 -gt $exactLimits.local_expanded_max_bytes){
     ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress
