@@ -6,6 +6,7 @@ function ReadRemedySubjects {
         'remedy-fact-oracles.json'='af130694ac859f9d32a867af45cccfbcfdea3655d716ba4c2e8285744a3285c4'
         'remedy-sources.json'='f2c26f754bd80ee58719d5b2d12271d338938ebaed6f952a3499faf774e76bc6'
         'remedy-r2.json'='389803c2d8f9da35a5ff913b2748c59e7a0504322bd09c1ee2f004aa283ae6cc'
+        'remedy-exact-r1.json'='6e195dffed56ae6385c0eb2bf1da6d2498cec11916a1f6d7a36fd8f2ac7c4b42'
     }
     $result=@{}
     foreach($name in $pins.Keys){
@@ -19,7 +20,16 @@ function ReadRemedySubjects {
     $projection=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'remedy-r2.json'))
     $original=[Text.Encoding]::UTF8.GetBytes($projection.Substring(0,$projection.Length-1).Replace("`n","`r`n")+"`n")
     AssertRemedyObject $original.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($original)).ToLowerInvariant()) @{bytes=31295;sha256='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2'}
+    $projection=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'remedy-exact-r1.json'))
+    $original=[Text.Encoding]::UTF8.GetBytes($projection.Substring(0,$projection.Length-1).Replace("`n","`r`n")+"`n")
+    AssertRemedyObject $original.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($original)).ToLowerInvariant()) @{bytes=204857;sha256='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824'}
+    $exact=$result['exact-r1']
+    if($exact.schema -cne 'tsgk.prepare06.exact-remedy-effects-proposal/r1' -or $exact.cases.Count -ne 103 -or $exact.patches.Count -ne 2 -or $exact.new_pg_cases.Count -ne 4 -or $exact.final_provider_adoption){throw 'Exact three-effect scope changed'}
     return $result
+}
+function ExactRemedyLimits([string]$stage){
+    $key=switch -CaseSensitive ($stage){'csharp-r3'{'csharp_r3'};'pg-legacy-r1'{'pg_legacy_r1'};'mssql-evaluate-r1'{'mssql_evaluate_r1'};default{return $null}}
+    return (ReadRemedySubjects)['exact-r1'].stage_operations[$key]
 }
 function EqualRemedyData($a,$b){
     if($a -is [Collections.IDictionary]){
@@ -68,6 +78,19 @@ function NewRemedyRows([string]$stage,$original,$additional){
         }
         if(@($rows|Where-Object {$_.case.edit}).Count -ne 7){throw 'Exact r2 edit count changed'}
         $expected=39
+    }elseif($stage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
+        $exact=(ReadRemedySubjects)['exact-r1']
+        $producers=switch -CaseSensitive ($stage){'csharp-r3'{@('csharp-candidate-r3')};'pg-legacy-r1'{@('postgresql-legacy-candidate-r1','postgresql-lfs-baseline-new-regression')};'mssql-evaluate-r1'{@('mssql-baseline-8620fbc','mssql-regenerated-8620fbc')}}
+        foreach($registered in $exact.cases|Where-Object {$_.producer -cin $producers}){
+            $matches=@(@($original)+@($additional)+@($exact.new_pg_cases)|Where-Object id -CEQ $registered.id)
+            if($matches.Count -ne 1){throw 'Exact three-effect case mapping mismatch'}
+            $case=$matches[0]|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
+            foreach($key in @('id','route','input_utf8','input_bytes','input_sha256','feature_ids','expected','edit')){if(-not (EqualRemedyData $case.$key $registered.$key)){throw 'Exact three-effect input/expectation/edit changed'}}
+            $rows.Add(@{id=$case.id;route=$case.route;producer=$registered.producer;case=$case;state='NOT_RUN';dependency='GENERATION_BUILD_AND_SAFETY_PREREQUISITES';command_label=('case-'+$registered.producer+'-'+$case.id.ToLowerInvariant());raw_stdout=$null;exit_code=$null})
+        }
+        $limits=ExactRemedyLimits $stage
+        if(@($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit){throw 'Exact three-effect edit count changed'}
+        $expected=$limits.X
     }elseif($stage -cin @('sql-pg-r1','sql-pg-r2','sql-only-r2')){
         $producers=if($stage -ceq 'sql-only-r2'){@('derek-sql-candidate')}else{@('derek-sql-candidate','postgresql-lfs-baseline','postgresql-noopt-regenerated')}
         foreach($producer in $producers){
@@ -104,8 +127,18 @@ function PrepareRemedyInputs($subjects){
             $script:verifiedSource[$relative]=$actual.sha256
         }
     }
-    if($RemedyStage -cnotin @('patch-r1','patch-r2')){return}
+    if($RemedyStage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
+        Record 'exact-remedy-authority-binding' @{human_subject=$RemedyApprovalSubject;approved_machine_sha256='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824';projection=(FileIdentity (Join-Path $PSScriptRoot 'remedy-exact-r1.json'));stage=$RemedyStage;limits=(ExactRemedyLimits $RemedyStage);candidate_adopted=$false;old_failed_evidence_preserved=$true}
+    }
+    if($RemedyStage -ceq 'pg-legacy-r1'){
+        $patch=@($subjects['exact-r1'].patches|Where-Object id -CEQ 'P05-PG-LEGACY-REMEDY-r1')[0]
+        $sourceRoot=Join-Path $root ('acquisition/sources/'+$patch.repository.Replace('/','--')+'--'+$patch.revision)
+        CopyExactRemedyCandidate $sourceRoot $patch
+        return
+    }
+    if($RemedyStage -cnotin @('patch-r1','patch-r2','csharp-r3')){return}
     foreach($patch in $subjects.patches.patches){
+        if($RemedyStage -ceq 'csharp-r3' -and $patch.repository -cne 'tree-sitter/tree-sitter-c-sharp'){continue}
         if($RemedyStage -ceq 'patch-r2' -and $patch.repository -ceq 'alex-pinkus/tree-sitter-swift'){continue}
         $key=$patch.repository.Replace('/','--')+'--'+$patch.base_commit
         $sourceRoot=Join-Path $root ('acquisition/sources/'+$key)
@@ -128,7 +161,7 @@ function PrepareRemedyInputs($subjects){
         }
         if(@($records|Where-Object patched).Count -ne $patch.files.Count){throw 'Missing literal patch target'}
         Record ('candidate-'+$patch.id.ToLowerInvariant()) @{proposal_id=$patch.id;original_repository=$patch.repository;original_commit=$patch.base_commit;files=$records;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
-        if($RemedyStage -ceq 'patch-r2'){
+        if($RemedyStage -cin @('patch-r2','csharp-r3')){
             $next=@($subjects.r2.patches|Where-Object repository -CEQ $patch.repository)
             if($next.Count -ne 1 -or $next[0].base_commit -cne $patch.base_commit){throw 'Exact r2 predecessor mismatch'}
             $next=$next[0];$nextRoot=Join-Path $root ('candidates/'+$next.id)
@@ -147,8 +180,47 @@ function PrepareRemedyInputs($subjects){
             }
             if(@($nextRecords|Where-Object patched).Count -ne 1){throw 'Exact r2 patch target missing'}
             Record ('candidate-'+$next.id.ToLowerInvariant()) @{proposal_id=$next.id;predecessor=$patch.id;machine_subject='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2';files=$nextRecords;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
+            if($RemedyStage -ceq 'csharp-r3'){
+                $last=@($subjects['exact-r1'].patches|Where-Object id -CEQ 'P05-CSHARP-REMEDY-r3')[0]
+                CopyExactRemedyCandidate $nextRoot $last
+                $scanner=FileIdentity (Join-Path $root ('candidates/'+$last.id+'/'+$last.scanner.target))
+                AssertRemedyObject $scanner.bytes $scanner.sha256 $last.scanner
+            }
         }
     }
+}
+function CopyExactRemedyCandidate([string]$sourceRoot,$patch){
+    $candidateRoot=Join-Path $root ('candidates/'+$patch.id)
+    if(Test-Path -LiteralPath $candidateRoot){throw 'Exact candidate already exists'}
+    $pin=$patch.change.Clone();$pin.original_bytes=$pin.base_file.bytes;$pin.original_sha256=$pin.base_file.sha256
+    $records=@()
+    foreach($file in Get-ChildItem -LiteralPath $sourceRoot -File -Recurse){
+        $identity=FileIdentity $file.FullName
+        if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'Exact candidate contains changed/unverified source'}
+        $relative=[IO.Path]::GetRelativePath($sourceRoot,$file.FullName).Replace('\','/')
+        $target=Join-Path $candidateRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))
+        $patched=$relative -ceq $patch.file
+        if($patched){[IO.File]::WriteAllText($target,(ApplyLiteralPatch ([IO.File]::ReadAllText($file.FullName)) $pin),[Text.UTF8Encoding]::new($false))}else{[IO.File]::Copy($file.FullName,$target)}
+        $candidate=FileIdentity $target;$script:verifiedSource[$candidate.path]=$candidate.sha256
+        $records+=@{predecessor=$identity;candidate=$candidate;patched=$patched}
+    }
+    if(@($records|Where-Object patched).Count -ne 1){throw 'Exact patch target missing'}
+    Record ('candidate-'+$patch.id.ToLowerInvariant()) @{proposal_id=$patch.id;machine_subject='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824';files=$records;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
+}
+function CheckRemedyJson([string]$path){
+    $identity=FileIdentity $path
+    if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'Unverified JSON generation input'}
+    $grammar=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json -AsHashtable
+    if(-not $grammar.rules.Count -or $grammar.name -cnotmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$'){throw 'Invalid JSON generation input'}
+    return ,@($identity)
+}
+function CheckExactRemedyTools($tools,[string]$output){
+    foreach($pin in @($tools.node,$tools.gcc,$tools.ld,$tools.loader,@{path='/lib/x86_64-linux-gnu/libc.so.6';sha256=$tools.libc.sha256},@{path='/inputs/acquisition/tools/tree-sitter';sha256='5a228811cdb3a01b7e4dd493c5fc5e05b0040a49ffede94e866c4c58ff2605db'})){
+        $lines=@($output -split "`n"|Where-Object {$_ -cmatch ('^[0-9a-f]{64}  '+[regex]::Escape($pin.path)+'$')})
+        if($lines.Count -ne 1 -or $lines[0].Substring(0,64) -cne $pin.sha256){throw 'Exact remedy tool bytes mismatch'}
+    }
+    $probe=FileIdentity (Join-Path $root 'probe.c');AssertRemedyObject $probe.bytes $probe.sha256 $tools.probe
+    Record 'exact-remedy-tool-gate' @{result='PASS';source='raw/tool-environment.stdout';image=$tools.image;before_upstream_generation_build_execution=$true;whole_support=$false}
 }
 function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
     $queue=[Collections.Generic.Queue[string]]::new();$queue.Enqueue($entry)
@@ -238,20 +310,21 @@ function InvokeRemedyBuildAndCases([string]$producer,[string]$grammarName,[strin
         $row['binary']=$binary;$row['structure_assessment']='REVIEW_REQUIRED_ORIGINAL_EXPECTATIONS_UNCHANGED'
     }
 }
-function InvokeRemedyGeneration([string]$producer,[string]$grammarPath,[string]$sourceRoot,[switch]$Sql,[switch]$Postgres){
+function InvokeRemedyGeneration([string]$producer,[string]$grammarPath,[string]$sourceRoot,[switch]$Sql,[switch]$Postgres,[switch]$Json,[switch]$MemoryEvents){
     $label='generate-'+$producer
     $localGrammar=Join-Path $root $grammarPath
-    $precheck=TryRemedyPrecheck $producer 'generation' {if($Postgres){@(FileIdentity $localGrammar)}elseif($Sql){CheckSqlJsInputs $localGrammar $sourceRoot}else{CheckJsInputs $localGrammar $sourceRoot}}
+    $precheck=TryRemedyPrecheck $producer 'generation' {if($Json){CheckRemedyJson $localGrammar}elseif($Postgres){@(FileIdentity $localGrammar)}elseif($Sql){CheckSqlJsInputs $localGrammar $sourceRoot}else{CheckJsInputs $localGrammar $sourceRoot}}
     if(-not $precheck.passed){return $null};$files=$precheck.value
-    Record ($label+'-inputs') @{files=$files;before_generation=$true;literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;options=$(if($Postgres){'--disable-optimizations'}else{'--js-runtime node'});toolchain_image=$toolchain.image}
+    Record ($label+'-inputs') @{files=$files;before_generation=$true;literal_dependencies_verified=$true;arbitrary_javascript_dependency_proof=$false;options=$(if($Postgres){'--disable-optimizations'}elseif($Json){'JSON_ONLY_NO_JAVASCRIPT_RUNTIME'}else{'--js-runtime node'});toolchain_image=$toolchain.image}
     $arguments=@('/inputs/acquisition/tools/tree-sitter','generate','--abi','15','--output','/work/generated')
-    if($Postgres){$arguments+='--disable-optimizations'}else{$arguments+=@('--js-runtime','node')}
+    if($Postgres){$arguments+='--disable-optimizations'}elseif(-not $Json){$arguments+=@('--js-runtime','node')}
     $arguments+=('/inputs/'+$grammarPath)
-    $result=Native generation $label $arguments 300 536870912 -MemoryEvents:$Postgres
+    $result=Native generation $label $arguments 300 536870912 -MemoryEvents:($Postgres -or $MemoryEvents)
     if($result.termination -cne 'EXITED' -or $result.exit_code -ne 0){foreach($row in $script:remedyRows|Where-Object producer -CEQ $producer){$row.dependency='GENERATION_FAILED';$row['blocked_by']=@{command=$label;termination=$result.termination;exit_code=$result.exit_code}};return $null}
     return 'results/'+$label+'/generated'
 }
 function InvokeRemedyProducers($subjects){
+    if($RemedyStage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){InvokeExactRemedyProducers $subjects;return}
     if($RemedyStage -cin @('patch-r1','patch-r2')){
         foreach($routeName in @('csharp','typescript','tsx','swift')){
             if($RemedyStage -ceq 'patch-r2' -and $routeName -ceq 'swift'){continue}
@@ -299,6 +372,36 @@ function InvokeRemedyProducers($subjects){
             if(-not $name.passed){continue}
             $parser=if($producer -ceq 'postgresql-lfs-baseline'){$pgParser}else{InvokeRemedyGeneration $producer ($pgRoot+'/src/grammar.json') (Join-Path $root $pgRoot) -Postgres}
             if($parser){InvokeRemedyBuildAndCases $producer $name.value ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner}
+        }
+    }
+}
+function InvokeExactRemedyProducers($subjects){
+    $pgOriginal='acquisition/sources/gmr--tree-sitter-postgres--59d0d8cd7506d68de1229fb4bbce838c83b60c8a/postgres'
+    foreach($producer in @($script:remedyRows.producer|Select-Object -Unique)){
+        $json=$false;$memory=$false
+        if($producer -ceq 'csharp-candidate-r3'){$sourceRoot='candidates/P05-CSHARP-REMEDY-r3';$entry=$sourceRoot+'/grammar.js';$parser=$null}
+        elseif($producer -ceq 'postgresql-legacy-candidate-r1'){$sourceRoot='candidates/P05-PG-LEGACY-REMEDY-r1/postgres';$entry=$sourceRoot+'/grammar.js';$parser=$null;$memory=$true}
+        elseif($producer -ceq 'postgresql-lfs-baseline-new-regression'){
+            $sourceRoot=$pgOriginal;$parser='materialized-lfs/postgres/src'
+            foreach($header in @('parser.h','alloc.h','array.h')){
+                $original=Join-Path $root ($pgOriginal+'/src/tree_sitter/'+$header)
+                if(-not (Test-Path -LiteralPath $original)){continue}
+                $target=Join-Path $root ($parser+'/tree_sitter/'+$header);[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target));[IO.File]::Copy($original,$target)
+                $id=FileIdentity $original;$copy=FileIdentity $target
+                if($script:verifiedSource[$id.path] -cne $copy.sha256){throw 'LFS companion header changed'};$script:verifiedSource[$copy.path]=$copy.sha256
+            }
+        }else{
+            $sourceRoot='candidate-evaluation/mssql-8620fbc';$entry=$sourceRoot+'/src/grammar.json';$json=$true
+            $parser=if($producer -ceq 'mssql-baseline-8620fbc'){$sourceRoot+'/src'}else{$null}
+            $license=FileIdentity (Join-Path $root ($sourceRoot+'/LICENSE'))
+            if($script:verifiedSource[$license.path] -cne $license.sha256 -or [IO.File]::ReadAllText((Join-Path $root $license.path)) -cnotmatch 'MIT License'){throw 'MSSQL license mismatch'}
+        }
+        $name=TryRemedyPrecheck $producer 'name' {ReadGrammarName (Join-Path $root ($sourceRoot+'/src/grammar.json'))}
+        if(-not $name.passed){continue}
+        if(-not $parser){$parser=InvokeRemedyGeneration $producer $entry (Join-Path $root $sourceRoot) -Json:$json -MemoryEvents:$memory}
+        if($parser){
+            $scanner=$sourceRoot+'/src/scanner.c';if(-not (Test-Path -LiteralPath (Join-Path $root $scanner))){$scanner=''}
+            InvokeRemedyBuildAndCases $producer $name.value ('/inputs/'+$parser) (Join-Path $root $parser) $(if($scanner){'/inputs/'+$scanner}else{''}) $scanner
         }
     }
 }

@@ -180,6 +180,24 @@ source/image receive-counter는 `approval.ps1`이 효과 전에 선택한다. �
 
 B의 PG LFS parser97,664,793bytes/SHA `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`는 실제 native baseline이다. baseline8개 중 legacy `WITH OIDS`는 required syntax ERROR이며 나머지7개는 quoted identifier/dollar string/ON CONFLICT 및 네 PG18 case의 등록 구조를 별도 raw 대조로 확인했다. noopt 재생성은 state387,042가 ABI/parser16-bit 최대65,535를 초과해 exit1이며8개 NOT_RUN이다. 과거 optimized exit137과 이번 명시적 state overflow를 구분하고 같은 noopt 생성을 반복하지 않는다. 각 remedy의 채택/추가 patch/생성 옵션 결정은 실패와 회귀 범위를 묶어 별도로 확인한다.
 
+## 다음 exact 3개 효과의 실행 경계
+
+2026-10-01 실제 사용자 답변은 human14,590bytes/SHA `dba0d5409f845fdcd1c2a0f373bac5cf90edf3b21033d5d060f59ced06dcd9ef`와 machine204,857bytes/SHA `80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824`의 정확한 세 효과를 승인했다. `remedy-exact-r1.json`은 원문 CRLF와 terminal LF를 재구성해 검증하는 공개 LF projection이다. subject 일치는 대상 식별이며 실제 사용자 권한·코드 정확성·지원 PASS를 대신하지 않는다.
+
+| dispatch stage | 실행 대상 | 새 upstream 상한 | source/image counter |
+|---|---|---|---|
+| `csharp-r3` | C#9150f7d의 r1→r2를 별도 copy에 재구성한 뒤 conflicts 한 행 추가. r1 scanner와 원래27개 입력/기대 유지 | G1/B1/X27/edit5 | 1,073,741,824bytes |
+| `pg-legacy-r1` | PG59d0d8c의 별도 copy에서 `OptWith`에 `WITH OIDS` 한 대안만 추가하고 최적화 생성. candidate 기존8+새4와 exact LFS baseline 새4 비교 | G1/B2/X16/edit1 | 1,610,612,736bytes |
+| `mssql-evaluate-r1` | meloncholera8620fbc/tree4db801d의 고정36 regular 파일27,954,992bytes. 원본 C와 고정JSON 재생성 producer를 frozen SQL30에 각각 대조 | G1/B2/X60/edit2 | 1,073,741,824bytes |
+
+PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중복 `WITH OIDS OIDS;` negative다. old A/B 행·원문·기대는 변경하지 않는다. 실패한 PG noopt의 무변경 재시도, MSSQL JavaScript module 실행·package 설치·lifecycle·후보 patch·provider 채택은 포함하지 않는다. 아직 취득하지 않은 MSSQL SHA-256은 사용 전 고정 Git blob/size를 검증하고 실제 SHA-256을 기록한다.
+
+새 단계도 fresh reviewed/merged main의 `pinned-tsql-r1`/`trixie-r1`/정확한 subject를 사용한다. tool bytes·전체8개 isolation·owned G→B→회수→새 container X를 먼저 확인하며 기존 개별 시간·4GiB memory·8MiB output·64KiB input·격리·capture·cleanup을 유지한다. native 단계 count와 동일 bound의 source/image 예약·polling·완료·실패 기록을 모두 검증한다. 이전 UNKNOWN과 실패에 새 한도를 소급하지 않는다.
+
+각 successful upstream G의 실제 `parser.c`는 원래 capture 출력과 함께 손실 없는 `parser.c.gz`로 별도 보존하고, 원 bytes/size/SHA와 build-input 기록에 연결한다. gzip의 압축 bytes를 producer identity로 사용하지 않는다. PG 실제 LFS bytes도 보존한다. 새 단계의 packed64MiB·펼침C#/MSSQL192MiB/PG256MiB와 기존 host256MiB 한도를 초과하면 원문을 자르지 않고 실패를 보존한다. local 누적4GiB와 회수 예약은 dispatch 전에 별도로 대조한다.
+
+새 효과의 승인·helper 검사·job conclusion·오류 부재는 syntax/구조/negative/recovery/edit 지원의 근거가 아니다. actual producer 결과와 최종6 route source 채택이 충족되기 전에는 PREPARATION_READY로 판정하지 않는다. NET461 업무 corpus와 `.svc` 제품, S08 전체78셀은 별도 NOT_RUN이다.
+
 ## SQL-only 실행 후 source 처분
 
 [run36803412644](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36803412644)은 reviewed/merged main `b640b0ad3f2c092eed3c782a9824058368e49139`의 fresh `sql-only-r2` dispatch다. exact DerekStride97614d0 source·고정 runtime/CLI·ABI15로 G1/B1/X30/edit1을 수행했다. generated parser41,602,006bytes/SHA `36ffce6999124e9762054f9bfe2cd3778db05288feb33a4e150dc17df2e73026`와 실행 probe11,395,032bytes/SHA `c13d9ecf141548cab10d95901a88f29eb8529342eea0770ca2c3d1320798eebc`를 사용 전 대조했다. 회수한 evidence는 명령·입력·출력·생성물/EXE identity를 보존하며 생성물 전체 파일의 장기 보관이나 타 플랫폼 재생성은 주장하지 않는다.

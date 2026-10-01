@@ -22,6 +22,7 @@ $candidate=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile t
 if($candidate.image -cne 'node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492' -or $candidate.compressed_bytes -ne 440298459){throw 'Proposed image identity mismatch'}
 $remedySubject='42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'
 $r2Subject='a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e'
+$exactSubject='dba0d5409f845fdcd1c2a0f373bac5cf90edf3b21033d5d060f59ced06dcd9ef'
 foreach($stage in @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2','sql-only-r2')){
     $binding=if($stage.EndsWith('r2')){$r2Subject}else{$remedySubject}
     $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $binding
@@ -29,6 +30,14 @@ foreach($stage in @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2','sql-only-r2')
     $wrong=if($stage.EndsWith('r2')){$remedySubject}else{$r2Subject}
     $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
     if(-not $rejected){throw 'Old/new remedy subject cross-binding accepted'}
+}
+foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
+    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $exactSubject
+    if($selected.acquisition_limit_bytes -ne $(if($stage -ceq 'pg-legacy-r1'){1610612736L}else{1073741824L})){throw 'Exact stage cap cross-binding'}
+    foreach($wrong in @('',$subject,$remedySubject,$r2Subject)){
+        $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
+        if(-not $rejected){throw 'Earlier subject authorized new exact effects'}
+    }
 }
 foreach($stage in @('patch-r1','sql-pg-r1')){$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $remedySubject}
 foreach($vector in @(@{RemedyStage='patch-r1';RemedySubject=''},@{RemedyStage='patch-r1';RemedySubject=$subject},@{RemedyStage='unknown';RemedySubject=$remedySubject},@{RemedyStage='';RemedySubject=$remedySubject})){
@@ -77,6 +86,19 @@ $altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHash
 @($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
 $rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
+foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
+    $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    $limits=ExactRemedyLimits $stage
+    if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit){throw 'Exact three-effect rows/edit budget mismatch'}
+    if($stage -ceq 'csharp-r3'){$rejected=$false;try{$null=NewRemedyRows $stage $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed r3 expectation accepted'}}
+    if($stage -ceq 'mssql-evaluate-r1'){
+        foreach($row in $rows){$prior=@($remainingSqlRows|Where-Object id -CEQ $row.id)[0];$priorCase=$prior.case|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;if(-not (EqualRemedyData $row.case $priorCase)){throw 'MSSQL trial changed frozen SQL requirement'}}
+    }
+}
+foreach($case in $remedySubjects['exact-r1'].new_pg_cases){
+    $bytes=[Text.Encoding]::UTF8.GetBytes($case.input_utf8)
+    AssertRemedyObject $bytes.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()) @{bytes=$case.input_bytes;sha256=$case.input_sha256}
+}
 $rejected=$false;try{$null=NewRemedyRows 'unknown' $originalInputs.cases $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Unknown remedy stage scheduled'}
 foreach($case in $remedySubjects.cases.cases){
@@ -98,6 +120,24 @@ foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','Ch
     if($definition.Count -ne 1){throw 'Control helper identity mismatch'}
     . ([scriptblock]::Create($definition[0].Extent.Text))
 }
+& {
+    param($caseRoot)
+    $root=Join-Path $caseRoot 'exact-input-controls';$sourceRoot=Join-Path $root 'source'
+    [void][IO.Directory]::CreateDirectory($sourceRoot)
+    $source=Join-Path $sourceRoot 'grammar.json';[IO.File]::WriteAllText($source,'{"name":"owned","rules":{"source":{"type":"STRING","value":"x"}}}',[Text.UTF8Encoding]::new($false))
+    $id=FileIdentity $source;$script:verifiedSource=@{};$script:verifiedSource[$id.path]=$id.sha256
+    if((CheckRemedyJson $source).Count -ne 1){throw 'Owned JSON generation closure missing'}
+    [IO.File]::AppendAllText($source,' ')
+    $rejected=$false;try{$null=CheckRemedyJson $source}catch{$rejected=$true};if(-not $rejected){throw 'Changed JSON bytes accepted'}
+    $sourceRoot=Join-Path $root 'patch-source';[void][IO.Directory]::CreateDirectory($sourceRoot)
+    $source=Join-Path $sourceRoot 'fixture.txt';[IO.File]::WriteAllText($source,'before',[Text.UTF8Encoding]::new($false))
+    $id=FileIdentity $source;$script:verifiedSource[$id.path]=$id.sha256
+    function Record([string]$name,$value){if($value.adopted){throw 'Owned patch trial adopted provider'}}
+    $change=$pin.Clone();$change.base_file=@{bytes=6;sha256=$id.sha256}
+    CopyExactRemedyCandidate $sourceRoot @{id='OWNED-EXACT';file='fixture.txt';change=$change}
+    if([IO.File]::ReadAllText((Join-Path $root 'candidates/OWNED-EXACT/fixture.txt')) -cne 'after' -or [IO.File]::ReadAllText($source) -cne 'before'){throw 'Owned exact patch copy changed original or result'}
+    $script:verifiedSource=@{}
+} $root
 $swiftSource='e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'
 CheckInertImports $swiftSource '50974:import"'
 foreach($vector in @(@($swiftSource,'50975:import"'),@($swiftSource,'50974:import";50980:import('),@('unreviewed','50974:import"'))){
@@ -388,9 +428,20 @@ $supervisorBurst=& {
             if($delta -le 0){$r=Get-Content -Raw (Join-Path $root 'records/download-budget.json')|ConvertFrom-Json;if($r.limit_bytes -ne $cap -or $r.final_snapshot.limit_bytes -ne $cap){throw 'Stage cap receipt mismatch'}}
         }
     }
-    $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
+$root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
     return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=5;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';both_stage_cap_boundaries='PASS';sqlpg_polling_cap='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';upstream_native=$false}
 } $ast $root
+if($env:RUNNER_TEMP -and -not $IsWindows){
+    $exportRoot=Join-Path $env:RUNNER_TEMP ('tsgk-p05-remedy-'+$env:GITHUB_RUN_ID+'-9001')
+    foreach($d in @('records','results/generate-owned-export/generated')){[void][IO.Directory]::CreateDirectory((Join-Path $exportRoot $d))}
+    $bytes=[byte[]]@(0,13,10,67,10);[IO.File]::WriteAllBytes((Join-Path $exportRoot 'results/generate-owned-export/generated/parser.c'),$bytes)
+    @{remedy_stage='csharp-r3';outcomes=@(@{kind='generation';scope='REGISTERED_P05';termination='EXITED';exit_code=0;label='generate-owned-export';result_directory='generate-owned-export'});owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $exportRoot 'records/summary.json') -Encoding utf8NoBOM
+    & (Join-Path $PSScriptRoot 'collect.ps1') -Root $exportRoot
+    $record=@(Get-Content -LiteralPath (Join-Path $exportRoot 'records/generated-artifacts.json') -Raw|ConvertFrom-Json)
+    if($record.Count -ne 1 -or $record[0].original_bytes -ne $bytes.Length){throw 'Owned C export receipt mismatch'}
+    $input=[IO.File]::OpenRead((Join-Path $exportRoot $record[0].lossless_gzip_path));$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$sink=[IO.MemoryStream]::new()
+    try{$gzip.CopyTo($sink);if([Convert]::ToHexString($sink.ToArray()) -cne [Convert]::ToHexString($bytes)){throw 'C export changed original NUL/CRLF'}}finally{$sink.Dispose();$gzip.Dispose();$input.Dispose()}
+}
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
