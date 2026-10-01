@@ -106,8 +106,11 @@ function Run([string]$label,[string[]]$argv,[int]$seconds,[long]$limit=8388608,[
                 if($reason -ne 'EXITED'){break}
             }
             if($reason -ne 'EXITED'){break}
-            $reads=[Threading.Tasks.Task[]]@($pending|Where-Object {$_})
-            if($reads.Count){[void][Threading.Tasks.Task]::WaitAny($reads,20)}elseif(-not $process.HasExited){[void]$process.WaitForExit(20)}
+            # Two fixed streams; avoid a pipeline on every short pipe read.
+            if($pending[0] -and $pending[1]){[void][Threading.Tasks.Task]::WaitAny([Threading.Tasks.Task[]]$pending,20)}
+            elseif($pending[0]){[void][Threading.Tasks.Task]::WaitAny([Threading.Tasks.Task[]]@($pending[0]),20)}
+            elseif($pending[1]){[void][Threading.Tasks.Task]::WaitAny([Threading.Tasks.Task[]]@($pending[1]),20)}
+            elseif(-not $process.HasExited){[void]$process.WaitForExit(20)}
         }
         if(-not $process.HasExited){$process.Kill($true);if(-not $process.WaitForExit(2000)){throw 'Host command cleanup unverified'}}
         $exitCode=$process.ExitCode
@@ -262,7 +265,7 @@ function CheckRecoveredProof([string]$path){
 }
 function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned,[switch]$MemoryEvents){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
-    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
+    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}elseif($RemedyStage -ceq 'sql-only-r2'){@{generation=1;build=1;execution=30}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
     if($Owned){
         if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
     }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}

@@ -169,3 +169,13 @@ r1 후보는 C# directive9개와 제한 Swift14개 source facts를 수용했지�
 source/image receive-counter는 `approval.ps1`이 효과 전에 선택한다. 새 `sql-pg-r2`만1,610,612,736bytes이고 다른 stage/일반경로는1,073,741,824bytes다. source+image 예약·polling·완료 snapshot·실패 snapshot·요약이 동일 stage bound를 쓰며 unknown/regressed/negative/over-cap 거부를 유지한다. HTTP52/600초·일반파일64MiB·PG exact100MiB 예외와 기존 native memory/시간/output/isolation/capture/cleanup 한도는 변하지 않는다. 과거 실패의 미기록 counter·UNKNOWN에 새 cap을 소급 적용하지 않는다.
 
 실제 G/B/X와 등록 syntax·구조·negative·recovery·edit를 별도 판정한다. job 성공·ERROR 부재·같은 tree 복구만으로 요구 지원을 주장하지 않으며 candidate 시험은 최종 provider 채택이 아니다. 새 [NET461 업무 계약](net461-workload.md)은 별도 case/owner/effect 경로이며 A/B 입력 집합에 포함하지 않는다.
+
+## A/B 관측과 B 미실행 SQL 재개
+
+[A run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494)은 G3/B2/X12·edit2다. C# r2 generation은 `new var`의 `_reserved_identifier`/`implicit_type`/`object_creation_expression` conflict로 exit1이므로 C#27개는 NOT_RUN이다. TypeScript4/TSX8은 등록 positive 구조10개·negative 거부2개와 edit2의 incremental/fresh 및 원본 복원을 확인했다. 이 한정 관측은 전체 feature 지원이나 최종 후보 채택이 아니다. 새 C# grammar patch는 정확한 추가 결정이 필요하다.
+
+[B run36796853218](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36796853218)은 G1/B1/X8·edit1이다. SQL은 native 전에 `Unreviewed SQL loader/evaluation`으로30개 NOT_RUN이다. static source 대조 결과 기존 PowerShell `-match`가 소문자 `function` 선언·SQL 문자열을 대문자 JavaScript `Function`으로 잘못 검사했다. `-cmatch`는 JavaScript 이름의 case sensitivity를 보존하며 `require`/`createRequire`/`eval`/`Function` 거부, 고정 source hash, literal 상대 ESM closure, root 제한과 모든 격리를 유지한다. 일반 function/SQL keyword 허용과 실제 loader/evaluation·동적/외부 import·변경/미등록 bytes 거부를 자체 반례로 검증한다.
+
+`sql-only-r2`는 승인 B에서 아직 native0인 동일 Derek source30파일·TSQL30개·edit1의 재개다. G1/B1/X30 상한, `pinned-tsql-r1`/`trixie-r1`과 동일 A/B subject를 사용한다. PG LFS 취득·PG 생성/빌드/실행은 하지 않으며 이미 회수한 B의 별도 PG 결과에 연결한다. combined source/image counter는 일반1GiB이고 SQLPG-only1.5GiB를 다른 경로에 적용하지 않는다. baseline/실패 원문·기대값·검사기는 유지한다.
+
+B의 PG LFS parser97,664,793bytes/SHA `a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`는 실제 native baseline이다. baseline8개 중 legacy `WITH OIDS`는 required syntax ERROR이며 나머지7개는 syntax 관측 후 별도 구조 판정을 요구한다. noopt 재생성은 state387,042가 ABI/parser16-bit 최대65,535를 초과해 exit1이며8개 NOT_RUN이다. 과거 optimized exit137과 이번 명시적 state overflow를 구분하고 같은 noopt 생성을 반복하지 않는다. 각 remedy의 채택/추가 patch/생성 옵션 결정은 실패와 회귀 범위를 묶어 별도로 확인한다.

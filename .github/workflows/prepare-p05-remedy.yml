@@ -37,7 +37,7 @@ on:
         description: Exact authorized finite stage; no candidate adoption
         required: true
         type: choice
-        options: [patch-r1, sql-pg-r1, patch-r2, sql-pg-r2]
+        options: [patch-r1, sql-pg-r1, patch-r2, sql-pg-r2, sql-only-r2]
       remedy_approval_subject:
         description: Exact r1 or separately approved A/B r2 proposal subject
         required: true

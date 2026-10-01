@@ -22,7 +22,7 @@ $candidate=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile t
 if($candidate.image -cne 'node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492' -or $candidate.compressed_bytes -ne 440298459){throw 'Proposed image identity mismatch'}
 $remedySubject='42396d74938e6938d38aa9adc1ea84fbe05a708fa220ca09074dc1bb56d671f4'
 $r2Subject='a72b87c3dfe6561855749b64cce03bdaa5d7c231948f42dfa6ef41ce84a7747e'
-foreach($stage in @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2')){
+foreach($stage in @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2','sql-only-r2')){
     $binding=if($stage.EndsWith('r2')){$r2Subject}else{$remedySubject}
     $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $binding
     if($selected.acquisition_limit_bytes -ne $(if($stage -ceq 'sql-pg-r2'){1610612736L}else{1073741824L})){throw 'Stage cap leaked into another route'}
@@ -71,6 +71,8 @@ $r2Rows=NewRemedyRows 'patch-r2' $originalInputs.cases $remedySubjects.cases.cas
 if($r2Rows.Count -ne 39 -or @($r2Rows|Where-Object {$_.case.edit}).Count -ne 7 -or @($r2Rows|Where-Object {$_.route -ceq 'csharp'}).Count -ne 27 -or @($r2Rows|Where-Object {$_.route -ceq 'typescript'}).Count -ne 4 -or @($r2Rows|Where-Object {$_.route -ceq 'tsx'}).Count -ne 8 -or @($r2Rows|Where-Object {$_.producer -cnotlike '*-candidate-r2'}).Count){throw 'Exact r2 producer budget mismatch'}
 $sqlRows=NewRemedyRows 'sql-pg-r2' $originalInputs.cases $remedySubjects.cases.cases
 if($sqlRows.Count -ne 46 -or @($sqlRows|Where-Object {$_.case.edit}).Count -ne 3){throw 'SQLPG row/edit identity changed'}
+$remainingSqlRows=NewRemedyRows 'sql-only-r2' $originalInputs.cases $remedySubjects.cases.cases
+if($remainingSqlRows.Count -ne 30 -or @($remainingSqlRows|Where-Object {$_.case.edit}).Count -ne 1 -or -not (EqualRemedyData $remainingSqlRows @($sqlRows|Where-Object producer -CEQ 'derek-sql-candidate'))){throw 'Remaining SQL rows differ from the approved B subset'}
 $altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
 @($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
 $rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
@@ -205,16 +207,23 @@ $grammarPath=Join-Path $root 'grammar.json'
     [void][IO.Directory]::CreateDirectory($sourceRoot);[void][IO.Directory]::CreateDirectory($parserRoot)
     $script:verifiedSource=@{}
     $entry=Join-Path $sourceRoot 'grammar.js';$dependency=Join-Path $sourceRoot 'dependency.js'
-    [IO.File]::WriteAllText($dependency,'export default {};',[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($dependency,'export function make_keyword(word) { return new RegExp(word); }; export default { keyword_function: () => make_keyword("function") };',[Text.UTF8Encoding]::new($false))
     function PinFixture([string]$path){$identity=FileIdentity $path;$script:verifiedSource[$identity.path]=$identity.sha256}
     PinFixture $dependency
     [IO.File]::WriteAllText($entry,"import rules from './dependency.js';`nexport default rules;",[Text.UTF8Encoding]::new($false));PinFixture $entry
     if((CheckSqlJsInputs $entry $sourceRoot).Count -ne 2){throw 'Owned literal ESM closure incomplete'}
-    foreach($source in @("import rules from 'unregistered';","import('./dependency.js');","const load = require;","import rules from '../outside.js';")){
+    foreach($source in @("import rules from 'unregistered';","import('./dependency.js');","const load = require;","require('./dependency.js');","createRequire('unregistered');","eval('unregistered');","Function('return 1');","new Function('return 1');","const evaluate = Function;","import rules from '../outside.js';")){
         [IO.File]::WriteAllText($entry,$source,[Text.UTF8Encoding]::new($false));PinFixture $entry
         $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{$rejected=$true}
         if(-not $rejected){throw 'Unresolved, dynamic, package or escaped SQL import accepted'}
     }
+    [IO.File]::WriteAllText($entry,"import rules from './dependency.js';`nexport default rules;",[Text.UTF8Encoding]::new($false));PinFixture $entry
+    [IO.File]::AppendAllText($dependency,' // changed after verification',[Text.UTF8Encoding]::new($false))
+    $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{if($_.Exception.Message -cne 'SQL dependency bytes changed'){throw};$rejected=$true}
+    if(-not $rejected){throw 'Changed SQL dependency bytes accepted'}
+    PinFixture $dependency;$script:verifiedSource.Remove((FileIdentity $dependency).path)
+    $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{if($_.Exception.Message -cne 'Unregistered SQL dependency'){throw};$rejected=$true}
+    if(-not $rejected){throw 'Unregistered SQL dependency accepted'}
     $parser=Join-Path $parserRoot 'parser.c';$header=Join-Path $parserRoot 'header.h'
     [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($header,'/* owned header */',[Text.UTF8Encoding]::new($false))
     if((CheckRemedyQuotedIncludes @($parser) $parserRoot).Count -ne 2){throw 'Owned quoted includes incomplete'}
