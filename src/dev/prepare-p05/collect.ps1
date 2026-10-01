@@ -27,7 +27,8 @@ function ReadCollectedRecord([string]$task,[string]$relative){
     CheckCollectionTime;return $value
 }
 function AssertFollowupEvidenceBinding([string]$task,[string]$stage,[string]$subject,$summary,[string]$inputProjection){
-    if(-not (FollowupStageKey $stage) -or $subject -cne 'a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2' -or $summary.remedy_stage -cne $stage -or $summary.remedy_approval_subject -cne $subject){throw 'Evidence expected stage/subject mismatch'}
+    $expectedSubject=if($stage -ceq 'csharp-r5'){'cced4a06c71eacd8c28e855ddfd20c92d7c82bb2cfe7bc8d29313302dd857390'}else{'a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2'}
+    if(-not (FollowupStageKey $stage) -or $subject -cne $expectedSubject -or $summary.remedy_stage -cne $stage -or $summary.remedy_approval_subject -cne $subject){throw 'Evidence expected stage/subject mismatch'}
     $limits=ExactRemedyLimits $stage
     if($summary.acquisition_limit_bytes -ne $limits.source_image_counter_bytes){throw 'Evidence exact stage counter mismatch'}
     if((CollectionHash $inputProjection) -cne 'f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4'){throw 'Evidence input projection changed'}
@@ -150,15 +151,16 @@ function GeneratedArtifactProvenance([string]$task,$outcome,[long]$bytes,[string
     }
     return @{references=@($refs.Values|Sort-Object path);build_inputs_state=$buildState;capture_original_retained=$true}
 }
-function StoreCsharpSourceCopies([string]$task,$files){
+function StoreCsharpSourceCopies([string]$task,$files,[ValidateSet('csharp-r4','csharp-r5')][string]$stage='csharp-r4'){
     $ids=@('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')
+    if($stage -ceq 'csharp-r5'){$ids+='P05-CSHARP-REMEDY-r5'}
     $expected=[Collections.Generic.HashSet[string]]::new([string[]]@($ids|ForEach-Object {'candidates/'+$_+'/src/parser.c'}),[StringComparer]::Ordinal)
     $actual=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach($file in $files){
         $relative=[IO.Path]::GetRelativePath($task,$file.FullName).Replace('\','/')
         if($relative -match '^candidates/[^/]+/src/parser\.c$' -and (-not $expected.Contains($relative) -or -not $actual.Add($relative))){throw 'Unexpected or duplicate candidate source path'}
     }
-    if(-not $actual.SetEquals($expected)){throw 'Exact four candidate source paths required'}
+    if(-not $actual.SetEquals($expected)){throw $(if($stage -ceq 'csharp-r5'){'Exact five candidate source paths required'}else{'Exact four candidate source paths required'})}
     $objectRoot=Join-Path $task 'source-objects'
     if(Test-Path -LiteralPath $objectRoot){throw 'Fresh source object destination required'}
     [void][IO.Directory]::CreateDirectory($objectRoot)
@@ -188,14 +190,17 @@ function StoreCsharpSourceCopies([string]$task,$files){
     }
     $record=Join-Path $task 'records/lossless-csharp-sources.json'
     $stream=[IO.File]::Open($record,[IO.FileMode]::CreateNew)
-    try{$stream.Write([Text.Encoding]::UTF8.GetBytes((@{schema='tsgk.p05.lossless-csharp-source-copies/r2';copies=$copies;unique_objects=$objects.Count;original_files_deleted=$false}|ConvertTo-Json -Depth 8)))}finally{$stream.Dispose()}
+    $schema=if($stage -ceq 'csharp-r5'){'tsgk.p05.lossless-csharp-source-copies/r3'}else{'tsgk.p05.lossless-csharp-source-copies/r2'}
+    try{$stream.Write([Text.Encoding]::UTF8.GetBytes((@{schema=$schema;stage=$stage;copies=$copies;unique_objects=$objects.Count;original_files_deleted=$false}|ConvertTo-Json -Depth 8)))}finally{$stream.Dispose()}
     return ,@($remaining+@($objects.Values|ForEach-Object {$_.file})+(Get-Item -LiteralPath $record))
 }
-function AssertLosslessCsharpSources([string]$task){
+function AssertLosslessCsharpSources([string]$task,[ValidateSet('csharp-r4','csharp-r5')][string]$stage='csharp-r4'){
     $record=ReadCollectedRecord $task 'records/lossless-csharp-sources.json'
     $allowed=@('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')
+    if($stage -ceq 'csharp-r5'){$allowed+='P05-CSHARP-REMEDY-r5'}
     $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal);$objects=@{};$total=0L
-    if($record.schema -cne 'tsgk.p05.lossless-csharp-source-copies/r2' -or $record.original_files_deleted -isnot [bool] -or $record.original_files_deleted -or $record.copies -isnot [array] -or $record.copies.Count -ne 4){throw 'Invalid lossless source record'}
+    $schema=if($stage -ceq 'csharp-r5'){'tsgk.p05.lossless-csharp-source-copies/r3'}else{'tsgk.p05.lossless-csharp-source-copies/r2'}
+    if($record.schema -cne $schema -or ($record.stage -and $record.stage -cne $stage) -or ($stage -ceq 'csharp-r5' -and $record.stage -cne $stage) -or $record.original_files_deleted -isnot [bool] -or $record.original_files_deleted -or $record.copies -isnot [array] -or $record.copies.Count -ne $allowed.Count){throw 'Invalid lossless source record'}
     foreach($copy in $record.copies){
         CheckCollectionTime
         $id=@($allowed|Where-Object {$copy.original_path -ceq ('candidates/'+$_+'/src/parser.c')})
@@ -221,8 +226,9 @@ function AssertLosslessCsharpSources([string]$task){
     if(-not $seen.SetEquals([string[]]@($allowed|ForEach-Object {'candidates/'+$_+'/src/parser.c'})) -or ($record.unique_objects -isnot [int] -and $record.unique_objects -isnot [long]) -or $record.unique_objects -ne $objects.Count){throw 'Lossless source exact set/object count mismatch'}
     return @{result='MATCH';original_copy_count=$seen.Count;unique_objects=$objects.Count;original_identity_bytes=$total;unique_decoded_source_bytes=($objects.Values|Measure-Object decoded_bytes -Sum).Sum;compressed_objects=@($objects.Values|Sort-Object path);compressed_stream_identity='ALL_BYTES_HASHED_BEFORE_AND_AFTER_DECODE';representation='LOSSLESS_GZIP_ORIGINAL_IDENTITY';bulk_materialization='NOT_RUN'}
 }
-function AssertLosslessCsharpManifest($manifest,$proof,[long]$expandedLimit){
-    if($proof.result -cne 'MATCH' -or $proof.original_copy_count -ne 4 -or $proof.compressed_objects.Count -ne $proof.unique_objects){throw 'Lossless source manifest proof incomplete'}
+function AssertLosslessCsharpManifest($manifest,$proof,[long]$expandedLimit,[ValidateSet('csharp-r4','csharp-r5')][string]$stage='csharp-r4'){
+    $copies=if($stage -ceq 'csharp-r5'){5}else{4}
+    if($proof.result -cne 'MATCH' -or $proof.original_copy_count -ne $copies -or $proof.compressed_objects.Count -ne $proof.unique_objects){throw 'Lossless source manifest proof incomplete'}
     $members=@($manifest|Where-Object {$_.path.StartsWith('source-objects/',[StringComparison]::Ordinal)})
     if($members.Count -ne $proof.unique_objects){throw 'Lossless source manifest object set mismatch'}
     foreach($object in $proof.compressed_objects){
@@ -244,17 +250,17 @@ $files=@(foreach($directory in @('raw','records','cases','owned','acquisition/ar
 })
 $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'inputs.json'),(Join-Path $PSScriptRoot 'case-review.json'),(Join-Path $PSScriptRoot 'probe.c.in')
 if($task.Substring($prefix.Length).StartsWith('tsgk-p05-remedy-')){
-    $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-patches.json'),(Join-Path $PSScriptRoot 'remedy-cases.json'),(Join-Path $PSScriptRoot 'remedy-fact-oracles.json'),(Join-Path $PSScriptRoot 'remedy-sources.json'),(Join-Path $PSScriptRoot 'remedy-r2.json'),(Join-Path $PSScriptRoot 'remedy-exact-r1.json'),(Join-Path $PSScriptRoot 'remedy-followup-r2.json')
+    $files+=Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-patches.json'),(Join-Path $PSScriptRoot 'remedy-cases.json'),(Join-Path $PSScriptRoot 'remedy-fact-oracles.json'),(Join-Path $PSScriptRoot 'remedy-sources.json'),(Join-Path $PSScriptRoot 'remedy-r2.json'),(Join-Path $PSScriptRoot 'remedy-exact-r1.json'),(Join-Path $PSScriptRoot 'remedy-followup-r2.json'),(Join-Path $PSScriptRoot 'remedy-csharp-r5.json')
     foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){
         $path=Join-Path $task $directory
         if(Test-Path -LiteralPath $path){$files+=Get-ChildItem -LiteralPath $path -File -Recurse}
     }
-    if($RemedyStage -ceq 'csharp-r4'){
+    if($RemedyStage -cin @('csharp-r4','csharp-r5')){
         $sourceProof=$null
         $candidateParsers=@($files|Where-Object {[IO.Path]::GetRelativePath($task,$_.FullName).Replace('\','/') -match '^candidates/[^/]+/src/parser\.c$'})
         if($candidateParsers.Count){
             $originalSourceFiles=$files
-            try{$files=StoreCsharpSourceCopies $task $files;$sourceProof=AssertLosslessCsharpSources $task}
+            try{$files=StoreCsharpSourceCopies $task $files $RemedyStage;$sourceProof=AssertLosslessCsharpSources $task $RemedyStage}
             catch{if($_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'){throw};$files=$originalSourceFiles;$bindingFailure=$true;$sourceProof=@{result='NOT_VERIFIED';reason=$_.Exception.Message;original_failed_files_preserved=$true}}
         }else{if($summary.counts.generation+$summary.counts.build+$summary.counts.execution -ne 0 -or $summary.verdict -cne 'FAILED'){$bindingFailure=$true};$sourceProof=@{result='NOT_APPLICABLE_NO_CANDIDATE_BYTES';native_support='NOT_VERIFIED'}}
         $sourceRecord=Join-Path $task 'records/lossless-csharp-sources-verified.json'
@@ -296,8 +302,8 @@ $manifest=@(foreach($file in $files){
     if($relative -notmatch '^[a-zA-Z0-9_.\-/]+$' -or $relative.Length -gt 200){throw 'Evidence path rejected'}
     @{path=$relative;bytes=$file.Length;sha256=(CollectionHash $file.FullName);source=$file.FullName}
 })
-if($RemedyStage -ceq 'csharp-r4' -and $sourceProof.result -ceq 'MATCH'){
-    try{$sourceExpansion=AssertLosslessCsharpManifest $manifest $sourceProof $exactLimits.local_expanded_max_bytes}
+if($RemedyStage -cin @('csharp-r4','csharp-r5') -and $sourceProof.result -ceq 'MATCH'){
+    try{$sourceExpansion=AssertLosslessCsharpManifest $manifest $sourceProof $exactLimits.local_expanded_max_bytes $RemedyStage}
     catch{
         if($_.Exception.Message -ceq 'Lossless source stage expanded reserve exceeded'){ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress}
         else{@{failure='LOSSLESS_SOURCE_IDENTITY_FAILURE';reason=$_.Exception.Message;support_assessment='NOT_VERIFIED'}|ConvertTo-Json -Compress}

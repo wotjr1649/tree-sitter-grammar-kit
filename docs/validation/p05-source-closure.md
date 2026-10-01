@@ -1,3 +1,37 @@
+# PREPARE-06 C# r5와 로컬 보존 한도의 좁은 추가 승인
+
+2026-10-02 실제 사용자 답변 `두 exact 효과 승인`은 human 11,379 bytes /
+`cced4a06c71eacd8c28e855ddfd20c92d7c82bb2cfe7bc8d29313302dd857390`과
+machine 50,057 bytes / `5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7`에 결속한다.
+[r5 projection](../../src/dev/prepare-p05/remedy-csharp-r5.json)은 LF를 CRLF로 복원하여
+승인 원문의 terminal CRLF까지 size/SHA를 확인한다. 아래 R2 원문과 이전 6 GiB 승인·소비·실패는 역사 기록으로 유지한다.
+
+`csharp-r5` / `csharp-candidate-r5`는 같은 `9150f7d56bb47f1a809fa23623f1ba1413e93fa9`의
+r4 `grammar.js` 62,851 bytes / `b6946fac28ee1e470aa3155f5a3b8deddfd6cd0c6c47ac52c587e3e69a683e5e`를
+별도 r5 copy에 복사한다. `method_declaration.returns`와 `object_creation_expression.type`의
+기존 `prec(2, alias('var', $.identifier))`를 각각 한 번 `prec.dynamic(2, prec(2, alias('var', $.identifier)))`로 감싼다.
+결과는 62,885 bytes / `da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7`이어야 한다.
+r4 copy의 scanner(r1에서 승인된 bytes 유지) 23,949 bytes / `164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227`,
+도구·runtime·npm·image·입력·기대·비교기를 유지한다. 이 수정은 시험할 가설이며 지원 성공이나 최종 provider 채택이 아니다.
+
+G1/B1/X27/edit5와 기존 owned G1/B1/X1·isolation8을 별도 fresh dispatch에서 수행한다.
+r4와 같은 27개 입력/5개 edit의 원문 size/SHA·feature·positive/negative·구조 기대를 전수 대조한다.
+`pinned-tsql-r1`, `trixie-r1` 및 위 r5 human subject가 필요하며 옛 R2 subject로 r5를 실행할 수 없다.
+r1~r5의 변경 없는 `src/parser.c` 다섯 identity는 lossless source-copy r3 schema로 보관한다.
+기존 r4의 정확한 네 identity/r2 schema는 유지한다. source object는 고유 SHA별 한 개로 보관하고
+모든 원래 path/copy proof와 decoded·compressed identity를 확인한다. 원 capture와 runner 원본은 보존한다.
+C# 펼침192 MiB·outer/inner64 MiB·회수/collector120초·일반 파일64 MiB는 유지한다.
+
+새 승인은 kit 준비 증거의 누적 로컬 보존 상한만 앞으로 8 GiB (`8589934592` bytes)로 높인다.
+이 상한은 로컬 kit의 `.work`·`artifacts`·`docs/plans`·`docs/prompts` 실제 파일 합계에 적용한다.
+로컬 finite-batch/dispatch guard와 회수 helper가 승인 subject를 대조하고 실행 전 공간을 예약한다.
+hosted workflow/collector의 runner 한도와 별개이며, 해당 로컬 guard의 검증·독립 리뷰 전에는 native dispatch하지 않는다.
+회수 전에 실제 보존량 + outer 실제 크기 + inner 최대64 MiB + stage expanded 한도 + 기록64 MiB를 예약하고
+C# r5는 승인 machine의 추가64 MiB 여유를 포함한 469,762,048 bytes를 실행 전에 예약한다.
+MSSQL의 기존 예약은 402,653,184 bytes다. manifest 확인 후 실제 보존량을 다시 대조한다.
+runner8 GiB, PG generation-only6 GiB, 다른 native4 GiB 및 모든 개별 실행·격리 한도는 그대로다.
+과거 한도 초과·소비량·UNKNOWN을 새 상한으로 소급 수정하지 않는다.
+
 # PREPARE-06 후속 exact R2 실행 계약
 
 2026-10-01 실제 사용자 답변 `R2 exact 효과·기대 정정 승인`은 human
