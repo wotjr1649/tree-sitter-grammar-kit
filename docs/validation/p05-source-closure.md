@@ -1,3 +1,34 @@
+# PREPARE-06 후속 exact R2 실행 계약
+
+2026-10-01 실제 사용자 답변 `R2 exact 효과·기대 정정 승인`은 human
+22,330 bytes / `a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2`,
+machine 235,604 bytes / `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4`,
+신규 원문 subject 16,877 bytes / `9fc51da6cd0ad60d6e28cefed4f37b2a3c5f651bccd9eacca61ef3494d41e603`에 결속한다.
+승인 기록은 `20261001-prepare-06/followup-exact-authorization-accepted-r2.json`이다.
+tracked `remedy-followup-r2.json`의 LF projection은 승인된 machine의 CRLF 원문과 terminal LF를 복원해 전체 size/SHA를 대조한다.
+
+| stage | producer | G/B/X/edit | source/image receive | native memory |
+|---|---|---|---|---|
+| `csharp-r4` | `csharp-candidate-r4` | 1/1/27/5 | 1 GiB | 4 GiB |
+| `pg-legacy-g6-r1` | `postgresql-legacy-candidate-r1-g6` | 1/1/12/1 | 1.5 GiB | 이 producer의 generation만 6 GiB; B/X 및 owned/diagnostic은 4 GiB |
+| `mssql-patch-r1` | `mssql-candidate-r1` | 1/1/41/1 | 1 GiB | 4 GiB |
+
+C#은 r1→r2→r3를 보존하며 r4 conflict 한 행만 별도 copy에 추가한다. PG는 같은 legacy patch를 재구성하고 유효한 baseline4를 재실행하지 않는다. MSSQL은 원본 C/JSON 두 producer를 보존하며 별도 네 파일 patch와 24 ESM module/42 literal import의 G1만 수행한다. source/dependency/scanner/tool identity는 G/B/X 전에 각각 확인한다. module metadata와 고정 입력만 읽으며 package/lifecycle/install/application 실행은 없다. 기존 26 route·256행·A/B 및 exact3 입력/기대/receipt는 유지한다.
+
+별도 `P05-MSSQL-BRACKET-COUNTEREXAMPLE-r1`은 기존20byte `e463eaca…`를 단일 delimited identifier byte[7,18)로 요구한다. `P05-MSSQL-BRACKET-UNTERMINATED-r1`은 실제 닫는 `]`를 제거한19byte `65434d11…`의 오류를 요구한다. 공식 identifier 규칙에 따른 이 좁은 기대 amendment를 채택했으며, 옛 negative 기대와 결과는 역사 증거로 보존한다. `SELECT  FROM t;`의 기존 negative/recovery 의무와 temporal/graph 구조 의무는 유지한다. 신규12개의 원문·source/member/hash·error window와 기존68개를 검사하고 stage별 frozen 입력만 materialize한다.
+
+PG G 시작 전 host `MemAvailable`과 실제 cgroup2 membership/mount에서 확인한 모든 부모의 가용 한도가 8 GiB 이상이어야 한다. UNKNOWN/부족이면 G를 시작하지 않는다. 같은 생성 container의 Docker inspect와 `memory.max=6442450944`, before/after `memory.events`를 기록한다. 다른 operation으로 예외를 확대하거나 자동 fallback하지 않는다. 기존 전체 isolation8·owned G→B→회수→fresh-container X·capture·cleanup을 통과해야 upstream을 실행한다.
+
+PG memory counter는 동일 container의 원문·command·hash와 전후 단조 증가를 대조한다. `oom`/`oom_kill`/`oom_group_kill` 증가면 원 exit/termination을 유지해 OOM으로 기록하고 B/X를 시작하지 않는다. `max` 증가만으로 OOM을 주장하지 않는다. 이전 patch와 현재 patch의 machine provenance도 구분하며 C# r3와 PG legacy는 이전 exact3 subject, C# r4와 MSSQL 네 파일은 새 R2 subject에 연결한다.
+
+[Linux kernel의 memory interface 정의](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#memory-interface-files)에 따라 실제 cgroup2 hierarchy root에는 `memory.current`/`memory.max`가 없다. mount root `/`, root 경로 `/sys/fs/cgroup`, 가용 memory controller와 두 interface 부재가 모두 관측된 경우만 root limit를 NOT_APPLICABLE로 기록한다. 이는 usage0 또는 임의 unlimited 관측이 아니다. 다른 부모의 미확인·부족 값은 계속 거부하며 host 가용8 GiB 조건은 유지한다.
+
+개별 G300/B120/X10초·CPU1/PIDs64/tmpfs2 GiB·input64 KiB/output8 MiB·network none/read-only/user65534/cap-drop/no-new-privileges는 유지한다. HTTP52/각120초/총600초, 일반 file64 MiB/PG exact LFS100 MiB, runner8 GiB, artifact256 MiB/7일, packed outer/inner64 MiB·회수120초·C#/MS 펼침192 MiB/PG256 MiB는 유지하며 local retained cap만6 GiB로 승인했다. 예약·poll·완료·실패·summary·collector는 같은 stage의 counter와 한도를 사용한다. 과거 UNKNOWN과 실패의 한도를 소급 수정하지 않는다.
+
+collector는 workflow가 전달한 stage/subject를 summary 및 전체 frozen case/expectation/edit ledger와 비교하고, 시도 횟수의 상한·관측된 command/outcome·출력 hash·cleanup·acquisition 완료/실패 counter를 확인한다. G 실패로 B/X가 NOT_RUN인 근거는 그대로 보관하며 quota를 실제 수행 수로 표시하지 않는다. 결속 실패도 bounded 원본 artifact를 보존하되 성공한 생성물 export나 지원 PASS로 승격하지 않는다. collection의 export/hash/manifest/ZIP 전체에는 별도의 총120초 clock을 적용한다. 로컬 회수는 download 전에 현재 retained bytes와 outer 실제 크기·inner 최대64 MiB·stage별 최대 expanded·기록64 MiB를6 GiB 안에 예약하고, 실제 manifest를 읽은 뒤 다시 확인한다. 이는 hosted runner8 GiB를6 GiB로 변경하지 않는다.
+
+R2 helper 검사와 실제 native 실행 결과는 각각의 immutable receipt로 판정한다. 이 계약 변경 시점에 R2 native와 최종 provider 채택은 **NOT_RUN/NOT_ADOPTED**다. 새 코드의 독립 리뷰·필수 CI·actual merge/postmerge 뒤 현재 main의 fresh dispatch에서 `pinned-tsql-r1`, `trixie-r1`, 위 human subject를 명시한다. S01/MASTER·업무 corpus/.svc 제품·S08 전체78셀은 시작하지 않는다.
+
 # P05 source closure 실행 순서
 
 소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 초기 T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3의95개 실행 결과와 당시 PG16개 미실행은 보존된 역사적 관측이다. 후속 original/r1/r2 및 실제 PG/SQL 결과는 아래 run별로 구분한다. 기존 26-route/256행 채택은 scope 근거이며 source 지원 근거가 아니다.

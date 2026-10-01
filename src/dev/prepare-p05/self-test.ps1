@@ -71,6 +71,56 @@ $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
 . (Join-Path $PSScriptRoot 'remedy.ps1')
 $remedySubjects=ReadRemedySubjects
+$followupSubject='a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2'
+foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1')){
+    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $followupSubject
+    $limits=ExactRemedyLimits $stage
+    if($selected.acquisition_limit_bytes -ne $limits.source_image_counter_bytes){throw 'Followup stage counter mismatch'}
+    foreach($wrong in @('',$subject,$remedySubject,$r2Subject,$exactSubject)){
+        $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
+        if(-not $rejected){throw 'Prior subject authorized followup effect'}
+    }
+    $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit -or @($rows|Where-Object {$_.producer -clike '*baseline*'}).Count){throw 'Followup rows/edit or baseline reuse mismatch'}
+    $rejected=$false;try{$null=AssertExactAcquisitionLimit $stage $(if($limits.source_image_counter_bytes -eq 1073741824){1610612736L}else{1073741824L})}catch{$rejected=$true};if(-not $rejected){throw 'Followup cross-stage counter accepted'}
+}
+foreach($case in $remedySubjects['followup-r2'].new_cases){
+    AssertFollowupCase $case
+    foreach($failure in @('empty','count','hash','window')){
+        $bad=$case|ConvertTo-Json -Depth 30|ConvertFrom-Json -AsHashtable
+        switch($failure){'empty'{$bad.input_utf8=''};'count'{$bad.input_bytes++};'hash'{$bad.input_sha256='0'*64};'window'{$bad.expected.error_window=@{start=-1;end=1}}}
+        $rejected=$false;try{AssertFollowupCase $bad}catch{$rejected=$true};if(-not $rejected){throw 'Invalid followup payload accepted'}
+    }
+}
+foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1','pg-legacy-r1','unknown')){
+    foreach($kind in @('generation','build','execution','preflight','diagnostic')){
+        foreach($owned in @($false,$true)){
+            $actual=RemedyMemoryBytes $stage $kind 'generate-postgresql-legacy-candidate-r1-g6' $owned
+            $expected=if($stage -ceq 'pg-legacy-g6-r1' -and $kind -ceq 'generation' -and -not $owned){6442450944L}else{4294967296L}
+            if($actual -ne $expected -or (RemedyMemoryBytes $stage $kind 'other-operation' $owned) -ne 4294967296){throw 'PG generation-only memory leaked'}
+        }
+    }
+}
+AssertGenerationCapacity 8589934592 @(@{max='max';current=0},@{max='17179869184';current=8589934592L})
+foreach($vector in @(@{available=8589934591L;parents=@(@{max='max';current=0})},@{available=8589934592L;parents=@()},@{available=8589934592L;parents=@(@{max='UNKNOWN';current=0})},@{available=8589934592L;parents=@(@{max='8589934592';current=1})},@{available=8589934592L;parents=@(@{max='max';current=-1})})){
+    $rejected=$false;try{AssertGenerationCapacity $vector.available $vector.parents}catch{$rejected=$true};if(-not $rejected){throw 'Unknown or insufficient generation host capacity accepted'}
+}
+AssertMemoryEnvelope 6442450944 6442450944 6442450944 '6442450944'
+$hierarchyRoot=@{path='/sys/fs/cgroup';mount_root='/';max='NOT_APPLICABLE_HIERARCHY_ROOT';current=$null;memory_controller_available=$true;max_file_present=$false;current_file_present=$false}
+AssertGenerationCapacity 8589934592 @($hierarchyRoot)
+foreach($key in @('path','mount_root','memory_controller_available','max_file_present','current_file_present','current')){
+    $bad=$hierarchyRoot.Clone();$bad[$key]=switch($key){'path'{'/sys/fs/cgroup/child'};'mount_root'{'/hidden'};'memory_controller_available'{$false};'current'{0};default{$true}}
+    $rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Unverified hierarchy root accepted'}
+}
+$before="low 0`nhigh 0`nmax 0`noom 0`noom_kill 0`noom_group_kill 0`n"
+$pressure=$before.Replace('max 0','max 1');$oom=$pressure.Replace('oom 0','oom 1').Replace('oom_kill 0','oom_kill 1')
+if((MemoryEventDelta $before $pressure).state -cne 'NO_OOM_OBSERVED' -or (MemoryEventDelta $before $oom).state -cne 'OOM_OBSERVED'){throw 'Pressure/OOM delta classification failed'}
+foreach($pair in @(@($oom,$before),@($before,$before.Replace('oom_kill 0', 'oom_kill UNKNOWN')),@($before,($before+"oom 0`n")),@($before,$before.Replace("oom 0`n",'')))){
+    $rejected=$false;try{$null=MemoryEventDelta $pair[0] $pair[1]}catch{$rejected=$true};if(-not $rejected){throw 'Unknown/regressed/duplicate/missing memory counter accepted'}
+}
+foreach($vector in @(@(6442450944L,4294967296L,6442450944L,'6442450944'),@(6442450944L,6442450944L,4294967296L,'6442450944'),@(6442450944L,6442450944L,6442450944L,'4294967296'),@(6442450944L,6442450944L,6442450944L,'max'),@(6442450944L,6442450944L,6442450944L,''))){
+    $rejected=$false;try{AssertMemoryEnvelope $vector[0] $vector[1] $vector[2] $vector[3]}catch{$rejected=$true};if(-not $rejected){throw 'Inspect/cgroup memory mismatch accepted'}
+}
 foreach($stage in @('patch-r1','sql-pg-r1')){
     $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
     if($rows.Count -ne $(if($stage -ceq 'patch-r1'){85}else{46}) -or @($rows|Where-Object {$_.case.edit}).Count -ne $(if($stage -ceq 'patch-r1'){16}else{3})){throw 'Remedy rows/edit budget mismatch'}
@@ -84,6 +134,7 @@ $remainingSqlRows=NewRemedyRows 'sql-only-r2' $originalInputs.cases $remedySubje
 if($remainingSqlRows.Count -ne 30 -or @($remainingSqlRows|Where-Object {$_.case.edit}).Count -ne 1 -or -not (EqualRemedyData $remainingSqlRows @($sqlRows|Where-Object producer -CEQ 'derek-sql-candidate'))){throw 'Remaining SQL rows differ from the approved B subset'}
 $altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
 @($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
+$rejected=$false;try{$null=NewRemedyRows 'csharp-r4' $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed followup expectation accepted'}
 $rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
 foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
@@ -140,6 +191,11 @@ foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','Ch
     $change=$pin.Clone();$change.base_file=@{bytes=6;sha256=$id.sha256}
     CopyExactRemedyCandidate $sourceRoot @{id='OWNED-EXACT';file='fixture.txt';change=$change}
     if([IO.File]::ReadAllText((Join-Path $root 'candidates/OWNED-EXACT/fixture.txt')) -cne 'after' -or [IO.File]::ReadAllText($source) -cne 'before'){throw 'Owned exact patch copy changed original or result'}
+    $second=Join-Path $sourceRoot 'second.txt';[IO.File]::WriteAllText($second,'before',[Text.UTF8Encoding]::new($false));$secondId=FileIdentity $second;$script:verifiedSource[$secondId.path]=$secondId.sha256
+    $firstChange=$change.Clone();$firstChange.target='fixture.txt';$secondChange=$change.Clone();$secondChange.target='second.txt'
+    CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MULTIFILE';files=@($firstChange,$secondChange)}
+    foreach($name in @('fixture.txt','second.txt')){if([IO.File]::ReadAllText((Join-Path $root ('candidates/OWNED-MULTIFILE/'+$name))) -cne 'after' -or [IO.File]::ReadAllText((Join-Path $sourceRoot $name)) -cne 'before'){throw 'Owned multi-file patch failed or changed source'}}
+    $missing=$change.Clone();$missing.target='missing.txt';$rejected=$false;try{CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MISSING';files=@($firstChange,$missing)}}catch{$rejected=$true};if(-not $rejected){throw 'Missing multi-file patch target accepted'}
     $script:verifiedSource=@{}
 } $root
 $swiftSource='e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'
@@ -455,9 +511,64 @@ $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
     return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=5;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';both_stage_cap_boundaries='PASS';sqlpg_polling_cap='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';upstream_native=$false}
 } $ast $root
 $exportAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'collect.ps1'),[ref]$tokens,[ref]$errors)
-$exportFunction=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'GeneratedArtifactProvenance'},$true))
-if($errors -or $exportFunction.Count -ne 1){throw 'Generated provenance helper missing'}
-. ([scriptblock]::Create($exportFunction[0].Extent.Text))
+if($errors){throw 'Collector parse failed'}
+foreach($name in @('CheckCollectionTime','CollectionHash','ReadCollectedRecord','AssertFollowupEvidenceBinding','GeneratedArtifactProvenance')){
+    $definition=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $name},$true))
+    if($definition.Count -ne 1){throw 'Collector guard helper missing'};. ([scriptblock]::Create($definition[0].Extent.Text))
+}
+$script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+$bindingRoot=Join-Path $root 'owned-followup-binding'
+foreach($directory in @('records','raw','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $bindingRoot $directory))}
+function OwnedBindingRecord([string]$relative,$data){[IO.File]::WriteAllText((Join-Path $bindingRoot $relative),($data|ConvertTo-Json -Depth 40),[Text.UTF8Encoding]::new($false))}
+foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1')){
+    $limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    $ledger=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;source_inputs_sha256='f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4';planned_stage_rows=$limits.X;planned_producer_edits=$limits.producer_edit;rows=$rows;owned_fixture_only=$true}
+    $proof=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0};owned_counts=@{generation=0;build=0;execution=0};capture_count=0;command_count=0;cleanup_errors=@();outcomes=@();verdict='FAILED';failure_type='OWNED_NOT_RUN_BOUNDARY_CONTROL';owned_fixture_only=$true}
+    $acq=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;download_bytes=0;http_requests=0;state='COMPLETED';owned_fixture_only=$true}
+    $budget=@{limit_bytes=$limits.source_image_counter_bytes;source_http_bytes=0;received_network_upper_bound_bytes=0;final_snapshot=@{limit_bytes=$limits.source_image_counter_bytes;state='OBSERVED';start_counter_bytes=1;end_counter_bytes=1;received_counter_bytes=0};owned_fixture_only=$true}
+    OwnedBindingRecord 'records/case-ledger.json' $ledger;OwnedBindingRecord 'acquisition/records/acquisition.json' $acq;OwnedBindingRecord 'records/download-budget.json' $budget
+    $match=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
+    if($match.result -cne 'MATCH' -or $match.observed_captured_native.execution -ne 0 -or $match.planned_producer_edits -ne $limits.producer_edit){throw 'Failed/NOT_RUN boundary control promoted execution'}
+    foreach($failure in @('subject','counter','rows','expectation','edit','attempts','commands','cleanup','acquisition','download','snapshot','unknown','over-cap','regressed','source-bytes','completion','executed-row')){
+        $pp=$proof|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$ll=$ledger|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$aa=$acq.Clone();$bb=$budget|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
+        switch($failure){'subject'{$pp.remedy_approval_subject='0'*64};'counter'{$pp.acquisition_limit_bytes++};'rows'{$ll.rows=@($ll.rows[1..($ll.rows.Count-1)])};'expectation'{$ll.rows[0].case.expected.facts='changed'};'edit'{$ll.planned_producer_edits++};'attempts'{$pp.counts.generation=$limits.G+1};'commands'{$pp.command_count=1};'cleanup'{$pp.cleanup_errors=@(@{owned='unverified'})};'acquisition'{$aa.acquisition_limit_bytes++};'download'{$bb.limit_bytes++};'snapshot'{$bb.final_snapshot.limit_bytes++};'unknown'{$bb.final_snapshot.state='NOT_VERIFIED'};'over-cap'{$bb.final_snapshot.end_counter_bytes=$limits.source_image_counter_bytes+2;$bb.final_snapshot.received_counter_bytes=$limits.source_image_counter_bytes+1;$bb.received_network_upper_bound_bytes=$limits.source_image_counter_bytes+1};'regressed'{$bb.final_snapshot.end_counter_bytes=0;$bb.final_snapshot.received_counter_bytes=-1};'source-bytes'{$aa.download_bytes=1};'completion'{$pp.verdict='BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'};'executed-row'{$ll.rows[0].state='EXITED'}}
+        OwnedBindingRecord 'records/case-ledger.json' $ll;OwnedBindingRecord 'acquisition/records/acquisition.json' $aa;OwnedBindingRecord 'records/download-budget.json' $bb
+        $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Collector binding negative accepted: '+$failure)}
+    }
+}
+$stage='pg-legacy-g6-r1';$limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+$ledger.remedy_stage=$stage;$ledger.planned_stage_rows=$limits.X;$ledger.planned_producer_edits=$limits.producer_edit;$ledger.rows=$rows
+$proof.remedy_stage=$stage;$proof.acquisition_limit_bytes=$limits.source_image_counter_bytes;$proof.counts.generation=1;$proof.counts.diagnostic=3;$proof.command_count=5;$proof.verdict='REPRODUCED_FAILURES'
+$acq.remedy_stage=$stage;$acq.acquisition_limit_bytes=$limits.source_image_counter_bytes;$budget.limit_bytes=$limits.source_image_counter_bytes;$budget.final_snapshot.limit_bytes=$limits.source_image_counter_bytes
+OwnedBindingRecord 'records/case-ledger.json' $ledger;OwnedBindingRecord 'acquisition/records/acquisition.json' $acq;OwnedBindingRecord 'records/download-budget.json' $budget
+$label='generate-'+$rows[0].producer;$container='1'*64
+function OwnedCommand([string]$label,[string[]]$argv,[int]$exitCode,[string]$stdout){
+    $out=[Text.Encoding]::UTF8.GetBytes($stdout);$err=[byte[]]::new(0)
+    [IO.File]::WriteAllBytes((Join-Path $bindingRoot ('raw/'+$label+'.stdout')),$out);[IO.File]::WriteAllBytes((Join-Path $bindingRoot ('raw/'+$label+'.stderr')),$err)
+    OwnedBindingRecord ('records/command-'+$label+'.json') @{label=$label;argv=$argv;termination='EXITED';exit_code=$exitCode;host_cleanup_verified=$true;seconds_limit=$(if($label -ceq ('generate-'+$rows[0].producer)){300}else{10});output_limit=8388608;stored_stdout_bytes=$out.Length;stored_stderr_bytes=0;stdout_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($out)).ToLowerInvariant();stderr_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($err)).ToLowerInvariant();owned_fixture_only=$true}
+}
+$memoryBefore="low 0`nhigh 0`nmax 0`noom 0`noom_kill 0`noom_group_kill 0`n";$memoryAfter=$memoryBefore.Replace('max 0','max 1').Replace('oom 0','oom 1').Replace('oom_kill 0','oom_kill 1')
+OwnedCommand $label @('exec',$container,'owned-not-executed') 137 ''
+foreach($when in @('before','after')){OwnedCommand ($label+'-memory-'+$when) @('exec',$container,'/bin/cat','/sys/fs/cgroup/memory.events') 0 $(if($when -ceq 'before'){$memoryBefore}else{$memoryAfter})}
+OwnedCommand ($label+'-inspect') @('inspect',$container) 0 (@(@{Id=$container;HostConfig=@{Memory=6442450944L;MemorySwap=6442450944L}})|ConvertTo-Json -AsArray -Depth 4)
+OwnedCommand ($label+'-memory-max') @('exec',$container,'/bin/cat','/sys/fs/cgroup/memory.max') 0 '6442450944'
+$events=@{container=$container;native_command=$label;memory_limit_bytes=6442450944L;state='OOM_OBSERVED';counters=(MemoryEventDelta $memoryBefore $memoryAfter);original_exit_code=137;original_termination='EXITED';owned_fixture_only=$true}
+foreach($when in @('before','after')){$relative='raw/'+$label+'-memory-'+$when+'.stdout';$events[$when+'_raw']=@{path=$relative;bytes=(Get-Item -LiteralPath (Join-Path $bindingRoot $relative)).Length;sha256=(CollectionHash (Join-Path $bindingRoot $relative))}}
+OwnedBindingRecord ('records/'+$label+'-memory-events.json') $events
+OwnedBindingRecord 'records/pg-generation-capacity.json' @{result='PASS';before_G=$true;generation_memory_bytes=6442450944L;MemAvailable_bytes=8589934592L;resolved_parents=@($hierarchyRoot);owned_fixture_only=$true;real_capacity='NOT_VERIFIED'}
+$limit=@{container=$container;bytes=6442450944L;inspect_and_cgroup='MATCH';owned_fixture_only=$true};OwnedBindingRecord ('records/'+$label+'-memory-limit.json') $limit
+$proof.outcomes=@(@{kind='generation';scope='REGISTERED_P05_REMEDY';termination='EXITED';exit_code=137;label=$label;result_directory=$null;memory_limit_bytes=6442450944L;resource_state='OOM_OBSERVED';memory_event_record=('records/'+$label+'-memory-events.json')})
+$match=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
+if($match.observed_captured_native.generation -ne 1 -or $match.observed_captured_native.execution -ne 0){throw 'Owned OOM control promoted B/X'}
+foreach($failure in @('container','delta','limit','build-after-oom')){
+    $ee=$events|ConvertTo-Json -Depth 12|ConvertFrom-Json -AsHashtable;$pp=$proof|ConvertTo-Json -Depth 12|ConvertFrom-Json -AsHashtable;$mm=$limit.Clone()
+    switch($failure){'container'{$ee.container='2'*64};'delta'{$ee.counters.delta.oom=0};'limit'{$mm.bytes=4294967296L};'build-after-oom'{$pp.counts.build=1}}
+    OwnedBindingRecord ('records/'+$label+'-memory-events.json') $ee;OwnedBindingRecord ('records/'+$label+'-memory-limit.json') $mm
+    $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Owned OOM evidence negative accepted: '+$failure)}
+}
+$script:collectionClock=[pscustomobject]@{Elapsed=[TimeSpan]::FromSeconds(121)}
+$rejected=$false;try{$null=CollectionHash (Join-Path $bindingRoot 'records/case-ledger.json')}catch{$rejected=$_.Exception.Message -ceq 'Total evidence collection time limit'};if(-not $rejected){throw 'Collector total deadline ignored'}
+$script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
 $exportRoot=Join-Path $root 'owned-export-provenance'
 if($env:RUNNER_TEMP -and -not $IsWindows){
     $run=if($env:GITHUB_RUN_ID){$env:GITHUB_RUN_ID}else{'0'}

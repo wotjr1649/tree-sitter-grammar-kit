@@ -1,3 +1,9 @@
+# PREPARE-06 후속 R2의 좁은 승인
+
+2026-10-01 human `a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2`와 machine `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4`에 실제 `R2 exact 효과·기대 정정 승인` 답변을 연결했다. C# r4 conflict 한 행 G1/B1/X27/edit5, 같은 PG legacy patch의 generation-only6 GiB G1/B1/X12/edit1, MSSQL 네 파일/24 ESM module G1/B1/X41/edit1을 별도 후보로 검증한다. 원본/r1/r2/r3·실패·옛 UNKNOWN은 보존한다. exact stage·원문·도구·한도는 [P05 source closure](p05-source-closure.md)의 후속 R2 계약에 따른다.
+
+공식 delimited identifier 규칙과 충돌한 옛20byte bracket negative의 원문/기대/판정은 유지하고, 별도 valid counterexample와 실제 미종결 negative를 채택했다. 필수 bracket/negative·temporal/graph·BARE recovery 요구와 26 route/256행은 유지한다. 후보 시험 및 새로운 기대 등록은 최종 provider 채택 근거를 대신하지 않는다. R2 native는 이 변경 시점에 **NOT_RUN**이며 기존 C#/PG/T-SQL 필수 격차는 미해결이다.
+
 # Campaign 01 source와 feature feasibility
 
 기준일 `2026-09-29`, PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). 모든 후보는 [등록된 26개 immutable identity](../../src/contracts/language-sources.json) 그대로다. feature ID는 [disposition](language-feature-disposition.md)를 가리킨다. 이 표는 P05 조사 결과이며 grammar 채택 변경이나 native 실행 허가가 아니다.
@@ -82,7 +88,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 ## 남은 승인과 readiness
 
-### PREPARE-06의 실제 A/B 및 SQL 결과
+#### PREPARE-06의 실제 A/B 및 SQL 결과
 
 실제 사용자 A/B 승인은 기존 정확한 r2 후보 시험과 SQLPG-only counter 한도에 연결됐다. 아래 결과는 그 실행이며 최종 provider 채택은 여전히 별도 결정이다. 과거 원본/r1 실패와 미실행을 유지한다.
 

@@ -37,7 +37,7 @@ on:
         description: Exact authorized finite stage; no candidate adoption
         required: true
         type: choice
-        options: [patch-r1, sql-pg-r1, patch-r2, sql-pg-r2, sql-only-r2, csharp-r3, pg-legacy-r1, mssql-evaluate-r1]
+        options: [patch-r1, sql-pg-r1, patch-r2, sql-pg-r2, sql-only-r2, csharp-r3, pg-legacy-r1, mssql-evaluate-r1, csharp-r4, pg-legacy-g6-r1, mssql-patch-r1]
       remedy_approval_subject:
         description: Exact separately approved remedy proposal subject
         required: true
@@ -91,9 +91,13 @@ jobs:
           & src/dev/prepare-p05/run.ps1 -Destination $taskRoot -AcquisitionProfile $env:ACQUISITION_PROFILE -AcquisitionApprovalSubject $env:ACQUISITION_APPROVAL_SUBJECT -ExecutionApprovalSubject $env:EXECUTION_APPROVAL_SUBJECT -ToolchainProfile $env:TOOLCHAIN_PROFILE -ToolchainApprovalSubject $env:TOOLCHAIN_APPROVAL_SUBJECT -RemedyStage $env:REMEDY_STAGE -RemedyApprovalSubject $env:REMEDY_APPROVAL_SUBJECT
       - name: 원본 근거를 유한 artifact로 묶기
         if: always()
+        timeout-minutes: 2
+        env:
+          REMEDY_STAGE: ${{ inputs.remedy_stage }}
+          REMEDY_APPROVAL_SUBJECT: ${{ inputs.remedy_approval_subject }}
         run: |
           $taskRoot = Join-Path $env:RUNNER_TEMP "tsgk-p05-remedy-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/prepare-p05/collect.ps1 -Root $taskRoot
+          & src/dev/prepare-p05/collect.ps1 -Root $taskRoot -RemedyStage $env:REMEDY_STAGE -RemedyApprovalSubject $env:REMEDY_APPROVAL_SUBJECT
       - name: 해당 run의 근거 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
