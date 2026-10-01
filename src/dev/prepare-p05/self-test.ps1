@@ -268,6 +268,25 @@ $grammarPath=Join-Path $root 'grammar.json'
     PinFixture $dependency;$script:verifiedSource.Remove((FileIdentity $dependency).path)
     $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{if($_.Exception.Message -cne 'Unregistered SQL dependency'){throw};$rejected=$true}
     if(-not $rejected){throw 'Unregistered SQL dependency accepted'}
+    $commentRoot=Join-Path $root 'reviewed-comment';$comment=Join-Path $commentRoot 'grammar/statements/create-function.js'
+    [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($comment))
+    $fixture=Join-Path $PSScriptRoot 'fixtures/mssql-create-function.js.txt'
+    $originalComment=[IO.File]::ReadAllBytes($fixture)
+    if($originalComment.Length -ne 2539 -or (Get-FileHash -LiteralPath $fixture).Hash.ToLowerInvariant() -cne 'f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a'){throw 'Reviewed prose fixture bytes changed'}
+    [IO.File]::WriteAllBytes($comment,$originalComment);PinFixture $comment
+    $helpers=Join-Path $commentRoot 'grammar/helpers.js'
+    [IO.File]::WriteAllText($helpers,'export const owned = true;',[Text.UTF8Encoding]::new($false));PinFixture $helpers
+    if((CheckSqlJsInputs $comment $commentRoot).Count -ne 2){throw 'Reviewed inert prose was rejected'}
+    $originalText=[Text.Encoding]::UTF8.GetString($originalComment)
+    foreach($changed in @($originalText.Replace('Functions require','Functions  require'),$originalText.Replace('allow it empty','allow it empty!'),($originalText+"`nconst load = require;"),($originalText+"`neval('unreviewed');"))){
+        [IO.File]::WriteAllText($comment,$changed,[Text.UTF8Encoding]::new($false));PinFixture $comment
+        $rejected=$false;try{$null=CheckSqlJsInputs $comment $commentRoot}catch{if($_.Exception.Message -cne 'Unreviewed SQL loader/evaluation'){throw};$rejected=$true}
+        if(-not $rejected){throw 'Changed or additional loader occurrence accepted'}
+    }
+    $wrongPath=Join-Path $commentRoot 'grammar/statements/other.js'
+    [IO.File]::WriteAllBytes($wrongPath,$originalComment);PinFixture $wrongPath
+    $rejected=$false;try{$null=CheckSqlJsInputs $wrongPath $commentRoot}catch{if($_.Exception.Message -cne 'Unreviewed SQL loader/evaluation'){throw};$rejected=$true}
+    if(-not $rejected){throw 'Reviewed prose exception escaped its exact path'}
     $parser=Join-Path $parserRoot 'parser.c';$header=Join-Path $parserRoot 'header.h'
     [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($header,'/* owned header */',[Text.UTF8Encoding]::new($false))
     if((CheckRemedyQuotedIncludes @($parser) $parserRoot).Count -ne 2){throw 'Owned quoted includes incomplete'}

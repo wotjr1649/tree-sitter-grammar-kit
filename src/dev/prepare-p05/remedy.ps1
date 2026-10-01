@@ -240,7 +240,11 @@ function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
         if($script:verifiedSource[$identity.path] -cne $identity.sha256){throw 'SQL dependency bytes changed'}
         $source=[IO.File]::ReadAllText($path)
         # JavaScript identifiers are case-sensitive: function is not the Function constructor.
-        if($source -cmatch '\b(?:require|createRequire|eval|Function)\b'){throw 'Unreviewed SQL loader/evaluation'}
+        $loaderWords=@([regex]::Matches($source,'\b(?:require|createRequire|eval|Function)\b'))
+        $relative=[IO.Path]::GetRelativePath($sourceRoot,$path).Replace('\','/')
+        # One reviewed prose occurrence; no comment stripping or JS execution permission.
+        $inertComment=$relative -ceq 'grammar/statements/create-function.js' -and $identity.bytes -eq 2539 -and $identity.sha256 -ceq 'f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a' -and $loaderWords.Count -eq 1 -and $loaderWords[0].Index -eq 1289 -and $loaderWords[0].Value -ceq 'require'
+        if($loaderWords.Count -and -not $inertComment){throw 'Unreviewed SQL loader/evaluation'}
         $imports=[regex]::Matches($source,'(?m)^\s*import\s+(?:[A-Za-z_$][\w$]*|\{[\w\s,$]*\})\s+from\s+["''](\.{1,2}/[A-Za-z0-9_./-]+\.js)["''];?\s*$')
         if([regex]::Matches($source,'\bimport\b').Count -ne $imports.Count){throw 'Unresolved SQL ESM import'}
         foreach($import in $imports){$queue.Enqueue((Join-Path ([IO.Path]::GetDirectoryName($path)) $import.Groups[1].Value))}

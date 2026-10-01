@@ -210,7 +210,9 @@ PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중�
 
 전체8개 isolation과 owned vertical control,48개 exact container의 종료/PID0/제거,813개 host command root 종료를 확인했다. 실제 source HTTP50회/26,700,503bytes, source/image receive-counter949,981,821bytes는 해당1GiB threshold 이내였다. daemon quiescence는 NOT_PROVEN이며 과거 UNKNOWN/overshoot를 소급 복원하지 않는다.
 
-[등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, negative 거부2개, 구조 실패2개, mapping 미해결2개다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
+[등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, 당시 frozen negative 기대와 일치한 거부2개, 구조 실패2개, mapping 미해결2개다. 거부2개 중 실제 SELECT 괄호 negative1개와 공식 구문에 반하는 bracket 기대1개를 구별하며 과거 원 기대·집계를 보존한다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
+
+SQL ESM 준비 검사는 pinned bytes와 literal import closure를 먼저 확인하고 loader/evaluation 단어를 거부한다. `meloncholera/tree-sitter-mssql@8620fbc`의 `grammar/statements/create-function.js`만 2,539 bytes / SHA-256 `f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a`, UTF-16 index1289의 `require`1회가 검토된 주석 원문임을 구별한다. 같은 path·전체 hash·bytes·단일 위치가 모두 일치해야 하며 주석 제거/임의 단어 허용은 없다. public MIT 원문 fixture의 정상 검사와 변경 bytes·위치·추가 loader·다른 path 거부를 self-check한다. 이는 static 입력 검사 보완이며 해당 후보 JS 실행·grammar 수정·provider 채택은 별도 exact 승인 전 NOT_RUN이다.
 
 ## exact3 종료 후 단계별 재개 조건
 
