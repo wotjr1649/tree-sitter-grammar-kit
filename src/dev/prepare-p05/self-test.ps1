@@ -450,7 +450,7 @@ if($env:RUNNER_TEMP -and -not $IsWindows){
     while($ancestor){if($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Owned export reparse ancestor'};$ancestor=$ancestor.Parent}
 }
 if(Test-Path -LiteralPath $exportRoot){throw 'Owned export fixture exists'}
-$createdExport=$false
+$createdExport=$false;$emptyExportRoot=$null
 try {
     [void][IO.Directory]::CreateDirectory($exportRoot);$createdExport=$true
     foreach($d in @('records','raw','results/generate-owned-export/generated')){[void][IO.Directory]::CreateDirectory((Join-Path $exportRoot $d))}
@@ -488,12 +488,20 @@ try {
         if($record.Count -ne 1 -or $record[0].original_bytes -ne $bytes.Length -or $record[0].provenance.references.Count -ne 8){throw 'Owned C export receipt mismatch'}
         $input=[IO.File]::OpenRead((Join-Path $exportRoot $record[0].lossless_gzip_path));$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$sink=[IO.MemoryStream]::new()
         try{$gzip.CopyTo($sink);if([Convert]::ToHexString($sink.ToArray()) -cne [Convert]::ToHexString($bytes)){throw 'C export changed original NUL/CRLF'}}finally{$sink.Dispose();$gzip.Dispose();$input.Dispose()}
+        $emptyExportRoot=[IO.Path]::GetFullPath((Join-Path $exportPrefix ('tsgk-p05-remedy-'+$run+'-'+[DateTime]::UtcNow.Ticks)))
+        if(Test-Path -LiteralPath $emptyExportRoot){throw 'Fresh empty export root required'}
+        [void][IO.Directory]::CreateDirectory((Join-Path $emptyExportRoot 'records'))
+        @{remedy_stage='csharp-r3';outcomes=@(@{kind='generation';scope='REGISTERED_P05';termination='EXITED';exit_code=1;label='generate-owned-failed';result_directory='generate-owned-failed'});owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $emptyExportRoot 'records/summary.json') -Encoding utf8NoBOM
+        & (Join-Path $PSScriptRoot 'collect.ps1') -Root $emptyExportRoot
+        if([IO.File]::ReadAllText((Join-Path $emptyExportRoot 'records/generated-artifacts.json')).Trim() -cne '[]' -or -not (Test-Path -LiteralPath (Join-Path $emptyExportRoot 'evidence.zip'))){throw 'Failed generation evidence was not packaged'}
     }
 }finally{
     if($createdExport -and $env:RUNNER_TEMP -and -not $IsWindows){
-        if([IO.Path]::GetFullPath($exportRoot) -cne $exportRoot -or -not $exportRoot.StartsWith($exportPrefix,[StringComparison]::Ordinal) -or (Get-Item -LiteralPath $exportRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint -or @(Get-ChildItem -LiteralPath $exportRoot -Force -Recurse|Where-Object {$_.Attributes -band [IO.FileAttributes]::ReparsePoint}).Count){throw 'Owned export cleanup target rejected'}
-        [IO.Directory]::Delete($exportRoot,$true)
-        if(Test-Path -LiteralPath $exportRoot){throw 'Owned export cleanup not verified'}
+        foreach($cleanupRoot in @($exportRoot,$emptyExportRoot)|Where-Object {$_ -and (Test-Path -LiteralPath $_)}){
+            if([IO.Path]::GetFullPath($cleanupRoot) -cne $cleanupRoot -or -not $cleanupRoot.StartsWith($exportPrefix,[StringComparison]::Ordinal) -or (Get-Item -LiteralPath $cleanupRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint -or @(Get-ChildItem -LiteralPath $cleanupRoot -Force -Recurse|Where-Object {$_.Attributes -band [IO.FileAttributes]::ReparsePoint}).Count){throw 'Owned export cleanup target rejected'}
+            [IO.Directory]::Delete($cleanupRoot,$true)
+            if(Test-Path -LiteralPath $cleanupRoot){throw 'Owned export cleanup not verified'}
+        }
     }
 }
 $savedPath=$env:PATH

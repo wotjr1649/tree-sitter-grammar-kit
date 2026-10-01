@@ -198,6 +198,8 @@ PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중�
 
 생성 C export는 성공한 generation/input/capture 기록과 raw stdout/stderr의 size/SHA를 먼저 대조한다. build-input 기록이 있으면 그 parser identity도 같아야 하며, 기록이 없으면 build를 NOT_RUN으로 명시한다. 자체 fixture는 누락 command·변경 capture·다른 build parser를 거부하고 NUL/CRLF gzip roundtrip을 확인한다. Unix의 이 fixture는 fresh 숫자 suffix와 검증한 task root에서만 생성하고 finally에서 정리한다. 새 source/image counter는 승인 machine의 해당 stage 값과 직접 비교하며 다른 stage 값을 거부한다. local receiver의 120초는 download·outer/inner 확장·manifest/hash 검증을 합한 시간이다.
 
+성공한 upstream generation이0개여도 `generated-artifacts.json`은 `[]`로 보존하고 기존 실패·summary·raw를 artifact로 묶는다. Unix 자체 반례는 실패 generation만 있는 실제 collector 경로에서 빈 목록과 package 생성을 확인하며, 이 packaging 성공을 generation/native 지원 성공으로 바꾸지 않는다.
+
 새 효과의 승인·helper 검사·job conclusion·오류 부재는 syntax/구조/negative/recovery/edit 지원의 근거가 아니다. actual producer 결과와 최종6 route source 채택이 충족되기 전에는 PREPARATION_READY로 판정하지 않는다. NET461 업무 corpus와 `.svc` 제품, S08 전체78셀은 별도 NOT_RUN이다.
 
 ## SQL-only 실행 후 source 처분
