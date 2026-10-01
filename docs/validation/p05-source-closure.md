@@ -200,6 +200,8 @@ PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중�
 
 성공한 upstream generation이0개여도 `generated-artifacts.json`은 `[]`로 보존하고 기존 실패·summary·raw를 artifact로 묶는다. Unix 자체 반례는 실패 generation만 있는 실제 collector 경로에서 빈 목록과 package 생성을 확인하며, 이 packaging 성공을 generation/native 지원 성공으로 바꾸지 않는다.
 
+새 empty-export root가 이미 존재하면 cleanup 후보에서 제외하고 실패한다. 충돌한 기존 디렉터리를 이 self-test가 생성한 상태로 취급하지 않는다.
+
 새 효과의 승인·helper 검사·job conclusion·오류 부재는 syntax/구조/negative/recovery/edit 지원의 근거가 아니다. actual producer 결과와 최종6 route source 채택이 충족되기 전에는 PREPARATION_READY로 판정하지 않는다. NET461 업무 corpus와 `.svc` 제품, S08 전체78셀은 별도 NOT_RUN이다.
 
 ## SQL-only 실행 후 source 처분

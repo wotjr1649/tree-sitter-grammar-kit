@@ -489,7 +489,7 @@ try {
         $input=[IO.File]::OpenRead((Join-Path $exportRoot $record[0].lossless_gzip_path));$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$sink=[IO.MemoryStream]::new()
         try{$gzip.CopyTo($sink);if([Convert]::ToHexString($sink.ToArray()) -cne [Convert]::ToHexString($bytes)){throw 'C export changed original NUL/CRLF'}}finally{$sink.Dispose();$gzip.Dispose();$input.Dispose()}
         $emptyExportRoot=[IO.Path]::GetFullPath((Join-Path $exportPrefix ('tsgk-p05-remedy-'+$run+'-'+[DateTime]::UtcNow.Ticks)))
-        if(Test-Path -LiteralPath $emptyExportRoot){throw 'Fresh empty export root required'}
+        if(Test-Path -LiteralPath $emptyExportRoot){$emptyExportRoot=$null;throw 'Fresh empty export root required'}
         [void][IO.Directory]::CreateDirectory((Join-Path $emptyExportRoot 'records'))
         @{remedy_stage='csharp-r3';outcomes=@(@{kind='generation';scope='REGISTERED_P05';termination='EXITED';exit_code=1;label='generate-owned-failed';result_directory='generate-owned-failed'});owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $emptyExportRoot 'records/summary.json') -Encoding utf8NoBOM
         & (Join-Path $PSScriptRoot 'collect.ps1') -Root $emptyExportRoot
