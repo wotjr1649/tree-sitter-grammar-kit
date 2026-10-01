@@ -140,7 +140,7 @@ run36651074932에서 C# G1/B2/X20 및 두 producer의 edit를 완료했다. 생�
 
 run36657324824의 결과는 `ts_pg_stage_evidence_subject`로 별도 immutable 관측에 결속한다. TS/TSX16행/4edit는 실행된 관측으로, PG16행/2개 producer edit는 `NOT_REEXECUTED_PRIOR_STAGE_BLOCKER_RETAINED`로 이월한다. PG syntax는 NOT_RUN이다. caller는 해당32행·원 input projection·같은 source/CLI/runtime/Trixie·원출력과 단계 차단을 먼저 대조한다. C#/TSQL까지 포함하면 prior108행 중92행이 실행됐고16행은 미실행이다. 남은 Swift3행/1edit와 전체111행/57원문/6edit 등록을 유지한다. 새 run의 성공 exit도 prior 필수 실패나 PG blocker를 해소하지 않는다.
 
-최신 Swift 관측을 합치면49개 원문/95개 producer와5개 원 edit/9개 producer edit를 실행했고, PG8개 원문/16개 producer와1개 원 edit/2개 producer edit는 미실행이다.95행 중62행에 원본 ERROR/MISSING,33행에 원본 오류 부재를 관측했다. T-SQL lowercase configuration 분류 차이와 broad C# 선언 gap도 유지한다. 숫자는 관측 집계이며 P05 scope PASS나 S08의78-cell qualification 완료가 아니다. 알려진 required gap의 실제 remedy와 PG 입력/capability를 별도 결정·검증해야 한다.
+run36660558049의 Swift 관측까지 합친 당시 집계는49개 원문/95개 producer와5개 원 edit/9개 producer edit 실행, PG8개 원문/16개 producer와1개 원 edit/2개 producer edit 미실행이었다.95행 중62행에 원본 ERROR/MISSING,33행에 원본 오류 부재를 관측했다. 당시 T-SQL lowercase configuration 분류 차이와 broad C# 선언 gap도 보존한다. 이 역사적 집계는 P05 scope PASS나 S08의78-cell qualification 완료가 아니다. 후속 run36796853218에서 PG baseline8개를 실제 실행했으며 WITH OIDS 실패와 나머지7개 fact 관측, noopt 생성 실패로 인한 재생성8개 NOT_RUN은 아래 해당 run 결과를 따른다.
 
 remedy 실행에서 확인한 producer별 import/include·ABI·entry-point·ELF closure 실패는 해당 producer의 전체 dependent row를 구체적 이유와 함께 `NOT_RUN`으로 남기고 독립 producer를 계속한다. generation/build의 exit 및 resource termination도 별도로 연결한다. 개별 native 한도 실패 뒤에는 원 partial output을 보존하고 실제 container cleanup을 검증한 뒤에만 진행한다. 승인·bytes identity·공유 한도·격리·capture·cleanup 오류와 예상하지 않은 예외는 전체 실행을 중단한다. 자체 input closure 반례는 한 producer의 실패가 다른 row를 바꾸지 않는지, 공유 안전 실패가 전파되는지 검사한다.
 
