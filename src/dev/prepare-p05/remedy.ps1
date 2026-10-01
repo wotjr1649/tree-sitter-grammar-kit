@@ -94,7 +94,7 @@ function TryRemedyPrecheck([string]$producer,[string]$stage,[scriptblock]$check)
     }
 }
 function PrepareRemedyInputs($subjects){
-    Record 'remedy-authority-binding' @{stage=$RemedyStage;subject=$RemedyApprovalSubject;actual_user_authority='caller acceptance record separately required; subject alone is not permission';original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();prior_aggregate_sha256='68053aac3fc0dab788b48d9c78cbd577a3f182dfb7f2e092f4d0f944f64de274';prior_execution_is_not_current=$true;conditional_registration='NOT_ADOPTED';source_application_execution=$false}
+    Record 'remedy-authority-binding' @{stage=$RemedyStage;subject=$RemedyApprovalSubject;actual_user_authority='caller acceptance record separately required; subject alone is not permission';r2_projection=@{path='harness/remedy-r2.json';bytes=(Get-Item -LiteralPath (Join-Path $PSScriptRoot 'remedy-r2.json')).Length;sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'remedy-r2.json')).Hash.ToLowerInvariant();approved_raw_bytes=31295;approved_raw_sha256='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2';serialization='LF projection; internal CRLF and terminal LF reconstructed and checked by ReadRemedySubjects'};original_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();prior_aggregate_sha256='68053aac3fc0dab788b48d9c78cbd577a3f182dfb7f2e092f4d0f944f64de274';prior_execution_is_not_current=$true;conditional_registration='NOT_ADOPTED';source_application_execution=$false}
     foreach($identity in @($acquisition.remedy_identities)){
         foreach($file in $identity.files){
             $relative=$identity.task_relative_source_root+'/'+$file.path
