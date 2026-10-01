@@ -11,7 +11,7 @@ r4 `grammar.js` 62,851 bytes / `b6946fac28ee1e470aa3155f5a3b8deddfd6cd0c6c47ac52
 별도 r5 copy에 복사한다. `method_declaration.returns`와 `object_creation_expression.type`의
 기존 `prec(2, alias('var', $.identifier))`를 각각 한 번 `prec.dynamic(2, prec(2, alias('var', $.identifier)))`로 감싼다.
 결과는 62,885 bytes / `da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7`이어야 한다.
-r1 scanner 23,949 bytes / `164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227`,
+r4 copy의 scanner(r1에서 승인된 bytes 유지) 23,949 bytes / `164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227`,
 도구·runtime·npm·image·입력·기대·비교기를 유지한다. 이 수정은 시험할 가설이며 지원 성공이나 최종 provider 채택이 아니다.
 
 G1/B1/X27/edit5와 기존 owned G1/B1/X1·isolation8을 별도 fresh dispatch에서 수행한다.
@@ -23,6 +23,9 @@ r1~r5의 변경 없는 `src/parser.c` 다섯 identity는 lossless source-copy r3
 C# 펼침192 MiB·outer/inner64 MiB·회수/collector120초·일반 파일64 MiB는 유지한다.
 
 새 승인은 kit 준비 증거의 누적 로컬 보존 상한만 앞으로 8 GiB (`8589934592` bytes)로 높인다.
+이 상한은 로컬 kit의 `.work`·`artifacts`·`docs/plans`·`docs/prompts` 실제 파일 합계에 적용한다.
+로컬 finite-batch/dispatch guard와 회수 helper가 승인 subject를 대조하고 실행 전 공간을 예약한다.
+hosted workflow/collector의 runner 한도와 별개이며, 해당 로컬 guard의 검증·독립 리뷰 전에는 native dispatch하지 않는다.
 회수 전에 실제 보존량 + outer 실제 크기 + inner 최대64 MiB + stage expanded 한도 + 기록64 MiB를 예약하고
 manifest 확인 후 다시 대조한다. runner8 GiB, PG generation-only6 GiB, 다른 native4 GiB 및 모든 개별 실행·격리 한도는 그대로다.
 과거 한도 초과·소비량·UNKNOWN을 새 상한으로 소급 수정하지 않는다.
