@@ -72,11 +72,13 @@ if(-not $rejected){throw 'Read-only assignment negative case failed'}
 . (Join-Path $PSScriptRoot 'remedy.ps1')
 $remedySubjects=ReadRemedySubjects
 $followupSubject='a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2'
-foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1')){
-    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $followupSubject
+$csharpR5Subject='cced4a06c71eacd8c28e855ddfd20c92d7c82bb2cfe7bc8d29313302dd857390'
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1')){
+    $stageSubject=if($stage -ceq 'csharp-r5'){$csharpR5Subject}else{$followupSubject}
+    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $stageSubject
     $limits=ExactRemedyLimits $stage
     if($selected.acquisition_limit_bytes -ne $limits.source_image_counter_bytes){throw 'Followup stage counter mismatch'}
-    foreach($wrong in @('',$subject,$remedySubject,$r2Subject,$exactSubject)){
+    foreach($wrong in @('',$subject,$remedySubject,$r2Subject,$exactSubject,$(if($stage -ceq 'csharp-r5'){$followupSubject}else{$csharpR5Subject}))){
         $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
         if(-not $rejected){throw 'Prior subject authorized followup effect'}
     }
@@ -84,6 +86,9 @@ foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1')){
     if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit -or @($rows|Where-Object {$_.producer -clike '*baseline*'}).Count){throw 'Followup rows/edit or baseline reuse mismatch'}
     $rejected=$false;try{$null=AssertExactAcquisitionLimit $stage $(if($limits.source_image_counter_bytes -eq 1073741824){1610612736L}else{1073741824L})}catch{$rejected=$true};if(-not $rejected){throw 'Followup cross-stage counter accepted'}
 }
+$r4Rows=NewRemedyRows 'csharp-r4' $originalInputs.cases $remedySubjects.cases.cases
+$r5Rows=NewRemedyRows 'csharp-r5' $originalInputs.cases $remedySubjects.cases.cases
+for($i=0;$i -lt $r4Rows.Count;$i++){if($r5Rows[$i].producer -cne 'csharp-candidate-r5' -or -not (EqualRemedyData $r4Rows[$i].case $r5Rows[$i].case)){throw 'C# r5 changed frozen r4 inputs/expectations/edit order'}}
 foreach($case in $remedySubjects['followup-r2'].new_cases){
     AssertFollowupCase $case
     foreach($failure in @('empty','count','hash','window')){
@@ -92,7 +97,7 @@ foreach($case in $remedySubjects['followup-r2'].new_cases){
         $rejected=$false;try{AssertFollowupCase $bad}catch{$rejected=$true};if(-not $rejected){throw 'Invalid followup payload accepted'}
     }
 }
-foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1','pg-legacy-r1','unknown')){
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1','pg-legacy-r1','unknown')){
     foreach($kind in @('generation','build','execution','preflight','diagnostic')){
         foreach($owned in @($false,$true)){
             $actual=RemedyMemoryBytes $stage $kind 'generate-postgresql-legacy-candidate-r1-g6' $owned
@@ -144,6 +149,7 @@ if($remainingSqlRows.Count -ne 30 -or @($remainingSqlRows|Where-Object {$_.case.
 $altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
 @($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
 $rejected=$false;try{$null=NewRemedyRows 'csharp-r4' $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed followup expectation accepted'}
+$rejected=$false;try{$null=NewRemedyRows 'csharp-r5' $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed C# r5 expectation accepted'}
 $rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
 foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
@@ -205,6 +211,17 @@ foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','Ch
     CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MULTIFILE';files=@($firstChange,$secondChange)}
     foreach($name in @('fixture.txt','second.txt')){if([IO.File]::ReadAllText((Join-Path $root ('candidates/OWNED-MULTIFILE/'+$name))) -cne 'after' -or [IO.File]::ReadAllText((Join-Path $sourceRoot $name)) -cne 'before'){throw 'Owned multi-file patch failed or changed source'}}
     $missing=$change.Clone();$missing.target='missing.txt';$rejected=$false;try{CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MISSING';files=@($firstChange,$missing)}}catch{$rejected=$true};if(-not $rejected){throw 'Missing multi-file patch target accepted'}
+    $r5=CsharpR5Patch $remedySubjects['csharp-r5'];$r5.id='OWNED-CSHARP-R5'
+    $sourceRoot=Join-Path $root 'owned-r5-predecessor';[void][IO.Directory]::CreateDirectory((Join-Path $sourceRoot 'src'))
+    $before=($r5.files[0].operations.before -join "`n")+"`n";$after=($r5.files[0].operations.after -join "`n")+"`n"
+    [IO.File]::WriteAllText((Join-Path $sourceRoot 'grammar.js'),$before,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllBytes((Join-Path $sourceRoot 'src/scanner.c'),[byte[]]@(0,13,10))
+    foreach($name in @('grammar.js','src/scanner.c')){$identity=FileIdentity (Join-Path $sourceRoot $name);$script:verifiedSource[$identity.path]=$identity.sha256}
+    $r5.files[0].base_file=FileIdentity (Join-Path $sourceRoot 'grammar.js')
+    $r5.files[0].proposed_result_bytes=[Text.Encoding]::UTF8.GetByteCount($after);$r5.files[0].proposed_result_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($after))).ToLowerInvariant()
+    $r5.scanner=FileIdentity (Join-Path $sourceRoot 'src/scanner.c');$r5.scanner.target='src/scanner.c'
+    CopyExactRemedyCandidate $sourceRoot $r5 '5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7'
+    if([IO.File]::ReadAllText((Join-Path $root 'candidates/OWNED-CSHARP-R5/grammar.js')) -cne $after -or [IO.File]::ReadAllText((Join-Path $sourceRoot 'grammar.js')) -cne $before -or (FileIdentity (Join-Path $root 'candidates/OWNED-CSHARP-R5/src/scanner.c')).sha256 -cne $r5.scanner.sha256){throw 'C# r5 exact two-operation copy/scanner/original preservation failed'}
     $script:verifiedSource=@{}
 } $root
 $swiftSource='e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'
@@ -577,7 +594,7 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
     }
     & {
         param($manifest,$sourceProof,$collectorAst)
-        $summary=@{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()};$exactLimits=@{local_expanded_max_bytes=201326592}
+        $summary=@{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()};$exactLimits=@{local_expanded_max_bytes=201326592};$RemedyStage='csharp-r4'
         $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$sourceExpansion=AssertLosslessCsharpManifest',[StringComparison]::Ordinal)},$true))
         if($guard.Count -ne 1){throw 'Actual source manifest catch guard unavailable'}
         $records=[Collections.Generic.List[object]]::new();$rejected=$false
@@ -594,7 +611,7 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
         function StoreCsharpSourceCopies([string]$task,$files){$stored=OriginalLosslessStore $task $files;$object=@($stored|Where-Object Extension -CEQ '.gz')[0];[IO.File]::WriteAllBytes($object.FullName,[byte[]]@(0,13,10));return ,$stored}
         $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$files=StoreCsharpSourceCopies $task $files',[StringComparison]::Ordinal)},$true))
         if($guard.Count -ne 1){throw 'Actual lossless fallback guard unavailable'}
-        $task=$fallbackRoot;$originalSourceFiles=$files;$bindingFailure=$false;. ([scriptblock]::Create($guard[0].Extent.Text))
+        $task=$fallbackRoot;$originalSourceFiles=$files;$bindingFailure=$false;$RemedyStage='csharp-r4';. ([scriptblock]::Create($guard[0].Extent.Text))
         if(-not $bindingFailure -or $sourceProof.result -cne 'NOT_VERIFIED' -or -not $sourceProof.original_failed_files_preserved -or $files.Count -ne 4){throw 'Post-Store corruption failed to restore original evidence selection'}
         foreach($file in $files){if($file.Extension -cne '.c' -or $file.Length -ne 131072){throw 'Post-Store fallback omitted original source bytes'}}
     } (Join-Path $caseRoot 'owned-lossless-csharp-fallback') $exportAst $originalFiles $copyRoot
@@ -626,23 +643,47 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
     $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
     @{result='PASS';original_copies=4;unique_objects=1;original_bytes=4*$data.Length;compressed_bytes=$encoded.Length;NUL_CRLF_roundtrip='PASS';negative_controls=34;actual_stage_overflow_fixture_bytes=268435456;original_files_retained=$true;raw_unchanged=$true;post_store_corruption_fallback='PASS';upstream_native=$false}|ConvertTo-Json -Compress
 } $root
+& {
+    param($caseRoot)
+    $copyRoot=Join-Path $caseRoot 'owned-lossless-csharp-r5';[void][IO.Directory]::CreateDirectory((Join-Path $copyRoot 'records'))
+    $data=[byte[]]@(0,13,10,255);$digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($data)).ToLowerInvariant();$files=@()
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4','P05-CSHARP-REMEDY-r5')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $copyRoot $relative
+        [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path));[IO.File]::WriteAllBytes($path,$data);$files+=Get-Item -LiteralPath $path
+        [IO.File]::WriteAllText((Join-Path $copyRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),(@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=$data.Length;sha256=$digest}})}|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    for($missing=0;$missing -lt 5;$missing++){
+        $subset=@(for($i=0;$i -lt 5;$i++){if($i -ne $missing){$files[$i]}})
+        $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $subset 'csharp-r5'}catch{$rejected=$_.Exception.Message -ceq 'Exact five candidate source paths required'};if(-not $rejected){throw 'Missing C# r5 source identity accepted'}
+    }
+    $original=$files;$stored=StoreCsharpSourceCopies $copyRoot $files 'csharp-r5';$match=AssertLosslessCsharpSources $copyRoot 'csharp-r5'
+    if($match.original_copy_count -ne 5 -or $match.unique_objects -ne 1 -or $match.unique_decoded_source_bytes -ne 4 -or $match.original_identity_bytes -ne 20){throw 'C# r5 five-copy lossless identity failed'}
+    $rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot 'csharp-r4'}catch{$rejected=$true};if(-not $rejected){throw 'C# r5 record accepted as r4'}
+    $manifest=@(foreach($file in $stored){@{path=[IO.Path]::GetRelativePath($copyRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    $null=AssertLosslessCsharpManifest $manifest $match 201326592 'csharp-r5'
+    $rejected=$false;try{$null=AssertLosslessCsharpManifest $manifest $match 201326592 'csharp-r4'}catch{$rejected=$true};if(-not $rejected){throw 'C# r5 manifest accepted as r4'}
+    $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $original 'csharp-r4'}catch{$rejected=$_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'};if(-not $rejected){throw 'C# r5 source enumeration accepted as r4'}
+    foreach($file in $original){if((CollectionHash $file.FullName) -cne $digest){throw 'C# r5 original source changed'}}
+    @{result='PASS';original_copies=5;unique_objects=1;missing_and_cross_stage_rejected=$true;originals_preserved=$true;upstream_native=$false}|ConvertTo-Json -Compress
+} $root
 $bindingRoot=Join-Path $root 'owned-followup-binding'
 foreach($directory in @('records','raw','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $bindingRoot $directory))}
 function OwnedBindingRecord([string]$relative,$data){[IO.File]::WriteAllText((Join-Path $bindingRoot $relative),($data|ConvertTo-Json -Depth 40),[Text.UTF8Encoding]::new($false))}
-foreach($stage in @('csharp-r4','pg-legacy-g6-r1','mssql-patch-r1')){
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1')){
+    $stageSubject=if($stage -ceq 'csharp-r5'){$csharpR5Subject}else{$followupSubject}
     $limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
-    $ledger=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;source_inputs_sha256='f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4';planned_stage_rows=$limits.X;planned_producer_edits=$limits.producer_edit;rows=$rows;owned_fixture_only=$true}
-    $proof=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0};owned_counts=@{generation=0;build=0;execution=0};capture_count=0;command_count=0;cleanup_errors=@();outcomes=@();verdict='FAILED';failure_type='OWNED_NOT_RUN_BOUNDARY_CONTROL';owned_fixture_only=$true}
-    $acq=@{remedy_stage=$stage;remedy_approval_subject=$followupSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;download_bytes=0;http_requests=0;state='COMPLETED';owned_fixture_only=$true}
+    $ledger=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;source_inputs_sha256='f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4';planned_stage_rows=$limits.X;planned_producer_edits=$limits.producer_edit;rows=$rows;owned_fixture_only=$true}
+    $proof=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0};owned_counts=@{generation=0;build=0;execution=0};capture_count=0;command_count=0;cleanup_errors=@();outcomes=@();verdict='FAILED';failure_type='OWNED_NOT_RUN_BOUNDARY_CONTROL';owned_fixture_only=$true}
+    $acq=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;download_bytes=0;http_requests=0;state='COMPLETED';owned_fixture_only=$true}
     $budget=@{limit_bytes=$limits.source_image_counter_bytes;source_http_bytes=0;received_network_upper_bound_bytes=0;final_snapshot=@{limit_bytes=$limits.source_image_counter_bytes;state='OBSERVED';start_counter_bytes=1;end_counter_bytes=1;received_counter_bytes=0};owned_fixture_only=$true}
     OwnedBindingRecord 'records/case-ledger.json' $ledger;OwnedBindingRecord 'acquisition/records/acquisition.json' $acq;OwnedBindingRecord 'records/download-budget.json' $budget
-    $match=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
+    $match=AssertFollowupEvidenceBinding $bindingRoot $stage $stageSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
     if($match.result -cne 'MATCH' -or $match.observed_captured_native.execution -ne 0 -or $match.planned_producer_edits -ne $limits.producer_edit){throw 'Failed/NOT_RUN boundary control promoted execution'}
     foreach($failure in @('subject','counter','rows','expectation','edit','attempts','commands','cleanup','acquisition','download','snapshot','unknown','over-cap','regressed','source-bytes','completion','executed-row')){
         $pp=$proof|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$ll=$ledger|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$aa=$acq.Clone();$bb=$budget|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
         switch($failure){'subject'{$pp.remedy_approval_subject='0'*64};'counter'{$pp.acquisition_limit_bytes++};'rows'{$ll.rows=@($ll.rows[1..($ll.rows.Count-1)])};'expectation'{$ll.rows[0].case.expected.facts='changed'};'edit'{$ll.planned_producer_edits++};'attempts'{$pp.counts.generation=$limits.G+1};'commands'{$pp.command_count=1};'cleanup'{$pp.cleanup_errors=@(@{owned='unverified'})};'acquisition'{$aa.acquisition_limit_bytes++};'download'{$bb.limit_bytes++};'snapshot'{$bb.final_snapshot.limit_bytes++};'unknown'{$bb.final_snapshot.state='NOT_VERIFIED'};'over-cap'{$bb.final_snapshot.end_counter_bytes=$limits.source_image_counter_bytes+2;$bb.final_snapshot.received_counter_bytes=$limits.source_image_counter_bytes+1;$bb.received_network_upper_bound_bytes=$limits.source_image_counter_bytes+1};'regressed'{$bb.final_snapshot.end_counter_bytes=0;$bb.final_snapshot.received_counter_bytes=-1};'source-bytes'{$aa.download_bytes=1};'completion'{$pp.verdict='BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'};'executed-row'{$ll.rows[0].state='EXITED'}}
         OwnedBindingRecord 'records/case-ledger.json' $ll;OwnedBindingRecord 'acquisition/records/acquisition.json' $aa;OwnedBindingRecord 'records/download-budget.json' $bb
-        $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Collector binding negative accepted: '+$failure)}
+        $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $stageSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Collector binding negative accepted: '+$failure)}
     }
 }
 $stage='pg-legacy-g6-r1';$limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases

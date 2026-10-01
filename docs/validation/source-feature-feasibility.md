@@ -1,3 +1,26 @@
+# PREPARE-06 회수된 R2 결과와 승인된 C# r5
+
+[C# r4 run36874388926/1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36874388926)은
+actual main `38406304006ab4ca6c2e4849974115a80c8bcd7e`에서 G1/B1/X27/edit5를 수행했다.
+등록 positive26와 negative1의 syntax 기대는 충족했지만, `P05-REMEDY-CS-VAR-TYPE` / `csharp-B01`의
+반환형 `var` byte[23,26)와 `new var()`의 type byte[44,47)가 `identifier` 대신 `implicit_type`으로 관측되었다.
+구조는 26 PASS/1 FAIL이며 recovery/edit5 일치가 이 구조 실패를 해결하지 않는다.
+원 입력·r4 tree·후보·scanner와 실패를 보존한다.
+
+[PG G6 run36882649292/1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292)은
+같은 main의 별도 G1/B1/X12/edit1이다. 실제 LFS 97,664,793 bytes /
+`a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`를 대조했다.
+legacy patch의 최적화 generation은 163.003초/exit0였으며 noopt 실행으로 재분류하지 않는다.
+등록 positive10·negative2·구조12·edit1의 기대를 충족하고 복구 incremental/fresh가 일치했다.
+오류가 넓게 남는 damage tree와 byte-window 안의 국소 오류를 각각 기록한다. 이 결과는 등록된 입력의 bounded 근거다.
+유효한 옛 baseline4는 identity를 대조해 재사용했으며 새 실행으로 표시하지 않는다.
+옛 noopt/4 GiB 실패와 UNKNOWN은 유지한다.
+
+실제 `두 exact 효과 승인`은 [r5 실행 계약](p05-source-closure.md)의 별도 두 줄 patch G1/B1/X27/edit5 및
+로컬 보존6→8 GiB에 한정한다. 이 계약 통합 시점 r5와 MSSQL 네 파일/24 ESM G1/B1/X41/edit1은
+**NOT_RUN**이다. TS/TSX·Swift의 유효한 등록 결과는 기존 identity로 재사용한다.
+여섯 route의 후보 시험은 최종 source 채택을 대신하지 않는다. 업무 corpus/.svc 제품과 S08 전체78셀도 **NOT_RUN**이다.
+
 # PREPARE-06 후속 R2의 좁은 승인
 
 ## 첫 C# R2 실행의 회수 실패

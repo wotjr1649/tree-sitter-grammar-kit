@@ -8,6 +8,7 @@ function ReadRemedySubjects {
         'remedy-r2.json'='389803c2d8f9da35a5ff913b2748c59e7a0504322bd09c1ee2f004aa283ae6cc'
         'remedy-exact-r1.json'='6e195dffed56ae6385c0eb2bf1da6d2498cec11916a1f6d7a36fd8f2ac7c4b42'
         'remedy-followup-r2.json'='6372d231f57cc463c1a3089a2de9716a604b8759a98885c191326c827423ecaf'
+        'remedy-csharp-r5.json'='6b4b43351a247e2bd4b7e366e38967eeaa74e487e70811cdd17ea3e66c4157b8'
     }
     $result=@{}
     foreach($name in $pins.Keys){
@@ -31,10 +32,15 @@ function ReadRemedySubjects {
     AssertRemedyObject $original.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($original)).ToLowerInvariant()) @{bytes=235604;sha256='d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4'}
     $followup=$result['followup-r2']
     if($followup.schema -cne 'tsgk.prepare06.followup-exact-effects/r2' -or $followup.cases.Count -ne 80 -or $followup.new_cases.Count -ne 12 -or $followup.patches.Count -ne 2 -or $followup.final_provider_adoption){throw 'Exact followup scope changed'}
+    $projection=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'remedy-csharp-r5.json'))
+    $original=[Text.Encoding]::UTF8.GetBytes($projection.Replace("`n","`r`n"))
+    AssertRemedyObject $original.Length ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($original)).ToLowerInvariant()) @{bytes=50057;sha256='5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7'}
+    $r5=$result['csharp-r5']
+    if($r5.schema -cne 'tsgk.prepare06.csharp-r5-local-storage-proposal/r2' -or $r5.stage -cne 'csharp-r5' -or $r5.rows.Count -ne 27 -or $r5.patch.replacements.Count -ne 2 -or $r5.final_provider_adoption -or -not (EqualRemedyData $r5.unchanged_tool_runtime_image.tools $followup.tools)){throw 'Exact C# r5 scope/tool tuple changed'}
     return $result
 }
 function FollowupStageKey([string]$stage){
-    switch -CaseSensitive ($stage){'csharp-r4'{'csharp_r4'};'pg-legacy-g6-r1'{'pg_legacy_g6'};'mssql-patch-r1'{'mssql_r1'};default{return $null}}
+    switch -CaseSensitive ($stage){'csharp-r4'{'csharp_r4'};'csharp-r5'{'csharp_r5'};'pg-legacy-g6-r1'{'pg_legacy_g6'};'mssql-patch-r1'{'mssql_r1'};default{return $null}}
 }
 function AssertFollowupCase($case){
     $bytes=[Text.Encoding]::UTF8.GetBytes($case.input_utf8)
@@ -43,6 +49,13 @@ function AssertFollowupCase($case){
     if($case.expected.error_window){$window=$case.expected.error_window;if($null -eq $window.start -or $null -eq $window.end -or $window.start -lt 0 -or $window.start -ge $window.end -or $window.end -gt $bytes.Length){throw 'Followup error window outside source'}}
 }
 function ExactRemedyLimits([string]$stage){
+    if($stage -ceq 'csharp-r5'){
+        $subject=(ReadRemedySubjects)['csharp-r5'];$limits=$subject.operations.Clone()
+        $limits.source_image_counter_bytes=$subject.limits.source_image_receive_bytes
+        $limits.local_packed_max_bytes=$subject.limits.inner_bytes
+        $limits.local_expanded_max_bytes=$subject.limits.expanded_CSharp_bytes
+        return $limits
+    }
     $followupKey=FollowupStageKey $stage
     if($followupKey){
         $subject=(ReadRemedySubjects)['followup-r2'];$limits=$subject.stage_operations[$followupKey].Clone()
@@ -169,16 +182,18 @@ function NewRemedyRows([string]$stage,$original,$additional){
         $expected=39
     }elseif(FollowupStageKey $stage){
         $subjects=ReadRemedySubjects;$followup=$subjects['followup-r2']
-        $producer=switch -CaseSensitive ($stage){'csharp-r4'{'csharp-candidate-r4'};'pg-legacy-g6-r1'{'postgresql-legacy-candidate-r1-g6'};'mssql-patch-r1'{'mssql-candidate-r1'}}
-        foreach($registered in $followup.cases|Where-Object producer -CEQ $producer){
+        $producer=switch -CaseSensitive ($stage){'csharp-r4'{'csharp-candidate-r4'};'csharp-r5'{'csharp-candidate-r5'};'pg-legacy-g6-r1'{'postgresql-legacy-candidate-r1-g6'};'mssql-patch-r1'{'mssql-candidate-r1'}}
+        $registeredRows=if($stage -ceq 'csharp-r5'){$subjects['csharp-r5'].rows}else{@($followup.cases|Where-Object producer -CEQ $producer)}
+        foreach($registered in $registeredRows){
             $matches=@(@($original)+@($additional)+@($subjects['exact-r1'].new_pg_cases)+@($followup.new_cases)|Where-Object id -CEQ $registered.id)
             if($matches.Count -ne 1){throw 'Followup case mapping mismatch'}
             $case=$matches[0]|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
-            foreach($key in @('id','route','input_utf8','input_bytes','input_sha256','feature_ids','expected','edit')){if(-not (EqualRemedyData $case.$key $registered.$key)){throw 'Followup input/expectation/edit changed'}}
+            $keys=@('id','route','input_bytes','input_sha256','feature_ids','expected','edit');if($stage -cne 'csharp-r5'){$keys+='input_utf8'}
+            foreach($key in $keys){if(-not (EqualRemedyData $case.$key $registered.$key)){throw 'Followup input/expectation/edit changed'}}
             AssertFollowupCase $case
             $rows.Add(@{id=$case.id;route=$case.route;producer=$producer;case=$case;state='NOT_RUN';dependency='GENERATION_BUILD_AND_SAFETY_PREREQUISITES';command_label=('case-'+$producer+'-'+$case.id.ToLowerInvariant());raw_stdout=$null;exit_code=$null})
         }
-        $limits=$followup.stage_operations[(FollowupStageKey $stage)];$expected=$limits.X
+        $limits=ExactRemedyLimits $stage;$expected=$limits.X
         if(@($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit){throw 'Followup edit budget changed'}
     }elseif($stage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
         $exact=(ReadRemedySubjects)['exact-r1']
@@ -232,7 +247,11 @@ function PrepareRemedyInputs($subjects){
     if($RemedyStage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
         Record 'exact-remedy-authority-binding' @{human_subject=$RemedyApprovalSubject;approved_machine_sha256='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824';projection=(FileIdentity (Join-Path $PSScriptRoot 'remedy-exact-r1.json'));stage=$RemedyStage;limits=(ExactRemedyLimits $RemedyStage);candidate_adopted=$false;old_failed_evidence_preserved=$true}
     }
-    if(FollowupStageKey $RemedyStage){Record 'followup-remedy-authority-binding' @{human_subject=$RemedyApprovalSubject;approved_machine_sha256='d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4';projection=(FileIdentity (Join-Path $PSScriptRoot 'remedy-followup-r2.json'));stage=$RemedyStage;limits=(ExactRemedyLimits $RemedyStage);candidate_adopted=$false;original_expectations_and_failures_preserved=$true}}
+    if(FollowupStageKey $RemedyStage){
+        $machine=if($RemedyStage -ceq 'csharp-r5'){'5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7'}else{'d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4'}
+        $projection=if($RemedyStage -ceq 'csharp-r5'){'remedy-csharp-r5.json'}else{'remedy-followup-r2.json'}
+        Record 'followup-remedy-authority-binding' @{human_subject=$RemedyApprovalSubject;approved_machine_sha256=$machine;projection=(FileIdentity (Join-Path $PSScriptRoot $projection));stage=$RemedyStage;limits=(ExactRemedyLimits $RemedyStage);candidate_adopted=$false;original_expectations_and_failures_preserved=$true}
+    }
     if($RemedyStage -ceq 'mssql-patch-r1'){
         $patch=@($subjects['followup-r2'].patches|Where-Object id -CEQ 'P05-MSSQL-REMEDY-r1')[0]
         CopyExactRemedyCandidate (Join-Path $root 'candidate-evaluation/mssql-8620fbc') $patch 'd6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4'
@@ -244,9 +263,9 @@ function PrepareRemedyInputs($subjects){
         CopyExactRemedyCandidate $sourceRoot $patch
         return
     }
-    if($RemedyStage -cnotin @('patch-r1','patch-r2','csharp-r3','csharp-r4')){return}
+    if($RemedyStage -cnotin @('patch-r1','patch-r2','csharp-r3','csharp-r4','csharp-r5')){return}
     foreach($patch in $subjects.patches.patches){
-        if($RemedyStage -cin @('csharp-r3','csharp-r4') -and $patch.repository -cne 'tree-sitter/tree-sitter-c-sharp'){continue}
+        if($RemedyStage -cin @('csharp-r3','csharp-r4','csharp-r5') -and $patch.repository -cne 'tree-sitter/tree-sitter-c-sharp'){continue}
         if($RemedyStage -ceq 'patch-r2' -and $patch.repository -ceq 'alex-pinkus/tree-sitter-swift'){continue}
         $key=$patch.repository.Replace('/','--')+'--'+$patch.base_commit
         $sourceRoot=Join-Path $root ('acquisition/sources/'+$key)
@@ -269,7 +288,7 @@ function PrepareRemedyInputs($subjects){
         }
         if(@($records|Where-Object patched).Count -ne $patch.files.Count){throw 'Missing literal patch target'}
         Record ('candidate-'+$patch.id.ToLowerInvariant()) @{proposal_id=$patch.id;original_repository=$patch.repository;original_commit=$patch.base_commit;files=$records;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
-        if($RemedyStage -cin @('patch-r2','csharp-r3','csharp-r4')){
+        if($RemedyStage -cin @('patch-r2','csharp-r3','csharp-r4','csharp-r5')){
             $next=@($subjects.r2.patches|Where-Object repository -CEQ $patch.repository)
             if($next.Count -ne 1 -or $next[0].base_commit -cne $patch.base_commit){throw 'Exact r2 predecessor mismatch'}
             $next=$next[0];$nextRoot=Join-Path $root ('candidates/'+$next.id)
@@ -288,20 +307,25 @@ function PrepareRemedyInputs($subjects){
             }
             if(@($nextRecords|Where-Object patched).Count -ne 1){throw 'Exact r2 patch target missing'}
             Record ('candidate-'+$next.id.ToLowerInvariant()) @{proposal_id=$next.id;predecessor=$patch.id;machine_subject='a216d31a0242ac161291e3f00cacf721d602dcdf7f76d8e86ef5a8bf161f5ba2';files=$nextRecords;source_repository_mutated=$false;adopted=$false;native_support='NOT_RUN'}
-            if($RemedyStage -cin @('csharp-r3','csharp-r4')){
+            if($RemedyStage -cin @('csharp-r3','csharp-r4','csharp-r5')){
                 $last=@($subjects['exact-r1'].patches|Where-Object id -CEQ 'P05-CSHARP-REMEDY-r3')[0]
                 CopyExactRemedyCandidate $nextRoot $last
                 $scanner=FileIdentity (Join-Path $root ('candidates/'+$last.id+'/'+$last.scanner.target))
                 AssertRemedyObject $scanner.bytes $scanner.sha256 $last.scanner
-                if($RemedyStage -ceq 'csharp-r4'){
+                if($RemedyStage -cin @('csharp-r4','csharp-r5')){
                     $followup=@($subjects['followup-r2'].patches|Where-Object id -CEQ 'P05-CSHARP-REMEDY-r4')[0]
                     CopyExactRemedyCandidate (Join-Path $root ('candidates/'+$last.id)) $followup 'd6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4'
+                    if($RemedyStage -ceq 'csharp-r5'){CopyExactRemedyCandidate (Join-Path $root ('candidates/'+$followup.id)) (CsharpR5Patch $subjects['csharp-r5']) '5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7'}
                 }
             }
         }
     }
 }
-function CopyExactRemedyCandidate([string]$sourceRoot,$patch,[ValidateSet('80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824','d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4')][string]$machineSubject='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824'){
+function CsharpR5Patch($subject){
+    $patch=$subject.patch;$scanner=$patch.scanner.Clone();$scanner.target='src/scanner.c'
+    return @{id=$patch.id;scanner=$scanner;files=@(@{target=$patch.file;base_file=$patch.base_file;proposed_result_bytes=$patch.proposed_result.bytes;proposed_result_sha256=$patch.proposed_result.sha256;operations=@($patch.replacements|ForEach-Object {@{before=$_.old;after=$_.new;occurrences=1}})})}
+}
+function CopyExactRemedyCandidate([string]$sourceRoot,$patch,[ValidateSet('80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824','d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4','5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7')][string]$machineSubject='80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824'){
     $candidateRoot=Join-Path $root ('candidates/'+$patch.id)
     if(Test-Path -LiteralPath $candidateRoot){throw 'Exact candidate already exists'}
     $pins=@(if($patch.files){$patch.files}else{$pin=$patch.change.Clone();$pin.target=$patch.file;$pin})
@@ -513,6 +537,7 @@ function InvokeExactRemedyProducers($subjects){
         $json=$false;$memory=$false;$sql=$false
         if($producer -ceq 'csharp-candidate-r3'){$sourceRoot='candidates/P05-CSHARP-REMEDY-r3';$entry=$sourceRoot+'/grammar.js';$parser=$null}
         elseif($producer -ceq 'csharp-candidate-r4'){$sourceRoot='candidates/P05-CSHARP-REMEDY-r4';$entry=$sourceRoot+'/grammar.js';$parser=$null}
+        elseif($producer -ceq 'csharp-candidate-r5'){$sourceRoot='candidates/P05-CSHARP-REMEDY-r5';$entry=$sourceRoot+'/grammar.js';$parser=$null}
         elseif($producer -ceq 'postgresql-legacy-candidate-r1'){$sourceRoot='candidates/P05-PG-LEGACY-REMEDY-r1/postgres';$entry=$sourceRoot+'/grammar.js';$parser=$null;$memory=$true}
         elseif($producer -ceq 'postgresql-legacy-candidate-r1-g6'){$sourceRoot='candidates/P05-PG-LEGACY-REMEDY-r1/postgres';$entry=$sourceRoot+'/grammar.js';$parser=$null;$memory=$true}
         elseif($producer -ceq 'mssql-candidate-r1'){$sourceRoot='candidates/P05-MSSQL-REMEDY-r1';$entry=$sourceRoot+'/grammar.js';$parser=$null;$sql=$true}
