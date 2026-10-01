@@ -5,8 +5,19 @@ $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
 function CheckCollectionTime {if($script:collectionClock.Elapsed.TotalSeconds -gt 120){throw 'Total evidence collection time limit'}}
 function CollectionHash([string]$path){
     CheckCollectionTime
-    $input=[IO.File]::OpenRead($path);$hash=[Security.Cryptography.IncrementalHash]::CreateHash([Security.Cryptography.HashAlgorithmName]::SHA256)
-    try{$buffer=[byte[]]::new(65536);while(($n=$input.Read($buffer,0,$buffer.Length)) -gt 0){CheckCollectionTime;$hash.AppendData($buffer,0,$n)};CheckCollectionTime;return [Convert]::ToHexString($hash.GetHashAndReset()).ToLowerInvariant()}finally{$hash.Dispose();$input.Dispose()}
+    $input=[IO.File]::OpenRead($path);$cancel=[Threading.CancellationTokenSource]::new();$operation=$null
+    try{
+        $operation=[Security.Cryptography.SHA256]::HashDataAsync($input,$cancel.Token).AsTask()
+        while(-not $operation.IsCompleted){CheckCollectionTime;[void]$operation.Wait(20)}
+        CheckCollectionTime;return [Convert]::ToHexString($operation.GetAwaiter().GetResult()).ToLowerInvariant()
+    }finally{
+        $cancel.Cancel();$input.Dispose()
+        if($operation -and -not $operation.IsCompleted){
+            try{[void]$operation.Wait(2000)}catch{if(-not $operation.IsCompleted){throw}}
+            if(-not $operation.IsCompleted){throw 'Collection hashing task termination not verified'}
+        }
+        $cancel.Dispose()
+    }
 }
 function ReadCollectedRecord([string]$task,[string]$relative){
     CheckCollectionTime
@@ -139,6 +150,94 @@ function GeneratedArtifactProvenance([string]$task,$outcome,[long]$bytes,[string
     }
     return @{references=@($refs.Values|Sort-Object path);build_inputs_state=$buildState;capture_original_retained=$true}
 }
+function StoreCsharpSourceCopies([string]$task,$files){
+    $ids=@('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')
+    $expected=[Collections.Generic.HashSet[string]]::new([string[]]@($ids|ForEach-Object {'candidates/'+$_+'/src/parser.c'}),[StringComparer]::Ordinal)
+    $actual=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach($file in $files){
+        $relative=[IO.Path]::GetRelativePath($task,$file.FullName).Replace('\','/')
+        if($relative -match '^candidates/[^/]+/src/parser\.c$' -and (-not $expected.Contains($relative) -or -not $actual.Add($relative))){throw 'Unexpected or duplicate candidate source path'}
+    }
+    if(-not $actual.SetEquals($expected)){throw 'Exact four candidate source paths required'}
+    $objectRoot=Join-Path $task 'source-objects'
+    if(Test-Path -LiteralPath $objectRoot){throw 'Fresh source object destination required'}
+    [void][IO.Directory]::CreateDirectory($objectRoot)
+    $remaining=@();$objects=@{};$copies=@()
+    foreach($file in $files){
+        CheckCollectionTime
+        $relative=[IO.Path]::GetRelativePath($task,$file.FullName).Replace('\','/')
+        $matches=@($ids|Where-Object {$relative -ceq ('candidates/'+$_+'/src/parser.c')})
+        if(-not $matches.Count){$remaining+=$file;continue}
+        if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint -or $file.Length -le 0 -or $file.Length -gt 67108864){throw 'Candidate source object is not bounded regular bytes'}
+        $parent=$file.Directory;while($parent){if($parent.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Candidate source ancestor link rejected'};$parent=$parent.Parent}
+        $proofPath='records/candidate-'+$matches[0].ToLowerInvariant()+'.json'
+        $proof=ReadCollectedRecord $task $proofPath
+        $identity=@($proof.files|Where-Object {$_.candidate.path -ceq $relative})
+        $digest=CollectionHash $file.FullName
+        if($proof.proposal_id -cne $matches[0] -or $identity.Count -ne 1 -or $identity[0].patched -isnot [bool] -or $identity[0].patched -or $identity[0].candidate.bytes -ne $file.Length -or $identity[0].candidate.sha256 -cne $digest){throw 'Candidate source object differs from original copy proof'}
+        $objectPath='source-objects/'+$digest+'.c.gz'
+        if(-not $objects.ContainsKey($digest)){
+            $target=Join-Path $task $objectPath;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))
+            $sink=[IO.File]::Open($target,[IO.FileMode]::CreateNew);$gzip=[IO.Compression.GZipStream]::new($sink,[IO.Compression.CompressionLevel]::Optimal);$input=[IO.File]::OpenRead($file.FullName)
+            try{$buffer=[byte[]]::new(65536);$count=0L;while(($n=$input.Read($buffer,0,$buffer.Length)) -gt 0){CheckCollectionTime;$count+=$n;if($count -gt 67108864 -or $sink.Position+$n+65536 -gt 67108864){throw 'Candidate source compression limit'};$gzip.Write($buffer,0,$n)}}finally{$input.Dispose();$gzip.Dispose();$sink.Dispose()}
+            if($count -ne $file.Length){throw 'Candidate source compression length changed'}
+            $objects[$digest]=@{file=(Get-Item -LiteralPath $target);sha256=(CollectionHash $target)}
+        }
+        if((CollectionHash $file.FullName) -cne $digest){throw 'Candidate source changed during compression'}
+        $copies+=@{original_path=$relative;original_bytes=$file.Length;original_sha256=$digest;lossless_gzip_path=$objectPath;gzip_bytes=$objects[$digest].file.Length;gzip_sha256=$objects[$digest].sha256;copy_proof=$proofPath;original_retained_on_runner=$true;identity_is_uncompressed_bytes=$true}
+    }
+    $record=Join-Path $task 'records/lossless-csharp-sources.json'
+    $stream=[IO.File]::Open($record,[IO.FileMode]::CreateNew)
+    try{$stream.Write([Text.Encoding]::UTF8.GetBytes((@{schema='tsgk.p05.lossless-csharp-source-copies/r2';copies=$copies;unique_objects=$objects.Count;original_files_deleted=$false}|ConvertTo-Json -Depth 8)))}finally{$stream.Dispose()}
+    return ,@($remaining+@($objects.Values|ForEach-Object {$_.file})+(Get-Item -LiteralPath $record))
+}
+function AssertLosslessCsharpSources([string]$task){
+    $record=ReadCollectedRecord $task 'records/lossless-csharp-sources.json'
+    $allowed=@('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')
+    $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal);$objects=@{};$total=0L
+    if($record.schema -cne 'tsgk.p05.lossless-csharp-source-copies/r2' -or $record.original_files_deleted -isnot [bool] -or $record.original_files_deleted -or $record.copies -isnot [array] -or $record.copies.Count -ne 4){throw 'Invalid lossless source record'}
+    foreach($copy in $record.copies){
+        CheckCollectionTime
+        $id=@($allowed|Where-Object {$copy.original_path -ceq ('candidates/'+$_+'/src/parser.c')})
+        if($id.Count -ne 1 -or -not $seen.Add($copy.original_path) -or $copy.original_sha256 -cnotmatch '^[0-9a-f]{64}$' -or ($copy.original_bytes -isnot [int] -and $copy.original_bytes -isnot [long]) -or $copy.original_bytes -le 0 -or $copy.original_bytes -gt 67108864 -or $copy.lossless_gzip_path -cne ('source-objects/'+$copy.original_sha256+'.c.gz') -or $copy.copy_proof -cne ('records/candidate-'+$id[0].ToLowerInvariant()+'.json') -or $copy.original_retained_on_runner -isnot [bool] -or -not $copy.original_retained_on_runner -or $copy.identity_is_uncompressed_bytes -isnot [bool] -or -not $copy.identity_is_uncompressed_bytes){throw 'Lossless source path/identity/retention mismatch'}
+        if(($copy.gzip_bytes -isnot [int] -and $copy.gzip_bytes -isnot [long]) -or $copy.gzip_bytes -le 0 -or $copy.gzip_bytes -gt 67108864 -or $copy.gzip_sha256 -cnotmatch '^[0-9a-f]{64}$'){throw 'Lossless source compressed identity invalid'}
+        $proof=ReadCollectedRecord $task $copy.copy_proof;$identity=@($proof.files|Where-Object {$_.candidate.path -ceq $copy.original_path})
+        if($proof.proposal_id -cne $id[0] -or $identity.Count -ne 1 -or $identity[0].patched -isnot [bool] -or $identity[0].patched -or $identity[0].candidate.bytes -ne $copy.original_bytes -or $identity[0].candidate.sha256 -cne $copy.original_sha256){throw 'Lossless source original copy proof mismatch'}
+        if(-not $objects.ContainsKey($copy.original_sha256)){
+            $file=Get-Item -LiteralPath (Join-Path $task $copy.lossless_gzip_path) -Force
+            if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint -or $file.Length -le 0 -or $file.Length -gt 67108864){throw 'Lossless source object is not bounded regular bytes'}
+            $parent=$file.Directory;while($parent){if($parent.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Lossless source ancestor link rejected'};$parent=$parent.Parent}
+            # Hash every compressed byte, including any tail, independently of decoder buffering.
+            if($file.Length -ne $copy.gzip_bytes -or (CollectionHash $file.FullName) -cne $copy.gzip_sha256){throw 'Lossless source compressed bytes mismatch'}
+            $input=[IO.File]::OpenRead($file.FullName);$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$hash=[Security.Cryptography.IncrementalHash]::CreateHash([Security.Cryptography.HashAlgorithmName]::SHA256)
+            try{$buffer=[byte[]]::new(65536);$count=0L;while(($n=$gzip.Read($buffer,0,$buffer.Length)) -gt 0){CheckCollectionTime;$count+=$n;if($count -gt $copy.original_bytes){throw 'Lossless source expansion limit'};$hash.AppendData($buffer,0,$n)};$digest=[Convert]::ToHexString($hash.GetHashAndReset()).ToLowerInvariant()}finally{$hash.Dispose();$gzip.Dispose();$input.Dispose()}
+            if($count -ne $copy.original_bytes -or $digest -cne $copy.original_sha256){throw 'Lossless source original bytes mismatch'}
+            if((Get-Item -LiteralPath $file.FullName).Length -ne $copy.gzip_bytes -or (CollectionHash $file.FullName) -cne $copy.gzip_sha256){throw 'Lossless source compressed bytes changed during verification'}
+            $objects[$copy.original_sha256]=@{path=$copy.lossless_gzip_path;bytes=$copy.gzip_bytes;sha256=$copy.gzip_sha256;decoded_bytes=$count;decoded_sha256=$digest}
+        }
+        $object=$objects[$copy.original_sha256]
+        if($object.decoded_bytes -ne $copy.original_bytes -or $object.bytes -ne $copy.gzip_bytes -or $object.sha256 -cne $copy.gzip_sha256){throw 'Lossless source duplicate identity mismatch'};$total+=$copy.original_bytes
+    }
+    if(-not $seen.SetEquals([string[]]@($allowed|ForEach-Object {'candidates/'+$_+'/src/parser.c'})) -or ($record.unique_objects -isnot [int] -and $record.unique_objects -isnot [long]) -or $record.unique_objects -ne $objects.Count){throw 'Lossless source exact set/object count mismatch'}
+    return @{result='MATCH';original_copy_count=$seen.Count;unique_objects=$objects.Count;original_identity_bytes=$total;unique_decoded_source_bytes=($objects.Values|Measure-Object decoded_bytes -Sum).Sum;compressed_objects=@($objects.Values|Sort-Object path);compressed_stream_identity='ALL_BYTES_HASHED_BEFORE_AND_AFTER_DECODE';representation='LOSSLESS_GZIP_ORIGINAL_IDENTITY';bulk_materialization='NOT_RUN'}
+}
+function AssertLosslessCsharpManifest($manifest,$proof,[long]$expandedLimit){
+    if($proof.result -cne 'MATCH' -or $proof.original_copy_count -ne 4 -or $proof.compressed_objects.Count -ne $proof.unique_objects){throw 'Lossless source manifest proof incomplete'}
+    $members=@($manifest|Where-Object {$_.path.StartsWith('source-objects/',[StringComparison]::Ordinal)})
+    if($members.Count -ne $proof.unique_objects){throw 'Lossless source manifest object set mismatch'}
+    foreach($object in $proof.compressed_objects){
+        $member=@($members|Where-Object path -CEQ $object.path)
+        if($member.Count -ne 1 -or $member[0].bytes -ne $object.bytes -or $member[0].sha256 -cne $object.sha256){throw 'Lossless source final manifest identity mismatch'}
+    }
+    $physical=($manifest|Measure-Object bytes -Sum).Sum
+    $decoded=($proof.compressed_objects|Measure-Object decoded_bytes -Sum).Sum
+    if($decoded -ne $proof.unique_decoded_source_bytes -or $physical+$decoded+8388608 -gt $expandedLimit){throw 'Lossless source stage expanded reserve exceeded'}
+    return @{physical_manifest_bytes=$physical;unique_decoded_source_bytes=$decoded;logical_copy_identity_bytes=$proof.original_identity_bytes;metadata_reserve_bytes=8388608;charged_expanded_bytes=$physical+$decoded+8388608;expanded_limit_bytes=$expandedLimit;duplicate_materialization=$false}
+}
+function ExpandedFailure($manifest,$proof,[long]$limit,$summary){
+    $physical=($manifest|Measure-Object bytes -Sum).Sum;$decoded=[long]$proof.unique_decoded_source_bytes
+    return @{failure='EXACT_EXPANDED_RESERVE_EXCEEDED';selected_bytes=$physical;unique_decoded_source_bytes=$decoded;charged_expanded_bytes=$physical+$decoded+8388608;expanded_cap=$limit;reserve_bytes=8388608;largest_members=@($manifest|Sort-Object bytes -Descending|Select-Object -First 12 path,bytes,sha256);native_counts=$summary.counts;outcomes=@($summary.outcomes|Select-Object label,kind,scope,exit_code,termination,resource_state);cleanup_errors=$summary.cleanup_errors;support_assessment='NOT_VERIFIED'}
+}
 $files=@(foreach($directory in @('raw','records','cases','owned','acquisition/archives','acquisition/records','acquisition/sources/Crary-Systems--tree-sitter-tsql--443d2bc774f1d779af7dcabcc99160fb24da96e6')){
     $path=Join-Path $task $directory
     if(Test-Path -LiteralPath $path){Get-ChildItem -LiteralPath $path -File -Recurse|Where-Object {-not $_.Name.EndsWith('.tar')} }
@@ -149,6 +248,18 @@ if($task.Substring($prefix.Length).StartsWith('tsgk-p05-remedy-')){
     foreach($directory in @('candidates','candidate-evaluation','materialized-lfs')){
         $path=Join-Path $task $directory
         if(Test-Path -LiteralPath $path){$files+=Get-ChildItem -LiteralPath $path -File -Recurse}
+    }
+    if($RemedyStage -ceq 'csharp-r4'){
+        $sourceProof=$null
+        $candidateParsers=@($files|Where-Object {[IO.Path]::GetRelativePath($task,$_.FullName).Replace('\','/') -match '^candidates/[^/]+/src/parser\.c$'})
+        if($candidateParsers.Count){
+            $originalSourceFiles=$files
+            try{$files=StoreCsharpSourceCopies $task $files;$sourceProof=AssertLosslessCsharpSources $task}
+            catch{if($_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'){throw};$files=$originalSourceFiles;$bindingFailure=$true;$sourceProof=@{result='NOT_VERIFIED';reason=$_.Exception.Message;original_failed_files_preserved=$true}}
+        }else{if($summary.counts.generation+$summary.counts.build+$summary.counts.execution -ne 0 -or $summary.verdict -cne 'FAILED'){$bindingFailure=$true};$sourceProof=@{result='NOT_APPLICABLE_NO_CANDIDATE_BYTES';native_support='NOT_VERIFIED'}}
+        $sourceRecord=Join-Path $task 'records/lossless-csharp-sources-verified.json'
+        $stream=[IO.File]::Open($sourceRecord,[IO.FileMode]::CreateNew);try{$stream.Write([Text.Encoding]::UTF8.GetBytes(($sourceProof|ConvertTo-Json -Depth 5)))}finally{$stream.Dispose()}
+        $files+=Get-Item -LiteralPath $sourceRecord
     }
 }
 if($exactLimits){
@@ -185,7 +296,18 @@ $manifest=@(foreach($file in $files){
     if($relative -notmatch '^[a-zA-Z0-9_.\-/]+$' -or $relative.Length -gt 200){throw 'Evidence path rejected'}
     @{path=$relative;bytes=$file.Length;sha256=(CollectionHash $file.FullName);source=$file.FullName}
 })
-if($exactLimits -and ($manifest|Measure-Object bytes -Sum).Sum+8388608 -gt $exactLimits.local_expanded_max_bytes){throw 'Exact stage expanded evidence reserve exceeded; preserve source without truncation'}
+if($RemedyStage -ceq 'csharp-r4' -and $sourceProof.result -ceq 'MATCH'){
+    try{$sourceExpansion=AssertLosslessCsharpManifest $manifest $sourceProof $exactLimits.local_expanded_max_bytes}
+    catch{
+        if($_.Exception.Message -ceq 'Lossless source stage expanded reserve exceeded'){ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress}
+        else{@{failure='LOSSLESS_SOURCE_IDENTITY_FAILURE';reason=$_.Exception.Message;support_assessment='NOT_VERIFIED'}|ConvertTo-Json -Compress}
+        throw
+    }
+}
+if($exactLimits -and ($manifest|Measure-Object bytes -Sum).Sum+8388608 -gt $exactLimits.local_expanded_max_bytes){
+    ExpandedFailure $manifest $sourceProof $exactLimits.local_expanded_max_bytes $summary|ConvertTo-Json -Depth 8 -Compress
+    throw 'Exact stage expanded evidence reserve exceeded; preserve source without truncation'
+}
 $manifest|Select-Object path,bytes,sha256|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $task 'evidence-manifest.json') -Encoding utf8NoBOM
 $manifest+=@{path='evidence-manifest.json';source=(Join-Path $task 'evidence-manifest.json');bytes=(Get-Item (Join-Path $task 'evidence-manifest.json')).Length}
 $partial=Join-Path $task 'evidence.partial.zip'
@@ -215,5 +337,5 @@ $digest=CollectionHash $partial
 [IO.File]::Move($partial,$complete)
 $package=Get-Item -LiteralPath $complete
 CheckCollectionTime
-@{bytes=$package.Length;sha256=$digest;files=$manifest.Count;retention_days=7;total_collection_wall_seconds=$script:collectionClock.Elapsed.TotalSeconds;seconds_limit=120;evidence_binding=$(if($bindingFailure){'NOT_VERIFIED_FAILED_BYTES_RETAINED'}elseif($binding){$binding.result}else{'LEGACY_SCOPE'})}|ConvertTo-Json -Compress
+@{bytes=$package.Length;sha256=$digest;files=$manifest.Count;retention_days=7;total_collection_wall_seconds=$script:collectionClock.Elapsed.TotalSeconds;seconds_limit=120;source_expansion=$sourceExpansion;evidence_binding=$(if($bindingFailure){'NOT_VERIFIED_FAILED_BYTES_RETAINED'}elseif($binding){$binding.result}else{'LEGACY_SCOPE'})}|ConvertTo-Json -Compress
 if($bindingFailure){throw 'Evidence binding failed; bounded original artifact retained'}

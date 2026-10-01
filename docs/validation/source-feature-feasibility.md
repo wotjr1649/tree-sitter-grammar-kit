@@ -1,8 +1,14 @@
 # PREPARE-06 후속 R2의 좁은 승인
 
+## 첫 C# R2 실행의 회수 실패
+
+[run36856318411/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36856318411)은 PR50 actual main `efaeac7d49b9b3c8ac17d796e9d28aa0aba102f6`의 fresh `csharp-r4` dispatch다. `pinned-tsql-r1`·`trixie-r1`·승인 human subject를 명시했고 checkout 확인은 성공했다. job은158초 후 failure였으며 native step의 `Required P05 inputs failed` 뒤 collector의 `Exact stage expanded evidence reserve exceeded`로 artifact가0개였다.
+
+이 로그는 개별 generation/build/execution 실패의 원인, 실제 수행 횟수, 원 native 출력 또는 정확한 container cleanup을 복원하지 못한다. 해당 값은 **UNKNOWN/회수 불가**로 보존하며 G/B/X0이나 syntax PASS로 표시하지 않는다. 이전 실패·receipt·27입력/5edit 기대는 유지한다. collector가 네 후보의 동일32,021,728-byte parser C를 반복 보관하는 경로를 고치고 손실 없는 source-object 검사를 거친 fresh revision에서만 후속 실행한다. 기존 후보 source/grammar patch와 개별 자원·회수 한도는 변경하지 않는다.
+
 2026-10-01 human `a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2`와 machine `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4`에 실제 `R2 exact 효과·기대 정정 승인` 답변을 연결했다. C# r4 conflict 한 행 G1/B1/X27/edit5, 같은 PG legacy patch의 generation-only6 GiB G1/B1/X12/edit1, MSSQL 네 파일/24 ESM module G1/B1/X41/edit1을 별도 후보로 검증한다. 원본/r1/r2/r3·실패·옛 UNKNOWN은 보존한다. exact stage·원문·도구·한도는 [P05 source closure](p05-source-closure.md)의 후속 R2 계약에 따른다.
 
-공식 delimited identifier 규칙과 충돌한 옛20byte bracket negative의 원문/기대/판정은 유지하고, 별도 valid counterexample와 실제 미종결 negative를 채택했다. 필수 bracket/negative·temporal/graph·BARE recovery 요구와 26 route/256행은 유지한다. 후보 시험 및 새로운 기대 등록은 최종 provider 채택 근거를 대신하지 않는다. R2 native는 이 변경 시점에 **NOT_RUN**이며 기존 C#/PG/T-SQL 필수 격차는 미해결이다.
+공식 delimited identifier 규칙과 충돌한 옛20byte bracket negative의 원문/기대/판정은 유지하고, 별도 valid counterexample와 실제 미종결 negative를 채택했다. 필수 bracket/negative·temporal/graph·BARE recovery 요구와 26 route/256행은 유지한다. 후보 시험 및 새로운 기대 등록은 최종 provider 채택 근거를 대신하지 않는다. PR50 통합 시점의 R2 native는 **NOT_RUN**이었다. 이후 위 fresh run의 실제 native 횟수·결과는 회수 불가 UNKNOWN이며 기존 C#/PG/T-SQL 필수 격차는 미해결이다.
 
 # Campaign 01 source와 feature feasibility
 
