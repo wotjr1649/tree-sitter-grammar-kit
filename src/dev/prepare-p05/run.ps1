@@ -265,7 +265,7 @@ function CheckRecoveredProof([string]$path){
 }
 function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned,[switch]$MemoryEvents){
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
-    if($RemedyStage){$selectedCaps=if($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}elseif($RemedyStage -ceq 'sql-only-r2'){@{generation=1;build=1;execution=30}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
+    if($RemedyStage){$exactLimits=ExactRemedyLimits $RemedyStage;$selectedCaps=if($exactLimits){@{generation=$exactLimits.G;build=$exactLimits.B;execution=$exactLimits.X}}elseif($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}elseif($RemedyStage -ceq 'sql-only-r2'){@{generation=1;build=1;execution=30}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
     if($Owned){
         if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
     }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
@@ -396,7 +396,7 @@ try {
     }
     if($RemedyStage){PrepareRemedyInputs $remedy}
     Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$toolchain.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
-    foreach($case in @($inputs.cases)+$(if($RemedyStage){@($remedy.cases.cases)}else{@()})){
+    foreach($case in @($inputs.cases)+$(if($RemedyStage){@($remedy.cases.cases)}else{@()})+$(if($RemedyStage -ceq 'pg-legacy-r1'){@($remedy['exact-r1'].new_pg_cases)}else{@()})){
         if($case.id -notmatch '^[A-Z0-9-]+$' -or $case.input_bytes -gt 65536){throw 'Case identity/size mismatch'}
         $path=Join-Path $root ('cases/'+$case.id);[IO.File]::WriteAllText($path,$case.input_utf8,[Text.UTF8Encoding]::new($false))
         if((Get-FileHash $path).Hash.ToLowerInvariant() -cne $case.input_sha256){throw 'Case bytes changed'}
@@ -410,6 +410,7 @@ try {
     $script:imageSize=[long]$im.Size
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
+    if($RemedyStage -and (ExactRemedyLimits $RemedyStage)){CheckExactRemedyTools $remedy['exact-r1'].tools (TextOutput @{label='tool-environment'})}
     Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
     if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
     Require (Native diagnostic 'cli-generate-help' @('/inputs/acquisition/tools/tree-sitter','generate','--help') 10 1048576)
