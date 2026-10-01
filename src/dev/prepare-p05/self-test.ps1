@@ -521,11 +521,102 @@ $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
 } $ast $root
 $exportAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'collect.ps1'),[ref]$tokens,[ref]$errors)
 if($errors){throw 'Collector parse failed'}
-foreach($name in @('CheckCollectionTime','CollectionHash','ReadCollectedRecord','AssertFollowupEvidenceBinding','GeneratedArtifactProvenance')){
+foreach($name in @('CheckCollectionTime','CollectionHash','ReadCollectedRecord','AssertFollowupEvidenceBinding','GeneratedArtifactProvenance','StoreCsharpSourceCopies','AssertLosslessCsharpSources','AssertLosslessCsharpManifest','ExpandedFailure')){
     $definition=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $name},$true))
     if($definition.Count -ne 1){throw 'Collector guard helper missing'};. ([scriptblock]::Create($definition[0].Extent.Text))
 }
 $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+& {
+    param($caseRoot)
+    $copyRoot=Join-Path $caseRoot 'owned-lossless-csharp'
+    [void][IO.Directory]::CreateDirectory((Join-Path $copyRoot 'records'))
+    $data=[byte[]]::new(131072);$data[0]=0;$data[1]=13;$data[2]=10;$data[-1]=255
+    $digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($data)).ToLowerInvariant();$files=@()
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $copyRoot $relative
+        [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path));[IO.File]::WriteAllBytes($path,$data);$files+=Get-Item -LiteralPath $path
+        $proof=@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=$data.Length;sha256=$digest}})}
+        [IO.File]::WriteAllText((Join-Path $copyRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    $originalFiles=$files;$rawPath=Join-Path $copyRoot 'raw/frozen.stdout';[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($rawPath));[IO.File]::WriteAllBytes($rawPath,[byte[]]@(0,13,10,255));$rawDigest=CollectionHash $rawPath;$files+=Get-Item -LiteralPath $rawPath
+    $files=StoreCsharpSourceCopies $copyRoot $files;$match=AssertLosslessCsharpSources $copyRoot
+    if($match.original_copy_count -ne 4 -or $match.unique_objects -ne 1 -or $match.original_identity_bytes -ne 4*$data.Length -or $match.unique_decoded_source_bytes -ne $data.Length -or $files.Count -ne 3 -or @($files|Where-Object FullName -CEQ $rawPath).Count -ne 1 -or (CollectionHash $rawPath) -cne $rawDigest){throw 'Lossless source deduplication/identity/raw retention mismatch'}
+    foreach($file in $originalFiles){if((CollectionHash $file.FullName) -cne $digest){throw 'Original candidate source changed'}}
+    $recordPath=Join-Path $copyRoot 'records/lossless-csharp-sources.json';$originalRecord=[IO.File]::ReadAllText($recordPath)
+    foreach($failure in @('path','bytes','hash','gzip-path','gzip-bytes','gzip-hash','proof-path','retention','identity-mode','duplicate','object-count','deleted','null-copies')){
+        $record=$originalRecord|ConvertFrom-Json -AsHashtable
+        switch($failure){'path'{$record.copies[0].original_path='../outside'};'bytes'{$record.copies[0].original_bytes=$true};'hash'{$record.copies[0].original_sha256='0'*64};'gzip-path'{$record.copies[0].lossless_gzip_path='../outside'};'gzip-bytes'{$record.copies[0].gzip_bytes=$true};'gzip-hash'{$record.copies[0].gzip_sha256='0'*64};'proof-path'{$record.copies[0].copy_proof='../outside'};'retention'{$record.copies[0].original_retained_on_runner=$false};'identity-mode'{$record.copies[0].identity_is_uncompressed_bytes=$false};'duplicate'{$record.copies+=@($record.copies[0])};'object-count'{$record.unique_objects++};'deleted'{$record.original_files_deleted=$true};'null-copies'{$record.copies=$null}}
+        [IO.File]::WriteAllText($recordPath,($record|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Lossless source record drift accepted'}
+    }
+    for($missing=0;$missing -lt 4;$missing++){
+        $record=$originalRecord|ConvertFrom-Json -AsHashtable;$record.copies=@(for($i=0;$i -lt 4;$i++){if($i -ne $missing){$record.copies[$i]}})
+        [IO.File]::WriteAllText($recordPath,($record|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Missing original identity accepted'}
+        $subset=@(for($i=0;$i -lt 4;$i++){if($i -ne $missing){$originalFiles[$i]}})
+        $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $subset}catch{$rejected=$_.Exception.Message -ceq 'Exact four candidate source paths required'};if(-not $rejected){throw 'Missing candidate enumeration accepted'}
+    }
+    $extraPath=Join-Path $copyRoot 'candidates/UNAPPROVED/src/parser.c';[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($extraPath));[IO.File]::WriteAllBytes($extraPath,$data)
+    $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot @($originalFiles+(Get-Item -LiteralPath $extraPath))}catch{$rejected=$_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'};if(-not $rejected){throw 'Extra candidate source accepted'}
+    [IO.File]::WriteAllText($recordPath,$originalRecord,[Text.UTF8Encoding]::new($false))
+    $small=$originalRecord|ConvertFrom-Json -AsHashtable;$proofs=@{}
+    foreach($copy in $small.copies){$copy.original_bytes--;$path=Join-Path $copyRoot $copy.copy_proof;$proofs[$path]=[IO.File]::ReadAllText($path);$proof=$proofs[$path]|ConvertFrom-Json -AsHashtable;$proof.files[0].candidate.bytes--;[IO.File]::WriteAllText($path,($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))}
+    [IO.File]::WriteAllText($recordPath,($small|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$_.Exception.Message -ceq 'Lossless source expansion limit'};if(-not $rejected){throw 'Decoded source byte bound ignored'}
+    foreach($path in $proofs.Keys){[IO.File]::WriteAllText($path,$proofs[$path],[Text.UTF8Encoding]::new($false))};[IO.File]::WriteAllText($recordPath,$originalRecord,[Text.UTF8Encoding]::new($false))
+    $objectPath=Join-Path $copyRoot ('source-objects/'+$digest+'.c.gz');$encoded=[IO.File]::ReadAllBytes($objectPath)
+    [IO.File]::WriteAllBytes($objectPath,[byte[]]@(0,13,10));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Corrupt source object accepted'}
+    [IO.File]::WriteAllBytes($objectPath,$encoded);$rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $originalFiles}catch{$rejected=$true};if(-not $rejected -or (CollectionHash $objectPath) -cne [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($encoded)).ToLowerInvariant()){throw 'Source object collision overwrite'}
+    foreach($tail in @([byte[]]@(0,255),$encoded)){
+        [IO.File]::WriteAllBytes($objectPath,[byte[]]@($encoded+$tail));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$_.Exception.Message -ceq 'Lossless source compressed bytes mismatch'};if(-not $rejected){throw 'Changed trailing bytes/member identity accepted'}
+    }
+    [IO.File]::WriteAllBytes($objectPath,$encoded)
+    $manifest=@(foreach($file in $files){@{path=[IO.Path]::GetRelativePath($copyRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    $budget=AssertLosslessCsharpManifest $manifest $match 201326592
+    if($budget.unique_decoded_source_bytes -ne $data.Length -or $budget.logical_copy_identity_bytes -ne 4*$data.Length -or $budget.duplicate_materialization){throw 'Source expanded accounting mismatch'}
+    foreach($field in @('bytes','sha256')){
+        $drift=$manifest|ConvertTo-Json -Depth 5|ConvertFrom-Json -AsHashtable;$member=@($drift|Where-Object {$_.path.StartsWith('source-objects/',[StringComparison]::Ordinal)})[0]
+        if($field -ceq 'bytes'){$member.bytes++}else{$member.sha256='0'*64};$rejected=$false;try{$null=AssertLosslessCsharpManifest $drift $match 201326592}catch{$rejected=$_.Exception.Message -ceq 'Lossless source final manifest identity mismatch'};if(-not $rejected){throw 'Final manifest source drift accepted'}
+    }
+    & {
+        param($fallbackRoot,$collectorAst,$originalFiles,$copyRoot)
+        [void][IO.Directory]::CreateDirectory((Join-Path $fallbackRoot 'records'));$files=@()
+        foreach($file in $originalFiles){$relative=[IO.Path]::GetRelativePath($copyRoot,$file.FullName);$target=Join-Path $fallbackRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target));[IO.File]::WriteAllBytes($target,[IO.File]::ReadAllBytes($file.FullName));$files+=Get-Item -LiteralPath $target}
+        foreach($file in Get-ChildItem -LiteralPath (Join-Path $copyRoot 'records') -Filter 'candidate-*.json' -File){[IO.File]::WriteAllBytes((Join-Path $fallbackRoot ('records/'+$file.Name)),[IO.File]::ReadAllBytes($file.FullName))}
+        $store=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'StoreCsharpSourceCopies'},$true))[0]
+        . ([scriptblock]::Create($store.Extent.Text.Replace('function StoreCsharpSourceCopies','function OriginalLosslessStore')))
+        function StoreCsharpSourceCopies([string]$task,$files){$stored=OriginalLosslessStore $task $files;$object=@($stored|Where-Object Extension -CEQ '.gz')[0];[IO.File]::WriteAllBytes($object.FullName,[byte[]]@(0,13,10));return ,$stored}
+        $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$files=StoreCsharpSourceCopies $task $files',[StringComparison]::Ordinal)},$true))
+        if($guard.Count -ne 1){throw 'Actual lossless fallback guard unavailable'}
+        $task=$fallbackRoot;$originalSourceFiles=$files;$bindingFailure=$false;. ([scriptblock]::Create($guard[0].Extent.Text))
+        if(-not $bindingFailure -or $sourceProof.result -cne 'NOT_VERIFIED' -or -not $sourceProof.original_failed_files_preserved -or $files.Count -ne 4){throw 'Post-Store corruption failed to restore original evidence selection'}
+        foreach($file in $files){if($file.Extension -cne '.c' -or $file.Length -ne 131072){throw 'Post-Store fallback omitted original source bytes'}}
+    } (Join-Path $caseRoot 'owned-lossless-csharp-fallback') $exportAst $originalFiles $copyRoot
+    $largeRoot=Join-Path $caseRoot 'owned-lossless-csharp-stage-overflow';[void][IO.Directory]::CreateDirectory((Join-Path $largeRoot 'records'));$largeFiles=@();$index=0
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $largeRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+        $sink=[IO.File]::Open($path,[IO.FileMode]::CreateNew)
+        try{CheckCollectionTime;$sink.SetLength(67108864);$sink.WriteByte([byte]$index);$index++}finally{$sink.Dispose()}
+        $sha=CollectionHash $path
+        $largeFiles+=Get-Item -LiteralPath $path;$proof=@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=67108864;sha256=$sha}})}
+        [IO.File]::WriteAllText((Join-Path $largeRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    $stored=StoreCsharpSourceCopies $largeRoot $largeFiles;$largeProof=AssertLosslessCsharpSources $largeRoot
+    $largeManifest=@(foreach($file in $stored){@{path=[IO.Path]::GetRelativePath($largeRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    if($largeProof.unique_objects -ne 4 -or $largeProof.unique_decoded_source_bytes -ne 268435456 -or ($largeManifest|Measure-Object bytes -Sum).Sum -ge 201326592){throw 'Stage overflow fixture does not exercise decoded total'}
+    $rejected=$false;try{$null=AssertLosslessCsharpManifest $largeManifest $largeProof 201326592}catch{$rejected=$_.Exception.Message -ceq 'Lossless source stage expanded reserve exceeded'};if(-not $rejected){throw 'Unique decoded stage overflow accepted'}
+    $overflow=ExpandedFailure $largeManifest $largeProof 201326592 @{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()}
+    if($overflow.unique_decoded_source_bytes -ne 268435456 -or $overflow.charged_expanded_bytes -le $overflow.expanded_cap -or $overflow.largest_members.Count -gt 12 -or $overflow.support_assessment -cne 'NOT_VERIFIED' -or [Text.Encoding]::UTF8.GetByteCount(($overflow|ConvertTo-Json -Depth 8 -Compress)) -gt 8388608){throw 'Decoded stage failure record lost'}
+    & {
+        param($hashDeadlineFile)
+        $clock=[pscustomobject]@{checks=0};$clock|Add-Member -MemberType ScriptProperty -Name Elapsed -Value {$this.checks=$this.checks+1;if($this.checks -gt 1){[TimeSpan]::FromSeconds(121)}else{[TimeSpan]::Zero}}
+        $script:collectionClock=$clock;$rejected=$false
+        try{$null=CollectionHash $hashDeadlineFile}catch{$rejected=$_.Exception.Message -ceq 'Total evidence collection time limit'}
+        if(-not $rejected -or $clock.checks -lt 2){throw 'Streaming hash deadline ignored'}
+        $released=[IO.File]::Open($hashDeadlineFile,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None);$released.Dispose()
+        $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+    } $largeFiles[0].FullName
+    $script:collectionClock=[pscustomobject]@{Elapsed=[TimeSpan]::FromSeconds(121)};$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Lossless source total deadline ignored'}
+    $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+    @{result='PASS';original_copies=4;unique_objects=1;original_bytes=4*$data.Length;compressed_bytes=$encoded.Length;NUL_CRLF_roundtrip='PASS';negative_controls=33;actual_stage_overflow_fixture_bytes=268435456;original_files_retained=$true;raw_unchanged=$true;post_store_corruption_fallback='PASS';upstream_native=$false}|ConvertTo-Json -Compress
+} $root
 $bindingRoot=Join-Path $root 'owned-followup-binding'
 foreach($directory in @('records','raw','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $bindingRoot $directory))}
 function OwnedBindingRecord([string]$relative,$data){[IO.File]::WriteAllText((Join-Path $bindingRoot $relative),($data|ConvertTo-Json -Depth 40),[Text.UTF8Encoding]::new($false))}

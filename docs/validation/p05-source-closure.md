@@ -7,6 +7,14 @@ machine 235,604 bytes / `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0
 승인 기록은 `20261001-prepare-06/followup-exact-authorization-accepted-r2.json`이다.
 tracked `remedy-followup-r2.json`의 LF projection은 승인된 machine의 CRLF 원문과 terminal LF를 복원해 전체 size/SHA를 대조한다.
 
+## C# 후보 원본의 손실 없는 보관
+
+`csharp-r4` collector는 r1~r4 후보에 복사된 변경 없는 `src/parser.c`를 SHA-256별 `source-objects/<sha256>.c.gz` 한 개로 보관한다. `records/lossless-csharp-sources.json`의 r2 schema는 정확한 네 원래 path·uncompressed bytes/SHA·candidate copy proof와 compressed bytes/SHA를 연결한다. runner의 원본 파일을 삭제하거나 변경하지 않으며, 원래 identity는 압축을 푼 bytes다. consumer는 copy proof·64 MiB 파일 한도를 확인하고, decoder와 별도로 압축 stream 전체 bytes를 읽어 SHA를 검증한다. 이 대조는 덧붙인 bytes/member의 identity 변경도 거부한다. decoder 자체가 임의 gzip의 single-member EOF를 증명한다는 주장은 하지 않는다. decode 전후와 최종 manifest의 compressed identity를 각각 결속한다.
+
+펼침 budget은 ZIP manifest의 물리적 bytes + 고유 source object의 decoded bytes + metadata reserve8 MiB로 계산한다. 같은 SHA의 네 원래 경로는 논리 identity로 기록하며 중복 materialize하지 않는다. C#192 MiB, outer/inner64 MiB, 총 회수120초, local6 GiB 및 collector120초 한도는 유지한다. 원 capture/raw·case·expectation·scanner·grammar·generated-C export의 identity도 유지한다. 자체 검사는 네 path 각각의 누락·추가 path·압축 identity/manifest drift·tail/member 변경·실제64 MiB×4의 고유 decoded256 MiB 거부·NUL/CRLF·collision·deadline을 포함한다. upstream 실행 전 실패로 후보 bytes가 없다면 NOT_APPLICABLE, 일부만 있으면 NOT_VERIFIED로 보존하며 지원 PASS로 승격하지 않는다.
+
+## 후속 stage 실행 범위
+
 | stage | producer | G/B/X/edit | source/image receive | native memory |
 |---|---|---|---|---|
 | `csharp-r4` | `csharp-candidate-r4` | 1/1/27/5 | 1 GiB | 4 GiB |
