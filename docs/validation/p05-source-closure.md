@@ -211,3 +211,13 @@ PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중�
 전체8개 isolation과 owned vertical control,48개 exact container의 종료/PID0/제거,813개 host command root 종료를 확인했다. 실제 source HTTP50회/26,700,503bytes, source/image receive-counter949,981,821bytes는 해당1GiB threshold 이내였다. daemon quiescence는 NOT_PROVEN이며 과거 UNKNOWN/overshoot를 소급 복원하지 않는다.
 
 [등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, negative 거부2개, 구조 실패2개, mapping 미해결2개다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
+
+## exact3 종료 후 단계별 재개 조건
+
+[실제 세 run과 기대값 충돌](source-feature-feasibility.md#승인된-exact3의-실제-관측과-기대값-충돌)은 A/G/B/X를 분리한다. C# r3는 source/scanner의 승인 hash 대조 후 G conflict로 B/X27이 NOT_RUN이다. PG는 실제 LFS baseline B/X4와 legacy candidate의 G OOM/X12 NOT_RUN을 구분한다. MSSQL은 고정36파일의 commit/blob/size와 취득한 SHA를 확인하고, 원본 C의 B/X30 및 JSON-only 재생성 G/B/X30을 각각 수행했다. MSSQL의 JS module 실행·수정·최종 provider 채택은 이 JSON-only 시험에 포함되지 않는다.
+
+각 failed job도 실제 command/input/tool/raw/한도와 cleanup의 근거다. probe exit2는 등록 syntax/edit의 결과이며 invocation/IO/runtime/bounds 실패 exit64~71이나 resource kill과 구별한다. 관측 row는 원 registered edit·command label·actual ledger state/dependency·command 원문·probe identity에 결속하고, negative 거부의 PASS를 positive syntax support로 표시하지 않는다. materialization이 없는 NOT_RUN 입력은 frozen identity로만 기록하며 실제 file read나 parse를 주장하지 않는다.
+
+공식 구문과 frozen 기대가 충돌하면 해당 expectation의 정확한 원문/primary 근거/영향을 별도 검토·채택한다. 허용 구문을 grammar에서 제거해 기대에 맞추거나 다른 유효 input으로 손상 의무를 대신하지 않는다. 기존 receipt/input/기대는 immutable로 보존하고, 새 revision에는 기존과 새 판정의 applicability를 명시한다. unresolved expectation은 P05의 evidence-integrity 잔여 조건이며 승인된 26-route scope 자체를 미채택으로 되돌리지 않는다.
+
+세 run의 회수는 download/확장/manifest/hash 총120초 안에 완료됐고 전체8개 isolation, owned 수직 경로, 생성 artifact의 lossless export 및 모든 생성 container의 종료/PID0/제거와 host root 종료를 검증했다. receive-counter threshold와 저장4 GiB는 유지하며 daemon quiescence와 역사적 미기록 network는 NOT_PROVEN/UNKNOWN이다. C#/PG의 추가 연산은 새 exact remedy·개별 한도 결정 전 NOT_RUN으로 남기고 같은 deterministic 실패를 반복하지 않는다.

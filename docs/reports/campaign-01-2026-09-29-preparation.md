@@ -30,6 +30,8 @@
 
 이 절의 PR #21/#22 초기 checkpoint 관측과 수치 예산은 역사적 기록이다. 후속 승인·실제 A/B r2·SQL30·PG baseline/noopt 결과와 현재 필수 격차는 [P05 관측표](../validation/source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)와 [source closure](../validation/p05-source-closure.md)를 따른다. 새 [NET461 업무 계약](../validation/net461-workload.md)은 기존 scope에 연결한 별도 workload/format이며 전체 corpus·제품·78셀은 NOT_RUN이다.
 
+후속 PR #43~#45의 wiring/export 보완을 통합한 main `ea262f5a8568118fbc7d3346d140c777e496573b`에서 승인 exact3 시험을 실제 수행했다. [새 관측](../validation/source-feature-feasibility.md#승인된-exact3의-실제-관측과-기대값-충돌)은 C# 생성 conflict, PG의 이번 OOM과 baseline 새4개, MSSQL의 두 producer60개·구조/negative/recovery 결과를 구분한다. T-SQL bracket negative 기대의 공식 구문 충돌도 별도 채택 전까지 남는다. 기존 A/B·exact3 효과 및 지속 예산을 다시 묻지 않으며 추가 source 변경·개별 한도·기대값 정정과 최종 채택만 결정 대상으로 관리한다. 이 결과 때문에 P05는 미완료이며 #20은 OPEN, S01/MASTER는 미착수다.
+
 공개 entry는 단일 root module의 `src/kit`이다. 첫 Inspect/Identity request/result/error·소유권·취소·한도를 설계했으며 구현과 external-consumer 실행은 S01에 속한다. E0/manifest r1은 mode provenance와 관측 전용 assessment를 명시한다. S05는 base64 bytes를 사용하는 bounded JSON transport와 실제 old-tree edit 경로를 소유하며 S06이 같은 producer를 확장한다.
 
 26개 후보의 공개 commit과 실제 grammar subdir·generated 파일·scanner/shared file 목록을 [등록부](../../src/contracts/language-sources.json)에 기록했다. metadata 존재는 full source closure 검토나 언어 지원 성공이 아니다. Swift 후보의 고정 source에는 `parser.c`가 없어 generation 준비가 필요하다. T-SQL과 PostgreSQL은 서로 다른 dialect 후보로 유지한다.
