@@ -31,6 +31,11 @@ function ExactRemedyLimits([string]$stage){
     $key=switch -CaseSensitive ($stage){'csharp-r3'{'csharp_r3'};'pg-legacy-r1'{'pg_legacy_r1'};'mssql-evaluate-r1'{'mssql_evaluate_r1'};default{return $null}}
     return (ReadRemedySubjects)['exact-r1'].stage_operations[$key]
 }
+function AssertExactAcquisitionLimit([string]$stage,[long]$limit){
+    $approved=ExactRemedyLimits $stage
+    if(-not $approved -or $limit -ne $approved.source_image_counter_bytes){throw 'Exact stage counter differs from approved proposal'}
+    return @{stage=$stage;actual_limit_bytes=$limit;proposal_limit_bytes=$approved.source_image_counter_bytes;match=$true}
+}
 function EqualRemedyData($a,$b){
     if($a -is [Collections.IDictionary]){
         if($b -isnot [Collections.IDictionary] -or $a.Count -ne $b.Count){return $false}

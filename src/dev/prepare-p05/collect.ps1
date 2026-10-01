@@ -12,6 +12,38 @@ if(Test-Path -LiteralPath $summaryPath){
     . (Join-Path $PSScriptRoot 'remedy.ps1')
     $exactLimits=ExactRemedyLimits $summary.remedy_stage
 }
+function GeneratedArtifactProvenance([string]$task,$outcome,[long]$bytes,[string]$sha256){
+    $label=$outcome.label
+    if($label -cnotmatch '^generate-[a-z0-9-]+$' -or $outcome.result_directory -cne $label){throw 'Generated artifact label mismatch'}
+    $refs=@{}
+    foreach($relative in @(('records/command-'+$label+'.json'),('records/'+$label+'-inputs.json'),('records/command-'+$label+'-copy.json'),('raw/'+$label+'.stdout'),('raw/'+$label+'.stderr'),('raw/'+$label+'-copy.stdout'),('raw/'+$label+'-copy.stderr'))){
+        $file=Get-Item -LiteralPath (Join-Path $task $relative) -Force
+        if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Generated provenance is not a regular file'}
+        $refs[$relative]=@{path=$relative;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}
+    }
+    foreach($suffix in @('','-copy')){
+        $command=Get-Content -LiteralPath (Join-Path $task ('records/command-'+$label+$suffix+'.json')) -Raw|ConvertFrom-Json
+        if($command.label -cne $label+$suffix -or $command.termination -cne 'EXITED' -or $command.exit_code -ne 0 -or -not $command.host_cleanup_verified){throw 'Generated provenance command did not complete'}
+        foreach($stream in @('stdout','stderr')){
+            $identity=$refs['raw/'+$label+$suffix+'.'+$stream]
+            if($identity.bytes -ne $command.('stored_'+$stream+'_bytes') -or $identity.sha256 -cne $command.($stream+'_sha256')){throw 'Generated command/capture bytes changed'}
+        }
+    }
+    $inputs=Get-Content -LiteralPath (Join-Path $task ('records/'+$label+'-inputs.json')) -Raw|ConvertFrom-Json
+    if(-not $inputs.before_generation -or -not $inputs.files.Count){throw 'Generated input provenance missing'}
+    $buildRelative='records/build-'+$label.Substring('generate-'.Length)+'-inputs.json'
+    $buildState='NOT_RUN_INPUT_RECORD_ABSENT'
+    if(Test-Path -LiteralPath (Join-Path $task $buildRelative)){
+        $file=Get-Item -LiteralPath (Join-Path $task $buildRelative) -Force
+        if($file.PSIsContainer -or $file.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Generated build provenance is not a regular file'}
+        $build=Get-Content -LiteralPath $file.FullName -Raw|ConvertFrom-Json
+        $parser=@($build.files|Where-Object path -CEQ ('results/'+$label+'/generated/parser.c'))
+        if(-not $build.before_build -or $parser.Count -ne 1 -or $parser[0].bytes -ne $bytes -or $parser[0].sha256 -cne $sha256){throw 'Generated C differs from build input'}
+        $refs[$buildRelative]=@{path=$buildRelative;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}
+        $buildState='OBSERVED_BEFORE_BUILD_NOT_BUILD_SUCCESS'
+    }
+    return @{references=@($refs.Values|Sort-Object path);build_inputs_state=$buildState;capture_original_retained=$true}
+}
 $files=@(foreach($directory in @('raw','records','cases','owned','acquisition/archives','acquisition/records','acquisition/sources/Crary-Systems--tree-sitter-tsql--443d2bc774f1d779af7dcabcc99160fb24da96e6')){
     $path=Join-Path $task $directory
     if(Test-Path -LiteralPath $path){Get-ChildItem -LiteralPath $path -File -Recurse|Where-Object {-not $_.Name.EndsWith('.tar')} }
@@ -33,6 +65,7 @@ if($exactLimits){
         $file=Get-Item -LiteralPath $source -Force
         if($file.Attributes -band [IO.FileAttributes]::ReparsePoint -or $file.Length -gt 536870912){throw 'Generated C export rejected'}
         $digest=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant()
+        $provenance=GeneratedArtifactProvenance $task $outcome $file.Length $digest
         $target=Join-Path $task ('generated-artifacts/'+$outcome.label+'/parser.c.gz')
         [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))
         $sink=[IO.File]::Open($target,[IO.FileMode]::CreateNew);$gzip=[IO.Compression.GZipStream]::new($sink,[IO.Compression.CompressionLevel]::Optimal);$input=[IO.File]::OpenRead($source)
@@ -41,12 +74,12 @@ if($exactLimits){
             while(($n=$input.Read($buffer,0,$buffer.Length)) -gt 0){$count+=$n;if($count -gt 536870912 -or $sink.Position+$n+65536 -gt $exactLimits.local_packed_max_bytes){throw 'Generated C export limit'};$gzip.Write($buffer,0,$n)}
         }finally{$input.Dispose();$gzip.Dispose();$sink.Dispose()}
         if($count -ne $file.Length -or (Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant() -cne $digest){throw 'Generated C changed during export'}
-        $exports+=@{producer=$outcome.label;source_path=[IO.Path]::GetRelativePath($task,$source);original_bytes=$file.Length;original_sha256=$digest;lossless_gzip_path=[IO.Path]::GetRelativePath($task,$target);capture_original_retained=$true;identity_is_uncompressed_bytes=$true}
+        $exports+=@{producer=$outcome.label;source_path=[IO.Path]::GetRelativePath($task,$source);original_bytes=$file.Length;original_sha256=$digest;lossless_gzip_path=[IO.Path]::GetRelativePath($task,$target);provenance=$provenance;capture_original_retained=$true;identity_is_uncompressed_bytes=$true}
         $files+=Get-Item -LiteralPath $target
     }
     $exportRecord=Join-Path $task 'records/generated-artifacts.json'
     $stream=[IO.File]::Open($exportRecord,[IO.FileMode]::CreateNew)
-    try{$bytes=[Text.Encoding]::UTF8.GetBytes(($exports|ConvertTo-Json -Depth 6 -AsArray));$stream.Write($bytes)}finally{$stream.Dispose()}
+    try{$bytes=[Text.Encoding]::UTF8.GetBytes(($exports|ConvertTo-Json -Depth 10 -AsArray));$stream.Write($bytes)}finally{$stream.Dispose()}
     $files+=Get-Item -LiteralPath $exportRecord
 }
 if($files.Count -gt 10000){throw 'Evidence file count limit'}

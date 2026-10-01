@@ -89,6 +89,10 @@ if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
 foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
     $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
     $limits=ExactRemedyLimits $stage
+    $binding=AssertExactAcquisitionLimit $stage $limits.source_image_counter_bytes
+    if(-not $binding.match -or $binding.actual_limit_bytes -ne $binding.proposal_limit_bytes){throw 'Exact counter binding missing'}
+    $rejected=$false;try{$null=AssertExactAcquisitionLimit $stage $(if($limits.source_image_counter_bytes -eq 1073741824L){1610612736L}else{1073741824L})}catch{$rejected=$true}
+    if(-not $rejected){throw 'Cross-stage counter accepted'}
     if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit){throw 'Exact three-effect rows/edit budget mismatch'}
     if($stage -ceq 'csharp-r3'){$rejected=$false;try{$null=NewRemedyRows $stage $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed r3 expectation accepted'}}
     if($stage -ceq 'mssql-evaluate-r1'){
@@ -431,16 +435,66 @@ $supervisorBurst=& {
 $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
     return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=5;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';both_stage_cap_boundaries='PASS';sqlpg_polling_cap='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';upstream_native=$false}
 } $ast $root
+$exportAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'collect.ps1'),[ref]$tokens,[ref]$errors)
+$exportFunction=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'GeneratedArtifactProvenance'},$true))
+if($errors -or $exportFunction.Count -ne 1){throw 'Generated provenance helper missing'}
+. ([scriptblock]::Create($exportFunction[0].Extent.Text))
+$exportRoot=Join-Path $root 'owned-export-provenance'
 if($env:RUNNER_TEMP -and -not $IsWindows){
-    $exportRoot=Join-Path $env:RUNNER_TEMP ('tsgk-p05-remedy-'+$env:GITHUB_RUN_ID+'-9001')
-    foreach($d in @('records','results/generate-owned-export/generated')){[void][IO.Directory]::CreateDirectory((Join-Path $exportRoot $d))}
-    $bytes=[byte[]]@(0,13,10,67,10);[IO.File]::WriteAllBytes((Join-Path $exportRoot 'results/generate-owned-export/generated/parser.c'),$bytes)
-    @{remedy_stage='csharp-r3';outcomes=@(@{kind='generation';scope='REGISTERED_P05';termination='EXITED';exit_code=0;label='generate-owned-export';result_directory='generate-owned-export'});owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $exportRoot 'records/summary.json') -Encoding utf8NoBOM
-    & (Join-Path $PSScriptRoot 'collect.ps1') -Root $exportRoot
-    $record=@(Get-Content -LiteralPath (Join-Path $exportRoot 'records/generated-artifacts.json') -Raw|ConvertFrom-Json)
-    if($record.Count -ne 1 -or $record[0].original_bytes -ne $bytes.Length){throw 'Owned C export receipt mismatch'}
-    $input=[IO.File]::OpenRead((Join-Path $exportRoot $record[0].lossless_gzip_path));$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$sink=[IO.MemoryStream]::new()
-    try{$gzip.CopyTo($sink);if([Convert]::ToHexString($sink.ToArray()) -cne [Convert]::ToHexString($bytes)){throw 'C export changed original NUL/CRLF'}}finally{$sink.Dispose();$gzip.Dispose();$input.Dispose()}
+    $run=if($env:GITHUB_RUN_ID){$env:GITHUB_RUN_ID}else{'0'}
+    if($run -cnotmatch '^[0-9]+$'){throw 'Owned export run identity invalid'}
+    $exportPrefix=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
+    $exportRoot=[IO.Path]::GetFullPath((Join-Path $exportPrefix ('tsgk-p05-remedy-'+$run+'-'+[DateTime]::UtcNow.Ticks)))
+    if(-not $exportRoot.StartsWith($exportPrefix,[StringComparison]::Ordinal) -or (Test-Path -LiteralPath $exportRoot)){throw 'Fresh owned export root required'}
+    $ancestor=Get-Item -LiteralPath $exportPrefix -Force
+    while($ancestor){if($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Owned export reparse ancestor'};$ancestor=$ancestor.Parent}
+}
+if(Test-Path -LiteralPath $exportRoot){throw 'Owned export fixture exists'}
+$createdExport=$false
+try {
+    [void][IO.Directory]::CreateDirectory($exportRoot);$createdExport=$true
+    foreach($d in @('records','raw','results/generate-owned-export/generated')){[void][IO.Directory]::CreateDirectory((Join-Path $exportRoot $d))}
+    $bytes=[byte[]]@(0,13,10,67,10);$digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+    [IO.File]::WriteAllBytes((Join-Path $exportRoot 'results/generate-owned-export/generated/parser.c'),$bytes)
+    $outcome=@{kind='generation';scope='REGISTERED_P05';termination='EXITED';exit_code=0;label='generate-owned-export';result_directory='generate-owned-export'}
+    foreach($suffix in @('','-copy')){
+        foreach($stream in @('stdout','stderr')){$streamBytes=[byte[]]::new(0);if($suffix -ceq '-copy' -and $stream -ceq 'stdout'){$streamBytes=$bytes};[IO.File]::WriteAllBytes((Join-Path $exportRoot ('raw/generate-owned-export'+$suffix+'.'+$stream)),$streamBytes)}
+        $command=@{label=('generate-owned-export'+$suffix);termination='EXITED';exit_code=0;host_cleanup_verified=$true;owned_fixture_only=$true}
+        foreach($stream in @('stdout','stderr')){$file=Get-Item (Join-Path $exportRoot ('raw/generate-owned-export'+$suffix+'.'+$stream));$command['stored_'+$stream+'_bytes']=$file.Length;$command[$stream+'_sha256']=(Get-FileHash $file.FullName).Hash.ToLowerInvariant()}
+        $command|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $exportRoot ('records/command-generate-owned-export'+$suffix+'.json')) -Encoding utf8NoBOM
+    }
+    $parser=@{path='results/generate-owned-export/generated/parser.c';bytes=$bytes.Length;sha256=$digest}
+    @{before_generation=$true;files=@($parser);owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $exportRoot 'records/generate-owned-export-inputs.json') -Encoding utf8NoBOM
+    $buildPath=Join-Path $exportRoot 'records/build-owned-export-inputs.json'
+    $proof=GeneratedArtifactProvenance $exportRoot $outcome $bytes.Length $digest
+    if($proof.build_inputs_state -cne 'NOT_RUN_INPUT_RECORD_ABSENT'){throw 'Unrun build was promoted'}
+    foreach($wrong in @($true,$false)){
+        $identity=$parser.Clone();if($wrong){$identity.sha256='0'*64}
+        @{before_build=$true;files=@($identity);owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $buildPath -Encoding utf8NoBOM
+        $rejected=$false;try{$proof=GeneratedArtifactProvenance $exportRoot $outcome $bytes.Length $digest}catch{$rejected=$true}
+        if($rejected -ne $wrong){throw 'Build/source provenance mismatch control failed'}
+    }
+    $rejected=$false;try{$null=GeneratedArtifactProvenance $exportRoot @{label='generate-missing';result_directory='generate-missing'} $bytes.Length $digest}catch{$rejected=$true}
+    if(-not $rejected){throw 'Missing command provenance accepted'}
+    $copyPath=Join-Path $exportRoot 'raw/generate-owned-export-copy.stdout'
+    [IO.File]::WriteAllBytes($copyPath,[byte[]]@(1,13,10,67,10))
+    $rejected=$false;try{$null=GeneratedArtifactProvenance $exportRoot $outcome $bytes.Length $digest}catch{$rejected=$true}
+    if(-not $rejected){throw 'Changed original capture accepted'}
+    [IO.File]::WriteAllBytes($copyPath,$bytes)
+    if($env:RUNNER_TEMP -and -not $IsWindows){
+        @{remedy_stage='csharp-r3';outcomes=@($outcome);owned_fixture_only=$true}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $exportRoot 'records/summary.json') -Encoding utf8NoBOM
+        & (Join-Path $PSScriptRoot 'collect.ps1') -Root $exportRoot
+        $record=@(Get-Content -LiteralPath (Join-Path $exportRoot 'records/generated-artifacts.json') -Raw|ConvertFrom-Json)
+        if($record.Count -ne 1 -or $record[0].original_bytes -ne $bytes.Length -or $record[0].provenance.references.Count -ne 8){throw 'Owned C export receipt mismatch'}
+        $input=[IO.File]::OpenRead((Join-Path $exportRoot $record[0].lossless_gzip_path));$gzip=[IO.Compression.GZipStream]::new($input,[IO.Compression.CompressionMode]::Decompress);$sink=[IO.MemoryStream]::new()
+        try{$gzip.CopyTo($sink);if([Convert]::ToHexString($sink.ToArray()) -cne [Convert]::ToHexString($bytes)){throw 'C export changed original NUL/CRLF'}}finally{$sink.Dispose();$gzip.Dispose();$input.Dispose()}
+    }
+}finally{
+    if($createdExport -and $env:RUNNER_TEMP -and -not $IsWindows){
+        if([IO.Path]::GetFullPath($exportRoot) -cne $exportRoot -or -not $exportRoot.StartsWith($exportPrefix,[StringComparison]::Ordinal) -or (Get-Item -LiteralPath $exportRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint -or @(Get-ChildItem -LiteralPath $exportRoot -Force -Recurse|Where-Object {$_.Attributes -band [IO.FileAttributes]::ReparsePoint}).Count){throw 'Owned export cleanup target rejected'}
+        [IO.Directory]::Delete($exportRoot,$true)
+        if(Test-Path -LiteralPath $exportRoot){throw 'Owned export cleanup not verified'}
+    }
 }
 $savedPath=$env:PATH
 try {

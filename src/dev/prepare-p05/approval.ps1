@@ -10,9 +10,14 @@ if($RemedyStage){
     if($RemedyStage -cnotin @('patch-r1','sql-pg-r1','patch-r2','sql-pg-r2','sql-only-r2','csharp-r3','pg-legacy-r1','mssql-evaluate-r1') -or $RemedySubject -cne $expected -or $Profile -cne 'pinned-tsql-r1' -or $ImageProfile -cne 'trixie-r1'){throw 'Separate exact remedy approval subject/profile mismatch'}
 }elseif($RemedySubject){throw 'Remedy subject without stage'}
 $acquisitionLimit=if($RemedyStage -cin @('sql-pg-r2','pg-legacy-r1')){1610612736L}else{1073741824L}
+$counterBinding=$null
+if($RemedyStage -cin @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
+    . (Join-Path $PSScriptRoot 'remedy.ps1')
+    $counterBinding=AssertExactAcquisitionLimit $RemedyStage $acquisitionLimit
+}
 if($ImageProfile -ceq 'trixie-r1'){
     if($ImageSubject -cne '5dc3d89579acd801130549ba35c989055b8e548d4ba73e51cc365760d9c4ac09'){throw 'Separate GLIBC image approval subject mismatch'}
-    return @{profile=$ImageProfile;image='node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492';compressed_bytes=440298459L;approval_subject=$ImageSubject;acquisition_limit_bytes=$acquisitionLimit}
+    return @{profile=$ImageProfile;image='node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492';compressed_bytes=440298459L;approval_subject=$ImageSubject;acquisition_limit_bytes=$acquisitionLimit;exact_counter_binding=$counterBinding}
 } elseif($ImageProfile -ceq 'bookworm-r1'){
     if($ImageSubject){throw 'Unexpected legacy image subject'}
     return @{profile=$ImageProfile;image='node@sha256:5a750d3be5e5c80275f8c9a5367c3aed99c2875656590c8d0701c7ee687f5f0a';compressed_bytes=409764189L;approval_subject='original B image';acquisition_limit_bytes=$acquisitionLimit}
