@@ -67,7 +67,7 @@ function AssertGenerationCapacity([long]$available,$parents){
     if($available -lt 8589934592 -or -not $parents.Count){throw 'PG generation host capacity unavailable'}
     foreach($parent in $parents){
         if($parent.max -ceq 'NOT_APPLICABLE_HIERARCHY_ROOT'){
-            if($parent.path -cne '/sys/fs/cgroup' -or $parent.mount_root -cne '/' -or $parent.memory_controller_available -ne $true -or $parent.max_file_present -ne $false -or $parent.current_file_present -ne $false -or $null -ne $parent.current){throw 'PG generation hierarchy root not verified'}
+            if($parent.path -isnot [string] -or $parent.path -cne '/sys/fs/cgroup' -or $parent.mount_root -isnot [string] -or $parent.mount_root -cne '/' -or $parent.memory_controller_available -isnot [bool] -or $parent.memory_controller_available -ne $true -or $parent.max_file_present -isnot [bool] -or $parent.max_file_present -ne $false -or $parent.current_file_present -isnot [bool] -or $parent.current_file_present -ne $false -or $null -ne $parent.current -or $parent.primary_source -isnot [string] -or $parent.primary_source -cne 'https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#memory-interface-files'){throw 'PG generation hierarchy root not verified'}
             continue
         }
         if($null -eq $parent.current -or $parent.current -lt 0 -or [Math]::Truncate($parent.current) -ne $parent.current -or ($parent.max -cne 'max' -and ($parent.max -cnotmatch '^[0-9]+$' -or [long]$parent.max-$parent.current -lt 8589934592))){throw 'PG generation parent capacity unavailable'}
@@ -83,7 +83,7 @@ function MemoryEventDelta([string]$before,[string]$after){
             if($line.Trim() -cnotmatch '^([a-z_]+) ([0-9]+)$' -or $values.ContainsKey($Matches[1])){throw 'Memory event counter unknown'}
             $values[$Matches[1]]=[long]$Matches[2]
         }
-        foreach($key in @('max','oom','oom_kill')){if(-not $values.ContainsKey($key)){throw 'Memory event counter missing'}}
+        foreach($key in @('max','oom','oom_kill','oom_group_kill')){if(-not $values.ContainsKey($key)){throw 'Memory event counter missing'}}
         $values
     })
     if($snapshots.Count -ne 2 -or $snapshots[0].Count -ne $snapshots[1].Count){throw 'Memory event counter set changed'}

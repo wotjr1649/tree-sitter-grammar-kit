@@ -106,17 +106,26 @@ foreach($vector in @(@{available=8589934591L;parents=@(@{max='max';current=0})},
     $rejected=$false;try{AssertGenerationCapacity $vector.available $vector.parents}catch{$rejected=$true};if(-not $rejected){throw 'Unknown or insufficient generation host capacity accepted'}
 }
 AssertMemoryEnvelope 6442450944 6442450944 6442450944 '6442450944'
-$hierarchyRoot=@{path='/sys/fs/cgroup';mount_root='/';max='NOT_APPLICABLE_HIERARCHY_ROOT';current=$null;memory_controller_available=$true;max_file_present=$false;current_file_present=$false}
+$hierarchyRoot=@{path='/sys/fs/cgroup';mount_root='/';max='NOT_APPLICABLE_HIERARCHY_ROOT';current=$null;memory_controller_available=$true;max_file_present=$false;current_file_present=$false;primary_source='https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#memory-interface-files'}
 AssertGenerationCapacity 8589934592 @($hierarchyRoot)
-foreach($key in @('path','mount_root','memory_controller_available','max_file_present','current_file_present','current')){
+foreach($key in @('path','mount_root','memory_controller_available','max_file_present','current_file_present','current','primary_source')){
     $bad=$hierarchyRoot.Clone();$bad[$key]=switch($key){'path'{'/sys/fs/cgroup/child'};'mount_root'{'/hidden'};'memory_controller_available'{$false};'current'{0};default{$true}}
     $rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Unverified hierarchy root accepted'}
 }
+$bad=$hierarchyRoot.Clone();$bad.Remove('primary_source')
+$rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Missing hierarchy root primary source accepted'}
+$bad=$hierarchyRoot.Clone();$bad.primary_source='https://www.kernel.org/invalid'
+$rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Wrong hierarchy root primary source accepted'}
 $before="low 0`nhigh 0`nmax 0`noom 0`noom_kill 0`noom_group_kill 0`n"
 $pressure=$before.Replace('max 0','max 1');$oom=$pressure.Replace('oom 0','oom 1').Replace('oom_kill 0','oom_kill 1')
 if((MemoryEventDelta $before $pressure).state -cne 'NO_OOM_OBSERVED' -or (MemoryEventDelta $before $oom).state -cne 'OOM_OBSERVED'){throw 'Pressure/OOM delta classification failed'}
 foreach($pair in @(@($oom,$before),@($before,$before.Replace('oom_kill 0', 'oom_kill UNKNOWN')),@($before,($before+"oom 0`n")),@($before,$before.Replace("oom 0`n",'')))){
     $rejected=$false;try{$null=MemoryEventDelta $pair[0] $pair[1]}catch{$rejected=$true};if(-not $rejected){throw 'Unknown/regressed/duplicate/missing memory counter accepted'}
+}
+$groupOom=$before.Replace('oom_group_kill 0','oom_group_kill 1')
+if((MemoryEventDelta $before $groupOom).state -cne 'OOM_OBSERVED'){throw 'Group-only OOM delta classification failed'}
+foreach($pair in @(@($before.Replace("oom_group_kill 0`n",''),$before.Replace("oom_group_kill 0`n",'')),@($before,$before.Replace('oom_group_kill 0','oom_group_kill UNKNOWN')),@($groupOom,$before))){
+    $rejected=$false;try{$null=MemoryEventDelta $pair[0] $pair[1]}catch{$rejected=$true};if(-not $rejected){throw 'Missing/unknown/regressed group OOM counter accepted'}
 }
 foreach($vector in @(@(6442450944L,4294967296L,6442450944L,'6442450944'),@(6442450944L,6442450944L,4294967296L,'6442450944'),@(6442450944L,6442450944L,6442450944L,'4294967296'),@(6442450944L,6442450944L,6442450944L,'max'),@(6442450944L,6442450944L,6442450944L,''))){
     $rejected=$false;try{AssertMemoryEnvelope $vector[0] $vector[1] $vector[2] $vector[3]}catch{$rejected=$true};if(-not $rejected){throw 'Inspect/cgroup memory mismatch accepted'}
@@ -273,11 +282,11 @@ foreach($vector in @(@('true false 3253',$validTop),@('false true 3253',$validTo
     $rejected=$false;try{[void](ConfirmFrozenState $vector[0] $vector[1])}catch{$rejected=$true}
     if(-not $rejected){throw 'Unsafe/nonquiescent container was accepted'}
 }
-$name=if($IsWindows){'p05-tool-check.cmd'}else{'p05-tool-check'}
+$applicationName=if($IsWindows){'p05-tool-check.cmd'}else{'p05-tool-check'}
 $directories=@((Join-Path $root 'first'),(Join-Path $root 'second'))
 foreach($directory in $directories){
     [void][IO.Directory]::CreateDirectory($directory)
-    $path=Join-Path $directory $name
+    $path=Join-Path $directory $applicationName
     [IO.File]::WriteAllText($path,"# owned discovery-only fixture`n",[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
@@ -637,10 +646,10 @@ try {
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
-    $all=@(Get-Command -Name $name -CommandType Application -All)
+    $all=@(Get-Command -Name $applicationName -CommandType Application -All)
     if($all.Count -ne 2){throw 'Duplicate application baseline missing'}
-    $selected=Application $name
-    if($selected -isnot [string] -or $selected -cne (Join-Path $directories[0] $name)){throw 'Application precedence/path selection failed'}
+    $selected=Application $applicationName
+    if($selected -isnot [string] -or $selected -cne (Join-Path $directories[0] $applicationName)){throw 'Application precedence/path selection failed'}
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}
