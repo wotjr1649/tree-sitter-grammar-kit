@@ -10,7 +10,7 @@
 - `P` valid syntax, `N` 문법 위반 negative, `R` 손상 후 recovery, `E` 실제 old-tree edit/fresh 비교, `Q` node/field/query 구조, `W` 실사용 source. N은 type error를 syntax error로 바꾸지 않는다. 표의 case 종류는 필수이며 한 case가 여러 항목을 덮을 수 있다. 임의의 동일 개수 quota는 없다.
 - 모든 REQ의 공통 assertion은 원본 byte/point 범위·자식 순서·구문 경계다. 표의 구조 목표를 더하며, 사양에 없는 Tree-sitter node 이름이나 전체 AST 동일성은 지금 확정하지 않는다. 잘못된 delimiter/토큰의 N/R에는 오류 위치·복구 후 유효한 후속 구문의 보존 목표를 붙인다.
 - 담당/기한: scope·case kind 채택은 **PREPARE/#20, S01 전**; 각 REQ의 candidate node/field mapping은 **S03/#5, S03 종료 전**; P/N/R/E의 fixture bytes·검토된 기대값은 **S05/#7, 해당 실행 전**; Q는 **S06/#8, 해당 query 전**; W와 세 OS 실행은 **S08/#10, qualification 전**. 증거 저장/재현은 S07/#9다. SEM/RUN/EXT의 분류 변경은 PREPARE scope 변경으로 재검토한다.
-- 현재 candidate mapping은 전 행 `PENDING_S03`, fixture/golden/native receipt는 `NOT_RUN`이다. 이 예정 상태는 scope 처분의 미정과 구별한다. 기대값은 공식 구문 사실 및 독립 구조 리뷰를 먼저 통과해야 한다. 대상 parser 출력 자체를 정답으로 채택하지 않는다.
+- 현재 candidate mapping은 전 행 `PENDING_S03`, fixture/golden/native receipt는 `NOT_RUN`이다. 단, 2026-10-02 채택한 6 route의 PREPARE 등록 사례 native 결과는 [6-route 채택 절](source-feature-feasibility.md#prepare-06-6-route-최종-채택-2026-10-02)에 있으며 S05 fixture/golden을 대신하지 않는다. 이 예정 상태는 scope 처분의 미정과 구별한다. 기대값은 공식 구문 사실 및 독립 구조 리뷰를 먼저 통과해야 한다. 대상 parser 출력 자체를 정답으로 채택하지 않는다.
 - 보조 parser는 전 행 기본 `NOT_REQUIRED`: 공식 사양+검토된 구조로 시작한다. type/context 경계 등 D7의 실제 불확실성을 해결할 때만 별도 case·효과 승인 후 등록한다. SDK/server 설치를 암묵적으로 요구하지 않는다.
 - 구체적인 source/content closure 및 지원 위험은 [P05 관측표](source-feature-feasibility.md)가 소유한다. scope에서 미정 항목이 발견되면 stable ID를 `UNRESOLVED`로 별도 등록하고 P04를 다시 보류한다. 이후 발견을 기존 성공이나 제외로 숨기지 않는다.
 

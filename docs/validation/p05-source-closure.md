@@ -122,7 +122,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | json | root grammar.js/json, node-types | parser.c, headers; scanner 없음 | strict negative/edit; JSONC는 대체 근거 아님 |
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
-| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
+| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js (2026-10-02 채택 후보 meloncholera@8620fbc: grammar.js·grammar/**/*.js 24 ESM module) | parser.c, headers; scanner 없음 (채택 후보는 src/scanner.c 2,046 bytes 포함) | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
 | postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36796853218 baseline8 실행, WITH OIDS 실패/구조7개 관측; noopt state overflow로 재생성8개 NOT_RUN, 과거 exit137 원인 미확정 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
