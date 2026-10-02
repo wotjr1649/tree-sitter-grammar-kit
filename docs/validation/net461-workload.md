@@ -71,7 +71,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 **UTF-16.** 원본 bytes를 tree-sitter UTF-16LE/BE 입력으로 그대로 넣는다. tree-sitter는 잘못된 sequence를 거부하지 않으므로 Go 사전 검증이 짝수 길이, 짝이 맞는 surrogate, U+0000 부재를 확인한다. edit 경계는 짝수 byte offset이다.
 
-**CP949.** 엄격 사전 검증을 통과한 파일만 C 드라이버의 decode callback으로 파싱한다. decode callback은 오류로 중단할 수 없으므로 검증은 사전 단계에서 끝낸다. 매핑 표는 [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/#euc-kr)의 `index-euc-kr`(identity `1d97134c…`)이며 표는 CC BY 4.0, 소스에 넣은 부분은 BSD-3-Clause다. 고지를 보존한다. 이 표에 없는 Windows 전용 확장 code point는 BLOCKED다. S05가 source-prepare 예산 안에서 pin한 identity로 들여온다.
+**CP949.** 엄격 사전 검증을 통과한 파일만 C 드라이버의 decode callback으로 파싱한다. decode callback은 오류로 중단할 수 없으므로 검증은 사전 단계에서 끝낸다. 매핑 표는 [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/#euc-kr)의 `index-euc-kr`(identifier `1d97134cbf187263585bc8f593ca4196654ed4c7a673f5672eaad4f5d9fdc4ba`, 파일 sha256 `89af20dd867c84cefb710b1790229786cfef2bf11916361a210d81b90381e267`)이며 표는 CC BY 4.0, 소스에 넣은 부분은 BSD-3-Clause다. 고지를 보존한다. 이 표에 없는 Windows 전용 확장 code point는 BLOCKED다. S05가 source-prepare 예산 안에서 pin한 identity로 들여온다.
 
 **동적 SQL.** 바깥 문장만 구조 해석한다. 문자열 안 SQL은 구조 해석하지 않고([tsql-S01](language-feature-disposition.md)) 위치 사실만 기록한다.
 
@@ -88,7 +88,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * 파싱 후 `descendant_count`가 50000 이하이고 출력이 16777216 bytes 이하면 전체 tree를 낸다. 아니면 summary를 낸다.
 * summary는 canonical tree digest, 상한 있는 ERROR/MISSING 목록, 선언 구조 자동 검사(type·member·procedure 선언의 이름과 범위), 등록 지점 부분 tree를 포함한다. S05는 선언 구조를 S03 schema의 선언 node 종류 순회로 검사하며 query를 쓰지 않는다. S06 사실 query 세트는 같은 사실을 재현해야 한다. 오류 개수만으로는 구조 PASS가 아니다.
 * 시간은 파싱당 60초(progress callback, 협조적 취소), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit)다. memory는 4 GiB다.
-* memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
+* memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패(runtime allocator hook으로 감지)·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
 * traversal은 반복 cursor로 한다. 상한은 tree depth 100000, summary node 25000000(잠정), encoded request와 output bytes다. 연산의 `max_depth`는 요청/JSON 구조 중첩이며 tree depth가 아니다. 깊은 중첩은 depth 10000 이상 정상 1건과 상한 초과 1건(`RESOURCE_LIMIT`)으로 세 OS에서 확인한다.
 * 세 OS 측정은 합성 약 22 MB fixture로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
 
@@ -106,14 +106,15 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 ## 비공개 로컬 corpus
 
-`NET461-PHASE2-LOCAL-r1`은 2026-10-03 사용자가 등록한 업무 실사용 corpus다. 위치는 저장소가 추적하지 않는 로컬 경로이며 로컬 결정 기록이 지정한다. 위 정책과 역할 등록부로 S01부터 다루며, 등록은 지원 증거가 아니다.
+`NET461-PHASE2-LOCAL-r1`은 2026-10-03 사용자가 등록한 업무 실사용 corpus다. corpus root는 caller가 로컬 입력으로 주며, 경로는 추적하지 않는 로컬 기록에만 둔다. 위 정책과 역할 등록부로 S01부터 다루며, 등록은 지원 증거가 아니다.
 
 * 로컬 전용이다. hosted CI·외부 전송·delegate 전달을 하지 않으며, 리뷰어와 모델에도 내용 대신 개수와 판정만 준다. 경로·이름·hash·내용이 담긴 기록은 추적하지 않는 로컬 artifacts에만 둔다. 공개 commit·PR·Issue에는 개수와 판정만 남긴다.
 * 자격 증명 성격 파일(`.pfx`, `.p12`, `.snk`, `.key` 등)과 vendor binary(`.dll`, `.exe`)는 존재와 크기만 기록하고 내용을 읽거나 복사하지 않는다(`PRESENCE_ONLY`).
 * `.config` 등 XML 값은 tree/capture 범위로만 다루고 텍스트를 추출하거나 출력하지 않는다.
 * `bin`·`obj`·`.vs`·`packages`·`TestResults` 빌드 산출물은 제외한다. MSBuild는 실행하지 않는다. `.csproj`에 적힌 포함 목록만 관측하며 조건·import·wildcard는 `UNRESOLVED`, 없는 항목은 `NOT_FOUND`다.
-* 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하면 1 invocation으로 센다. 로컬 저장은 2147483648 bytes, S08 실행 wall은 7200초다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
-* S08 판정은 파일마다 COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED·BLOCKED(인코딩·정책)로 집계한다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일 전부 처분(grammar gap·원본 손상·미지원)이다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
+* 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 제외 디렉터리는 읽지 않고 잘라내며 수에 넣지 않는다. `PRESENCE_ONLY` 파일은 파일 수와 레코드에는 넣고 bytes에는 넣지 않는다. 레코드는 파일 항목 하나가 1개이며 포함 관계·중복 묶음은 항목의 필드다. 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하면 1 invocation으로 센다. pg-large-source-r1 예외는 이 연산에 적용하지 않는다. 로컬 저장은 2147483648 bytes, S08 실행 wall은 7200초이고 S01·S05의 로컬 실행 wall은 각 Session envelope를 따른다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
+* corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r1` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. 그 밖과 `UNCLASSIFIED`는 route 없음(unrouted)이다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록하며, 표 변경은 기록한 뒤 적용한다.
+* S08 판정은 route가 있는 파일마다 `execution_status` COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED, 또는 실행하지 않은 `assessment=BLOCKED`(인코딩·정책)로 집계한다. unrouted와 `PRESENCE_ONLY` 파일은 따로 센다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일 전부 처분(grammar gap·원본 손상·미지원)이다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
 
 ## Session 책임과 준비 전제
 
