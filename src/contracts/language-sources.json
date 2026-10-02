@@ -21,12 +21,46 @@
         "src/tree_sitter/parser.h"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "KNOWN_REQUIRED_SUPPORT_GAP",
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
       "known_gaps": [
-        "고정 upstream README에 async/var/await identifier 및 file-based app directives 미지원 명시; native 재현은 NOT_RUN"
-      ]
+        "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)",
+        "S04: patch chain r1→r5 재구성과 parser.c 재생성의 재현성",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-CSHARP-REMEDY-r5",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-patches.json",
+          "src/dev/prepare-p05/remedy-r2.json",
+          "src/dev/prepare-p05/remedy-exact-r1.json",
+          "src/dev/prepare-p05/remedy-followup-r2.json",
+          "src/dev/prepare-p05/remedy-csharp-r5.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 62885,
+            "sha256": "da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 23949,
+            "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36917832850,
+          "stage": "csharp-r5",
+          "registered_rows": 27,
+          "registered_edits": 5,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
+        }
+      }
     },
     {
       "route_id": "go",
@@ -139,10 +173,38 @@
         "typescript/src/tree_sitter/parser.h"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "UNRESOLVED",
-      "known_gaps": []
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
+      "known_gaps": [
+        "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록",
+        "S04: tree-sitter-javascript@0.23.1 npm closure 재현성",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-TS-TSX-REMEDY-r2",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-patches.json",
+          "src/dev/prepare-p05/remedy-r2.json"
+        ],
+        "patched_files": [
+          {
+            "path": "common/define-grammar.js",
+            "bytes": 33689,
+            "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36795440494,
+          "stage": "patch-r2",
+          "registered_rows": 4,
+          "registered_edits": 1,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
+        }
+      }
     },
     {
       "route_id": "tsx",
@@ -168,10 +230,38 @@
         "typescript/src/tree_sitter/parser.h"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "UNRESOLVED",
-      "known_gaps": []
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
+      "known_gaps": [
+        "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록",
+        "S04: tree-sitter-javascript@0.23.1 npm closure 재현성",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-TS-TSX-REMEDY-r2",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-patches.json",
+          "src/dev/prepare-p05/remedy-r2.json"
+        ],
+        "patched_files": [
+          {
+            "path": "common/define-grammar.js",
+            "bytes": 33689,
+            "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36795440494,
+          "stage": "patch-r2",
+          "registered_rows": 8,
+          "registered_edits": 1,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
+        }
+      }
     },
     {
       "route_id": "java",
@@ -295,12 +385,38 @@
         "src/scanner.c"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "UNRESOLVED",
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
       "known_gaps": [
-        "선택한 source commit에 parser.c 없음; 승인된 generation 경로 준비 필요"
-      ]
+        "S04: upstream에 parser.c가 없어 고정 generator로 재생성해야 하며 그 identity·재현성",
+        "S06: scanner/ABI 관측",
+        "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-SWIFT-REMEDY-r1",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-patches.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 76448,
+            "sha256": "bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36741763343,
+          "stage": "patch-r1",
+          "registered_rows": 14,
+          "registered_edits": 3,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
+        }
+      }
     },
     {
       "route_id": "dart",
@@ -578,28 +694,78 @@
     },
     {
       "route_id": "tsql",
-      "repository": "Crary-Systems/tree-sitter-tsql",
-      "commit": "443d2bc774f1d779af7dcabcc99160fb24da96e6",
+      "repository": "meloncholera/tree-sitter-mssql",
+      "commit": "8620fbcfca9438e1ff7104835bcb8305aba3bdfa",
       "grammar_subdirectory": ".",
-      "license_metadata": "BSD-2-Clause",
+      "license_metadata": "MIT",
       "grammar_js": true,
       "grammar_json": true,
       "parser_c": true,
       "node_types": true,
       "scanner_and_shared": [
+        "src/scanner.c",
         "src/tree_sitter/alloc.h",
         "src/tree_sitter/array.h",
         "src/tree_sitter/parser.h"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "STATIC_REQUIRED_SOURCE_GAP",
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
       "known_gaps": [
-        "UPSTREAM_DECLARED: configuration function 대소문자에 따른 LOCAL_ID 분류 errata; tsql-B01, native NOT_RUN",
-        "STATIC_SOURCE_OBSERVATION: 고정 grammar.js의 sql_clauses/dml_clause/another_statement는 SELECT/EXEC 중심이며 DDL/다른 DML/CTE 경로 TODO; tsql-B02/B03/B04 필수 source 격차, generated 대응과 native 실패는 미검증",
-        "generation closure에 grammar/precedences.js, grammar/builtins.js, grammar/functions 및 grammar/data_types.js 필요; scanner/header metadata만으로 source closure 완료 아님"
-      ]
+        "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded",
+        "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
+        "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "superseded_candidate": {
+        "repository": "Crary-Systems/tree-sitter-tsql",
+        "commit": "443d2bc774f1d779af7dcabcc99160fb24da96e6",
+        "license_metadata": "BSD-2-Clause",
+        "reason": "original/Derek 후보는 등록 구문의 다수가 실패; meloncholera 4파일 patch 후보로 교체"
+      },
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-MSSQL-REMEDY-r1",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-followup-r2.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 6225,
+            "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
+          },
+          {
+            "path": "grammar/keywords.js",
+            "bytes": 25233,
+            "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
+          },
+          {
+            "path": "grammar/column-lists.js",
+            "bytes": 9051,
+            "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400"
+          },
+          {
+            "path": "grammar/statements/create.js",
+            "bytes": 22558,
+            "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36947507308,
+          "stage": "mssql-patch-r1",
+          "registered_rows": 41,
+          "registered_edits": 1,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS",
+          "note": "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1의 error_window는 추적 amendment(src/dev/prepare-p05/remedy-expectation-amendments-r1.json)로 [27,50)→[27,52) 정정 후 같은 증거를 재판정; 원래 window 기준 40/41 결과는 보존. 이전 run 36935408325는 probe 입력이름 결함으로 12행 미실행"
+        },
+        "expectation_amendments": [
+          "src/dev/prepare-p05/remedy-expectation-amendments-r1.json"
+        ]
+      }
     },
     {
       "route_id": "postgresql-sql",
@@ -622,12 +788,40 @@
         "postgres/src/tree_sitter/parser.h"
       ],
       "submodules": [],
-      "feasibility": "METADATA_OBSERVED_NATIVE_NOT_RUN",
-      "source_closure": "CONTENT_REVIEW_PENDING",
-      "feature_support": "UNRESOLVED",
+      "feasibility": "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS",
+      "source_closure": "ADOPTED_PINNED_PATCH_RECONSTRUCTION",
+      "feature_support": "REGISTERED_CASES_PASS_GAPS_RECORDED",
       "known_gaps": [
-        "후보는 PostgreSQL19 기반; 채택 9.6~18 syntax 전수와의 대응 미검증, strict version rejection은 약속하지 않음"
-      ]
+        "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증",
+        "S05: postgresql-sql-B04 utility 구문 등록 0행",
+        "S04: --disable-optimizations 재생성은 한 번도 성공하지 못함(state overflow); optimized generation은 6 GiB 필요",
+        "S08: Windows amd64·macOS arm64 qualification"
+      ],
+      "adoption": {
+        "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
+        "candidate": "P05-PG-LEGACY-REMEDY-r1",
+        "patch_subjects": [
+          "src/dev/prepare-p05/remedy-exact-r1.json",
+          "src/dev/prepare-p05/remedy-followup-r2.json"
+        ],
+        "patched_files": [
+          {
+            "path": "postgres/grammar.js",
+            "bytes": 245861,
+            "sha256": "e2c7defa738d4d261a9a2dcc2c4c3d646a9cc4a847b4f7ef3d22dea0636dd508"
+          }
+        ],
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
+        "native_evidence": {
+          "run_id": 36882649292,
+          "stage": "pg-legacy-g6-r1",
+          "registered_rows": 12,
+          "registered_edits": 1,
+          "platform": "linux/amd64",
+          "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS",
+          "note": "optimized generation만 성공(generation 전용 6 GiB); 4개 baseline 행은 run 36820514519 결과 재사용"
+        }
+      }
     }
   ]
 }

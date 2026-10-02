@@ -75,7 +75,7 @@ R2 helper 검사와 실제 native 실행 결과는 각각의 immutable receipt�
 
 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)의 `mssql-patch-r1` 41행 중 기존 28행과 SELECT negative 1행은 판정했다. 신규 12행은 probe가 case 이름에 `A-Z0-9-`만 허용해 `-r1` 접미사를 파싱 전에 exit64로 거부했으므로 NOT_VERIFIED이며 grammar 실패나 PASS가 아니다. case-ID 계약은 `run.ps1`·`remedy.ps1`의 `^[A-Z0-9-]+(?:-r[0-9]+)?$`이다.
 
-2026-10-02 실제 사용자 답변 `probe 수정 후 같은 41행 재실행`에 따라 probe는 선택적 `-r<숫자>` 접미사를 분리한 뒤 나머지에 기존 문자 집합을 적용한다. 승인된 subject projection과 machine identity는 변경하지 않으며 `RemedyProbePin`이 `mssql-patch-r1`에만 새 probe 5,910 bytes / `5171da776dd6dbcdf379b106522e7d716ddcf45174bfd870aee40174cbe91a70`를 적용하고 이전 pin을 `amends`로 보존한다. 다른 stage의 tool gate는 이전 probe pin을 유지하므로 현재 probe로 재실행할 수 없다. 재실행은 같은 입력·기대·comparator·G1/B1/X41/edit1·한도로 새 유한 batch에서 1회만 수행하며, 이 변경은 provider 채택을 뜻하지 않는다.
+2026-10-02 실제 사용자 답변 `probe 수정 후 같은 41행 재실행`에 따라 probe는 선택적 `-r<숫자>` 접미사를 분리한 뒤 나머지에 기존 문자 집합을 적용한다. 승인된 subject projection과 machine identity는 변경하지 않으며 `RemedyProbePin`이 `mssql-patch-r1`에만 새 probe 5,910 bytes / `5171da776dd6dbcdf379b106522e7d716ddcf45174bfd870aee40174cbe91a70`를 적용하고 이전 pin을 `amends`로 보존한다. 다른 stage의 tool gate는 이전 probe pin을 유지하므로 현재 probe로 재실행할 수 없다. 재실행은 같은 입력·기대·comparator·G1/B1/X41/edit1·한도로 새 유한 batch에서 1회만 수행하며, 이 변경은 provider 채택을 뜻하지 않는다. 재실행 결과 40/41 중 `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`의 window 정정은 [기대 amendment](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)에 따로 기록했다(원래 판정 보존, 정정 window로 같은 증거 재판정).
 
 # P05 source closure 실행 순서
 
@@ -122,7 +122,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | json | root grammar.js/json, node-types | parser.c, headers; scanner 없음 | strict negative/edit; JSONC는 대체 근거 아님 |
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
-| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
+| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js (2026-10-02 채택 후보 meloncholera@8620fbc: grammar.js·grammar/**/*.js 24 ESM module) | parser.c, headers; scanner 없음 (채택 후보는 src/scanner.c 2,046 bytes 포함) | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
 | postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36796853218 baseline8 실행, WITH OIDS 실패/구조7개 관측; noopt state overflow로 재생성8개 NOT_RUN, 과거 exit137 원인 미확정 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.

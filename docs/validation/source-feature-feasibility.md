@@ -1,3 +1,22 @@
+# PREPARE-06 6-route 최종 채택 (2026-10-02)
+
+2026-10-02 실제 사용자 결정에 따라 등록 사례가 모두 PASS인 후보를 채택하고, 범위 밖 격차는 후속 Session 의무로 기록한다. 채택 상태·재구성 patch·결과 hash·native 근거·격차는 [후보 등록부](../../src/contracts/language-sources.json)의 각 route `adoption`/`known_gaps`가 소유한다. 모든 후보는 고정 upstream commit에 저장소 안의 patch subject를 적용하고 tree-sitter CLI 0.27.0 `generate --abi 15`로 `parser.c`를 다시 만든다.
+
+| route | 채택 후보 | upstream | 등록 native 근거 (linux/amd64) |
+|---|---|---|---|
+| `csharp` | P05-CSHARP-REMEDY-r5 (patch r1→r5) | tree-sitter/tree-sitter-c-sharp@9150f7d | [run36917832850](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36917832850): 27행·edit5 PASS |
+| `typescript` | P05-TS-TSX-REMEDY-r2 | tree-sitter/tree-sitter-typescript@75b3874 | [run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494): 4행·edit1 PASS |
+| `tsx` | P05-TS-TSX-REMEDY-r2 | tree-sitter/tree-sitter-typescript@75b3874 | [run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494): 8행·edit1 PASS |
+| `swift` | P05-SWIFT-REMEDY-r1 | alex-pinkus/tree-sitter-swift@35245fb (parser.c 재생성 필수) | [run36741763343](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36741763343): 14행·edit3 PASS |
+| `postgresql-sql` | P05-PG-LEGACY-REMEDY-r1 | gmr/tree-sitter-postgres@59d0d8c (optimized generation, 6 GiB) | [run36882649292](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292): 12행·edit1 PASS |
+| `tsql` | P05-MSSQL-REMEDY-r1 (4파일 patch) | **meloncholera/tree-sitter-mssql@8620fbc** (Crary 후보 대체) | [run36947507308](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36947507308): 41행·edit1 PASS |
+
+T-SQL은 원 Crary·Derek 후보가 등록 구문 다수에서 실패해 meloncholera 후보로 교체했고, 등록부의 `superseded_candidate`에 이전 identity를 보존한다. 첫 재실행 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)은 probe 입력이름 결함으로 12행이 파싱 전에 거부되어 [PR #53](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/53) 뒤 다시 실행했다. `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`은 0폭 `MISSING keyword_end`가 byte 51에 있어 등록 window [27,50)을 사용자 승인으로 [27,52)로 정정했고, 원래 기대와 40/41 결과는 보존한다. 정정은 추적 subject [remedy-expectation-amendments-r1.json](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)이 소유하며 승인된 `remedy-followup-r2.json` projection은 변경하지 않는다.
+
+채택은 등록된 bounded 사례의 근거이며 전체 언어 지원 주장이 아니다. 후속 의무: S03/S05 등록 사례 밖 구문(C# async/var/await, TS 5.x–7, PostgreSQL 9.6–18 checkpoint, T-SQL 전체 statement), S04 patch 재구성·parser.c 재생성·npm/ESM closure 재현성(Swift 재생성 필수, PG noopt 미성공), S06 scanner/ABI 관측, S07 SQL Server runtime NOT_RUN, S08 Windows amd64·macOS arm64 qualification. 나머지 20 route의 native와 S08 78셀, 업무 corpus/.svc 제품은 **NOT_RUN**이다.
+
+이 절 아래의 PREPARE-06 절, 위험표의 "다음 증거"와 "현재 P05가 남는 이유"는 채택 이전 시점의 역사적 관측이다. 현재 상태는 이 채택 절과 등록부가 우선하며, T-SQL 행과 SQL-1/SQL-2 근거는 당시 Crary 후보를 가리킨다.
+
 # PREPARE-06 회수된 R2 결과와 승인된 C# r5
 
 [C# r4 run36874388926/1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36874388926)은
@@ -35,7 +54,7 @@ legacy patch의 최적화 generation은 163.003초/exit0였으며 noopt 실행�
 
 # Campaign 01 source와 feature feasibility
 
-기준일 `2026-09-29`, PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). 모든 후보는 [등록된 26개 immutable identity](../../src/contracts/language-sources.json) 그대로다. feature ID는 [disposition](language-feature-disposition.md)를 가리킨다. 이 표는 P05 조사 결과이며 grammar 채택 변경이나 native 실행 허가가 아니다.
+기준일 `2026-09-29`, PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). 모든 후보는 [등록된 26개 immutable identity](../../src/contracts/language-sources.json)를 기준으로 조사했다(2026-10-02 채택 이후 T-SQL identity는 위 채택 절 참조). feature ID는 [disposition](language-feature-disposition.md)를 가리킨다. 이 표는 P05 조사 결과이며 그 자체로 grammar 채택 변경이나 native 실행 허가가 아니다.
 
 ## 관측 등급
 
