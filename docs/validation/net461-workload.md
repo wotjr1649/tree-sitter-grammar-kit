@@ -84,13 +84,13 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 **대용량.** 제품 기본 `file_bytes` 16777216은 유지한다. 실사용 source는 별도 policy identity의 profile을 쓴다.
 
-* 연산 값: 입력 33554432 bytes, encoded 요청 50331648 bytes, 응답 출력 16777216 bytes, ERROR/MISSING 목록 상한 1000건, wall 초과 후 종료 유예 5초다. 기본 `native-parse-edit`·`native-query`에도 tree depth 상한 100000을 둔다.
+* 연산 값: 입력 33554432 bytes, encoded 요청 50331648 bytes, 응답 출력 16777216 bytes, ERROR/MISSING 목록 상한 1000건, wall 초과 후 종료 유예 5초, 저장은 요청당 응답 출력과 같은 16777216 bytes다. 기본 `native-parse-edit`·`native-query`에도 tree depth 상한 100000을 둔다.
 * 파싱 후 `descendant_count`가 50000 이하이고 출력이 16777216 bytes 이하면 전체 tree를 낸다. 아니면 summary를 낸다.
 * summary는 canonical tree digest, 상한 있는 ERROR/MISSING 목록, 선언 구조 자동 검사(type·member·procedure 선언의 이름과 범위), 등록 지점 부분 tree를 포함한다. S05는 선언 구조를 S03 schema의 선언 node 종류 순회로 검사하며 query를 쓰지 않는다. S06 사실 query 세트는 같은 사실을 재현해야 한다. 오류 개수만으로는 구조 PASS가 아니다.
 * 시간은 파싱당 60초(progress callback, 협조적 취소, S05 driver), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit, S04 runner)다. memory는 4 GiB다. 정책 wall·deadline 초과는 `RESOURCE_LIMIT`이고 caller의 명시적 취소만 `CANCELLED`다.
 * memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패(runtime allocator hook으로 감지)·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
 * traversal은 반복 cursor로 한다. 상한은 tree depth 100000, summary node 25000000(잠정), encoded request와 output bytes다. 연산의 `max_depth`는 요청/JSON 구조 중첩이며 tree depth가 아니다. 깊은 중첩은 depth 10000 이상 정상 1건과 상한 초과 1건(`RESOURCE_LIMIT`)으로 세 OS에서 확인한다.
-* 대형 입력 query는 `native-query-large`(입력 33554432 bytes, node 25000000, wall 90초, 출력 16777216 bytes, capture 1000000)를 쓰며, memory 4 GiB·tree depth 100000·encoded 요청 50331648 bytes·저장은 위 실사용 연산 값을 따른다.
+* 대형 입력 query는 `native-query-large`(입력 33554432 bytes, node 25000000, wall 90초, 출력 16777216 bytes, capture 1000000)를 쓰며, memory 4 GiB·tree depth 100000·encoded 요청 50331648 bytes·요청당 저장 16777216 bytes는 위 실사용 연산 값을 따른다.
 * hosted 측정이 값에 못 미치면 S05-A18 결과로 기록하고 S05 종료를 막지 않으며, 값을 올리는 것은 사용자 결정이다.
 * 세 OS 측정은 합성 대형 fixture(크기는 fixture identity가 고정)로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
 
