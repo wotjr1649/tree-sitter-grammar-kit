@@ -60,7 +60,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 `REAL-WORLD-SOURCE-r1`은 업무 실사용 C#·T-SQL·`.svc` source를 grammar에 넣는 정책이다. 2026-10-02 PREPARE에서 사용자가 채택했고 분리 context 검증 조건을 반영했다. 구현과 측정은 아래 담당 Session이 하며 이 문서는 지원 증거가 아니다.
 
-**Encoding 판별.** 아래 순서에서 처음 결정되는 단계가 결과다. 추정은 하지 않으며 판별 encoding과 그 출처(BOM·검증·선언)를 결과 identity에 넣는다. 파일별 선언(`utf-8` 또는 `cp949`)이 있으면 3~5단계 대신 선언한 encoding으로만 검증하고, 실패하면 BLOCKED다.
+**Encoding 판별.** 아래 순서에서 처음 결정되는 단계가 결과다. 추정은 하지 않으며 판별 encoding과 그 출처(BOM·검증·선언)를 결과 identity에 넣는다. 파일별 선언(`utf-8` 또는 `cp949`)이 있으면 4~5단계 대신 선언한 encoding으로만 검증하고, 실패하면 BLOCKED다.
 
 1. UTF-32 BOM은 BLOCKED다.
 2. UTF-8·UTF-16LE·UTF-16BE BOM이 있으면 그 encoding으로 내용을 검증한다. 실패하면 다른 encoding으로 넘어가지 않고 BLOCKED다.
@@ -94,13 +94,13 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 | 담당 | 책임 |
 |---|---|
-| S01 / #3 | encoding 판별·AMBIGUOUS·입력 size 상한, profile·파일별 encoding 선언 필드 고정 |
+| S01 / #3 | 판별 순서·BOM·NUL·UTF-8 검증·선언 처리와 negative, 입력 size 상한, profile·파일별 encoding 선언 필드 고정 |
 | S03 / #5 | 동적 SQL node/field mapping, summary 출력 schema, tree envelope의 판별 encoding 필드, 원본 byte/point |
 | S04 / #6 | wall·memory 강제 방식의 resource policy 필드 |
-| S05 / #7 | `index-euc-kr` 취득과 cp949 decode 실행, UTF-16/cp949/동적 SQL/대용량 fixture와 세 OS 측정, full tree gate·상한 값의 profile revision |
+| S05 / #7 | `index-euc-kr` 취득, 표가 필요한 cp949 검증·AMBIGUOUS 판정 완성과 decode 실행, UTF-16/cp949/동적 SQL/대용량 fixture와 세 OS 측정, full tree gate·상한 값의 profile revision |
 | S06 / #8 | 동적 SQL 위치 사실 추출 |
 
-[profile r0](../specs/cli-and-profile.md)는 encoding 선언, wall·memory, full tree gate를 표현하지 못하고, [tree envelope r0](../specs/tree-and-adapter-protocol.md)의 `input.encoding`은 판별 encoding과 출처를 표현하지 못한다. 위 표의 담당 Session이 각 r0 확장 revision을 고정하기 전에는 그 필드에 의존하는 실행을 하지 않는다. S01은 cp949 decode를 실행하지 않고 판별과 negative만 다룬다.
+[profile r0](../specs/cli-and-profile.md)는 encoding 선언, wall·memory, full tree gate를 표현하지 못하고, [tree envelope r0](../specs/tree-and-adapter-protocol.md)의 `input.encoding`은 판별 encoding과 출처를 표현하지 못한다. 위 표의 담당 Session이 각 r0 확장 revision을 고정하기 전에는 그 필드에 의존하는 실행을 하지 않는다. S01은 표가 필요한 cp949 검증·AMBIGUOUS 판정과 cp949 decode를 하지 않으며, 그 경로는 S05가 표를 pin한 뒤 완성한다.
 
 ## Session 책임과 준비 전제
 
