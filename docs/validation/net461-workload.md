@@ -12,7 +12,7 @@
 | N461-RESOURCE | Resources.Designer.cs, `.resx`, 등록 문화권 리소스 | generated partial/member·ResourceManager 접근; XML 요소·속성·문자값·선언된 참조 / C# 및 inert XML |
 | N461-DX202 | 실제 DevExpress 20.2 사용·초기화 `.cs` | qualified component type, generic, new/init/cast/property/event 구조 / source만 검사 |
 | N461-WCF-CS | 계약·구현 `.cs`, `.svc.cs`, 생성 Reference.cs | ServiceContract/OperationContract attribute, interface/implementation, generic ClientBase/channel/proxy / C# source |
-| N461-SVC | `.svc` | `SVC-SERVICEHOST-r1` directive + 등록 inline C# + 원본 위치 mapping |
+| N461-SVC | `.svc` | `SVC-SERVICEHOST-r1` directive + 등록 inline C# + 원본 included range |
 | N461-XML | App.config/Web.config, 필요한 기존 WSDL/XSD | XML source, namespace/qualified 이름, 값·import/include/설정 참조 선언 / inert XML |
 
 실제 20.2.x·사용 component·compiler·LangVersion은 caller가 읽기를 허용한 metadata에서 확인하고 미확인 값은 UNKNOWN이다. project 설정을 변경하지 않는다. 역할의 실제 파일이 제공 corpus에 없으면 NOT_PROVIDED이며 요구는 유지한다. 소스 구문/구조, net461 build, Framework runtime 실행, designer/WCF 통합은 별도 축이다. IIS/WCF endpoint·폼·component·designer 실행, SDK 설치·restore·MSBuild target·svcutil·runtime downgrade는 승인되지 않았다.
@@ -26,10 +26,10 @@
 * 전체 원본 identity와 directive 시작/끝, 이름, attribute 이름/값/quote, `<%`·`@`·`%>` 경계를 반열림 byte/point span으로 기록한다. 여러 줄·공백·CRLF·LF·BOM을 보존한다. unknown/duplicate attribute·중복 directive의 진단과 미검증 의미를 보존한다.
 * CodeBehind는 선언된 참조다. 자동 파일 접근이나 project 밖 탐색을 유발하지 않는다. resolved 여부와 별도 입력 identity는 caller의 승인·등록 파일 집합으로 정한다. directive-only·CodeBehind·inline coverage를 구분한다.
 * inline이 있고 Language가 등록된 `C#`/`c#`일 때만 기존 C# producer를 재사용한다. inline Language 생략은 UNRESOLVED_LANGUAGE, VB/JS/기타는 UNSUPPORTED_LANGUAGE이며 C# PASS가 아니다. inline 없는 Language 생략 directive 관측과 구분한다.
-* UTF-8(유효 bytes, BOM 유무)은 원본 slice와 offset mapping을 기록한다. UTF-16 LE/BE는 BOM과 caller의 encoding 등록을 확인한 뒤에만 lossless UTF-8 변환을 허용하며 원본↔변환 byte/point 경계 mapping을 결속한다. 불명 encoding·손상 sequence·mapping 불가능 경계는 BLOCKED다. charset 추정·newline 정규화·directive 삭제 후 전체 원본 PASS·임의 wrapper 삽입은 금지한다.
-* composite result는 전체 원본 identity, format revision, directive 관측, inline 언어/slice, 변환/mapping identity, C# producer/source/tool, 원본에 대응한 node/capture span과 coverage를 결속한다. producer local span도 보존한다. point는 [tree 계약](../specs/tree-and-adapter-protocol.md)의 0-based row와 byte column이다. mapping 없이는 전체 `.svc` 지원을 주장하지 않는다.
-* 변환한 UTF-8 producer의 local point와 UTF-16 원본 point를 구분한다. 원본 row는 등록 encoding에서 해석한 LF 경계로 세며 column은 원본의 행 시작부터 실제 byte 수다. UTF-16 code unit 내부의 단독 `0x0A` byte를 줄바꿈으로 오인하지 않는다. BOM·CRLF·segment offset을 포함한 byte 경계 mapping으로 원본 point를 재계산하고 producer 좌표를 원본 좌표로 그대로 복사하지 않는다.
-* 원본 byte 좌표 edit마다 directive/inline 경계와 mapping을 재계산한다. damaged incremental/fresh, restored incremental/fresh, original syntax/구조를 각각 대조한다. segment/language 변경을 기록한다. 동일한 잘못된 tree의 복구는 지원 PASS가 아니다.
+* encoding 판별과 입력은 아래 [실사용 source 입력 정책](#실사용-source-입력-정책)을 따른다. UTF-8·UTF-16 LE/BE·선언된 cp949 모두 변환 없이 원본 bytes를 판별 encoding으로 입력하고 inline 구간은 included range로 지정한다. 불명 encoding·손상 sequence는 BLOCKED다. charset 추정·newline 정규화·directive 삭제 후 전체 원본 PASS·임의 wrapper 삽입은 금지한다.
+* composite result는 전체 원본 identity, format revision, directive 관측, inline 언어와 included range, 판별 encoding identity, C# producer/source/tool, 원본 좌표의 node/capture span과 coverage를 결속한다. point는 [tree 계약](../specs/tree-and-adapter-protocol.md)의 0-based row와 byte column이다. included range와 원본 좌표 검증 없이는 전체 `.svc` 지원을 주장하지 않는다.
+* 원본을 직접 입력하므로 producer byte/point는 원본 좌표다. row는 판별 encoding에서 해석한 LF 경계로 세며 column은 원본의 행 시작부터 실제 byte 수다. UTF-16 code unit 내부의 단독 `0x0A` byte를 줄바꿈으로 오인하지 않는다. BOM·CRLF·included range 경계를 원본 byte로 기록한다.
+* 원본 byte 좌표 edit마다 directive/inline 경계와 included range를 재계산한다. damaged incremental/fresh, restored incremental/fresh, original syntax/구조를 각각 대조한다. segment/language 변경을 기록한다. 동일한 잘못된 tree의 복구는 지원 PASS가 아니다.
 
 XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 entity/schema 취득, ResXFileRef·config/WSDL/XSD 참조 자동 접근을 수행하지 않는다. 기존 C#/XML 경로와 제한된 format 처리를 재사용하며 범용 ASP.NET/Razor compiler나 새 parser runtime을 만들지 않는다.
 
@@ -48,24 +48,70 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 | N461-XML-REFERENCE | P,N,R,E | config/WSDL/XSD declared reference; DTD/entity/schema/ResXFileRef 자동 접근 거부 | XML / S01,S02,S03,S05 |
 | N461-SVC-DIRECTIVE | P,N | directive-only, Service 이름/값/원문 범위 | svc / S03,S05,S06 |
 | N461-SVC-CODEBEHIND | P,N | CodeBehind 참조·inline 유무의 독립 coverage | svc+C# / S01,S02,S03,S05 |
-| N461-SVC-INLINE | P,N,R,E | C# slice·전체 원본 byte/point mapping | svc+C# / S03,S05,S06 |
+| N461-SVC-INLINE | P,N,R,E | C# included range·전체 원본 byte/point | svc+C# / S03,S05,S06 |
 | N461-SVC-MULTILINE | P,N | 여러 줄 attribute·optional Factory/Debug/Language | svc / S03,S05 |
 | N461-SVC-QUOTE | N,R,E | quote 손상/복구, 오류 위치·후속 source 보존 | svc / S05 |
 | N461-SVC-TERMINATOR | N,R,E | `%>` 손상/복구·segment 경계 진단 | svc / S05 |
-| N461-SVC-BOUNDARY | P,N,R,E | directive/코드 경계 edit·mapping 재계산·fresh 대조 | svc+C# / S03,S05 |
+| N461-SVC-BOUNDARY | P,N,R,E | directive/코드 경계 edit·included range 재계산·fresh 대조 | svc+C# / S03,S05 |
 | N461-SVC-LANGUAGE | P,N | directive-only 생략, inline 생략 UNRESOLVED, 비C# UNSUPPORTED | svc / S03,S05 |
-| N461-SVC-ENCODING | P,N,R,E | BOM/CRLF/LF/Unicode·등록 UTF-16 mapping; 불명/손상 encoding 거부 | svc mapping / S01,S02,S03,S05 |
+| N461-SVC-ENCODING | P,N,R,E | BOM/CRLF/LF/Unicode·UTF-16 직접 입력과 included range; 불명/손상 encoding 거부 | svc included range / S01,S02,S03,S05 |
+
+## 실사용 source 입력 정책
+
+`REAL-WORLD-SOURCE-r1`은 업무 실사용 C#·T-SQL·`.svc` source를 grammar에 넣는 정책이다. 2026-10-02 PREPARE에서 사용자가 채택했고 분리 context 검증 조건을 반영했다. 구현과 측정은 아래 담당 Session이 하며 이 문서는 지원 증거가 아니다.
+
+**Encoding 판별.** 아래 순서에서 처음 결정되는 단계가 결과다. 추정은 하지 않으며 판별 encoding과 그 출처(BOM·검증·선언)를 결과 identity에 넣는다. 파일별 선언(`utf-8` 또는 `cp949`)이 있으면 4~5단계 대신 선언한 encoding으로만 검증하고, 실패하면 BLOCKED다.
+
+1. UTF-32 BOM은 BLOCKED다.
+2. UTF-8·UTF-16LE·UTF-16BE BOM이 있으면 그 encoding으로 내용을 검증한다. 실패하면 다른 encoding으로 넘어가지 않고 BLOCKED다.
+3. BOM 없이 NUL byte가 있으면 BLOCKED다.
+4. 파일 전체가 엄격한 UTF-8이면 UTF-8이다. 순수 ASCII도 UTF-8이다. 단, profile이 `cp949`를 선언했고 비ASCII bytes가 cp949로도 유효하면 AMBIGUOUS(BLOCKED)다. profile이 cp949를 선언하지 않으면 cp949는 후보가 아니다.
+5. UTF-8이 아니면 profile이 `cp949`를 선언했을 때만 cp949로 검증한다.
+6. 그 밖에는 BLOCKED다.
+
+**UTF-16.** 원본 bytes를 tree-sitter UTF-16LE/BE 입력으로 그대로 넣는다. tree-sitter는 잘못된 sequence를 거부하지 않으므로 Go 사전 검증이 짝수 길이, 짝이 맞는 surrogate, U+0000 부재를 확인한다. edit 경계는 짝수 byte offset이다.
+
+**CP949.** 엄격 사전 검증을 통과한 파일만 C 드라이버의 decode callback으로 파싱한다. decode callback은 오류로 중단할 수 없으므로 검증은 사전 단계에서 끝낸다. 매핑 표는 [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/#euc-kr)의 `index-euc-kr`(identity `1d97134c…`)이며 BSD-3-Clause 고지를 보존한다. 이 표에 없는 Windows 전용 확장 code point는 BLOCKED다. S05가 source-prepare 예산 안에서 pin한 identity로 들여온다.
+
+**동적 SQL.** 바깥 문장만 구조 해석한다. 문자열 안 SQL은 구조 해석하지 않고([tsql-S01](language-feature-disposition.md)) 위치 사실만 기록한다.
+
+* 구문 종류는 닫힌 목록이다: `EXEC(...)`, `EXEC(...) AT` linked server, 이름을 정규화한 `sp_executesql`, C# command 생성자·initializer·`CommandText` 대입. `EXEC @module_var`는 동적 SQL이 아니다.
+* 인자 종류도 닫힌 목록이다: `literal_unicode`, `literal_char`, `variable`, `bare_word`, `concatenation`, `other`.
+* 사실은 구문 종류, 인자 종류, 원본 byte/point 범위, 변수 이름이다. 인자는 위치로 추출하며 `AS USER`와 pass-through 매개변수는 제외한다.
+* `AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출은 알려진 누락이다.
+* C# 위치는 버전을 붙인 API 이름 목록으로 찾는 heuristic이며 결과에 heuristic으로 표시한다. `CommandType.StoredProcedure`는 알려진 false positive다.
+* 이스케이프 없는 완성 리터럴을 단일 included range로 2차 파싱하는 것은 범위 밖의 후속 선택지다.
+
+**대용량.** 제품 기본 `file_bytes` 16777216은 유지한다. 실사용 source는 별도 policy identity의 profile을 쓴다.
+
+* 파일 상한은 33554432 bytes다.
+* 파싱 후 `descendant_count`가 50000 이하이고 `output_bytes` 안이면 전체 tree를 낸다. 아니면 summary를 낸다.
+* summary는 canonical tree digest, 상한 있는 ERROR/MISSING 목록, 선언 구조 자동 검사(type·member·procedure 선언의 이름과 범위), 등록 지점 부분 tree를 포함한다. 오류 개수만으로는 구조 PASS가 아니다.
+* 시간은 파싱당 60초(progress callback), edit 요청당 300초다. memory는 4 GiB다.
+* memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 그 방식을 결과에 기록한다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
+* traversal은 반복 cursor로 한다. 상한은 depth 100000, summary node 25000000(잠정), encoded request와 output bytes다.
+* 세 OS 측정은 합성 약 22 MB fixture로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
+
+| 담당 | 책임 |
+|---|---|
+| S01 / #3 | 판별 순서·BOM·NUL·UTF-8 검증·선언 처리와 negative, 입력 size 상한, profile·파일별 encoding 선언 필드 고정 |
+| S03 / #5 | 동적 SQL node/field mapping, summary 출력 schema, tree envelope의 판별 encoding 필드, 원본 byte/point |
+| S04 / #6 | wall·memory 강제 방식의 resource policy 필드 |
+| S05 / #7 | `index-euc-kr` 취득, 표가 필요한 cp949 검증·AMBIGUOUS 판정 완성과 decode 실행, UTF-16/cp949/동적 SQL/대용량 fixture와 세 OS 측정, full tree gate·상한 값의 profile revision |
+| S06 / #8 | 동적 SQL 위치 사실 추출 |
+
+[profile r0](../specs/cli-and-profile.md)는 encoding 선언, wall·memory, full tree gate를 표현하지 못하고, [tree envelope r0](../specs/tree-and-adapter-protocol.md)의 `input.encoding`은 판별 encoding과 출처를 표현하지 못한다. 위 표의 담당 Session이 각 r0 확장 revision을 고정하기 전에는 그 필드에 의존하는 실행을 하지 않는다. S01은 표가 필요한 cp949 검증·AMBIGUOUS 판정과 cp949 decode를 하지 않으며, 그 경로는 S05가 표를 pin한 뒤 완성한다.
 
 ## Session 책임과 준비 전제
 
 | Session / Issue / Milestone | 추가 책임 |
 |---|---|
-| S01 / #3 / MS2 | role·입력 identity/size/encoding·원본 포함 관계·허용 root·mapping 입력 제한 |
+| S01 / #3 / MS2 | role·입력 identity/size/encoding·원본 포함 관계·허용 root·included range 입력 제한 |
 | S02 / #4 / MS3 | 안전한 참조·entity/schema/ResXFileRef 비실행·private source/effect 경계 |
 | S03 / #5 / MS4 | C#/XML 구조 mapping·svc composite-result·원본 byte/point 계약 |
 | S05 / #7 / MS6 | 등록 format syntax/구조/negative/recovery/edit; 기존 bounded runner 재사용 |
 | S06 / #8 / MS7 | C#/XML query/capture·svc directive/segment 관측 |
-| S07 / #9 / MS8 | 원본/변환/mapping/expectation/producer/실행 identity·private 근거 |
+| S07 / #9 / MS8 | 원본/판별 encoding·cp949 매핑 표/expectation/producer/실행 identity·private 근거 |
 | S08 / #10 / MS9 | Windows amd64/Linux amd64/macOS arm64 **source parser** qualification 별도 결과 |
 
 PREPARE 필수 전제는 scope/roles/format/위치·encoding/안전 경계/case 종류/owner와 feasibility 경로의 정합성이다. C# 등 producer의 현재 필수 source 격차는 P05에 남긴다. 미제공 업무 파일·전체 corpus·svc 제품 기능·S08 78셀은 NOT_RUN/NOT_PROVIDED이며 미래 업무 검증 전체를 pre-S01 gate로 추가하지 않는다. 세 host source parser 검증은 WinForms/WCF 애플리케이션의 세 플랫폼 실행이 아니다.
