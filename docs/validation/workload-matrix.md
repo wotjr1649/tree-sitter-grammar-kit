@@ -20,7 +20,7 @@
 
 ## Campaign 01 채택 수용 조건
 
-아래 영문 조건은 제공된 실행 specification의 판정 조건을 그대로 채택한 것이다. 모든 행은 구현 전 요구사항이며 PASS 증거가 아니다. 세션/Issue/branch/플랫폼 기계 연결은 [campaign 정의](../../src/contracts/campaign-01.json), 언어 범위는 [feature owner](language-feature-scope.md)를 따른다. 각 세션은 등록된 26개 route의 자기 단계 검사군을 소유하며 4개 fixture 역할을 구분한다.
+아래 영문 조건은 제공된 실행 specification의 판정 조건을 그대로 채택한 것이다. 각 Session 표의 마지막 추가 행(S01-A15~A19, S02-A15~A16, S03-A15~A18, S04-A16~A18, S05-A16~A22, S06-A15~A17, S07-A15~A16, S08-A16~A17)은 2026-10-03 PREPARE 보완에서 사용자가 채택한 실사용 source·비공개 corpus·진행 규칙 조건이다. 모든 행은 구현 전 요구사항이며 PASS 증거가 아니다. 세션/Issue/branch/플랫폼 기계 연결은 [campaign 정의](../../src/contracts/campaign-01.json), 언어 범위는 [feature owner](language-feature-scope.md)를 따른다. 각 세션은 등록된 26개 route의 자기 단계 검사군을 소유하며 4개 fixture 역할을 구분한다.
 
 ### S01
 
@@ -40,6 +40,11 @@
 | S01-A12 | API direct call, concurrent independent roots where supported | Same guards as CLI; documented ownership and no process-global mutation |
 | S01-A13 | Targeted mutant skips a file, returns fixed digest, normalizes bytes, or hard-codes one grammar | Corresponding meaningful test fails for the intended reason |
 | S01-A14 | Three real OS/arch core/API lanes | Current-candidate tests/build/vet/CGO closure and source-only checks pass; no zero-test pass |
+| S01-A15 | Encoding detection fixtures: UTF-32 BOM, UTF-8/UTF-16LE/UTF-16BE BOM with valid and invalid content, BOM-less NUL, ASCII, strict UTF-8, a cp949 declaration and per-file `utf-8`/`cp949` declarations supplied as API/CLI input (strict profile parsing is S02) | Steps 1–6 of the [real-world source policy](net461-workload.md) in order; per-file declarations replace only steps 4–5; detected encoding and its source are bound to identity; outcomes that need the cp949 table are `assessment=UNRESOLVED` with finding `ENCODING_TABLE_REQUIRED` until S05, never guessed |
+| S01-A16 | UTF-16 input with odd length, unpaired surrogate or U+0000 | Typed BLOCKED before any parse input is produced; raw hash/size still recorded |
+| S01-A17 | Six adopted routes from `language-sources.json` `adoption` (upstream commit, patch subjects, patched-file hashes; T-SQL meloncholera identity) | Recorded as inventory/identity inputs and checked against the registry; S01 does not fabricate or re-derive patched trees (S04) |
+| S01-A18 | Private local corpus `NET461-PHASE2-LOCAL-r1` through operation `private-corpus-local` | Every non-build file gets an N461 role or `UNCLASSIFIED` (role axis only; routes come from the extension table); credential-like files and vendor binaries are `PRESENCE_ONLY` (existence and size, content never read); build outputs excluded; declared `.csproj` membership observed with conditions/imports/wildcards `UNRESOLVED` and missing items `NOT_FOUND`; newline class, size class, generated marker and content-duplicate groups recorded; public outputs carry counts and judgements only |
+| S01-A19 | Corpus at and one over each `private-corpus-local` limit, exercised with injected reduced limits and count/byte accounting tests; a corpus file over 32 MiB | At the limit COMPLETED, one over typed `RESOURCE_LIMIT` with no partial PASS; `pg-large-source-r1` does not apply to `private-corpus-local` |
 
 ### S02
 
@@ -59,6 +64,8 @@
 | S02-A12 | Mutants remove exact-set, duplicate detection, streamed limit or no-clobber check | Intended negative tests fail meaningfully |
 | S02-A13 | Original S01 fixtures and 26 inventory/profile selections | Regression preserved; missing capability distinct from empty success |
 | S02-A14 | Three OS actual core/API lanes, no native tools | Same portable contract, real platform path behavior recorded |
+| S02-A15 | Patch subjects, the 24 T-SQL ESM modules and the npm closure supplied as profile inputs | Treated as untrusted data with explicit bounds; no execution and no limit relaxation through profile fields |
+| S02-A16 | Strict profile with encoding declarations and operation limits, including unknown/duplicate declarations and limits above the caller-supplied operation limits or the tracked `private-corpus-local` limits | Rejected with typed errors; a profile cannot raise limits above those bounds |
 
 ### S03
 
@@ -78,6 +85,10 @@
 | S03-A12 | Mutant sorts/deduplicates an unrelated ordered-tree fixture | Cross-module regression rejects scope leakage |
 | S03-A13 | Registered 26 route schema checks plus owned change controls | Coverage table with real outcomes, not one grammar's PASS multiplied |
 | S03-A14 | Three OS core/API/source-only/external-consumer validation | Current-candidate evidence and no added CGO/consumer runtime dependency |
+| S03-A15 | Declaration node types and fact mapping per adopted grammar: C# type/member declarations, SQL `CREATE` objects, static `EXEC` targets, C# `CommandText` literals, dynamic SQL sites | Versioned mapping from the schema; each fact kind maps to named node types/fields or is `UNSUPPORTED` with a reason |
+| S03-A16 | Large-input summary schema and tree envelope encoding fields | Summary carries canonical tree digest, capped ERROR/MISSING list, declaration structure result and registered-point partial trees; `input` carries detected encoding and its source; no text extracted from XML values |
+| S03-A17 | Dynamic SQL kinds: `EXEC(...)`, `EXEC(...) AT`, normalized `sp_executesql`, C# command sites, `EXEC @module_var`, six argument kinds | Closed mapping with `EXEC @module_var` non-dynamic and known misses (`AT DATA_SOURCE`, `WITH RESULT SETS`, batch-first call without `EXEC`) reported |
+| S03-A18 | Out-of-scope constructs that `known_gaps` assigns to S03: C# async/var/await identifiers and file-based directives, T-SQL beyond registered B01..B05/V16/V22 rows, PostgreSQL 9.6–18 checkpoints | Structure contract written or explicitly dispositioned for each listed item; no unbounded full-language claim |
 
 ### S04
 
@@ -98,6 +109,9 @@
 | S04-A13 | Three OS native-ready supervisor controls | Actual host/tool capability receipts; unsupported controls explicit |
 | S04-A14 | Prior offline public API with no tools on PATH | Still usable; no runner/network import/effect leaks into offline use |
 | S04-A15 | Registered 26-route reproduction coverage | No route silently omitted; claims match the actually selected source path |
+| S04-A16 | Resource policy for real-world source: 60 s per parse (progress callback), 90 s process wall per single parse request, 300 s per edit request with at most 4 edits, 4 GiB memory | Linux cgroup and Windows Job Object enforce hard caps; macOS uses sampled termination and is labelled non-strict; allocation failure (detected through the runtime allocator hook), OOM and sampled kill all map to `RESOURCE_LIMIT` |
+| S04-A17 | Patch chain r1→r5 and regeneration for adopted routes (Swift regeneration, PostgreSQL optimized 6 GiB, TypeScript npm and T-SQL ESM closures) | Reconstructed bytes match the adoption hashes or the mismatch is recorded; no silent baseline replacement |
+| S04-A18 | Build-portability patch under the pre-authorization; Windows/macOS tree-sitter CLI 0.27.0 and Node 24.21.0 digests | Only compiler options, platform shims or build scripts change, with separate review, three-OS CI and no regression; generator runs stay BLOCKED until the host tool digests are recorded |
 
 ### S05
 
@@ -118,6 +132,13 @@
 | S05-A13 | Driver allocation/lifetime error paths, consecutive requests in separate processes | No known leak/double-free/use-after-free path; use approved diagnostics if available, record unrun diagnostics |
 | S05-A14 | Registered 26 route edit/feature cases on three hosts | Real candidate-bound results, not compiler version or previous corpus success |
 | S05-A15 | Prior offline CLI/API in tool-free environment | Native feature doesn't become a mandatory core runtime dependency |
+| S05-A16 | cp949 decode with WHATWG `index-euc-kr` (identifier `1d97134cbf187263585bc8f593ca4196654ed4c7a673f5672eaad4f5d9fdc4ba`, file sha256 `89af20dd867c84cefb710b1790229786cfef2bf11916361a210d81b90381e267`) after Go strict pre-validation | Table pinned with its licence notice (CC BY 4.0; BSD-3-Clause for incorporated source); valid files decode; Windows-only and invalid sequences BLOCKED; AMBIGUOUS completed for cp949-declared profiles; `read` returns the whole remaining buffer |
+| S05-A17 | Edits at odd UTF-16 offsets or splitting a cp949 two-byte character | Rejected; valid edits keep incremental/fresh agreement |
+| S05-A18 | `real-world-source-r2` on synthetic large fixtures (sizes fixed by fixture identity, up to 32 MiB) on three hosts | Full tree only when descendant_count ≤ 50000 and output ≤ 16 MiB, else summary with digest, capped ERROR/MISSING, declaration structure check over S03 declaration node types (no query) and registered-point partial trees; S04-A16 limits apply; a shortfall is a user decision, never an automatic raise |
+| S05-A19 | Nesting depth ≥ 10000 and one input over the 100000 depth cap on three hosts | First completes without stack failure; second ends `RESOURCE_LIMIT` |
+| S05-A20 | Private corpus encoding paths and large-file profile run locally on Windows | Every routed, non-`PRESENCE_ONLY` file gets a detected encoding and source or a typed BLOCKED reason; AMBIGUOUS count reported; large files pass through the r2 gate with a recorded status; kit defects 0 or recorded as blocking; counts and judgements only, nothing private leaves the host, raw kept locally for S07 binding |
+| S05-A21 | Owned dynamic SQL fixtures for every closed construct and argument kind | Registered with expected location facts for S06 |
+| S05-A22 | Native build of 26 routes on three hosts; out-of-scope constructs in `known_gaps` and `postgresql-sql-B04` (0 registered rows at adoption) | Build failures fixed under the build-portability pre-authorization or recorded; fixture/golden and recovery/edit cases registered for each listed gap; grammar gaps dispositioned and carried to S08 without blocking S06; T-SQL window amendment kept applicable |
 
 ### S06
 
@@ -137,6 +158,9 @@
 | S06-A12 | Extended producer with all S05 edit controls | No regression and no alternate duplicate engine |
 | S06-A13 | Registered 26 route native/query/API cases on three hosts | Actual compatible cohort results with scoped unsupported reporting |
 | S06-A14 | Tool-free offline API and dependency audit | No new runtime/FFI requirement for offline consumers |
+| S06-A15 | Versioned fact query pack with expected-capture fixtures | Captures match expectations under the comparator; pack identity recorded; reproduces the S05 declaration structure facts exactly for inputs within the approved query limits, including at least one fixture for which S05 produced a large-input summary within those limits; larger inputs not submitted are `NOT_RUN` until S06-A17 limits are approved, which is not a kit defect |
+| S06-A16 | Dynamic SQL location facts (construct, argument kind, original byte/point range, variable name; `AS USER` and pass-through excluded; C# heuristic labelled) | Matches the S05 fixtures; known misses reported, never silently absent |
+| S06-A17 | Fact pack on large inputs above the recorded query operation limits | Large-input query limits are recorded in the operation policy and approved by the user before use; an input submitted above the approved limits ends typed `RESOURCE_LIMIT`, no silent truncation |
 
 ### S07
 
@@ -156,6 +180,8 @@
 | S07-A12 | Mutants omit unused records, trust PASS label, default unknown to success or round numbers | Targeted controls detect each intended defect |
 | S07-A13 | S01–S06 records and selected historical subset | No duplicate model or silent schema rewrite; differences documented |
 | S07-A14 | Three OS common core/reducer lanes | Deterministic semantic result under same reducer, host observations retained |
+| S07-A15 | Private local corpus workload registration, including S05 local raw recorded earlier | Local-run identity (candidate commit, clean tree, host facts, tool identities) defined; private paths/names/content only in untracked local records; public evidence carries counts and judgements only; local raw replays |
+| S07-A16 | Gitignored PREPARE native evidence for the `native_evidence` run IDs in `language-sources.json` `adoption`, and SQL Server runtime `tsql-R01` | Replay connected for each listed run whose raw is present; absent raw is `RECORDED_NOT_RECOMPUTED`; `tsql-R01` stays NOT_RUN |
 
 ### S08
 
@@ -176,3 +202,5 @@
 | S08-A13 | Full current core/API and S04–S07 affected regressions | Actual three-OS gates pass at the verified candidate |
 | S08-A14 | Final review, actual merge and post-merge/tracking | Exact identities, no unresolved material findings or premature closure |
 | S08-A15 | User-facing support/release language | Only registered scope claimed; publication and Go adoption explicitly not performed |
+| S08-A16 | Full private corpus on local Windows via `private-corpus-local` (wall 2 h, local storage 2 GiB) with the corpus route table | Every routed file counted by `execution_status` COMPLETED (has_error split), CANCELLED, RESOURCE_LIMIT or FAILED, or `assessment=BLOCKED` (encoding/policy, not run); unrouted and `PRESENCE_ONLY` files counted separately; kit defects 0; every ERROR file dispositioned (grammar gap, source damage, unsupported); separate row from the 78 cells; no ratio threshold |
+| S08-A17 | NET461 workload across three hosts | Hosted hosts use OWNED_FIXTURE only (synthetic large and deep-nesting fixtures); the private corpus never leaves the local host; mandatory mainstream grammar gaps block the support claim |

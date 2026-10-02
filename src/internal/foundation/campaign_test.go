@@ -43,7 +43,7 @@ func checkCampaignDefinition(c campaignDefinition, workload string) error {
 		}
 	}
 	branches := strings.Fields("inventory-identity profile-security schema-contract reproducibility incremental native-oracle evidence-replay real-world-qualification")
-	counts := []int{14, 14, 14, 15, 15, 14, 14, 15}
+	counts := []int{19, 16, 18, 18, 22, 17, 16, 17}
 	if len(c.Sessions) != 8 {
 		return fmt.Errorf("campaign session count mismatch")
 	}

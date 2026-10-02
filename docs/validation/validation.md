@@ -114,6 +114,13 @@ S01~S03은 공개 offline API/CLI equivalence와 직접 API guard, checkout 밖 
 
 시간/입력/출력/저장/지원되는 memory·process 한도와 campaign/session 소모량을 등록한다. local heavy는 1, campaign heavy CI는 겹치는 workflow 전체를 합쳐 최대 3이다. 현재 Foundation은 workflow 전체의 공통 concurrency group과 matrix max-parallel3으로 직렬 run을 보장한다. 이후 native workflow도 같은 공유 lane을 사용하거나 동등한 scheduler 근거를 갖춰야 한다. 무변경 재시도는 원인이 확인된 일시적 infrastructure 오류에 한해 1회이며 제품 수정은 새 후보·남은 예산으로 검증한다. null/0을 무제한으로 해석하거나 한도·golden·필수 범위를 자동 완화하지 않는다.
 
+### Campaign 01 Session 진행 규칙 — 2026-10-03 PREPARE 보완
+
+* kit 결함은 다음 Session 진입을 막는다. grammar 지원 gap은 기록·처분한 뒤 S08 판정으로 넘기며 S06/S07 진입을 막지 않는다. kit 결함은 kit 코드·계약이 입력을 잘못 읽거나 판정·guard·회수·결과를 틀리게 내는 경우이고, grammar gap은 kit가 충실히 보고한 결과에서 grammar가 유효한 source를 기대 구조로 파싱하지 못하는 경우다. 필수 mainstream gap은 S08의 지원 claim을 막는다.
+* patch 사전 승인: 채택 6 route의 등록 실패 사례를 고치는 저장소 안 patch subject 수정과, 26 route 전부의 build 이식성 수정(compiler 옵션·플랫폼 shim·build 스크립트)은 미리 승인됐다. 조건은 실패 사례·원문·기대값 선기록, 분리 context 리뷰 BLOCKER/MATERIAL 0, 세 OS 필수 CI 통과, 기존 등록 사례 회귀 없음, native는 Session envelope·운영 상한 안, 결과의 tracking·registry 기록이다. upstream 변경, 기대값·comparator 완화, provider/candidate 교체, 상한 상향, tag/Release/package publication은 제외이며 비채택 20 route의 grammar 동작 patch는 별도 승인이 필요하다.
+* campaign 예비분(wall 115200초, CI 720 job-분, download 1 GiB, 유료 0원)은 목표가 아니다. Session envelope 합계 밖의 추가분으로 본다(PREPARE 보완의 기록된 가정). Session이 envelope를 넘으면 사유와 소비를 ledger에 기록하고 차감한다. 소진되면 멈추고 사용자에게 묻는다.
+* 비공개 corpus와 실사용 source 값은 [NET461 등록부](net461-workload.md)를 따른다.
+
 ## Session 00 gates — 보존된 완료 기준
 
 All gates are required: G00-01 target/authority; 02 pinned references; 03 src/module/local boundaries; 04 AGENTS at most 60 nonblank lines; 05 design; 06 observed foundation/negative/CGO-free checks; 07 exact three-OS CI; 08 Issue/Milestone work program; 09 local prompts/hashes; 10 independent review with zero open BLOCKER/MATERIAL findings; 11 merge/post-merge; 12 handoff.

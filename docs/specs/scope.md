@@ -6,6 +6,8 @@ Campaign의 추가 `NET461-WINFORMS-DX202-WCF` 업무 profile은 [업무 workloa
 
 첫 release 후보의 최소 범위는 검증된 offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API다. Session 01~08 campaign은 그 위에 reproduction·incremental·native oracle·bounded replay·qualification을 순차 개발한다. 독립 offline 기능의 사용 가능성과 campaign 전체 목표 충족은 구분한다. campaign 완료는 release 승인이 아니다. 현재는 foundation 검사만 구현했다.
 
+kit는 grammar·runtime·정책 조합이 실사용 코드를 믿고 파싱하는지 검증하고 검증된 tree·capture·사실을 내는 신뢰 계층이다. 소스 색인·검색 서비스, MSBuild 평가와 의미 분석은 범위 밖이며 kit 출력을 쓰는 별도 소비자가 맡는다.
+
 파일·결과 코어는 불필요한 C 종속을 갖지 않으며 첫 실행 backend는 표준 Tree-sitter다. `parser.c`는 native build가 요구하는 입력이고 inventory/schema/기록 비교의 일률적 선행 조건이 아니다. repository snapshot, 선택 grammar, 공유 source/dependency closure를 구분한다.
 
 필수 qualification은 [언어·feature 등록부](../validation/language-feature-scope.md)의 26개 route 전체와 Windows amd64/Linux amd64/macOS arm64의 78개 요약 칸이다. maintained BrightScript, 제한된 historical audit, 자체 scannerless/stateful 및 경계 fixture는 별도 역할로 유지한다. 소비자가 26개 grammar를 모두 설치해야 한다는 뜻은 아니다.
