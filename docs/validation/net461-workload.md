@@ -84,12 +84,14 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 **대용량.** 제품 기본 `file_bytes` 16777216은 유지한다. 실사용 source는 별도 policy identity의 profile을 쓴다.
 
-* 파일 상한은 33554432 bytes다.
+* 연산 값: 입력 33554432 bytes, encoded 요청 50331648 bytes, 응답 출력 16777216 bytes, ERROR/MISSING 목록 상한 1000건, wall 초과 후 종료 유예 5초다. 기본 `native-parse-edit`·`native-query`에도 tree depth 상한 100000을 둔다.
 * 파싱 후 `descendant_count`가 50000 이하이고 출력이 16777216 bytes 이하면 전체 tree를 낸다. 아니면 summary를 낸다.
 * summary는 canonical tree digest, 상한 있는 ERROR/MISSING 목록, 선언 구조 자동 검사(type·member·procedure 선언의 이름과 범위), 등록 지점 부분 tree를 포함한다. S05는 선언 구조를 S03 schema의 선언 node 종류 순회로 검사하며 query를 쓰지 않는다. S06 사실 query 세트는 같은 사실을 재현해야 한다. 오류 개수만으로는 구조 PASS가 아니다.
-* 시간은 파싱당 60초(progress callback, 협조적 취소), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit)다. memory는 4 GiB다.
+* 시간은 파싱당 60초(progress callback, 협조적 취소, S05 driver), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit, S04 runner)다. memory는 4 GiB다. 정책 wall·deadline 초과는 `RESOURCE_LIMIT`이고 caller의 명시적 취소만 `CANCELLED`다.
 * memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패(runtime allocator hook으로 감지)·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
 * traversal은 반복 cursor로 한다. 상한은 tree depth 100000, summary node 25000000(잠정), encoded request와 output bytes다. 연산의 `max_depth`는 요청/JSON 구조 중첩이며 tree depth가 아니다. 깊은 중첩은 depth 10000 이상 정상 1건과 상한 초과 1건(`RESOURCE_LIMIT`)으로 세 OS에서 확인한다.
+* 대형 입력 query는 `native-query-large`(입력 33554432 bytes, node 25000000, wall 90초, 출력 16777216 bytes, capture 1000000)를 쓴다.
+* hosted 측정이 값에 못 미치면 S05-A18 결과로 기록하고 S05 종료를 막지 않으며, 값을 올리는 것은 사용자 결정이다.
 * 세 OS 측정은 합성 대형 fixture(크기는 fixture identity가 고정)로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
 
 | 담당 | 책임 |
@@ -108,13 +110,15 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 
 `NET461-PHASE2-LOCAL-r1`은 2026-10-03 사용자가 등록한 업무 실사용 corpus다. corpus root는 caller가 로컬 입력으로 주며, 경로는 추적하지 않는 로컬 기록에만 둔다. 위 정책과 역할 등록부로 S01부터 다루며, 등록은 지원 증거가 아니다.
 
-* 로컬 전용이다. hosted CI·외부 전송·delegate 전달을 하지 않으며, 리뷰어와 모델에도 내용 대신 개수와 판정만 준다. 경로·이름·hash·내용이 담긴 기록은 추적하지 않는 로컬 artifacts에만 둔다. 공개 commit·PR·Issue에는 개수와 판정만 남긴다.
-* 자격 증명 성격 파일(`.pfx`, `.p12`, `.snk`, `.key` 등)과 vendor binary(`.dll`, `.exe`)는 존재와 크기만 기록하고 내용을 읽거나 복사하지 않는다(`PRESENCE_ONLY`).
-* `.config` 등 XML 값은 tree/capture 범위로만 다루고 텍스트를 추출하거나 출력하지 않는다.
-* `bin`·`obj`·`.vs`·`packages`·`TestResults` 빌드 산출물은 제외한다. MSBuild는 실행하지 않는다. `.csproj`에 적힌 포함 목록만 관측하며 조건·import·wildcard는 `UNRESOLVED`, 없는 항목은 `NOT_FOUND`다.
-* 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 제외 디렉터리는 읽지 않고 잘라내며 수에 넣지 않는다. `PRESENCE_ONLY` 파일은 파일 수와 레코드에는 넣고 bytes에는 넣지 않는다. 레코드는 파일 항목 하나가 1개이며 포함 관계·중복 묶음은 항목의 필드다. 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하면 1 invocation으로 센다. pg-large-source-r1 예외는 이 연산에 적용하지 않는다. 로컬 저장은 2147483648 bytes, S08 실행 wall은 7200초이고 S01·S05의 로컬 실행 wall은 각 Session envelope를 따른다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
+* 로컬 전용이다. hosted CI로 보내지 않는다. 2026-10-03 사용자 결정으로 실행 모델과 분리 리뷰어는 진단을 위해 소스 내용을 열람할 수 있으며, 그 내용이 모델 제공자에게 전송되는 것을 감수한다. 경로·이름·hash·내용이 담긴 기록은 추적하지 않는 로컬 artifacts에만 둔다. 공개 commit·PR·Issue에는 개수와 판정만 남긴다.
+* ERROR 진단은 실행 모델이 로컬 내용으로 한다. 처분할 수 없는 파일은 `UNDISPOSITIONED`로 두고 사용자에게 묻는다.
+* 자격 증명 성격 파일(`.pfx`, `.p12`, `.snk`, `.key`, `.pem`, `.jks`, `.keystore`, `.pvk`)과 vendor binary(`.dll`, `.exe`, `.pdb`)는 존재와 크기만 기록하고 내용을 읽거나 복사하지 않는다(`PRESENCE_ONLY`). 자격 증명 파일은 모델과 리뷰어도 읽지 않으며, Claude Code에서는 로컬 deny 규칙으로 구조적으로 막는다.
+* `.config` 등의 연결 문자열·비밀번호 같은 비밀 값은 인용·출력·전송하지 않으며, 결과에서는 tree/capture 범위로만 다룬다.
+* `bin`·`obj`·`.vs`·`packages`·`TestResults` 빌드 산출물과 `.git`·`.svn`·`.hg` VCS 디렉터리는 제외한다. MSBuild는 실행하지 않는다. `.csproj`에 적힌 포함 목록만 관측한다. `\`는 `/`로 정규화하고, 조건·import·wildcard·`$(...)` 속성은 `UNRESOLVED`, corpus root 밖이거나 없는 항목은 읽지 않고 `NOT_FOUND`다. 파일마다 N461 역할은 하나다.
+* S01은 이를 위해 소유 계약인 [identity/evidence](../specs/identity-and-evidence.md)와 [공개 API](../specs/public-go-api.md)를 개정할 수 있다. manifest revision에서 판별 encoding을 identity에 결속하고, sha256 없는 `PRESENCE_ONLY` 레코드와 corpus 진입점을 정의한다.
+* 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 제외 디렉터리는 읽지 않고 잘라내며 수에 넣지 않는다. `PRESENCE_ONLY` 파일은 파일 수와 레코드에는 넣고 bytes에는 넣지 않는다. 레코드는 파일 항목 하나가 1개이며 포함 관계·중복 묶음은 항목의 필드다. 디렉터리 깊이 32, inventory 보고 67108864 bytes, Go 프로세스 memory 2147483648 bytes다. native 단계는 batch 요청으로 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하며 1 invocation으로 센다(파일당 60초, batch 프로세스 wall 3600초). in-process inventory는 invocation으로 세지 않는다. pg-large-source-r1 예외는 이 연산에 적용하지 않는다. 보존은 파일당 레코드(상태·has_error·digest·상한 있는 ERROR 범위·encoding)만이며 full tree는 보존하지 않는다. 로컬 저장은 실행 1회당 2147483648 bytes다. 실행 wall은 S01 1800초, S05 3600초, S07 1800초, S08 7200초다. S07 비공개 replay는 파일 26000, 레코드 합계 2147483648 bytes다. corpus profile은 `cp949`를 선언하고, 파일별 선언은 결과 관측 전 등록한 로컬 manifest로만 준다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
 * corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r1` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. route는 N461 역할과 무관하게 확장자로 정하며, 표에 없는 확장자만 route 없음(unrouted)이다. `UNCLASSIFIED`는 역할 축에만 쓰는 값이고 route를 없애지 않는다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록한다. route를 줄이는 변경은 분리 리뷰와 사용자 결정이 필요하며 결과를 관측하기 전에만 적용한다.
-* S08 판정은 route가 있는 파일마다 `execution_status` COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED, 또는 실행하지 않은 `assessment=BLOCKED`(인코딩·정책)로 집계한다. unrouted와 `PRESENCE_ONLY` 파일은 따로 센다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일 전부 처분(grammar gap·원본 손상·미지원)이다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
+* S08 판정은 route가 있는 파일마다 `execution_status` COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED, 또는 실행하지 않은 `assessment=BLOCKED`(인코딩·정책)로 집계한다. unrouted와 `PRESENCE_ONLY` 파일은 따로 센다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일(COMPLETED이면서 `has_error`) 전부 처분(grammar gap·원본 손상·미지원, 또는 사용자에게 넘긴 `UNDISPOSITIONED`), CANCELLED·RESOURCE_LIMIT·FAILED 파일의 한도·환경·kit 결함 분류다. 분류하지 못한 FAILED는 kit 결함으로 센다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
 
 ## Session 책임과 준비 전제
 
