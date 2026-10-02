@@ -169,7 +169,7 @@ supervisor는 ready stream의 완료 read를 즉시 drain하되 매 read의 time
 
 `patch-r1`은 별도 scratch의 C#/TS/TSX/Swift 네 파일에 exact literal patch만 적용한다. 원본 producer에는 추가32입력만, 후보에는 원21+추가32입력을 계획한다(G5/B8/X85, producer edit16). `sql-pg-r1`은 Derek 고정30파일의 **평가만** 수행하고 TSQL28+negative2, PG exact LFS baseline8 및 옵션 변경 regeneration8을 계획한다(G2/B3/X46, edit3). SQL 채택/교체/patch와 다음 grammar patch는 자동 승인되지 않는다. PG object는97,664,793bytes/SHA-256과100MiB 단일 파일 예외를 대조하며 원 pointer를 보존한다. PG generation의 `--disable-optimizations` 및 같은 container의 `memory.events` 전후 관측은 기존 exit137의 무변경 반복과 구별한다.
 
-기존 supervisor·회수·전체8개 isolation·자체 G/B/X·새 container의 EXE/ELF/hash 확인·cleanup과 개별 limits를 재사용한다. 각 stage의 더 작은 G/B/X 상한을 적용하고 quoted include/ABI를 build 전에 검사한다. 실패한 producer는 후속 NOT_RUN을 남기며 독립 producer는 안전한 한도 안에서 계속한다. 원 probe/comparator와 구문 기대는 변경하지 않는다. negative의 ERROR도 원 exit2로 보존하므로 job의 성공/실패 표시는 최종 지원 판정을 대신하지 않는다. 후보별 required syntax·구조·negative·legacy/recovery/edit 검증과 독립 리뷰를 통과하기 전 kit source 등록부에 채택하지 않는다.
+기존 supervisor·회수·전체8개 isolation·자체 G/B/X·새 container의 EXE/ELF/hash 확인·cleanup과 개별 limits를 재사용한다. 각 stage의 더 작은 G/B/X 상한을 적용하고 quoted include/ABI를 build 전에 검사한다. 실패한 producer는 후속 NOT_RUN을 남기며 독립 producer는 안전한 한도 안에서 계속한다. 원 probe/comparator와 구문 기대는 변경하지 않는다(예외: `mssql-patch-r1` 재실행의 probe 입력이름 정합은 위 "MSSQL R2 재실행의 probe 입력이름 정합" 절). negative의 ERROR도 원 exit2로 보존하므로 job의 성공/실패 표시는 최종 지원 판정을 대신하지 않는다. 후보별 required syntax·구조·negative·legacy/recovery/edit 검증과 독립 리뷰를 통과하기 전 kit source 등록부에 채택하지 않는다.
 
 ## 실제 archive 취득 경계
 
