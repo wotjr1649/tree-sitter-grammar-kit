@@ -90,7 +90,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * 시간은 파싱당 60초(progress callback, 협조적 취소), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit)다. memory는 4 GiB다.
 * memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패(runtime allocator hook으로 감지)·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
 * traversal은 반복 cursor로 한다. 상한은 tree depth 100000, summary node 25000000(잠정), encoded request와 output bytes다. 연산의 `max_depth`는 요청/JSON 구조 중첩이며 tree depth가 아니다. 깊은 중첩은 depth 10000 이상 정상 1건과 상한 초과 1건(`RESOURCE_LIMIT`)으로 세 OS에서 확인한다.
-* 세 OS 측정은 합성 약 22 MB fixture로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
+* 세 OS 측정은 합성 대형 fixture(크기는 fixture identity가 고정)로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
 
 | 담당 | 책임 |
 |---|---|
@@ -113,7 +113,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * `.config` 등 XML 값은 tree/capture 범위로만 다루고 텍스트를 추출하거나 출력하지 않는다.
 * `bin`·`obj`·`.vs`·`packages`·`TestResults` 빌드 산출물은 제외한다. MSBuild는 실행하지 않는다. `.csproj`에 적힌 포함 목록만 관측하며 조건·import·wildcard는 `UNRESOLVED`, 없는 항목은 `NOT_FOUND`다.
 * 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 제외 디렉터리는 읽지 않고 잘라내며 수에 넣지 않는다. `PRESENCE_ONLY` 파일은 파일 수와 레코드에는 넣고 bytes에는 넣지 않는다. 레코드는 파일 항목 하나가 1개이며 포함 관계·중복 묶음은 항목의 필드다. 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하면 1 invocation으로 센다. pg-large-source-r1 예외는 이 연산에 적용하지 않는다. 로컬 저장은 2147483648 bytes, S08 실행 wall은 7200초이고 S01·S05의 로컬 실행 wall은 각 Session envelope를 따른다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
-* corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r1` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. 그 밖과 `UNCLASSIFIED`는 route 없음(unrouted)이다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록하며, 표 변경은 기록한 뒤 적용한다.
+* corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r1` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. route는 N461 역할과 무관하게 확장자로 정하며, 표에 없는 확장자만 route 없음(unrouted)이다. `UNCLASSIFIED`는 역할 축에만 쓰는 값이고 route를 없애지 않는다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록한다. route를 줄이는 변경은 분리 리뷰와 사용자 결정이 필요하며 결과를 관측하기 전에만 적용한다.
 * S08 판정은 route가 있는 파일마다 `execution_status` COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED, 또는 실행하지 않은 `assessment=BLOCKED`(인코딩·정책)로 집계한다. unrouted와 `PRESENCE_ONLY` 파일은 따로 센다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일 전부 처분(grammar gap·원본 손상·미지원)이다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
 
 ## Session 책임과 준비 전제
