@@ -351,12 +351,17 @@ function CheckRemedyJson([string]$path){
     if(-not $grammar.rules.Count -or $grammar.name -cnotmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$'){throw 'Invalid JSON generation input'}
     return ,@($identity)
 }
-function CheckExactRemedyTools($tools,[string]$output){
+function RemedyProbePin($tools,[string]$stage){
+    # 2026-10-02 user-approved MSSQL rerun: probe case-name check aligned with ^[A-Z0-9-]+(?:-r[0-9]+)?$; approved subjects keep the prior probe pin.
+    if($stage -ceq 'mssql-patch-r1'){return @{path='src/dev/prepare-p05/probe.c.in';bytes=5910;sha256='5171da776dd6dbcdf379b106522e7d716ddcf45174bfd870aee40174cbe91a70';amends=$tools.probe}}
+    return $tools.probe
+}
+function CheckExactRemedyTools($tools,[string]$output,[string]$stage=''){
     foreach($pin in @($tools.node,$tools.gcc,$tools.ld,$tools.loader,@{path='/lib/x86_64-linux-gnu/libc.so.6';sha256=$tools.libc.sha256},@{path='/inputs/acquisition/tools/tree-sitter';sha256='5a228811cdb3a01b7e4dd493c5fc5e05b0040a49ffede94e866c4c58ff2605db'})){
         $lines=@($output -split "`n"|Where-Object {$_ -cmatch ('^[0-9a-f]{64}  '+[regex]::Escape($pin.path)+'$')})
         if($lines.Count -ne 1 -or $lines[0].Substring(0,64) -cne $pin.sha256){throw 'Exact remedy tool bytes mismatch'}
     }
-    $probe=FileIdentity (Join-Path $root 'probe.c');AssertRemedyObject $probe.bytes $probe.sha256 $tools.probe
+    $probe=FileIdentity (Join-Path $root 'probe.c');AssertRemedyObject $probe.bytes $probe.sha256 (RemedyProbePin $tools $stage)
     Record 'exact-remedy-tool-gate' @{result='PASS';source='raw/tool-environment.stdout';image=$tools.image;before_upstream_generation_build_execution=$true;whole_support=$false}
 }
 function CheckSqlJsInputs([string]$entry,[string]$sourceRoot){
