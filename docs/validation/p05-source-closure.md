@@ -150,7 +150,7 @@ selected pointer bytes의 정합성은 실제 generated C artifact 확보를 뜻
 3. 실제 native 격리를 검증한다. env 제거만으로 host filesystem/network 격리를 입증하지 않는다. tool/OS/digest·경계와 회수 절차의 독립 리뷰 후 실행한다.
 4. C#/TSQL/TS/TSX/PG 기존 artifact baseline을 보존한다. Swift 및 승인된 동일-source regeneration은 별도 producer로 build한다. source 대응이 불일치하면 원래 실패를 덮지 않는다.
 5. 등록 P05 case family의 구체 원문, 구조 사실, negative/recovery/edit를 검토·고정하고 제한 실행한다. official syntax에서 기대를 얻으며 candidate tree를 golden으로 복사하지 않는다.
-6. 각 결과를 upstream 선언/정적 관찰/재현 실패/검증된 remedy로 구별한다. 실제 gap에 대해 적합한 기존 후보를 비교한 뒤 exact replacement/patch/추가 효과 승인을 요청한다. 승인 없는 grammar patch 또는 required syntax 재분류는 하지 않는다.
+6. 각 결과를 upstream 선언/정적 관찰/재현 실패/검증된 remedy로 구별한다. 실제 gap에 대해 적합한 기존 후보를 비교한 뒤 exact replacement/patch/추가 효과 승인을 요청한다. 승인 없는 grammar patch 또는 required syntax 재분류는 하지 않는다. PREPARE 이후 Session의 patch는 [validation](validation.md)의 사전 승인 범위를 따른다.
 7. 현재 P01~P14, 실제 PR/CI/merge/post-merge, tracking과 immutable checkpoint를 대조한다. 알려진 필수 gap이나 누락 권한/능력이 남으면 exact blocker를 기록하고 #20을 OPEN으로 유지한다.
 
 source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속한다. 미래 S05/S06의 제품 native producer나 S08의 78-cell qualification을 여기서 완료했다고 표시하지 않는다.
