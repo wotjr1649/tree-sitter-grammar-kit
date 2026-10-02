@@ -86,6 +86,10 @@ foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1'))
     if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit -or @($rows|Where-Object {$_.producer -clike '*baseline*'}).Count){throw 'Followup rows/edit or baseline reuse mismatch'}
     $rejected=$false;try{$null=AssertExactAcquisitionLimit $stage $(if($limits.source_image_counter_bytes -eq 1073741824){1610612736L}else{1073741824L})}catch{$rejected=$true};if(-not $rejected){throw 'Followup cross-stage counter accepted'}
 }
+$probeBytes=[IO.File]::ReadAllBytes((Join-Path $PSScriptRoot 'probe.c.in'));$probeSha=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($probeBytes)).ToLowerInvariant()
+$followupTools=$remedySubjects['followup-r2'].tools;$mssqlProbe=RemedyProbePin $followupTools 'mssql-patch-r1'
+if($mssqlProbe.bytes -ne $probeBytes.Length -or $mssqlProbe.sha256 -cne $probeSha -or $mssqlProbe.amends.sha256 -cne $followupTools.probe.sha256){throw 'MSSQL probe amendment pin mismatch'}
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1')){if(-not [object]::ReferenceEquals((RemedyProbePin $followupTools $stage),$followupTools.probe)){throw 'Probe amendment leaked to another stage'}}
 $r4Rows=NewRemedyRows 'csharp-r4' $originalInputs.cases $remedySubjects.cases.cases
 $r5Rows=NewRemedyRows 'csharp-r5' $originalInputs.cases $remedySubjects.cases.cases
 for($i=0;$i -lt $r4Rows.Count;$i++){if($r5Rows[$i].producer -cne 'csharp-candidate-r5' -or -not (EqualRemedyData $r4Rows[$i].case $r5Rows[$i].case)){throw 'C# r5 changed frozen r4 inputs/expectations/edit order'}}

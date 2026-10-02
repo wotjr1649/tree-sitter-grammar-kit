@@ -425,7 +425,7 @@ try {
     $script:imageSize=[long]$im.Size
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
-    if($RemedyStage -and (ExactRemedyLimits $RemedyStage)){$exactTools=if(FollowupStageKey $RemedyStage){$remedy['followup-r2'].tools}else{$remedy['exact-r1'].tools};CheckExactRemedyTools $exactTools (TextOutput @{label='tool-environment'})}
+    if($RemedyStage -and (ExactRemedyLimits $RemedyStage)){$exactTools=if(FollowupStageKey $RemedyStage){$remedy['followup-r2'].tools}else{$remedy['exact-r1'].tools};CheckExactRemedyTools $exactTools (TextOutput @{label='tool-environment'}) $RemedyStage}
     Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
     if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
     Require (Native diagnostic 'cli-generate-help' @('/inputs/acquisition/tools/tree-sitter','generate','--help') 10 1048576)

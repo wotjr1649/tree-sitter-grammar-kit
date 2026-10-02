@@ -60,9 +60,20 @@ static int emit(TSTree *tree, const char *stage) {
   nodes=0;bounded=1;dump(ts_tree_root_node(tree),0,NULL);printf("}\n");
   return bounded;
 }
+/* Case IDs follow the run.ps1/remedy.ps1 contract ^[A-Z0-9-]+(?:-r[0-9]+)?$. */
+static int case_name_ok(const char *name) {
+  size_t n=strlen(name), core=n, d=n;
+  while(d>0 && name[d-1]>='0' && name[d-1]<='9') --d;
+  if(d<n && d>=2 && name[d-1]=='r' && name[d-2]=='-') core=d-2;
+  for(size_t i=0;i<core;++i) {
+    char c=name[i];
+    if(!((c>='A' && c<='Z') || (c>='0' && c<='9') || c=='-')) return 0;
+  }
+  return core>0;
+}
 int main(int argc, char **argv) {
   if(argc!=2 && argc!=4) return 64;
-  if(strncmp(argv[1],"/inputs/cases/",14) || strspn(argv[1]+14,"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")!=strlen(argv[1]+14)) return 64;
+  if(strncmp(argv[1],"/inputs/cases/",14) || !case_name_ok(argv[1]+14)) return 64;
   FILE *file=fopen(argv[1],"rb"); if(!file) return 65;
   char original[65537], damaged[65537];
   size_t length=fread(original,1,sizeof(original),file); int io=ferror(file); fclose(file);

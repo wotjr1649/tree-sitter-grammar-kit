@@ -71,6 +71,12 @@ collector는 workflow가 전달한 stage/subject를 summary 및 전체 frozen ca
 
 R2 helper 검사와 실제 native 실행 결과는 각각의 immutable receipt로 판정한다. 이 계약 변경 시점에 R2 native와 최종 provider 채택은 **NOT_RUN/NOT_ADOPTED**다. 새 코드의 독립 리뷰·필수 CI·actual merge/postmerge 뒤 현재 main의 fresh dispatch에서 `pinned-tsql-r1`, `trixie-r1`, 위 human subject를 명시한다. S01/MASTER·업무 corpus/.svc 제품·S08 전체78셀은 시작하지 않는다.
 
+## MSSQL R2 재실행의 probe 입력이름 정합
+
+[run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)의 `mssql-patch-r1` 41행 중 기존 28행과 SELECT negative 1행은 판정했다. 신규 12행은 probe가 case 이름에 `A-Z0-9-`만 허용해 `-r1` 접미사를 파싱 전에 exit64로 거부했으므로 NOT_VERIFIED이며 grammar 실패나 PASS가 아니다. case-ID 계약은 `run.ps1`·`remedy.ps1`의 `^[A-Z0-9-]+(?:-r[0-9]+)?$`이다.
+
+2026-10-02 실제 사용자 답변 `probe 수정 후 같은 41행 재실행`에 따라 probe는 선택적 `-r<숫자>` 접미사를 분리한 뒤 나머지에 기존 문자 집합을 적용한다. 승인된 subject projection과 machine identity는 변경하지 않으며 `RemedyProbePin`이 `mssql-patch-r1`에만 새 probe 5,910 bytes / `5171da776dd6dbcdf379b106522e7d716ddcf45174bfd870aee40174cbe91a70`를 적용하고 이전 pin을 `amends`로 보존한다. 다른 stage의 tool gate는 이전 probe pin을 유지하므로 현재 probe로 재실행할 수 없다. 재실행은 같은 입력·기대·comparator·G1/B1/X41/edit1·한도로 새 유한 batch에서 1회만 수행하며, 이 변경은 provider 채택을 뜻하지 않는다.
+
 # P05 source closure 실행 순서
 
 소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 초기 T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3의95개 실행 결과와 당시 PG16개 미실행은 보존된 역사적 관측이다. 후속 original/r1/r2 및 실제 PG/SQL 결과는 아래 run별로 구분한다. 기존 26-route/256행 채택은 scope 근거이며 source 지원 근거가 아니다.
