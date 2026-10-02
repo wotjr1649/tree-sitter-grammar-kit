@@ -760,8 +760,11 @@
           "registered_edits": 1,
           "platform": "linux/amd64",
           "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS",
-          "note": "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1의 error_window를 사용자 승인으로 [27,50)→[27,52) 정정(0폭 MISSING keyword_end가 byte 51); 원래 기대와 40/41 결과 보존. 이전 run 36935408325는 probe 입력이름 결함으로 12행 미실행"
-        }
+          "note": "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1의 error_window는 추적 amendment(src/dev/prepare-p05/remedy-expectation-amendments-r1.json)로 [27,50)→[27,52) 정정 후 같은 증거를 재판정; 원래 window 기준 40/41 결과는 보존. 이전 run 36935408325는 probe 입력이름 결함으로 12행 미실행"
+        },
+        "expectation_amendments": [
+          "src/dev/prepare-p05/remedy-expectation-amendments-r1.json"
+        ]
       }
     },
     {

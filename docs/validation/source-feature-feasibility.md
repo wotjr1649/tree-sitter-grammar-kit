@@ -11,9 +11,11 @@
 | `postgresql-sql` | P05-PG-LEGACY-REMEDY-r1 | gmr/tree-sitter-postgres@59d0d8c (optimized generation, 6 GiB) | [run36882649292](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292): 12행·edit1 PASS |
 | `tsql` | P05-MSSQL-REMEDY-r1 (4파일 patch) | **meloncholera/tree-sitter-mssql@8620fbc** (Crary 후보 대체) | [run36947507308](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36947507308): 41행·edit1 PASS |
 
-T-SQL은 원 Crary·Derek 후보가 등록 구문 다수에서 실패해 meloncholera 후보로 교체했고, 등록부의 `superseded_candidate`에 이전 identity를 보존한다. 첫 재실행 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)은 probe 입력이름 결함으로 12행이 파싱 전에 거부되어 [PR #53](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/53) 뒤 다시 실행했다. `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`은 0폭 `MISSING keyword_end`가 byte 51에 있어 등록 window [27,50)을 사용자 승인으로 [27,52)로 정정했고, 원래 기대와 40/41 결과는 보존한다.
+T-SQL은 원 Crary·Derek 후보가 등록 구문 다수에서 실패해 meloncholera 후보로 교체했고, 등록부의 `superseded_candidate`에 이전 identity를 보존한다. 첫 재실행 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)은 probe 입력이름 결함으로 12행이 파싱 전에 거부되어 [PR #53](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/53) 뒤 다시 실행했다. `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`은 0폭 `MISSING keyword_end`가 byte 51에 있어 등록 window [27,50)을 사용자 승인으로 [27,52)로 정정했고, 원래 기대와 40/41 결과는 보존한다. 정정은 추적 subject [remedy-expectation-amendments-r1.json](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)이 소유하며 승인된 `remedy-followup-r2.json` projection은 변경하지 않는다.
 
 채택은 등록된 bounded 사례의 근거이며 전체 언어 지원 주장이 아니다. 후속 의무: S03/S05 등록 사례 밖 구문(C# async/var/await, TS 5.x–7, PostgreSQL 9.6–18 checkpoint, T-SQL 전체 statement), S04 patch 재구성·parser.c 재생성·npm/ESM closure 재현성(Swift 재생성 필수, PG noopt 미성공), S06 scanner/ABI 관측, S07 SQL Server runtime NOT_RUN, S08 Windows amd64·macOS arm64 qualification. 나머지 20 route의 native와 S08 78셀, 업무 corpus/.svc 제품은 **NOT_RUN**이다.
+
+이 절 아래의 PREPARE-06 절, 위험표의 "다음 증거"와 "현재 P05가 남는 이유"는 채택 이전 시점의 역사적 관측이다. 현재 상태는 이 채택 절과 등록부가 우선하며, T-SQL 행과 SQL-1/SQL-2 근거는 당시 Crary 후보를 가리킨다.
 
 # PREPARE-06 회수된 R2 결과와 승인된 C# r5
 

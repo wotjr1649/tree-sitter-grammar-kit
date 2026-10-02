@@ -102,8 +102,9 @@ type sourceAdoption struct {
 		Bytes  int64  `json:"bytes"`
 		SHA256 string `json:"sha256"`
 	} `json:"patched_files"`
-	Generation     string `json:"generation"`
-	NativeEvidence struct {
+	Generation            string   `json:"generation"`
+	ExpectationAmendments []string `json:"expectation_amendments"`
+	NativeEvidence        struct {
 		RunID           int64  `json:"run_id"`
 		Stage           string `json:"stage"`
 		RegisteredRows  int    `json:"registered_rows"`
@@ -111,6 +112,35 @@ type sourceAdoption struct {
 		Platform        string `json:"platform"`
 		Result          string `json:"result"`
 	} `json:"native_evidence"`
+}
+
+type expectationAmendments struct {
+	Schema     string `json:"schema"`
+	Amendments []struct {
+		ID, Route, Stage  string
+		RegisteredSubject string                   `json:"registered_subject"`
+		InputBytes        int                      `json:"input_bytes"`
+		InputSHA256       string                   `json:"input_sha256"`
+		OldWindow         struct{ Start, End int } `json:"old_error_window"`
+		NewWindow         struct{ Start, End int } `json:"new_error_window"`
+		ComparatorChanged bool                     `json:"comparator_changed"`
+		OtherRowsChanged  bool                     `json:"other_rows_changed"`
+	} `json:"amendments"`
+}
+
+// checkExpectationAmendments pins the single user-approved T-SQL window correction to its registered case.
+func checkExpectationAmendments(e expectationAmendments) error {
+	if e.Schema != "tsgk-p05-expectation-amendments/r1" || len(e.Amendments) != 1 {
+		return fmt.Errorf("expectation amendment scope mismatch")
+	}
+	a := e.Amendments[0]
+	if a.ID != "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1" || a.Route != "tsql" || a.Stage != "mssql-patch-r1" || a.RegisteredSubject != "src/dev/prepare-p05/remedy-followup-r2.json" || a.InputBytes != 54 || !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(a.InputSHA256) {
+		return fmt.Errorf("expectation amendment identity mismatch")
+	}
+	if a.OldWindow.Start != 27 || a.OldWindow.End != 50 || a.NewWindow.Start != 27 || a.NewWindow.End != 52 || a.ComparatorChanged || a.OtherRowsChanged {
+		return fmt.Errorf("expectation amendment window mismatch")
+	}
+	return nil
 }
 
 // adoptedRoutes are the routes whose remedied candidates the user adopted on 2026-10-02 (PREPARE #20).
@@ -134,6 +164,10 @@ func checkAdoption(r sourceCandidate) error {
 	n := a.NativeEvidence
 	if n.RunID <= 0 || strings.TrimSpace(n.Stage) == "" || n.RegisteredRows <= 0 || n.RegisteredEdits < 0 || n.Platform != "linux/amd64" || n.Result != "ALL_REGISTERED_ROWS_AND_EDITS_PASS" {
 		return fmt.Errorf("source adoption native evidence mismatch: %s", r.RouteID)
+	}
+	wantAmendments := r.RouteID == "tsql"
+	if (len(a.ExpectationAmendments) == 1 && a.ExpectationAmendments[0] == "src/dev/prepare-p05/remedy-expectation-amendments-r1.json") != wantAmendments || (!wantAmendments && len(a.ExpectationAmendments) != 0) {
+		return fmt.Errorf("source adoption expectation amendment mismatch: %s", r.RouteID)
 	}
 	if r.RouteID == "tsql" && (r.SupersededCandidate == nil || !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(r.SupersededCandidate.Commit) || r.SupersededCandidate.Repository == r.Repository) {
 		return fmt.Errorf("source adoption superseded candidate mismatch: %s", r.RouteID)
@@ -378,6 +412,19 @@ func TestCampaignDefinitions(t *testing.T) {
 	if err := checkSources(raw, c.Routes, scope); err != nil {
 		t.Fatal(err)
 	}
+	var amendments expectationAmendments
+	if err := json.Unmarshal(read("src/dev/prepare-p05/remedy-expectation-amendments-r1.json"), &amendments); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkExpectationAmendments(amendments); err != nil {
+		t.Fatal(err)
+	}
+	widened := amendments
+	widened.Amendments = append(widened.Amendments[:0:0], amendments.Amendments...)
+	widened.Amendments[0].ComparatorChanged = true
+	if err := checkExpectationAmendments(widened); err == nil || !strings.Contains(err.Error(), "window") {
+		t.Fatalf("comparator change not detected: %v", err)
+	}
 	for _, tc := range []struct {
 		name, diagnostic string
 		mutate           func(*campaignDefinition, *string)
@@ -421,6 +468,11 @@ func TestCampaignDefinitions(t *testing.T) {
 		{"unsafe-patch-subject", "patch subject", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.PatchSubjects[0] = "../remedy.json" }},
 		{"bad-patched-hash", "patched file", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.PatchedFiles[0].SHA256 = "00" }},
 		{"missing-superseded-tsql", "superseded", func(s *sourceRegistry, _ *string) { s.Routes[24].SupersededCandidate = nil }},
+		{"adoption-record-on-unadopted-route", "closure", func(s *sourceRegistry, _ *string) { s.Routes[1].Adoption = s.Routes[0].Adoption }},
+		{"missing-tsql-amendment", "expectation amendment", func(s *sourceRegistry, _ *string) { s.Routes[24].Adoption.ExpectationAmendments = nil }},
+		{"amendment-on-other-route", "expectation amendment", func(s *sourceRegistry, _ *string) {
+			s.Routes[0].Adoption.ExpectationAmendments = []string{"src/dev/prepare-p05/remedy-expectation-amendments-r1.json"}
+		}},
 		{"missing-feature-row", "scope table", func(_ *sourceRegistry, text *string) { *text = strings.Replace(*text, "| `csharp` |", "| csharp |", 1) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
