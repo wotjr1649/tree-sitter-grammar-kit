@@ -687,7 +687,7 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 	}
 	argExpr := map[int64]Capture{} // argument -> its last named child (the expression)
 	for _, pc := range x.pairs("arg", "arg.expr") {
-		if !pc[1].Extra {
+		if !pc[1].Extra || pc[1].IsError {
 			argExpr[pc[0].Node] = pc[1]
 		}
 	}

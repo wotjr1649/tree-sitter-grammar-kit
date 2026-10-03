@@ -522,6 +522,39 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 	if err := requireMembers(t.Wire.Queries, true, "id", "status", "code", "query_ms", "error", "patterns", "capture_names", "predicates", "matches", "partial", "types", "captures"); err != nil {
 		return err
 	}
+	// the nested objects too: a predicate without its pattern or a step without its kind
+	// must not default to pattern 0 or an empty step
+	var nested []struct {
+		Error      jsontext.Value `json:"error"`
+		Predicates jsontext.Value `json:"predicates"`
+	}
+	if err := jsonv2.Unmarshal(t.Wire.Queries, &nested); err != nil {
+		return invalid("RESPONSE_MALFORMED", err)
+	}
+	for _, q := range nested {
+		if !isNull(q.Error) {
+			if err := requireMembers(q.Error, false, "type", "offset", "point"); err != nil {
+				return err
+			}
+		}
+		if isNull(q.Predicates) {
+			continue
+		}
+		if err := requireMembers(q.Predicates, true, "pattern", "steps"); err != nil {
+			return err
+		}
+		var preds []struct {
+			Steps jsontext.Value `json:"steps"`
+		}
+		if err := jsonv2.Unmarshal(q.Predicates, &preds); err != nil {
+			return invalid("RESPONSE_MALFORMED", err)
+		}
+		for _, p := range preds {
+			if err := requireMembers(p.Steps, true, "kind", "value", "quantifier"); err != nil {
+				return err
+			}
+		}
+	}
 	if err := jsonv2.Unmarshal(t.Wire.Queries, &t.Queries, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return invalid("RESPONSE_MALFORMED", err)
 	}

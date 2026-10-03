@@ -344,14 +344,20 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
 	r2 := req.Revision() == ProtocolR2
-	if r2 && resp.Protocol == ProtocolR2 {
-		// a required capability the producer does not declare blocks the case before any
-		// of its observations is interpreted
+	// a required capability the producer does not declare blocks the case before any of its
+	// observations is interpreted; a response that is not even a well-formed r2 answer to
+	// this request (no producer declaration, another id, an exit that contradicts its
+	// status) is left to Check and fails instead
+	p := resp.Producer
+	exits := map[string]int{kit.StatusCompleted: 0, "INVALID_REQUEST": 2, kit.StatusResourceLimit: 3, kit.StatusFailed: 4}
+	exit, known := exits[resp.Status]
+	wellFormed := p.Query != "" && p.API != nil && p.Predicates != nil && p.SymbolCount != nil && p.FieldCount != nil && resp.ID == req.ID && known && exit == res.ExitCode
+	if r2 && resp.Protocol == ProtocolR2 && wellFormed {
 		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
 			out.Producer = &resp.Producer
 			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
 		}
-		if x.API && (resp.Producer.API == nil || *resp.Producer.API != APICapability) {
+		if x.API && *resp.Producer.API != APICapability {
 			out.Producer = &resp.Producer
 			return notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
 		}

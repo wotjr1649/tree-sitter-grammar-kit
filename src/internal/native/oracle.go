@@ -293,11 +293,13 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		for _, mem := range members {
 			if mem.Role == "record" {
 				m.Records++
-				m.Cases = append(m.Cases, mem.Case)
 			}
 		}
-		if berr == nil && len(m.Cases) != len(prof.OracleCases) {
-			m.ExecutionStatus = kit.StatusFailed // a case without its record is not a complete run
+		if berr == nil {
+			// every profile case gets a record; one without is a CASE_RECORD_MISMATCH
+			for _, oc := range prof.OracleCases {
+				m.Cases = append(m.Cases, oc.ID)
+			}
 		}
 		data, err := json.Marshal(m)
 		if err == nil && write("manifest.json", append(data, '\n')) {

@@ -426,4 +426,13 @@ func TestQueryMembersRequired(t *testing.T) {
 	if err := tamper(func(q map[string]any) { delete(q, "partial") }); err == nil {
 		t.Fatal("a result without partial was accepted")
 	}
+	// nested: a predicate without its pattern must not default to pattern 0
+	if err := tamper(func(q map[string]any) { delete(q["predicates"].([]any)[0].(map[string]any), "pattern") }); err == nil {
+		t.Fatal("a predicate without its pattern was accepted")
+	}
+	if err := tamper(func(q map[string]any) {
+		delete(q["predicates"].([]any)[0].(map[string]any)["steps"].([]any)[0].(map[string]any), "kind")
+	}); err == nil {
+		t.Fatal("a predicate step without its kind was accepted")
+	}
 }
