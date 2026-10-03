@@ -55,3 +55,21 @@ func TestBatchRecords(t *testing.T) {
 		t.Fatalf("encoding-invalid file %+v", bad)
 	}
 }
+
+// S05-A09: bytes after the last batch response make every frame of that batch unaccepted.
+func TestBatchTrailingBytes(t *testing.T) {
+	b := fixtureBuild(t, "plain", "TSGK_FAULT_TRAILING")
+	root := t.TempDir()
+	data := []byte("x = 1;\n")
+	os.WriteFile(filepath.Join(root, "a.txt"), data, 0o644)
+	s := sha256.Sum256(data)
+	cases := []kit.IncrementalCase{{ID: "a", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "a.txt", Role: "case", SHA256: hex.EncodeToString(s[:]), Bytes: uint64(len(data))}}}
+	x := testContext("private-corpus-local")
+	x.Output = kit.OutputRecord
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	out, batches := runBatches(ctx, b, x, root, cases)
+	if len(batches) != 1 || batches[0].TrailingBytes != 4 || out[0].ExecutionStatus != kit.StatusFailed || out[0].Code != "RESPONSE_TRAILING_BYTES" {
+		t.Fatalf("trailing batch accepted: %+v %s %s", batches, out[0].ExecutionStatus, out[0].Code)
+	}
+}

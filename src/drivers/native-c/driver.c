@@ -1303,7 +1303,12 @@ int main(int argc, char **argv) {
   for (;;) {
     uint8_t hdr[4];
     size_t got = read_full(hdr, 4);
-    if (got == 0 && batch) return 0;
+    if (got == 0 && batch) {
+#ifdef TSGK_FAULT_TRAILING
+      fwrite("junk", 1, 4, stdout); /* owned fault: bytes after the last response */
+#endif
+      return 0;
+    }
     req_id[0] = 0;
     if (got < 4) return protocol_error("FRAME_TRUNCATED");
     uint32_t len = (uint32_t)hdr[0] << 24 | (uint32_t)hdr[1] << 16 | (uint32_t)hdr[2] << 8 | hdr[3];
