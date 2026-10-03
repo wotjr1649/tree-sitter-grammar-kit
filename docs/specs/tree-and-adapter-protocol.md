@@ -1,6 +1,13 @@
 # Tree와 adapter — draft/r0
 
-등록된 `.svc`는 [SVC-SERVICEHOST-r1](../validation/net461-workload.md)의 composite result를 사용한다. directive 관측과 원본 bytes를 included range로 파싱한 inline C# tree를 원본 identity·byte/point로 결속하며 segment PASS를 전체 파일 PASS로 바꾸지 않는다. 이 계약은 계획이며 format 구현은 NOT_RUN이다.
+등록된 `.svc`는 [SVC-SERVICEHOST-r1](../validation/net461-workload.md)의 composite result를 사용한다. directive 관측과 원본 bytes를 included range로 파싱한 inline C# tree를 원본 identity·byte/point로 결속하며 segment PASS를 전체 파일 PASS로 바꾸지 않는다. S03이 record 모양 `tsgk-svc-composite/r1`을 고정하고 생산은 S05다(format 구현은 NOT_RUN).
+
+* `schema`, `format: "SVC-SERVICEHOST-r1"`, `input`(아래 `tsgk-tree/r1`의 전체 파일 input), `identities`(producer·source·policy).
+* `directive`: directive가 없으면 `null`이다. 있으면 전체 범위, `<%@`과 `%>`의 범위(`%>`가 없으면 `null`), `ServiceHost` 이름 범위, `attributes[{name, value, quote}]`(이름·값은 원본 범위, `quote`는 `"`·`'`·`null`), `diagnostics`(`DIRECTIVE_DUPLICATE`, `ATTRIBUTE_DUPLICATE`, `ATTRIBUTE_UNKNOWN`, `TERMINATOR_MISSING`, `QUOTE_UNTERMINATED`)다.
+* `language{value, status}`: `value`는 Language 값 범위 또는 `null`, `status`는 `CSHARP`(`C#`/`c#`), `UNRESOLVED_LANGUAGE`(inline이 있는데 생략), `UNSUPPORTED_LANGUAGE`(그 밖의 값), `NOT_REQUIRED`(inline 없는 directive에서 생략)다.
+* `code_behind`: CodeBehind 값 범위와 `resolution`(`NOT_RESOLVED` 또는 caller가 준 입력 identity를 가진 `CALLER_SUPPLIED`)이며 없으면 `null`이다. kit는 그 파일을 스스로 찾거나 읽지 않는다.
+* `inline`: `status`가 `CSHARP`일 때만 `{included_ranges, tree}`이고 그 밖은 `null`이다. `tree`는 원본 좌표의 `tsgk-tree/r1` envelope 또는 `tsgk-tree-summary/r1`이다.
+* `coverage{directive, code_behind, inline}`: 각각 `OBSERVED`, `ABSENT`, `UNRESOLVED`, `UNSUPPORTED`다. 모든 범위는 원본 byte와 0-based row·byte column이며 값 텍스트를 추출하지 않는다.
 
 S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 주장이다. schema 일치, ordered CST 일치, query 일치, 언어 사양 적합성은 서로 대체하지 않는다. 아래 형식은 experimental이며 실제 native/두 번째 grammar/consumer 검증 전에 안정 API로 고정하지 않는다.
 
@@ -42,7 +49,7 @@ S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 
 
 ### 선언·사실 mapping과 등록 사례 밖 구조 — S03 고정
 
-[`declaration-facts-r1`](../../src/contracts/fact-mapping.json)은 채택 C#·T-SQL·PostgreSQL route의 사실 종류(`type_declaration`, `member_declaration`, `create_object`, `static_exec_target`, `command_text_site`, `command_text_literal`, `dynamic_sql_site`)를 각 route의 등록 upstream schema(repository·commit·path·bytes·sha256)의 named node와 locator(`node`, `field:F`, `child:T`, `children:T`의 `/` 경로)에 대응시키거나 이유를 붙여 `UNSUPPORTED`로 둔다. 같은 파일의 `dynamic-sql-r1`은 동적 SQL 구문 종류(`EXEC_PAREN`, `EXEC_PAREN_AT`, `SP_EXECUTESQL`, heuristic `CSHARP_COMMAND`), 동적이 아닌 `EXEC_MODULE_VARIABLE`(`EXEC @module_var`), 제외 인자(`AS USER/LOGIN`, pass-through 매개변수), 인자 종류 6가지와 그 node 대응, 알려진 누락(`AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출)과 C# 오탐(`CommandType.StoredProcedure`)을 닫힌 목록으로 고정한다. `TestFactMapping`이 형식과 전수성을, `TestFactMappingAgainstSchemas`(로컬 schema 사본 필요)가 모든 locator가 그 schema에서 해석되는지 검사한다. mapping은 schema에서 도출한 계약이며 tree 위 동작은 S05(선언 순회)·S06(사실 query·동적 SQL 위치 추출)이 native로 검증한다. 채택 후보의 schema는 S04가 재생성하므로 아직 결속하지 않는다. PREPARE의 후보 native tree에는 upstream schema에 없는 node(C# `file_based_app_directive`, T-SQL `generated_always_clause`·`graph_table_type`)가 있어, S04는 재생성 schema를 `schema diff`로 upstream과 대조하고 mapping의 locator를 다시 검사해야 한다.
+[`declaration-facts-r1`](../../src/contracts/fact-mapping.json)은 채택 C#·T-SQL·PostgreSQL route의 사실 종류(`type_declaration`, `member_declaration`, `create_object`, `static_exec_target`, `command_text_site`, `command_text_literal`, `dynamic_sql_site`)를 각 route의 등록 upstream schema(repository·commit·path·bytes·sha256)의 named node와 locator(`node`, `field:F`, `child:T`, `children:T`의 `/` 경로)에 대응시키거나 이유를 붙여 `UNSUPPORTED`로 둔다. 같은 파일의 `dynamic-sql-r1`은 동적 SQL 구문 종류(`EXEC_PAREN`, `EXEC_PAREN_AT`, `SP_EXECUTESQL`, heuristic `CSHARP_COMMAND`), 동적이 아닌 `EXEC_MODULE_VARIABLE`(`EXEC @module_var`), 제외 인자(`AS USER/LOGIN`, pass-through 매개변수), 인자 종류 6가지와 그 node 대응, 알려진 누락(`AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출)과 C# 오탐(`CommandType.StoredProcedure`)을 닫힌 목록으로 고정한다. XML 구조 mapping `xml-structure-r1`은 element 이름(`STag`·`EmptyElemTag`의 `Name`), attribute 이름과 값 범위(`Attribute`의 `Name`·`AttValue`), 등록 이름 목록에 해당하는 선언 참조 attribute를 범위로만 기록하며 값을 추출·해석·취득하지 않는다. `TestFactMapping`이 형식과 전수성을, `TestFactMappingAgainstSchemas`(로컬 schema 사본 필요)가 모든 locator가 그 schema에서 해석되는지 검사한다. mapping은 schema에서 도출한 계약이며 tree 위 동작은 S05(선언 순회)·S06(사실 query·동적 SQL 위치 추출)이 native로 검증한다. 채택 후보의 schema는 S04가 재생성하므로 아직 결속하지 않는다. PREPARE의 후보 native tree에는 upstream schema에 없는 node(C# `file_based_app_directive`, T-SQL `generated_always_clause`·`graph_table_type`)가 있어, S04는 재생성 schema를 `schema diff`로 upstream과 대조하고 mapping의 locator를 다시 검사해야 한다.
 
 `known_gaps`가 S03에 배정한 항목의 구조 계약과 처분은 다음과 같다. 어느 항목도 전체 언어 지원 주장이 아니다.
 

@@ -26,6 +26,17 @@ type factMapping struct {
 			Fact, Node, Name, Value, Match, Status, Reason string
 		} `json:"facts"`
 	} `json:"routes"`
+	XMLStructure struct {
+		Revision, Route string
+		ValuePolicy     string `json:"value_policy"`
+		Schema          struct {
+			Repository, Commit, Path, SHA256 string
+			Bytes                            int
+		} `json:"schema"`
+		Facts []struct {
+			Fact, Node, Name, Value, Match, Status, Reason string
+		} `json:"facts"`
+	} `json:"xml_structure"`
 	DynamicSQL struct {
 		Revision string `json:"revision"`
 		Kinds    []struct {
@@ -135,6 +146,10 @@ func TestFactMapping(t *testing.T) {
 			}
 		}
 	}
+	x := m.XMLStructure
+	if x.Revision != "xml-structure-r1" || x.Route != "xml" || x.Schema.Path != "xml/src/node-types.json" || len(x.Facts) != 4 || !strings.Contains(x.ValuePolicy, "never extracted") {
+		t.Fatalf("xml structure %+v", x)
+	}
 	for _, r := range []string{"csharp", "tsql", "postgresql-sql"} {
 		if !routes[r] {
 			t.Fatalf("adopted declaration route %s is not mapped", r)
@@ -178,7 +193,11 @@ func TestFactMappingAgainstSchemas(t *testing.T) {
 		Fields   map[string]set `json:"fields"`
 		Children *set           `json:"children"`
 	}
-	for _, r := range m.Routes {
+	routes := m.Routes
+	routes = append(routes, routes[0])
+	last := &routes[len(routes)-1]
+	last.Route, last.Schema, last.Facts = m.XMLStructure.Route, m.XMLStructure.Schema, m.XMLStructure.Facts
+	for _, r := range routes {
 		data, err := os.ReadFile(filepath.Join(dir, r.Route+".json"))
 		if err != nil {
 			t.Fatal(err)

@@ -90,6 +90,19 @@
       ]
     }
   ],
+  "xml_structure": {
+    "revision": "xml-structure-r1",
+    "route": "xml",
+    "schema": {"repository": "tree-sitter-grammars/tree-sitter-xml", "commit": "5000ae8f22d11fbe93939b05c1e37cf21117162d", "path": "xml/src/node-types.json", "bytes": 17444, "sha256": "3b63e111187a0f9b2282e1748db2dd6b10e968f0cdb3676772def93bf89f2a7b"},
+    "value_policy": "ranges only: element names, attribute names and attribute value ranges are recorded; attribute values and character data are never extracted as text, resolved or fetched",
+    "facts": [
+      {"fact": "xml_element", "node": "STag", "name": "child:Name"},
+      {"fact": "xml_element", "node": "EmptyElemTag", "name": "child:Name"},
+      {"fact": "xml_attribute", "node": "Attribute", "name": "child:Name", "value": "child:AttValue"},
+      {"fact": "xml_declared_reference", "node": "Attribute", "name": "child:Name", "value": "child:AttValue", "match": "the attribute name, compared case-sensitively after any namespace prefix, is one of xml-reference-attributes-r1; the reference is recorded as a range and never accessed (N461-XML-REFERENCE)"}
+    ],
+    "reference_attributes": {"revision": "xml-reference-attributes-r1", "names": ["schemaLocation", "noNamespaceSchemaLocation", "location", "configSource", "file", "namespace"]}
+  },
   "csharp_command_api": {
     "revision": "csharp-command-api-r1",
     "heuristic": true,
