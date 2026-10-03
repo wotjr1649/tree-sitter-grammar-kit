@@ -18,7 +18,7 @@ Windows 로컬 실행은 Go 1.27.1, PowerShell 7.6.6, 기존 MSYS2 UCRT64 GCC 16
 
 ## 관측 revision과 로컬 검사
 
-구현 commit `b07fc5b`, `4f94433`, `7d192bc`, `5189eee`, `4b73cdc`, `0685eaf`, `9c047c1`, `fb8934a`에서 Windows amd64로 [validation](../validation/validation.md)의 명령 블록(고정 module 취득 → `GOPROXY=off`·`-mod=readonly`, `gofmt`, `go vet`(windows·`GOOS=linux`·`GOOS=darwin`), `go test ./src/... -timeout 300s`, `go build`, `git diff --check`)을 `TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC`를 준 상태로 실행해 모두 통과했다. 한 번은 기존 S01 시험 `TestCorpusLimits/WALL_LIMIT`(wall 1ns)이 native 시험과 동시에 돌 때 실패했고 단독 3회는 통과했다. 시간 의존 시험의 기존 불안정으로 기록하며 이번 변경과 무관하다.
+구현 commit `b07fc5b`, `4f94433`, `7d192bc`, `5189eee`, `4b73cdc`, `0685eaf`, `9c047c1`, `fb8934a`, 보고서 `861e215`, 리뷰 수정 `e81fa10`, `58f079b`에서 Windows amd64로 [validation](../validation/validation.md)의 명령 블록(고정 module 취득 → `GOPROXY=off`·`-mod=readonly`, `gofmt`, `go vet`(windows·`GOOS=linux`·`GOOS=darwin`), `go test ./src/... -timeout 300s`, `go build`, `git diff --check`)을 `TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC`를 준 상태로 실행해 모두 통과했다. 한 번은 기존 S01 시험 `TestCorpusLimits/WALL_LIMIT`(wall 1ns)이 native 시험과 동시에 돌 때 실패했고 단독 3회는 통과했다. 시간 의존 시험의 기존 불안정으로 기록하며 이번 변경과 무관하다.
 
 | 검사 | 결과 |
 |---|---|
@@ -28,18 +28,18 @@ Windows 로컬 실행은 Go 1.27.1, PowerShell 7.6.6, 기존 MSYS2 UCRT64 GCC 16
 | frame(A09) | 짧은 머리·짧은 payload·48 MiB 초과·single의 추가 frame/byte·공백 삽입·trailing JSON·protocol revision·base64·0 한도·tree가 아닌 edit·5 edit·locator·encoding·range 위반을 `INVALID_REQUEST`로 거부. 응답 쪽 truncation·trailing byte·unknown/중복 member·`complete:false`·exit 불일치·step 누락·digest 위조·node graph 위조·source 전송 불일치를 거부. batch의 trailing byte는 그 batch 전체를 받지 않음 |
 | 한도·취소(A10·A13·A19) | node·depth·출력 상한 `RESOURCE_LIMIT`, `parse_ms` 1ms progress 취소 `PARSE_TIME_LIMIT`, allocator hook 2048 bytes `ALLOCATION_LIMIT`, null tree fault `FAILED`/`PARSE_NULL`(빈 tree로 바꾸지 않음), caller 취소 `CANCELLED`와 cleanup verified, 같은 요청 10회 별도 process 동일 digest. 중첩 12000은 완료(max depth ≥ 10000), 100001은 `DEPTH_LIMIT` |
 | identity(A11) | define·parser bytes 변경은 새 build identity, 옛 hash의 parser·runtime 변경·compiler hash 불일치·제한 밖 symbol은 실행 전 거부, 변조한 executable은 `EXECUTABLE_MISMATCH`로 실행하지 않음 |
-| targeted mutant(A12) | 21/21 검출(`mutants-fb8934a.json`). 마지막 step만 비교, 정렬·중복 제거 후 비교, 누락 flag 기본값, route 재사용·fresh 독립 확인 제거, trailing byte·digest·exit·step 수 검사 제거, edit old 검사 제거, Unicode scalar column, cp949 AMBIGUOUS 무시, progress 취소·allocator 상한·depth 상한 제거, cp949 decode 폭, 홀수 UTF-16 수용, summary gate 무시, CR 정규화, batch trailing 무시. 첫 실행(`4b73cdc`)은 18/21이었다: 한 mutant는 컴파일되지 않았고(검출 실패 아님), allocator mutant는 realloc 경로가 같은 한도를 지켜 동등했으며, chunk 크기 mutant는 runtime이 chunk 경계를 이어 읽어 동등했다. 앞의 둘은 의미 있는 형태로 고쳤고 마지막은 decode 폭 mutant로 바꿨다. decode 폭을 관측하려고 owned plain grammar의 identifier를 Unicode 문자로 넓혀 parser를 다시 생성했다 |
+| targeted mutant(A12) | 21/21 검출(`mutants-fb8934a.json`, 리뷰 수정 뒤 `mutants-58f079b.json`도 21/21). 마지막 step만 비교, 정렬·중복 제거 후 비교, 누락 flag 기본값, route 재사용·fresh 독립 확인 제거, trailing byte·digest·exit·step 수 검사 제거, edit old 검사 제거, Unicode scalar column, cp949 AMBIGUOUS 무시, progress 취소·allocator 상한·depth 상한 제거, cp949 decode 폭, 홀수 UTF-16 수용, summary gate 무시, CR 정규화, batch trailing 무시. 첫 실행(`4b73cdc`)은 18/21이었다: 한 mutant는 컴파일되지 않았고(검출 실패 아님), allocator mutant는 realloc 경로가 같은 한도를 지켜 동등했으며, chunk 크기 mutant는 runtime이 chunk 경계를 이어 읽어 동등했다. 앞의 둘은 의미 있는 형태로 고쳤고 마지막은 decode 폭 mutant로 바꿨다. decode 폭을 관측하려고 owned plain grammar의 identifier를 Unicode 문자로 넓혀 parser를 다시 생성했다 |
 | 공개 offline closure(A15) | `TestOfflineClosure` 통과: 공개 package closure에 runner·`os/exec`·network가 없다. native 도구가 없으면 owned native 시험은 skip이고 기존 CLI/API 시험은 그대로 통과한다(CI는 `TSGK_NATIVE_REQUIRED=1`) |
 | cp949 표(A16) | 내장 표 identity·고지 시험, driver header가 표의 기계 변환인지 시험, AMBIGUOUS·표 밖 쌍·선언 판정 시험 |
 | 등록부·fixture | 26 route registry가 adoption hash와 재현 기준 parser를 가리키는지, 대용량 fixture를 Go에서 독립 재생성해 크기·sha256이 같은지, 사례 파일 형식을 시험 |
 
 ## 26 route (A14·A22, Windows 로컬)
 
-`prepare-routes.ps1`이 S01이 결속한 source에서 26 route 입력을 만들었다. 채택 6 route는 patch chain을 적용해 모든 adoption hash가 일치했고, typescript는 `tsgk reproduce`로 다시 생성해 6개 출력이 모두 등록 기준과 같았다(PASS, npm `tree-sitter-javascript@0.23.1` 632551 bytes 다운로드). 나머지 5개 채택 route는 S04 출력을 같은 hash로 재사용했다. `fb8934a`의 `run-routes.ps1` 결과(`routes-windows-fb8934a.json`):
+`prepare-routes.ps1`이 S01이 결속한 source에서 26 route 입력을 만들었다. 채택 6 route는 patch chain을 적용해 모든 adoption hash가 일치했고, typescript는 `tsgk reproduce`로 다시 생성해 6개 출력이 모두 등록 기준과 같았다(PASS, npm `tree-sitter-javascript@0.23.1` 632551 bytes 다운로드). 나머지 5개 채택 route는 S04 출력을 같은 hash로 재사용했다. 리뷰 수정 뒤 `e81fa10`의 `run-routes.ps1` 결과(`routes-windows-e81fa10.json`; 수정 전 `fb8934a` 결과도 보존):
 
 * 26 route 모두 GCC로 build됐다. build 이식성 patch는 필요 없었다(parser compile 최장 PostgreSQL 6.9초).
-* 사례 137개(route 기본 52, gap 42, NET461 C#·XML 21, SVC 22) 모두 `COMPLETED`. edit가 있는 모든 사례에서 incremental equality와 route가 PASS다. 기대값 FAIL은 아래 10건뿐이다.
-* SVC 22건 중 21건 PASS. `n461-svc-terminator-r-r1`은 `%>`를 지운 중간 step에 parse할 inline이 없어 설계대로 `BLOCKED`(`SVC_INLINE_NOT_PARSED`)다. 이 형식은 그런 step의 incremental 비교를 하지 않는다(한계).
+* 사례 137개(route 기본 52, gap 42, NET461 C#·XML 21, SVC 22) 모두 `COMPLETED`: PASS 122, FAIL 10, BLOCKED 5. edit가 있는 모든 사례에서 incremental equality와 route가 PASS다. FAIL은 아래 grammar gap 10건이다.
+* SVC 22건 중 directive만 있거나 C# inline을 parse한 17건이 PASS다. BLOCKED 5건은 inline을 C#으로 해석할 수 없는 사례다: Language 생략·`%>` 없음(`SVC_INLINE_UNRESOLVED` 3건: directive·codebehind·language 음성 사례), VB(`SVC_INLINE_UNSUPPORTED`), `%>`를 지운 중간 step(`SVC_INLINE_NOT_PARSED`). 이 형식은 그런 step의 incremental 비교를 하지 않는다(한계).
 
 grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 넘김):
 
@@ -56,26 +56,37 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 
 | fixture | bytes | 결과 | parse | process wall | job commit 최대 |
 |---|---|---|---|---|---|
-| `cs-large-22m` | 21997719 | `COMPLETED`, summary(`DESCENDANT_LIMIT`, 11463151 node), errors 0, 선언 PASS | 10.6초 | 26.2초 | 3.33 GB |
-| `cs-large-8m-errors` | 7999000 | `COMPLETED`, summary, errors 2257(목록 1000건 상한, truncated), 선언 FAIL(기대값) | 5.2초 | 10.1초 | 1.23 GB |
-| `cs-large-32mib-errors` | 33554432 | `RESOURCE_LIMIT`(`MEMORY_LIMIT`, Job Object hard cap 4 GiB) | — | 18.4초 | 4.30 GB |
+| `cs-large-22m` | 21997719 | `COMPLETED`, summary(`DESCENDANT_LIMIT`, 11463151 node), errors 0, 선언 PASS | 10.5초 | 21.6초 | 3.33 GB |
+| `cs-large-8m-errors` | 7999000 | `COMPLETED`, summary, errors 2257(목록 1000건 상한, truncated), 선언 FAIL(기대값) | 4.0초 | 8.0초 | 1.23 GB |
+| `cs-large-32mib-errors` | 33554432 | `RESOURCE_LIMIT`(`MEMORY_LIMIT`, Job Object hard cap 4 GiB) | — | 13.5초 | 4.30 GB |
 
 32 MiB C#은 이 grammar에서 4 GiB 안에 parse되지 않는다. S05-A18에 따라 이 결과를 그대로 기록하고 상한은 올리지 않는다. 값을 올릴지는 사용자 결정이다. 48 MiB를 넘는 encoded 요청은 실행 전 `REQUEST_TOO_LARGE`, driver frame 머리는 `FRAME_TOO_LARGE`다. 세 host 측정은 `native routes` job이 같은 fixture로 한다(실행 전). 깊은 중첩은 owned grammar로 foundation의 세 OS 시험에 들어 있다.
 
 ## 비공개 corpus(A20, Windows 로컬, 개수만)
 
-`NET461-PHASE2-LOCAL-r1`을 clean 후보 `fb8934a`에서 `run-corpus.ps1`로 실행했다(8분 3초, 실행 wall 3600초 안). 경로·이름·내용이 담긴 기록은 추적하지 않는 로컬 artifacts에만 있다.
+`NET461-PHASE2-LOCAL-r1`을 clean 후보 `58f079b`에서 `run-corpus.ps1`로 실행했다(6분 34초, 실행 wall 3600초 안, 호출마다 남은 시간을 `--run-wall`로 줌). 리뷰 수정 전 `fb8934a`의 실행도 같은 개수였다. 경로·이름·내용이 담긴 기록은 추적하지 않는 로컬 artifacts에만 있다.
 
 * inventory 21451 record: route 있는 비`PRESENCE_ONLY` 17957, `PRESENCE_ONLY` 133, route 없음 3494. encoding: UTF-8(BOM 13371, 검증 1146), UTF-16LE(BOM) 2789, CP949(검증) 651. route 없는 파일 중 AMBIGUOUS 2, NUL_WITHOUT_BOM 1292.
-* route별 batch: csharp 6624 파일·14 process, tsql 6150·13, xml 5163·11, svc 20·1. 17957 파일 모두 `COMPLETED`, `NOT_RUN` 0, 치명 frame 0, kit 결함 0.
-* `has_error`: csharp 48(그중 자동 생성 파일 45), tsql 181, xml 1, svc 0. 이 230개 ERROR 파일의 개별 처분은 S08 판정이다. 표본 진단에서 tsql 오류는 한글 식별자(별칭·변수·열 이름) 위치였고 decode된 글자는 정확했다. UTF-8 파일에서도 같은 형태가 나와 encoding이 아니라 grammar의 비ASCII 식별자 미지원으로 본다.
+* route별 batch: csharp 6624 파일·14 process, tsql 6150·13, xml 5163·11. svc 20 파일은 모두 inline 없는 directive라 driver process 없이 관측만 했다. 17957 파일 모두 `COMPLETED`, `NOT_RUN` 0, 치명 frame 0, kit 결함 0.
+* `has_error`: csharp 48(그중 자동 생성 파일 45), tsql 181, xml 1. svc는 tree를 parse하지 않았으므로 관측값이 없다. 이 230개 ERROR 파일의 개별 처분은 S08 판정이다. 표본 진단에서 tsql 오류는 한글 식별자(별칭·변수·열 이름) 위치였고 decode된 글자는 정확했다. UTF-8 파일에서도 같은 형태가 나와 encoding이 아니라 grammar의 비ASCII 식별자 미지원으로 본다.
 * full tree gate: 517개 파일이 descendant 50000을 넘었고 모두 완료됐다(보존은 record만).
 * svc 20개는 모두 directive와 CodeBehind 관측, inline 없음(`inline: ABSENT`)이다.
-* 처음 두 실행(`0685eaf`, `9c047c1`)은 parse를 마친 뒤 helper의 결과 취합 단계에서 strict mode 속성 접근 오류로 멈췄다. 두 시도는 보존했고 helper를 고친 세 번째 실행이 위 결과다.
+* helper 결과 취합 결함으로 네 번의 시도가 완전한 기록을 남기지 못했다: `0685eaf`·`9c047c1`은 parse를 마친 뒤 strict mode 속성 접근 오류로 멈췄고, `e81fa10`은 주석 처리 실수로 `has_error`를 기록하지 않았다. 모두 보존했다(`private-corpus-*-attempt*`). parse 자체의 결과 개수는 시도마다 같았다.
+
+## 분리 context 리뷰와 처분
+
+`5aee01d..861e215`에 대한 분리 context 리뷰(EXECUTED_REVIEW, 별도 general-purpose subagent, Windows에서 전체 `go test`와 native frame 시험 실행; sanitizer·세 OS CI는 미실행; GitHub 승인 아님)는 BLOCKER 1, MATERIAL 3, MINOR 6, NOTE 5를 보고했다(`artifacts/.../session-05/review-r1.json`). 처분은 `e81fa10`이다.
+
+* BLOCKER R1-B1: driver가 included range의 끝을 검사하기 전에 point를 계산해 source 밖을 읽었다 → 범위 검사를 먼저 하고, 4000000000 끝 범위 거부 시험을 더했다.
+* MATERIAL R1-M1: 선언 64개일 때 계산 표시 bit와 64번째 선언 bit가 겹쳤다 → 별도 계산 표시, `TestSixtyFourDeclarations`.
+* MATERIAL R1-M2: 빈 buffer를 `memcpy(NULL, 0)`으로 넘겨 UBSan에서 멈출 수 있었다 → 길이 0이면 복사하지 않는다.
+* MATERIAL R1-M3: parse하지 않은 `.svc` inline(Language 생략·VB·directive 없음·일부 step만 C#)이 PASS였다 → directive만 있는 source만 PASS, 나머지는 code를 붙여 BLOCKED. 계약 문구와 시험을 고쳤다.
+* MINOR R1-m1~m6: batch 배열 null과 parse하지 않은 step의 `has_error` 기록, cleanup 실패를 다른 상태보다 먼저 판정, partial tree 최하위 node의 field, 응답 파일 이름 충돌과 쓰기 실패 exit, 응답 code와 첫 미완료 tree의 일치, corpus 전체 wall(`--run-wall`).
+* NOTE R1-n1~n4: locator 구분자 일치, protocol 오류 시 frame buffer 해제, route helper의 BLOCKED claim·대용량 build 실패 집계, build identity와 executable bytes 관계(같은 identity로 다시 build하면 Windows PE bytes가 달라질 수 있어 executable hash를 build마다 기록) — 모두 반영했다.
 
 ## acceptance 연결
 
-A01 `TestIncrementalSequence`; A02 `TestMalformedThenRepair`; A03·A04 `TestFaultControlsDetected`; A05 `TestEdgeStructures`, `TestCompareTrees`; A06·A16·A17 `TestEncodingsAndPoints`, `TestApplyEdits`, `TestEncodingSteps`, `TestCP949Table`, `TestCP949TableHeader`; A07 `TestEditRejections`; A08 `TestStatefulScanner`; A09 `TestFrames`, `TestBatchTrailingBytes`; A10·A13·A19 `TestLimitsAndCancellation`, `TestBatchRecords`; A11 `TestBuildIdentity`; A12 위 mutant; A13 sanitizer는 CI Linux 단계; A14·A22 위 26 route와 `TestNativeRoutesRegistry`, `TestRouteCaseFiles`; A15 `TestOfflineClosure`; A18 `TestSummaryGate`, `TestLargeFixtureIdentity`와 위 대용량 표; A20 위 corpus와 `TestBatchRecords`; A21 `src/testdata/native/dynamic-sql/expected.json`; NET461 SVC는 `TestObserveServiceHost`, `TestObserveServiceHostUTF16`, `TestSvcComposite`와 SVC 사례.
+A01 `TestIncrementalSequence`; A02 `TestMalformedThenRepair`; A03·A04 `TestFaultControlsDetected`; A05 `TestEdgeStructures`, `TestCompareTrees`; A06·A16·A17 `TestEncodingsAndPoints`, `TestApplyEdits`, `TestEncodingSteps`, `TestCP949Table`, `TestCP949TableHeader`; A07 `TestEditRejections`; A08 `TestStatefulScanner`; A09 `TestFrames`, `TestBatchTrailingBytes`; A18 선언 상한 `TestSixtyFourDeclarations`; A10·A13·A19 `TestLimitsAndCancellation`, `TestBatchRecords`; A11 `TestBuildIdentity`; A12 위 mutant; A13 sanitizer는 CI Linux 단계; A14·A22 위 26 route와 `TestNativeRoutesRegistry`, `TestRouteCaseFiles`; A15 `TestOfflineClosure`; A18 `TestSummaryGate`, `TestLargeFixtureIdentity`와 위 대용량 표; A20 위 corpus와 `TestBatchRecords`; A21 `src/testdata/native/dynamic-sql/expected.json`; NET461 SVC는 `TestObserveServiceHost`, `TestObserveServiceHostUTF16`, `TestSvcComposite`와 SVC 사례.
 
 ## 남은 일과 한계
 
