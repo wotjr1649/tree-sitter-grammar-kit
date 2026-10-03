@@ -110,6 +110,24 @@ PR #64의 CI run 37120183769(head `4a52224`)에서 foundation ubuntu-24.04만 �
 * 새 시험은 compiler를 실제로 실행하지 않는다. Linux CI build는 link로 지정한 compiler로 build할 수 있음을 보여 주지만, 해석한 경로로 실행했는지는 간접적으로만 확인한다.
 * 다음 CI의 위험은 Linux sanitizer 단계의 시간 예산이다.
 
+## PR CI 2회차 실패와 Linux 전용 경로 점검
+
+CI run 37121192095(head `0271e06`)에서 compiler link 수정은 효과가 있었다. Linux에서 CLI 시험과 대부분의 native 시험이 실제 build까지 통과했다(native package 47.8초). 남은 실패는 `TestBuildIdentity`와 `TestBuildCompilerLink` 두 개였고, 둘 다 `BUILD_START_FAILED: MEMORY_HARD_CAP_UNSUPPORTED: posix-process-group backend memory is SAMPLED`였다. 두 시험만 build 요청에 위임된 cgroup parent를 넘기지 않았다. 계약(platform-support, cli-and-profile)상 Windows·Linux는 hard memory backend가 없으면 실행 전에 거부하므로 제품 동작은 맞고, 결함은 시험에 있었다.
+
+수정 `95bde45`:
+
+* 시험 build 요청을 `testBuildRequest` 하나로 모았다. 모든 시험 build가 같은 cgroup parent와 같은 sanitizer 모드를 쓴다. 이전에는 `TestBuildIdentity`의 요청에 sanitizer 설정도 빠져 있었다. 그래서 sanitizer 단계에서 "parser가 바뀌면 identity도 바뀐다"는 비교가 처음부터 다른 build끼리 이뤄졌다.
+* Linux에서만 드러나는 경로를 정적으로 점검하다 CI helper script의 종료 코드 결함을 찾았다. `run-routes.ps1`은 실패가 없으면 `exit` 없이 끝났다. 그러면 호출한 workflow의 `$LASTEXITCODE`에 마지막 tsgk exit이 남는다(대용량 32 MiB의 예상된 `RESOURCE_LIMIT`이면 3). 결국 실패 0건이어도 routes job이 세 OS 모두에서 실패했을 것이다. `run-routes.ps1`과 `prepare-routes.ps1`은 이제 `exit 0`으로 끝난다. 수정 뒤 csharp route를 workflow와 같은 방식으로 호출해 확인했다. 마지막 tsgk는 exit 3이었고 호출자의 `$LASTEXITCODE`는 0이었다.
+* `TestHostSettingsReachCI`를 추가했다. 시험 build가 `testBuildRequest`를 우회하거나 두 script가 `exit 0`으로 끝나지 않으면 실패한다. 두 음성 대조로 시험이 잡는 것을 확인했다.
+* Linux sanitizer 단계에서 `vm.mmap_rnd_bits=28`을 설정한다. 높은 ASLR 엔트로피에서 오래된 sanitizer runtime이 shadow memory를 배치하지 못하는 문제가 알려져 있다(actions/runner-images#9515). 이 설정은 일회용 hosted VM의 그 단계에만 적용된다.
+
+정적으로 점검했지만 Linux 없이는 확인할 수 없는 CI 위험:
+
+* sanitizer 단계의 ASan/UBSan 실행(LSan 누수 판정 포함)과 시간 예산. sanitizer 없는 Linux native package가 47.8초였고, 상한은 go test 420초와 step 8분이다.
+* native-prepare의 codeload archive 경로. 26 route archive 추출, patch chain, tree-sitter·node 내려받기와 실행 권한, 6개 route 재생성이 해당한다. 로컬 prepare는 S01 source를 재사용해 이 경로를 실행하지 않았다. runtime archive 경로만 세 OS foundation에서 통과했다.
+* Linux 대용량 fixture의 cgroup 메모리. cgroup은 page cache도 센다. 22m fixture가 4 GiB에 닿으면 측정 결과가 달라질 수 있지만 route failure로 세지는 않는다.
+* macOS 대용량 fixture. sampled 메모리이고 runner RAM은 7 GB다.
+
 ## acceptance 연결
 
 A01 `TestIncrementalSequence`; A02 `TestMalformedThenRepair`; A03·A04 `TestFaultControlsDetected`; A05 `TestEdgeStructures`, `TestCompareTrees`; A06·A16·A17 `TestEncodingsAndPoints`, `TestApplyEdits`, `TestEncodingSteps`, `TestCP949Table`, `TestCP949TableHeader`; A07 `TestEditRejections`; A08 `TestStatefulScanner`; A09 `TestFrames`, `TestBatchTrailingBytes`; A18 선언 상한 `TestSixtyFourDeclarations`; A10·A13·A19 `TestLimitsAndCancellation`, `TestBatchRecords`; A11 `TestBuildIdentity`; A12 위 mutant; A13 sanitizer는 CI Linux 단계; A14·A22 위 26 route와 `TestNativeRoutesRegistry`, `TestRouteCaseFiles`; A15 `TestOfflineClosure`; A18 `TestSummaryGate`, `TestLargeFixtureIdentity`와 위 대용량 표; A20 위 corpus와 `TestBatchRecords`; A21 `src/testdata/native/dynamic-sql/expected.json`; NET461 SVC는 `TestObserveServiceHost`, `TestObserveServiceHostUTF16`, `TestSvcComposite`와 SVC 사례.
