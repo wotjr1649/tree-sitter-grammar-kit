@@ -4,17 +4,25 @@ A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go A
 
 ## Status and scope
 
-Session 01 implements offline `tsgk inspect` (bounded zero-config inventory of a grammar snapshot without running its code), `tsgk identity` (versioned file manifest and set fingerprint with detected encodings), `tsgk corpus` (private local corpus inventory), and the same operations in the public `src/kit` API. A fingerprint identifies bytes; it does not authenticate a source or qualify a grammar. Repository foundation checks validate the source/module layout, canonical documentation links, Git tracking/ignore policy, and the CGO-free core boundary.
+Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)):
 
-Verification and schema commands are planned; generator, native runtime, and adapter execution are also unimplemented. The [public API contract](docs/specs/public-go-api.md) selects `src/kit` in the existing root module. Specifications describe intended contracts, not available features. See the [scope](docs/specs/scope.md) and [roadmap](docs/roadmap.md).
+| Area | CLI | Public API (`src/kit`) | Notes |
+|---|---|---|---|
+| Inventory and identity | `inspect`, `identity`, `corpus` | `Inspect`, `Identity`, `Corpus` | offline; a fingerprint identifies bytes, it does not authenticate a source |
+| Strict verification | `verify` | `Verify` | exact-set check against a caller-trusted expected document; ZIP inspected without extraction |
+| Node schema | `schema check`, `schema diff` | `SchemaCheck`, `SchemaDiff` | static `node-types.json` facts and review risks, not runtime trees |
+| Reproduction | `reproduce` | profile parsing only | runs a pinned generator in two workspaces (EXEC_GENERATOR) |
+| Native parse/edit and query records | `incremental`, `oracle record` | comparators, profile parsing, record-set verification | build and run the pinned runtime with a host compiler (BUILD_NATIVE, EXEC_NATIVE); not part of the offline API |
+| Evidence replay | `replay`, `evidence verify` | `Replay`, `VerifyEvidence`, `CompareGates` | registered data-only reducers; integrity, not authenticity |
+| Qualification | `qualify` | `Qualify`, `ParseQualificationInventory` | aggregates one candidate's three host runs into the 26 route x 3 platform cells; read-only |
 
-Campaign qualification requires [26 syntax routes](docs/validation/language-feature-scope.md) on three platforms, with registered legacy and modern features. This is a development acceptance scope, not a claim that the current product or every candidate grammar supports them. Users can use verified offline operations independently; they need not install all grammars or invoke the kit in their application runtime.
+A grammar update workflow uses only the offline commands: take the baseline snapshot's `identity` as the expected document, `verify` the candidate against it (changed files are reported as FAIL), and `schema diff` the two `node-types.json` files for review risks. Nothing is adopted automatically.
 
-Foundation CI runs on Windows amd64, Linux amd64, and macOS Apple Silicon arm64. Its success does not establish product/native support or cross-platform semantic parity. The [platform contract](docs/specs/platform-support.md) defines those separate claims. Versioned [foundation results](docs/reports/session-00-foundation.md) describe their own tested revision; use the [Foundation workflow](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/workflows/foundation.yml) for later runs.
+Campaign qualification requires [26 syntax routes](docs/validation/language-feature-scope.md) on Windows amd64, Linux amd64 and macOS arm64 with the registered legacy and modern features. `tsgk qualify` reports each cell on two axes, the kit mechanism and the grammar requirement coverage; the support claim is SUPPORTED only when every cell passes. The registered cases do not yet cover every required feature row and case kind, and adopted routes carry known grammar gaps, so the current support claim is **BLOCKED**: the kit's verified offline and evidence functions are usable on their own, but no route, version range or platform is claimed as fully supported. The [platform contract](docs/specs/platform-support.md) separates foundation success, native execution and cross-platform semantic parity. Experimental and campaign-internal protocols (`tsgk-native/r2`, the qualification inventory, CI helpers under `src/dev/`) may change. No tag, Release or package has been published, and no Go consumer (including `go-treesitter`) has adopted the kit.
 
 ## Verify this checkout
 
-Use Go 1.27.1, Git, and PowerShell 7 (`pwsh`). Core checks use `CGO_ENABLED=0`; Node, Python, a C compiler, and WSL are not prerequisites. The core currently has no external Go dependencies.
+Use Go 1.27.1, Git, and PowerShell 7 (`pwsh`). Core checks use `CGO_ENABLED=0`; Node, Python and WSL are not prerequisites, and native tests skip locally without a C compiler. The only external Go dependency is the pinned `golang.org/x/sys` used by the process runner; download it first as the [validation contract](docs/validation/validation.md) describes.
 
 From the repository root in PowerShell 7:
 
@@ -34,11 +42,11 @@ This runs development checks, not grammar validation. Follow the [validation con
 | Location | Purpose |
 |---|---|
 | `go.mod` | Root Go module |
-| `src/kit/` | Public offline API (inspect, identity, corpus) |
+| `src/kit/` | Public offline API |
 | `src/cmd/tsgk/` | CLI over the same API |
 | `src/testdata/consumer/` | External-consumer module template used by tests |
 | `src/internal/foundation/` | Implemented development checks and tests |
-| `src/contracts/examples/` | Planned contract examples |
+| `src/contracts/` | Registries (routes, sources, fact queries, qualification inventory) and contract examples |
 | `docs/specs/`, `docs/design/` | Specifications and architectural decisions |
 | `docs/provenance/`, `docs/validation/` | Reference identities and validation contracts |
 | `docs/reports/` | Results bound to named revisions and dates |
