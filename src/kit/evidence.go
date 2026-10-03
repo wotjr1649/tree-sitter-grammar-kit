@@ -178,6 +178,7 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	}
 	nodes := map[string]*EvidenceNode{}
 	files := map[string]string{"evidence.json": ""}
+	kept := map[string][]byte{}
 	for i := range doc.Nodes {
 		n := &doc.Nodes[i]
 		if !validID(n.ID) {
@@ -225,7 +226,17 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 				continue
 			}
 			files[f.Path] = n.ID
-			if e := x.verifyFile(f.Path, f.Bytes, f.SHA256); e != nil {
+			var e *Error
+			if f.Role == "replay-result" {
+				// read once and kept for the replay binding below
+				var b []byte
+				if b, e = x.read(f.Path, f.Bytes, f.SHA256); e == nil {
+					kept[f.Path] = b
+				}
+			} else {
+				e = x.verifyFile(f.Path, f.Bytes, f.SHA256)
+			}
+			if e != nil {
 				if e.Kind == KindCancelled || e.Kind == KindIO || e.Kind == KindResourceLimit {
 					return bad(e) // a file beyond the limits is a limit, not damaged evidence
 				}
@@ -304,7 +315,7 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 						add("REPLAY_SUBJECT_MISMATCH", id, "replay와 subject의 identity가 다르다: "+role)
 					}
 				}
-				x.checkReplayFile(n, t, add)
+				x.checkReplayFile(n, t, kept, add)
 			case "carries":
 				x.checkCarry(n, t, pol, add)
 			}
@@ -408,14 +419,14 @@ func (x *replayEnv) checkCarry(n, origin *EvidenceNode, pol evidencePolicy, add 
 
 // checkReplayFile reads a replay node's replay-result file, when it lists one, and binds
 // its evidence mode, assessment and subject run to the graph.
-func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, add func(code, path, msg string)) {
+func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]byte, add func(code, path, msg string)) {
 	for _, f := range n.Files {
 		if f.Role != "replay-result" {
 			continue
 		}
-		data, e := x.read(f.Path, f.Bytes, f.SHA256)
-		if e != nil {
-			return // already a FILE_ finding
+		data, ok := kept[f.Path]
+		if !ok {
+			continue // not verified: already a FILE_ finding
 		}
 		var rr struct {
 			ResultSchema string `json:"result_schema"`

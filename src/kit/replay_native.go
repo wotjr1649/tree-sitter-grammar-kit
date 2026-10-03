@@ -790,6 +790,18 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 	}
 	cons := newConsumer(x, ids)
 	x.seen = map[string]map[string]bool{}
+	defer func() {
+		run := map[string]string{}
+		if top.Build != nil {
+			run["producer"] = top.Build.Identity
+		}
+		for _, id := range top.Identities {
+			if id.Role == "policy" {
+				run["policy"] = id.SHA256
+			}
+		}
+		x.checkSeen(run)
+	}()
 	m, e := x.stream(resultPath)
 	if e != nil {
 		return top, nil, e
@@ -837,16 +849,6 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 	if top.Schema != ReportSchema || top.ResultSchema != "tsgk-incremental-result/r1" {
 		return top, outs, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", resultPath, nil)
 	}
-	bindRun := map[string]string{}
-	if top.Build != nil {
-		bindRun["producer"] = top.Build.Identity
-	}
-	for _, id := range top.Identities {
-		if id.Role == "policy" {
-			bindRun["policy"] = id.SHA256
-		}
-	}
-	x.checkSeen(bindRun)
 	sg := x.gate("summary")
 	s := top.Summary
 	sg.check(s.Cases == sum.cases && maps.Equal(s.Statuses, sum.statuses) && maps.Equal(s.Assessments, sum.assessments) && maps.Equal(s.Codes, sum.codes) && s.HasError == sum.hasError,
@@ -987,6 +989,7 @@ func replayOracleSet(x *replayEnv) *Error {
 		want[prof.Native.Cases[i].ID] = &prof.Native.Cases[i]
 	}
 	x.seen = map[string]map[string]bool{}
+	defer x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
 	records := 0
@@ -1029,7 +1032,6 @@ func replayOracleSet(x *replayEnv) *Error {
 		}
 	}
 	cons.close()
-	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
 	sg.check(records == man.Records, mm.Path, "RECORD_COUNT_MISMATCH", "record 수가 manifest와 다르다")
 	sg.check(aggregateRecorded(statuses, assessments, records) == Verdict{man.ExecutionStatus, man.Assessment}, mm.Path, "RUN_VERDICT_MISMATCH", "set 판정이 record 판정의 집계와 다르다")
 	x.recorded = Verdict{man.ExecutionStatus, man.Assessment}

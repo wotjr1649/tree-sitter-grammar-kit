@@ -103,6 +103,10 @@ S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 �
   * M3: 같은 run identity의 과거 record와 새 run을 참조 없이 함께 두면 relabel을 잡지 못했다. 이제 run·record 쌍도 `RUN_IDENTITY_DUPLICATE`다.
   * m1: 한도 초과 조기 반환이 앞서 찾은 실패를 버렸다. 이제 실패는 FAIL로 남고, S06 raw 응답은 decode 없이 hash만 확인한다. m2: 없는 PREPARE raw가 FAIL이었다. 이제 그 row는 기록으로 남는다. m3: tree의 producer·policy 혼합 검사가 문서의 member 순서에 기댔다. 이제 문서를 다 읽은 뒤 비교한다. m4: 크기만 본 inventory 항목이 `REPLAYED_RAW`로 표시되었다. 이제 기록이다. m5: reducer 등록부가 SVC 관측 전용 사례를 기록으로 적었지만 실제로는 다시 계산한다. 등록부와 계약 표를 고쳤다.
 
+* **r2**(STATIC, `817537c..f67c44c`): r1 8건이 모두 고쳐졌음을 확인했고, 새로 MATERIAL 1, MINOR 4를 찾았다. 모두 다음 commit에서 고쳤다.
+  * N1: `evidence verify`가 replay-result 파일을 두 번 읽어 합계 한도가 두 번째 읽기에서만 나면 대조를 조용히 건너뛰고 PASS일 수 있었다. 이제 한 번만 읽어 그 bytes로 대조하고, 한도는 `RESOURCE_LIMIT`다(`TestVerifyEvidence`).
+  * N2: oracle set에서 한도 초과 record가 앞서 본 혼합 tree identity 검사를 건너뛰게 했다. 이제 모든 종료 경로에서 비교한다. N3: 읽는 도중 한도를 넘게 커진 member가 검증 없이 지나갈 수 있었다. 이제 `RESOURCE_LIMIT`다. N4: raw가 모두 없는 PREPARE replay가 `REPLAYED_RAW`로 표시되었다. 이제 `RECORDED_NOT_RECOMPUTED`다. N5: 소비하지 않는 member 하나의 한도 초과가 다른 member의 소비 검사를 껐다. 이제 reducer에 필요한 member가 한도를 넘었을 때만 끈다(`TestReplayOverLimitKeepsChecks`, `TestReplayPrepareNative`).
+
 ## 남은 일과 한계
 
 * 세 OS CI, PR·merge·post-merge는 이 세션 범위 밖이며 orchestrator가 한다. Linux·macOS 실행은 로컬에서 하지 못했다.

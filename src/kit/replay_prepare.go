@@ -107,6 +107,7 @@ func replayPrepareNative(x *replayEnv) *Error {
 	cons := newConsumer(x, x.prof.Records)
 	bind, rawg, pv, sy := x.gate("ledger-binding"), x.gate("raw-binding"), x.gate("exit"), x.gate("syntax")
 	var outs []caseOutcome
+	readRows := 0
 	for i, row := range led.Rows {
 		if row.Producer != producer {
 			x.cons.Excluded++
@@ -141,6 +142,7 @@ func replayPrepareNative(x *replayEnv) *Error {
 			continue
 		}
 		rawg.pass()
+		readRows++
 		lines, ok := probeLines(raw)
 		if !pv.check(ok && len(lines) > 0 && lines[0].Stage == "original" && lines[0].HasError != nil, name, "RAW_MALFORMED", "probe 출력 형식이 계약과 다르다") {
 			continue
@@ -171,6 +173,7 @@ func replayPrepareNative(x *replayEnv) *Error {
 		outs = append(outs, caseOutcome{status: StatusCompleted, assess: AssessUnresolved})
 	}
 	cons.close()
+	x.noRecomp = readRows == 0 // no registered row had its raw: nothing recomputed
 	x.actual["producer"] = producer
 	x.actual["inventory"] = im.SHA256
 	x.recomp = aggregateCases(outs)

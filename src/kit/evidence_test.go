@@ -266,6 +266,29 @@ func TestVerifyEvidence(t *testing.T) {
 	g = newFxGraph()
 	g.nodes[0]["files"] = []any{map[string]any{"path": "../raw/old.json", "role": "raw", "bytes": 12, "sha256": fxExe}}
 	evidenceFails(t, g, nil, "FILE_INVALID")
+	// review r2 N1: a replay node's result file is bound to the graph
+	rr, _ := json.Marshal(map[string]any{"result_schema": ReplayResultSchema, "evidence_mode": "REPLAYED_RAW", "assessment": "PASS", "subject": map[string]any{"run": "10", "attempt": 1}})
+	g = newFxGraph()
+	g.files["replay/result.json"] = rr
+	g.nodes[2]["files"] = []any{map[string]any{"path": "replay/result.json", "role": "replay-result", "bytes": len(rr), "sha256": sum(rr)}}
+	evidenceFails(t, g, nil, "REPLAY_RESULT_MISMATCH") // the graph says FAIL, the result PASS
+	g.nodes[2]["assessment"] = "PASS"
+	if r := g.run(t, nil); r.Assessment != AssessPass {
+		t.Fatalf("bound replay result: %v", r.Findings)
+	}
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = 20; return l }
+	g = newFxGraph()
+	g.files["replay/result.json"] = rr
+	g.nodes[2]["files"] = []any{map[string]any{"path": "replay/result.json", "role": "replay-result", "bytes": len(rr), "sha256": sum(rr)}}
+	root0 := t.TempDir()
+	doc0, _ := json.Marshal(map[string]any{"schema": EvidenceSchema, "nodes": g.nodes})
+	writeSet(t, root0, map[string][]byte{"evidence.json": doc0, "raw/old.json": g.files["raw/old.json"], "replay/result.json": rr}, func(string) string { return "" })
+	g.policy["evidence_sha256"] = sum(doc0)
+	pol0, _ := json.Marshal(g.policy)
+	if r, err := VerifyEvidence(ctxT(t), EvidenceRequest{Root: root0, Policy: pol0}); err == nil || r.Assessment == AssessPass {
+		t.Fatalf("total limit with a replay result: %v %s", err, r.Assessment)
+	}
+	testHookReplayLimits = nil
 	// a file beyond the operation limits ends RESOURCE_LIMIT, not a failed check
 	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 4; return l }
 	defer func() { testHookReplayLimits = nil }()

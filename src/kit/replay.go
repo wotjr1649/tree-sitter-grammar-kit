@@ -358,8 +358,10 @@ type replayEnv struct {
 	recomp   Verdict
 	findings []Finding
 	redact   bool
-	over     bool   // a needed or registered member exceeds the operation limits
-	overAt   string // a needed member exceeds the operation limits: recorded, not recomputed
+	over     bool   // a needed or registered member exceeds the operation limits: recorded, not recomputed
+	overAt   string // the member that did
+	needOver bool   // a member the reducer needed was beyond the limits: it stopped early
+	noRecomp bool   // the reducer recomputed no subject outcome (absent raw)
 }
 
 func (x *replayEnv) finding(code, path, msg string) {
@@ -689,6 +691,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	if e := red.run(x); e != nil {
 		switch {
 		case e.Kind == KindResourceLimit && x.over:
+			x.needOver = true
 			// a needed raw member is beyond the operation limits: it is not read and the
 			// subject stays as recorded; everything found so far still counts
 		case e.Kind == KindInvalidInput && (strings.HasPrefix(e.Code, "MEMBER_") || strings.HasPrefix(e.Code, "RECORD_") || strings.HasPrefix(e.Code, "JSON_")):
@@ -718,11 +721,18 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 					return bad(e)
 				case e.Kind != KindResourceLimit:
 					x.finding(e.Code, m.Path, "등록된 member를 확인하지 못했다")
+				case x.overAt != m.Path:
+					// grew past the limit while read: unverified, not a pass
+					res.BytesRead = r.totalRead
+					return bad(e)
+				}
+				if !x.consumed[m.Path] && m.Role != "retained" && !x.needOver {
+					x.finding("MEMBER_UNUSED", m.Path, "reducer가 소비하지 않은 등록 member다(evidence가 아니면 retained로 등록한다)")
 				}
 				continue
 			}
 		}
-		if !x.consumed[m.Path] && m.Role != "retained" && !x.over {
+		if !x.consumed[m.Path] && m.Role != "retained" && !x.needOver {
 			x.finding("MEMBER_UNUSED", m.Path, "reducer가 소비하지 않은 등록 member다(evidence가 아니면 retained로 등록한다)")
 		}
 	}
@@ -748,7 +758,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		switch {
 		case !wok:
 			x.finding("IDENTITY_UNBOUND", k, "reducer가 관측한 identity를 등록이 결속하지 않았다")
-		case !gok && x.over:
+		case !gok && x.needOver:
 			// not observed: the raw that would show it was beyond the limits
 		case !gok:
 			x.finding("IDENTITY_UNKNOWN", k, "reducer가 관측하지 않는 identity를 등록했다")
@@ -798,7 +808,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	if !recomputedAny {
 		res.EvidenceMode = ModeRecordedNotRecomputed
 	}
-	if x.over && res.EvidenceValid {
+	if (x.over || x.noRecomp) && res.EvidenceValid {
 		res.EvidenceMode, res.Recomputed = ModeRecordedNotRecomputed, Verdict{StatusNotRun, AssessUnresolved}
 	}
 	switch {

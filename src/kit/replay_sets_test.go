@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -156,6 +157,30 @@ func TestReplayUnconsumedMembers(t *testing.T) {
 	ms[len(ms)-1].(map[string]any)["role"] = "retained"
 	if r := runReg(t, root, reg); !r.EvidenceValid || r.Retained != 1 {
 		t.Fatalf("retained member: %v %d", r.Findings, r.Retained)
+	}
+}
+
+// review r2 N2/N5: a mixed tree identity found before an over-limit record still fails the
+// replay; an over-limit retained member degrades the replay but does not hide an
+// unconsumed registered member.
+func TestReplayOverLimitKeepsChecks(t *testing.T) {
+	root, reg := fxOracleSet(t, func(records []map[string]any, files map[string][]byte) {
+		records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)["identities"] = []IdentityRef{{"producer", "tsgk-native-build/r1", fxExe}}
+		records[1]["pad"] = strings.Repeat("p", 40*1024)
+	})
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 20 * 1024; return l }
+	defer func() { testHookReplayLimits = nil }()
+	if r := runReg(t, root, reg); r.Assessment != AssessFail || gateOf(r, "case-binding").Code != "MIXED_IDENTITY" {
+		t.Fatalf("mixed identity before an over-limit record: %s %+v", r.Assessment, gateOf(r, "case-binding"))
+	}
+	root, reg = fxOracleSet(t, nil)
+	big, stale := bytes.Repeat([]byte("b"), 40*1024), []byte(`{"stale":true}`)
+	os.WriteFile(filepath.Join(root, "tool.bin"), big, 0o644)
+	os.WriteFile(filepath.Join(root, "records", "00009-old.json"), stale, 0o644)
+	reg["members"] = append(reg["members"].([]any), map[string]any{"path": "tool.bin", "role": "retained", "bytes": len(big), "sha256": sum(big)},
+		map[string]any{"path": "records/00009-old.json", "role": "record", "bytes": len(stale), "sha256": sum(stale)})
+	if r := runReg(t, root, reg); r.Assessment != AssessFail || !slices.Contains(codes(r.Findings), "MEMBER_UNUSED") {
+		t.Fatalf("unconsumed member next to an over-limit retained member: %s %v", r.Assessment, r.Findings)
 	}
 }
 
@@ -339,6 +364,14 @@ func TestReplayPrepareNative(t *testing.T) {
 	r = runReg(t, root, reg)
 	if !r.EvidenceValid || r.Assessment != AssessUnresolved || gateOf(r, "raw-binding").NotRecomputed != 1 || gateOf(r, "exit").EvidenceMode != ModeRecordedNotRecomputed {
 		t.Fatalf("absent raw: %s %v %+v", r.Assessment, r.Findings, r.Gates)
+	}
+	// review r2 N4: with no registered raw present nothing is recomputed: recorded
+	root, reg = fxPrepare(t, nil)
+	for _, n := range []string{"case-p-a.stdout", "case-p-b.stdout", "case-p-n.stdout"} {
+		os.Remove(filepath.Join(root, "raw", n))
+	}
+	if r = runReg(t, root, reg); r.EvidenceMode != ModeRecordedNotRecomputed || r.Assessment != AssessUnresolved {
+		t.Fatalf("all raw absent: %s %s %v", r.EvidenceMode, r.Assessment, r.Findings)
 	}
 	for want, m := range map[string]func([]map[string]any, map[string]string){
 		"EXIT_MISMATCH": func(rows []map[string]any, _ map[string]string) { rows[2]["exit_code"] = 0 },
