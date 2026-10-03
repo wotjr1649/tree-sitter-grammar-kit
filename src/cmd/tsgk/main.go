@@ -44,11 +44,11 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"replay": "S07", "evidence": "S07", "parity": "S08"}
+var future = map[string]string{"parity": "S08"}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce | tsgk incremental | tsgk oracle record")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce | tsgk incremental | tsgk oracle record | tsgk replay | tsgk evidence verify")
 		return exitUsage
 	}
 	cmd := args[0]
@@ -63,6 +63,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if cmd == "oracle" {
 		return runOracle(ctx, args[1:], stdout, stderr)
+	}
+	if cmd == "replay" {
+		return runReplay(ctx, "replay", args[1:], stdout, stderr)
+	}
+	if cmd == "evidence" {
+		if len(args) < 2 || args[1] != "verify" {
+			fmt.Fprintln(stderr, "tsgk: USAGE: tsgk evidence verify --input DIR --profile FILE [--out PATH]")
+			return exitUsage
+		}
+		return runReplay(ctx, "evidence verify", args[2:], stdout, stderr)
 	}
 	if owner, ok := future[cmd]; ok {
 		fmt.Fprintf(stderr, "tsgk: UNSUPPORTED_COMMAND: %s는 %s 범위이며 이 build에서 구현되지 않았다\n", cmd, owner)
@@ -374,6 +384,10 @@ func finish(result any, err error, out, publishRoot string, stdout, stderr io.Wr
 		code = assessExit(v.Assessment)
 	case kit.SchemaDiffResult:
 		code = assessExit(v.Assessment)
+	case kit.ReplayResult:
+		code = replayExit(v.Assessment)
+	case kit.EvidenceResult:
+		code = replayExit(v.Assessment)
 	}
 	if out == "" {
 		if _, werr := stdout.Write(data); werr != nil {
@@ -397,6 +411,57 @@ func assessExit(assessment string) int {
 		return exitBlocked
 	}
 	return exitOK
+}
+
+// replayExit: only a PASS is 0; a recorded-not-recomputed or not-assessed subject is not a
+// success (3), a failed check or a recomputed FAIL is 1.
+func replayExit(assessment string) int {
+	switch assessment {
+	case kit.AssessPass:
+		return exitOK
+	case kit.AssessFail:
+		return exitFail
+	}
+	return exitBlocked
+}
+
+// runReplay handles `replay` and `evidence verify`: both read one evidence root with a
+// caller-trusted registration outside it; neither starts a process.
+func runReplay(ctx context.Context, name string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	input := fs.String("input", "", "evidence set root (read only)")
+	profile := fs.String("profile", "", "replay registration (tsgk-replay/r1) or evidence policy (tsgk-evidence-policy/r1), outside the input")
+	out := fs.String("out", "", "new result file outside the input (no clobber)")
+	if err := fs.Parse(args); err != nil {
+		return exitUsage
+	}
+	if fs.NArg() != 0 || *input == "" || *profile == "" {
+		fmt.Fprintf(stderr, "tsgk: USAGE: tsgk %s --input DIR --profile FILE [--out PATH]\n", name)
+		return exitUsage
+	}
+	if documentInside(*profile, *input) {
+		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 input 밖에 있어야 한다")
+		return exitUsage
+	}
+	data, err := readDocument(*profile)
+	if err != nil {
+		fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
+		return exitIO
+	}
+	wall := time.Duration(0)
+	for _, l := range kit.ReplayOperations() {
+		wall = max(wall, l.Wall)
+	}
+	cctx, cancel := context.WithTimeout(ctx, wall+5*time.Second)
+	defer cancel()
+	var result any
+	if name == "replay" {
+		result, err = kit.Replay(cctx, kit.ReplayRequest{Root: *input, Profile: data})
+	} else {
+		result, err = kit.VerifyEvidence(cctx, kit.EvidenceRequest{Root: *input, Policy: data})
+	}
+	return finish(result, err, *out, *input, stdout, stderr)
 }
 
 // printable quotes a diagnostic path that could carry terminal control bytes (archive
