@@ -489,12 +489,11 @@ func TestLimitsAndCancellation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := p.Stdin().Write(frame[:len(frame)-1]); err != nil {
-			t.Fatal(err)
-		}
+		_, werr := p.Stdin().Write(frame[:len(frame)-1])
 		cancel()
-		if res := p.Wait(); res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
-			t.Fatalf("cancel: %s %+v", res.Status, res.Cleanup)
+		res := p.Wait() // also on a failed write, so the backend is released
+		if werr != nil || res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
+			t.Fatalf("cancel: %v %s %+v", werr, res.Status, res.Cleanup)
 		}
 	})
 	t.Run("deep-nesting", func(t *testing.T) {
