@@ -75,18 +75,32 @@ func TestFrameCrashWithStdoutHolder(t *testing.T) {
 	s.Grace = time.Second
 	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 20 * time.Second, FrameGrace: time.Second,
 		StdoutBytes: 1 << 20, BatchWall: 60 * time.Second}
-	start := time.Now()
-	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}, {ID: "c", Request: []byte("z")}})
-	if err != nil {
-		t.Fatal(err)
+	type outcome struct {
+		r   BatchResult
+		err error
+	}
+	done := make(chan outcome, 1)
+	go func() {
+		r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}, {ID: "c", Request: []byte("z")}})
+		done <- outcome{r, err}
+	}()
+	var o outcome
+	select {
+	case o = <-done:
+	case <-time.After(10 * time.Second):
+		for _, pid := range readPIDs(t, pids) {
+			killPID(pid) // lets the stuck read end so the goroutine can finish
+		}
+		t.Fatal("RunBatch still blocked 10 s after the helper crashed")
 	}
 	defer func() {
 		for _, pid := range readPIDs(t, pids) {
 			killPID(pid)
 		}
 	}()
-	if el := time.Since(start); el > 10*time.Second {
-		t.Fatalf("batch took %v; the crash was not released before the watchdog", el)
+	r, err := o.r, o.err
+	if err != nil {
+		t.Fatal(err)
 	}
 	if r.Frames[0].Status != FrameCompleted || r.Frames[1].Status != FrameFailed || r.Frames[2].Status != FrameRequeued {
 		t.Fatalf("%+v %+v", r.Frames, r.Process)

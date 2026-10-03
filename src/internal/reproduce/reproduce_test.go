@@ -407,7 +407,8 @@ func TestSourceWritesAndFailedPublication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !hasFinding(res, "SOURCE_CHANGED") || res.ExecutionStatus != kit.StatusFailed || res.Assessment == kit.AssessPass || res.SourceBefore == res.SourceAfter {
+	if !hasFinding(res, "SOURCE_CHANGED") || res.ExecutionStatus != kit.StatusFailed || res.Assessment == kit.AssessPass || res.SourceBefore == res.SourceAfter ||
+		res.Claims.JSReproduction == ClaimPass || res.Claims.Deterministic != ClaimPass {
 		t.Fatalf("root change not reported: %+v", res.Report)
 	}
 	g := newFixture(t, kit.ModeJS, "MODE:exit3")
