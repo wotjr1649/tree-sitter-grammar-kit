@@ -39,6 +39,7 @@ var required = []string{
 	"src/internal/foundation/campaign_test.go",
 	"src/contracts/examples/profile-r1.json", "src/contracts/examples/expected-r1.json",
 	"src/contracts/campaign-01.json", "src/contracts/language-sources.json",
+	"src/contracts/fact-mapping.json", "src/contracts/examples/tree-summary-r1.json",
 	".github/workflows/prepare-p05.yml", "src/dev/prepare-p05/inputs.json",
 	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
 	"src/dev/prepare-p05/collect.ps1", "src/dev/prepare-p05/probe.c.in",

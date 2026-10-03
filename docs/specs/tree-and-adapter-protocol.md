@@ -40,9 +40,22 @@ S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 
 
 **한도와 취소.** `schema` 연산 한도는 입력당 문서 16777216 bytes(`DOCUMENT_BYTES_LIMIT`), record 200000(node 항목·field·type 참조, `SCHEMA_RECORD_LIMIT`), decode한 JSON 값 8×record(`JSON_VALUE_LIMIT`), JSON 중첩 32(`JSON_DEPTH_LIMIT`), 출력 16777216 bytes(`OUTPUT_LIMIT`), kit wall 120초(`WALL_LIMIT`)이며 모두 `RESOURCE_LIMIT`이다. 취소는 JSON 값 4096개, record 1024개, 그래프 단계·비교 node 1024개마다 확인한다. 집합 정규화는 schema의 type·subtype·field 집합에만 쓰며 ordered tree·raw input·query capture 순서로 넓히지 않는다(S03-A12 회귀).
 
+### 선언·사실 mapping과 등록 사례 밖 구조 — S03 고정
+
+[`declaration-facts-r1`](../../src/contracts/fact-mapping.json)은 채택 C#·T-SQL·PostgreSQL route의 사실 종류(`type_declaration`, `member_declaration`, `create_object`, `static_exec_target`, `command_text_site`, `command_text_literal`, `dynamic_sql_site`)를 각 route의 등록 upstream schema(repository·commit·path·bytes·sha256)의 named node와 locator(`node`, `field:F`, `child:T`, `children:T`의 `/` 경로)에 대응시키거나 이유를 붙여 `UNSUPPORTED`로 둔다. 같은 파일의 `dynamic-sql-r1`은 동적 SQL 구문 종류(`EXEC_PAREN`, `EXEC_PAREN_AT`, `SP_EXECUTESQL`, heuristic `CSHARP_COMMAND`), 동적이 아닌 `EXEC_MODULE_VARIABLE`(`EXEC @module_var`), 제외 인자(`AS USER/LOGIN`, pass-through 매개변수), 인자 종류 6가지와 그 node 대응, 알려진 누락(`AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출)과 C# 오탐(`CommandType.StoredProcedure`)을 닫힌 목록으로 고정한다. `TestFactMapping`이 형식과 전수성을, `TestFactMappingAgainstSchemas`(로컬 schema 사본 필요)가 모든 locator가 그 schema에서 해석되는지 검사한다. mapping은 schema에서 도출한 계약이며 tree 위 동작은 S05(선언 순회)·S06(사실 query·동적 SQL 위치 추출)이 native로 검증한다. 채택 후보의 schema는 S04가 재생성하므로 아직 결속하지 않는다. PREPARE의 후보 native tree에는 upstream schema에 없는 node(C# `file_based_app_directive`, T-SQL `generated_always_clause`·`graph_table_type`)가 있어, S04는 재생성 schema를 `schema diff`로 upstream과 대조하고 mapping의 locator를 다시 검사해야 한다.
+
+`known_gaps`가 S03에 배정한 항목의 구조 계약과 처분은 다음과 같다. 어느 항목도 전체 언어 지원 주장이 아니다.
+
+| 항목 | 구조 계약 | 처분 |
+|---|---|---|
+| C# `async`·`var`·`await`를 식별자로 쓴 선언(등록 27사례 밖) | upstream schema에서 세 spelling은 anonymous token으로만 선언된다. 이름 위치에 쓰이면 mapping name locator가 가리키는 named `identifier`이고, 암시 형식 `var`는 `type` supertype의 `implicit_type`이다 | 등록 행(P05-CS-ID-ASYNC/AWAIT/VAR)만 후보 r5 native PASS다. 다른 위치(generic 인자, pattern, query 식 등)는 미검증으로 S05 fixture와 S08로 넘긴다 |
+| C# file-based directive | `#!`은 upstream `shebang_directive`(field 없음)다. `#:` directive는 후보 r5 native tree(run 36917832850, 등록 directive 사례)에서 `file_based_app_directive{name: identifier, argument: preproc_arg}`이며 argument는 행 끝(EOL 제외)까지다 | upstream schema에 없으므로 S04 재생성 schema가 이 node와 두 field를 선언하는지 `schema check`·`schema diff`로 확인한다. SDK 의미(include 파일 읽기·restore)는 범위 밖(`csharp-V14c`) |
+| T-SQL 등록 B01..B05·V16·V22 행 밖 | 최상위는 `program` → `batch` → `statement`/`go_statement`/`block`/`sqlcmd_*`이고 upstream `statement`는 151가지 statement node를 자식으로 선언한다. CREATE·EXEC 사실은 위 mapping이다 | 등록 행 밖 statement는 schema 선언만 있고 native 미검증이다. statement 종류별 지원은 주장하지 않으며 S05가 등록하는 fixture와 S08 판정으로 넘긴다. 알려진 EXEC 누락은 위 목록이다 |
+| PostgreSQL 9.6–18 checkpoint | 후보는 PostgreSQL 19 기반 grammar의 legacy-r1 patch다. checkpoint 기능은 upstream schema의 node로 나타난다: V10 `CallStmt`·`generated_when`, V13 `MergeStmt`·`opt_search_clause`·`opt_cycle_clause`·`opt_materialized`, V16 `json_table`·`json_table_column_definition`, V18 `opt_virtual_or_stored`·`opt_without_overlaps`·`returning_with_clause`, L01 `OptWith`·`kw_oids` | 정적 schema는 "어느 version에서만 유효"를 표현하지 못하므로 version 경계(예: 9.6에서 `CALL` 거부)는 schema로 판정하지 않는다(UNSUPPORTED). 등록 12행만 native PASS이며 checkpoint별 fixture는 S05, 지원 claim은 S08이 판정한다 |
+
 ## Ordered tree
 
-envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`; 실사용 source의 판별 encoding·출처 필드는 S03 확장 revision), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.
+envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`; 실사용 source의 판별 encoding·출처는 아래 `tsgk-tree/r1`), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.
 
 nodes는 cursor preorder 배열이다. 각 항목은 `parent`(root -1, 나머지는 앞선 index), `type`(이름), `field`(부모 기준 이름 또는 null), `named`, `extra`, `is_error`, `has_error`, `is_missing`(bool), `start_byte`, `end_byte`, `start_point`, `end_point`를 가진다. point는 0-based `row`, byte 단위 `column`이다. 범위는 반열림 `[start,end)`이고 0≤start≤end≤input.bytes를 만족한다. 노드 배열과 sibling 순서, anonymous/extra, ERROR 내부 구조, zero-width·중복 범위를 보존한다. root start가 항상 0이라고 가정하지 않는다. numeric symbol/field ID를 runtime 간 의미 키로 쓰지 않는다.
 
@@ -51,6 +64,20 @@ nodes는 cursor preorder 배열이다. 각 항목은 `parent`(root -1, 나머지
 captures는 query identity와 함께 원 producer의 ordered `match_index`, `pattern_index`, `capture_index`, `name`, `node_index`, byte/point range를 기록한다. duplicate capture와 같은 위치의 동률도 producer 순서를 보존한다. sorting/dedup/span 보정은 비교 전처리가 아니다. S06에서 Tree-sitter API ordering을 pinned version으로 검증해 comparator revision을 확정한다. runtime에 따라 순서를 보장할 수 없으면 해당 query comparison capability를 UNSUPPORTED로 둔다.
 
 필수 비교 필드는 profile이 선택한다. adapter가 제공하지 못하는 필드는 null과 명시적 unsupported capability로 표시하고 false/0으로 채우지 않는다. strict profile 필드가 미지원이면 BLOCKED다. 부분 결과는 부분 관측만 주장한다. malformed 입력 bytes도 hash/길이를 원형대로 기록한다. edit offset/point 변환은 byte 기준이며 UTF-8 모드의 boundary 정책은 S05에서 fixture와 함께 고정한다.
+
+### 입력 encoding r1과 대용량 summary — S03 고정, S05 생산
+
+`tsgk-tree/r1`은 r0에서 `input`만 바꾼다. `input`은 `{bytes, sha256, encoding, encoding_source}`이고, `encoding`은 parser에 넣은 판별 encoding(`UTF-8`, `UTF-16LE`, `UTF-16BE`, `CP949`), `encoding_source`는 그 출처(`BOM`, `VALIDATION`, `DECLARATION`)다. 값은 S01 identity의 `EncodingOutcome`과 같고 `PASS`가 아닌 파일은 parse 입력을 만들지 않으므로 envelope가 없다. `bytes`·`sha256`은 변환하지 않은 원본 bytes의 값이며 point column은 원본 행 시작부터의 byte 수다. r0의 `encoding: bytes`는 r0에만 쓴다.
+
+[실사용 source 정책](../validation/net461-workload.md)이 summary를 요구하면(descendant 50000 초과 또는 출력 16777216 bytes 초과) `tsgk-tree-summary/r1`을 낸다. 필드는 정확히 다음과 같다([예시](../../src/contracts/examples/tree-summary-r1.json), `TestTreeSummaryExample`이 key 집합과 값 규칙을 검사한다).
+
+* `schema`, `input`(위 r1), `status`(parse status), `identities`(E0 `IdentityRef` 배열: producer·source·policy), `reason`(`DESCENDANT_LIMIT` 또는 `OUTPUT_LIMIT`), `descendant_count`.
+* `digest{canonicalization: "tsgk-tree-digest/r1", sha256}`: preorder node마다 `parent`(root -1), `type`과 `field`(없으면 빈 값)를 각각 10진 byte 길이 + `:` + bytes로, flag 다섯 개(`named`, `extra`, `is_error`, `has_error`, `is_missing`)를 `0`/`1`로, `start_byte`, `end_byte`, 시작·끝 point의 row·column을 10진수로 써 NUL로 잇고 줄 끝에 LF를 붙인다. preimage는 ASCII `tsgk-tree-digest/r1\n` 뒤에 이 줄들을 순서대로 이은 것이다. 같은 bytes·grammar·producer의 전체 tree와 summary는 같은 digest를 가진다.
+* `errors{limit: 1000, total, truncated, items}`: preorder 순서의 ERROR·MISSING node이며 각 item은 `kind`(`ERROR`|`MISSING`), `type`, byte·point 범위다. `truncated`는 `total`이 item 수보다 클 때만 true다. 오류 개수만으로 구조 PASS가 아니다.
+* `declarations{mapping, route, assessment, items}`: S05가 [선언·사실 mapping](../../src/contracts/fact-mapping.json)의 선언 node 종류(`type_declaration`, `member_declaration`, `create_object`)를 query 없이 순회한 결과다. item은 `fact`, `node_type`, 범위, `name`(name locator가 가리키는 범위 `{start_byte, end_byte}` 또는 locator가 `node`면 `null`), `status`(`PASS`, `NAME_MISSING`, `HAS_ERROR`)다. 모든 item이 `PASS`면 `PASS`, 하나라도 아니면 `FAIL`, 선언이 하나도 없으면 `NOT_APPLICABLE`, mapping이 없는 route면 `NOT_ASSESSED`다. S06의 사실 query는 같은 item을 재현해야 한다.
+* `partial_trees[{point, byte, truncated, nodes}]`: workload가 미리 등록한 지점(`point` id, 원본 byte offset)마다 그 byte를 덮는 가장 깊은 node의 조상 사슬과 그 node의 subtree를 ordered tree node 모양으로 담는다. `parent`는 이 배열 안의 index이고 맨 위 조상이 -1이다. 한 지점에 1000 node를 넘으면 preorder 앞 1000개만 담고 `truncated: true`다.
+
+summary와 envelope는 범위만 담는다. source·XML 값·이름의 텍스트를 추출하지 않으며 이름도 byte 범위로만 기록한다. 비공개 corpus의 summary는 로컬 기록에만 둔다.
 
 ## 실행 경계와 단계
 

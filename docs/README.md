@@ -1,6 +1,6 @@
 # Documentation map
 
-The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) and the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, with the matching `src/kit` API. Other commands and r0 data contracts are planned specifications, not claims of implementation.
+The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, and the Session 03 static `node-types.json` check and directional diff (`tsgk schema check|diff`), with the matching `src/kit` API. Other commands and r0 data contracts are planned specifications, not claims of implementation.
 
 | Task | Canonical owner |
 |---|---|
@@ -9,7 +9,7 @@ The current implementation consists of repository foundation checks, the Session
 | Public offline Go API, ownership, external consumers | [public API](specs/public-go-api.md) |
 | Fingerprints, manifests, evidence | [identity/evidence](specs/identity-and-evidence.md) |
 | Untrusted inputs, paths/archives, execution authority | [trust/execution](specs/trust-and-execution.md) |
-| Ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md) |
+| Static node-types contract, declaration/fact mapping, ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md), [fact mapping](../src/contracts/fact-mapping.json) |
 | OS/arch/capabilities | [platform](specs/platform-support.md) |
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |

@@ -226,7 +226,7 @@ type SchemaDifference struct {
 }
 ```
 
-판정·code·순서·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. 입력은 파일 경로가 아니라 caller가 가진 bytes이며 API는 파일·process·network를 쓰지 않고 `parser.c`가 필요 없다. 호출 중 caller는 `Data`를 바꾸지 않고, API는 반환 후 이를 보관하지 않는다. 결과는 호출별로 새로 할당된다. 서로 다른 입력에 대한 동시 호출은 공유 상태가 없다. 형식 위반은 `SchemaCheck`의 오류가 아니라 `error == nil`인 결과의 `FAIL`/`BLOCKED`다. `SchemaDiff`는 잘못된 입력을 `*Error`(`INVALID_INPUT`/`SCHEMA_INVALID`, `UNSUPPORTED`/`SCHEMA_KEY_UNSUPPORTED`)로 돌려주고 그 입력의 finding을 결과에 남긴다. 한도·취소·deadline 없는 context·잘못된 limits(`LIMITS_INVALID`)는 S01과 같은 `*Error`다. 오류와 함께 반환된 결과는 `COMPLETED`/`PASS`가 아니고 `Counts`는 nil, `Differences`는 비어 있다.
+판정·code·순서·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. 실행되는 공개 예시는 `src/kit/example_test.go`의 `ExampleSchemaDiff`다. 입력은 파일 경로가 아니라 caller가 가진 bytes이며 API는 파일·process·network를 쓰지 않고 `parser.c`가 필요 없다. 호출 중 caller는 `Data`를 바꾸지 않고, API는 반환 후 이를 보관하지 않는다. 결과는 호출별로 새로 할당된다. 서로 다른 입력에 대한 동시 호출은 공유 상태가 없다. 형식 위반은 `SchemaCheck`의 오류가 아니라 `error == nil`인 결과의 `FAIL`/`BLOCKED`다. `SchemaDiff`는 잘못된 입력을 `*Error`(`INVALID_INPUT`/`SCHEMA_INVALID`, `UNSUPPORTED`/`SCHEMA_KEY_UNSUPPORTED`)로 돌려주고 그 입력의 finding을 결과에 남긴다. 한도·취소·deadline 없는 context·잘못된 limits(`LIMITS_INVALID`)는 S01과 같은 `*Error`다. 오류와 함께 반환된 결과는 `COMPLETED`/`PASS`가 아니고 `Counts`는 nil, `Differences`는 비어 있다.
 
 ## 외부 소비자 검증
 

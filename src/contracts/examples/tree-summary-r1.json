@@ -1,0 +1,43 @@
+{
+  "schema": "tsgk-tree-summary/r1",
+  "input": {"bytes": 41943040, "sha256": "4b2d0d6f0a5d3a8c1d4e7f6a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c", "encoding": "UTF-16LE", "encoding_source": "BOM"},
+  "status": "COMPLETED",
+  "identities": [
+    {"role": "producer", "schema": "tsgk-native/r1", "sha256": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"},
+    {"role": "source", "schema": "tsgk-files/r2", "sha256": "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809"},
+    {"role": "policy", "schema": "tsgk-policy/r1", "sha256": "2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a"}
+  ],
+  "reason": "DESCENDANT_LIMIT",
+  "descendant_count": 61234,
+  "digest": {"canonicalization": "tsgk-tree-digest/r1", "sha256": "3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b"},
+  "errors": {
+    "limit": 1000,
+    "total": 2,
+    "truncated": false,
+    "items": [
+      {"kind": "ERROR", "type": "ERROR", "start_byte": 2048, "end_byte": 2060, "start_point": {"row": 40, "column": 8}, "end_point": {"row": 40, "column": 20}},
+      {"kind": "MISSING", "type": ";", "start_byte": 4096, "end_byte": 4096, "start_point": {"row": 81, "column": 30}, "end_point": {"row": 81, "column": 30}}
+    ]
+  },
+  "declarations": {
+    "mapping": "declaration-facts-r1",
+    "route": "csharp",
+    "assessment": "FAIL",
+    "items": [
+      {"fact": "type_declaration", "node_type": "class_declaration", "start_byte": 120, "end_byte": 41900000, "name": {"start_byte": 146, "end_byte": 166}, "status": "PASS"},
+      {"fact": "member_declaration", "node_type": "indexer_declaration", "start_byte": 1800, "end_byte": 1900, "name": null, "status": "PASS"},
+      {"fact": "member_declaration", "node_type": "method_declaration", "start_byte": 2000, "end_byte": 2200, "name": {"start_byte": 2024, "end_byte": 2040}, "status": "HAS_ERROR"}
+    ]
+  },
+  "partial_trees": [
+    {
+      "point": "P01",
+      "byte": 2050,
+      "truncated": false,
+      "nodes": [
+        {"parent": -1, "type": "method_declaration", "field": null, "named": true, "extra": false, "is_error": false, "has_error": true, "is_missing": false, "start_byte": 2000, "end_byte": 2200, "start_point": {"row": 39, "column": 4}, "end_point": {"row": 44, "column": 5}},
+        {"parent": 0, "type": "ERROR", "field": null, "named": true, "extra": false, "is_error": true, "has_error": true, "is_missing": false, "start_byte": 2048, "end_byte": 2060, "start_point": {"row": 40, "column": 8}, "end_point": {"row": 40, "column": 20}}
+      ]
+    }
+  ]
+}

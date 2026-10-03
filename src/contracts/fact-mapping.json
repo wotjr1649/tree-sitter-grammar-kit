@@ -1,0 +1,128 @@
+{
+  "schema": "tsgk-fact-mapping/r1",
+  "revision": "declaration-facts-r1",
+  "status": "SCHEMA_DERIVED_NATIVE_NOT_RUN",
+  "locators": {
+    "node": "the declaration node itself; no separate name",
+    "field:F": "the node's field F",
+    "child:T": "the first named child of type T",
+    "children:T": "every named child of type T, in order"
+  },
+  "routes": [
+    {
+      "route": "csharp",
+      "schema": {"repository": "tree-sitter/tree-sitter-c-sharp", "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9", "path": "src/node-types.json", "bytes": 133257, "sha256": "54bf9fa925bac6fcdc05e0221ae8d4a62c155eb43ccd72b5bc2a4bdbebb7997e"},
+      "candidate_schema": "NOT_AVAILABLE: the adopted P05-CSHARP-REMEDY-r5 node-types.json is regenerated in S04; its native trees (run 36917832850) contain file_based_app_directive, which the upstream schema lacks",
+      "facts": [
+        {"fact": "type_declaration", "node": "class_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "struct_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "interface_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "enum_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "record_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "delegate_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "namespace_declaration", "name": "field:name"},
+        {"fact": "type_declaration", "node": "file_scoped_namespace_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "method_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "constructor_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "destructor_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "property_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "event_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "enum_member_declaration", "name": "field:name"},
+        {"fact": "member_declaration", "node": "field_declaration", "name": "child:variable_declaration/children:variable_declarator/field:name"},
+        {"fact": "member_declaration", "node": "event_field_declaration", "name": "child:variable_declaration/children:variable_declarator/field:name"},
+        {"fact": "member_declaration", "node": "indexer_declaration", "name": "node"},
+        {"fact": "member_declaration", "node": "operator_declaration", "name": "field:operator"},
+        {"fact": "member_declaration", "node": "conversion_operator_declaration", "name": "field:type"},
+        {"fact": "member_declaration", "node": "extension_declaration", "name": "node"},
+        {"fact": "command_text_site", "node": "assignment_expression", "name": "field:left", "value": "field:right", "match": "left is identifier CommandText (object initializer) or member_access_expression whose field:name is identifier CommandText"},
+        {"fact": "command_text_site", "node": "object_creation_expression", "name": "field:type", "value": "field:arguments/child:argument", "match": "field:type names a type in csharp-command-api-r1"},
+        {"fact": "command_text_literal", "node": "string_literal", "name": "node", "match": "value of a command_text_site"},
+        {"fact": "command_text_literal", "node": "verbatim_string_literal", "name": "node", "match": "value of a command_text_site"},
+        {"fact": "command_text_literal", "node": "raw_string_literal", "name": "node", "match": "value of a command_text_site"},
+        {"fact": "dynamic_sql_site", "node": "assignment_expression", "name": "node", "match": "dynamic-sql-r1 kind CSHARP_COMMAND for a command_text_site"},
+        {"fact": "dynamic_sql_site", "node": "object_creation_expression", "name": "node", "match": "dynamic-sql-r1 kind CSHARP_COMMAND for a command_text_site"},
+        {"fact": "create_object", "status": "UNSUPPORTED", "reason": "SQL CREATE is not C# syntax; C# carries SQL only inside string values (command_text_literal)"},
+        {"fact": "static_exec_target", "status": "UNSUPPORTED", "reason": "a stored-procedure name passed through CommandText is a string value; resolving it needs CommandType semantics outside this static mapping"}
+      ]
+    },
+    {
+      "route": "tsql",
+      "schema": {"repository": "meloncholera/tree-sitter-mssql", "commit": "8620fbcfca9438e1ff7104835bcb8305aba3bdfa", "path": "src/node-types.json", "bytes": 404735, "sha256": "d49356aed210b6522a6e130fdfb3081ff004b74c1cc3a8aee8c5f76eb73d30b9"},
+      "candidate_schema": "NOT_AVAILABLE: the adopted P05-MSSQL-REMEDY-r1 node-types.json is regenerated in S04; its native trees (run 36947507308) contain generated_always_clause and graph_table_type, which the upstream schema lacks",
+      "facts": [
+        {"fact": "create_object", "node": "create_procedure", "name": "field:name"},
+        {"fact": "create_object", "node": "create_function", "name": "field:name"},
+        {"fact": "create_object", "node": "create_view", "name": "field:name"},
+        {"fact": "create_object", "node": "create_table", "name": "field:name"},
+        {"fact": "create_object", "node": "create_trigger", "name": "child:object_reference"},
+        {"fact": "create_object", "node": "create_type", "name": "field:name"},
+        {"fact": "create_object", "node": "create_schema", "name": "field:name"},
+        {"fact": "create_object", "node": "create_synonym", "name": "field:name"},
+        {"fact": "create_object", "node": "create_sequence", "name": "field:name"},
+        {"fact": "create_object", "node": "create_index", "name": "field:name"},
+        {"fact": "static_exec_target", "node": "execute_statement", "name": "field:procedure", "match": "field:procedure is present and its object_reference field:name identifier does not start with @ (EXEC @module_var is a non-dynamic module variable call, kind EXEC_MODULE_VARIABLE)"},
+        {"fact": "dynamic_sql_site", "node": "execute_statement", "name": "node", "match": "dynamic-sql-r1 kinds EXEC_PAREN, EXEC_PAREN_AT and SP_EXECUTESQL; the argument is chosen by the kind"},
+        {"fact": "type_declaration", "status": "UNSUPPORTED", "reason": "C# type declarations are not T-SQL syntax; T-SQL user types are create_object create_type"},
+        {"fact": "member_declaration", "status": "UNSUPPORTED", "reason": "no member declarations in T-SQL"},
+        {"fact": "command_text_site", "status": "UNSUPPORTED", "reason": "ADO.NET command sites are C# syntax"},
+        {"fact": "command_text_literal", "status": "UNSUPPORTED", "reason": "ADO.NET command sites are C# syntax"}
+      ]
+    },
+    {
+      "route": "postgresql-sql",
+      "schema": {"repository": "gmr/tree-sitter-postgres", "commit": "59d0d8cd7506d68de1229fb4bbce838c83b60c8a", "path": "postgres/src/node-types.json", "bytes": 508227, "sha256": "7f9f350c2730fbddf36f096dbb27405f6ae29ba787b265f2bb494e6a887078d5"},
+      "candidate_schema": "NOT_AVAILABLE: the adopted P05-PG-LEGACY-REMEDY-r1 node-types.json is regenerated in S04; its registered native trees (run 36882649292) showed no node outside the upstream schema",
+      "facts": [
+        {"fact": "create_object", "node": "CreateStmt", "name": "child:qualified_name"},
+        {"fact": "create_object", "node": "ViewStmt", "name": "child:qualified_name"},
+        {"fact": "create_object", "node": "CreateFunctionStmt", "name": "child:func_name"},
+        {"fact": "create_object", "node": "IndexStmt", "name": "child:opt_single_name"},
+        {"fact": "create_object", "node": "CreateTrigStmt", "name": "child:name"},
+        {"fact": "create_object", "node": "CreateSchemaStmt", "name": "child:opt_single_name"},
+        {"fact": "create_object", "node": "CreateSeqStmt", "name": "child:qualified_name"},
+        {"fact": "create_object", "node": "DefineStmt", "name": "child:any_name"},
+        {"fact": "static_exec_target", "status": "UNSUPPORTED", "reason": "PostgreSQL has no T-SQL EXEC; CALL and EXECUTE of prepared statements are different semantics outside declaration-facts-r1"},
+        {"fact": "dynamic_sql_site", "status": "UNSUPPORTED", "reason": "PL/pgSQL EXECUTE belongs to the excluded PL/pgSQL language (postgresql-sql-X01); SQL-level dynamic SQL has no node in this grammar"},
+        {"fact": "type_declaration", "status": "UNSUPPORTED", "reason": "PostgreSQL types are create_object DefineStmt"},
+        {"fact": "member_declaration", "status": "UNSUPPORTED", "reason": "no member declarations in SQL"},
+        {"fact": "command_text_site", "status": "UNSUPPORTED", "reason": "ADO.NET command sites are C# syntax"},
+        {"fact": "command_text_literal", "status": "UNSUPPORTED", "reason": "ADO.NET command sites are C# syntax"}
+      ]
+    }
+  ],
+  "csharp_command_api": {
+    "revision": "csharp-command-api-r1",
+    "heuristic": true,
+    "types": ["SqlCommand", "SqlDataAdapter", "OleDbCommand", "OleDbDataAdapter", "OdbcCommand", "OdbcDataAdapter"],
+    "properties": ["CommandText"],
+    "type_match": "the last identifier of the written type name (simple, qualified or alias-qualified); generic arguments are not part of the match",
+    "known_false_positive": "CommandText assigned a stored-procedure name while CommandType is StoredProcedure"
+  },
+  "dynamic_sql": {
+    "revision": "dynamic-sql-r1",
+    "kinds": [
+      {"kind": "EXEC_PAREN", "route": "tsql", "node": "execute_statement", "match": "no field:procedure and no keyword_at child", "argument": "first parenthesized expression child"},
+      {"kind": "EXEC_PAREN_AT", "route": "tsql", "node": "execute_statement", "match": "no field:procedure and a keyword_at child; the linked server is the identifier child after keyword_at", "argument": "first parenthesized expression child"},
+      {"kind": "SP_EXECUTESQL", "route": "tsql", "node": "execute_statement", "match": "field:procedure object_reference whose name, after removing [] or \"\" quoting and comparing case-insensitively, is sp_executesql and whose schema part is absent or sys", "argument": "the first exec_argument when it is positional, or the exec_argument whose field:name is @stmt"},
+      {"kind": "CSHARP_COMMAND", "route": "csharp", "node": "command_text_site", "match": "csharp-command-api-r1 (heuristic, reported as heuristic)", "argument": "the command_text_site value"}
+    ],
+    "non_dynamic": [
+      {"kind": "EXEC_MODULE_VARIABLE", "route": "tsql", "node": "execute_statement", "match": "field:procedure object_reference whose field:name identifier starts with @"}
+    ],
+    "excluded_arguments": ["AS USER / AS LOGIN = expression of EXEC(...)", "parenthesized expressions after the first (pass-through parameters to a linked server)", "sp_executesql arguments after the statement (parameter definitions and values)"],
+    "argument_kinds": [
+      {"kind": "literal_unicode", "tsql": "literal whose text starts with N' or n'", "csharp": "string_literal, verbatim_string_literal or raw_string_literal (C# strings are UTF-16)"},
+      {"kind": "literal_char", "tsql": "literal whose text starts with '", "csharp": "none"},
+      {"kind": "variable", "tsql": "field or identifier whose identifier text starts with @ (not @@)", "csharp": "identifier"},
+      {"kind": "bare_word", "tsql": "field or identifier whose identifier text does not start with @", "csharp": "none"},
+      {"kind": "concatenation", "tsql": "binary_expression whose field:operator is +", "csharp": "binary_expression whose field:operator is +, or interpolated_string_expression"},
+      {"kind": "other", "tsql": "any other node (numbers, NULL, @@ system variables, unary_expression, keyword_default, invocation, subquery)", "csharp": "any other node"}
+    ],
+    "fact_fields": ["kind", "argument_kind", "start_byte", "end_byte", "start_point", "end_point", "variable_name_range"],
+    "known_misses": [
+      {"case": "EXEC (...) AT DATA_SOURCE name", "reason": "execute_statement accepts only AT identifier"},
+      {"case": "EXEC ... WITH RESULT SETS (...)", "reason": "execute_statement accepts only WITH RECOMPILE"},
+      {"case": "procedure call as the first statement of a batch without EXEC", "reason": "no execute_statement node is produced"}
+    ]
+  }
+}
