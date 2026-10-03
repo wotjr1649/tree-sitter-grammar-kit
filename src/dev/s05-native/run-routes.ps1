@@ -186,7 +186,7 @@ if ($Large) {
     $cases += [ordered]@{ id = $fx.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = $sha; bytes = $bytes.Length }; edits = @()
       points = @($fx.points | ForEach-Object { [ordered]@{ id = $_.id; byte = $_.byte } }); expect = @($fx.expect | ForEach-Object { [ordered]@{ step = 0; syntax = $_.syntax; contains = @(); declarations = $_.declarations } }) }
   }
-  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r2' 'auto' $cases (Get-Declarations $r.route)
+  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r3' 'auto' $cases (Get-Declarations $r.route)
   if (-not @($run.res.cases).Count) { $summary.failures += "large: $($run.res.execution_status) build or refusal" }
   foreach ($c in @($run.res.cases)) {
     $t = if (@($c.steps).Count) { $c.steps[0].incremental } else { $null }

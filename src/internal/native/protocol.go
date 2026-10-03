@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
@@ -14,8 +15,12 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-// Protocol is the driver protocol revision.
-const Protocol = "tsgk-native/r1"
+// Driver protocol revisions: r1 (S05) and r2 (S06: queries, API facts, capabilities). The
+// driver answers each request in the revision it was asked in.
+const (
+	Protocol   = "tsgk-native/r1"
+	ProtocolR2 = "tsgk-native/r2"
+)
 
 // MaxRequestFrame is the request frame payload ceiling.
 const MaxRequestFrame = 50331648
@@ -23,11 +28,19 @@ const MaxRequestFrame = 50331648
 // Limits are the per-request driver limits.
 type Limits struct {
 	InputBytes, Nodes, FullNodes, Depth, OutputBytes, ParseMillis, MemoryBytes, Errors, PartialNodes uint64
+	Matches, Captures, QueryMillis                                                                   uint64 // r2 only
 }
 
 // LimitsFor returns the request limits of an operation.
 func LimitsFor(op kit.NativeOperation) Limits {
-	return Limits{op.InputBytes, op.Nodes, op.FullNodes, op.Depth, op.OutputBytes, op.ParseMillis, op.MemoryBytes, op.Errors, op.PartialNodes}
+	return Limits{op.InputBytes, op.Nodes, op.FullNodes, op.Depth, op.OutputBytes, op.ParseMillis, op.MemoryBytes, op.Errors, op.PartialNodes,
+		op.Matches, op.Captures, op.QueryMillis}
+}
+
+// QuerySource is one r2 query: its id and UTF-8 source.
+type QuerySource struct {
+	ID     string
+	Source []byte
 }
 
 // Request is one driver request.
@@ -41,16 +54,33 @@ type Request struct {
 	Ranges       [][]kit.Span // included ranges per step (SVC inline code); nil for whole input
 	Source       []byte
 	Edits        []kit.Edit
+	Protocol     string // "" is r1
+	Queries      []QuerySource
+	API          bool
 }
 
-// Encode renders the canonical request payload (fixed key order, no whitespace).
+// Revision is the request's protocol revision.
+func (r Request) Revision() string {
+	if r.Protocol == "" {
+		return Protocol
+	}
+	return r.Protocol
+}
+
+// Encode renders the canonical request payload (fixed key order, no whitespace). An r1
+// request is exactly the S05 payload; r2 adds the query limits, queries and the API switch.
 func (r Request) Encode() []byte {
 	var b bytes.Buffer
 	b64 := base64.StdEncoding.EncodeToString
-	fmt.Fprintf(&b, `{"protocol":%q,"id":%q,"encoding":%q,"output":%q,`, Protocol, r.ID, r.Encoding, r.Output)
+	r2 := r.Revision() == ProtocolR2
+	fmt.Fprintf(&b, `{"protocol":%q,"id":%q,"encoding":%q,"output":%q,`, r.Revision(), r.ID, r.Encoding, r.Output)
 	l := r.Limits
-	fmt.Fprintf(&b, `"limits":{"input_bytes":%d,"nodes":%d,"full_nodes":%d,"depth":%d,"output_bytes":%d,"parse_ms":%d,"memory_bytes":%d,"errors":%d,"partial_nodes":%d},`,
+	fmt.Fprintf(&b, `"limits":{"input_bytes":%d,"nodes":%d,"full_nodes":%d,"depth":%d,"output_bytes":%d,"parse_ms":%d,"memory_bytes":%d,"errors":%d,"partial_nodes":%d`,
 		l.InputBytes, l.Nodes, l.FullNodes, l.Depth, l.OutputBytes, l.ParseMillis, l.MemoryBytes, l.Errors, l.PartialNodes)
+	if r2 {
+		fmt.Fprintf(&b, `,"matches":%d,"captures":%d,"query_ms":%d`, l.Matches, l.Captures, l.QueryMillis)
+	}
+	b.WriteString("},")
 	b.WriteString(`"declarations":[`)
 	for i, d := range r.Declarations {
 		if i > 0 {
@@ -86,7 +116,18 @@ func (r Request) Encode() []byte {
 		}
 		fmt.Fprintf(&b, `{"start_byte":%d,"old_end_byte":%d,"new_end_byte":%d,"old":"%s","new":"%s"}`, e.StartByte, e.OldEndByte, e.NewEndByte, b64(e.Old), b64(e.New))
 	}
-	b.WriteString("]}")
+	b.WriteByte(']')
+	if r2 {
+		b.WriteString(`,"queries":[`)
+		for i, q := range r.Queries {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			fmt.Fprintf(&b, `{"id":%q,"source":"%s"}`, q.ID, b64(q.Source))
+		}
+		fmt.Fprintf(&b, `],"api":%t`, r.API)
+	}
+	b.WriteByte('}')
 	return b.Bytes()
 }
 
@@ -110,12 +151,18 @@ type Response struct {
 	Complete       bool     `json:"complete"`
 }
 
-// Producer is the runtime and grammar ABI the driver reports.
+// Producer is the runtime and grammar ABI the driver reports. An r2 producer also declares
+// its capabilities (query and API revisions, predicate handling) and the language shape;
+// those members are absent from r1.
 type Producer struct {
-	LanguageVersion        uint32 `json:"language_version"`
-	RuntimeLanguageVersion uint32 `json:"runtime_language_version"`
-	RuntimeMinCompatible   uint32 `json:"runtime_min_compatible"`
-	Query                  string `json:"query"`
+	LanguageVersion        uint32  `json:"language_version"`
+	RuntimeLanguageVersion uint32  `json:"runtime_language_version"`
+	RuntimeMinCompatible   uint32  `json:"runtime_min_compatible"`
+	Query                  string  `json:"query"`
+	API                    *string `json:"api,omitempty"`
+	Predicates             *string `json:"predicates,omitempty"`
+	SymbolCount            *uint32 `json:"symbol_count,omitempty"`
+	FieldCount             *uint32 `json:"field_count,omitempty"`
 }
 
 // Step is one parse step of a response.
@@ -149,21 +196,70 @@ type Route struct {
 
 // WireTree is one serialized tree in any form.
 type WireTree struct {
-	Status          string        `json:"status"`
-	Code            string        `json:"code"`
-	ParseMillis     uint64        `json:"parse_ms"`
-	Form            *string       `json:"form"`
-	Reason          string        `json:"reason"`
-	DescendantCount uint64        `json:"descendant_count"`
-	MaxDepth        uint64        `json:"max_depth"`
-	HasError        bool          `json:"has_error"`
-	Digest          string        `json:"digest"`
-	Types           []string      `json:"types"`
-	Fields          []string      `json:"fields"`
-	Nodes           [][]int64     `json:"nodes"`
-	Errors          *WireErrors   `json:"errors"`
-	Declarations    *[]DeclItem   `json:"declarations"`
-	PartialTrees    []WirePartial `json:"partial_trees"`
+	Status          string         `json:"status"`
+	Code            string         `json:"code"`
+	ParseMillis     uint64         `json:"parse_ms"`
+	Form            *string        `json:"form"`
+	Reason          string         `json:"reason"`
+	DescendantCount uint64         `json:"descendant_count"`
+	MaxDepth        uint64         `json:"max_depth"`
+	HasError        bool           `json:"has_error"`
+	Digest          string         `json:"digest"`
+	Types           []string       `json:"types"`
+	Fields          []string       `json:"fields"`
+	Nodes           [][]int64      `json:"nodes"`
+	Errors          *WireErrors    `json:"errors"`
+	Declarations    *[]DeclItem    `json:"declarations"`
+	PartialTrees    []WirePartial  `json:"partial_trees"`
+	Queries         jsontext.Value `json:"queries"` // r2: null or the query results; absent in r1
+	API             jsontext.Value `json:"api"`     // r2: null or the API observations; absent in r1
+}
+
+// WireQuery is one r2 query result on one tree.
+type WireQuery struct {
+	ID           string          `json:"id"`
+	Status       string          `json:"status"`
+	Code         string          `json:"code"`
+	QueryMillis  uint64          `json:"query_ms"`
+	Error        *QueryError     `json:"error"`
+	Patterns     uint32          `json:"patterns"`
+	CaptureNames []string        `json:"capture_names"`
+	Predicates   []WirePredicate `json:"predicates"`
+	Matches      uint64          `json:"matches"`
+	Partial      bool            `json:"partial"`
+	Types        []string        `json:"types"`
+	Captures     [][]int64       `json:"captures"`
+}
+
+// QueryError is the runtime's rejection of a query: class, byte offset and point in the
+// query source.
+type QueryError struct {
+	Type   string    `json:"type"`
+	Offset uint32    `json:"offset"`
+	Point  [2]uint32 `json:"point"`
+}
+
+// WirePredicate is one predicate of a pattern as the runtime lists it.
+type WirePredicate struct {
+	Pattern uint32     `json:"pattern"`
+	Steps   []PredStep `json:"steps"`
+}
+
+// PredStep is one predicate step: kind capture (with its quantifier) or string.
+type PredStep struct {
+	Kind       string  `json:"kind"`
+	Value      string  `json:"value"`
+	Quantifier *string `json:"quantifier"`
+}
+
+// WireAPI is the tsgk-api/r1 observation of one full tree.
+type WireAPI struct {
+	Revision     string    `json:"revision"`
+	Nodes        [][]int64 `json:"nodes"`
+	ChildFields  [][]int64 `json:"child_fields"`
+	FieldLookups [][]int64 `json:"field_lookups"`
+	Points       [][]int64 `json:"points"`
+	Names        []string  `json:"names"`
 }
 
 // WireErrors is the capped ERROR/MISSING list.
@@ -273,18 +369,42 @@ type Tree struct {
 	Wire     WireTree
 	Nodes    []kit.TreeNode // full form only
 	Partials [][]kit.TreeNode
+	Queries  []WireQuery // r2: one per requested query when the tree completed
+	API      *WireAPI    // r2: requested API observations of a full tree
 }
 
-// checkTree validates a tree object against the step's source length.
-func checkTree(w WireTree, sourceBytes uint64, nodes uint64) (Tree, error) {
+// incomplete returns the status and code of the first part of t that did not complete:
+// the tree itself, else a query cut by a limit or failed. An invalid query is an
+// observation of the query input, not an incomplete tree.
+func (t Tree) incomplete() (string, string, bool) {
+	if t.Status != kit.StatusCompleted {
+		return t.Status, t.Code, true
+	}
+	for _, q := range t.Queries {
+		if q.Status == kit.StatusResourceLimit || q.Status == kit.StatusFailed {
+			return q.Status, q.Code, true
+		}
+	}
+	return "", "", false
+}
+
+func isNull(v jsontext.Value) bool { return string(v) == "null" }
+
+// checkTree validates a tree object against the step's source length and, for r2, the
+// requested queries and API observations.
+func checkTree(w WireTree, sourceBytes uint64, nodes uint64, req Request) (Tree, error) {
 	t := Tree{Status: w.Status, Code: w.Code, Wire: w}
+	r2 := req.Revision() == ProtocolR2
+	if r2 != (w.Queries != nil) || r2 != (w.API != nil) {
+		return t, invalid("RESPONSE_INVALID", errors.New("query/api members do not match the revision"))
+	}
 	switch w.Status {
 	case kit.StatusCompleted:
 		if w.Code != "" || w.Form == nil {
 			return t, invalid("RESPONSE_INVALID", errors.New("completed tree without form"))
 		}
 	case kit.StatusResourceLimit, kit.StatusFailed:
-		if w.Code == "" || w.Form != nil || w.Nodes != nil {
+		if w.Code == "" || w.Form != nil || w.Nodes != nil || (r2 && (!isNull(w.Queries) || !isNull(w.API))) {
 			return t, invalid("RESPONSE_INVALID", errors.New("noncomplete tree with data"))
 		}
 		return t, nil
@@ -347,7 +467,159 @@ func checkTree(w WireTree, sourceBytes uint64, nodes uint64) (Tree, error) {
 			}
 		}
 	}
+	if r2 {
+		if err := t.checkQueries(req, sourceBytes); err != nil {
+			return t, err
+		}
+		if err := t.checkAPI(req); err != nil {
+			return t, err
+		}
+	}
 	return t, nil
+}
+
+var queryLimitCodes = map[string]bool{"QUERY_TIME_LIMIT": true, "MATCH_LIMIT": true, "CAPTURE_LIMIT": true, "QUERY_MATCH_OVERFLOW": true}
+
+// checkQueries validates the query results of a completed r2 tree: one per requested query
+// in order, a consistent status, and every capture row inside the query's tables, the
+// source and the tree; on a full tree the linked node must be the captured node.
+func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
+	bad := func(i int, what string) error {
+		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
+	}
+	if isNull(t.Wire.Queries) {
+		if len(req.Queries) != 0 {
+			return bad(0, "missing")
+		}
+		return nil
+	}
+	if err := jsonv2.Unmarshal(t.Wire.Queries, &t.Queries, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return invalid("RESPONSE_MALFORMED", err)
+	}
+	if len(t.Queries) != len(req.Queries) {
+		return bad(len(t.Queries), "count")
+	}
+	for i, q := range t.Queries {
+		if q.ID != req.Queries[i].ID {
+			return bad(i, "id")
+		}
+		switch q.Status {
+		case kit.StatusCompleted:
+			if q.Code != "" || q.Error != nil || q.Captures == nil || q.Partial {
+				return bad(i, "completed shape")
+			}
+		case kit.StatusResourceLimit:
+			if !queryLimitCodes[q.Code] || q.Error != nil || q.Captures == nil || !q.Partial {
+				return bad(i, "limit shape")
+			}
+		case kit.StatusFailed:
+			if q.Code != "CAPTURE_NODE_UNMAPPED" || q.Error != nil || q.Captures != nil || q.Partial {
+				return bad(i, "failed shape")
+			}
+			continue
+		case "INVALID_QUERY":
+			if q.Error == nil || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial || uint64(q.Error.Offset) > uint64(len(req.Queries[i].Source)) {
+				return bad(i, "invalid shape")
+			}
+			continue
+		default:
+			return bad(i, "status "+strconv.Quote(q.Status))
+		}
+		for _, p := range q.Predicates {
+			if p.Pattern >= q.Patterns || len(p.Steps) == 0 {
+				return bad(i, "predicate")
+			}
+			for _, st := range p.Steps {
+				if (st.Kind != "capture" || st.Quantifier == nil) && (st.Kind != "string" || st.Quantifier != nil) {
+					return bad(i, "predicate step")
+				}
+			}
+		}
+		seen := int64(-1)
+		for k, row := range q.Captures {
+			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
+				row[3] < 0 || uint64(row[3]) >= t.Wire.DescendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
+				return bad(i, fmt.Sprintf("capture %d indices", k))
+			}
+			for _, v := range row[6:] {
+				if v < 0 || v > 0xffffffff {
+					return bad(i, fmt.Sprintf("capture %d range", k))
+				}
+			}
+			if row[6] > row[7] || uint64(row[7]) > sourceBytes {
+				return bad(i, fmt.Sprintf("capture %d range", k))
+			}
+			// the runtime numbers a match when it first returns one of its captures
+			if row[0] > seen+1 {
+				return bad(i, fmt.Sprintf("capture %d match order", k))
+			}
+			seen = max(seen, row[0])
+			if t.Nodes != nil {
+				n := t.Nodes[row[3]]
+				c := captureOf(q, row)
+				if n.Type != c.Type || n.Named != c.Named || n.Extra != c.Extra || n.IsError != c.IsError || n.HasError != c.HasError || n.IsMissing != c.IsMissing ||
+					n.StartByte != c.StartByte || n.EndByte != c.EndByte || n.StartPoint != c.StartPoint || n.EndPoint != c.EndPoint {
+					return invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// captureOf converts one validated capture row to the public capture.
+func captureOf(q WireQuery, row []int64) kit.Capture {
+	f := row[5]
+	return kit.Capture{Match: uint32(row[0]), Pattern: uint32(row[1]), Capture: uint32(row[2]), Name: q.CaptureNames[row[2]], Node: row[3], Type: q.Types[row[4]],
+		Named: f&1 != 0, Extra: f&2 != 0, IsError: f&4 != 0, HasError: f&8 != 0, IsMissing: f&16 != 0,
+		StartByte: uint32(row[6]), EndByte: uint32(row[7]), StartPoint: kit.Point{Row: uint32(row[8]), Column: uint32(row[9])}, EndPoint: kit.Point{Row: uint32(row[10]), Column: uint32(row[11])}}
+}
+
+// checkAPI validates the shape of requested API observations: present exactly for a
+// completed full tree of an API request, with every row's arity and table indices in
+// range. Whether the values agree with the serialized tree is judged by compareAPI.
+func (t *Tree) checkAPI(req Request) error {
+	bad := func(what string) error { return invalid("RESPONSE_INVALID", errors.New("api: "+what)) }
+	want := req.API && t.Form == "full"
+	if isNull(t.Wire.API) {
+		if want {
+			return bad("missing")
+		}
+		return nil
+	}
+	if !want {
+		return bad("unrequested")
+	}
+	var a WireAPI
+	if err := jsonv2.Unmarshal(t.Wire.API, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return invalid("RESPONSE_MALFORMED", err)
+	}
+	n := int64(len(t.Nodes))
+	if a.Revision != "tsgk-api/r1" || int64(len(a.Nodes)) != n || len(a.Points) != len(req.Points) {
+		return bad("header")
+	}
+	for _, r := range a.Nodes {
+		if len(r) != 13 {
+			return bad("node row")
+		}
+	}
+	for _, r := range a.ChildFields {
+		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[2] < 0 || r[2] >= int64(len(a.Names)) {
+			return bad("child field row")
+		}
+	}
+	for _, r := range a.FieldLookups {
+		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[1] >= int64(len(a.Names)) {
+			return bad("field lookup row")
+		}
+	}
+	for _, r := range a.Points {
+		if len(r) != 4 {
+			return bad("point row")
+		}
+	}
+	t.API = &a
+	return nil
 }
 
 // Checked is a response validated against its request and the kit's own intermediate
@@ -374,8 +646,11 @@ func sha(b []byte) string {
 // computation, and every tree's structure.
 func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, exitCode int) (Checked, error) {
 	c := Checked{Response: r}
-	if r.Protocol != Protocol || !r.Complete {
-		return c, invalid("RESPONSE_INVALID", errors.New("protocol or completeness"))
+	if r.Protocol != req.Revision() {
+		return c, invalid("RESPONSE_PROTOCOL_MISMATCH", fmt.Errorf("request %s response %s", req.Revision(), r.Protocol))
+	}
+	if !r.Complete {
+		return c, invalid("RESPONSE_INVALID", errors.New("completeness"))
 	}
 	if r.ID != req.ID {
 		return c, invalid("RESPONSE_INVALID", errors.New("id"))
@@ -388,8 +663,13 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 	if (r.Status == kit.StatusCompleted) != (r.Code == "") {
 		return c, invalid("RESPONSE_INVALID", errors.New("code"))
 	}
-	if r.Producer.Query != "UNSUPPORTED" {
-		return c, invalid("RESPONSE_INVALID", errors.New("query capability"))
+	p := r.Producer
+	if req.Revision() == Protocol {
+		if p.Query != "UNSUPPORTED" || p.API != nil || p.Predicates != nil || p.SymbolCount != nil || p.FieldCount != nil {
+			return c, invalid("RESPONSE_INVALID", errors.New("r1 producer"))
+		}
+	} else if p.API == nil || p.Predicates == nil || p.SymbolCount == nil || p.FieldCount == nil || p.Query == "" {
+		return c, invalid("RESPONSE_INVALID", errors.New("r2 producer capabilities"))
 	}
 	if r.Status == "INVALID_REQUEST" {
 		if len(r.Steps) != 0 {
@@ -420,19 +700,24 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 				return c, invalid("EDIT_POINT_MISMATCH", fmt.Errorf("step %d", k))
 			}
 		}
-		inc, err := checkTree(s.Incremental, s.SourceBytes, req.Limits.Nodes)
+		inc, err := checkTree(s.Incremental, s.SourceBytes, req.Limits.Nodes, req)
 		if err != nil {
 			return c, err
 		}
 		cs := CheckedStep{Step: s, Incremental: inc}
 		if s.Fresh != nil {
-			f, err := checkTree(*s.Fresh, s.SourceBytes, req.Limits.Nodes)
+			f, err := checkTree(*s.Fresh, s.SourceBytes, req.Limits.Nodes, req)
 			if err != nil {
 				return c, err
 			}
 			cs.Fresh = &f
 		}
-		stepDone := inc.Status == kit.StatusCompleted && (k == 0 || (cs.Fresh != nil && cs.Fresh.Status == kit.StatusCompleted))
+		_, _, incBad := inc.incomplete()
+		freshBad := true
+		if cs.Fresh != nil {
+			_, _, freshBad = cs.Fresh.incomplete()
+		}
+		stepDone := !incBad && (k == 0 || !freshBad)
 		if stepDone {
 			completed++
 		} else if k != len(r.Steps)-1 || r.Status == kit.StatusCompleted {
@@ -440,21 +725,22 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 		}
 		c.Steps = append(c.Steps, cs)
 	}
-	// The response status and code are those of the first noncomplete tree; a response that
-	// dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT, LANGUAGE_INCOMPATIBLE) reports the count only.
+	// The response status and code are those of the first noncomplete tree or query; a
+	// response that dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT, LANGUAGE_INCOMPATIBLE,
+	// and in r2 a QUERY_TIME_LIMIT the runtime ran past) reports the count only.
 	if r.Status != kit.StatusCompleted {
 		if len(c.Steps) == 0 {
-			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" {
+			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" && (r.Code != "QUERY_TIME_LIMIT" || req.Revision() != ProtocolR2) {
 				return c, invalid("RESPONSE_INVALID", errors.New("noncomplete response without steps"))
 			}
 		} else {
 			last := c.Steps[len(c.Steps)-1]
-			t := last.Incremental
-			if t.Status == kit.StatusCompleted && last.Fresh != nil {
-				t = *last.Fresh
+			status, code, bad := last.Incremental.incomplete()
+			if !bad && last.Fresh != nil {
+				status, code, bad = last.Fresh.incomplete()
 			}
-			if t.Status == kit.StatusCompleted || t.Status != r.Status || t.Code != r.Code {
-				return c, invalid("RESPONSE_INVALID", errors.New("response status/code differ from the first noncomplete tree"))
+			if !bad || status != r.Status || code != r.Code {
+				return c, invalid("RESPONSE_INVALID", errors.New("response status/code differ from the first noncomplete tree or query"))
 			}
 		}
 	}

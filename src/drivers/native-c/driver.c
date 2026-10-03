@@ -1,6 +1,8 @@
-/* tsgk-native/r1 generic driver (Session 05).
+/* tsgk-native generic driver: r1 (Session 05) and r2 (Session 06, queries and API facts).
  *
- * Contract: docs/specs/tree-and-adapter-protocol.md, "S05 구현". The kit builds this file
+ * Contract: docs/specs/tree-and-adapter-protocol.md, "S05 구현" and "S06 구현". An r1
+ * request gets exactly the r1 response; r2 adds queries, API observations and a capability
+ * declaration on the same parse and serialization engine. The kit builds this file
  * as a separate executable together with the pinned Tree-sitter runtime, the grammar's
  * parser and scanner and a generated shim that defines tsgk_language(). It reads
  * length-prefixed canonical JSON requests from stdin and writes one length-prefixed JSON
@@ -29,14 +31,15 @@
 
 const TSLanguage *tsgk_language(void);
 
-#define PROTOCOL "tsgk-native/r1"
+#define PROTOCOL_R1 "tsgk-native/r1"
+#define PROTOCOL_R2 "tsgk-native/r2"
 #define MAX_FRAME 50331648u
 #define MAX_INPUT 33554432u
 #define MAX_OUTPUT 16777216u
 #define MAX_NODES 25000000u
 #define MAX_DEPTH 100000u
 #define MAX_PARSE_MS 60000u
-#define MAX_MEMORY 4294967296ull
+#define MAX_MEMORY 8589934592ull /* 8 GiB: real-world-source-r3 on windows/amd64 (C1-REAL-WORLD-SOURCE-WINDOWS-R3) */
 #define MAX_ERRORS 1000u
 #define MAX_PARTIAL 1000u
 #define MAX_EDITS 4
@@ -44,6 +47,11 @@ const TSLanguage *tsgk_language(void);
 #define MAX_POINTS 64
 #define MAX_RANGES 16
 #define MAX_TEXT 128
+#define MAX_QUERIES 16
+#define MAX_QUERY_BYTES 65536u
+#define MAX_MATCHES 1000000u
+#define MAX_CAPTURES 1000000u
+#define MAX_QUERY_MS 90000u
 
 enum { ENC_UTF8, ENC_UTF16LE, ENC_UTF16BE, ENC_CP949 };
 enum { OUT_TREE, OUT_AUTO, OUT_RECORD };
@@ -54,8 +62,12 @@ typedef union { size_t n; max_align_t align; } Header;
 static uint64_t mem_used, mem_limit = MAX_MEMORY;
 static char req_id[MAX_TEXT + 1];
 static uint32_t cur_source_bytes, cur_steps_done;
-static char producer_json[256];
+static int req_rev = 1; /* protocol revision of the current request; 1 until r2 is read */
+static char producer_json[2][384];
+static const char *protocol_name(void) { return req_rev == 2 ? PROTOCOL_R2 : PROTOCOL_R1; }
+static const char *producer(void) { return producer_json[req_rev - 1]; }
 static void fatal_allocation(void);
+static void fatal_limit(const char *code);
 
 static void *t_malloc(size_t n) {
   if (n > (size_t)-1 - sizeof(Header) || (uint64_t)n > mem_limit || mem_used > mem_limit - (uint64_t)n) fatal_allocation();
@@ -102,17 +114,20 @@ static void write_frame(const char *payload, size_t n) {
   fflush(stdout);
 }
 
-/* Allocation over the request's memory_bytes (or a failed allocation) ends the process:
- * runtime state may be inconsistent. The frame is formatted in static storage. */
-static void fatal_allocation(void) {
+/* A limit that leaves no consistent point to continue from ends the process with a typed
+ * frame and no steps: an allocation over the request's memory_bytes (or a failed
+ * allocation), where runtime state may be inconsistent, and a query the runtime kept
+ * running after its cancellation. The frame is formatted in static storage. */
+static void fatal_limit(const char *code) {
   static char buf[1024];
   int n = snprintf(buf, sizeof buf,
-    "{\"protocol\":\"" PROTOCOL "\",\"id\":\"%s\",\"status\":\"RESOURCE_LIMIT\",\"code\":\"ALLOCATION_LIMIT\",\"producer\":%s,"
+    "{\"protocol\":\"%s\",\"id\":\"%s\",\"status\":\"RESOURCE_LIMIT\",\"code\":\"%s\",\"producer\":%s,"
     "\"source_bytes\":%u,\"steps_completed\":%u,\"steps\":[],\"complete\":true}",
-    req_id, producer_json, (unsigned)cur_source_bytes, (unsigned)cur_steps_done);
+    protocol_name(), req_id, code, producer(), (unsigned)cur_source_bytes, (unsigned)cur_steps_done);
   if (n > 0 && (size_t)n < sizeof buf) write_frame(buf, (size_t)n);
   _Exit(3);
 }
+static void fatal_allocation(void) { fatal_limit("ALLOCATION_LIMIT"); }
 
 /* ---- time ---- */
 
@@ -219,11 +234,11 @@ static void puti(Buf *b, int64_t v) {
   if (v < 0) { put(b, "-", 1); putu(b, (uint64_t)(-v)); } else putu(b, (uint64_t)v);
 }
 static void putb(Buf *b, bool v) { puts_(b, v ? "true" : "false"); }
-static void putstr(Buf *b, const char *s) {
+static void putstrn(Buf *b, const char *s, size_t n) {
   static const char hex[] = "0123456789abcdef";
   put(b, "\"", 1);
   const char *run = s;
-  for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+  for (const unsigned char *p = (const unsigned char *)s; p < (const unsigned char *)s + n; p++) {
     if (*p == '"' || *p == '\\' || *p < 0x20) {
       put(b, run, (size_t)((const char *)p - run));
       if (*p == '"') puts_(b, "\\\"");
@@ -232,9 +247,10 @@ static void putstr(Buf *b, const char *s) {
       run = (const char *)p + 1;
     }
   }
-  put(b, run, strlen(run));
+  put(b, run, (size_t)(s + n - run));
   put(b, "\"", 1);
 }
+static void putstr(Buf *b, const char *s) { putstrn(b, s, strlen(s)); }
 static void putpoint(Buf *b, TSPoint p) { put(b, "[", 1); putu(b, p.row); put(b, ",", 1); putu(b, p.column); put(b, "]", 1); }
 static void buf_free(Buf *b) { t_free(b->data); memset(b, 0, sizeof *b); }
 
@@ -243,10 +259,16 @@ static void buf_free(Buf *b) { t_free(b->data); memset(b, 0, sizeof *b); }
 typedef struct { char fact[MAX_TEXT + 1], node[MAX_TEXT + 1], name[MAX_TEXT + 1]; } Decl;
 typedef struct { char id[MAX_TEXT + 1]; uint32_t byte; } Point;
 typedef struct { uint32_t start, old_end, new_end, old_len, new_len; uint8_t *old, *neu; } Edit;
+/* r2 query: source bytes, and after compilation the query or its error */
+typedef struct { char id[MAX_TEXT + 1]; uint8_t *src; uint32_t len; TSQuery *q; uint32_t err_offset; TSQueryError err; } Query;
 typedef struct {
   char id[MAX_TEXT + 1];
-  int enc, out;
+  int rev, enc, out;
   uint64_t input_bytes, nodes, full_nodes, depth, output_bytes, parse_ms, memory_bytes, errors, partial_nodes;
+  uint64_t matches, captures, query_ms; /* r2 */
+  Query queries[MAX_QUERIES];
+  int nqueries;
+  bool api;
   Decl decls[MAX_DECLS];
   int ndecls;
   Point points[MAX_POINTS];
@@ -347,8 +369,13 @@ static const char *bounded(uint64_t v, uint64_t max) { return v == 0 || v > max 
 static void req_free(Req *r) {
   t_free(r->source);
   for (int i = 0; i < r->nedits; i++) { t_free(r->edits[i].old); t_free(r->edits[i].neu); }
+  for (int i = 0; i < r->nqueries; i++) {
+    t_free(r->queries[i].src);
+    if (r->queries[i].q) ts_query_delete(r->queries[i].q);
+  }
   r->source = NULL;
   r->nedits = 0;
+  r->nqueries = 0;
 }
 
 static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
@@ -357,7 +384,10 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   memset(r, 0, sizeof *r);
   lit(&c, "{\"protocol\":");
   if (!text(&c, word, false)) return c.err;
-  if (strcmp(word, PROTOCOL)) return "PROTOCOL_MISMATCH";
+  if (!strcmp(word, PROTOCOL_R1)) r->rev = 1;
+  else if (!strcmp(word, PROTOCOL_R2)) r->rev = 2;
+  else return "PROTOCOL_MISMATCH";
+  req_rev = r->rev;
   lit(&c, ",\"id\":");
   if (!text(&c, r->id, true)) return c.err;
   memcpy(req_id, r->id, sizeof req_id);
@@ -383,6 +413,11 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   lit(&c, ",\"memory_bytes\":"); r->memory_bytes = num(&c);
   lit(&c, ",\"errors\":"); r->errors = num(&c);
   lit(&c, ",\"partial_nodes\":"); r->partial_nodes = num(&c);
+  if (r->rev == 2) {
+    lit(&c, ",\"matches\":"); r->matches = num(&c);
+    lit(&c, ",\"captures\":"); r->captures = num(&c);
+    lit(&c, ",\"query_ms\":"); r->query_ms = num(&c);
+  }
   lit(&c, "}");
   if (c.err) return c.err;
   const char *e = bounded(r->input_bytes, MAX_INPUT);
@@ -394,6 +429,9 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   if (!e) e = bounded(r->memory_bytes, MAX_MEMORY);
   if (!e) e = bounded(r->errors, MAX_ERRORS);
   if (!e) e = bounded(r->partial_nodes, MAX_PARTIAL);
+  if (!e && r->rev == 2) e = bounded(r->matches, MAX_MATCHES);
+  if (!e && r->rev == 2) e = bounded(r->captures, MAX_CAPTURES);
+  if (!e && r->rev == 2) e = bounded(r->query_ms, MAX_QUERY_MS);
   if (e) return e;
   lit(&c, ",\"declarations\":[");
   while (!c.err && !peek(&c, ']')) {
@@ -464,7 +502,27 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
     ed->neu = b64(&c, r->input_bytes, &ed->new_len);
     lit(&c, "}");
   }
-  lit(&c, "]}");
+  lit(&c, "]");
+  if (r->rev == 2) {
+    /* r2: queries (id, base64 UTF-8 source) and the API-observation switch */
+    lit(&c, ",\"queries\":[");
+    while (!c.err && !peek(&c, ']')) {
+      if (r->nqueries && !lit(&c, ",")) break;
+      if (r->nqueries == MAX_QUERIES) return "LIMIT_INVALID";
+      Query *q = &r->queries[r->nqueries++];
+      lit(&c, "{\"id\":"); text(&c, q->id, true);
+      lit(&c, ",\"source\":");
+      if (c.err) break;
+      q->src = b64(&c, MAX_INPUT, &q->len);
+      if (c.err) break;
+      if (q->len == 0 || q->len > MAX_QUERY_BYTES) return "QUERY_SOURCE_INVALID";
+      for (int i = 0; i + 1 < r->nqueries; i++) if (!strcmp(r->queries[i].id, q->id)) return "QUERY_ID_DUPLICATE";
+      lit(&c, "}");
+    }
+    lit(&c, "],\"api\":");
+    if (peek(&c, 't')) { lit(&c, "true"); r->api = true; } else lit(&c, "false");
+  }
+  lit(&c, "}");
   if (c.err) return c.err;
   if (c.p != c.end) return "REQUEST_MALFORMED";
   for (int i = 0; i < r->ndecls; i++) {
@@ -967,8 +1025,12 @@ static void partial_tree(TreeCtx *x, Buf *b, TSNode root, const Point *pt) {
   t_free(fields);
 }
 
+static const char *emit_queries(Buf *out, Req *r, TSTree *t);
+static void emit_api(Buf *out, Req *r, TSTree *t, uint32_t count);
+
 /* Serializes one tree object. Returns NULL for a completed tree, else its code; *status is
- * set to the tree status. fault_flag applies the owned STEP1 fault. */
+ * set to the tree status. fault_flag applies the owned STEP1 fault. An r2 tree also carries
+ * its query results and API observations; a query that did not complete returns its code. */
 static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint64_t ms, int form, bool fault_flag) {
   size_t mark = out->len;
   const char *status = "COMPLETED";
@@ -1020,8 +1082,9 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
   put(out, "{\"status\":", 10); putstr(out, status);
   puts_(out, ",\"code\":"); putstr(out, strcmp(status, "COMPLETED") ? code : "");
   puts_(out, ",\"parse_ms\":"); putu(out, ms);
+  const char *qcode = NULL;
   if (strcmp(status, "COMPLETED")) {
-    puts_(out, ",\"form\":null}");
+    puts_(out, r->rev == 2 ? ",\"form\":null,\"queries\":null,\"api\":null}" : ",\"form\":null}");
   } else {
     puts_(out, ",\"form\":"); putstr(out, x.full ? "full" : form == OUT_RECORD ? "record" : "summary");
     if (!x.full && form == OUT_AUTO) { puts_(out, ",\"reason\":"); putstr(out, reason); }
@@ -1067,6 +1130,13 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
       if (parts.over) out->over = true; else put(out, parts.data, parts.len);
       buf_free(&parts);
     }
+    if (r->rev == 2) {
+      /* the serialization buffers are released first: the queries may need the memory */
+      buf_free(&x.nodes); buf_free(&x.errs); buf_free(&x.decls);
+      qcode = emit_queries(out, r, t);
+      puts_(out, ",\"api\":");
+      if (r->api && x.full) emit_api(out, r, t, count); else puts_(out, "null");
+    }
     put(out, "}", 1);
   }
   buf_free(&x.nodes); buf_free(&x.errs); buf_free(&x.decls);
@@ -1074,7 +1144,7 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
   t_free(x.symdecl);
   t_free(x.symdone);
   (void)mark;
-  return strcmp(status, "COMPLETED") ? code : NULL;
+  return strcmp(status, "COMPLETED") ? code : qcode;
 }
 
 /* ---- incremental route instrumentation: runtime node identities of the edited old tree ---- */
@@ -1108,6 +1178,336 @@ static void route_counts(Req *r, TSTree *old, TSTree *inc, TSTree *fresh, uint64
   t_free(s.slots);
 }
 
+/* ---- r2: node index map ----
+ * Maps a runtime node identity (TSNode.id, the node's subtree slot; ts_node_eq compares it)
+ * to its preorder index in the serialized tree. Identities are used only inside this
+ * process and never written; (type, start, end) is not assumed to be unique. */
+
+typedef struct { const void **keys; uint32_t *vals; uint32_t n; } IdMap;
+static void idmap_init(IdMap *m, uint64_t count) {
+  m->n = 64;
+  while (m->n < 2 * count + 2) m->n *= 2;
+  m->keys = t_calloc(m->n, sizeof *m->keys);
+  m->vals = t_calloc(m->n, sizeof *m->vals);
+}
+static uint32_t *idmap_slot(IdMap *m, const void *id, bool add) {
+  uint32_t h = ptr_hash(id) & (m->n - 1);
+  while (m->keys[h]) {
+    if (m->keys[h] == id) return &m->vals[h];
+    h = (h + 1) & (m->n - 1);
+  }
+  if (!add) return NULL;
+  m->keys[h] = id;
+  m->vals[h] = UINT32_MAX;
+  return &m->vals[h];
+}
+static void idmap_free(IdMap *m) { t_free(m->keys); t_free(m->vals); memset(m, 0, sizeof *m); }
+/* -1 for a null node, -2 for a node the map does not know (never expected) */
+static int64_t idx_of(IdMap *m, TSNode n) {
+  if (ts_node_is_null(n)) return -1;
+  uint32_t *v = idmap_slot(m, n.id, false);
+  return v && *v != UINT32_MAX ? (int64_t)*v : -2;
+}
+typedef struct { IdMap *m; bool all; } MapWalk;
+static void visit_map(Walk *w, TSNode n, uint32_t idx, int64_t parent, const char *field) {
+  (void)parent; (void)field;
+  MapWalk *mw = w->ctx;
+  uint32_t *v = idmap_slot(mw->m, n.id, mw->all);
+  if (v) *v = idx;
+}
+static void map_tree(Req *r, TSTree *t, IdMap *m, bool all) {
+  MapWalk mw = {m, all};
+  Walk w = {r->nodes, r->depth, visit_map, &mw, 0, 0};
+  walk(ts_tree_root_node(t), &w);
+}
+
+/* ---- r2: queries ----
+ * Each compiled query runs on the step tree through the pinned runtime's capture stream
+ * (ts_query_cursor_next_capture) and every capture is written in the order the runtime
+ * returned it: no sorting, no deduplication. Predicates and directives are not evaluated
+ * here; their steps are reported for the host's declared policy. A query cut by a limit
+ * keeps its captures but is marked partial and RESOURCE_LIMIT. */
+
+typedef struct { uint32_t match, pattern, capture; TSNode node; } CapRow;
+typedef struct { CapRow *rows; uint32_t n, cap, matches; const char *code; uint64_t ms; } QRun;
+typedef struct { uint64_t start, limit; bool timed_out; } QClock;
+/* The pinned runtime does not keep a cancellation: next_capture calls the cursor again
+ * while an earlier match is unfinished, so a cancelled query can run on. The first expiry
+ * cancels (the loop below then stops and keeps its captures as partial); a callback after
+ * that means the runtime continued, and the process ends with a typed QUERY_TIME_LIMIT. */
+static bool qprogress(TSQueryCursorState *s) {
+  QClock *c = s->payload;
+  if (now_ms() - c->start <= c->limit) return false;
+  if (c->timed_out) fatal_limit("QUERY_TIME_LIMIT");
+  c->timed_out = true;
+  return true;
+}
+static const char *quant_name(TSQuantifier q) {
+  switch (q) {
+    case TSQuantifierZero: return "ZERO";
+    case TSQuantifierZeroOrOne: return "ZERO_OR_ONE";
+    case TSQuantifierZeroOrMore: return "ZERO_OR_MORE";
+    case TSQuantifierOne: return "ONE";
+    default: return "ONE_OR_MORE";
+  }
+}
+static const char *qerr_name(TSQueryError e) {
+  static const char *names[] = {"NONE", "SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE"};
+  return (unsigned)e < sizeof names / sizeof *names ? names[e] : "UNKNOWN";
+}
+
+static void run_query(Req *r, const TSQuery *q, TSNode root, QRun *run) {
+  TSQueryCursor *qc = ts_query_cursor_new();
+  QClock clock = {now_ms(), r->query_ms, false};
+  TSQueryCursorOptions opt = {&clock, qprogress};
+  ts_query_cursor_exec_with_options(qc, q, root, &opt);
+  TSQueryMatch m;
+  uint32_t ci;
+  for (;;) {
+    /* the runtime does not keep a cancellation: the loop stops on the flag itself */
+    if (clock.timed_out) { run->code = "QUERY_TIME_LIMIT"; break; }
+    if (!ts_query_cursor_next_capture(qc, &m, &ci)) {
+      if (clock.timed_out) run->code = "QUERY_TIME_LIMIT";
+      break;
+    }
+    if ((uint64_t)m.id >= r->matches) { run->code = "MATCH_LIMIT"; break; }
+    if (run->n == r->captures) { run->code = "CAPTURE_LIMIT"; break; }
+    if (run->n == run->cap) {
+      run->cap = run->cap ? run->cap * 2 : 64;
+      run->rows = t_realloc(run->rows, run->cap * sizeof *run->rows);
+    }
+    run->rows[run->n++] = (CapRow){m.id, m.pattern_index, m.captures[ci].index, m.captures[ci].node};
+    if (m.id + 1 > run->matches) run->matches = m.id + 1;
+  }
+  /* an in-progress match dropped for capacity makes the stream incomplete */
+  if (!run->code && ts_query_cursor_did_exceed_match_limit(qc)) run->code = "QUERY_MATCH_OVERFLOW";
+  run->ms = now_ms() - clock.start;
+  ts_query_cursor_delete(qc);
+}
+
+/* Predicates as the runtime lists them: per pattern, each predicate's steps in order (the
+ * first step is the operator string); capture steps carry the capture's quantifier. */
+static void emit_predicates(Buf *b, const TSQuery *q) {
+  put(b, "[", 1);
+  bool firstp = true;
+  for (uint32_t p = 0; p < ts_query_pattern_count(q); p++) {
+    uint32_t ns;
+    const TSQueryPredicateStep *st = ts_query_predicates_for_pattern(q, p, &ns);
+    for (uint32_t k = 0; k < ns;) {
+      if (!firstp) put(b, ",", 1);
+      firstp = false;
+      puts_(b, "{\"pattern\":"); putu(b, p); puts_(b, ",\"steps\":[");
+      for (bool firsts = true; k < ns && st[k].type != TSQueryPredicateStepTypeDone; k++, firsts = false) {
+        uint32_t len;
+        if (!firsts) put(b, ",", 1);
+        if (st[k].type == TSQueryPredicateStepTypeCapture) {
+          const char *name = ts_query_capture_name_for_id(q, st[k].value_id, &len);
+          puts_(b, "{\"kind\":\"capture\",\"value\":"); putstrn(b, name, len);
+          puts_(b, ",\"quantifier\":"); putstr(b, quant_name(ts_query_capture_quantifier_for_id(q, p, st[k].value_id)));
+          put(b, "}", 1);
+        } else {
+          const char *s = ts_query_string_value_for_id(q, st[k].value_id, &len);
+          puts_(b, "{\"kind\":\"string\",\"value\":"); putstrn(b, s, len); puts_(b, ",\"quantifier\":null}");
+        }
+      }
+      puts_(b, "]}");
+      k++; /* the Done sentinel */
+    }
+  }
+  put(b, "]", 1);
+}
+
+/* Writes ,"queries":[...] for one completed tree; returns the code of the first query that
+ * did not complete, else NULL. */
+static const char *emit_queries(Buf *out, Req *r, TSTree *t) {
+  puts_(out, ",\"queries\":");
+  if (!r->nqueries) { puts_(out, "null"); return NULL; }
+  TSNode root = ts_tree_root_node(t);
+  QRun runs[MAX_QUERIES];
+  memset(runs, 0, sizeof runs);
+  uint64_t total = 0;
+  for (int i = 0; i < r->nqueries; i++) {
+    if (!r->queries[i].q) continue;
+    run_query(r, r->queries[i].q, root, &runs[i]);
+    total += runs[i].n;
+  }
+  /* one preorder walk resolves every captured node to its index */
+  IdMap m;
+  idmap_init(&m, total);
+  for (int i = 0; i < r->nqueries; i++)
+    for (uint32_t k = 0; k < runs[i].n; k++) idmap_slot(&m, runs[i].rows[k].node.id, true);
+  if (total) map_tree(r, t, &m, false);
+  const char *first = NULL;
+  put(out, "[", 1);
+  for (int i = 0; i < r->nqueries; i++) {
+    Query *qq = &r->queries[i];
+    QRun *run = &runs[i];
+    if (i) put(out, ",", 1);
+    puts_(out, "{\"id\":"); putstr(out, qq->id);
+    if (!qq->q) {
+      char code[32];
+      snprintf(code, sizeof code, "QUERY_%s", qerr_name(qq->err));
+      TSPoint at = point_at(ENC_UTF8, qq->src, qq->err_offset <= qq->len ? qq->err_offset : qq->len);
+      puts_(out, ",\"status\":\"INVALID_QUERY\",\"code\":"); putstr(out, code);
+      puts_(out, ",\"query_ms\":0,\"error\":{\"type\":"); putstr(out, qerr_name(qq->err));
+      puts_(out, ",\"offset\":"); putu(out, qq->err_offset);
+      puts_(out, ",\"point\":"); putpoint(out, at);
+      puts_(out, "},\"patterns\":0,\"capture_names\":[],\"predicates\":[],\"matches\":0,\"partial\":false,\"types\":[],\"captures\":null}");
+      continue;
+    }
+    const TSQuery *q = qq->q;
+    /* a capture that the walk did not reach would break the record linkage */
+    const char *code = run->code;
+    for (uint32_t k = 0; !code && k < run->n; k++) {
+      uint32_t *v = idmap_slot(&m, run->rows[k].node.id, false);
+      if (!v || *v == UINT32_MAX) code = "CAPTURE_NODE_UNMAPPED";
+    }
+    bool unmapped = code && !strcmp(code, "CAPTURE_NODE_UNMAPPED");
+    if (code && !first) first = code;
+    puts_(out, ",\"status\":"); putstr(out, !code ? "COMPLETED" : unmapped ? "FAILED" : "RESOURCE_LIMIT");
+    puts_(out, ",\"code\":"); putstr(out, code ? code : "");
+    puts_(out, ",\"query_ms\":"); putu(out, run->ms);
+    puts_(out, ",\"error\":null,\"patterns\":"); putu(out, ts_query_pattern_count(q));
+    puts_(out, ",\"capture_names\":[");
+    for (uint32_t k = 0; k < ts_query_capture_count(q); k++) {
+      uint32_t len;
+      const char *name = ts_query_capture_name_for_id(q, k, &len);
+      if (k) put(out, ",", 1);
+      putstrn(out, name, len);
+    }
+    puts_(out, "],\"predicates\":"); emit_predicates(out, q);
+    puts_(out, ",\"matches\":"); putu(out, run->matches);
+    puts_(out, ",\"partial\":"); putb(out, code && !unmapped);
+    Names types = {0};
+    Buf rows = {0};
+    rows.limit = out->limit;
+    for (uint32_t k = 0; !unmapped && k < run->n; k++) {
+      CapRow *c = &run->rows[k];
+      TSNode n = c->node;
+      TSPoint a = ts_node_start_point(n), e = ts_node_end_point(n);
+      if (k) put(&rows, ",", 1);
+      put(&rows, "[", 1); putu(&rows, c->match);
+      put(&rows, ",", 1); putu(&rows, c->pattern);
+      put(&rows, ",", 1); putu(&rows, c->capture);
+      put(&rows, ",", 1); putu(&rows, *idmap_slot(&m, n.id, false));
+      put(&rows, ",", 1); putu(&rows, intern(&types, ts_node_type(n)));
+      put(&rows, ",", 1); putu(&rows, node_flags(n));
+      put(&rows, ",", 1); putu(&rows, ts_node_start_byte(n));
+      put(&rows, ",", 1); putu(&rows, ts_node_end_byte(n));
+      put(&rows, ",", 1); putu(&rows, a.row); put(&rows, ",", 1); putu(&rows, a.column);
+      put(&rows, ",", 1); putu(&rows, e.row); put(&rows, ",", 1); putu(&rows, e.column);
+      put(&rows, "]", 1);
+    }
+    puts_(out, ",\"types\":"); names_put(out, &types);
+    puts_(out, ",\"captures\":");
+    if (unmapped) puts_(out, "null");
+    else {
+      put(out, "[", 1);
+      if (rows.over) out->over = true; else put(out, rows.data, rows.len);
+      put(out, "]", 1);
+    }
+    put(out, "}", 1);
+    buf_free(&rows);
+    names_free(&types);
+  }
+  put(out, "]", 1);
+  for (int i = 0; i < r->nqueries; i++) t_free(runs[i].rows);
+  idmap_free(&m);
+  return first;
+}
+
+/* ---- r2: public API observations (tsgk-api/r1) ----
+ * For a full tree: per preorder node the node API's parent, siblings, first children,
+ * counts and a cursor positioned by descendant index; every field lookup by field id; the
+ * field name the node API gives each child; and the byte lookups of the request points.
+ * The kit compares them with the cursor serialization of the same tree. */
+
+typedef struct { Req *r; IdMap *m; TSTreeCursor cur; Buf nodes, fields, looks; Names names; const TSLanguage *lang; } ApiCtx;
+
+static void visit_api(Walk *w, TSNode n, uint32_t idx, int64_t parent, const char *field) {
+  (void)parent; (void)field;
+  ApiCtx *x = w->ctx;
+  Buf *b = &x->nodes;
+  uint32_t children = ts_node_child_count(n);
+  int64_t v[13];
+  v[0] = idx_of(x->m, ts_node_parent(n));
+  v[1] = idx_of(x->m, ts_node_prev_sibling(n));
+  v[2] = idx_of(x->m, ts_node_next_sibling(n));
+  v[3] = idx_of(x->m, ts_node_prev_named_sibling(n));
+  v[4] = idx_of(x->m, ts_node_next_named_sibling(n));
+  v[5] = children ? idx_of(x->m, ts_node_child(n, 0)) : -1;
+  v[6] = ts_node_named_child_count(n) ? idx_of(x->m, ts_node_named_child(n, 0)) : -1;
+  v[7] = children;
+  v[8] = ts_node_named_child_count(n);
+  v[9] = ts_node_descendant_count(n);
+  ts_tree_cursor_goto_descendant(&x->cur, idx);
+  v[10] = ts_tree_cursor_current_depth(&x->cur);
+  v[11] = ts_tree_cursor_current_descendant_index(&x->cur);
+  v[12] = idx_of(x->m, ts_tree_cursor_current_node(&x->cur));
+  if (idx) put(b, ",", 1);
+  put(b, "[", 1);
+  for (int i = 0; i < 13; i++) { if (i) put(b, ",", 1); puti(b, v[i]); }
+  put(b, "]", 1);
+  for (uint32_t k = 0; k < children; k++) {
+    const char *f = ts_node_field_name_for_child(n, k);
+    if (!f) continue;
+    if (x->fields.len) put(&x->fields, ",", 1);
+    put(&x->fields, "[", 1); putu(&x->fields, idx);
+    put(&x->fields, ",", 1); putu(&x->fields, k);
+    put(&x->fields, ",", 1); putu(&x->fields, intern(&x->names, f));
+    put(&x->fields, "]", 1);
+  }
+  if (!children) return;
+  uint32_t nf = ts_language_field_count(x->lang);
+  for (TSFieldId f = 1; f <= nf; f++) {
+    TSNode c = ts_node_child_by_field_id(n, f);
+    if (ts_node_is_null(c)) continue;
+    if (x->looks.len) put(&x->looks, ",", 1);
+    put(&x->looks, "[", 1); putu(&x->looks, idx);
+    put(&x->looks, ",", 1); putu(&x->looks, intern(&x->names, ts_language_field_name_for_id(x->lang, f)));
+    put(&x->looks, ",", 1); puti(&x->looks, idx_of(x->m, c));
+    put(&x->looks, "]", 1);
+  }
+}
+
+static void emit_api(Buf *out, Req *r, TSTree *t, uint32_t count) {
+  TSNode root = ts_tree_root_node(t);
+  IdMap m;
+  idmap_init(&m, count);
+  map_tree(r, t, &m, true);
+  ApiCtx x;
+  memset(&x, 0, sizeof x);
+  x.r = r;
+  x.m = &m;
+  x.lang = ts_tree_language(t);
+  x.cur = ts_tree_cursor_new(root);
+  x.nodes.limit = x.fields.limit = x.looks.limit = out->limit;
+  Walk w = {r->nodes, r->depth, visit_api, &x, 0, 0};
+  walk(root, &w);
+  ts_tree_cursor_delete(&x.cur);
+  puts_(out, "{\"revision\":\"tsgk-api/r1\",\"nodes\":[");
+  if (x.nodes.over) out->over = true; else put(out, x.nodes.data, x.nodes.len);
+  puts_(out, "],\"child_fields\":[");
+  if (x.fields.over) out->over = true; else put(out, x.fields.data, x.fields.len);
+  puts_(out, "],\"field_lookups\":[");
+  if (x.looks.over) out->over = true; else put(out, x.looks.data, x.looks.len);
+  puts_(out, "],\"points\":[");
+  for (int i = 0; i < r->npoints; i++) {
+    uint32_t b = r->points[i].byte;
+    if (i) put(out, ",", 1);
+    put(out, "[", 1); putu(out, b);
+    put(out, ",", 1); puti(out, idx_of(&m, ts_node_descendant_for_byte_range(root, b, b)));
+    put(out, ",", 1); puti(out, idx_of(&m, ts_node_named_descendant_for_byte_range(root, b, b)));
+    put(out, ",", 1); puti(out, idx_of(&m, ts_node_first_child_for_byte(root, b)));
+    put(out, "]", 1);
+  }
+  puts_(out, "],\"names\":"); names_put(out, &x.names);
+  put(out, "}", 1);
+  buf_free(&x.nodes); buf_free(&x.fields); buf_free(&x.looks);
+  names_free(&x.names);
+  idmap_free(&m);
+}
+
 /* ---- request handling ---- */
 
 static int exit_for(const char *status) {
@@ -1120,10 +1520,11 @@ static int exit_for(const char *status) {
 static void respond(const char *status, const char *code, uint32_t source_bytes, uint32_t done, Buf *steps, uint64_t limit) {
   Buf out = {0};
   out.limit = limit;
-  puts_(&out, "{\"protocol\":\"" PROTOCOL "\",\"id\":"); putstr(&out, req_id);
+  puts_(&out, "{\"protocol\":"); putstr(&out, protocol_name());
+  puts_(&out, ",\"id\":"); putstr(&out, req_id);
   puts_(&out, ",\"status\":"); putstr(&out, status);
   puts_(&out, ",\"code\":"); putstr(&out, code ? code : "");
-  puts_(&out, ",\"producer\":"); puts_(&out, producer_json);
+  puts_(&out, ",\"producer\":"); puts_(&out, producer());
   puts_(&out, ",\"source_bytes\":"); putu(&out, source_bytes);
   puts_(&out, ",\"steps_completed\":"); putu(&out, done);
   puts_(&out, ",\"steps\":[");
@@ -1133,8 +1534,9 @@ static void respond(const char *status, const char *code, uint32_t source_bytes,
     /* the steps do not fit: report the limit without them (the small frame always fits) */
     buf_free(&out);
     out.limit = MAX_OUTPUT;
-    puts_(&out, "{\"protocol\":\"" PROTOCOL "\",\"id\":"); putstr(&out, req_id);
-    puts_(&out, ",\"status\":\"RESOURCE_LIMIT\",\"code\":\"OUTPUT_LIMIT\",\"producer\":"); puts_(&out, producer_json);
+    puts_(&out, "{\"protocol\":"); putstr(&out, protocol_name());
+    puts_(&out, ",\"id\":"); putstr(&out, req_id);
+    puts_(&out, ",\"status\":\"RESOURCE_LIMIT\",\"code\":\"OUTPUT_LIMIT\",\"producer\":"); puts_(&out, producer());
     puts_(&out, ",\"source_bytes\":"); putu(&out, source_bytes);
     puts_(&out, ",\"steps_completed\":"); putu(&out, done);
     puts_(&out, ",\"steps\":[],\"complete\":true}");
@@ -1167,6 +1569,7 @@ static void step_header(Buf *b, int k, Src *src, const Edit *e, const Src *prev,
 static int handle(const uint8_t *data, size_t n) {
   Req r;
   req_id[0] = 0;
+  req_rev = 1;
   cur_source_bytes = cur_steps_done = 0;
   const char *code = parse_request(data, n, &r);
   if (code) { respond("INVALID_REQUEST", code, 0, 0, NULL, MAX_OUTPUT); req_free(&r); return 2; }
@@ -1191,6 +1594,11 @@ static int handle(const uint8_t *data, size_t n) {
     status = "FAILED";
     code = "LANGUAGE_INCOMPATIBLE";
   } else {
+    /* queries compile once, before the first parse; an invalid one is reported per tree */
+    for (int i = 0; i < r.nqueries; i++) {
+      Query *q = &r.queries[i];
+      q->q = ts_query_new(tsgk_language(), (const char *)q->src, q->len, &q->err_offset, &q->err);
+    }
     uint64_t ms;
     const char *pcode;
     set_ranges(a, &r, 0);
@@ -1257,7 +1665,7 @@ static int handle(const uint8_t *data, size_t n) {
       if (!code) cur_steps_done = (uint32_t)k + 2;
     }
     if (code) {
-      status = !strcmp(code, "PARSE_NULL") || !strcmp(code, "DESCENDANT_COUNT_MISMATCH") ? "FAILED" : "RESOURCE_LIMIT";
+      status = !strcmp(code, "PARSE_NULL") || !strcmp(code, "DESCENDANT_COUNT_MISMATCH") || !strcmp(code, "CAPTURE_NODE_UNMAPPED") ? "FAILED" : "RESOURCE_LIMIT";
     }
     if (prev) ts_tree_delete(prev);
   }
@@ -1301,9 +1709,21 @@ int main(int argc, char **argv) {
   bool batch = !strcmp(argv[1], "batch");
   ts_set_allocator(t_malloc, t_calloc, t_realloc, t_free);
   const TSLanguage *lang = tsgk_language();
-  snprintf(producer_json, sizeof producer_json,
+  unsigned abi = ts_language_abi_version(lang);
+  snprintf(producer_json[0], sizeof producer_json[0],
            "{\"language_version\":%u,\"runtime_language_version\":%u,\"runtime_min_compatible\":%u,\"query\":\"UNSUPPORTED\"}",
-           (unsigned)ts_language_abi_version(lang), (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
+           abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
+  /* r2 capability declaration: what this producer can observe, and the language shape */
+#ifdef TSGK_FAULT_NO_QUERY
+  const char *query_cap = "UNSUPPORTED"; /* owned fault: a producer without the query capability */
+#else
+  const char *query_cap = "tsgk-query/r1";
+#endif
+  snprintf(producer_json[1], sizeof producer_json[1],
+           "{\"language_version\":%u,\"runtime_language_version\":%u,\"runtime_min_compatible\":%u,\"query\":\"%s\",\"api\":\"tsgk-api/r1\","
+           "\"predicates\":\"NOT_EVALUATED\",\"symbol_count\":%u,\"field_count\":%u}",
+           abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, query_cap,
+           (unsigned)ts_language_symbol_count(lang), (unsigned)ts_language_field_count(lang));
   for (;;) {
     uint8_t hdr[4];
     size_t got = read_full(hdr, 4);
@@ -1314,6 +1734,7 @@ int main(int argc, char **argv) {
       return 0;
     }
     req_id[0] = 0;
+    req_rev = 1;
     if (got < 4) return protocol_error("FRAME_TRUNCATED");
     uint32_t len = (uint32_t)hdr[0] << 24 | (uint32_t)hdr[1] << 16 | (uint32_t)hdr[2] << 8 | hdr[3];
     if (len > MAX_FRAME) return protocol_error("FRAME_TOO_LARGE");
