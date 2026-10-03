@@ -1,0 +1,80 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "kotlin",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(class_declaration name: (identifier) @class)\n(function_declaration name: (identifier) @function)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "kotlin-query-r1",
+      "source_case": "kotlin-feature-r1",
+      "features": [
+        "kotlin-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Item"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Level"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Repository"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "all"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "InMemoryRepository"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "all"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "level"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "main"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

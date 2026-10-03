@@ -1,0 +1,66 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "tsql",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(create_table name: (object_reference name: (identifier) @table))\n(column_definition name: (identifier) @column)\n(create_procedure name: (object_reference name: (identifier) @procedure))\n(execute_statement procedure: (object_reference name: (identifier) @exec))\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "tsql-query-r1",
+      "source_case": "tsql-feature-r1",
+      "features": [
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "Items"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Id"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Name"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Quantity"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Price"
+            },
+            {
+              "name": "procedure",
+              "type": "identifier",
+              "text": "AddItem"
+            },
+            {
+              "name": "exec",
+              "type": "identifier",
+              "text": "AddItem"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,256 @@
+{
+ "schema": "tsgk-fact-query-pack/r1",
+ "revision": "fact-queries-r1",
+ "mapping": "declaration-facts-r1",
+ "dynamic_sql": "dynamic-sql-r1",
+ "xml_structure": "xml-structure-r1",
+ "routes": [
+  {
+   "route": "csharp",
+   "declarations": [
+    {
+     "fact": "type_declaration",
+     "node": "class_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "struct_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "interface_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "enum_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "record_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "delegate_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "namespace_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "file_scoped_namespace_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "method_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "constructor_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "destructor_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "property_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "event_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "enum_member_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "field_declaration",
+     "name": "child:variable_declaration/children:variable_declarator/field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "event_field_declaration",
+     "name": "child:variable_declaration/children:variable_declarator/field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "indexer_declaration",
+     "name": "node"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "operator_declaration",
+     "name": "field:operator"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "conversion_operator_declaration",
+     "name": "field:type"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "extension_declaration",
+     "name": "node"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(class_declaration) @c.0.0.0\n(class_declaration name: _ @c.0.1.1) @c.0.1.0\n(struct_declaration) @c.1.0.0\n(struct_declaration name: _ @c.1.1.1) @c.1.1.0\n(interface_declaration) @c.2.0.0\n(interface_declaration name: _ @c.2.1.1) @c.2.1.0\n(enum_declaration) @c.3.0.0\n(enum_declaration name: _ @c.3.1.1) @c.3.1.0\n(record_declaration) @c.4.0.0\n(record_declaration name: _ @c.4.1.1) @c.4.1.0\n(delegate_declaration) @c.5.0.0\n(delegate_declaration name: _ @c.5.1.1) @c.5.1.0\n(namespace_declaration) @c.6.0.0\n(namespace_declaration name: _ @c.6.1.1) @c.6.1.0\n(file_scoped_namespace_declaration) @c.7.0.0\n(file_scoped_namespace_declaration name: _ @c.7.1.1) @c.7.1.0\n(method_declaration) @c.8.0.0\n(method_declaration name: _ @c.8.1.1) @c.8.1.0\n(constructor_declaration) @c.9.0.0\n(constructor_declaration name: _ @c.9.1.1) @c.9.1.0\n(destructor_declaration) @c.10.0.0\n(destructor_declaration name: _ @c.10.1.1) @c.10.1.0\n(property_declaration) @c.11.0.0\n(property_declaration name: _ @c.11.1.1) @c.11.1.0\n(event_declaration) @c.12.0.0\n(event_declaration name: _ @c.12.1.1) @c.12.1.0\n(enum_member_declaration) @c.13.0.0\n(enum_member_declaration name: _ @c.13.1.1) @c.13.1.0\n(field_declaration) @c.14.0.0\n(field_declaration (variable_declaration) @c.14.1.1) @c.14.1.0\n(field_declaration (variable_declaration (variable_declarator name: _ @c.14.3.3) @c.14.3.2) @c.14.3.1)\n(event_field_declaration) @c.15.0.0\n(event_field_declaration (variable_declaration) @c.15.1.1) @c.15.1.0\n(event_field_declaration (variable_declaration (variable_declarator name: _ @c.15.3.3) @c.15.3.2) @c.15.3.1)\n(indexer_declaration) @c.16.0.0\n(operator_declaration) @c.17.0.0\n(operator_declaration operator: _ @c.17.1.1) @c.17.1.0\n(conversion_operator_declaration) @c.18.0.0\n(conversion_operator_declaration type: _ @c.18.1.1) @c.18.1.0\n(extension_declaration) @c.19.0.0\n"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "facts": "dynamic_sql",
+     "source": "(object_creation_expression type: _ @oc.type) @oc\n(object_creation_expression arguments: (argument_list . (argument) @oc.arg)) @oc.a\n(argument (_) @arg.expr) @arg\n(qualified_name name: _ @qn.name) @qn\n(alias_qualified_name name: _ @aq.name) @aq\n(generic_name . (identifier) @gn.name) @gn\n(initializer_expression (assignment_expression left: (identifier) @ini.left right: _ @ini.right) @ini.as)\n(assignment_expression left: (member_access_expression name: (identifier) @ma.name) right: _ @ma.right) @ma.as\n(binary_expression operator: _ @bin.op) @bin\n"
+    }
+   ]
+  },
+  {
+   "route": "tsql",
+   "declarations": [
+    {
+     "fact": "create_object",
+     "node": "create_procedure",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_function",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_view",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_table",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_trigger",
+     "name": "child:object_reference"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_type",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_schema",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_synonym",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_sequence",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_index",
+     "name": "field:name"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(create_procedure) @c.0.0.0\n(create_procedure name: _ @c.0.1.1) @c.0.1.0\n(create_function) @c.1.0.0\n(create_function name: _ @c.1.1.1) @c.1.1.0\n(create_view) @c.2.0.0\n(create_view name: _ @c.2.1.1) @c.2.1.0\n(create_table) @c.3.0.0\n(create_table name: _ @c.3.1.1) @c.3.1.0\n(create_trigger) @c.4.0.0\n(create_trigger (object_reference) @c.4.1.1) @c.4.1.0\n(create_type) @c.5.0.0\n(create_type name: _ @c.5.1.1) @c.5.1.0\n(create_schema) @c.6.0.0\n(create_schema name: _ @c.6.1.1) @c.6.1.0\n(create_synonym) @c.7.0.0\n(create_synonym name: _ @c.7.1.1) @c.7.1.0\n(create_sequence) @c.8.0.0\n(create_sequence name: _ @c.8.1.1) @c.8.1.0\n(create_index) @c.9.0.0\n(create_index name: _ @c.9.1.1) @c.9.1.0\n"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "facts": "dynamic_sql",
+     "source": "(execute_statement) @exec\n(execute_statement _ @exec.child) @exec.parent\n(execute_statement procedure: (object_reference) @proc) @proc.exec\n(object_reference name: _ @ref.name) @ref\n(object_reference schema: _ @ref.schema) @ref.s\n(exec_argument name: _ @arg.name) @arg\n(exec_argument value: _ @arg.value) @arg.v\n(binary_expression operator: _ @bin.op) @bin\n(field name: _ @field.name) @field\n\";\" @semi\n(ERROR . (identifier) @err.first) @err\n(ERROR . (keyword_with) @errwith.first) @errwith\n"
+    }
+   ]
+  },
+  {
+   "route": "postgresql-sql",
+   "declarations": [
+    {
+     "fact": "create_object",
+     "node": "CreateStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "ViewStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateFunctionStmt",
+     "name": "child:func_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "IndexStmt",
+     "name": "child:opt_single_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateTrigStmt",
+     "name": "child:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateSchemaStmt",
+     "name": "child:opt_single_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateSeqStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "DefineStmt",
+     "name": "child:any_name"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(CreateStmt) @c.0.0.0\n(CreateStmt (qualified_name) @c.0.1.1) @c.0.1.0\n(ViewStmt) @c.1.0.0\n(ViewStmt (qualified_name) @c.1.1.1) @c.1.1.0\n(CreateFunctionStmt) @c.2.0.0\n(CreateFunctionStmt (func_name) @c.2.1.1) @c.2.1.0\n(IndexStmt) @c.3.0.0\n(IndexStmt (opt_single_name) @c.3.1.1) @c.3.1.0\n(CreateTrigStmt) @c.4.0.0\n(CreateTrigStmt (name) @c.4.1.1) @c.4.1.0\n(CreateSchemaStmt) @c.5.0.0\n(CreateSchemaStmt (opt_single_name) @c.5.1.1) @c.5.1.0\n(CreateSeqStmt) @c.6.0.0\n(CreateSeqStmt (qualified_name) @c.6.1.1) @c.6.1.0\n(DefineStmt) @c.7.0.0\n(DefineStmt (any_name) @c.7.1.1) @c.7.1.0\n"
+    }
+   ]
+  },
+  {
+   "route": "xml",
+   "declarations": [],
+   "queries": [
+    {
+     "id": "facts.xml_structure",
+     "facts": "xml_structure",
+     "source": "(STag (Name) @element.name) @element\n(EmptyElemTag (Name) @element.name) @element\n(Attribute (Name) @attribute.name (AttValue) @attribute.value) @attribute\n"
+    }
+   ]
+  }
+ ]
+}

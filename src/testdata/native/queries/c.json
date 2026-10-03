@@ -1,0 +1,85 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "c",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_definition declarator: (type_identifier) @type)\n(function_definition declarator: (function_declarator declarator: (identifier) @function))\n(call_expression function: (identifier) @call)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "c-query-r1",
+      "source_case": "c-feature-r1",
+      "features": [
+        "c-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "add_item"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "strncpy"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "classify"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "main"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "add_item"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "add_item"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "SQUARE"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "printf"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "classify"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "printf"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

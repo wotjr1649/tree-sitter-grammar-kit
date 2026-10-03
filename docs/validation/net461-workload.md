@@ -90,9 +90,10 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * 시간은 파싱당 60초(progress callback, 협조적 취소, S05 driver), 단일 parse 요청의 process wall 90초, edit 요청 300초(최대 4 edit, S04 runner)다. memory는 4 GiB다. 정책 wall·deadline 초과는 `RESOURCE_LIMIT`이고 caller의 context 취소·deadline만 `CANCELLED`다.
 * memory 상한은 Linux cgroup과 Windows Job Object에서는 hard cap이다. macOS는 sampling 후 종료로 강제하며 이 profile은 macOS에서 non-strict로 결과에 기록한다. 할당 실패(runtime allocator hook으로 감지)·OOM·sampling 종료는 모두 `RESOURCE_LIMIT`다. macOS 결과는 hard cap 근거가 아니며, strict memory cap을 요구하는 operation은 [trust 계약](../specs/trust-and-execution.md)대로 macOS에서 BLOCKED다.
 * traversal은 반복 cursor로 한다. 상한은 tree depth 100000, summary node 25000000(잠정), encoded request와 output bytes다. 연산의 `max_depth`는 요청/JSON 구조 중첩이며 tree depth가 아니다. 깊은 중첩은 depth 10000 이상 정상 1건과 상한 초과 1건(`RESOURCE_LIMIT`)으로 세 OS에서 확인한다.
-* 대형 입력 query는 `native-query-large`(입력 33554432 bytes, node 25000000, wall 90초, 출력 16777216 bytes, capture 1000000)를 쓰며, memory 4 GiB(macOS는 non-strict)·tree depth 100000·encoded 요청 50331648 bytes·요청당 저장 16777216 bytes는 위 실사용 연산 값을 따른다.
+* 대형 입력 query는 `native-query-large`(입력 33554432 bytes, node 25000000, wall 90초, 출력 16777216 bytes, capture 1000000)를 쓰며, tree depth 100000·encoded 요청 50331648 bytes·요청당 저장 16777216 bytes는 위 실사용 연산 값을 따른다. memory는 아래 r3 값(8 GiB, windows/amd64)이다.
 * hosted 측정이 값에 못 미치면 S05-A18 결과로 기록하고 S05 종료를 막지 않으며, 값을 올리는 것은 사용자 결정이다.
-* 세 OS 측정은 합성 대형 fixture(크기는 fixture identity가 고정)로 한다. 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
+* S05는 합성 대형 fixture(크기는 fixture identity가 고정)를 세 OS에서 4 GiB로 측정했다(`real-world-source-r2`, 역사로 보존). 비공개 source는 로컬에서만 측정한다. 자동 생성 파일도 전체 파싱하되 집계를 분리한다.
+* **`real-world-source-r3`(2026-10-03 사용자 결정 `C1-REAL-WORLD-SOURCE-WINDOWS-R3`, S06 개정).** NET461 실사용 대용량 profile(합성 대형 fixture와 대용량 실사용 연산)은 windows/amd64에서만 qualification한다. WinForms/.NET Framework 4.6.1 workload는 Windows에서 실행되기 때문이다. Linux amd64·macOS arm64에서는 실행하지도 측정하지도 않으며 결과는 `NOT_APPLICABLE`(이유 "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)")이다. memory는 8 GiB(8589934592, Job Object hard)다. 값은 `cs-large-32mib-errors`를 로컬 Windows에서 12 GiB 측정 상한으로 실행한 peak commit 5157146624 bytes에 약 20%를 더한 값 이상인 8·10·12 GiB 중 가장 작은 값으로 정했다. 그 밖의 값은 r2와 같다. `native-query-large`의 memory와 대용량 qualification 범위도 같다. csharp grammar route와 26 route의 세 OS 검증은 그대로이며, 12 GiB를 넘는 값·다른 상한 상향·grammar route의 세 OS 검증 제거·기대값 완화·비공개 corpus의 hosted 전송은 이 결정에 들어 있지 않다.
 
 | 담당 | 책임 |
 |---|---|
@@ -100,7 +101,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 | S03 / #5 | 동적 SQL node/field mapping, summary 출력 schema, tree envelope의 판별 encoding 필드, 원본 byte/point |
 | S04 / #6 | wall·memory 강제 방식의 resource policy 필드 |
 | S05 / #7 | `index-euc-kr` 취득, 표가 필요한 cp949 검증·AMBIGUOUS 판정 완성과 decode 실행, UTF-16/cp949/동적 SQL/대용량/깊은 중첩 fixture와 세 OS 측정, 선언 node 종류 순회 검사, full tree gate·상한 값의 profile revision |
-| S06 / #8 | 동적 SQL 위치 사실 추출, 사실 query 세트(S05 선언 사실 재현) |
+| S06 / #8 | 동적 SQL 위치 사실 추출, 사실 query 세트(S05 선언 사실 재현), `real-world-source-r3`(windows/amd64 전용, 8 GiB)와 `native-query-large`의 같은 범위 |
 | S07 / #9 | 비공개 corpus workload 등록, 로컬 실행 identity와 evidence 결속 |
 | S08 / #10 | `real-world-source-r2`와 판별 규칙으로 비공개 corpus 전체 로컬 qualification, 세 OS는 OWNED_FIXTURE 비교 |
 

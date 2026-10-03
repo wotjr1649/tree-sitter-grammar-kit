@@ -283,7 +283,8 @@ func TestFrames(t *testing.T) {
 		"extra-byte":       {append(Frame(valid), 'x'), "FRAME_EXTRA"},
 		"malformed":        {Frame([]byte(`{"protocol":"tsgk-native/r1","id":"x"}`)), "REQUEST_MALFORMED"},
 		"whitespace":       {Frame(bytes.Replace(valid, []byte(`,"id"`), []byte(`, "id"`), 1)), "REQUEST_MALFORMED"},
-		"protocol":         {Frame(bytes.Replace(valid, []byte("tsgk-native/r1"), []byte("tsgk-native/r2"), 1)), "PROTOCOL_MISMATCH"},
+		"protocol":         {Frame(bytes.Replace(valid, []byte("tsgk-native/r1"), []byte("tsgk-native/r3"), 1)), "PROTOCOL_MISMATCH"},
+		"r1-body-as-r2":    {Frame(bytes.Replace(valid, []byte("tsgk-native/r1"), []byte("tsgk-native/r2"), 1)), "REQUEST_MALFORMED"}, // S06-A01: no silent reinterpretation
 		"base64":           {Frame(bytes.Replace(valid, []byte(`"source":"YSA9IDE7"`), []byte(`"source":"YSA9IDE"`), 1)), "BASE64_INVALID"},
 		"trailing-json":    {Frame(append(append([]byte(nil), valid...), ' ')), "REQUEST_MALFORMED"},
 		"limit-zero":       {Frame(bytes.Replace(valid, []byte(`"errors":1000`), []byte(`"errors":0`), 1)), "LIMIT_INVALID"},

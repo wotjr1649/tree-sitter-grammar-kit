@@ -1,0 +1,123 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "css",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(namespace_statement (namespace_name) @namespace)\n(declaration (property_name) @property)\n(feature_query (feature_name) @feature)\n(keyframes_statement (keyframes_name) @keyframes)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "css-query-r1",
+      "source_case": "css-feature-r1",
+      "features": [
+        "css-B01",
+        "css-M03",
+        "css-M04",
+        "css-M06"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "namespace",
+              "type": "namespace_name",
+              "text": "svg"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "--accent"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "--gap"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "display"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "margin"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "color"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "background"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font"
+            },
+            {
+              "name": "feature",
+              "type": "feature_name",
+              "text": "min-width"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "display"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "grid-template-columns"
+            },
+            {
+              "name": "feature",
+              "type": "feature_name",
+              "text": "display"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "gap"
+            },
+            {
+              "name": "keyframes",
+              "type": "keyframes_name",
+              "text": "fade"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "opacity"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "opacity"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font-family"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "src"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

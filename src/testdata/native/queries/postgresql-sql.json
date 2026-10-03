@@ -1,0 +1,71 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "postgresql-sql",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(CreateStmt (qualified_name) @table)\n(columnDef (ColId) @column)\n(common_table_expr (name) @cte)\n(CreateFunctionStmt (func_name) @function)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "postgresql-sql-query-r1",
+      "source_case": "postgresql-sql-feature-r1",
+      "features": [
+        "postgresql-sql-B02",
+        "postgresql-sql-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "table",
+              "type": "qualified_name",
+              "text": "items"
+            },
+            {
+              "name": "column",
+              "type": "ColId",
+              "text": "id"
+            },
+            {
+              "name": "column",
+              "type": "ColId",
+              "text": "name"
+            },
+            {
+              "name": "column",
+              "type": "ColId",
+              "text": "quantity"
+            },
+            {
+              "name": "column",
+              "type": "ColId",
+              "text": "price"
+            },
+            {
+              "name": "column",
+              "type": "ColId",
+              "text": "tags"
+            },
+            {
+              "name": "cte",
+              "type": "name",
+              "text": "levels"
+            },
+            {
+              "name": "function",
+              "type": "func_name",
+              "text": "item_total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

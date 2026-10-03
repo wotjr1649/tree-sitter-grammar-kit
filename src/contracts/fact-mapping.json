@@ -141,7 +141,7 @@
                  "object_creation_expression field:type", "object_creation_expression field:arguments", "argument_list child:argument",
                  "binary_expression field:operator", "interpolated_string_expression", "string_literal", "verbatim_string_literal", "raw_string_literal", "identifier"]
     },
-    "fact_fields": ["kind", "argument_kind", "start_byte", "end_byte", "start_point", "end_point", "variable_name_range"],
+    "fact_fields": ["construct", "argument_kind", "start_byte", "end_byte", "start_point", "end_point", "variable", "heuristic"],
     "known_misses": [
       {"case": "EXEC (...) AT DATA_SOURCE name", "reason": "execute_statement accepts only AT identifier"},
       {"case": "EXEC ... WITH RESULT SETS (...)", "reason": "execute_statement accepts only WITH RECOMPILE"},

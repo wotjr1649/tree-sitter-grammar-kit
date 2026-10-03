@@ -1,11 +1,17 @@
 #Requires -Version 7
-# S05 development helper: runs `tsgk incremental` for every registered route on this host
-# with the prepared inputs (prepare-routes.ps1), the registered cases
-# (src/testdata/native/routes, src/testdata/native/gaps) and, with -Large, the synthetic
-# real-world-source-r2 fixtures (src/contracts/native-large-fixtures.json). Writes one
-# result directory per route and summary.json under -Destination. Exit 1 when a build
-# fails, a case does not complete, or an incremental equality/route claim fails;
-# expectation failures are grammar findings for disposition and do not fail the run.
+# S05/S06 development helper: runs `tsgk incremental` for every registered route on this
+# host with the prepared inputs (prepare-routes.ps1), the registered cases
+# (src/testdata/native/routes, gaps, n461) and, with -Large, the synthetic
+# real-world-source-r3 fixtures (src/contracts/native-large-fixtures.json; windows/amd64
+# only, NOT_APPLICABLE elsewhere). With -Oracle (S06) it also records every route through
+# `tsgk oracle record` (tsgk-native/r2): the same cases plus the route's query case
+# (src/testdata/native/queries), the fact query pack (src/contracts/fact-query-pack.json)
+# for its routes, the dynamic SQL fixtures, and with -Large the native-query-large cases.
+# Writes one result directory per run and summary.json under -Destination. Exit 1 when a
+# build fails, a case does not complete, a record set does not verify, or an incremental
+# equality/route, query equality, query expectation, fact reproduction or dynamic SQL claim
+# fails; language expectation failures and API claims (the runtime node API disagreeing
+# with its cursor) are findings for disposition and do not fail the run.
 param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
@@ -13,7 +19,8 @@ param(
   [Parameter(Mandatory)][string]$Platform,
   [string]$CgroupParent = '',
   [string[]]$Routes = @(),
-  [switch]$Large
+  [switch]$Large,
+  [switch]$Oracle
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -26,6 +33,9 @@ $Prepared = (Resolve-Path $Prepared).Path
 $registry = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/native-routes.json') -Raw | ConvertFrom-Json
 $facts = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/fact-mapping.json') -Raw | ConvertFrom-Json
 $utf8 = [Text.UTF8Encoding]::new($false, $true)
+$packFile = Join-Path $repo 'src/contracts/fact-query-pack.json'
+$pack = Get-Content -LiteralPath $packFile -Raw | ConvertFrom-Json
+$r3Reason = 'NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)'
 
 function Get-Sha([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Get-ShaBytes([byte[]]$Data) { [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($Data)).ToLowerInvariant() }
@@ -50,7 +60,7 @@ $compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = (Get-Sha $ccIt
 $work = Join-Path $Destination 'work'
 New-Item -ItemType Directory -Path $work | Out-Null
 $summary = [ordered]@{ schema = 'tsgk-s05-route-run/r1'; platform = $Platform; compiler = [ordered]@{ path = $Compiler; version_line = $ccVersion; sha256 = $compilerId.sha256; bytes = $compilerId.bytes }
-  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); failures = @() }
+  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); api_findings = @(); failures = @() }
 
 function Get-Declarations([string]$Route) {
   $m = $facts.routes | Where-Object { $_.route -eq $Route } | Select-Object -First 1
@@ -145,6 +155,125 @@ function Add-Result([string]$Label, $Run) {
   Write-Output ("route {0}: exit={1} status={2} assessment={3} cases={4}" -f $Label, $Run.code, $res.execution_status, $res.assessment, @($res.cases).Count)
 }
 
+# S06: an oracle profile is the incremental profile plus queries, the pack binding and the
+# API switch; every case carries its query and dynamic SQL expectations.
+function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, $Queries, [bool]$UsePack, [bool]$Api, [string]$Format = '') {
+  $sorted = [Collections.Generic.List[object]]::new()
+  foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
+  $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
+  $factPack = $null
+  if ($UsePack) { $factPack = [ordered]@{ revision = $pack.revision; sha256 = (Get-Sha $packFile); route = $r.route } }
+  $profile = [ordered]@{ schema = 'tsgk-oracle/r1'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
+    compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases); queries = @($Queries); fact_pack = $factPack; api = $Api }
+  if ($Format) { $profile.format = $Format }
+  $pf = Join-Path $Destination "profiles/$Id.json"
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pf) | Out-Null
+  $profile | ConvertTo-Json -Depth 16 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
+  $out = Join-Path $Destination "records/$Id"
+  New-Item -ItemType Directory -Force -Path (Join-Path $Destination 'records') | Out-Null
+  $cliArgs = @('oracle', 'record', '--root', $Root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
+    '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE')
+  if ($UsePack) { $cliArgs += @('--fact-pack', $packFile) }
+  if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
+  $line = & $cli @cliArgs
+  $code = $LASTEXITCODE
+  return @{ code = $code; res = ($line | ConvertFrom-Json); out = $out }
+}
+
+# Adds the empty S06 expectations to converted S05 cases.
+function Add-OracleFields($Cases) {
+  foreach ($c in $Cases) { $c.query_expect = @(); $c.dynamic_sql_expect = $null }
+  return $Cases
+}
+
+# The route's query case: the registered source case with its edits and S05 expectations,
+# plus the query expectations; returns @{ queries; cases }.
+function Convert-QueryCases($r, [string]$Root) {
+  $file = Join-Path $repo "src/testdata/native/queries/$($r.route).json"
+  if (-not (Test-Path -LiteralPath $file)) { return @{ queries = @(); cases = @() } }
+  $doc = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+  $sources = (Get-Content -LiteralPath (Join-Path $repo "src/testdata/native/routes/$($r.route).json") -Raw | ConvertFrom-Json).cases
+  $cases = @()
+  foreach ($q in $doc.cases) {
+    $src = $sources | Where-Object { $_.id -eq $q.source_case }
+    if (-not $src) { throw "$($q.id): source case $($q.source_case) not found" }
+    $tmp = Join-Path $Destination "tmp-$($q.id).json"
+    $copy = $src | Select-Object *
+    $copy.id = $q.id
+    [ordered]@{ cases = @($copy) } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $tmp -Encoding utf8NoBOM
+    $c = @(Convert-Cases $tmp $Root)[0]
+    Remove-Item -LiteralPath $tmp
+    $c.query_expect = @($q.query_expect | ForEach-Object { [ordered]@{ query = $_.query; step = $_.step; status = $_.status; code = $_.code
+          captures = $(if ($null -eq $_.captures) { $null } else { @($_.captures | ForEach-Object { [ordered]@{ name = $_.name; type = $_.type; text = $_.text } }) }); error = $_.error } })
+    $c.dynamic_sql_expect = $null
+    $cases += $c
+  }
+  return @{ queries = @($doc.queries | ForEach-Object { [ordered]@{ id = $_.id; source = $_.source } }); cases = $cases }
+}
+
+# The dynamic SQL fixtures of a route with their registered facts and known-miss ranges.
+function Get-DynamicCases([string]$Route, [string]$Root) {
+  $spec = Get-Content -LiteralPath (Join-Path $repo 'src/testdata/native/dynamic-sql/expected.json') -Raw | ConvertFrom-Json
+  $out = @()
+  foreach ($f in $spec.files | Where-Object { $_.route -eq $Route }) {
+    $from = Join-Path $repo "src/testdata/native/dynamic-sql/$($f.path)"
+    if ((Get-Sha $from) -ne $f.sha256) { throw "dynamic SQL fixture identity: $($f.path)" }
+    $rel = "cases/dynamic-$($f.path)"
+    New-Item -ItemType Directory -Force -Path (Join-Path $Root 'cases') | Out-Null
+    Copy-Item -LiteralPath $from -Destination (Join-Path $Root $rel)
+    $out += [ordered]@{ id = "dynamic-sql-$Route"; input = [ordered]@{ path = $rel; role = 'case'; sha256 = $f.sha256; bytes = $f.bytes }; edits = @(); points = @(); expect = @()
+      query_expect = @(); dynamic_sql_expect = [ordered]@{ facts = @($f.facts); known_misses = @($f.non_facts | Where-Object { $_.what -eq 'KNOWN_MISS' } | ForEach-Object { [ordered]@{ start_byte = $_.start_byte; end_byte = $_.end_byte } }) } }
+  }
+  return $out
+}
+
+function Get-PackQueries([string]$Route, [string]$Only = '') {
+  $pr = $pack.routes | Where-Object { $_.route -eq $Route }
+  if (-not $pr) { return @() }
+  return @($pr.queries | Where-Object { -not $Only -or $_.facts -eq $Only } | ForEach-Object { [ordered]@{ id = $_.id; source = $_.source } })
+}
+
+function Add-OracleResult([string]$Label, $Run) {
+  $res = $Run.res
+  $entry = [ordered]@{ route = $Label; exit = $Run.code; execution_status = $res.execution_status; assessment = $res.assessment
+    set_valid = $(if ($res.set) { $res.set.valid } else { $null }); build = $(if ($res.build) { $res.build.identity } else { $null }); cases = @() }
+  foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $script:summary.failures += "oracle ${Label}: $($f.code)" } }
+  if (-not $res.set -or -not $res.set.valid) { $script:summary.failures += "oracle ${Label}: record set not verified" }
+  $i = 0
+  foreach ($c in @($res.cases)) {
+    $record = Join-Path $Run.out ('records/{0:D5}-{1}.json' -f $i, $c.id)
+    $i++
+    $detail = $null
+    if (Test-Path -LiteralPath $record) { $detail = Get-Content -LiteralPath $record -Raw | ConvertFrom-Json }
+    $qfails = @()
+    if ($detail -and $detail.PSObject.Properties['query_expectations']) { $qfails = @($detail.query_expectations | Where-Object { $_.result -ne 'PASS' } | ForEach-Object { "$($_.query) step $($_.step): $($_.result) $($_.detail)" }) }
+    $facts = $null
+    if ($detail -and $detail.PSObject.Properties['facts'] -and $detail.facts) {
+      $facts = [ordered]@{ difference = $(if ($detail.facts.PSObject.Properties['first_difference']) { $detail.facts.first_difference } else { '' })
+        declarations = $(if ($detail.facts.declarations) { [ordered]@{ items = @($detail.facts.declarations.items).Count; reproduces = $detail.facts.declarations.reproduces_s05 } } else { $null })
+        dynamic_sql = $(if ($detail.facts.dynamic_sql) { [ordered]@{ items = @($detail.facts.dynamic_sql.items).Count; known_misses = @($detail.facts.dynamic_sql.known_misses).Count } } else { $null }) }
+    }
+    $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; oracle = $c.oracle_claims
+      query_expectation_failures = $qfails; facts = $facts }
+    if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "oracle $Label/$($c.id): $($c.execution_status) $($c.code)" }
+    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route)" }
+    if ($c.oracle_claims) {
+      foreach ($k in @('query_equality', 'query_expectations', 'fact_reproduction', 'dynamic_sql')) {
+        if ($c.oracle_claims.$k -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): $k $($c.oracle_claims.$k)" }
+      }
+      # an API claim FAIL is the runtime's node API disagreeing with its cursor (recorded with
+      # the first difference for disposition); the comparator is guarded by the owned tests
+      if ($c.oracle_claims.api -in @('FAIL', 'BLOCKED') -and $detail) {
+        $first = @($detail.steps | ForEach-Object { $_.incremental, $_.fresh } | Where-Object { $_ -and $_.PSObject.Properties['api'] -and $_.api -and -not $_.api.consistent } | Select-Object -First 1)
+        $script:summary.api_findings += [ordered]@{ case = "$Label/$($c.id)"; claim = $c.oracle_claims.api; first_difference = $(if ($first.Count) { $first[0].api.first_difference } else { $null }) }
+      }
+    }
+  }
+  if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $script:summary.failures += "oracle ${Label}: $($res.execution_status) build or refusal" }
+  $script:summary.oracle += $entry
+  Write-Output ("oracle {0}: exit={1} status={2} assessment={3} cases={4} set={5}" -f $Label, $Run.code, $res.execution_status, $res.assessment, @($res.cases).Count, $entry.set_valid)
+}
+
 foreach ($r in $registry.routes) {
   if ($Routes.Count -and $Routes -notcontains $r.route) { continue }
   $root = New-Root $r
@@ -155,6 +284,14 @@ foreach ($r in $registry.routes) {
   }
   if (-not $cases.Count) { $summary.failures += "$($r.route): no registered cases"; continue }
   Add-Result $r.route (Invoke-Profile $r $root "s05-$($r.route)" 'native-parse-edit' 'tree' $cases (Get-Declarations $r.route))
+  if ($Oracle) {
+    $qc = Convert-QueryCases $r $root
+    if (-not @($qc.cases).Count) { $summary.failures += "oracle $($r.route): no registered query case" }
+    $oc = @(Add-OracleFields $cases) + @($qc.cases) + @(Get-DynamicCases $r.route $root)
+    $queries = @($qc.queries) + @(Get-PackQueries $r.route)
+    $usePack = [bool]($pack.routes | Where-Object { $_.route -eq $r.route })
+    Add-OracleResult $r.route (Invoke-Oracle $r $root "s06-$($r.route)" 'native-query' 'tree' $oc (Get-Declarations $r.route) $queries $usePack $true)
+  }
 }
 
 # SVC-SERVICEHOST-r1 composite cases: the C# route with the format set.
@@ -164,10 +301,23 @@ if ((Test-Path -LiteralPath $svcFile) -and (-not $Routes.Count -or $Routes -cont
   $root = New-Root $r
   $root2 = Join-Path $Destination 'roots/csharp-svc'
   Move-Item -LiteralPath $root -Destination $root2
-  Add-Result 'csharp-svc' (Invoke-Profile $r $root2 's05-csharp-svc' 'native-parse-edit' 'tree' (Convert-Cases $svcFile $root2) $null 'SVC-SERVICEHOST-r1')
+  $svcCases = Convert-Cases $svcFile $root2
+  Add-Result 'csharp-svc' (Invoke-Profile $r $root2 's05-csharp-svc' 'native-parse-edit' 'tree' $svcCases $null 'SVC-SERVICEHOST-r1')
+  if ($Oracle) {
+    Add-OracleResult 'csharp-svc' (Invoke-Oracle $r $root2 's06-csharp-svc' 'native-query' 'tree' (Add-OracleFields $svcCases) $null (Get-PackQueries 'csharp') $false $true 'SVC-SERVICEHOST-r1')
+  }
 }
 
-if ($Large) {
+if ($Large -and -not $IsWindows) {
+  # C1-REAL-WORLD-SOURCE-WINDOWS-R3: the NET461 large-file profile is qualified on
+  # windows/amd64 only; elsewhere it is neither run nor measured.
+  $spec = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/native-large-fixtures.json') -Raw | ConvertFrom-Json
+  foreach ($fx in $spec.fixtures) {
+    $summary.large += [ordered]@{ id = $fx.id; execution_status = 'NOT_RUN'; assessment = 'NOT_APPLICABLE'; code = 'OPERATION_PLATFORM_SCOPE'; reason = $r3Reason }
+    if ($Oracle) { $summary.oracle_large += [ordered]@{ id = $fx.id; execution_status = 'NOT_RUN'; assessment = 'NOT_APPLICABLE'; code = 'OPERATION_PLATFORM_SCOPE'; reason = $r3Reason } }
+  }
+  Write-Output "large: NOT_APPLICABLE on $Platform ($r3Reason)"
+} elseif ($Large) {
   $spec = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/native-large-fixtures.json') -Raw | ConvertFrom-Json
   $r = $registry.routes | Where-Object { $_.route -eq $spec.route }
   $root = New-Root $r
@@ -186,7 +336,7 @@ if ($Large) {
     $cases += [ordered]@{ id = $fx.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = $sha; bytes = $bytes.Length }; edits = @()
       points = @($fx.points | ForEach-Object { [ordered]@{ id = $_.id; byte = $_.byte } }); expect = @($fx.expect | ForEach-Object { [ordered]@{ step = 0; syntax = $_.syntax; contains = @(); declarations = $_.declarations } }) }
   }
-  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r2' 'auto' $cases (Get-Declarations $r.route)
+  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r3' 'auto' $cases (Get-Declarations $r.route)
   if (-not @($run.res.cases).Count) { $summary.failures += "large: $($run.res.execution_status) build or refusal" }
   foreach ($c in @($run.res.cases)) {
     $t = if (@($c.steps).Count) { $c.steps[0].incremental } else { $null }
@@ -195,6 +345,37 @@ if ($Large) {
       process_wall_ms = $(if ($c.process) { $c.process.wall_ms } else { $null }); memory_peak = $(if ($c.process) { $c.process.memory.peak_bytes } else { $null })
       errors_total = $(if ($t -and $t.PSObject.Properties['summary']) { $t.summary.errors.total } else { $null }); declarations = $(if ($t -and $t.PSObject.Properties['summary']) { $t.summary.declarations.assessment } else { $null }) }
     Write-Output ("large {0}: {1} {2} form={3} parse_ms={4}" -f $c.id, $c.execution_status, $c.assessment, $(if ($t) { $t.form } else { '' }), $(if ($t) { $t.parse_ms } else { '' }))
+  }
+  if ($Oracle) {
+    # S06-A15/A17: the fact pack on the large fixtures through native-query-large reproduces
+    # the S05 declaration items; one input over a limit (every node captured) ends typed
+    # RESOURCE_LIMIT.
+    $ocases = @(Add-OracleFields $cases)
+    # the declaration query alone: the dynamic SQL query's structural candidates (every
+    # binary expression of the synthetic blocks) would exceed the output limit by design
+    $orun = Invoke-Oracle $r $root 's06-large' 'native-query-large' 'auto' $ocases (Get-Declarations $r.route) (Get-PackQueries 'csharp' 'declarations') $true $false
+    $over = @(Add-OracleFields @($cases | Where-Object { $_.id -eq 'cs-large-8m-errors' } | ForEach-Object {
+          $x = [ordered]@{}
+          foreach ($k in $_.Keys) { $x[$k] = $_[$k] }
+          $x.id = 'cs-large-8m-over-captures'
+          $x }))
+    $orun2 = Invoke-Oracle $r $root 's06-large-over' 'native-query-large' 'auto' $over (Get-Declarations $r.route) @([ordered]@{ id = 'all.nodes'; source = "_ @node`n" }) $false $false
+    foreach ($pair in @(@($orun, $false), @($orun2, $true))) {
+      $run, $isOver = $pair
+      if (-not @($run.res.cases).Count) { $summary.failures += "oracle large: $($run.res.execution_status) build or refusal" }
+      $i = 0
+      foreach ($c in @($run.res.cases)) {
+        $rec = Join-Path $run.out ('records/{0:D5}-{1}.json' -f $i, $c.id)
+        $i++
+        $d = if (Test-Path -LiteralPath $rec) { Get-Content -LiteralPath $rec -Raw | ConvertFrom-Json } else { $null }
+        $repro = if ($d -and $d.PSObject.Properties['facts'] -and $d.facts -and $d.facts.declarations) { $d.facts.declarations.reproduces_s05 } else { $null }
+        $summary.oracle_large += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; oracle = $c.oracle_claims; declarations_reproduced = $repro
+          memory_peak = $(if ($d -and $d.process) { $d.process.memory.peak_bytes } else { $null }); process_wall_ms = $(if ($d -and $d.process) { $d.process.wall_ms } else { $null }) }
+        if ($isOver -and $c.execution_status -ne 'RESOURCE_LIMIT') { $summary.failures += "oracle large $($c.id): over-limit input ended $($c.execution_status)" }
+        if (-not $isOver -and ($c.execution_status -ne 'COMPLETED' -or $repro -ne $true)) { $summary.failures += "oracle large $($c.id): $($c.execution_status) $($c.code) reproduces=$repro" }
+        Write-Output ("oracle large {0}: {1} {2} {3} reproduces={4}" -f $c.id, $c.execution_status, $c.assessment, $c.code, $repro)
+      }
+    }
   }
 }
 $summary.finished_at = (Get-Date).ToUniversalTime().ToString('o')

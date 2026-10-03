@@ -1,0 +1,61 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "tsx",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_alias_declaration name: (type_identifier) @type)\n(interface_declaration name: (type_identifier) @interface)\n(function_declaration name: (identifier) @function)\n(jsx_self_closing_element name: (identifier) @component)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "tsx-query-r1",
+      "source_case": "tsx-feature-r1",
+      "features": [
+        "tsx-B01",
+        "tsx-V29"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "ButtonProps"
+            },
+            {
+              "name": "interface",
+              "type": "type_identifier",
+              "text": "ListProps"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "Button"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "List"
+            },
+            {
+              "name": "component",
+              "type": "identifier",
+              "text": "Button"
+            },
+            {
+              "name": "component",
+              "type": "identifier",
+              "text": "List"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을 구현했다(아래 `S04 구현`, `S05 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을 구현했다(아래 `S04 구현`, `S05 구현`, `S06 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -20,7 +20,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `schema diff --before FILE --after FILE` | node/field/type/required/multiple/supertype 변경 | READ_DATA, 03 |
 | `reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH --allow EXEC_GENERATOR` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
 | `incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | 매 edit의 incremental/fresh 결과(edit는 profile 안) | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
-| `oracle record --root PATH --profile FILE --out PATH` | native ordered tree/query/API record | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
+| `oracle record --root PATH --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
 | `parity --left PATH --right PATH --profile FILE` | 동일 의미 identity의 결과 대조 | READ_DATA, 08 |
@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05가 구현했다.
+* `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05, `oracle record`는 S06이 구현했다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -132,11 +132,34 @@ profile `tsgk-incremental/r1`은 S02와 같은 strict decoder로 읽는다. 필�
 | `real-world-source-r2` | 33554432 | 25000000 / 50000 | 16777216 | 60초 | parse 90초, edit 300초 | 4 (`tree`만) | 64 |
 | `private-corpus-local` | 33554432 | 25000000 / 50000 | 16777216 | 60초 | batch 3600초, frame 60초+5초 | 0 (`record`만) | 26000 |
 
-`--run-wall`은 run 전체 wall을 연산 값보다 낮게만 줄인다(여러 호출을 한 실행 wall 안에 넣을 때). 줄인 값은 결과 `operation.run_wall_ns`와 policy identity에 남는다. 세 연산 모두 tree depth 100000, 메모리 4294967296(Windows·Linux hard, macOS sampled non-strict), ERROR/MISSING 1000건, partial tree 1000 node이고 run 전체 wall은 3600초다. `private-corpus-local`은 process 하나에 사례 500개 또는 입력 268435456 bytes까지 `batch` frame으로 보내며, batch 한도나 치명 frame(`ALLOCATION_LIMIT`) 뒤에 답하지 않은 사례는 새 process로 다시 보낸다(재시도로 세지 않음). 마지막 응답 뒤 stdout bytes·cleanup 미확인·비정상 exit가 있으면 그 batch의 어떤 frame도 완료로 받지 않는다. run wall 안에 처리하지 못한 사례는 `NOT_RUN`이다.
+`--run-wall`은 run 전체 wall을 연산 값보다 낮게만 줄인다(여러 호출을 한 실행 wall 안에 넣을 때). 줄인 값은 결과 `operation.run_wall_ns`와 policy identity에 남는다. 세 연산 모두 tree depth 100000, 메모리 4294967296(Windows·Linux hard, macOS sampled non-strict; S06의 `real-world-source-r3`는 아래 `S06 구현`), ERROR/MISSING 1000건, partial tree 1000 node이고 run 전체 wall은 3600초다. `private-corpus-local`은 process 하나에 사례 500개 또는 입력 268435456 bytes까지 `batch` frame으로 보내며, batch 한도나 치명 frame(`ALLOCATION_LIMIT`) 뒤에 답하지 않은 사례는 새 process로 다시 보낸다(재시도로 세지 않음). 마지막 응답 뒤 stdout bytes·cleanup 미확인·비정상 exit가 있으면 그 batch의 어떤 frame도 완료로 받지 않는다. run wall 안에 처리하지 못한 사례는 `NOT_RUN`이다.
 
 실행 순서: profile 검증 → hard memory backend 확인(macOS 제외, 없으면 `MEMORY_HARD_CAP_UNSUPPORTED`) → `--work` 안 새 build 디렉터리에 runtime(내장 manifest와 hash 대조, `RUNTIME_MISMATCH`)·grammar(`SOURCE_MISMATCH`, link 거부)·driver source·shim 복사 → 컴파일러 `--version`과 compile/link(아래 [플랫폼](platform-support.md) `S05 native build`) → 사례마다 입력 hash 확인(`SOURCE_MISMATCH`), edit 검사(`kit.ApplyEdits`), 실행 직전 executable hash 재확인(`EXECUTABLE_MISMATCH`), runner 실행, response 검증 → 판정 → `--out/result.json`(`tsgk-incremental-result/r1`)과 `--out/responses/<순번 5자리>-<사례>.json`(원 response payload; 대소문자를 구분하지 않는 filesystem에서도 겹치지 않음, 쓰기 실패면 실행 `FAILED`) → build 디렉터리 삭제 확인(`BUILD_CLEANUP_FAILED`면 완료가 아님). stdout에는 같은 결과 한 줄을 쓴다.
 
 사례 결과는 `execution_status`, `assessment`, `code`(첫 실패 사유), claim 세 개(`incremental_equality`, `incremental_route`, `expectations`; `PASS`·`FAIL`·`BLOCKED`·`NOT_CLAIMED`), driver status·code·producer, runner 결과, step별 source bytes·sha256, edit와 point, route 계측과 `proven`, 비교(`equal`, `first_difference`), 공개 `tsgk-tree/r1`·`tsgk-tree-summary/r1` envelope, 기대값 결과다. 판정은 [tree/protocol](tree-and-adapter-protocol.md) `S05 구현`의 비교 projection을 따른다. exit: 모든 사례가 완료되고 PASS면 0, FAIL 1, BLOCKED·`RESOURCE_LIMIT` 3, 실행 전 거부 2, 실패(FAILED·cleanup·결과 쓰기) 4, 취소 130이다.
+
+## S06 구현 — oracle record, oracle profile r1
+
+```text
+tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE [--cgroup-parent DIR] [--run-wall SECONDS]
+```
+
+`oracle record`는 `incremental`과 같은 인자 검사·build·runner·driver를 쓰고 요청만 [`tsgk-native/r2`](tree-and-adapter-protocol.md)로 보낸다. capability 거부, root 밖 경로 규칙(`PROFILE_INSIDE_INPUT`은 `--fact-pack`에도 적용), hard memory backend 확인, build 단계와 실패 code, 사례 입력 hash, edit 검사, 실행 직전 executable hash 재확인은 `S05 구현`과 같다. `--out`은 배타적으로 만든다. 이미 있거나 동시 실행이 먼저 만들었으면 `OUTPUT_EXISTS`(exit 2)이며 그 디렉터리에 아무것도 쓰지 않는다. 결과 디렉터리는 [기록 set](tree-and-adapter-protocol.md)(`records/`, `raw/`, 마지막 `manifest.json`)뿐이다. stdout에는 `tsgk-oracle-result/r1` 한 줄을 쓴다. 이 결과는 E0 report, profile·route·operation, build, build 삭제 결과, 사례 요약(상태·판정·code·S05 claim·S06 claim), set 검증 결과(`kit.VerifyOracleSet`: `valid`, record 수, 실행 상태·판정, finding), platform, wall을 담는다. exit는 `incremental`과 같다. member 쓰기 실패·set 검증 실패는 실행 `FAILED`(exit 4)이고 완결 set이 아니다.
+
+profile `tsgk-oracle/r1`은 `tsgk-incremental/r1`의 모든 필드(같은 strict decoder와 같은 규칙)에 세 필드를 더한다. `queries`는 `{id, source}` 최대 16개이고, id는 유일한 1~128자 ID, source는 UTF-8 1~65536 bytes다. `fact_pack`은 `null` 또는 `{revision, sha256, route}`이며 route는 profile route와 같아야 한다. `api`는 boolean이다. 사례에는 두 필드를 더한다. `query_expect`는 `{query, step, status, code, captures, error}` 목록이다. `captures`는 `null`(capture를 주장하지 않음) 또는 그 step incremental tree의 평가된 stream 전체를 순서대로 담은 `{name, type, text}`이고 `text`는 원본 UTF-8 bytes다. `error`는 `INVALID_QUERY`일 때만 `{type, offset}`이다. `dynamic_sql_expect`는 `null` 또는 `{facts, known_misses}`이며 `fact_pack`이 있어야 한다. `operation`은 query 연산만 받고, `tsgk-incremental/r1`은 query 연산을 받지 않는다(`OPERATION_UNSUPPORTED`). profile이 pack을 결속하면 `--fact-pack`의 revision·sha256이 같아야 한다. 그 route의 pack query를 하나 이상 같은 id로 담아야 하고, 담은 query는 pack과 source가 같아야 한다(대용량 입력에는 선언 query만 고르는 식으로 일부만 담을 수 있다). 선언 query는 profile `declarations`로 만든 것과 같아야 한다. 어긋나면 실행 전 `FACT_PACK_MISMATCH`다.
+
+| `operation` | 입력 | node / full gate | 출력 | match / capture | parse당 | query | process wall | edit | 사례 | host |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `native-query` | 65536 | 10000 / 10000 | 8388608 | 10000 / 10000 | 10초 | 4초 | 10초 | 4 (`tree`만) | 1000 | 세 OS |
+| `native-query-large` | 33554432 | 25000000 / 50000 | 16777216 | 1000000 / 1000000 | 60초 | 20초 | 90초 | 0 (`auto`만) | 64 | windows/amd64 |
+
+query 열은 query 실행 하나의 시간 예산이며 process wall 안에 들어가도록 정했다(등록 wall 10초·90초는 그대로). 사용자 등록 값이 아니라 S06이 wall 안에서 정한 값이다.
+
+두 연산의 tree depth는 100000, ERROR/MISSING 목록은 1000건, partial tree는 1000 node, run 전체 wall은 3600초다. 메모리는 `native-query`가 4294967296(Windows·Linux hard, macOS sampled non-strict), `native-query-large`가 아래 `real-world-source-r3`와 같은 8589934592다.
+
+**`real-world-source-r3`(2026-10-03 사용자 결정 `C1-REAL-WORLD-SOURCE-WINDOWS-R3`).** S05의 `real-world-source-r2`는 역사로 보존한다. r3는 r2와 같은 값이고 메모리만 8589934592(8 GiB, Windows Job Object hard)이며 windows/amd64에서만 실행한다. 값은 결정 receipt의 규칙대로 정했다. `cs-large-32mib-errors`를 로컬 Windows에서 12 GiB 측정 상한으로 실행한 peak commit은 5157146624 bytes였고, 여기에 약 20%를 더한 값 이상인 8·10·12 GiB 중 가장 작은 값이 8 GiB다. 다른 host에서 r3(`incremental`)나 `native-query-large`(`oracle record`) profile을 실행하면 두 명령 모두 build 전에 `OPERATION_PLATFORM_SCOPE`(BLOCKED, exit 3)이며 이유는 "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"이다. route helper는 그 host의 대용량 행을 `NOT_APPLICABLE`로 기록하고 실행하지 않는다. grammar route 26개의 세 OS 검증은 그대로다. driver의 `memory_bytes` 상한도 8589934592로 올렸다. 다른 상한은 바꾸지 않았다.
+
+사례 결과는 `S05 구현`의 모든 필드에 다음을 더한다. tree마다 `queries`(query마다 `id`, `sha256`, status·code, `evaluation`, 오류, pattern 수, capture 이름, predicate 단계, match 수, `partial`, 평가된 `captures`)를 둔다. 완료되지 않은 tree에는 모든 query를 `NOT_RUN`/`TREE_NOT_COMPLETED`로 둔다. full tree에는 S05 선언 항목(`declarations`)과 API 판정(`api{revision, consistent, first_difference, position_navigation_divergences, first_divergence}`)도 둔다. edit step에는 incremental/fresh query 비교(`query_comparison`)를 둔다. 사례 수준에는 S06 claim 다섯 개(`oracle_claims`), query 기대값 결과(`query_expectations`), pack 사실(`facts`: 재현한 선언 항목과 S05 일치 여부, 동적 SQL 사실과 known miss, XML 구조 capture 수, 첫 차이)를 둔다. full tree envelope의 `capabilities`는 producer의 `query`·`api` 값이고 `captures`는 `null`이다(capture는 query identity와 함께 query마다 있다). 판정은 S05 claim과 S06 claim 중 가장 나쁜 값이다.
 
 ## discovery와 strict profile
 

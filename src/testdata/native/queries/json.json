@@ -1,0 +1,95 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "json",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(pair key: (string) @array_key value: (array))\n(pair key: (string) @object_key value: (object))\n(pair key: (string) @key value: (string) @value)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "json-query-r1",
+      "source_case": "json-feature-r1",
+      "features": [
+        "json-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "key",
+              "type": "string",
+              "text": "\"name\""
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "text": "\"inventory\""
+            },
+            {
+              "name": "array_key",
+              "type": "string",
+              "text": "\"tags\""
+            },
+            {
+              "name": "array_key",
+              "type": "string",
+              "text": "\"items\""
+            },
+            {
+              "name": "key",
+              "type": "string",
+              "text": "\"name\""
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "text": "\"bolt\""
+            },
+            {
+              "name": "key",
+              "type": "string",
+              "text": "\"name\""
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "text": "\"nut\""
+            },
+            {
+              "name": "key",
+              "type": "string",
+              "text": "\"name\""
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "text": "\"washer\""
+            },
+            {
+              "name": "object_key",
+              "type": "string",
+              "text": "\"limits\""
+            },
+            {
+              "name": "key",
+              "type": "string",
+              "text": "\"notes\""
+            },
+            {
+              "name": "value",
+              "type": "string",
+              "text": "\"line1\\nline2 \\\"quoted\\\"\""
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

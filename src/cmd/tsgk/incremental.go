@@ -16,18 +16,37 @@ import (
 )
 
 // runIncremental builds the native driver for a tsgk-incremental/r1 profile and runs its
-// cases through the S04 runner (S05). Only this command and reproduce start processes.
+// cases through the S04 runner (S05). Only this command, oracle record and reproduce
+// start processes.
 func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	fs := flag.NewFlagSet("incremental", flag.ContinueOnError)
+	return runNative(ctx, "incremental", args, stdout, stderr)
+}
+
+// runOracle dispatches `tsgk oracle record` (S06): the same build, runner and protocol as
+// incremental, with r2 queries and API observations and a published record set.
+func runOracle(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 || args[0] != "record" {
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE")
+		return exitUsage
+	}
+	return runNative(ctx, "oracle", args[1:], stdout, stderr)
+}
+
+func runNative(ctx context.Context, kind string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet(kind, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := fs.String("root", "", "case root (read only)")
 	groot := fs.String("grammar-root", "", "grammar file root (read only; default --root)")
-	profile := fs.String("profile", "", "tsgk-incremental/r1 profile outside the root")
+	profile := fs.String("profile", "", "profile outside the root")
 	rt := fs.String("runtime", "", "pinned Tree-sitter runtime source directory")
 	out := fs.String("out", "", "new result directory outside the root (no clobber)")
 	work := fs.String("work", "", "existing caller-owned build directory outside the root")
 	cgroup := fs.String("cgroup-parent", "", "delegated cgroup v2 directory (Linux hard memory cap)")
 	runWall := fs.Int("run-wall", 0, "seconds; narrows the operation run wall (0 keeps it)")
+	var pack *string
+	if kind == "oracle" {
+		pack = fs.String("fact-pack", "", "fact query pack the profile binds (outside the root)")
+	}
 	var tools, allow multi
 	fs.Var(&tools, "tool", "cc=PATH compiler executable")
 	fs.Var(&allow, "allow", "granted capability (BUILD_NATIVE, EXEC_NATIVE)")
@@ -35,6 +54,9 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 		return exitUsage
 	}
 	usage := "tsgk: USAGE: tsgk incremental --root PATH [--grammar-root PATH] --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+	if kind == "oracle" {
+		usage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+	}
 	if fs.NArg() != 0 || *root == "" || *profile == "" || *rt == "" || *out == "" || *work == "" || len(tools) != 1 {
 		fmt.Fprintln(stderr, usage)
 		return exitUsage
@@ -67,17 +89,41 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 			return exitUsage
 		}
 	}
-	if documentInside(*profile, abs["root"]) || documentInside(*profile, abs["grammar-root"]) {
-		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
-		return exitUsage
+	docs := []string{*profile}
+	if pack != nil && *pack != "" {
+		docs = append(docs, *pack)
+	}
+	for _, d := range docs {
+		if documentInside(d, abs["root"]) || documentInside(d, abs["grammar-root"]) {
+			fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
+			return exitUsage
+		}
 	}
 	data, err := readDocument(*profile)
 	if err != nil {
 		fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
 		return exitIO
 	}
-	res, rerr := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-		Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: time.Duration(max(*runWall, 0)) * time.Second})
+	wall := time.Duration(max(*runWall, 0)) * time.Second
+	var res any
+	var status, assessment string
+	var rerr error
+	if kind == "oracle" {
+		var packData []byte
+		if *pack != "" {
+			if packData, err = readDocument(*pack); err != nil {
+				fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
+				return exitIO
+			}
+		}
+		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
+			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
+	} else {
+		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
+			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
+	}
 	line, merr := json.Marshal(res)
 	if merr != nil {
 		fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")
@@ -92,9 +138,9 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 		}
 		return exitIO
 	}
-	switch res.ExecutionStatus {
+	switch status {
 	case kit.StatusCompleted:
-		return assessExit(res.Assessment)
+		return assessExit(assessment)
 	case kit.StatusCancelled:
 		return exitCanceled
 	case kit.StatusResourceLimit:

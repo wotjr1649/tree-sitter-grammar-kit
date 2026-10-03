@@ -1,0 +1,70 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "rust",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(struct_item name: (type_identifier) @struct)\n(enum_item name: (type_identifier) @enum)\n(trait_item name: (type_identifier) @trait)\n(function_item name: (identifier) @function)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "rust-query-r1",
+      "source_case": "rust-feature-r1",
+      "features": [
+        "rust-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "struct",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "enum",
+              "type": "type_identifier",
+              "text": "Event"
+            },
+            {
+              "name": "trait",
+              "type": "type_identifier",
+              "text": "Store"
+            },
+            {
+              "name": "struct",
+              "type": "type_identifier",
+              "text": "MemoryStore"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "total"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "fmt"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "main"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

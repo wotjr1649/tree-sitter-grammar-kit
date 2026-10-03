@@ -1,0 +1,70 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "ruby",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(module name: (constant) @module)\n(class name: (constant) @class)\n(method name: (identifier) @method)\n(singleton_method name: (identifier) @singleton_method)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "ruby-query-r1",
+      "source_case": "ruby-feature-r1",
+      "features": [
+        "ruby-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "module",
+              "type": "constant",
+              "text": "Inventory"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "bulk?"
+            },
+            {
+              "name": "class",
+              "type": "constant",
+              "text": "Store"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "initialize"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "each"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "summary"
+            },
+            {
+              "name": "singleton_method",
+              "type": "identifier",
+              "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

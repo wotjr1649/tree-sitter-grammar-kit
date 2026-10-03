@@ -1,0 +1,97 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "yaml",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(block_mapping_pair key: (flow_node) @block_key value: (block_node))\n(block_node (anchor) @anchor)\n(block_mapping_pair value: (flow_node (alias) @alias))\n(flow_pair key: (flow_node) @flow_key)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "yaml-query-r1",
+      "source_case": "yaml-feature-r1",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "defaults"
+            },
+            {
+              "name": "anchor",
+              "type": "anchor",
+              "text": "&defaults"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "services"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "api"
+            },
+            {
+              "name": "alias",
+              "type": "alias",
+              "text": "*defaults"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "worker"
+            },
+            {
+              "name": "alias",
+              "type": "alias",
+              "text": "*defaults"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "queues"
+            },
+            {
+              "name": "flow_key",
+              "type": "flow_node",
+              "text": "MODE"
+            },
+            {
+              "name": "flow_key",
+              "type": "flow_node",
+              "text": "DEBUG"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "description"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "summary"
+            },
+            {
+              "name": "block_key",
+              "type": "flow_node",
+              "text": "items"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

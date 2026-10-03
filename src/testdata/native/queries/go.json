@@ -1,0 +1,76 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "go",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_spec name: (type_identifier) @type)\n(method_declaration name: (field_identifier) @method)\n(function_declaration name: (identifier) @function)\n(call_expression function: (selector_expression field: (field_identifier) @call))\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "go-query-r1",
+      "source_case": "go-feature-r1",
+      "features": [
+        "go-B02",
+        "go-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Store"
+            },
+            {
+              "name": "call",
+              "type": "field_identifier",
+              "text": "New"
+            },
+            {
+              "name": "method",
+              "type": "field_identifier",
+              "text": "Put"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "Summarize"
+            },
+            {
+              "name": "call",
+              "type": "field_identifier",
+              "text": "Fprintf"
+            },
+            {
+              "name": "call",
+              "type": "field_identifier",
+              "text": "Fprintf"
+            },
+            {
+              "name": "call",
+              "type": "field_identifier",
+              "text": "String"
+            },
+            {
+              "name": "call",
+              "type": "field_identifier",
+              "text": "Sprint"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

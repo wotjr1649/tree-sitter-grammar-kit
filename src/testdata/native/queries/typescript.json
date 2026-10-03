@@ -1,0 +1,71 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "typescript",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(interface_declaration name: (type_identifier) @interface)\n(type_alias_declaration name: (type_identifier) @type)\n(enum_declaration name: (identifier) @enum)\n(method_definition name: (property_identifier) @method)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "typescript-query-r1",
+      "source_case": "typescript-feature-r1",
+      "features": [
+        "typescript-B01",
+        "typescript-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "interface",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Status"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Keys"
+            },
+            {
+              "name": "enum",
+              "type": "identifier",
+              "text": "Level"
+            },
+            {
+              "name": "interface",
+              "type": "type_identifier",
+              "text": "EventEmitter"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "constructor"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "add"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "find"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

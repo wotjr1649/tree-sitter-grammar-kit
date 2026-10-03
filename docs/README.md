@@ -9,7 +9,7 @@ The current implementation consists of repository foundation checks, the Session
 | Public offline Go API, ownership, external consumers | [public API](specs/public-go-api.md) |
 | Fingerprints, manifests, evidence | [identity/evidence](specs/identity-and-evidence.md) |
 | Untrusted inputs, paths/archives, execution authority | [trust/execution](specs/trust-and-execution.md) |
-| Static node-types contract, declaration/fact mapping, ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md), [fact mapping](../src/contracts/fact-mapping.json) |
+| Static node-types contract, declaration/fact mapping, ordered CST, queries, adapters | [tree/protocol](specs/tree-and-adapter-protocol.md), [fact mapping](../src/contracts/fact-mapping.json), [fact query pack](../src/contracts/fact-query-pack.json) |
 | OS/arch/capabilities | [platform](specs/platform-support.md) |
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
@@ -22,6 +22,7 @@ The current implementation consists of repository foundation checks, the Session
 | Observed Session 03 results | [schema contract report](reports/session-03-schema-contract.md) |
 | Observed Session 04 results | [reproducibility report](reports/session-04-reproducibility.md) |
 | Observed Session 05 results | [incremental report](reports/session-05-incremental.md) |
+| Observed Session 06 results | [native oracle report](reports/session-06-native-oracle.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

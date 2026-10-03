@@ -103,7 +103,8 @@ type PartialTree struct {
 	Nodes     []kit.TreeNode `json:"nodes"`
 }
 
-// TreeOut is one step tree in the report.
+// TreeOut is one step tree in the report. Queries, API and Declarations are r2 (S06)
+// members and are absent from an r1 (incremental) result.
 type TreeOut struct {
 	Status          string           `json:"status"`
 	Code            string           `json:"code"`
@@ -115,6 +116,34 @@ type TreeOut struct {
 	Digest          string           `json:"digest"`
 	Tree            *TreeEnvelope    `json:"tree,omitempty"`
 	Summary         *SummaryEnvelope `json:"summary,omitempty"`
+	Declarations    *[]DeclItem      `json:"declarations,omitempty"`
+	Queries         []QueryOut       `json:"queries,omitempty"`
+	API             *APIOut          `json:"api,omitempty"`
+}
+
+// APIOut is the judgement of a tree's tsgk-api/r1 observations against its serialization;
+// the observations themselves stay in the raw response.
+type APIOut struct {
+	Revision           string         `json:"revision"`
+	Consistent         bool           `json:"consistent"`
+	First              *APIDifference `json:"first_difference"`
+	PositionNavigation int            `json:"position_navigation_divergences"`
+	FirstDivergence    *APIDifference `json:"first_divergence"`
+}
+
+// QueryComparison is the incremental/fresh query comparison of one edit step.
+type QueryComparison struct {
+	Equal bool   `json:"equal"`
+	First string `json:"first_difference,omitempty"`
+}
+
+// OracleClaims are the S06 judgements of an r2 case, kept apart from the S05 claims.
+type OracleClaims struct {
+	QueryEquality     string `json:"query_equality"`
+	QueryExpectations string `json:"query_expectations"`
+	API               string `json:"api"`
+	FactReproduction  string `json:"fact_reproduction"`
+	DynamicSQL        string `json:"dynamic_sql"`
 }
 
 // RouteOut is the route instrumentation with its judgement.
@@ -158,15 +187,16 @@ func composite(o kit.SvcObservation, in TreeInput, ids []kit.IdentityRef, tree *
 
 // StepResult is one step of a case.
 type StepResult struct {
-	Composite    *SvcComposite `json:"composite,omitempty"`
-	Step         int           `json:"step"`
-	SourceBytes  uint64        `json:"source_bytes"`
-	SourceSHA256 string        `json:"source_sha256"`
-	Edit         *StepEdit     `json:"edit"`
-	Route        *RouteOut     `json:"route"`
-	Comparison   *Comparison   `json:"comparison"`
-	Incremental  *TreeOut      `json:"incremental"` // nil when no tree was parsed (SVC observation only)
-	Fresh        *TreeOut      `json:"fresh"`
+	Composite    *SvcComposite    `json:"composite,omitempty"`
+	Step         int              `json:"step"`
+	SourceBytes  uint64           `json:"source_bytes"`
+	SourceSHA256 string           `json:"source_sha256"`
+	Edit         *StepEdit        `json:"edit"`
+	Route        *RouteOut        `json:"route"`
+	Comparison   *Comparison      `json:"comparison"`
+	Incremental  *TreeOut         `json:"incremental"` // nil when no tree was parsed (SVC observation only)
+	Fresh        *TreeOut         `json:"fresh"`
+	QueryCompare *QueryComparison `json:"query_comparison,omitempty"`
 }
 
 // ExpectationResult is one evaluated expectation.
@@ -191,6 +221,9 @@ type CaseResult struct {
 	Process         *runner.Result      `json:"process"`
 	Steps           []StepResult        `json:"steps"`
 	Expectations    []ExpectationResult `json:"expectations"`
+	Oracle          *OracleClaims       `json:"oracle_claims,omitempty"`
+	QueryExpect     []QueryExpectResult `json:"query_expectations,omitempty"`
+	Facts           *FactsOut           `json:"facts,omitempty"`
 	Raw             []byte              `json:"-"`
 }
 
@@ -203,6 +236,9 @@ type Context struct {
 	Format       string
 	CgroupParent string
 	PolicyRef    kit.IdentityRef
+	Protocol     string // "" (r1) or ProtocolR2
+	Queries      []QuerySource
+	API          bool
 }
 
 // PolicyRef binds the operation limits, output form and encoding into a policy identity.
@@ -215,7 +251,8 @@ func PolicyRef(op kit.NativeOperation, output string) kit.IdentityRef {
 }
 
 func (x Context) request(c kit.IncrementalCase, source []byte) Request {
-	r := Request{ID: c.ID, Encoding: c.Encoding, Output: x.Output, Limits: LimitsFor(x.Op), Points: c.Points, Source: source, Edits: c.Edits}
+	r := Request{ID: c.ID, Encoding: c.Encoding, Output: x.Output, Limits: LimitsFor(x.Op), Points: c.Points, Source: source, Edits: c.Edits,
+		Protocol: x.Protocol, Queries: x.Queries, API: x.API}
 	if x.Declarations != nil {
 		r.Declarations = x.Declarations.Items
 	}
@@ -306,11 +343,33 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if err != nil {
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
+	r2 := req.Revision() == ProtocolR2
+	// a required capability the producer does not declare blocks the case before any of its
+	// observations is interpreted; a response that is not even a well-formed r2 answer to
+	// this request (no producer declaration, another id, an exit that contradicts its
+	// status) is left to Check and fails instead
+	p := resp.Producer
+	exits := map[string]int{kit.StatusCompleted: 0, "INVALID_REQUEST": 2, kit.StatusResourceLimit: 3, kit.StatusFailed: 4}
+	exit, known := exits[resp.Status]
+	wellFormed := p.Query != "" && p.API != nil && p.Predicates != nil && p.SymbolCount != nil && p.FieldCount != nil && resp.ID == req.ID && known && exit == res.ExitCode
+	if r2 && resp.Protocol == ProtocolR2 && wellFormed {
+		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
+			out.Producer = &resp.Producer
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
+		}
+		if x.API && *resp.Producer.API != APICapability {
+			out.Producer = &resp.Producer
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
+		}
+	}
 	checked, err := Check(resp, req, versions, points, res.ExitCode)
 	if err != nil {
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
 	out.ResponseStatus, out.ResponseCode, out.Producer = resp.Status, resp.Code, &resp.Producer
+	if r2 {
+		out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+	}
 	build := kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}
 	for k, cs := range checked.Steps {
 		sr := StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Edit: cs.Step.Edit}
@@ -321,6 +380,9 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		if cs.Fresh != nil {
 			f := x.treeOut(*cs.Fresh, in, ids, c.Points)
 			sr.Fresh = &f
+		}
+		if r2 {
+			x.oracleTrees(&sr, cs, c.Encoding, versions[k], &resp.Producer, out.Oracle)
 		}
 		if svc != nil {
 			sr.Composite = composite(svc[k], in, ids, sr.Incremental.Tree)
@@ -369,8 +431,19 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if out.Claims.Expectations == ClaimFail && out.Code == "" {
 		out.Code = "EXPECTATION_FAILED"
 	}
+	foldAssessment(&out)
+	return out
+}
+
+// foldAssessment sets a completed case's assessment to the worst of its claims: any FAIL
+// is FAIL, else any BLOCKED is BLOCKED, else PASS.
+func foldAssessment(out *CaseResult) {
+	claims := []string{out.Claims.IncrementalEquality, out.Claims.IncrementalRoute, out.Claims.Expectations}
+	if o := out.Oracle; o != nil {
+		claims = append(claims, o.QueryEquality, o.QueryExpectations, o.API, o.FactReproduction, o.DynamicSQL)
+	}
 	out.Assessment = kit.AssessPass
-	for _, cl := range []string{out.Claims.IncrementalEquality, out.Claims.IncrementalRoute, out.Claims.Expectations} {
+	for _, cl := range claims {
 		switch cl {
 		case ClaimFail:
 			out.Assessment = kit.AssessFail
@@ -380,7 +453,61 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 			}
 		}
 	}
-	return out
+}
+
+// oracleTrees adds the r2 observations of one step: each tree's query results, its S05
+// declarations and the API judgement, and for an edit step the incremental/fresh query
+// comparison. The query-equality and API claims accumulate in claims.
+func (x Context) oracleTrees(sr *StepResult, cs CheckedStep, enc string, src []byte, p *Producer, claims *OracleClaims) {
+	add := func(o *TreeOut, t Tree) {
+		o.Queries = queryOuts(t, x.Queries, enc, src)
+		if t.Form == "full" {
+			o.Declarations = t.Wire.Declarations
+		}
+		if o.Tree != nil {
+			o.Tree.Capabilities = map[string]string{"query": p.Query, "api": *p.API}
+			o.Tree.Captures = nil // captures are per query, bound to the query identity
+		}
+		if !x.API || t.Status != kit.StatusCompleted {
+			return
+		}
+		if t.API == nil {
+			claims.API = worse(claims.API, ClaimBlocked) // a summary tree has no API observations
+			return
+		}
+		d, div := compareAPI(t.Nodes, t.API)
+		o.API = &APIOut{Revision: t.API.Revision, Consistent: d == nil, First: d, PositionNavigation: len(div)}
+		if len(div) > 0 {
+			o.API.FirstDivergence = &div[0]
+		}
+		if d != nil {
+			claims.API = ClaimFail
+		} else {
+			claims.API = worse(claims.API, ClaimPass)
+		}
+	}
+	add(sr.Incremental, cs.Incremental)
+	if cs.Fresh != nil && sr.Fresh != nil {
+		add(sr.Fresh, *cs.Fresh)
+		if len(x.Queries) > 0 && cs.Incremental.Status == kit.StatusCompleted && cs.Fresh.Status == kit.StatusCompleted {
+			eq, first := compareQueries(sr.Incremental.Queries, sr.Fresh.Queries)
+			sr.QueryCompare = &QueryComparison{Equal: eq, First: first}
+			if eq {
+				claims.QueryEquality = worse(claims.QueryEquality, ClaimPass)
+			} else {
+				claims.QueryEquality = ClaimFail
+			}
+		}
+	}
+}
+
+// worse returns the more severe claim: FAIL > BLOCKED > PASS > NOT_CLAIMED.
+func worse(a, b string) string {
+	rank := map[string]int{ClaimNotClaimed: 0, ClaimPass: 1, ClaimBlocked: 2, ClaimFail: 3}
+	if rank[b] > rank[a] {
+		return b
+	}
+	return a
 }
 
 func (x Context) treeOut(t Tree, in TreeInput, ids []kit.IdentityRef, points []kit.NativePoint) TreeOut {

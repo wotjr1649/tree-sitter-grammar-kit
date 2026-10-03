@@ -1,0 +1,101 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "xml",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(GEDecl (Name) @entity)\n(document root: (element (STag (Name) @root)))\n(content (element (STag (Name) @child_tag)))\n(Attribute (Name) @attribute)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "xml-query-r1",
+      "source_case": "xml-feature-r1",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "entity",
+              "type": "Name",
+              "text": "company"
+            },
+            {
+              "name": "root",
+              "type": "Name",
+              "text": "inventory"
+            },
+            {
+              "name": "attribute",
+              "type": "Name",
+              "text": "xmlns"
+            },
+            {
+              "name": "attribute",
+              "type": "Name",
+              "text": "xmlns:x"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "item"
+            },
+            {
+              "name": "attribute",
+              "type": "Name",
+              "text": "id"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "name"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "count"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "x:note"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "item"
+            },
+            {
+              "name": "attribute",
+              "type": "Name",
+              "text": "id"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "name"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "count"
+            },
+            {
+              "name": "child_tag",
+              "type": "Name",
+              "text": "description"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

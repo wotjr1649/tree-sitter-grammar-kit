@@ -476,11 +476,14 @@ func TestLimits(t *testing.T) {
 		{"TOTAL_BYTES_LIMIT", func(l *Limits) { l.TotalBytes = 5 }},
 		{"DEPTH_LIMIT", func(l *Limits) { l.Depth = 2 }},
 		{"OUTPUT_LIMIT", func(l *Limits) { l.OutputBytes-- }},
-		{"WALL_LIMIT", func(l *Limits) { l.Wall = time.Nanosecond }},
+		{"WALL_LIMIT", func(l *Limits) { l.Wall = time.Nanosecond }}, // the wall hook expires it mid-walk; the timer is TestStartRunWallTimer
 	} {
 		t.Run(tc.code, func(t *testing.T) {
 			l := at
 			tc.mutate(&l)
+			if tc.code == "WALL_LIMIT" {
+				defer wallExpiringAtOpen(t)()
+			}
 			res, err := run(l)
 			kindOf(t, err, KindResourceLimit, tc.code)
 			if res.ExecutionStatus != StatusResourceLimit || res.Assessment != AssessBlocked || res.SetSHA256 != "" || len(res.Manifest.Files) != 0 {

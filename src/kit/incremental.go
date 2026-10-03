@@ -44,25 +44,44 @@ type NativeOperation struct {
 	FrameWall    time.Duration `json:"frame_wall_ns,omitempty"`
 	BatchWall    time.Duration `json:"batch_wall_ns,omitempty"`
 	RunWall      time.Duration `json:"run_wall_ns"`
+	Platforms    []string      `json:"platforms,omitempty"` // empty: every supported host
+	Matches      uint64        `json:"matches,omitempty"`   // query operations (S06) only
+	Captures     uint64        `json:"captures,omitempty"`
+	QueryMillis  uint64        `json:"query_ms,omitempty"`
 }
 
+// RealWorldR3MemoryBytes is the windows/amd64 memory value of real-world-source-r3 and
+// native-query-large (decision C1-REAL-WORLD-SOURCE-WINDOWS-R3): the smallest of 8, 10 or
+// 12 GiB at least the measured cs-large-32mib-errors peak plus about 20 percent.
+const RealWorldR3MemoryBytes = 8589934592
+
+// R3PlatformReason is why the r3 large-input profile is qualified on windows/amd64 only.
+const R3PlatformReason = "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
+
 // NativeOperations returns the adopted operations: the small registered edit cases
-// (native-parse-edit), the real-world large-source profile (real-world-source-r2) and the
-// private corpus batch (private-corpus-local, S05 wall 3600 s).
+// (native-parse-edit), the real-world large-source profiles (real-world-source-r2 kept as
+// S05 history, real-world-source-r3 windows/amd64 only), the private corpus batch
+// (private-corpus-local, S05 wall 3600 s) and the S06 query operations (native-query and
+// the windows/amd64 native-query-large).
 func NativeOperations() map[string]NativeOperation {
 	rw := NativeOperation{Name: "real-world-source-r2", InputBytes: 33554432, Nodes: 25000000, FullNodes: 50000, Depth: 100000, OutputBytes: 16777216,
 		ParseMillis: 60000, MemoryBytes: 4294967296, Errors: 1000, PartialNodes: 1000, ParseWall: 90 * time.Second, EditWall: 300 * time.Second,
 		MaxEdits: 4, MaxCases: 64, Outputs: []string{OutputTree, OutputAuto}, RunWall: 3600 * time.Second}
+	r3 := rw
+	r3.Name, r3.MemoryBytes, r3.Platforms = "real-world-source-r3", RealWorldR3MemoryBytes, []string{"windows/amd64"}
 	pc := rw
 	pc.Name, pc.Outputs, pc.MaxEdits, pc.MaxCases, pc.Batch = "private-corpus-local", []string{OutputRecord}, 0, 26000, true
 	pc.BatchFiles, pc.BatchBytes, pc.FrameWall, pc.BatchWall = 500, 268435456, 60*time.Second, 3600*time.Second
-	return map[string]NativeOperation{
-		"native-parse-edit": {Name: "native-parse-edit", InputBytes: 65536, Nodes: 10000, FullNodes: 10000, Depth: 100000, OutputBytes: 8388608,
-			ParseMillis: 10000, MemoryBytes: 4294967296, Errors: 1000, PartialNodes: 1000, ParseWall: 10 * time.Second, EditWall: 10 * time.Second,
-			MaxEdits: 4, MaxCases: 1000, Outputs: []string{OutputTree}, RunWall: 3600 * time.Second},
-		rw.Name: rw,
-		pc.Name: pc,
-	}
+	pe := NativeOperation{Name: "native-parse-edit", InputBytes: 65536, Nodes: 10000, FullNodes: 10000, Depth: 100000, OutputBytes: 8388608,
+		ParseMillis: 10000, MemoryBytes: 4294967296, Errors: 1000, PartialNodes: 1000, ParseWall: 10 * time.Second, EditWall: 10 * time.Second,
+		MaxEdits: 4, MaxCases: 1000, Outputs: []string{OutputTree}, RunWall: 3600 * time.Second}
+	nq := pe
+	// the query budget is a part of the registered process wall, so a slow query ends as a
+	// typed QUERY_TIME_LIMIT before the runner's wall (10 s and 90 s) ends the process
+	nq.Name, nq.Matches, nq.Captures, nq.QueryMillis = "native-query", 10000, 10000, 4000
+	ql := r3
+	ql.Name, ql.MaxEdits, ql.Outputs, ql.Matches, ql.Captures, ql.QueryMillis = "native-query-large", 0, []string{OutputAuto}, 1000000, 1000000, 20000
+	return map[string]NativeOperation{pe.Name: pe, rw.Name: rw, r3.Name: r3, pc.Name: pc, nq.Name: nq, ql.Name: ql}
 }
 
 // Build ceilings of the c-build operation.
@@ -202,20 +221,40 @@ func nativeInput(t typed, v *jv, roles map[string]bool) (NativeInput, *Error) {
 }
 
 func parseIncremental(data []byte) (IncrementalProfile, *Error) {
+	p, _, e := parseNative(data, IncrementalSchema, "incremental", nil, nil)
+	return p, e
+}
+
+// nativeExtras are the members a profile revision adds to the shared native profile: the
+// top-level ones and, per case, the case-level ones.
+type nativeExtras struct {
+	t     typed
+	top   map[string]*jv
+	cases []map[string]*jv
+}
+
+// parseNative decodes the members shared by tsgk-incremental/r1 and tsgk-oracle/r1; extra
+// top-level and case-level members are required and returned undecoded. A query operation
+// (S06) is accepted only by a revision with queries, and the other operations only without.
+func parseNative(data []byte, schema, doc string, topExtra, caseExtra []string) (IncrementalProfile, nativeExtras, *Error) {
 	var p IncrementalProfile
-	t := typed{doc: "incremental"}
+	t := typed{doc: doc}
+	x := nativeExtras{t: t, top: map[string]*jv{}}
 	v, e := decodeStrict(t.doc, data, MaxDocumentBytes)
 	if e != nil {
-		return p, e
+		return p, x, e
 	}
-	m, e := t.object(v, []string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, "format")
+	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format")
 	if e != nil {
-		return p, e
+		return p, x, e
+	}
+	for _, k := range topExtra {
+		x.top[k] = m[k]
 	}
 	if s, e := t.str(m["schema"]); e != nil {
-		return p, e
-	} else if s != IncrementalSchema {
-		return p, t.bad("SCHEMA_UNSUPPORTED", m["schema"])
+		return p, x, e
+	} else if s != schema {
+		return p, x, t.bad("SCHEMA_UNSUPPORTED", m["schema"])
 	}
 	sum := sha256.Sum256(data)
 	p.SHA256 = hex.EncodeToString(sum[:])
@@ -225,81 +264,82 @@ func parseIncremental(data []byte) (IncrementalProfile, *Error) {
 	}{{&p.ID, "id"}, {&p.Route, "route"}} {
 		s, e := t.str(m[f.name])
 		if e != nil {
-			return p, e
+			return p, x, e
 		}
 		if !validID(s) {
-			return p, t.bad(map[string]string{"id": "ID_INVALID", "route": "ROUTE_INVALID"}[f.name], m[f.name])
+			return p, x, t.bad(map[string]string{"id": "ID_INVALID", "route": "ROUTE_INVALID"}[f.name], m[f.name])
 		}
 		*f.dst = s
 	}
 	ops := NativeOperations()
 	if p.Operation, e = t.str(m["operation"]); e != nil {
-		return p, e
+		return p, x, e
 	}
 	op, ok := ops[p.Operation]
-	if !ok {
-		return p, t.bad("OPERATION_UNSUPPORTED", m["operation"])
+	if !ok || (op.Matches > 0) != (schema == OracleSchema) {
+		return p, x, t.bad("OPERATION_UNSUPPORTED", m["operation"])
 	}
 	if p.Symbol, e = t.str(m["symbol"]); e != nil {
-		return p, e
+		return p, x, e
 	} else if !ValidLanguageSymbol(p.Symbol) {
-		return p, t.bad("SYMBOL_INVALID", m["symbol"])
+		return p, x, t.bad("SYMBOL_INVALID", m["symbol"])
 	}
 	if p.Encoding, e = t.str(m["encoding"]); e != nil {
-		return p, e
+		return p, x, e
 	} else if !encodingNames[p.Encoding] {
-		return p, t.bad("ENCODING_UNSUPPORTED", m["encoding"])
+		return p, x, t.bad("ENCODING_UNSUPPORTED", m["encoding"])
 	}
 	if p.Output, e = t.str(m["output"]); e != nil {
-		return p, e
+		return p, x, e
 	}
 	allowed := false
 	for _, o := range op.Outputs {
 		allowed = allowed || o == p.Output
 	}
 	if !allowed {
-		return p, t.bad("OUTPUT_NOT_ALLOWED", m["output"])
+		return p, x, t.bad("OUTPUT_NOT_ALLOWED", m["output"])
 	}
-	if x := m["format"]; x != nil {
-		if p.Format, e = t.str(x); e != nil {
-			return p, e
+	if f := m["format"]; f != nil {
+		if p.Format, e = t.str(f); e != nil {
+			return p, x, e
 		} else if p.Format != SvcFormat || p.Symbol != "tree_sitter_c_sharp" {
-			return p, t.bad("FORMAT_UNSUPPORTED", x)
+			return p, x, t.bad("FORMAT_UNSUPPORTED", f)
 		}
 	}
 	if p.Compiler, e = parseTool(t, m["compiler"]); e != nil {
-		return p, e
+		return p, x, e
 	}
 	if p.Grammar, e = parseGrammarInputs(t, m["grammar"]); e != nil {
-		return p, e
+		return p, x, e
 	}
-	if x := m["declarations"]; x.kind != 'n' {
-		d, e := parseDeclarations(t, x)
+	if dv := m["declarations"]; dv.kind != 'n' {
+		d, e := parseDeclarations(t, dv)
 		if e != nil {
-			return p, e
+			return p, x, e
 		}
 		p.Declarations = d
 	}
 	list, e := t.array(m["cases"])
 	if e != nil {
-		return p, e
+		return p, x, e
 	}
 	if len(list) == 0 || len(list) > op.MaxCases {
-		return p, t.bad("CASES_COUNT_INVALID", m["cases"])
+		return p, x, t.bad("CASES_COUNT_INVALID", m["cases"])
 	}
 	seen := map[string]bool{}
 	for _, item := range list {
-		c, e := parseCase(t, item, p, op)
+		c, cm, e := parseCase(t, item, p, op, caseExtra)
 		if e != nil {
-			return p, e
+			return p, x, e
 		}
+		x.cases = append(x.cases, cm)
 		if seen[c.ID] {
-			return p, t.bad("CASE_DUPLICATE", item)
+			return p, x, t.bad("CASE_DUPLICATE", item)
 		}
 		seen[c.ID] = true
 		p.Cases = append(p.Cases, c)
 	}
-	return p, nil
+	return p, x, nil
 }
 
 func parseGrammarInputs(t typed, v *jv) ([]NativeInput, *Error) {
@@ -407,45 +447,45 @@ func splitPath(s string) []string {
 	return out
 }
 
-func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation) (IncrementalCase, *Error) {
+func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra []string) (IncrementalCase, map[string]*jv, *Error) {
 	var c IncrementalCase
-	m, e := t.object(v, []string{"id", "input", "edits", "points", "expect"}, "encoding")
+	m, e := t.object(v, append([]string{"id", "input", "edits", "points", "expect"}, extra...), "encoding")
 	if e != nil {
-		return c, e
+		return c, nil, e
 	}
 	if c.ID, e = t.str(m["id"]); e != nil {
-		return c, e
+		return c, nil, e
 	} else if !validID(c.ID) {
-		return c, t.bad("CASE_ID_INVALID", m["id"])
+		return c, nil, t.bad("CASE_ID_INVALID", m["id"])
 	}
 	if c.Input, e = nativeInput(t, m["input"], map[string]bool{"case": true}); e != nil {
-		return c, e
+		return c, nil, e
 	}
 	if c.Input.Bytes > op.InputBytes {
-		return c, t.bad("INPUT_TOO_LARGE", m["input"])
+		return c, nil, t.bad("INPUT_TOO_LARGE", m["input"])
 	}
 	c.Encoding = p.Encoding
 	if x := m["encoding"]; x != nil {
 		if c.Encoding, e = t.str(x); e != nil {
-			return c, e
+			return c, nil, e
 		} else if !encodingNames[c.Encoding] {
-			return c, t.bad("ENCODING_UNSUPPORTED", x)
+			return c, nil, t.bad("ENCODING_UNSUPPORTED", x)
 		}
 	}
 	edits, e := t.array(m["edits"])
 	if e != nil {
-		return c, e
+		return c, nil, e
 	}
 	if len(edits) > op.MaxEdits {
-		return c, t.bad("EDIT_COUNT_LIMIT", m["edits"])
+		return c, nil, t.bad("EDIT_COUNT_LIMIT", m["edits"])
 	}
 	if len(edits) > 0 && p.Output != OutputTree {
-		return c, t.bad("EDITS_NOT_ALLOWED", m["edits"])
+		return c, nil, t.bad("EDITS_NOT_ALLOWED", m["edits"])
 	}
 	for _, item := range edits {
 		f, e := t.object(item, []string{"start_byte", "old_end_byte", "new_end_byte", "old", "new"})
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		var ed Edit
 		for _, x := range []struct {
@@ -454,95 +494,95 @@ func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation) (Increm
 		}{{&ed.StartByte, "start_byte"}, {&ed.OldEndByte, "old_end_byte"}, {&ed.NewEndByte, "new_end_byte"}} {
 			n, e := t.uint(f[x.name])
 			if e != nil {
-				return c, e
+				return c, nil, e
 			}
 			if n > 0xffffffff {
-				return c, t.bad("EDIT_RANGE", f[x.name])
+				return c, nil, t.bad("EDIT_RANGE", f[x.name])
 			}
 			*x.dst = uint32(n)
 		}
 		if ed.Old, e = strictBase64(t, f["old"]); e != nil {
-			return c, e
+			return c, nil, e
 		}
 		if ed.New, e = strictBase64(t, f["new"]); e != nil {
-			return c, e
+			return c, nil, e
 		}
 		c.Edits = append(c.Edits, ed)
 	}
 	points, e := t.array(m["points"])
 	if e != nil {
-		return c, e
+		return c, nil, e
 	}
 	if len(points) > 64 {
-		return c, t.bad("POINTS_COUNT_INVALID", m["points"])
+		return c, nil, t.bad("POINTS_COUNT_INVALID", m["points"])
 	}
 	for _, item := range points {
 		f, e := t.object(item, []string{"id", "byte"})
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		var pt NativePoint
 		if pt.ID, e = t.str(f["id"]); e != nil {
-			return c, e
+			return c, nil, e
 		} else if !validID(pt.ID) {
-			return c, t.bad("POINT_ID_INVALID", f["id"])
+			return c, nil, t.bad("POINT_ID_INVALID", f["id"])
 		}
 		n, e := t.uint(f["byte"])
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		if n > 0xffffffff {
-			return c, t.bad("POINT_RANGE", f["byte"])
+			return c, nil, t.bad("POINT_RANGE", f["byte"])
 		}
 		pt.Byte = uint32(n)
 		c.Points = append(c.Points, pt)
 	}
 	expect, e := t.array(m["expect"])
 	if e != nil {
-		return c, e
+		return c, nil, e
 	}
 	for _, item := range expect {
 		f, e := t.object(item, []string{"step", "syntax", "contains", "declarations"})
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		var x StepExpectation
 		n, e := t.uint(f["step"])
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		if n > uint64(len(c.Edits)) {
-			return c, t.bad("EXPECT_STEP_INVALID", f["step"])
+			return c, nil, t.bad("EXPECT_STEP_INVALID", f["step"])
 		}
 		x.Step = int(n)
 		if x.Syntax, e = t.str(f["syntax"]); e != nil {
-			return c, e
+			return c, nil, e
 		} else if x.Syntax != "NO_ERROR" && x.Syntax != "ERROR" && x.Syntax != "ANY" {
-			return c, t.bad("EXPECT_SYNTAX_INVALID", f["syntax"])
+			return c, nil, t.bad("EXPECT_SYNTAX_INVALID", f["syntax"])
 		}
 		types, e := t.array(f["contains"])
 		if e != nil {
-			return c, e
+			return c, nil, e
 		}
 		for _, ty := range types {
 			s, e := nativeText(t, ty, "EXPECT_TYPE_INVALID")
 			if e != nil {
-				return c, e
+				return c, nil, e
 			}
 			x.Contains = append(x.Contains, s)
 		}
 		if x.Declarations, e = t.str(f["declarations"]); e != nil {
-			return c, e
+			return c, nil, e
 		}
 		switch x.Declarations {
 		case "", AssessPass, AssessFail, "NOT_APPLICABLE":
 		default:
-			return c, t.bad("EXPECT_DECLARATIONS_INVALID", f["declarations"])
+			return c, nil, t.bad("EXPECT_DECLARATIONS_INVALID", f["declarations"])
 		}
 		if x.Declarations != "" && p.Declarations == nil {
-			return c, t.bad("EXPECT_DECLARATIONS_UNMAPPED", f["declarations"])
+			return c, nil, t.bad("EXPECT_DECLARATIONS_UNMAPPED", f["declarations"])
 		}
 		c.Expect = append(c.Expect, x)
 	}
-	return c, nil
+	return c, m, nil
 }

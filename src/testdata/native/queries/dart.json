@@ -1,0 +1,80 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "dart",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(class_definition name: (identifier) @class)\n(enum_declaration name: (identifier) @enum)\n(function_signature name: (identifier) @function)\n(getter_signature name: (identifier) @getter)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "dart-query-r1",
+      "source_case": "dart-feature-r1",
+      "features": [
+        "dart-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Item"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "copyWith"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "toString"
+            },
+            {
+              "name": "enum",
+              "type": "identifier",
+              "text": "Level"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "log"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Store"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "getter",
+              "type": "identifier",
+              "text": "total"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "levelOf"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "main"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}
