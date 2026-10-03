@@ -45,6 +45,16 @@ func TestSvcComposite(t *testing.T) {
 	if only.Assessment != kit.AssessPass || only.Process != nil || only.Steps[0].Composite.Inline != nil || only.Steps[0].Composite.Coverage.CodeBehind != "OBSERVED" {
 		t.Fatalf("directive-only %s %s", only.Assessment, only.Code)
 	}
+	// R1 M-3: inline code that is not parsed as C# is never PASS.
+	for code, s := range map[string]string{
+		"SVC_INLINE_UNRESOLVED":  "<%@ ServiceHost Service=\"S\" %>\nclass Svc { }\n",
+		"SVC_INLINE_UNSUPPORTED": "<%@ ServiceHost Language=\"VB\" Service=\"S\" %>\nClass Svc\n",
+		"SVC_DIRECTIVE_ABSENT":   "class Svc { }\n",
+	} {
+		if r := run("svc-"+code, s); r.Assessment != kit.AssessBlocked || r.Code != code || r.Steps[0].Incremental != nil {
+			t.Fatalf("%s: %s %s", code, r.Assessment, r.Code)
+		}
+	}
 	// an edit that removes the Language attribute leaves a step without parseable inline code
 	lost := run("svc-language-lost", src, edit{"Language=\"C#\" ", ""})
 	if lost.Assessment != kit.AssessBlocked || lost.Code != "SVC_INLINE_NOT_PARSED" || lost.Process != nil || lost.Steps[1].Composite.Language.Status != "UNRESOLVED_LANGUAGE" {

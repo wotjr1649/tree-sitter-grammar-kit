@@ -86,7 +86,8 @@ $runs = @()
 foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
   $cases = $groups[$g]
   if (-not $cases.Count) { continue }
-  if (((Get-Date) - $start).TotalSeconds -ge $WallSeconds) { $runs += [ordered]@{ group = $g; skipped = 'RUN_WALL_EXHAUSTED' }; continue }
+  $remaining = [int]($WallSeconds - ((Get-Date) - $start).TotalSeconds)
+  if ($remaining -le 0) { $runs += [ordered]@{ group = $g; skipped = 'RUN_WALL_EXHAUSTED' }; continue }
   $route = if ($g -eq 'svc') { 'csharp' } else { $g }
   $r = $registry.routes | Where-Object { $_.route -eq $route }
   $sorted = [Collections.Generic.List[object]]::new()
@@ -100,7 +101,7 @@ foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
   $out = Join-Path $Destination "result-$g"
   $t0 = Get-Date
   $line = & $cli incremental --root $CorpusRoot --grammar-root (Join-Path $Prepared "routes/$route") --profile $pf --runtime (Join-Path $Prepared 'runtime') `
-    --tool "cc=$Compiler" --work $work --out $out --allow BUILD_NATIVE --allow EXEC_NATIVE
+    --tool "cc=$Compiler" --work $work --out $out --allow BUILD_NATIVE --allow EXEC_NATIVE --run-wall $remaining
   $code = $LASTEXITCODE
   $res = $line | ConvertFrom-Json
   foreach ($c in @($res.cases)) {
@@ -108,7 +109,7 @@ foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
     $e.execution_status = $c.execution_status; $e.assessment = $c.assessment; $e.code = $c.code
     if (@($c.steps).Count) {
       $s = $c.steps[0]
-      if ($s.PSObject.Properties['incremental'] -and $s.incremental) { $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
+      if ($s.incremental) {  # null when no tree was parsed (SVC observation only) $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
         if ($s.incremental.PSObject.Properties['summary'] -and $s.incremental.summary) { $e.errors_total = $s.incremental.summary.errors.total } }
       if ($s.PSObject.Properties['composite'] -and $s.composite) { $e.svc_coverage = $s.composite.coverage }
     }

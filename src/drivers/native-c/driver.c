@@ -196,7 +196,7 @@ static void sha_hex(Sha *s, char out[65]) {
 typedef struct { char *data; size_t len, cap, limit; bool over; } Buf;
 
 static void put(Buf *b, const char *s, size_t n) {
-  if (b->over) return;
+  if (b->over || n == 0) return;
   if (n > b->limit - b->len) { b->over = true; return; }
   if (b->len + n > b->cap) {
     size_t c = b->cap ? b->cap : 4096;
@@ -475,7 +475,7 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
       const char *slash = strchr(s, '/');
       size_t len = slash ? (size_t)(slash - s) : strlen(s);
       size_t k = !strncmp(s, "field:", 6) ? 6 : !strncmp(s, "children:", 9) ? 9 : !strncmp(s, "child:", 6) ? 6 : 0;
-      if (!k || len <= k || memchr(s, ':', len) != s + k - 1) return "LOCATOR_INVALID";
+      if (!k || len <= k || memchr(s, ':', len) != s + k - 1 || memchr(s + k, ':', len - k)) return "LOCATOR_INVALID";
       s += len;
       if (*s == '/') { s++; if (!*s) return "LOCATOR_INVALID"; }
     }
@@ -600,9 +600,9 @@ static const char *check_ranges(Req *r, Src *v) {
     uint32_t prev = 0;
     for (int i = 0; i < r->nranges[k]; i++) {
       TSRange *g = &r->ranges[k][i];
+      if (g->start_byte < prev || g->start_byte > g->end_byte || g->end_byte > v[k].n) return "RANGES_INVALID";
       TSPoint a = point_at(r->enc, v[k].s, g->start_byte), b = point_at(r->enc, v[k].s, g->end_byte);
-      if (g->start_byte < prev || g->start_byte > g->end_byte || g->end_byte > v[k].n ||
-          a.row != g->start_point.row || a.column != g->start_point.column || b.row != g->end_point.row || b.column != g->end_point.column)
+      if (a.row != g->start_point.row || a.column != g->start_point.column || b.row != g->end_point.row || b.column != g->end_point.column)
         return "RANGES_INVALID";
       prev = g->end_byte;
     }
@@ -746,7 +746,8 @@ typedef struct {
   Buf nodes, errs, decls;
   bool full, fault_flag;
   uint32_t err_total, err_items, decl_items;
-  uint64_t *symdecl; /* per symbol: bit i set when decls[i].node matches; bit 63 = computed */
+  uint64_t *symdecl; /* per symbol: bit i set when decls[i].node matches */
+  uint8_t *symdone;  /* per symbol: symdecl computed */
   uint32_t nsym;
 } TreeCtx;
 
@@ -859,11 +860,12 @@ static void declarations(TreeCtx *x, TSNode n) {
   TSSymbol sym = ts_node_symbol(n);
   if (sym >= x->nsym) return;
   uint64_t mask = x->symdecl[sym];
-  if (!(mask >> 63)) {
-    mask = UINT64_C(1) << 63;
+  if (!x->symdone[sym]) {
+    mask = 0;
     const char *t = ts_node_type(n);
     for (int i = 0; i < x->r->ndecls; i++) if (!strcmp(t, x->r->decls[i].node)) mask |= UINT64_C(1) << i;
     x->symdecl[sym] = mask;
+    x->symdone[sym] = 1;
   }
   for (int i = 0; i < x->r->ndecls; i++) {
     if (!(mask & (UINT64_C(1) << i))) continue;
@@ -904,11 +906,11 @@ static void visit_tree(Walk *w, TSNode n, uint32_t idx, int64_t parent, const ch
 
 /* Partial tree of one registered point: the ancestor chain of the deepest node that covers
  * the byte, then that node's subtree, at most partial_nodes nodes in preorder. */
-typedef struct { TreeCtx *x; Buf *b; uint32_t base, written; } Part;
+typedef struct { TreeCtx *x; Buf *b; uint32_t base, written; const char *top_field; } Part;
 static void visit_part(Walk *w, TSNode n, uint32_t idx, int64_t parent, const char *field) {
   Part *p = w->ctx;
   if (p->written++) put(p->b, ",", 1);
-  node_array(p->b, p->x, n, parent < 0 ? (int64_t)p->base - 1 : parent + p->base, field, node_flags(n));
+  node_array(p->b, p->x, n, parent < 0 ? (int64_t)p->base - 1 : parent + p->base, parent < 0 ? p->top_field : field, node_flags(n));
   (void)idx;
 }
 
@@ -950,7 +952,7 @@ static void partial_tree(TreeCtx *x, Buf *b, TSNode root, const Point *pt) {
     }
     if (anc >= budget) truncated = true;
     else {
-      Part part = {x, &nodes, anc, anc};
+      Part part = {x, &nodes, anc, anc, fields[anc]};
       Walk w = {budget - anc, x->r->depth, visit_part, &part, 0, 0};
       if (walk(chain.v[anc], &w)) truncated = true;
     }
@@ -987,6 +989,7 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
     else {
       x.nsym = ts_language_symbol_count(ts_tree_language(t));
       x.symdecl = t_calloc(x.nsym ? x.nsym : 1, sizeof *x.symdecl);
+      x.symdone = t_calloc(x.nsym ? x.nsym : 1, sizeof *x.symdone);
       x.full = form == OUT_TREE || (form == OUT_AUTO && count <= r->full_nodes);
       if (form == OUT_AUTO && !x.full) reason = "DESCENDANT_LIMIT";
       for (int attempt = 0; attempt < 2; attempt++) {
@@ -1069,6 +1072,7 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
   buf_free(&x.nodes); buf_free(&x.errs); buf_free(&x.decls);
   names_free(&x.types); names_free(&x.fields);
   t_free(x.symdecl);
+  t_free(x.symdone);
   (void)mark;
   return strcmp(status, "COMPLETED") ? code : NULL;
 }
@@ -1314,8 +1318,11 @@ int main(int argc, char **argv) {
     uint32_t len = (uint32_t)hdr[0] << 24 | (uint32_t)hdr[1] << 16 | (uint32_t)hdr[2] << 8 | hdr[3];
     if (len > MAX_FRAME) return protocol_error("FRAME_TOO_LARGE");
     uint8_t *data = t_malloc((size_t)len + 1);
-    if (read_full(data, len) < len) return protocol_error("FRAME_TRUNCATED");
-    if (!batch && fgetc(stdin) != EOF) return protocol_error("FRAME_EXTRA");
+    const char *perr = read_full(data, len) < len ? "FRAME_TRUNCATED" : (!batch && fgetc(stdin) != EOF) ? "FRAME_EXTRA" : NULL;
+    if (perr) {
+      t_free(data);
+      return protocol_error(perr);
+    }
     int code = handle(data, len);
     t_free(data);
     if (!batch) return code;

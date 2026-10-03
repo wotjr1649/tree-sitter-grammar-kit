@@ -9,6 +9,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
@@ -26,6 +27,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 	out := fs.String("out", "", "new result directory outside the root (no clobber)")
 	work := fs.String("work", "", "existing caller-owned build directory outside the root")
 	cgroup := fs.String("cgroup-parent", "", "delegated cgroup v2 directory (Linux hard memory cap)")
+	runWall := fs.Int("run-wall", 0, "seconds; narrows the operation run wall (0 keeps it)")
 	var tools, allow multi
 	fs.Var(&tools, "tool", "cc=PATH compiler executable")
 	fs.Var(&allow, "allow", "granted capability (BUILD_NATIVE, EXEC_NATIVE)")
@@ -75,7 +77,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 		return exitIO
 	}
 	res, rerr := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-		Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup})
+		Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: time.Duration(max(*runWall, 0)) * time.Second})
 	line, merr := json.Marshal(res)
 	if merr != nil {
 		fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")

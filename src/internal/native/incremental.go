@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,6 +37,7 @@ type IncrementalRequest struct {
 	Out          string
 	Allow        []string
 	CgroupParent string
+	RunWall      time.Duration // optional, at most the operation's run wall
 }
 
 // Summary counts case outcomes.
@@ -146,7 +148,12 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	if err := os.MkdirAll(filepath.Join(req.Out, "responses"), 0o755); err != nil {
 		return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
 	}
-	runCtx, cancel := context.WithTimeout(ctx, op.RunWall)
+	wall := op.RunWall
+	if req.RunWall > 0 && req.RunWall < wall {
+		wall = req.RunWall // a caller may only narrow the run wall
+	}
+	writeFailed := false
+	runCtx, cancel := context.WithTimeout(ctx, wall)
 	defer cancel()
 	groot := req.GrammarRoot
 	if groot == "" {
@@ -181,14 +188,23 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 				}
 				cr := b.RunCase(runCtx, x, c, src)
 				if cr.Raw != nil {
-					if err := os.WriteFile(filepath.Join(req.Out, "responses", c.ID+".json"), cr.Raw, 0o644); err != nil {
+					// The case order makes the name unique on case-insensitive filesystems too.
+					name := fmt.Sprintf("%05d-%s.json", len(res.Cases), c.ID)
+					if err := os.WriteFile(filepath.Join(req.Out, "responses", name), cr.Raw, 0o644); err != nil {
 						res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "원 응답을 보존하지 못했다"))
+						writeFailed = true
 					}
 				}
 				res.Cases = append(res.Cases, cr)
 			}
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(res.Cases)
+		if writeFailed {
+			res.ExecutionStatus = kit.StatusFailed
+			if res.Assessment == kit.AssessPass {
+				res.Assessment = kit.AssessNotAssessed
+			}
+		}
 	}
 	if b != nil {
 		res.BuildRemoved = "REMOVED"
@@ -256,7 +272,7 @@ func summarize(cases []CaseResult, batches []BatchRecord) Summary {
 		if c.Code != "" {
 			s.Codes[c.Code]++
 		}
-		if len(c.Steps) > 0 && c.Steps[0].Incremental.HasError {
+		if len(c.Steps) > 0 && c.Steps[0].Incremental != nil && c.Steps[0].Incremental.HasError {
 			s.HasError++
 		}
 	}
@@ -273,7 +289,7 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 		out[i] = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed, Code: "NOT_RUN",
 			Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
 	}
-	var batches []BatchRecord
+	batches := []BatchRecord{}
 	queue := make([]int, 0, len(cases))
 	for i := range cases {
 		queue = append(queue, i)
@@ -314,7 +330,8 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				in := TreeInput{Bytes: uint64(len(src)), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
 				out[i].Steps = []StepResult{{Step: 0, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)}}
 				if o.IncludedRanges == nil { // directive observation only: no frame
-					out[i].ExecutionStatus, out[i].Assessment, out[i].Code = kit.StatusCompleted, kit.AssessPass, ""
+					out[i].ExecutionStatus = kit.StatusCompleted
+					out[i].Assessment, out[i].Code = svcObservationOnly([]kit.SvcObservation{o}, false)
 					continue
 				}
 				r.Ranges = [][]kit.Span{o.IncludedRanges}
@@ -432,7 +449,7 @@ func recordResult(c CaseResult, resp Response, checked Checked, x Context) CaseR
 				DescendantCount: w.DescendantCount, Status: cs.Incremental.Status, PartialTrees: []PartialTree{}, Identities: []kit.IdentityRef{}}
 			t.Summary = s
 		}
-		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: t, Composite: comp})
+		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: &t, Composite: comp})
 	}
 	return c
 }

@@ -440,7 +440,24 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 		}
 		c.Steps = append(c.Steps, cs)
 	}
-	// A response that dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT) reports the count only.
+	// The response status and code are those of the first noncomplete tree; a response that
+	// dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT, LANGUAGE_INCOMPATIBLE) reports the count only.
+	if r.Status != kit.StatusCompleted {
+		if len(c.Steps) == 0 {
+			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" {
+				return c, invalid("RESPONSE_INVALID", errors.New("noncomplete response without steps"))
+			}
+		} else {
+			last := c.Steps[len(c.Steps)-1]
+			t := last.Incremental
+			if t.Status == kit.StatusCompleted && last.Fresh != nil {
+				t = *last.Fresh
+			}
+			if t.Status == kit.StatusCompleted || t.Status != r.Status || t.Code != r.Code {
+				return c, invalid("RESPONSE_INVALID", errors.New("response status/code differ from the first noncomplete tree"))
+			}
+		}
+	}
 	if len(r.Steps) > 0 && completed != r.StepsCompleted {
 		return c, invalid("RESPONSE_INVALID", errors.New("steps_completed"))
 	}

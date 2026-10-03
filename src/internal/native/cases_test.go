@@ -293,6 +293,7 @@ func TestFrames(t *testing.T) {
 		"encoding-unknown": {Frame(bytes.Replace(valid, []byte(`"UTF-8"`), []byte(`"UTF-32"`), 1)), "ENCODING_UNSUPPORTED"},
 		"ranges-count":     {Frame(rangeRequest(2, 1)), "RANGES_INVALID"},
 		"ranges-outside":   {Frame(rangeRequest(1, 99)), "RANGES_INVALID"},
+		"ranges-huge":      {Frame(rangeRequest(1, 4000000000)), "RANGES_INVALID"}, // R1 B-1: checked before any read
 	} {
 		t.Run(name, func(t *testing.T) {
 			res, resp, err := rawExec(t, b, tc.stdin, "native-parse-edit")
@@ -329,6 +330,17 @@ func TestFrames(t *testing.T) {
 			return err
 		},
 		"exit-mismatch": func() error { _, err := Check(resp, req, versions, nil, 1); return err },
+		"code-mismatch": func() error {
+			lim := baseRequest(plainSource, "native-parse-edit")
+			lim.Limits.Nodes, lim.Limits.FullNodes = 5, 5
+			res2, r2, err := rawExec(t, b, Frame(lim.Encode()), "native-parse-edit")
+			if err != nil || r2.Code != "NODE_LIMIT" {
+				return nil
+			}
+			r2.Code = "DEPTH_LIMIT"
+			_, err = Check(r2, lim, [][]byte{lim.Source}, nil, res2.ExitCode)
+			return err
+		},
 		"step-missing": func() error {
 			r := resp
 			r.Steps = nil
@@ -506,7 +518,7 @@ func TestSummaryGate(t *testing.T) {
 	req := baseRequest(src, "real-world-source-r2")
 	req.Output = kit.OutputAuto
 	req.Declarations = []kit.NativeDeclaration{{Fact: "type_declaration", Node: "assignment", Name: "field:name"}}
-	req.Points = []kit.NativePoint{{ID: "P01", Byte: 9}, {ID: "P02", Byte: uint32(len(src) + 5)}}
+	req.Points = []kit.NativePoint{{ID: "P01", Byte: 9}, {ID: "P02", Byte: uint32(len(src) + 5)}, {ID: "P03", Byte: 4}}
 	res, resp, err := rawExec(t, b, Frame(req.Encode()), "real-world-source-r2")
 	if err != nil || resp.Status != kit.StatusCompleted {
 		t.Fatalf("%v %s %s", err, resp.Status, resp.Code)
@@ -515,11 +527,17 @@ func TestSummaryGate(t *testing.T) {
 	if *sum.Form != "summary" || sum.Reason != "DESCENDANT_LIMIT" || sum.Errors.Total <= 1000 || !sum.Errors.Truncated || len(sum.Errors.Items) != 1000 {
 		t.Fatalf("summary %v %s total=%d", *sum.Form, sum.Reason, sum.Errors.Total)
 	}
-	if len(*sum.Declarations) < 3000 || len(sum.PartialTrees) != 2 || len(sum.PartialTrees[0].Nodes) == 0 || len(sum.PartialTrees[1].Nodes) != 0 {
+	if len(*sum.Declarations) < 3000 || len(sum.PartialTrees) != 3 || len(sum.PartialTrees[0].Nodes) == 0 || len(sum.PartialTrees[1].Nodes) != 0 {
 		t.Fatalf("declarations %d partial %d", len(*sum.Declarations), len(sum.PartialTrees))
 	}
-	if _, err := Check(resp, req, [][]byte{req.Source}, nil, res.ExitCode); err != nil {
+	checked, err := Check(resp, req, [][]byte{req.Source}, nil, res.ExitCode)
+	if err != nil {
 		t.Fatal(err)
+	}
+	// R1 MINOR-3: the deepest node of a partial tree keeps its field (identifier `f`, field function).
+	p3 := checked.Steps[0].Incremental.Partials[2]
+	if deepest := p3[len(p3)-1]; deepest.Type != "identifier" || deepest.Field == nil || *deepest.Field != "function" {
+		t.Fatalf("partial deepest node %+v", deepest)
 	}
 	full := req
 	full.Limits.FullNodes = full.Limits.Nodes

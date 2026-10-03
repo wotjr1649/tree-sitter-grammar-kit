@@ -88,7 +88,7 @@ func TestIncrementalCLI(t *testing.T) {
 	if err != nil || json.Unmarshal(published, &res) != nil || res.Assessment != "PASS" || res.BuildRemoved != "REMOVED" || res.Cases[0].Claims["incremental_route"] != "PASS" {
 		t.Fatalf("published result %v %s", err, published[:min(len(published), 400)])
 	}
-	if _, err := os.Stat(filepath.Join(out, "responses", "one.json")); err != nil {
+	if _, err := os.Stat(filepath.Join(out, "responses", "00000-one.json")); err != nil {
 		t.Fatal("raw response not preserved")
 	}
 	if entries, _ := os.ReadDir(work); len(entries) != 0 {

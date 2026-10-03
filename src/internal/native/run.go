@@ -165,7 +165,7 @@ type StepResult struct {
 	Edit         *StepEdit     `json:"edit"`
 	Route        *RouteOut     `json:"route"`
 	Comparison   *Comparison   `json:"comparison"`
-	Incremental  TreeOut       `json:"incremental"`
+	Incremental  *TreeOut      `json:"incremental"` // nil when no tree was parsed (SVC observation only)
 	Fresh        *TreeOut      `json:"fresh"`
 }
 
@@ -263,10 +263,8 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 				in := TreeInput{Bytes: uint64(len(versions[k])), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
 				out.Steps = append(out.Steps, StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)})
 			}
-			out.ExecutionStatus, out.Assessment = kit.StatusCompleted, kit.AssessPass
-			if svc[0].IncludedRanges != nil || len(c.Expect) > 0 {
-				out.Assessment, out.Code = kit.AssessBlocked, "SVC_INLINE_NOT_PARSED"
-			}
+			out.ExecutionStatus = kit.StatusCompleted
+			out.Assessment, out.Code = svcObservationOnly(svc, len(c.Expect) > 0)
 			return out
 		}
 	}
@@ -292,12 +290,12 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	}
 	out.Process = &res
 	switch {
+	case !res.Cleanup.Verified:
+		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "PROCESS_CLEANUP_UNVERIFIED")
 	case res.Status == runner.StatusCancelled:
 		return notRun(kit.StatusCancelled, kit.AssessNotAssessed, "CANCELLED")
 	case res.Status == runner.StatusResourceLimit:
 		return notRun(kit.StatusResourceLimit, kit.AssessBlocked, res.Reason)
-	case !res.Cleanup.Verified:
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "PROCESS_CLEANUP_UNVERIFIED")
 	}
 	frame, err := SplitFrame(res.Stdout)
 	if err != nil {
@@ -318,7 +316,8 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		sr := StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Edit: cs.Step.Edit}
 		in := TreeInput{Bytes: cs.Step.SourceBytes, SHA256: cs.Step.SourceSHA256, Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
 		ids := []kit.IdentityRef{build, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: cs.Step.SourceSHA256}, x.PolicyRef}
-		sr.Incremental = x.treeOut(cs.Incremental, in, ids, c.Points)
+		t := x.treeOut(cs.Incremental, in, ids, c.Points)
+		sr.Incremental = &t
 		if cs.Fresh != nil {
 			f := x.treeOut(*cs.Fresh, in, ids, c.Points)
 			sr.Fresh = &f
@@ -407,6 +406,28 @@ func summaryErrors(w *WireErrors) SummaryErrors {
 		s.Items = append(s.Items, SummaryError{e.Kind, e.Type, e.StartByte, e.EndByte, kit.Point{Row: e.StartPoint[0], Column: e.StartPoint[1]}, kit.Point{Row: e.EndPoint[0], Column: e.EndPoint[1]}})
 	}
 	return s
+}
+
+// svcObservationOnly judges a composite without a parsed inline tree: PASS only when every
+// step is a directive without inline code; any inline code that could not be parsed as
+// C#, a missing directive or an expectation that needs a tree is BLOCKED, never PASS.
+func svcObservationOnly(svc []kit.SvcObservation, expect bool) (string, string) {
+	for _, o := range svc {
+		switch {
+		case o.Directive == nil:
+			return kit.AssessBlocked, "SVC_DIRECTIVE_ABSENT"
+		case o.Coverage.Inline == "UNRESOLVED":
+			return kit.AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		case o.Coverage.Inline == "UNSUPPORTED":
+			return kit.AssessBlocked, "SVC_INLINE_UNSUPPORTED"
+		case o.Coverage.Inline == "OBSERVED":
+			return kit.AssessBlocked, "SVC_INLINE_NOT_PARSED" // C# in some steps only
+		}
+	}
+	if expect {
+		return kit.AssessBlocked, "SVC_EXPECTATION_UNASSESSABLE"
+	}
+	return kit.AssessPass, ""
 }
 
 // DeclAssessment applies the summary rule: no items NOT_APPLICABLE, all PASS PASS, else FAIL.

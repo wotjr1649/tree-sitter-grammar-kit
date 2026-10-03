@@ -133,7 +133,7 @@ function Add-Result([string]$Label, $Run) {
       steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $(if ($_.incremental) { $_.incremental.has_error } else { $null }); digest = $(if ($_.incremental) { $_.incremental.digest } else { $null }); equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
             svc_coverage = $(if ($_.PSObject.Properties['composite']) { $_.composite.coverage } else { $null }) } }) }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "$Label/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -eq 'FAIL' -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
+    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
   }
   if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $script:summary.failures += "${Label}: $($res.execution_status) build or refusal" }
   $script:summary.routes += $entry
@@ -182,12 +182,13 @@ if ($Large) {
       points = @($fx.points | ForEach-Object { [ordered]@{ id = $_.id; byte = $_.byte } }); expect = @($fx.expect | ForEach-Object { [ordered]@{ step = 0; syntax = $_.syntax; contains = @(); declarations = $_.declarations } }) }
   }
   $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r2' 'auto' $cases (Get-Declarations $r.route)
+  if (-not @($run.res.cases).Count) { $summary.failures += "large: $($run.res.execution_status) build or refusal" }
   foreach ($c in @($run.res.cases)) {
     $t = if (@($c.steps).Count) { $c.steps[0].incremental } else { $null }
     $summary.large += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code
       form = $(if ($t) { $t.form } else { $null }); parse_ms = $(if ($t) { $t.parse_ms } else { $null }); descendant_count = $(if ($t) { $t.descendant_count } else { $null })
       process_wall_ms = $(if ($c.process) { $c.process.wall_ms } else { $null }); memory_peak = $(if ($c.process) { $c.process.memory.peak_bytes } else { $null })
-      errors_total = $(if ($t -and $t.summary) { $t.summary.errors.total } else { $null }); declarations = $(if ($t -and $t.summary) { $t.summary.declarations.assessment } else { $null }) }
+      errors_total = $(if ($t -and $t.PSObject.Properties['summary']) { $t.summary.errors.total } else { $null }); declarations = $(if ($t -and $t.PSObject.Properties['summary']) { $t.summary.declarations.assessment } else { $null }) }
     Write-Output ("large {0}: {1} {2} form={3} parse_ms={4}" -f $c.id, $c.execution_status, $c.assessment, $(if ($t) { $t.form } else { '' }), $(if ($t) { $t.parse_ms } else { '' }))
   }
 }
