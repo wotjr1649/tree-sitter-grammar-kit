@@ -18,24 +18,67 @@ generator 실행 전에 공식 release asset digest를 기록했다(`artifacts/.
 
 ## 관측 revision과 로컬 검사
 
-PLACEHOLDER_CHECKS
+구현 commit `f8fd305`(runner·frame), `519c319`(reproduce), `cc3ab68`(등록부·CI owned 재현)에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`로 [validation](../validation/validation.md)의 갱신된 명령 블록(고정 module 취득 → `GOPROXY=off`·`-mod=readonly`)을 실행했다. Linux·macOS 실행과 세 OS CI는 PR 단계에서 따로 기록한다.
+
+| 검사 | 결과 |
+|---|---|
+| `go mod download`·`go mod verify`(proxy·sumdb), `gofmt -l src`, `go vet ./src/...`(windows, `GOOS=linux`, `GOOS=darwin`), `go build ./src/...`, `git diff --check` | 통과 |
+| `go test ./src/... -count=1` | `src/kit`, `src/cmd/tsgk`, `src/internal/foundation`, `src/internal/runner`, `src/internal/reproduce` 통과 |
+| runner·frame 시험 반복 | `-count=5`와 `-count=3`에서 모두 통과 |
+| targeted mutant 14종(`cc3ab68`) | 14/14 검출. 첫 실행은 미사용 변수로 컴파일되지 않은 mutant 3종이 있어 11/14로 기록했고(검출 실패가 아님), 컴파일되는 형태로 고친 재실행이 14/14다. 두 receipt 모두 보존 |
+| `src/dev/s04-reproduce/ci-owned.ps1`(로컬 Windows) | asset digest 확인 뒤 owned fixture 재현 PASS, Job Object hard memory backend |
+| Windows capability receipt | `windows-job-object`, tree cleanup `JOB_OBJECT`, 그룹 이탈 하위 process 포함, memory `HARD`(job commit bytes) |
+
+mutant는 첫 작업 공간 재사용, 작업 공간 밖 공유 home(cache), source hash 검사 생략, 도구 identity 검사 생략, 부모 process만 종료, 출력 상한 제거, Job memory 상한 제거, batch 한도를 자기 한도로 분류, 기존 결과 덮어쓰기, JSON 실행이 JS claim을 가져감, 작업 공간 삭제 실패 무시, generator 상한 초과 허용, 환경 상속, A↔B 비교 생략이다.
 
 ## 채택 route patch chain과 재생성 (S04-A17)
 
-PLACEHOLDER_A17
+patch chain 재구성은 분리된 하위 작업이 S01이 결속한 upstream base bytes에 각 route의 patch subject를 순서대로 literal 적용했다(`artifacts/.../session-04/patch-chain-reconstruction-r1.json`). 모든 단계에서 `before`가 등록된 `occurrences`만큼 나왔고, 결과 10개 파일(C# `grammar.js`·`src/scanner.c`, TS·TSX `common/define-grammar.js`, Swift `grammar.js`, T-SQL 4개, PostgreSQL `postgres/grammar.js`)이 모두 `language-sources.json`의 adoption hash와 같다. 보존 후보 사본은 대조에만 썼다. C# r5 replacement에는 `occurrences`가 없어 각 1회로 보고 적용했고 실제로 각 1회였다. `remedy-followup-r2.json`의 PG 항목은 같은 patch의 재기재라 다시 적용하지 않고 동일성만 확인했다. 재구성 결과는 아래 재생성의 subject root를 만드는 builder가 adoption hash와 다시 대조했다.
+
+재생성은 tree-sitter 0.27.0(Windows), Node 24.21.0, `--abi 15`, 최적화 기본값으로 `tsgk reproduce`를 실행했다. 6 route 모두 두 작업 공간의 6개 출력이 byte 단위로 같고, PREPARE가 Linux에서 만든 생성물 기록과 `parser.c`·`tree_sitter/parser.h`가 모두 같다(MATCH).
+
+| route | parser.c bytes | PREPARE 기록 | wall A/B ms | job commit 최대 |
+|---|---|---|---|---|
+| csharp | 32815459 | `native-36917832850-assessment-r6` | 6185 / 5660 | 757 MiB |
+| typescript | 8764241 | run 36795440494 build 입력 기록 | 2273 / 1571 | 130 MiB |
+| tsx | 8788036 | run 36795440494 build 입력 기록 | 3110 / 1999 | 138 MiB |
+| swift | 23472218 | run 36741763343 build 입력 기록 | 3547 / 2976 | 172 MiB |
+| tsql | 26919442 | `native-36947507308-assessment-r5` | 7816 / 6164 | 401 MiB |
+| postgresql-sql | 97664835 | `native-36882649292-assessment-r5` | 180381 / 111815 | 4622 MiB |
+
+PREPARE 기록에 `grammar.json`·`node-types.json`·`alloc.h`·`array.h`의 생성물 hash가 없어 그 네 output은 `REFERENCE_ABSENT`이고, 그래서 6 route의 `reference_match`는 `NOT_CLAIMED`, assessment는 `BLOCKED`다(PASS로 채우지 않음). PostgreSQL은 4 GiB를 넘는 job commit(최대 4846997504 bytes)을 썼으므로 6 GiB 예외가 실제로 필요했다. no-optimization 재생성은 PREPARE에서 parse state 387042가 16-bit 상한 65535를 넘어 exit 1이었고 upstream 도구 gap으로 등록했다(`RECORDED_NOT_RECOMPUTED`, 다시 실행하지 않음).
+
+S03이 넘긴 재생성 schema 의무: 6 route의 재생성 `node-types.json`은 모두 `tsgk schema check` PASS다. upstream→재생성 diff는 C# 2건(`file_based_app_directive` 추가 등), TS·TSX 각 4건(`defer` 추가 등), T-SQL 8건(`generated_always_clause`, `graph_table_type`, keyword 4개 추가 등), PostgreSQL 0건이며 S03이 후보 tree에서 관측한 node와 맞는다. Swift는 upstream schema가 S03의 `NODE_DUPLICATE`로 diff 입력이 될 수 없어 diff는 `NOT_ASSESSED`다. 새 관측: 0.27.0으로 실제 재생성한 Swift schema에는 그 중복이 없다(check PASS). S03 보고서의 "재생성 후보 사본에도 같은 중복" 서술은 재생성본이 아닌 upstream 사본을 본 것으로 보이므로, Swift 중복은 upstream에 들어 있는 이전 CLI 생성물의 문제로 S08 처분에 넘긴다.
 
 ## 26 route 재현 (S04-A15)
 
-PLACEHOLDER_A15
+S01이 결속한 26 route source(`_ref/campaign-01-s01/sources`)로 route마다 subject root를 만들었다. 입력은 진입 `grammar.js`에서 정적으로 따라간 상대 require/import, `package.json`·`tree-sitter.json`, 그리고 lockfile integrity로 확인한 npm grammar 2개(cpp의 `tree-sitter-c@0.24.1`, TS·TSX의 `tree-sitter-javascript@0.23.1`; PREPARE 보존 사본과 tarball 내용이 같음)뿐이다. 해석하지 못한 의존은 0이다. 26 route 모두 JS 재생성 경로이며 JSON-only나 checked-in C만으로 JS 재현을 주장한 route는 없다. Swift는 upstream `parser.c`가 없으므로 기준은 PREPARE 생성물뿐이다.
+
+| 결과(Windows, 26 route × 작업 공간 2) | route |
+|---|---|
+| 생성기 실행·두 작업 공간 byte 동일(`generator_ran`·`deterministic` PASS) | 26 전부 |
+| 기준 전부 일치(assessment PASS) | php |
+| upstream 생성물과 불일치(assessment FAIL) | json, go, python, javascript, jsx, java, c, rust, dart, ruby, r, bash, powershell, html, css, yaml, xml, cpp, kotlin |
+| 채택 route: `parser.c`·`parser.h` 일치, 나머지 기준 없음(BLOCKED) | csharp, typescript, tsx, swift, tsql, postgresql-sql |
+
+비채택 route의 불일치는 upstream이 다른 CLI 버전으로 만든 생성물과 0.27.0 출력의 차이다. 예를 들어 go `parser.c`의 첫 줄은 upstream `/* Automatically @generated by tree-sitter v0.25.8 */`와 0.27.0 `/* Automatically @generated by tree-sitter */`로 다르다. 비채택 20 route 중 `array.h`는 php를 뺀 19 route에서 다르고, `parser.c`가 같은 route는 c, dart, powershell, cpp, php다. 정규화하지 않고 불일치로 기록했으며 kit 결함이 아니라 기준 생성물의 drift다. 이 drift를 받아들일지는 route별 기준 갱신 결정이며 이번 Session에서 기준을 바꾸지 않았다.
+
+세 OS: Windows는 위 실행이 근거다. Linux·macOS는 foundation CI가 같은 등록 tree-sitter 0.27.0 asset으로 owned fixture를 재현한다. 26 route의 Linux·macOS 재생성은 이번 Session에서 실행하지 않았다(`NOT_RUN`, 남은 일 참조). 대신 채택 6 route는 PREPARE Linux 생성물과 Windows 재생성 `parser.c`가 같아, 같은 도구 version의 생성 결과가 두 OS에서 같다는 관측이 있다.
 
 ## acceptance 연결
 
-PLACEHOLDER_ACCEPT
+A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26 route 실행; A02 `TestReferenceFindings`(기준 변경 → `MISMATCH`, 기준 없음 → `NOT_CLAIMED`, source 불변); A03 `TestJSONOnlyRun`(JS helper 변경 뒤 JSON 실행은 JS claim 없음, JS 실행은 `SOURCE_MISMATCH`); A04 `TestRunIdentityAndPoison`(abi·최적화·도구·header 변경 → 새 identity, 오염된 work 디렉터리·home 미사용); A05 `TestSourceWritesAndFailedPublication`, `TestReproducePass`의 `OUTPUT_EXISTS`; A06 `TestBlockedBeforeLaunch`(runner·reproduce 둘 다; 작업 공간·결과를 만들지 않음); A07 `TestNonzeroExit`, `TestOutputLimits`, `TestFailureKinds`; A08 `TestTreeTermination`, `TestPipeHoldingDescendant`, `TestEscapedDescendant`; A09 `TestEvidenceAndCleanupFailures`; A10 `TestArgsDirEnvExact`, `TestReproduceCLI`; A11 `TestOutputLimits`(같음/하나 초과), `TestReproduceLimitCeilings`, 아래 예산 소비; A12 위 mutant 14종; A13 `TestCapabilityReceipt`와 세 OS CI(PR 단계); A14 `TestOfflineClosure`와 `PATH`를 비운 기존 CLI·외부 consumer 시험; A15 `TestReproductionRoutes`와 위 26 route 표; A16 `TestDefaultBatchPolicy`, `TestFrameStatusMapping`, `TestMemoryLimit`; A17 위 patch chain·재생성 절; A18 도구 identity 절과 `TestReproductionRoutes`의 digest·patch 상태 검사.
+
+예산 소비(로컬): 다운로드 7,538,845 bytes(x/sys 2,094,997, tree-sitter Windows asset 3,778,280, npm tarball 2개 1,580,215, release metadata·SHASUMS 85,353)와 CI 스크립트 로컬 검증의 asset 재다운로드 3,778,280 bytes. 생성기 process 52회(26 route × 2)와 owned fixture 소량, 보존 출력 663,504,523 bytes(`.work/session-04/results`).
 
 ## 분리 context 리뷰와 처분
 
-PLACEHOLDER_REVIEW
+(리뷰 뒤 기록)
 
 ## 남은 일과 한계
 
-PLACEHOLDER_REMAIN
+* 세 OS CI(A13, Linux cgroup·macOS sampled backend의 실제 시험 포함)는 PR 단계에서 실행한다. Linux·macOS backend 코드는 로컬에서 교차 vet만 했고 실행하지 않았다.
+* 26 route의 Linux·macOS 재생성은 실행하지 않았다(`NOT_RUN`). hosted 실행에는 route source·npm 취득과 macOS용 Node 24.21.0 asset 취득이 필요하며, campaign heavy CI 예산 안의 별도 dispatch 결정이 필요하다.
+* 비채택 20 route의 기준 drift(이전 CLI 생성물)는 기록만 했다. 채택 route의 `grammar.json`·`node-types.json`·`alloc.h`·`array.h` 기준은 PREPARE 기록에 없어 `NOT_CLAIMED`다.
+* 저장 용량 상한은 실행 뒤 작업 공간 합계로 관측하며 실행 중 quota가 아니다. macOS 메모리는 sampled이고 hard cap이 아니다. process-group backend는 그룹을 떠난 하위 process를 포함하지 못하며 그 경우 cleanup을 verified로 보고하지 않는다. 이 backend들은 적대적 native code 격리가 아니다.
+* runner의 driver 쪽 60초 progress callback과 allocator hook은 S05 범위다. `go test -race`는 CGO 조건이 맞지 않아 실행하지 않았다.
