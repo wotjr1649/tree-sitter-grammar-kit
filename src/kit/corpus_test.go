@@ -195,7 +195,7 @@ func TestCorpusLimits(t *testing.T) {
 		{"TOTAL_BYTES_LIMIT", func(l *CorpusLimits) { l.TotalBytes = 5 }},
 		{"DEPTH_LIMIT", func(l *CorpusLimits) { l.Depth = 2 }},
 		{"OUTPUT_LIMIT", func(l *CorpusLimits) { l.ReportBytes-- }},
-		{"WALL_LIMIT", func(l *CorpusLimits) { l.Wall = time.Nanosecond }},
+		{"WALL_LIMIT", func(l *CorpusLimits) { l.Wall = time.Nanosecond }}, // the wall hook expires it mid-walk; the timer is TestStartRunWallTimer
 	} {
 		t.Run(tc.code, func(t *testing.T) {
 			l := at
@@ -218,8 +218,11 @@ func TestCorpusLimits(t *testing.T) {
 		defer cancel()
 		expireWall := testHookOpen
 		testHookOpen = func(name string) { cancel(); expireWall(name) }
-		_, err := Corpus(ctx, CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Profile: "cp949"}})
+		res, err := Corpus(ctx, CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Profile: "cp949"}})
 		kindOf(t, err, KindCancelled, "CANCELLED")
+		if res.ExecutionStatus != StatusCancelled || len(res.Records) != 0 {
+			t.Fatalf("partial result after cancel: %+v", res.Report)
+		}
 	})
 	t.Run("per-file-limit-is-record-scoped", func(t *testing.T) {
 		l := at
@@ -326,9 +329,10 @@ func TestCorpusLimits(t *testing.T) {
 
 // wallExpiringAtOpen makes the kit wall expire (with the kit's own cause) when the walk opens
 // its first file, so the WALL_LIMIT path is taken mid-work by construction, not by timer
-// scheduling (#61). It returns a restore function.
+// scheduling (#61). The returned function restores the previous hooks.
 func wallExpiringAtOpen(t *testing.T) func() {
 	t.Helper()
+	prevWall, prevOpen := testHookWall, testHookOpen
 	var expire context.CancelCauseFunc
 	testHookWall = func() (context.Context, context.CancelFunc) {
 		ctx, c := context.WithCancelCause(context.Background())
@@ -340,5 +344,26 @@ func wallExpiringAtOpen(t *testing.T) func() {
 			expire(errWall)
 		}
 	}
-	return func() { testHookWall, testHookOpen = nil, nil }
+	return func() { testHookWall, testHookOpen = prevWall, prevOpen }
+}
+
+// The real kit wall: without the hook, startRun's timer expires the wall with the kit's
+// cause and the next checkpoint is WALL_LIMIT. Waiting on Done removes the timer race.
+func TestStartRunWallTimer(t *testing.T) {
+	r, e := startRun(testCtx(t), time.Millisecond)
+	if e != nil {
+		if e.Code != "WALL_LIMIT" {
+			t.Fatalf("start: %v", e)
+		}
+		return // the timer already fired before the first checkpoint
+	}
+	defer r.cancel()
+	select {
+	case <-r.wall.Done():
+	case <-time.After(30 * time.Second):
+		t.Fatal("the kit wall timer never fired")
+	}
+	if e := r.check(); e == nil || e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" || context.Cause(r.wall) != errWall {
+		t.Fatalf("expired wall: %v cause %v", e, context.Cause(r.wall))
+	}
 }

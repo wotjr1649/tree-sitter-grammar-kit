@@ -476,7 +476,7 @@ func TestLimits(t *testing.T) {
 		{"TOTAL_BYTES_LIMIT", func(l *Limits) { l.TotalBytes = 5 }},
 		{"DEPTH_LIMIT", func(l *Limits) { l.Depth = 2 }},
 		{"OUTPUT_LIMIT", func(l *Limits) { l.OutputBytes-- }},
-		{"WALL_LIMIT", func(l *Limits) { l.Wall = time.Nanosecond }},
+		{"WALL_LIMIT", func(l *Limits) { l.Wall = time.Nanosecond }}, // the wall hook expires it mid-walk; the timer is TestStartRunWallTimer
 	} {
 		t.Run(tc.code, func(t *testing.T) {
 			l := at
