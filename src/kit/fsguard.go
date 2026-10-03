@@ -44,11 +44,13 @@ func openRoot(root string) (*os.Root, string, *Error) {
 	if err != nil {
 		return nil, "", fail(KindInvalidInput, "ROOT_NOT_FOUND", "", err)
 	}
-	info, err := os.Lstat(resolved)
+	// The root itself may be a deliberate platform alias (symlink or Windows junction that
+	// EvalSymlinks keeps); entries below it are never followed.
+	info, err := os.Stat(resolved)
 	if err != nil {
 		return nil, "", fail(KindIO, "ROOT_UNREADABLE", "", err)
 	}
-	if info.Mode().Type() != fs.ModeDir {
+	if !info.IsDir() {
 		return nil, "", fail(KindInvalidInput, "ROOT_NOT_DIRECTORY", "", nil)
 	}
 	r, err := os.OpenRoot(resolved)

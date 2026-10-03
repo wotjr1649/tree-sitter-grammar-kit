@@ -162,7 +162,7 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 		return failWith(e)
 	}
 	for p := range declared {
-		if c.index[strings.ToLower(p)] == 0 {
+		if i := c.index[strings.ToLower(p)]; i == 0 || c.res.Records[i-1].Path != p { // declarations match exact record paths
 			return failWith(fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil))
 		}
 	}
@@ -269,6 +269,11 @@ func (c *corpus) file(p, name string, fi fs.FileInfo) *Error {
 			keep = c.limits.FileBytes
 		}
 		st, e := c.g.readFile(c.r, p, fi, c.limits.FileBytes, c.limits.TotalBytes, keep, nl, ms)
+		if e != nil && e.Code == "HARDLINK_REJECTED" {
+			rec.State = RecordUnsupported
+			c.res.Findings = append(c.res.Findings, Finding{Code: "HARDLINK_REJECTED", Severity: "error", Path: p, Message: "hard link 파일은 읽지 않는다"})
+			break
+		}
 		if e != nil {
 			return e
 		}
@@ -399,7 +404,13 @@ func parseProject(src []byte) (items []rawItem, imports, ignored int, ok bool) {
 					cond = true
 				case "Include":
 					include, hasInclude = a.Value, true
+				case "Exclude":
+					cond = true // exclusion needs evaluation; the declared items stay UNRESOLVED
 				}
+			}
+			// Choose/When/Otherwise branches and Target-scoped item groups are not static declarations.
+			if t.Name.Local == "Choose" || t.Name.Local == "Target" {
+				cond = true
 			}
 			parentCond := len(stack) > 0 && stack[len(stack)-1].cond
 			if t.Name.Local == "Import" {

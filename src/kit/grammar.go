@@ -250,7 +250,7 @@ func Identity(ctx context.Context, req IdentityRequest) (IdentityResult, error) 
 		}
 		outcome := st.encoding.result(req.Encoding.Profile == "cp949", declared[item.Path])
 		if outcome.Assessment != "PASS" {
-			inv.finding("ENCODING_"+outcome.Assessment, "warning", item.Path, "encoding 판정: "+outcome.Code)
+			inv.finding(outcome.Code, "warning", item.Path, "encoding 판정 "+outcome.Assessment+"; parse 입력을 만들지 않는다")
 		}
 		res.Manifest.Files = append(res.Manifest.Files, FileIdentity{Path: item.Path, Role: item.Role, Mode: "100644", ModeProvenance: "POLICY_DEFAULT", Size: st.size, SHA256: st.sha256, Encoding: outcome})
 	}

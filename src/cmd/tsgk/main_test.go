@@ -73,6 +73,10 @@ func TestExitCodes(t *testing.T) {
 			t.Errorf("%v: exit %d stderr %q", tc.args, code, stderr)
 		}
 	}
+	writeTree(t, root, map[string]string{"alpha/queries/a=b.scm": "(x) @y\n"})
+	if code, stdout, stderr := cli(t, ctx, "identity", "--root", root, "--grammar", "alpha", "--declare", "alpha/queries/a=b.scm=utf-8"); code != 0 || !strings.Contains(stdout, `"source":"DECLARATION"`) {
+		t.Fatalf("declaration path containing '=': %d %s", code, stderr)
+	}
 	code, stdout, _ := cli(t, ctx, "identity", "--root", root, "--grammar", "alpha", "--declare", "alpha/grammar.js=utf-8")
 	var rep map[string]any
 	if code != 0 || json.Unmarshal([]byte(stdout), &rep) != nil || rep["schema"] != "tsgk-report/r1" || rep["set_sha256"] == "" {
@@ -130,6 +134,25 @@ func TestOutPublication(t *testing.T) {
 	if _, err := os.Lstat(inside); !os.IsNotExist(err) {
 		t.Fatal("output created inside input")
 	}
+	t.Run("alias-of-root", func(t *testing.T) {
+		alias := filepath.Join(t.TempDir(), "alias")
+		var err error
+		if filepath.Separator == '\\' {
+			err = exec.Command("cmd", "/c", "mklink", "/J", alias, root).Run()
+		} else {
+			err = os.Symlink(root, alias)
+		}
+		if err != nil {
+			t.Skipf("alias unavailable: %v", err)
+		}
+		target := filepath.Join(root, "alpha", "via-alias.json")
+		if code, _, stderr := cli(t, ctx, "inspect", "--root", alias, "--grammar", "alpha", "--out", target); code != 4 || !strings.Contains(stderr, "OUTPUT_INSIDE_INPUT") {
+			t.Fatalf("aliased root: %d %s", code, stderr)
+		}
+		if _, err := os.Lstat(target); !os.IsNotExist(err) {
+			t.Fatal("output created inside the aliased input")
+		}
+	})
 	failed := filepath.Join(outDir, "failed.json")
 	if code, _, _ := cli(t, ctx, "identity", "--root", root, "--grammar", "../x", "--out", failed); code != 2 {
 		t.Fatal("failed run must not succeed")

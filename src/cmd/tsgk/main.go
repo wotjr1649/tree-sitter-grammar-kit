@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -100,7 +99,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			return exitUsage
 		}
 		for _, d := range declares {
-			p, e, ok := strings.Cut(d, "=")
+			p, e, ok := cutLast(d)
 			if !ok {
 				fmt.Fprintln(stderr, "tsgk: USAGE: --declare PATH=ENCODING")
 				return exitUsage
@@ -117,7 +116,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		wall = limits.Wall
 		sel := kit.Selection{Grammar: *grammar}
 		for _, f := range files {
-			p, role, ok := strings.Cut(f, "=")
+			p, role, ok := cutLast(f)
 			if !ok {
 				fmt.Fprintln(stderr, "tsgk: USAGE: --file PATH=ROLE")
 				return exitUsage
@@ -198,11 +197,7 @@ func publish(out, root string, data []byte) (string, error) {
 		return "OUTPUT_PARENT_INVALID", err
 	}
 	final := filepath.Join(parent, filepath.Base(abs))
-	rootAbs, err := filepath.Abs(root)
-	if err != nil {
-		return "OUTPUT_INVALID", err
-	}
-	if resolved, err := filepath.EvalSymlinks(rootAbs); err == nil && within(final, resolved) {
+	if inside(parent, root) {
 		return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside the input root")
 	}
 	tmp, err := os.CreateTemp(parent, ".tsgk-out-*.tmp")
@@ -237,10 +232,30 @@ func publish(out, root string, data []byte) (string, error) {
 // testHookBeforeLink lets tests create a concurrent destination before the final link.
 var testHookBeforeLink func()
 
-func within(p, root string) bool {
-	rel, err := filepath.Rel(root, p)
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		rel, err = filepath.Rel(strings.ToLower(root), strings.ToLower(p))
+// inside reports whether dir is the root or below it, comparing file identities of dir
+// and each of its ancestors with the root, so case, symlink and junction aliases match.
+func inside(dir, root string) bool {
+	rootInfo, err := os.Stat(root)
+	if err != nil {
+		return false
 	}
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)
+	for p := dir; ; {
+		if info, err := os.Stat(p); err == nil && os.SameFile(info, rootInfo) {
+			return true
+		}
+		up := filepath.Dir(p)
+		if up == p {
+			return false
+		}
+		p = up
+	}
+}
+
+// cutLast splits PATH=VALUE at the last '=': portable paths may contain '=', values do not.
+func cutLast(s string) (string, string, bool) {
+	i := strings.LastIndex(s, "=")
+	if i < 0 {
+		return "", "", false
+	}
+	return s[:i], s[i+1:], true
 }

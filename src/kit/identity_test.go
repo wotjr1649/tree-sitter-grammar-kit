@@ -179,7 +179,7 @@ func TestEncodingBoundIntoIdentity(t *testing.T) {
 	for _, f := range cp.Manifest.Files {
 		got[f.Path] = f.Encoding
 	}
-	if got["a.cs"].Code != "ENCODING_TABLE_REQUIRED" || got["a.cs"].Assessment != "UNRESOLVED" {
+	if got["a.cs"].Code != "ENCODING_TABLE_REQUIRED" || got["a.cs"].Assessment != "UNRESOLVED" || !hasFinding(cp.Findings, "ENCODING_TABLE_REQUIRED", "a.cs") || !hasFinding(cp.Findings, "UTF16_UNPAIRED_SURROGATE", "b.cs") {
 		t.Fatalf("cp949 outcome %+v", got["a.cs"])
 	}
 	if got["b.cs"].Assessment != "BLOCKED" || got["b.cs"].Code != "UTF16_UNPAIRED_SURROGATE" || cp.Manifest.Files[1].Size != 6 {
@@ -484,6 +484,21 @@ func TestLimits(t *testing.T) {
 		_, err := run(l)
 		kindOf(t, err, KindInvalidInput, "LIMITS_INVALID")
 	}
+	t.Run("empty-directory-at-depth-limit", func(t *testing.T) {
+		deep := t.TempDir()
+		writeTree(t, deep, map[string]string{"grammar.js": "module.exports = {};\n"})
+		if err := os.MkdirAll(filepath.Join(deep, "queries", "a", "b"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		l := DefaultLimits()
+		l.Depth = 3
+		if _, err := Inspect(testCtx(t), InspectRequest{Root: deep, Selection: Selection{Grammar: "."}, Limits: l}); err != nil {
+			t.Fatalf("directory at the depth limit: %v", err)
+		}
+		l.Depth = 2
+		_, err := Inspect(testCtx(t), InspectRequest{Root: deep, Selection: Selection{Grammar: "."}, Limits: l})
+		kindOf(t, err, KindResourceLimit, "DEPTH_LIMIT")
+	})
 	t.Run("source-changed", func(t *testing.T) {
 		testHookAfterOpen = func(name string) {
 			if name == "a/d.scm" {

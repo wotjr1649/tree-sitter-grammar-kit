@@ -223,9 +223,6 @@ func (d *discovery) walk(dir, role, ext string, report bool) *Error {
 	for len(stack) > 0 {
 		cur := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		if depthOf(cur)+1 > d.limits.Depth {
-			return fail(KindResourceLimit, "DEPTH_LIMIT", cur, nil)
-		}
 		entries, e := d.g.readDir(d.r, cur, &d.inv.budget, d.limits.Files)
 		if e != nil {
 			return e
@@ -248,6 +245,9 @@ func (d *discovery) walk(dir, role, ext string, report bool) *Error {
 			}
 			switch kind(info) {
 			case "dir":
+				if depthOf(p) > d.limits.Depth {
+					return fail(KindResourceLimit, "DEPTH_LIMIT", p, nil)
+				}
 				stack = append(stack, p)
 			case "file":
 				if ext == "" || path.Ext(p) == ext {

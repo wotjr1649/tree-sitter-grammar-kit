@@ -35,13 +35,13 @@ tsgk identity --root PATH [--grammar DIR] [--file PATH=ROLE ...] [--encoding-pro
 tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|cp949 ...] [--out PATH]
 ```
 
-* `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
+* `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. strict profile 해석은 S02이므로 `--profile`은 exit 2로 거부한다.
 * `verify`, `schema`, `reproduce`, `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
-* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 부모 디렉터리를 해석한 최종 경로가 root 안이면(Windows·macOS는 대소문자 무시) 거부한다. 같은 디렉터리에 임시 파일을 완성·동기화한 뒤 hard link로 최종 이름에 놓아, 그 사이 다른 쓰기가 만든 대상도 덮어쓰지 않는다. 임시 파일은 항상 지운다. hard link를 지원하지 않는 filesystem은 publication 실패(exit 4)다.
+* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 대상의 부모 디렉터리나 그 조상이 root와 같은 파일 identity이면(대소문자·symlink·junction 별칭 포함) 입력 안으로 보고 거부한다. 같은 디렉터리에 임시 파일을 완성·동기화한 뒤 hard link로 최종 이름에 놓아, 그 사이 다른 쓰기가 만든 대상도 덮어쓰지 않는다. 임시 파일은 항상 지운다. hard link를 지원하지 않는 filesystem은 publication 실패(exit 4)다.
 
 ### discovery `known-paths-r1`
 
@@ -60,7 +60,7 @@ grammar 디렉터리 G(`.` 또는 선택 경로)와 root에서 다음만 본다.
 
 entry의 `basis`는 `KNOWN_PATH`, `LISTING`, `METADATA`, `REQUIRE`, `INCLUDE`, `SELECTION` 중 하나다. `tree-sitter.json`의 `grammars[].path`와 legacy `package.json`의 `tree-sitter[].path`는 `grammars` 후보로 보고한다. G에 grammar source가 없으면 closure는 `NOT_APPLICABLE`이고 `UNKNOWN_LAYOUT`과 다른 후보마다 `GRAMMAR_CANDIDATE` finding을 낸다. 이 경우 inspect는 관측으로 완료(exit 0)하고 discovery 기반 identity는 `NO_GRAMMAR_SELECTED`(exit 2)다. grammar source가 있고 root `tree-sitter.json`이 없으면 `METADATA_ABSENT` info finding을 낸다.
 
-closure는 실행 없이 정적으로 관측한다. grammar role의 `.js` 파일에서 literal `require('…')`·`import … from '…'`·`import('…')`를 찾고, `./`·`../` 참조만 root 안에서 그대로·`.js`·`.json`·`/index.js` 순서로 해석한다. scanner의 `#include "…"`는 포함하는 파일의 디렉터리, 그다음 tree-sitter build의 `-I G/src` 관례대로 `G/src`에서 해석한다. 찾은 파일은 같은 규칙으로 다시 훑는다. root 밖 module(`EXTERNAL_MODULE_REFERENCE`), root 밖 경로(`REFERENCE_OUTSIDE_ROOT`), 없는 파일(`REFERENCE_NOT_FOUND`, `INCLUDE_NOT_FOUND`), literal로 해석하지 못한 `require`/`import` token(`UNPARSED_REFERENCE_TOKEN`)이 하나라도 있으면 `UNRESOLVED`, 없으면 `OBSERVED`다. `OBSERVED`는 관측한 참조가 모두 root 안에서 해석됐다는 뜻이고 완전성 증명이 아니다. JS를 훑었으면 coverage `unsupported`에 `js-closure-proof`를 넣는다. 명시 선택은 `CALLER_SELECTED`다. 파일 수 한도는 선택 파일 수와 listing 항목 수에 각각 적용하고, depth는 경로 segment 수다. inspect는 metadata와 closure 대상 source만 읽으므로 그 밖의 큰 파일(예: `parser.c`)은 크기만 관측한다.
+closure는 실행 없이 정적으로 관측한다. grammar role의 `.js` 파일에서 literal `require('…')`·`import … from '…'`·`import('…')`를 찾고, `./`·`../` 참조만 root 안에서 그대로·`.js`·`.json`·`/index.js` 순서로 해석한다. scanner의 `#include "…"`는 포함하는 파일의 디렉터리, 그다음 tree-sitter build의 `-I G/src` 관례대로 `G/src`에서 해석한다. 찾은 파일은 같은 규칙으로 다시 훑는다. root 밖 module(`EXTERNAL_MODULE_REFERENCE`), root 밖 경로(`REFERENCE_OUTSIDE_ROOT`), 없는 파일(`REFERENCE_NOT_FOUND`, `INCLUDE_NOT_FOUND`), literal로 해석하지 못한 `require`/`import` token(`UNPARSED_REFERENCE_TOKEN`)이 하나라도 있으면 `UNRESOLVED`, 없으면 `OBSERVED`다. `OBSERVED`는 관측한 참조가 모두 root 안에서 해석됐다는 뜻이고 완전성 증명이 아니다. JS를 훑었으면 coverage `unsupported`에 `js-closure-proof`를 넣는다. 명시 선택은 `CALLER_SELECTED`다. 파일 수 한도는 선택 파일 수와 listing 항목 수에 각각 적용하고, depth는 파일·디렉터리 경로의 segment 수다. total_bytes는 연산이 실제로 읽은 bytes 합계이며, discovery 기반 identity는 metadata와 closure source를 discovery에서 한 번, identity에서 다시 한 번 읽으므로 둘 다 센다. inspect는 metadata와 closure 대상 source만 읽으므로 그 밖의 큰 파일(예: `parser.c`)은 크기만 관측한다.
 
 ### 비공개 corpus 진입점
 

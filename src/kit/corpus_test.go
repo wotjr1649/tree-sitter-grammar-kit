@@ -31,7 +31,13 @@ const csproj = `<?xml version="1.0" encoding="utf-8"?>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\App.config;..\Schema\a.xsd" />
+    <Compile Include="..\Dx\Grid.cs" Exclude="..\Dx\Grid.cs" />
   </ItemGroup>
+  <Choose>
+    <When Condition="'$(X)'=='1'"><ItemGroup><Compile Include="..\Misc\gen.cs" /></ItemGroup></When>
+    <Otherwise><ItemGroup><Compile Include="..\Misc\u16.cs" /></ItemGroup></Otherwise>
+  </Choose>
+  <Target Name="Gen"><ItemGroup><Compile Include="..\dup1\a.cs" /></ItemGroup></Target>
 </Project>
 `
 
@@ -145,14 +151,16 @@ func TestCorpusInventory(t *testing.T) {
 	for _, it := range proj.Items {
 		states[it.State]++
 	}
-	if proj.State != "PARSED" || proj.Imports != 1 || proj.IgnoredItems != 1 || states["MEMBER"] != 5 || states["NOT_FOUND"] != 4 || states["UNRESOLVED"] != 3 || states["EXCLUDED"] != 1 {
+	if proj.State != "PARSED" || proj.Imports != 1 || proj.IgnoredItems != 1 || states["MEMBER"] != 5 || states["NOT_FOUND"] != 4 || states["UNRESOLVED"] != 7 || states["EXCLUDED"] != 1 {
 		t.Fatalf("project observation %+v %v", proj, states)
 	}
 	if got := recs["Forms/MainForm.Designer.cs"].DeclaredBy; len(got) != 1 || got[0] != "App/App.csproj" {
 		t.Fatalf("case-insensitive membership: %v", got)
 	}
-	if len(recs["Svc/IService.cs"].DeclaredBy) != 0 {
-		t.Fatal("conditional item must stay UNRESOLVED, not membership")
+	for _, p := range []string{"Svc/IService.cs", "Misc/gen.cs", "Misc/u16.cs", "dup1/a.cs"} {
+		if len(recs[p].DeclaredBy) != 0 {
+			t.Fatalf("conditional, Choose, Exclude or Target item must stay UNRESOLVED: %s", p)
+		}
 	}
 	if res.ExecutionStatus != StatusCompleted || res.Assessment != AssessNotAssessed || res.Summary.PresenceOnly["credential"] != 1 || res.Summary.PresenceOnly["vendor_binary"] != 1 {
 		t.Fatalf("summary %+v", res.Summary)
@@ -247,6 +255,30 @@ func TestCorpusLimits(t *testing.T) {
 			t.Fatalf("caller cancel: %v", err)
 		}
 		kindOf(t, err, KindCancelled, "CANCELLED")
+	})
+	t.Run("declaration-applies-exact-path", func(t *testing.T) {
+		res, err := Corpus(testCtx(t), CorpusRequest{Root: root, Limits: DefaultCorpusLimits(), Encoding: EncodingPolicy{Profile: "cp949", Files: []FileEncoding{{"b.cs", "utf-8"}}}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, r := range res.Records {
+			if r.Path == "b.cs" && (r.Encoding == nil || r.Encoding.Source != SourceDeclaration) {
+				t.Fatalf("declaration not applied: %+v", r.Encoding)
+			}
+		}
+		_, err = Corpus(testCtx(t), CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Files: []FileEncoding{{"B.cs", "utf-8"}}}})
+		kindOf(t, err, KindInvalidInput, "DECLARATION_UNMATCHED")
+	})
+	t.Run("hardlink-is-record-scoped", func(t *testing.T) {
+		hl := t.TempDir()
+		writeTree(t, hl, map[string]string{"a.cs": "x", "b.cs": "y"})
+		if err := os.Link(filepath.Join(hl, "a.cs"), filepath.Join(t.TempDir(), "alias.cs")); err != nil {
+			t.Skipf("hard link unavailable: %v", err)
+		}
+		res, err := corpusRun(t, hl, DefaultCorpusLimits())
+		if err != nil || res.Records[0].State != RecordUnsupported || res.Records[1].State != RecordCompleted || !hasCode(res.Findings, "HARDLINK_REJECTED") {
+			t.Fatalf("hard link record: %v %+v", err, res.Records)
+		}
 	})
 	t.Run("invalid", func(t *testing.T) {
 		_, err := corpusRun(t, root, CorpusLimits{})
