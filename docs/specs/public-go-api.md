@@ -37,7 +37,7 @@ type IdentityRequest struct {
     Selection        Selection
     Limits           Limits
     Encoding         EncodingPolicy
-    LargeFileProfile string // "" 또는 등록된 identity 한정 예외(pg-large-source-r1)
+    LargeFileProfile string // "" 또는 등록된 identity 한정 예외(pg-large-source-r1, large-parser-source-r1)
 }
 type CorpusRequest struct {
     Root     string

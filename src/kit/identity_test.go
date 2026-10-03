@@ -540,6 +540,27 @@ func TestLimits(t *testing.T) {
 		_, err = Identity(testCtx(t), IdentityRequest{Root: big, Selection: Selection{Grammar: "."}, Limits: l, LargeFileProfile: "unknown"})
 		kindOf(t, err, KindInvalidInput, "LARGE_FILE_PROFILE_UNKNOWN")
 	})
+	t.Run("large-file-profile-admits-only-exact-identity", func(t *testing.T) {
+		body := strings.Repeat("x", 17)
+		sum := sha256.Sum256([]byte(body))
+		largeFileProfiles["test-large-r1"] = largeFileProfile{limit: 20, ids: map[string]uint64{hex.EncodeToString(sum[:]): 17}}
+		defer delete(largeFileProfiles, "test-large-r1")
+		l := DefaultLimits()
+		l.FileBytes = 16
+		run := func(content string) (IdentityResult, error) {
+			root := t.TempDir()
+			writeTree(t, root, map[string]string{"src/parser.c": content})
+			return Identity(testCtx(t), IdentityRequest{Root: root, Selection: Selection{Grammar: ".", Files: []FileSelection{{"src/parser.c", "generated"}}}, Limits: l, LargeFileProfile: "test-large-r1"})
+		}
+		res, err := run(body)
+		if err != nil || len(res.Manifest.Files) != 1 || !slices.ContainsFunc(res.Findings, func(f Finding) bool { return f.Code == "LARGE_FILE_EXCEPTION" }) {
+			t.Fatalf("exact identity: err=%v res=%+v", err, res)
+		}
+		_, err = run(strings.Repeat("y", 17)) // same size, other content
+		kindOf(t, err, KindResourceLimit, "FILE_BYTES_LIMIT")
+		_, err = run(strings.Repeat("x", 21)) // over the profile limit
+		kindOf(t, err, KindResourceLimit, "FILE_BYTES_LIMIT")
+	})
 }
 
 // countingCtx cancels deterministically after n checkpoint queries.

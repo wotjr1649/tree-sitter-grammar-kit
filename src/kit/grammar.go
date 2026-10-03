@@ -44,7 +44,7 @@ type IdentityRequest struct {
 	Selection        Selection
 	Limits           Limits
 	Encoding         EncodingPolicy
-	LargeFileProfile string // "" or a registered identity-scoped exception such as "pg-large-source-r1"
+	LargeFileProfile string // "" or a registered identity-scoped exception such as "pg-large-source-r1" or "large-parser-source-r1"
 }
 
 // GrammarCandidate is a grammar directory named by metadata; it is an observation.
@@ -114,6 +114,12 @@ var largeFileProfiles = map[string]largeFileProfile{
 	"pg-large-source-r1": {limit: 104857600, ids: map[string]uint64{
 		"a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5": 97664793,
 		"cc47959aac26b9e749883dac2fb2852dcb7efd895d51e4b19d38d4b1a3528f7d": 97664835,
+	}},
+	"large-parser-source-r1": {limit: 33554432, ids: map[string]uint64{
+		"2549deeed0c8aeb84f42f9ccd3cf9de047a0c609387075a97784fddb2d1770cd": 32021728, // csharp
+		"869b54a39e38e73da254cece5085e497063e699d30e689e0d20b93e5fb3bc2a2": 26649584, // tsql
+		"0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999": 25857209, // cpp
+		"9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3": 22443237, // kotlin
 	}},
 }
 
