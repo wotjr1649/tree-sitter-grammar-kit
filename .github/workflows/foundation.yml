@@ -106,6 +106,18 @@ jobs:
           }
           go test ./src/... -count=1 -v -timeout 120s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: S04 runner tree 정리 반복 시험 (Linux cgroup v2)
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: |
+          # The cgroup release race only shows on a real cgroup v2 host: repeat the tree
+          # cleanup tests 20 times under the same delegated parent as the main test step.
+          $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+          $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameEscapedStdoutHolder|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
+          if ($LASTEXITCODE -ne 0) { throw 'repeated tree cleanup tests failed' }
       - name: P05 도구 경로 회귀 검사
         run: |
           $taskTestRoot = Join-Path $env:RUNNER_TEMP "p05-tool-check-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
