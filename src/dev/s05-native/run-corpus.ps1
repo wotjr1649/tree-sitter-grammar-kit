@@ -108,9 +108,9 @@ foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
     $e.execution_status = $c.execution_status; $e.assessment = $c.assessment; $e.code = $c.code
     if (@($c.steps).Count) {
       $s = $c.steps[0]
-      if ($s.incremental) { $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
-        if ($s.incremental.summary) { $e.errors_total = $s.incremental.summary.errors.total } }
-      if ($s.composite) { $e.svc_coverage = $s.composite.coverage }
+      if ($s.PSObject.Properties['incremental'] -and $s.incremental) { $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
+        if ($s.incremental.PSObject.Properties['summary'] -and $s.incremental.summary) { $e.errors_total = $s.incremental.summary.errors.total } }
+      if ($s.PSObject.Properties['composite'] -and $s.composite) { $e.svc_coverage = $s.composite.coverage }
     }
   }
   $runs += [ordered]@{ group = $g; exit = $code; execution_status = $res.execution_status; assessment = $res.assessment; cases = @($res.cases).Count; batches = @($res.batches).Count
