@@ -160,9 +160,11 @@ func (c *cgroupTree) stop(force bool) {
 }
 
 // live counts the leaf's processes. cgroup.procs drops a killed task as soon as it starts
-// exiting, but the kernel releases it (and allows rmdir) only once cgroup.events reports
-// "populated 0", e.g. after an orphaned zombie is reaped. Until then the tree is not empty,
-// so Wait's bounded grace wait covers the release and an unreleased leaf stays unverified.
+// exiting, but the task stays counted in "populated" until the kernel unlinks it from the
+// cgroup during exit, and rmdir is refused until cgroup.events reports "populated 0". Until
+// then the tree is not empty, so Wait's bounded grace wait covers the release and an
+// unreleased leaf stays unverified. A task still being released can therefore appear in
+// residual_after_exit.
 func (c *cgroupTree) live() (int, error) {
 	data, err := os.ReadFile(filepath.Join(c.dir, "cgroup.procs"))
 	if err != nil {
