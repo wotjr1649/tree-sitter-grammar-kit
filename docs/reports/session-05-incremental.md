@@ -164,6 +164,13 @@ Linux·macOS route step의 나머지 줄을 정적으로 점검한 결과:
 * macOS `/usr/bin/clang`은 일반 파일 shim이다. build 환경은 `DEVELOPER_DIR`·`SDKROOT`가 있으면 넘기며, foundation macOS native suite가 이 경로(link가 아닌 경로)로 통과했다. 이 shim은 xcrun을 거쳐 호출 이름으로 도구를 고르므로 link로 지정하지 않는다(platform-support의 wrapper 규칙). 그래서 `TestSelectCompilerFreshShell`의 link는 대상과 같은 basename을 쓴다(재리뷰 r12의 MATERIAL. 다른 이름이면 macOS foundation에서 실패할 수 있었다).
 * root 권한이 필요한 읽기는 이제 `sysctl`뿐이고 `sudo`로 한다.
 
+push 전 후속(`936eae8`):
+
+* darwin의 linked 사례는 `/usr/bin/clang` shim 대신 `xcrun --find clang`이 돌려주는 실제 clang binary를 link한다. 기대값도 그 실제 파일이다. xcrun이 경로를 주지 못하면 그 하위 사례만 건너뛴다.
+* 일반 사례와 linked 사례는 subtest로 나눴다.
+* platform-support에는 wrapper·shim compiler를 link 대상으로 지원하지 않는다고 적었다.
+* routes step harness를 CI job env(`CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`)로 다시 실행했다. 로컬 `TSGK_*` 변수는 뺐다. 결과는 step exit 0, 사례 137개(PASS 119, FAIL 10, BLOCKED 8), failures 0이었다.
+
 Linux 없이는 확인할 수 없는 위험:
 
 * Linux sanitizer step의 ASan/UBSan/LSan 실행과 420초 예산. 아직 한 번도 끝까지 실행되지 않았다.
