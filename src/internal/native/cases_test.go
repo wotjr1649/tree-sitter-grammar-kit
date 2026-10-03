@@ -473,8 +473,9 @@ func TestLimitsAndCancellation(t *testing.T) {
 	t.Run("cancellation", func(t *testing.T) {
 		req := baseRequest(repeatSource("a = f(1, [2, 3], (4));\n", 1400000), "real-world-source-r2")
 		req.Output = kit.OutputAuto
+		// The caller cancels before the driver can answer: a timer raced the parse time (#65).
 		ctx, cancel := context.WithCancel(context.Background())
-		time.AfterFunc(300*time.Millisecond, cancel)
+		cancel()
 		res, err := b.Exec(ctx, "single", Frame(req.Encode()), 90*time.Second, kit.NativeOperations()["real-world-source-r2"], os.Getenv("TSGK_CGROUP_PARENT"))
 		if err != nil || res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
 			t.Fatalf("cancel: %v %s %+v", err, res.Status, res.Cleanup)
