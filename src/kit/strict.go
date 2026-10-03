@@ -34,6 +34,16 @@ type jv struct {
 
 var pointerEscaper = strings.NewReplacer("~", "~0", "/", "~1")
 
+// cptr is the error-path pointer: built from the root and clipped to maxFindingPath bytes,
+// so an error report stays bounded whatever the member names.
+func (v *jv) cptr() string {
+	p, cut := v.ptrClip(maxFindingPath)
+	if cut {
+		p += "...(truncated)"
+	}
+	return p
+}
+
 // ptrLen returns len(v.ptr()) without building it; each value computes it once.
 func (v *jv) ptrLen() int {
 	if v == nil || v.up == nil {
@@ -79,7 +89,7 @@ func (b *valueBudget) take(doc string, at *jv) *Error {
 		return nil
 	}
 	if b.n++; b.n > b.max {
-		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+at.ptr(), nil)
+		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+at.cptr(), nil)
 	}
 	if b.n%4096 == 0 {
 		return b.check()
@@ -112,7 +122,7 @@ func decodeBounded(doc string, data []byte, maxBytes uint64, b *valueBudget) (*j
 func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudget) (*jv, *Error) {
 	tok, err := dec.ReadToken()
 	if err != nil {
-		return nil, jsonError(doc, v.ptr(), err)
+		return nil, jsonError(doc, v.cptr(), err)
 	}
 	if e := b.take(doc, v); e != nil {
 		return nil, e
@@ -121,7 +131,7 @@ func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudge
 	switch v.kind {
 	case '{', '[':
 		if depth >= jsonMaxDepth {
-			return nil, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc+"#"+v.ptr(), nil)
+			return nil, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc+"#"+v.cptr(), nil)
 		}
 		end := jsontext.Kind('}')
 		if v.kind == '[' {
@@ -132,7 +142,7 @@ func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudge
 			if v.kind == '{' {
 				name, err := dec.ReadToken()
 				if err != nil {
-					return nil, jsonError(doc, v.ptr(), err)
+					return nil, jsonError(doc, v.cptr(), err)
 				}
 				child.name = name.String()
 				v.keys = append(v.keys, child.name)
@@ -144,7 +154,7 @@ func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudge
 			v.vals = append(v.vals, c)
 		}
 		if _, err := dec.ReadToken(); err != nil {
-			return nil, jsonError(doc, v.ptr(), err)
+			return nil, jsonError(doc, v.cptr(), err)
 		}
 	default:
 		v.s = tok.String()
@@ -155,7 +165,11 @@ func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudge
 func jsonError(doc, ptr string, err error) *Error {
 	var se *jsontext.SyntacticError
 	if errors.As(err, &se) {
-		ptr = string(se.JSONPointer)
+		if p, cut := clipPath(string(se.JSONPointer), maxFindingPath); cut {
+			ptr = p + "...(truncated)"
+		} else {
+			ptr = p
+		}
 	}
 	code := "JSON_SYNTAX"
 	switch {
@@ -171,7 +185,7 @@ func jsonError(doc, ptr string, err error) *Error {
 type typed struct{ doc string }
 
 func (t typed) bad(code string, v *jv) *Error {
-	return fail(KindInvalidInput, code, t.doc+"#"+v.ptr(), nil)
+	return fail(KindInvalidInput, code, t.doc+"#"+v.cptr(), nil)
 }
 
 // want rejects null distinctly from a wrong type: null is never an absent value.
@@ -198,13 +212,13 @@ func (t typed) object(v *jv, required []string, optional ...string) (map[string]
 			known = known || k == name
 		}
 		if !known {
-			return nil, fail(KindInvalidInput, "JSON_UNKNOWN_FIELD", t.doc+"#"+v.vals[i].ptr(), nil)
+			return nil, fail(KindInvalidInput, "JSON_UNKNOWN_FIELD", t.doc+"#"+v.vals[i].cptr(), nil)
 		}
 		out[k] = v.vals[i]
 	}
 	for _, name := range required {
 		if out[name] == nil {
-			return nil, fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.ptr()+"/"+name, nil)
+			return nil, fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.cptr()+"/"+name, nil)
 		}
 	}
 	return out, nil

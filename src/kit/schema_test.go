@@ -429,6 +429,13 @@ func TestSchemaLongNames(t *testing.T) {
 	if len(d.Findings) != 1 || d.Findings[0].Code != "SCHEMA_INVALID" || uint64(len(mustJSON(t, d))) > l.OutputBytes {
 		t.Fatalf("failure report not bounded: %d findings", len(d.Findings))
 	}
+	// A decoder limit under a long key reports a clipped path too.
+	deep := `[{"type":"a","named":true,"` + strings.Repeat("k", 8192) + `":` + strings.Repeat("[", 40) + strings.Repeat("]", 40) + `}]`
+	r, err := SchemaCheck(testCtx(t), SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: []byte(deep)}, Limits: l})
+	kindOf(t, err, KindResourceLimit, "JSON_DEPTH_LIMIT")
+	if uint64(len(mustJSON(t, r))) > l.OutputBytes || !strings.HasSuffix(err.(*Error).Path, "...(truncated)") {
+		t.Fatalf("decoder limit report not bounded: %d bytes", len(mustJSON(t, r)))
+	}
 }
 
 // Review fixes: findings stay bounded per input while the assessment counts all of them,
