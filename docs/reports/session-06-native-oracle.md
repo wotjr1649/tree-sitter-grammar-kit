@@ -32,4 +32,47 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S06`, Issue #8, Milestone 7, bra
 * **동적 SQL known miss.** 등록 fixture는 known miss 세 곳을 사실에서 빼고 범위로 기록했다. grammar는 그중 `AT DATA_SOURCE`와 `WITH RESULT SETS`에서 부분 `execute_statement`를 만든다. 추출은 mapping `dynamic-sql-r1`의 known_misses 목록을 구현해 세 곳을 known miss 범위로 보고하며(`AT DATA_SOURCE`: 따옴표 없는 `DATA_SOURCE` linked server, `WITH RESULT SETS`: EXEC 바로 뒤 `WITH`로 시작하는 ERROR, EXEC 없는 첫 호출: 첫 child가 `sp_executesql`인 ERROR), 등록 기대값은 바꾸지 않았다.
 * **pack query 일부 선택.** 대용량 합성 fixture에 C# 동적 SQL query를 실행하면, 그 구조 후보 pattern이 모든 `binary_expression`을 잡아 출력 상한(`OUTPUT_LIMIT`)에 닿았다. driver는 predicate를 평가하지 않기 때문이다. profile이 pack query 일부만 고를 수 있게 했다. 대용량은 선언 query만 쓰며, 고른 query는 pack과 정확히 같아야 한다.
 
-<!-- RESULTS -->
+## 도구 identity와 로컬 검사
+
+Windows 로컬 실행은 Go 1.27.1, PowerShell 7, 기존 MSYS2 UCRT64 GCC 16.2.0(`gcc.exe` sha256 `75e87953…`, 3299024 bytes, 설치·변경 없음), runtime `tree-sitter/tree-sitter@659cda7c`(내장 manifest 83개 파일), S05가 준비한 26 route 입력(`.work/session-05/prepared`, 등록부 hash 대조)을 썼다. 새 다운로드는 없다.
+
+구현 commit `4f37a73`, `29ac625`, `14b595d`, `90071ce`에서 [validation](../validation/validation.md)의 명령 블록을 실행했다. 대상은 `gofmt`, `go vet`(windows·`GOOS=linux`·`GOOS=darwin`), `go test ./src/... -count=1`(`TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC` 지정), `go build`, `git diff --check`이고 모두 통과했다. native package는 로컬에서 148초다(무거운 build 시험 둘은 순차 시험이 끝난 뒤 병렬로 돈다).
+
+| 검사 | 결과 |
+|---|---|
+| r1 호환(A01·A12) | S05 native·CLI 시험 전체가 확장 driver에서 그대로 통과했다. 바뀐 기대는 `TestFrames/protocol` 하나다. 알 수 없는 revision(`r3`)은 `PROTOCOL_MISMATCH`, r2 머리의 r1 본문은 `REQUEST_MALFORMED`다. `TestRevisions`: r1 요청은 r1 응답, r2 응답을 r1 요청으로 검사하면 `RESPONSE_PROTOCOL_MISMATCH`다 |
+| capture stream(A03·A06) | `TestQueryStream`: 두 pattern이 같은 node를 잡은 중복과 같은 byte의 동률이 runtime 순서(시작 byte, pattern 번호, match 안 capture 순서)대로 남는다. 기대 stream은 이 순서 규칙에서 손으로 도출했다. `TestCaptureIdentity`: 같은 범위의 root·statement와 zero-width MISSING이 서로 다른 index다. `TestCaptureLink`: 다른 node로 연결한 capture 행은 `CAPTURE_LINK_MISMATCH` |
+| 오류·predicate(A04) | `TestQueryErrorsAndPredicates`: `NODE_TYPE`(offset 19, point 0:19)·`SYNTAX`·`FIELD` 오류, `match?`와 `#set!`은 `UNSUPPORTED`(capture 없음), `eq?`·`any-of?`는 평가된 stream, 일치 없는 query는 `captures: []`, 요청하지 않은 query는 없음 |
+| 한도·취소(A05) | `TestQueryLimits`: `CAPTURE_LIMIT`·`MATCH_LIMIT`는 부분 capture를 `partial`로 남기고 사례 `RESOURCE_LIMIT`/`BLOCKED`, cleanup verified. 1 ms 시간 예산은 typed `QUERY_TIME_LIMIT`이며 완료로 보고하지 않는다 |
+| API 관측(A07) | `TestAPIObservations`: ERROR·MISSING·extra(comment)가 있는 tree에서 API claim PASS, zero-width MISSING 경계의 형제 탐색 차이가 `position_navigation`으로 기록된다. 위조한 parent·형제·child 수·depth와 빠진 field lookup은 차이로 검출한다 |
+| closure 거부(A08) | `TestClosureRejections`: scanner가 빠졌거나 다른 grammar의 scanner면 link 단계 `BUILD_FAILED`, 바뀐 header는 `SOURCE_MISMATCH`, closure에 없는 symbol은 `BUILD_FAILED`, ABI 99·12는 build 뒤 driver가 `FAILED`/`LANGUAGE_INCOMPATIBLE`(step 없음), 바뀐 scanner는 새 identity로만 build된다. S05 `TestBuildIdentity`(parser·compiler·runtime·symbol 형식·executable 변조)는 그대로 통과 |
+| capability(A08) | `TestCapabilityMissing`: query capability를 선언하지 않는 fault build(`TSGK_FAULT_NO_QUERY`)는 관측을 해석하기 전에 `NOT_RUN`/`BLOCKED`(`QUERY_CAPABILITY_MISSING`) |
+| 기록 set(A02·A09·A10) | `TestOracleRecordSet`: 발행한 set이 검증을 통과하고 record가 build identity·입력 identity에 결속된다. 기존 출력은 `OUTPUT_EXISTS`로 거부되고 기존 파일은 바뀌지 않는다. 같은 출력으로 동시에 두 번 실행하면 하나만 성공한다. member 쓰기 실패 주입 뒤에는 manifest가 없고 set 검증은 `MANIFEST_MISSING`이다. `TestVerifyOracleSet`(도구 없이 실행): 잘린 member, footer 없는 manifest, 잘린 manifest, 없는 manifest·member, 목록 밖 파일, record 수 불일치, 완결되지 않았거나 입력·step·사례가 다른 record를 모두 거부한다 |
+| edit와 query(A02·A12) | `TestQueryAcrossEdits`: edit step마다 incremental·fresh query stream이 같고 S05 claim도 PASS다. `TestQueryEquality`: 바뀐 capture·status를 검출한다 |
+| 사실 query 세트(A15) | `TestFactQueryPack`: pack의 선언 항목이 mapping과 같고 선언 query가 `DeclarationQuery` 결과와 같으며 pack identity가 bytes를 결속한다. `TestDeriveDeclarations`: `child:`·`field:` 첫 node, `children:` 전부, 문서 순서, `NAME_MISSING` 우선 |
+
+## targeted mutant (A11)
+
+`90071ce`에서 19/19를 검출했다(`artifacts/.../session-06/mutants-90071ce.json`). mutant 내용은 다음과 같다. capture 정렬, 중복 capture 제거, 범위로 만든 node identity, 없는 field의 빈 이름 기본값, build identity에서 scanner 제외, record identity에서 producer 제외, predicate 무시, 잘못된 query를 빈 성공으로 보고, query 한도를 완료로 취급, capture-node 연결 검사 제거, API 비교 생략, set footer 검사 제거, 목록 밖 member 허용, 기존 출력 재사용, `child:` locator가 모든 node를 취함, incremental/fresh query 비교 무력화, query 시간 상한을 한 번만 취소, revision 검사 제거, capability 검사 제거. 첫 실행에서는 기존 출력 재사용 mutant가 살아남았다. 기존 출력 검사(`Lstat`)가 배타 생성보다 먼저 걸러 배타 생성 자체를 시험하지 못했기 때문이다. 그래서 배타 `Mkdir`을 유일한 guard로 남겼다(`90071ce`). 첫 실행의 harness는 한글 출력 decode 오류로 중간에 멈췄고(도구 결함), 고친 뒤 19개 전부를 다시 실행한 결과가 위 기록이다.
+
+## 26 route 기록 (A13·A15·A16·A17, Windows 로컬)
+
+`run-routes.ps1 -Large -Oracle`(`.work/session-06/routes-1`, 16분 40초)의 결과는 failures 0이다. S05 incremental(r1) 27개 실행의 판정은 S05와 같다(csharp·typescript·tsx·swift의 grammar gap FAIL, SVC BLOCKED). oracle(r2) 27개 실행(26 route + SVC)의 결과는 다음과 같다.
+
+* 사례 165개 모두 `COMPLETED`, 기록 set 27개 모두 `VerifyOracleSet` 통과.
+* route query 사례 26개의 기대 capture stream 26/26 PASS. 기대값은 별도 작성자가 source와 query 의미에서 도출했고 실행 결과에서 가져오지 않았다.
+* edit step의 incremental/fresh query 비교 140 사례 PASS, 선언 사실 재현 50 사례 PASS(C#·T-SQL·PostgreSQL의 모든 등록 사례와 동적 SQL fixture).
+* 동적 SQL(A16): T-SQL fixture 사실 13개와 known miss 3개, C# fixture 사실 13개(모두 `heuristic: true`, `CommandType.StoredProcedure` 오탐 포함)가 등록값과 순서까지 같다. `AS USER/LOGIN`·pass-through·`EXEC @module_var`는 사실에 없다.
+* API claim: 129 사례 PASS, 6개 route의 23 사례 FAIL. 모두 node API의 field lookup이 cursor와 다른 경우다. T-SQL(5)·Swift(9)·Python(2)은 직렬화에 없는 field를 `child_by_field_id`가 돌려준다(aliased 또는 숨은 node 안으로 내려감). C#(4)·TypeScript(2)·SVC inline C#(1)은 ERROR 안에서 cursor가 보고한 field를 찾지 못한다. kit가 충실히 보고한 runtime API 동작이며 S08로 넘긴다.
+* 대용량(A15·A17, `native-query-large`, 선언 query): 22m(peak 3351498752 bytes, 28.2초), 8m-errors(1234075648, 9.7초), 32mib-errors(5193019392, 55.1초)가 모두 `COMPLETED`이고 S05 선언 항목을 재현했다. 모든 node를 잡는 query를 쓴 상한 초과 입력 하나는 `RESOURCE_LIMIT`/`OUTPUT_LIMIT`다(capture를 잘라 완료로 보고하지 않음). 같은 실행의 S05 r3 대용량 3개도 8 GiB에서 `COMPLETED`다(32 MiB peak 5157437440).
+
+## Q 행 연결과 남은 범위
+
+feature disposition에서 `Q`를 요구하는 154행 중 이번 query 사례의 `features`가 직접 덮는 것은 46행이다. 나머지 108행은 query 사례가 없어 `NOT_RUN`이며 N/A로 바꾸지 않는다. S05의 feature 사례가 덮는 Q행(98)보다도 적은데, 사례마다 query가 실제로 capture하는 구조만 연결했기 때문이다. 이 108행은 S08 qualification 전에 사례를 더해야 한다.
+
+## 정적 점검과 Linux·macOS 위험
+
+* 모든 native 실행과 build는 cgroup parent를 넘긴다. `Oracle`은 요청의 cgroup parent로 build·실행하고 hard memory backend를 확인한다. 새 시험은 `testBuildRequest` 또는 cgroup이 들어간 `OracleRequest`만 쓴다(`TestHostSettingsReachCI`).
+* helper는 `exit 0`/`exit 1`로 끝나고 잘린 native pipeline이 없다(`TestCIScriptPatterns`). 새 외부 도구는 없으며 경로는 `Join-Path`로 만든다.
+* Linux sanitizer step은 새 owned 시험도 ASan/UBSan driver로 실행한다. 단 `TestOracleRecordSet`의 build는 sanitizer 설정을 받지 않으며(제품 `Oracle` 경로), r2 driver 코드는 다른 시험의 sanitizer build로 실행된다.
+* 확인할 수 없는 위험: Linux·macOS에서 r2 query·API 시험과 26 route oracle 실행(로컬은 Windows뿐), Linux sanitizer step의 시간(420초 상한, native package 로컬 148초), hosted windows-2025의 8 GiB 대용량 실측과 route job 시간(build가 route마다 두 번), macOS sampled 메모리의 시간 여유(#65).
