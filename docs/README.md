@@ -18,6 +18,7 @@ The current implementation consists of repository foundation checks, the Session
 | NET461 WinForms/DevExpress 20.2/WCF workload, bounded .svc format, real-world source encoding/dynamic SQL/large-file policy | [업무 workload/format 등록부](validation/net461-workload.md) |
 | Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
+| Observed Session 03 results | [schema contract report](reports/session-03-schema-contract.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

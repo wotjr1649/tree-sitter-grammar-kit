@@ -55,6 +55,7 @@ var required = []string{
 	"src/kit/kit.go", "src/cmd/tsgk/main.go",
 	"src/testdata/consumer/main.go", "src/testdata/consumer/go.mod.tmpl",
 	"docs/reports/session-01-inventory-identity.md",
+	"docs/reports/session-03-schema-contract.md",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}
