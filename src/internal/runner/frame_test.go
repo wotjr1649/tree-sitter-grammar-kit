@@ -130,7 +130,10 @@ func TestFrameStatusMapping(t *testing.T) {
 		{"all", "echo", nil, 0, []string{FrameCompleted, FrameCompleted, FrameCompleted, FrameCompleted}, ""},
 		{"own-watchdog", "hang@2", nil, 0, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonFrameWatchdog},
 		{"own-response-cap", "big@2", nil, 0, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonResponseBytes},
-		{"own-memory", "alloc@2", nil, 192 << 20, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonMemory},
+		// The frame watchdog outlasts the sampling interval so a sampled backend (macOS ps
+		// RSS) cannot lose the race to it; the helper holds 1 GiB until it is ended.
+		{"own-memory", "alloc@2", func(p *BatchPolicy) { p.FrameWall = 20 * time.Second }, 192 << 20,
+			[]string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonMemory},
 		{"batch-stdout", "fat@2", func(p *BatchPolicy) { p.StdoutBytes = 500 }, 0, []string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonOutput},
 		{"batch-wall", "hang@2", func(p *BatchPolicy) { p.FrameWall, p.BatchWall = 20*time.Second, 1500*time.Millisecond }, 0,
 			[]string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonWall},
