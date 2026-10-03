@@ -55,5 +55,5 @@ S01이 결속한 26 route source 사본(`_ref/campaign-01-s01/sources`, 새 down
 * 세 OS CI(A14)는 PR 단계에서 실행한다. `go test -race`는 CGO를 쓰지 않는 조건이라 실행하지 않았다.
 * mapping은 schema에서 도출한 계약이다. tree 위 동작(선언 순회, 사실 query, 동적 SQL 위치 추출)은 S05·S06이 native로 검증한다. 등록 T-SQL 사례에는 `execute_statement`가 없어 EXEC 관련 mapping은 grammar source와 schema로만 도출했다.
 * supertype 변화는 supertype node의 `SUBTYPE_*`로만 보고하고 field의 실효 type 집합으로 펼치지 않는다.
-* 비공개 corpus는 다시 실행하지 않았다. S03은 corpus inventory 경로를 바꾸지 않았고, 공유 decoder 변경(지연 pointer, 오류 path 절단)은 profile 문서 decode에만 닿으며 S01·S02 시험 전체와 S01·S02 mutant 20종이 같은 결과다.
+* 비공개 corpus는 다시 실행하지 않았다. S03은 corpus inventory 경로를 바꾸지 않았고, 공유 decoder 변경(지연 pointer, 오류 path 절단)은 corpus 경로에서는 profile 문서 decode에만 닿고(verify의 profile·expected 문서에도 같은 규칙이 적용된다) S01·S02 시험 전체와 S01·S02 mutant 20종이 같은 결과다.
 * 같은 identity가 모양만 다르게 두 번 나오는 swift schema(generator 0.27.0 출력 포함)는 `schema diff` 입력이 될 수 없다. S04가 swift 재생성 schema를 upstream과 비교하려면 이 처분을 바꾸는 별도 결정이 필요하다.
