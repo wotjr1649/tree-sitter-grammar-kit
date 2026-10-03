@@ -154,15 +154,12 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		}
 		pack = &p
 	}
-	if _, err := os.Lstat(req.Out); err == nil {
-		return stop(refuse(kit.KindInvalidInput, "OUTPUT_EXISTS", nil))
-	}
 	probe := runner.Probe(runner.Spec{Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: req.CgroupParent})
 	if runtime.GOOS != "darwin" && probe.Memory != runner.MemoryHard {
 		return stop(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", nil))
 	}
-	// the exclusive directory is the collision guard: a concurrent run or an existing
-	// output makes this run stop before anything is written into it
+	// the exclusive directory is the only collision guard: an existing output or a
+	// concurrent run that created it first makes this run stop before writing anything
 	if err := os.Mkdir(req.Out, 0o755); err != nil {
 		code := "OUTPUT_FAILED"
 		if errors.Is(err, os.ErrExist) {
