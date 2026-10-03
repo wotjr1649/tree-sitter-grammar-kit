@@ -148,10 +148,11 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	if err := os.MkdirAll(filepath.Join(req.Out, "responses"), 0o755); err != nil {
 		return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
 	}
-	wall := op.RunWall
-	if req.RunWall > 0 && req.RunWall < wall {
-		wall = req.RunWall // a caller may only narrow the run wall
+	if req.RunWall > 0 && req.RunWall < op.RunWall {
+		op.RunWall = req.RunWall // a caller may only narrow the run wall; recorded in operation and policy
+		res.Operation = op
 	}
+	wall := op.RunWall
 	writeFailed := false
 	runCtx, cancel := context.WithTimeout(ctx, wall)
 	defer cancel()

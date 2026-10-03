@@ -28,7 +28,7 @@ func TestObserveServiceHost(t *testing.T) {
 		{"inline", "<%@ ServiceHost Language=\"C#\" Service=\"App.Svc\" %>\nusing System;\nclass Svc { }\n", "CSHARP", "OBSERVED", "ABSENT", "OBSERVED", nil, "\nusing System;\nclass Svc { }\n", 2},
 		{"multiline", "<%@ ServiceHost\r\n    Language='c#'\r\n    Factory=\"F\"\r\n    Service=\"S\" %>", "CSHARP", "OBSERVED", "ABSENT", "ABSENT", nil, "", 3},
 		{"quote-unterminated", `<%@ ServiceHost Service="App.Svc %>`, "NOT_REQUIRED", "OBSERVED", "ABSENT", "ABSENT", []string{"QUOTE_UNTERMINATED"}, "", 1},
-		{"terminator-missing", "<%@ ServiceHost Language=\"C#\" Service=\"S\"\nclass Svc { }\n", "CSHARP", "OBSERVED", "ABSENT", "ABSENT", []string{"ATTRIBUTE_UNKNOWN", "ATTRIBUTE_UNKNOWN", "TERMINATOR_MISSING"}, "", 4}, // all text up to EOF belongs to the open directive
+		{"terminator-missing", "<%@ ServiceHost Language=\"C#\" Service=\"S\"\nclass Svc { }\n", "CSHARP", "OBSERVED", "ABSENT", "UNRESOLVED", []string{"ATTRIBUTE_UNKNOWN", "ATTRIBUTE_UNKNOWN", "TERMINATOR_MISSING"}, "", 4}, // all text up to EOF belongs to the open directive
 		{"language-missing-inline", "<%@ ServiceHost Service=\"S\" %>\nclass Svc { }\n", "UNRESOLVED_LANGUAGE", "OBSERVED", "ABSENT", "UNRESOLVED", nil, "", 1},
 		{"language-unsupported", "<%@ ServiceHost Language=\"VB\" Service=\"S\" %>\nClass Svc\n", "UNSUPPORTED_LANGUAGE", "OBSERVED", "ABSENT", "UNSUPPORTED", nil, "", 2},
 		{"duplicates", `<%@ ServiceHost Service="A" Service="B" Bogus="x" %><%@ ServiceHost Service="C" %>`, "UNRESOLVED_LANGUAGE", "OBSERVED", "ABSENT", "UNRESOLVED",

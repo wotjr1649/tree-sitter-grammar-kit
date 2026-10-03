@@ -208,8 +208,8 @@ type Context struct {
 // PolicyRef binds the operation limits, output form and encoding into a policy identity.
 func PolicyRef(op kit.NativeOperation, output string) kit.IdentityRef {
 	l := LimitsFor(op)
-	text := fmt.Sprintf("tsgk-native-policy/r1\noperation=%s\noutput=%s\nlimits=%+v\nparse_wall=%s\nedit_wall=%s\nmax_edits=%d\nbatch=%t %d %d %s %s\n",
-		op.Name, output, l, op.ParseWall, op.EditWall, op.MaxEdits, op.Batch, op.BatchFiles, op.BatchBytes, op.FrameWall, op.BatchWall)
+	text := fmt.Sprintf("tsgk-native-policy/r1\noperation=%s\noutput=%s\nlimits=%+v\nparse_wall=%s\nedit_wall=%s\nmax_edits=%d\nbatch=%t %d %d %s %s\nrun_wall=%s\n",
+		op.Name, output, l, op.ParseWall, op.EditWall, op.MaxEdits, op.Batch, op.BatchFiles, op.BatchBytes, op.FrameWall, op.BatchWall, op.RunWall)
 	s := sha256.Sum256([]byte(text))
 	return kit.IdentityRef{Role: "policy", Schema: "tsgk-native-policy/r1", SHA256: hex.EncodeToString(s[:])}
 }
@@ -416,6 +416,8 @@ func svcObservationOnly(svc []kit.SvcObservation, expect bool) (string, string) 
 		switch {
 		case o.Directive == nil:
 			return kit.AssessBlocked, "SVC_DIRECTIVE_ABSENT"
+		case o.Directive.Close == nil:
+			return kit.AssessBlocked, "SVC_INLINE_UNRESOLVED" // no %>: inline code cannot be separated
 		case o.Coverage.Inline == "UNRESOLVED":
 			return kit.AssessBlocked, "SVC_INLINE_UNRESOLVED"
 		case o.Coverage.Inline == "UNSUPPORTED":
@@ -426,6 +428,11 @@ func svcObservationOnly(svc []kit.SvcObservation, expect bool) (string, string) 
 	}
 	if expect {
 		return kit.AssessBlocked, "SVC_EXPECTATION_UNASSESSABLE"
+	}
+	for _, o := range svc {
+		if len(o.Directive.Diagnostics) > 0 { // a damaged directive is observed, not passed
+			return kit.AssessBlocked, "SVC_DIRECTIVE_DIAGNOSTICS"
+		}
 	}
 	return kit.AssessPass, ""
 }

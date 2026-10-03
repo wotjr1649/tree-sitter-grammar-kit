@@ -248,9 +248,9 @@ func ObserveServiceHost(enc string, src []byte) SvcObservation {
 		obs.Language.Status = "UNRESOLVED_LANGUAGE"
 	}
 	switch {
-	case !hasInline:
 	case obs.Directive != nil && obs.Directive.Close == nil:
-		obs.Coverage.Inline = "UNRESOLVED"
+		obs.Coverage.Inline = "UNRESOLVED" // the directive runs to EOF: inline code cannot be told apart
+	case !hasInline:
 	case obs.Language.Status == "CSHARP":
 		obs.IncludedRanges = []Span{span(inlineFrom, n)}
 		obs.Coverage.Inline = "OBSERVED"

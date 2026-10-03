@@ -55,6 +55,14 @@ func TestSvcComposite(t *testing.T) {
 			t.Fatalf("%s: %s %s", code, r.Assessment, r.Code)
 		}
 	}
+	// R2 M-1 / n-2: a directive without %> (inline boundary unknown) and a damaged directive.
+	if r := run("svc-no-terminator", "<%@ ServiceHost Language=\"C#\" Service=\"S\"\nusing System;\npublic class Svc { }\n"); r.Assessment != kit.AssessBlocked || r.Code != "SVC_INLINE_UNRESOLVED" ||
+		r.Steps[0].Composite.Coverage.Inline != "UNRESOLVED" {
+		t.Fatalf("no terminator: %s %s %+v", r.Assessment, r.Code, r.Steps[0].Composite.Coverage)
+	}
+	if r := run("svc-diagnostics", "<%@ ServiceHost Service=\"S\" Bogus=\"x\" %>\n"); r.Assessment != kit.AssessBlocked || r.Code != "SVC_DIRECTIVE_DIAGNOSTICS" {
+		t.Fatalf("diagnostics: %s %s", r.Assessment, r.Code)
+	}
 	// an edit that removes the Language attribute leaves a step without parseable inline code
 	lost := run("svc-language-lost", src, edit{"Language=\"C#\" ", ""})
 	if lost.Assessment != kit.AssessBlocked || lost.Code != "SVC_INLINE_NOT_PARSED" || lost.Process != nil || lost.Steps[1].Composite.Language.Status != "UNRESOLVED_LANGUAGE" {

@@ -134,7 +134,7 @@ $summary = [ordered]@{ schema = 'tsgk-s05-private-corpus-run/r1'; corpus = 'NET4
   inventory = [ordered]@{ records = @($inv.records).Count; routed_non_presence = $records.Count; presence_only = @($inv.records | Where-Object { $_.state -eq 'PRESENCE_ONLY' }).Count
     unrouted = @($inv.records | Where-Object { -not $_.route }).Count; encoding_codes = $inv.summary.encoding_codes }
   by_route_status = & $count { param($e) "$($e.route):$($e.execution_status):$($e.assessment)" }
-  has_error = & $count { param($e) if ($e.execution_status -eq 'COMPLETED') { "$($e.route):$($e.has_error)" } }
+  has_error = & $count { param($e) if ($e.execution_status -eq 'COMPLETED') { "$($e.route):$(if ($null -eq $e.has_error) { 'null' } else { $e.has_error })" } }
   codes = & $count { param($e) if ($e.code) { "$($e.route):$($e.code)" } }
   forms = & $count { param($e) if ($e.form) { "$($e.route):$($e.form)" } }
   not_run = @($records | Where-Object { $_.execution_status -eq 'NOT_RUN' -and $_.assessment -ne 'BLOCKED' }).Count
