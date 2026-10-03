@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -45,6 +46,7 @@ type IdentityRequest struct {
 	Limits           Limits
 	Encoding         EncodingPolicy
 	LargeFileProfile string // "" or a registered identity-scoped exception such as "pg-large-source-r1" or "large-parser-source-r1"
+	Profile          []byte // nil, or a strict tsgk-profile/r1 document
 }
 
 // GrammarCandidate is a grammar directory named by metadata; it is an observation.
@@ -177,39 +179,100 @@ func Inspect(ctx context.Context, req InspectRequest) (InventoryResult, error) {
 	return res, nil
 }
 
-// Identity reads every selected file completely and binds manifest r2.
+// Identity reads every selected file completely and binds manifest r2. An optional
+// tsgk-profile/r1 may select the files, declare encodings and lower the limits.
 func Identity(ctx context.Context, req IdentityRequest) (IdentityResult, error) {
-	res := IdentityResult{Report: newReport("identity"), Manifest: Manifest{Schema: ManifestSchema, Algorithm: "sha256", ModePolicy: ModePolicy, Files: []FileIdentity{}}}
-	encPolicy := "detect-r1"
-	if req.Encoding.Profile == "cp949" {
-		encPolicy += ";profile=cp949"
+	policy := grammarPolicy(req.Limits, req.LargeFileProfile, encodingPolicyName(req.Encoding))
+	res, e := func() (IdentityResult, *Error) {
+		if !req.Limits.valid() {
+			return IdentityResult{}, fail(KindInvalidInput, "LIMITS_INVALID", "", nil)
+		}
+		if req.Profile == nil {
+			return bindIdentity(ctx, req, nil, false)
+		}
+		prof, e := parseProfile(req.Profile)
+		if e != nil {
+			return IdentityResult{}, e
+		}
+		if e := prof.applyTo(&req, nil); e != nil {
+			return IdentityResult{}, e
+		}
+		policy = grammarPolicy(req.Limits, req.LargeFileProfile, encodingPolicyName(req.Encoding))
+		return bindIdentity(ctx, req, prof, false)
+	}()
+	if e == nil {
+		e = sealOutput(res, req.Limits.OutputBytes)
 	}
-	res.Manifest.EncodingPolicy = encPolicy
-	res.Policy = grammarPolicy(req.Limits, req.LargeFileProfile, encPolicy)
-	failWith := func(e *Error) (IdentityResult, error) {
-		out := IdentityResult{Report: newReport("identity"), Policy: res.Policy, Manifest: Manifest{Schema: ManifestSchema, Algorithm: "sha256", ModePolicy: ModePolicy, EncodingPolicy: encPolicy, Files: []FileIdentity{}}}
+	if e != nil {
+		out := IdentityResult{Report: newReport("identity"), Policy: policy, Manifest: Manifest{Schema: ManifestSchema, Algorithm: "sha256", ModePolicy: ModePolicy, EncodingPolicy: policy.EncodingPolicy, Files: []FileIdentity{}}}
 		failReport(&out.Report, e)
 		return out, e
 	}
-	profile, ok := largeFileProfiles[req.LargeFileProfile]
+	return res, nil
+}
+
+// applyTo moves the profile's selection, encoding declarations and narrower limits into
+// req. extra holds operation-specific limit keys and bounds and receives their effective
+// values.
+func (p *profile) applyTo(req *IdentityRequest, extra map[string]uint64) *Error {
+	if p.files != nil {
+		if req.Selection.Files != nil {
+			return fail(KindInvalidInput, "SELECTION_SOURCE_CONFLICT", "profile#/files", nil)
+		}
+		req.Selection.Files = p.files
+	}
+	enc, e := p.encodingFrom(req.Encoding)
+	if e != nil {
+		return e
+	}
+	req.Encoding = enc
+	l := req.Limits
+	bounds := map[string]uint64{"files": l.Files, "file_bytes": l.FileBytes, "total_bytes": l.TotalBytes, "depth": l.Depth, "output_bytes": l.OutputBytes}
+	maps.Copy(bounds, extra)
+	got, e := p.narrow(bounds)
+	if e != nil {
+		return e
+	}
+	req.Limits.Files, req.Limits.FileBytes, req.Limits.TotalBytes, req.Limits.Depth, req.Limits.OutputBytes = got["files"], got["file_bytes"], got["total_bytes"], got["depth"], got["output_bytes"]
+	for k := range extra {
+		extra[k] = got[k]
+	}
+	return nil
+}
+
+func encodingPolicyName(p EncodingPolicy) string {
+	if p.Profile == "cp949" {
+		return "detect-r1;profile=cp949"
+	}
+	return "detect-r1"
+}
+
+// bindIdentity binds the selected files of an already profile-applied request. prof (may be
+// nil) supplies requiredness and the profile identity. With tolerateMissing (verify), an
+// absent explicitly selected file is left out of the manifest for the caller to judge.
+func bindIdentity(ctx context.Context, req IdentityRequest, prof *profile, tolerateMissing bool) (IdentityResult, *Error) {
+	encPolicy := encodingPolicyName(req.Encoding)
+	res := IdentityResult{Report: newReport("identity"), Manifest: Manifest{Schema: ManifestSchema, Algorithm: "sha256", ModePolicy: ModePolicy, EncodingPolicy: encPolicy, Files: []FileIdentity{}}}
+	res.Policy = grammarPolicy(req.Limits, req.LargeFileProfile, encPolicy)
+	large, ok := largeFileProfiles[req.LargeFileProfile]
 	if req.LargeFileProfile != "" && !ok {
-		return failWith(fail(KindInvalidInput, "LARGE_FILE_PROFILE_UNKNOWN", "", nil))
+		return res, fail(KindInvalidInput, "LARGE_FILE_PROFILE_UNKNOWN", "", nil)
 	}
 	declared, e := declarations(req.Encoding)
 	if e != nil {
-		return failWith(e)
+		return res, e
 	}
 	inv, r, e := prepare(ctx, req.Root, req.Selection, req.Limits)
 	if r != nil {
 		defer r.cancel()
 	}
 	if e != nil {
-		return failWith(e)
+		return res, e
 	}
 	defer inv.root.Close()
 	if req.Selection.Files == nil && inv.closure == ClosureNotApplicable {
 		// Metadata alone is not a grammar identity; an unknown layout stays an inspect observation.
-		return failWith(fail(KindInvalidInput, "NO_GRAMMAR_SELECTED", inv.grammar, nil))
+		return res, fail(KindInvalidInput, "NO_GRAMMAR_SELECTED", inv.grammar, nil)
 	}
 	var selected []*entry
 	folded := map[string]string{}
@@ -218,41 +281,39 @@ func Identity(ctx context.Context, req IdentityRequest) (IdentityResult, error) 
 		switch item.State {
 		case StateFound:
 			if prev, dup := folded[strings.ToLower(item.Path)]; dup {
-				return failWith(fail(KindInvalidInput, "PATH_CASE_COLLISION", prev, nil))
+				return res, fail(KindInvalidInput, "PATH_CASE_COLLISION", prev, nil)
 			}
 			folded[strings.ToLower(item.Path)] = item.Path
 			selected = append(selected, item)
 		case StateUnsupported:
-			return failWith(fail(KindInvalidInput, "LINK_OR_SPECIAL_REJECTED", item.Path, nil))
+			return res, fail(KindInvalidInput, "LINK_OR_SPECIAL_REJECTED", item.Path, nil)
 		case StateNotFound:
-			if req.Selection.Files != nil { // an explicit member may not silently disappear
-				return failWith(fail(KindInvalidInput, "SELECTED_FILE_NOT_FOUND", item.Path, nil))
+			switch {
+			case req.Selection.Files == nil:
+			case prof != nil && prof.optional[item.Path]:
+				inv.finding("OPTIONAL_FILE_ABSENT", "info", item.Path, "profile이 선택적(required=false)으로 선언한 파일이 없다")
+			case tolerateMissing:
+			default: // an explicit member may not silently disappear
+				return res, fail(KindInvalidInput, "SELECTED_FILE_NOT_FOUND", item.Path, nil)
 			}
 		}
 	}
-	if len(selected) == 0 {
-		return failWith(fail(KindInvalidInput, "EMPTY_SELECTION", "", nil))
+	if len(selected) == 0 && !tolerateMissing {
+		return res, fail(KindInvalidInput, "EMPTY_SELECTION", "", nil)
 	}
 	for p := range declared {
 		if item := inv.entries[p]; item == nil || item.State != StateFound {
-			return failWith(fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil))
+			return res, fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil)
 		}
 	}
 	g := newGuard(inv.root)
-	hardMax := req.Limits.FileBytes
-	if ok {
-		hardMax = max(hardMax, profile.limit)
-	}
 	for _, item := range selected {
-		st, e := g.readFile(r, item.Path, item.info, hardMax, req.Limits.TotalBytes, 0)
+		st, e := g.readFile(r, item.Path, item.info, hardMax(req.Limits.FileBytes, large, ok), req.Limits.TotalBytes, 0)
 		if e != nil {
-			return failWith(e)
+			return res, e
 		}
-		if st.size > req.Limits.FileBytes {
-			if size, hit := profile.ids[st.sha256]; !ok || !hit || size != st.size {
-				return failWith(fail(KindResourceLimit, "FILE_BYTES_LIMIT", item.Path, nil))
-			}
-			inv.finding("LARGE_FILE_EXCEPTION", "info", item.Path, "등록된 identity 한정 대용량 예외("+req.LargeFileProfile+")로 읽었다")
+		if e := admitSize(inv.finding, item.Path, st, req.Limits.FileBytes, req.LargeFileProfile, large, ok); e != nil {
+			return res, e
 		}
 		outcome := st.encoding.result(req.Encoding.Profile == "cp949", declared[item.Path])
 		if outcome.Assessment != "PASS" {
@@ -264,11 +325,31 @@ func Identity(ctx context.Context, req IdentityRequest) (IdentityResult, error) 
 	res.SetSHA256 = setSHA256(res.Manifest)
 	res.Findings = append(res.Findings, inv.findings...)
 	res.Identities = append(res.Identities, IdentityRef{Role: "source-set", Schema: FileSetSchema, SHA256: res.SetSHA256}, res.Policy.ref())
-	res.Coverage = coverage(inv.inventory)
-	if e := sealOutput(res, req.Limits.OutputBytes); e != nil {
-		return failWith(e)
+	if prof != nil {
+		res.Identities = append(res.Identities, prof.ref())
 	}
+	res.Coverage = coverage(inv.inventory)
 	return res, nil
+}
+
+// hardMax is the largest single file a read may accept before admitSize judges it.
+func hardMax(fileBytes uint64, large largeFileProfile, ok bool) uint64 {
+	if ok {
+		return max(fileBytes, large.limit)
+	}
+	return fileBytes
+}
+
+// admitSize accepts a file over the ordinary bound only as an exact registered identity.
+func admitSize(note func(code, severity, path, message string), p string, st *readStats, fileBytes uint64, name string, large largeFileProfile, ok bool) *Error {
+	if st.size <= fileBytes {
+		return nil
+	}
+	if size, hit := large.ids[st.sha256]; !ok || !hit || size != st.size {
+		return fail(KindResourceLimit, "FILE_BYTES_LIMIT", p, nil)
+	}
+	note("LARGE_FILE_EXCEPTION", "info", p, "등록된 identity 한정 대용량 예외("+name+")로 읽었다")
+	return nil
 }
 
 // setSHA256 hashes the domain-separated r2 preimage (docs/specs/identity-and-evidence.md).

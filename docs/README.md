@@ -1,6 +1,6 @@
 # Documentation map
 
-The current implementation consists of repository foundation checks and the Session 01 offline core: `tsgk inspect`, `tsgk identity`, `tsgk corpus` and the matching `src/kit` API. Other commands and r0 data contracts are planned specifications, not claims of implementation.
+The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) and the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, with the matching `src/kit` API. Other commands and r0 data contracts are planned specifications, not claims of implementation.
 
 | Task | Canonical owner |
 |---|---|

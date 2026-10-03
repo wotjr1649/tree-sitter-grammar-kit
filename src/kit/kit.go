@@ -141,6 +141,10 @@ type Policy struct {
 	WallMillis       int64    `json:"wall_ms"`
 	LargeFileProfile string   `json:"large_file_profile,omitempty"`
 	EncodingPolicy   string   `json:"encoding_policy,omitempty"`
+	ArchiveProfile   string   `json:"archive_profile,omitempty"`
+	ArchiveEntries   uint64   `json:"archive_entries,omitempty"`
+	ArchiveBytes     uint64   `json:"archive_bytes,omitempty"`
+	ArchiveDepth     uint64   `json:"archive_depth,omitempty"`
 	Exclusions       []string `json:"exclusions"`
 }
 
@@ -148,6 +152,9 @@ func (p Policy) text() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "tsgk-policy/r1\noperation=%s\ndiscovery=%s\nfiles=%d\nrecords=%d\nfile_bytes=%d\ntotal_bytes=%d\ndepth=%d\noutput_bytes=%d\nwall_ms=%d\nlarge_file_profile=%s\nencoding=%s\n",
 		p.Operation, p.Discovery, p.Files, p.Records, p.FileBytes, p.TotalBytes, p.Depth, p.OutputBytes, p.WallMillis, p.LargeFileProfile, p.EncodingPolicy)
+	if p.ArchiveProfile != "" { // archive lines exist only for archive operations
+		fmt.Fprintf(&b, "archive_profile=%s\narchive_entries=%d\narchive_bytes=%d\narchive_depth=%d\n", p.ArchiveProfile, p.ArchiveEntries, p.ArchiveBytes, p.ArchiveDepth)
+	}
 	for _, x := range p.Exclusions {
 		fmt.Fprintf(&b, "exclude=%s\n", x)
 	}

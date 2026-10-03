@@ -20,6 +20,7 @@ import (
 
 const (
 	exitOK       = 0
+	exitFail     = 1
 	exitUsage    = 2
 	exitBlocked  = 3
 	exitIO       = 4
@@ -39,11 +40,11 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"verify": "S02", "schema": "S03", "reproduce": "S04", "incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
+var future = map[string]string{"schema": "S03", "reproduce": "S04", "incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus> --root PATH [--out PATH]")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH]")
 		return exitUsage
 	}
 	cmd := args[0]
@@ -51,7 +52,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "tsgk: UNSUPPORTED_COMMAND: %s는 %s 범위이며 이 build에서 구현되지 않았다\n", cmd, owner)
 		return exitUsage
 	}
-	if cmd != "inspect" && cmd != "identity" && cmd != "corpus" {
+	if cmd != "inspect" && cmd != "identity" && cmd != "corpus" && cmd != "verify" {
 		fmt.Fprintf(stderr, "tsgk: UNKNOWN_COMMAND: %s\n", cmd)
 		return exitUsage
 	}
@@ -59,15 +60,23 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 	root := fs.String("root", ".", "snapshot root")
 	out := fs.String("out", "", "new result file outside the root (no clobber)")
-	profile := fs.String("profile", "", "strict profile (S02)")
-	var grammar, encProfile, large *string
-	var files, declares multi
+	profile := fs.String("profile", "", "strict tsgk-profile/r1 file")
+	var grammar, encProfile, large, archive, archiveRoot, expected *string
+	var files, declares, nested multi
 	if cmd != "corpus" {
 		grammar = fs.String("grammar", ".", `grammar directory ("." is the root)`)
 	}
+	if cmd == "identity" || cmd == "verify" {
+		large = fs.String("large-file-profile", "", "registered identity-scoped exception")
+	}
 	if cmd == "identity" {
 		fs.Var(&files, "file", "explicit selection PATH=ROLE (repeatable)")
-		large = fs.String("large-file-profile", "", "registered identity-scoped exception")
+	}
+	if cmd == "verify" {
+		archive = fs.String("archive", "", "ZIP archive subject instead of --root")
+		archiveRoot = fs.String("archive-root", "", "member directory that maps to expected paths")
+		fs.Var(&nested, "nested", "explicitly inspected nested ZIP member (repeatable)")
+		expected = fs.String("expected", "", "caller-trusted tsgk-expected/r1 file (required)")
 	}
 	if cmd != "inspect" {
 		def := ""
@@ -84,15 +93,20 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "tsgk: USAGE: unexpected arguments")
 		return exitUsage
 	}
-	if *profile != "" {
-		fmt.Fprintln(stderr, "tsgk: PROFILE_UNSUPPORTED: strict profile 해석은 S02 범위이며 이 build는 profile을 읽지 않는다")
+	set := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { set[f.Name] = true })
+	if *profile != "" && cmd == "inspect" {
+		fmt.Fprintln(stderr, "tsgk: PROFILE_UNSUPPORTED: inspect는 profile을 읽지 않는다")
 		return exitUsage
 	}
 	var enc kit.EncodingPolicy
 	if encProfile != nil {
 		switch *encProfile {
 		case "cp949":
-			enc.Profile = "cp949"
+			// The corpus default declaration yields to a profile's own encoding section.
+			if cmd != "corpus" || *profile == "" || set["encoding-profile"] {
+				enc.Profile = "cp949"
+			}
 		case "", "none":
 		default:
 			fmt.Fprintln(stderr, "tsgk: USAGE: --encoding-profile must be cp949 or none")
@@ -107,13 +121,19 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			enc.Files = append(enc.Files, kit.FileEncoding{Path: p, Encoding: e})
 		}
 	}
+	limits := kit.DefaultLimits()
+	var profileData, expectedData []byte
+	if *profile != "" {
+		var rerr error
+		if profileData, rerr = readDocument(*profile); rerr != nil {
+			fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", rerr)
+			return exitIO
+		}
+	}
 	var result any
 	var err error
-	var wall time.Duration
 	switch cmd {
 	case "inspect", "identity":
-		limits := kit.DefaultLimits()
-		wall = limits.Wall
 		sel := kit.Selection{Grammar: *grammar}
 		for _, f := range files {
 			p, role, ok := cutLast(f)
@@ -123,18 +143,49 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			}
 			sel.Files = append(sel.Files, kit.FileSelection{Path: p, Role: role})
 		}
-		cctx, cancel := context.WithTimeout(ctx, wall+5*time.Second)
+		cctx, cancel := context.WithTimeout(ctx, limits.Wall+5*time.Second)
 		defer cancel()
 		if cmd == "inspect" {
 			result, err = kit.Inspect(cctx, kit.InspectRequest{Root: *root, Selection: sel, Limits: limits})
 		} else {
-			result, err = kit.Identity(cctx, kit.IdentityRequest{Root: *root, Selection: sel, Limits: limits, Encoding: enc, LargeFileProfile: *large})
+			result, err = kit.Identity(cctx, kit.IdentityRequest{Root: *root, Selection: sel, Limits: limits, Encoding: enc, LargeFileProfile: *large, Profile: profileData})
 		}
 	case "corpus":
 		limits := kit.DefaultCorpusLimits()
 		cctx, cancel := context.WithTimeout(ctx, limits.Wall+5*time.Second)
 		defer cancel()
-		result, err = kit.Corpus(cctx, kit.CorpusRequest{Root: *root, Limits: limits, Encoding: enc})
+		result, err = kit.Corpus(cctx, kit.CorpusRequest{Root: *root, Limits: limits, Encoding: enc, Profile: profileData})
+	case "verify":
+		if *expected == "" {
+			fmt.Fprintln(stderr, "tsgk: USAGE: verify requires --expected FILE")
+			return exitUsage
+		}
+		req := kit.VerifyRequest{Root: *root, Archive: *archive, ArchiveRoot: *archiveRoot, Nested: nested, Selection: kit.Selection{Grammar: *grammar},
+			Limits: limits, ArchiveLimits: kit.DefaultArchiveLimits(), Encoding: enc, LargeFileProfile: *large, Profile: profileData}
+		if *archive != "" {
+			if set["root"] || set["grammar"] {
+				fmt.Fprintln(stderr, "tsgk: USAGE: --archive excludes --root and --grammar")
+				return exitUsage
+			}
+			req.Root, req.Selection = "", kit.Selection{}
+		} else {
+			// A trust document taken from inside the subject would certify itself.
+			for name, p := range map[string]string{"EXPECTED_INSIDE_INPUT": *expected, "PROFILE_INSIDE_INPUT": *profile} {
+				if p != "" && documentInside(p, *root) {
+					fmt.Fprintf(stderr, "tsgk: %s: 신뢰 문서는 검증 대상 root 밖에 있어야 한다\n", name)
+					return exitUsage
+				}
+			}
+		}
+		var rerr error
+		if expectedData, rerr = readDocument(*expected); rerr != nil {
+			fmt.Fprintf(stderr, "tsgk: EXPECTED_UNREADABLE: %v\n", rerr)
+			return exitIO
+		}
+		req.Expected = expectedData
+		cctx, cancel := context.WithTimeout(ctx, limits.Wall+5*time.Second)
+		defer cancel()
+		result, err = kit.Verify(cctx, req)
 	}
 	data, merr := json.Marshal(result)
 	if merr != nil {
@@ -153,18 +204,50 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "tsgk: IO:", err)
 		return exitIO
 	}
+	code := exitOK
+	if v, ok := result.(kit.VerifyResult); ok && v.Assessment == kit.AssessFail {
+		code = exitFail // a completed comparison that found differences is a complete report
+	}
 	if *out == "" {
 		if _, werr := stdout.Write(data); werr != nil {
 			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 완전한 report를 쓰지 못했다")
 			return exitIO
 		}
-		return exitOK
+		return code
 	}
-	if code, perr := publish(*out, *root, data); perr != nil {
-		fmt.Fprintf(stderr, "tsgk: %s: 분석은 끝났지만 결과 publication이 실패했다: %v\n", code, perr)
+	publishRoot := *root
+	if archive != nil && *archive != "" {
+		publishRoot = "" // the input is one file; an existing destination is still refused
+	}
+	if pcode, perr := publish(*out, publishRoot, data); perr != nil {
+		fmt.Fprintf(stderr, "tsgk: %s: 분석은 끝났지만 결과 publication이 실패했다: %v\n", pcode, perr)
 		return exitIO
 	}
-	return exitOK
+	return code
+}
+
+// readDocument reads at most MaxDocumentBytes+1 bytes so the API, not the CLI, rejects an oversized
+// document with the same DOCUMENT_BYTES_LIMIT a direct caller gets.
+func readDocument(p string) ([]byte, error) {
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return io.ReadAll(io.LimitReader(f, kit.MaxDocumentBytes+1))
+}
+
+// documentInside reports whether a trust document's directory is the root or below it.
+func documentInside(doc, root string) bool {
+	abs, err := filepath.Abs(doc)
+	if err != nil {
+		return false // readDocument reports the unreadable path
+	}
+	dir, err := filepath.EvalSymlinks(filepath.Dir(abs))
+	if err != nil {
+		return false
+	}
+	return inside(dir, root)
 }
 
 func exitFor(kind string) int {

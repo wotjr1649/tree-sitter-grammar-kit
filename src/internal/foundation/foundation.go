@@ -37,7 +37,7 @@ var required = []string{
 	"docs/validation/workload-matrix.md", "docs/reports/session-00-foundation.md",
 	"src/internal/foundation/foundation.go", "src/internal/foundation/foundation_test.go",
 	"src/internal/foundation/campaign_test.go",
-	"src/contracts/examples/profile-r0.json",
+	"src/contracts/examples/profile-r1.json", "src/contracts/examples/expected-r1.json",
 	"src/contracts/campaign-01.json", "src/contracts/language-sources.json",
 	".github/workflows/prepare-p05.yml", "src/dev/prepare-p05/inputs.json",
 	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
