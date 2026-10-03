@@ -109,7 +109,8 @@ foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
     $e.execution_status = $c.execution_status; $e.assessment = $c.assessment; $e.code = $c.code
     if (@($c.steps).Count) {
       $s = $c.steps[0]
-      if ($s.incremental) {  # null when no tree was parsed (SVC observation only) $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
+      # incremental is null when no tree was parsed (SVC observation only)
+      if ($s.incremental) { $e.has_error = $s.incremental.has_error; $e.descendant_count = $s.incremental.descendant_count; $e.digest = $s.incremental.digest; $e.form = $s.incremental.form
         if ($s.incremental.PSObject.Properties['summary'] -and $s.incremental.summary) { $e.errors_total = $s.incremental.summary.errors.total } }
       if ($s.PSObject.Properties['composite'] -and $s.composite) { $e.svc_coverage = $s.composite.coverage }
     }
