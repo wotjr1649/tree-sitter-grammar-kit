@@ -55,9 +55,12 @@ type detector struct {
 	u16high    bool
 	u16bad     string
 	u16started bool
-	// cp949 structural state (lead byte waiting for a trail byte).
-	cpLead bool
-	cpBad  bool
+	// cp949 state: a lead byte waiting for its trail, a structural violation, and a
+	// well-formed pair without a code point in the pinned index-euc-kr.
+	cpLead     bool
+	cpLeadByte byte
+	cpBad      bool
+	cpUnmapped bool
 }
 
 func newDetector() *detector { return &detector{u16odd: -1} }
@@ -121,13 +124,15 @@ func (d *detector) feed(p []byte) {
 		if d.cpLead {
 			if b < 0x41 || b == 0xFF {
 				d.cpBad = true
+			} else if !CP949Pair(d.cpLeadByte, b) {
+				d.cpUnmapped = true
 			}
 			d.cpLead = false
 		} else if b >= 0x80 {
 			if b == 0x80 || b == 0xFF {
 				d.cpBad = true
 			} else {
-				d.cpLead = true
+				d.cpLead, d.cpLeadByte = true, b
 			}
 		}
 	}
@@ -228,31 +233,31 @@ func (d *detector) result(profileCP949 bool, declared string) EncodingOutcome {
 		return blocked("", "", "NUL_WITHOUT_BOM")
 	}
 	utf8OK := !d.u8bad && len(d.u8carry) == 0
-	cpPossible := !d.cpBad && !d.cpLead
-	switch declared { // per-file declarations replace steps 4-5 only
+	cpPossible := !d.cpBad && !d.cpLead    // structure of the WHATWG euc-kr decoder
+	cpValid := cpPossible && !d.cpUnmapped // and every pair has a code point in the pinned table
+	switch declared {                      // per-file declarations replace steps 4-5 only
 	case "utf-8":
 		if utf8OK {
 			return EncodingOutcome{Assessment: "PASS", Encoding: EncodingUTF8, Source: SourceDeclaration}
 		}
 		return blocked(EncodingUTF8, SourceDeclaration, "DECLARED_ENCODING_INVALID")
 	case "cp949":
-		if !cpPossible {
+		if !cpValid {
 			return blocked(EncodingCP949, SourceDeclaration, "DECLARED_ENCODING_INVALID")
 		}
-		if !d.nonASCII {
-			return EncodingOutcome{Assessment: "PASS", Encoding: EncodingCP949, Source: SourceDeclaration}
-		}
-		return EncodingOutcome{Assessment: "UNRESOLVED", Encoding: EncodingCP949, Source: SourceDeclaration, Code: "ENCODING_TABLE_REQUIRED"}
+		return EncodingOutcome{Assessment: "PASS", Encoding: EncodingCP949, Source: SourceDeclaration}
 	}
 	if utf8OK { // step 4
-		if profileCP949 && d.nonASCII && cpPossible {
-			// AMBIGUOUS needs the index-euc-kr table (S05); structural cp949 failure needs no table.
-			return EncodingOutcome{Assessment: "UNRESOLVED", Code: "ENCODING_TABLE_REQUIRED"}
+		if profileCP949 && d.nonASCII && cpValid {
+			return blocked("", "", "AMBIGUOUS_ENCODING")
 		}
 		return EncodingOutcome{Assessment: "PASS", Encoding: EncodingUTF8, Source: SourceValidation}
 	}
 	if profileCP949 && cpPossible { // step 5
-		return EncodingOutcome{Assessment: "UNRESOLVED", Encoding: EncodingCP949, Source: SourceValidation, Code: "ENCODING_TABLE_REQUIRED"}
+		if d.cpUnmapped { // Windows-only extensions and other pairs outside the table
+			return blocked(EncodingCP949, SourceValidation, "CP949_UNMAPPED")
+		}
+		return EncodingOutcome{Assessment: "PASS", Encoding: EncodingCP949, Source: SourceValidation}
 	}
 	return blocked("", "", "UNDETERMINED_ENCODING") // step 6
 }

@@ -623,9 +623,6 @@ func (c *corpus) finish() {
 	c.res.Identities = append(c.res.Identities, c.res.Policy.ref())
 	c.res.Coverage = Coverage{Requested: []string{"csproj-membership", "duplicates", "encoding-steps-1-6", "generated-marker", "newline", "role", "size-class"},
 		Observed: []string{"csproj-membership", "duplicates", "encoding-steps-1-6", "generated-marker", "newline", "role", "size-class"}, Unsupported: []string{}}
-	if s.EncodingCodes["ENCODING_TABLE_REQUIRED"] > 0 {
-		c.res.Coverage.Unsupported = append(c.res.Coverage.Unsupported, "cp949-table")
-	}
 }
 
 // newlineSink classifies line endings; UTF-16 input (by BOM) is read as code units.

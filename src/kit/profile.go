@@ -239,7 +239,8 @@ var (
 	encodingNames   = map[string]bool{EncodingUTF8: true, EncodingUTF16LE: true, EncodingUTF16BE: true, EncodingCP949: true}
 	encodingSources = map[string]bool{SourceBOM: true, SourceValidation: true, SourceDeclaration: true}
 	encodingCodes   = map[string]bool{"UTF32_BOM": true, "BOM_CONTENT_INVALID": true, "UTF16_ODD_LENGTH": true, "UTF16_UNPAIRED_SURROGATE": true, "UTF16_NUL": true,
-		"NUL_WITHOUT_BOM": true, "DECLARED_ENCODING_INVALID": true, "UNDETERMINED_ENCODING": true, "ENCODING_TABLE_REQUIRED": true}
+		"NUL_WITHOUT_BOM": true, "DECLARED_ENCODING_INVALID": true, "UNDETERMINED_ENCODING": true, "ENCODING_TABLE_REQUIRED": true,
+		"AMBIGUOUS_ENCODING": true, "CP949_UNMAPPED": true}
 )
 
 func parseExpected(data []byte) (*expected, *Error) {
