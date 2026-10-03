@@ -133,18 +133,24 @@ func openZip(r *run, ra io.ReaderAt, size uint64, lim ArchiveLimits, seen *uint6
 		}
 		host, ext := le16(h[4:])>>8, le32(h[38:])
 		e.dir = strings.HasSuffix(e.name, "/")
-		if host == 3 { // Unix: the mode type travels in the high external attribute bits
-			switch t := ext >> 16 & 0xF000; {
-			case t == 0xA000:
-				return nil, zipFail("ARCHIVE_LINK_REJECTED", where)
-			case t == 0x4000 && !e.dir || t == 0x8000 && e.dir:
-				return nil, zipFail("ZIP_ENTRY_TYPE_INCONSISTENT", where)
-			case t != 0 && t != 0x4000 && t != 0x8000:
-				return nil, zipFail("ARCHIVE_SPECIAL_REJECTED", where)
-			}
-		}
-		if (host == 0 || host == 10 || host == 11) && ext&0x400 != 0 { // DOS/NTFS reparse point
+		// Unix and OS X writers, and tools copying st_mode on other hosts, put a Unix mode in
+		// the high bits; extractors honor it, so a link or special type is rejected whatever
+		// host the entry claims.
+		switch t := ext >> 16 & 0xF000; {
+		case t == 0xA000:
 			return nil, zipFail("ARCHIVE_LINK_REJECTED", where)
+		case t == 0x4000 && !e.dir || t == 0x8000 && e.dir:
+			return nil, zipFail("ZIP_ENTRY_TYPE_INCONSISTENT", where)
+		case t != 0 && t != 0x4000 && t != 0x8000:
+			return nil, zipFail("ARCHIVE_SPECIAL_REJECTED", where)
+		}
+		if host == 0 || host == 10 || host == 14 { // MS-DOS/FAT, NTFS, VFAT attributes
+			switch {
+			case ext&0x400 != 0: // reparse point
+				return nil, zipFail("ARCHIVE_LINK_REJECTED", where)
+			case ext&0x10 != 0 && !e.dir: // a directory attribute needs a directory name
+				return nil, zipFail("ZIP_ENTRY_TYPE_INCONSISTENT", where)
+			}
 		}
 		if e.dir && e.usize != 0 {
 			return nil, zipFail("ZIP_DIRECTORY_HAS_DATA", where)

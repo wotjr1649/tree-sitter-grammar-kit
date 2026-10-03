@@ -106,7 +106,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if encProfile != nil {
 		switch *encProfile {
 		case "cp949":
-			// The corpus default declaration yields to a profile's own encoding section.
+			// With --profile, corpus takes its encoding only from the profile (none if absent).
 			if cmd != "corpus" || *profile == "" || set["encoding-profile"] {
 				enc.Profile = "cp949"
 			}
@@ -173,8 +173,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			req.Root, req.Selection = "", kit.Selection{}
 		} else {
 			// A trust document taken from inside the subject would certify itself.
-			for name, p := range map[string]string{"EXPECTED_INSIDE_INPUT": *expected, "PROFILE_INSIDE_INPUT": *profile} {
-				if p != "" && documentInside(p, *root) {
+			for _, d := range [][2]string{{"EXPECTED_INSIDE_INPUT", *expected}, {"PROFILE_INSIDE_INPUT", *profile}} {
+				if name, p := d[0], d[1]; p != "" && documentInside(p, *root) {
 					fmt.Fprintf(stderr, "tsgk: %s: 신뢰 문서는 검증 대상 root 밖에 있어야 한다\n", name)
 					return exitUsage
 				}

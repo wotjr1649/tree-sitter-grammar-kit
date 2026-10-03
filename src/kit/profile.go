@@ -3,6 +3,8 @@ package kit
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -93,7 +95,8 @@ func parseProfile(data []byte) (*profile, *Error) {
 		if e != nil {
 			return nil, e
 		}
-		for k, x := range l {
+		for _, k := range v.keys { // document order keeps the reported error deterministic
+			x := l[k]
 			n, e := t.uint(x)
 			if e != nil {
 				return nil, e
@@ -191,14 +194,9 @@ func sortedUnique(t typed, prefix string, paths []*jv) *Error {
 // narrow applies profile limits under the operation bounds: every key must apply to the
 // operation and may only lower its bound. It returns the effective bounds.
 func (p *profile) narrow(bounds map[string]uint64) (map[string]uint64, *Error) {
-	out := map[string]uint64{}
-	for k, v := range bounds {
-		out[k] = v
-	}
-	if p == nil {
-		return out, nil
-	}
-	for k, v := range p.limits {
+	out := maps.Clone(bounds)
+	for _, k := range slices.Sorted(maps.Keys(p.limits)) {
+		v := p.limits[k]
 		bound, ok := bounds[k]
 		if !ok {
 			return nil, fail(KindInvalidInput, "PROFILE_LIMIT_NOT_APPLICABLE", "profile#/limits/"+k, nil)
@@ -438,8 +436,7 @@ func pathProblem(p string) string {
 		case strings.TrimRight(seg, " .") != seg:
 			return "TRAILING_DOT_SPACE"
 		}
-		base, _, _ := strings.Cut(seg, ".")
-		if windowsDevices[strings.ToUpper(base)] {
+		if reservedDevice(seg) {
 			return "DEVICE"
 		}
 	}

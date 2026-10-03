@@ -18,7 +18,7 @@ func TestStrictDocuments(t *testing.T) {
 		name, doc, kind, code, path string
 	}{
 		{"duplicate", `{"schema":"tsgk-profile/r1","id":"a","id":"b"}`, KindInvalidInput, "JSON_DUPLICATE_KEY", "profile#/id"},
-		{"escaped-duplicate", `{"schema":"tsgk-profile/r1","id":"a","id":"b"}`, KindInvalidInput, "JSON_DUPLICATE_KEY", "profile#/id"},
+		{"escaped-duplicate", `{"schema":"tsgk-profile/r1","id":"a","\u0069d":"b"}`, KindInvalidInput, "JSON_DUPLICATE_KEY", "profile#/id"},
 		{"case-key", `{"schema":"tsgk-profile/r1","ID":"a"}`, KindInvalidInput, "JSON_UNKNOWN_FIELD", "profile#/ID"},
 		{"unknown-key", `{"schema":"tsgk-profile/r1","id":"a","hooks":[]}`, KindInvalidInput, "JSON_UNKNOWN_FIELD", "profile#/hooks"},
 		{"trailing-object", goodProfile + `{}`, KindInvalidInput, "JSON_TRAILING_VALUE", "profile"},
@@ -38,6 +38,7 @@ func TestStrictDocuments(t *testing.T) {
 		{"max-plus-one", `{"schema":"tsgk-profile/r1","id":"a","limits":{"files":9007199254740992}}`, KindInvalidInput, "JSON_INTEGER_RANGE", "profile#/limits/files"},
 		{"huge", `{"schema":"tsgk-profile/r1","id":"a","limits":{"files":123456789012345678901234567890}}`, KindInvalidInput, "JSON_INTEGER_RANGE", "profile#/limits/files"},
 		{"zero-limit", `{"schema":"tsgk-profile/r1","id":"a","limits":{"files":0}}`, KindInvalidInput, "PROFILE_LIMIT_INVALID", "profile#/limits/files"},
+		{"first-error-in-document-order", `{"schema":"tsgk-profile/r1","id":"a","limits":{"files":0,"depth":"x","total_bytes":1.5}}`, KindInvalidInput, "PROFILE_LIMIT_INVALID", "profile#/limits/files"},
 		{"nan", `{"schema":"tsgk-profile/r1","id":"a","limits":{"files":NaN}}`, KindInvalidInput, "JSON_SYNTAX", "profile#/limits/files"},
 		{"invalid-utf8", "{\"schema\":\"tsgk-profile/r1\",\"id\":\"\xff\"}", KindInvalidInput, "JSON_INVALID_UTF8", "profile"},
 		{"lone-surrogate", `{"schema":"tsgk-profile/r1","id":"\ud800"}`, KindInvalidInput, "JSON_SYNTAX", "profile#/id"},
@@ -68,6 +69,11 @@ func TestStrictDocuments(t *testing.T) {
 				t.Fatalf("path %q, want %q", e.Path, tc.path)
 			}
 		})
+	}
+	for _, name := range []string{"CON .txt", "a/conout$", "COM\u00b9.txt", "lpt\u00b3"} {
+		if portable(name, false) {
+			t.Fatalf("reserved device name accepted: %q", name)
+		}
 	}
 	if _, e := parseProfile(make([]byte, MaxDocumentBytes+1)); e == nil || e.Code != "DOCUMENT_BYTES_LIMIT" {
 		t.Fatalf("oversized document: %v", e)

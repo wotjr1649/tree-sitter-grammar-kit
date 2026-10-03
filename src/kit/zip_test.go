@@ -219,6 +219,8 @@ func TestArchiveRejects(t *testing.T) {
 		{"unc-slash", []rz{ok("//server/share/x")}, nil, KindInvalidInput, "ARCHIVE_PATH_ABSOLUTE"},
 		{"ads", []rz{ok("a.txt:stream")}, nil, KindInvalidInput, "ARCHIVE_PATH_ADS"},
 		{"device", []rz{ok("src/CON.txt")}, nil, KindInvalidInput, "ARCHIVE_PATH_DEVICE"},
+		{"device-space", []rz{ok("CON .txt")}, nil, KindInvalidInput, "ARCHIVE_PATH_DEVICE"},
+		{"device-conin", []rz{ok("conin$")}, nil, KindInvalidInput, "ARCHIVE_PATH_DEVICE"},
 		{"trailing-dot", []rz{ok("a.txt"), ok("a.txt.")}, nil, KindInvalidInput, "ARCHIVE_PATH_TRAILING_DOT_SPACE"},
 		{"trailing-space", []rz{ok("dir /a")}, nil, KindInvalidInput, "ARCHIVE_PATH_TRAILING_DOT_SPACE"},
 		{"control", []rz{ok("a\x01b")}, nil, KindInvalidInput, "ARCHIVE_PATH_CONTROL"},
@@ -228,6 +230,10 @@ func TestArchiveRejects(t *testing.T) {
 		{"file-dir", []rz{ok("a"), ok("a/b")}, nil, KindInvalidInput, "ARCHIVE_FILE_DIRECTORY_CONFLICT"},
 		{"file-dir-case", []rz{ok("A"), ok("a/b")}, nil, KindInvalidInput, "ARCHIVE_FILE_DIRECTORY_CONFLICT"},
 		{"symlink", []rz{with(ok("link"), func(e *rz) { e.ext = 0o120777 << 16 })}, nil, KindInvalidInput, "ARCHIVE_LINK_REJECTED"},
+		{"symlink-osx", []rz{with(ok("link"), func(e *rz) { e.host, e.ext = 19, 0o120777<<16 })}, nil, KindInvalidInput, "ARCHIVE_LINK_REJECTED"},
+		{"symlink-any-host", []rz{with(ok("link"), func(e *rz) { e.host, e.ext = 0, 0o120777<<16 })}, nil, KindInvalidInput, "ARCHIVE_LINK_REJECTED"},
+		{"dos-dir-without-slash", []rz{with(ok("d"), func(e *rz) { e.host, e.ext, e.data = 0, 0x10, nil })}, nil, KindInvalidInput, "ZIP_ENTRY_TYPE_INCONSISTENT"},
+		{"vfat-reparse", []rz{with(ok("j"), func(e *rz) { e.host, e.ext = 14, 0x400 })}, nil, KindInvalidInput, "ARCHIVE_LINK_REJECTED"},
 		{"junction", []rz{with(ok("j"), func(e *rz) { e.host, e.ext = 0, 0x410 })}, nil, KindInvalidInput, "ARCHIVE_LINK_REJECTED"},
 		{"fifo", []rz{with(ok("p"), func(e *rz) { e.ext = 0o010644 << 16 })}, nil, KindInvalidInput, "ARCHIVE_SPECIAL_REJECTED"},
 		{"dir-data", []rz{with(ok("d/"), func(e *rz) { e.ext = 0o040755 << 16 })}, nil, KindInvalidInput, "ZIP_DIRECTORY_HAS_DATA"},
@@ -311,6 +317,28 @@ func TestArchiveLimits(t *testing.T) {
 	}
 	_, err = verifyArchive(t, outer, nexp, func(r *VerifyRequest) { r.Nested = []string{"lib/missing.zip"} })
 	kindOf(t, err, KindInvalidInput, "NESTED_MEMBER_NOT_FOUND")
+}
+
+// S02-A11: an explicit API selection on an archive is validated like a directory one.
+func TestArchiveSelection(t *testing.T) {
+	p := writeZip(t, buildZip([]rz{file("a.js", "a\n")}))
+	exp := expectedFor(t, []FileIdentity{rec2("a.js", "scanner", "a\n")})
+	for _, tc := range []struct {
+		files []FileSelection
+		code  string
+	}{
+		{[]FileSelection{}, "EMPTY_SELECTION"},
+		{[]FileSelection{{"a.js", "grammar"}, {"a.js", "scanner"}}, "SELECTION_DUPLICATE"},
+		{[]FileSelection{{"../a.js", "scanner"}}, "SELECTION_INVALID"},
+		{[]FileSelection{{"a.js", ""}}, "SELECTION_INVALID"},
+	} {
+		_, err := verifyArchive(t, p, exp, func(r *VerifyRequest) { r.Selection.Files = tc.files })
+		kindOf(t, err, KindInvalidInput, tc.code)
+	}
+	res, err := verifyArchive(t, p, exp, func(r *VerifyRequest) { r.Selection.Files = []FileSelection{{"a.js", "scanner"}} })
+	if err != nil || res.Assessment != AssessPass || res.Scope != ScopeListed {
+		t.Fatalf("listed archive: %v %+v", err, res.Differences)
+	}
 }
 
 // S02-A08: a decompression bomb never allocates its expanded size. The declared size is

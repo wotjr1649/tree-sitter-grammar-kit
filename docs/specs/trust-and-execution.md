@@ -20,7 +20,7 @@ grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다.
 
 ## Path와 archive
 
-portable path는 UTF-8 상대 경로, `/` separator, 빈 segment/`.`/`..`/제어문자/절대 경로/drive/UNC/역슬래시/ADS `:`를 거부한다. 대소문자 접기 충돌, Windows device basename(CON/PRN/AUX/NUL/COM1~9/LPT1~9 및 확장자 형태), trailing dot/space도 거부한다. Unicode 정규화 충돌은 S02가 고정한 이름 정책 `portable-names-r1`(아래)이 ASCII 밖 이름을 명시 거부하는 방식으로 다룬다.
+portable path는 UTF-8 상대 경로, `/` separator, 빈 segment/`.`/`..`/제어문자/절대 경로/drive/UNC/역슬래시/ADS `:`를 거부한다. 대소문자 접기 충돌, Windows device basename(CON/PRN/AUX/NUL/COM1~9/LPT1~9/COM¹²³/LPT¹²³/CONIN$/CONOUT$, 확장자 형태와 첫 마침표 앞 공백 형태 `CON .txt` 포함; [Windows 이름 규칙](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file)), trailing dot/space도 거부한다. Unicode 정규화 충돌은 S02가 고정한 이름 정책 `portable-names-r1`(아래)이 ASCII 밖 이름을 명시 거부하는 방식으로 다룬다.
 
 grammar 선택의 `Selection.Grammar`와 source 등록부의 `grammar_subdirectory`는 전체 값 `"."`에 한해 별도 root sentinel을 허용한다. 검증된 root를 가리키며 정규화로 다른 문자열을 sentinel로 바꾸지 않는다. 파일/member path와 `./child`·`child/.`·`child/../other`에는 이 예외를 적용하지 않는다.
 
@@ -34,7 +34,7 @@ archive inspection은 extraction과 분리한다. 절대·상위·중복·case c
 
 구조 검사는 member 데이터를 읽기 전에 한다. EOCD는 comment 길이가 파일 끝과 정확히 맞아야 하고, central directory는 EOCD 바로 앞에서 끝나야 한다(`ZIP_STRUCTURE_INVALID`). entry 수는 entry를 할당하기 전에 `ArchiveLimits.Entries`와 비교한다. 각 local header는 central entry와 flags·method·이름 bytes가 같아야 하고, descriptor가 없으면 CRC·두 크기도 같아야 한다. descriptor가 있으면 local 값은 0이거나 같아야 하며 descriptor 값은 central과 같아야 한다(`ZIP_LOCAL_CENTRAL_MISMATCH`, `ZIP_DESCRIPTOR_MISMATCH`). local header·data·descriptor 영역이 서로 겹치거나 central directory와 겹치면 `ZIP_OVERLAP`이다. stored member는 두 크기가 같아야 한다.
 
-member 이름은 원래 bytes를 진단용으로 보존하고 고쳐 쓰지 않는다. directory entry(이름 끝 `/`)는 데이터를 가질 수 없다(`ZIP_DIRECTORY_HAS_DATA`). Unix 생성 entry의 mode가 symlink이거나 DOS/NTFS 생성 entry에 reparse point 속성이 있으면 `ARCHIVE_LINK_REJECTED`, regular·directory가 아닌 mode는 `ARCHIVE_SPECIAL_REJECTED`, mode와 이름의 file/directory 종류가 다르면 `ZIP_ENTRY_TYPE_INCONSISTENT`다. 같은 이름은 `ARCHIVE_DUPLICATE_MEMBER`, ASCII 대소문자만 다른 이름은 `ARCHIVE_CASE_COLLISION`, 한 entry가 file이고 다른 entry가 그 아래를 쓰는 경우(대소문자 무시)는 `ARCHIVE_FILE_DIRECTORY_CONFLICT`다.
+member 이름은 원래 bytes를 진단용으로 보존하고 고쳐 쓰지 않는다. directory entry(이름 끝 `/`)는 데이터를 가질 수 없다(`ZIP_DIRECTORY_HAS_DATA`). external attribute 상위 16 bit의 Unix mode type은 entry가 주장하는 host와 관계없이 검사한다(Unix·OS X writer와 st_mode를 복사하는 도구가 쓰고 extractor가 따른다). symlink type이면 `ARCHIVE_LINK_REJECTED`, regular·directory가 아닌 type은 `ARCHIVE_SPECIAL_REJECTED`, type과 이름의 file/directory 종류가 다르면 `ZIP_ENTRY_TYPE_INCONSISTENT`다. MS-DOS/FAT·NTFS·VFAT host(0·10·14)의 속성은 reparse point면 `ARCHIVE_LINK_REJECTED`, directory 속성인데 이름이 `/`로 끝나지 않으면 `ZIP_ENTRY_TYPE_INCONSISTENT`다. 이름이 `/`로 끝나는데 directory 속성이 없는 entry(예: Java jar)는 허용한다. 같은 이름은 `ARCHIVE_DUPLICATE_MEMBER`, ASCII 대소문자만 다른 이름은 `ARCHIVE_CASE_COLLISION`, 한 entry가 file이고 다른 entry가 그 아래를 쓰는 경우(대소문자 무시)는 `ARCHIVE_FILE_DIRECTORY_CONFLICT`다.
 
 이름 정책 `portable-names-r1`은 위 portable path 규칙에 ASCII만 허용하는 조건을 더한다. Unicode 정규화 충돌을 표 없이 검출할 수 없어 정규화 표 dependency를 들이지 않고, ASCII 밖 이름은 `..._NOT_ASCII`(`UNSUPPORTED`)로 명시 거부한다. 거부 사유 code는 `EMPTY`, `BACKSLASH`(UNC `\\server` 포함), `ABSOLUTE`(`//server` 포함), `DRIVE`, `ADS`, `NOT_ASCII`, `CONTROL`, `EMPTY_SEGMENT`, `TRAVERSAL`, `TRAILING_DOT_SPACE`, `DEVICE`이고 archive member는 `ARCHIVE_PATH_` 접두, expected path는 `EXPECTED_PATH_` 접두로 보고한다. 이 정책은 verify의 archive member와 expected path에 적용한다. 디렉터리 discovery의 S01 규칙(UTF-8 portable path)은 바꾸지 않는다. 디렉터리 subject에서 ASCII 밖 이름의 actual 파일은 expected에 있을 수 없으므로 `UNEXPECTED_FILE`이 된다.
 

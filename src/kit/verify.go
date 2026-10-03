@@ -302,6 +302,11 @@ func (v *verification) archive(ctx context.Context) (Manifest, *Error) {
 	if req.Selection.Grammar != "" {
 		return out, fail(KindInvalidInput, "GRAMMAR_NOT_APPLICABLE", "", nil)
 	}
+	if req.Selection.Files != nil {
+		if e := checkSelection(req.Selection.Files); e != nil {
+			return out, e
+		}
+	}
 	if req.ArchiveRoot != "" && !portable(req.ArchiveRoot, false) {
 		return out, fail(KindInvalidInput, "ARCHIVE_ROOT_INVALID", "", nil)
 	}
@@ -418,7 +423,7 @@ func (v *verification) archive(ctx context.Context) (Manifest, *Error) {
 	for _, m := range members {
 		present[m.path] = true
 	}
-	for p := range declared {
+	for _, p := range slices.Sorted(maps.Keys(declared)) {
 		if !present[p] {
 			return out, fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil)
 		}

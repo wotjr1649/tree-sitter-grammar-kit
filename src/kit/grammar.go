@@ -184,11 +184,11 @@ func Inspect(ctx context.Context, req InspectRequest) (InventoryResult, error) {
 func Identity(ctx context.Context, req IdentityRequest) (IdentityResult, error) {
 	policy := grammarPolicy(req.Limits, req.LargeFileProfile, encodingPolicyName(req.Encoding))
 	res, e := func() (IdentityResult, *Error) {
+		if req.Profile == nil { // S01 error precedence is unchanged without a profile
+			return bindIdentity(ctx, req, nil, false)
+		}
 		if !req.Limits.valid() {
 			return IdentityResult{}, fail(KindInvalidInput, "LIMITS_INVALID", "", nil)
-		}
-		if req.Profile == nil {
-			return bindIdentity(ctx, req, nil, false)
 		}
 		prof, e := parseProfile(req.Profile)
 		if e != nil {
@@ -301,7 +301,7 @@ func bindIdentity(ctx context.Context, req IdentityRequest, prof *profile, toler
 	if len(selected) == 0 && !tolerateMissing {
 		return res, fail(KindInvalidInput, "EMPTY_SELECTION", "", nil)
 	}
-	for p := range declared {
+	for _, p := range slices.Sorted(maps.Keys(declared)) {
 		if item := inv.entries[p]; item == nil || item.State != StateFound {
 			return res, fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil)
 		}

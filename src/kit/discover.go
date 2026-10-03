@@ -38,13 +38,10 @@ func discover(r *run, g *guard, inv *inventory, sel Selection, limits Limits) *E
 	d := &discovery{r: r, g: g, inv: inv, limits: limits}
 	if sel.Files != nil {
 		inv.closure = ClosureCallerSelected
+		if e := checkSelection(sel.Files); e != nil {
+			return e
+		}
 		for _, f := range sel.Files {
-			if !portable(f.Path, false) || !roles[f.Role] {
-				return fail(KindInvalidInput, "SELECTION_INVALID", f.Path, nil)
-			}
-			if inv.entries[f.Path] != nil {
-				return fail(KindInvalidInput, "SELECTION_DUPLICATE", f.Path, nil)
-			}
 			if e := d.add(f.Path, f.Role, "SELECTION", true); e != nil {
 				return e
 			}
@@ -91,6 +88,25 @@ func discover(r *run, g *guard, inv *inventory, sel Selection, limits Limits) *E
 		return e
 	}
 	return d.countSelected()
+}
+
+// checkSelection validates an explicit file list before any read; directory and archive
+// subjects share it.
+func checkSelection(files []FileSelection) *Error {
+	if len(files) == 0 {
+		return fail(KindInvalidInput, "EMPTY_SELECTION", "", nil)
+	}
+	seen := map[string]bool{}
+	for _, f := range files {
+		if !portable(f.Path, false) || !roles[f.Role] {
+			return fail(KindInvalidInput, "SELECTION_INVALID", f.Path, nil)
+		}
+		if seen[f.Path] {
+			return fail(KindInvalidInput, "SELECTION_DUPLICATE", f.Path, nil)
+		}
+		seen[f.Path] = true
+	}
+	return nil
 }
 
 type discovery struct {

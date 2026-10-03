@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"io"
 	"io/fs"
+	"maps"
 	"path"
 	"slices"
 	"strings"
@@ -165,7 +166,7 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 	if e := c.walk(); e != nil {
 		return failWith(e)
 	}
-	for p := range declared {
+	for _, p := range slices.Sorted(maps.Keys(declared)) {
 		if !c.exact[p] { // declarations match exact record paths
 			return failWith(fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil))
 		}
