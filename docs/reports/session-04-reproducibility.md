@@ -26,7 +26,7 @@ generator 실행 전에 공식 release asset digest를 기록했다(`artifacts/.
 | `go mod download`·`go mod verify`(proxy·sumdb), `gofmt -l src`, `go vet ./src/...`(windows, `GOOS=linux`, `GOOS=darwin`), `go build ./src/...`, `git diff --check` | 통과 |
 | `go test ./src/... -count=1` | `src/kit`, `src/cmd/tsgk`, `src/internal/foundation`, `src/internal/runner`, `src/internal/reproduce` 통과 |
 | runner·frame 시험 반복 | `-count=5`와 `-count=3`에서 모두 통과 |
-| targeted mutant 14종(`cc3ab68`) | 14/14 검출. 첫 실행은 미사용 변수로 컴파일되지 않은 mutant 3종이 있어 11/14로 기록했고(검출 실패가 아님), 컴파일되는 형태로 고친 재실행이 14/14다. 두 receipt 모두 보존 |
+| targeted mutant 14종(`cc3ab68`), 18종(`a4c3fdb`) | 14/14, 18/18 검출. `cc3ab68` 첫 실행은 미사용 변수로 컴파일되지 않은 mutant 3종이 있어 11/14로 기록했고(검출 실패가 아님), 컴파일되는 형태로 고친 재실행이 14/14다. receipt 모두 보존 |
 | `src/dev/s04-reproduce/ci-owned.ps1`(로컬 Windows) | asset digest 확인 뒤 owned fixture 재현 PASS, Job Object hard memory backend |
 | Windows capability receipt | `windows-job-object`, tree cleanup `JOB_OBJECT`, 그룹 이탈 하위 process 포함, memory `HARD`(job commit bytes) |
 
@@ -68,13 +68,22 @@ S01이 결속한 26 route source(`_ref/campaign-01-s01/sources`)로 route마다 
 
 ## acceptance 연결
 
-A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26 route 실행; A02 `TestReferenceFindings`(기준 변경 → `MISMATCH`, 기준 없음 → `NOT_CLAIMED`, source 불변); A03 `TestJSONOnlyRun`(JS helper 변경 뒤 JSON 실행은 JS claim 없음, JS 실행은 `SOURCE_MISMATCH`); A04 `TestRunIdentityAndPoison`(abi·최적화·도구·header 변경 → 새 identity, 오염된 work 디렉터리·home 미사용); A05 `TestSourceWritesAndFailedPublication`(작업 공간 사본 쓰기, 실행 중 원본 root 변경, 실패 publication), `TestReproducePass`의 `OUTPUT_EXISTS`; A06 `TestBlockedBeforeLaunch`(runner·reproduce 둘 다; 작업 공간·결과를 만들지 않음); A07 `TestNonzeroExit`, `TestOutputLimits`, `TestFailureKinds`; A08 `TestTreeTermination`, `TestPipeHoldingDescendant`, `TestEscapedDescendant`, `TestEscapedQuietDescendant`; A09 `TestEvidenceAndCleanupFailures`(작업 공간·도구 사본 정리 실패, 결과 쓰기 실패); A10 `TestArgsDirEnvExact`, `TestReproduceCLI`; A11 `TestOutputLimits`(같음/하나 초과), `TestStorageLimit`(같음/한 byte 초과), `TestReproduceLimitCeilings`, 아래 예산 소비; A03·A04는 `TestJSClosureLeak`도 포함; A12 위 mutant 14종; A13 `TestCapabilityReceipt`와 세 OS CI(PR 단계); A14 `TestOfflineClosure`와 `PATH`를 비운 기존 CLI·외부 consumer 시험; A15 `TestReproductionRoutes`와 위 26 route 표; A16 `TestDefaultRequestPolicy`(90초·300초·4 edit·4 GiB·5초, 5 edit 거부), `TestDefaultBatchPolicy`, `TestFrameStatusMapping`, `TestFrameEscapedStdoutHolder`, `TestMemoryLimit`; A17 위 patch chain·재생성 절; A18 도구 identity 절과 `TestReproductionRoutes`의 digest·patch 상태 검사.
+A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26 route 실행; A02 `TestReferenceFindings`(기준 변경 → `MISMATCH`, 기준 없음 → `NOT_CLAIMED`, source 불변); A03 `TestJSONOnlyRun`(JS helper 변경 뒤 JSON 실행은 JS claim 없음, JS 실행은 `SOURCE_MISMATCH`); A04 `TestRunIdentityAndPoison`(abi·최적화·도구·header 변경 → 새 identity, 오염된 work 디렉터리·home 미사용); A05 `TestSourceWritesAndFailedPublication`(작업 공간 사본 쓰기, 실행 중 원본 root 변경, 실패 publication), `TestReproducePass`의 `OUTPUT_EXISTS`; A06 `TestBlockedBeforeLaunch`(runner·reproduce 둘 다; 작업 공간·결과를 만들지 않음); A07 `TestNonzeroExit`, `TestOutputLimits`, `TestFailureKinds`; A08 `TestTreeTermination`, `TestPipeHoldingDescendant`, `TestEscapedDescendant`, `TestEscapedQuietDescendant`; A09 `TestEvidenceAndCleanupFailures`(작업 공간·도구 사본 정리 실패, 결과 쓰기 실패); A10 `TestArgsDirEnvExact`, `TestReproduceCLI`; A11 `TestOutputLimits`(같음/하나 초과), `TestStorageLimit`(같음/한 byte 초과), `TestReproduceLimitCeilings`, 아래 예산 소비; A03·A04는 `TestJSClosureLeak`도 포함; A12 위 mutant 18종; A13 `TestCapabilityReceipt`와 세 OS CI(PR 단계); A14 `TestOfflineClosure`와 `PATH`를 비운 기존 CLI·외부 consumer 시험; A15 `TestReproductionRoutes`와 위 26 route 표; A16 `TestDefaultRequestPolicy`(90초·300초·4 edit·4 GiB·5초, 5 edit 거부), `TestDefaultBatchPolicy`, `TestFrameStatusMapping`, `TestFrameEscapedStdoutHolder`, `TestMemoryLimit`; A17 위 patch chain·재생성 절; A18 도구 identity 절과 `TestReproductionRoutes`의 digest·patch 상태 검사.
 
 예산 소비(로컬): 다운로드 7,538,845 bytes(x/sys 2,094,997, tree-sitter Windows asset 3,778,280, npm tarball 2개 1,580,215, release metadata·SHASUMS 85,353)와 CI 스크립트 로컬 검증의 asset 재다운로드 3,778,280 bytes. 생성기 process 52회(26 route × 2)와 owned fixture 소량, 보존 출력 663,504,523 bytes(`.work/session-04/results`).
 
 ## 분리 context 리뷰와 처분
 
-(리뷰 뒤 기록)
+`24bdba5..8f8bad5`에 대한 분리 context 리뷰(EXECUTED_REVIEW, 별도 general-purpose subagent, Windows에서 vet과 focused test 실행; GitHub 승인 아님)는 BLOCKER 0, MATERIAL 4, MINOR 5, NOTE 4를 보고했다(`artifacts/.../session-04/review-r1.json`). 처분은 `a4c3fdb`다.
+
+* MATERIAL R1-01: S04-A16의 단일 요청 정책(90초·300초·4 edit·4 GiB·5초)이 없었다 → `runner.DefaultRequestPolicy`와 `Apply`(5 edit 이상 실행 전 거부), 값 drift 시험.
+* MATERIAL R1-02: `storage_bytes`를 관측값과 비교하지 않았다 → 실행 뒤 초과면 `STORAGE_LIMIT`·`RESOURCE_LIMIT`·`BLOCKED`, 같음/한 byte 초과 시험.
+* MATERIAL R1-03: JS 실행이 `--work` 상위의 `node_modules`나 `--work/lib/node`에서 선언하지 않은 module을 찾을 수 있었다 → 실행 전 `JS_CLOSURE_LEAK`, 시험. 이번 26 route 실행 경로의 상위에는 둘 다 없음을 확인해 기존 근거는 유효하다.
+* MATERIAL R1-04: process-group backend의 verified가 pipe를 잡지 않은 이탈 process를 덮는 것처럼 서술했다 → `cleanup.scope` 추가, 보고서·플랫폼 문구 정정, `TestEscapedQuietDescendant`.
+* MINOR R1-05~R1-09: `Wait`가 supervise 종료를 기다림, 이미 회수한 process에는 종료 신호를 보내지 않음, interactive stdout을 grace 뒤 닫음(`TestFrameEscapedStdoutHolder`), 완료되지 않은 실행의 PASS 제거와 실행 중 원본 변경 시험, 도구 사본 정리 실패 보고, 읽기 pipe 닫기.
+* NOTE R1-10: 위임 cgroup 부모에 쓰지 않고 읽기만 한다. R1-11: Windows 메모리 통지는 비동기이며 관측된 오분류가 없어 그대로 두고 위험으로 기록한다. R1-12: CI 단계는 PR CI에서 확인한다. R1-13: A17 표기 대응을 적었다.
+
+수정 뒤 mutant는 새 4종(저장 용량 판정 제거, JS 누출 검사 제거, PASS 정리 제거, edit 상한 제거)을 더해 18/18 검출이다(`mutants-a4c3fdb.json`). 재리뷰 결과는 아래에 더한다.
 
 ## 남은 일과 한계
 
