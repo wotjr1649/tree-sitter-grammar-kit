@@ -39,8 +39,9 @@ function Find-Bytes([byte[]]$Hay, [byte[]]$Needle) {
 $cli = Join-Path $Destination ('tsgk' + $(if ($IsWindows) { '.exe' } else { '' }))
 Push-Location $repo
 try { go build -o $cli ./src/cmd/tsgk; if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' } } finally { Pop-Location }
-$ccVersion = (& $Compiler --version | Select-Object -First 1)
+$ccLines = @(& $Compiler --version) # whole output: a cut pipeline would leave $LASTEXITCODE stale
 if ($LASTEXITCODE -ne 0) { throw 'compiler --version failed' }
+$ccVersion = $ccLines | Select-Object -First 1
 # A linked compiler (Ubuntu /usr/bin/gcc -> gcc-13) is identified by the file it resolves
 # to, as tsgk does: Get-FileHash follows the link but Length would be the link's own size.
 $ccItem = Get-Item -LiteralPath $Compiler

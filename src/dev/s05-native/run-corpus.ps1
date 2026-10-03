@@ -39,7 +39,9 @@ $ccSha = (Get-FileHash -LiteralPath $Compiler -Algorithm SHA256).Hash.ToLowerInv
 $ccItem = Get-Item -LiteralPath $Compiler
 if ($ccItem.LinkTarget) { $ccItem = $ccItem.ResolveLinkTarget($true) }
 $compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = $ccSha; bytes = $ccItem.Length }
-$ccVersion = (& $Compiler --version | Select-Object -First 1)
+$ccLines = @(& $Compiler --version) # whole output: a cut pipeline would leave $LASTEXITCODE stale
+if ($LASTEXITCODE -ne 0) { throw 'compiler --version failed' }
+$ccVersion = $ccLines | Select-Object -First 1
 
 # 1. inventory (S01 operation, cp949 profile) with the S05 table-completed encodings
 $inventory = Join-Path $Destination 'inventory.json'

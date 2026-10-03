@@ -315,7 +315,8 @@ jobs:
           # Sanitizer runtimes older than the high-entropy ASLR fix cannot place their shadow
           # memory with 32 random mmap bits (actions/runner-images#9515). The setting is
           # kernel-wide, so it is restored before the route step runs.
-          $bits = (Get-Content -Raw /proc/sys/vm/mmap_rnd_bits).Trim()
+          $bits = sudo sysctl -n vm.mmap_rnd_bits # /proc/sys/vm/mmap_rnd_bits is root-only
+          if ($LASTEXITCODE -ne 0 -or $bits -notmatch '^\d+$') { throw 'sysctl read failed' }
           sudo sysctl -w vm.mmap_rnd_bits=28
           if ($LASTEXITCODE -ne 0) { throw 'sysctl failed' }
           try {
