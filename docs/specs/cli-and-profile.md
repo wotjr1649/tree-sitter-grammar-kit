@@ -94,7 +94,7 @@ tsgk schema check --input FILE [--out PATH]
 tsgk schema diff  --before FILE --after FILE [--out PATH]
 ```
 
-* 형식·판정·차이 모델·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. CLI는 파일을 `MaxDocumentBytes`+1 bytes까지만 읽어 API에 넘기고 같은 결과를 그대로 출력한다. 결과의 `name`은 파일의 base name이며 디렉터리·절대 경로는 넣지 않는다. 같은 base name의 두 입력은 `role`과 sha256으로 구분된다.
+* 형식·판정·차이 모델·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. CLI는 파일을 `MaxDocumentBytes`+1 bytes까지만 읽어 API에 넘기고 같은 결과를 그대로 출력한다(기본 문서 한도는 `MaxDocumentBytes`를 넘지 않으며, 한도를 넘은 입력은 hash하지 않으므로 잘린 읽기와 전체 파일의 결과가 같다). 결과의 `name`은 파일의 base name이며 디렉터리·절대 경로는 넣지 않는다. 같은 base name의 두 입력은 `role`과 sha256으로 구분된다.
 * 필수 인자가 없거나 하위 명령이 `check`·`diff`가 아니면 파일을 읽기 전에 exit 2(`USAGE`)다. 읽을 수 없는 입력은 `SCHEMA_UNREADABLE` exit 4다.
 * exit: check는 PASS 0, FAIL 1, BLOCKED 3이다. diff는 같으면 0, 차이가 있으면 1, 잘못된 입력 schema는 `SCHEMA_INVALID` exit 2, 해석하지 않는 key만 가진 입력은 `SCHEMA_KEY_UNSUPPORTED` exit 3이다. 한도 3, 취소 130은 공통 규칙과 같다.
 * `--out`은 S01 publication 규칙을 따르되 입력 root가 없으므로 기존 대상 거부와 hard link publication만 적용한다(입력 파일 자신도 기존 대상이라 덮어쓰지 않는다). 기본 한도는 `kit.DefaultSchemaLimits`다.

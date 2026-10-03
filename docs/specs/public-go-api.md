@@ -193,7 +193,7 @@ type SchemaDiffRequest struct { Baseline, Candidate SchemaInput; Limits SchemaLi
 type SchemaCheckResult struct {
     Report
     Policy SchemaPolicy
-    Schema SchemaSummary
+    Input  SchemaSummary // JSON "input"; E0 "schema" stays the report revision
 }
 type SchemaDiffResult struct {
     Report

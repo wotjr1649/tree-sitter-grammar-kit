@@ -19,7 +19,7 @@ func ExampleSchemaDiff() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("check:", check.Assessment, check.Schema.Counts.Nodes, "nodes")
+	fmt.Println("check:", check.Assessment, check.Input.Counts.Nodes, "nodes")
 	diff, err := kit.SchemaDiff(ctx, kit.SchemaDiffRequest{
 		Baseline:  kit.SchemaInput{Name: "old/node-types.json", Data: before},
 		Candidate: kit.SchemaInput{Name: "new/node-types.json", Data: after},

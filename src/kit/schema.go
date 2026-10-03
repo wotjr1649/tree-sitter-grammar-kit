@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -106,7 +107,7 @@ type SchemaCounts struct {
 type SchemaCheckResult struct {
 	Report
 	Policy SchemaPolicy  `json:"policy"`
-	Schema SchemaSummary `json:"schema"`
+	Input  SchemaSummary `json:"input"`
 }
 
 // SchemaDifference is one directional static contract change. Before and After are the
@@ -153,24 +154,24 @@ var diffOrder = []string{"NODE_REMOVED", "NODE_ADDED", "NODE_NAMED_CHANGED", "RO
 // SchemaCheck validates one node-types.json document without parsing any source.
 func SchemaCheck(ctx context.Context, req SchemaCheckRequest) (SchemaCheckResult, error) {
 	res := SchemaCheckResult{Report: newReport("schema check"), Policy: schemaPolicy("schema-check", "", req.Limits)}
-	res.Schema = summarize("input", req.Input)
+	res.Input = summarize("input", req.Input, req.Limits)
 	if e := schemaRun(ctx, req.Limits, &res.Report, func(r *run) *Error {
-		res.Report.Identities = []IdentityRef{{Role: "schema", Schema: SchemaFormat, SHA256: res.Schema.SHA256}, res.Policy.ref()}
-		doc, findings, e := parseSchema(r, req.Input, req.Limits)
+		res.Report.Identities = schemaIdentities(res.Policy, res.Input)
+		doc, c, e := parseSchema(r, req.Input, req.Limits)
 		if e != nil {
 			return e
 		}
-		res.Report.Findings = append(res.Report.Findings, findings...)
+		res.Report.Findings = append(res.Report.Findings, c.findings()...)
 		res.Report.Findings = append(res.Report.Findings, Finding{Code: "SCHEMA_STATIC_ONLY", Severity: "info", Path: "",
 			Message: "정적 node-types 계약 검사이며 runtime tree·parser·문법 정확성 판정이 아니다"})
-		res.Report.Assessment = assessFindings(findings)
+		res.Report.Assessment = c.assessment()
 		if doc != nil {
-			res.Schema.Counts = doc.counts()
+			res.Input.Counts = doc.counts()
 		}
 		res.Report.Coverage = schemaCoverage()
 		return sealOutput(res, req.Limits.OutputBytes)
 	}); e != nil {
-		res.Schema.Counts = nil
+		res.Input.Counts = nil
 		return res, e
 	}
 	return res, nil
@@ -181,19 +182,18 @@ func SchemaCheck(ctx context.Context, req SchemaCheckRequest) (SchemaCheckResult
 // input's findings; it never yields a partial comparison.
 func SchemaDiff(ctx context.Context, req SchemaDiffRequest) (SchemaDiffResult, error) {
 	res := SchemaDiffResult{Report: newReport("schema diff"), Policy: schemaPolicy("schema-diff", SchemaComparator, req.Limits), Differences: []SchemaDifference{}}
-	res.Baseline, res.Candidate = summarize("baseline", req.Baseline), summarize("candidate", req.Candidate)
+	res.Baseline, res.Candidate = summarize("baseline", req.Baseline, req.Limits), summarize("candidate", req.Candidate, req.Limits)
 	if e := schemaRun(ctx, req.Limits, &res.Report, func(r *run) *Error {
-		res.Report.Identities = []IdentityRef{{Role: "baseline", Schema: SchemaFormat, SHA256: res.Baseline.SHA256},
-			{Role: "candidate", Schema: SchemaFormat, SHA256: res.Candidate.SHA256}, res.Policy.ref()}
+		res.Report.Identities = schemaIdentities(res.Policy, res.Baseline, res.Candidate)
 		var docs [2]*schemaDoc
 		for i, in := range []SchemaInput{req.Baseline, req.Candidate} {
 			role := [2]string{"baseline", "candidate"}[i]
-			doc, findings, e := parseSchema(r, SchemaInput{Name: role + ":" + in.Name, Data: in.Data}, req.Limits)
+			doc, c, e := parseSchema(r, SchemaInput{Name: role + ":" + in.Name, Data: in.Data}, req.Limits)
 			if e != nil {
 				return e
 			}
-			res.Report.Findings = append(res.Report.Findings, findings...)
-			switch assessFindings(findings) {
+			res.Report.Findings = append(res.Report.Findings, c.findings()...)
+			switch c.assessment() {
 			case AssessFail:
 				return fail(KindInvalidInput, "SCHEMA_INVALID", role+":"+in.Name, nil)
 			case AssessBlocked:
@@ -226,9 +226,29 @@ func schemaPolicy(op, comparator string, l SchemaLimits) SchemaPolicy {
 	return SchemaPolicy{Operation: op, Format: SchemaFormat, Comparator: comparator, DocumentBytes: l.DocumentBytes, Records: l.Records, OutputBytes: l.OutputBytes, WallMillis: l.Wall.Milliseconds()}
 }
 
-func summarize(role string, in SchemaInput) SchemaSummary {
-	sum := sha256.Sum256(in.Data)
-	return SchemaSummary{Role: role, Name: in.Name, Bytes: uint64(len(in.Data)), SHA256: hex.EncodeToString(sum[:])}
+// summarize binds the raw input. An input over DocumentBytes is not hashed (Bytes 0, SHA256
+// ""), so a caller passing the whole file and the CLI passing its bounded read agree.
+func summarize(role string, in SchemaInput, l SchemaLimits) SchemaSummary {
+	s := SchemaSummary{Role: role, Name: in.Name}
+	if uint64(len(in.Data)) <= l.DocumentBytes {
+		sum := sha256.Sum256(in.Data)
+		s.Bytes, s.SHA256 = uint64(len(in.Data)), hex.EncodeToString(sum[:])
+	}
+	return s
+}
+
+func schemaIdentities(p SchemaPolicy, inputs ...SchemaSummary) []IdentityRef {
+	out := []IdentityRef{}
+	for _, in := range inputs {
+		if in.SHA256 != "" {
+			role := in.Role
+			if role == "input" {
+				role = "schema"
+			}
+			out = append(out, IdentityRef{Role: role, Schema: SchemaFormat, SHA256: in.SHA256})
+		}
+	}
+	return append(out, p.ref())
 }
 
 func schemaCoverage() Coverage {
@@ -247,24 +267,59 @@ func schemaRun(ctx context.Context, l SchemaLimits, rep *Report, body func(*run)
 		e = body(r)
 	}
 	if e != nil {
+		if e.Code == "OUTPUT_LIMIT" {
+			rep.Findings = []Finding{} // the failure report itself must stay small
+		}
 		failReport(rep, e)
 		return e
 	}
 	return nil
 }
 
-func assessFindings(fs []Finding) string {
-	out := AssessPass
-	for _, f := range fs {
-		switch {
-		case f.Severity != "error":
-		case f.Code == "SCHEMA_KEY_UNSUPPORTED":
-			if out == AssessPass {
-				out = AssessBlocked
-			}
-		default:
-			return AssessFail // a definite violation outranks an uninterpreted key
+// maxSchemaFindings bounds the findings kept per input; the assessment counts every one.
+const maxSchemaFindings = 1000
+
+// collector gathers one input's findings: violations make FAIL, uninterpreted keys alone
+// make BLOCKED, warnings keep PASS.
+type collector struct {
+	name                   string
+	list                   []Finding
+	total                  int
+	violation, unsupported bool
+}
+
+func (c *collector) add(code, sev, ptr, msg string) {
+	c.addPath(code, sev, c.name+"#"+ptr, msg)
+}
+
+func (c *collector) addPath(code, sev, path, msg string) {
+	if sev == "error" {
+		if code == "SCHEMA_KEY_UNSUPPORTED" {
+			c.unsupported = true
+		} else {
+			c.violation = true
 		}
+	}
+	if c.total++; c.total <= maxSchemaFindings {
+		c.list = append(c.list, Finding{Code: code, Severity: sev, Path: path, Message: msg})
+	}
+}
+
+func (c *collector) assessment() string {
+	switch {
+	case c.violation: // a definite violation outranks an uninterpreted key
+		return AssessFail
+	case c.unsupported:
+		return AssessBlocked
+	}
+	return AssessPass
+}
+
+func (c *collector) findings() []Finding {
+	out := append([]Finding{}, c.list...)
+	if c.total > maxSchemaFindings {
+		out = append(out, Finding{Code: "FINDINGS_TRUNCATED", Severity: "info", Path: c.name,
+			Message: fmt.Sprintf("finding %d건 중 앞의 %d건만 기록했다", c.total, maxSchemaFindings)})
 	}
 	return out
 }
@@ -315,26 +370,28 @@ type schemaDoc struct {
 
 // parseSchema decodes and validates one document. Format violations are findings; only
 // limits, cancellation and invalid requests are errors.
-func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, []Finding, *Error) {
-	findings := []Finding{}
-	add := func(code, sev, ptr, msg string) {
-		findings = append(findings, Finding{Code: code, Severity: sev, Path: in.Name + "#" + ptr, Message: msg})
+func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, *collector, *Error) {
+	c := &collector{name: in.Name}
+	add := c.add
+	values := uint64(math.MaxUint64) // 8 JSON values per record, saturating
+	if l.Records <= math.MaxUint64/8 {
+		values = l.Records * 8
 	}
-	top, e := decodeBounded(in.Name, in.Data, l.DocumentBytes, &valueBudget{max: l.Records * 8, check: r.check})
+	top, e := decodeBounded(in.Name, in.Data, l.DocumentBytes, &valueBudget{max: values, check: r.check})
 	if e != nil {
 		if e.Kind != KindInvalidInput {
 			return nil, nil, e
 		}
-		findings = append(findings, Finding{Code: e.Code, Severity: "error", Path: e.Path, Message: "JSON 문서가 엄격한 형식 규칙을 위반한다"})
-		return nil, findings, nil
+		c.addPath(e.Code, "error", e.Path, "JSON 문서가 엄격한 형식 규칙을 위반한다")
+		return nil, c, nil
 	}
 	if top.kind != '[' {
 		add(jsonKindCode(top), "error", "", "최상위 값은 node 배열이어야 한다")
-		return nil, findings, nil
+		return nil, c, nil
 	}
 	if len(top.vals) == 0 {
 		add("SCHEMA_EMPTY", "error", "", "node가 하나도 없는 schema는 유효한 빈 schema가 아니다")
-		return nil, findings, nil
+		return nil, c, nil
 	}
 	doc := &schemaDoc{nodes: map[schemaRef]*schemaNode{}}
 	count := func() *Error {
@@ -388,10 +445,10 @@ func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, []Finding,
 	if e := supertypeCycles(r, doc, add); e != nil {
 		return nil, nil, e
 	}
-	if assessFindings(findings) != AssessPass {
-		return nil, findings, nil
+	if c.assessment() != AssessPass {
+		return nil, c, nil
 	}
-	return doc, findings, nil
+	return doc, c, nil
 }
 
 func (n *schemaNode) sets() []*schemaSet {
@@ -453,7 +510,9 @@ func parseNode(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 				if e != nil {
 					return nil, false, e
 				}
-				n.fields[name] = set
+				if set != nil {
+					n.fields[name] = set
+				}
 			}
 		case "children":
 			set, e := parseSet(val, add, count)
@@ -709,13 +768,13 @@ type setJSON struct {
 }
 
 type nodeJSON struct {
-	Type     string              `json:"type"`
-	Named    bool                `json:"named"`
-	Root     *bool               `json:"root,omitempty"`
-	Extra    *bool               `json:"extra,omitempty"`
-	Fields   map[string]*setJSON `json:"fields,omitempty"`
-	Children *setJSON            `json:"children,omitempty"`
-	Subtypes []NodeRef           `json:"subtypes,omitempty"`
+	Type     string               `json:"type"`
+	Named    bool                 `json:"named"`
+	Root     *bool                `json:"root,omitempty"`
+	Extra    *bool                `json:"extra,omitempty"`
+	Fields   *map[string]*setJSON `json:"fields,omitempty"` // pointer: {} stays distinct from absent
+	Children *setJSON             `json:"children,omitempty"`
+	Subtypes []NodeRef            `json:"subtypes,omitempty"`
 }
 
 func refList(m map[schemaRef]string) []NodeRef {
@@ -736,10 +795,11 @@ func (s *schemaSet) canon() *setJSON {
 func (n *schemaNode) canon() nodeJSON {
 	j := nodeJSON{Type: n.ref.typ, Named: n.ref.named, Root: n.root, Extra: n.extra, Children: n.children.canon()}
 	if n.fields != nil {
-		j.Fields = map[string]*setJSON{}
+		fields := map[string]*setJSON{}
 		for k, s := range n.fields {
-			j.Fields[k] = s.canon()
+			fields[k] = s.canon()
 		}
+		j.Fields = &fields
 	}
 	if n.subtypes != nil {
 		j.Subtypes = refList(n.subtypes)

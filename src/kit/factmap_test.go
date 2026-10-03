@@ -49,6 +49,7 @@ type factMapping struct {
 			Kind, TSQL, CSharp string
 		} `json:"argument_kinds"`
 		KnownMisses []struct{ Case, Reason string } `json:"known_misses"`
+		Requires    map[string][]string             `json:"requires"`
 	} `json:"dynamic_sql"`
 }
 
@@ -163,6 +164,9 @@ func TestFactMapping(t *testing.T) {
 	for _, a := range d.ArgumentKinds {
 		args = append(args, a.Kind)
 	}
+	if len(d.Requires["tsql"]) == 0 || len(d.Requires["csharp"]) == 0 {
+		t.Fatal("dynamic SQL schema requirements are missing")
+	}
 	if d.Revision != "dynamic-sql-r1" || strings.Join(kinds, ",") != "EXEC_PAREN,EXEC_PAREN_AT,SP_EXECUTESQL,CSHARP_COMMAND" ||
 		strings.Join(args, ",") != "literal_unicode,literal_char,variable,bare_word,concatenation,other" ||
 		len(d.NonDynamic) != 1 || d.NonDynamic[0].Kind != "EXEC_MODULE_VARIABLE" || len(d.KnownMisses) != 3 {
@@ -257,6 +261,18 @@ func TestFactMappingAgainstSchemas(t *testing.T) {
 			if f.Status == "" {
 				resolve(f.Node, f.Name)
 				resolve(f.Node, f.Value)
+			}
+		}
+		// The dynamic SQL kinds and argument kinds rely on these nodes and locators.
+		for _, req := range m.DynamicSQL.Requires[r.Route] {
+			node, loc, _ := strings.Cut(req, " ")
+			resolve(node, loc)
+		}
+		for _, k := range m.DynamicSQL.Kinds {
+			if k.Route == r.Route {
+				for _, node := range strings.Split(k.Node, ", ") {
+					resolve(node, "")
+				}
 			}
 		}
 	}

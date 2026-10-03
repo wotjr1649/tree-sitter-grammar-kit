@@ -164,7 +164,7 @@ func TestSchemaEquivalence(t *testing.T) {
 	if err != nil || res.Assessment != AssessPass || res.ExecutionStatus != StatusCompleted {
 		t.Fatalf("base check: %v %+v", err, res.Report)
 	}
-	c := res.Schema.Counts
+	c := res.Input.Counts
 	if c == nil || c.Nodes != 10 || c.Named != 7 || c.Anonymous != 3 || c.Supertypes != 1 || c.Fields != 3 || c.References != 7 || len(c.Roots) != 1 || c.Roots[0] != (NodeRef{"program", true}) {
 		t.Fatalf("counts %+v", c)
 	}
@@ -293,7 +293,12 @@ func TestSchemaInvalid(t *testing.T) {
 		{"duplicate-node", `[{"type":"a","named":true},{"type":"a","named":true}]`, AssessFail, []string{"NODE_DUPLICATE"}},
 		{"duplicate-node-other-shape", `[{"type":"?","named":false},{"type":"?","named":false,"fields":{}}]`, AssessFail, []string{"NODE_DUPLICATE"}},
 		{"duplicate-field", sub(`,"fields":{"f":` + set + `,"f":` + set + `}`), AssessFail, []string{"JSON_DUPLICATE_KEY"}},
-		{"escaped-duplicate-field", sub(`,"fields":{"f":` + set + `,"f":` + set + `}`), AssessFail, []string{"JSON_DUPLICATE_KEY"}},
+		{"escaped-duplicate-field", sub(`,"fields":{"f":` + set + `,"` + "\\" + `u0066":` + set + `}`), AssessFail, []string{"JSON_DUPLICATE_KEY"}},
+		{"field-value-null", sub(`,"fields":{"f":null}`), AssessFail, []string{"JSON_NULL"}},
+		{"field-value-number", sub(`,"fields":{"f":1,"g":` + set + `}`), AssessFail, []string{"JSON_TYPE"}},
+		{"children-number", sub(`,"children":1`), AssessFail, []string{"JSON_TYPE"}},
+		{"subtypes-object", sub(`,"subtypes":{}`), AssessFail, []string{"JSON_TYPE"}},
+		{"member-null", sub(`,"children":{"multiple":false,"required":true,"types":[null]}`), AssessFail, []string{"JSON_NULL"}},
 		{"duplicate-member", sub(`,"children":{"multiple":false,"required":true,"types":[{"type":"a","named":true},{"type":"a","named":true}]}`), AssessFail, []string{"MEMBER_DUPLICATE"}},
 		{"unsupported-key", sub(`,"visible":true`), AssessBlocked, []string{"SCHEMA_KEY_UNSUPPORTED"}},
 		{"unsupported-member-key", sub(`,"children":{"multiple":false,"required":true,"types":[{"type":"a","named":true,"alias":true}]}`), AssessBlocked, []string{"SCHEMA_KEY_UNSUPPORTED"}},
@@ -322,8 +327,8 @@ func TestSchemaInvalid(t *testing.T) {
 			if err != nil {
 				t.Fatalf("check error %v", err)
 			}
-			if res.Assessment != c.assess || res.ExecutionStatus != StatusCompleted || res.Schema.Counts != nil {
-				t.Fatalf("assessment %s status %s counts %v", res.Assessment, res.ExecutionStatus, res.Schema.Counts)
+			if res.Assessment != c.assess || res.ExecutionStatus != StatusCompleted || res.Input.Counts != nil {
+				t.Fatalf("assessment %s status %s counts %v", res.Assessment, res.ExecutionStatus, res.Input.Counts)
 			}
 			for _, code := range c.codes {
 				if !hasCode(res.Findings, code) {
@@ -358,6 +363,69 @@ func TestSchemaInvalid(t *testing.T) {
 		t.Fatal(err)
 	}
 	sameLines(t, "fields presence", diffLines(d.Differences), []string{"FIELDS_PRESENCE_CHANGED IDENTITY a:true - -"})
+	if string(d.Differences[0].Before) != "null" || string(d.Differences[0].After) != "{}" {
+		t.Fatalf("fields presence values %s -> %s", d.Differences[0].Before, d.Differences[0].After)
+	}
+	// Whole-node evidence keeps an explicit empty fields object too.
+	d, err = schemaDiff(t, `[{"type":"x","named":false}]`, `[{"type":"x","named":true,"fields":{}}]`)
+	if err != nil || len(d.Differences) != 1 || string(d.Differences[0].After) != `{"type":"x","named":true,"fields":{}}` {
+		t.Fatalf("named change evidence: %v %v", err, d.Differences)
+	}
+	if !strings.Contains(sub(`,"fields":{"f":`+set+`,"`+"\\"+`u0066":`+set+`}`), `f`) {
+		t.Fatal("the escaped duplicate case must carry a JSON escape")
+	}
+}
+
+// Review fixes: findings stay bounded per input while the assessment counts all of them,
+// a failure report over the output limit drops them, and an input over the document limit
+// is not hashed, so a bounded CLI read and a whole-file API call agree.
+func TestSchemaFindingBounds(t *testing.T) {
+	many := "[" + strings.Repeat("1,", 4999) + `{"type":"a","named":true,"visible":true}]`
+	res, err := schemaCheck(t, many)
+	if err != nil || res.Assessment != AssessFail || len(res.Findings) != maxSchemaFindings+2 ||
+		res.Findings[maxSchemaFindings].Code != "FINDINGS_TRUNCATED" {
+		t.Fatalf("bounded findings: %v %s %d", err, res.Assessment, len(res.Findings))
+	}
+	// Only uninterpreted keys, but the 1001st finding would be a violation: still FAIL.
+	var b strings.Builder
+	for i := 0; i < maxSchemaFindings; i++ {
+		fmt.Fprintf(&b, `{"type":"a%d","named":true,"v":1},`, i)
+	}
+	only := "[" + b.String() + `{"type":"z","named":true}]`
+	if res, _ := schemaCheck(t, only); res.Assessment != AssessBlocked {
+		t.Fatalf("only uninterpreted keys: %s", res.Assessment)
+	}
+	hidden := "[" + b.String() + `{"type":"","named":true}]`
+	if res, _ := schemaCheck(t, hidden); res.Assessment != AssessFail || hasCode(res.Findings, "NODE_TYPE_EMPTY") {
+		t.Fatalf("violation beyond the kept findings: %s", res.Assessment)
+	}
+	d, err := schemaDiff(t, schemaBase, many)
+	kindOf(t, err, KindInvalidInput, "SCHEMA_INVALID")
+	if len(d.Findings) != maxSchemaFindings+2 {
+		t.Fatalf("diff findings %d", len(d.Findings))
+	}
+	l := DefaultSchemaLimits()
+	l.OutputBytes = 4096
+	r, err := SchemaCheck(testCtx(t), SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: []byte(many)}, Limits: l})
+	kindOf(t, err, KindResourceLimit, "OUTPUT_LIMIT")
+	if len(r.Findings) != 1 || uint64(len(mustJSON(t, r))) > l.OutputBytes {
+		t.Fatalf("output-limited report keeps %d findings", len(r.Findings))
+	}
+	l = DefaultSchemaLimits()
+	l.DocumentBytes = uint64(len(schemaBase)) - 1
+	r, err = SchemaCheck(testCtx(t), SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: []byte(schemaBase)}, Limits: l})
+	kindOf(t, err, KindResourceLimit, "DOCUMENT_BYTES_LIMIT")
+	if r.Input.Bytes != 0 || r.Input.SHA256 != "" || len(r.Identities) != 1 || r.Identities[0].Role != "policy" {
+		t.Fatalf("oversize input identity %+v %+v", r.Schema, r.Identities)
+	}
+	if DefaultSchemaLimits().DocumentBytes > MaxDocumentBytes {
+		t.Fatal("the CLI reads at most MaxDocumentBytes+1; the default document limit must not exceed it")
+	}
+	l = DefaultSchemaLimits()
+	l.Records = 1<<64 - 1 // the 8-values-per-record bound saturates instead of wrapping
+	if r, err := SchemaCheck(testCtx(t), SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: []byte(schemaBase)}, Limits: l}); err != nil || r.Assessment != AssessPass {
+		t.Fatalf("saturated records: %v", err)
+	}
 }
 
 // S03-A08: limits at and one over each bound, deep supertype chains without recursion,
@@ -365,7 +433,7 @@ func TestSchemaInvalid(t *testing.T) {
 func TestSchemaLimits(t *testing.T) {
 	base := []byte(schemaBase)
 	ok, _ := schemaCheck(t, schemaBase)
-	c := ok.Schema.Counts
+	c := ok.Input.Counts
 	records := c.Nodes + c.Fields + c.References
 	check := func(l SchemaLimits, data []byte) (SchemaCheckResult, error) {
 		return SchemaCheck(testCtx(t), SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: data}, Limits: l})
@@ -378,7 +446,7 @@ func TestSchemaLimits(t *testing.T) {
 	l.Records = records - 1
 	r, err := check(l, base)
 	kindOf(t, err, KindResourceLimit, "SCHEMA_RECORD_LIMIT")
-	if r.ExecutionStatus != StatusResourceLimit || r.Assessment != AssessBlocked || r.Schema.Counts != nil {
+	if r.ExecutionStatus != StatusResourceLimit || r.Assessment != AssessBlocked || r.Input.Counts != nil {
 		t.Fatalf("limit report %+v", r.Report)
 	}
 	l = DefaultSchemaLimits()
@@ -434,7 +502,7 @@ func TestSchemaLimits(t *testing.T) {
 		return []byte(b.String())
 	}
 	deep, err := check(DefaultSchemaLimits(), chain(false))
-	if err != nil || deep.Assessment != AssessPass || deep.Schema.Counts.Supertypes != 20000 {
+	if err != nil || deep.Assessment != AssessPass || deep.Input.Counts.Supertypes != 20000 {
 		t.Fatalf("deep chain: %v %+v", err, deep.Report)
 	}
 	cyc, err := check(DefaultSchemaLimits(), chain(true))
@@ -447,7 +515,7 @@ func TestSchemaLimits(t *testing.T) {
 	cancel()
 	r, err = SchemaCheck(dead, SchemaCheckRequest{Input: SchemaInput{Name: "n", Data: base}, Limits: DefaultSchemaLimits()})
 	kindOf(t, err, KindCancelled, "CANCELLED")
-	if r.ExecutionStatus != StatusCancelled || r.Schema.Counts != nil {
+	if r.ExecutionStatus != StatusCancelled || r.Input.Counts != nil {
 		t.Fatalf("cancel report %+v", r.Report)
 	}
 	// Count the checkpoints of a full run, then cancel at the first, middle and last one
@@ -471,6 +539,20 @@ func TestSchemaLimits(t *testing.T) {
 	}
 	_, err = SchemaCheck(context.Background(), SchemaCheckRequest{Input: SchemaInput{Data: base}, Limits: DefaultSchemaLimits()})
 	kindOf(t, err, KindInvalidInput, "DEADLINE_REQUIRED")
+
+	// The comparator's own checkpoints: cancel at the last checkpoint of a full diff.
+	diff := func(ctx context.Context) error {
+		_, err := SchemaDiff(ctx, SchemaDiffRequest{Baseline: SchemaInput{Name: "a", Data: chain(false)}, Candidate: SchemaInput{Name: "b", Data: chain(false)}, Limits: DefaultSchemaLimits()})
+		return err
+	}
+	probe = &countingCtx{Context: parent}
+	probe.left.Store(1 << 40)
+	if err := diff(probe); err != nil {
+		t.Fatal(err)
+	}
+	last := &countingCtx{Context: parent}
+	last.left.Store(1<<40 - probe.left.Load() - 1)
+	kindOf(t, diff(last), KindCancelled, "CANCELLED")
 }
 
 // S03-A12: set normalization stays inside schema alternatives. The shared strict decoder

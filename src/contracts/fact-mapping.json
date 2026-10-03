@@ -6,7 +6,7 @@
     "node": "the declaration node itself; no separate name",
     "field:F": "the node's field F",
     "child:T": "the first named child of type T",
-    "children:T": "every named child of type T, in order"
+    "children:T": "every named child of type T, in order; a name locator that yields several names makes one declaration item per name"
   },
   "routes": [
     {
@@ -60,7 +60,7 @@
         {"fact": "create_object", "node": "create_synonym", "name": "field:name"},
         {"fact": "create_object", "node": "create_sequence", "name": "field:name"},
         {"fact": "create_object", "node": "create_index", "name": "field:name"},
-        {"fact": "static_exec_target", "node": "execute_statement", "name": "field:procedure", "match": "field:procedure is present and its object_reference field:name identifier does not start with @ (EXEC @module_var is a non-dynamic module variable call, kind EXEC_MODULE_VARIABLE)"},
+        {"fact": "static_exec_target", "node": "execute_statement", "name": "field:procedure", "match": "field:procedure is present, its object_reference field:name identifier does not start with @ (EXEC @module_var is the non-dynamic kind EXEC_MODULE_VARIABLE) and it is not an SP_EXECUTESQL call (that call is only a dynamic_sql_site)"},
         {"fact": "dynamic_sql_site", "node": "execute_statement", "name": "node", "match": "dynamic-sql-r1 kinds EXEC_PAREN, EXEC_PAREN_AT and SP_EXECUTESQL; the argument is chosen by the kind"},
         {"fact": "type_declaration", "status": "UNSUPPORTED", "reason": "C# type declarations are not T-SQL syntax; T-SQL user types are create_object create_type"},
         {"fact": "member_declaration", "status": "UNSUPPORTED", "reason": "no member declarations in T-SQL"},
@@ -117,7 +117,7 @@
       {"kind": "EXEC_PAREN", "route": "tsql", "node": "execute_statement", "match": "no field:procedure and no keyword_at child", "argument": "first parenthesized expression child"},
       {"kind": "EXEC_PAREN_AT", "route": "tsql", "node": "execute_statement", "match": "no field:procedure and a keyword_at child; the linked server is the identifier child after keyword_at", "argument": "first parenthesized expression child"},
       {"kind": "SP_EXECUTESQL", "route": "tsql", "node": "execute_statement", "match": "field:procedure object_reference whose name, after removing [] or \"\" quoting and comparing case-insensitively, is sp_executesql and whose schema part is absent or sys", "argument": "the first exec_argument when it is positional, or the exec_argument whose field:name is @stmt"},
-      {"kind": "CSHARP_COMMAND", "route": "csharp", "node": "command_text_site", "match": "csharp-command-api-r1 (heuristic, reported as heuristic)", "argument": "the command_text_site value"}
+      {"kind": "CSHARP_COMMAND", "route": "csharp", "node": "assignment_expression, object_creation_expression", "match": "csharp-command-api-r1 (heuristic, reported as heuristic)", "argument": "the command_text_site value"}
     ],
     "non_dynamic": [
       {"kind": "EXEC_MODULE_VARIABLE", "route": "tsql", "node": "execute_statement", "match": "field:procedure object_reference whose field:name identifier starts with @"}
@@ -131,6 +131,16 @@
       {"kind": "concatenation", "tsql": "binary_expression whose field:operator is +", "csharp": "binary_expression whose field:operator is +, or interpolated_string_expression"},
       {"kind": "other", "tsql": "any other node (numbers, NULL, @@ system variables, unary_expression, keyword_default, invocation, subquery)", "csharp": "any other node"}
     ],
+    "requires": {
+      "tsql": ["execute_statement field:procedure", "execute_statement field:return_status", "execute_statement child:keyword_at", "execute_statement child:identifier",
+               "execute_statement child:keyword_as", "execute_statement child:keyword_user", "execute_statement child:keyword_login", "execute_statement child:exec_argument",
+               "execute_statement child:literal", "execute_statement child:field", "execute_statement child:binary_expression",
+               "exec_argument field:name", "exec_argument field:value", "object_reference field:name", "object_reference field:schema",
+               "field field:name", "binary_expression field:operator", "literal", "identifier"],
+      "csharp": ["assignment_expression field:left", "assignment_expression field:right", "member_access_expression field:name",
+                 "object_creation_expression field:type", "object_creation_expression field:arguments", "argument_list child:argument",
+                 "binary_expression field:operator", "interpolated_string_expression", "string_literal", "verbatim_string_literal", "raw_string_literal", "identifier"]
+    },
     "fact_fields": ["kind", "argument_kind", "start_byte", "end_byte", "start_point", "end_point", "variable_name_range"],
     "known_misses": [
       {"case": "EXEC (...) AT DATA_SOURCE name", "reason": "execute_statement accepts only AT identifier"},
