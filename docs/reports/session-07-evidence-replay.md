@@ -24,15 +24,15 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S07`, Issue #9, Milestone 8, bra
 | `prepare-native-r1` | 한 producer의 등록 row 전수, raw stdout 결속, probe 판정에서 다시 계산한 exit, 기대 syntax 종류 | 등록 fact check와 edit 창(PREPARE 리뷰 helper), 크기만 대조한 inventory 항목, 없는 raw |
 | `bs-gate-compare-r1` | `S07-REPLAY-2ULP-r1` 비교 | raw에서 gate를 다시 계산하는 일 |
 
-## 로컬 검사(Windows, 코드 `201cc03`)
+## 로컬 검사(Windows, 코드 `570d956`)
 
 * `gofmt -l src`, `go vet ./src/...`, `go build ./src/...`, `go test ./src/... -count=1`: 통과(`CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`).
-* 새 시험: `TestReplayNativeResult`, `TestReplayConsumption`, `TestReplayStaleIdentity`, `TestReplayMutantControls`, `TestReplayUnsupported`, `TestReplayGuards`, `TestReplayLimitsAndCancel`, `TestReplayUnreadMemberOverLimit`, `TestReplayDeterministic`, `TestReplayOracleSet`, `TestReplayUnconsumedMembers`, `TestReplayPrivateCorpus`, `TestReplayPrepareNative`, `TestCompareGates`, `TestReplayGateCompare`, `TestVerifyEvidence`(`src/kit`), `TestReplayCLI`(`src/cmd/tsgk`). fixture는 시험이 임시 디렉터리에 만들며 tool·target 실행이 없어 세 OS foundation job에서 그대로 돈다.
-* **targeted mutant 28개 모두 검출**(`.work/session-07/mutants.py`, 결과는 로컬 artifacts `mutants-201cc03.json`; 첫 23개는 `2130380`에서도 모두 검출): 미사용 record 무시, PASS label 신뢰, 모르는 reducer를 지원 reducer로 대체, 일부 기록 gate를 replay로 표시, 기록 claim에 기대는 사례를 PASS로, 반올림 비교, 값 비교(+0 = -0), 전역 4 ULP, threshold 구간 미검사, 최대값 항목 미비교, 허가 없는 승계, comparator를 뺀 승계, `NEW_RUN` 자격 미검사, relabel 미검사, summary 신뢰, digest 신뢰, 목록 밖 파일 무시, identity 미비교, tree identity 혼합 허용, PREPARE exit 신뢰, 다른 cohort row 소비, projection 신뢰, dirty 실행 허용, 소비하지 않은 member 허용, 모르는 member 역할 허용, 읽지 않은 한도 초과 member를 FAIL로, 과거 record의 run relabel 미검사, 없는 PREPARE raw를 건너뜀. 모두 의도한 시험이 그 code로 실패했고 compile 실패로 대신한 것은 없다.
+* 새 시험: `TestReplayNativeResult`, `TestReplayConsumption`, `TestReplayStaleIdentity`, `TestReplayMutantControls`, `TestReplayUnsupported`, `TestReplayGuards`, `TestReplayLimitsAndCancel`, `TestReplayUnreadMemberOverLimit`, `TestReplayDeterministic`, `TestReplayOracleSet`, `TestReplayUnconsumedMembers`, `TestReplayOverLimitKeepsChecks`, `TestReplayPrivateCorpus`, `TestReplayPrepareNative`, `TestCompareGates`, `TestReplayGateCompare`, `TestVerifyEvidence`(`src/kit`), `TestReplayCLI`(`src/cmd/tsgk`). fixture는 시험이 임시 디렉터리에 만들며 tool·target 실행이 없어 세 OS foundation job에서 그대로 돈다.
+* **targeted mutant 31개 모두 검출**(`.work/session-07/mutants.py`, 결과는 로컬 artifacts `mutants-570d956.json`; 앞선 commit에서도 23/23 `2130380`, 28/28 `201cc03`): 미사용 record 무시, PASS label 신뢰, 모르는 reducer를 지원 reducer로 대체, 일부 기록 gate를 replay로 표시, 기록 claim에 기대는 사례를 PASS로, 반올림 비교, 값 비교(+0 = -0), 전역 4 ULP, threshold 구간 미검사, 최대값 항목 미비교, 허가 없는 승계, comparator를 뺀 승계, `NEW_RUN` 자격 미검사, relabel 미검사, summary 신뢰, digest 신뢰, 목록 밖 파일 무시, identity 미비교, tree identity 혼합 허용, PREPARE exit 신뢰, 다른 cohort row 소비, projection 신뢰, dirty 실행 허용, 소비하지 않은 member 허용, 모르는 member 역할 허용, 읽지 않은 한도 초과 member를 FAIL로, 과거 record의 run relabel 미검사, 없는 PREPARE raw를 건너뜀, replay-result 미대조, 한도 초과 뒤 혼합 identity 버림, raw가 모두 없는 PREPARE replay를 `REPLAYED_RAW`로 표시. 모두 의도한 시험이 그 code로 실패했고 compile 실패로 대신한 것은 없다.
 
 ## S06 기록 set replay(로컬 ci-sim 출력)
 
-S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 두 개)을 `oracle-set-r1`로 replay했다. registration의 identity와 기록 판정은 첫 실행에서 관측한 값이라 독립 anchor가 아니다(로컬 receipt `s06-set-replays-r1.json`).
+S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 두 개)을 코드 `570d956`의 `oracle-set-r1`로 replay했다. registration의 identity와 기록 판정은 첫 실행에서 관측한 값이라 독립 anchor가 아니다(로컬 receipt `s06-set-replays-r3.json`).
 
 * 29개 set 모두 evidence가 유효했다(member·identity·record 결속·소비 문제 0, claim 불일치 0). 사례 166개를 소비했고 gate 재계산은 tree 836, incremental/fresh 비교 494, route 494, 기대값 644, query 비교 494건이며 실패 0이다.
 * API claim 152건, query 기대값 26건, 사실 재현 50건, 동적 SQL 2건은 `RECORDED_NOT_RECOMPUTED`다. 그래서 기록이 PASS인 set의 다시 계산한 판정은 `UNRESOLVED`다. 기록 FAIL인 csharp·swift·tsx·typescript는 다시 계산한 claim에서도 FAIL이고, 기록 FAIL인 csharp-svc·python·tsql은 실패 claim이 API뿐이라 `UNRESOLVED`다(기록 FAIL은 그대로 `recorded`에 남는다). 한도 초과 사례 set은 기록과 같은 `BLOCKED`다.
@@ -40,15 +40,15 @@ S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 �
 
 ## 비공개 corpus(A15, Windows 로컬, 개수만)
 
-`NET461-PHASE2-LOCAL-r1`의 S05 로컬 raw 세 실행을 `private-corpus-r1`/`private-corpus-replay`로 replay했다. replay 실행 자신의 로컬 실행 identity(후보 commit `201cc03`, clean tree, host Windows 11 AMD64, `tsgk` sha256, Go 1.27.1)와 각 subject 실행의 identity(후보 commit, clean tree, host, compiler `75e87953…`, runtime `659cda7c`)를 로컬 receipt에 남겼다. 경로·이름·hash가 담긴 registration·결과·receipt는 추적하지 않는 로컬 artifacts에만 있다. member bytes는 S07에서 처음 결속했다(S05가 그 bytes의 hash를 따로 남기지 않았다).
+`NET461-PHASE2-LOCAL-r1`의 S05 로컬 raw 세 실행을 `private-corpus-r1`/`private-corpus-replay`로 replay했다. 로컬 receipt `private-replay-receipt-r3.json`이 replay 실행 자신의 로컬 실행 identity(후보 commit `570d956`, clean tree, host Windows 11 AMD64, `tsgk` sha256, Go 1.27.1)와 각 subject 실행의 identity(후보 commit, clean tree, host, compiler `75e87953…`, runtime `659cda7c`)를 담는다. 경로·이름·hash가 담긴 registration·결과·receipt는 추적하지 않는 로컬 artifacts에만 있다. member bytes는 S07에서 처음 결속했다(S05가 그 bytes의 hash를 따로 남기지 않았다).
 
-* `81a0538`(S05 보고 실행): **PASS**, `REPLAYED_RAW`, wall 약 1.3초, 읽은 bytes 210254984. inventory 21451 record와 route 파일 17957개를 모두 한 번씩 소비했다(expected 35914 = 파일 record 17957 + projection 17957, 누락·중복·미사용 0). route 묶음 결속 4, 사례 결속·상태·판정 17957, incremental/기대값 17937, projection 17957, summary 14, 로컬 실행 identity 7 검사가 모두 통과했다. 다시 센 값은 S05 보고서와 같다: COMPLETED 17957, `NOT_RUN` 0, `has_error` 230(csharp 48, tsql 181, xml 1), `PRESENCE_ONLY` 133, route 없음 3494. record 형식 tree digest 17937건은 nodes가 없어 기록으로 남는다(판정은 digest에 기대지 않는다).
+* `81a0538`(S05 보고 실행): **PASS**, `REPLAYED_RAW`, wall 약 1.2초, 읽은 bytes 210254984. inventory 21451 record와 route 파일 17957개를 모두 한 번씩 소비했다(expected 35914 = 파일 record 17957 + projection 17957, 누락·중복·미사용 0). route 묶음 결속 4, 사례 결속·상태·판정 17957, incremental/기대값 17937, projection 17957, summary 14, 로컬 실행 identity 7 검사가 모두 통과했다. 다시 센 값은 S05 보고서와 같다: COMPLETED 17957, `NOT_RUN` 0, `has_error` 230(csharp 48, tsql 181, xml 1), `PRESENCE_ONLY` 133, route 없음 3494. record 형식 tree digest 17937건은 nodes가 없어 기록으로 남는다(판정은 digest에 기대지 않는다).
 * `58f079b`: **FAIL**(`SUMMARY_MISMATCH` 1건). 이 실행의 summary는 수정 전 helper가 쓴 `has_error` key `svc:`(값 없는 관측)을 담는다. 지금 등록한 projection 규칙은 `svc:null`이다. 사례·projection·소비는 모두 통과했다. 옛 형식을 새 형식으로 고쳐 읽지 않는다.
 * `fb8934a`: **FAIL**(`STATUS_TREE_INCONSISTENT` 20건). 이 build는 SVC 관측 전용 step에 `incremental: null` 대신 빈 tree 객체를 썼다(같은 `tsgk-incremental-result/r1` 안의 형식 차이, `81a0538`에서 고침). replay는 그 20개를 완료 tree가 없는 COMPLETED 사례로 거부하고 다시 해석하지 않는다.
 
 ## PREPARE native 증거(A16, 로컬, gitignored raw)
 
-`language-sources.json` adoption의 `native_evidence` run 다섯 개(36795440494는 typescript·tsx 두 cohort)와 PostgreSQL baseline 재사용 run 36820514519를 `prepare-native-r1`로 replay했다. registration은 bundle의 `evidence-manifest.json`과 `records/case-ledger.json`을 결속하고, expected record는 그 run의 등록 facts 파일에서 채택 producer의 row다. raw는 모두 있고 읽은 member는 모두 16 MiB 안이었다. registration이 결속한 inventory의 나머지 항목(16 MiB를 넘는 생성 `parser.c` 등)은 크기만 대조하고 읽지 않았으므로 `inventory` gate는 `RECORDED_NOT_RECOMPUTED`다. 읽은 raw stdout은 inventory hash와 대조했다.
+`language-sources.json` adoption의 `native_evidence` run 다섯 개(36795440494는 typescript·tsx 두 cohort)와 PostgreSQL baseline 재사용 run 36820514519를 코드 `570d956`의 `prepare-native-r1`로 replay했다(로컬 receipt `prepare-replay-receipt-r3.json`). registration은 bundle의 `evidence-manifest.json`과 `records/case-ledger.json`을 결속하고, expected record는 그 run의 등록 facts 파일에서 채택 producer의 row다. raw는 모두 있고 읽은 member는 모두 16 MiB 안이었다. registration이 결속한 inventory의 나머지 항목(16 MiB를 넘는 생성 `parser.c` 등)은 크기만 대조하고 읽지 않았으므로 `inventory` gate는 `RECORDED_NOT_RECOMPUTED`다. 읽은 raw stdout은 inventory hash와 대조했다.
 
 | run | route | 등록 row | 소비 | exit·syntax 재계산 | 기록으로 남음 | 결과 |
 |---|---|---|---|---|---|---|
@@ -89,7 +89,7 @@ S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 �
 | S07-A09 | `TestVerifyEvidence`(`ELIGIBILITY_REJECTED`) |
 | S07-A10 | `TestReplayNativeResult`(`PATH` 비움), `TestOfflineClosure`, `TestReplayCLI` |
 | S07-A11 | `TestReplayLimitsAndCancel`, `TestReplayUnreadMemberOverLimit`, `TestVerifyEvidence`(한도 초과 파일), `TestReplayCLI`(`OUTPUT_EXISTS`) |
-| S07-A12 | `TestReplayMutantControls`와 mutant 28개 |
+| S07-A12 | `TestReplayMutantControls`와 mutant 31개 |
 | S07-A13 | 위 절, 로컬 S06·S05 raw replay |
 | S07-A14 | `TestReplayDeterministic`; 세 OS 실행은 PR CI가 한다 |
 | S07-A15 | 비공개 corpus 절 |
@@ -103,9 +103,15 @@ S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 �
   * M3: 같은 run identity의 과거 record와 새 run을 참조 없이 함께 두면 relabel을 잡지 못했다. 이제 run·record 쌍도 `RUN_IDENTITY_DUPLICATE`다.
   * m1: 한도 초과 조기 반환이 앞서 찾은 실패를 버렸다. 이제 실패는 FAIL로 남고, S06 raw 응답은 decode 없이 hash만 확인한다. m2: 없는 PREPARE raw가 FAIL이었다. 이제 그 row는 기록으로 남는다. m3: tree의 producer·policy 혼합 검사가 문서의 member 순서에 기댔다. 이제 문서를 다 읽은 뒤 비교한다. m4: 크기만 본 inventory 항목이 `REPLAYED_RAW`로 표시되었다. 이제 기록이다. m5: reducer 등록부가 SVC 관측 전용 사례를 기록으로 적었지만 실제로는 다시 계산한다. 등록부와 계약 표를 고쳤다.
 
-* **r2**(STATIC, `817537c..f67c44c`): r1 8건이 모두 고쳐졌음을 확인했고, 새로 MATERIAL 1, MINOR 4를 찾았다. 모두 다음 commit에서 고쳤다.
+* **r2**(STATIC, `817537c..f67c44c`): r1 8건이 모두 고쳐졌음을 확인했고, 새로 MATERIAL 1, MINOR 4를 찾았다. 모두 `570d956`에서 고쳤다.
   * N1: `evidence verify`가 replay-result 파일을 두 번 읽어 합계 한도가 두 번째 읽기에서만 나면 대조를 조용히 건너뛰고 PASS일 수 있었다. 이제 한 번만 읽어 그 bytes로 대조하고, 한도는 `RESOURCE_LIMIT`다(`TestVerifyEvidence`).
   * N2: oracle set에서 한도 초과 record가 앞서 본 혼합 tree identity 검사를 건너뛰게 했다. 이제 모든 종료 경로에서 비교한다. N3: 읽는 도중 한도를 넘게 커진 member가 검증 없이 지나갈 수 있었다. 이제 `RESOURCE_LIMIT`다. N4: raw가 모두 없는 PREPARE replay가 `REPLAYED_RAW`로 표시되었다. 이제 `RECORDED_NOT_RECOMPUTED`다. N5: 소비하지 않는 member 하나의 한도 초과가 다른 member의 소비 검사를 껐다. 이제 reducer에 필요한 member가 한도를 넘었을 때만 끈다(`TestReplayOverLimitKeepsChecks`, `TestReplayPrepareNative`).
+
+* **r3**(STATIC, `f67c44c..570d956`): N1–N5가 고쳐졌음을 확인했고 새 finding은 없다. 남은 BLOCKER·MATERIAL은 0이다.
+
+## evidence graph 실데이터 확인
+
+로컬 S06 bash 기록 set의 manifest를 run node로, 그 replay 결과를 replay node(`replay-result` 파일)로 둔 graph를 `tsgk evidence verify`로 검사했다. 정상 policy는 PASS(node 2, 파일 2)이고, 두 node에 `NEW_RUN` 자격을 요구한 policy는 replay node 때문에 `ELIGIBILITY_REJECTED`/FAIL(exit 1)이다(로컬 `evidence-graph-demo-r2.json`).
 
 ## 남은 일과 한계
 
