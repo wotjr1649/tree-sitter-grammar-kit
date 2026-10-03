@@ -28,7 +28,9 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 		t.Fatal(err)
 	}
 	paths := []string{cc}
-	link := filepath.Join(t.TempDir(), "cc-link"+filepath.Ext(cc))
+	// Same basename as the target: macOS /usr/bin/clang is an xcrun shim that picks the
+	// tool by its invoked name, so a differently named link would not run clang at all.
+	link := filepath.Join(t.TempDir(), filepath.Base(cc))
 	if err := os.Symlink(cc, link); err == nil {
 		paths = append(paths, link)
 	} else {

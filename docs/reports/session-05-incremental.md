@@ -161,7 +161,7 @@ Linux·macOS route step의 나머지 줄을 정적으로 점검한 결과:
 * Linux route step은 sanitizer step과 다른 이름의 cgroup을 만든다. 이 생성 방식(`sudo mkdir`·`chown`·`echo $PID`, 위임 뒤 사용자 쓰기)은 foundation에서 통과했다.
 * `select-compiler`는 `/usr/bin/gcc`를 해석한 경로를 돌려준다.
 * run-routes는 외부 도구로 go, compiler, tsgk만 쓰므로 GNU와 BSD 도구 차이는 없다. 경로는 모두 `Join-Path`로 만든다.
-* macOS `/usr/bin/clang`은 일반 파일 shim이다. build 환경은 `DEVELOPER_DIR`·`SDKROOT`가 있으면 넘기며, foundation macOS native suite가 이 경로로 통과했다.
+* macOS `/usr/bin/clang`은 일반 파일 shim이다. build 환경은 `DEVELOPER_DIR`·`SDKROOT`가 있으면 넘기며, foundation macOS native suite가 이 경로(link가 아닌 경로)로 통과했다. 이 shim은 xcrun을 거쳐 호출 이름으로 도구를 고르므로 link로 지정하지 않는다(platform-support의 wrapper 규칙). 그래서 `TestSelectCompilerFreshShell`의 link는 대상과 같은 basename을 쓴다(재리뷰 r12의 MATERIAL. 다른 이름이면 macOS foundation에서 실패할 수 있었다).
 * root 권한이 필요한 읽기는 이제 `sysctl`뿐이고 `sudo`로 한다.
 
 Linux 없이는 확인할 수 없는 위험:
