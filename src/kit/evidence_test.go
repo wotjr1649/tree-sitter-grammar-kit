@@ -220,6 +220,9 @@ func TestVerifyEvidence(t *testing.T) {
 	g.nodes[1]["identities"] = ident("p2", "10")
 	evidenceFails(t, g, nil, "RUN_RELABELED")
 	g = newFxGraph()
+	g.nodes[4]["identities"] = ident("p0", "11") // the historical record relabelled as the new run
+	evidenceFails(t, g, nil, "RUN_IDENTITY_DUPLICATE")
+	g = newFxGraph()
 	g.nodes[2]["identities"] = ident("p1", "10")
 	evidenceFails(t, g, nil, "REPLAY_RELABELS_SUBJECT")
 	g = newFxGraph()
@@ -263,4 +266,17 @@ func TestVerifyEvidence(t *testing.T) {
 	g = newFxGraph()
 	g.nodes[0]["files"] = []any{map[string]any{"path": "../raw/old.json", "role": "raw", "bytes": 12, "sha256": fxExe}}
 	evidenceFails(t, g, nil, "FILE_INVALID")
+	// a file beyond the operation limits ends RESOURCE_LIMIT, not a failed check
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 4; return l }
+	defer func() { testHookReplayLimits = nil }()
+	g = newFxGraph()
+	root := t.TempDir()
+	doc, _ := json.Marshal(map[string]any{"schema": EvidenceSchema, "nodes": g.nodes})
+	writeSet(t, root, map[string][]byte{"evidence.json": doc, "raw/old.json": g.files["raw/old.json"]}, func(string) string { return "" })
+	g.policy["evidence_sha256"] = sum(doc)
+	pol, _ := json.Marshal(g.policy)
+	r, err := VerifyEvidence(ctxT(t), EvidenceRequest{Root: root, Policy: pol})
+	if err == nil || r.ExecutionStatus != StatusResourceLimit || r.Assessment == AssessFail {
+		t.Fatalf("over-limit file: %v %s %s", err, r.ExecutionStatus, r.Assessment)
+	}
 }

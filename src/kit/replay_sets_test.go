@@ -138,6 +138,27 @@ func TestReplayOracleSet(t *testing.T) {
 	}
 }
 
+// S07-A02 (review r1 M2): a registered member the reducer never consumes, or one with a
+// role the reducer does not know, is rejected; a member registered as retained is not.
+func TestReplayUnconsumedMembers(t *testing.T) {
+	root, reg := fxOracleSet(t, nil)
+	stale := []byte(`{"stale":true}`)
+	os.WriteFile(filepath.Join(root, "records", "00009-old.json"), stale, 0o644)
+	reg["members"] = append(reg["members"].([]any), map[string]any{"path": "records/00009-old.json", "role": "record", "bytes": len(stale), "sha256": sum(stale)})
+	if r := runReg(t, root, reg); r.EvidenceValid || !slices.Contains(codes(r.Findings), "MEMBER_UNUSED") {
+		t.Fatalf("unconsumed record member: %v", r.Findings)
+	}
+	ms := reg["members"].([]any)
+	ms[len(ms)-1].(map[string]any)["role"] = "notes"
+	if r := runReg(t, root, reg); r.EvidenceValid || !slices.Contains(codes(r.Findings), "MEMBER_ROLE_UNKNOWN") {
+		t.Fatalf("unknown role: %v", r.Findings)
+	}
+	ms[len(ms)-1].(map[string]any)["role"] = "retained"
+	if r := runReg(t, root, reg); !r.EvidenceValid || r.Retained != 1 {
+		t.Fatalf("retained member: %v %d", r.Findings, r.Retained)
+	}
+}
+
 // fxPrivate builds a tiny NET461-style corpus run: inventory (one routed tsql file, one
 // routed file blocked by encoding, one presence-only and one unrouted file), the tsql
 // route profile and result, the per-file projection and the summary.
@@ -301,13 +322,23 @@ func TestReplayPrepareNative(t *testing.T) {
 	if !r.EvidenceValid || r.Assessment != AssessUnresolved || r.Consumption.Consumed != 3 || r.Consumption.Excluded != 1 {
 		t.Fatalf("prepare: %s %v %+v %+v", r.Assessment, r.Findings, r.Consumption, r.Gates)
 	}
-	for _, id := range []string{"exit", "syntax", "raw-binding", "ledger-binding", "inventory"} {
+	if g := gateOf(r, "inventory"); g.EvidenceMode != ModeRecordedNotRecomputed || g.Failed != 0 {
+		t.Fatalf("inventory entries are checked by size only: %+v", g)
+	}
+	for _, id := range []string{"exit", "syntax", "raw-binding", "ledger-binding"} {
 		if g := gateOf(r, id); g.EvidenceMode != ModeReplayedRaw || g.Failed != 0 {
 			t.Fatalf("gate %s %+v", id, g)
 		}
 	}
 	if g := gateOf(r, "fact-checks"); g.EvidenceMode != ModeRecordedNotRecomputed {
 		t.Fatalf("fact checks %+v", g)
+	}
+	// a registered row whose raw is absent stays recorded, never a pass or a failure
+	root, reg = fxPrepare(t, nil)
+	os.Remove(filepath.Join(root, "raw", "case-p-n.stdout"))
+	r = runReg(t, root, reg)
+	if !r.EvidenceValid || r.Assessment != AssessUnresolved || gateOf(r, "raw-binding").NotRecomputed != 1 || gateOf(r, "exit").EvidenceMode != ModeRecordedNotRecomputed {
+		t.Fatalf("absent raw: %s %v %+v", r.Assessment, r.Findings, r.Gates)
 	}
 	for want, m := range map[string]func([]map[string]any, map[string]string){
 		"EXIT_MISMATCH": func(rows []map[string]any, _ map[string]string) { rows[2]["exit_code"] = 0 },

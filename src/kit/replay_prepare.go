@@ -79,8 +79,16 @@ func replayPrepareNative(x *replayEnv) *Error {
 		}
 		entries[en.Path] = en
 		x.covered[en.Path] = true
-		info := x.files[en.Path]
-		ig.check(info != nil && uint64(info.Size()) == en.Bytes, en.Path, "INVENTORY_MEMBER_MISMATCH", "inventory 파일이 없거나 크기가 다르다")
+		// an entry not read here is checked by size only (recorded); an absent one stays
+		// recorded too: absent raw is not recomputed, never a pass
+		switch info := x.files[en.Path]; {
+		case info == nil:
+			ig.recorded()
+		case uint64(info.Size()) != en.Bytes:
+			ig.fail(en.Path, "INVENTORY_MEMBER_MISMATCH", "inventory 파일의 크기가 다르다")
+		default:
+			ig.recorded()
+		}
 	}
 	if le, ok := entries[lm.Path]; !ok || le.SHA256 != lm.SHA256 || le.Bytes != lm.Bytes {
 		x.finding("LEDGER_UNLISTED", lm.Path, "ledger가 inventory에 같은 identity로 없다")
@@ -114,6 +122,14 @@ func replayPrepareNative(x *replayEnv) *Error {
 		}
 		en, ok := entries[*row.RawStdout]
 		if !rawg.check(ok, name, "RAW_UNLISTED", "row의 raw stdout이 inventory에 없다") {
+			continue
+		}
+		if x.files[en.Path] == nil {
+			// the raw of this row is not present: recorded, not recomputed
+			rawg.recorded()
+			x.gate("exit").recorded()
+			x.gate("syntax").recorded()
+			outs = append(outs, caseOutcome{status: StatusCompleted, assess: AssessUnresolved})
 			continue
 		}
 		raw, e := x.read(en.Path, en.Bytes, en.SHA256)

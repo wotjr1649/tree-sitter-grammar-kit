@@ -231,9 +231,18 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				ids = t.Summary.Identities
 			}
 			for _, id := range ids {
-				want := map[string]string{"producer": x.bind["producer"], "policy": x.bind["policy"], "source": s.SourceSHA256}[id.Role]
-				if want != "" && id.SHA256 != want {
-					bind.fail(name, "MIXED_IDENTITY", fmt.Sprintf("step %d tree의 %s identity가 run과 다르다", s.Step, id.Role))
+				switch id.Role {
+				case "source":
+					if id.SHA256 != s.SourceSHA256 {
+						bind.fail(name, "MIXED_IDENTITY", fmt.Sprintf("step %d tree의 source identity가 step과 다르다", s.Step))
+					}
+				case "producer", "policy":
+					// compared with the run's value once the whole document is read, so the
+					// member order of the document does not matter
+					if x.seen[id.Role] == nil {
+						x.seen[id.Role] = map[string]bool{}
+					}
+					x.seen[id.Role][id.SHA256] = true
 				}
 			}
 		}
@@ -417,6 +426,20 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		out.assess, out.complete = AssessUnresolved, false
 	}
 	return out
+}
+
+// checkSeen compares the producer and policy every tree named with the run's values; a
+// tree from another build or policy in the same document is a mixed result.
+func (x *replayEnv) checkSeen(run map[string]string) {
+	g := x.gate("case-binding")
+	for _, role := range []string{"producer", "policy"} {
+		for _, v := range sortedKeys(x.seen[role]) {
+			if v != run[role] {
+				g.fail(role, "MIXED_IDENTITY", "tree의 "+role+" identity가 run과 다르다")
+			}
+		}
+	}
+	x.seen = map[string]map[string]bool{}
 }
 
 // svcVerdict is the S05 observation-only rule: PASS only when every step is a directive
@@ -631,6 +654,12 @@ func (x *replayEnv) streamTop(m *memberReader, arrayKey string, member func(name
 		}
 		name := nt.String()
 		if name == arrayKey {
+			if dec.PeekKind() == 'n' {
+				if _, err := dec.ReadToken(); err != nil {
+					return jerr(err)
+				}
+				continue
+			}
 			if dec.PeekKind() != '[' {
 				return fail(KindInvalidInput, "JSON_TYPE", m.path+"#/"+name, nil)
 			}
@@ -760,6 +789,7 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		ids = append(ids, prof.Cases[i].ID)
 	}
 	cons := newConsumer(x, ids)
+	x.seen = map[string]map[string]bool{}
 	m, e := x.stream(resultPath)
 	if e != nil {
 		return top, nil, e
@@ -777,17 +807,6 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		}
 		return nil
 	}, func(raw jsontext.Value, i int) *Error {
-		if i == 0 {
-			x.bind = map[string]string{}
-			if top.Build != nil {
-				x.bind["producer"] = top.Build.Identity
-			}
-			for _, id := range top.Identities {
-				if id.Role == "policy" {
-					x.bind["policy"] = id.SHA256
-				}
-			}
-		}
 		var c rcCase
 		if e := decodeRecord(resultPath, raw, &c); e != nil {
 			return e
@@ -818,6 +837,16 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 	if top.Schema != ReportSchema || top.ResultSchema != "tsgk-incremental-result/r1" {
 		return top, outs, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", resultPath, nil)
 	}
+	bindRun := map[string]string{}
+	if top.Build != nil {
+		bindRun["producer"] = top.Build.Identity
+	}
+	for _, id := range top.Identities {
+		if id.Role == "policy" {
+			bindRun["policy"] = id.SHA256
+		}
+	}
+	x.checkSeen(bindRun)
 	sg := x.gate("summary")
 	s := top.Summary
 	sg.check(s.Cases == sum.cases && maps.Equal(s.Statuses, sum.statuses) && maps.Equal(s.Assessments, sum.assessments) && maps.Equal(s.Codes, sum.codes) && s.HasError == sum.hasError,
@@ -906,6 +935,7 @@ func replayNativeResult(x *replayEnv) *Error {
 			ok = n < len(prof.Cases) && prof.Cases[n].ID == sm[2]
 		}
 		rg.check(ok, m.Path, "RESPONSE_UNBOUND", "response 이름이 workload case 순번·id와 맞지 않는다")
+		x.consumed[m.Path] = ok
 	}
 	return nil
 }
@@ -956,7 +986,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	for i := range prof.Native.Cases {
 		want[prof.Native.Cases[i].ID] = &prof.Native.Cases[i]
 	}
-	x.bind = map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256}
+	x.seen = map[string]map[string]bool{}
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
 	records := 0
@@ -966,12 +996,17 @@ func replayOracleSet(x *replayEnv) *Error {
 			x.finding("MANIFEST_MEMBER_UNREGISTERED", mem.Path, "manifest member가 등록 inventory와 다르다")
 			continue
 		}
+		if mem.Role != "record" {
+			// the raw driver response is bound by its hash; the offline API does not decode it
+			if e := x.verifyFile(mem.Path, mem.Bytes, mem.SHA256); e != nil {
+				return e
+			}
+			x.consumed[mem.Path] = true
+			continue
+		}
 		b, e := x.member(mem.Path)
 		if e != nil {
 			return e
-		}
-		if mem.Role != "record" {
-			continue
 		}
 		records++
 		if code := checkRecord(b, mem); code != "" {
@@ -994,6 +1029,7 @@ func replayOracleSet(x *replayEnv) *Error {
 		}
 	}
 	cons.close()
+	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
 	sg.check(records == man.Records, mm.Path, "RECORD_COUNT_MISMATCH", "record 수가 manifest와 다르다")
 	sg.check(aggregateRecorded(statuses, assessments, records) == Verdict{man.ExecutionStatus, man.Assessment}, mm.Path, "RUN_VERDICT_MISMATCH", "set 판정이 record 판정의 집계와 다르다")
 	x.recorded = Verdict{man.ExecutionStatus, man.Assessment}

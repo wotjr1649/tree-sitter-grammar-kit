@@ -145,7 +145,7 @@ func (f *fxNative) write(t *testing.T, edit func(root string, reg map[string]any
 		case strings.HasPrefix(p, "responses/"):
 			role = "response"
 		default:
-			role = "other"
+			role = "retained"
 		}
 		members = append(members, map[string]any{"path": p, "role": role, "bytes": len(files[p]), "sha256": sum(files[p])})
 	}
@@ -433,6 +433,26 @@ func TestReplayLimitsAndCancel(t *testing.T) {
 	testHookReplayLimits = nil
 	if err != nil || r.Assessment != AssessPass {
 		t.Fatalf("streamed: %v %s %v", err, r.Assessment, r.Findings)
+	}
+}
+
+// S07-A11 (review r1 M1, m1): a registered member beyond the per-file limit is not read
+// and leaves the replay recorded (exit 3), not a failed check; a failure found before it
+// still fails the replay.
+func TestReplayUnreadMemberOverLimit(t *testing.T) {
+	f := newFxNative()
+	f.extra["responses/00001-c2.json"] = bytes.Repeat([]byte("r"), 100*1024)
+	root, reg := f.write(t, nil)
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 64 * 1024; return l }
+	defer func() { testHookReplayLimits = nil }()
+	r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+	if err != nil || r.Assessment != AssessUnresolved || r.EvidenceMode != ModeRecordedNotRecomputed || !slices.Contains(codes(r.Findings), "RAW_OVER_LIMIT") {
+		t.Fatalf("over-limit response: %v %s %s %v", err, r.EvidenceMode, r.Assessment, r.Findings)
+	}
+	f.cases[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)["identities"] = []IdentityRef{{"producer", "tsgk-native-build/r1", fxExe}}
+	root, reg = f.write(t, nil)
+	if r, err = Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg}); err != nil || r.Assessment != AssessFail {
+		t.Fatalf("a failure before the over-limit member is kept: %v %s %+v", err, r.Assessment, gateOf(r, "case-binding"))
 	}
 }
 

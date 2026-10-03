@@ -18,10 +18,10 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S07`, Issue #9, Milestone 8, bra
 
 | reducer | 다시 계산 | 기록으로 남음(현재 판정 UNRESOLVED) |
 |---|---|---|
-| `native-result-r1` | case 결속, 상태-판정 일관성, full tree 구조·digest·node 수·`has_error`, incremental/fresh 비교, route 증명, 기대값, claim과 판정, summary 수와 run 판정, response 이름 결속 | 응답 payload, r1 full tree의 declarations 기대값, record·summary 형식 tree의 digest |
+| `native-result-r1` | case 결속(tree identity 포함), 상태-판정 일관성, SVC 관측 전용 사례 판정, full tree 구조·digest·node 수·`has_error`, incremental/fresh 비교, route 증명, 기대값, claim과 판정, summary 수와 run 판정, response 이름 결속 | 응답 payload, r1 full tree의 declarations 기대값, record·summary 형식 tree의 digest |
 | `oracle-set-r1` | 위 항목, record 완결성, set 사례 목록·record 수·set 판정, incremental/fresh query 비교 | API claim, query 기대값, 사실 재현, 동적 SQL, UNSUPPORTED query의 구조 stream |
 | `private-corpus-r1` | corpus route 묶음 결속, 사례 판정, 파일 projection, summary 수, 로컬 실행 identity | record 형식 tree의 digest |
-| `prepare-native-r1` | bundle inventory, 한 producer의 등록 row 전수, raw stdout 결속, probe 판정에서 다시 계산한 exit, 기대 syntax 종류 | 등록 fact check와 edit 창(PREPARE 리뷰 helper) |
+| `prepare-native-r1` | 한 producer의 등록 row 전수, raw stdout 결속, probe 판정에서 다시 계산한 exit, 기대 syntax 종류 | 등록 fact check와 edit 창(PREPARE 리뷰 helper), 크기만 대조한 inventory 항목, 없는 raw |
 | `bs-gate-compare-r1` | `S07-REPLAY-2ULP-r1` 비교 | raw에서 gate를 다시 계산하는 일 |
 
 ## 로컬 검사(Windows, `2130380`과 그 뒤 작업 트리)

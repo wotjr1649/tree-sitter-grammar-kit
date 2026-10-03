@@ -134,6 +134,9 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	res.PolicyID = pol.ID
 	res.Identities = append(res.Identities, IdentityRef{Role: "evidence-policy", Schema: EvidencePolicySchema, SHA256: digestHex(req.Policy)})
 	lim := ReplayOperations()["evidence-replay"]
+	if testHookReplayLimits != nil {
+		lim = testHookReplayLimits(lim)
+	}
 	r, e := startRun(ctx, lim.Wall)
 	if e != nil {
 		return bad(e)
@@ -222,9 +225,9 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 				continue
 			}
 			files[f.Path] = n.ID
-			if _, e := x.read(f.Path, f.Bytes, f.SHA256); e != nil {
-				if e.Kind == KindCancelled || e.Kind == KindIO {
-					return bad(e)
+			if e := x.verifyFile(f.Path, f.Bytes, f.SHA256); e != nil {
+				if e.Kind == KindCancelled || e.Kind == KindIO || e.Kind == KindResourceLimit {
+					return bad(e) // a file beyond the limits is a limit, not damaged evidence
 				}
 				add("FILE_"+e.Code, f.Path, "파일이 없거나 bytes·sha256이 다르다")
 			}
@@ -273,7 +276,9 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	for i, a := range ids {
 		for _, b := range ids[i+1:] {
 			na, nb := nodes[a], nodes[b]
-			if na.Kind == "run" && nb.Kind == "run" && sameRun(na, nb) {
+			// a run and a historical record of the same run identity are one execution
+			// labelled twice, as are two runs
+			if na.Kind != "replay" && na.Kind != "carry" && nb.Kind != "replay" && nb.Kind != "carry" && sameRun(na, nb) {
 				add("RUN_IDENTITY_DUPLICATE", a+","+b, "같은 run·attempt·platform이 두 결과로 기록됐다(relabel)")
 			}
 		}

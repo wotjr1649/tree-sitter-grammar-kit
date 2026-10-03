@@ -136,6 +136,7 @@ type ReplayResult struct {
 	Gates         []ReplayGate      `json:"gates"`
 	Consumption   Consumption       `json:"consumption"`
 	Members       int               `json:"members"`
+	Retained      int               `json:"retained_members"` // registered and hashed, not evidence of this reducer
 	BytesRead     uint64            `json:"bytes_read"`
 	Explanation   []string          `json:"explanation"`
 }
@@ -281,6 +282,7 @@ type ReducerInfo struct {
 	Revision    string   `json:"revision"`
 	Operation   string   `json:"operation"`
 	Inputs      []string `json:"inputs"`
+	Roles       []string `json:"member_roles"` // registrable member roles; a role ending in ':' takes a route group suffix
 	Gates       []string `json:"gates"`
 	Recorded    []string `json:"recorded_not_recomputed"`
 	Description string   `json:"description"`
@@ -295,26 +297,31 @@ func reducerTable() map[string]reducer {
 	return map[string]reducer{
 		"native-result-r1": {ReducerInfo{ID: "native-result-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-incremental-result/r1 result.json", "tsgk-incremental/r1 workload profile", "responses/ members"},
+			Roles:       []string{"workload-profile", "result", "response", "retained"},
 			Gates:       nativeGates,
-			Recorded:    []string{"driver response payloads (tsgk-native protocol decoding is not part of the offline API)", "expectations with declarations on r1 full trees", "SVC composite observation-only cases"},
+			Recorded:    []string{"driver response payloads (tsgk-native protocol decoding is not part of the offline API)", "expectations with declarations on r1 full trees", "digests of record and summary form trees"},
 			Description: "S05 incremental result: exact case consumption against the workload profile, tree digest and structure, incremental/fresh comparison, route proof, expectations and verdict fold recomputed from the recorded trees"}, replayNativeResult},
 		"oracle-set-r1": {ReducerInfo{ID: "oracle-set-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-oracle-manifest/r1 manifest.json", "tsgk-oracle-record/r1 records/", "raw/ driver responses", "tsgk-oracle/r1 workload profile"},
+			Roles:       []string{"workload-profile", "manifest", "record", "raw", "retained"},
 			Gates:       append(slices.Clone(nativeGates), "query-equality"),
 			Recorded:    []string{"api (tsgk-api/r1 observations stay in the raw response)", "query_expectations, fact_reproduction, dynamic_sql (need the case source bytes)", "runtime structural capture streams of UNSUPPORTED queries"},
 			Description: "S06 record set: set completeness through the shared record checks, then the S05 gates and the incremental/fresh query comparison per record"}, replayOracleSet},
 		"private-corpus-r1": {ReducerInfo{ID: "private-corpus-r1", Revision: "r1", Operation: "private-corpus-replay",
 			Inputs:      []string{"tsgk-report/r1 corpus inventory", "tsgk-incremental/r1 route profiles", "tsgk-incremental-result/r1 route results", "per-file record projection (jsonl)", "local-run summary"},
+			Roles:       []string{"inventory", "summary", "projection", "workload-profile:", "result:", "retained"},
 			Gates:       []string{"local-run-identity", "corpus-binding", "case-status", "verdict", "record-projection", "summary"},
 			Recorded:    []string{"tree digests of record-form trees (no nodes are kept)"},
 			Description: "NET461-PHASE2-LOCAL-r1: every routed inventory record consumed by exactly one route case, case verdicts, the per-file projection and the summary counts recomputed; paths are never reported"}, replayPrivateCorpus},
 		"prepare-native-r1": {ReducerInfo{ID: "prepare-native-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"PREPARE evidence-manifest.json", "records/case-ledger.json", "raw/case-*.stdout probe output"},
+			Roles:       []string{"inventory", "ledger", "retained"},
 			Gates:       []string{"inventory", "ledger-binding", "raw-binding", "exit", "syntax"},
-			Recorded:    []string{"fact-checks (PREPARE review helper, not ported)", "edit-recovery (PREPARE review helper, not ported)"},
+			Recorded:    []string{"fact-checks (PREPARE review helper, not ported)", "edit-recovery (PREPARE review helper, not ported)", "inventory entries checked by size only (not read) and absent raw"},
 			Description: "PREPARE native probe evidence: bundle inventory, exact registered rows of one producer, raw stdout binding and the original-stage syntax class recomputed; registered fact and edit checks stay recorded"}, replayPrepareNative},
 		"bs-gate-compare-r1": {ReducerInfo{ID: "bs-gate-compare-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"recorded gate documents", "recomputed gate documents (from a separately authorized EXEC_ADAPTER run)"},
+			Roles:       []string{"recorded-gate", "recomputed-gate", "retained"},
 			Gates:       []string{"gate-compare"},
 			Recorded:    []string{"raw-recompute (BrightScript gates.py is an archived Python verifier; the kit compares only)"},
 			Description: "BrightScript v0.1.2 historical policy S07-REPLAY-2ULP-r1, scoped to this workload adapter: exact types, keys, order, identities, verdicts and thresholds; <= 2 ULP only on the allowlisted log-derived exponents, zero and subnormal bit-exact, no threshold straddle, unchanged max winner"}, replayGateCompare},
@@ -341,16 +348,18 @@ type replayEnv struct {
 	files    map[string]fs.FileInfo
 	members  map[string]ReplayMember
 	verified map[string]bool
-	covered  map[string]bool // files a reducer inventory lists besides the profile members
+	consumed map[string]bool            // members the reducer read or bound
+	seen     map[string]map[string]bool // producer and policy values named by trees
+	covered  map[string]bool            // files a reducer inventory lists besides the profile members
 	gates    []*ReplayGate
 	cons     Consumption
 	actual   map[string]string
 	recorded Verdict
 	recomp   Verdict
 	findings []Finding
-	bind     map[string]string // the run's producer and policy every tree must name
 	redact   bool
-	over     bool // a needed member exceeds the operation limits: recorded, not recomputed
+	over     bool   // a needed or registered member exceeds the operation limits
+	overAt   string // a needed member exceeds the operation limits: recorded, not recomputed
 }
 
 func (x *replayEnv) finding(code, path, msg string) {
@@ -423,7 +432,36 @@ func (x *replayEnv) member(path string) ([]byte, *Error) {
 	if !ok {
 		return nil, fail(KindInvalidInput, "MEMBER_NOT_REGISTERED", path, nil)
 	}
-	return x.read(path, mem.Bytes, mem.SHA256)
+	b, e := x.read(path, mem.Bytes, mem.SHA256)
+	if e == nil {
+		x.consumed[path] = true
+	}
+	return b, e
+}
+
+// verifyFile hashes one walked file in a bounded stream against a trusted size and sha256
+// without keeping its bytes; only the per-file and total limits apply.
+func (x *replayEnv) verifyFile(path string, size uint64, sum string) *Error {
+	info := x.files[path]
+	if info == nil {
+		return fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
+	}
+	if uint64(info.Size()) != size {
+		return fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+	}
+	if size > x.lim.FileBytes {
+		x.over, x.overAt = true, path
+		return fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
+	}
+	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, 0)
+	if e != nil {
+		return e
+	}
+	if st.sha256 != sum {
+		return fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+	}
+	x.verified[path] = true
+	return nil
 }
 
 // read reads one walked file whose identity comes from a trusted inventory.
@@ -436,7 +474,7 @@ func (x *replayEnv) read(path string, size uint64, sum string) ([]byte, *Error) 
 		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	if size > x.lim.FileBytes || size > x.lim.RecordBytes {
-		x.over = true
+		x.over, x.overAt = true, path
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
 	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, size+1)
@@ -465,7 +503,7 @@ func (x *replayEnv) stream(path string) (*memberReader, *Error) {
 		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	if mem.Bytes > x.lim.FileBytes {
-		x.over = true
+		x.over, x.overAt = true, path
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
 	f, err := x.g.root.Open(path)
@@ -553,6 +591,7 @@ func (m *memberReader) finish() *Error {
 		return fail(KindInvalidInput, "MEMBER_MISMATCH", m.path, nil)
 	}
 	m.x.verified[m.path] = true
+	m.x.consumed[m.path] = true
 	return nil
 }
 
@@ -639,7 +678,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	}
 	defer root.Close()
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
-		verified: map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
 	for _, m := range prof.Members {
 		x.members[m.Path] = m
 	}
@@ -648,37 +687,43 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		return bad(e)
 	}
 	if e := red.run(x); e != nil {
-		if e.Kind == KindResourceLimit && x.over {
-			// a needed raw member is beyond the operation limits: the subject stays as recorded
-			res.EvidenceMode, res.Assessment = ModeRecordedNotRecomputed, AssessUnresolved
-			res.Findings = append(res.Findings, Finding{Code: "RAW_OVER_LIMIT", Severity: "warning", Path: e.Path, Message: "raw가 연산 한도를 넘어 다시 계산하지 않고 기록 판정만 보존했다"})
-			res.Recomputed = Verdict{StatusNotRun, AssessUnresolved}
-			res.BytesRead = r.totalRead
-			res.Explanation = append(res.Explanation, "raw가 한도를 넘어 재계산하지 않았다(RECORDED_NOT_RECOMPUTED). 원 판정은 recorded에 그대로 남는다.")
-			return res, nil
-		}
-		if e.Kind == KindInvalidInput && (strings.HasPrefix(e.Code, "MEMBER_") || strings.HasPrefix(e.Code, "RECORD_") || strings.HasPrefix(e.Code, "JSON_")) {
+		switch {
+		case e.Kind == KindResourceLimit && x.over:
+			// a needed raw member is beyond the operation limits: it is not read and the
+			// subject stays as recorded; everything found so far still counts
+		case e.Kind == KindInvalidInput && (strings.HasPrefix(e.Code, "MEMBER_") || strings.HasPrefix(e.Code, "RECORD_") || strings.HasPrefix(e.Code, "JSON_")):
 			// damaged or incomplete evidence is a completed check that failed, not an argument error
 			x.finding(e.Code, e.Path, "evidence가 등록과 다르거나 불완전해 소비를 끝내지 못했다")
-		} else {
+		default:
 			res.BytesRead = r.totalRead
 			return bad(e)
 		}
 	}
-	// every registered member is verified, every walked file is registered or listed
+	// every registered member has a role of the reducer, is verified, and is consumed by the
+	// reducer unless it is registered as retained; every walked file is registered or listed
 	for _, m := range prof.Members {
-		if x.verified[m.Path] {
+		known := false
+		for _, role := range red.info.Roles {
+			known = known || m.Role == role || (strings.HasSuffix(role, ":") && strings.HasPrefix(m.Role, role) && validID(strings.TrimPrefix(m.Role, role)))
+		}
+		if !known {
+			x.finding("MEMBER_ROLE_UNKNOWN", m.Path, "reducer가 모르는 member 역할이다")
 			continue
 		}
-		if x.files[m.Path] == nil {
-			x.finding("MEMBER_MISSING", m.Path, "등록된 member 파일이 없다")
-			continue
-		}
-		if _, e := x.member(m.Path); e != nil {
-			if e.Kind == KindCancelled || e.Kind == KindIO {
-				return bad(e)
+		if !x.verified[m.Path] {
+			if e := x.verifyFile(m.Path, m.Bytes, m.SHA256); e != nil {
+				switch {
+				case e.Kind == KindCancelled || e.Kind == KindIO || e.Code == "TOTAL_BYTES_LIMIT":
+					res.BytesRead = r.totalRead
+					return bad(e)
+				case e.Kind != KindResourceLimit:
+					x.finding(e.Code, m.Path, "등록된 member를 확인하지 못했다")
+				}
+				continue
 			}
-			x.finding(e.Code, m.Path, "등록된 member를 확인하지 못했다")
+		}
+		if !x.consumed[m.Path] && m.Role != "retained" && !x.over {
+			x.finding("MEMBER_UNUSED", m.Path, "reducer가 소비하지 않은 등록 member다(evidence가 아니면 retained로 등록한다)")
 		}
 	}
 	unlisted := 0
@@ -703,6 +748,8 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		switch {
 		case !wok:
 			x.finding("IDENTITY_UNBOUND", k, "reducer가 관측한 identity를 등록이 결속하지 않았다")
+		case !gok && x.over:
+			// not observed: the raw that would show it was beyond the limits
 		case !gok:
 			x.finding("IDENTITY_UNKNOWN", k, "reducer가 관측하지 않는 identity를 등록했다")
 		case want != got:
@@ -729,6 +776,14 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		x.finding("CONSUMPTION_INCOMPLETE", c.First, "expected record의 누락·중복·미사용·순서 오류가 있다")
 	}
 	res.Findings = append(res.Findings, x.findings...)
+	if x.over {
+		res.Findings = append(res.Findings, Finding{Code: "RAW_OVER_LIMIT", Severity: "warning", Path: x.overAt, Message: "raw가 연산 한도를 넘어 읽지 않았다. 다시 계산하지 않고 기록 판정만 보존한다"})
+	}
+	for _, m := range prof.Members {
+		if m.Role == "retained" {
+			res.Retained++
+		}
+	}
 	res.Members, res.BytesRead = len(prof.Members), r.totalRead
 	res.Recomputed = x.recomp
 	failed := false
@@ -742,6 +797,9 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	}
 	if !recomputedAny {
 		res.EvidenceMode = ModeRecordedNotRecomputed
+	}
+	if x.over && res.EvidenceValid {
+		res.EvidenceMode, res.Recomputed = ModeRecordedNotRecomputed, Verdict{StatusNotRun, AssessUnresolved}
 	}
 	switch {
 	case !res.EvidenceValid:
