@@ -4,9 +4,9 @@ A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go A
 
 ## Status and scope
 
-Only repository foundation checks are implemented. They validate the source/module layout, canonical documentation links, Git tracking/ignore policy, and the CGO-free core boundary. There is no usable `tsgk` executable yet.
+Session 01 implements offline `tsgk inspect` (bounded zero-config inventory of a grammar snapshot without running its code), `tsgk identity` (versioned file manifest and set fingerprint with detected encodings), `tsgk corpus` (private local corpus inventory), and the same operations in the public `src/kit` API. A fingerprint identifies bytes; it does not authenticate a source or qualify a grammar. Repository foundation checks validate the source/module layout, canonical documentation links, Git tracking/ignore policy, and the CGO-free core boundary.
 
-Offline inspection, identity, verification, and schema commands/API are planned; generator, native runtime, and adapter execution are also unimplemented. The [public API contract](docs/specs/public-go-api.md) selects `src/kit` in the existing root module. Specifications describe intended contracts, not available features. See the [scope](docs/specs/scope.md) and [roadmap](docs/roadmap.md).
+Verification and schema commands are planned; generator, native runtime, and adapter execution are also unimplemented. The [public API contract](docs/specs/public-go-api.md) selects `src/kit` in the existing root module. Specifications describe intended contracts, not available features. See the [scope](docs/specs/scope.md) and [roadmap](docs/roadmap.md).
 
 Campaign qualification requires [26 syntax routes](docs/validation/language-feature-scope.md) on three platforms, with registered legacy and modern features. This is a development acceptance scope, not a claim that the current product or every candidate grammar supports them. Users can use verified offline operations independently; they need not install all grammars or invoke the kit in their application runtime.
 
@@ -34,6 +34,9 @@ This runs development checks, not grammar validation. Follow the [validation con
 | Location | Purpose |
 |---|---|
 | `go.mod` | Root Go module |
+| `src/kit/` | Public offline API (inspect, identity, corpus) |
+| `src/cmd/tsgk/` | CLI over the same API |
+| `src/testdata/consumer/` | External-consumer module template used by tests |
 | `src/internal/foundation/` | Implemented development checks and tests |
 | `src/contracts/examples/` | Planned contract examples |
 | `docs/specs/`, `docs/design/` | Specifications and architectural decisions |

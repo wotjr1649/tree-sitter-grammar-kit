@@ -91,6 +91,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'vet failed' }
           go build ./src/...
           if ($LASTEXITCODE -ne 0) { throw 'build failed' }
+          $cliPath = Join-Path $env:RUNNER_TEMP "tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          go build -o $cliPath ./src/cmd/tsgk
+          if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' }
           git diff --check
           if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
           git diff --exit-code

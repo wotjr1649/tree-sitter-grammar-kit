@@ -1,6 +1,6 @@
 # 아키텍처
 
-root `go.mod` 하나와 `src/` 제품·검증 경계를 사용한다. 현재 실제 Go package는 `src/internal/foundation/`뿐이다. 공개 entry는 `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`, CLI는 `src/cmd/tsgk/`, 내부 import는 `src/internal/...`로 채택한다. API와 CLI는 동일한 offline core/guard를 호출한다. [공개 API](../specs/public-go-api.md)가 함수·타입·오류·소유권을 소유한다. 실제 package는 담당 Session에서 만든다. Go internal 가시성에 따라 내부 구현을 쓰는 도구/테스트는 `src/` 아래에 둔다. [Go module layout](https://go.dev/doc/modules/layout)
+root `go.mod` 하나와 `src/` 제품·검증 경계를 사용한다. 현재 Go package는 공개 entry `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`(S01 offline core: discovery·identity·encoding 판별·guard·E0·corpus inventory), CLI `src/cmd/tsgk/`, 개발 검사 `src/internal/foundation/`이다. 내부 import는 실제 책임이 생길 때 `src/internal/...`로 둔다. API와 CLI는 동일한 offline core/guard를 호출한다. [공개 API](../specs/public-go-api.md)가 함수·타입·오류·소유권을 소유한다. 실제 package는 담당 Session에서 만든다. Go internal 가시성에 따라 내부 구현을 쓰는 도구/테스트는 `src/` 아래에 둔다. [Go module layout](https://go.dev/doc/modules/layout)
 
 ## 책임과 데이터 흐름
 
