@@ -212,9 +212,12 @@ func TestCorpusLimits(t *testing.T) {
 	}
 	t.Run("caller-cancel-wins-over-wall", func(t *testing.T) {
 		// the caller's cancellation stays CANCELLED even when the kit wall has also expired
+		// both expire at the same point (the first open), so the next checkpoint sees both
 		defer wallExpiringAtOpen(t)()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		cancel()
+		defer cancel()
+		expireWall := testHookOpen
+		testHookOpen = func(name string) { cancel(); expireWall(name) }
 		_, err := Corpus(ctx, CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Profile: "cp949"}})
 		kindOf(t, err, KindCancelled, "CANCELLED")
 	})
