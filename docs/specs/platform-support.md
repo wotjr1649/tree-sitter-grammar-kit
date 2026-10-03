@@ -23,3 +23,18 @@ semantic 비교는 source/input/profile/protocol/comparator가 같은 결정적 
 CI 집계는 repo/workflow/candidate/run attempt/input identity와 모든 필수 OS artifact를 확인한다. missing/skip/cancel은 PASS가 아니다. cross-build는 native 실행으로 기록하지 않는다. 향후 race 검사는 CGO가 필요한 별도 diagnostic lane이며 CGO-free core gate와 분리한다.
 
 compiler·executable·OS image는 host별 identity를 유지한다. 같은 runtime/header compatibility를 사용해도 동일한 빌드 bytes를 요구하지 않는다. 보조 언어 parser 대조는 등록된 모호·최신·불일치 case에 한해 필요한 환경에서 수행하며 다른 OS native 실행을 대체하지 않는다. 세 OS runner label/architecture는 [기계 정의](../../src/contracts/campaign-01.json)에 있고 실제 image와 tool은 run receipt에 기록한다.
+
+## S04 runner backend
+
+`src/internal/runner`는 generator와 이후 native 실행이 함께 쓰는 하나의 runner다. 실행 파일은 절대 경로로만 받고 PATH를 찾지 않으며, argv는 shell 없이 그대로 넘기고 환경 변수는 호출자가 준 목록만 쓴다(Windows에서는 `os/exec`가 `SYSTEMROOT`를 더한다). stdout·stderr 상한을 넘으면 `OUTPUT_LIMIT`, wall을 넘으면 `WALL_LIMIT`, 메모리 상한이면 `MEMORY_LIMIT`로 끝나며 셋 다 `RESOURCE_LIMIT`다. 호출자 취소는 `CANCELLED`다. 주 process가 끝난 뒤 남은 하위 process는 종료하고 수(`residual_after_exit`)를 기록한다. cgroup backend에서는 커널이 아직 해제하지 않은 종료 중 task도 이 수에 들어갈 수 있다. process tree가 grace 안에 비고 출력 pipe가 닫혀야 cleanup `verified`이며, 그렇지 않으면 성공으로 보고하지 않는다. `cleanup.scope`는 verified가 덮는 범위다. `JOB_OBJECT`·`CGROUP_KILL`은 tree 전체, `PROCESS_GROUP`은 process group뿐이다.
+
+| OS | backend | tree 정리 | 그룹 이탈 하위 process | 메모리 |
+|---|---|---|---|---|
+| windows/amd64 | Job Object(정지 상태로 시작 → job 배정 → 재개, breakaway 불허, KILL_ON_JOB_CLOSE) | `TerminateJobObject`, active process 0 확인 | 포함 | hard: `JobMemoryLimit`(job commit bytes), 완료 port의 memory-limit 통지 |
+| linux/amd64 + 위임 cgroup | cgroup v2 leaf에 직접 시작(`CLONE_INTO_CGROUP`), process group leader | SIGTERM → grace → `cgroup.kill`, `cgroup.procs`가 비고 `cgroup.events`가 `populated 0`이 될 때까지 확인(종료 중인 task는 procs에서 먼저 빠짐) 뒤 leaf 제거 | 포함 | hard: `memory.max`·`memory.oom.group`·`memory.swap.max=0`, `memory.events` oom_kill |
+| linux/amd64, 위임 cgroup 없음 | process group | SIGTERM → grace → SIGKILL, `/proc` pgid 확인 | 미포함(`NOT_CONTAINED`) | sampled(`/proc/PID/statm`), non-strict |
+| darwin/arm64 | process group | SIGTERM → grace → SIGKILL, `kern.proc.pgrp` 확인 | 미포함(`NOT_CONTAINED`) | sampled(`/bin/ps` rss), non-strict |
+
+hard memory를 요구한 요청은 hard backend가 없으면 실행 전에 `MEMORY_HARD_CAP_UNSUPPORTED`로 막는다. sampled 종료는 hard cap 근거가 아니다. 미포함 backend에서 그룹을 떠난 하위 process가 pipe를 잡고 있으면 cleanup은 verified가 아니다. pipe를 잡지 않은 이탈 process는 그 backend가 관측하지 못하므로, scope `PROCESS_GROUP`의 verified는 그런 process의 종료를 뜻하지 않는다. interactive 실행에서는 주 process가 끝나면(종료시킨 경우든 스스로 끝난 경우든) 남은 하위 process를 바로 종료하고, 그래도 stdout을 잡은 이탈 process가 있으면 grace 뒤 읽기 쪽을 닫아 대기를 끝낸다. 호출자는 Wait 전에 stdout을 읽으며, 닫힌 뒤의 읽기는 EOF가 아니라 오류다. Linux 위임 cgroup은 부모의 `cgroup.subtree_control`에 memory가 이미 켜져 있어야 하며 runner는 부모를 바꾸지 않는다. 이 backend들은 승인된 도구를 제한·정리하는 수단이며 적대적 native code 격리가 아니다. hosted Linux CI는 위임 cgroup에서 시험하고, cgroup 없이 실행되면 capability 시험이 실패한다.
+
+길이 접두 frame envelope(`RunBatch`)는 frame마다 4-byte big-endian 길이와 payload를 주고받는다. 기본값은 요청 50331648 bytes·응답 16777216 bytes, frame watchdog 60초+5초, batch stdout 268435456 bytes, batch wall 3600초다. 끝난 frame은 `COMPLETED`로 남는다. 진행 중 frame은 자기 한도(watchdog, 응답 크기, 메모리)면 `RESOURCE_LIMIT`, batch 한도(batch wall, batch stdout)나 호출자 취소면 `REQUEUED`, process가 스스로 끝나거나 protocol을 어기면 `FAILED`다. 보내지 않은 frame은 `REQUEUED`, 요청 상한을 넘는 frame은 보내지 않고 `RESOURCE_LIMIT`다. 단일 native 요청 process의 정책 `DefaultRequestPolicy`는 parse 요청 wall 90초, edit 요청 wall 300초와 요청당 최대 4 edit(5개 이상은 실행 전 `EDIT_COUNT_LIMIT`), 메모리 4 GiB(Windows·Linux hard, macOS sampled), 종료 유예 5초다. batch는 같은 메모리·유예에 batch wall을 쓴다. driver 쪽 60초 progress callback과 allocator hook은 S05 범위다.

@@ -1,0 +1,325 @@
+{
+  "schema": "tsgk-reproduction-routes/r1",
+  "status": "REGISTRATION_NOT_RESULT",
+  "generator": {
+    "tool": "tree-sitter",
+    "version": "0.27.0",
+    "abi": 15,
+    "optimize": true,
+    "release_assets": {
+      "windows/amd64": {
+        "asset": "tree-sitter-windows-x64.gz",
+        "bytes": 3778280,
+        "sha256": "2d6c014b4e91d3d302ba7b30b3b625914027c3861ae7817e068a273e3f034550"
+      },
+      "linux/amd64": {
+        "asset": "tree-sitter-linux-x64.gz",
+        "bytes": 8594290,
+        "sha256": "20a1f39ec1c45f2211492dcb8881c802b643b554bb196869a29ac3778277fa77"
+      },
+      "darwin/arm64": {
+        "asset": "tree-sitter-macos-arm64.gz",
+        "bytes": 7275255,
+        "sha256": "70f7573b2b2e5371a5b58cc5227d2ad981fd5374596b9874e770af486060774e"
+      }
+    },
+    "executables": {
+      "windows/amd64": {
+        "bytes": 9745408,
+        "sha256": "9fbc4f285c876b1a38c7e9d5223a51fb7842255285cdd7db3ffb0ba3934f2662"
+      }
+    }
+  },
+  "js_runtime": {
+    "tool": "node",
+    "version": "24.21.0",
+    "release_assets": {
+      "windows/amd64": {
+        "asset": "win-x64/node.exe",
+        "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32"
+      },
+      "linux/amd64": {
+        "asset": "node-v24.21.0-linux-x64.tar.xz",
+        "sha256": "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6"
+      },
+      "darwin/arm64": {
+        "asset": "node-v24.21.0-darwin-arm64.tar.gz",
+        "sha256": "bed7eea5325e1108f32ce5228ddd6a5f0f08a499ee42aa7442aea583702f6057"
+      }
+    }
+  },
+  "npm_dependencies": [
+    {
+      "package": "tree-sitter-c",
+      "version": "0.24.1",
+      "integrity": "sha512-lkYwWN3SRecpvaeqmFKkuPNR3ZbtnvHU+4XAEEkJdrp3JfSp2pBrhXOtvfsENUneye76g889Y0ddF2DM0gEDpA==",
+      "files": [
+        "grammar.js",
+        "package.json"
+      ]
+    },
+    {
+      "package": "tree-sitter-javascript",
+      "version": "0.23.1",
+      "integrity": "sha512-/bnhbrTD9frUYHQTiYnPcxyHORIw157ERBa6dqzaKxvR/x3PC4Yzd+D1pZIMS6zNg2v3a8BZ0oK7jHqsQo9fWA==",
+      "files": [
+        "grammar.js",
+        "package.json"
+      ]
+    }
+  ],
+  "outputs": [
+    "grammar.json",
+    "node-types.json",
+    "parser.c",
+    "tree_sitter/alloc.h",
+    "tree_sitter/array.h",
+    "tree_sitter/parser.h"
+  ],
+  "routes": [
+    {
+      "route": "csharp",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-CSHARP-REMEDY-r5",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 32815459,
+          "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
+    },
+    {
+      "route": "go",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "python",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "javascript",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "jsx",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "typescript",
+      "mode": "js",
+      "entry": "typescript/grammar.js",
+      "npm_dependencies": [
+        "tree-sitter-javascript"
+      ],
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-TS-TSX-REMEDY-r2",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 8764241,
+          "sha256": "1ed7309680ac623523e1c9ae31d8b7286a56219d08b9a11660887e88d848d3c5"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
+    },
+    {
+      "route": "tsx",
+      "mode": "js",
+      "entry": "tsx/grammar.js",
+      "npm_dependencies": [
+        "tree-sitter-javascript"
+      ],
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-TS-TSX-REMEDY-r2",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 8788036,
+          "sha256": "87e0d559545b43b6fd0f6146a5419dbc19a900b2e10f3ef9451aaf33275e5296"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
+    },
+    {
+      "route": "java",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "kotlin",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "c",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "cpp",
+      "mode": "js",
+      "entry": "grammar.js",
+      "npm_dependencies": [
+        "tree-sitter-c"
+      ],
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "rust",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "swift",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-SWIFT-REMEDY-r1",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 23472218,
+          "sha256": "cfd9b9ca69c9ba7c71965766076340474a56ad286e2340de8ba0fe691e0f1d74"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      },
+      "upstream_parser_c": "ABSENT"
+    },
+    {
+      "route": "dart",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "php",
+      "mode": "js",
+      "entry": "php/grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "ruby",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "r",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "bash",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "powershell",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "html",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "css",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "json",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "yaml",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "xml",
+      "mode": "js",
+      "entry": "xml/grammar.js",
+      "reference_basis": "UPSTREAM_CHECKED_IN"
+    },
+    {
+      "route": "tsql",
+      "mode": "js",
+      "entry": "grammar.js",
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-MSSQL-REMEDY-r1",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 26919442,
+          "sha256": "0c2db4895b33385590646dd6a7b12afc08f94dc85ef893f402059dd320a8fd99"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
+    },
+    {
+      "route": "postgresql-sql",
+      "mode": "js",
+      "entry": "postgres/grammar.js",
+      "reference_basis": "PREPARE_GENERATED",
+      "candidate": "P05-PG-LEGACY-REMEDY-r1",
+      "prepare_generated": {
+        "parser.c": {
+          "bytes": 97664835,
+          "sha256": "cc47959aac26b9e749883dac2fb2852dcb7efd895d51e4b19d38d4b1a3528f7d"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "route": "postgresql-sql",
+      "kind": "UPSTREAM_TOOL_GAP",
+      "detail": "tree-sitter 0.27.0 generate --disable-optimization of the PostgreSQL grammar exits 1 because its 387042 parse states exceed the 16-bit ABI/parser maximum 65535 (PREPARE run 36796853218, docs/validation/p05-source-closure.md); only the optimized generation (6 GiB) is registered",
+      "evidence_mode": "RECORDED_NOT_RECOMPUTED"
+    }
+  ],
+  "build_portability_patch": {
+    "state": "NOT_APPLICABLE",
+    "reason": "no patch needed"
+  }
+}

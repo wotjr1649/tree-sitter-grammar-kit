@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -502,5 +503,116 @@ func TestSourceRegistryPaths(t *testing.T) {
 	}
 	if portableSourcePath(".", false) {
 		t.Fatal("root sentinel accepted as a file path")
+	}
+}
+
+type reproductionRoutes struct {
+	Schema    string
+	Generator struct {
+		Version       string
+		ABI           int
+		ReleaseAssets map[string]struct {
+			Asset  string
+			Bytes  int64
+			SHA256 string
+		} `json:"release_assets"`
+	}
+	JSRuntime struct {
+		Version       string
+		ReleaseAssets map[string]struct{ Asset, SHA256 string } `json:"release_assets"`
+	} `json:"js_runtime"`
+	Routes []struct {
+		Route, Mode, Entry string
+		ReferenceBasis     string                             `json:"reference_basis"`
+		PrepareGenerated   map[string]struct{ SHA256 string } `json:"prepare_generated"`
+		UpstreamParserC    string                             `json:"upstream_parser_c"`
+		NPM                []string                           `json:"npm_dependencies"`
+	}
+	BuildPortabilityPatch struct{ State, Reason string } `json:"build_portability_patch"`
+}
+
+var hex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+// checkReproductionRoutes binds the S04 registry to the source registry: every route once,
+// in order, with the source path it actually has (S04-A15) and the tool digests that gate
+// generator runs per OS (S04-A18).
+func checkReproductionRoutes(r reproductionRoutes, sources sourceRegistry) error {
+	if r.Schema != "tsgk-reproduction-routes/r1" || r.Generator.Version != "0.27.0" || r.Generator.ABI != 15 || r.JSRuntime.Version != "24.21.0" {
+		return errors.New("reproduction registry identity")
+	}
+	for _, os := range []string{"windows/amd64", "linux/amd64", "darwin/arm64"} {
+		if a := r.Generator.ReleaseAssets[os]; !hex64.MatchString(a.SHA256) || a.Asset == "" || a.Bytes <= 0 {
+			return fmt.Errorf("generator digest missing for %s", os)
+		}
+		if a := r.JSRuntime.ReleaseAssets[os]; !hex64.MatchString(a.SHA256) || a.Asset == "" {
+			return fmt.Errorf("node digest missing for %s", os)
+		}
+	}
+	if len(r.Routes) != len(sources.Routes) {
+		return fmt.Errorf("route count %d, sources %d", len(r.Routes), len(sources.Routes))
+	}
+	for i, src := range sources.Routes {
+		e := r.Routes[i]
+		if e.Route != src.RouteID {
+			return fmt.Errorf("route %d is %q, sources %q", i, e.Route, src.RouteID)
+		}
+		prefix := ""
+		if src.GrammarSubdirectory != "." {
+			prefix = src.GrammarSubdirectory + "/"
+		}
+		if e.Mode != "js" || src.GrammarJS == nil || !*src.GrammarJS || e.Entry != prefix+"grammar.js" {
+			return fmt.Errorf("%s: JS regeneration claimed without grammar.js at %q", e.Route, e.Entry)
+		}
+		adopted := src.Adoption != nil
+		switch {
+		case adopted && (e.ReferenceBasis != "PREPARE_GENERATED" || !hex64.MatchString(e.PrepareGenerated["parser.c"].SHA256)):
+			return fmt.Errorf("%s: adopted route needs its PREPARE generated parser.c reference", e.Route)
+		case !adopted && (e.ReferenceBasis != "UPSTREAM_CHECKED_IN" || len(e.PrepareGenerated) != 0):
+			return fmt.Errorf("%s: non-adopted route compares with the upstream generated files", e.Route)
+		}
+		if (src.ParserC != nil && !*src.ParserC) != (e.UpstreamParserC == "ABSENT") {
+			return fmt.Errorf("%s: upstream parser.c presence disagrees with the source registry", e.Route)
+		}
+	}
+	if r.BuildPortabilityPatch.State != "NOT_APPLICABLE" || r.BuildPortabilityPatch.Reason != "no patch needed" {
+		return errors.New("build portability patch state")
+	}
+	return nil
+}
+
+func TestReproductionRoutes(t *testing.T) {
+	read := func(name string) []byte {
+		data, err := os.ReadFile(filepath.Join(repository(t), filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return data
+	}
+	var sources sourceRegistry
+	if err := json.Unmarshal(read("src/contracts/language-sources.json"), &sources); err != nil {
+		t.Fatal(err)
+	}
+	data := read("src/contracts/reproduction-routes.json")
+	var r reproductionRoutes
+	if err := json.Unmarshal(data, &r); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkReproductionRoutes(r, sources); err != nil {
+		t.Fatal(err)
+	}
+	for name, mutate := range map[string]func(*reproductionRoutes){
+		"omitted route":     func(x *reproductionRoutes) { x.Routes = x.Routes[1:] },
+		"json path claimed": func(x *reproductionRoutes) { x.Routes[3].Mode = "json" },
+		"wrong entry":       func(x *reproductionRoutes) { x.Routes[5].Entry = "grammar.js" },
+		"adopted basis":     func(x *reproductionRoutes) { x.Routes[0].ReferenceBasis = "UPSTREAM_CHECKED_IN" },
+		"swift parser.c":    func(x *reproductionRoutes) { x.Routes[12].UpstreamParserC = "" },
+		"missing digest":    func(x *reproductionRoutes) { delete(x.Generator.ReleaseAssets, "darwin/arm64") },
+	} {
+		var m reproductionRoutes
+		json.Unmarshal(data, &m)
+		mutate(&m)
+		if checkReproductionRoutes(m, sources) == nil {
+			t.Errorf("mutation not detected: %s", name)
+		}
 	}
 }

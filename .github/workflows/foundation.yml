@@ -18,6 +18,7 @@ env:
   GOWORK: 'off'
   GOTOOLCHAIN: local
   GOPROXY: 'off'
+  GOFLAGS: '-mod=readonly'
 
 jobs:
   foundation:
@@ -51,6 +52,16 @@ jobs:
         with:
           go-version: '1.27.1'
           cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          # Only the modules pinned by go.mod/go.sum (golang.org/x/sys); later steps run with GOPROXY=off.
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
@@ -79,8 +90,34 @@ jobs:
         run: |
           $formatted = gofmt -l src
           if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
+          if ($IsLinux) {
+            # Delegate a cgroup v2 subtree so the runner's hard memory cap is exercised: this
+            # shell moves into a leaf, the runner creates per-process leaves below jobs/.
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo mkdir -p "$base/supervisor" "$base/jobs"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+            sudo chown -R "$(id -u):$(id -g)" $base
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+            Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+            $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          }
           go test ./src/... -count=1 -v -timeout 120s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: S04 runner tree 정리 반복 시험 (Linux cgroup v2)
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: |
+          # The cgroup release race only shows on a real cgroup v2 host: repeat the tree
+          # cleanup tests 20 times under the same delegated parent as the main test step.
+          $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+          $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameEscapedStdoutHolder|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
+          if ($LASTEXITCODE -ne 0) { throw 'repeated tree cleanup tests failed' }
       - name: P05 도구 경로 회귀 검사
         run: |
           $taskTestRoot = Join-Path $env:RUNNER_TEMP "p05-tool-check-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
@@ -98,6 +135,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
+      - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.0)
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP "s04-owned-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          if ($IsLinux) {
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            $cgroup = "$base/jobs"
+          }
+          & src/dev/s04-reproduce/ci-owned.ps1 -Destination $dest -Platform $env:PLATFORM -CgroupParent $cgroup
       - name: Verify clean validation output
         run: |
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching

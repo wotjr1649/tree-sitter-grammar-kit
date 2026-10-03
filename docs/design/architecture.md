@@ -1,6 +1,6 @@
 # 아키텍처
 
-root `go.mod` 하나와 `src/` 제품·검증 경계를 사용한다. 현재 Go package는 공개 entry `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`(S01 offline core: discovery·identity·encoding 판별·guard·E0·corpus inventory), CLI `src/cmd/tsgk/`, 개발 검사 `src/internal/foundation/`이다. 내부 import는 실제 책임이 생길 때 `src/internal/...`로 둔다. API와 CLI는 동일한 offline core/guard를 호출한다. [공개 API](../specs/public-go-api.md)가 함수·타입·오류·소유권을 소유한다. 실제 package는 담당 Session에서 만든다. Go internal 가시성에 따라 내부 구현을 쓰는 도구/테스트는 `src/` 아래에 둔다. [Go module layout](https://go.dev/doc/modules/layout)
+root `go.mod` 하나와 `src/` 제품·검증 경계를 사용한다. 현재 Go package는 공개 entry `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`(S01 offline core: discovery·identity·encoding 판별·guard·E0·corpus inventory), CLI `src/cmd/tsgk/`, 개발 검사 `src/internal/foundation/`, S04의 외부 process runner `src/internal/runner/`와 재현 orchestration `src/internal/reproduce/`다. 내부 import는 실제 책임이 생길 때 `src/internal/...`로 둔다. API와 CLI는 동일한 offline core/guard를 호출한다. [공개 API](../specs/public-go-api.md)가 함수·타입·오류·소유권을 소유한다. 실제 package는 담당 Session에서 만든다. Go internal 가시성에 따라 내부 구현을 쓰는 도구/테스트는 `src/` 아래에 둔다. [Go module layout](https://go.dev/doc/modules/layout)
 
 ## 책임과 데이터 흐름
 
@@ -16,6 +16,6 @@ native C는 `src/drivers/native-c/`에 분리해 Go package build에 포함되�
 
 ## 단순성과 자원
 
-stdlib, streaming hash/record, 명시적 size bound, iterative traversal을 우선한다. deep tree 재귀와 대형 raw 전체 복제를 피한다. benchmark는 serial 또는 고정 concurrency로 수행한다. 보안 OS API를 unsafe 코드로 새로 만들기보다 필요한 경우 `x/sys`의 버전·license·CGO·호출 효과를 검토하고 최소 의존성으로 채택한다. 현재 외부 Go dependency는 없다.
+stdlib, streaming hash/record, 명시적 size bound, iterative traversal을 우선한다. deep tree 재귀와 대형 raw 전체 복제를 피한다. benchmark는 serial 또는 고정 concurrency로 수행한다. 보안 OS API를 unsafe 코드로 새로 만들기보다 필요한 경우 `x/sys`의 버전·license·CGO·호출 효과를 검토하고 최소 의존성으로 채택한다. 외부 Go dependency는 S04 runner의 OS 제어(Windows Job Object·thread 재개, macOS sysctl)에 쓰는 `golang.org/x/sys` v0.48.0 하나다(2026-10-03 승인, `go.sum` 고정, `CGO_ENABLED=0`). offline `src/kit` closure에는 들어가지 않는다.
 
 fixture는 자체 scannerless/stateful-scanner를 작게 작성하며 외부 grammar 전체를 vendor하지 않는다. artifact/source ZIP 배포는 [identity 계약](../specs/identity-and-evidence.md), 권한은 [trust](../specs/trust-and-execution.md), 순서는 [roadmap](../roadmap.md)이 소유한다.

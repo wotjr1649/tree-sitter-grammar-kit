@@ -87,7 +87,7 @@ func TestStrictDocuments(t *testing.T) {
 // Tracked examples: valid ones decode, each invalid one fails with the code in its name.
 func TestContractExamples(t *testing.T) {
 	dir := filepath.Join("..", "contracts", "examples")
-	for _, name := range []string{"profile-r1.json", "expected-r1.json"} {
+	for _, name := range []string{"profile-r1.json", "expected-r1.json", "reproduce-r1.json"} {
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			t.Fatal(err)
@@ -95,6 +95,10 @@ func TestContractExamples(t *testing.T) {
 		if strings.HasPrefix(name, "profile") {
 			_, e := parseProfile(data)
 			if e != nil {
+				t.Fatalf("%s: %v", name, e)
+			}
+		} else if strings.HasPrefix(name, "reproduce") {
+			if _, e := parseReproduce(data); e != nil {
 				t.Fatalf("%s: %v", name, e)
 			}
 		} else if _, e := parseExpected(data); e != nil {
@@ -117,6 +121,8 @@ func TestContractExamples(t *testing.T) {
 			_, e = parseProfile(data)
 		case "expected":
 			_, e = parseExpected(data)
+		case "reproduce":
+			_, e = parseReproduce(data)
 		default:
 			t.Fatalf("unknown example %s", ent.Name())
 		}

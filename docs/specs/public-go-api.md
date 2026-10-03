@@ -228,6 +228,14 @@ type SchemaDifference struct {
 
 판정·code·순서·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. 실행되는 공개 예시는 `src/kit/example_test.go`의 `ExampleSchemaDiff`다. 입력은 파일 경로가 아니라 caller가 가진 bytes이며 API는 파일·process·network를 쓰지 않고 `parser.c`가 필요 없다. 호출 중 caller는 `Data`를 바꾸지 않고, API는 반환 후 이를 보관하지 않는다. 결과는 호출별로 새로 할당된다. 서로 다른 입력에 대한 동시 호출은 공유 상태가 없다. 형식 위반은 `SchemaCheck`의 오류가 아니라 `error == nil`인 결과의 `FAIL`/`BLOCKED`다. `SchemaDiff`는 잘못된 입력을 `*Error`(`INVALID_INPUT`/`SCHEMA_INVALID`, `UNSUPPORTED`/`SCHEMA_KEY_UNSUPPORTED`)로 돌려주고 그 입력의 finding을 결과에 남긴다. 한도·취소·deadline 없는 context·잘못된 limits(`LIMITS_INVALID`)는 S01과 같은 `*Error`다. 오류와 함께 반환된 결과는 `COMPLETED`/`PASS`가 아니고 `Counts`는 nil, `Differences`는 비어 있다.
 
+## S04 함수 — reproduce profile 해석
+
+```go
+func ParseReproduceProfile(data []byte) (ReproduceProfile, error)
+```
+
+`tsgk-reproduce/r1` 문서를 S02와 같은 strict decoder로 해석해 `ReproduceProfile`(`SHA256`, `ID`, `Route`, `Mode`, `Generator`, `JSRuntime`, `ABI`, `Optimize`, `Grammar`, `Inputs`, `Outputs`, `Limits`)을 돌려준다. 오류는 `*Error`(`INVALID_INPUT`, code는 [CLI 계약](cli-and-profile.md)의 `S04 구현` 절)다. 상수 `ModeJS`, `ModeJSON`, `ReferencePresent`, `ReferenceAbsent`와 generator 연산 상한 `Gen*`를 공개한다. 이 함수는 파일·process·network를 쓰지 않는다. 생성기 실행은 공개 API가 아니며 CLI `reproduce`가 내부 runner로 한다. 공개 package의 dependency closure에는 runner, `os/exec`, `golang.org/x/sys`, network package가 없다(`TestOfflineClosure`).
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.

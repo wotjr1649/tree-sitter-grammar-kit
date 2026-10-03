@@ -1,0 +1,37 @@
+{
+  "schema": "tsgk-s04-owned-expected/r1",
+  "generator": "tree-sitter 0.27.0 windows/amd64 executable sha256 9fbc4f285c876b1a38c7e9d5223a51fb7842255285cdd7db3ffb0ba3934f2662; JSON mode (grammar.json is input, not re-emitted), abi 15, optimized",
+  "observed": "S04 local Windows run; workspaces A and B byte-equal",
+  "outputs": [
+    {
+      "path": "node-types.json",
+      "reference": "PRESENT",
+      "sha256": "ce5ef2a002dc0436d73a2150032ece287c693f871f17a7f887bb320d804a7fae",
+      "bytes": 1312
+    },
+    {
+      "path": "parser.c",
+      "reference": "PRESENT",
+      "sha256": "a90ffaef0b59792bf91c82016e6d0d3282051fb7db77774cbd18f5367e4d2197",
+      "bytes": 9223
+    },
+    {
+      "path": "tree_sitter/alloc.h",
+      "reference": "PRESENT",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+    },
+    {
+      "path": "tree_sitter/array.h",
+      "reference": "PRESENT",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+    },
+    {
+      "path": "tree_sitter/parser.h",
+      "reference": "PRESENT",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+    }
+  ]
+}

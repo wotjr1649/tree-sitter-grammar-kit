@@ -1,6 +1,6 @@
 # Documentation map
 
-The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, and the Session 03 static `node-types.json` check and directional diff (`tsgk schema check|diff`), with the matching `src/kit` API. Other commands and r0 data contracts are planned specifications, not claims of implementation.
+The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, the Session 03 static `node-types.json` check and directional diff (`tsgk schema check|diff`), with the matching `src/kit` API, and the Session 04 supervised process runner (`src/internal/runner`) with `tsgk reproduce` (the only command that starts a process). Other commands and r0 data contracts are planned specifications, not claims of implementation.
 
 | Task | Canonical owner |
 |---|---|
@@ -13,12 +13,14 @@ The current implementation consists of repository foundation checks, the Session
 | OS/arch/capabilities | [platform](specs/platform-support.md) |
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
+| Generator reproduction routes, tool digests | [reproduction registry](../src/contracts/reproduction-routes.json) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
 | Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md), [disposition](validation/language-feature-disposition.md), [source risks](validation/source-feature-feasibility.md) |
 | NET461 WinForms/DevExpress 20.2/WCF workload, bounded .svc format, real-world source encoding/dynamic SQL/large-file policy | [업무 workload/format 등록부](validation/net461-workload.md) |
 | Campaign scope, Issues/Milestones | [roadmap](roadmap.md) |
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 | Observed Session 03 results | [schema contract report](reports/session-03-schema-contract.md) |
+| Observed Session 04 results | [reproducibility report](reports/session-04-reproducibility.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
