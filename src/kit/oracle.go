@@ -480,11 +480,74 @@ func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
 		if e != nil {
 			return e
 		}
-		for _, v := range obj {
-			if _, e := t.str(v); e != nil {
+		vals := map[string]string{}
+		for name, v := range obj {
+			if vals[name], e = t.str(v); e != nil {
 				return e
 			}
 		}
+		if k == "workload" {
+			m.Workload = vals
+		} else {
+			m.Producer = vals
+		}
+	}
+	ref := func(v *jv) (IdentityRef, *Error) {
+		rm, e := t.object(v, []string{"role", "schema", "sha256"})
+		if e != nil {
+			return IdentityRef{}, e
+		}
+		var r IdentityRef
+		for _, f := range []struct {
+			dst  *string
+			name string
+		}{{&r.Role, "role"}, {&r.Schema, "schema"}, {&r.SHA256, "sha256"}} {
+			if *f.dst, e = t.str(rm[f.name]); e != nil {
+				return r, e
+			}
+		}
+		return r, nil
+	}
+	if m.Policy, e = ref(mm["policy"]); e != nil {
+		return e
+	}
+	cs, e := t.array(mm["comparators"])
+	if e != nil {
+		return e
+	}
+	for _, cv := range cs {
+		c, e := t.str(cv)
+		if e != nil {
+			return e
+		}
+		m.Comparators = append(m.Comparators, c)
+	}
+	qs, e := t.array(mm["queries"])
+	if e != nil {
+		return e
+	}
+	for _, qv := range qs {
+		q, e := ref(qv)
+		if e != nil {
+			return e
+		}
+		m.Queries = append(m.Queries, q)
+	}
+	if fv := mm["fact_pack"]; fv.kind != 'n' {
+		fm, e := t.object(fv, []string{"revision", "sha256", "route"})
+		if e != nil {
+			return e
+		}
+		var f FactPackRef
+		for _, x := range []struct {
+			dst  *string
+			name string
+		}{{&f.Revision, "revision"}, {&f.SHA256, "sha256"}, {&f.Route, "route"}} {
+			if *x.dst, e = t.str(fm[x.name]); e != nil {
+				return e
+			}
+		}
+		m.FactPack = &f
 	}
 	for _, f := range []struct {
 		dst  *string

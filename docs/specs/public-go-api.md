@@ -270,6 +270,19 @@ func CaptureText(src []byte, c Capture) (string, error)
 
 모두 offline이며 process·network를 쓰지 않는다. `VerifyOracleSet`만 호출자가 준 `fs.FS`를 읽는다. `Capture`는 runtime이 돌려준 순서의 capture 하나다(`match`, `pattern`, `capture`, `name`, preorder `node`, `type`, node flag 다섯 개, byte·point 범위). `CompareCaptures`는 하나뿐인 capture stream 비교 함수(`tsgk-capture-compare/r1`)다. stream 순서대로 모든 필드를 정렬·중복 제거 없이 비교하고 첫 차이(`index`, `field`, `left`, `right`; 한쪽이 접두면 `capture_count`)를 낸다. `ParseOracleProfile`은 [CLI 계약](cli-and-profile.md) `S06 구현`의 `tsgk-oracle/r1`을 S05와 같은 strict decoder로 해석한다. `VerifyOracleSet`은 [tree/protocol](tree-and-adapter-protocol.md) `S06 구현`의 기록 set 완결성(마지막 `complete` member, member bytes·sha256, 목록 밖 파일, record 수, record의 입력·step 0 결속)을 검사하고 finding을 모아 `valid`와 manifest의 실행 상태·판정을 낸다(`valid`는 완결·무손상만 뜻한다). 고치거나 추정하지 않는다. `ParseFactPack`은 `tsgk-fact-query-pack/r1`을 해석하고 파일 bytes의 sha256을 identity로 돌려준다. `DeclarationQuery`는 선언 query text를 만들며 pack의 text가 그 결과와 같다(`TestFactQueryPack`). `DeriveDeclarations`와 `DeriveDynamicSQL`은 pack query의 capture(동적 SQL은 원본 bytes와 판별 encoding도)에서 같은 절의 규칙으로 사실을 도출한다. 소비자가 같은 pack과 기록으로 사실을 다시 만들 수 있게 공개한다. `CaptureText`는 capture의 원본 text를 돌려주고 UTF-8이 아니면 오류다. `NativeOperations`에는 `native-query`, `native-query-large`(windows/amd64), `real-world-source-r3`(windows/amd64, 8 GiB)가 더해졌고 `NativeOperation`에는 `platforms`·`matches`·`captures`·`query_ms`가 더해졌다. driver build·실행·기록 set 발행은 공개 API가 아니며 CLI `oracle record`가 내부 `src/internal/native`로 한다. 공개 closure에 runner·`os/exec`·network가 없음은 `TestOfflineClosure`가 계속 확인한다.
 
+## S07 함수 — replay, reducer 등록부, 수치 비교, evidence graph
+
+```go
+func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error)
+func ParseReplayProfile(data []byte) (ReplayProfile, error)
+func ReplayOperations() map[string]ReplayLimits
+func Reducers() []ReducerInfo
+func CompareGates(recorded, recomputed []byte) (GateComparison, error)
+func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, error)
+```
+
+모두 offline이며 process·network를 쓰지 않는다. `Replay`와 `VerifyEvidence`는 호출자가 준 root만 S01 guard로 읽고, `ctx`의 deadline이 필요하다(없으면 `DEADLINE_REQUIRED`). 연산 wall에 닿으면 `RESOURCE_LIMIT`, 호출자 취소·deadline은 `CANCELLED`다. 실패는 `*Error`와 함께 실패 report를 돌려준다. 등록되지 않은 reducer·schema·연산은 `KindUnsupported`이고, 손상되었거나 불완전한 evidence는 오류가 아니라 `evidence_valid: false`와 `FAIL` 결과다. `ReplayResult`는 E0 `Report`에 `subject`, `recorded`, `recomputed`, `evidence_valid`, `observed_identities`, `gates`, `consumption`, `members`, `bytes_read`, 한국어 `explanation`을 더한다. `ReplayOperations`는 `evidence-replay`와 `private-corpus-replay`의 한도를, `Reducers`는 등록 reducer(다시 계산하는 gate와 기록으로 남는 것)를 돌려준다. `CompareGates`는 BrightScript `S07-REPLAY-2ULP-r1` 비교이며 그 workload에만 쓴다. 차이는 오류 text가 보관된 verifier의 code로 시작한다. `VerifyEvidence`는 `tsgk-evidence/r1` graph를 `tsgk-evidence-policy/r1`로 검사하고 E0에 `nodes`, `files`, `modes`, `explanation`을 더한 `EvidenceResult`를 돌려준다. 계약은 [identity/evidence](identity-and-evidence.md) `S07 구현`과 [CLI/profile](cli-and-profile.md) `S07 구현`이다. 같은 입력의 두 호출은 같은 결과이며 동시 호출은 서로 상태를 공유하지 않는다.
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.

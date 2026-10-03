@@ -66,6 +66,55 @@ BrightScript v0.1.2는 historical raw replay 기준이다. 그 로그 파생값�
 
 source package는 추적 blob/mode allowlist, verification package는 별도 등록 manifest에서 구성한다. local 폴더 전체 ZIP은 허용하지 않는다. 작은 추적 manifest/요약 보고와 별도 raw 자산을 연결하되 이번 campaign에서 publication을 자동 수행하지 않는다.
 
+## S07 구현 — replay와 evidence graph
+
+S07은 E0를 확장하고 새 report 체계를 만들지 않는다. `tsgk-replay-result/r1`과 `tsgk-evidence-result/r1`은 E0 envelope(`schema: tsgk-report/r1`, 세 축, `identities`, `findings`, `coverage`)에 필드를 더한 것이다. 명령·registration·한도는 [CLI/profile](cli-and-profile.md) `S07 구현`이 소유한다.
+
+### replay: 세 축과 subject
+
+* replay 연산 자체의 축과 과거 subject run을 따로 둔다. 결과의 `subject`는 registration이 적은 run·attempt·platform·commit과 그 원 축이며 replay가 바꾸지 않는다. `recorded`는 raw에 기록된 subject 판정이고 registration의 원 판정과 다르면 `RECORDED_VERDICT_MISMATCH`다. `recomputed`는 reducer가 raw에서 다시 계산한 subject 판정이다.
+* gate마다 `recomputed`·`not_recomputed` 수를 센다. 모든 record를 다시 계산한 gate만 `evidence_mode: REPLAYED_RAW`이고, 하나라도 다시 계산하지 못한 gate는 `RECORDED_NOT_RECOMPUTED`이며 실패가 없으면 판정은 `UNRESOLVED`다. 다시 계산하지 못한 claim에 기대는 사례는 다시 계산한 claim이 FAIL이 아닌 한 `UNRESOLVED`이고 PASS가 되지 않는다.
+* 한도: reducer에 필요한 member든 소비하지 않는 member든 파일당 한도를 넘으면 읽지 않는다(`RAW_OVER_LIMIT` 경고). 그때까지 찾은 실패(혼합 identity 포함)는 그대로 FAIL이고, 실패가 없으면 결과는 `RECORDED_NOT_RECOMPUTED`/`UNRESOLVED`이며 subject는 기록대로 남는다. 소비하지 않는 member가 한도를 넘어도 다른 member의 역할·소비 검사는 그대로 한다. 읽는 도중 한도를 넘게 커진 파일과 합계 한도는 `RESOURCE_LIMIT`다. reducer가 subject 결과를 하나도 다시 계산하지 못하면(예: 등록 row의 raw가 모두 없음) 결과는 `RECORDED_NOT_RECOMPUTED`다.
+* 결과 `assessment`는 evidence가 유효하면(`evidence_valid`: finding 없음, gate 실패 없음) 다시 계산한 subject 판정이고, 유효하지 않으면 `FAIL`이다. 다시 계산한 gate가 하나도 없으면 결과 `evidence_mode`는 `RECORDED_NOT_RECOMPUTED`다. 등록되지 않은 reducer·schema·연산은 `UNSUPPORTED`(NOT_RUN/NOT_RUN/BLOCKED)이고 replay 성공이 되지 않는다.
+* member: registration의 `members`가 독립 inventory다. root의 모든 파일은 member이거나 reducer가 결속한 inventory의 항목이어야 하며(`MEMBER_UNLISTED`), member는 등록한 bytes·sha256과 같아야 한다(`MEMBER_MISSING`, `MEMBER_MISMATCH`). member 역할은 reducer가 선언한 역할(`member_roles`)이어야 하고(`MEMBER_ROLE_UNKNOWN`), reducer가 소비하지 않은 member는 `MEMBER_UNUSED`다. evidence가 아닌 동반 파일(예: 실행에 쓴 binary)은 역할 `retained`로 등록하며 hash만 확인하고 결과의 `retained_members`로 센다. 같은 bundle이 만든 manifest(S06 `manifest.json`, PREPARE `evidence-manifest.json`)는 무결성 metadata이며 registration이 그 bytes를 결속할 때만 그 목록을 쓴다.
+* identity: reducer가 raw에서 관측한 identity(`observed_identities`)와 registration의 `identities`를 역할마다 정확히 비교한다. 다르면 `IDENTITY_MISMATCH`(stale·혼합), 결속하지 않은 관측 역할은 `IDENTITY_UNBOUND`, 관측하지 않는 역할은 `IDENTITY_UNKNOWN`이다. tree마다 붙은 producer·policy·source identity가 run의 값과 다르면 `MIXED_IDENTITY`다. summary·manifest만 고쳐 hash를 다시 맞춰도 reducer가 record에서 다시 센 값과 달라 거부된다.
+* 소비: reducer는 workload(또는 registration의 `records`)에서 expected record와 순서를 정하고 record마다 정확히 한 번 소비한다. `consumption`은 `expected`, `consumed`, `missing`, `duplicate`, `unused`, `out_of_order`(뒤에 등록된 record 다음에 나온 record), `excluded`(다른 cohort, 소비하지 않음)와 첫 문제를 적는다. 누락·중복·미사용·순서 오류가 있으면 `CONSUMPTION_INCOMPLETE`다.
+
+### 등록 reducer
+
+reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reducers`). 각 reducer는 다시 계산하는 gate와 다시 계산하지 않는 기록을 선언한다.
+
+| reducer | 입력 | 다시 계산하는 gate | 기록으로 남는 것 |
+|---|---|---|---|
+| `native-result-r1` | S05 `tsgk-incremental-result/r1`, 그 workload profile, `responses/` | case 결속(id·입력·step 수), tree의 producer·policy·source 결속, 상태-판정 일관성, SVC 관측 전용 사례의 판정(기록된 directive 관측에서), full tree 구조·`tsgk-tree-digest/r1`·node 수·`has_error`, incremental/fresh 비교(`CompareTrees`), route 증명, 기대값(workload 등록에서), claim과 판정 fold, summary 수와 run 판정 | driver 응답 payload(protocol decode는 공개 API 밖), r1 full tree의 declarations 기대값, record·summary 형식 tree의 digest |
+| `oracle-set-r1` | S06 기록 set(`manifest.json`, `records/`, `raw/`)과 workload profile | 위 S05 gate, record 완결성(S06 기록 set 검사), set 사례 목록·record 수·set 판정, incremental/fresh query 비교(`CompareCaptures`) | API claim(관측은 raw 응답에만), query 기대값·사실 재현·동적 SQL(사례 source bytes 필요), UNSUPPORTED query의 runtime 구조 stream |
+| `private-corpus-r1` | `NET461-PHASE2-LOCAL-r1` 로컬 실행: S01 inventory, route profile·결과, 파일별 projection(jsonl), 실행 summary | 아래 비공개 workload 등록 | record 형식 tree의 digest |
+| `prepare-native-r1` | PREPARE probe bundle: `evidence-manifest.json`, `records/case-ledger.json`, `raw/case-*.stdout` | 한 producer의 등록 row 전수, raw stdout 결속(hash), probe 판정(원본 오류, incremental/fresh 출력 동일성, 손상 오류·복구 무오류, 복구=원본)으로 다시 계산한 exit, 기대 syntax 종류 | 등록 fact check와 edit 창(PREPARE 리뷰 helper, 이식하지 않음), 읽지 않은 inventory 항목(크기만 대조), 없는 raw(그 row는 `UNRESOLVED`) |
+| `bs-gate-compare-r1` | BrightScript 기록 gate 문서와 다시 계산한 gate 문서 | `S07-REPLAY-2ULP-r1` 비교 | raw에서 gate를 다시 계산하는 일(보관된 Python verifier, 별도 EXEC_ADAPTER) |
+
+`native-result-r1`·`oracle-set-r1`·`private-corpus-r1`은 같은 사례 reducer와 S05·S06의 공개 비교 함수를 쓴다. 새 JSON normalizer는 없고 host 관측(process, 시간, executable)은 raw에 남되 판정에 쓰지 않는다. 같은 reducer와 같은 bytes는 같은 결과다.
+
+### BrightScript 수치 정책 `S07-REPLAY-2ULP-r1`
+
+BrightScript v0.1.2 historical replay의 비교 규칙이며 `bs-gate-compare-r1`에만 속한다. kit 전역 tolerance가 아니다. `kit.CompareGates`는 보관된 `replay_compare.py`를 옮긴 것이다. key 집합·배열 길이와 순서·ID·bool/int/float/string/null 형(정수와 실수 literal은 다른 형)·verdict·원 측정·threshold는 정확히 같아야 한다. gate별 허용 목록의 log 파생 exponent만, 두 값이 같은 부호의 유한 normal이면 2 ULP까지 허용한다. 0과 subnormal은 bit까지 같아야 하므로 `+0`/`-0`도 다르다. 어느 값이든 ±2 ULP 구간이 원 threshold를 걸치면 `NUMERIC_BOUNDARY_INDETERMINATE`, threshold 판정이 다르면 `THRESHOLD_DECISION_DIFFERENCE`, `REGRESSION-SWEEP`의 집계가 exponent 최대값과 다르면 `AGGREGATE_VALUE_DIFFERENCE`, 최대값을 낸 항목이 바뀌면 `AGGREGATE_SOURCE_CHANGED`다. 허용된 차이는 `REPLAY_EQUIVALENT_WITH_DECLARED_ROUNDING`으로 경로·ULP 거리·threshold와 함께 남고 `BITWISE_EQUAL`과 구별한다. v0.1.2 verification bundle은 이 저장소에 없으며 S07은 그것을 내려받지 않았다(이번 다운로드 0). 17개 gate의 raw 재계산은 보관된 verifier 실행이 필요하므로 지원하지 않는다.
+
+### 비공개 corpus workload 등록과 로컬 실행 identity
+
+`private-corpus-r1`은 [NET461 등록부](../validation/net461-workload.md)의 corpus route 표를 workload로 등록한다. inventory 순서대로 route가 있고 `PRESENCE_ONLY`가 아닌 record가 파일 record(`f` + inventory 순번 6자리)다. 그중 `COMPLETED`·encoding `PASS`·portable path인 record만 route 묶음(`csharp`, `tsql`, `xml`, `svc`; svc는 csharp route로 파싱)의 사례이고 나머지는 `BLOCKED`(그 code)로 실행하지 않는다. 각 route profile은 그 묶음을 같은 순서·입력 identity·encoding으로 정확히 담아야 하고(`corpus-binding`), 결과는 위 사례 reducer로 다시 판정한다. 파일별 projection은 모든 파일 record를 한 번씩 소비하고 다시 계산한 상태·판정·code·`has_error`·node 수·digest·형식과 같아야 한다. summary의 inventory 수·route별 상태·`has_error`·code·형식·`not_run`은 다시 센 값과 같아야 한다.
+
+로컬 실행 identity는 후보 commit(40자리 hex), clean tree(`clean_tree: true`, dirty 0), host 정보(OS·arch), 도구 identity(compiler sha256, runtime commit; 각 route 결과의 build 값과 같아야 함)다. 모두 `local-run-identity` gate와 결속 identity(`commit`, `clean_tree`, `host`, `compiler`, `runtime`, route별 `workload`·`policy`·`producer`·`executable`·`operation`·`platform`)로 검사한다. 이 reducer의 결과는 경로·이름을 담지 않는다(record는 순번으로만 나타낸다). 그래도 registration과 결과는 hash와 로컬 실행 정보를 담으므로 추적하지 않는 로컬 artifacts에만 두고, 공개 기록은 개수와 판정만 담는다.
+
+### evidence graph `tsgk-evidence/r1`
+
+`kit.VerifyEvidence`는 caller 신뢰 policy가 anchor한 `evidence.json`과 그 파일로 graph를 검사한다. node 종류와 축은 `run`(NEW_RUN), `replay`(REPLAYED_RAW), `carry`(CARRIED_FORWARD, 현재 실행 NOT_RUN), `record`(RECORDED_NOT_RECOMPUTED, 현재 판정 UNRESOLVED와 `recorded_assessment`)다. 완료되지 않은 실행의 PASS는 없다. identity는 `source`, `tool`, `input`, `query`, `policy`, `comparator`, `protocol`, `workload`, `platform`, `run`, `attempt`를 모두 별도 필드로 가진다.
+
+* 참조는 `subject`(replay → run·record, 정확히 하나), `carries`(carry → run, 정확히 하나), `supersedes`(나중 결과 → 이전 결과)만 허용하고 순환은 `GRAPH_CYCLE`이다. 파일은 graph가 나열한 것뿐이며 bytes·sha256이 같아야 한다.
+* replay는 subject와 다른 run·attempt를 가져야 하고(`REPLAY_RELABELS_SUBJECT`) source·input·workload·platform은 subject와 같아야 한다(`REPLAY_SUBJECT_MISMATCH`). `replay-result` 파일이 있으면 그 evidence mode·판정·subject run이 graph와 같아야 하며(`REPLAY_RESULT_MISMATCH`), 한도 때문에 읽지 못하면 결과는 `RESOURCE_LIMIT`다.
+* 이전 FAIL과 수정·새 policy의 PASS는 서로 다른 run identity의 두 node로 남는다. 같은 run·attempt·platform을 가진 run·record node 둘(run과 run, run과 과거 record, record와 record)은 `RUN_IDENTITY_DUPLICATE`, 같은 run identity로 이전 결과를 대체하면 `RUN_RELABELED`다.
+* 승계는 기본 거부다. 채택한 관계는 `unchanged-dependency-r1` 하나뿐이다. policy의 `carry_forward` 규칙이 그 node·원 결과·관계·허가자를 적어야 하고(없으면 `CARRY_FORWARD_UNAUTHORIZED`, 다르면 `CARRY_RELATION_UNSUPPORTED`), run·attempt를 뺀 모든 dependency identity(source·tool·input·query·policy·comparator·protocol·workload·platform)가 원 결과와 같아야 한다(`CARRY_DEPENDENCY_CHANGED`). 원 결과는 완료된 NEW_RUN이고(`CARRY_ORIGIN_INCOMPLETE`) 판정은 바뀌지 않는다(`CARRY_ASSESSMENT_CHANGED`).
+* `required` node는 종류와 적힌 identity가 정확히 같아야 한다(`IDENTITY_MISMATCH`). `eligibility`가 있으면 그 node의 evidence mode가 목록에 있어야 하며, S08 최종 qualification처럼 `NEW_RUN`만 받는 자격에 replay·carry·record node는 무결성이 맞아도 `ELIGIBILITY_REJECTED`다.
+* hash 일치는 무결성이다. 게시자 인증(authenticity)은 지원하지 않으며 결과 coverage에 `unsupported: authenticity`로 남는다.
+
 ## 준비 tracking의 적용 대상과 보존 결과
 
 PREPARE tracking receipt의 객체별 S00 보존은 `s00_object_preservation.applicable`과 `status`를 구별한다. 대상은 `issue:2`와 `milestone:1`이며 실제 원본 body/description·title·state·관계 대조 결과를 `PRESERVED` 또는 `MISMATCH`로 기록한다. 다른 객체의 상태는 `NOT_APPLICABLE`이다. 별도 `tracking_readback`은 intended object와 실제 readback의 `MATCH`/`MISMATCH`를 기록한다. Parent #1은 S00 객체가 아니므로 그 안의 S00 완료 이력 section을 별도로 대조한다.

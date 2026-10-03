@@ -62,6 +62,7 @@ var required = []string{
 	"src/contracts/native-large-fixtures.json", "src/dev/s05-native/prepare-routes.ps1", "src/dev/s05-native/run-routes.ps1",
 	"src/dev/s05-native/select-compiler.ps1", "src/dev/s05-native/run-corpus.ps1", "docs/reports/session-05-incremental.md",
 	"src/contracts/fact-query-pack.json", "docs/reports/session-06-native-oracle.md",
+	"src/contracts/examples/replay-r1.json", "src/contracts/examples/evidence-policy-r1.json", "docs/reports/session-07-evidence-replay.md",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}
