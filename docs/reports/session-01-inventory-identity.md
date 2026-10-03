@@ -15,7 +15,7 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S01`, Issue #3, Milestone 2, bra
 
 ## 관측 revision과 로컬 검사
 
-코드 commit `caa0e72`와 리뷰 수정 commit `0e1673d`·`716c86f`·`79f4f49`(branch `session/01-inventory-identity`, base main `631c01e`)에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`로 실행했다. 아래 mutant·route·corpus 근거는 최종 코드 commit `79f4f49`의 build(sha256 `5bf4c6d90a28b499066c47111dceeca696712b35936cfef4bf26ca4ccd3f14a1`)에 결속한다. 세 OS CI는 PR 단계에서 따로 기록한다.
+코드 commit `caa0e72`, 리뷰 수정 commit `0e1673d`·`716c86f`·`79f4f49`, 사용자 결정 반영 commit `d99ab52`(branch `session/01-inventory-identity`, base main `631c01e`)에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`로 실행했다. 아래 mutant·route 근거는 최종 코드 commit `d99ab52`의 build(sha256 `6c93f0c7b23b2d5364b40ca5ebd93cb75c3405905157458b3538ae7843808fd4`)에, 비공개 corpus 근거는 `79f4f49` build(sha256 `5bf4c6d90a28b499066c47111dceeca696712b35936cfef4bf26ca4ccd3f14a1`)에 결속한다. `d99ab52`는 identity profile 등록부만 바꾸며 corpus 경로는 profile을 받지 않는다. 세 OS CI는 PR 단계에서 따로 기록한다.
 
 | 검사 | 결과 |
 |---|---|
@@ -23,7 +23,7 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S01`, Issue #3, Milestone 2, bra
 | `go test ./src/... -count=1` | `src/kit`, `src/cmd/tsgk`, `src/internal/foundation` 통과. Windows에서 Unix 전용 2건(실행 비트, FIFO)은 skip이며 Linux·macOS CI에서 실행된다 |
 | 외부 consumer module(checkout 밖, `PATH` 비움) | CLI와 API 결과 JSON bytes 동일, 경로 탈출 오류 code 동일 |
 | 제품 dependency closure | `os/exec`, `net`, `plugin` 없음 |
-| targeted mutant 6종(`79f4f49`에서 재실행) | 파일 누락·고정 digest·CRLF 정규화·grammar 이름 하드코딩·link 추적·선언의 BOM 우선 위반 모두 컴파일되고 해당 시험이 의도한 진단으로 실패 |
+| targeted mutant 7종(`d99ab52`에서 재실행) | 파일 누락·고정 digest·CRLF 정규화·grammar 이름 하드코딩·link 추적·선언의 BOM 우선 위반·대용량 profile의 identity 무시 모두 컴파일되고 해당 시험이 의도한 진단으로 실패 |
 
 acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayouts`와 아래 route 관측; A04·A05·A06 `TestIdentityVector`(외부 Python 계산 vector와 시험 안 독립 preimage); A07 `TestGuards`; A08 `TestLimits`; A09 `TestCancellation`; A10 `TestOutPublication`; A11 `TestOfflineClosure`와 `PATH` 없는 실행; A12 `TestConcurrentRoots`·`TestGuards`; A13 위 mutant; A14 세 OS CI(미실행, PR 단계); A15·A16 `TestEncodingSteps`·`TestEncodingBoundIntoIdentity`; A17 아래 source 결속; A18·A19 `TestCorpusInventory`·`TestCorpusLimits`와 비공개 corpus 실행.
 
@@ -31,11 +31,11 @@ acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayout
 
 채택 6 route의 upstream base bytes는 PREPARE 보존 사본을 기록된 hash로 확인해 썼고, PostgreSQL `postgres/src/parser.c`는 보존된 LFS 실체(97664793 bytes, `pg-large-source-r1` 첫 identity)로 채웠다. 비채택 20 route는 `source-prepare`로 취득 전 목록(19 요청)을 기록한 뒤 고정 commit tarball을 받았고(8397488 bytes), 19개 모두 PREPARE 보존 archive와 byte 단위로 같았다. 이어서 registry가 선언한 26 route의 파일 전부를 bytes·sha256으로 결속했다(누락 0). 채택 route의 registry `patched_files` 10건 중 9건은 보존 candidate 사본과 hash가 같고, C# r5 `grammar.js`는 보존 candidate 사본이 없어 registry 값만 입력으로 기록했다. patched tree는 S01에서 재구성하지 않는다(S04).
 
-아래는 CLI(`79f4f49` build; `caa0e72`·`0e1673d` build와 결과 같음)로 registry의 `grammar_subdirectory`를 선택해 얻은 관측이다. `UNRESOLVED`는 실행 없이 닫을 수 없는 참조(root 밖 module, literal로 해석하지 못한 `require`/`import` token 등)가 있다는 정직한 관측이며 결함 판정이 아니다. `registry 미선택`은 registry가 저장소 전체 기준으로 적은 형제 grammar의 scanner·헤더, `common.mak` 같은 build 파일처럼 선택 grammar의 관측 closure에 들어오지 않은 파일 수다.
+아래는 CLI(`d99ab52` build)로 registry의 `grammar_subdirectory`를 선택해 얻은 관측이다. `UNRESOLVED`는 실행 없이 닫을 수 없는 참조(root 밖 module, literal로 해석하지 못한 `require`/`import` token 등)가 있다는 정직한 관측이며 결함 판정이 아니다. `registry 미선택`은 registry가 저장소 전체 기준으로 적은 형제 grammar의 scanner·헤더, `common.mak` 같은 build 파일처럼 선택 grammar의 관측 closure에 들어오지 않은 파일 수다.
 
 | route | grammar | inspect closure | FOUND | identity | 선택 파일 | registry 미선택 |
 |---|---|---|---|---|---|---|
-| csharp (채택) | `.` | OBSERVED | 31 | RESOURCE_LIMIT (parser.c) | - | - |
+| csharp (채택) | `.` | OBSERVED | 31 | COMPLETED (`large-parser-source-r1`) | 31 | 0 |
 | go | `.` | UNRESOLVED | 18 | COMPLETED | 18 | 0 |
 | python | `.` | UNRESOLVED | 17 | COMPLETED | 17 | 0 |
 | javascript | `.` | UNRESOLVED | 22 | COMPLETED | 22 | 0 |
@@ -43,9 +43,9 @@ acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayout
 | typescript (채택) | `typescript` | UNRESOLVED | 16 | COMPLETED | 16 | 5 |
 | tsx (채택) | `tsx` | UNRESOLVED | 15 | COMPLETED | 15 | 5 |
 | java | `.` | UNRESOLVED | 17 | COMPLETED | 17 | 0 |
-| kotlin | `.` | UNRESOLVED | 13 | RESOURCE_LIMIT (parser.c) | - | - |
+| kotlin | `.` | UNRESOLVED | 13 | COMPLETED (`large-parser-source-r1`) | 13 | 0 |
 | c | `.` | OBSERVED | 19 | COMPLETED | 19 | 0 |
-| cpp | `.` | UNRESOLVED | 31 | RESOURCE_LIMIT (parser.c) | - | - |
+| cpp | `.` | UNRESOLVED | 31 | COMPLETED (`large-parser-source-r1`) | 31 | 0 |
 | rust | `.` | OBSERVED | 22 | COMPLETED | 22 | 0 |
 | swift (채택) | `.` | UNRESOLVED | 24 | COMPLETED | 24 | 0 |
 | dart | `.` | UNRESOLVED | 29 | COMPLETED | 29 | 0 |
@@ -59,10 +59,10 @@ acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayout
 | json | `.` | OBSERVED | 11 | COMPLETED | 11 | 0 |
 | yaml | `.` | OBSERVED | 22 | COMPLETED | 22 | 9 |
 | xml | `xml` | OBSERVED | 14 | COMPLETED | 14 | 5 |
-| tsql (채택) | `.` | UNRESOLVED | 69 | RESOURCE_LIMIT (parser.c) | - | - |
+| tsql (채택) | `.` | UNRESOLVED | 69 | COMPLETED (`large-parser-source-r1`) | 69 | 0 |
 | postgresql-sql (채택) | `postgres` | OBSERVED | 25 | COMPLETED (`pg-large-source-r1`) | 25 | 4 |
 
-inspect는 26 route 모두 완료했다. identity는 22 route에서 완료했고, C#(32021728 bytes), T-SQL(26649584), C++(25857209), Kotlin(22443237)의 upstream `src/parser.c`가 제품 기본 단일 파일 한도 16777216 bytes를 넘어 `RESOURCE_LIMIT`(exit 3)로 끝났다. 이것은 채택 계약대로의 동작이며 S01은 한도를 올리지 않았다. 후속 Session이 이 4개 identity의 전체 manifest를 필요로 하면 `pg-large-source-r1`과 같은 identity 한정 예외가 사용자 결정으로 필요하다. 해당 파일의 bytes는 위 결속 기록에 있다.
+inspect와 identity 모두 26 route에서 완료했다. C#(32021728 bytes), T-SQL(26649584), C++(25857209), Kotlin(22443237)의 upstream `src/parser.c`는 제품 기본 단일 파일 한도 16777216 bytes를 넘어 `79f4f49` build에서 `RESOURCE_LIMIT`(exit 3)였다. 사용자 결정 `C1-LARGE-PARSER-SOURCE-R1`에 따라 이 네 identity(bytes·sha256은 위 결속 기록과 같다)에만 단일 파일 33554432 bytes를 허용하는 `large-parser-source-r1`을 등록했고([CLI/profile](../specs/cli-and-profile.md)), 네 route의 identity는 그 파일 하나에만 `LARGE_FILE_EXCEPTION` finding을 내고 완료했다. 같은 네 route를 profile 없이, 또는 `pg-large-source-r1`로 실행하면 그대로 `FILE_BYTES_LIMIT`(exit 3)다. 나머지 22 route의 선택·역할·encoding·finding·set identity는 `79f4f49` build 결과와 같다. 다른 한도는 올리지 않았다.
 
 ## 비공개 corpus `NET461-PHASE2-LOCAL-r1`
 
