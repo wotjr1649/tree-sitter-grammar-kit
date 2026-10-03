@@ -95,10 +95,12 @@ func fixtureBuild(t *testing.T, name string, defines ...string) *Build {
 		Symbol: "tree_sitter_tsgk_" + name, Compiler: cc, CompilerID: kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n},
 		Defines: defines, Sanitize: os.Getenv("TSGK_NATIVE_SANITIZE") == "1", CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")})
 	if err != nil {
-		for _, s := range b.Steps {
-			t.Logf("%s %v: %s %s", s.Name, s.Argv, s.Result.Status, s.Stderr)
+		if b != nil { // nil when the build was refused before any step ran
+			for _, s := range b.Steps {
+				t.Logf("%s %v: %s %s", s.Name, s.Argv, s.Result.Status, s.Stderr)
+			}
 		}
-		t.Fatalf("build %s: %v", key, err)
+		t.Fatalf("build %s with compiler %s: %v", key, cc, err)
 	}
 	buildCache[key] = b
 	return b

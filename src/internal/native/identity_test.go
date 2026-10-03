@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -107,5 +108,42 @@ func TestBuildIdentity(t *testing.T) {
 	}
 	if err := nb.Remove(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A host compiler reached through a link (Ubuntu /usr/bin/gcc -> gcc-13) is identified
+// and run as the file it resolves to; a dangling link is TOOL_MISSING with its cause.
+func TestBuildCompilerLink(t *testing.T) {
+	rt, cc := nativeTools(t)
+	dir := t.TempDir()
+	link := filepath.Join(dir, "cc-link"+filepath.Ext(cc))
+	if err := os.Symlink(cc, link); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	sum, n := digestOf(t, cc)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // stop at the first compiler step: only the refusal before it matters here
+	req := BuildRequest{Work: dir, Runtime: rt, GrammarRoot: fixtureRoot(t, "plain"), Grammar: fixtureGrammar(t, "plain"),
+		Symbol: "tree_sitter_tsgk_plain", Compiler: link, CompilerID: kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n}}
+	b, err := NewBuild(ctx, req)
+	var ne *Error
+	if b == nil || !errors.As(err, &ne) || ne.Code != "CANCELLED" {
+		t.Fatalf("linked compiler refused before its first step: %v", err)
+	}
+	req.Compiler = filepath.Join(dir, "dangling")
+	if err := os.Symlink(filepath.Join(dir, "absent"), req.Compiler); err != nil {
+		t.Fatal(err)
+	}
+	b, err = NewBuild(context.Background(), req)
+	if b != nil || !errors.As(err, &ne) || ne.Code != "TOOL_MISSING" || ne.Cause == nil {
+		t.Fatalf("dangling compiler link: %v", err)
+	}
+	msg := buildFailure(err, b)
+	if !strings.Contains(msg, "TOOL_MISSING") || !strings.Contains(msg, "absent") {
+		t.Fatalf("build failure hides its cause: %q", msg)
+	}
+	failed := &Build{Steps: []BuildStep{{Name: "parser", Stderr: "parser.c:1: error: boom"}}}
+	if msg := buildFailure(refuse(kit.KindIO, "BUILD_FAILED", errors.New("parser exit 1")), failed); !strings.Contains(msg, "parser stderr: parser.c:1: error: boom") {
+		t.Fatalf("step stderr missing: %q", msg)
 	}
 }

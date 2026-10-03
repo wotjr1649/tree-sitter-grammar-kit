@@ -80,6 +80,18 @@ type BatchRecord struct {
 	Fatal         string        `json:"fatal,omitempty"`
 }
 
+// buildFailure names the cause of a failed build: the refusal error and, for a failed
+// compiler step, that step's stderr tail (already bounded to 4096 bytes per step).
+func buildFailure(err error, b *Build) string {
+	msg := "driver build이 완료되지 않았다: " + err.Error()
+	if b != nil && len(b.Steps) > 0 {
+		if s := b.Steps[len(b.Steps)-1]; s.Stderr != "" {
+			msg += "\n" + s.Name + " stderr: " + s.Stderr
+		}
+	}
+	return msg
+}
+
 func finding(code, severity, path, msg string) kit.Finding {
 	return kit.Finding{Code: code, Severity: severity, Path: path, Message: msg}
 }
@@ -173,7 +185,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		if ne.Kind == kit.KindInvalidInput {
 			res.ExecutionStatus = kit.StatusNotRun
 		}
-		res.Findings = append(res.Findings, finding(ne.Code, "error", "", "driver build이 완료되지 않았다"))
+		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
 		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, CgroupParent: req.CgroupParent, PolicyRef: policy}

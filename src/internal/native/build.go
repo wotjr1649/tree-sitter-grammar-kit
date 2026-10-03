@@ -222,6 +222,13 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 			return nil, refuse(kit.KindInvalidInput, "PATH_NOT_ABSOLUTE", nil)
 		}
 	}
+	// A host compiler is often a link (Ubuntu /usr/bin/gcc -> gcc-13): identify and run
+	// the file it resolves to, so the identified bytes are the executed bytes.
+	cc, err := filepath.EvalSymlinks(req.Compiler)
+	if err != nil {
+		return nil, refuse(kit.KindUnsupported, "TOOL_MISSING", err)
+	}
+	req.Compiler = cc
 	sum, size, err := fileDigest(req.Compiler)
 	if err != nil {
 		return nil, refuse(kit.KindUnsupported, "TOOL_MISSING", err)
