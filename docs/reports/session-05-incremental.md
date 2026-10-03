@@ -92,14 +92,14 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 
 ## PR CI 1회차 실패와 수정
 
-PR #64의 CI run 37120183769(head `4a52224`)에서 foundation ubuntu-24.04만 실패했다. Windows·macOS foundation은 `TSGK_NATIVE_REQUIRED=1`로 owned native 시험까지 통과했고, native prepare·routes는 foundation에 걸려 건너뛰었다. 원인은 kit 결함이다. Ubuntu의 `/usr/bin/gcc`는 `gcc-13`을 가리키는 link인데 compiler identity 확인이 link를 일반 파일이 아니라며 거부했다. 그래서 모든 Linux build가 단계 하나 실행하기 전에 `TOOL_MISSING`이 됐고, CLI finding은 원인을 담지 않았으며, 시험 helper는 nil build를 역참조했다. Windows MSYS2의 `gcc.exe`는 일반 파일이라 로컬에서는 드러나지 않았다.
+PR #64의 CI run 37120183769(head `4a52224`)에서 foundation ubuntu-24.04만 실패했다(orchestrator 보고: Windows·macOS foundation 성공, native prepare·routes는 `needs`로 건너뜀). workflow의 foundation native 준비 단계는 세 OS 모두 `TSGK_NATIVE_REQUIRED=1`을 주므로, 성공한 두 job에서는 owned native 시험이 skip 없이 실행됐다. CI 로그에서 관측한 것은 `TSGK_NATIVE_CC=/usr/bin/gcc`, 단계 실행 전(`wall_ms` 0, build null)의 `TOOL_MISSING`, 원인이 빠진 CLI finding, nil build를 역참조한 시험 helper다. 원인은 소거법으로 추론했다. 수정 전 코드에서 build 없이 `TOOL_MISSING`을 내는 곳은 compiler identity 확인 하나뿐이고, 이 확인은 일반 파일이 아닌 경로(link)를 거부한다. Ubuntu의 `/usr/bin/gcc`는 보통 버전별 gcc를 가리키는 link이고, Windows MSYS2 `gcc.exe`와 macOS `/usr/bin/clang`은 일반 파일이라 그 host에서는 드러나지 않았다. kit 결함이다.
 
 수정 `483a640`:
 
 * compiler 경로의 link를 해석해 실제 파일의 bytes를 대조하고 그 파일을 실행한다. 해석할 수 없는 link는 계속 `TOOL_MISSING`이다.
 * build 실패 finding에 원인 error와 실패한 단계의 stderr 끝을 담는다.
 * helper는 nil build에서 `t.Fatalf`로 실패한다.
-* `TestBuildCompilerLink`를 추가했다. 수정을 되돌리면 CI와 같은 `TOOL_MISSING: not a regular file`로 실패한다.
+* `TestBuildCompilerLink`를 추가했다. 로컬에서 수정을 되돌리면 CI와 같은 code `TOOL_MISSING`로 실패하고, 원인은 `not a regular file`로 나온다.
 
 단언, `TSGK_NATIVE_REQUIRED` 관문, 상한은 바꾸지 않았다. 로컬 Windows에서 전체 검사가 통과했다. Linux 실행은 다음 CI에서 확인한다.
 
@@ -107,7 +107,7 @@ PR #64의 CI run 37120183769(head `4a52224`)에서 foundation ubuntu-24.04만 �
 
 * finding 메시지에 host 경로가 들어갈 수 있다. 지금은 로컬 결과에만 쓰고 공개 summary에는 code만 옮긴다.
 * 호출 이름에 의존하는 wrapper는 link로 지정하지 않는다고 위 계약에 적었다.
-* 새 시험은 compiler를 실제로 실행하지 않는다. 해석한 경로로 실행하는지는 Linux CI build가 확인한다.
+* 새 시험은 compiler를 실제로 실행하지 않는다. Linux CI build는 link로 지정한 compiler로 build할 수 있음을 보여 주지만, 해석한 경로로 실행했는지는 간접적으로만 확인한다.
 * 다음 CI의 위험은 Linux sanitizer 단계의 시간 예산이다.
 
 ## acceptance 연결
