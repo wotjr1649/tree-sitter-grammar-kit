@@ -422,4 +422,8 @@ func TestQueryMembersRequired(t *testing.T) {
 	if err := tamper(func(q map[string]any) { q["matches"] = 7.0 }); err == nil {
 		t.Fatal("a wrong match count was accepted")
 	}
+	// a member no other shape check covers: its absence alone must be rejected
+	if err := tamper(func(q map[string]any) { delete(q, "partial") }); err == nil {
+		t.Fatal("a result without partial was accepted")
+	}
 }

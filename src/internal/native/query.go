@@ -252,10 +252,11 @@ func compareAPI(nodes []kit.TreeNode, a *WireAPI) (*APIDifference, []APIDifferen
 	// skipping zero-width siblings at x's boundary (x's end going forward, its start going
 	// back), as the pinned runtime's position-based search does: every sibling it passed over
 	// in that direction, the cursor's sibling included, is such a node, and got is null or
-	// the next sibling after them. got == x is never accepted.
+	// the next sibling after them. x itself is never on the walked side, so a node named as
+	// its own sibling is a difference.
 	positional := func(x, got int64, step int, named bool) bool {
 		p := nodes[x].Parent
-		if p < 0 || got == x {
+		if p < 0 {
 			return false
 		}
 		b := nodes[x].EndByte
