@@ -1,0 +1,556 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "csharp",
+  "cases": [
+    {
+      "id": "n461-cs-partial-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-PARTIAL"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderForm : System.Windows.Forms.Form\n    {\n        /// <summary>\n        /// Required designer variable.\n        /// </summary>\n        private System.ComponentModel.IContainer components = null;\n\n        private System.Windows.Forms.Label titleLabel;\n        private System.Windows.Forms.TextBox customerTextBox;\n        private System.Windows.Forms.Button saveButton;\n        private Demo.Orders.SummaryPanel summaryPanel;\n\n        public OrderForm()\n        {\n            InitializeComponent();\n        }\n\n        internal string CustomerName\n        {\n            get { return this.customerTextBox.Text; }\n        }\n\n        private void InitializeComponent()\n        {\n            this.titleLabel = new System.Windows.Forms.Label();\n            this.customerTextBox = new System.Windows.Forms.TextBox();\n            this.saveButton = new System.Windows.Forms.Button();\n            this.summaryPanel = new Demo.Orders.SummaryPanel();\n            this.SuspendLayout();\n            this.titleLabel.Text = \"Orders\";\n            this.saveButton.Text = \"Save\";\n            this.Controls.Add(this.titleLabel);\n            this.Controls.Add(this.customerTextBox);\n            this.Controls.Add(this.saveButton);\n            this.Controls.Add(this.summaryPanel);\n            this.Name = \"OrderForm\";\n            this.ResumeLayout(false);\n        }\n    }\n\n    public partial class SummaryPanel : global::System.Windows.Forms.UserControl\n    {\n        private global::System.Windows.Forms.Label totalLabel;\n\n        public SummaryPanel()\n        {\n            this.totalLabel = new global::System.Windows.Forms.Label();\n            this.Controls.Add(this.totalLabel);\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "        private System.Windows.Forms.Button saveButton;\n",
+          "replace": "        private System.Windows.Forms.Button saveButton;\n        private System.Windows.Forms.Button cancelButton;\n"
+        },
+        {
+          "find": "this.saveButton.Text = \"Save\";",
+          "replace": "this.saveButton.Text = \"Save order\";"
+        },
+        {
+          "find": "        private global::System.Windows.Forms.Label totalLabel;\n",
+          "replace": "        private global::System.Windows.Forms.Label totalLabel;\n        private global::System.Windows.Forms.Label countLabel;\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_declaration",
+            "class_declaration",
+            "base_list",
+            "field_declaration",
+            "constructor_declaration",
+            "alias_qualified_name"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-partial-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-PARTIAL"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderForm : System.Windows.Forms.Form\n    {\n        /// <summary>\n        /// Required designer variable.\n        /// </summary>\n        private System.ComponentModel.IContainer components = null;\n\n        private System.Windows.Forms.Label titleLabel;\n        private System.Windows.Forms.TextBox customerTextBox customerTextBox2;\n        private System.Windows.Forms.Button saveButton;\n        private Demo.Orders.SummaryPanel summaryPanel;\n\n        public OrderForm()\n        {\n            InitializeComponent();\n        }\n\n        internal string CustomerName\n        {\n            get { return this.customerTextBox.Text; }\n        }\n\n        private void InitializeComponent()\n        {\n            this.titleLabel = new System.Windows.Forms.Label();\n            this.customerTextBox = new System.Windows.Forms.TextBox();\n            this.saveButton = new System.Windows.Forms.Button();\n            this.summaryPanel = new Demo.Orders.SummaryPanel();\n            this.SuspendLayout();\n            this.titleLabel.Text = \"Orders\";\n            this.saveButton.Text = \"Save\";\n            this.Controls.Add(this.titleLabel);\n            this.Controls.Add(this.customerTextBox);\n            this.Controls.Add(this.saveButton);\n            this.Controls.Add(this.summaryPanel);\n            this.Name = \"OrderForm\";\n            this.ResumeLayout(false);\n        }\n    }\n\n    public partial class SummaryPanel : global::System.Windows.Forms.UserControl\n    {\n        private global::System.Windows.Forms.Label totalLabel;\n\n        public SummaryPanel()\n        {\n            this.totalLabel = new global::System.Windows.Forms.Label();\n            this.Controls.Add(this.totalLabel);\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-partial-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-PARTIAL"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderForm : System.Windows.Forms.Form\n    {\n        /// <summary>\n        /// Required designer variable.\n        /// </summary>\n        private System.ComponentModel.IContainer components = null;\n\n        private System.Windows.Forms.Label titleLabel;\n        private System.Windows.Forms.TextBox customerTextBox;\n        private System.Windows.Forms.Button saveButton;\n        private Demo.Orders.SummaryPanel summaryPanel;\n\n        public OrderForm()\n        {\n            InitializeComponent();\n        }\n\n        internal string CustomerName\n        {\n            get { return this.customerTextBox.Text; }\n        }\n\n        private void InitializeComponent()\n        {\n            this.titleLabel = new System.Windows.Forms.Label();\n            this.customerTextBox = new System.Windows.Forms.TextBox();\n            this.saveButton = new System.Windows.Forms.Button();\n            this.summaryPanel = new Demo.Orders.SummaryPanel();\n            this.SuspendLayout();\n            this.titleLabel.Text = \"Orders\";\n            this.saveButton.Text = \"Save\";\n            this.Controls.Add(this.titleLabel);\n            this.Controls.Add(this.customerTextBox);\n            this.Controls.Add(this.saveButton);\n            this.Controls.Add(this.summaryPanel);\n            this.Name = \"OrderForm\";\n            this.ResumeLayout(false);\n        }\n    }\n\n    public partial class SummaryPanel : global::System.Windows.Forms.UserControl\n    {\n        private global::System.Windows.Forms.Label totalLabel;\n\n        public SummaryPanel()\n        {\n            this.totalLabel = new global::System.Windows.Forms.Label();\n            this.Controls.Add(this.totalLabel);\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "this.Controls.Add(this.customerTextBox);",
+          "replace": "this.Controls.Add(this.customerTextBox));"
+        },
+        {
+          "find": "this.Controls.Add(this.customerTextBox));",
+          "replace": "this.Controls.Add(this.customerTextBox);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-init-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-INIT"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderEditor\n    {\n        private System.ComponentModel.IContainer components = null;\n        private System.Windows.Forms.ComboBox statusComboBox;\n        private System.Windows.Forms.ListView itemListView;\n        private System.Windows.Forms.Button okButton;\n        private System.Windows.Forms.PictureBox logoPictureBox;\n\n        protected override void Dispose(bool disposing)\n        {\n            if (disposing && (components != null))\n            {\n                components.Dispose();\n            }\n            base.Dispose(disposing);\n        }\n\n        private void InitializeComponent()\n        {\n            this.components = new System.ComponentModel.Container();\n            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OrderEditor));\n            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {\n            \"First\",\n            \"1\"}, -1);\n            this.statusComboBox = new System.Windows.Forms.ComboBox();\n            this.itemListView = new System.Windows.Forms.ListView();\n            this.okButton = new System.Windows.Forms.Button();\n            this.logoPictureBox = new System.Windows.Forms.PictureBox();\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).BeginInit();\n            this.SuspendLayout();\n            //\n            // statusComboBox\n            //\n            this.statusComboBox.FormattingEnabled = true;\n            this.statusComboBox.Items.AddRange(new object[] {\n            \"Open\",\n            \"Closed\"});\n            this.statusComboBox.Location = new System.Drawing.Point(12, 12);\n            this.statusComboBox.Size = new System.Drawing.Size(121, 21);\n            this.statusComboBox.TabIndex = 0;\n            //\n            // itemListView\n            //\n            this.itemListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {\n            listViewItem1});\n            this.itemListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(250)))));\n            this.itemListView.Tag = new System.Collections.Generic.List<string> { \"a\", \"b\" };\n            //\n            // okButton\n            //\n            this.okButton.Font = new System.Drawing.Font(\"Tahoma\", 8.25F, System.Drawing.FontStyle.Bold);\n            this.okButton.Text = \"OK\";\n            this.okButton.Click += new System.EventHandler(this.okButton_Click);\n            //\n            // logoPictureBox\n            //\n            this.logoPictureBox.Image = ((System.Drawing.Image)(resources.GetObject(\"logoPictureBox.Image\")));\n            //\n            // OrderEditor\n            //\n            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);\n            this.Controls.Add(this.statusComboBox);\n            this.Controls.Add(this.itemListView);\n            this.Controls.Add(this.okButton);\n            this.Load += new System.EventHandler(this.OrderEditor_Load);\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void okButton_Click(object sender, System.EventArgs e)\n        {\n            this.Close();\n        }\n\n        private void OrderEditor_Load(object sender, System.EventArgs e)\n        {\n            this.statusComboBox.SelectedIndex = 0;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "            this.okButton.Text = \"OK\";\n",
+          "replace": "            this.okButton.Text = \"OK\";\n            this.okButton.TabIndex = 2;\n"
+        },
+        {
+          "find": "            \"Closed\"});",
+          "replace": "            \"Closed\",\n            \"Cancelled\"});"
+        },
+        {
+          "find": "            this.Close();",
+          "replace": "            this.DialogResult = System.Windows.Forms.DialogResult.OK;\n            this.Close();"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_declaration",
+            "cast_expression",
+            "array_creation_expression",
+            "object_creation_expression",
+            "initializer_expression",
+            "assignment_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-init-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-INIT"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderEditor\n    {\n        private System.ComponentModel.IContainer components = null;\n        private System.Windows.Forms.ComboBox statusComboBox;\n        private System.Windows.Forms.ListView itemListView;\n        private System.Windows.Forms.Button okButton;\n        private System.Windows.Forms.PictureBox logoPictureBox;\n\n        protected override void Dispose(bool disposing)\n        {\n            if (disposing && (components != null))\n            {\n                components.Dispose();\n            }\n            base.Dispose(disposing);\n        }\n\n        private void InitializeComponent()\n        {\n            this.components = new System.ComponentModel.Container();\n            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OrderEditor));\n            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {\n            \"First\",\n            \"1\"}, -1);\n            this.statusComboBox = new System.Windows.Forms.ComboBox();\n            this.itemListView = new System.Windows.Forms.ListView();\n            this.okButton = new System.Windows.Forms.Button();\n            this.logoPictureBox = new System.Windows.Forms.PictureBox();\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).BeginInit();\n            this.SuspendLayout();\n            //\n            // statusComboBox\n            //\n            this.statusComboBox.FormattingEnabled = true;\n            this.statusComboBox.Items.AddRange(new object[] {\n            \"Open\",\n            \"Closed\"});\n            this.statusComboBox.Location = new System.Drawing.Point(12, 12);\n            this.statusComboBox.Size = new System.Drawing.Size(121, 21);\n            this.statusComboBox.TabIndex = 0;\n            //\n            // itemListView\n            //\n            this.itemListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {\n            listViewItem1});\n            this.itemListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(250)))));\n            this.itemListView.Tag = new System.Collections.Generic.List<string> { \"a\", \"b\" };\n            //\n            // okButton\n            //\n            this.okButton.Font = new System.Drawing.Font(\"Tahoma\", 8.25F, System.Drawing.FontStyle.Bold);\n            this.okButton.Text = \"OK\";\n            this.okButton.Click += += new System.EventHandler(this.okButton_Click);\n            //\n            // logoPictureBox\n            //\n            this.logoPictureBox.Image = ((System.Drawing.Image)(resources.GetObject(\"logoPictureBox.Image\")));\n            //\n            // OrderEditor\n            //\n            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);\n            this.Controls.Add(this.statusComboBox);\n            this.Controls.Add(this.itemListView);\n            this.Controls.Add(this.okButton);\n            this.Load += new System.EventHandler(this.OrderEditor_Load);\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void okButton_Click(object sender, System.EventArgs e)\n        {\n            this.Close();\n        }\n\n        private void OrderEditor_Load(object sender, System.EventArgs e)\n        {\n            this.statusComboBox.SelectedIndex = 0;\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-init-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-INIT"
+      ],
+      "source_utf8": "using System;\nusing System.Windows.Forms;\n\nnamespace Demo.Orders\n{\n    partial class OrderEditor\n    {\n        private System.ComponentModel.IContainer components = null;\n        private System.Windows.Forms.ComboBox statusComboBox;\n        private System.Windows.Forms.ListView itemListView;\n        private System.Windows.Forms.Button okButton;\n        private System.Windows.Forms.PictureBox logoPictureBox;\n\n        protected override void Dispose(bool disposing)\n        {\n            if (disposing && (components != null))\n            {\n                components.Dispose();\n            }\n            base.Dispose(disposing);\n        }\n\n        private void InitializeComponent()\n        {\n            this.components = new System.ComponentModel.Container();\n            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OrderEditor));\n            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {\n            \"First\",\n            \"1\"}, -1);\n            this.statusComboBox = new System.Windows.Forms.ComboBox();\n            this.itemListView = new System.Windows.Forms.ListView();\n            this.okButton = new System.Windows.Forms.Button();\n            this.logoPictureBox = new System.Windows.Forms.PictureBox();\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).BeginInit();\n            this.SuspendLayout();\n            //\n            // statusComboBox\n            //\n            this.statusComboBox.FormattingEnabled = true;\n            this.statusComboBox.Items.AddRange(new object[] {\n            \"Open\",\n            \"Closed\"});\n            this.statusComboBox.Location = new System.Drawing.Point(12, 12);\n            this.statusComboBox.Size = new System.Drawing.Size(121, 21);\n            this.statusComboBox.TabIndex = 0;\n            //\n            // itemListView\n            //\n            this.itemListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {\n            listViewItem1});\n            this.itemListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(250)))));\n            this.itemListView.Tag = new System.Collections.Generic.List<string> { \"a\", \"b\" };\n            //\n            // okButton\n            //\n            this.okButton.Font = new System.Drawing.Font(\"Tahoma\", 8.25F, System.Drawing.FontStyle.Bold);\n            this.okButton.Text = \"OK\";\n            this.okButton.Click += new System.EventHandler(this.okButton_Click);\n            //\n            // logoPictureBox\n            //\n            this.logoPictureBox.Image = ((System.Drawing.Image)(resources.GetObject(\"logoPictureBox.Image\")));\n            //\n            // OrderEditor\n            //\n            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);\n            this.Controls.Add(this.statusComboBox);\n            this.Controls.Add(this.itemListView);\n            this.Controls.Add(this.okButton);\n            this.Load += new System.EventHandler(this.OrderEditor_Load);\n            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void okButton_Click(object sender, System.EventArgs e)\n        {\n            this.Close();\n        }\n\n        private void OrderEditor_Load(object sender, System.EventArgs e)\n        {\n            this.statusComboBox.SelectedIndex = 0;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "this.okButton.Click += new",
+          "replace": "this.okButton.Click += += new"
+        },
+        {
+          "find": "+= += new",
+          "replace": "+= new"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-resource-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-RESOURCE"
+      ],
+      "source_utf8": "using System;\n\nnamespace Demo.Properties {\n    using System.Globalization;\n\n    /// <summary>\n    ///   A strongly-typed resource class, for looking up localized strings, etc.\n    /// </summary>\n    [global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.Resources.Tools.StronglyTypedResourceBuilder\", \"4.0.0.0\")]\n    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]\n    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]\n    internal class Resources {\n\n        private static global::System.Resources.ResourceManager resourceMan;\n\n        private static global::System.Globalization.CultureInfo resourceCulture;\n\n        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(\"Microsoft.Performance\", \"CA1811:AvoidUncalledPrivateCode\")]\n        internal Resources() {\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global::System.Resources.ResourceManager ResourceManager {\n            get {\n                if (object.ReferenceEquals(resourceMan, null)) {\n                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(\"Demo.Properties.Resources\", typeof(Resources).Assembly);\n                    resourceMan = temp;\n                }\n                return resourceMan;\n            }\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global::System.Globalization.CultureInfo Culture {\n            get {\n                return resourceCulture;\n            }\n            set {\n                resourceCulture = value;\n            }\n        }\n\n        internal static global::System.Drawing.Bitmap Logo {\n            get {\n                object obj = ResourceManager.GetObject(\"Logo\", resourceCulture);\n                return ((global::System.Drawing.Bitmap)(obj));\n            }\n        }\n\n        internal static string Greeting {\n            get {\n                return ResourceManager.GetString(\"Greeting\", resourceCulture);\n            }\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "                return ResourceManager.GetString(\"Greeting\", resourceCulture);\n            }\n        }\n",
+          "replace": "                return ResourceManager.GetString(\"Greeting\", resourceCulture);\n            }\n        }\n\n        internal static string Farewell {\n            get {\n                return ResourceManager.GetString(\"Farewell\", resourceCulture);\n            }\n        }\n"
+        },
+        {
+          "find": "GetObject(\"Logo\", resourceCulture)",
+          "replace": "GetObject(\"CompanyLogo\", resourceCulture)"
+        },
+        {
+          "find": "GetString(\"Greeting\", resourceCulture)",
+          "replace": "GetString(\"Greeting\", Culture)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "attribute_list",
+            "field_declaration",
+            "property_declaration",
+            "alias_qualified_name",
+            "accessor_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-resource-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-RESOURCE"
+      ],
+      "source_utf8": "using System;\n\nnamespace Demo.Properties {\n    using System.Globalization;\n\n    /// <summary>\n    ///   A strongly-typed resource class, for looking up localized strings, etc.\n    /// </summary>\n    [global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.Resources.Tools.StronglyTypedResourceBuilder\", \"4.0.0.0\")]\n    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]\n    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]\n    internal class Resources {\n\n        private static global::System.Resources.ResourceManager resourceMan;\n\n        private static global::System.Globalization.CultureInfo resourceCulture;\n\n        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(\"Microsoft.Performance\", \"CA1811:AvoidUncalledPrivateCode\")]\n        internal Resources() {\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global:::System.Resources.ResourceManager ResourceManager {\n            get {\n                if (object.ReferenceEquals(resourceMan, null)) {\n                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(\"Demo.Properties.Resources\", typeof(Resources).Assembly);\n                    resourceMan = temp;\n                }\n                return resourceMan;\n            }\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global::System.Globalization.CultureInfo Culture {\n            get {\n                return resourceCulture;\n            }\n            set {\n                resourceCulture = value;\n            }\n        }\n\n        internal static global::System.Drawing.Bitmap Logo {\n            get {\n                object obj = ResourceManager.GetObject(\"Logo\", resourceCulture);\n                return ((global::System.Drawing.Bitmap)(obj));\n            }\n        }\n\n        internal static string Greeting {\n            get {\n                return ResourceManager.GetString(\"Greeting\", resourceCulture);\n            }\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-resource-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-RESOURCE"
+      ],
+      "source_utf8": "using System;\n\nnamespace Demo.Properties {\n    using System.Globalization;\n\n    /// <summary>\n    ///   A strongly-typed resource class, for looking up localized strings, etc.\n    /// </summary>\n    [global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.Resources.Tools.StronglyTypedResourceBuilder\", \"4.0.0.0\")]\n    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]\n    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]\n    internal class Resources {\n\n        private static global::System.Resources.ResourceManager resourceMan;\n\n        private static global::System.Globalization.CultureInfo resourceCulture;\n\n        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(\"Microsoft.Performance\", \"CA1811:AvoidUncalledPrivateCode\")]\n        internal Resources() {\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global::System.Resources.ResourceManager ResourceManager {\n            get {\n                if (object.ReferenceEquals(resourceMan, null)) {\n                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(\"Demo.Properties.Resources\", typeof(Resources).Assembly);\n                    resourceMan = temp;\n                }\n                return resourceMan;\n            }\n        }\n\n        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]\n        internal static global::System.Globalization.CultureInfo Culture {\n            get {\n                return resourceCulture;\n            }\n            set {\n                resourceCulture = value;\n            }\n        }\n\n        internal static global::System.Drawing.Bitmap Logo {\n            get {\n                object obj = ResourceManager.GetObject(\"Logo\", resourceCulture);\n                return ((global::System.Drawing.Bitmap)(obj));\n            }\n        }\n\n        internal static string Greeting {\n            get {\n                return ResourceManager.GetString(\"Greeting\", resourceCulture);\n            }\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "CultureInfo Culture {",
+          "replace": "CultureInfo Culture {{"
+        },
+        {
+          "find": "Culture {{",
+          "replace": "Culture {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-dx202-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-DX202"
+      ],
+      "source_utf8": "using System;\nusing System.ComponentModel;\nusing DevExpress.XtraEditors;\nusing DevExpress.XtraGrid;\nusing DevExpress.XtraGrid.Views.Grid;\n\nnamespace Demo.Orders\n{\n    public sealed class OrderRow\n    {\n        public int Id { get; set; }\n        public string Customer { get; set; }\n    }\n\n    partial class OrderListForm : DevExpress.XtraEditors.XtraForm\n    {\n        private System.ComponentModel.IContainer components = null;\n        private DevExpress.XtraGrid.GridControl orderGridControl;\n        private DevExpress.XtraGrid.Views.Grid.GridView orderGridView;\n        private DevExpress.XtraGrid.Columns.GridColumn colCustomer;\n        private DevExpress.XtraEditors.LookUpEdit statusLookUpEdit;\n        private System.ComponentModel.BindingList<OrderRow> orders;\n\n        private void InitializeComponent()\n        {\n            this.orderGridControl = new DevExpress.XtraGrid.GridControl();\n            this.orderGridView = new DevExpress.XtraGrid.Views.Grid.GridView();\n            this.colCustomer = new DevExpress.XtraGrid.Columns.GridColumn();\n            this.statusLookUpEdit = new DevExpress.XtraEditors.LookUpEdit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).BeginInit();\n            this.SuspendLayout();\n            this.orderGridControl.MainView = this.orderGridView;\n            this.orderGridControl.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {\n            this.orderGridView});\n            this.orderGridView.Columns.AddRange(new DevExpress.XtraGrid.Columns.GridColumn[] {\n            this.colCustomer});\n            this.orderGridView.GridControl = this.orderGridControl;\n            this.orderGridView.OptionsView.ShowGroupPanel = false;\n            this.colCustomer.FieldName = \"Customer\";\n            this.colCustomer.Visible = true;\n            this.colCustomer.VisibleIndex = 0;\n            this.statusLookUpEdit.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {\n            new DevExpress.XtraEditors.Controls.EditorButton(DevExpress.XtraEditors.Controls.ButtonPredefines.Combo)});\n            this.statusLookUpEdit.EditValueChanged += new System.EventHandler(this.statusLookUpEdit_EditValueChanged);\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void LoadOrders()\n        {\n            this.orders = new System.ComponentModel.BindingList<OrderRow>();\n            this.orders.Add(new OrderRow { Id = 1, Customer = \"Contoso\" });\n            this.orderGridControl.DataSource = this.orders;\n            GridView view = (GridView)this.orderGridControl.MainView;\n            view.BestFitColumns();\n        }\n\n        private void statusLookUpEdit_EditValueChanged(object sender, EventArgs e)\n        {\n            object value = ((LookUpEdit)sender).EditValue;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "            this.colCustomer.VisibleIndex = 0;\n",
+          "replace": "            this.colCustomer.VisibleIndex = 0;\n            this.colCustomer.Caption = \"Customer\";\n"
+        },
+        {
+          "find": "Customer = \"Contoso\"",
+          "replace": "Customer = \"Fabrikam\""
+        },
+        {
+          "find": "            view.BestFitColumns();\n",
+          "replace": "            view.BestFitColumns();\n            view.ExpandAllGroups();\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "using_directive",
+            "generic_name",
+            "cast_expression",
+            "array_creation_expression",
+            "initializer_expression",
+            "property_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-dx202-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-DX202"
+      ],
+      "source_utf8": "using System;\nusing System.ComponentModel;\nusing DevExpress.XtraEditors;\nusing DevExpress.XtraGrid;\nusing DevExpress.XtraGrid.Views.Grid;\n\nnamespace Demo.Orders\n{\n    public sealed class OrderRow\n    {\n        public int Id { get; set; }\n        public string Customer { get; set; }\n    }\n\n    partial class OrderListForm : DevExpress.XtraEditors.XtraForm\n    {\n        private System.ComponentModel.IContainer components = null;\n        private DevExpress.XtraGrid.GridControl orderGridControl;\n        private DevExpress.XtraGrid.Views.Grid.GridView orderGridView;\n        private DevExpress.XtraGrid.Columns.GridColumn colCustomer;\n        private DevExpress.XtraEditors.LookUpEdit statusLookUpEdit;\n        private System.ComponentModel.BindingList<OrderRow orders;\n\n        private void InitializeComponent()\n        {\n            this.orderGridControl = new DevExpress.XtraGrid.GridControl();\n            this.orderGridView = new DevExpress.XtraGrid.Views.Grid.GridView();\n            this.colCustomer = new DevExpress.XtraGrid.Columns.GridColumn();\n            this.statusLookUpEdit = new DevExpress.XtraEditors.LookUpEdit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).BeginInit();\n            this.SuspendLayout();\n            this.orderGridControl.MainView = this.orderGridView;\n            this.orderGridControl.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {\n            this.orderGridView});\n            this.orderGridView.Columns.AddRange(new DevExpress.XtraGrid.Columns.GridColumn[] {\n            this.colCustomer});\n            this.orderGridView.GridControl = this.orderGridControl;\n            this.orderGridView.OptionsView.ShowGroupPanel = false;\n            this.colCustomer.FieldName = \"Customer\";\n            this.colCustomer.Visible = true;\n            this.colCustomer.VisibleIndex = 0;\n            this.statusLookUpEdit.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {\n            new DevExpress.XtraEditors.Controls.EditorButton(DevExpress.XtraEditors.Controls.ButtonPredefines.Combo)});\n            this.statusLookUpEdit.EditValueChanged += new System.EventHandler(this.statusLookUpEdit_EditValueChanged);\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void LoadOrders()\n        {\n            this.orders = new System.ComponentModel.BindingList<OrderRow>();\n            this.orders.Add(new OrderRow { Id = 1, Customer = \"Contoso\" });\n            this.orderGridControl.DataSource = this.orders;\n            GridView view = (GridView)this.orderGridControl.MainView;\n            view.BestFitColumns();\n        }\n\n        private void statusLookUpEdit_EditValueChanged(object sender, EventArgs e)\n        {\n            object value = ((LookUpEdit)sender).EditValue;\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-dx202-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-DX202"
+      ],
+      "source_utf8": "using System;\nusing System.ComponentModel;\nusing DevExpress.XtraEditors;\nusing DevExpress.XtraGrid;\nusing DevExpress.XtraGrid.Views.Grid;\n\nnamespace Demo.Orders\n{\n    public sealed class OrderRow\n    {\n        public int Id { get; set; }\n        public string Customer { get; set; }\n    }\n\n    partial class OrderListForm : DevExpress.XtraEditors.XtraForm\n    {\n        private System.ComponentModel.IContainer components = null;\n        private DevExpress.XtraGrid.GridControl orderGridControl;\n        private DevExpress.XtraGrid.Views.Grid.GridView orderGridView;\n        private DevExpress.XtraGrid.Columns.GridColumn colCustomer;\n        private DevExpress.XtraEditors.LookUpEdit statusLookUpEdit;\n        private System.ComponentModel.BindingList<OrderRow> orders;\n\n        private void InitializeComponent()\n        {\n            this.orderGridControl = new DevExpress.XtraGrid.GridControl();\n            this.orderGridView = new DevExpress.XtraGrid.Views.Grid.GridView();\n            this.colCustomer = new DevExpress.XtraGrid.Columns.GridColumn();\n            this.statusLookUpEdit = new DevExpress.XtraEditors.LookUpEdit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).BeginInit();\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).BeginInit();\n            this.SuspendLayout();\n            this.orderGridControl.MainView = this.orderGridView;\n            this.orderGridControl.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {\n            this.orderGridView});\n            this.orderGridView.Columns.AddRange(new DevExpress.XtraGrid.Columns.GridColumn[] {\n            this.colCustomer});\n            this.orderGridView.GridControl = this.orderGridControl;\n            this.orderGridView.OptionsView.ShowGroupPanel = false;\n            this.colCustomer.FieldName = \"Customer\";\n            this.colCustomer.Visible = true;\n            this.colCustomer.VisibleIndex = 0;\n            this.statusLookUpEdit.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {\n            new DevExpress.XtraEditors.Controls.EditorButton(DevExpress.XtraEditors.Controls.ButtonPredefines.Combo)});\n            this.statusLookUpEdit.EditValueChanged += new System.EventHandler(this.statusLookUpEdit_EditValueChanged);\n            ((System.ComponentModel.ISupportInitialize)(this.statusLookUpEdit.Properties)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridView)).EndInit();\n            ((System.ComponentModel.ISupportInitialize)(this.orderGridControl)).EndInit();\n            this.ResumeLayout(false);\n        }\n\n        private void LoadOrders()\n        {\n            this.orders = new System.ComponentModel.BindingList<OrderRow>();\n            this.orders.Add(new OrderRow { Id = 1, Customer = \"Contoso\" });\n            this.orderGridControl.DataSource = this.orders;\n            GridView view = (GridView)this.orderGridControl.MainView;\n            view.BestFitColumns();\n        }\n\n        private void statusLookUpEdit_EditValueChanged(object sender, EventArgs e)\n        {\n            object value = ((LookUpEdit)sender).EditValue;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "BindingList<OrderRow>();",
+          "replace": "BindingList<OrderRow>(;"
+        },
+        {
+          "find": "<OrderRow>(;",
+          "replace": "<OrderRow>();"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-wcf-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-WCF"
+      ],
+      "source_utf8": "using System;\nusing System.Runtime.Serialization;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [DataContract(Namespace = \"urn:example:orders\")]\n    public class OrderInfo\n    {\n        [DataMember]\n        public int Id { get; set; }\n\n        [DataMember(IsRequired = true)]\n        public string Status { get; set; }\n    }\n\n    [ServiceContract(Namespace = \"urn:example:orders\", SessionMode = SessionMode.Allowed)]\n    public interface IOrderService\n    {\n        [OperationContract]\n        OrderInfo GetOrder(int id);\n\n        [OperationContract(IsOneWay = true)]\n        void Ping();\n    }\n\n    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall)]\n    public class OrderService : IOrderService\n    {\n        public OrderInfo GetOrder(int id)\n        {\n            return new OrderInfo { Id = id, Status = \"Open\" };\n        }\n\n        public void Ping()\n        {\n        }\n    }\n\n    [System.Diagnostics.DebuggerStepThroughAttribute()]\n    [System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.ServiceModel\", \"4.0.0.0\")]\n    public partial class OrderServiceClient : System.ServiceModel.ClientBase<Demo.Services.IOrderService>, Demo.Services.IOrderService\n    {\n        public OrderServiceClient()\n        {\n        }\n\n        public OrderServiceClient(string endpointConfigurationName) :\n                base(endpointConfigurationName)\n        {\n        }\n\n        public OrderServiceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) :\n                base(binding, remoteAddress)\n        {\n        }\n\n        public Demo.Services.OrderInfo GetOrder(int id)\n        {\n            return base.Channel.GetOrder(id);\n        }\n\n        public System.Threading.Tasks.Task<Demo.Services.OrderInfo> GetOrderAsync(int id)\n        {\n            return System.Threading.Tasks.Task.FromResult(base.Channel.GetOrder(id));\n        }\n\n        public void Ping()\n        {\n            base.Channel.Ping();\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "        [OperationContract(IsOneWay = true)]\n        void Ping();\n",
+          "replace": "        [OperationContract(IsOneWay = true)]\n        void Ping();\n\n        [OperationContract]\n        bool Cancel(int id);\n"
+        },
+        {
+          "find": "Status = \"Open\"",
+          "replace": "Status = \"Pending\""
+        },
+        {
+          "find": "            base.Channel.Ping();\n",
+          "replace": "            base.Channel.Ping();\n            System.Diagnostics.Debug.WriteLine(\"ping\");\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute",
+            "interface_declaration",
+            "generic_name",
+            "constructor_declaration",
+            "constructor_initializer",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-wcf-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-WCF"
+      ],
+      "source_utf8": "using System;\nusing System.Runtime.Serialization;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [DataContract(Namespace = \"urn:example:orders\")]\n    public class OrderInfo\n    {\n        [DataMember]\n        public int Id { get; set; }\n\n        [DataMember(IsRequired = true)]\n        public string Status { get; set; }\n    }\n\n    [ServiceContract(Namespace = \"urn:example:orders\", SessionMode = SessionMode.Allowed)]\n    public interface IOrderService\n    {\n        [OperationContract]\n        OrderInfo GetOrder(int id);\n\n        [OperationContract(IsOneWay = true))]\n        void Ping();\n    }\n\n    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall)]\n    public class OrderService : IOrderService\n    {\n        public OrderInfo GetOrder(int id)\n        {\n            return new OrderInfo { Id = id, Status = \"Open\" };\n        }\n\n        public void Ping()\n        {\n        }\n    }\n\n    [System.Diagnostics.DebuggerStepThroughAttribute()]\n    [System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.ServiceModel\", \"4.0.0.0\")]\n    public partial class OrderServiceClient : System.ServiceModel.ClientBase<Demo.Services.IOrderService>, Demo.Services.IOrderService\n    {\n        public OrderServiceClient()\n        {\n        }\n\n        public OrderServiceClient(string endpointConfigurationName) :\n                base(endpointConfigurationName)\n        {\n        }\n\n        public OrderServiceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) :\n                base(binding, remoteAddress)\n        {\n        }\n\n        public Demo.Services.OrderInfo GetOrder(int id)\n        {\n            return base.Channel.GetOrder(id);\n        }\n\n        public System.Threading.Tasks.Task<Demo.Services.OrderInfo> GetOrderAsync(int id)\n        {\n            return System.Threading.Tasks.Task.FromResult(base.Channel.GetOrder(id));\n        }\n\n        public void Ping()\n        {\n            base.Channel.Ping();\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-cs-wcf-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-CS-WCF"
+      ],
+      "source_utf8": "using System;\nusing System.Runtime.Serialization;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [DataContract(Namespace = \"urn:example:orders\")]\n    public class OrderInfo\n    {\n        [DataMember]\n        public int Id { get; set; }\n\n        [DataMember(IsRequired = true)]\n        public string Status { get; set; }\n    }\n\n    [ServiceContract(Namespace = \"urn:example:orders\", SessionMode = SessionMode.Allowed)]\n    public interface IOrderService\n    {\n        [OperationContract]\n        OrderInfo GetOrder(int id);\n\n        [OperationContract(IsOneWay = true)]\n        void Ping();\n    }\n\n    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall)]\n    public class OrderService : IOrderService\n    {\n        public OrderInfo GetOrder(int id)\n        {\n            return new OrderInfo { Id = id, Status = \"Open\" };\n        }\n\n        public void Ping()\n        {\n        }\n    }\n\n    [System.Diagnostics.DebuggerStepThroughAttribute()]\n    [System.CodeDom.Compiler.GeneratedCodeAttribute(\"System.ServiceModel\", \"4.0.0.0\")]\n    public partial class OrderServiceClient : System.ServiceModel.ClientBase<Demo.Services.IOrderService>, Demo.Services.IOrderService\n    {\n        public OrderServiceClient()\n        {\n        }\n\n        public OrderServiceClient(string endpointConfigurationName) :\n                base(endpointConfigurationName)\n        {\n        }\n\n        public OrderServiceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) :\n                base(binding, remoteAddress)\n        {\n        }\n\n        public Demo.Services.OrderInfo GetOrder(int id)\n        {\n            return base.Channel.GetOrder(id);\n        }\n\n        public System.Threading.Tasks.Task<Demo.Services.OrderInfo> GetOrderAsync(int id)\n        {\n            return System.Threading.Tasks.Task.FromResult(base.Channel.GetOrder(id));\n        }\n\n        public void Ping()\n        {\n            base.Channel.Ping();\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "base.Channel.Ping();",
+          "replace": "base.Channel.Ping());"
+        },
+        {
+          "find": "Ping());",
+          "replace": "Ping();"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

@@ -130,8 +130,8 @@ function Add-Result([string]$Label, $Run) {
   foreach ($c in @($res.cases)) {
     $fails = @($c.expectations | Where-Object { $_.result -ne 'PASS' } | ForEach-Object { "step $($_.step): $($_.result) $($_.detail)" })
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; expectation_failures = $fails
-      steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $_.incremental.has_error; digest = $_.incremental.digest; equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
-            svc_coverage = $(if ($_.composite) { $_.composite.coverage } else { $null }) } }) }
+      steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $(if ($_.incremental) { $_.incremental.has_error } else { $null }); digest = $(if ($_.incremental) { $_.incremental.digest } else { $null }); equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
+            svc_coverage = $(if ($_.PSObject.Properties['composite']) { $_.composite.coverage } else { $null }) } }) }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "$Label/$($c.id): $($c.execution_status) $($c.code)" }
     if ($c.claims.incremental_equality -eq 'FAIL' -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
   }
@@ -193,7 +193,7 @@ if ($Large) {
 }
 $summary.finished_at = (Get-Date).ToUniversalTime().ToString('o')
 $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $Destination 'summary.json') -Encoding utf8NoBOM
-Remove-Item -LiteralPath (Join-Path $Destination 'roots') -Recurse -Force
+if (Test-Path -LiteralPath (Join-Path $Destination 'roots')) { Remove-Item -LiteralPath (Join-Path $Destination 'roots') -Recurse -Force }
 Write-Output ("routes={0} failures={1}" -f $summary.routes.Count, $summary.failures.Count)
 foreach ($f in $summary.failures) { Write-Output "FAILURE $f" }
 if ($summary.failures.Count) { exit 1 }

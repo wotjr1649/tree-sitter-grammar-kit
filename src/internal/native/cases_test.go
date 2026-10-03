@@ -192,6 +192,14 @@ func TestEncodingsAndPoints(t *testing.T) {
 				t.Fatalf("cp949 string range %+v", n)
 			}
 		}
+		// A cp949 identifier: only a correct two-byte decode keeps both letters in one token.
+		ident := []byte("\xB0\xA1\xB3\xAA = 1;\nb = 2;\n")
+		ic := kit.IncrementalCase{ID: "cp949-ident", Encoding: kit.EncodingCP949, Edits: editsBy(string(ident), edit{"2", "3"}),
+			Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR", Contains: []string{"assignment"}}}}
+		ir := b.RunCase(ctx, testContext("native-parse-edit"), ic, ident)
+		if ir.Assessment != kit.AssessPass || ir.Steps[0].Incremental.Tree.Nodes[2].Type != "identifier" || ir.Steps[0].Incremental.Tree.Nodes[2].EndByte != 4 {
+			t.Fatalf("cp949 identifier: %s %s %+v", ir.Assessment, ir.Code, ir.Steps[0].Incremental.Tree.Nodes[:3])
+		}
 		split := kit.Edit{StartByte: 6, OldEndByte: 6, NewEndByte: 7, New: []byte("x")}
 		if _, _, err := kit.ApplyEdits(kit.EncodingCP949, src, []kit.Edit{split}, 65536); !hasCode(err, "EDIT_SPLITS_CHARACTER") {
 			t.Fatalf("cp949 split: %v", err)
