@@ -1,0 +1,103 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "bash",
+  "cases": [
+    {
+      "id": "bash-feature-r1",
+      "kind": "feature",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V4"
+      ],
+      "source_utf8": "#!/usr/bin/env bash\nset -euo pipefail\n\nreadonly LOG_DIR=\"${LOG_DIR:-/tmp/logs}\"\ndeclare -A counts\ncounts[bolt]=120\ncounts[nut]=4\n\n# Print a message with a timestamp.\nlog() {\n  local level=\"$1\"\n  shift\n  printf '%s [%s] %s\\n' \"$(date +%T)\" \"$level\" \"$*\" >&2\n}\n\nclassify() {\n  local n=$1\n  if (( n > 100 )); then\n    echo bulk\n  elif [[ $n -eq 0 ]]; then\n    echo empty\n  else\n    echo normal\n  fi\n}\n\nfor name in \"${!counts[@]}\"; do\n  level=$(classify \"${counts[$name]}\")\n  case \"$level\" in\n    bulk) log INFO \"$name is bulk\" ;;\n    empty|normal) log DEBUG \"$name: $level\" ;;\n    *) log WARN \"unknown\" ;;\n  esac\ndone\n\nmkdir -p \"$LOG_DIR\"\ntotal=0\nwhile read -r line; do\n  total=$((total + ${#line}))\ndone < <(printf '%s\\n' \"${!counts[@]}\")\ncat <<EOF > \"$LOG_DIR/summary.txt\"\ntotal=$total\nEOF\necho \"done: $total\" | tee -a \"$LOG_DIR/run.log\"\n",
+      "edits": [
+        {
+          "find": "counts[nut]=4\n",
+          "replace": "counts[nut]=4\nexport MODE=batch\n"
+        },
+        {
+          "find": "if (( n > 100 )); then",
+          "replace": "if (( n > 500 )); then"
+        },
+        {
+          "find": "mkdir -p \"$LOG_DIR\"\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration_command",
+            "function_definition",
+            "if_statement",
+            "case_statement",
+            "for_statement",
+            "while_statement",
+            "command_substitution",
+            "pipeline"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "bash-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "bash-B02"
+      ],
+      "source_utf8": "#!/bin/bash\nset -e\n\ngreet() {\n  echo \"hello $1\"\n}\n\nfor n in 1 2 3; do\n  if [ \"$n\" -gt 1 ]; then\n    greet \"$n\"\n  fi\ndone\n",
+      "edits": [
+        {
+          "find": "    greet \"$n\"\n  fi\n",
+          "replace": "    greet \"$n\"\n"
+        },
+        {
+          "find": "    greet \"$n\"\n",
+          "replace": "    greet \"$n\"\n  fi\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

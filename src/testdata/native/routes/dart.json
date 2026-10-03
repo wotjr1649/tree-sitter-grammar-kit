@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "dart",
+  "cases": [
+    {
+      "id": "dart-feature-r1",
+      "kind": "feature",
+      "features": [
+        "dart-B01",
+        "dart-B02"
+      ],
+      "source_utf8": "import 'dart:async';\nimport 'dart:math' as math;\n\n/// An item in stock.\nclass Item {\n  final String name;\n  final int count;\n\n  const Item(this.name, [this.count = 0]);\n\n  Item copyWith({int? count}) => Item(name, count ?? this.count);\n\n  @override\n  String toString() => 'Item($name, $count)';\n}\n\nenum Level { low, high }\n\nmixin Logging {\n  void log(String message) => print('[log] $message');\n}\n\nclass Store with Logging {\n  final _items = <String, Item>{};\n  late final int limit;\n\n  Store(this.limit);\n\n  void add(Item item) {\n    if (_items.length >= limit) {\n      throw StateError('full');\n    }\n    _items[item.name] = item;\n    log('added ${item.name}');\n  }\n\n  int get total => _items.values.fold(0, (sum, i) => sum + i.count);\n\n  Level levelOf(String name) {\n    final count = _items[name]?.count ?? 0;\n    return count > 100 ? Level.high : Level.low;\n  }\n}\n\nFuture<void> main() async {\n  final store = Store(4)..add(const Item('bolt', 120));\n  for (var i = 0; i < 3; i++) {\n    store.add(Item('item$i', math.max(i, 1)));\n  }\n  await Future.delayed(Duration.zero);\n  print('total=${store.total}');\n}\n",
+      "edits": [
+        {
+          "find": "enum Level { low, high }\n",
+          "replace": "enum Level { low, high }\n\ntypedef Visitor = void Function(Item item);\n"
+        },
+        {
+          "find": "count > 100 ?",
+          "replace": "count > 500 ?"
+        },
+        {
+          "find": "  await Future.delayed(Duration.zero);\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_or_export",
+            "class_definition",
+            "enum_declaration",
+            "method_signature",
+            "getter_signature",
+            "function_signature",
+            "cascade_section",
+            "template_substitution"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "dart-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "dart-B02"
+      ],
+      "source_utf8": "import 'dart:math';\n\nint largest(List<int> values) {\n  var best = values.first;\n  for (final v in values) {\n    best = max(best, v);\n  }\n  return best;\n}\n\nvoid main() {\n  final data = [4, 9, 2];\n  print(largest(data));\n}\n",
+      "edits": [
+        {
+          "find": "largest(data));",
+          "replace": "largest(data);"
+        },
+        {
+          "find": "largest(data);",
+          "replace": "largest(data));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

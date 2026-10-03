@@ -1,0 +1,96 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "csharp",
+  "cases": [
+    {
+      "id": "csharp-gap-generic-arg-r1",
+      "kind": "gap",
+      "features": ["csharp-B01", "csharp-B02", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "class async { }\nclass var { }\nclass C\n{\n    System.Collections.Generic.List<async> a;\n    System.Collections.Generic.List<var> v;\n}\n",
+      "edits": [
+        {"find": "List<var> v;", "replace": "List<var v;"},
+        {"find": "List<var v;", "replace": "List<var> v;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "field_declaration", "generic_name", "type_argument_list"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["class_declaration", "field_declaration", "generic_name", "type_argument_list"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "csharp-gap-type-parameter-r1",
+      "kind": "gap",
+      "features": ["csharp-B01", "csharp-B02", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "class C0 { }\nclass G<async, await> where async : class\n{\n    await First(async x, await y) { return y; }\n}\n",
+      "edits": [
+        {"find": "where async : class", "replace": "where async : "},
+        {"find": "where async : ", "replace": "where async : class"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "type_parameter_list", "type_parameter", "type_parameter_constraints_clause", "method_declaration"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["class_declaration", "type_parameter_list", "type_parameter", "type_parameter_constraints_clause", "method_declaration"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "csharp-gap-pattern-r1",
+      "kind": "gap",
+      "features": ["csharp-B01", "csharp-V08", "csharp-V09", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "class async { }\nclass C\n{\n    const int await = 1;\n    bool M(object o) { return o is async a && a != null; }\n    int N(int x) => x switch { await => 10, _ => 0 };\n}\n",
+      "edits": [
+        {"find": "{ await => 10,", "replace": "{ await => ,"},
+        {"find": "{ await => ,", "replace": "{ await => 10,"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["is_pattern_expression", "declaration_pattern", "switch_expression", "switch_expression_arm"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["is_pattern_expression", "declaration_pattern", "switch_expression", "switch_expression_arm"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "csharp-gap-query-r1",
+      "kind": "gap",
+      "features": ["csharp-B01", "csharp-B03", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "class C0 { }\nclass C\n{\n    void M(int[] xs)\n    {\n        var q1 = from x in xs select x;\n        var q2 = from async in xs where async > 0 select async;\n        var q3 = from await in xs orderby await select await;\n    }\n}\n",
+      "edits": [
+        {"find": "where async > 0", "replace": "where async >"},
+        {"find": "where async >", "replace": "where async > 0"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["query_expression", "from_clause", "where_clause", "order_by_clause", "select_clause"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["query_expression", "from_clause", "where_clause", "order_by_clause", "select_clause"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "csharp-gap-lambda-param-r1",
+      "kind": "gap",
+      "features": ["csharp-B01", "csharp-B03", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "class C0 { }\nclass C\n{\n    void M()\n    {\n        System.Func<int, int> f0 = x => x;\n        System.Func<int, int> f1 = async => async + 1;\n        System.Func<int, int, int> f2 = (var, await) => var + await;\n    }\n}\n",
+      "edits": [
+        {"find": "f1 = async => async + 1;", "replace": "f1 = async async => async + 1;"},
+        {"find": "(var, await) =>", "replace": "(var, await =>"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["local_declaration_statement", "lambda_expression"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["local_declaration_statement", "lambda_expression"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "csharp-gap-file-directives-r1",
+      "kind": "gap",
+      "features": ["csharp-V14c", "S03/S05: 등록 27사례 밖의 async/var/await identifier 선언과 file-based directive 지원은 미검증(upstream 선언 한계)"],
+      "source_utf8": "#!/usr/bin/env -S dotnet run\n#:sdk Microsoft.NET.Sdk\n#:package Humanizer@2.14.1\n#:property Nullable=enable\nusing System;\nConsole.WriteLine(\"first\");\nConsole.WriteLine(\"second\");\n",
+      "edits": [
+        {"find": "#:property Nullable=enable", "replace": "#:property Nullable=enable\n#:project ../Lib/Lib.csproj"},
+        {"find": "Console.WriteLine(\"second\");", "replace": "Console.WriteLine(\"second\";"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["shebang_directive", "file_based_app_directive", "preproc_arg", "using_directive", "global_statement"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["shebang_directive", "file_based_app_directive", "preproc_arg", "using_directive", "global_statement"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    }
+  ]
+}

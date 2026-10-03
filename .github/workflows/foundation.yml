@@ -86,6 +86,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'checkout identity failed' }
           if ($checkoutSha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$checkoutSha pr_head_sha=$env:PR_HEAD_SHA"
+      - name: S05 native 도구 준비 (고정 runtime source, 기존 C 컴파일러)
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: |
+          # Only the pinned runtime archive is fetched (hash-checked per file); no compiler is installed.
+          $dest = Join-Path $env:RUNNER_TEMP "s05-native-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform $env:PLATFORM -Routes none
+          $cc = & src/dev/s05-native/select-compiler.ps1
+          "TSGK_NATIVE_RUNTIME=$(Join-Path $dest 'runtime')" >> $env:GITHUB_ENV
+          "TSGK_NATIVE_CC=$cc" >> $env:GITHUB_ENV
+          'TSGK_NATIVE_REQUIRED=1' >> $env:GITHUB_ENV
       - name: 형식과 foundation 검사
         run: |
           $formatted = gofmt -l src
@@ -104,7 +115,7 @@ jobs:
             Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
             $env:TSGK_CGROUP_PARENT = "$base/jobs"
           }
-          go test ./src/... -count=1 -v -timeout 120s
+          go test ./src/... -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
       - name: S04 runner tree 정리 반복 시험 (Linux cgroup v2)
         if: runner.os == 'Linux'
@@ -153,3 +164,185 @@ jobs:
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
           if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
           if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
+
+  native-prepare:
+    # S05: one Linux job fetches the 26 pinned route sources, applies the adopted patch
+    # chains and regenerates the 6 adopted parsers with tsgk reproduce; every file is
+    # hash-checked against src/contracts/native-routes.json before it is handed on.
+    name: native prepare (ubuntu-24.04)
+    needs: foundation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+      - name: 26 route source 준비와 채택 6 route 재생성
+        run: |
+          $cgroup = ''
+          if ($IsLinux) {
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo mkdir -p "$base/supervisor" "$base/jobs"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+            sudo chown -R "$(id -u):$(id -g)" $base
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+            Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+            $cgroup = "$base/jobs"
+          }
+          $dest = Join-Path $env:RUNNER_TEMP "s05-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform linux/amd64 -CgroupParent $cgroup
+          # keep the regeneration reports, drop the duplicated outputs, tools and CLI
+          Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory | Remove-Item -Recurse -Force }
+          Remove-Item -LiteralPath (Join-Path $dest 'tools'), (Join-Path $dest 'profiles') -Recurse -Force
+          Get-ChildItem -LiteralPath $dest -File -Filter 'tsgk*' | Remove-Item -Force
+      - name: 준비한 입력 전달
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s05-prepared-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/s05-prepared-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: Verify clean validation output
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+
+  native-routes:
+    # S05: build the driver and run the registered edit/feature/gap cases of the 26 routes
+    # and the synthetic large C# fixtures on each host with its existing compiler.
+    name: native routes (${{ matrix.os }})
+    needs: native-prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - os: windows-2025
+            goos: windows
+            goarch: amd64
+          - os: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+          - os: macos-15
+            goos: darwin
+            goarch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+      - name: 준비한 입력 받기
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: s05-prepared-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/s05-prepared
+      - name: S05 driver sanitizer (Linux, ASan/UBSan)
+        if: runner.os == 'Linux'
+        timeout-minutes: 8
+        run: |
+          # The owned native suite with an AddressSanitizer/UBSan driver build: a leak, overflow
+          # or use-after-free ends the driver nonzero and fails the protocol checks.
+          $base = "/sys/fs/cgroup/tsgk-san-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          sudo mkdir -p "$base/supervisor" "$base/jobs"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+          sudo chown -R "$(id -u):$(id -g)" $base
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+          Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+          Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+          $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          $env:TSGK_NATIVE_RUNTIME = Join-Path $env:RUNNER_TEMP 's05-prepared/runtime'
+          $env:TSGK_NATIVE_CC = & src/dev/s05-native/select-compiler.ps1
+          $env:TSGK_NATIVE_REQUIRED = '1'
+          $env:TSGK_NATIVE_SANITIZE = '1'
+          go test ./src/internal/native -count=1 -timeout 420s
+          if ($LASTEXITCODE -ne 0) { throw 'sanitizer native tests failed' }
+      - name: 26 route native build와 등록 사례 실행
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: |
+          $cgroup = ''
+          if ($IsLinux) {
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo mkdir -p "$base/supervisor" "$base/jobs"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+            sudo chown -R "$(id -u):$(id -g)" $base
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+            Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+            $cgroup = "$base/jobs"
+          }
+          $cc = & src/dev/s05-native/select-compiler.ps1
+          $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large
+          if ($LASTEXITCODE -ne 0) { throw 'route run reported failures' }
+      - name: route 결과 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s05-routes-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/summary.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify clean validation output
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }

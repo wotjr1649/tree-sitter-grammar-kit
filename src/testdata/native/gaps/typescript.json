@@ -1,0 +1,96 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "typescript",
+  "cases": [
+    {
+      "id": "typescript-gap-satisfies-r1",
+      "kind": "gap",
+      "features": ["typescript-V45", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "const before: number = 1;\nconst cfg = { port: 80, host: \"localhost\" } satisfies { port: number; host: string };\n",
+      "edits": [
+        {"find": "host: string };", "replace": "host: string ;"},
+        {"find": "host: string ;", "replace": "host: string };"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["lexical_declaration", "satisfies_expression", "object_type"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["lexical_declaration", "satisfies_expression", "object_type"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "typescript-gap-using-r1",
+      "kind": "gap",
+      "features": ["typescript-V50", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "const before: number = 1;\ndeclare function open(): Disposable;\ndeclare function connect(): AsyncDisposable;\nasync function run() {\n  using res = open();\n  await using conn = connect();\n  for (using item of [open()]) { }\n}\n",
+      "edits": [
+        {"find": "using res = open();", "replace": "using res = open(), res2 = open();"},
+        {"find": "await using conn = connect();", "replace": "await using conn = ;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["ambient_declaration", "function_declaration"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["ambient_declaration", "function_declaration"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "typescript-gap-const-type-param-r1",
+      "kind": "gap",
+      "features": ["typescript-V50", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "const before: number = 1;\nfunction first<const T extends readonly unknown[]>(xs: T): T[0] { return xs[0]; }\nclass Box<const V> { constructor(readonly v: V) {} }\n",
+      "edits": [
+        {"find": "unknown[]>(xs", "replace": "unknown[](xs"},
+        {"find": "unknown[](xs", "replace": "unknown[]>(xs"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["function_declaration", "class_declaration", "type_parameters", "type_parameter"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["function_declaration", "class_declaration", "type_parameters", "type_parameter"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "typescript-gap-accessor-decorator-r1",
+      "kind": "gap",
+      "features": ["typescript-V40", "typescript-V50", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "const before: number = 1;\ndeclare function logged(value: unknown, context: unknown): void;\ndeclare function tag(name: string): (value: unknown, context: unknown) => void;\n@tag(\"box\")\nclass Box {\n  @logged accessor value = 1;\n  static accessor count: number = 0;\n  @logged method(): void {}\n}\n",
+      "edits": [
+        {"find": "@logged accessor value = 1;", "replace": "@logged @tag(\"v\") accessor value = 1;"},
+        {"find": "static accessor count: number = 0;", "replace": "static accessor count: = 0;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "decorator", "public_field_definition", "method_definition"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["class_declaration", "decorator", "public_field_definition", "method_definition"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "typescript-gap-import-attributes-r1",
+      "kind": "gap",
+      "features": ["typescript-V50", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "import base from \"./base.json\" with { type: \"json\" };\nimport data from \"./data.json\" with { type: \"json\" };\nexport { default as schema } from \"./schema.json\" with { type: \"json\" };\nconst lazy = import(\"./lazy.json\", { with: { type: \"json\" } });\n",
+      "edits": [
+        {"find": "\"./data.json\" with { type: \"json\" }", "replace": "\"./data.json\" with { type: \"json\""},
+        {"find": "\"./data.json\" with { type: \"json\";", "replace": "\"./data.json\" with { type: \"json\" };"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["import_statement", "import_attribute", "export_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["import_statement", "import_attribute", "export_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "typescript-gap-export-type-star-r1",
+      "kind": "gap",
+      "features": ["typescript-V50", "S05: 등록 V59 밖의 TypeScript 5.x–7 구문(typescript-V50 등)은 미등록"],
+      "source_utf8": "const before: number = 1;\nexport type * from \"./types\";\nexport type * as ns from \"./types\";\nexport type { Shape } from \"./shapes\";\n",
+      "edits": [
+        {"find": "export type * as ns from", "replace": "export type * as from"},
+        {"find": "export type * as from", "replace": "export type * as ns from"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["export_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["export_statement"], "declarations": ""}
+      ]
+    }
+  ]
+}

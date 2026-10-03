@@ -1,0 +1,105 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "jsx",
+  "cases": [
+    {
+      "id": "jsx-feature-r1",
+      "kind": "feature",
+      "features": [
+        "jsx-B01",
+        "jsx-B02",
+        "jsx-B03",
+        "jsx-B04"
+      ],
+      "source_utf8": "import React, { useState } from 'react';\n\nconst items = ['alpha', 'beta', 'gamma'];\n\nfunction Badge({ label, ...props }) {\n  return <span className=\"badge\" {...props}>{label}</span>;\n}\n\nexport function List({ title, onSelect }) {\n  const [selected, setSelected] = useState(null);\n  const handle = (item) => {\n    setSelected(item);\n    onSelect?.(item);\n  };\n  return (\n    <section aria-label={title}>\n      <h2>{title} &amp; more</h2>\n      {/* list of items */}\n      <ul>\n        {items.map((item) => (\n          <li key={item} onClick={() => handle(item)}>\n            {item === selected ? <Badge label={item} /> : item}\n          </li>\n        ))}\n      </ul>\n      <>\n        <Layout.Footer disabled text=\"done\" />\n      </>\n    </section>\n  );\n}\n",
+      "edits": [
+        {
+          "find": "const items = ['alpha', 'beta', 'gamma'];\n",
+          "replace": "const items = ['alpha', 'beta', 'gamma'];\nconst empty = <p className=\"empty\">Nothing here</p>;\n"
+        },
+        {
+          "find": "<h2>{title} &amp; more</h2>",
+          "replace": "<h2 id=\"title\">{title}</h2>"
+        },
+        {
+          "find": "      <>\n        <Layout.Footer disabled text=\"done\" />\n      </>\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "jsx_expression",
+            "jsx_text",
+            "arrow_function"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "jsx-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "jsx-B01",
+        "jsx-B03"
+      ],
+      "source_utf8": "const name = 'world';\n\nfunction Greeting() {\n  return (\n    <div className=\"greeting\">\n      <p>Hello, {name}!</p>\n    </div>\n  );\n}\n\nexport default Greeting;\n",
+      "edits": [
+        {
+          "find": "      <p>Hello, {name}!</p>\n    </div>\n",
+          "replace": "      <p>Hello, {name}!</p>\n"
+        },
+        {
+          "find": "      <p>Hello, {name}!</p>\n",
+          "replace": "      <p>Hello, {name}!</p>\n    </div>\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

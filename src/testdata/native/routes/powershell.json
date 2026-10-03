@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "powershell",
+  "cases": [
+    {
+      "id": "powershell-feature-r1",
+      "kind": "feature",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "source_utf8": "# Inventory report script\n$ErrorActionPreference = 'Stop'\n\nenum Level {\n    Low\n    High\n}\n\nclass Item {\n    [string]$Name\n    [int]$Count\n\n    Item([string]$name, [int]$count) {\n        $this.Name = $name\n        $this.Count = $count\n    }\n\n    [Level] GetLevel() {\n        if ($this.Count -gt 100) {\n            return [Level]::High\n        }\n        return [Level]::Low\n    }\n}\n\nfunction Get-Total {\n    [CmdletBinding()]\n    param(\n        [Parameter(Mandatory = $true)]\n        [Item[]]$Items\n    )\n    process {\n        $sum = 0\n        foreach ($item in $Items) {\n            $sum += $item.Count\n        }\n        $sum\n    }\n}\n\n$items = @(\n    [Item]::new('bolt', 120),\n    [Item]::new('nut', 4)\n)\n$table = @{ Name = 'inventory'; Size = $items.Count }\nswitch ($items.Count) {\n    0 { Write-Warning 'empty' }\n    default { Write-Output \"count: $($items.Count)\" }\n}\ntry {\n    Get-Total -Items $items | ForEach-Object { \"total=$_\" }\n}\ncatch {\n    Write-Error $_.Exception.Message\n}\nfinally {\n    Write-Verbose 'done'\n}\n",
+      "edits": [
+        {
+          "find": "\nenum Level {\n",
+          "replace": "\n$Version = '1.0'\n\nenum Level {\n"
+        },
+        {
+          "find": "-gt 100",
+          "replace": "-ge 500"
+        },
+        {
+          "find": "$table = @{ Name = 'inventory'; Size = $items.Count }\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "enum_statement",
+            "class_statement",
+            "class_method_definition",
+            "function_statement",
+            "param_block",
+            "foreach_statement",
+            "switch_statement",
+            "try_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "powershell-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "powershell-B02"
+      ],
+      "source_utf8": "$values = 1, 2, 3\n\nfunction Get-Square {\n    param([int]$X)\n    $X * $X\n}\n\nforeach ($v in $values) {\n    Write-Output (Get-Square -X $v)\n}\n",
+      "edits": [
+        {
+          "find": "    Write-Output (Get-Square -X $v)\n}\n",
+          "replace": "    Write-Output (Get-Square -X $v)\n"
+        },
+        {
+          "find": "    Write-Output (Get-Square -X $v)\n",
+          "replace": "    Write-Output (Get-Square -X $v)\n}\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

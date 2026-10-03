@@ -1,0 +1,2028 @@
+{
+ "schema": "tsgk-native-routes/r1",
+ "status": "REGISTRATION_NOT_RESULT",
+ "note": "Native build inputs of the 26 routes for S05: upstream files at the pinned commit (archive identity where S01 acquired one), or for adopted routes the regenerated outputs of the S04 reproduction (tsgk reproduce, tree-sitter 0.27.0) from the patched grammar. The patch chain lists the literal operations in order; every patched file must end at its adoption hash.",
+ "runtime": "src/drivers/native-c/runtime-manifest.json",
+ "routes": [
+  {
+   "route": "csharp",
+   "repository": "tree-sitter/tree-sitter-c-sharp",
+   "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-c-sharp/tar.gz/9150f7d56bb47f1a809fa23623f1ba1413e93fa9"
+   },
+   "symbol": "tree_sitter_c_sharp",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
+     "bytes": 32815459
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "patched",
+     "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
+     "bytes": 23949
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "c40d6ebd66ca8e60089a5946451cc2806f3aedc5e9ef26e7e969ac82f762066e",
+      "bytes": 295814
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "2f861ab9b80015ded0ebfcc0784cea9a45213c45c0f14091026976f449716ba1",
+      "bytes": 133825
+     },
+     {
+      "path": "parser.c",
+      "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
+      "bytes": 32815459
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7",
+      "bytes": 62885
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "a76d617869801ea0e9969a06725a776a3e94076311a45f072a30aaaa497f47ea",
+      "bytes": 1427
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "7f65dca6680effa50fcc49abcf1346ee3067c5d1881b2e2fc46c5d1eec34e736",
+      "bytes": 953
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-patches.json",
+      "pointer": "/patches/0/files/0",
+      "field": "operations",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-patches.json",
+      "pointer": "/patches/0/files/1",
+      "field": "operations",
+      "target": "src/scanner.c"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-r2.json",
+      "pointer": "/patches/0/file",
+      "field": "operations",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-exact-r1.json",
+      "pointer": "/patches/0/change",
+      "field": "operations",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "pointer": "/patches/0/files/0",
+      "field": "operations",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-csharp-r5.json",
+      "pointer": "/patch",
+      "field": "replacements",
+      "target": "grammar.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "grammar.js",
+      "bytes": 62885,
+      "sha256": "da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7"
+     },
+     {
+      "path": "src/scanner.c",
+      "bytes": 23949,
+      "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227"
+     }
+    ]
+   }
+  },
+  {
+   "route": "go",
+   "repository": "tree-sitter/tree-sitter-go",
+   "commit": "2346a3ab1bb3857b48b29d779a1ef9799a248cd7",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-go/tar.gz/2346a3ab1bb3857b48b29d779a1ef9799a248cd7",
+    "bytes": 211421,
+    "sha256": "94d08fc0f727a8dbe03203e2aaf1c5dc33a57e496b583049324eddc79769797b"
+   },
+   "symbol": "tree_sitter_go",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
+     "bytes": 1572685
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "python",
+   "repository": "tree-sitter/tree-sitter-python",
+   "commit": "26855eabccb19c6abf499fbc5b8dc7cc9ab8bc64",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-python/tar.gz/26855eabccb19c6abf499fbc5b8dc7cc9ab8bc64",
+    "bytes": 265695,
+    "sha256": "43e71c4d0cbbd2350e83e0b2da3558eab09b8dc78153a8990508b0c9eec754e6"
+   },
+   "symbol": "tree_sitter_python",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "53a7bd87ba22c4fdbb8566a2caf848a1478f3ac9d47a1b32677a71de75d75db6",
+     "bytes": 3448505
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe",
+     "bytes": 15470
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "javascript",
+   "repository": "tree-sitter/tree-sitter-javascript",
+   "commit": "58404d8cf191d69f2674a8fd507bd5776f46cb11",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/58404d8cf191d69f2674a8fd507bd5776f46cb11",
+    "bytes": 310038,
+    "sha256": "f3e51e9f7b129f62a817551ae22a878dac5c18d71c456d5ad73e9c82d687f33d"
+   },
+   "symbol": "tree_sitter_javascript",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+     "bytes": 2855934
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7",
+     "bytes": 10576
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "jsx",
+   "repository": "tree-sitter/tree-sitter-javascript",
+   "commit": "58404d8cf191d69f2674a8fd507bd5776f46cb11",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/58404d8cf191d69f2674a8fd507bd5776f46cb11",
+    "bytes": 310038,
+    "sha256": "f3e51e9f7b129f62a817551ae22a878dac5c18d71c456d5ad73e9c82d687f33d"
+   },
+   "symbol": "tree_sitter_javascript",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+     "bytes": 2855934
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7",
+     "bytes": 10576
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "typescript",
+   "repository": "tree-sitter/tree-sitter-typescript",
+   "commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+   "grammar_dir": "typescript",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/75b3874edb2dc714fb1fd77a32013d0f8699989f"
+   },
+   "symbol": "tree_sitter_typescript",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "common/scanner.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c",
+     "bytes": 10097
+    },
+    {
+     "path": "typescript/src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "1ed7309680ac623523e1c9ae31d8b7286a56219d08b9a11660887e88d848d3c5",
+     "bytes": 8764241
+    },
+    {
+     "path": "typescript/src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "9125013b42cb888379d9be909f1d73dfb75a37626c2cdbf4122718a2b431a6d3",
+     "bytes": 573
+    },
+    {
+     "path": "typescript/src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "typescript/src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "typescript/src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "892e45034d02055836a9820bc491d50232d05ff70cb415f0c5939e1c2c666c9b",
+      "bytes": 282775
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "d00b324d64ed24d6a52222345e5f39db4129efae7e3498905704bd9f6846cf22",
+      "bytes": 108753
+     },
+     {
+      "path": "parser.c",
+      "sha256": "1ed7309680ac623523e1c9ae31d8b7286a56219d08b9a11660887e88d848d3c5",
+      "bytes": 8764241
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "typescript/grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "common/define-grammar.js",
+      "role": "js_helper",
+      "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846",
+      "bytes": 33689
+     },
+     {
+      "path": "node_modules/tree-sitter-javascript/grammar.js",
+      "role": "dependency",
+      "sha256": "230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc",
+      "bytes": 31373
+     },
+     {
+      "path": "node_modules/tree-sitter-javascript/package.json",
+      "role": "dependency",
+      "sha256": "2d677a45985e03e329f78e2f8b0f7b401ae68698eec2743059fc34e56f1f6644",
+      "bytes": 1317
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "26892ef49837678a747f81e344ed26938ec5804e29e003ad34fd5a3c87c68baf",
+      "bytes": 1373
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "4f39daa6a0bde84506cdeaf0b4460ed262df880030b3e6073868d0c746932291",
+      "bytes": 2793
+     },
+     {
+      "path": "typescript/grammar.js",
+      "role": "grammar_js",
+      "sha256": "7e4109889b2ce2731dde89f82f545a12f1e54a286f72bc874f1aed9965c5d5ae",
+      "bytes": 106
+     },
+     {
+      "path": "typescript/package.json",
+      "role": "metadata",
+      "sha256": "fcbd2e0fb7e7eed1af20cfd562cd3c3b22c839cb95b9d18df5793b850bd601dd",
+      "bytes": 202
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-patches.json",
+      "pointer": "/patches/1/files/0",
+      "field": "operations",
+      "target": "common/define-grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-r2.json",
+      "pointer": "/patches/1/file",
+      "field": "operations",
+      "target": "common/define-grammar.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "common/define-grammar.js",
+      "bytes": 33689,
+      "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846"
+     }
+    ]
+   }
+  },
+  {
+   "route": "tsx",
+   "repository": "tree-sitter/tree-sitter-typescript",
+   "commit": "75b3874edb2dc714fb1fd77a32013d0f8699989f",
+   "grammar_dir": "tsx",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/75b3874edb2dc714fb1fd77a32013d0f8699989f"
+   },
+   "symbol": "tree_sitter_tsx",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "common/scanner.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c",
+     "bytes": 10097
+    },
+    {
+     "path": "tsx/src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "87e0d559545b43b6fd0f6146a5419dbc19a900b2e10f3ef9451aaf33275e5296",
+     "bytes": 8788036
+    },
+    {
+     "path": "tsx/src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "d563cd30b2f39718c9ae4292795c5ce03a2ad01954ba3a86ef84c2781a736673",
+     "bytes": 538
+    },
+    {
+     "path": "tsx/src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "tsx/src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "tsx/src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "09f6a9ad52f32a320e301198757ee5f5cec799d8c192aa50357f2f10b0edcc81",
+      "bytes": 282835
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "33cb54d98e3d7813a0258becabd7e645594ead14a8888741dbaf77a4fe63d878",
+      "bytes": 113515
+     },
+     {
+      "path": "parser.c",
+      "sha256": "87e0d559545b43b6fd0f6146a5419dbc19a900b2e10f3ef9451aaf33275e5296",
+      "bytes": 8788036
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "tsx/grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "common/define-grammar.js",
+      "role": "js_helper",
+      "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846",
+      "bytes": 33689
+     },
+     {
+      "path": "node_modules/tree-sitter-javascript/grammar.js",
+      "role": "dependency",
+      "sha256": "230e330dd914d94297e5e58d53942cd5debf9c069852da93b6a6b1daae1967dc",
+      "bytes": 31373
+     },
+     {
+      "path": "node_modules/tree-sitter-javascript/package.json",
+      "role": "dependency",
+      "sha256": "2d677a45985e03e329f78e2f8b0f7b401ae68698eec2743059fc34e56f1f6644",
+      "bytes": 1317
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "26892ef49837678a747f81e344ed26938ec5804e29e003ad34fd5a3c87c68baf",
+      "bytes": 1373
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "4f39daa6a0bde84506cdeaf0b4460ed262df880030b3e6073868d0c746932291",
+      "bytes": 2793
+     },
+     {
+      "path": "tsx/grammar.js",
+      "role": "grammar_js",
+      "sha256": "19b7bc89bac1dfbb64e01ca15ca52345056028c2582d71762efd675af947a0f6",
+      "bytes": 99
+     },
+     {
+      "path": "tsx/package.json",
+      "role": "metadata",
+      "sha256": "d91e8e983679ba8bb4736e0680dc895513f2f10a7e7ff833bcc5f9e92ef0dfeb",
+      "bytes": 195
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-patches.json",
+      "pointer": "/patches/1/files/0",
+      "field": "operations",
+      "target": "common/define-grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-r2.json",
+      "pointer": "/patches/1/file",
+      "field": "operations",
+      "target": "common/define-grammar.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "common/define-grammar.js",
+      "bytes": 33689,
+      "sha256": "21559c1095e398e31e22d601af1388b107009a9dde888daf748c17878186f846"
+     }
+    ]
+   }
+  },
+  {
+   "route": "java",
+   "repository": "tree-sitter/tree-sitter-java",
+   "commit": "e10607b45ff745f5f876bfa3e94fbcc6b44bdc11",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-java/tar.gz/e10607b45ff745f5f876bfa3e94fbcc6b44bdc11",
+    "bytes": 214927,
+    "sha256": "95a46b6b7b545b48cd6c3a0d5b1014fed271a63a71164cdc4382d9d441e3609f"
+   },
+   "symbol": "tree_sitter_java",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
+     "bytes": 2561266
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "kotlin",
+   "repository": "tree-sitter-grammars/tree-sitter-kotlin",
+   "commit": "3dea6dfa9c0129deb7c4315afbda806c85c41667",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-kotlin/tar.gz/3dea6dfa9c0129deb7c4315afbda806c85c41667",
+    "bytes": 1244959,
+    "sha256": "a3f14d9574c788b09f8ed9057f48a6a153a016b642647318457fe2d3adced7a9"
+   },
+   "symbol": "tree_sitter_kotlin",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
+     "bytes": 22443237
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "164c2bb928d23765ed38c3a322deaef9b52d6e147cec7cdf45add90d4fa6101c",
+     "bytes": 15179
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "c",
+   "repository": "tree-sitter/tree-sitter-c",
+   "commit": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-c/tar.gz/b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+    "bytes": 382014,
+    "sha256": "dc3979e40fce678c27273ba8ab93b48b5acd6b91d1dfde6a4451222d366d689f"
+   },
+   "symbol": "tree_sitter_c",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
+     "bytes": 3872012
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
+     "bytes": 13269
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "cpp",
+   "repository": "tree-sitter/tree-sitter-cpp",
+   "commit": "c009222808634c1014f82438d4883753516a2c24",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-cpp/tar.gz/c009222808634c1014f82438d4883753516a2c24",
+    "bytes": 1740811,
+    "sha256": "6c6efaf024f5c02fee0403e4e2373346eeadc40828587bcfad9351df2f0a7986"
+   },
+   "symbol": "tree_sitter_cpp",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999",
+     "bytes": 25857209
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "cf60387d290271f4d2fb558d0569b2b9ef879cb72206a9df5cc73b0b1a4b20ff",
+     "bytes": 5169
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "4483dc3d37ab62fc8cabd5cfbd7de8267a2b1e3b12da3a90a5b8b324dacd5498",
+     "bytes": 13720
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "rust",
+   "repository": "tree-sitter/tree-sitter-rust",
+   "commit": "77a3747266f4d621d0757825e6b11edcbf991ca5",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-rust/tar.gz/77a3747266f4d621d0757825e6b11edcbf991ca5",
+    "bytes": 468573,
+    "sha256": "dee82ddfd01bfc3a8ed201cc03b56448107d3217a4b3a7a8fc7fa6bc32b2405b"
+   },
+   "symbol": "tree_sitter_rust",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a",
+     "bytes": 6505510
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283",
+     "bytes": 12588
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
+     "bytes": 13269
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "swift",
+   "repository": "alex-pinkus/tree-sitter-swift",
+   "commit": "35245fbfee2fccf16273c6f4299438fb76875970",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/alex-pinkus/tree-sitter-swift/tar.gz/35245fbfee2fccf16273c6f4299438fb76875970"
+   },
+   "symbol": "tree_sitter_swift",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "cfd9b9ca69c9ba7c71965766076340474a56ad286e2340de8ba0fe691e0f1d74",
+     "bytes": 23472218
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "b0abca0bb8d9e34da210ef0fac14f67c4fb40cb2625c4e51bd42ea80ac59d1b1",
+     "bytes": 36786
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "38a4d324cf7b9c6cfbc1043c57b76ccd617dbd42af1cdc1206470c703c150a9b",
+      "bytes": 280455
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "f41134fe4638b2652779f6f9369d0bf44d8fa447133e7858733eb01a4600b7c3",
+      "bytes": 710400
+     },
+     {
+      "path": "parser.c",
+      "sha256": "cfd9b9ca69c9ba7c71965766076340474a56ad286e2340de8ba0fe691e0f1d74",
+      "bytes": 23472218
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512",
+      "bytes": 76448
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "f3755edf7df457cb449547db31f035e24b248bcdb2a0e6e137f0b07d8ed1ee44",
+      "bytes": 1852
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "8fe119a382e307be0b94d0c80fda46339a693b84cae8cf2e19b6264437dd49db",
+      "bytes": 832
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-patches.json",
+      "pointer": "/patches/2/files/0",
+      "field": "operations",
+      "target": "grammar.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "grammar.js",
+      "bytes": 76448,
+      "sha256": "bcff6a77ef53571245cdccf1799c62229548fca75f503ea258040df086f03512"
+     }
+    ]
+   }
+  },
+  {
+   "route": "dart",
+   "repository": "UserNobody14/tree-sitter-dart",
+   "commit": "be07cf7118d3dba06236a3f19541685a68209934",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/UserNobody14/tree-sitter-dart/tar.gz/be07cf7118d3dba06236a3f19541685a68209934",
+    "bytes": 551720,
+    "sha256": "b126efb8dfeeba8b71f0c6ae1f0cd09cf8b205560786b31d44cc16b283e782f2"
+   },
+   "symbol": "tree_sitter_dart",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "af2c6d473ddd54f56603db77fa35e0bdbc8e4fb92d41c4bac69dc7e510eb9ca4",
+     "bytes": 7136472
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "07a7b7818b175e9460523e705dd88d20f7b5141bac95c593d4426e6d52284996",
+     "bytes": 3839
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
+     "bytes": 13269
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "php",
+   "repository": "tree-sitter/tree-sitter-php",
+   "commit": "92b5271b60bec77fb65b5e5bc41561e8dac81299",
+   "grammar_dir": "php",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-php/tar.gz/92b5271b60bec77fb65b5e5bc41561e8dac81299",
+    "bytes": 757921,
+    "sha256": "2dfa7643857b94a273b6b413b4cb694aef9c9898e17403f97b66a9ba9c163891"
+   },
+   "symbol": "tree_sitter_php",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "common/scanner.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "72b141c8795e31d1559c8a5d5491acdf02a055777aa1667e51dac0144a0dc35d",
+     "bytes": 16202
+    },
+    {
+     "path": "php/src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "80a9bb8d671ff300717de63939fc9b82c6ca6c7b38805fcbb33705dcc322eec3",
+     "bytes": 7287175
+    },
+    {
+     "path": "php/src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "58c92cafe4ebda509c3ad3864fa6fc0e9877bbac26e17a03d23ea2101c291ad5",
+     "bytes": 595
+    },
+    {
+     "path": "php/src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "php/src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "php/src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "ruby",
+   "repository": "tree-sitter/tree-sitter-ruby",
+   "commit": "ad907a69da0c8a4f7a943a7fe012712208da6dee",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-ruby/tar.gz/ad907a69da0c8a4f7a943a7fe012712208da6dee",
+    "bytes": 630155,
+    "sha256": "f7aa2408f1b39922f85add38cacd60b59828a8222c609a240f08779d46d079d9"
+   },
+   "symbol": "tree_sitter_ruby",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
+     "bytes": 15277808
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "88c1c036d5af7c22a1bc9cc5e50411d414ac9624afed676d42957c566ac4083d",
+     "bytes": 37383
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+     "bytes": 10420
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "r",
+   "repository": "r-lib/tree-sitter-r",
+   "commit": "58a22794466c0fc15b0d3b40531db751593721e8",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/r-lib/tree-sitter-r/tar.gz/58a22794466c0fc15b0d3b40531db751593721e8",
+    "bytes": 267400,
+    "sha256": "642b13978f724c78f067e6b17edd8ffff223c48e8ea09776324e1f4e8e75ca1c"
+   },
+   "symbol": "tree_sitter_r",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
+     "bytes": 4030362
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d",
+     "bytes": 31117
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "bash",
+   "repository": "tree-sitter/tree-sitter-bash",
+   "commit": "a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-bash/tar.gz/a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+    "bytes": 543183,
+    "sha256": "879e8951ea2cc82455407e3eda0293319657ec53e83191e0fb5a67430d10d804"
+   },
+   "symbol": "tree_sitter_bash",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
+     "bytes": 9912254
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "7cc25d70626f8939b35ecd504bf724e2001b817412aa29bceb4c4955a91558a9",
+     "bytes": 45602
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "powershell",
+   "repository": "airbus-cert/tree-sitter-powershell",
+   "commit": "e7bd348c49fdfd5c853a146a670965ba516a6239",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/airbus-cert/tree-sitter-powershell/tar.gz/e7bd348c49fdfd5c853a146a670965ba516a6239",
+    "bytes": 310421,
+    "sha256": "0c66318caf62f788b717e8dee74b75552917d1f22ecca0b01b621f79fc0d49f1"
+   },
+   "symbol": "tree_sitter_powershell",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
+     "bytes": 4697445
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "cf366b70e258a0ac1eb264ac0f4165c8f0c1b943d1a6e9db9d291c6cf178221f",
+     "bytes": 2135
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
+     "bytes": 13269
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "html",
+   "repository": "tree-sitter/tree-sitter-html",
+   "commit": "73a3947324f6efddf9e17c0ea58d454843590cc0",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-html/tar.gz/73a3947324f6efddf9e17c0ea58d454843590cc0",
+    "bytes": 50226,
+    "sha256": "892f6b732e08bcb90918a985fdee58d6a0fd7a90326af601a2536a5d477583fa"
+   },
+   "symbol": "tree_sitter_html",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
+     "bytes": 66466
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "5c0a0567e010277b81fe63be0acd04f6b44c3ef3063ac01429b910c1d22f0dca",
+     "bytes": 10796
+    },
+    {
+     "path": "src/tag.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "aaf1a10c8a2f685ef51a4aa6c01a2cbe166bff67eeccf6b9501a625b71f9ab70",
+     "bytes": 8388
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+     "bytes": 10420
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "css",
+   "repository": "tree-sitter/tree-sitter-css",
+   "commit": "dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-css/tar.gz/dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+    "bytes": 132925,
+    "sha256": "c47392e483feb9137d8f0acf9ca6e916b820122c260324454a9980c75c98c3c5"
+   },
+   "symbol": "tree_sitter_css",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
+     "bytes": 504262
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "18dae8c8c4f515f28a3dc7ffb5bda259b06013a752921dc411a2fad8ecf78988",
+     "bytes": 3469
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "json",
+   "repository": "tree-sitter/tree-sitter-json",
+   "commit": "254c42a6476413b776221e03982ac8ae159eeb72",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter/tree-sitter-json/tar.gz/254c42a6476413b776221e03982ac8ae159eeb72",
+    "bytes": 40341,
+    "sha256": "5735ec109268bdc25eb67875b96bc891de1f405253a1d3f9528a504249b0f832"
+   },
+   "symbol": "tree_sitter_json",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "9a266ae4a0305b8a2769bee90a14ac06914bdc83a509f16428311eac2845637e",
+     "bytes": 27700
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+     "bytes": 10420
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+     "bytes": 7039
+    }
+   ]
+  },
+  {
+   "route": "yaml",
+   "repository": "tree-sitter-grammars/tree-sitter-yaml",
+   "commit": "a1c4812a73ec5e089de8e441fdea3a921e8d5079",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-yaml/tar.gz/a1c4812a73ec5e089de8e441fdea3a921e8d5079",
+    "bytes": 174838,
+    "sha256": "6548cd059983e8073dfa39f102641f71d045b37f3a05b7ebd799ad17df8471d1"
+   },
+   "symbol": "tree_sitter_yaml",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "02c5d32e95fa018a3c3ba7d7134d84bb7d5595c8874aa7ae6582745d9b40dede",
+     "bytes": 1289047
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "a510c0ca699cf3853bd2192bf103e11132414bc002fe952a88a7106ffb5d44e9",
+     "bytes": 51548
+    },
+    {
+     "path": "src/schema.core.c",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "91e56c3f3ae6fad1803b739ce4eb4568a782a9aec710f733db2f3e38d407a4d5",
+     "bytes": 6630
+    },
+    {
+     "path": "src/schema.json.c",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "3a18e4406aa8cdaea2806483e11c50e1a392fd72cf8f54ab7f189b3728836949",
+     "bytes": 3065
+    },
+    {
+     "path": "src/schema.legacy.c",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "4f7ca12361e848214beceaa95ae615048317039ea4736c6eec956e3e8da4694c",
+     "bytes": 18624
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "xml",
+   "repository": "tree-sitter-grammars/tree-sitter-xml",
+   "commit": "5000ae8f22d11fbe93939b05c1e37cf21117162d",
+   "grammar_dir": "xml",
+   "archive": {
+    "url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-xml/tar.gz/5000ae8f22d11fbe93939b05c1e37cf21117162d",
+    "bytes": 99920,
+    "sha256": "1b7611ba3f2af55768acfbfbaf2fd2eb404ba61b14a85056d4f8d8326fc55146"
+   },
+   "symbol": "tree_sitter_xml",
+   "source": "upstream",
+   "files": [
+    {
+     "path": "common/scanner.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "ce5082af60b1808035a43c3df129df9b811c9c69949fdb664a351f7aae340409",
+     "bytes": 4270
+    },
+    {
+     "path": "xml/src/parser.c",
+     "role": "parser",
+     "origin": "upstream",
+     "sha256": "e00f74ae7edcfc5e0cf9dc551a41a02e88a86dad9d6d13820e292bde794cdd94",
+     "bytes": 240381
+    },
+    {
+     "path": "xml/src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "c49be7a88f5bc0feee512ce704dc05b1fd53c20f2110a46fb987bd93509ef806",
+     "bytes": 7759
+    },
+    {
+     "path": "xml/src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "xml/src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+     "bytes": 10431
+    },
+    {
+     "path": "xml/src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "upstream",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ]
+  },
+  {
+   "route": "tsql",
+   "repository": "meloncholera/tree-sitter-mssql",
+   "commit": "8620fbcfca9438e1ff7104835bcb8305aba3bdfa",
+   "grammar_dir": ".",
+   "archive": {
+    "url": "https://codeload.github.com/meloncholera/tree-sitter-mssql/tar.gz/8620fbcfca9438e1ff7104835bcb8305aba3bdfa"
+   },
+   "symbol": "tree_sitter_mssql",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "0c2db4895b33385590646dd6a7b12afc08f94dc85ef893f402059dd320a8fd99",
+     "bytes": 26919442
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "392bf26c2295e8ee3dd584dbea619d39573495244b4bbd2b59dab387a8494aec",
+     "bytes": 2046
+    },
+    {
+     "path": "src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "4d15bb38eed50171b78d54ab290f88d4b0b866f0eecc6a93cc899deca900cfd4",
+      "bytes": 674776
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "6e3659d7fa299b11dc6dee4b0cbc4386daf80245f20bfaf9929ddb89288f87ed",
+      "bytes": 406460
+     },
+     {
+      "path": "parser.c",
+      "sha256": "0c2db4895b33385590646dd6a7b12afc08f94dc85ef893f402059dd320a8fd99",
+      "bytes": 26919442
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92",
+      "bytes": 6225
+     },
+     {
+      "path": "grammar/column-lists.js",
+      "role": "js_helper",
+      "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400",
+      "bytes": 9051
+     },
+     {
+      "path": "grammar/expressions.js",
+      "role": "js_helper",
+      "sha256": "ae97f4c54a3b436de71ad75a80172d0e23942ca05d10ee5e957017e85773eb22",
+      "bytes": 16738
+     },
+     {
+      "path": "grammar/helpers.js",
+      "role": "js_helper",
+      "sha256": "ddf28d342fef7195fe9cf923e0930811ffe1bd8dbf0d702e6ef3641ef355b892",
+      "bytes": 4145
+     },
+     {
+      "path": "grammar/keywords.js",
+      "role": "js_helper",
+      "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782",
+      "bytes": 25233
+     },
+     {
+      "path": "grammar/statements/alter.js",
+      "role": "js_helper",
+      "sha256": "6e6363eab88fbf1cee7b86c9a45ffab36e615a0a9c9be29124efa374aa7acd02",
+      "bytes": 18435
+     },
+     {
+      "path": "grammar/statements/create-function.js",
+      "role": "js_helper",
+      "sha256": "f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a",
+      "bytes": 2539
+     },
+     {
+      "path": "grammar/statements/create-procedure.js",
+      "role": "js_helper",
+      "sha256": "6f30d8156863bdccac89214cc116fff86d5e6aea5f9ba6f316ee58d9731db7b4",
+      "bytes": 3811
+     },
+     {
+      "path": "grammar/statements/create.js",
+      "role": "js_helper",
+      "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e",
+      "bytes": 22558
+     },
+     {
+      "path": "grammar/statements/delete.js",
+      "role": "js_helper",
+      "sha256": "c99c4953685be731370d7435c999edae3f1865c986458105e3c56e003ecaa67c",
+      "bytes": 879
+     },
+     {
+      "path": "grammar/statements/dml-shared.js",
+      "role": "js_helper",
+      "sha256": "4b24d7d996304901e374009eaa708faa1e2d408a2a16099bfc070724882d683d",
+      "bytes": 1163
+     },
+     {
+      "path": "grammar/statements/drop.js",
+      "role": "js_helper",
+      "sha256": "099eb1998c5ab0c6a89c693ad09faf06586bf85ed661de0d450e62741872b880",
+      "bytes": 4386
+     },
+     {
+      "path": "grammar/statements/index.js",
+      "role": "js_helper",
+      "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff",
+      "bytes": 23575
+     },
+     {
+      "path": "grammar/statements/insert.js",
+      "role": "js_helper",
+      "sha256": "3c3a63330c7843949dd74bb4e11480bf450fc34701379e502cca991f11570b61",
+      "bytes": 1878
+     },
+     {
+      "path": "grammar/statements/merge.js",
+      "role": "js_helper",
+      "sha256": "b81208b4111e7398e3bd582a868f8d731e7a1f5224f002ae4bcb9b07db679555",
+      "bytes": 3227
+     },
+     {
+      "path": "grammar/statements/module-shared.js",
+      "role": "js_helper",
+      "sha256": "3d671dc79983a3aee5d879fa0a53f2577280fad22b8ba315b1a380f60efa2b9a",
+      "bytes": 632
+     },
+     {
+      "path": "grammar/statements/security.js",
+      "role": "js_helper",
+      "sha256": "8d3596628aa2fe0906726a76980c2627753bb7beefbcf0290e0ec7cb11793129",
+      "bytes": 14337
+     },
+     {
+      "path": "grammar/statements/select.js",
+      "role": "js_helper",
+      "sha256": "75ea8ee0a680bd2ea0b6edc07f4f22a57dab1d4058d043a088dec327d07f6525",
+      "bytes": 23474
+     },
+     {
+      "path": "grammar/statements/service-broker.js",
+      "role": "js_helper",
+      "sha256": "f6212f53a2c3c6dd566573e0b0388083a1a162861c327aeddcdd93d0385669eb",
+      "bytes": 4907
+     },
+     {
+      "path": "grammar/statements/set.js",
+      "role": "js_helper",
+      "sha256": "f73046419f8b7a025fbb87860fc50ce432959210208a5a2be71afb8b93cfae5c",
+      "bytes": 1594
+     },
+     {
+      "path": "grammar/statements/truncate.js",
+      "role": "js_helper",
+      "sha256": "4076bfccb4953dfb829c3b1b546c4aef843b80af400a26fb8259356d446be3a4",
+      "bytes": 1069
+     },
+     {
+      "path": "grammar/statements/update.js",
+      "role": "js_helper",
+      "sha256": "b60c834509299d09845ab50619552c83e7d417ec1f4bf93cd55fb0fd42aa5738",
+      "bytes": 1150
+     },
+     {
+      "path": "grammar/transactions.js",
+      "role": "js_helper",
+      "sha256": "4f9860c5bee52c94e4b2673ee9d3bbf93b59da575d4aecba3dc8bc603ab4ff14",
+      "bytes": 1561
+     },
+     {
+      "path": "grammar/types.js",
+      "role": "js_helper",
+      "sha256": "99985d53b6917ca7236424d69c8f1f7d7e2d86f5ebdbfbea89de41d3c59c7807",
+      "bytes": 3654
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "83883fa456daef6f4d85f75d2e4e35cfca67cc5a9f9f787f5855b5a8f0ceec3b",
+      "bytes": 2102
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "34f3763aabc4e63f8c7b3d4042bf1e68e7d15c954a4aeeb9a7470130fc821522",
+      "bytes": 969
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "pointer": "/patches/1/files/0",
+      "field": "operations",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "pointer": "/patches/1/files/1",
+      "field": "operations",
+      "target": "grammar/keywords.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "pointer": "/patches/1/files/2",
+      "field": "operations",
+      "target": "grammar/column-lists.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "pointer": "/patches/1/files/3",
+      "field": "operations",
+      "target": "grammar/statements/create.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "grammar.js",
+      "bytes": 6225,
+      "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
+     },
+     {
+      "path": "grammar/keywords.js",
+      "bytes": 25233,
+      "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
+     },
+     {
+      "path": "grammar/column-lists.js",
+      "bytes": 9051,
+      "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400"
+     },
+     {
+      "path": "grammar/statements/create.js",
+      "bytes": 22558,
+      "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
+     }
+    ]
+   }
+  },
+  {
+   "route": "postgresql-sql",
+   "repository": "gmr/tree-sitter-postgres",
+   "commit": "59d0d8cd7506d68de1229fb4bbce838c83b60c8a",
+   "grammar_dir": "postgres",
+   "archive": {
+    "url": "https://codeload.github.com/gmr/tree-sitter-postgres/tar.gz/59d0d8cd7506d68de1229fb4bbce838c83b60c8a"
+   },
+   "symbol": "tree_sitter_postgres",
+   "source": "regenerated",
+   "files": [
+    {
+     "path": "postgres/src/parser.c",
+     "role": "parser",
+     "origin": "generated",
+     "sha256": "cc47959aac26b9e749883dac2fb2852dcb7efd895d51e4b19d38d4b1a3528f7d",
+     "bytes": 97664835
+    },
+    {
+     "path": "postgres/src/scanner.c",
+     "role": "scanner",
+     "origin": "upstream",
+     "sha256": "4d7872a6bb2126e206a7aa0730b7f272b41d9e75c2d11af274fc4db2cd7c3352",
+     "bytes": 3403
+    },
+    {
+     "path": "postgres/src/tree_sitter/alloc.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+     "bytes": 985
+    },
+    {
+     "path": "postgres/src/tree_sitter/array.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
+    },
+    {
+     "path": "postgres/src/tree_sitter/parser.h",
+     "role": "header",
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
+    }
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "9976842e67a26641db79dc6f1a227cebce1477f65672004356d9a6b4cf4f3fdf",
+      "bytes": 1403902
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "7f9f350c2730fbddf36f096dbb27405f6ae29ba787b265f2bb494e6a887078d5",
+      "bytes": 508227
+     },
+     {
+      "path": "parser.c",
+      "sha256": "cc47959aac26b9e749883dac2fb2852dcb7efd895d51e4b19d38d4b1a3528f7d",
+      "bytes": 97664835
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "postgres/grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 6442450944,
+    "inputs": [
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "e7306517712796015aa66ee1dac6829b47e3aa5c3a25e5974259de4225bbcf1f",
+      "bytes": 1999
+     },
+     {
+      "path": "postgres/grammar.js",
+      "role": "grammar_js",
+      "sha256": "e2c7defa738d4d261a9a2dcc2c4c3d646a9cc4a847b4f7ef3d22dea0636dd508",
+      "bytes": 245861
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "a20253a9151e8f2a4b878dbbc92531c5335ebb0f30f3280e8d0a74cc8e52776c",
+      "bytes": 788
+     }
+    ],
+    "patch_chain": [
+     {
+      "subject": "src/dev/prepare-p05/remedy-exact-r1.json",
+      "pointer": "/patches/1/change",
+      "field": "operations",
+      "target": "postgres/grammar.js"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "postgres/grammar.js",
+      "bytes": 245861,
+      "sha256": "e2c7defa738d4d261a9a2dcc2c4c3d646a9cc4a847b4f7ef3d22dea0636dd508"
+     }
+    ]
+   }
+  }
+ ]
+}

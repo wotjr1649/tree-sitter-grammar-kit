@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "yaml",
+  "cases": [
+    {
+      "id": "yaml-feature-r1",
+      "kind": "feature",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03",
+        "yaml-V12"
+      ],
+      "source_utf8": "%YAML 1.2\n---\n# Inventory configuration\nname: inventory\nversion: 3\nenabled: true\nowner: ~\ndefaults: &defaults\n  retries: 3\n  timeout: 2.5\nservices:\n  api:\n    <<: *defaults\n    port: 8080\n    tags: [web, \"public\", 'v1']\n  worker:\n    <<: *defaults\n    queues:\n      - high\n      - low\n    env: {MODE: batch, DEBUG: false}\ndescription: |\n  Multi-line literal\n  block scalar.\nsummary: >-\n  Folded text that\n  continues here.\nitems:\n  - id: 1\n    name: bolt\n  - id: 2\n    name: !!str 0042\n...\n",
+      "edits": [
+        {
+          "find": "owner: ~\n",
+          "replace": "owner: ~\nregion: eu-west\n"
+        },
+        {
+          "find": "port: 8080",
+          "replace": "port: 9090"
+        },
+        {
+          "find": "summary: >-\n  Folded text that\n  continues here.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "yaml_directive",
+            "comment",
+            "block_mapping_pair",
+            "block_sequence",
+            "flow_sequence",
+            "flow_mapping",
+            "anchor",
+            "alias"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "yaml-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "yaml-B02"
+      ],
+      "source_utf8": "server:\n  host: localhost\n  port: 8080\nfeatures: [auth, metrics, tracing]\nlimits:\n  rps: 100\n  burst: 20\nowners:\n  - ops\n  - dev\nenabled: true\n",
+      "edits": [
+        {
+          "find": "tracing]",
+          "replace": "tracing"
+        },
+        {
+          "find": "tracing",
+          "replace": "tracing]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

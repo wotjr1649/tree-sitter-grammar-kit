@@ -1,0 +1,105 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "typescript",
+  "cases": [
+    {
+      "id": "typescript-feature-r1",
+      "kind": "feature",
+      "features": [
+        "typescript-B01",
+        "typescript-B02",
+        "typescript-V28",
+        "typescript-V3",
+        "typescript-V45"
+      ],
+      "source_utf8": "import type { Readable } from 'node:stream';\nimport { EventEmitter } from 'node:events';\n\nexport interface Item {\n  readonly id: number;\n  name: string;\n  tags?: string[];\n}\n\ntype Status = 'active' | 'retired';\ntype Keys<T> = { [K in keyof T]-?: T[K] extends Function ? never : K }[keyof T];\n\nenum Level {\n  Low = 1,\n  High,\n}\n\ndeclare module 'node:events' {\n  interface EventEmitter {\n    tagged?: boolean;\n  }\n}\n\nexport abstract class Repository<T extends Item> extends EventEmitter {\n  protected items = new Map<number, T>();\n\n  constructor(private readonly label: string) {\n    super();\n  }\n\n  abstract validate(item: T): item is T;\n\n  add(item: T): this {\n    if (!this.validate(item)) {\n      throw new Error(`invalid ${this.label}`);\n    }\n    this.items.set(item.id, item);\n    return this;\n  }\n\n  find(id: number): T | undefined {\n    return this.items.get(id) as T | undefined;\n  }\n}\n\nexport function level(n: number): Level {\n  return n > 10 ? Level.High : Level.Low;\n}\n\nconst config = { retries: 3 } as const satisfies Record<string, number>;\n",
+      "edits": [
+        {
+          "find": "type Status = 'active' | 'retired';\n",
+          "replace": "type Status = 'active' | 'retired';\ntype Handler<T> = (item: T) => void;\n"
+        },
+        {
+          "find": "Low = 1,",
+          "replace": "Low = 0,"
+        },
+        {
+          "find": "const config = { retries: 3 } as const satisfies Record<string, number>;\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_declaration",
+            "type_alias_declaration",
+            "enum_declaration",
+            "ambient_declaration",
+            "abstract_class_declaration",
+            "union_type",
+            "type_parameters",
+            "satisfies_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "typescript-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "typescript-B01"
+      ],
+      "source_utf8": "interface Point {\n  x: number;\n  y: number;\n}\n\nfunction distance(a: Point, b: Point): number {\n  const dx = a.x - b.x;\n  const dy = a.y - b.y;\n  return Math.sqrt(dx * dx + dy * dy);\n}\n\nexport const origin: Point = { x: 0, y: 0 };\n",
+      "edits": [
+        {
+          "find": "dy * dy);",
+          "replace": "dy * dy;"
+        },
+        {
+          "find": "dy * dy;",
+          "replace": "dy * dy);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

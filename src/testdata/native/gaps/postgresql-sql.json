@@ -1,0 +1,186 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "postgresql-sql",
+  "cases": [
+    {
+      "id": "postgresql-sql-gap-call-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V10", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nCREATE PROCEDURE p(a int) LANGUAGE sql AS $$ SELECT a $$;\nCALL p(1);\n",
+      "edits": [
+        {"find": "CALL p(1);", "replace": "CALL p(1;"},
+        {"find": "CALL p(1;", "replace": "CALL p(1);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["CreateFunctionStmt", "CallStmt"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["CreateFunctionStmt", "CallStmt"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-merge-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V13", "postgresql-sql-V16", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nMERGE INTO t USING s ON t.id = s.id\nWHEN MATCHED THEN UPDATE SET v = s.v\nWHEN NOT MATCHED THEN INSERT (id, v) VALUES (s.id, s.v);\n",
+      "edits": [
+        {"find": "VALUES (s.id, s.v);", "replace": "VALUES (s.id, s.v) RETURNING merge_action(), t.id;"},
+        {"find": "THEN UPDATE SET v = s.v", "replace": "THEN UPDATE v = s.v"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["MergeStmt", "merge_when_clause"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["MergeStmt", "merge_when_clause", "returning_clause"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-json-table-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V16", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nSELECT jt.* FROM docs, JSON_TABLE(docs.body, '$.items[*]' COLUMNS (id int PATH '$.id', name text PATH '$.name')) AS jt;\n",
+      "edits": [
+        {"find": "COLUMNS (id int", "replace": "COLUMNS id int"},
+        {"find": "COLUMNS id int", "replace": "COLUMNS (id int"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["json_table", "json_table_column_definition"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["json_table", "json_table_column_definition"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-generated-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V10", "postgresql-sql-V18", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nCREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c int GENERATED ALWAYS AS IDENTITY);\n",
+      "edits": [
+        {"find": "STORED", "replace": "VIRTUAL"},
+        {"find": "AS (a * 2)", "replace": "AS a * 2"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["CreateStmt", "generated_when", "opt_virtual_or_stored"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["CreateStmt", "generated_when", "opt_virtual_or_stored"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-temporal-returning-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V18", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nCREATE TABLE r (id int, during tstzrange, UNIQUE (id, during WITHOUT OVERLAPS));\nDELETE FROM r WHERE id = 1 RETURNING old.id, old.during;\nINSERT INTO r VALUES (2, NULL) RETURNING WITH (NEW AS n) n.id;\n",
+      "edits": [
+        {"find": "RETURNING WITH (NEW AS n)", "replace": "RETURNING WITH (NEW AS n"},
+        {"find": "RETURNING WITH (NEW AS n", "replace": "RETURNING WITH (NEW AS n)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["CreateStmt", "opt_without_overlaps", "returning_clause", "returning_with_clause"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["CreateStmt", "opt_without_overlaps", "returning_clause", "returning_with_clause"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-cte-search-cycle-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-V10", "postgresql-sql-V13", "S05/S03: 후보가 PostgreSQL 19 기반이며 채택 범위 9.6–18 checkpoint별 지원은 미검증"],
+      "source_utf8": "SELECT 1;\nWITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 5) SEARCH DEPTH FIRST BY n SET ord CYCLE n SET is_cycle USING path SELECT * FROM t;\nWITH w AS MATERIALIZED (SELECT 1 AS a) SELECT a FROM w;\n",
+      "edits": [
+        {"find": "AS MATERIALIZED", "replace": "AS NOT MATERIALIZED"},
+        {"find": "SET is_cycle USING path", "replace": "SET is_cycle USING"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["opt_search_clause", "opt_cycle_clause", "opt_materialized"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["opt_search_clause", "opt_cycle_clause", "opt_materialized"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-vacuum-analyze-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nVACUUM (VERBOSE, ANALYZE) t;\nANALYZE t (a);\n",
+      "edits": [
+        {"find": "(VERBOSE, ANALYZE) t;", "replace": "(VERBOSE, ANALYZE t;"},
+        {"find": "(VERBOSE, ANALYZE t;", "replace": "(VERBOSE, ANALYZE) t;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["VacuumStmt", "AnalyzeStmt"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["VacuumStmt", "AnalyzeStmt"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-copy-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nCOPY t (a, b) FROM STDIN WITH (FORMAT csv, HEADER true);\nCOPY (SELECT a FROM t) TO STDOUT;\n",
+      "edits": [
+        {"find": "TO STDOUT;", "replace": "TO STDOUT WITH (FORMAT csv);"},
+        {"find": "WITH (FORMAT csv, HEADER true);", "replace": "WITH (FORMAT csv, HEADER true;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["CopyStmt"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["CopyStmt"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-explain-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nEXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) SELECT * FROM t WHERE a = 1;\n",
+      "edits": [
+        {"find": "FORMAT JSON)", "replace": "FORMAT JSON"},
+        {"find": "FORMAT JSON", "replace": "FORMAT JSON)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["ExplainStmt"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["ExplainStmt"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-set-show-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nSET search_path TO app, public;\nSHOW search_path;\nRESET search_path;\n",
+      "edits": [
+        {"find": "SHOW search_path;", "replace": "SHOW ALL;"},
+        {"find": "SET search_path TO app, public;", "replace": "SET search_path TO ;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["VariableSetStmt", "VariableShowStmt"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["VariableSetStmt", "VariableShowStmt"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-index-concurrently-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "postgresql-sql-B03", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nCREATE INDEX CONCURRENTLY IF NOT EXISTS t_a_idx ON t USING btree (a) INCLUDE (b) WHERE a > 0;\nREINDEX INDEX CONCURRENTLY t_a_idx;\n",
+      "edits": [
+        {"find": "USING btree (a)", "replace": "USING btree a"},
+        {"find": "USING btree a", "replace": "USING btree (a)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["IndexStmt", "ReindexStmt"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["IndexStmt", "ReindexStmt"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "postgresql-sql-gap-b04-session-utilities-r1",
+      "kind": "gap",
+      "features": ["postgresql-sql-B04", "S05: postgresql-sql-B04 utility 구문 등록 0행"],
+      "source_utf8": "SELECT 1;\nLISTEN chan;\nNOTIFY chan, 'payload';\nLOCK TABLE t IN ACCESS EXCLUSIVE MODE NOWAIT;\nPREPARE q(int) AS SELECT $1;\nEXECUTE q(1);\nDEALLOCATE q;\nDISCARD ALL;\nCHECKPOINT;\nCOMMENT ON TABLE t IS 'note';\nDO $$BEGIN NULL; END$$;\n",
+      "edits": [
+        {"find": "EXECUTE q(1);", "replace": "EXECUTE q(1;"},
+        {"find": "EXECUTE q(1;", "replace": "EXECUTE q(1);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["ListenStmt", "NotifyStmt", "LockStmt", "PrepareStmt", "ExecuteStmt", "DeallocateStmt", "DiscardStmt", "CheckPointStmt", "CommentStmt", "DoStmt"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["ListenStmt", "NotifyStmt", "LockStmt", "PrepareStmt", "ExecuteStmt", "DeallocateStmt", "DiscardStmt", "CheckPointStmt", "CommentStmt", "DoStmt"], "declarations": ""}
+      ]
+    }
+  ]
+}

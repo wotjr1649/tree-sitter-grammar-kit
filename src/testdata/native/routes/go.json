@@ -1,0 +1,106 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "go",
+  "cases": [
+    {
+      "id": "go-feature-r1",
+      "kind": "feature",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-B03",
+        "go-B04",
+        "go-V18"
+      ],
+      "source_utf8": "package inventory\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Item is a stock entry.\ntype Item struct {\n\tName  string `json:\"name\"`\n\tCount int    `json:\"count\"`\n}\n\ntype Store[K comparable, V any] struct {\n\titems map[K]V\n}\n\nconst maxItems = 1_000\n\nvar ErrFull = errors.New(\"store is full\")\n\nfunc (s *Store[K, V]) Put(key K, value V) error {\n\tif len(s.items) >= maxItems {\n\t\treturn ErrFull\n\t}\n\ts.items[key] = value\n\treturn nil\n}\n\nfunc Summarize(items []Item) string {\n\tvar b strings.Builder\n\ttotal := 0\n\tfor i, it := range items {\n\t\tswitch {\n\t\tcase it.Count == 0:\n\t\t\tcontinue\n\t\tcase it.Count > 100:\n\t\t\tfmt.Fprintf(&b, \"%d:%s(bulk) \", i, it.Name)\n\t\tdefault:\n\t\t\tfmt.Fprintf(&b, \"%d:%s \", i, it.Name)\n\t\t}\n\t\ttotal += it.Count\n\t}\n\tch := make(chan int, 1)\n\tgo func() { ch <- total }()\n\tdefer close(ch)\n\treturn b.String() + fmt.Sprint(<-ch)\n}\n",
+      "edits": [
+        {
+          "find": "var ErrFull = errors.New(\"store is full\")\n",
+          "replace": "var ErrFull = errors.New(\"store is full\")\n\nfunc (s *Store[K, V]) Len() int {\n\treturn len(s.items)\n}\n"
+        },
+        {
+          "find": "case it.Count > 100:",
+          "replace": "case it.Count > 500:"
+        },
+        {
+          "find": "\tdefer close(ch)\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "type_declaration",
+            "method_declaration",
+            "function_declaration",
+            "range_clause",
+            "expression_switch_statement",
+            "func_literal",
+            "go_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "go-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "go-B03",
+        "go-B04"
+      ],
+      "source_utf8": "package main\n\nimport \"fmt\"\n\nfunc add(a, b int) int {\n\treturn a + b\n}\n\nfunc main() {\n\tfor i := 0; i < 3; i++ {\n\t\tfmt.Println(add(i, i))\n\t}\n}\n",
+      "edits": [
+        {
+          "find": "add(i, i))",
+          "replace": "add(i, i)"
+        },
+        {
+          "find": "add(i, i)",
+          "replace": "add(i, i))"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

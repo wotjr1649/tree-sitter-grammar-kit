@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "swift",
+  "cases": [
+    {
+      "id": "swift-feature-r1",
+      "kind": "feature",
+      "features": [
+        "swift-B01",
+        "swift-B02"
+      ],
+      "source_utf8": "import Foundation\n\n/// An item in stock.\nstruct Item: Equatable {\n    let name: String\n    var count: Int = 0\n}\n\nenum Level {\n    case low, high\n}\n\nprotocol Store {\n    func add(_ item: Item) throws\n    var total: Int { get }\n}\n\nenum StoreError: Error {\n    case full(limit: Int)\n}\n\nfinal class MemoryStore: Store {\n    private var items: [String: Item] = [:]\n    let limit: Int\n\n    init(limit: Int) {\n        self.limit = limit\n    }\n\n    func add(_ item: Item) throws {\n        guard items.count < limit else {\n            throw StoreError.full(limit: limit)\n        }\n        items[item.name] = item\n    }\n\n    var total: Int {\n        items.values.reduce(0) { $0 + $1.count }\n    }\n}\n\nfunc level(of item: Item?) -> Level {\n    switch item?.count ?? 0 {\n    case 0..<100:\n        return .low\n    default:\n        return .high\n    }\n}\n\nlet store = MemoryStore(limit: 4)\nfor i in 1...3 {\n    try? store.add(Item(name: \"item\\(i)\", count: i * 10))\n}\n// Print a summary.\nprint(\"total: \\(store.total), level: \\(level(of: nil))\")\n",
+      "edits": [
+        {
+          "find": "enum Level {\n    case low, high\n}\n",
+          "replace": "enum Level {\n    case low, high\n}\n\ntypealias Inventory = [Item]\n"
+        },
+        {
+          "find": "case 0..<100:",
+          "replace": "case 0..<500:"
+        },
+        {
+          "find": "// Print a summary.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "class_declaration",
+            "protocol_declaration",
+            "function_declaration",
+            "property_declaration",
+            "guard_statement",
+            "switch_statement",
+            "lambda_literal"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "swift-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "swift-B02"
+      ],
+      "source_utf8": "import Foundation\n\nfunc square(_ x: Int) -> Int {\n    return x * x\n}\n\nlet values = [1, 2, 3]\nfor v in values {\n    print(square(v))\n}\n",
+      "edits": [
+        {
+          "find": "square(v))",
+          "replace": "square(v)"
+        },
+        {
+          "find": "square(v)",
+          "replace": "square(v))"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "tsql",
+  "cases": [
+    {
+      "id": "tsql-gap-merge-output-r1",
+      "kind": "gap",
+      "features": ["tsql-B02", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nMERGE INTO dbo.t AS tgt\nUSING dbo.s AS src ON tgt.id = src.id\nWHEN MATCHED THEN UPDATE SET tgt.v = src.v\nWHEN NOT MATCHED BY TARGET THEN INSERT (id, v) VALUES (src.id, src.v)\nWHEN NOT MATCHED BY SOURCE THEN DELETE\nOUTPUT $action, inserted.id;\n",
+      "edits": [
+        {"find": "BY SOURCE THEN DELETE", "replace": "BY SOURCE THEN"},
+        {"find": "BY SOURCE THEN", "replace": "BY SOURCE THEN DELETE"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge", "merge_when_clause", "output_clause"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge", "merge_when_clause", "output_clause"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-try-catch-r1",
+      "kind": "gap",
+      "features": ["tsql-B04", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nBEGIN TRY\n    SELECT 1 / 0 AS boom;\nEND TRY\nBEGIN CATCH\n    THROW 50001, N'failed', 1;\nEND CATCH;\n",
+      "edits": [
+        {"find": "END TRY", "replace": "END TRX"},
+        {"find": "END TRX", "replace": "END TRY"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["try_catch_statement", "try_block", "catch_block", "throw_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["try_catch_statement", "try_block", "catch_block", "throw_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-cte-recursive-r1",
+      "kind": "gap",
+      "features": ["tsql-B02", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nWITH n (i) AS (\n    SELECT 1\n    UNION ALL\n    SELECT i + 1 FROM n WHERE i < 10\n)\nSELECT i FROM n OPTION (MAXRECURSION 100);\n",
+      "edits": [
+        {"find": "WHERE i < 10", "replace": "WHERE i <"},
+        {"find": "WHERE i <", "replace": "WHERE i < 10"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-window-functions-r1",
+      "kind": "gap",
+      "features": ["tsql-B02", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nSELECT id,\n       ROW_NUMBER() OVER (PARTITION BY g ORDER BY id) AS rn,\n       LAG(v, 1, 0) OVER (PARTITION BY g ORDER BY id) AS prev_v,\n       SUM(v) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running\nFROM dbo.t;\n",
+      "edits": [
+        {"find": "AND CURRENT ROW) AS running", "replace": "AND CURRENT ROW AS running"},
+        {"find": "AND CURRENT ROW AS running", "replace": "AND CURRENT ROW) AS running"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["window_function", "window_specification", "partition_by", "window_frame"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["window_function", "window_specification", "partition_by", "window_frame"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-pivot-r1",
+      "kind": "gap",
+      "features": ["tsql-B02", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nSELECT p.[2024], p.[2025]\nFROM (SELECT y, amt FROM dbo.sales) AS s\nPIVOT (SUM(amt) FOR y IN ([2024], [2025])) AS p;\nSELECT u.y, u.amt FROM dbo.wide AS w UNPIVOT (amt FOR y IN ([2024], [2025])) AS u;\n",
+      "edits": [
+        {"find": "IN ([2024], [2025])) AS p", "replace": "IN ([2024], [2025]) AS p"},
+        {"find": "IN ([2024], [2025]) AS p", "replace": "IN ([2024], [2025])) AS p"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["pivot_clause", "unpivot_clause"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["pivot_clause", "unpivot_clause"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-output-clause-r1",
+      "kind": "gap",
+      "features": ["tsql-B02", "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded"],
+      "source_utf8": "SELECT 1 AS anchor;\nDECLARE @ids TABLE (id int);\nUPDATE dbo.t SET v = v + 1 OUTPUT inserted.id INTO @ids WHERE id > 0;\nINSERT INTO dbo.t (v) OUTPUT inserted.id, inserted.v VALUES (1);\nDELETE FROM dbo.t OUTPUT deleted.id WHERE id < 0;\n",
+      "edits": [
+        {"find": "OUTPUT deleted.id WHERE", "replace": "OUTPUT WHERE"},
+        {"find": "OUTPUT WHERE", "replace": "OUTPUT deleted.id WHERE"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["output_clause"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["output_clause"], "declarations": ""}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "swift",
+  "cases": [
+    {
+      "id": "swift-gap-macro-use-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nlet (value, code) = #stringify(a + b)\nlet line = #line\n",
+      "edits": [
+        {"find": "#stringify(a + b)", "replace": "#stringify(a + b"},
+        {"find": "#stringify(a + b", "replace": "#stringify(a + b)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["property_declaration", "macro_invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["property_declaration", "macro_invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-macro-decl-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\n@freestanding(expression)\npublic macro stringify<T>(_ value: T) -> (T, String) = #externalMacro(module: \"MyMacros\", type: \"StringifyMacro\")\n",
+      "edits": [
+        {"find": "type: \"StringifyMacro\")", "replace": "type: )"},
+        {"find": "type: )", "replace": "type: \"StringifyMacro\")"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["macro_declaration"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["macro_declaration"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-if-let-shorthand-r1",
+      "kind": "gap",
+      "features": ["swift-V55", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nfunc greet(name: String?) {\n    if let name { print(name) }\n    guard let name else { return }\n    print(name)\n}\n",
+      "edits": [
+        {"find": "if let name {", "replace": "if let name, let first = name.first {"},
+        {"find": "guard let name else", "replace": "guard let else"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["function_declaration", "if_statement", "guard_statement"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["function_declaration", "if_statement", "guard_statement"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-typed-throws-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nenum LoadError: Error { case bad }\nfunc load() throws(LoadError) -> Int { throw .bad }\n",
+      "edits": [
+        {"find": "throws(LoadError)", "replace": "throws(any Error)"},
+        {"find": "throws(any Error)", "replace": "throws(any Error"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "function_declaration"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["class_declaration", "function_declaration"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-noncopyable-consume-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nstruct Token: ~Copyable { var id: Int }\nfunc use(_ t: consuming Token) { let u = consume t; _ = u }\n",
+      "edits": [
+        {"find": "consume t;", "replace": "consume ;"},
+        {"find": "consume ;", "replace": "consume t;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "function_declaration", "consume_expression"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["class_declaration", "function_declaration", "consume_expression"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-parameter-pack-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nfunc all<each T>(_ v: repeat each T) -> (repeat each T) { (repeat each v) }\n",
+      "edits": [
+        {"find": "(_ v: repeat each T)", "replace": "(_ v: repeat each T, _ w: Int)"},
+        {"find": "{ (repeat each v) }", "replace": "{ (repeat each ) }"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["function_declaration", "type_parameters"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["function_declaration", "type_parameters"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "swift-gap-if-switch-expression-r1",
+      "kind": "gap",
+      "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
+      "source_utf8": "let before = 1\nlet size = if before > 0 { \"big\" } else { \"small\" }\nlet label = switch before {\ncase 0: \"zero\"\ndefault: \"other\"\n}\n",
+      "edits": [
+        {"find": "case 0: \"zero\"", "replace": "case : \"zero\""},
+        {"find": "case : \"zero\"", "replace": "case 0: \"zero\""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["property_declaration"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["property_declaration"], "declarations": ""}
+      ]
+    }
+  ]
+}

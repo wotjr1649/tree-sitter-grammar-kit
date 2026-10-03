@@ -1,0 +1,103 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "tsx",
+  "cases": [
+    {
+      "id": "tsx-feature-r1",
+      "kind": "feature",
+      "features": [
+        "tsx-B01",
+        "tsx-B02",
+        "tsx-V29"
+      ],
+      "source_utf8": "import React, { useState } from 'react';\n\ntype ButtonProps = {\n  label: string;\n  onPress?: (id: number) => void;\n};\n\ninterface ListProps<T> {\n  items: T[];\n  render: (item: T) => React.ReactNode;\n}\n\nconst identity = <T,>(value: T): T => value;\n\nexport function Button({ label, onPress }: ButtonProps): JSX.Element {\n  const [count, setCount] = useState<number>(0);\n  return (\n    <button type=\"button\" onClick={() => { setCount(count + 1); onPress?.(count); }}>\n      {label}: {count}\n    </button>\n  );\n}\n\nexport function List<T extends { id: number }>({ items, render }: ListProps<T>) {\n  if (items.length === 0) {\n    return <p className=\"empty\">No items</p>;\n  }\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item.id}>{render(identity(item))}</li>\n      ))}\n    </ul>\n  );\n}\n\nexport const App = () => (\n  <>\n    <Button label=\"Add\" />\n    <List<{ id: number }> items={[{ id: 1 }]} render={(i) => <span>{i.id}</span>} />\n  </>\n);\n",
+      "edits": [
+        {
+          "find": "const identity = <T,>(value: T): T => value;\n",
+          "replace": "const identity = <T,>(value: T): T => value;\nconst MAX_ITEMS: number = 50;\n"
+        },
+        {
+          "find": "<p className=\"empty\">No items</p>",
+          "replace": "<p className=\"empty\">Empty list</p>"
+        },
+        {
+          "find": "    <Button label=\"Add\" />\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias_declaration",
+            "interface_declaration",
+            "type_annotation",
+            "type_arguments",
+            "jsx_element",
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "jsx_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsx-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "tsx-B01"
+      ],
+      "source_utf8": "type Props = { name: string };\n\nfunction Hello({ name }: Props) {\n  return <h1 className=\"title\">Hello {name}</h1>;\n}\n\nexport default function Page() {\n  return (\n    <main>\n      <Hello name=\"tsx\" />\n    </main>\n  );\n}\n",
+      "edits": [
+        {
+          "find": "      <Hello name=\"tsx\" />\n    </main>\n",
+          "replace": "      <Hello name=\"tsx\" />\n"
+        },
+        {
+          "find": "      <Hello name=\"tsx\" />\n",
+          "replace": "      <Hello name=\"tsx\" />\n    </main>\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}
