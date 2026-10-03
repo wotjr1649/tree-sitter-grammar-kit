@@ -12,8 +12,11 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
@@ -198,7 +201,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		stdout.Write(data)
 		var ke *kit.Error
 		if errors.As(err, &ke) {
-			fmt.Fprintf(stderr, "tsgk: %s: %s %s\n", ke.Kind, ke.Code, ke.Path)
+			fmt.Fprintf(stderr, "tsgk: %s: %s %s\n", ke.Kind, ke.Code, printable(ke.Path))
 			return exitFor(ke.Kind)
 		}
 		fmt.Fprintln(stderr, "tsgk: IO:", err)
@@ -224,6 +227,15 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return exitIO
 	}
 	return code
+}
+
+// printable quotes a diagnostic path that could carry terminal control bytes (archive
+// member names and JSON keys come from untrusted input); the JSON report escapes them.
+func printable(p string) string {
+	if !utf8.ValidString(p) || strings.ContainsFunc(p, unicode.IsControl) {
+		return strconv.QuoteToASCII(p)
+	}
+	return p
 }
 
 // readDocument reads at most MaxDocumentBytes+1 bytes so the API, not the CLI, rejects an oversized

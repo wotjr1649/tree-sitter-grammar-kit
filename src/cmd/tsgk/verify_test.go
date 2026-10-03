@@ -117,6 +117,14 @@ func TestVerifyCLI(t *testing.T) {
 	}
 	b.Reset()
 	w = zip.NewWriter(&b)
+	w.Create("a\x1b[2J.txt") // a hostile name must not reach the terminal raw
+	w.Close()
+	os.WriteFile(bad, b.Bytes(), 0o644)
+	if code, _, stderr = cli(t, ctx, "verify", "--archive", bad, "--expected", exp); code != 2 || !strings.Contains(stderr, `ARCHIVE_PATH_CONTROL "a\x1b[2J.txt"`) || strings.ContainsRune(stderr, 0x1b) {
+		t.Fatalf("control name: %d %q", code, stderr)
+	}
+	b.Reset()
+	w = zip.NewWriter(&b)
 	w.Create("café.txt")
 	w.Close()
 	os.WriteFile(bad, b.Bytes(), 0o644)
