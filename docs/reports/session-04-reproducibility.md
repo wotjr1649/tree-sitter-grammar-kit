@@ -95,6 +95,8 @@ A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26
 
 `4afd455`에서 mutant 20종(새 2종: 주 process 종료 뒤 release 제거, 완료되지 않은 실행의 mode claim 정리 제거)은 18/20이었다. release 제거는 시험을 go test 제한 180초까지 멈추게 했고(결함이 드러났지만 시험이 실패로 끝나지 않음), mode claim 시험은 그 경로를 타지 않았다. 시험에 10초 자체 제한을 두고 source 변경 시험에서 mode claim을 확인하도록 고친 `3c412ea`에서 20/20이다(`mutants-4afd455.json`, `mutants-3c412ea.json` 보존).
 
+재리뷰 r3(`f0e38d2..1af8d18`, `review-r3.json`)는 R1-06과 R2-01~04를 모두 RESOLVED로 확인했고, `TestStorageLimitWorkspaceB`가 B의 출력에 파일을 더해 결정성 실패로 먼저 끝나므로 "B만 넘고 나머지 claim은 PASS" 경로를 시험하지 않는다는 MINOR R3-01과 CLI 계약 문구 NOTE R3-02를 보고했다. fake generator가 B의 격리 home에만 64 KiB를 쓰도록 바꿔 출력은 같고 저장 용량만 넘게 했고(deterministic·reference PASS, `js_reproduction` NOT_CLAIMED 확인), 문구를 고쳤다.
+
 ## 남은 일과 한계
 
 * 세 OS CI(A13, Linux cgroup·macOS sampled backend의 실제 시험 포함)는 PR 단계에서 실행한다. Linux·macOS backend 코드는 로컬에서 교차 vet만 했고 실행하지 않았다.

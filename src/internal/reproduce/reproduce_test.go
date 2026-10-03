@@ -89,9 +89,10 @@ func fakeGenerate(args []string) int {
 	case strings.Contains(mode, "MODE:write-source"):
 		os.WriteFile("injected.txt", []byte("x"), 0o644)
 	case strings.Contains(mode, "MODE:grow-b"):
-		// Only workspace B writes an extra 64 KiB, so only B can exceed storage_bytes.
-		if filepath.Base(filepath.Dir(out)) != "" && strings.HasSuffix(filepath.Dir(out), "-b") {
-			files["padding.bin"] = strings.Repeat("x", 65536)
+		// Only workspace B writes 64 KiB into its isolated home (counted as workspace storage,
+		// not an output), so only B can exceed storage_bytes while every output stays equal.
+		if strings.HasSuffix(filepath.Dir(out), "-b") {
+			os.WriteFile(filepath.Join(os.Getenv("HOME"), "padding.bin"), []byte(strings.Repeat("x", 65536)), 0o644)
 		}
 	case strings.Contains(mode, "MODE:touch-root "):
 		_, target, _ := strings.Cut(mode, "MODE:touch-root ")
@@ -614,7 +615,7 @@ func TestStorageLimitWorkspaceB(t *testing.T) {
 		t.Fatal(err)
 	}
 	if res.ExecutionStatus != kit.StatusResourceLimit || res.Assessment != kit.AssessBlocked || !hasFinding(res, "STORAGE_LIMIT") ||
-		res.Claims.JSReproduction == ClaimPass || res.Runs[1].State != "EXECUTED" {
+		res.Claims.Deterministic != ClaimPass || res.Claims.ReferenceMatch != ClaimPass || res.Claims.JSReproduction != ClaimNone || res.Runs[1].State != "EXECUTED" {
 		t.Fatalf("%+v %+v", res.Report, res.Claims)
 	}
 }
