@@ -352,7 +352,7 @@ func wallExpiringAtOpen(t *testing.T) func() {
 func TestStartRunWallTimer(t *testing.T) {
 	r, e := startRun(testCtx(t), time.Millisecond)
 	if e != nil {
-		if e.Code != "WALL_LIMIT" {
+		if e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" || !errors.Is(e, errWall) {
 			t.Fatalf("start: %v", e)
 		}
 		return // the timer already fired before the first checkpoint

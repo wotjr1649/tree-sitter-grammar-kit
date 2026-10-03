@@ -168,6 +168,22 @@ feature disposition에서 `Q`를 요구하는 행은 154개다. 이 중 이번 q
   * macOS sampled 메모리의 시간 여유(#65).
   * 32 MiB 응답 출력 여유 7%.
 
+## PR CI 1회차 실패와 수정 (Refs #61)
+
+PR #67 run 37141714979(head `a78d5cc`)에서 foundation windows-2025만 실패했다. Linux·macOS foundation은 통과했고 native job은 건너뛰었다(orchestrator 보고). 실패한 시험은 `src/kit` `TestCorpusLimits/WALL_LIMIT`이고, 결과는 "want RESOURCE_LIMIT/WALL_LIMIT, got <nil>"이었다.
+
+* 원인: 이 사례와 `TestLimits/WALL_LIMIT`은 kit wall을 1 ns로 두고 작은 fixture를 처리했다. Windows timer 해상도에서는 처리가 timer보다 먼저 끝날 수 있다. #61이 추적하는 시험 결함이며 이번 S06 변경과 무관하다. 다만 필수 CI를 무작위로 막으므로 이 PR에서 고쳤다.
+* 수정(`910b072`, `6550b6b`, `76db754`과 그 다음 commit):
+  * kit에 비공개 시험 hook `testHookWall` 하나를 두었다. 시험이 이 hook을 설정하면 timer 대신 그 wall context를 쓴다. hook이 nil이면 제품 경로는 이전과 같다.
+  * 두 사례는 기존 `testHookOpen`으로, walk가 첫 파일을 열 때 wall을 kit의 cause로 만료시킨다. 그래서 작업 도중 `WALL_LIMIT` 경로를 반드시 탄다. 단언(`RESOURCE_LIMIT`/`BLOCKED`, 부분 결과 없음)은 그대로다.
+  * caller 취소와 wall 만료가 같은 지점에서 일어나도 `CANCELLED`(부분 결과 없음)인지 보는 사례를 더했다.
+  * 실제 timer 경로는 `TestStartRunWallTimer`가 본다. hook 없이 1 ms wall의 `Done`을 기다린 뒤 `WALL_LIMIT`과 cause를 확인하므로 timer와 경쟁하지 않는다.
+* 검증:
+  * 세 시험을 `-count=200` 반복했다.
+  * mutant 5개를 추가했고 모두 검출됐다: wall 검사 제거(두 사례), caller 우선순위 역전, timer가 울리지 않음, cause 없는 timer. 앞 두 commit에서는 caller 우선순위 mutant가 살아남아 시험을 고쳤다.
+  * 전체 mutant 27/27(`76db754`), CI 방식 foundation step exit 0.
+* 분리 리뷰 r5·r6에서 MINOR 1건(실제 timer 경로의 시험 부재)과 NOTE 4건이 나왔다. 범위 밖으로 기록만 한 R5-n3(native·runner의 여유 큰 시간 가정)을 빼고 모두 처분했다.
+
 ## 남은 일과 한계
 
 * 세 OS CI(foundation, native prepare, native routes 세 job, Linux sanitizer), PR·merge·post-merge는 이 세션 범위 밖이며 orchestrator가 한다.
