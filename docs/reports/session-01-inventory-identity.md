@@ -105,12 +105,15 @@ inspect는 26 route 모두 완료했다. identity는 22 route에서 완료했고
 
 수정분 재리뷰는 6건을 해결로 확인했고, `--out` junction 건이 root 하위 디렉터리를 가리키는 junction에서 남는다는 점과 새 MINOR 2건(UNC를 가리키는 symlink root, 대소문자 구분 filesystem의 index 충돌)을 보고했다. 경로에 해석되지 않은 junction·mount point가 남으면 `OUTPUT_PARENT_ALIAS`로 거부하고, 해석된 root도 UNC/device 검사를 하며, corpus 선언은 정확한 path 집합으로, `.csproj`는 정확 일치 우선·단일 대소문자 무시 일치만 `MEMBER`로 고쳤다. 각 수정에 시험을 더했다(대소문자 구분 시험은 Windows·macOS 기본 filesystem에서 skip).
 
+2차 재검토는 남은 3건을 해결로 확인하고 MINOR 2건을 더 보고했다. cloud placeholder 같은 일반 reparse 디렉터리를 별칭으로 오인해 `--out`을 거부하던 점은 Windows reparse tag(mount point·symlink)로 좁혀 고쳤다. `subst`·bind mount처럼 경로에 드러나지 않는 별칭은 표준 라이브러리로 검출하지 않으며, 이 한계를 CLI 계약에 적고 아래 남은 일에 남겼다.
+
 리뷰가 남긴 정의 문제(discovery 기반 identity가 같은 source를 두 번 읽어 `total_bytes`에 두 번 셈)는 CLI 계약에 "실제로 읽은 bytes 합계"로 명시했다.
 
 ## 남은 일과 한계
 
 * 세 OS CI, PR, 분리 context 리뷰 처분, merge, post-merge 검증과 tracking은 이 보고서 이후 단계다.
 * JS closure는 실행 없이 완전성을 증명하지 않는다(`js-closure-proof` unsupported). C include는 포함 파일 디렉터리와 `G/src`만 본다.
+* `--out`의 입력 내부 검사는 `subst` drive·bind mount 같은 경로 밖 별칭을 검출하지 못한다(CLI 계약에 한계로 명시, 후속 개선 후보).
 * 읽는 중 변경 검출은 관측 가능한 변경(크기·수정 시각·파일 identity·읽은 bytes 수)만 다루며 적대적 동시 교체를 막는 sandbox가 아니다.
 * cp949 표가 필요한 판정과 decode는 S05, strict profile·expected 검증은 S02다. N461 역할의 내용 표지는 ASCII bytes 검색이므로 UTF-16 파일에서는 이름 규칙만 적용된다.
 * `src/contracts/campaign-01.json`의 Session 구현 상태는 foundation 시험이 PREPARE 값(`NOT_IMPLEMENTED`)으로 고정하고 있어 이 Session에서 바꾸지 않았다. 갱신 시점은 통합 후 결정 사항이다.

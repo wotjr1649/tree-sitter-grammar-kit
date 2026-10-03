@@ -256,9 +256,10 @@ func inside(dir, root string) bool {
 
 // unresolvedAlias reports a directory component that EvalSymlinks left in place (Windows
 // junctions and volume mount points); its target cannot be compared with the root.
+// ponytail: path-component check; subst drives and bind mounts are not detected.
 func unresolvedAlias(dir string) bool {
 	for p := dir; ; {
-		if info, err := os.Lstat(p); err == nil && info.Mode()&(os.ModeSymlink|os.ModeIrregular) != 0 {
+		if info, err := os.Lstat(p); err == nil && isAlias(p, info) {
 			return true
 		}
 		up := filepath.Dir(p)
