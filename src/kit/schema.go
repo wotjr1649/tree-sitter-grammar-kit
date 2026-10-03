@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Static node-types.json contract revisions. SchemaFormat is the adopted reading of the
@@ -172,6 +174,9 @@ func SchemaCheck(ctx context.Context, req SchemaCheckRequest) (SchemaCheckResult
 		return sealOutput(res, req.Limits.OutputBytes)
 	}); e != nil {
 		res.Input.Counts = nil
+		if sealOutput(res, req.Limits.OutputBytes) != nil {
+			keepFailureFinding(&res.Report)
+		}
 		return res, e
 	}
 	return res, nil
@@ -202,7 +207,7 @@ func SchemaDiff(ctx context.Context, req SchemaDiffRequest) (SchemaDiffResult, e
 			docs[i] = doc
 		}
 		res.Baseline.Counts, res.Candidate.Counts = docs[0].counts(), docs[1].counts()
-		diffs, e := diffSchemas(r, docs[0], docs[1])
+		diffs, e := diffSchemas(r, docs[0], docs[1], req.Limits.OutputBytes)
 		if e != nil {
 			return e
 		}
@@ -217,9 +222,20 @@ func SchemaDiff(ctx context.Context, req SchemaDiffRequest) (SchemaDiffResult, e
 		return sealOutput(res, req.Limits.OutputBytes)
 	}); e != nil {
 		res.Baseline.Counts, res.Candidate.Counts, res.Differences = nil, nil, []SchemaDifference{}
+		if sealOutput(res, req.Limits.OutputBytes) != nil {
+			keepFailureFinding(&res.Report)
+		}
 		return res, e
 	}
 	return res, nil
+}
+
+// keepFailureFinding reduces a failure report that would exceed the output limit to the
+// failure finding failReport appended last.
+func keepFailureFinding(r *Report) {
+	if n := len(r.Findings); n > 1 {
+		r.Findings = r.Findings[n-1:]
+	}
 }
 
 func schemaPolicy(op, comparator string, l SchemaLimits) SchemaPolicy {
@@ -288,11 +304,35 @@ type collector struct {
 	violation, unsupported bool
 }
 
-func (c *collector) add(code, sev, ptr, msg string) {
-	c.addPath(code, sev, c.name+"#"+ptr, msg)
+// maxFindingPath bounds a finding path; a member name can be as long as the document.
+const maxFindingPath = 1024
+
+// add records a finding at value at (plus a literal pointer suffix). The pointer is built,
+// clipped, only for a finding that is kept.
+func (c *collector) add(code, sev string, at *jv, suffix, msg string) {
+	if c.keep(code, sev) {
+		p, cut := at.ptrClip(maxFindingPath)
+		if !cut {
+			p, cut = clipPath(p+suffix, maxFindingPath)
+		}
+		if cut {
+			p += "...(truncated)"
+		}
+		c.list = append(c.list, Finding{Code: code, Severity: sev, Path: c.name + "#" + p, Message: msg})
+	}
 }
 
 func (c *collector) addPath(code, sev, path, msg string) {
+	if c.keep(code, sev) {
+		if p, cut := clipPath(path, len(c.name)+1+maxFindingPath); cut {
+			path = p + "...(truncated)"
+		}
+		c.list = append(c.list, Finding{Code: code, Severity: sev, Path: path, Message: msg})
+	}
+}
+
+// keep counts a finding toward the assessment and reports whether it is still recorded.
+func (c *collector) keep(code, sev string) bool {
 	if sev == "error" {
 		if code == "SCHEMA_KEY_UNSUPPORTED" {
 			c.unsupported = true
@@ -300,9 +340,46 @@ func (c *collector) addPath(code, sev, path, msg string) {
 			c.violation = true
 		}
 	}
-	if c.total++; c.total <= maxSchemaFindings {
-		c.list = append(c.list, Finding{Code: code, Severity: sev, Path: path, Message: msg})
+	c.total++
+	return c.total <= maxSchemaFindings
+}
+
+// clipPath cuts p to at most max bytes on a UTF-8 boundary.
+func clipPath(p string, max int) (string, bool) {
+	if len(p) <= max {
+		return p, false
 	}
+	for max > 0 && !utf8.RuneStart(p[max]) {
+		max--
+	}
+	return p[:max], true
+}
+
+// ptrClip builds v's JSON pointer from the root, stopping after max bytes, so a long member
+// name is never copied in full for a finding.
+func (v *jv) ptrClip(max int) (string, bool) {
+	var chain []*jv
+	for x := v; x != nil && x.up != nil; x = x.up {
+		chain = append(chain, x)
+	}
+	var b strings.Builder
+	for i := len(chain) - 1; i >= 0; i-- {
+		x := chain[i]
+		seg := strconv.Itoa(x.idx)
+		if x.up.kind == '{' {
+			name := x.name
+			if len(name) > max {
+				name = name[:max]
+			}
+			seg = pointerEscaper.Replace(name)
+		}
+		b.WriteByte('/')
+		b.WriteString(seg)
+		if b.Len() > max {
+			return clipPath(b.String(), max)
+		}
+	}
+	return b.String(), false
 }
 
 func (c *collector) assessment() string {
@@ -344,22 +421,23 @@ func compareRefs(a, b schemaRef) int {
 	return 1
 }
 
-// schemaSet is a children or field description; types is an unordered set (ref → pointer).
+// schemaSet is a children or field description; types is an unordered set (ref → member
+// value). Values are kept as links; pointers are built only when reported.
 type schemaSet struct {
-	ptr                string
+	at                 *jv
 	required, multiple bool
-	types              map[schemaRef]string
+	types              map[schemaRef]*jv
 }
 
 type schemaNode struct {
 	ref                   schemaRef
-	ptr                   string
+	at                    *jv
 	root, extra           *bool
 	fields                map[string]*schemaSet // nil: key absent (not the same as {})
-	fieldsPtr             string
+	fieldsAt              *jv
 	children              *schemaSet
-	subtypes              map[schemaRef]string // nil: key absent
-	subtypesPtr           string
+	subtypes              map[schemaRef]*jv // nil: key absent
+	subtypesAt            *jv
 	hasFields, hasSubtype bool
 }
 
@@ -386,11 +464,11 @@ func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, *collector
 		return nil, c, nil
 	}
 	if top.kind != '[' {
-		add(jsonKindCode(top), "error", "", "최상위 값은 node 배열이어야 한다")
+		add(jsonKindCode(top), "error", top, "", "최상위 값은 node 배열이어야 한다")
 		return nil, c, nil
 	}
 	if len(top.vals) == 0 {
-		add("SCHEMA_EMPTY", "error", "", "node가 하나도 없는 schema는 유효한 빈 schema가 아니다")
+		add("SCHEMA_EMPTY", "error", top, "", "node가 하나도 없는 schema는 유효한 빈 schema가 아니다")
 		return nil, c, nil
 	}
 	doc := &schemaDoc{nodes: map[schemaRef]*schemaNode{}}
@@ -417,11 +495,11 @@ func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, *collector
 		}
 		if n.root != nil && *n.root {
 			if roots++; roots > 1 {
-				add("ROOT_MULTIPLE", "error", n.ptr+"/root", "root로 표시된 node가 둘 이상이다")
+				add("ROOT_MULTIPLE", "error", n.at, "/root", "root로 표시된 node가 둘 이상이다")
 			}
 		}
 		if prev := doc.nodes[n.ref]; prev != nil {
-			add("NODE_DUPLICATE", "error", n.ptr, "같은 (type, named) node가 "+prev.ptr+"에도 있다")
+			add("NODE_DUPLICATE", "error", n.at, "", "같은 (type, named) node가 "+prev.at.ptr()+"에도 있다")
 			continue
 		}
 		doc.nodes[n.ref] = n
@@ -431,13 +509,13 @@ func parseSchema(r *run, in SchemaInput, l SchemaLimits) (*schemaDoc, *collector
 	for _, n := range sortedNodes(doc) {
 		for _, ref := range sortedRefs(n.subtypes) {
 			if doc.nodes[ref] == nil {
-				add("REFERENCE_UNRESOLVED", "error", n.subtypes[ref], "subtype이 선언된 node를 가리키지 않는다")
+				add("REFERENCE_UNRESOLVED", "error", n.subtypes[ref], "", "subtype이 선언된 node를 가리키지 않는다")
 			}
 		}
 		for _, set := range n.sets() {
 			for _, ref := range sortedRefs(set.types) {
 				if doc.nodes[ref] == nil {
-					add("REFERENCE_UNDECLARED", "warning", set.types[ref], "허용 type이 schema에 별도 node로 선언되지 않았다")
+					add("REFERENCE_UNDECLARED", "warning", set.types[ref], "", "허용 type이 schema에 별도 node로 선언되지 않았다")
 				}
 			}
 		}
@@ -465,21 +543,21 @@ func (n *schemaNode) sets() []*schemaSet {
 // parseNode reads one entry. Every violation is a finding; the returned bool reports only
 // whether the (type, named) identity is readable, so duplicates are found even in entries
 // that are invalid for another reason.
-func parseNode(v *jv, add func(code, sev, ptr, msg string), count func() *Error) (*schemaNode, bool, *Error) {
+func parseNode(v *jv, add func(code, sev string, at *jv, suffix, msg string), count func() *Error) (*schemaNode, bool, *Error) {
 	if v.kind != '{' {
-		add(jsonKindCode(v), "error", v.ptr, "node 항목은 object여야 한다")
+		add(jsonKindCode(v), "error", v, "", "node 항목은 object여야 한다")
 		return nil, false, nil
 	}
-	n := &schemaNode{ptr: v.ptr}
+	n := &schemaNode{at: v}
 	typeOK, namedOK := false, false
 	for i, key := range v.keys {
 		val := v.vals[i]
 		switch key {
 		case "type":
 			if val.kind != '"' {
-				add(jsonKindCode(val), "error", val.ptr, "type은 문자열이어야 한다")
+				add(jsonKindCode(val), "error", val, "", "type은 문자열이어야 한다")
 			} else if n.ref.typ = val.s; val.s == "" {
-				add("NODE_TYPE_EMPTY", "error", val.ptr, "type이 비어 있다")
+				add("NODE_TYPE_EMPTY", "error", val, "", "type이 비어 있다")
 			} else {
 				typeOK = true
 			}
@@ -492,9 +570,9 @@ func parseNode(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 				n.extra = &b
 			}
 		case "fields":
-			n.hasFields, n.fieldsPtr = true, val.ptr
+			n.hasFields, n.fieldsAt = true, val
 			if val.kind != '{' {
-				add(jsonKindCode(val), "error", val.ptr, "fields는 object여야 한다")
+				add(jsonKindCode(val), "error", val, "", "fields는 object여야 한다")
 				continue
 			}
 			n.fields = map[string]*schemaSet{}
@@ -503,7 +581,7 @@ func parseNode(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 					return nil, false, e
 				}
 				if name == "" {
-					add("FIELD_NAME_EMPTY", "error", val.vals[j].ptr, "field 이름이 비어 있다")
+					add("FIELD_NAME_EMPTY", "error", val.vals[j], "", "field 이름이 비어 있다")
 					continue
 				}
 				set, e := parseSet(val.vals[j], add, count)
@@ -521,36 +599,36 @@ func parseNode(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 			}
 			n.children = set
 		case "subtypes":
-			n.hasSubtype, n.subtypesPtr = true, val.ptr
+			n.hasSubtype, n.subtypesAt = true, val
 			refs, good, e := parseRefs(val, add, count)
 			if e != nil {
 				return nil, false, e
 			}
 			n.subtypes = refs
 			if good && len(refs) == 0 {
-				add("SUBTYPES_EMPTY", "error", val.ptr, "subtypes가 비어 있다")
+				add("SUBTYPES_EMPTY", "error", val, "", "subtypes가 비어 있다")
 			}
 		default:
-			add("SCHEMA_KEY_UNSUPPORTED", "error", val.ptr, "이 형식 revision이 해석하지 않는 key다")
+			add("SCHEMA_KEY_UNSUPPORTED", "error", val, "", "이 형식 revision이 해석하지 않는 key다")
 		}
 	}
 	for _, key := range []string{"type", "named"} {
 		if !v.has(key) {
-			add("JSON_MISSING_FIELD", "error", v.ptr+"/"+key, key+"가 없다")
+			add("JSON_MISSING_FIELD", "error", v, "/"+key, key+"가 없다")
 		}
 	}
 	if n.hasSubtype && (n.hasFields || n.children != nil) {
-		add("SUPERTYPE_SHAPE", "error", v.ptr, "supertype은 subtypes 외에 fields·children을 가질 수 없다")
+		add("SUPERTYPE_SHAPE", "error", v, "", "supertype은 subtypes 외에 fields·children을 가질 수 없다")
 	}
 	return n, typeOK && namedOK, nil
 }
 
-func parseSet(v *jv, add func(code, sev, ptr, msg string), count func() *Error) (*schemaSet, *Error) {
+func parseSet(v *jv, add func(code, sev string, at *jv, suffix, msg string), count func() *Error) (*schemaSet, *Error) {
 	if v.kind != '{' {
-		add(jsonKindCode(v), "error", v.ptr, "field·children 설명은 object여야 한다")
+		add(jsonKindCode(v), "error", v, "", "field·children 설명은 object여야 한다")
 		return nil, nil
 	}
-	s := &schemaSet{ptr: v.ptr}
+	s := &schemaSet{at: v}
 	for i, key := range v.keys {
 		val := v.vals[i]
 		switch key {
@@ -565,15 +643,15 @@ func parseSet(v *jv, add func(code, sev, ptr, msg string), count func() *Error) 
 			}
 			s.types = refs
 			if good && len(refs) == 0 {
-				add("TYPES_EMPTY", "error", val.ptr, "허용 type 목록이 비어 있다")
+				add("TYPES_EMPTY", "error", val, "", "허용 type 목록이 비어 있다")
 			}
 		default:
-			add("SCHEMA_KEY_UNSUPPORTED", "error", val.ptr, "이 형식 revision이 해석하지 않는 key다")
+			add("SCHEMA_KEY_UNSUPPORTED", "error", val, "", "이 형식 revision이 해석하지 않는 key다")
 		}
 	}
 	for _, key := range []string{"multiple", "required", "types"} {
 		if !v.has(key) {
-			add("JSON_MISSING_FIELD", "error", v.ptr+"/"+key, key+"가 없다")
+			add("JSON_MISSING_FIELD", "error", v, "/"+key, key+"가 없다")
 		}
 	}
 	return s, nil
@@ -581,19 +659,19 @@ func parseSet(v *jv, add func(code, sev, ptr, msg string), count func() *Error) 
 
 // parseRefs reads a list of {type, named} references as a set; a repeated member is
 // MEMBER_DUPLICATE, never silently merged.
-func parseRefs(v *jv, add func(code, sev, ptr, msg string), count func() *Error) (map[schemaRef]string, bool, *Error) {
+func parseRefs(v *jv, add func(code, sev string, at *jv, suffix, msg string), count func() *Error) (map[schemaRef]*jv, bool, *Error) {
 	if v.kind != '[' {
-		add(jsonKindCode(v), "error", v.ptr, "type 목록은 배열이어야 한다")
+		add(jsonKindCode(v), "error", v, "", "type 목록은 배열이어야 한다")
 		return nil, false, nil
 	}
-	out := map[schemaRef]string{}
+	out := map[schemaRef]*jv{}
 	ok := true
 	for _, m := range v.vals {
 		if e := count(); e != nil {
 			return nil, false, e
 		}
 		if m.kind != '{' {
-			add(jsonKindCode(m), "error", m.ptr, "type 참조는 object여야 한다")
+			add(jsonKindCode(m), "error", m, "", "type 참조는 object여야 한다")
 			ok = false
 			continue
 		}
@@ -605,10 +683,10 @@ func parseRefs(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 			case "type":
 				hasType = true
 				if val.kind != '"' {
-					add(jsonKindCode(val), "error", val.ptr, "type은 문자열이어야 한다")
+					add(jsonKindCode(val), "error", val, "", "type은 문자열이어야 한다")
 					good = false
 				} else if ref.typ = val.s; val.s == "" {
-					add("NODE_TYPE_EMPTY", "error", val.ptr, "type이 비어 있다")
+					add("NODE_TYPE_EMPTY", "error", val, "", "type이 비어 있다")
 					good = false
 				}
 			case "named":
@@ -616,39 +694,39 @@ func parseRefs(v *jv, add func(code, sev, ptr, msg string), count func() *Error)
 				b, g := boolOf(val, add, "named는 boolean이어야 한다")
 				ref.named, good = b, good && g
 			default:
-				add("SCHEMA_KEY_UNSUPPORTED", "error", val.ptr, "이 형식 revision이 해석하지 않는 key다")
+				add("SCHEMA_KEY_UNSUPPORTED", "error", val, "", "이 형식 revision이 해석하지 않는 key다")
 				good = false
 			}
 		}
 		if !hasType {
-			add("JSON_MISSING_FIELD", "error", m.ptr+"/type", "type이 없다")
+			add("JSON_MISSING_FIELD", "error", m, "/type", "type이 없다")
 			good = false
 		}
 		if !hasNamed {
-			add("JSON_MISSING_FIELD", "error", m.ptr+"/named", "named가 없다")
+			add("JSON_MISSING_FIELD", "error", m, "/named", "named가 없다")
 			good = false
 		}
 		if !good {
 			ok = false
 			continue
 		}
-		if prev, dup := out[ref]; dup {
-			add("MEMBER_DUPLICATE", "error", m.ptr, "같은 type 참조가 "+prev+"에도 있다")
+		if _, dup := out[ref]; dup {
+			add("MEMBER_DUPLICATE", "error", m, "", "같은 type 참조가 이 목록에 이미 있다")
 			ok = false
 			continue
 		}
-		out[ref] = m.ptr
+		out[ref] = m
 	}
 	return out, ok, nil
 }
 
 func (v *jv) has(key string) bool { return slices.Contains(v.keys, key) }
 
-func boolOf(v *jv, add func(code, sev, ptr, msg string), msg string) (bool, bool) {
+func boolOf(v *jv, add func(code, sev string, at *jv, suffix, msg string), msg string) (bool, bool) {
 	if v.kind == 't' || v.kind == 'f' {
 		return v.kind == 't', true
 	}
-	add(jsonKindCode(v), "error", v.ptr, msg)
+	add(jsonKindCode(v), "error", v, "", msg)
 	return false, false
 }
 
@@ -661,7 +739,7 @@ func jsonKindCode(v *jv) string {
 
 // supertypeCycles walks the supertype → subtype graph iteratively (no recursion), visiting
 // each node once, and reports every subtype edge that closes a cycle.
-func supertypeCycles(r *run, doc *schemaDoc, add func(code, sev, ptr, msg string)) *Error {
+func supertypeCycles(r *run, doc *schemaDoc, add func(code, sev string, at *jv, suffix, msg string)) *Error {
 	const (
 		white = iota
 		grey
@@ -699,7 +777,7 @@ func supertypeCycles(r *run, doc *schemaDoc, add func(code, sev, ptr, msg string
 			}
 			switch color[child] {
 			case grey:
-				add("SUPERTYPE_CYCLE", "error", doc.nodes[top.ref].subtypes[child], "supertype 관계가 순환한다")
+				add("SUPERTYPE_CYCLE", "error", doc.nodes[top.ref].subtypes[child], "", "supertype 관계가 순환한다")
 			case white:
 				color[child] = grey
 				stack = append(stack, frame{child, sortedRefs(cn.subtypes)})
@@ -777,7 +855,7 @@ type nodeJSON struct {
 	Subtypes []NodeRef            `json:"subtypes,omitempty"`
 }
 
-func refList(m map[schemaRef]string) []NodeRef {
+func refList(m map[schemaRef]*jv) []NodeRef {
 	out := []NodeRef{}
 	for _, r := range sortedRefs(m) {
 		out = append(out, r.public())
@@ -816,11 +894,50 @@ func raw(v any) json.RawMessage {
 	return data
 }
 
+// loc is a reported location: a value link plus a literal pointer suffix.
+type loc struct {
+	at     *jv
+	suffix string
+}
+
+func (l loc) size() int {
+	if l.at == nil {
+		return 0
+	}
+	return l.at.ptrLen() + len(l.suffix)
+}
+
+func (l loc) path() string {
+	if l.at == nil {
+		return ""
+	}
+	return l.at.ptr() + l.suffix
+}
+
+type pendingDiff struct {
+	d          SchemaDifference
+	base, cand loc
+}
+
+type emitFunc func(d SchemaDifference, base, cand loc)
+
 // diffSchemas reports every static contract change from a to b. Absent fields, children and
 // subtypes compare as empty member sets; their presence change is reported separately.
-func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
-	out := []SchemaDifference{}
-	emit := func(d SchemaDifference) { out = append(out, d) }
+// Paths are built only after the whole report, paths included, is known to fit limit.
+func diffSchemas(r *run, a, b *schemaDoc, limit uint64) ([]SchemaDifference, *Error) {
+	var pending []pendingDiff
+	var size uint64
+	emit := func(d SchemaDifference, base, cand loc) {
+		if size > limit {
+			return
+		}
+		size += uint64(160 + len(d.Code) + len(d.Risk) + len(d.Node.Type) + len(d.Field) + len(d.Before) + len(d.After))
+		if d.Member != nil {
+			size += uint64(len(d.Member.Type))
+		}
+		pending = append(pending, pendingDiff{d, base, cand})
+	}
+	overLimit := fail(KindResourceLimit, "OUTPUT_LIMIT", "", nil)
 	// Group identities by spelling to recognize a named-status change of one spelling.
 	removed, added := map[string][]*schemaNode{}, map[string][]*schemaNode{}
 	for ref, n := range a.nodes {
@@ -836,17 +953,17 @@ func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
 	for typ, rs := range removed {
 		if as := added[typ]; len(rs) == 1 && len(as) == 1 {
 			emit(SchemaDifference{Code: "NODE_NAMED_CHANGED", Risk: RiskIdentity, Node: rs[0].ref.public(),
-				Before: raw(rs[0].canon()), After: raw(as[0].canon()), BaselinePath: rs[0].ptr, CandidatePath: as[0].ptr})
+				Before: raw(rs[0].canon()), After: raw(as[0].canon())}, loc{rs[0].at, ""}, loc{as[0].at, ""})
 			delete(added, typ)
 			continue
 		}
 		for _, n := range rs {
-			emit(SchemaDifference{Code: "NODE_REMOVED", Risk: RiskRemoval, Node: n.ref.public(), Before: raw(n.canon()), After: raw(nil), BaselinePath: n.ptr})
+			emit(SchemaDifference{Code: "NODE_REMOVED", Risk: RiskRemoval, Node: n.ref.public(), Before: raw(n.canon()), After: raw(nil)}, loc{n.at, ""}, loc{})
 		}
 	}
 	for _, as := range added {
 		for _, n := range as {
-			emit(SchemaDifference{Code: "NODE_ADDED", Risk: RiskAddition, Node: n.ref.public(), Before: raw(nil), After: raw(n.canon()), CandidatePath: n.ptr})
+			emit(SchemaDifference{Code: "NODE_ADDED", Risk: RiskAddition, Node: n.ref.public(), Before: raw(nil), After: raw(n.canon())}, loc{}, loc{n.at, ""})
 		}
 	}
 	steps := 0
@@ -855,6 +972,9 @@ func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
 		if y == nil {
 			continue
 		}
+		if size > limit {
+			return nil, overLimit
+		}
 		if steps++; steps%1024 == 0 {
 			if e := r.check(); e != nil {
 				return nil, e
@@ -862,21 +982,21 @@ func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
 		}
 		node := x.ref.public()
 		if !sameFlag(x.root, y.root) {
-			emit(SchemaDifference{Code: "ROOT_CHANGED", Risk: RiskIdentity, Node: node, Before: raw(x.root), After: raw(y.root), BaselinePath: flagPtr(x, x.root, "root"), CandidatePath: flagPtr(y, y.root, "root")})
+			emit(SchemaDifference{Code: "ROOT_CHANGED", Risk: RiskIdentity, Node: node, Before: raw(x.root), After: raw(y.root)}, flagLoc(x, x.root, "root"), flagLoc(y, y.root, "root"))
 		}
 		if !sameFlag(x.extra, y.extra) {
-			emit(SchemaDifference{Code: "EXTRA_CHANGED", Risk: RiskClassification, Node: node, Before: raw(x.extra), After: raw(y.extra), BaselinePath: flagPtr(x, x.extra, "extra"), CandidatePath: flagPtr(y, y.extra, "extra")})
+			emit(SchemaDifference{Code: "EXTRA_CHANGED", Risk: RiskClassification, Node: node, Before: raw(x.extra), After: raw(y.extra)}, flagLoc(x, x.extra, "extra"), flagLoc(y, y.extra, "extra"))
 		}
 		if x.hasFields != y.hasFields {
-			emit(SchemaDifference{Code: "FIELDS_PRESENCE_CHANGED", Risk: RiskIdentity, Node: node, Before: raw(x.canon().Fields), After: raw(y.canon().Fields), BaselinePath: x.fieldsPtr, CandidatePath: y.fieldsPtr})
+			emit(SchemaDifference{Code: "FIELDS_PRESENCE_CHANGED", Risk: RiskIdentity, Node: node, Before: raw(x.canon().Fields), After: raw(y.canon().Fields)}, loc{x.fieldsAt, ""}, loc{y.fieldsAt, ""})
 		}
 		for _, name := range unionKeys(x.fields, y.fields) {
 			fx, fy := x.fields[name], y.fields[name]
 			switch {
 			case fy == nil:
-				emit(SchemaDifference{Code: "FIELD_REMOVED", Risk: RiskRemoval, Node: node, Field: name, Before: raw(fx.canon()), After: raw(nil), BaselinePath: fx.ptr})
+				emit(SchemaDifference{Code: "FIELD_REMOVED", Risk: RiskRemoval, Node: node, Field: name, Before: raw(fx.canon()), After: raw(nil)}, loc{fx.at, ""}, loc{})
 			case fx == nil:
-				emit(SchemaDifference{Code: "FIELD_ADDED", Risk: RiskAddition, Node: node, Field: name, Before: raw(nil), After: raw(fy.canon()), CandidatePath: fy.ptr})
+				emit(SchemaDifference{Code: "FIELD_ADDED", Risk: RiskAddition, Node: node, Field: name, Before: raw(nil), After: raw(fy.canon())}, loc{}, loc{fy.at, ""})
 			default:
 				diffSet(emit, "FIELD", node, name, fx, fy)
 			}
@@ -886,7 +1006,7 @@ func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
 			if y.children == nil {
 				risk = RiskRemoval
 			}
-			emit(SchemaDifference{Code: "CHILDREN_PRESENCE_CHANGED", Risk: risk, Node: node, Before: raw(x.children.canon()), After: raw(y.children.canon()), BaselinePath: setPtr(x.children), CandidatePath: setPtr(y.children)})
+			emit(SchemaDifference{Code: "CHILDREN_PRESENCE_CHANGED", Risk: risk, Node: node, Before: raw(x.children.canon()), After: raw(y.children.canon())}, setLoc(x.children), setLoc(y.children))
 		}
 		diffSet(emit, "CHILDREN", node, "", x.children, y.children)
 		if x.hasSubtype != y.hasSubtype {
@@ -894,35 +1014,48 @@ func diffSchemas(r *run, a, b *schemaDoc) ([]SchemaDifference, *Error) {
 			if !y.hasSubtype {
 				risk = RiskRemoval
 			}
-			emit(SchemaDifference{Code: "SUBTYPES_PRESENCE_CHANGED", Risk: risk, Node: node, Before: raw(x.canon().Subtypes), After: raw(y.canon().Subtypes), BaselinePath: x.subtypesPtr, CandidatePath: y.subtypesPtr})
+			emit(SchemaDifference{Code: "SUBTYPES_PRESENCE_CHANGED", Risk: risk, Node: node, Before: raw(x.canon().Subtypes), After: raw(y.canon().Subtypes)}, loc{x.subtypesAt, ""}, loc{y.subtypesAt, ""})
 		}
 		diffMembers(emit, "SUBTYPE", node, "", x.subtypes, y.subtypes)
+	}
+	if size > limit {
+		return nil, overLimit
+	}
+	for _, p := range pending {
+		if size += uint64(p.base.size() + p.cand.size()); size > limit {
+			return nil, overLimit
+		}
 	}
 	rank := map[string]int{}
 	for i, c := range diffOrder {
 		rank[c] = i
 	}
-	slices.SortFunc(out, func(p, q SchemaDifference) int {
-		return cmp.Or(compareRefs(schemaRef{p.Node.Type, p.Node.Named}, schemaRef{q.Node.Type, q.Node.Named}),
-			cmp.Compare(rank[p.Code], rank[q.Code]), strings.Compare(p.Field, q.Field), compareMember(p.Member, q.Member))
+	slices.SortFunc(pending, func(p, q pendingDiff) int {
+		return cmp.Or(compareRefs(schemaRef{p.d.Node.Type, p.d.Node.Named}, schemaRef{q.d.Node.Type, q.d.Node.Named}),
+			cmp.Compare(rank[p.d.Code], rank[q.d.Code]), strings.Compare(p.d.Field, q.d.Field), compareMember(p.d.Member, q.d.Member))
 	})
+	out := make([]SchemaDifference, 0, len(pending))
+	for _, p := range pending {
+		p.d.BaselinePath, p.d.CandidatePath = p.base.path(), p.cand.path()
+		out = append(out, p.d)
+	}
 	return out, nil
 }
 
 // diffSet compares two children/field descriptions; cardinality is compared only when both
 // exist, while alternatives compare against an empty set when one side is absent.
-func diffSet(emit func(SchemaDifference), prefix string, node NodeRef, field string, x, y *schemaSet) {
+func diffSet(emit emitFunc, prefix string, node NodeRef, field string, x, y *schemaSet) {
 	if x != nil && y != nil {
 		if x.required != y.required {
 			emit(SchemaDifference{Code: prefix + "_REQUIRED_CHANGED", Risk: cardinalityRisk(y.required), Node: node, Field: field,
-				Before: raw(x.required), After: raw(y.required), BaselinePath: x.ptr + "/required", CandidatePath: y.ptr + "/required"})
+				Before: raw(x.required), After: raw(y.required)}, loc{x.at, "/required"}, loc{y.at, "/required"})
 		}
 		if x.multiple != y.multiple {
 			emit(SchemaDifference{Code: prefix + "_MULTIPLE_CHANGED", Risk: cardinalityRisk(!y.multiple), Node: node, Field: field,
-				Before: raw(x.multiple), After: raw(y.multiple), BaselinePath: x.ptr + "/multiple", CandidatePath: y.ptr + "/multiple"})
+				Before: raw(x.multiple), After: raw(y.multiple)}, loc{x.at, "/multiple"}, loc{y.at, "/multiple"})
 		}
 	}
-	var xt, yt map[schemaRef]string
+	var xt, yt map[schemaRef]*jv
 	if x != nil {
 		xt = x.types
 	}
@@ -932,17 +1065,17 @@ func diffSet(emit func(SchemaDifference), prefix string, node NodeRef, field str
 	diffMembers(emit, prefix+"_TYPE", node, field, xt, yt)
 }
 
-func diffMembers(emit func(SchemaDifference), prefix string, node NodeRef, field string, x, y map[schemaRef]string) {
+func diffMembers(emit emitFunc, prefix string, node NodeRef, field string, x, y map[schemaRef]*jv) {
 	for _, ref := range sortedRefs(x) {
 		if _, ok := y[ref]; !ok {
 			m := ref.public()
-			emit(SchemaDifference{Code: prefix + "_REMOVED", Risk: RiskRemoval, Node: node, Field: field, Member: &m, Before: raw(m), After: raw(nil), BaselinePath: x[ref]})
+			emit(SchemaDifference{Code: prefix + "_REMOVED", Risk: RiskRemoval, Node: node, Field: field, Member: &m, Before: raw(m), After: raw(nil)}, loc{x[ref], ""}, loc{})
 		}
 	}
 	for _, ref := range sortedRefs(y) {
 		if _, ok := x[ref]; !ok {
 			m := ref.public()
-			emit(SchemaDifference{Code: prefix + "_ADDED", Risk: RiskAddition, Node: node, Field: field, Member: &m, Before: raw(nil), After: raw(m), CandidatePath: y[ref]})
+			emit(SchemaDifference{Code: prefix + "_ADDED", Risk: RiskAddition, Node: node, Field: field, Member: &m, Before: raw(nil), After: raw(m)}, loc{}, loc{y[ref], ""})
 		}
 	}
 }
@@ -959,18 +1092,18 @@ func sameFlag(a, b *bool) bool {
 	return (a == nil) == (b == nil) && (a == nil || *a == *b)
 }
 
-func flagPtr(n *schemaNode, v *bool, key string) string {
+func flagLoc(n *schemaNode, v *bool, key string) loc {
 	if v == nil {
-		return ""
+		return loc{}
 	}
-	return n.ptr + "/" + key
+	return loc{n.at, "/" + key}
 }
 
-func setPtr(s *schemaSet) string {
+func setLoc(s *schemaSet) loc {
 	if s == nil {
-		return ""
+		return loc{}
 	}
-	return s.ptr
+	return loc{s.at, ""}
 }
 
 func unionKeys(a, b map[string]*schemaSet) []string {

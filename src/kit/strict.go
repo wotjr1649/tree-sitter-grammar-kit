@@ -19,12 +19,46 @@ const maxJSONInteger = 1<<53 - 1
 // jv is one strictly decoded JSON value. Numbers keep their exact literal; objects keep
 // member order. Duplicate names (including escape-equivalent spellings), invalid UTF-8,
 // lone surrogates, trailing values and nesting beyond jsonMaxDepth never reach jv.
+// A value keeps only its parent link and member name or index; its JSON pointer is built on
+// demand, so a long member name is never copied once per descendant value.
 type jv struct {
 	kind byte // '{' '[' '"' '0' 't' 'f' 'n'
 	s    string
 	keys []string
 	vals []*jv
-	ptr  string
+	up   *jv    // containing value; nil for the document root
+	name string // member name when up is an object
+	idx  int    // element index when up is an array
+	plen int    // memoized ptrLen()+1; 0 when not computed
+}
+
+var pointerEscaper = strings.NewReplacer("~", "~0", "/", "~1")
+
+// ptrLen returns len(v.ptr()) without building it; each value computes it once.
+func (v *jv) ptrLen() int {
+	if v == nil || v.up == nil {
+		return 0
+	}
+	if v.plen == 0 {
+		seg := len(strconv.Itoa(v.idx))
+		if v.up.kind == '{' {
+			seg = len(v.name) + strings.Count(v.name, "~") + strings.Count(v.name, "/")
+		}
+		v.plen = v.up.ptrLen() + 1 + seg + 1
+	}
+	return v.plen - 1
+}
+
+// ptr returns the RFC 6901 pointer of v ("" for the root).
+func (v *jv) ptr() string {
+	if v == nil || v.up == nil {
+		return ""
+	}
+	seg := strconv.Itoa(v.idx)
+	if v.up.kind == '{' {
+		seg = pointerEscaper.Replace(v.name)
+	}
+	return v.up.ptr() + "/" + seg
 }
 
 // decodeStrict is the single strict decoder shared by CLI and API for profile and expected
@@ -40,12 +74,12 @@ type valueBudget struct {
 	check  func() *Error
 }
 
-func (b *valueBudget) take(doc, ptr string) *Error {
+func (b *valueBudget) take(doc string, at *jv) *Error {
 	if b == nil {
 		return nil
 	}
 	if b.n++; b.n > b.max {
-		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+ptr, nil)
+		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+at.ptr(), nil)
 	}
 	if b.n%4096 == 0 {
 		return b.check()
@@ -61,7 +95,7 @@ func decodeBounded(doc string, data []byte, maxBytes uint64, b *valueBudget) (*j
 		return nil, fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
 	}
 	dec := jsontext.NewDecoder(bytes.NewReader(data))
-	v, e := readJSON(dec, doc, "", 0, b)
+	v, e := readJSON(dec, doc, &jv{}, 0, b)
 	if e != nil {
 		return nil, e
 	}
@@ -74,33 +108,34 @@ func decodeBounded(doc string, data []byte, maxBytes uint64, b *valueBudget) (*j
 	return v, nil
 }
 
-func readJSON(dec *jsontext.Decoder, doc, ptr string, depth int, b *valueBudget) (*jv, *Error) {
+// readJSON reads one value into v, which already carries its parent link and name or index.
+func readJSON(dec *jsontext.Decoder, doc string, v *jv, depth int, b *valueBudget) (*jv, *Error) {
 	tok, err := dec.ReadToken()
 	if err != nil {
-		return nil, jsonError(doc, ptr, err)
+		return nil, jsonError(doc, v.ptr(), err)
 	}
-	if e := b.take(doc, ptr); e != nil {
+	if e := b.take(doc, v); e != nil {
 		return nil, e
 	}
-	v := &jv{kind: byte(tok.Kind()), ptr: ptr}
+	v.kind = byte(tok.Kind())
 	switch v.kind {
 	case '{', '[':
 		if depth >= jsonMaxDepth {
-			return nil, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc+"#"+ptr, nil)
+			return nil, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc+"#"+v.ptr(), nil)
 		}
 		end := jsontext.Kind('}')
 		if v.kind == '[' {
 			end = ']'
 		}
 		for dec.PeekKind() != end {
-			child := ptr + "/" + strconv.Itoa(len(v.vals))
+			child := &jv{up: v, idx: len(v.vals)}
 			if v.kind == '{' {
 				name, err := dec.ReadToken()
 				if err != nil {
-					return nil, jsonError(doc, ptr, err)
+					return nil, jsonError(doc, v.ptr(), err)
 				}
-				v.keys = append(v.keys, name.String())
-				child = ptr + "/" + strings.NewReplacer("~", "~0", "/", "~1").Replace(name.String())
+				child.name = name.String()
+				v.keys = append(v.keys, child.name)
 			}
 			c, e := readJSON(dec, doc, child, depth+1, b)
 			if e != nil {
@@ -109,7 +144,7 @@ func readJSON(dec *jsontext.Decoder, doc, ptr string, depth int, b *valueBudget)
 			v.vals = append(v.vals, c)
 		}
 		if _, err := dec.ReadToken(); err != nil {
-			return nil, jsonError(doc, ptr, err)
+			return nil, jsonError(doc, v.ptr(), err)
 		}
 	default:
 		v.s = tok.String()
@@ -136,7 +171,7 @@ func jsonError(doc, ptr string, err error) *Error {
 type typed struct{ doc string }
 
 func (t typed) bad(code string, v *jv) *Error {
-	return fail(KindInvalidInput, code, t.doc+"#"+v.ptr, nil)
+	return fail(KindInvalidInput, code, t.doc+"#"+v.ptr(), nil)
 }
 
 // want rejects null distinctly from a wrong type: null is never an absent value.
@@ -163,13 +198,13 @@ func (t typed) object(v *jv, required []string, optional ...string) (map[string]
 			known = known || k == name
 		}
 		if !known {
-			return nil, fail(KindInvalidInput, "JSON_UNKNOWN_FIELD", t.doc+"#"+v.vals[i].ptr, nil)
+			return nil, fail(KindInvalidInput, "JSON_UNKNOWN_FIELD", t.doc+"#"+v.vals[i].ptr(), nil)
 		}
 		out[k] = v.vals[i]
 	}
 	for _, name := range required {
 		if out[name] == nil {
-			return nil, fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.ptr+"/"+name, nil)
+			return nil, fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.ptr()+"/"+name, nil)
 		}
 	}
 	return out, nil

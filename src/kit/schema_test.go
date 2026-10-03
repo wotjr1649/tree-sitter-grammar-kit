@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -371,8 +372,62 @@ func TestSchemaInvalid(t *testing.T) {
 	if err != nil || len(d.Differences) != 1 || string(d.Differences[0].After) != `{"type":"x","named":true,"fields":{}}` {
 		t.Fatalf("named change evidence: %v %v", err, d.Differences)
 	}
-	if !strings.Contains(sub(`,"fields":{"f":`+set+`,"`+"\\"+`u0066":`+set+`}`), `f`) {
+	if !strings.Contains(sub(`,"fields":{"f":`+set+`,"`+"\\"+`u0066":`+set+`}`), "\\"+"u0066") {
 		t.Fatal("the escaped duplicate case must carry a JSON escape")
+	}
+}
+
+// Re-review fixes: a long member name is not copied per descendant value (decoder, findings
+// and differences), and every failure report respects the output limit.
+func TestSchemaLongNames(t *testing.T) {
+	name := strings.Repeat("k", 1<<20)
+	allocated := func(f func()) uint64 {
+		var before, after runtime.MemStats
+		runtime.GC()
+		runtime.ReadMemStats(&before)
+		f()
+		runtime.ReadMemStats(&after)
+		return after.TotalAlloc - before.TotalAlloc
+	}
+	// 4000 invalid members under a 1 MiB field name: findings keep clipped paths.
+	doc := `[{"type":"a","named":true,"fields":{"` + name + `":{"multiple":false,"required":false,"types":[` + strings.TrimSuffix(strings.Repeat("1,", 4000), ",") + `]}}}]`
+	var res SchemaCheckResult
+	var err error
+	if n := allocated(func() { res, err = schemaCheck(t, doc) }); n > 256<<20 {
+		t.Fatalf("check allocated %d bytes", n)
+	}
+	if err != nil || res.Assessment != AssessFail || len(res.Findings) != maxSchemaFindings+2 {
+		t.Fatalf("long-name check: %v %s %d", err, res.Assessment, len(res.Findings))
+	}
+	for _, f := range res.Findings[:maxSchemaFindings] {
+		if len(f.Path) > len("node-types.json#")+maxFindingPath+len("...(truncated)") || !strings.HasSuffix(f.Path, "...(truncated)") {
+			t.Fatalf("finding path not clipped: %d bytes", len(f.Path))
+		}
+	}
+	// 2000 removed alternatives under a 1 MiB field name: 2 GB of paths are refused as
+	// OUTPUT_LIMIT before any is built.
+	var types strings.Builder
+	nodes := `{"type":"x0","named":true}`
+	for i := 0; i < 2000; i++ {
+		if i > 0 {
+			types.WriteByte(',')
+			nodes += fmt.Sprintf(`,{"type":"x%d","named":true}`, i)
+		}
+		fmt.Fprintf(&types, `{"type":"x%d","named":true}`, i)
+	}
+	before := `[{"type":"a","named":true,"fields":{"` + name + `":{"multiple":false,"required":false,"types":[` + types.String() + `]}}},` + nodes + `]`
+	after := `[{"type":"a","named":true,"fields":{"` + name + `":{"multiple":false,"required":false,"types":[{"type":"x0","named":true}]}}},` + nodes + `]`
+	if n := allocated(func() { _, err = schemaDiff(t, before, after) }); n > 256<<20 {
+		t.Fatalf("diff allocated %d bytes", n)
+	}
+	kindOf(t, err, KindResourceLimit, "OUTPUT_LIMIT")
+	// A diff refused for an invalid input stays within a small output limit too.
+	l := DefaultSchemaLimits()
+	l.OutputBytes = 4096
+	d, err := SchemaDiff(testCtx(t), SchemaDiffRequest{Baseline: SchemaInput{Name: "a", Data: []byte(schemaBase)}, Candidate: SchemaInput{Name: "b", Data: []byte(doc)}, Limits: l})
+	kindOf(t, err, KindInvalidInput, "SCHEMA_INVALID")
+	if len(d.Findings) != 1 || d.Findings[0].Code != "SCHEMA_INVALID" || uint64(len(mustJSON(t, d))) > l.OutputBytes {
+		t.Fatalf("failure report not bounded: %d findings", len(d.Findings))
 	}
 }
 
