@@ -15,7 +15,7 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S01`, Issue #3, Milestone 2, bra
 
 ## 관측 revision과 로컬 검사
 
-코드 commit `caa0e72`(branch `session/01-inventory-identity`, base main `631c01e`)에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`로 실행했다. 세 OS CI는 PR 단계에서 따로 기록한다.
+코드 commit `caa0e72`와 리뷰 수정 commit `0e1673d`(branch `session/01-inventory-identity`, base main `631c01e`)에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`로 실행했다. 세 OS CI는 PR 단계에서 따로 기록한다.
 
 | 검사 | 결과 |
 |---|---|
@@ -23,7 +23,7 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S01`, Issue #3, Milestone 2, bra
 | `go test ./src/... -count=1` | `src/kit`, `src/cmd/tsgk`, `src/internal/foundation` 통과. Windows에서 Unix 전용 2건(실행 비트, FIFO)은 skip이며 Linux·macOS CI에서 실행된다 |
 | 외부 consumer module(checkout 밖, `PATH` 비움) | CLI와 API 결과 JSON bytes 동일, 경로 탈출 오류 code 동일 |
 | 제품 dependency closure | `os/exec`, `net`, `plugin` 없음 |
-| targeted mutant 6종 | 파일 누락·고정 digest·CRLF 정규화·grammar 이름 하드코딩·link 추적·선언의 BOM 우선 위반 모두 컴파일되고 해당 시험이 의도한 진단으로 실패 |
+| targeted mutant 6종(`0e1673d`에서 재실행) | 파일 누락·고정 digest·CRLF 정규화·grammar 이름 하드코딩·link 추적·선언의 BOM 우선 위반 모두 컴파일되고 해당 시험이 의도한 진단으로 실패 |
 
 acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayouts`와 아래 route 관측; A04·A05·A06 `TestIdentityVector`(외부 Python 계산 vector와 시험 안 독립 preimage); A07 `TestGuards`; A08 `TestLimits`; A09 `TestCancellation`; A10 `TestOutPublication`; A11 `TestOfflineClosure`와 `PATH` 없는 실행; A12 `TestConcurrentRoots`·`TestGuards`; A13 위 mutant; A14 세 OS CI(미실행, PR 단계); A15·A16 `TestEncodingSteps`·`TestEncodingBoundIntoIdentity`; A17 아래 source 결속; A18·A19 `TestCorpusInventory`·`TestCorpusLimits`와 비공개 corpus 실행.
 
@@ -31,7 +31,7 @@ acceptance 연결: A01 `TestExternalConsumerAndCLI`; A02·A03 `TestInspectLayout
 
 채택 6 route의 upstream base bytes는 PREPARE 보존 사본을 기록된 hash로 확인해 썼고, PostgreSQL `postgres/src/parser.c`는 보존된 LFS 실체(97664793 bytes, `pg-large-source-r1` 첫 identity)로 채웠다. 비채택 20 route는 `source-prepare`로 취득 전 목록(19 요청)을 기록한 뒤 고정 commit tarball을 받았고(8397488 bytes), 19개 모두 PREPARE 보존 archive와 byte 단위로 같았다. 이어서 registry가 선언한 26 route의 파일 전부를 bytes·sha256으로 결속했다(누락 0). 채택 route의 registry `patched_files` 10건 중 9건은 보존 candidate 사본과 hash가 같고, C# r5 `grammar.js`는 보존 candidate 사본이 없어 registry 값만 입력으로 기록했다. patched tree는 S01에서 재구성하지 않는다(S04).
 
-아래는 CLI(`caa0e72` build)로 registry의 `grammar_subdirectory`를 선택해 얻은 관측이다. `UNRESOLVED`는 실행 없이 닫을 수 없는 참조(root 밖 module, literal로 해석하지 못한 `require`/`import` token 등)가 있다는 정직한 관측이며 결함 판정이 아니다. `registry 미선택`은 registry가 저장소 전체 기준으로 적은 형제 grammar의 scanner·헤더, `common.mak` 같은 build 파일처럼 선택 grammar의 관측 closure에 들어오지 않은 파일 수다.
+아래는 CLI(`0e1673d` build; `caa0e72` build와 결과 같음)로 registry의 `grammar_subdirectory`를 선택해 얻은 관측이다. `UNRESOLVED`는 실행 없이 닫을 수 없는 참조(root 밖 module, literal로 해석하지 못한 `require`/`import` token 등)가 있다는 정직한 관측이며 결함 판정이 아니다. `registry 미선택`은 registry가 저장소 전체 기준으로 적은 형제 grammar의 scanner·헤더, `common.mak` 같은 build 파일처럼 선택 grammar의 관측 closure에 들어오지 않은 파일 수다.
 
 | route | grammar | inspect closure | FOUND | identity | 선택 파일 | registry 미선택 |
 |---|---|---|---|---|---|---|
@@ -68,7 +68,7 @@ inspect는 26 route 모두 완료했다. identity는 22 route에서 완료했고
 
 로컬 Windows에서 `tsgk corpus`(기본 `private-corpus-local` 한도, profile cp949)를 한 번 실행했다. 경로·이름·hash가 담긴 결과는 추적하지 않는 로컬 artifacts에만 있고 여기에는 개수와 판정만 적는다. 내용 bytes·연결 문자열은 출력하지 않았고 자격 증명 성격 파일과 vendor binary는 열지 않았다.
 
-최종 실행은 `caa0e72` build로 `execution_status=COMPLETED`, `evidence_mode=NEW_RUN`, `assessment=NOT_ASSESSED`, wall 28초(kit wall 1800초 안; 같은 corpus의 첫 실행은 파일 cache가 비어 444초)였다. 실행 단위 finding은 0건이다.
+최종 실행은 `0e1673d` build로 `execution_status=COMPLETED`, `evidence_mode=NEW_RUN`, `assessment=NOT_ASSESSED`, wall 35초(kit wall 1800초 안; 같은 corpus의 첫 실행은 파일 cache가 비어 444초)였다. `caa0e72` build의 실행과 집계가 같다. 실행 단위 finding은 0건이다.
 
 | 항목 | 값 |
 |---|---|
@@ -88,6 +88,22 @@ inspect는 26 route 모두 완료했다. identity는 22 route에서 완료했고
 | `.csproj` | 137 모두 해석, 선언 item `MEMBER` 13205·`NOT_FOUND` 258, `Import` 209, 파일이 아닌 item 3044 |
 
 파일 수 21451, 자격 증명 성격 28, vendor binary 105, `.csproj` 137은 PREPARE의 사전 관측과 같다. PREPARE가 적은 "목록 항목 누락 666"은 집계 규칙이 기록되지 않은 값이며, 여기의 258은 위 계약 규칙(파일 item 종류만, 디렉터리 item 제외)의 결과다. 첫 실행(커밋 전 build)은 디렉터리를 가리키는 `WCFMetadataStorage` 42건을 `NOT_FOUND`로 셌고, 이를 파일 item에서 빼는 수정 후 다시 실행했다. 두 실행의 원자료는 모두 로컬에 보존했다. `ENCODING_TABLE_REQUIRED` 694건은 S05가 cp949 표를 pin한 뒤 판정한다.
+
+## 분리 context 리뷰와 처분
+
+`caa0e72`·`5933c13`에 대한 분리 context 정적 리뷰(STATIC_REVIEW, 실행 없음)는 BLOCKER 0, MATERIAL 1, MINOR 6을 보고했다. 모두 `0e1673d`에서 고치고 회귀 시험을 더했다.
+
+| 등급 | finding | 처분 |
+|---|---|---|
+| MATERIAL | corpus 파일별 encoding 선언이 대소문자만 다르면 오류 없이 적용되지 않음 | 선언은 record path와 정확히 일치해야 하며 아니면 `DECLARATION_UNMATCHED`. 선언 적용(`source=DECLARATION`) 시험 추가 |
+| MINOR | `--out` 입력 내부 검사를 junction 별칭으로 우회 | 부모와 조상의 파일 identity를 root와 비교. junction·symlink 별칭 root 시험 추가. root 자체의 alias는 `Stat`으로 해석 |
+| MINOR | corpus hard link 하나가 실행 전체를 끝냄 | 그 record만 `UNSUPPORTED`와 `HARDLINK_REJECTED` finding |
+| MINOR | `.csproj`의 `Choose`·`Target`·`Exclude` item을 `MEMBER`로 셈 | `UNRESOLVED`. fixture에 세 경우 추가 |
+| MINOR | 한도 깊이의 빈 디렉터리가 `DEPTH_LIMIT` | 디렉터리도 경로 segment 수로 비교. 경계 시험 추가 |
+| MINOR | CLI `PATH=VALUE`를 첫 `=`에서 분리 | 마지막 `=`에서 분리. `=`가 든 path 시험 추가 |
+| MINOR | A15 finding code가 `ENCODING_TABLE_REQUIRED`가 아님 | finding code를 record code와 같게 |
+
+리뷰가 남긴 정의 문제(discovery 기반 identity가 같은 source를 두 번 읽어 `total_bytes`에 두 번 셈)는 CLI 계약에 "실제로 읽은 bytes 합계"로 명시했다.
 
 ## 남은 일과 한계
 
