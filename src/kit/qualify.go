@@ -459,9 +459,14 @@ type QualificationResult struct {
 	ExtraRoles   []QualRoleRow     `json:"extra_roles"`
 	Comparisons  []QualComparison  `json:"comparisons"`
 	Totals       QualTotals        `json:"totals"`
-	SupportClaim string            `json:"support_claim"`
-	BytesRead    uint64            `json:"bytes_read"`
-	Explanation  []string          `json:"explanation"`
+	// MechanismGate is PASS when every kit-side check passed: completeness, cohort and
+	// eligibility, every cell's mechanism and comparison, every executed extra-role row.
+	// Requirement failures and uncovered obligations (grammar gaps, missing cases) do not
+	// change it; they keep SupportClaim BLOCKED.
+	MechanismGate string   `json:"mechanism_gate"`
+	SupportClaim  string   `json:"support_claim"`
+	BytesRead     uint64   `json:"bytes_read"`
+	Explanation   []string `json:"explanation"`
 }
 
 // testHookQualifyLimits lets a test lower the qualification limits.
@@ -476,7 +481,7 @@ var testHookQualifyLimits func(ReplayLimits) ReplayLimits
 // mechanism, every required obligation and the cross-platform comparison pass.
 func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, error) {
 	res := QualificationResult{Report: newReport("qualify"), ResultSchema: QualificationResultSchema, Hosts: map[string]string{}, Cells: []QualCell{},
-		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED"}
+		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail}
 	res.Assessment = AssessNotAssessed
 	bad := func(e *Error) (QualificationResult, error) {
 		failReport(&res.Report, e)
@@ -596,14 +601,18 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	res.Totals = totals(res.Cells)
 	failed := !completeness || len(q.findings) > 0
+	gate := !failed
 	allPass := true
 	for _, c := range res.Cells {
 		failed = failed || c.Status == CellFail
 		allPass = allPass && c.Status == CellPass
+		gate = gate && c.Mechanism == AssessPass && c.Comparison == AssessPass
 	}
 	for _, x := range res.ExtraRoles {
 		failed = failed || x.Status == CellFail
+		gate = gate && x.Status != CellFail && x.Status != CellMissing && x.Status != CellIncomplete
 	}
+	res.MechanismGate = map[bool]string{true: AssessPass, false: AssessFail}[gate]
 	switch {
 	case failed:
 		res.Assessment = AssessFail
@@ -723,6 +732,7 @@ func explainQualification(res QualificationResult) []string {
 		fmt.Sprintf("필수 칸 %d개: PASS %d, FAIL %d, INCOMPLETE %d, MISSING %d. 완결성 %s.", t.Cells, t.Status[CellPass], t.Status[CellFail], t.Status[CellIncomplete], t.Status[CellMissing], res.Completeness),
 		fmt.Sprintf("kit 축 PASS %d칸, 요구 축 PASS %d칸, 세 platform 비교 FAIL %d칸.", t.MechanismPass, t.RequirementPass, t.ComparisonFail),
 		fmt.Sprintf("필수 의무 %d개: PASS %d, FAIL %d, BLOCKED %d, 사례 없음 %d.", t.Obligations.Obligations, t.Obligations.Pass, t.Obligations.Fail, t.Obligations.Blocked, t.Obligations.NotCovered),
+		fmt.Sprintf("kit 검사 gate %s(완결성·cohort·자격·칸별 kit 축·비교·추가 역할 실행 행).", res.MechanismGate),
 	}
 	if res.SupportClaim != "SUPPORTED" {
 		out = append(out, "지원 claim은 BLOCKED다: 모든 필수 칸이 PASS일 때만 SUPPORTED다. 추가 역할 행은 필수 칸을 대신하지 않는다.")

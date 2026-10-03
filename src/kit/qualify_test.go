@@ -272,7 +272,7 @@ func setCodes(c QualCell) []string { return codes(c.Set.Findings) }
 func TestQualifyBaseline(t *testing.T) {
 	f := newQfx(t)
 	r := f.run(t, f.all(t, nil))
-	if len(r.Cells) != 6 || r.Completeness != AssessPass || r.Assessment != AssessBlocked || r.SupportClaim != "BLOCKED" {
+	if len(r.Cells) != 6 || r.Completeness != AssessPass || r.Assessment != AssessBlocked || r.SupportClaim != "BLOCKED" || r.MechanismGate != AssessPass {
 		t.Fatalf("baseline: %d cells %s %s %s %v", len(r.Cells), r.Completeness, r.Assessment, r.SupportClaim, r.Findings)
 	}
 	for _, p := range qfxPlatforms {
@@ -313,7 +313,7 @@ func TestQualifyCompleteness(t *testing.T) {
 	hosts := f.all(t, nil)
 	one := map[string]string{"windows-amd64": hosts["windows-amd64"], "linux-amd64": hosts["linux-amd64"]}
 	r := f.run(t, one)
-	if r.Completeness != AssessFail || r.Assessment != AssessFail || cellOf(r, "fxa", "darwin-arm64").Status != CellMissing || len(r.Cells) != 6 {
+	if r.Completeness != AssessFail || r.Assessment != AssessFail || cellOf(r, "fxa", "darwin-arm64").Status != CellMissing || len(r.Cells) != 6 || r.MechanismGate != AssessFail {
 		t.Fatalf("missing host: %s %s %s", r.Completeness, r.Assessment, cellOf(r, "fxa", "darwin-arm64").Status)
 	}
 	if c := cellOf(r, "fxa", "windows-amd64"); c.Comparison != AssessPass {
@@ -368,7 +368,7 @@ func TestQualifyCohort(t *testing.T) {
 			f := newQfx(t)
 			r := f.run(t, f.all(t, map[string]qfxMut{"linux-amd64": tc.mut}))
 			c := cellOf(r, "fxa", "linux-amd64")
-			if r.Assessment != AssessFail || c.Status != CellFail || !slices.Contains(setCodes(c), tc.code) {
+			if r.Assessment != AssessFail || c.Status != CellFail || !slices.Contains(setCodes(c), tc.code) || r.MechanismGate != AssessFail {
 				t.Fatalf("%s: %s %s %v", tc.name, r.Assessment, c.Status, setCodes(c))
 			}
 			if w := cellOf(r, "fxa", "windows-amd64"); w.Status != CellPass && w.Status != CellIncomplete {
@@ -437,7 +437,7 @@ func TestQualifyComparison(t *testing.T) {
 				t.Fatalf("other route affected: %s", c.Comparison)
 			}
 			cmp := r.Comparisons[0]
-			if cmp.Result != AssessFail || len(cmp.Differences) == 0 {
+			if cmp.Result != AssessFail || len(cmp.Differences) == 0 || r.MechanismGate != AssessFail {
 				t.Fatalf("difference not reported: %+v", cmp)
 			}
 		})
@@ -485,7 +485,7 @@ func TestQualifyDetectorAndGap(t *testing.T) {
 	}
 	r := f.run(t, f.all(t, muts))
 	c := cellOf(r, "fxa", "windows-amd64")
-	if c.Mechanism != AssessPass || c.Requirement != AssessFail || c.Status != CellFail || r.SupportClaim != "BLOCKED" {
+	if c.Mechanism != AssessPass || c.Requirement != AssessFail || c.Status != CellFail || r.SupportClaim != "BLOCKED" || r.MechanismGate != AssessPass {
 		t.Fatalf("mainstream gap: %s %s %s %s", c.Mechanism, c.Requirement, c.Status, r.SupportClaim)
 	}
 	for _, x := range r.ExtraRoles {
@@ -568,7 +568,7 @@ func TestQualifyMechanism(t *testing.T) {
 			f := newQfx(t)
 			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": tc.mut}))
 			c := cellOf(r, "fxa", "windows-amd64")
-			if c.Status != CellFail || r.Assessment != AssessFail {
+			if c.Status != CellFail || r.Assessment != AssessFail || r.MechanismGate != AssessFail {
 				t.Fatalf("%s: %s %s %v %+v", tc.name, c.Status, c.Mechanism, setCodes(c), c.Set.Gates)
 			}
 			if tc.code != "" && !slices.Contains(setCodes(c), tc.code) {

@@ -330,8 +330,6 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'sysctl restore failed' }
           }
       - name: 26 route native build와 등록 사례·query 기록 실행
-        env:
-          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
           $cgroup = ''
           if ($IsLinux) {
@@ -349,13 +347,104 @@ jobs:
           $cc = & src/dev/s05-native/select-compiler.ps1
           $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large -Oracle
-          if ($LASTEXITCODE -ne 0) { throw 'route run reported failures' }
+          $routesExit = $LASTEXITCODE
+          # S08: the host's run identity for the qualification job, written even when cases failed
+          & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'run identity failed' }
+          if ($routesExit -ne 0) { throw 'route run reported failures' }
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
+          # S08 qualification evidence: the run identity, the S06 record sets and their
+          # workload profiles; summary.json is the helper's own retained summary
           name: s05-routes-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/summary.json
+          path: |
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/summary.json
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/records
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/profiles/s06-*.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: Verify clean validation output
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+
+  qualification:
+    # S08: aggregates the three native-routes hosts of this run and attempt into the
+    # 26 route x 3 platform cells and the extra-role rows (tsgk qualify). Read-only and
+    # tool-free; it fails on the kit gate (completeness, cohort, eligibility, mechanism,
+    # cross-platform comparison) and records grammar requirement results for disposition.
+    name: qualification (ubuntu-24.04)
+    needs: native-routes
+    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+      - name: 세 host 근거 받기
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: s05-routes-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification-hosts
+      - name: 78칸 qualification 집계
+        env:
+          CANDIDATE: ${{ github.sha }}
+        run: |
+          $cli = Join-Path $env:RUNNER_TEMP "tsgk-qualify-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          go build -o $cli ./src/cmd/tsgk
+          if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' }
+          $hosts = Join-Path $env:RUNNER_TEMP 'qualification-hosts'
+          $cliArgs = @('qualify', '--inventory', 'src/contracts/qualification-c1.json', '--candidate', $env:CANDIDATE)
+          foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'), @('darwin', 'darwin-arm64'))) {
+            $dir = Join-Path $hosts "s05-routes-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            if (Test-Path -LiteralPath $dir) { $cliArgs += @('--host', "$($p[1])=$dir") } else { Write-Output "host evidence missing: $($p[1])" }
+          }
+          $out = Join-Path $env:RUNNER_TEMP "qualification-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $result = Join-Path $out 'qualification.json'
+          & $cli @cliArgs --out $result
+          $code = $LASTEXITCODE
+          & src/dev/s08-qualify/gate.ps1 -Result $result -QualifyExit $code
+          if ($LASTEXITCODE -ne 0) { throw 'qualification kit gate failed' }
+      - name: qualification 결과 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s08-qualification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification-${{ github.run_id }}-${{ github.run_attempt }}/qualification.json
           if-no-files-found: error
           retention-days: 7
       - name: Verify clean validation output
