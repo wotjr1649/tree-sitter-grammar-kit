@@ -43,14 +43,17 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"schema": "S03", "reproduce": "S04", "incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
+var future = map[string]string{"reproduce": "S04", "incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH]")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff>")
 		return exitUsage
 	}
 	cmd := args[0]
+	if cmd == "schema" {
+		return runSchema(ctx, args[1:], stdout, stderr)
+	}
 	if owner, ok := future[cmd]; ok {
 		fmt.Fprintf(stderr, "tsgk: UNSUPPORTED_COMMAND: %s는 %s 범위이며 이 build에서 구현되지 않았다\n", cmd, owner)
 		return exitUsage
@@ -190,6 +193,69 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		defer cancel()
 		result, err = kit.Verify(cctx, req)
 	}
+	publishRoot := *root
+	if archive != nil && *archive != "" {
+		publishRoot = "" // the input is one file; an existing destination is still refused
+	}
+	return finish(result, err, *out, publishRoot, stdout, stderr)
+}
+
+// runSchema handles `schema check --input FILE` and `schema diff --before FILE --after FILE`.
+// Results name inputs by base name only; roles and hashes keep same-named inputs apart.
+func runSchema(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 || (args[0] != "check" && args[0] != "diff") {
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk schema check --input FILE | tsgk schema diff --before FILE --after FILE [--out PATH]")
+		return exitUsage
+	}
+	sub := args[0]
+	fs := flag.NewFlagSet("schema "+sub, flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	out := fs.String("out", "", "new result file (no clobber)")
+	paths := map[string]*string{}
+	names := []string{"input"}
+	if sub == "diff" {
+		names = []string{"before", "after"}
+	}
+	for _, n := range names {
+		paths[n] = fs.String(n, "", "node-types.json file")
+	}
+	if err := fs.Parse(args[1:]); err != nil {
+		return exitUsage
+	}
+	if fs.NArg() != 0 {
+		fmt.Fprintln(stderr, "tsgk: USAGE: unexpected arguments")
+		return exitUsage
+	}
+	for _, n := range names {
+		if *paths[n] == "" {
+			fmt.Fprintf(stderr, "tsgk: USAGE: schema %s requires --%s FILE\n", sub, n)
+			return exitUsage
+		}
+	}
+	inputs := make([]kit.SchemaInput, len(names))
+	for i, n := range names {
+		data, err := readDocument(*paths[n])
+		if err != nil {
+			fmt.Fprintf(stderr, "tsgk: SCHEMA_UNREADABLE: %v\n", err)
+			return exitIO
+		}
+		inputs[i] = kit.SchemaInput{Name: filepath.Base(*paths[n]), Data: data}
+	}
+	limits := kit.DefaultSchemaLimits()
+	cctx, cancel := context.WithTimeout(ctx, limits.Wall+5*time.Second)
+	defer cancel()
+	var result any
+	var err error
+	if sub == "check" {
+		result, err = kit.SchemaCheck(cctx, kit.SchemaCheckRequest{Input: inputs[0], Limits: limits})
+	} else {
+		result, err = kit.SchemaDiff(cctx, kit.SchemaDiffRequest{Baseline: inputs[0], Candidate: inputs[1], Limits: limits})
+	}
+	return finish(result, err, *out, "", stdout, stderr)
+}
+
+// finish renders the API result as one JSON line, maps the exit code and publishes --out.
+func finish(result any, err error, out, publishRoot string, stdout, stderr io.Writer) int {
 	data, merr := json.Marshal(result)
 	if merr != nil {
 		fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")
@@ -207,26 +273,38 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "tsgk: IO:", err)
 		return exitIO
 	}
+	// A completed comparison or check that found differences or violations is a complete report.
 	code := exitOK
-	if v, ok := result.(kit.VerifyResult); ok && v.Assessment == kit.AssessFail {
-		code = exitFail // a completed comparison that found differences is a complete report
+	switch v := result.(type) {
+	case kit.VerifyResult:
+		code = assessExit(v.Assessment)
+	case kit.SchemaCheckResult:
+		code = assessExit(v.Assessment)
+	case kit.SchemaDiffResult:
+		code = assessExit(v.Assessment)
 	}
-	if *out == "" {
+	if out == "" {
 		if _, werr := stdout.Write(data); werr != nil {
 			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 완전한 report를 쓰지 못했다")
 			return exitIO
 		}
 		return code
 	}
-	publishRoot := *root
-	if archive != nil && *archive != "" {
-		publishRoot = "" // the input is one file; an existing destination is still refused
-	}
-	if pcode, perr := publish(*out, publishRoot, data); perr != nil {
+	if pcode, perr := publish(out, publishRoot, data); perr != nil {
 		fmt.Fprintf(stderr, "tsgk: %s: 분석은 끝났지만 결과 publication이 실패했다: %v\n", pcode, perr)
 		return exitIO
 	}
 	return code
+}
+
+func assessExit(assessment string) int {
+	switch assessment {
+	case kit.AssessFail:
+		return exitFail
+	case kit.AssessBlocked:
+		return exitBlocked
+	}
+	return exitOK
 }
 
 // printable quotes a diagnostic path that could carry terminal control bytes (archive

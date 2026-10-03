@@ -4,6 +4,42 @@
 
 S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 주장이다. schema 일치, ordered CST 일치, query 일치, 언어 사양 적합성은 서로 대체하지 않는다. 아래 형식은 experimental이며 실제 native/두 번째 grammar/consumer 검증 전에 안정 API로 고정하지 않는다.
 
+## 정적 node-types 계약 — S03 구현
+
+`node-types-r1`은 Tree-sitter `node-types.json`을 읽는 채택 규칙이다. 근거는 [공식 Static Node Types 문서](https://tree-sitter.github.io/tree-sitter/using-parsers/6-static-node-types.html)와 generator의 [node_types.rs](https://github.com/tree-sitter/tree-sitter/blob/master/crates/generate/src/node_types.rs)(2026-10-03 확인), 그리고 등록 26 route schema의 실제 형태다. `node-types-diff-r1`은 baseline → candidate 방향의 차이 모델이다. 두 연산은 parser·`parser.c`·compiler·process·network를 쓰지 않는 정적 분석이며 runtime tree 일치, 언어 정확성, API 호환 인증, SemVer 판정이 아니다.
+
+**형식 검사.** 문서는 공유 strict JSON decoder를 거친다(중복·escape 동등 key, 잘못된 UTF-8, trailing 값은 각 `JSON_*`). 아래 위반은 모두 finding으로 모으고 첫 위반에서 멈추지 않는다.
+
+* 최상위는 비어 있지 않은 node 배열이다. `[]`은 유효한 빈 schema가 아니라 `SCHEMA_EMPTY`, `null`은 `JSON_NULL`, 다른 값은 `JSON_TYPE`이다. 형식이 허용하지 않는 `null`은 어디서든 없는 값으로 보지 않고 `JSON_NULL`이다.
+* node identity는 `(type, named)`이다. `type`은 비어 있지 않은 문자열(`NODE_TYPE_EMPTY`), `named`는 boolean이고 둘 다 필수다(`JSON_MISSING_FIELD`). 같은 spelling이라도 named가 다르면 다른 node다. 같은 identity가 두 번 나오면 모양이 달라도 `NODE_DUPLICATE`다(공식 문서의 유일성 규칙).
+* 선택 key는 `root`, `extra`(boolean), `fields`(field 이름 → set object), `children`(set), `subtypes`(참조 배열)뿐이다. 다른 key는 이 revision이 해석하지 않는 형식 확장이므로 `SCHEMA_KEY_UNSUPPORTED`다. 없는 `root`/`extra`는 선언 없음으로 보존하며 `false`와 구분한다. `fields`가 없는 것(token/leaf)과 `fields: {}`(field 없는 nonterminal)는 다른 계약이다. field 이름은 비어 있지 않다(`FIELD_NAME_EMPTY`).
+* set은 `multiple`, `required`(boolean), `types`(참조 배열)를 모두 가진다. `types`와 `subtypes`는 비어 있지 않고(`TYPES_EMPTY`, `SUBTYPES_EMPTY`), 참조는 `{type, named}`만 가지며, 한 목록 안의 같은 참조는 합치지 않고 `MEMBER_DUPLICATE`다. `types`·`subtypes`·`fields`는 순서 없는 집합이고, 결과의 정렬은 보고용일 뿐 의미 비교와 별개다.
+* supertype(`subtypes`를 가진 node)은 `fields`·`children`을 가질 수 없다(`SUPERTYPE_SHAPE`). `subtypes` 참조는 선언된 node여야 한다(`REFERENCE_UNRESOLVED`). 중첩 supertype은 허용하고, supertype → subtype 그래프의 순환은 `SUPERTYPE_CYCLE`이다. 그래프는 각 node를 한 번만 방문하는 반복 DFS로 걷는다. `root: true`가 둘 이상이면 `ROOT_MULTIPLE`이다.
+* field·children의 허용 type이 별도 node로 선언되지 않은 것은 형식 위반이 아니라 `REFERENCE_UNDECLARED` warning이다. generator가 alias를 이렇게 내보내고(등록 python schema의 `as_pattern_target`), 이름에 1:1 node가 없다는 이유만으로 정당한 grammar 관례를 거부하지 않는다.
+
+`schema check` 판정: error finding 중 위반이 하나라도 있으면 `FAIL`, 해석하지 않는 key(`SCHEMA_KEY_UNSUPPORTED`)만 있으면 `BLOCKED`, 그 밖은 `PASS`(warning 허용)이며 셋 다 `execution_status: COMPLETED`다. 항상 `SCHEMA_STATIC_ONLY` info finding을 낸다. `counts`(node·named·anonymous·supertype·field·참조 수, root 목록)는 PASS일 때만 있고 그 밖은 `null`이다. finding path는 `이름#JSON pointer`다.
+
+**차이 모델.** `schema diff`는 두 입력이 모두 PASS일 때만 비교한다. 그렇지 않으면 그 입력의 finding(path 앞에 `baseline:`/`candidate:`)을 보존하고 `INVALID_INPUT`/`SCHEMA_INVALID` 또는 `UNSUPPORTED`/`SCHEMA_KEY_UNSUPPORTED`로 끝나며 부분 비교는 없다. 차이가 없으면 `PASS`(등록 정적 계약이 같다), 있으면 `FAIL`이다. FAIL은 결함 판정이 아니며 항상 `SCHEMA_DIFF_DESCRIPTIVE` info finding을 낸다.
+
+| code | 의미 | risk |
+|---|---|---|
+| `NODE_ADDED` / `NODE_REMOVED` | identity가 한쪽에만 있다 | `ADDITION` / `REMOVAL` |
+| `NODE_NAMED_CHANGED` | 같은 spelling의 identity가 baseline에서 정확히 하나 사라지고 candidate에 정확히 하나 생겼다. 이때는 제거·추가 대신 이 하나만 낸다 | `IDENTITY` |
+| `ROOT_CHANGED`, `EXTRA_CHANGED` | `root`·`extra`의 값 또는 선언 유무 변화 | `IDENTITY`, `CLASSIFICATION` |
+| `FIELDS_PRESENCE_CHANGED` | `fields` key 유무 변화(leaf ↔ nonterminal) | `IDENTITY` |
+| `FIELD_ADDED` / `FIELD_REMOVED` | field가 한쪽에만 있다 | `ADDITION` / `REMOVAL` |
+| `FIELD_REQUIRED_CHANGED`, `FIELD_MULTIPLE_CHANGED` | 양쪽에 있는 field의 cardinality 변화 | 새 값이 `required: true` 또는 `multiple: false`이면 `CARDINALITY_NARROWED`, 아니면 `CARDINALITY_WIDENED` |
+| `FIELD_TYPE_ADDED` / `FIELD_TYPE_REMOVED` | field 허용 type 집합의 원소 변화 | `ADDITION` / `REMOVAL` |
+| `CHILDREN_PRESENCE_CHANGED` | `children` 유무 변화 | 생기면 `ADDITION`, 없어지면 `REMOVAL` |
+| `CHILDREN_REQUIRED_CHANGED`, `CHILDREN_MULTIPLE_CHANGED`, `CHILDREN_TYPE_ADDED` / `_REMOVED` | field와 같은 규칙 | field와 같음 |
+| `SUBTYPES_PRESENCE_CHANGED`, `SUBTYPE_ADDED` / `SUBTYPE_REMOVED` | supertype 여부와 subtype 집합 변화 | `ADDITION` / `REMOVAL` |
+
+없는 `fields`·`children`·`subtypes`는 원소 비교에서 빈 집합이고 그 유무 변화는 위 `*_PRESENCE_CHANGED`로 따로 낸다. cardinality는 양쪽에 set이 있을 때만 비교한다. 다른 spelling 사이의 rename은 추정하지 않으며 `NODE_REMOVED`와 `NODE_ADDED`로 나타난다. field가 supertype을 가리킬 때 subtype 변화는 그 supertype의 `SUBTYPE_*`로만 보고하고 field의 실효 type 집합으로 펼치지 않는다(coverage `unsupported`의 `supertype-expansion`). risk는 검토 범주일 뿐 안전하다는 뜻의 값은 없다. 새 optional field도 정확한 구조에 의존하는 consumer에 영향을 줄 수 있다.
+
+각 차이는 `code`, `risk`, `node{type, named}`, field 이름(`field`), 원소(`member`), 비교한 값 `before`/`after`, 원본 문서 안의 JSON pointer `baseline_path`/`candidate_path`를 가진다. 값은 원소를 `(type, named)`로, object key를 이름순으로 정렬한 canonical JSON이며 `null`은 그쪽에 없음을 뜻한다(형식이 `null`을 허용하지 않으므로 모호하지 않다). 없는 쪽의 path는 빈 문자열이다. 차이는 node(type bytes 오름차순, anonymous 먼저), 위 표의 code 순서, field, member 순서로 정렬한다. 입력을 바꾸면 추가와 제거, narrowed와 widened가 뒤집히고 같은 입력은 같은 결과다. identity는 `schema`(check) 또는 `baseline`·`candidate`(diff)의 원본 bytes sha256(schema `node-types-r1`)과 `policy`(`tsgk-schema-policy/r1` text: 연산, format, comparator, 한도)다. 같은 base name의 두 입력도 role과 hash로 구분한다.
+
+**한도와 취소.** `schema` 연산 한도는 입력당 문서 16777216 bytes(`DOCUMENT_BYTES_LIMIT`), record 200000(node 항목·field·type 참조, `SCHEMA_RECORD_LIMIT`), decode한 JSON 값 8×record(`JSON_VALUE_LIMIT`), JSON 중첩 32(`JSON_DEPTH_LIMIT`), 출력 16777216 bytes(`OUTPUT_LIMIT`), kit wall 120초(`WALL_LIMIT`)이며 모두 `RESOURCE_LIMIT`이다. 취소는 JSON 값 4096개, record 1024개, 그래프 단계·비교 node 1024개마다 확인한다. 집합 정규화는 schema의 type·subtype·field 집합에만 쓰며 ordered tree·raw input·query capture 순서로 넓히지 않는다(S03-A12 회귀).
+
 ## Ordered tree
 
 envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`; 실사용 source의 판별 encoding·출처 필드는 S03 확장 revision), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.

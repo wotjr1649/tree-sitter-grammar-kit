@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `schema`, `reproduce`, `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
+* `reproduce`, `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -86,6 +86,18 @@ tsgk corpus   ... [--profile FILE]
 * **실패와 출력.** 잘못된 문서와 subject(archive 구조·이름 공격 포함)는 `INVALID_INPUT`(exit 2), 지원하지 않는 archive 기능과 ASCII 밖 이름은 `UNSUPPORTED`(exit 3), 한도는 `RESOURCE_LIMIT`(exit 3)이다. 이때 actual·`actual_set_sha256`·differences는 비고 결과는 COMPLETED/PASS가 아니다. `--out`은 PASS와 FAIL의 완전한 report만 쓴다. archive subject의 `--out`에는 입력 root 검사가 없고(입력은 파일 하나) 기존 대상 거부와 hard link publication 규칙은 같다.
 * **기본 한도.** verify는 offline-inspect 한도와 archive 한도 entries 10000, archive 파일 268435456 bytes, nesting depth 2(`kit.DefaultArchiveLimits`)를 쓴다. policy의 `operation`은 `offline-verify`, `discovery`는 scope다. archive subject에서만 `archive_profile`·`archive_entries`·`archive_bytes`·`archive_depth` 줄이 policy preimage에 붙으므로 S01 연산의 policy identity는 바뀌지 않는다.
 * **extraction은 없다(UNAVAILABLE).** 채택된 source 준비 계획이 ZIP extraction을 요구하지 않으므로 이 build에는 풀기 명령과 쓰기 capability가 없다. source는 별도 승인 절차로 준비한다.
+
+## S03 구현 — schema check, schema diff
+
+```text
+tsgk schema check --input FILE [--out PATH]
+tsgk schema diff  --before FILE --after FILE [--out PATH]
+```
+
+* 형식·판정·차이 모델·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. CLI는 파일을 `MaxDocumentBytes`+1 bytes까지만 읽어 API에 넘기고 같은 결과를 그대로 출력한다. 결과의 `name`은 파일의 base name이며 디렉터리·절대 경로는 넣지 않는다. 같은 base name의 두 입력은 `role`과 sha256으로 구분된다.
+* 필수 인자가 없거나 하위 명령이 `check`·`diff`가 아니면 파일을 읽기 전에 exit 2(`USAGE`)다. 읽을 수 없는 입력은 `SCHEMA_UNREADABLE` exit 4다.
+* exit: check는 PASS 0, FAIL 1, BLOCKED 3이다. diff는 같으면 0, 차이가 있으면 1, 잘못된 입력 schema는 `SCHEMA_INVALID` exit 2, 해석하지 않는 key만 가진 입력은 `SCHEMA_KEY_UNSUPPORTED` exit 3이다. 한도 3, 취소 130은 공통 규칙과 같다.
+* `--out`은 S01 publication 규칙을 따르되 입력 root가 없으므로 기존 대상 거부와 hard link publication만 적용한다(입력 파일 자신도 기존 대상이라 덮어쓰지 않는다). 기본 한도는 `kit.DefaultSchemaLimits`다.
 
 ## discovery와 strict profile
 

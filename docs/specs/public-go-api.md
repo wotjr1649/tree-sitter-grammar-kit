@@ -101,7 +101,7 @@ func (e *Error) Error() string
 func (e *Error) Unwrap() error
 ```
 
-필드의 문자열 값과 JSON 이름은 [CLI/profile](cli-and-profile.md)과 [E0/identity](identity-and-evidence.md)의 닫힌 값 집합을 사용한다. `Error.Kind`는 `INVALID_INPUT`, `IO`, `CANCELLED`, `RESOURCE_LIMIT`, `UNSUPPORTED`이고 `Code`는 안정적인 기계 값이다(예: `GRAMMAR_INVALID`, `SELECTION_INVALID`, `LINK_OR_SPECIAL_REJECTED`, `HARDLINK_REJECTED`, `ROOT_NOT_LOCAL`, `NO_GRAMMAR_SELECTED`, `EMPTY_SELECTION`, `FILE_COUNT_LIMIT`, `FILE_BYTES_LIMIT`, `TOTAL_BYTES_LIMIT`, `DEPTH_LIMIT`, `RECORD_LIMIT`, `OUTPUT_LIMIT`, `WALL_LIMIT`, `SOURCE_CHANGED`, `READ_FAILED`, `CANCELLED`). `errors.As`로 `*kit.Error`를 구분하고 취소는 `errors.Is(err, context.Canceled/DeadlineExceeded)`도 보존한다. 오류 문자열은 machine identity가 아니다. 성공한 관측(unknown layout, 미해결 closure, encoding `BLOCKED`/`UNRESOLVED`)은 실행 오류가 아니라 결과 안의 finding과 필드다. S02의 verify 함수와 추가 result는 아래 `S02 함수와 추가 필드` 절이 고정한다. S03의 schema 함수는 구현 전에 같은 owner에서 별도 revision으로 고정한다.
+필드의 문자열 값과 JSON 이름은 [CLI/profile](cli-and-profile.md)과 [E0/identity](identity-and-evidence.md)의 닫힌 값 집합을 사용한다. `Error.Kind`는 `INVALID_INPUT`, `IO`, `CANCELLED`, `RESOURCE_LIMIT`, `UNSUPPORTED`이고 `Code`는 안정적인 기계 값이다(예: `GRAMMAR_INVALID`, `SELECTION_INVALID`, `LINK_OR_SPECIAL_REJECTED`, `HARDLINK_REJECTED`, `ROOT_NOT_LOCAL`, `NO_GRAMMAR_SELECTED`, `EMPTY_SELECTION`, `FILE_COUNT_LIMIT`, `FILE_BYTES_LIMIT`, `TOTAL_BYTES_LIMIT`, `DEPTH_LIMIT`, `RECORD_LIMIT`, `OUTPUT_LIMIT`, `WALL_LIMIT`, `SOURCE_CHANGED`, `READ_FAILED`, `CANCELLED`). `errors.As`로 `*kit.Error`를 구분하고 취소는 `errors.Is(err, context.Canceled/DeadlineExceeded)`도 보존한다. 오류 문자열은 machine identity가 아니다. 성공한 관측(unknown layout, 미해결 closure, encoding `BLOCKED`/`UNRESOLVED`)은 실행 오류가 아니라 결과 안의 finding과 필드다. S02의 verify 함수와 추가 result는 아래 `S02 함수와 추가 필드` 절이 고정한다. S03의 schema 함수는 아래 `S03 함수와 추가 필드` 절이 고정한다.
 
 Root는 절대화한 뒤 한 번 `EvalSymlinks`로 해석하고 root 자체는 따라가서 디렉터리인지 확인한다(macOS `/var` → `/private/var`, root를 가리키는 symlink·Windows junction 같은 alias를 의도적으로 허용). 존재하지 않거나 디렉터리가 아닌 root는 `INVALID_INPUT`이고, Windows UNC share와 `\\?\`·`\\.\` device namespace root는 network·device 접근을 피하려고 `ROOT_NOT_LOCAL`로 거부하며, 입력 문자열과 해석된 경로를 모두 검사한다. root 아래 항목은 따라가지 않는다. caller가 명시한 Root와 Selection만 읽는다. 부모 저장소 탐색·Git·Node·shell·compiler·target JS·network·plugin·stdout/stderr·os.Exit·chdir·process 환경 변경·파일 생성은 API 효과에 포함되지 않는다. 제품 dependency closure(`src/kit`, `src/cmd/tsgk`)에는 `os/exec`, `net`, `plugin`이 없다. archive는 S02의 `Verify`가 `zip-r1`로만 읽는다. `parser.c` 부재는 inspect/identity 자체의 실패 조건이 아니다.
 
@@ -163,8 +163,73 @@ profile과 expected는 원문 bytes로 받아 CLI와 같은 strict decoder를 �
 
 Verify의 효과는 Root(또는 Archive 파일 하나)와 caller가 준 bytes를 읽는 것뿐이다. archive를 풀거나 파일을 만들지 않는다. 취소 확인은 S01 지점에 더해 central directory entry마다, archive 원본 hash와 member 해제의 1 MiB 읽기 사이에 한다. 결과는 호출별로 새로 할당되며 request의 slice를 보관하지 않는다.
 
+## S03 함수와 추가 필드 — 설계 r4
+
+S03은 r3에 아래를 더한다. 기존 함수와 결과는 바뀌지 않는다.
+
+```go
+func SchemaCheck(ctx context.Context, request SchemaCheckRequest) (SchemaCheckResult, error)
+func SchemaDiff(ctx context.Context, request SchemaDiffRequest) (SchemaDiffResult, error)
+func DefaultSchemaLimits() SchemaLimits // document 16777216, records 200000, output 16777216, wall 120s
+
+const (
+    SchemaFormat     = "node-types-r1"
+    SchemaComparator = "node-types-diff-r1"
+    SchemaPolicyName = "tsgk-schema-policy/r1"
+    RiskAddition, RiskRemoval, RiskIdentity, RiskClassification = "ADDITION", "REMOVAL", "IDENTITY", "CLASSIFICATION"
+    RiskNarrowed, RiskWidened = "CARDINALITY_NARROWED", "CARDINALITY_WIDENED"
+)
+
+type SchemaLimits struct {
+    DocumentBytes, Records, OutputBytes uint64 // 모두 양수
+    Wall time.Duration
+}
+type SchemaInput struct {
+    Name string // caller 표시 이름; kit는 열지 않는다
+    Data []byte // node-types.json 원문 bytes
+}
+type SchemaCheckRequest struct { Input SchemaInput; Limits SchemaLimits }
+type SchemaDiffRequest struct { Baseline, Candidate SchemaInput; Limits SchemaLimits }
+type SchemaCheckResult struct {
+    Report
+    Policy SchemaPolicy
+    Schema SchemaSummary
+}
+type SchemaDiffResult struct {
+    Report
+    Policy              SchemaPolicy
+    Baseline, Candidate SchemaSummary
+    Differences         []SchemaDifference
+}
+type SchemaPolicy struct {
+    Operation, Format, Comparator string // "schema-check"|"schema-diff"; comparator는 diff만
+    DocumentBytes, Records, OutputBytes uint64
+    WallMillis int64
+}
+type SchemaSummary struct {
+    Role, Name, SHA256 string // role: "input"|"baseline"|"candidate"
+    Bytes  uint64
+    Counts *SchemaCounts // 유효한 schema일 때만, 그 밖은 nil
+}
+type SchemaCounts struct {
+    Nodes, Named, Anonymous, Supertypes, Fields, References uint64
+    Roots []NodeRef
+}
+type NodeRef struct{ Type string; Named bool }
+type SchemaDifference struct {
+    Code, Risk    string
+    Node          NodeRef
+    Field         string   // field 범위 차이만
+    Member        *NodeRef // 허용 type·subtype 원소 차이만
+    Before, After json.RawMessage // canonical 값, 없는 쪽은 null
+    BaselinePath, CandidatePath string // 원본 JSON pointer, 없는 쪽은 ""
+}
+```
+
+판정·code·순서·한도는 [정적 node-types 계약](tree-and-adapter-protocol.md)이 소유한다. 입력은 파일 경로가 아니라 caller가 가진 bytes이며 API는 파일·process·network를 쓰지 않고 `parser.c`가 필요 없다. 호출 중 caller는 `Data`를 바꾸지 않고, API는 반환 후 이를 보관하지 않는다. 결과는 호출별로 새로 할당된다. 서로 다른 입력에 대한 동시 호출은 공유 상태가 없다. 형식 위반은 `SchemaCheck`의 오류가 아니라 `error == nil`인 결과의 `FAIL`/`BLOCKED`다. `SchemaDiff`는 잘못된 입력을 `*Error`(`INVALID_INPUT`/`SCHEMA_INVALID`, `UNSUPPORTED`/`SCHEMA_KEY_UNSUPPORTED`)로 돌려주고 그 입력의 finding을 결과에 남긴다. 한도·취소·deadline 없는 context·잘못된 limits(`LIMITS_INVALID`)는 S01과 같은 `*Error`다. 오류와 함께 반환된 결과는 `COMPLETED`/`PASS`가 아니고 `Counts`는 nil, `Differences`는 비어 있다.
+
 ## 외부 소비자 검증
 
-`src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.
+`src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.
 
 S01의 local replace는 초기 소비 경계만 검증한다. S08은 준비된 source-export/versioned local module-proxy를 사용해 developer checkout 경로와 unpublished tag에 의존하지 않는 배포 형식도 검증한다. publication은 수행하지 않는다.

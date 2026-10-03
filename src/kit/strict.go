@@ -30,6 +30,30 @@ type jv struct {
 // decodeStrict is the single strict decoder shared by CLI and API for profile and expected
 // documents. doc names the document in error paths ("profile#/files/0/path").
 func decodeStrict(doc string, data []byte, maxBytes uint64) (*jv, *Error) {
+	return decodeBounded(doc, data, maxBytes, nil)
+}
+
+// valueBudget bounds the decoded value count (so a small-valued document cannot allocate far
+// beyond its byte size) and runs a cancellation checkpoint every 4096 values.
+type valueBudget struct {
+	max, n uint64
+	check  func() *Error
+}
+
+func (b *valueBudget) take(doc, ptr string) *Error {
+	if b == nil {
+		return nil
+	}
+	if b.n++; b.n > b.max {
+		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+ptr, nil)
+	}
+	if b.n%4096 == 0 {
+		return b.check()
+	}
+	return nil
+}
+
+func decodeBounded(doc string, data []byte, maxBytes uint64, b *valueBudget) (*jv, *Error) {
 	if uint64(len(data)) > maxBytes {
 		return nil, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
 	}
@@ -37,7 +61,7 @@ func decodeStrict(doc string, data []byte, maxBytes uint64) (*jv, *Error) {
 		return nil, fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
 	}
 	dec := jsontext.NewDecoder(bytes.NewReader(data))
-	v, e := readJSON(dec, doc, "", 0)
+	v, e := readJSON(dec, doc, "", 0, b)
 	if e != nil {
 		return nil, e
 	}
@@ -50,10 +74,13 @@ func decodeStrict(doc string, data []byte, maxBytes uint64) (*jv, *Error) {
 	return v, nil
 }
 
-func readJSON(dec *jsontext.Decoder, doc, ptr string, depth int) (*jv, *Error) {
+func readJSON(dec *jsontext.Decoder, doc, ptr string, depth int, b *valueBudget) (*jv, *Error) {
 	tok, err := dec.ReadToken()
 	if err != nil {
 		return nil, jsonError(doc, ptr, err)
+	}
+	if e := b.take(doc, ptr); e != nil {
+		return nil, e
 	}
 	v := &jv{kind: byte(tok.Kind()), ptr: ptr}
 	switch v.kind {
@@ -75,7 +102,7 @@ func readJSON(dec *jsontext.Decoder, doc, ptr string, depth int) (*jv, *Error) {
 				v.keys = append(v.keys, name.String())
 				child = ptr + "/" + strings.NewReplacer("~", "~0", "/", "~1").Replace(name.String())
 			}
-			c, e := readJSON(dec, doc, child, depth+1)
+			c, e := readJSON(dec, doc, child, depth+1, b)
 			if e != nil {
 				return nil, e
 			}
