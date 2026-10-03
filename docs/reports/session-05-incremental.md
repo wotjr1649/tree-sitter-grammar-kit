@@ -90,6 +90,26 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 
 재리뷰 r4(`02577a1..57e4afb`, EXECUTED, `review-r4.json`)는 최종 증거와 맞지 않는 보고서 수치 3건(PostgreSQL compile 시간의 출처, 32 MiB 최종 wall 누락, corpus summary 차이에서 `executable_sha256` 누락)과 확인할 수 없는 digest 서술을 보고했고 모두 고쳤다. SVC 판정 code가 여럿 해당할 때의 순서는 계약에 정하지 않았고 구현 순서를 기록한다: 앞 step부터 보며, 각 step 안에서 directive 없음(`SVC_DIRECTIVE_ABSENT`), `%>` 없음·inline 해석 실패(`SVC_INLINE_UNRESOLVED`), 지원하지 않는 언어(`SVC_INLINE_UNSUPPORTED`), 일부 step만 C# inline(`SVC_INLINE_NOT_PARSED`) 순으로 처음 맞는 code를 낸다. 모든 step을 본 뒤에야 기대값(`SVC_EXPECTATION_UNASSESSABLE`), 진단(`SVC_DIRECTIVE_DIAGNOSTICS`)을 본다. 그래서 step 0에 C# inline이 있고 step 1에 `%>`가 없는 `n461-svc-terminator-r-r1`은 `SVC_INLINE_NOT_PARSED`다. 재리뷰 r5(`57e4afb..415d44a`, EXECUTED)는 r4 정정 4건을 RESOLVED로 확인했고, 이 순서 서술과 문단 구성을 고치게 했다.
 
+## PR CI 1회차 실패와 수정
+
+PR #64의 CI run 37120183769(head `4a52224`)에서 foundation ubuntu-24.04만 실패했다. Windows·macOS foundation은 `TSGK_NATIVE_REQUIRED=1`로 owned native 시험까지 통과했고, native prepare·routes는 foundation에 걸려 건너뛰었다. 원인은 kit 결함이다. Ubuntu의 `/usr/bin/gcc`는 `gcc-13`을 가리키는 link인데 compiler identity 확인이 link를 일반 파일이 아니라며 거부했다. 그래서 모든 Linux build가 단계 하나 실행하기 전에 `TOOL_MISSING`이 됐고, CLI finding은 원인을 담지 않았으며, 시험 helper는 nil build를 역참조했다. Windows MSYS2의 `gcc.exe`는 일반 파일이라 로컬에서는 드러나지 않았다.
+
+수정 `483a640`:
+
+* compiler 경로의 link를 해석해 실제 파일의 bytes를 대조하고 그 파일을 실행한다. 해석할 수 없는 link는 계속 `TOOL_MISSING`이다.
+* build 실패 finding에 원인 error와 실패한 단계의 stderr 끝을 담는다.
+* helper는 nil build에서 `t.Fatalf`로 실패한다.
+* `TestBuildCompilerLink`를 추가했다. 수정을 되돌리면 CI와 같은 `TOOL_MISSING: not a regular file`로 실패한다.
+
+단언, `TSGK_NATIVE_REQUIRED` 관문, 상한은 바꾸지 않았다. 로컬 Windows에서 전체 검사가 통과했다. Linux 실행은 다음 CI에서 확인한다.
+
+재리뷰 r7(`4a52224..483a640`, EXECUTED, `review-r7.json`)의 결론은 BLOCKER·MATERIAL·MINOR 0, NOTE 4다.
+
+* finding 메시지에 host 경로가 들어갈 수 있다. 지금은 로컬 결과에만 쓰고 공개 summary에는 code만 옮긴다.
+* 호출 이름에 의존하는 wrapper는 link로 지정하지 않는다고 위 계약에 적었다.
+* 새 시험은 compiler를 실제로 실행하지 않는다. 해석한 경로로 실행하는지는 Linux CI build가 확인한다.
+* 다음 CI의 위험은 Linux sanitizer 단계의 시간 예산이다.
+
 ## acceptance 연결
 
 A01 `TestIncrementalSequence`; A02 `TestMalformedThenRepair`; A03·A04 `TestFaultControlsDetected`; A05 `TestEdgeStructures`, `TestCompareTrees`; A06·A16·A17 `TestEncodingsAndPoints`, `TestApplyEdits`, `TestEncodingSteps`, `TestCP949Table`, `TestCP949TableHeader`; A07 `TestEditRejections`; A08 `TestStatefulScanner`; A09 `TestFrames`, `TestBatchTrailingBytes`; A18 선언 상한 `TestSixtyFourDeclarations`; A10·A13·A19 `TestLimitsAndCancellation`, `TestBatchRecords`; A11 `TestBuildIdentity`; A12 위 mutant; A13 sanitizer는 CI Linux 단계; A14·A22 위 26 route와 `TestNativeRoutesRegistry`, `TestRouteCaseFiles`; A15 `TestOfflineClosure`; A18 `TestSummaryGate`, `TestLargeFixtureIdentity`와 위 대용량 표; A20 위 corpus와 `TestBatchRecords`; A21 `src/testdata/native/dynamic-sql/expected.json`; NET461 SVC는 `TestObserveServiceHost`, `TestObserveServiceHostUTF16`, `TestSvcComposite`와 SVC 사례.
