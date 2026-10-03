@@ -105,7 +105,9 @@ inspect와 identity 모두 26 route에서 완료했다. C#(32021728 bytes), T-SQ
 
 수정분 재리뷰는 6건을 해결로 확인했고, `--out` junction 건이 root 하위 디렉터리를 가리키는 junction에서 남는다는 점과 새 MINOR 2건(UNC를 가리키는 symlink root, 대소문자 구분 filesystem의 index 충돌)을 보고했다. 경로에 해석되지 않은 junction·mount point가 남으면 `OUTPUT_PARENT_ALIAS`로 거부하고, 해석된 root도 UNC/device 검사를 하며, corpus 선언은 정확한 path 집합으로, `.csproj`는 정확 일치 우선·단일 대소문자 무시 일치만 `MEMBER`로 고쳤다. 각 수정에 시험을 더했다(대소문자 구분 시험은 Windows·macOS 기본 filesystem에서 skip).
 
-2차 재검토는 남은 3건을 해결로 확인하고 MINOR 2건을 더 보고했다. cloud placeholder 같은 일반 reparse 디렉터리를 별칭으로 오인해 `--out`을 거부하던 점은 Windows reparse tag(mount point·symlink)로 좁혀 고쳤다. `subst`·bind mount처럼 경로에 드러나지 않는 별칭은 표준 라이브러리로 검출하지 않으며, 이 한계를 CLI 계약에 적고 아래 남은 일에 남겼다. `79f4f49`에 대한 3차 재검토는 새 finding 없음(NO_FINDINGS)으로 끝났다. 열린 BLOCKER·MATERIAL·MINOR는 없다.
+2차 재검토는 남은 3건을 해결로 확인하고 MINOR 2건을 더 보고했다. cloud placeholder 같은 일반 reparse 디렉터리를 별칭으로 오인해 `--out`을 거부하던 점은 Windows reparse tag(mount point·symlink)로 좁혀 고쳤다. `subst`·bind mount처럼 경로에 드러나지 않는 별칭은 표준 라이브러리로 검출하지 않으며, 이 한계를 CLI 계약에 적고 아래 남은 일에 남겼다. `79f4f49`에 대한 3차 재검토는 새 finding 없음(NO_FINDINGS)으로 끝났다.
+
+사용자 결정 반영분(`d99ab52`·보고서 갱신)에 대한 분리 context 정적 리뷰는 등록값·범위·문서가 결정 receipt와 맞다고 확인하고 MINOR 1건을 보고했다. profile 상한 초과 시험 내용이 등록되지 않은 identity여서 상한이 아니라 identity 불일치로도 거부될 수 있었다. 초과 내용도 test profile에 등록해 상한만이 거부 경로가 되도록 고쳤고, 읽기 상한을 profile 한도 대신 `total_bytes`로 바꾼 mutant가 이 시험에서 실패함을 확인했다. 예외는 `pg-large-source-r1`처럼 bytes·sha256 identity로만 맞추며 경로는 보지 않는다(같은 bytes는 자원 영향도 같다). 등록된 네 값 자체는 단위 시험이 아니라 위 route 실측으로 확인한다.
 
 리뷰가 남긴 정의 문제(discovery 기반 identity가 같은 source를 두 번 읽어 `total_bytes`에 두 번 셈)는 CLI 계약에 "실제로 읽은 bytes 합계"로 명시했다.
 

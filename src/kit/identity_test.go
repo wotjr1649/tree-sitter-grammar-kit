@@ -541,9 +541,10 @@ func TestLimits(t *testing.T) {
 		kindOf(t, err, KindInvalidInput, "LARGE_FILE_PROFILE_UNKNOWN")
 	})
 	t.Run("large-file-profile-admits-only-exact-identity", func(t *testing.T) {
-		body := strings.Repeat("x", 17)
-		sum := sha256.Sum256([]byte(body))
-		largeFileProfiles["test-large-r1"] = largeFileProfile{limit: 20, ids: map[string]uint64{hex.EncodeToString(sum[:]): 17}}
+		body, over := strings.Repeat("x", 17), strings.Repeat("x", 21)
+		sum, overSum := sha256.Sum256([]byte(body)), sha256.Sum256([]byte(over))
+		// over is registered too, so only the profile limit can reject it.
+		largeFileProfiles["test-large-r1"] = largeFileProfile{limit: 20, ids: map[string]uint64{hex.EncodeToString(sum[:]): 17, hex.EncodeToString(overSum[:]): 21}}
 		defer delete(largeFileProfiles, "test-large-r1")
 		l := DefaultLimits()
 		l.FileBytes = 16
@@ -558,7 +559,7 @@ func TestLimits(t *testing.T) {
 		}
 		_, err = run(strings.Repeat("y", 17)) // same size, other content
 		kindOf(t, err, KindResourceLimit, "FILE_BYTES_LIMIT")
-		_, err = run(strings.Repeat("x", 21)) // over the profile limit
+		_, err = run(over) // registered identity over the profile limit
 		kindOf(t, err, KindResourceLimit, "FILE_BYTES_LIMIT")
 	})
 }
