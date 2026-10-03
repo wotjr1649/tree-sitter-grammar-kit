@@ -34,7 +34,11 @@ $cli = Join-Path $Destination 'tsgk.exe'
 Push-Location $repo
 try { go build -o $cli ./src/cmd/tsgk; if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' } } finally { Pop-Location }
 $ccSha = (Get-FileHash -LiteralPath $Compiler -Algorithm SHA256).Hash.ToLowerInvariant()
-$compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = $ccSha; bytes = (Get-Item -LiteralPath $Compiler).Length }
+# A linked compiler (Ubuntu /usr/bin/gcc -> gcc-13) is identified by the file it resolves
+# to, as tsgk does: Get-FileHash follows the link but Length would be the link's own size.
+$ccItem = Get-Item -LiteralPath $Compiler
+if ($ccItem.LinkTarget) { $ccItem = $ccItem.ResolveLinkTarget($true) }
+$compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = $ccSha; bytes = $ccItem.Length }
 $ccVersion = (& $Compiler --version | Select-Object -First 1)
 
 # 1. inventory (S01 operation, cp949 profile) with the S05 table-completed encodings

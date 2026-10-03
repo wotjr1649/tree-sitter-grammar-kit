@@ -235,4 +235,15 @@ func TestHostSettingsReachCI(t *testing.T) {
 			t.Errorf("%s must end with an explicit exit 0", rel)
 		}
 	}
+	// A linked compiler must be identified by its resolved file: Get-Item Length is the
+	// link's own size (0 on Windows, the target name length on Linux).
+	for _, rel := range []string{"src/dev/s05-native/run-routes.ps1", "src/dev/s05-native/run-corpus.ps1", "src/dev/s05-native/select-compiler.ps1"} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "..", filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(data), "ResolveLinkTarget($true)") {
+			t.Errorf("%s must resolve a linked compiler before identifying it", rel)
+		}
+	}
 }

@@ -12,6 +12,8 @@ $cc = $candidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | 
 if (-not $cc) { throw "no existing C compiler among: $($candidates -join ', ')" }
 $version = & $cc --version | Select-Object -First 1
 if ($LASTEXITCODE -ne 0) { throw 'compiler --version failed' }
+$item = Get-Item -LiteralPath $cc
+if ($item.LinkTarget) { $cc = $item.ResolveLinkTarget($true).FullName } # report and return the file that runs
 $sha = (Get-FileHash -LiteralPath $cc -Algorithm SHA256).Hash.ToLowerInvariant()
 Write-Host ("compiler path={0} sha256={1} bytes={2} version={3}" -f $cc, $sha, (Get-Item -LiteralPath $cc).Length, $version)
 return $cc

@@ -119,7 +119,14 @@ CI run 37121192095(head `0271e06`)에서 compiler link 수정은 효과가 있�
 * 시험 build 요청을 `testBuildRequest` 하나로 모았다. 모든 시험 build가 같은 cgroup parent와 같은 sanitizer 모드를 쓴다. 이전에는 `TestBuildIdentity`의 요청에 sanitizer 설정도 빠져 있었다. 그래서 sanitizer 단계에서 "parser가 바뀌면 identity도 바뀐다"는 비교가 처음부터 다른 build끼리 이뤄졌다.
 * Linux에서만 드러나는 경로를 정적으로 점검하다 CI helper script의 종료 코드 결함을 찾았다. `run-routes.ps1`은 실패가 없으면 `exit` 없이 끝났다. 그러면 호출한 workflow의 `$LASTEXITCODE`에 마지막 tsgk exit이 남는다(대용량 32 MiB의 예상된 `RESOURCE_LIMIT`이면 3). 결국 실패 0건이어도 routes job이 세 OS 모두에서 실패했을 것이다. `run-routes.ps1`과 `prepare-routes.ps1`은 이제 `exit 0`으로 끝난다. 수정 뒤 csharp route를 workflow와 같은 방식으로 호출해 확인했다. 마지막 tsgk는 exit 3이었고 호출자의 `$LASTEXITCODE`는 0이었다.
 * `TestHostSettingsReachCI`를 추가했다. 시험 build가 `testBuildRequest`를 우회하거나 두 script가 `exit 0`으로 끝나지 않으면 실패한다. 두 음성 대조로 시험이 잡는 것을 확인했다.
-* Linux sanitizer 단계에서 `vm.mmap_rnd_bits=28`을 설정한다. 높은 ASLR 엔트로피에서 오래된 sanitizer runtime이 shadow memory를 배치하지 못하는 문제가 알려져 있다(actions/runner-images#9515). 이 설정은 일회용 hosted VM의 그 단계에만 적용된다.
+* Linux sanitizer 단계에서 `vm.mmap_rnd_bits=28`을 설정한다. 높은 ASLR 엔트로피에서 오래된 sanitizer runtime이 shadow memory를 배치하지 못하는 문제가 알려져 있다(actions/runner-images#9515). kernel 전역 설정이므로 시험 뒤(실패해도) 원래 값으로 되돌려 같은 job의 route 단계는 원래 엔트로피에서 돈다.
+
+재리뷰 r10(`0271e06..198f6c1`, EXECUTED)은 위 수정을 확인했고, 보고서가 아직 이름 붙이지 않은 Linux 전용 경로 하나를 MATERIAL로 지적했다. route helper가 compiler bytes를 `Get-Item`의 `Length`로 기록하는데, 이것은 link 자체의 크기다. 반면 hash는 `Get-FileHash`가 link를 따라가 실제 파일로 계산한다. 그래서 Linux의 `/usr/bin/gcc`(link)로는 모든 route build가 `TOOL_IDENTITY_MISMATCH`로 거부됐을 것이다. 처분:
+
+* `select-compiler.ps1`은 해석한 실제 경로를 돌려준다.
+* `run-routes.ps1`·`run-corpus.ps1`은 link면 해석한 파일로 hash와 크기를 함께 기록한다.
+* Windows에서 symlink compiler로 json route를 실행해 확인했다(Windows도 link의 `Length`는 0이다). 수정 전 helper는 `TOOL_BYTES_INVALID`로 실패했고(caller exit 1), 수정 후에는 PASS(caller exit 0)였다. `TestHostSettingsReachCI`는 세 helper가 link를 해석하는지도 확인한다.
+* sanitizer 단계의 `mmap_rnd_bits` 적용 범위 서술을 바로잡았다(MINOR).
 
 정적으로 점검했지만 Linux 없이는 확인할 수 없는 CI 위험:
 

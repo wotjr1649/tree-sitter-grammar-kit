@@ -41,7 +41,11 @@ Push-Location $repo
 try { go build -o $cli ./src/cmd/tsgk; if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' } } finally { Pop-Location }
 $ccVersion = (& $Compiler --version | Select-Object -First 1)
 if ($LASTEXITCODE -ne 0) { throw 'compiler --version failed' }
-$compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = (Get-Sha $Compiler); bytes = (Get-Item -LiteralPath $Compiler).Length }
+# A linked compiler (Ubuntu /usr/bin/gcc -> gcc-13) is identified by the file it resolves
+# to, as tsgk does: Get-FileHash follows the link but Length would be the link's own size.
+$ccItem = Get-Item -LiteralPath $Compiler
+if ($ccItem.LinkTarget) { $ccItem = $ccItem.ResolveLinkTarget($true) }
+$compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = (Get-Sha $ccItem.FullName); bytes = $ccItem.Length }
 $work = Join-Path $Destination 'work'
 New-Item -ItemType Directory -Path $work | Out-Null
 $summary = [ordered]@{ schema = 'tsgk-s05-route-run/r1'; platform = $Platform; compiler = [ordered]@{ path = $Compiler; version_line = $ccVersion; sha256 = $compilerId.sha256; bytes = $compilerId.bytes }

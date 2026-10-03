@@ -313,12 +313,18 @@ jobs:
           $env:TSGK_NATIVE_REQUIRED = '1'
           $env:TSGK_NATIVE_SANITIZE = '1'
           # Sanitizer runtimes older than the high-entropy ASLR fix cannot place their shadow
-          # memory with 32 random mmap bits (actions/runner-images#9515); this ephemeral VM
-          # uses 28 for the sanitizer step only.
+          # memory with 32 random mmap bits (actions/runner-images#9515). The setting is
+          # kernel-wide, so it is restored before the route step runs.
+          $bits = (Get-Content -Raw /proc/sys/vm/mmap_rnd_bits).Trim()
           sudo sysctl -w vm.mmap_rnd_bits=28
           if ($LASTEXITCODE -ne 0) { throw 'sysctl failed' }
-          go test ./src/internal/native -count=1 -timeout 420s
-          if ($LASTEXITCODE -ne 0) { throw 'sanitizer native tests failed' }
+          try {
+            go test ./src/internal/native -count=1 -timeout 420s
+            if ($LASTEXITCODE -ne 0) { throw 'sanitizer native tests failed' }
+          } finally {
+            sudo sysctl -w "vm.mmap_rnd_bits=$bits"
+            if ($LASTEXITCODE -ne 0) { throw 'sysctl restore failed' }
+          }
       - name: 26 route native build와 등록 사례 실행
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
