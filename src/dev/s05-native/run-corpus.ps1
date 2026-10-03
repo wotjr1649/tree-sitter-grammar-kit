@@ -13,7 +13,7 @@ param(
   [int]$WallSeconds = 3600
 )
 $ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+# No strict mode: the results carry optional (omitted) JSON members.
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $start = Get-Date
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
