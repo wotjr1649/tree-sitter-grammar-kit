@@ -66,3 +66,68 @@ func TestQualifyCLI(t *testing.T) {
 		t.Fatalf("candidate: %d %s", code, errb.String())
 	}
 }
+
+// treeHashes maps every file below root to its bytes, so a workflow can be shown to leave
+// its inputs untouched.
+func treeHashes(t *testing.T, root string) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	filepath.WalkDir(root, func(p string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			b, _ := os.ReadFile(p)
+			out[p] = string(b)
+		}
+		return nil
+	})
+	return out
+}
+
+// S08-A10: the tool-free grammar-update workflow through the CLI. A baseline snapshot's
+// identity becomes the expected document; the candidate snapshot is verified against it
+// (FAIL with the changed files reported) and its node schema diffed against the baseline's
+// (review risks). Nothing is adopted: both snapshots are unchanged and nothing is written
+// except an explicit --out.
+func TestGrammarUpdateWorkflow(t *testing.T) {
+	ctx := context.Background()
+	bin := buildCLI(t)
+	offline := []string{"PATH=", "SystemRoot=" + os.Getenv("SystemRoot")}
+	base, cand := t.TempDir(), t.TempDir()
+	writeTree(t, base, fixture)
+	writeTree(t, cand, fixture)
+	writeTree(t, base, map[string]string{"alpha/src/node-types.json": cliBase})
+	writeTree(t, cand, map[string]string{"alpha/src/node-types.json": cliCandidate, "alpha/src/grammar.json": `{"name":"alpha"}`})
+	before := map[string]map[string]string{base: treeHashes(t, base), cand: treeHashes(t, cand)}
+	exp := expectedFromIdentity(t, ctx, base)
+	if code, stdout, stderr := runBin(t, offline, bin, "verify", "--root", base, "--grammar", "alpha", "--expected", exp); code != exitOK || !strings.Contains(stdout, `"assessment":"PASS"`) {
+		t.Fatalf("baseline against its own identity: %d %s", code, stderr)
+	}
+	code, stdout, stderr := runBin(t, offline, bin, "verify", "--root", cand, "--grammar", "alpha", "--expected", exp)
+	if code != exitFail || !strings.Contains(stdout, `"assessment":"FAIL"`) || !strings.Contains(stdout, "node-types.json") || !strings.Contains(stdout, "grammar.json") {
+		t.Fatalf("candidate against the baseline identity: %d %s %s", code, stdout, stderr)
+	}
+	report := filepath.Join(t.TempDir(), "diff.json")
+	if code, _, stderr := runBin(t, offline, bin, "schema", "diff", "--before", filepath.Join(base, "alpha", "src", "node-types.json"),
+		"--after", filepath.Join(cand, "alpha", "src", "node-types.json"), "--out", report); code != exitOK && code != exitFail {
+		t.Fatalf("schema diff: %d %s", code, stderr)
+	}
+	var diff struct {
+		Differences []struct {
+			Risk string `json:"risk"`
+		} `json:"differences"`
+	}
+	data, _ := os.ReadFile(report)
+	if json.Unmarshal(data, &diff) != nil || len(diff.Differences) == 0 {
+		t.Fatalf("schema diff reported no review item: %s", data)
+	}
+	for root, files := range before {
+		after := treeHashes(t, root)
+		if len(after) != len(files) {
+			t.Fatalf("files added or removed under %s", root)
+		}
+		for p, b := range files {
+			if after[p] != b {
+				t.Fatalf("workflow changed %s", p)
+			}
+		}
+	}
+}
