@@ -336,7 +336,7 @@ func (x *expected) file(t typed, item *jv) (FileIdentity, *jv, *Error) {
 		if code == "NOT_ASCII" {
 			kind = KindUnsupported
 		}
-		return out, nil, fail(kind, "EXPECTED_PATH_"+code, t.doc+"#"+f["path"].ptr, nil)
+		return out, nil, fail(kind, "EXPECTED_PATH_"+code, t.doc+"#"+f["path"].cptr(), nil)
 	}
 	if out.Role, e = t.str(f["role"]); e != nil {
 		return out, nil, e

@@ -39,6 +39,7 @@ var required = []string{
 	"src/internal/foundation/campaign_test.go",
 	"src/contracts/examples/profile-r1.json", "src/contracts/examples/expected-r1.json",
 	"src/contracts/campaign-01.json", "src/contracts/language-sources.json",
+	"src/contracts/fact-mapping.json", "src/contracts/examples/tree-summary-r1.json",
 	".github/workflows/prepare-p05.yml", "src/dev/prepare-p05/inputs.json",
 	"src/dev/prepare-p05/acquire.ps1", "src/dev/prepare-p05/run.ps1",
 	"src/dev/prepare-p05/collect.ps1", "src/dev/prepare-p05/probe.c.in",
@@ -54,6 +55,7 @@ var required = []string{
 	"src/kit/kit.go", "src/cmd/tsgk/main.go",
 	"src/testdata/consumer/main.go", "src/testdata/consumer/go.mod.tmpl",
 	"docs/reports/session-01-inventory-identity.md",
+	"docs/reports/session-03-schema-contract.md",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

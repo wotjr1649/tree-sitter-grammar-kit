@@ -60,7 +60,11 @@ func TestExitCodes(t *testing.T) {
 		{nil, 2, "USAGE"},
 		{[]string{"verify", "--root", root}, 2, "requires --expected"},
 		{[]string{"reproduce"}, 2, "UNSUPPORTED_COMMAND"},
-		{[]string{"schema", "check"}, 2, "UNSUPPORTED_COMMAND"},
+		{[]string{"incremental"}, 2, "UNSUPPORTED_COMMAND"},
+		{[]string{"schema", "check"}, 2, "requires --input"},
+		{[]string{"schema", "diff", "--before", "a.json"}, 2, "requires --after"},
+		{[]string{"schema", "verify"}, 2, "USAGE"},
+		{[]string{"schema"}, 2, "USAGE"},
 		{[]string{"bogus"}, 2, "UNKNOWN_COMMAND"},
 		{[]string{"inspect", "--root", root, "--profile", "p.json"}, 2, "PROFILE_UNSUPPORTED"},
 		{[]string{"identity", "--root", root, "--grammar", "../x"}, 2, "GRAMMAR_INVALID"},
@@ -275,10 +279,9 @@ func runBin(t *testing.T, env []string, bin string, args ...string) (int, string
 	return 0, out.String(), errb.String()
 }
 
-// S01-A01/A11/A12: a module outside the checkout uses only the public API and gets the
-// same semantic results and guards as the CLI; the CLI runs with no executable path.
-func TestExternalConsumerAndCLI(t *testing.T) {
-	bin := buildCLI(t)
+// buildConsumer instantiates the external consumer template as a module outside the checkout.
+func buildConsumer(t *testing.T) string {
+	t.Helper()
 	module := t.TempDir()
 	tmpl, err := os.ReadFile(filepath.Join(repoRoot(t), "src", "testdata", "consumer", "go.mod.tmpl"))
 	if err != nil {
@@ -295,6 +298,13 @@ func TestExternalConsumerAndCLI(t *testing.T) {
 	writeTree(t, module, map[string]string{"go.mod": gomod, "main.go": string(src)})
 	consumer := filepath.Join(module, "consumer"+exeSuffix())
 	goRun(t, module, "build", "-o", consumer, ".")
+	return consumer
+}
+
+// S01-A01/A11/A12: a module outside the checkout uses only the public API and gets the
+// same semantic results and guards as the CLI; the CLI runs with no executable path.
+func TestExternalConsumerAndCLI(t *testing.T) {
+	bin, consumer := buildCLI(t), buildConsumer(t)
 	root := t.TempDir()
 	writeTree(t, root, fixture)
 	offline := []string{"PATH=", "SystemRoot=" + os.Getenv("SystemRoot")}

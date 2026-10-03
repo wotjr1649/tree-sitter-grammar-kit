@@ -8,15 +8,24 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
 func main() {
-	root, grammar := os.Args[1], os.Args[2]
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+	if os.Args[1] == "schema" { // schema BEFORE AFTER: both files are caller-owned snapshots
+		before, after := readInput(os.Args[2]), readInput(os.Args[3])
+		check, err := kit.SchemaCheck(ctx, kit.SchemaCheckRequest{Input: before, Limits: kit.DefaultSchemaLimits()})
+		emit("schema-check", check, err)
+		diff, err := kit.SchemaDiff(ctx, kit.SchemaDiffRequest{Baseline: before, Candidate: after, Limits: kit.DefaultSchemaLimits()})
+		emit("schema-diff", diff, err)
+		return
+	}
+	root, grammar := os.Args[1], os.Args[2]
 	sel := kit.Selection{Grammar: grammar}
 	inspect, err := kit.Inspect(ctx, kit.InspectRequest{Root: root, Selection: sel, Limits: kit.DefaultLimits()})
 	emit("inspect", inspect, err)
@@ -36,6 +45,14 @@ func main() {
 	}
 	archive, err := kit.Verify(ctx, kit.VerifyRequest{Archive: os.Args[4], Expected: expected, Limits: kit.DefaultLimits(), ArchiveLimits: kit.DefaultArchiveLimits()})
 	emit("verify-archive", archive, err)
+}
+
+func readInput(p string) kit.SchemaInput {
+	data, err := os.ReadFile(p)
+	if err != nil {
+		panic(err)
+	}
+	return kit.SchemaInput{Name: filepath.Base(p), Data: data}
 }
 
 func emit(name string, v any, err error) {
