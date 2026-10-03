@@ -1,0 +1,81 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "tsx",
+  "cases": [
+    {
+      "id": "tsx-gap-fragment-r1",
+      "kind": "gap",
+      "features": ["tsx-B01", "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록"],
+      "source_utf8": "const before: number = 1;\nconst list = <><li key=\"a\">a</li><li key=\"b\">b</li></>;\nconst nested = <div><>{list}</></div>;\n",
+      "edits": [
+        {"find": "<li key=\"b\">b</li></>;", "replace": "<li key=\"b\">b</li>;"},
+        {"find": "<li key=\"b\">b</li>;", "replace": "<li key=\"b\">b</li></>;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["jsx_element", "jsx_opening_element", "jsx_closing_element", "jsx_attribute", "jsx_expression"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["jsx_element", "jsx_opening_element", "jsx_closing_element", "jsx_attribute", "jsx_expression"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsx-gap-namespaced-spread-attr-r1",
+      "kind": "gap",
+      "features": ["tsx-V29", "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록"],
+      "source_utf8": "const before: number = 1;\ndeclare const rest: Record<string, string>;\nconst svg = <svg xmlns:xlink=\"http://www.w3.org/1999/xlink\"><use xlink:href=\"#a\" {...rest} /></svg>;\n",
+      "edits": [
+        {"find": "{...rest} />", "replace": "{...rest} data-x=\"1\" />"},
+        {"find": "xlink:href=\"#a\"", "replace": "xlink:=\"#a\""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["jsx_namespace_name", "jsx_attribute", "jsx_self_closing_element", "jsx_expression", "spread_element"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["jsx_namespace_name", "jsx_attribute", "jsx_self_closing_element", "jsx_expression", "spread_element"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsx-gap-generic-arrow-r1",
+      "kind": "gap",
+      "features": ["tsx-B02", "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록"],
+      "source_utf8": "const before: number = 1;\nconst wrap = <T,>(value: T) => <div>{String(value)}</div>;\nconst pick = <K extends string, V,>(k: K, v: V): [K, V] => [k, v];\n",
+      "edits": [
+        {"find": "const wrap = <T,>", "replace": "const wrap = <T>"},
+        {"find": "const wrap = <T>", "replace": "const wrap = <T,>"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["arrow_function", "type_parameters", "type_parameter", "jsx_element", "tuple_type"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["arrow_function", "type_parameters", "type_parameter", "jsx_element", "tuple_type"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsx-gap-conditional-render-r1",
+      "kind": "gap",
+      "features": ["tsx-B01", "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록"],
+      "source_utf8": "const before: number = 1;\nfunction View(props: { ok: boolean; items: string[] }) {\n  return (\n    <div>\n      {props.ok && <span>yes</span>}\n      {props.ok ? <b>a</b> : null}\n      {props.items.map((s) => <i key={s}>{s}</i>)}\n    </div>\n  );\n}\n",
+      "edits": [
+        {"find": "{props.ok ? <b>a</b> : null}", "replace": "{props.ok ? <b>a</b> : }"},
+        {"find": "{props.ok ? <b>a</b> : }", "replace": "{props.ok ? <b>a</b> : null}"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["function_declaration", "jsx_element", "jsx_expression", "ternary_expression", "binary_expression", "arrow_function"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["function_declaration", "jsx_element", "jsx_expression", "ternary_expression", "binary_expression", "arrow_function"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsx-gap-text-entities-r1",
+      "kind": "gap",
+      "features": ["tsx-B01", "S05: 등록 B01/B02/V29 밖의 TSX 구문은 미등록"],
+      "source_utf8": "const before: number = 1;\nconst p = <p title=\"x\">A &amp; B &#169; {1 + 1}</p>;\n",
+      "edits": [
+        {"find": "&amp;", "replace": "&lt;"},
+        {"find": "{1 + 1}</p>", "replace": "{1 + 1}</q>"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["jsx_element", "jsx_attribute", "jsx_text", "html_character_reference"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["jsx_element", "jsx_attribute", "jsx_text", "html_character_reference"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
+      ]
+    }
+  ]
+}

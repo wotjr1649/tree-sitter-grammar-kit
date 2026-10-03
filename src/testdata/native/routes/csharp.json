@@ -1,0 +1,108 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "csharp",
+  "cases": [
+    {
+      "id": "csharp-feature-r1",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03",
+        "csharp-B04",
+        "csharp-B05",
+        "csharp-V08",
+        "csharp-V09",
+        "csharp-V10"
+      ],
+      "source_utf8": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\nnamespace Demo.Inventory;\n\npublic record Item(string Name, int Quantity, decimal Price);\n\npublic enum Status { Active, Retired }\n\npublic class Store\n{\n    private readonly List<Item> _items = new();\n\n    public int Count => _items.Count;\n\n    // Adds an item after validating it.\n    public void Add(Item item)\n    {\n        if (item is null)\n        {\n            throw new ArgumentNullException(nameof(item));\n        }\n        _items.Add(item);\n    }\n\n    public decimal Total()\n    {\n        decimal sum = 0m;\n        foreach (var item in _items)\n        {\n            sum += item.Price * item.Quantity;\n        }\n        return sum;\n    }\n\n    public string Describe(Item item) => item.Quantity switch\n    {\n        0 => \"empty\",\n        < 10 => $\"low: {item.Name}\",\n        _ => $\"ok: {item.Name}\",\n    };\n\n    public IEnumerable<string> Names() =>\n        from i in _items where i.Quantity > 0 orderby i.Name select i.Name;\n}\n",
+      "edits": [
+        {
+          "find": "    public int Count => _items.Count;\n",
+          "replace": "    public int Count => _items.Count;\n\n    public bool IsEmpty => _items.Count == 0;\n"
+        },
+        {
+          "find": "0 => \"empty\",",
+          "replace": "0 => \"none\","
+        },
+        {
+          "find": "public enum Status { Active, Retired }\n\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "using_directive",
+            "file_scoped_namespace_declaration",
+            "record_declaration",
+            "class_declaration",
+            "method_declaration",
+            "foreach_statement",
+            "switch_expression",
+            "interpolated_string_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "csharp-B04",
+        "csharp-B05"
+      ],
+      "source_utf8": "using System;\n\nnamespace Demo;\n\npublic static class MathUtil\n{\n    public static int Clamp(int value, int min, int max)\n    {\n        if (value < min)\n        {\n            return min;\n        }\n        return value > max ? max : value;\n    }\n\n    public static int Square(int x) => x * x;\n}\n",
+      "edits": [
+        {
+          "find": "            return min;\n        }\n",
+          "replace": "            return min;\n"
+        },
+        {
+          "find": "            return min;\n",
+          "replace": "            return min;\n        }\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

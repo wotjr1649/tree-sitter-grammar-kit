@@ -1,0 +1,508 @@
+{
+  "schema": "tsgk-dynamic-sql-fixtures/r1",
+  "mapping": "dynamic-sql-r1",
+  "files": [
+    {
+      "path": "tsql-dynamic.sql",
+      "route": "tsql",
+      "sha256": "ef588ec844ca2f7348cc91623a74ba61dc46bf5b3e656b162b69d7ee245d7850",
+      "bytes": 1378,
+      "facts": [
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "literal_unicode",
+          "start_byte": 329,
+          "end_byte": 345,
+          "start_point": {
+            "row": 8,
+            "column": 6
+          },
+          "end_point": {
+            "row": 8,
+            "column": 22
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "literal_char",
+          "start_byte": 354,
+          "end_byte": 369,
+          "start_point": {
+            "row": 9,
+            "column": 6
+          },
+          "end_point": {
+            "row": 9,
+            "column": 21
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "variable",
+          "start_byte": 381,
+          "end_byte": 385,
+          "start_point": {
+            "row": 10,
+            "column": 9
+          },
+          "end_point": {
+            "row": 10,
+            "column": 13
+          },
+          "variable": "@sql",
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "concatenation",
+          "start_byte": 394,
+          "end_byte": 436,
+          "start_point": {
+            "row": 11,
+            "column": 6
+          },
+          "end_point": {
+            "row": 11,
+            "column": 48
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN_AT",
+          "argument_kind": "literal_unicode",
+          "start_byte": 518,
+          "end_byte": 534,
+          "start_point": {
+            "row": 13,
+            "column": 6
+          },
+          "end_point": {
+            "row": 13,
+            "column": 22
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN_AT",
+          "argument_kind": "variable",
+          "start_byte": 556,
+          "end_byte": 560,
+          "start_point": {
+            "row": 14,
+            "column": 6
+          },
+          "end_point": {
+            "row": 14,
+            "column": 10
+          },
+          "variable": "@sql",
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "literal_unicode",
+          "start_byte": 670,
+          "end_byte": 686,
+          "start_point": {
+            "row": 16,
+            "column": 19
+          },
+          "end_point": {
+            "row": 16,
+            "column": 35
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "variable",
+          "start_byte": 711,
+          "end_byte": 715,
+          "start_point": {
+            "row": 17,
+            "column": 23
+          },
+          "end_point": {
+            "row": 17,
+            "column": 27
+          },
+          "variable": "@sql",
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "bare_word",
+          "start_byte": 738,
+          "end_byte": 744,
+          "start_point": {
+            "row": 18,
+            "column": 21
+          },
+          "end_point": {
+            "row": 18,
+            "column": 27
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "literal_unicode",
+          "start_byte": 779,
+          "end_byte": 796,
+          "start_point": {
+            "row": 19,
+            "column": 33
+          },
+          "end_point": {
+            "row": 19,
+            "column": 50
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "other",
+          "start_byte": 849,
+          "end_byte": 853,
+          "start_point": {
+            "row": 20,
+            "column": 22
+          },
+          "end_point": {
+            "row": 20,
+            "column": 26
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "literal_unicode",
+          "start_byte": 919,
+          "end_byte": 945,
+          "start_point": {
+            "row": 22,
+            "column": 6
+          },
+          "end_point": {
+            "row": 22,
+            "column": 32
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN",
+          "argument_kind": "literal_char",
+          "start_byte": 975,
+          "end_byte": 1001,
+          "start_point": {
+            "row": 23,
+            "column": 6
+          },
+          "end_point": {
+            "row": 23,
+            "column": 32
+          },
+          "variable": null,
+          "heuristic": false
+        }
+      ],
+      "non_facts": [
+        {
+          "what": "PASS_THROUGH",
+          "start_byte": 562,
+          "end_byte": 564,
+          "note": "linked-server pass-through parameter after the first parenthesized expression"
+        },
+        {
+          "what": "PASS_THROUGH",
+          "start_byte": 566,
+          "end_byte": 570,
+          "note": "linked-server pass-through parameter after the first parenthesized expression"
+        },
+        {
+          "what": "PASS_THROUGH",
+          "start_byte": 798,
+          "end_byte": 817,
+          "note": "sp_executesql parameter definition after the statement (excluded_arguments); range is the exec_argument"
+        },
+        {
+          "what": "PASS_THROUGH",
+          "start_byte": 819,
+          "end_byte": 825,
+          "note": "sp_executesql parameter value after the statement (excluded_arguments); range is the exec_argument"
+        },
+        {
+          "what": "AS_USER",
+          "start_byte": 957,
+          "end_byte": 967,
+          "note": "AS USER = expression of EXEC(...) is excluded"
+        },
+        {
+          "what": "AS_USER",
+          "start_byte": 1014,
+          "end_byte": 1025,
+          "note": "AS LOGIN = expression of EXEC(...) is excluded"
+        },
+        {
+          "what": "EXEC_MODULE_VARIABLE",
+          "start_byte": 1072,
+          "end_byte": 1077,
+          "note": "EXEC @module_var is not dynamic SQL; range is the module variable"
+        },
+        {
+          "what": "KNOWN_MISS",
+          "start_byte": 1160,
+          "end_byte": 1191,
+          "note": "procedure call as the first statement of a batch without EXEC; range is the statement through ;"
+        },
+        {
+          "what": "KNOWN_MISS",
+          "start_byte": 1226,
+          "end_byte": 1274,
+          "note": "EXEC (...) AT DATA_SOURCE name; range is the statement through ;"
+        },
+        {
+          "what": "KNOWN_MISS",
+          "start_byte": 1311,
+          "end_byte": 1374,
+          "note": "EXEC ... WITH RESULT SETS (...); range is the statement through ;"
+        }
+      ]
+    },
+    {
+      "path": "csharp-command.cs",
+      "route": "csharp",
+      "sha256": "db2d2507e413ef3b32e261b336aa8054d4925e52fcb19524c3e6495cb4c1e80a",
+      "bytes": 1656,
+      "facts": [
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 657,
+          "end_byte": 672,
+          "start_point": {
+            "row": 19,
+            "column": 36
+          },
+          "end_point": {
+            "row": 19,
+            "column": 51
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 717,
+          "end_byte": 733,
+          "start_point": {
+            "row": 20,
+            "column": 36
+          },
+          "end_point": {
+            "row": 20,
+            "column": 52
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 778,
+          "end_byte": 797,
+          "start_point": {
+            "row": 21,
+            "column": 36
+          },
+          "end_point": {
+            "row": 21,
+            "column": 55
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "variable",
+          "start_byte": 864,
+          "end_byte": 867,
+          "start_point": {
+            "row": 22,
+            "column": 58
+          },
+          "end_point": {
+            "row": 22,
+            "column": 61
+          },
+          "variable": "sql",
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "concatenation",
+          "start_byte": 914,
+          "end_byte": 938,
+          "start_point": {
+            "row": 23,
+            "column": 38
+          },
+          "end_point": {
+            "row": 23,
+            "column": 62
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "concatenation",
+          "start_byte": 987,
+          "end_byte": 1027,
+          "start_point": {
+            "row": 24,
+            "column": 37
+          },
+          "end_point": {
+            "row": 24,
+            "column": 77
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1106,
+          "end_byte": 1121,
+          "start_point": {
+            "row": 25,
+            "column": 66
+          },
+          "end_point": {
+            "row": 25,
+            "column": 81
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "other",
+          "start_byte": 1170,
+          "end_byte": 1185,
+          "start_point": {
+            "row": 26,
+            "column": 40
+          },
+          "end_point": {
+            "row": 26,
+            "column": 55
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "variable",
+          "start_byte": 1236,
+          "end_byte": 1239,
+          "start_point": {
+            "row": 27,
+            "column": 42
+          },
+          "end_point": {
+            "row": 27,
+            "column": 45
+          },
+          "variable": "sql",
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1292,
+          "end_byte": 1307,
+          "start_point": {
+            "row": 28,
+            "column": 41
+          },
+          "end_point": {
+            "row": 28,
+            "column": 56
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1391,
+          "end_byte": 1406,
+          "start_point": {
+            "row": 29,
+            "column": 71
+          },
+          "end_point": {
+            "row": 29,
+            "column": 86
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "concatenation",
+          "start_byte": 1439,
+          "end_byte": 1459,
+          "start_point": {
+            "row": 30,
+            "column": 29
+          },
+          "end_point": {
+            "row": 30,
+            "column": 49
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1621,
+          "end_byte": 1636,
+          "start_point": {
+            "row": 34,
+            "column": 29
+          },
+          "end_point": {
+            "row": 34,
+            "column": 44
+          },
+          "variable": null,
+          "heuristic": true
+        }
+      ],
+      "non_facts": [
+        {
+          "what": "FALSE_POSITIVE",
+          "start_byte": 1621,
+          "end_byte": 1636,
+          "note": "CommandType is StoredProcedure: the heuristic reports this CommandText value (also listed in facts) although it is a procedure name, not SQL text"
+        }
+      ]
+    }
+  ]
+}

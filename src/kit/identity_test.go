@@ -179,7 +179,8 @@ func TestEncodingBoundIntoIdentity(t *testing.T) {
 	for _, f := range cp.Manifest.Files {
 		got[f.Path] = f.Encoding
 	}
-	if got["a.cs"].Code != "ENCODING_TABLE_REQUIRED" || got["a.cs"].Assessment != "UNRESOLVED" || !hasFinding(cp.Findings, "ENCODING_TABLE_REQUIRED", "a.cs") || !hasFinding(cp.Findings, "UTF16_UNPAIRED_SURROGATE", "b.cs") {
+	// S05 completed the table-dependent outcomes: a.cs is a mapped index-euc-kr pair.
+	if got["a.cs"] != (EncodingOutcome{Assessment: "PASS", Encoding: EncodingCP949, Source: SourceValidation}) || !hasFinding(cp.Findings, "UTF16_UNPAIRED_SURROGATE", "b.cs") {
 		t.Fatalf("cp949 outcome %+v", got["a.cs"])
 	}
 	if got["b.cs"].Assessment != "BLOCKED" || got["b.cs"].Code != "UTF16_UNPAIRED_SURROGATE" || cp.Manifest.Files[1].Size != 6 {

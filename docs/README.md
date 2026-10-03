@@ -1,6 +1,6 @@
 # Documentation map
 
-The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, the Session 03 static `node-types.json` check and directional diff (`tsgk schema check|diff`), with the matching `src/kit` API, and the Session 04 supervised process runner (`src/internal/runner`) with `tsgk reproduce` (the only command that starts a process). Other commands and r0 data contracts are planned specifications, not claims of implementation.
+The current implementation consists of repository foundation checks, the Session 01 offline core (`tsgk inspect`, `tsgk identity`, `tsgk corpus`) the Session 02 strict profile/expected decoding and `tsgk verify` with bounded ZIP inspection, the Session 03 static `node-types.json` check and directional diff (`tsgk schema check|diff`), with the matching `src/kit` API, the Session 04 supervised process runner (`src/internal/runner`) with `tsgk reproduce`, and the Session 05 native driver (`src/drivers/native-c`, `tsgk-native/r1`) with `tsgk incremental` and the `src/kit` tree comparator, edit validation and cp949 table (`reproduce` and `incremental` are the only commands that start processes). Other commands and r0 data contracts are planned specifications, not claims of implementation.
 
 | Task | Canonical owner |
 |---|---|
@@ -21,6 +21,7 @@ The current implementation consists of repository foundation checks, the Session
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 | Observed Session 03 results | [schema contract report](reports/session-03-schema-contract.md) |
 | Observed Session 04 results | [reproducibility report](reports/session-04-reproducibility.md) |
+| Observed Session 05 results | [incremental report](reports/session-05-incremental.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

@@ -1,0 +1,424 @@
+{
+ "schema": "tsgk-native-runtime/r1",
+ "repository": "tree-sitter/tree-sitter",
+ "commit": "659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+ "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+ "note": "Pinned Tree-sitter runtime source for the S05 driver build (same identity as the PREPARE runtime, ABI 13..15); a runtime directory must contain exactly these files with these hashes.",
+ "files": [
+  {
+   "path": "LICENSE",
+   "sha256": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+   "bytes": 1080
+  },
+  {
+   "path": "lib/include/tree_sitter/api.h",
+   "sha256": "efe63c187bb941be6e36dfb0597846bfe1976a0917c04a16e3edf6ee7cf6f9b7",
+   "bytes": 49952
+  },
+  {
+   "path": "lib/src/alloc.c",
+   "sha256": "c7d15b9015568f439af4adf28ead9e2bd14901221819276727c11227a29576da",
+   "bytes": 1542
+  },
+  {
+   "path": "lib/src/alloc.h",
+   "sha256": "6a59c4997fe6df7fa2c00fcaff9cf0882e26309d1743bea05983ea56e0ca0c91",
+   "bytes": 917
+  },
+  {
+   "path": "lib/src/array.h",
+   "sha256": "3a66fd611d88de00207bf40466b2393170c2110b17ce0d16e3716ef3a00e3d8e",
+   "bytes": 13467
+  },
+  {
+   "path": "lib/src/atomic.h",
+   "sha256": "bbc630cb913ac64274ce4412bc9d504174220323993f306ded74abe502867e74",
+   "bytes": 1384
+  },
+  {
+   "path": "lib/src/error_costs.h",
+   "sha256": "0e8d1a21e0d60981e762989108231df6610d95591892f631c6c78a9ef831a2ab",
+   "bytes": 294
+  },
+  {
+   "path": "lib/src/get_changed_ranges.c",
+   "sha256": "6fcee7d2663ac67d88b9e79a03ff4854dde1e8d30d3c985d945bad8017532c52",
+   "bytes": 17733
+  },
+  {
+   "path": "lib/src/get_changed_ranges.h",
+   "sha256": "f394bd0b6fce006be460fd16cbea3cc96e248c810a4d97e8830463c29c85e4a5",
+   "bytes": 836
+  },
+  {
+   "path": "lib/src/host.h",
+   "sha256": "e1982b9795b9c52b5ab564d8b9876189d65a97ca02f78351e1740b0985992fd2",
+   "bytes": 520
+  },
+  {
+   "path": "lib/src/language.c",
+   "sha256": "16ca0511cd57ff301c63a19b4f10821552153224affa23908d4fc0d2bbca353e",
+   "bytes": 11440
+  },
+  {
+   "path": "lib/src/language.h",
+   "sha256": "9371240c2060bd7c145b41a32b2535bbca3c3ac1713a4684e272e268ac924c22",
+   "bytes": 9030
+  },
+  {
+   "path": "lib/src/length.h",
+   "sha256": "7fc186fb4bf50233059e8be9ca68efe95e66d34ced4b8a8f38f14497352faeb1",
+   "bytes": 1275
+  },
+  {
+   "path": "lib/src/lexer.c",
+   "sha256": "eb6ca639beaea9fb99bfb0faa0bd0f8e8df785a52dc09321582dc858a448eb34",
+   "bytes": 16062
+  },
+  {
+   "path": "lib/src/lexer.h",
+   "sha256": "7d76308f7a2d3246a3e28fb27698be928f848130d1bfacc39f9f623127671b74",
+   "bytes": 1263
+  },
+  {
+   "path": "lib/src/lib.c",
+   "sha256": "a9830f5a1e72db564afef45f690510cf0aa751075ed855789e26c9f25f087b80",
+   "bytes": 405
+  },
+  {
+   "path": "lib/src/node.c",
+   "sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
+   "bytes": 25151
+  },
+  {
+   "path": "lib/src/parser.c",
+   "sha256": "97a49276242294bc1b1a22908671a202f92d2a213a872edbe467a9e121822615",
+   "bytes": 79954
+  },
+  {
+   "path": "lib/src/parser.h",
+   "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+   "bytes": 7624
+  },
+  {
+   "path": "lib/src/point.c",
+   "sha256": "04a101f16f40a651814c0f307fadf3f351d0f24013fa6d8b89c85bf1c6a5e717",
+   "bytes": 547
+  },
+  {
+   "path": "lib/src/point.h",
+   "sha256": "0929027be2ff54627be560f3bafc1af59e81ac6d5a8d5864455601a0dbee50ff",
+   "bytes": 1307
+  },
+  {
+   "path": "lib/src/portable/endian.h",
+   "sha256": "528ca0666737e1a66218e2179004d5af2154393c6564ac9c57c110c5d8f57f85",
+   "bytes": 7325
+  },
+  {
+   "path": "lib/src/query.c",
+   "sha256": "f7e9b04c50f9d5bae3c01cf5860fd45d24d89b2d2e5748de758b0a39bc146c83",
+   "bytes": 171255
+  },
+  {
+   "path": "lib/src/reduce_action.h",
+   "sha256": "8f40396e431d7ff558694ca248eed1332b6cf6f7e6255f06cddfde78020bd308",
+   "bytes": 772
+  },
+  {
+   "path": "lib/src/reusable_node.h",
+   "sha256": "10be747ea4c733ca181dc43d55d155ac8e5b8caa247079621cca0ce633347bfb",
+   "bytes": 2747
+  },
+  {
+   "path": "lib/src/stack.c",
+   "sha256": "f70b7e5823e82901801193562908037db4c1a73721e48da0fe54cdb2a6b5856d",
+   "bytes": 28636
+  },
+  {
+   "path": "lib/src/stack.h",
+   "sha256": "dea9df947fa871b253528dca48611aa174181a286ec2734c16d4038e040834f6",
+   "bytes": 4872
+  },
+  {
+   "path": "lib/src/subtree.c",
+   "sha256": "ec4d623ca1c290f6c1fb8a9dcfc08dcc5fc2a452fa1b27587b9a73c1a74438b0",
+   "bytes": 36750
+  },
+  {
+   "path": "lib/src/subtree.h",
+   "sha256": "552633ba7b8be2d266031bb04776c17ba7bc5fe270d1afd5203eb4889e8b7f09",
+   "bytes": 12548
+  },
+  {
+   "path": "lib/src/tree.c",
+   "sha256": "a0f63bc46fc4fcb88d35caa6fe89d7fc18edb895bc781db20f11d5c58988fb06",
+   "bytes": 5144
+  },
+  {
+   "path": "lib/src/tree.h",
+   "sha256": "628701f470166ad550471a673dce078f28a7851193939f02a342c30c3a8ef39c",
+   "bytes": 915
+  },
+  {
+   "path": "lib/src/tree_cursor.c",
+   "sha256": "5638f6702b6d0b40755fcba32d85ca0fc44ab51bd3546525b4787a304a7b503c",
+   "bytes": 23140
+  },
+  {
+   "path": "lib/src/tree_cursor.h",
+   "sha256": "3e8d9671ab1397bcaeb3e0cbf153a61a99e214782b43c09e5cde5a01e8283a1a",
+   "bytes": 1285
+  },
+  {
+   "path": "lib/src/ts_assert.h",
+   "sha256": "ac1ec4b7ba388a9d8708feeb6c5c766b2927cecfd6db644b939772e1dc086526",
+   "bytes": 205
+  },
+  {
+   "path": "lib/src/unicode.h",
+   "sha256": "968175f1e018e4130c403fe08d12b4d103e6fe6c1dbbf658e58ab9af378530a4",
+   "bytes": 2084
+  },
+  {
+   "path": "lib/src/unicode/ICU_SHA",
+   "sha256": "2879b4cf5a2c625c6509c26e341b9c8b0c50fde284113b449e00567bdf4e593c",
+   "bytes": 41
+  },
+  {
+   "path": "lib/src/unicode/LICENSE",
+   "sha256": "6a18c5fac70d7860b57f5b72b4e2c9a1ba6b3d2741eef7ff9767c5379364f10d",
+   "bytes": 21001
+  },
+  {
+   "path": "lib/src/unicode/README.md",
+   "sha256": "73bbccbcf2e6648385d188d914b16ae56b4553a0f1efb033e6b6d6242e41df1d",
+   "bytes": 1270
+  },
+  {
+   "path": "lib/src/unicode/ptypes.h",
+   "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+   "bytes": 72
+  },
+  {
+   "path": "lib/src/unicode/umachine.h",
+   "sha256": "2d79c0903d9e73e247b948bc0a12b6a785257ca0273bddab56fb59561f8d7391",
+   "bytes": 14865
+  },
+  {
+   "path": "lib/src/unicode/urename.h",
+   "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+   "bytes": 72
+  },
+  {
+   "path": "lib/src/unicode/utf.h",
+   "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+   "bytes": 72
+  },
+  {
+   "path": "lib/src/unicode/utf16.h",
+   "sha256": "c370d9069f37fad2b53981c06dc648bbc21923db1655517a31bb237df4fba041",
+   "bytes": 23878
+  },
+  {
+   "path": "lib/src/unicode/utf8.h",
+   "sha256": "39651224b2ca2452359c7f3339f3cc0a841fe7db64f8a00c9c5ec19c0389645c",
+   "bytes": 31698
+  },
+  {
+   "path": "lib/src/wasm-stdlib/README.md",
+   "sha256": "37bb3e39b390ed1cedf9127edb00bf2baf896f277ca34a8722694aa41fb3546a",
+   "bytes": 1255
+  },
+  {
+   "path": "lib/src/wasm-stdlib/external_scanner_allocator.c",
+   "sha256": "b13eb3c31b8b952578260b858462e821985d347d1dae186e71566ff36d875b1f",
+   "bytes": 4275
+  },
+  {
+   "path": "lib/src/wasm-stdlib/external_scanner_stdlib.h",
+   "sha256": "462bb994df614cb18899b03b1435f2749414e4722ba8cf450266a149426cea0c",
+   "bytes": 107108
+  },
+  {
+   "path": "lib/src/wasm-stdlib/imports.txt",
+   "sha256": "4fb97410d22925f88857d9adfecc2b955c08819e7d55de4e460d417bf1a2215d",
+   "bytes": 276
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc.c",
+   "sha256": "1b70f41eda904b816e641d5841c7ad0b637cf5bc637e1f3d0965f75789711ff5",
+   "bytes": 1346
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/LICENSE",
+   "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+   "bytes": 6204
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/README.md",
+   "sha256": "a5714bd844b272c950cb055fcabbd04e4da0ee02f35e5d5340caa4f3af9626fb",
+   "bytes": 685
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/alpha.h",
+   "sha256": "bf14a0a8e2e3722e8d618d00f903be102a0214c4ab30d96dc8d7f3e15c5106e7",
+   "bytes": 12783
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/casemap.h",
+   "sha256": "e69896dc36e5b1c0f0f30917cad6dcda2f55c2d691be1b84625880ebf22fb618",
+   "bytes": 16079
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/isblank.c",
+   "sha256": "2fe71bd5c48604d04f2582e35e1230c2c302bd175ebcfa3c7ed15cf191156bd3",
+   "bytes": 173
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswalnum.c",
+   "sha256": "647f8fc54b33790c1de8a26acd2f5b7212952c2e60db0ada433f9ddd639ce186",
+   "bytes": 191
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswalpha.c",
+   "sha256": "c22480b08b6943bbecfb6e0ab6677bf3b41c0371d5df51286f437b3cb37c130e",
+   "bytes": 333
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswblank.c",
+   "sha256": "6f3a3161506c01d7a425c766e6de722101618d14548b56998bc147e86077e744",
+   "bytes": 193
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswdigit.c",
+   "sha256": "d7e9bda18ff14bd8ace47884d8bd021130e95c69a2dc747f83effc1a2714895b",
+   "bytes": 201
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswlower.c",
+   "sha256": "e51bb97002c407e416bfca5689abef2e9b9dc625bef19ae684753722e98d0392",
+   "bytes": 181
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswpunct.c",
+   "sha256": "6bc6c0a07485c87aa556c265f37968c42d635e4a2fd89e701efdb57f8a111b66",
+   "bytes": 303
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswspace.c",
+   "sha256": "c8592c0fb5463b314c38926e3df26b9efdfe5f1437958ba20c7c36f81facba80",
+   "bytes": 616
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswupper.c",
+   "sha256": "f6b68aa9983a6fb5c09479e1349a2b35721cb7aef308192584fdea5585032cd8",
+   "bytes": 181
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/iswxdigit.c",
+   "sha256": "1f6dc78efe7c313ddcf47401101f903ce194af5dacd89922f483a995075f52cb",
+   "bytes": 222
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/punct.h",
+   "sha256": "45382a2b630fc896057871ac9abe9e3f1580048f1f3b1c96505aaf3dc522832d",
+   "bytes": 10440
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/ctype/towctrans.c",
+   "sha256": "43f4374b7dfcd24a957b4be4cfa304611e24912529183174ec724fcbaedf82cd",
+   "bytes": 1715
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/memchr.c",
+   "sha256": "1ea082084a8cfcc6aee5dc962e0ddd2167d2ce38e529a22d138bdfaab83c223a",
+   "bytes": 2818
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/memcmp.c",
+   "sha256": "44ec5045d00709ddd9ae59b4b0e7ac7e78a8401d27acc4cb95bb46acb2d103f2",
+   "bytes": 1413
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/memcpy.c",
+   "sha256": "4ad219f8d43467d894ef2cfd3d6d17ae958710c689097c15d41b68ee99c74769",
+   "bytes": 2756
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/memmove.c",
+   "sha256": "202adc3108340168e8604c1ed848e84df51a806726ebc992b597218a50c9a8d9",
+   "bytes": 965
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/memset.c",
+   "sha256": "a7a8ff014b6a196342bbe3e8bdd7ae7ee91f0003f96e328d915f1af13066dad8",
+   "bytes": 2324
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/stpncpy.c",
+   "sha256": "12f0e4fd1005104a6c1200af5b90e1694d75ad0fb2586305b560341be0ef6481",
+   "bytes": 819
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strchr.c",
+   "sha256": "629d401b95d07ddff9560eb5a9cfbda1652caaec273dc6a79013a56b1790af53",
+   "bytes": 147
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strchrnul.c",
+   "sha256": "3eaa363698e2dfb472a59ed35c445d970a06d4da9d94a47eb918c0a3e2f74e7b",
+   "bytes": 2295
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strcmp.c",
+   "sha256": "3e1793ea2dd358e5c884c4dd232083605d0f6775f7ebe19d03d64fe97068a78f",
+   "bytes": 150
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strlen.c",
+   "sha256": "767f030f94a4868eb88c8b28e0aa535f53deb2f23b79ba5627d6d8ba6b460d7d",
+   "bytes": 2036
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strncat.c",
+   "sha256": "784dbc83b122671f97711ab6cbcb1ee871513e8d0da3462a8ce267e1367353af",
+   "bytes": 179
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strncmp.c",
+   "sha256": "df801c43304b27dcda67f219a7a3ca34a8fb06f4e63d21e8a6bcb36b03c3c012",
+   "bytes": 220
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/strncpy.c",
+   "sha256": "88301f7a48004250e1833e9155c7d2fa607ffdddca3b1b1804774d93c82acb96",
+   "bytes": 123
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/wcschr.c",
+   "sha256": "c9ac14e131c281bef6ab9228ae4e0aea824b3b96c32ed4c2b1a573d7529e7194",
+   "bytes": 171
+  },
+  {
+   "path": "lib/src/wasm-stdlib/libc/string/wcslen.c",
+   "sha256": "4baada75103e9906fa85dd6650c07752c1803b36cbdfc1b5e0678c5e3f3223a6",
+   "bytes": 109
+  },
+  {
+   "path": "lib/src/wasm-stdlib/stdio.c",
+   "sha256": "463ff7c94b4f9df0164aa3d966eeb5765a7f9acecdf477119e2fe54891e34b0e",
+   "bytes": 6791
+  },
+  {
+   "path": "lib/src/wasm_store.c",
+   "sha256": "e630e55f3984cc9111646a719f793f5b7b4823632767129c4583aa2b1521e746",
+   "bytes": 70668
+  },
+  {
+   "path": "lib/src/wasm_store.h",
+   "sha256": "4f70d0500b0775e5d862a8e7d191b3853d73378c65e020e01767838a18debe0e",
+   "bytes": 1137
+  }
+ ]
+}

@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "json",
+  "cases": [
+    {
+      "id": "json-feature-r1",
+      "kind": "feature",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "source_utf8": "{\n  \"name\": \"inventory\",\n  \"version\": 3,\n  \"active\": true,\n  \"owner\": null,\n  \"ratio\": -1.25e-3,\n  \"tags\": [\"tools\", \"hardware\", \"caf\\u00e9\"],\n  \"items\": [\n    {\"id\": 1, \"name\": \"bolt\", \"count\": 120, \"price\": 0.25},\n    {\"id\": 2, \"name\": \"nut\", \"count\": 4, \"price\": 0.1},\n    {\"id\": 3, \"name\": \"washer\", \"count\": 0, \"price\": 0.05}\n  ],\n  \"limits\": {\n    \"max\": 1000,\n    \"min\": 0,\n    \"notes\": \"line1\\nline2 \\\"quoted\\\"\"\n  }\n}\n",
+      "edits": [
+        {
+          "find": "  \"owner\": null,\n",
+          "replace": "  \"owner\": null,\n  \"archived\": false,\n"
+        },
+        {
+          "find": "\"count\": 4,",
+          "replace": "\"count\": 40,"
+        },
+        {
+          "find": ",\n    {\"id\": 3, \"name\": \"washer\", \"count\": 0, \"price\": 0.05}",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "string",
+            "number",
+            "true",
+            "null"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "json-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "json-B01"
+      ],
+      "source_utf8": "{\n  \"service\": \"api\",\n  \"port\": 8080,\n  \"features\": [\"auth\", \"metrics\"],\n  \"limits\": {\n    \"rps\": 100,\n    \"burst\": 20\n  },\n  \"owners\": [\"ops\", \"dev\"],\n  \"enabled\": true\n}\n",
+      "edits": [
+        {
+          "find": "\"port\": 8080",
+          "replace": "\"port\" 8080"
+        },
+        {
+          "find": "\"port\" 8080",
+          "replace": "\"port\": 8080"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

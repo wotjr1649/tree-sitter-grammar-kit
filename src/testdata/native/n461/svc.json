@@ -1,0 +1,481 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "csharp",
+  "format": "SVC-SERVICEHOST-r1",
+  "cases": [
+    {
+      "id": "n461-svc-inline-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "        string Echo(string text);\n",
+          "replace": "        string Echo(string text);\n\n        [OperationContract]\n        int Length(string text);\n"
+        },
+        {
+          "find": "            return text;\n        }\n",
+          "replace": "            return text;\n        }\n\n        public int Length(string text)\n        {\n            return text.Length;\n        }\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "using_directive",
+            "namespace_declaration",
+            "interface_declaration",
+            "attribute",
+            "method_declaration",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-inline-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text));\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-inline-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"c#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "return text;",
+          "replace": "return text));"
+        },
+        {
+          "find": "text));",
+          "replace": "text;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-boundary-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-BOUNDARY"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "Service=\"Demo.Services.ClockService\" %>",
+          "replace": "Service=\"Demo.Services.ClockService\" Factory=\"System.ServiceModel.Activation.ServiceHostFactory\" %>"
+        },
+        {
+          "find": "            return DateTime.UtcNow;",
+          "replace": "            return DateTime.Now;"
+        },
+        {
+          "find": "        DateTime Now();\n",
+          "replace": "        DateTime Now();\n\n        [OperationContract]\n        TimeSpan Offset();\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "using_directive",
+            "interface_declaration",
+            "method_declaration",
+            "return_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-boundary-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-BOUNDARY"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %>>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-boundary-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-BOUNDARY"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "Service=\"Demo.Services.ClockService\" %>",
+          "replace": "Service=\"Demo.Services.ClockService\" Factory=\"System.ServiceModel.Activation.ServiceHostFactory\" %>"
+        },
+        {
+          "find": "return DateTime.UtcNow;",
+          "replace": "return return DateTime.UtcNow;"
+        },
+        {
+          "find": "return return ",
+          "replace": "return "
+        },
+        {
+          "find": " Factory=\"System.ServiceModel.Activation.ServiceHostFactory\"",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-encoding-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-ENCODING"
+      ],
+      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "edits": [
+        {
+          "find": "        string Greet(string name);\r\n",
+          "replace": "        string Greet(string name);\r\n\r\n        [OperationContract]\r\n        string Farewell(string name);\r\n"
+        },
+        {
+          "find": "\" / Gr\u00fc\u00dfe\"",
+          "replace": "\" / Gr\u00fc\u00df Gott\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "using_directive",
+            "interface_declaration",
+            "method_declaration",
+            "binary_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-encoding-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-ENCODING"
+      ],
+      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name));\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-encoding-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-ENCODING"
+      ],
+      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "edits": [
+        {
+          "find": ")\r\n        {\r\n            return \"",
+          "replace": ")\r\n        {\r\n            return return \""
+        },
+        {
+          "find": "return return \"",
+          "replace": "return \""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-directive-p-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" %>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-directive-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" Service=\"Demo.Services.Other\" Mode=\"Fast\" %>\n<%@ ServiceHost Service=\"Demo.Services.Again\" %>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-codebehind-p-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-CODEBEHIND"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-codebehind-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-CODEBEHIND"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind CodeBehind=\"App_Code/OrderService.cs\" %>\npublic class Stray\n{\n}\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-multiline-p-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-MULTILINE"
+      ],
+      "source_utf8": "<%@ ServiceHost\n    Language=\"C#\"\n    Debug='false'\n    Service=\"Demo.Services.OrderService\"\n    Factory=\"System.ServiceModel.Activation.ServiceHostFactory\"\n    CodeBehind=\"OrderService.svc.cs\"\n%>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-multiline-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-MULTILINE"
+      ],
+      "source_utf8": "<%@ ServiceHost\n    Language=\"C#\"\n    Service='Demo.Services.OrderService'\n    Debug=true ;\n    Factory=\n%>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-quote-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-QUOTE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs %>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-quote-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-QUOTE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %>\n",
+      "edits": [
+        {
+          "find": "OrderService\" CodeBehind",
+          "replace": "OrderService CodeBehind"
+        },
+        {
+          "find": "OrderService CodeBehind",
+          "replace": "OrderService\" CodeBehind"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-terminator-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-TERMINATOR"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\"\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-terminator-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-TERMINATOR"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" %>\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n",
+      "edits": [
+        {
+          "find": "\" %>\n",
+          "replace": "\"\n"
+        },
+        {
+          "find": "OrderService\"\n",
+          "replace": "OrderService\" %>\n"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-language-p-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-LANGUAGE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %>\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-language-unresolved-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-LANGUAGE"
+      ],
+      "source_utf8": "<%@ ServiceHost Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": []
+    },
+    {
+      "id": "n461-svc-language-vb-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-LANGUAGE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"VB\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nImports System.ServiceModel\n\nPublic Class EchoService\n    Public Function Echo(ByVal text As String) As String\n        Return text\n    End Function\nEnd Class\n",
+      "edits": [],
+      "expect": []
+    }
+  ]
+}

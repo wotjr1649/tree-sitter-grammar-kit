@@ -124,7 +124,7 @@ func TestCorpusInventory(t *testing.T) {
 			t.Fatalf("presence-only record %+v", r)
 		}
 	}
-	if q := recs["Data/q.sql"]; q.Encoding.Code != "ENCODING_TABLE_REQUIRED" || q.Newline != "CR" {
+	if q := recs["Data/q.sql"]; q.Encoding.Assessment != "PASS" || q.Encoding.Encoding != EncodingCP949 || q.Newline != "CR" {
 		t.Fatalf("cp949 record %+v %+v", q, q.Encoding)
 	}
 	if u := recs["Misc/u16.cs"]; u.Encoding.Encoding != EncodingUTF16LE || u.Newline != "CRLF" {

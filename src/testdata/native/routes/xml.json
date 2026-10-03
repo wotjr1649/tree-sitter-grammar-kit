@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "xml",
+  "cases": [
+    {
+      "id": "xml-feature-r1",
+      "kind": "feature",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE inventory [\n  <!ELEMENT inventory (item*)>\n  <!ATTLIST item id CDATA #REQUIRED>\n  <!ENTITY company \"Acme\">\n]>\n<!-- Inventory export -->\n<inventory xmlns=\"urn:example:inventory\" xmlns:x=\"urn:example:extra\">\n  <item id=\"1\">\n    <name>bolt</name>\n    <count>120</count>\n    <x:note>Made by &company; &#169;</x:note>\n  </item>\n  <item id=\"2\">\n    <name>nut</name>\n    <count>4</count>\n    <description><![CDATA[Small <metal> part]]></description>\n  </item>\n  <?process mode=\"fast\"?>\n  <empty/>\n</inventory>\n",
+      "edits": [
+        {
+          "find": "    <description><![CDATA[Small <metal> part]]></description>\n  </item>\n",
+          "replace": "    <description><![CDATA[Small <metal> part]]></description>\n  </item>\n  <item id=\"3\">\n    <name>washer</name>\n    <count>0</count>\n  </item>\n"
+        },
+        {
+          "find": "<count>4</count>",
+          "replace": "<count>40</count>"
+        },
+        {
+          "find": "  <?process mode=\"fast\"?>\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "doctypedecl",
+            "Comment",
+            "element",
+            "Attribute",
+            "EntityRef",
+            "CDSect",
+            "EmptyElemTag"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "xml-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "xml-B01"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<config>\n  <server host=\"localhost\" port=\"8080\"/>\n  <limits>\n    <rps>100</rps>\n    <burst>20</burst>\n  </limits>\n  <owners>\n    <owner>ops</owner>\n    <owner>dev</owner>\n  </owners>\n</config>\n",
+      "edits": [
+        {
+          "find": "<limits>",
+          "replace": "<limits"
+        },
+        {
+          "find": "<limits",
+          "replace": "<limits>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "css",
+  "cases": [
+    {
+      "id": "css-feature-r1",
+      "kind": "feature",
+      "features": [
+        "css-B01",
+        "css-M01",
+        "css-M03",
+        "css-M04",
+        "css-M05",
+        "css-M06",
+        "css-M07",
+        "css-M08",
+        "css-M09",
+        "css-M11",
+        "css-M14",
+        "css-M27"
+      ],
+      "source_utf8": "@charset \"utf-8\";\n@import url(\"base.css\") screen;\n@namespace svg url(\"http://www.w3.org/2000/svg\");\n\n:root {\n  --accent: #3366ff;\n  --gap: calc(1rem + 2px);\n}\n\n/* Layout */\nbody > main .card:hover,\n#top::before {\n  display: flex;\n  margin: 0 auto !important;\n  color: var(--accent, blue);\n  background: linear-gradient(to right, rgb(0 0 0 / 50%), transparent);\n}\n\na[href^=\"https\"]:not(.internal) ~ span + em {\n  font: italic bold 12px/1.5 \"Helvetica Neue\", sans-serif;\n}\n\n@media screen and (min-width: 600px) {\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n}\n\n@supports (display: grid) {\n  .grid { gap: var(--gap); }\n}\n\n@keyframes fade {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n\n@font-face {\n  font-family: \"Inter\";\n  src: url(\"inter.woff2\") format(\"woff2\");\n}\n",
+      "edits": [
+        {
+          "find": "  font: italic bold 12px/1.5 \"Helvetica Neue\", sans-serif;\n}\n",
+          "replace": "  font: italic bold 12px/1.5 \"Helvetica Neue\", sans-serif;\n}\n\n.hidden { display: none; }\n"
+        },
+        {
+          "find": "min-width: 600px",
+          "replace": "min-width: 768px"
+        },
+        {
+          "find": "@supports (display: grid) {\n  .grid { gap: var(--gap); }\n}\n\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "rule_set",
+            "declaration",
+            "pseudo_class_selector",
+            "attribute_selector",
+            "call_expression",
+            "media_statement",
+            "keyframes_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "css-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "css-B01",
+        "css-M01"
+      ],
+      "source_utf8": "body {\n  margin: 0;\n  color: #333;\n}\n\n.card {\n  padding: 1rem;\n  border: 1px solid #ccc;\n}\n\n.card .title {\n  font-weight: bold;\n}\n",
+      "edits": [
+        {
+          "find": ".card .title {",
+          "replace": ".card .title"
+        },
+        {
+          "find": ".card .title",
+          "replace": ".card .title {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

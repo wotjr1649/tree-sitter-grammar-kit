@@ -1,0 +1,103 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "html",
+  "cases": [
+    {
+      "id": "html-feature-r1",
+      "kind": "feature",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Inventory &amp; Stock</title>\n  <style>\n    body { font-family: sans-serif; }\n  </style>\n</head>\n<body>\n  <!-- Main content -->\n  <header class=\"top\" id=\"top\">\n    <h1>Inventory</h1>\n  </header>\n  <main>\n    <table>\n      <tr><th>Name</th><th>Count</th></tr>\n      <tr><td>bolt</td><td>120</td></tr>\n      <tr><td>nut</td><td>4</td></tr>\n    </table>\n    <form action=\"/add\" method=\"post\">\n      <input type=\"text\" name=\"item\" required>\n      <br/>\n      <button type=\"submit\" disabled>Add</button>\n    </form>\n  </main>\n  <script>\n    const rows = document.querySelectorAll(\"tr\");\n    console.log(rows.length > 2 ? \"many\" : \"few\");\n  </script>\n</body>\n</html>\n",
+      "edits": [
+        {
+          "find": "      <tr><td>nut</td><td>4</td></tr>\n",
+          "replace": "      <tr><td>nut</td><td>4</td></tr>\n      <tr><td>washer</td><td>0</td></tr>\n"
+        },
+        {
+          "find": "<button type=\"submit\" disabled>Add</button>",
+          "replace": "<button type=\"submit\">Add item</button>"
+        },
+        {
+          "find": "  <!-- Main content -->\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctype",
+            "element",
+            "attribute",
+            "quoted_attribute_value",
+            "comment",
+            "entity",
+            "style_element",
+            "script_element"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "html-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "html-B01"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Report</title>\n</head>\n<body>\n  <div class=\"card\">\n    <p>Total: <strong>124</strong></p>\n  </div>\n</body>\n</html>\n",
+      "edits": [
+        {
+          "find": "<div class=\"card\">",
+          "replace": "<div class=\"card\""
+        },
+        {
+          "find": "<div class=\"card\"",
+          "replace": "<div class=\"card\">"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

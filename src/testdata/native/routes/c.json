@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "c",
+  "cases": [
+    {
+      "id": "c-feature-r1",
+      "kind": "feature",
+      "features": [
+        "c-B01",
+        "c-B02"
+      ],
+      "source_utf8": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\n#define MAX_ITEMS 16\n#define SQUARE(x) ((x) * (x))\n\ntypedef struct {\n    char name[32];\n    int count;\n} Item;\n\nenum level { LEVEL_LOW, LEVEL_HIGH };\n\nstatic Item items[MAX_ITEMS];\nstatic size_t item_count = 0;\n\n/* Adds an item; returns 0 on success. */\nint add_item(const char *name, int count)\n{\n    if (item_count >= MAX_ITEMS) {\n        return -1;\n    }\n    Item *it = &items[item_count++];\n    strncpy(it->name, name, sizeof it->name - 1);\n    it->count = count;\n    return 0;\n}\n\nstatic enum level classify(const Item *it)\n{\n    switch (it->count) {\n    case 0:\n        return LEVEL_LOW;\n    default:\n        return it->count > 100 ? LEVEL_HIGH : LEVEL_LOW;\n    }\n}\n\nint main(void)\n{\n    add_item(\"bolt\", 120);\n    add_item(\"nut\", 4);\n    long total = 0;\n    for (size_t i = 0; i < item_count; i++) {\n        total += SQUARE(items[i].count);\n        printf(\"%s: %d\\n\", items[i].name, (int)classify(&items[i]));\n    }\n#ifdef VERBOSE\n    printf(\"total=%ld\\n\", total);\n#endif\n    return total > 0 ? EXIT_SUCCESS : EXIT_FAILURE;\n}\n",
+      "edits": [
+        {
+          "find": "enum level { LEVEL_LOW, LEVEL_HIGH };\n",
+          "replace": "enum level { LEVEL_LOW, LEVEL_HIGH };\n\nstatic const char *const version = \"1.0\";\n"
+        },
+        {
+          "find": "add_item(\"nut\", 4);",
+          "replace": "add_item(\"nut\", 40);"
+        },
+        {
+          "find": "#ifdef VERBOSE\n    printf(\"total=%ld\\n\", total);\n#endif\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_include",
+            "preproc_function_def",
+            "type_definition",
+            "struct_specifier",
+            "function_definition",
+            "switch_statement",
+            "for_statement",
+            "preproc_ifdef"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "c-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "#include <stdio.h>\n\nstatic int square(int x)\n{\n    return x * x;\n}\n\nint main(void)\n{\n    for (int i = 0; i < 3; i++) {\n        printf(\"%d\\n\", square(i));\n    }\n    return 0;\n}\n",
+      "edits": [
+        {
+          "find": "square(i));",
+          "replace": "square(i);"
+        },
+        {
+          "find": "square(i);",
+          "replace": "square(i));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

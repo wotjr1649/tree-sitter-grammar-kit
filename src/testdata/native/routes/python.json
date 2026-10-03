@@ -1,0 +1,107 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "python",
+  "cases": [
+    {
+      "id": "python-feature-r1",
+      "kind": "feature",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V38",
+        "python-V310",
+        "python-V312"
+      ],
+      "source_utf8": "# -*- coding: utf-8 -*-\n\"\"\"Inventory helpers.\"\"\"\nfrom __future__ import annotations\n\nimport asyncio\nfrom dataclasses import dataclass, field\n\n\n@dataclass\nclass Item:\n    name: str\n    count: int = 0\n    tags: list[str] = field(default_factory=list)\n\n    def label(self, /, upper: bool = False) -> str:\n        text = f\"{self.name}: {self.count!r}\"\n        return text.upper() if upper else text\n\n\ntype Pair[T] = tuple[T, T]\n\n\ndef classify(item: Item) -> str:\n    match item:\n        case Item(count=0):\n            return \"empty\"\n        case Item(name=str(n), count=c) if c > 100:\n            return f\"bulk {n}\"\n        case _:\n            return \"normal\"\n\n\nasync def total(items: list[Item]) -> int:\n    await asyncio.sleep(0)\n    if (n := len(items)) == 0:\n        return 0\n    squares = [i.count ** 2 for i in items if i.count > 0]\n    try:\n        return sum(squares) // n\n    except (ZeroDivisionError, ValueError) as exc:\n        raise RuntimeError(\"bad\") from exc\n    finally:\n        pass\n",
+      "edits": [
+        {
+          "find": "    tags: list[str] = field(default_factory=list)\n",
+          "replace": "    tags: list[str] = field(default_factory=list)\n    price: float = 0.0\n"
+        },
+        {
+          "find": "return \"empty\"",
+          "replace": "return \"none\""
+        },
+        {
+          "find": "    finally:\n        pass\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_from_statement",
+            "decorated_definition",
+            "class_definition",
+            "function_definition",
+            "match_statement",
+            "case_clause",
+            "named_expression",
+            "list_comprehension"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "python-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "python-B01",
+        "python-B03"
+      ],
+      "source_utf8": "import math\n\n\ndef area(radius: float) -> float:\n    return math.pi * radius ** 2\n\n\ndef describe(values: list[float]) -> str:\n    parts = []\n    for v in values:\n        parts.append(f\"{v:.2f}\")\n    return \", \".join(parts)\n",
+      "edits": [
+        {
+          "find": "for v in values:",
+          "replace": "for v in values"
+        },
+        {
+          "find": "for v in values",
+          "replace": "for v in values:"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

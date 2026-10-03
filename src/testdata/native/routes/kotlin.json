@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "kotlin",
+  "cases": [
+    {
+      "id": "kotlin-feature-r1",
+      "kind": "feature",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "source_utf8": "package com.example.inventory\n\nimport kotlin.math.max\n\n/** An item in stock. */\ndata class Item(val name: String, val count: Int = 0)\n\nenum class Level { LOW, HIGH }\n\ninterface Repository<T> {\n    fun add(item: T)\n    fun all(): List<T>\n}\n\nclass InMemoryRepository : Repository<Item> {\n    private val items = mutableListOf<Item>()\n\n    override fun add(item: Item) {\n        require(item.count >= 0) { \"negative count\" }\n        items.add(item)\n    }\n\n    override fun all(): List<Item> = items.toList()\n\n    val total: Int\n        get() = items.sumOf { it.count }\n}\n\nfun level(item: Item?): Level {\n    val count = item?.count ?: 0\n    return when {\n        count > 100 -> Level.HIGH\n        else -> Level.LOW\n    }\n}\n\nfun main() {\n    val repo = InMemoryRepository()\n    for (i in 1..3) {\n        repo.add(Item(\"item$i\", i * 10))\n    }\n    // Print a summary line.\n    println(\"total=${repo.total}, best=${max(repo.total, 1)}\")\n}\n",
+      "edits": [
+        {
+          "find": "enum class Level { LOW, HIGH }\n",
+          "replace": "enum class Level { LOW, HIGH }\n\ntypealias Inventory = List<Item>\n"
+        },
+        {
+          "find": "count > 100 -> Level.HIGH",
+          "replace": "count >= 100 -> Level.HIGH"
+        },
+        {
+          "find": "    // Print a summary line.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_header",
+            "import",
+            "class_declaration",
+            "function_declaration",
+            "property_declaration",
+            "when_expression",
+            "lambda_literal",
+            "string_literal"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "kotlin-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "kotlin-B02"
+      ],
+      "source_utf8": "import kotlin.math.abs\n\nfun distance(a: Int, b: Int): Int {\n    return abs(a - b)\n}\n\nfun main() {\n    val values = listOf(3, 8, 1)\n    for (v in values) {\n        println(distance(v, 5))\n    }\n}\n",
+      "edits": [
+        {
+          "find": "distance(v, 5))",
+          "replace": "distance(v, 5)"
+        },
+        {
+          "find": "distance(v, 5)",
+          "replace": "distance(v, 5))"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

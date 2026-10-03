@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "php",
+  "cases": [
+    {
+      "id": "php-feature-r1",
+      "kind": "feature",
+      "features": [
+        "php-B01",
+        "php-V56",
+        "php-V72",
+        "php-V80"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<html>\n<body>\n<h1>Inventory</h1>\n<?php\nenum Level: string\n{\n    case Low = 'low';\n    case High = 'high';\n}\n\nfinal class Item\n{\n    public function __construct(\n        public readonly string $name,\n        private int $count = 0,\n    ) {}\n\n    public function count(): int\n    {\n        return $this->count;\n    }\n}\n\nfunction level(?Item $item): Level\n{\n    $count = $item?->count() ?? 0;\n    return match (true) {\n        $count > 100 => Level::High,\n        default => Level::Low,\n    };\n}\n\n$items = [new Item('bolt', 120), new Item(name: 'nut', count: 4)];\n$total = array_sum(array_map(fn(Item $i): int => $i->count(), $items));\nforeach ($items as $i => $item) {\n    // Print one row per item.\n    echo \"<p>{$item->name}: \" . level($item)->value . \"</p>\\n\";\n}\n?>\n<footer>Total: <?= $total ?></footer>\n</body>\n</html>\n",
+      "edits": [
+        {
+          "find": "\nfinal class Item\n",
+          "replace": "\nconst MAX_ITEMS = 64;\n\nfinal class Item\n"
+        },
+        {
+          "find": "$count > 100 => Level::High,",
+          "replace": "$count >= 100 => Level::High,"
+        },
+        {
+          "find": "    // Print one row per item.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "text",
+            "php_tag",
+            "enum_declaration",
+            "class_declaration",
+            "function_definition",
+            "match_expression",
+            "arrow_function",
+            "foreach_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "php-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "php-B01"
+      ],
+      "source_utf8": "<p>Report</p>\n<?php\nfunction square(int $x): int\n{\n    return $x * $x;\n}\n\n$values = [1, 2, 3];\nforeach ($values as $v) {\n    echo square($v), \"\\n\";\n}\n?>\n<p>Done</p>\n",
+      "edits": [
+        {
+          "find": "square($v),",
+          "replace": "square($v,"
+        },
+        {
+          "find": "square($v,",
+          "replace": "square($v),"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

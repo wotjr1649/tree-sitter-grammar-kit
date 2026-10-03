@@ -1,0 +1,80 @@
+[
+  {
+    "type": "heredoc",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "heredoc_end",
+          "named": true
+        },
+        {
+          "type": "heredoc_line",
+          "named": true
+        },
+        {
+          "type": "heredoc_start",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "heredoc",
+          "named": true
+        },
+        {
+          "type": "statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "word",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": ";",
+    "named": false
+  },
+  {
+    "type": "heredoc_end",
+    "named": true
+  },
+  {
+    "type": "heredoc_line",
+    "named": true
+  },
+  {
+    "type": "heredoc_start",
+    "named": true
+  },
+  {
+    "type": "word",
+    "named": true
+  }
+]

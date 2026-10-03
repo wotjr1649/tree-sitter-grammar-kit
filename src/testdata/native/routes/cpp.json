@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "cpp",
+  "cases": [
+    {
+      "id": "cpp-feature-r1",
+      "kind": "feature",
+      "features": [
+        "cpp-B01",
+        "cpp-V14",
+        "cpp-V17",
+        "cpp-V20"
+      ],
+      "source_utf8": "#include <algorithm>\n#include <iostream>\n#include <map>\n#include <memory>\n#include <string>\n#include <vector>\n\nnamespace inventory {\n\nstruct Item {\n    std::string name;\n    int count = 0;\n};\n\ntemplate <typename T>\nconcept Countable = requires(T t) { t.count; };\n\nclass Store {\npublic:\n    explicit Store(std::size_t limit) : limit_(limit) {}\n    virtual ~Store() = default;\n\n    bool add(Item item) {\n        if (items_.size() >= limit_) {\n            return false;\n        }\n        items_.push_back(std::move(item));\n        return true;\n    }\n\n    template <Countable T>\n    static int weight(const T& value) noexcept { return value.count * 2; }\n\n    [[nodiscard]] int total() const {\n        int sum = 0;\n        for (const auto& [name, count] : index()) {\n            sum += count;\n        }\n        return sum;\n    }\n\nprivate:\n    std::map<std::string, int> index() const {\n        std::map<std::string, int> out;\n        for (const auto& it : items_) out[it.name] += it.count;\n        return out;\n    }\n\n    std::size_t limit_;\n    std::vector<Item> items_;\n};\n\n}  // namespace inventory\n\nint main() {\n    auto store = std::make_unique<inventory::Store>(8);\n    store->add({\"bolt\", 3});\n    auto doubled = [factor = 2](int x) { return x * factor; };\n    std::cout << doubled(store->total()) << '\\n';\n    return 0;\n}\n",
+      "edits": [
+        {
+          "find": "}  // namespace inventory\n",
+          "replace": "}  // namespace inventory\n\nstatic constexpr int kVersion = 2;\n"
+        },
+        {
+          "find": "store->add({\"bolt\", 3});",
+          "replace": "store->add({\"nut\", 5});"
+        },
+        {
+          "find": "    virtual ~Store() = default;\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_definition",
+            "struct_specifier",
+            "class_specifier",
+            "template_declaration",
+            "concept_definition",
+            "for_range_loop",
+            "lambda_expression",
+            "structured_binding_declarator"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "cpp-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "cpp-B01"
+      ],
+      "source_utf8": "#include <vector>\n\nint sum(const std::vector<int>& values) {\n    int total = 0;\n    for (int v : values) {\n        total += v;\n    }\n    return total;\n}\n\nint main() {\n    std::vector<int> data{1, 2, 3};\n    return sum(data) == 6 ? 0 : 1;\n}\n",
+      "edits": [
+        {
+          "find": "sum(data) ==",
+          "replace": "sum(data =="
+        },
+        {
+          "find": "sum(data ==",
+          "replace": "sum(data) =="
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

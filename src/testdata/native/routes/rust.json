@@ -1,0 +1,103 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "rust",
+  "cases": [
+    {
+      "id": "rust-feature-r1",
+      "kind": "feature",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "source_utf8": "use std::collections::HashMap;\nuse std::fmt;\n\n/// An item in stock.\n#[derive(Debug, Clone, PartialEq)]\npub struct Item {\n    pub name: String,\n    pub count: u32,\n}\n\n#[derive(Debug)]\npub enum Event {\n    Added(Item),\n    Removed { name: String },\n}\n\npub trait Store {\n    fn add(&mut self, item: Item) -> Result<(), String>;\n    fn total(&self) -> u64;\n}\n\n#[derive(Default)]\npub struct MemoryStore<'a> {\n    items: HashMap<String, Item>,\n    label: &'a str,\n}\n\nimpl<'a> Store for MemoryStore<'a> {\n    fn add(&mut self, item: Item) -> Result<(), String> {\n        if item.name.is_empty() {\n            return Err(format!(\"empty name in {}\", self.label));\n        }\n        self.items.insert(item.name.clone(), item);\n        Ok(())\n    }\n\n    fn total(&self) -> u64 {\n        self.items.values().map(|i| i.count as u64).sum()\n    }\n}\n\nimpl fmt::Display for Event {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            Event::Added(item) if item.count > 100 => write!(f, \"bulk {}\", item.name),\n            Event::Added(item) => write!(f, \"added {}\", item.name),\n            Event::Removed { name } => write!(f, \"removed {name}\"),\n        }\n    }\n}\n\nmacro_rules! square {\n    ($x:expr) => {\n        $x * $x\n    };\n}\n\nfn main() {\n    let mut store = MemoryStore { label: \"main\", ..Default::default() };\n    for n in 1..=3 {\n        let _ = store.add(Item { name: format!(\"item{n}\"), count: square!(n) });\n    }\n    let Some(first) = store.items.values().next() else {\n        return;\n    };\n    println!(\"{} {}\", first.name, store.total());\n}\n",
+      "edits": [
+        {
+          "find": "use std::fmt;\n",
+          "replace": "use std::fmt;\n\nconst MAX_ITEMS: usize = 64;\n"
+        },
+        {
+          "find": "item.count > 100",
+          "replace": "item.count > 500"
+        },
+        {
+          "find": "/// An item in stock.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "use_declaration",
+            "struct_item",
+            "enum_item",
+            "trait_item",
+            "impl_item",
+            "match_expression",
+            "macro_definition",
+            "closure_expression"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "rust-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "rust-B02"
+      ],
+      "source_utf8": "use std::cmp::max;\n\nfn largest(values: &[i32]) -> i32 {\n    let mut best = i32::MIN;\n    for v in values {\n        best = max(best, *v);\n    }\n    best\n}\n\nfn main() {\n    let data = vec![4, 9, 2];\n    println!(\"{}\", largest(&data));\n}\n",
+      "edits": [
+        {
+          "find": "largest(&data));",
+          "replace": "largest(&data);"
+        },
+        {
+          "find": "largest(&data);",
+          "replace": "largest(&data));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

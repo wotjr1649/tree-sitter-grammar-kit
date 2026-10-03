@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "r",
+  "cases": [
+    {
+      "id": "r-feature-r1",
+      "kind": "feature",
+      "features": [
+        "r-B01",
+        "r-B02",
+        "r-V40"
+      ],
+      "source_utf8": "# Inventory helpers\nlibrary(stats)\n\nitems <- data.frame(\n  name = c(\"bolt\", \"nut\", \"washer\"),\n  count = c(120L, 4L, 0L),\n  stringsAsFactors = FALSE\n)\n\nlevel <- function(count, threshold = 100) {\n  if (is.na(count)) {\n    return(NA_character_)\n  } else if (count > threshold) {\n    \"bulk\"\n  } else {\n    \"normal\"\n  }\n}\n\nsummarise <- function(df, ...) {\n  total <- 0\n  for (i in seq_len(nrow(df))) {\n    total <- total + df$count[[i]]\n  }\n  list(total = total, levels = vapply(df$count, level, character(1), ...))\n}\n\nsquares <- sapply(items$count, \\(x) x^2)\nresult <- items |> subset(count > 0) |> summarise()\nwhile (FALSE) next\nrepeat {\n  break\n}\nprint(result[[\"total\"]])\n",
+      "edits": [
+        {
+          "find": "  stringsAsFactors = FALSE\n)\n",
+          "replace": "  stringsAsFactors = FALSE\n)\n\nthreshold <- 100L\n"
+        },
+        {
+          "find": "count > threshold",
+          "replace": "count >= threshold"
+        },
+        {
+          "find": "while (FALSE) next\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "call",
+            "function_definition",
+            "if_statement",
+            "for_statement",
+            "braced_expression",
+            "extract_operator",
+            "subset2"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "r-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "r-B01",
+        "r-B02"
+      ],
+      "source_utf8": "library(utils)\n\nsquare <- function(x) {\n  x * x\n}\n\nvalues <- c(1, 2, 3)\nfor (v in values) {\n  print(square(v))\n}\n",
+      "edits": [
+        {
+          "find": "square(v))",
+          "replace": "square(v)"
+        },
+        {
+          "find": "square(v)",
+          "replace": "square(v))"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

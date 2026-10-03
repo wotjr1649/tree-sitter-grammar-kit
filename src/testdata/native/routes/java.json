@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "java",
+  "cases": [
+    {
+      "id": "java-feature-r1",
+      "kind": "feature",
+      "features": [
+        "java-B01",
+        "java-V9",
+        "java-V14",
+        "java-V21"
+      ],
+      "source_utf8": "package com.example.inventory;\n\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.function.Predicate;\n\n/** A simple inventory. */\npublic class Inventory {\n    public record Item(String name, int count) {}\n\n    public sealed interface Event permits Added, Removed {}\n    public record Added(Item item) implements Event {}\n    public record Removed(String name) implements Event {}\n\n    private static final String HELP = \"\"\"\n        Inventory help\n        \"\"\";\n\n    private final List<Item> items = new ArrayList<>();\n\n    public void add(Item item) {\n        if (item == null) {\n            throw new IllegalArgumentException(\"item\");\n        }\n        items.add(item);\n    }\n\n    public List<Item> filter(Predicate<Item> test) {\n        var result = new ArrayList<Item>();\n        for (Item item : items) {\n            if (test.test(item)) {\n                result.add(item);\n            }\n        }\n        return result;\n    }\n\n    public static String describe(Event event) {\n        return switch (event) {\n            case Added a when a.item().count() > 100 -> \"bulk \" + a.item().name();\n            case Added a -> \"added \" + a.item().name();\n            case Removed r -> \"removed \" + r.name();\n        };\n    }\n\n    public long total() {\n        // Sum of all counts.\n        return items.stream().mapToLong(Item::count).sum();\n    }\n}\n",
+      "edits": [
+        {
+          "find": "    private final List<Item> items = new ArrayList<>();\n",
+          "replace": "    private final List<Item> items = new ArrayList<>();\n    private int version = 0;\n"
+        },
+        {
+          "find": "\"bulk \"",
+          "replace": "\"large \""
+        },
+        {
+          "find": "\n    public long total() {\n        // Sum of all counts.\n        return items.stream().mapToLong(Item::count).sum();\n    }\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_declaration",
+            "import_declaration",
+            "class_declaration",
+            "record_declaration",
+            "method_declaration",
+            "enhanced_for_statement",
+            "switch_expression",
+            "method_reference"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "java-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "java-B01"
+      ],
+      "source_utf8": "import java.util.List;\n\npublic class Stats {\n    public static int max(List<Integer> values) {\n        int best = Integer.MIN_VALUE;\n        for (int v : values) {\n            if (v > best) {\n                best = v;\n            }\n        }\n        return best;\n    }\n}\n",
+      "edits": [
+        {
+          "find": "if (v > best) {",
+          "replace": "if (v > best {"
+        },
+        {
+          "find": "if (v > best {",
+          "replace": "if (v > best) {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

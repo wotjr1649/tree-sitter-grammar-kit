@@ -1,0 +1,107 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "javascript",
+  "cases": [
+    {
+      "id": "javascript-feature-r1",
+      "kind": "feature",
+      "features": [
+        "javascript-B01",
+        "javascript-V15",
+        "javascript-V16",
+        "javascript-V20",
+        "javascript-V22",
+        "javascript-B02"
+      ],
+      "source_utf8": "#!/usr/bin/env node\n'use strict';\n\nimport { readFile } from 'node:fs/promises';\nimport path from 'node:path';\n\nconst DEFAULTS = { retries: 3, verbose: false };\n\n/**\n * Loads a config file and merges defaults.\n */\nexport async function loadConfig(file, options = {}) {\n  const text = await readFile(path.resolve(file), 'utf8');\n  const { retries = DEFAULTS.retries, ...rest } = JSON.parse(text);\n  return { ...DEFAULTS, ...rest, retries };\n}\n\nclass Cache {\n  #store = new Map();\n  static instances = 0;\n\n  constructor(limit = 10) {\n    this.limit = limit;\n    Cache.instances += 1;\n  }\n\n  get(key) {\n    return this.#store.get(key) ?? null;\n  }\n\n  set(key, value) {\n    if (this.#store.size >= this.limit) {\n      const [first] = this.#store.keys();\n      this.#store.delete(first);\n    }\n    this.#store.set(key, value);\n    return this;\n  }\n}\n\nexport const cache = new Cache(2 ** 4);\n\nfor (const [k, v] of Object.entries(DEFAULTS)) {\n  console.log(`${k} -> ${v}`, /^\\d+$/u.test(String(v)));\n}\n\nexport default cache;\n",
+      "edits": [
+        {
+          "find": "const DEFAULTS = { retries: 3, verbose: false };\n",
+          "replace": "const DEFAULTS = { retries: 3, verbose: false };\nconst VERSION = 1n;\n"
+        },
+        {
+          "find": "this.#store.get(key) ?? null",
+          "replace": "this.#store.get(key)?.value ?? null"
+        },
+        {
+          "find": "export default cache;\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "export_statement",
+            "function_declaration",
+            "class_declaration",
+            "field_definition",
+            "private_property_identifier",
+            "for_in_statement",
+            "template_string"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "javascript-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "javascript-B01",
+        "javascript-V15"
+      ],
+      "source_utf8": "const items = [1, 2, 3];\n\nfunction sum(list) {\n  let total = 0;\n  for (const n of list) {\n    total += n;\n  }\n  return total;\n}\n\nconsole.log(sum(items));\n",
+      "edits": [
+        {
+          "find": "sum(items));",
+          "replace": "sum(items);"
+        },
+        {
+          "find": "sum(items);",
+          "replace": "sum(items));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

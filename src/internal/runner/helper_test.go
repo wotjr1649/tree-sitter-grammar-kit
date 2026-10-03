@@ -153,6 +153,10 @@ func frameHelper(arg string) int {
 	for i := 0; ; i++ {
 		var hdr [4]byte
 		if _, err := io.ReadFull(in, hdr[:]); err != nil {
+			if action == "tail" { // stray bytes after the last response
+				out.WriteString("junk")
+				out.Flush()
+			}
 			return 0
 		}
 		req := make([]byte, binary.BigEndian.Uint32(hdr[:]))

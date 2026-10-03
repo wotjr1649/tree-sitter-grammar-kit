@@ -1,0 +1,107 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "tsql",
+  "cases": [
+    {
+      "id": "tsql-feature-r1",
+      "kind": "feature",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04",
+        "tsql-B05",
+        "tsql-V16"
+      ],
+      "source_utf8": "SET NOCOUNT ON;\nGO\n\nCREATE TABLE dbo.Items (\n    Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,\n    Name NVARCHAR(100) NOT NULL,\n    Quantity INT NOT NULL DEFAULT 0,\n    Price DECIMAL(10, 2) NULL\n);\nGO\n\nCREATE OR ALTER PROCEDURE dbo.AddItem\n    @Name NVARCHAR(100),\n    @Quantity INT = 0\nAS\nBEGIN\n    DECLARE @Existing INT;\n    SELECT @Existing = Id FROM dbo.Items WHERE Name = @Name;\n    IF @Existing IS NULL\n    BEGIN\n        INSERT INTO dbo.Items (Name, Quantity) VALUES (@Name, @Quantity);\n    END\n    ELSE\n    BEGIN\n        UPDATE dbo.Items SET Quantity = Quantity + @Quantity WHERE Id = @Existing;\n    END\nEND\nGO\n\n-- Report items with their stock level.\nWITH Levels AS (\n    SELECT Name, Quantity,\n        CASE WHEN Quantity > 100 THEN N'bulk' ELSE N'normal' END AS StockLevel\n    FROM dbo.Items\n)\nSELECT TOP (10) l.Name, l.StockLevel, COUNT(*) OVER (PARTITION BY l.StockLevel) AS LevelCount\nFROM Levels AS l\nWHERE l.Quantity >= 0\nORDER BY l.Name;\nGO\n\nBEGIN TRY\n    BEGIN TRANSACTION;\n    EXEC dbo.AddItem @Name = N'bolt', @Quantity = 120;\n    COMMIT TRANSACTION;\nEND TRY\nBEGIN CATCH\n    ROLLBACK TRANSACTION;\n    THROW;\nEND CATCH\nGO\n",
+      "edits": [
+        {
+          "find": "    Price DECIMAL(10, 2) NULL\n);\nGO\n",
+          "replace": "    Price DECIMAL(10, 2) NULL\n);\nGO\n\nCREATE INDEX IX_Items_Name ON dbo.Items (Name);\nGO\n"
+        },
+        {
+          "find": "Quantity > 100",
+          "replace": "Quantity > 500"
+        },
+        {
+          "find": "-- Report items with their stock level.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "go_statement",
+            "create_table",
+            "column_definition",
+            "create_procedure",
+            "insert",
+            "update",
+            "cte",
+            "try_catch_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "tsql-B02",
+        "tsql-B05"
+      ],
+      "source_utf8": "CREATE TABLE dbo.Orders (\n    Id INT NOT NULL PRIMARY KEY,\n    Total DECIMAL(10, 2) NOT NULL\n);\nGO\n\nSELECT Id, Total\nFROM dbo.Orders\nWHERE Total > (SELECT AVG(Total) FROM dbo.Orders);\nGO\n",
+      "edits": [
+        {
+          "find": "FROM dbo.Orders);",
+          "replace": "FROM dbo.Orders;"
+        },
+        {
+          "find": "FROM dbo.Orders;",
+          "replace": "FROM dbo.Orders);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

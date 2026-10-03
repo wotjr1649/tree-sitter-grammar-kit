@@ -99,3 +99,61 @@ S05 query capability는 아직 unsupported다. S06은 같은 driver/protocol에 
 query predicate/directive를 host layer가 평가해야 하면 지원 subset을 명시한다. structural match를 완전히 평가된 capture로 바꾸어 말하지 않는다. capture의 node mapping에 `(type,start,end)` 유일성을 가정하지 않으며 duplicate/tie 순서를 보존한다. 반복·edit/fresh·old/candidate·cross-OS 비교마다 목적과 projection을 사전 고정하고 mismatch 후 normalization을 추가하지 않는다.
 
 참고한 go-treesitter driver는 ordered Parent/Named/Extra/Missing/Error/range를 제공하지만 node별 has_error 등 kit 필드를 그대로 충족한다고 가정하지 않는다. 원 record를 adapter에서 변환할 때 누락 정보와 consumer 특유 root 가정을 드러낸다. [고정 출처](../provenance/upstream-sources.md)
+
+## S05 구현 — `tsgk-native/r1` driver protocol과 incremental 비교
+
+S05가 구현 전에 고정한 driver protocol·edit·encoding·한도·상태·비교 projection이다. 위 절의 "process당 하나의 JSON request/response"는 아래 frame 하나로 구체화한다. driver source는 `src/drivers/native-c/`, 실행은 S04 runner, 비교와 판정은 Go(`src/kit`의 tree 비교·edit 검사, `src/internal/native`의 build·실행)다. query는 S06까지 지원하지 않는다(요청에 query 필드가 없고 응답 `producer.query`가 `UNSUPPORTED`).
+
+**Frame.** stdin·stdout 모두 4-byte big-endian 길이 + payload의 frame이다. driver의 유일한 인자는 `single` 또는 `batch`다. `single`은 request frame 하나를 읽은 뒤 stdin이 EOF여야 하고(`FRAME_EXTRA`), response frame 하나를 쓰고 끝난다. `batch`(비공개 corpus 전용)는 frame 경계의 EOF까지 request를 하나씩 읽고 순서대로 response를 하나씩 쓴다. 머리 4 bytes가 모자라거나 payload가 선언 길이보다 짧으면 `FRAME_TRUNCATED`, 선언 길이가 50331648 bytes를 넘으면 payload를 읽기 전에 `FRAME_TOO_LARGE`다. response payload는 요청의 `output_bytes` 이하다. Go는 single에서 정확히 한 response와 그 뒤 stdout 0 bytes를, batch에서 request 수만큼의 response와 그 뒤 0 bytes를 요구한다. 남은 bytes는 `RESPONSE_TRAILING_BYTES`이고 성공이 아니다. stderr는 상한 있는 진단일 뿐 protocol이 아니다.
+
+**Request.** payload는 아래 key 순서와 공백 없는 canonical JSON이며 driver는 이 형태만 받는다(그 밖은 `REQUEST_MALFORMED`). 문자열은 escape 없는 출력 가능 ASCII(`"`·`\` 제외)이고 정수는 선행 0 없는 10진수다.
+
+```text
+{"protocol":"tsgk-native/r1","id":ID,"encoding":ENC,"output":OUT,
+ "limits":{"input_bytes":N,"nodes":N,"full_nodes":N,"depth":N,"output_bytes":N,"parse_ms":N,"memory_bytes":N,"errors":N,"partial_nodes":N},
+ "declarations":[{"fact":S,"node":S,"name":S},...],"points":[{"id":S,"byte":N},...],
+ "ranges":[[{"start_byte":N,"end_byte":N,"start_point":[R,C],"end_point":[R,C]},...],...],
+ "source":B64,"edits":[{"start_byte":N,"old_end_byte":N,"new_end_byte":N,"old":B64,"new":B64},...]}
+```
+
+* `id`는 1~128자의 `[A-Za-z0-9._:-]`, `ENC`는 `UTF-8`·`UTF-16LE`·`UTF-16BE`·`CP949`, `OUT`은 `tree`(전체 tree, edit 허용), `auto`(아래 full tree gate), `record`(비공개 corpus 보존 레코드)다. edit는 `tree`에서만, 최대 4개다(`EDITS_NOT_ALLOWED`, `EDIT_COUNT_LIMIT`).
+* driver 고정 상한: `input_bytes` ≤ 33554432, `output_bytes` ≤ 16777216, `nodes` ≤ 25000000, `full_nodes` ≤ `nodes`, `depth` ≤ 100000, `parse_ms` ≤ 60000, `memory_bytes` ≤ 4294967296, `errors` ≤ 1000, `partial_nodes` ≤ 1000, `declarations` ≤ 64개(각 문자열 1~128 bytes), `points` ≤ 64개. 0이거나 넘으면 `LIMIT_INVALID`다. base64는 패딩 있는 표준 alphabet만 받는다(`BASE64_INVALID`). 길이가 `input_bytes`를 넘으면 `INPUT_TOO_LARGE`다.
+* 선언 `name` locator는 [fact mapping](../../src/contracts/fact-mapping.json)의 `node`, `field:F`, `child:T`, `children:T`를 `/`로 이은 경로다. `field:F`는 그 field의 첫 child, `child:T`는 type T인 첫 named child, `children:T`는 그런 named child 전부이며 경로 중 `children:`이 이름을 여러 개 내면 이름마다 item 하나다(`LOCATOR_INVALID`). `points`의 byte를 덮는 node가 없으면 그 지점의 `nodes`는 빈 배열이다.
+* `ranges`는 비어 있거나(전체 입력) step마다 하나씩(edit 수 + 1) 있는 included range 목록이다. 각 목록은 비어 있지 않고 최대 16개이며, 그 step source 안에서 겹치지 않게 오름차순이고 point는 driver 계산과 같아야 한다(`RANGES_INVALID`). driver는 parse마다 그 step의 목록을 parser A·B에 `ts_parser_set_included_ranges`로 설정하므로 결과 tree는 원본 좌표다. `.svc` inline C#(아래)만 이 필드를 쓴다.
+
+**Encoding과 edit 경계.** source는 변환하지 않은 원본 bytes다. `UTF-8`은 어떤 bytes(NUL·BOM·잘못된 sequence 포함)도 받고, `UTF-16LE/BE`는 짝수 길이·짝 맞는 surrogate·U+0000 없음, `CP949`는 ASCII 또는 lead 0x81–0xFE + trail 0x41–0xFE이면서 WHATWG `index-euc-kr`에 code point가 있는 쌍만 받는다(`SOURCE_ENCODING_INVALID`). `CP949`는 runtime의 custom decode callback(표 lookup)으로, 나머지는 runtime 내장 decode로 파싱한다. read callback은 요청 byte부터 남은 buffer 전체를 돌려준다. edit 경계 정책:
+
+* 공통: `0 ≤ start_byte ≤ old_end_byte ≤ 현재 길이`이고 uint32 안(`EDIT_RANGE`), `old`의 bytes가 현재 source의 `[start_byte, old_end_byte)`와 같고(`EDIT_OLD_MISMATCH`), `new_end_byte = start_byte + len(new)`(`EDIT_LENGTH_INCONSISTENT`), `old`와 `new`가 모두 비면 `EDIT_EMPTY`, 결과 길이가 `input_bytes`를 넘으면 `INPUT_TOO_LARGE`다.
+* `UTF-8`: 경계가 올바른 다중 byte 문자(Go `utf8.DecodeRune`이 크기 2 이상의 유효 문자로 읽는 것)의 중간이면 `EDIT_SPLITS_CHARACTER`다. 잘못된 byte는 1 byte 단위이므로 그 앞뒤 경계는 받는다(교정하지 않음).
+* `UTF-16LE/BE`: 홀수 offset은 `EDIT_ODD_UTF16`, surrogate 쌍 중간은 `EDIT_SPLITS_CHARACTER`, 결과 source가 위 UTF-16 조건을 깨면 `EDIT_ENCODING_INVALID`다.
+* `CP949`: lead와 trail 사이 경계는 `EDIT_SPLITS_CHARACTER`, 결과 source가 표 조건을 깨면 `EDIT_ENCODING_INVALID`다.
+* 경계는 적용 전 source에서 `start_byte`·`old_end_byte`, 적용 후 source에서 `start_byte`·`new_end_byte`를 본다. driver는 모든 edit를 순서대로 bytes에 적용해 보며 검사를 끝낸 뒤에야 첫 parse를 시작하므로 거부된 요청은 native 상태를 만들지 않는다. Go(`kit.ApplyEdits`)가 같은 검사를 먼저 하고 driver가 다시 한다.
+* point: row는 그 offset 앞의 LF 개수(UTF-8·CP949는 byte 0x0A, UTF-16은 짝수 offset의 code unit 0x000A), column은 마지막 LF 다음 byte부터 그 offset까지의 byte 수다. Unicode scalar 수를 세지 않는다. CR은 보통 byte다.
+
+**실행 순서와 route 계측.** parser A로 초기 source를 parse한다(step 0, `fresh: null`). edit k마다 이전 tree에 `ts_tree_edit`를 호출하고, 그 직후 이전 root의 `has_changes`와 end byte를 기록한 뒤, source bytes를 바꾸고 parser A에 그 이전 tree를 넘겨 incremental tree를 만든다. 이어 old tree 없이 별도 parser B로 같은 bytes를 parse해 fresh tree를 만들고, 다음 edit 전에 두 tree를 직렬화한다. 이전 tree·fresh tree·parser는 성공·오류·취소 경로마다 해제한다. route 계측은 driver가 tree에서 관측한 값이며 자기 보고 flag가 아니다: `edit_has_changes`, `edited_root_end_byte`, `reused_nodes`(incremental tree node 중 edit된 이전 tree의 node와 runtime node identity, 즉 공개 `TSNode.id`가 같은 수. id는 부모 안의 subtree slot이므로 다시 만든 부모 바로 아래에서 재사용된 leaf는 세지 않고 재사용된 subtree 안의 node만 센다. 그래서 하한이다), `fresh_reused_nodes`(fresh tree에 대한 같은 수, 0이어야 함). identity 값은 출력하지 않으며 runtime 간 의미 key가 아니다. 재사용 수는 경로 증거일 뿐 재사용률·성능 주장이 아니다.
+
+**Tree 직렬화.** 반복 `TSTreeCursor` preorder이며 depth는 root를 1로 센 node 깊이다. `depth`를 넘으면 `DEPTH_LIMIT`, node 수가 `nodes`를 넘으면 `NODE_LIMIT`이며 둘 다 그 tree의 `RESOURCE_LIMIT`이다. full tree는 `types`·`fields` 이름 표와 node마다 `[parent, type, field, flags, start_byte, end_byte, start_row, start_column, end_row, end_column]`이다(`field`는 표 index 또는 -1, `flags`는 named 1·extra 2·is_error 4·has_error 8·is_missing 16). 모든 완료 form은 `descendant_count`, `max_depth`, `has_error`와 위 `tsgk-tree-digest/r1` digest를 가진다. Go는 full tree의 digest를 다시 계산해 대조한다(`TREE_DIGEST_MISMATCH`). `auto`는 `descendant_count ≤ full_nodes`이고 full 직렬화가 `output_bytes` 안이면 full, 아니면 summary(`reason` `DESCENDANT_LIMIT` 또는 `OUTPUT_LIMIT`; errors·declarations·partial_trees)다. `record`는 summary에서 partial tree를 뺀 보존 레코드다. 요청에 선언이 있으면 full tree에도 declarations를 붙인다. Go는 full을 `tsgk-tree/r1`, summary를 `tsgk-tree-summary/r1`로 바꾼다.
+
+**`.svc` composite 생산(`SVC-SERVICEHOST-r1`).** 위 첫 절의 `tsgk-svc-composite/r1`을 S05가 만든다. `kit.ObserveServiceHost`가 판별 encoding의 code unit으로 첫 `<%@`부터 directive를 offline으로 관측한다(이름은 `<%@` 뒤 첫 단어, attribute는 `이름 = 값`이며 값은 `"`·`'` quote 또는 공백·`%>` 전까지, 알려진 이름은 대소문자를 가리지 않는 `Service`·`Factory`·`Debug`·`Language`·`CodeBehind`). `%>`가 없으면 끝까지가 directive이고 `TERMINATOR_MISSING`, 닫는 quote가 없으면 `QUOTE_UNTERMINATED`, 같은 이름은 `ATTRIBUTE_DUPLICATE`, 그 밖의 이름은 `ATTRIBUTE_UNKNOWN`, 첫 directive 뒤의 다른 `<%@`는 `DIRECTIVE_DUPLICATE`다. directive 뒤에 공백이 아닌 내용이 있으면 inline이며, Language 값이 `C#`·`c#`이면 그 뒤 원본 전체가 included range 하나다. 값 텍스트는 판정에만 쓰고 결과에는 범위만 남긴다. 사례의 모든 step에 C# inline이 있으면 step마다 다시 관측한 range를 `ranges`로 보내 inline만 C# grammar로 parse하고 step마다 composite에 inline tree를 붙인다. 어느 step이든 C# inline이 없으면 driver를 실행하지 않고 composite(관측만)를 남긴다. 이때 PASS는 모든 step이 진단 없는 directive이고 inline이 없을 때뿐이다(진단이 있으면 `SVC_DIRECTIVE_DIAGNOSTICS`). directive가 없으면 `SVC_DIRECTIVE_ABSENT`, Language 생략이나 `%>` 없음(directive가 파일 끝까지 이어져 inline 경계를 알 수 없음, coverage `inline: UNRESOLVED`)으로 inline을 해석하지 못하면 `SVC_INLINE_UNRESOLVED`, C#이 아닌 Language면 `SVC_INLINE_UNSUPPORTED`, 일부 step만 C# inline이면 `SVC_INLINE_NOT_PARSED`, 기대값이 있으면 `SVC_EXPECTATION_UNASSESSABLE`이며 모두 `BLOCKED`다. parse하지 않은 step의 `incremental`은 `null`이다. directive 진단은 이 관측 전용 판정에만 쓴다. C# inline을 parse한 사례의 진단은 composite에 기록할 뿐 assessment를 바꾸지 않는다. 관측기는 위에 적은 다섯 진단만 내며 이름 아닌 문자나 빈 값은 진단하지 않는다.
+
+**Response.**
+
+```text
+{"protocol":"tsgk-native/r1","id":ID,"status":S,"code":C,"producer":{"language_version":N,"runtime_language_version":15,"runtime_min_compatible":13,"query":"UNSUPPORTED"},
+ "source_bytes":N,"steps_completed":N,"steps":[{"step":K,"source_bytes":N,"source_sha256":H,"edit":E|null,"route":R|null,"incremental":T,"fresh":T|null},...],"complete":true}
+```
+
+Go는 응답 status·code가 처음으로 완료되지 않은 tree의 status·code와 같은지도 확인한다(step 없는 응답은 `OUTPUT_LIMIT`·`ALLOCATION_LIMIT`·`LANGUAGE_INCOMPATIBLE`만). `edit`은 요청의 세 byte 값과 driver가 계산한 `start_point`·`old_end_point`·`new_end_point`(`[row,column]`)다. Go는 자기 계산과 다르면 `EDIT_POINT_MISMATCH`, step의 `source_sha256`이 자기 중간 bytes와 다르면 `SOURCE_TRANSPORT_MISMATCH`다. tree는 `status`·`code`·`parse_ms`·`form`과 form별 필드다. 완료되지 않은 tree는 `form: null`이고 node가 없다(빈 성공 tree로 바꾸지 않음).
+
+| 상황 | status, code | driver exit |
+|---|---|---|
+| 정상 | `COMPLETED`, `""` | 0 |
+| request·frame·edit 위반 | response `INVALID_REQUEST`, 위 code; step 없음 | 2 |
+| `parse_ms`(실사용 60초)를 넘어 progress callback이 parse를 취소 | tree·response `RESOURCE_LIMIT`, `PARSE_TIME_LIMIT` | 3 |
+| node·depth 상한, response가 `output_bytes`를 넘음 | `RESOURCE_LIMIT`, `NODE_LIMIT`·`DEPTH_LIMIT`·`OUTPUT_LIMIT` | 3 |
+| allocator hook의 누적 할당이 `memory_bytes`를 넘거나 할당 실패 | `RESOURCE_LIMIT`, `ALLOCATION_LIMIT`(미리 만든 frame을 쓰고 즉시 종료, batch에서도 치명) | 3 |
+| runtime이 취소 없이 null tree를 냄 | `FAILED`, `PARSE_NULL` | 4 |
+
+response status는 처음으로 완료되지 않은 tree의 status·code이며 그 뒤 step은 실행하지 않는다. 출력 상한을 넘으면 step 없이 `OUTPUT_LIMIT`과 `steps_completed`만 낸다. 이미 직렬화한 step은 부분 관측으로 보존할 뿐 완료 근거가 아니다. batch에서 치명이 아닌 frame 실패는 그 frame의 response이고 process는 다음 frame을 계속 읽으며, 끝까지 처리하면 exit 0이다. caller 취소와 runner 한도(wall, memory, stdout)는 response 없이 runner 결과로 `CANCELLED`·`RESOURCE_LIMIT`이다. Go는 runner `COMPLETED`·cleanup verified·exit code와 response status의 일치·`complete: true`·step 수(완료면 edit 수 + 1)·node graph(root 하나, `parent < index`이며 직전 node 또는 그 조상, byte·point 범위가 입력 안이고 start ≤ end)·이름 표 index를 모두 확인한 뒤에만 결과를 쓴다. 하나라도 어긋나면 earlier step이 정상이어도 `FAILED`(`RESPONSE_INVALID`)다.
+
+**비교 projection과 판정.** 하나의 비교 함수(`kit.CompareTrees`)가 같은 bytes·grammar·policy의 두 full tree를 node 수와 node별 12개 공개 필드(type·field는 표 index가 아니라 이름) 전부로, 정렬·중복 제거·span 보정 없이 preorder 순서대로 비교하고 첫 차이(node index, 필드, 두 값)를 낸다. 사례마다 claim 세 개를 따로 둔다. `incremental_equality`는 모든 edit step에서 incremental = fresh, `incremental_route`는 모든 edit step에서 `edit_has_changes`·`reused_nodes > 0`·`fresh_reused_nodes = 0`, `expectations`는 등록 사례의 언어 기대값(step별 `NO_ERROR`·`ERROR`와 있어야 할 named node type)이다. native/fresh 일치는 언어 정확성이 아니며, 기대값 불일치는 kit가 충실히 보고한 grammar 결과라면 grammar gap으로 처분한다. 어느 claim이든 FAIL이면 그 사례의 assessment는 FAIL이다. 재사용할 node가 없는 edit는 route를 증명하지 못하므로 등록 사례는 바뀌지 않는 문맥을 남긴다.

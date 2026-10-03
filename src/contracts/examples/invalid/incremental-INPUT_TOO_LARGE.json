@@ -1,0 +1,82 @@
+{
+  "schema": "tsgk-incremental/r1",
+  "id": "example-plain",
+  "route": "owned-plain",
+  "operation": "native-parse-edit",
+  "symbol": "tree_sitter_tsgk_plain",
+  "encoding": "UTF-8",
+  "output": "tree",
+  "compiler": {
+    "name": "gcc",
+    "version": "16.2.0",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+    "bytes": 1000
+  },
+  "grammar": [
+    {
+      "path": "src/parser.c",
+      "role": "parser",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "bytes": 24812
+    },
+    {
+      "path": "src/tree_sitter/parser.h",
+      "role": "header",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "bytes": 7624
+    }
+  ],
+  "declarations": {
+    "mapping": "declaration-facts-r1",
+    "items": [
+      {
+        "fact": "type_declaration",
+        "node": "assignment",
+        "name": "field:name"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "a01",
+      "input": {
+        "path": "cases/a01.txt",
+        "role": "case",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+        "bytes": 65537
+      },
+      "edits": [
+        {
+          "start_byte": 4,
+          "old_end_byte": 5,
+          "new_end_byte": 5,
+          "old": "Zg==",
+          "new": "Zw=="
+        }
+      ],
+      "points": [
+        {
+          "id": "P01",
+          "byte": 4
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "call"
+          ],
+          "declarations": "PASS"
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

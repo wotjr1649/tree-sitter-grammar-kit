@@ -1,0 +1,104 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "postgresql-sql",
+  "cases": [
+    {
+      "id": "postgresql-sql-feature-r1",
+      "kind": "feature",
+      "features": [
+        "postgresql-sql-B01",
+        "postgresql-sql-B02",
+        "postgresql-sql-B03",
+        "postgresql-sql-V10"
+      ],
+      "source_utf8": "CREATE TABLE items (\n    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    name text NOT NULL UNIQUE,\n    quantity integer NOT NULL DEFAULT 0 CHECK (quantity >= 0),\n    price numeric(10, 2),\n    tags text[] DEFAULT '{}'\n);\n\nCREATE INDEX items_name_idx ON items USING btree (lower(name));\n\n-- Upsert a row.\nINSERT INTO items (name, quantity, price)\nVALUES ('bolt', 120, 0.25), ('nut', 4, 0.10)\nON CONFLICT (name) DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity\nRETURNING id;\n\nUPDATE items SET price = price * 1.1 WHERE quantity > 100;\n\nWITH levels AS (\n    SELECT name, quantity,\n           CASE WHEN quantity > 100 THEN 'bulk' ELSE 'normal' END AS level\n    FROM items\n)\nSELECT l.name, l.level, count(*) OVER (PARTITION BY l.level) AS level_count\nFROM levels AS l\nWHERE l.quantity BETWEEN 0 AND 1000\nORDER BY l.name\nLIMIT 10;\n\nCREATE FUNCTION item_total(p_name text) RETURNS numeric\nLANGUAGE sql STABLE\nAS $$ SELECT quantity * price FROM items WHERE name = p_name $$;\n\nBEGIN;\nDELETE FROM items WHERE quantity = 0;\nCOMMIT;\n",
+      "edits": [
+        {
+          "find": "CREATE INDEX items_name_idx ON items USING btree (lower(name));\n",
+          "replace": "CREATE INDEX items_name_idx ON items USING btree (lower(name));\n\nALTER TABLE items ADD COLUMN note varchar(200);\n"
+        },
+        {
+          "find": "WHERE quantity > 100;",
+          "replace": "WHERE quantity > 500;"
+        },
+        {
+          "find": "-- Upsert a row.\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "CreateStmt",
+            "IndexStmt",
+            "InsertStmt",
+            "UpdateStmt",
+            "SelectStmt",
+            "common_table_expr",
+            "CreateFunctionStmt",
+            "DeleteStmt"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "postgresql-sql-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "postgresql-sql-B02"
+      ],
+      "source_utf8": "CREATE TABLE orders (\n    id bigint PRIMARY KEY,\n    total numeric(10, 2) NOT NULL\n);\n\nINSERT INTO orders (id, total) VALUES (1, 10.50), (2, 99.00);\n\nSELECT id, total\nFROM orders\nWHERE total > (SELECT avg(total) FROM orders);\n",
+      "edits": [
+        {
+          "find": "FROM orders);",
+          "replace": "FROM orders;"
+        },
+        {
+          "find": "FROM orders;",
+          "replace": "FROM orders);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

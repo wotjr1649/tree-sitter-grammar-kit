@@ -1,0 +1,102 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "ruby",
+  "cases": [
+    {
+      "id": "ruby-feature-r1",
+      "kind": "feature",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "source_utf8": "# frozen_string_literal: true\n\nrequire 'json'\n\nmodule Inventory\n  Item = Struct.new(:name, :count) do\n    def bulk?\n      count > 100\n    end\n  end\n\n  class Store\n    include Enumerable\n    attr_reader :limit\n\n    def initialize(limit = 10)\n      @limit = limit\n      @items = {}\n    end\n\n    def add(item)\n      raise ArgumentError, \"store is full\" if @items.size >= limit\n\n      @items[item.name] = item\n      self\n    end\n\n    def each(&block)\n      @items.each_value(&block)\n    end\n\n    def summary\n      map { |i| \"#{i.name}=#{i.count}\" }.join(\", \")\n    end\n\n    def self.level(count)\n      case count\n      when 0 then :empty\n      when 1..100 then :normal\n      else :bulk\n      end\n    end\n  end\nend\n\nstore = Inventory::Store.new(4)\n[[\"bolt\", 120], [\"nut\", 4]].each do |name, count|\n  store.add(Inventory::Item.new(name, count))\nend\nputs store.summary\nputs Inventory::Store.level(store.sum(&:count)).to_s\n",
+      "edits": [
+        {
+          "find": "    attr_reader :limit\n",
+          "replace": "    attr_reader :limit\n    VERSION = \"1.0\"\n"
+        },
+        {
+          "find": "when 1..100 then :normal",
+          "replace": "when 1..500 then :normal"
+        },
+        {
+          "find": "puts store.summary\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "module",
+            "class",
+            "method",
+            "singleton_method",
+            "case",
+            "do_block",
+            "block",
+            "interpolation"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "ruby-recovery-r1",
+      "kind": "recovery",
+      "features": [
+        "ruby-B02"
+      ],
+      "source_utf8": "require 'set'\n\ndef square(x)\n  x * x\nend\n\ndef report(values)\n  values.each do |v|\n    puts square(v)\n  end\nend\n\nreport([1, 2, 3])\n",
+      "edits": [
+        {
+          "find": "    puts square(v)\n  end\n",
+          "replace": "    puts square(v)\n"
+        },
+        {
+          "find": "    puts square(v)\n",
+          "replace": "    puts square(v)\n  end\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

@@ -96,9 +96,12 @@ type FrameResult struct {
 }
 
 // BatchResult keeps every frame outcome and the supervised process result.
+// TrailingBytes counts stdout bytes after the last expected response; any is a protocol
+// violation the caller must not accept (S05).
 type BatchResult struct {
-	Frames  []FrameResult `json:"frames"`
-	Process Result        `json:"process"`
+	Frames        []FrameResult `json:"frames"`
+	Process       Result        `json:"process"`
+	TrailingBytes int64         `json:"trailing_bytes"`
 }
 
 // RunBatch sends frames one at a time to a single supervised process and reads one
@@ -133,6 +136,10 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 	// A process that neither exits nor stops writing after its last frame is ended.
 	p.Stdin().Close()
 	linger := time.AfterFunc(pol.FrameGrace, func() { p.Terminate(ReasonBatchExit) })
+	if inflight < 0 {
+		// Every frame was answered: anything more on stdout is not a response.
+		out.TrailingBytes, _ = io.Copy(io.Discard, p.Stdout())
+	}
 	out.Process = p.Wait()
 	linger.Stop()
 	if inflight >= 0 {

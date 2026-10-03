@@ -8,8 +8,10 @@ import (
 // S01-A15/A16: steps 1-6 of the real-world source policy, in order, fed in one chunk
 // and byte by byte so streaming state across chunk boundaries is exercised.
 func TestEncodingSteps(t *testing.T) {
-	han := []byte("\xED\x95\x9C\xEA\xB8\x80") // two Hangul syllables in UTF-8; also cp949-shaped
-	cp := []byte("\xC7\xD1")                  // cp949-shaped, invalid UTF-8
+	han := []byte("\xED\x95\x9C\xEA\xB8\x80")  // two Hangul syllables in UTF-8; also cp949-shaped
+	cp := []byte("\xC7\xD1")                   // cp949-shaped, invalid UTF-8
+	both := []byte("\xEA\xB0\x81\xEA\xB0\x81") // valid UTF-8 whose cp949 pairs are all in index-euc-kr
+	unmapped := []byte("\xFE\xA1")             // invalid UTF-8; cp949-shaped user-defined row absent from index-euc-kr
 	cases := []struct {
 		name     string
 		data     []byte
@@ -41,15 +43,18 @@ func TestEncodingSteps(t *testing.T) {
 		{"strict-utf8", append([]byte("a"), han...), false, "", EncodingOutcome{"PASS", "UTF-8", "VALIDATION", ""}},
 		{"utf8-surrogate-is-invalid", []byte("\xED\xA0\x80"), false, "", EncodingOutcome{"BLOCKED", "", "", "UNDETERMINED_ENCODING"}},
 		{"utf8-overlong-is-invalid", []byte("\xC0\xAF"), false, "", EncodingOutcome{"BLOCKED", "", "", "UNDETERMINED_ENCODING"}},
-		{"ambiguous-needs-table", append([]byte("a"), han...), true, "", EncodingOutcome{"UNRESOLVED", "", "", "ENCODING_TABLE_REQUIRED"}},
+		{"ambiguous", append([]byte("a"), both...), true, "", EncodingOutcome{"BLOCKED", "", "", "AMBIGUOUS_ENCODING"}},
+		{"utf8-with-unmapped-cp949-pairs", append([]byte("a"), han...), true, "", EncodingOutcome{"PASS", "UTF-8", "VALIDATION", ""}},
 		{"utf8-not-cp949-shaped", []byte("\xE2\x82\xAC"), true, "", EncodingOutcome{"PASS", "UTF-8", "VALIDATION", ""}},
-		{"cp949-profile-needs-table", cp, true, "", EncodingOutcome{"UNRESOLVED", "CP949", "VALIDATION", "ENCODING_TABLE_REQUIRED"}},
+		{"cp949-profile-valid", cp, true, "", EncodingOutcome{"PASS", "CP949", "VALIDATION", ""}},
+		{"cp949-profile-unmapped", unmapped, true, "", EncodingOutcome{"BLOCKED", "CP949", "VALIDATION", "CP949_UNMAPPED"}},
 		{"cp949-profile-structurally-invalid", []byte("\xC7\x20"), true, "", EncodingOutcome{"BLOCKED", "", "", "UNDETERMINED_ENCODING"}},
 		{"cp949-truncated-lead", []byte("a\xC7"), true, "", EncodingOutcome{"BLOCKED", "", "", "UNDETERMINED_ENCODING"}},
 		{"no-profile-no-cp949", cp, false, "", EncodingOutcome{"BLOCKED", "", "", "UNDETERMINED_ENCODING"}},
 		{"declared-utf8-valid", append([]byte("a"), han...), true, "utf-8", EncodingOutcome{"PASS", "UTF-8", "DECLARATION", ""}},
 		{"declared-utf8-invalid", cp, true, "utf-8", EncodingOutcome{"BLOCKED", "UTF-8", "DECLARATION", "DECLARED_ENCODING_INVALID"}},
-		{"declared-cp949-needs-table", cp, false, "cp949", EncodingOutcome{"UNRESOLVED", "CP949", "DECLARATION", "ENCODING_TABLE_REQUIRED"}},
+		{"declared-cp949-valid", cp, false, "cp949", EncodingOutcome{"PASS", "CP949", "DECLARATION", ""}},
+		{"declared-cp949-unmapped", unmapped, false, "cp949", EncodingOutcome{"BLOCKED", "CP949", "DECLARATION", "DECLARED_ENCODING_INVALID"}},
 		{"declared-cp949-ascii", []byte("abc"), false, "cp949", EncodingOutcome{"PASS", "CP949", "DECLARATION", ""}},
 		{"declared-cp949-invalid", []byte("\xFF"), false, "cp949", EncodingOutcome{"BLOCKED", "CP949", "DECLARATION", "DECLARED_ENCODING_INVALID"}},
 	}

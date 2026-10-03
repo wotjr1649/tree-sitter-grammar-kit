@@ -1,0 +1,225 @@
+{
+  "schema": "tsgk-native-route-cases/r1",
+  "route": "xml",
+  "cases": [
+    {
+      "id": "n461-xml-resource-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-RESOURCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<root>\n  <!-- Synthetic resx-like fixture for the ko-KR culture (Resources.ko-KR.resx). -->\n  <xsd:schema id=\"root\" xmlns=\"\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:msdata=\"urn:schemas-microsoft-com:xml-msdata\">\n    <xsd:import namespace=\"http://www.w3.org/XML/1998/namespace\" />\n    <xsd:element name=\"root\" msdata:IsDataSet=\"true\">\n      <xsd:complexType>\n        <xsd:choice maxOccurs=\"unbounded\">\n          <xsd:element name=\"data\">\n            <xsd:complexType>\n              <xsd:sequence>\n                <xsd:element name=\"value\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"1\" />\n                <xsd:element name=\"comment\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"2\" />\n              </xsd:sequence>\n              <xsd:attribute name=\"name\" type=\"xsd:string\" use=\"required\" msdata:Ordinal=\"1\" />\n              <xsd:attribute name=\"type\" type=\"xsd:string\" msdata:Ordinal=\"3\" />\n              <xsd:attribute ref=\"xml:space\" />\n            </xsd:complexType>\n          </xsd:element>\n        </xsd:choice>\n      </xsd:complexType>\n    </xsd:element>\n  </xsd:schema>\n  <resheader name=\"resmimetype\">\n    <value>text/microsoft-resx</value>\n  </resheader>\n  <resheader name=\"version\">\n    <value>2.0</value>\n  </resheader>\n  <resheader name=\"reader\">\n    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral</value>\n  </resheader>\n  <data name=\"Greeting\" xml:space=\"preserve\">\n    <value>Hello</value>\n    <comment>culture: ko-KR</comment>\n  </data>\n  <data name=\"Farewell\" xml:space=\"preserve\">\n    <value>Goodbye</value>\n  </data>\n  <data name=\"Logo\" type=\"System.Resources.ResXFileRef, System.Windows.Forms\">\n    <value>Resources/logo.png;System.Drawing.Bitmap, System.Drawing</value>\n  </data>\n</root>\n",
+      "edits": [
+        {
+          "find": "  <data name=\"Farewell\" xml:space=\"preserve\">\n    <value>Goodbye</value>\n  </data>\n",
+          "replace": "  <data name=\"Farewell\" xml:space=\"preserve\">\n    <value>Goodbye</value>\n  </data>\n  <data name=\"Thanks\" xml:space=\"preserve\">\n    <value>Thank you</value>\n  </data>\n"
+        },
+        {
+          "find": "<value>Hello</value>",
+          "replace": "<value>Hello, world</value>"
+        },
+        {
+          "find": "    <comment>culture: ko-KR</comment>\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "Comment",
+            "element",
+            "Attribute",
+            "EmptyElemTag"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-xml-resource-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-RESOURCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<root>\n  <!-- Synthetic resx-like fixture for the ko-KR culture (Resources.ko-KR.resx). -->\n  <xsd:schema id=\"root\" xmlns=\"\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:msdata=\"urn:schemas-microsoft-com:xml-msdata\">\n    <xsd:import namespace=\"http://www.w3.org/XML/1998/namespace\" />\n    <xsd:element name=\"root\" msdata:IsDataSet=\"true\">\n      <xsd:complexType>\n        <xsd:choice maxOccurs=\"unbounded\">\n          <xsd:element name=\"data\">\n            <xsd:complexType>\n              <xsd:sequence>\n                <xsd:element name=\"value\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"1\" />\n                <xsd:element name=\"comment\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"2\" />\n              </xsd:sequence>\n              <xsd:attribute name=\"name\" type=\"xsd:string\" use=\"required\" msdata:Ordinal=\"1\" />\n              <xsd:attribute name=\"type\" type=\"xsd:string\" msdata:Ordinal=\"3\" />\n              <xsd:attribute ref=\"xml:space\" />\n            </xsd:complexType>\n          </xsd:element>\n        </xsd:choice>\n      </xsd:complexType>\n    </xsd:element>\n  </xsd:schema>\n  <resheader name=\"resmimetype\">\n    <value>text/microsoft-resx</value>\n  </resheader>\n  <resheader name=\"version\">\n    <value>2.0</value>\n  </resheader>\n  <resheader name=\"reader\">\n    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral</value>\n  </resheader>\n  <data name=\"Greeting\" xml:space=\"preserve\">\n    <value>Hello</value>\n    <comment>culture: ko-KR</comment>\n  </data>\n  <data name=\"Farewell\" xml:space=preserve>\n    <value>Goodbye</value>\n  </data>\n  <data name=\"Logo\" type=\"System.Resources.ResXFileRef, System.Windows.Forms\">\n    <value>Resources/logo.png;System.Drawing.Bitmap, System.Drawing</value>\n  </data>\n</root>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-xml-resource-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-RESOURCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<root>\n  <!-- Synthetic resx-like fixture for the ko-KR culture (Resources.ko-KR.resx). -->\n  <xsd:schema id=\"root\" xmlns=\"\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:msdata=\"urn:schemas-microsoft-com:xml-msdata\">\n    <xsd:import namespace=\"http://www.w3.org/XML/1998/namespace\" />\n    <xsd:element name=\"root\" msdata:IsDataSet=\"true\">\n      <xsd:complexType>\n        <xsd:choice maxOccurs=\"unbounded\">\n          <xsd:element name=\"data\">\n            <xsd:complexType>\n              <xsd:sequence>\n                <xsd:element name=\"value\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"1\" />\n                <xsd:element name=\"comment\" type=\"xsd:string\" minOccurs=\"0\" msdata:Ordinal=\"2\" />\n              </xsd:sequence>\n              <xsd:attribute name=\"name\" type=\"xsd:string\" use=\"required\" msdata:Ordinal=\"1\" />\n              <xsd:attribute name=\"type\" type=\"xsd:string\" msdata:Ordinal=\"3\" />\n              <xsd:attribute ref=\"xml:space\" />\n            </xsd:complexType>\n          </xsd:element>\n        </xsd:choice>\n      </xsd:complexType>\n    </xsd:element>\n  </xsd:schema>\n  <resheader name=\"resmimetype\">\n    <value>text/microsoft-resx</value>\n  </resheader>\n  <resheader name=\"version\">\n    <value>2.0</value>\n  </resheader>\n  <resheader name=\"reader\">\n    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral</value>\n  </resheader>\n  <data name=\"Greeting\" xml:space=\"preserve\">\n    <value>Hello</value>\n    <comment>culture: ko-KR</comment>\n  </data>\n  <data name=\"Farewell\" xml:space=\"preserve\">\n    <value>Goodbye</value>\n  </data>\n  <data name=\"Logo\" type=\"System.Resources.ResXFileRef, System.Windows.Forms\">\n    <value>Resources/logo.png;System.Drawing.Bitmap, System.Drawing</value>\n  </data>\n</root>\n",
+      "edits": [
+        {
+          "find": "<data name=\"Farewell\" xml:space=\"preserve\">",
+          "replace": "<data name=\"Farewell\" xml:space=\"preserve\""
+        },
+        {
+          "find": "xml:space=\"preserve\"\n",
+          "replace": "xml:space=\"preserve\">\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-xml-reference-pe-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-REFERENCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE configuration [\n  <!ENTITY appName \"DemoOrders\">\n]>\n<!-- Synthetic web.config-like fixture; every value is a fake placeholder. -->\n<configuration>\n  <configSections>\n    <section name=\"demoSettings\" type=\"Demo.Configuration.DemoSection, Demo\" />\n  </configSections>\n  <appSettings>\n    <add key=\"ApplicationName\" value=\"DemoOrders\" />\n    <add key=\"SchemaLocation\" value=\"schemas/orders.xsd\" />\n  </appSettings>\n  <connectionStrings>\n    <add name=\"OrdersDb\" connectionString=\"Server=example;Database=demo;Integrated Security=true\" providerName=\"System.Data.SqlClient\" />\n  </connectionStrings>\n  <demoSettings>&appName; settings</demoSettings>\n  <system.serviceModel>\n    <services>\n      <service name=\"Demo.Services.OrderService\">\n        <endpoint address=\"\" binding=\"basicHttpBinding\" contract=\"Demo.Services.IOrderService\" />\n      </service>\n    </services>\n    <client>\n      <endpoint address=\"http://example.invalid/OrderService.svc\" binding=\"basicHttpBinding\" contract=\"OrderReference.IOrderService\" name=\"BasicHttpBinding_IOrderService\" />\n    </client>\n  </system.serviceModel>\n  <runtime>\n    <assemblyBinding xmlns=\"urn:schemas-microsoft-com:asm.v1\">\n      <dependentAssembly>\n        <assemblyIdentity name=\"Demo.Shared\" culture=\"neutral\" />\n        <codeBase version=\"1.0.0.0\" href=\"bin/Demo.Shared.dll\" />\n      </dependentAssembly>\n    </assemblyBinding>\n  </runtime>\n</configuration>\n",
+      "edits": [
+        {
+          "find": "    <add key=\"SchemaLocation\" value=\"schemas/orders.xsd\" />\n",
+          "replace": "    <add key=\"SchemaLocation\" value=\"schemas/orders.xsd\" />\n    <add key=\"Culture\" value=\"ko-KR\" />\n"
+        },
+        {
+          "find": "Database=demo;",
+          "replace": "Database=demo_archive;"
+        },
+        {
+          "find": "binding=\"basicHttpBinding\" contract=\"Demo.Services.IOrderService\"",
+          "replace": "binding=\"wsHttpBinding\" contract=\"Demo.Services.IOrderService\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "doctypedecl",
+            "element",
+            "Attribute",
+            "EntityRef",
+            "EmptyElemTag"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-xml-reference-n-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-REFERENCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<xs:schema targetNamespace=\"urn:example:orders\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:tns=\"urn:example:orders\" elementFormDefault=\"qualified\">\n  <xs:import namespace=\"urn:example:types\" schemaLocation=\"types.xsd\" />\n  <xs:include schemaLocation=\"common.xsd\" />\n  <xs:element name=\"Order\" type=\"tns:OrderType\" />\n  <xs:complexType name=\"OrderType\">\n    <xs:sequence>\n      <xs:element name=\"Id\" type=\"xs:int\" />\n      <xs:element name=\"Status\" type=\"xs:string\" minOccurs=0 />\n    </xs:sequence>\n  </xs:complexType>\n</xs:schema>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-xml-reference-r-r1",
+      "kind": "n461",
+      "features": [
+        "N461-XML-REFERENCE"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<wsdl:definitions name=\"OrderService\" targetNamespace=\"urn:example:orders\" xmlns:wsdl=\"http://schemas.xmlsoap.org/wsdl/\" xmlns:soap=\"http://schemas.xmlsoap.org/wsdl/soap/\" xmlns:tns=\"urn:example:orders\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\n  <wsdl:types>\n    <xsd:schema targetNamespace=\"urn:example:orders/imports\">\n      <xsd:import schemaLocation=\"OrderService.svc?xsd=xsd0\" namespace=\"urn:example:orders\" />\n    </xsd:schema>\n  </wsdl:types>\n  <wsdl:message name=\"IOrderService_GetOrder_InputMessage\">\n    <wsdl:part name=\"parameters\" element=\"tns:GetOrder\" />\n  </wsdl:message>\n  <wsdl:portType name=\"IOrderService\">\n    <wsdl:operation name=\"GetOrder\">\n      <wsdl:input message=\"tns:IOrderService_GetOrder_InputMessage\" />\n    </wsdl:operation>\n  </wsdl:portType>\n  <wsdl:service name=\"OrderService\">\n    <wsdl:port name=\"BasicHttpBinding_IOrderService\" binding=\"tns:BasicHttpBinding_IOrderService\">\n      <soap:address location=\"http://example.invalid/OrderService.svc\" />\n    </wsdl:port>\n  </wsdl:service>\n</wsdl:definitions>\n",
+      "edits": [
+        {
+          "find": "<wsdl:portType name=\"IOrderService\">",
+          "replace": "<wsdl:portType name=\"IOrderService>"
+        },
+        {
+          "find": "name=\"IOrderService>",
+          "replace": "name=\"IOrderService\">"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}
