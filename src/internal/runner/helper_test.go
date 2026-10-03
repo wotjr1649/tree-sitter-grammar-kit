@@ -149,8 +149,9 @@ func helper(mode string) int {
 		if err := os.WriteFile(base+".ready", nil, 0o600); err != nil {
 			return 67
 		}
-		waitFor(func() bool { return exists(base + ".ping") })
-		os.WriteFile(base+".pong", nil, 0o600)
+		if waitFor(func() bool { return exists(base + ".ping") }) {
+			os.WriteFile(base+".pong", nil, 0o600)
+		}
 		time.Sleep(time.Hour)
 		return 0
 	case "memory":
