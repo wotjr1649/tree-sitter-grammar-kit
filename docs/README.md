@@ -21,6 +21,7 @@ The current implementation consists of repository foundation checks, the Session
 | Observed Session 00 results | [foundation report](reports/session-00-foundation.md) |
 | Observed Session 03 results | [schema contract report](reports/session-03-schema-contract.md) |
 | Observed Session 04 results | [reproducibility report](reports/session-04-reproducibility.md) |
+| Observed Session 05 results | [incremental report](reports/session-05-incremental.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
