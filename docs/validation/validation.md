@@ -8,7 +8,15 @@ Only Go 1.27.1, Git, and PowerShell 7 are required. Core checks do not require N
 $env:CGO_ENABLED = '0'
 $env:GOWORK = 'off'
 $env:GOTOOLCHAIN = 'local'
+# Acquire only the go.sum-pinned modules (golang.org/x/sys), then build and test offline.
+$env:GOPROXY = 'https://proxy.golang.org'
+$env:GOSUMDB = 'sum.golang.org'
+go mod download
+if ($LASTEXITCODE -ne 0) { throw 'module download failed' }
+go mod verify
+if ($LASTEXITCODE -ne 0) { throw 'module verify failed' }
 $env:GOPROXY = 'off'
+$env:GOFLAGS = '-mod=readonly'
 $formatted = gofmt -l src
 if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
 go test ./src/... -count=1 -v -timeout 120s
