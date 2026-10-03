@@ -23,20 +23,12 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want, err := filepath.EvalSymlinks(cc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	paths := []string{cc}
-	// Same basename as the target: macOS /usr/bin/clang is an xcrun shim that picks the
-	// tool by its invoked name, so a differently named link would not run clang at all.
-	link := filepath.Join(t.TempDir(), filepath.Base(cc))
-	if err := os.Symlink(cc, link); err == nil {
-		paths = append(paths, link)
-	} else {
-		t.Logf("symlinks unavailable, linked case skipped: %v", err)
-	}
-	for _, p := range paths {
+	check := func(t *testing.T, p, target string) {
+		t.Helper()
+		want, err := filepath.EvalSymlinks(target)
+		if err != nil {
+			t.Fatal(err)
+		}
 		out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-File", script, "-Candidates", p).Output()
 		if err != nil {
 			t.Fatalf("%s: %v\n%s", p, err, out)
@@ -51,6 +43,27 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 			t.Fatalf("%s: selected %q, want the resolved file %q", p, got, want)
 		}
 	}
+	t.Run("regular", func(t *testing.T) { check(t, cc, cc) })
+
+	// The linked case needs a real compiler binary as its target. macOS /usr/bin/clang is
+	// an xcrun shim that dispatches on how and where it is invoked, and shims are not
+	// supported as links (platform-support), so on darwin link the clang binary that
+	// xcrun runs from the active developer directory instead.
+	t.Run("linked", func(t *testing.T) {
+		target := cc
+		if runtime.GOOS == "darwin" {
+			out, err := exec.Command("xcrun", "--find", "clang").Output()
+			if err != nil {
+				t.Skipf("darwin linked case skipped: xcrun --find clang: %v", err)
+			}
+			target = strings.TrimSpace(string(out))
+		}
+		link := filepath.Join(t.TempDir(), filepath.Base(target))
+		if err := os.Symlink(target, link); err != nil {
+			t.Skipf("symlinks unavailable, linked case skipped: %v", err)
+		}
+		check(t, link, target)
+	})
 }
 
 // Static guards for lines no Windows run can reach: a native command piped into
