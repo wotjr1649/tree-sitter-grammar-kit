@@ -206,6 +206,17 @@ func TestVerifyDirectory(t *testing.T) {
 	if err != nil || codesOf(res) != "ROLE_CHANGED:src/parser.c" {
 		t.Fatalf("role: %v %s", err, codesOf(res))
 	}
+	// S02-A07: a link inside the directory subject is rejected, never followed or compared.
+	linked := fresh()
+	if err := os.Symlink(filepath.Join(ref, "src", "scanner.c"), filepath.Join(linked, "src", "link.c")); err != nil {
+		t.Logf("symlink unavailable: %v", err)
+	} else {
+		res, err := verifyDir(t, linked, exp, nil)
+		kindOf(t, err, KindInvalidInput, "LINK_OR_SPECIAL_REJECTED")
+		if len(res.Actual.Files) != 0 || res.Assessment == AssessPass {
+			t.Fatalf("partial result after link: %+v", res)
+		}
+	}
 	// Encoding policy is a declared parameter, not inferred from the expected record.
 	_, err = Verify(testCtx(t), VerifyRequest{Root: fresh(), Selection: Selection{Grammar: "."}, Expected: exp, Limits: DefaultLimits(), Encoding: EncodingPolicy{Profile: "cp949"}})
 	kindOf(t, err, KindInvalidInput, "ENCODING_POLICY_MISMATCH")
