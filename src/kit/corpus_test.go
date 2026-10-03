@@ -200,6 +200,9 @@ func TestCorpusLimits(t *testing.T) {
 		t.Run(tc.code, func(t *testing.T) {
 			l := at
 			tc.mutate(&l)
+			if tc.code == "WALL_LIMIT" {
+				defer wallExpiringAtOpen(t)()
+			}
 			res, err := corpusRun(t, root, l)
 			kindOf(t, err, KindResourceLimit, tc.code)
 			if res.ExecutionStatus != StatusResourceLimit || res.Assessment != AssessBlocked || len(res.Records) != 0 {
@@ -207,6 +210,14 @@ func TestCorpusLimits(t *testing.T) {
 			}
 		})
 	}
+	t.Run("caller-cancel-wins-over-wall", func(t *testing.T) {
+		// the caller's cancellation stays CANCELLED even when the kit wall has also expired
+		defer wallExpiringAtOpen(t)()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		cancel()
+		_, err := Corpus(ctx, CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Profile: "cp949"}})
+		kindOf(t, err, KindCancelled, "CANCELLED")
+	})
 	t.Run("per-file-limit-is-record-scoped", func(t *testing.T) {
 		l := at
 		l.FileBytes = 2
@@ -308,4 +319,23 @@ func TestCorpusLimits(t *testing.T) {
 		_, err = Corpus(testCtx(t), CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Files: []FileEncoding{{"nope.cs", "utf-8"}}}})
 		kindOf(t, err, KindInvalidInput, "DECLARATION_UNMATCHED")
 	})
+}
+
+// wallExpiringAtOpen makes the kit wall expire (with the kit's own cause) when the walk opens
+// its first file, so the WALL_LIMIT path is taken mid-work by construction, not by timer
+// scheduling (#61). It returns a restore function.
+func wallExpiringAtOpen(t *testing.T) func() {
+	t.Helper()
+	var expire context.CancelCauseFunc
+	testHookWall = func() (context.Context, context.CancelFunc) {
+		ctx, c := context.WithCancelCause(context.Background())
+		expire = c
+		return ctx, func() { c(context.Canceled) }
+	}
+	testHookOpen = func(string) {
+		if expire != nil {
+			expire(errWall)
+		}
+	}
+	return func() { testHookWall, testHookOpen = nil, nil }
 }

@@ -481,6 +481,9 @@ func TestLimits(t *testing.T) {
 		t.Run(tc.code, func(t *testing.T) {
 			l := at
 			tc.mutate(&l)
+			if tc.code == "WALL_LIMIT" {
+				defer wallExpiringAtOpen(t)()
+			}
 			res, err := run(l)
 			kindOf(t, err, KindResourceLimit, tc.code)
 			if res.ExecutionStatus != StatusResourceLimit || res.Assessment != AssessBlocked || res.SetSHA256 != "" || len(res.Manifest.Files) != 0 {

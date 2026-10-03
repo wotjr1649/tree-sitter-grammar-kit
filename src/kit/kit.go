@@ -212,6 +212,10 @@ type run struct {
 
 var errWall = errors.New("kit wall limit")
 
+// testHookWall, when a test sets it, makes the kit wall context in place of the timer, so
+// a test can expire the wall at a chosen point instead of racing a 1 ns timer (#61).
+var testHookWall func() (context.Context, context.CancelFunc)
+
 func startRun(ctx context.Context, wall time.Duration) (*run, *Error) {
 	if ctx == nil {
 		return nil, fail(KindInvalidInput, "NIL_CONTEXT", "", nil)
@@ -219,7 +223,13 @@ func startRun(ctx context.Context, wall time.Duration) (*run, *Error) {
 	if _, ok := ctx.Deadline(); !ok {
 		return nil, fail(KindInvalidInput, "DEADLINE_REQUIRED", "", nil)
 	}
-	wctx, cancel := context.WithTimeoutCause(context.Background(), wall, errWall)
+	var wctx context.Context
+	var cancel context.CancelFunc
+	if testHookWall != nil {
+		wctx, cancel = testHookWall()
+	} else {
+		wctx, cancel = context.WithTimeoutCause(context.Background(), wall, errWall)
+	}
 	r := &run{caller: ctx, wall: wctx, cancel: cancel}
 	if err := r.check(); err != nil {
 		cancel()
