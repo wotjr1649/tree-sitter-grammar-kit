@@ -1,12 +1,12 @@
 # Tree와 adapter — draft/r0
 
-등록된 `.svc`는 [SVC-SERVICEHOST-r1](../validation/net461-workload.md)의 composite result를 사용한다. directive 관측과 inline C# local tree를 전체 원본 identity·byte/point mapping으로 결속하며 segment PASS를 전체 파일 PASS로 바꾸지 않는다. 이 계약은 계획이며 format 구현은 NOT_RUN이다.
+등록된 `.svc`는 [SVC-SERVICEHOST-r1](../validation/net461-workload.md)의 composite result를 사용한다. directive 관측과 원본 bytes를 included range로 파싱한 inline C# tree를 원본 identity·byte/point로 결속하며 segment PASS를 전체 파일 PASS로 바꾸지 않는다. 이 계약은 계획이며 format 구현은 NOT_RUN이다.
 
 S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 주장이다. schema 일치, ordered CST 일치, query 일치, 언어 사양 적합성은 서로 대체하지 않는다. 아래 형식은 experimental이며 실제 native/두 번째 grammar/consumer 검증 전에 안정 API로 고정하지 않는다.
 
 ## Ordered tree
 
-envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.
+envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`; 실사용 source의 판별 encoding·출처 필드는 S03 확장 revision), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.
 
 nodes는 cursor preorder 배열이다. 각 항목은 `parent`(root -1, 나머지는 앞선 index), `type`(이름), `field`(부모 기준 이름 또는 null), `named`, `extra`, `is_error`, `has_error`, `is_missing`(bool), `start_byte`, `end_byte`, `start_point`, `end_point`를 가진다. point는 0-based `row`, byte 단위 `column`이다. 범위는 반열림 `[start,end)`이고 0≤start≤end≤input.bytes를 만족한다. 노드 배열과 sibling 순서, anonymous/extra, ERROR 내부 구조, zero-width·중복 범위를 보존한다. root start가 항상 0이라고 가정하지 않는다. numeric symbol/field ID를 runtime 간 의미 키로 쓰지 않는다.
 
@@ -20,7 +20,7 @@ captures는 query identity와 함께 원 producer의 ordered `match_index`, `pat
 
 native oracle은 `src/drivers/native-c/`의 generic C driver와 build-local language shim, 고정 runtime/parser/scanner source를 별도 executable로 build한다. ABI/header/compiler/options/source closure/executable hash를 모두 고정한다. [scanner 직렬화 계약](https://tree-sitter.github.io/tree-sitter/creating-parsers/4-external-scanners.html)은 stateful fixture의 필수 대조다.
 
-S05 transport는 `tsgk-native/r1`의 process당 하나의 bounded stdin/stdout JSON request/response로 채택한다. 원본·replacement는 base64 bytes이며 encoded/decoded 길이 한도를 모두 적용한다. shell 인자에 source bytes를 넣지 않는다. stdout은 protocol만, stderr는 bounded 진단이다. revision/length/record count, trailing JSON, truncation과 최종 completeness를 검증한다. 정확한 request/error 필드와 연산 한도는 S05 구현 전에 이 owner에서 고정하고 native round-trip으로 검증한다. Go adapter는 이번 campaign 밖이다.
+S05 transport는 `tsgk-native/r1`의 process당 하나의 bounded stdin/stdout JSON request/response로 채택한다. 예외로 비공개 corpus batch는 한 process 안의 길이-접두 frame 연속이다. 원본·replacement는 base64 bytes이며 encoded/decoded 길이 한도를 모두 적용한다. shell 인자에 source bytes를 넣지 않는다. stdout은 protocol만, stderr는 bounded 진단이다. revision/length/record count, trailing JSON, truncation과 최종 completeness를 검증한다. 정확한 request/error 필드와 연산 한도는 S05 구현 전에 이 owner에서 고정하고 native round-trip으로 검증한다. 비공개 corpus batch([NET461 등록부](../validation/net461-workload.md))는 각 frame에 request/response 한도와 길이·record count·trailing 완결성 검증을 적용하며, 아래의 nonzero exit·truncated response 규칙도 frame 단위로 적용한다. 통과한 frame만 파일별 결과이고 batch process 결과는 따로 기록한다. envelope는 S04, frame 내용은 S05가 고정한다. Go adapter는 이번 campaign 밖이다.
 
 S04의 검증된 공통 runner를 S05에서 재사용한다. S05는 최소 generic C driver, 엄격히 제한된 grammar-symbol shim, ordered public CST, byte-edit 및 incremental/fresh comparator를 구현한다. 이전 tree에 `ts_tree_edit`를 호출하고 이를 다음 parse에 실제 전달한 경로를 독립 instrumentation으로 검증한다. 각 중간 bytes를 별도의 fresh parser로 즉시 비교하며 마지막 상태만 검사하지 않는다. scannerless와 stateful scanner, malformed 중간 상태·inverse repair, EOF/CRLF/BOM/NUL/잘못된 UTF-8와 byte point 계산을 포함한다. source와 replacement를 자동 정규화하지 않는다.
 

@@ -58,7 +58,7 @@ function SaveReceipt([string]$path, $value) {
 function Fetch([string]$url, [string]$target, [long]$limit) {
     $allowed = @('codeload.github.com','github.com','release-assets.githubusercontent.com','objects.githubusercontent.com','registry.npmjs.org')
     if($PinnedTsql){$allowed+='raw.githubusercontent.com'}
-    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2','pg-legacy-r1') -and $url -ceq $remedy.sources.postgresql.provider){$allowed+='media.githubusercontent.com'}
+    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2','pg-legacy-r1','pg-legacy-g6-r1') -and $url -ceq $remedy.sources.postgresql.provider){$allowed+='media.githubusercontent.com'}
     $handler = [Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect = $false
     $handler.UseProxy=$false;$handler.UseDefaultCredentials=$false;$handler.UseCookies=$false
     $client = [Net.Http.HttpClient]::new($handler)
@@ -288,8 +288,8 @@ try {
     try {$count=0L;$buffer=[byte[]]::new(65536);while(($n=$gzip.Read($buffer,0,$buffer.Length)) -gt 0){$count+=$n;if($count -gt 67108864){throw 'CLI expansion limit'};$output.Write($buffer,0,$n)}}finally{$output.Dispose();$gzip.Dispose();$input.Dispose()}
     if(-not $IsWindows){[IO.File]::SetUnixFileMode((Join-Path $root 'tools/tree-sitter'),[IO.UnixFileMode]493)}
     $results.Add(@{tool='tree-sitter';archive=$download;executable_sha256=(Get-FileHash (Join-Path $root 'tools/tree-sitter')).Hash.ToLowerInvariant()})
-    if($RemedyStage -ceq 'mssql-evaluate-r1'){
-        $sql=$remedy['exact-r1'].sources.new_mssql
+    if($RemedyStage -cin @('mssql-evaluate-r1','mssql-patch-r1')){
+        $sql=if($RemedyStage -ceq 'mssql-patch-r1'){$remedy['followup-r2'].sources.new_mssql}else{$remedy['exact-r1'].sources.new_mssql}
         $pins=@(foreach($file in $sql.selected_regular_files){
             $pin=$file.Clone()
             if($pin.mode -cne '100644' -or $pin.git_blob_sha1 -cnotmatch '^[0-9a-f]{40}$'){throw 'MSSQL selected blob not pinned'}
@@ -300,11 +300,11 @@ try {
         $archive=Join-Path $root 'archives/mssql-8620fbc.tgz'
         $download=Fetch $sql.provider $archive $sql.archive_limit_bytes
         $files=Materialize $archive (MapFiles $pins) (Join-Path ([IO.Path]::GetDirectoryName($root)) 'candidate-evaluation/mssql-8620fbc')
-        $extraInputs+=@{repository=$sql.repository;commit=$sql.revision;tree=$sql.tree;task_relative_source_root='candidate-evaluation/mssql-8620fbc';files=$files;archive=$download;purpose='BASELINE_AND_JSON_EVALUATION_ONLY_NO_JS_INSTALL_PATCH_OR_ADOPTION'}
+        $extraInputs+=@{repository=$sql.repository;commit=$sql.revision;tree=$sql.tree;task_relative_source_root='candidate-evaluation/mssql-8620fbc';files=$files;archive=$download;purpose=$(if($RemedyStage -ceq 'mssql-patch-r1'){'EXACT_FOUR_FILE_OWNED_PATCH_AND_24_ESM_GENERATION_NO_INSTALL_OR_ADOPTION'}else{'BASELINE_AND_JSON_EVALUATION_ONLY_NO_JS_INSTALL_PATCH_OR_ADOPTION'})}
     }
-    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2','sql-only-r2','pg-legacy-r1')){
+    if($RemedyStage -cin @('sql-pg-r1','sql-pg-r2','sql-only-r2','pg-legacy-r1','pg-legacy-g6-r1')){
         $taskRoot=[IO.Path]::GetDirectoryName($root)
-        if($RemedyStage -cne 'pg-legacy-r1'){
+        if($RemedyStage -cnotin @('pg-legacy-r1','pg-legacy-g6-r1')){
         $sql=$remedy.sources.sql
         $archive=Join-Path $root 'archives/derek-sql-97614d0.tgz'
         $download=Fetch $sql.provider $archive 8388608

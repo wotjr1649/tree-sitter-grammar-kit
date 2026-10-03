@@ -43,7 +43,7 @@ func checkCampaignDefinition(c campaignDefinition, workload string) error {
 		}
 	}
 	branches := strings.Fields("inventory-identity profile-security schema-contract reproducibility incremental native-oracle evidence-replay real-world-qualification")
-	counts := []int{14, 14, 14, 15, 15, 14, 14, 15}
+	counts := []int{19, 16, 18, 18, 22, 17, 16, 17}
 	if len(c.Sessions) != 8 {
 		return fmt.Errorf("campaign session count mismatch")
 	}
@@ -84,9 +84,95 @@ type sourceCandidate struct {
 	ScannerAndShared    []string                     `json:"scanner_and_shared"`
 	Submodules          []struct{ Path, SHA string } `json:"submodules"`
 	Feasibility         string
-	SourceClosure       string   `json:"source_closure"`
-	FeatureSupport      string   `json:"feature_support"`
-	KnownGaps           []string `json:"known_gaps"`
+	SourceClosure       string          `json:"source_closure"`
+	FeatureSupport      string          `json:"feature_support"`
+	KnownGaps           []string        `json:"known_gaps"`
+	Adoption            *sourceAdoption `json:"adoption"`
+	SupersededCandidate *struct {
+		Repository, Commit string
+	} `json:"superseded_candidate"`
+}
+
+type sourceAdoption struct {
+	Decision      string   `json:"decision"`
+	Candidate     string   `json:"candidate"`
+	PatchSubjects []string `json:"patch_subjects"`
+	PatchedFiles  []struct {
+		Path   string `json:"path"`
+		Bytes  int64  `json:"bytes"`
+		SHA256 string `json:"sha256"`
+	} `json:"patched_files"`
+	Generation            string   `json:"generation"`
+	ExpectationAmendments []string `json:"expectation_amendments"`
+	NativeEvidence        struct {
+		RunID           int64  `json:"run_id"`
+		Stage           string `json:"stage"`
+		RegisteredRows  int    `json:"registered_rows"`
+		RegisteredEdits int    `json:"registered_edits"`
+		Platform        string `json:"platform"`
+		Result          string `json:"result"`
+	} `json:"native_evidence"`
+}
+
+type expectationAmendments struct {
+	Schema     string `json:"schema"`
+	Amendments []struct {
+		ID, Route, Stage  string
+		RegisteredSubject string                   `json:"registered_subject"`
+		InputBytes        int                      `json:"input_bytes"`
+		InputSHA256       string                   `json:"input_sha256"`
+		OldWindow         struct{ Start, End int } `json:"old_error_window"`
+		NewWindow         struct{ Start, End int } `json:"new_error_window"`
+		ComparatorChanged bool                     `json:"comparator_changed"`
+		OtherRowsChanged  bool                     `json:"other_rows_changed"`
+	} `json:"amendments"`
+}
+
+// checkExpectationAmendments pins the single user-approved T-SQL window correction to its registered case.
+func checkExpectationAmendments(e expectationAmendments) error {
+	if e.Schema != "tsgk-p05-expectation-amendments/r1" || len(e.Amendments) != 1 {
+		return fmt.Errorf("expectation amendment scope mismatch")
+	}
+	a := e.Amendments[0]
+	if a.ID != "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1" || a.Route != "tsql" || a.Stage != "mssql-patch-r1" || a.RegisteredSubject != "src/dev/prepare-p05/remedy-followup-r2.json" || a.InputBytes != 54 || !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(a.InputSHA256) {
+		return fmt.Errorf("expectation amendment identity mismatch")
+	}
+	if a.OldWindow.Start != 27 || a.OldWindow.End != 50 || a.NewWindow.Start != 27 || a.NewWindow.End != 52 || a.ComparatorChanged || a.OtherRowsChanged {
+		return fmt.Errorf("expectation amendment window mismatch")
+	}
+	return nil
+}
+
+// adoptedRoutes are the routes whose remedied candidates the user adopted on 2026-10-02 (PREPARE #20).
+var adoptedRoutes = map[string]bool{"csharp": true, "typescript": true, "tsx": true, "swift": true, "tsql": true, "postgresql-sql": true}
+
+func checkAdoption(r sourceCandidate) error {
+	a := r.Adoption
+	if a == nil || strings.TrimSpace(a.Decision) == "" || strings.TrimSpace(a.Generation) == "" || !regexp.MustCompile(`^P05-[A-Z0-9-]+-r[0-9]+$`).MatchString(a.Candidate) || len(a.PatchSubjects) == 0 || len(a.PatchedFiles) == 0 {
+		return fmt.Errorf("source adoption record mismatch: %s", r.RouteID)
+	}
+	for _, subject := range a.PatchSubjects {
+		if !regexp.MustCompile(`^src/dev/prepare-p05/remedy-[a-z0-9-]+\.json$`).MatchString(subject) {
+			return fmt.Errorf("source adoption patch subject mismatch: %s", r.RouteID)
+		}
+	}
+	for _, file := range a.PatchedFiles {
+		if !portableSourcePath(file.Path, false) || file.Bytes <= 0 || !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(file.SHA256) {
+			return fmt.Errorf("source adoption patched file mismatch: %s", r.RouteID)
+		}
+	}
+	n := a.NativeEvidence
+	if n.RunID <= 0 || strings.TrimSpace(n.Stage) == "" || n.RegisteredRows <= 0 || n.RegisteredEdits < 0 || n.Platform != "linux/amd64" || n.Result != "ALL_REGISTERED_ROWS_AND_EDITS_PASS" {
+		return fmt.Errorf("source adoption native evidence mismatch: %s", r.RouteID)
+	}
+	wantAmendments := r.RouteID == "tsql"
+	if (len(a.ExpectationAmendments) == 1 && a.ExpectationAmendments[0] == "src/dev/prepare-p05/remedy-expectation-amendments-r1.json") != wantAmendments || (!wantAmendments && len(a.ExpectationAmendments) != 0) {
+		return fmt.Errorf("source adoption expectation amendment mismatch: %s", r.RouteID)
+	}
+	if r.RouteID == "tsql" && (r.SupersededCandidate == nil || !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(r.SupersededCandidate.Commit) || r.SupersededCandidate.Repository == r.Repository) {
+		return fmt.Errorf("source adoption superseded candidate mismatch: %s", r.RouteID)
+	}
+	return nil
 }
 
 // This checks registry data, not filesystem authorization or source closure.
@@ -129,7 +215,16 @@ func checkSources(registry sourceRegistry, routes []string, scope string) error 
 		if (r.License != "MIT" && r.License != "BSD-2-Clause" && r.License != "BSD-3-Clause") || r.GrammarJS == nil || !*r.GrammarJS || r.GrammarJSON == nil || !*r.GrammarJSON || r.NodeTypes == nil || !*r.NodeTypes || r.ParserC == nil || *r.ParserC != (r.RouteID != "swift") {
 			return fmt.Errorf("observed source metadata mismatch: %s", r.RouteID)
 		}
-		if r.Feasibility != "METADATA_OBSERVED_NATIVE_NOT_RUN" || r.SourceClosure != "CONTENT_REVIEW_PENDING" || r.Submodules == nil || len(r.ScannerAndShared) == 0 {
+		wantFeasibility, wantClosure := "METADATA_OBSERVED_NATIVE_NOT_RUN", "CONTENT_REVIEW_PENDING"
+		if adoptedRoutes[r.RouteID] {
+			wantFeasibility, wantClosure = "ADOPTED_REMEDIED_CANDIDATE_REGISTERED_NATIVE_PASS", "ADOPTED_PINNED_PATCH_RECONSTRUCTION"
+			if err := checkAdoption(r); err != nil {
+				return err
+			}
+		} else if r.Adoption != nil || r.SupersededCandidate != nil {
+			return fmt.Errorf("source observation status/closure mismatch: %s", r.RouteID)
+		}
+		if r.Feasibility != wantFeasibility || r.SourceClosure != wantClosure || r.Submodules == nil || len(r.ScannerAndShared) == 0 {
 			return fmt.Errorf("source observation status/closure mismatch: %s", r.RouteID)
 		}
 		for _, submodule := range r.Submodules {
@@ -151,7 +246,10 @@ func checkSources(registry sourceRegistry, routes []string, scope string) error 
 		if r.RouteID == "tsql" {
 			wantSupport = "STATIC_REQUIRED_SOURCE_GAP"
 		}
-		if r.FeatureSupport != wantSupport || ((r.RouteID == "csharp" || r.RouteID == "swift" || r.RouteID == "tsql" || r.RouteID == "postgresql-sql") && len(r.KnownGaps) == 0) {
+		if adoptedRoutes[r.RouteID] {
+			wantSupport = "REGISTERED_CASES_PASS_GAPS_RECORDED"
+		}
+		if r.FeatureSupport != wantSupport || ((adoptedRoutes[r.RouteID] || r.RouteID == "csharp" || r.RouteID == "swift" || r.RouteID == "tsql" || r.RouteID == "postgresql-sql") && len(r.KnownGaps) == 0) {
 			return fmt.Errorf("source known gap/support mismatch: %s", r.RouteID)
 		}
 	}
@@ -314,6 +412,19 @@ func TestCampaignDefinitions(t *testing.T) {
 	if err := checkSources(raw, c.Routes, scope); err != nil {
 		t.Fatal(err)
 	}
+	var amendments expectationAmendments
+	if err := json.Unmarshal(read("src/dev/prepare-p05/remedy-expectation-amendments-r1.json"), &amendments); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkExpectationAmendments(amendments); err != nil {
+		t.Fatal(err)
+	}
+	widened := amendments
+	widened.Amendments = append(widened.Amendments[:0:0], amendments.Amendments...)
+	widened.Amendments[0].ComparatorChanged = true
+	if err := checkExpectationAmendments(widened); err == nil || !strings.Contains(err.Error(), "window") {
+		t.Fatalf("comparator change not detected: %v", err)
+	}
 	for _, tc := range []struct {
 		name, diagnostic string
 		mutate           func(*campaignDefinition, *string)
@@ -350,6 +461,18 @@ func TestCampaignDefinitions(t *testing.T) {
 		{"false-closure", "closure", func(s *sourceRegistry, _ *string) { s.Routes[0].SourceClosure = "VERIFIED" }},
 		{"false-support", "gap/support", func(s *sourceRegistry, _ *string) { s.Routes[0].FeatureSupport = "SUPPORTED" }},
 		{"missing-gap", "gap/support", func(s *sourceRegistry, _ *string) { s.Routes[0].KnownGaps = nil }},
+		{"adoption-on-unadopted-route", "closure", func(s *sourceRegistry, _ *string) { s.Routes[1].Feasibility = s.Routes[0].Feasibility }},
+		{"missing-adoption-record", "adoption", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption = nil }},
+		{"missing-native-run", "adoption native", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.NativeEvidence.RunID = 0 }},
+		{"partial-native-result", "adoption native", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.NativeEvidence.Result = "PARTIAL" }},
+		{"unsafe-patch-subject", "patch subject", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.PatchSubjects[0] = "../remedy.json" }},
+		{"bad-patched-hash", "patched file", func(s *sourceRegistry, _ *string) { s.Routes[0].Adoption.PatchedFiles[0].SHA256 = "00" }},
+		{"missing-superseded-tsql", "superseded", func(s *sourceRegistry, _ *string) { s.Routes[24].SupersededCandidate = nil }},
+		{"adoption-record-on-unadopted-route", "closure", func(s *sourceRegistry, _ *string) { s.Routes[1].Adoption = s.Routes[0].Adoption }},
+		{"missing-tsql-amendment", "expectation amendment", func(s *sourceRegistry, _ *string) { s.Routes[24].Adoption.ExpectationAmendments = nil }},
+		{"amendment-on-other-route", "expectation amendment", func(s *sourceRegistry, _ *string) {
+			s.Routes[0].Adoption.ExpectationAmendments = []string{"src/dev/prepare-p05/remedy-expectation-amendments-r1.json"}
+		}},
 		{"missing-feature-row", "scope table", func(_ *sourceRegistry, text *string) { *text = strings.Replace(*text, "| `csharp` |", "| csharp |", 1) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

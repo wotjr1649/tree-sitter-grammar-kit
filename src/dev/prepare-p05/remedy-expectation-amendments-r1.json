@@ -1,0 +1,46 @@
+{
+  "schema": "tsgk-p05-expectation-amendments/r1",
+  "prepare_issue": 20,
+  "decision": "2026-10-02 실제 사용자 답변 '기대 범위 정정 후 채택': 공식 오류 위치에 맞춘 한 행의 window 정정이며 comparator와 다른 행은 변경하지 않는다",
+  "amendments": [
+    {
+      "id": "P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1",
+      "route": "tsql",
+      "feature_ids": [
+        "tsql-V16"
+      ],
+      "kind": "N",
+      "stage": "mssql-patch-r1",
+      "registered_subject": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "input_utf8": "CREATE TABLE t (s datetime2 GENERATED ALWAYS AS ROW);\n",
+      "input_bytes": 54,
+      "input_sha256": "83ca09268b49bc4c3e720fd9adc6026b1d3c1fb2e06f6dcb92d8ec2e67744431",
+      "old_error_window": {
+        "start": 27,
+        "end": 50,
+        "preserve_following_source": true
+      },
+      "new_error_window": {
+        "start": 27,
+        "end": 52,
+        "preserve_following_source": true
+      },
+      "reason": "START/END가 빠진 위치는 ROW(byte 48..51) 직후 byte 51이며 이전 window는 ROW 끝과 그 지점을 포함하지 않았다",
+      "observed_basis": {
+        "run_id": 36947507308,
+        "node": "keyword_end",
+        "missing": true,
+        "start": 51,
+        "end": 51,
+        "parent": "generated_always_clause",
+        "following_source_preserved": [
+          ")",
+          ";"
+        ]
+      },
+      "applicability": "run 36947507308의 같은 증거를 정정 window로 다시 판정한 결과만; 원래 window 기준 40/41 판정은 보존",
+      "comparator_changed": false,
+      "other_rows_changed": false
+    }
+  ]
+}

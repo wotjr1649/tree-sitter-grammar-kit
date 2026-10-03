@@ -195,8 +195,9 @@ function StopContainer([string]$id,[string]$label){
     [void]$script:containers.Remove($id)
     Record ($label+'-cleanup') @{container=$id;running=$false;host_pid=0;removed=$true}
 }
-function Container([string]$label){
-    $args=@('create','--network','none','--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--user','65534:65534','--pids-limit','64','--memory','4g','--memory-swap','4g','--cpus','1','--tmpfs','/work:rw,size=2147483648,mode=1777','--env','HOME=/work','--env','TMPDIR=/work','--env','NODE_PATH=/inputs/npm')
+function Container([string]$label,[long]$memoryBytes=4294967296){
+    if($memoryBytes -ne 4294967296 -and ($memoryBytes -ne 6442450944 -or $RemedyStage -cne 'pg-legacy-g6-r1' -or $label -cne 'generate-postgresql-legacy-candidate-r1-g6')){throw 'Container memory scope mismatch'}
+    $args=@('create','--network','none','--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--user','65534:65534','--pids-limit','64','--memory',[string]$memoryBytes,'--memory-swap',[string]$memoryBytes,'--cpus','1','--tmpfs','/work:rw,size=2147483648,mode=1777','--env','HOME=/work','--env','TMPDIR=/work','--env','NODE_PATH=/inputs/npm')
     foreach($mount in @(@{host=(Join-Path $root 'acquisition');target='/inputs/acquisition'},@{host=(Join-Path $root 'cases');target='/inputs/cases'},@{host=(Join-Path $root 'probe.c');target='/inputs/probe.c'},@{host=(Join-Path $root 'npm');target='/inputs/npm'},@{host=(Join-Path $root 'owned');target='/inputs/owned'},@{host=(Join-Path $root 'results');target='/inputs/results'})){
         $args+=@('--mount',('type=bind,source='+$mount.host+',target='+$mount.target+',readonly'))
     }
@@ -207,7 +208,13 @@ function Container([string]$label){
     $script:containers.Add($id);Require (Run ($label+'-start') @('start',$id) 10)
     $config=Run ($label+'-inspect') @('inspect',$id) 10;Require $config
     $observed=(TextOutput $config|ConvertFrom-Json)[0]
-    if($observed.HostConfig.NetworkMode -cne 'none' -or $observed.HostConfig.IpcMode -cne 'none' -or $observed.HostConfig.PidMode -eq 'host' -or $observed.HostConfig.Privileged -or -not $observed.HostConfig.ReadonlyRootfs -or $observed.HostConfig.Memory -ne 4294967296 -or $observed.HostConfig.MemorySwap -ne 4294967296 -or $observed.HostConfig.NanoCpus -ne 1000000000 -or $observed.HostConfig.PidsLimit -ne 64 -or 'ALL' -notin $observed.HostConfig.CapDrop -or 'no-new-privileges' -notin $observed.HostConfig.SecurityOpt -or $observed.Config.User -cne '65534:65534' -or @($observed.Mounts|Where-Object {$_.Type -eq 'bind' -and $_.RW}).Count){throw 'Container boundary mismatch'}
+    if($observed.HostConfig.NetworkMode -cne 'none' -or $observed.HostConfig.IpcMode -cne 'none' -or $observed.HostConfig.PidMode -eq 'host' -or $observed.HostConfig.Privileged -or -not $observed.HostConfig.ReadonlyRootfs -or $observed.HostConfig.Memory -ne $memoryBytes -or $observed.HostConfig.MemorySwap -ne $memoryBytes -or $observed.HostConfig.NanoCpus -ne 1000000000 -or $observed.HostConfig.PidsLimit -ne 64 -or 'ALL' -notin $observed.HostConfig.CapDrop -or 'no-new-privileges' -notin $observed.HostConfig.SecurityOpt -or $observed.Config.User -cne '65534:65534' -or @($observed.Mounts|Where-Object {$_.Type -eq 'bind' -and $_.RW}).Count){throw 'Container boundary mismatch'}
+    if($memoryBytes -eq 6442450944){
+        if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
+        $cgroup=Run ($label+'-memory-max') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.max') 10 1048576;Require $cgroup
+        AssertMemoryEnvelope $memoryBytes $observed.HostConfig.Memory $observed.HostConfig.MemorySwap (TextOutput $cgroup)
+        Record ($label+'-memory-limit') @{stage=$RemedyStage;operation='generation';bytes=$memoryBytes;inspect_and_cgroup='MATCH';container=$id}
+    }
     return $id
 }
 function ConfirmFrozenState([string]$state,[string]$top){
@@ -264,13 +271,16 @@ function CheckRecoveredProof([string]$path){
     if((Get-Item -LiteralPath $path).Length -ne 12 -or [Convert]::ToHexString([IO.File]::ReadAllBytes($path)) -cne '707265736572766564000D0A'){throw 'Recovered binary proof changed'}
 }
 function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long]$resultLimit,[switch]$Owned,[switch]$MemoryEvents){
+    $memoryBytes=if($RemedyStage){RemedyMemoryBytes $RemedyStage $kind $label $Owned.IsPresent}else{4294967296L}
+    if($memoryBytes -eq 6442450944){ConfirmGenerationCapacity}
     $caps=@{generation=6;build=11;execution=128;preflight=8;diagnostic=16}
     if($RemedyStage){$exactLimits=ExactRemedyLimits $RemedyStage;$selectedCaps=if($exactLimits){@{generation=$exactLimits.G;build=$exactLimits.B;execution=$exactLimits.X}}elseif($RemedyStage -ceq 'patch-r1'){@{generation=5;build=8;execution=85}}elseif($RemedyStage -ceq 'patch-r2'){@{generation=3;build=3;execution=39}}elseif($RemedyStage -ceq 'sql-only-r2'){@{generation=1;build=1;execution=30}}else{@{generation=2;build=3;execution=46}};foreach($key in $selectedCaps.Keys){$caps[$key]=$selectedCaps[$key]}}
     if($Owned){
         if($kind -notin @('generation','build','execution') -or ++$script:ownedCounts[$kind] -gt 1){throw 'Owned control budget exceeded'}
     }elseif(++$script:counts[$kind] -gt $caps[$kind]){throw 'Native operation budget exceeded'}
-    $id=Container $label
+    $id=Container $label $memoryBytes
     try {
+        $memoryState='NOT_SAMPLED';$memoryRecord=$null
         if($MemoryEvents){
             if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
             Require (Run ($label+'-memory-before') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.events') 10 1048576)
@@ -280,17 +290,21 @@ function Native([string]$kind,[string]$label,[string[]]$argv,[int]$seconds,[long
         if($MemoryEvents){
             if(++$script:counts.diagnostic -gt 16){throw 'Memory diagnostic budget exceeded'}
             Require (Run ($label+'-memory-after') @('exec',$id,'/bin/cat','/sys/fs/cgroup/memory.events') 10 1048576)
+            $events=MemoryEventDelta ([IO.File]::ReadAllText((Join-Path $root ('raw/'+$label+'-memory-before.stdout')))) ([IO.File]::ReadAllText((Join-Path $root ('raw/'+$label+'-memory-after.stdout'))))
+            $memoryState=$events.state;$memoryRecord='records/'+$label+'-memory-events.json'
+            Record ($label+'-memory-events') @{container=$id;native_command=$label;memory_limit_bytes=$memoryBytes;state=$memoryState;counters=$events;before_raw=(FileIdentity (Join-Path $root ('raw/'+$label+'-memory-before.stdout')));after_raw=(FileIdentity (Join-Path $root ('raw/'+$label+'-memory-after.stdout')));original_exit_code=$result.exit_code;original_termination=$result.termination}
         }
-        if($result.termination -ne 'EXITED'){
+        $result.resource_healthy=if($MemoryEvents){$memoryState -ceq 'NO_OOM_OBSERVED'}else{$null};$result.memory_event_record=$memoryRecord
+        if($result.termination -ne 'EXITED' -or $result.resource_healthy -eq $false){
             if(-not $RemedyStage -or $Owned -or $kind -notin @('generation','build','execution')){throw ('Native resource limit: '+$label)}
             $script:failed=$true
-            $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$null;scope='REGISTERED_P05_REMEDY';partial_output_retained=$true;capture='NOT_RUN_AFTER_RESOURCE_LIMIT'})
+            $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$null;memory_limit_bytes=$memoryBytes;resource_state=$memoryState;memory_event_record=$memoryRecord;scope='REGISTERED_P05_REMEDY';partial_output_retained=$true;capture='NOT_RUN_AFTER_RESOURCE_LIMIT'})
             return $result
         }
         $archive=Snapshot $id $label $resultLimit
         $directory=Join-Path $root ('results/'+$label)
         UnpackResult $archive $directory $resultLimit -Executable:($kind -eq 'build')
-        $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$label;scope=$(if($Owned){'OWNED_VERTICAL_CONTROL'}else{'REGISTERED_P05'})})
+        $script:outcomes.Add(@{kind=$kind;label=$label;exit_code=$result.exit_code;termination=$result.termination;result_directory=$label;memory_limit_bytes=$memoryBytes;resource_state=$memoryState;memory_event_record=$memoryRecord;scope=$(if($Owned){'OWNED_VERTICAL_CONTROL'}else{'REGISTERED_P05'})})
         if($result.exit_code -ne 0){$script:failed=$true}
         return $result
     } finally {StopContainer $id $label}
@@ -396,8 +410,9 @@ try {
     }
     if($RemedyStage){PrepareRemedyInputs $remedy}
     Record 'verified-source-inputs' @{manifest='acquisition/records/acquisition.json';all_selected_bytes_rechecked=$true;stage='BEFORE_GENERATION_AND_BUILD';system_headers_and_tools=$toolchain.image;dependency_resolution='read-only pinned source roots and image; no install or fetch in native containers'}
-    foreach($case in @($inputs.cases)+$(if($RemedyStage){@($remedy.cases.cases)}else{@()})+$(if($RemedyStage -ceq 'pg-legacy-r1'){@($remedy['exact-r1'].new_pg_cases)}else{@()})){
-        if($case.id -notmatch '^[A-Z0-9-]+$' -or $case.input_bytes -gt 65536){throw 'Case identity/size mismatch'}
+    $materializedCases=if($RemedyStage -and (FollowupStageKey $RemedyStage)){@($script:remedyRows.case)}else{@($inputs.cases)+$(if($RemedyStage){@($remedy.cases.cases)}else{@()})+$(if($RemedyStage -ceq 'pg-legacy-r1'){@($remedy['exact-r1'].new_pg_cases)}else{@()})}
+    foreach($case in $materializedCases){
+        if($case.id -cnotmatch '^[A-Z0-9-]+(?:-r[0-9]+)?$' -or $case.input_bytes -le 0 -or $case.input_bytes -gt 65536){throw 'Case identity/size mismatch'}
         $path=Join-Path $root ('cases/'+$case.id);[IO.File]::WriteAllText($path,$case.input_utf8,[Text.UTF8Encoding]::new($false))
         if((Get-FileHash $path).Hash.ToLowerInvariant() -cne $case.input_sha256){throw 'Case bytes changed'}
     }
@@ -410,7 +425,7 @@ try {
     $script:imageSize=[long]$im.Size
     if($script:imageSize -gt 2147483648){throw 'Image storage reserve exceeded'}
     Require (Native diagnostic 'tool-environment' @('/bin/sh','-ec','getconf GNU_LIBC_VERSION; node --version; gcc --version; ld --version; /usr/bin/readelf -hW -lW -dW -VW /inputs/acquisition/tools/tree-sitter; /usr/bin/readelf -VW /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2; sha256sum /inputs/acquisition/tools/tree-sitter /usr/local/bin/node /usr/bin/gcc /usr/bin/ld /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib64/ld-linux-x86-64.so.2 /usr/bin/readelf /bin/sh /usr/bin/stat /usr/bin/sha256sum') 10 1048576)
-    if($RemedyStage -and (ExactRemedyLimits $RemedyStage)){CheckExactRemedyTools $remedy['exact-r1'].tools (TextOutput @{label='tool-environment'})}
+    if($RemedyStage -and (ExactRemedyLimits $RemedyStage)){$exactTools=if(FollowupStageKey $RemedyStage){$remedy['followup-r2'].tools}else{$remedy['exact-r1'].tools};CheckExactRemedyTools $exactTools (TextOutput @{label='tool-environment'}) $RemedyStage}
     Require (Native diagnostic 'cli-version' @('/inputs/acquisition/tools/tree-sitter','--version') 10 1048576)
     if((TextOutput @{label='cli-version'}).Trim() -cnotmatch '^tree-sitter 0\.27\.0(?:\s|$)'){throw 'CLI version mismatch'}
     Require (Native diagnostic 'cli-generate-help' @('/inputs/acquisition/tools/tree-sitter','generate','--help') 10 1048576)
@@ -496,7 +511,8 @@ finally {
         Record 'download-budget-incomplete' $network
         if($network.state -cne 'OBSERVED'){$script:failed=$true}
     }
-    Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;rows=(CaseLedger);source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;whole_feature_support=$false}
+    $stageRows=CaseLedger
+    Record 'case-ledger' @{planned_original_inputs=57;planned_edits=6;planned_stage_rows=$stageRows.Count;planned_producer_edits=@($stageRows|Where-Object {$_.case.edit}).Count;rows=$stageRows;source_inputs_sha256=(Get-FileHash $inputsPath).Hash.ToLowerInvariant();remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;whole_feature_support=$false}
     Record 'summary' @{verdict=$verdict;failure_type=$failure;cleanup_errors=$cleanupErrors;counts=$script:counts;owned_counts=$script:ownedCounts;capture_count=$script:captures;wall_seconds=$script:wall.Elapsed.TotalSeconds;outcomes=$script:outcomes;product_qualification=$false;whole_feature_support=$false;command_count=$script:commands.Count;remedy_stage=$RemedyStage;remedy_approval_subject=$RemedyApprovalSubject;acquisition_limit_bytes=$script:acquisitionLimit}
 }
 if($script:failed){throw 'Required P05 inputs failed; original evidence retained'}

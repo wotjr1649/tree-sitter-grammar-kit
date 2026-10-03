@@ -71,6 +71,74 @@ $rejected=$false;try{RejectReadOnlyAssignments ([scriptblock]::Create('$PID=1').
 if(-not $rejected){throw 'Read-only assignment negative case failed'}
 . (Join-Path $PSScriptRoot 'remedy.ps1')
 $remedySubjects=ReadRemedySubjects
+$followupSubject='a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2'
+$csharpR5Subject='cced4a06c71eacd8c28e855ddfd20c92d7c82bb2cfe7bc8d29313302dd857390'
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1')){
+    $stageSubject=if($stage -ceq 'csharp-r5'){$csharpR5Subject}else{$followupSubject}
+    $selected=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $stageSubject
+    $limits=ExactRemedyLimits $stage
+    if($selected.acquisition_limit_bytes -ne $limits.source_image_counter_bytes){throw 'Followup stage counter mismatch'}
+    foreach($wrong in @('',$subject,$remedySubject,$r2Subject,$exactSubject,$(if($stage -ceq 'csharp-r5'){$followupSubject}else{$csharpR5Subject}))){
+        $rejected=$false;try{$null=& $approval -Profile pinned-tsql-r1 -Subject $subject -ImageProfile trixie-r1 -ImageSubject $imageSubject -RemedyStage $stage -RemedySubject $wrong}catch{$rejected=$true}
+        if(-not $rejected){throw 'Prior subject authorized followup effect'}
+    }
+    $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    if($rows.Count -ne $limits.X -or @($rows|Where-Object {$_.case.edit}).Count -ne $limits.producer_edit -or @($rows|Where-Object {$_.producer -clike '*baseline*'}).Count){throw 'Followup rows/edit or baseline reuse mismatch'}
+    $rejected=$false;try{$null=AssertExactAcquisitionLimit $stage $(if($limits.source_image_counter_bytes -eq 1073741824){1610612736L}else{1073741824L})}catch{$rejected=$true};if(-not $rejected){throw 'Followup cross-stage counter accepted'}
+}
+$probeBytes=[IO.File]::ReadAllBytes((Join-Path $PSScriptRoot 'probe.c.in'));$probeSha=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($probeBytes)).ToLowerInvariant()
+$followupTools=$remedySubjects['followup-r2'].tools;$mssqlProbe=RemedyProbePin $followupTools 'mssql-patch-r1'
+if($mssqlProbe.bytes -ne $probeBytes.Length -or $mssqlProbe.sha256 -cne $probeSha -or $mssqlProbe.amends.sha256 -cne $followupTools.probe.sha256){throw 'MSSQL probe amendment pin mismatch'}
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1')){if(-not [object]::ReferenceEquals((RemedyProbePin $followupTools $stage),$followupTools.probe)){throw 'Probe amendment leaked to another stage'}}
+$r4Rows=NewRemedyRows 'csharp-r4' $originalInputs.cases $remedySubjects.cases.cases
+$r5Rows=NewRemedyRows 'csharp-r5' $originalInputs.cases $remedySubjects.cases.cases
+for($i=0;$i -lt $r4Rows.Count;$i++){if($r5Rows[$i].producer -cne 'csharp-candidate-r5' -or -not (EqualRemedyData $r4Rows[$i].case $r5Rows[$i].case)){throw 'C# r5 changed frozen r4 inputs/expectations/edit order'}}
+foreach($case in $remedySubjects['followup-r2'].new_cases){
+    AssertFollowupCase $case
+    foreach($failure in @('empty','count','hash','window')){
+        $bad=$case|ConvertTo-Json -Depth 30|ConvertFrom-Json -AsHashtable
+        switch($failure){'empty'{$bad.input_utf8=''};'count'{$bad.input_bytes++};'hash'{$bad.input_sha256='0'*64};'window'{$bad.expected.error_window=@{start=-1;end=1}}}
+        $rejected=$false;try{AssertFollowupCase $bad}catch{$rejected=$true};if(-not $rejected){throw 'Invalid followup payload accepted'}
+    }
+}
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1','pg-legacy-r1','unknown')){
+    foreach($kind in @('generation','build','execution','preflight','diagnostic')){
+        foreach($owned in @($false,$true)){
+            $actual=RemedyMemoryBytes $stage $kind 'generate-postgresql-legacy-candidate-r1-g6' $owned
+            $expected=if($stage -ceq 'pg-legacy-g6-r1' -and $kind -ceq 'generation' -and -not $owned){6442450944L}else{4294967296L}
+            if($actual -ne $expected -or (RemedyMemoryBytes $stage $kind 'other-operation' $owned) -ne 4294967296){throw 'PG generation-only memory leaked'}
+        }
+    }
+}
+AssertGenerationCapacity 8589934592 @(@{max='max';current=0},@{max='17179869184';current=8589934592L})
+foreach($vector in @(@{available=8589934591L;parents=@(@{max='max';current=0})},@{available=8589934592L;parents=@()},@{available=8589934592L;parents=@(@{max='UNKNOWN';current=0})},@{available=8589934592L;parents=@(@{max='8589934592';current=1})},@{available=8589934592L;parents=@(@{max='max';current=-1})})){
+    $rejected=$false;try{AssertGenerationCapacity $vector.available $vector.parents}catch{$rejected=$true};if(-not $rejected){throw 'Unknown or insufficient generation host capacity accepted'}
+}
+AssertMemoryEnvelope 6442450944 6442450944 6442450944 '6442450944'
+$hierarchyRoot=@{path='/sys/fs/cgroup';mount_root='/';max='NOT_APPLICABLE_HIERARCHY_ROOT';current=$null;memory_controller_available=$true;max_file_present=$false;current_file_present=$false;primary_source='https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#memory-interface-files'}
+AssertGenerationCapacity 8589934592 @($hierarchyRoot)
+foreach($key in @('path','mount_root','memory_controller_available','max_file_present','current_file_present','current','primary_source')){
+    $bad=$hierarchyRoot.Clone();$bad[$key]=switch($key){'path'{'/sys/fs/cgroup/child'};'mount_root'{'/hidden'};'memory_controller_available'{$false};'current'{0};default{$true}}
+    $rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Unverified hierarchy root accepted'}
+}
+$bad=$hierarchyRoot.Clone();$bad.Remove('primary_source')
+$rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Missing hierarchy root primary source accepted'}
+$bad=$hierarchyRoot.Clone();$bad.primary_source='https://www.kernel.org/invalid'
+$rejected=$false;try{AssertGenerationCapacity 8589934592 @($bad)}catch{$rejected=$true};if(-not $rejected){throw 'Wrong hierarchy root primary source accepted'}
+$before="low 0`nhigh 0`nmax 0`noom 0`noom_kill 0`noom_group_kill 0`n"
+$pressure=$before.Replace('max 0','max 1');$oom=$pressure.Replace('oom 0','oom 1').Replace('oom_kill 0','oom_kill 1')
+if((MemoryEventDelta $before $pressure).state -cne 'NO_OOM_OBSERVED' -or (MemoryEventDelta $before $oom).state -cne 'OOM_OBSERVED'){throw 'Pressure/OOM delta classification failed'}
+foreach($pair in @(@($oom,$before),@($before,$before.Replace('oom_kill 0', 'oom_kill UNKNOWN')),@($before,($before+"oom 0`n")),@($before,$before.Replace("oom 0`n",'')))){
+    $rejected=$false;try{$null=MemoryEventDelta $pair[0] $pair[1]}catch{$rejected=$true};if(-not $rejected){throw 'Unknown/regressed/duplicate/missing memory counter accepted'}
+}
+$groupOom=$before.Replace('oom_group_kill 0','oom_group_kill 1')
+if((MemoryEventDelta $before $groupOom).state -cne 'OOM_OBSERVED'){throw 'Group-only OOM delta classification failed'}
+foreach($pair in @(@($before.Replace("oom_group_kill 0`n",''),$before.Replace("oom_group_kill 0`n",'')),@($before,$before.Replace('oom_group_kill 0','oom_group_kill UNKNOWN')),@($groupOom,$before))){
+    $rejected=$false;try{$null=MemoryEventDelta $pair[0] $pair[1]}catch{$rejected=$true};if(-not $rejected){throw 'Missing/unknown/regressed group OOM counter accepted'}
+}
+foreach($vector in @(@(6442450944L,4294967296L,6442450944L,'6442450944'),@(6442450944L,6442450944L,4294967296L,'6442450944'),@(6442450944L,6442450944L,6442450944L,'4294967296'),@(6442450944L,6442450944L,6442450944L,'max'),@(6442450944L,6442450944L,6442450944L,''))){
+    $rejected=$false;try{AssertMemoryEnvelope $vector[0] $vector[1] $vector[2] $vector[3]}catch{$rejected=$true};if(-not $rejected){throw 'Inspect/cgroup memory mismatch accepted'}
+}
 foreach($stage in @('patch-r1','sql-pg-r1')){
     $rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
     if($rows.Count -ne $(if($stage -ceq 'patch-r1'){85}else{46}) -or @($rows|Where-Object {$_.case.edit}).Count -ne $(if($stage -ceq 'patch-r1'){16}else{3})){throw 'Remedy rows/edit budget mismatch'}
@@ -84,6 +152,8 @@ $remainingSqlRows=NewRemedyRows 'sql-only-r2' $originalInputs.cases $remedySubje
 if($remainingSqlRows.Count -ne 30 -or @($remainingSqlRows|Where-Object {$_.case.edit}).Count -ne 1 -or -not (EqualRemedyData $remainingSqlRows @($sqlRows|Where-Object producer -CEQ 'derek-sql-candidate'))){throw 'Remaining SQL rows differ from the approved B subset'}
 $altered=$originalInputs.cases|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
 @($altered|Where-Object route -CEQ 'csharp')[0].expected.facts='altered expectation'
+$rejected=$false;try{$null=NewRemedyRows 'csharp-r4' $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed followup expectation accepted'}
+$rejected=$false;try{$null=NewRemedyRows 'csharp-r5' $altered $remedySubjects.cases.cases}catch{$rejected=$true};if(-not $rejected){throw 'Changed C# r5 expectation accepted'}
 $rejected=$false;try{$null=NewRemedyRows 'patch-r2' $altered $remedySubjects.cases.cases}catch{$rejected=$true}
 if(-not $rejected){throw 'Changed exact r2 expectation accepted'}
 foreach($stage in @('csharp-r3','pg-legacy-r1','mssql-evaluate-r1')){
@@ -140,6 +210,22 @@ foreach($helper in @('CheckElfClosure','CheckOwnedControl','ReadGrammarName','Ch
     $change=$pin.Clone();$change.base_file=@{bytes=6;sha256=$id.sha256}
     CopyExactRemedyCandidate $sourceRoot @{id='OWNED-EXACT';file='fixture.txt';change=$change}
     if([IO.File]::ReadAllText((Join-Path $root 'candidates/OWNED-EXACT/fixture.txt')) -cne 'after' -or [IO.File]::ReadAllText($source) -cne 'before'){throw 'Owned exact patch copy changed original or result'}
+    $second=Join-Path $sourceRoot 'second.txt';[IO.File]::WriteAllText($second,'before',[Text.UTF8Encoding]::new($false));$secondId=FileIdentity $second;$script:verifiedSource[$secondId.path]=$secondId.sha256
+    $firstChange=$change.Clone();$firstChange.target='fixture.txt';$secondChange=$change.Clone();$secondChange.target='second.txt'
+    CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MULTIFILE';files=@($firstChange,$secondChange)}
+    foreach($name in @('fixture.txt','second.txt')){if([IO.File]::ReadAllText((Join-Path $root ('candidates/OWNED-MULTIFILE/'+$name))) -cne 'after' -or [IO.File]::ReadAllText((Join-Path $sourceRoot $name)) -cne 'before'){throw 'Owned multi-file patch failed or changed source'}}
+    $missing=$change.Clone();$missing.target='missing.txt';$rejected=$false;try{CopyExactRemedyCandidate $sourceRoot @{id='OWNED-MISSING';files=@($firstChange,$missing)}}catch{$rejected=$true};if(-not $rejected){throw 'Missing multi-file patch target accepted'}
+    $r5=CsharpR5Patch $remedySubjects['csharp-r5'];$r5.id='OWNED-CSHARP-R5'
+    $sourceRoot=Join-Path $root 'owned-r5-predecessor';[void][IO.Directory]::CreateDirectory((Join-Path $sourceRoot 'src'))
+    $before=($r5.files[0].operations.before -join "`n")+"`n";$after=($r5.files[0].operations.after -join "`n")+"`n"
+    [IO.File]::WriteAllText((Join-Path $sourceRoot 'grammar.js'),$before,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllBytes((Join-Path $sourceRoot 'src/scanner.c'),[byte[]]@(0,13,10))
+    foreach($name in @('grammar.js','src/scanner.c')){$identity=FileIdentity (Join-Path $sourceRoot $name);$script:verifiedSource[$identity.path]=$identity.sha256}
+    $r5.files[0].base_file=FileIdentity (Join-Path $sourceRoot 'grammar.js')
+    $r5.files[0].proposed_result_bytes=[Text.Encoding]::UTF8.GetByteCount($after);$r5.files[0].proposed_result_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($after))).ToLowerInvariant()
+    $r5.scanner=FileIdentity (Join-Path $sourceRoot 'src/scanner.c');$r5.scanner.target='src/scanner.c'
+    CopyExactRemedyCandidate $sourceRoot $r5 '5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7'
+    if([IO.File]::ReadAllText((Join-Path $root 'candidates/OWNED-CSHARP-R5/grammar.js')) -cne $after -or [IO.File]::ReadAllText((Join-Path $sourceRoot 'grammar.js')) -cne $before -or (FileIdentity (Join-Path $root 'candidates/OWNED-CSHARP-R5/src/scanner.c')).sha256 -cne $r5.scanner.sha256){throw 'C# r5 exact two-operation copy/scanner/original preservation failed'}
     $script:verifiedSource=@{}
 } $root
 $swiftSource='e798585e0b27886fce7fc540b3e246073bd6bedd2d7d18c63c5832b6a148db2b'
@@ -217,11 +303,11 @@ foreach($vector in @(@('true false 3253',$validTop),@('false true 3253',$validTo
     $rejected=$false;try{[void](ConfirmFrozenState $vector[0] $vector[1])}catch{$rejected=$true}
     if(-not $rejected){throw 'Unsafe/nonquiescent container was accepted'}
 }
-$name=if($IsWindows){'p05-tool-check.cmd'}else{'p05-tool-check'}
+$applicationName=if($IsWindows){'p05-tool-check.cmd'}else{'p05-tool-check'}
 $directories=@((Join-Path $root 'first'),(Join-Path $root 'second'))
 foreach($directory in $directories){
     [void][IO.Directory]::CreateDirectory($directory)
-    $path=Join-Path $directory $name
+    $path=Join-Path $directory $applicationName
     [IO.File]::WriteAllText($path,"# owned discovery-only fixture`n",[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){[IO.File]::SetUnixFileMode($path,[IO.UnixFileMode]493)}
 }
@@ -268,6 +354,25 @@ $grammarPath=Join-Path $root 'grammar.json'
     PinFixture $dependency;$script:verifiedSource.Remove((FileIdentity $dependency).path)
     $rejected=$false;try{$null=CheckSqlJsInputs $entry $sourceRoot}catch{if($_.Exception.Message -cne 'Unregistered SQL dependency'){throw};$rejected=$true}
     if(-not $rejected){throw 'Unregistered SQL dependency accepted'}
+    $commentRoot=Join-Path $root 'reviewed-comment';$comment=Join-Path $commentRoot 'grammar/statements/create-function.js'
+    [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($comment))
+    $fixture=Join-Path $PSScriptRoot 'fixtures/mssql-create-function.js.txt'
+    $originalComment=[IO.File]::ReadAllBytes($fixture)
+    if($originalComment.Length -ne 2539 -or (Get-FileHash -LiteralPath $fixture).Hash.ToLowerInvariant() -cne 'f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a'){throw 'Reviewed prose fixture bytes changed'}
+    [IO.File]::WriteAllBytes($comment,$originalComment);PinFixture $comment
+    $helpers=Join-Path $commentRoot 'grammar/helpers.js'
+    [IO.File]::WriteAllText($helpers,'export const owned = true;',[Text.UTF8Encoding]::new($false));PinFixture $helpers
+    if((CheckSqlJsInputs $comment $commentRoot).Count -ne 2){throw 'Reviewed inert prose was rejected'}
+    $originalText=[Text.Encoding]::UTF8.GetString($originalComment)
+    foreach($changed in @($originalText.Replace('Functions require','Functions  require'),$originalText.Replace('allow it empty','allow it empty!'),($originalText+"`nconst load = require;"),($originalText+"`neval('unreviewed');"))){
+        [IO.File]::WriteAllText($comment,$changed,[Text.UTF8Encoding]::new($false));PinFixture $comment
+        $rejected=$false;try{$null=CheckSqlJsInputs $comment $commentRoot}catch{if($_.Exception.Message -cne 'Unreviewed SQL loader/evaluation'){throw};$rejected=$true}
+        if(-not $rejected){throw 'Changed or additional loader occurrence accepted'}
+    }
+    $wrongPath=Join-Path $commentRoot 'grammar/statements/other.js'
+    [IO.File]::WriteAllBytes($wrongPath,$originalComment);PinFixture $wrongPath
+    $rejected=$false;try{$null=CheckSqlJsInputs $wrongPath $commentRoot}catch{if($_.Exception.Message -cne 'Unreviewed SQL loader/evaluation'){throw};$rejected=$true}
+    if(-not $rejected){throw 'Reviewed prose exception escaped its exact path'}
     $parser=Join-Path $parserRoot 'parser.c';$header=Join-Path $parserRoot 'header.h'
     [IO.File]::WriteAllText($parser,'#include "header.h"',[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($header,'/* owned header */',[Text.UTF8Encoding]::new($false))
     if((CheckRemedyQuotedIncludes @($parser) $parserRoot).Count -ne 2){throw 'Owned quoted includes incomplete'}
@@ -436,9 +541,188 @@ $root=$savedRoot;$script:acquisitionLimit=1073741824L;$script:acquiring=$false
     return @{result='PASS';bytes=$result.stored_stdout_bytes;seconds_limit=2;wall_seconds=$result.wall_seconds;sha256=$expected;owned_processes=5;fixture='OWNED_GO_STDOUT_ONLY';owned_build_processes=1;compiler_sha256=(Get-FileHash -LiteralPath $build.FileName).Hash.ToLowerInvariant();source_sha256=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant();binary_sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();build_seconds_limit=30;output_limit_negative='PASS';timeout_negative='PASS';download_limit_receipt_negative='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';counter_unavailable_or_regressed='PASS';both_stage_cap_boundaries='PASS';sqlpg_polling_cap='PASS_CONTROLLED_COUNTER_NOT_HOST_NETWORK_PROOF';upstream_native=$false}
 } $ast $root
 $exportAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'collect.ps1'),[ref]$tokens,[ref]$errors)
-$exportFunction=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'GeneratedArtifactProvenance'},$true))
-if($errors -or $exportFunction.Count -ne 1){throw 'Generated provenance helper missing'}
-. ([scriptblock]::Create($exportFunction[0].Extent.Text))
+if($errors){throw 'Collector parse failed'}
+foreach($name in @('CheckCollectionTime','CollectionHash','ReadCollectedRecord','AssertFollowupEvidenceBinding','GeneratedArtifactProvenance','StoreCsharpSourceCopies','AssertLosslessCsharpSources','AssertLosslessCsharpManifest','ExpandedFailure')){
+    $definition=@($exportAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq $name},$true))
+    if($definition.Count -ne 1){throw 'Collector guard helper missing'};. ([scriptblock]::Create($definition[0].Extent.Text))
+}
+$script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+& {
+    param($caseRoot)
+    $copyRoot=Join-Path $caseRoot 'owned-lossless-csharp'
+    [void][IO.Directory]::CreateDirectory((Join-Path $copyRoot 'records'))
+    $data=[byte[]]::new(131072);$data[0]=0;$data[1]=13;$data[2]=10;$data[-1]=255
+    $digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($data)).ToLowerInvariant();$files=@()
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $copyRoot $relative
+        [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path));[IO.File]::WriteAllBytes($path,$data);$files+=Get-Item -LiteralPath $path
+        $proof=@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=$data.Length;sha256=$digest}})}
+        [IO.File]::WriteAllText((Join-Path $copyRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    $originalFiles=$files;$rawPath=Join-Path $copyRoot 'raw/frozen.stdout';[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($rawPath));[IO.File]::WriteAllBytes($rawPath,[byte[]]@(0,13,10,255));$rawDigest=CollectionHash $rawPath;$files+=Get-Item -LiteralPath $rawPath
+    $files=StoreCsharpSourceCopies $copyRoot $files;$match=AssertLosslessCsharpSources $copyRoot
+    if($match.original_copy_count -ne 4 -or $match.unique_objects -ne 1 -or $match.original_identity_bytes -ne 4*$data.Length -or $match.unique_decoded_source_bytes -ne $data.Length -or $files.Count -ne 3 -or @($files|Where-Object FullName -CEQ $rawPath).Count -ne 1 -or (CollectionHash $rawPath) -cne $rawDigest){throw 'Lossless source deduplication/identity/raw retention mismatch'}
+    foreach($file in $originalFiles){if((CollectionHash $file.FullName) -cne $digest){throw 'Original candidate source changed'}}
+    $recordPath=Join-Path $copyRoot 'records/lossless-csharp-sources.json';$originalRecord=[IO.File]::ReadAllText($recordPath)
+    foreach($failure in @('path','bytes','hash','gzip-path','gzip-bytes','gzip-hash','proof-path','retention','identity-mode','duplicate','object-count','deleted','null-copies')){
+        $record=$originalRecord|ConvertFrom-Json -AsHashtable
+        switch($failure){'path'{$record.copies[0].original_path='../outside'};'bytes'{$record.copies[0].original_bytes=$true};'hash'{$record.copies[0].original_sha256='0'*64};'gzip-path'{$record.copies[0].lossless_gzip_path='../outside'};'gzip-bytes'{$record.copies[0].gzip_bytes=$true};'gzip-hash'{$record.copies[0].gzip_sha256='0'*64};'proof-path'{$record.copies[0].copy_proof='../outside'};'retention'{$record.copies[0].original_retained_on_runner=$false};'identity-mode'{$record.copies[0].identity_is_uncompressed_bytes=$false};'duplicate'{$record.copies+=@($record.copies[0])};'object-count'{$record.unique_objects++};'deleted'{$record.original_files_deleted=$true};'null-copies'{$record.copies=$null}}
+        [IO.File]::WriteAllText($recordPath,($record|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Lossless source record drift accepted'}
+    }
+    for($missing=0;$missing -lt 4;$missing++){
+        $record=$originalRecord|ConvertFrom-Json -AsHashtable;$record.copies=@(for($i=0;$i -lt 4;$i++){if($i -ne $missing){$record.copies[$i]}})
+        [IO.File]::WriteAllText($recordPath,($record|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Missing original identity accepted'}
+        $subset=@(for($i=0;$i -lt 4;$i++){if($i -ne $missing){$originalFiles[$i]}})
+        $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $subset}catch{$rejected=$_.Exception.Message -ceq 'Exact four candidate source paths required'};if(-not $rejected){throw 'Missing candidate enumeration accepted'}
+    }
+    $extraPath=Join-Path $copyRoot 'candidates/UNAPPROVED/src/parser.c';[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($extraPath));[IO.File]::WriteAllBytes($extraPath,$data)
+    $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot @($originalFiles+(Get-Item -LiteralPath $extraPath))}catch{$rejected=$_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'};if(-not $rejected){throw 'Extra candidate source accepted'}
+    [IO.File]::WriteAllText($recordPath,$originalRecord,[Text.UTF8Encoding]::new($false))
+    $small=$originalRecord|ConvertFrom-Json -AsHashtable;$proofs=@{}
+    foreach($copy in $small.copies){$copy.original_bytes--;$path=Join-Path $copyRoot $copy.copy_proof;$proofs[$path]=[IO.File]::ReadAllText($path);$proof=$proofs[$path]|ConvertFrom-Json -AsHashtable;$proof.files[0].candidate.bytes--;[IO.File]::WriteAllText($path,($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))}
+    [IO.File]::WriteAllText($recordPath,($small|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$_.Exception.Message -ceq 'Lossless source expansion limit'};if(-not $rejected){throw 'Decoded source byte bound ignored'}
+    foreach($path in $proofs.Keys){[IO.File]::WriteAllText($path,$proofs[$path],[Text.UTF8Encoding]::new($false))};[IO.File]::WriteAllText($recordPath,$originalRecord,[Text.UTF8Encoding]::new($false))
+    $objectPath=Join-Path $copyRoot ('source-objects/'+$digest+'.c.gz');$encoded=[IO.File]::ReadAllBytes($objectPath)
+    [IO.File]::WriteAllBytes($objectPath,[byte[]]@(0,13,10));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Corrupt source object accepted'}
+    [IO.File]::WriteAllBytes($objectPath,$encoded);$rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $originalFiles}catch{$rejected=$true};if(-not $rejected -or (CollectionHash $objectPath) -cne [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($encoded)).ToLowerInvariant()){throw 'Source object collision overwrite'}
+    foreach($tail in @([byte[]]@(0,255),$encoded)){
+        [IO.File]::WriteAllBytes($objectPath,[byte[]]@($encoded+$tail));$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$_.Exception.Message -ceq 'Lossless source compressed bytes mismatch'};if(-not $rejected){throw 'Changed trailing bytes/member identity accepted'}
+    }
+    [IO.File]::WriteAllBytes($objectPath,$encoded)
+    $manifest=@(foreach($file in $files){@{path=[IO.Path]::GetRelativePath($copyRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    $budget=AssertLosslessCsharpManifest $manifest $match 201326592
+    if($budget.unique_decoded_source_bytes -ne $data.Length -or $budget.logical_copy_identity_bytes -ne 4*$data.Length -or $budget.duplicate_materialization){throw 'Source expanded accounting mismatch'}
+    foreach($field in @('bytes','sha256')){
+        $drift=$manifest|ConvertTo-Json -Depth 5|ConvertFrom-Json -AsHashtable;$member=@($drift|Where-Object {$_.path.StartsWith('source-objects/',[StringComparison]::Ordinal)})[0]
+        if($field -ceq 'bytes'){$member.bytes++}else{$member.sha256='0'*64};$rejected=$false;try{$null=AssertLosslessCsharpManifest $drift $match 201326592}catch{$rejected=$_.Exception.Message -ceq 'Lossless source final manifest identity mismatch'};if(-not $rejected){throw 'Final manifest source drift accepted'}
+    }
+    & {
+        param($manifest,$sourceProof,$collectorAst)
+        $summary=@{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()};$exactLimits=@{local_expanded_max_bytes=201326592};$RemedyStage='csharp-r4'
+        $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$sourceExpansion=AssertLosslessCsharpManifest',[StringComparison]::Ordinal)},$true))
+        if($guard.Count -ne 1){throw 'Actual source manifest catch guard unavailable'}
+        $records=[Collections.Generic.List[object]]::new();$rejected=$false
+        try{& ([scriptblock]::Create($guard[0].Extent.Text))|ForEach-Object {$records.Add($_)}}catch{$rejected=$_.Exception.Message -ceq 'Lossless source final manifest identity mismatch'}
+        if(-not $rejected -or $records.Count -ne 1 -or ($records[0]|ConvertFrom-Json).failure -cne 'LOSSLESS_SOURCE_IDENTITY_FAILURE'){throw 'Source identity failure misclassified as budget overflow'}
+    } $drift $match $exportAst
+    & {
+        param($fallbackRoot,$collectorAst,$originalFiles,$copyRoot)
+        [void][IO.Directory]::CreateDirectory((Join-Path $fallbackRoot 'records'));$files=@()
+        foreach($file in $originalFiles){$relative=[IO.Path]::GetRelativePath($copyRoot,$file.FullName);$target=Join-Path $fallbackRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target));[IO.File]::WriteAllBytes($target,[IO.File]::ReadAllBytes($file.FullName));$files+=Get-Item -LiteralPath $target}
+        foreach($file in Get-ChildItem -LiteralPath (Join-Path $copyRoot 'records') -Filter 'candidate-*.json' -File){[IO.File]::WriteAllBytes((Join-Path $fallbackRoot ('records/'+$file.Name)),[IO.File]::ReadAllBytes($file.FullName))}
+        $store=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'StoreCsharpSourceCopies'},$true))[0]
+        . ([scriptblock]::Create($store.Extent.Text.Replace('function StoreCsharpSourceCopies','function OriginalLosslessStore')))
+        function StoreCsharpSourceCopies([string]$task,$files){$stored=OriginalLosslessStore $task $files;$object=@($stored|Where-Object Extension -CEQ '.gz')[0];[IO.File]::WriteAllBytes($object.FullName,[byte[]]@(0,13,10));return ,$stored}
+        $guard=@($collectorAst.FindAll({param($n)$n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text.Contains('$files=StoreCsharpSourceCopies $task $files',[StringComparison]::Ordinal)},$true))
+        if($guard.Count -ne 1){throw 'Actual lossless fallback guard unavailable'}
+        $task=$fallbackRoot;$originalSourceFiles=$files;$bindingFailure=$false;$RemedyStage='csharp-r4';. ([scriptblock]::Create($guard[0].Extent.Text))
+        if(-not $bindingFailure -or $sourceProof.result -cne 'NOT_VERIFIED' -or -not $sourceProof.original_failed_files_preserved -or $files.Count -ne 4){throw 'Post-Store corruption failed to restore original evidence selection'}
+        foreach($file in $files){if($file.Extension -cne '.c' -or $file.Length -ne 131072){throw 'Post-Store fallback omitted original source bytes'}}
+    } (Join-Path $caseRoot 'owned-lossless-csharp-fallback') $exportAst $originalFiles $copyRoot
+    $largeRoot=Join-Path $caseRoot 'owned-lossless-csharp-stage-overflow';[void][IO.Directory]::CreateDirectory((Join-Path $largeRoot 'records'));$largeFiles=@();$index=0
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $largeRoot $relative;[void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+        $sink=[IO.File]::Open($path,[IO.FileMode]::CreateNew)
+        try{CheckCollectionTime;$sink.SetLength(67108864);$sink.WriteByte([byte]$index);$index++}finally{$sink.Dispose()}
+        $sha=CollectionHash $path
+        $largeFiles+=Get-Item -LiteralPath $path;$proof=@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=67108864;sha256=$sha}})}
+        [IO.File]::WriteAllText((Join-Path $largeRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),($proof|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    $stored=StoreCsharpSourceCopies $largeRoot $largeFiles;$largeProof=AssertLosslessCsharpSources $largeRoot
+    $largeManifest=@(foreach($file in $stored){@{path=[IO.Path]::GetRelativePath($largeRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    if($largeProof.unique_objects -ne 4 -or $largeProof.unique_decoded_source_bytes -ne 268435456 -or ($largeManifest|Measure-Object bytes -Sum).Sum -ge 201326592){throw 'Stage overflow fixture does not exercise decoded total'}
+    $rejected=$false;try{$null=AssertLosslessCsharpManifest $largeManifest $largeProof 201326592}catch{$rejected=$_.Exception.Message -ceq 'Lossless source stage expanded reserve exceeded'};if(-not $rejected){throw 'Unique decoded stage overflow accepted'}
+    $overflow=ExpandedFailure $largeManifest $largeProof 201326592 @{counts=@{generation=0;build=0;execution=0};outcomes=@();cleanup_errors=@()}
+    if($overflow.unique_decoded_source_bytes -ne 268435456 -or $overflow.charged_expanded_bytes -le $overflow.expanded_cap -or $overflow.largest_members.Count -gt 12 -or $overflow.support_assessment -cne 'NOT_VERIFIED' -or [Text.Encoding]::UTF8.GetByteCount(($overflow|ConvertTo-Json -Depth 8 -Compress)) -gt 8388608){throw 'Decoded stage failure record lost'}
+    & {
+        param($hashDeadlineFile)
+        $clock=[pscustomobject]@{checks=0};$clock|Add-Member -MemberType ScriptProperty -Name Elapsed -Value {$this.checks=$this.checks+1;if($this.checks -gt 1){[TimeSpan]::FromSeconds(121)}else{[TimeSpan]::Zero}}
+        $script:collectionClock=$clock;$rejected=$false
+        try{$null=CollectionHash $hashDeadlineFile}catch{$rejected=$_.Exception.Message -ceq 'Total evidence collection time limit'}
+        if(-not $rejected -or $clock.checks -lt 2){throw 'Streaming hash deadline ignored'}
+        $released=[IO.File]::Open($hashDeadlineFile,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None);$released.Dispose()
+        $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+    } $largeFiles[0].FullName
+    $script:collectionClock=[pscustomobject]@{Elapsed=[TimeSpan]::FromSeconds(121)};$rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot}catch{$rejected=$true};if(-not $rejected){throw 'Lossless source total deadline ignored'}
+    $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
+    @{result='PASS';original_copies=4;unique_objects=1;original_bytes=4*$data.Length;compressed_bytes=$encoded.Length;NUL_CRLF_roundtrip='PASS';negative_controls=34;actual_stage_overflow_fixture_bytes=268435456;original_files_retained=$true;raw_unchanged=$true;post_store_corruption_fallback='PASS';upstream_native=$false}|ConvertTo-Json -Compress
+} $root
+& {
+    param($caseRoot)
+    $copyRoot=Join-Path $caseRoot 'owned-lossless-csharp-r5';[void][IO.Directory]::CreateDirectory((Join-Path $copyRoot 'records'))
+    $data=[byte[]]@(0,13,10,255);$digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($data)).ToLowerInvariant();$files=@()
+    foreach($id in @('P05-CS-REMEDY-r1','P05-CSHARP-REMEDY-r2','P05-CSHARP-REMEDY-r3','P05-CSHARP-REMEDY-r4','P05-CSHARP-REMEDY-r5')){
+        $relative='candidates/'+$id+'/src/parser.c';$path=Join-Path $copyRoot $relative
+        [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path));[IO.File]::WriteAllBytes($path,$data);$files+=Get-Item -LiteralPath $path
+        [IO.File]::WriteAllText((Join-Path $copyRoot ('records/candidate-'+$id.ToLowerInvariant()+'.json')),(@{proposal_id=$id;files=@(@{patched=$false;candidate=@{path=$relative;bytes=$data.Length;sha256=$digest}})}|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
+    }
+    for($missing=0;$missing -lt 5;$missing++){
+        $subset=@(for($i=0;$i -lt 5;$i++){if($i -ne $missing){$files[$i]}})
+        $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $subset 'csharp-r5'}catch{$rejected=$_.Exception.Message -ceq 'Exact five candidate source paths required'};if(-not $rejected){throw 'Missing C# r5 source identity accepted'}
+    }
+    $original=$files;$stored=StoreCsharpSourceCopies $copyRoot $files 'csharp-r5';$match=AssertLosslessCsharpSources $copyRoot 'csharp-r5'
+    if($match.original_copy_count -ne 5 -or $match.unique_objects -ne 1 -or $match.unique_decoded_source_bytes -ne 4 -or $match.original_identity_bytes -ne 20){throw 'C# r5 five-copy lossless identity failed'}
+    $rejected=$false;try{$null=AssertLosslessCsharpSources $copyRoot 'csharp-r4'}catch{$rejected=$true};if(-not $rejected){throw 'C# r5 record accepted as r4'}
+    $manifest=@(foreach($file in $stored){@{path=[IO.Path]::GetRelativePath($copyRoot,$file.FullName).Replace('\','/');bytes=$file.Length;sha256=(CollectionHash $file.FullName)}})
+    $null=AssertLosslessCsharpManifest $manifest $match 201326592 'csharp-r5'
+    $rejected=$false;try{$null=AssertLosslessCsharpManifest $manifest $match 201326592 'csharp-r4'}catch{$rejected=$true};if(-not $rejected){throw 'C# r5 manifest accepted as r4'}
+    $rejected=$false;try{$null=StoreCsharpSourceCopies $copyRoot $original 'csharp-r4'}catch{$rejected=$_.Exception.Message -ceq 'Unexpected or duplicate candidate source path'};if(-not $rejected){throw 'C# r5 source enumeration accepted as r4'}
+    foreach($file in $original){if((CollectionHash $file.FullName) -cne $digest){throw 'C# r5 original source changed'}}
+    @{result='PASS';original_copies=5;unique_objects=1;missing_and_cross_stage_rejected=$true;originals_preserved=$true;upstream_native=$false}|ConvertTo-Json -Compress
+} $root
+$bindingRoot=Join-Path $root 'owned-followup-binding'
+foreach($directory in @('records','raw','acquisition/records')){[void][IO.Directory]::CreateDirectory((Join-Path $bindingRoot $directory))}
+function OwnedBindingRecord([string]$relative,$data){[IO.File]::WriteAllText((Join-Path $bindingRoot $relative),($data|ConvertTo-Json -Depth 40),[Text.UTF8Encoding]::new($false))}
+foreach($stage in @('csharp-r4','csharp-r5','pg-legacy-g6-r1','mssql-patch-r1')){
+    $stageSubject=if($stage -ceq 'csharp-r5'){$csharpR5Subject}else{$followupSubject}
+    $limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+    $ledger=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;source_inputs_sha256='f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4';planned_stage_rows=$limits.X;planned_producer_edits=$limits.producer_edit;rows=$rows;owned_fixture_only=$true}
+    $proof=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;counts=@{generation=0;build=0;execution=0;preflight=0;diagnostic=0};owned_counts=@{generation=0;build=0;execution=0};capture_count=0;command_count=0;cleanup_errors=@();outcomes=@();verdict='FAILED';failure_type='OWNED_NOT_RUN_BOUNDARY_CONTROL';owned_fixture_only=$true}
+    $acq=@{remedy_stage=$stage;remedy_approval_subject=$stageSubject;acquisition_limit_bytes=$limits.source_image_counter_bytes;download_bytes=0;http_requests=0;state='COMPLETED';owned_fixture_only=$true}
+    $budget=@{limit_bytes=$limits.source_image_counter_bytes;source_http_bytes=0;received_network_upper_bound_bytes=0;final_snapshot=@{limit_bytes=$limits.source_image_counter_bytes;state='OBSERVED';start_counter_bytes=1;end_counter_bytes=1;received_counter_bytes=0};owned_fixture_only=$true}
+    OwnedBindingRecord 'records/case-ledger.json' $ledger;OwnedBindingRecord 'acquisition/records/acquisition.json' $acq;OwnedBindingRecord 'records/download-budget.json' $budget
+    $match=AssertFollowupEvidenceBinding $bindingRoot $stage $stageSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
+    if($match.result -cne 'MATCH' -or $match.observed_captured_native.execution -ne 0 -or $match.planned_producer_edits -ne $limits.producer_edit){throw 'Failed/NOT_RUN boundary control promoted execution'}
+    foreach($failure in @('subject','counter','rows','expectation','edit','attempts','commands','cleanup','acquisition','download','snapshot','unknown','over-cap','regressed','source-bytes','completion','executed-row')){
+        $pp=$proof|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$ll=$ledger|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable;$aa=$acq.Clone();$bb=$budget|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
+        switch($failure){'subject'{$pp.remedy_approval_subject='0'*64};'counter'{$pp.acquisition_limit_bytes++};'rows'{$ll.rows=@($ll.rows[1..($ll.rows.Count-1)])};'expectation'{$ll.rows[0].case.expected.facts='changed'};'edit'{$ll.planned_producer_edits++};'attempts'{$pp.counts.generation=$limits.G+1};'commands'{$pp.command_count=1};'cleanup'{$pp.cleanup_errors=@(@{owned='unverified'})};'acquisition'{$aa.acquisition_limit_bytes++};'download'{$bb.limit_bytes++};'snapshot'{$bb.final_snapshot.limit_bytes++};'unknown'{$bb.final_snapshot.state='NOT_VERIFIED'};'over-cap'{$bb.final_snapshot.end_counter_bytes=$limits.source_image_counter_bytes+2;$bb.final_snapshot.received_counter_bytes=$limits.source_image_counter_bytes+1;$bb.received_network_upper_bound_bytes=$limits.source_image_counter_bytes+1};'regressed'{$bb.final_snapshot.end_counter_bytes=0;$bb.final_snapshot.received_counter_bytes=-1};'source-bytes'{$aa.download_bytes=1};'completion'{$pp.verdict='BOUNDED_INPUTS_COMPLETED_REVIEW_REQUIRED'};'executed-row'{$ll.rows[0].state='EXITED'}}
+        OwnedBindingRecord 'records/case-ledger.json' $ll;OwnedBindingRecord 'acquisition/records/acquisition.json' $aa;OwnedBindingRecord 'records/download-budget.json' $bb
+        $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $stageSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Collector binding negative accepted: '+$failure)}
+    }
+}
+$stage='pg-legacy-g6-r1';$limits=ExactRemedyLimits $stage;$rows=NewRemedyRows $stage $originalInputs.cases $remedySubjects.cases.cases
+$ledger.remedy_stage=$stage;$ledger.planned_stage_rows=$limits.X;$ledger.planned_producer_edits=$limits.producer_edit;$ledger.rows=$rows
+$proof.remedy_stage=$stage;$proof.acquisition_limit_bytes=$limits.source_image_counter_bytes;$proof.counts.generation=1;$proof.counts.diagnostic=3;$proof.command_count=5;$proof.verdict='REPRODUCED_FAILURES'
+$acq.remedy_stage=$stage;$acq.acquisition_limit_bytes=$limits.source_image_counter_bytes;$budget.limit_bytes=$limits.source_image_counter_bytes;$budget.final_snapshot.limit_bytes=$limits.source_image_counter_bytes
+OwnedBindingRecord 'records/case-ledger.json' $ledger;OwnedBindingRecord 'acquisition/records/acquisition.json' $acq;OwnedBindingRecord 'records/download-budget.json' $budget
+$label='generate-'+$rows[0].producer;$container='1'*64
+function OwnedCommand([string]$label,[string[]]$argv,[int]$exitCode,[string]$stdout){
+    $out=[Text.Encoding]::UTF8.GetBytes($stdout);$err=[byte[]]::new(0)
+    [IO.File]::WriteAllBytes((Join-Path $bindingRoot ('raw/'+$label+'.stdout')),$out);[IO.File]::WriteAllBytes((Join-Path $bindingRoot ('raw/'+$label+'.stderr')),$err)
+    OwnedBindingRecord ('records/command-'+$label+'.json') @{label=$label;argv=$argv;termination='EXITED';exit_code=$exitCode;host_cleanup_verified=$true;seconds_limit=$(if($label -ceq ('generate-'+$rows[0].producer)){300}else{10});output_limit=8388608;stored_stdout_bytes=$out.Length;stored_stderr_bytes=0;stdout_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($out)).ToLowerInvariant();stderr_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($err)).ToLowerInvariant();owned_fixture_only=$true}
+}
+$memoryBefore="low 0`nhigh 0`nmax 0`noom 0`noom_kill 0`noom_group_kill 0`n";$memoryAfter=$memoryBefore.Replace('max 0','max 1').Replace('oom 0','oom 1').Replace('oom_kill 0','oom_kill 1')
+OwnedCommand $label @('exec',$container,'owned-not-executed') 137 ''
+foreach($when in @('before','after')){OwnedCommand ($label+'-memory-'+$when) @('exec',$container,'/bin/cat','/sys/fs/cgroup/memory.events') 0 $(if($when -ceq 'before'){$memoryBefore}else{$memoryAfter})}
+OwnedCommand ($label+'-inspect') @('inspect',$container) 0 (@(@{Id=$container;HostConfig=@{Memory=6442450944L;MemorySwap=6442450944L}})|ConvertTo-Json -AsArray -Depth 4)
+OwnedCommand ($label+'-memory-max') @('exec',$container,'/bin/cat','/sys/fs/cgroup/memory.max') 0 '6442450944'
+$events=@{container=$container;native_command=$label;memory_limit_bytes=6442450944L;state='OOM_OBSERVED';counters=(MemoryEventDelta $memoryBefore $memoryAfter);original_exit_code=137;original_termination='EXITED';owned_fixture_only=$true}
+foreach($when in @('before','after')){$relative='raw/'+$label+'-memory-'+$when+'.stdout';$events[$when+'_raw']=@{path=$relative;bytes=(Get-Item -LiteralPath (Join-Path $bindingRoot $relative)).Length;sha256=(CollectionHash (Join-Path $bindingRoot $relative))}}
+OwnedBindingRecord ('records/'+$label+'-memory-events.json') $events
+OwnedBindingRecord 'records/pg-generation-capacity.json' @{result='PASS';before_G=$true;generation_memory_bytes=6442450944L;MemAvailable_bytes=8589934592L;resolved_parents=@($hierarchyRoot);owned_fixture_only=$true;real_capacity='NOT_VERIFIED'}
+$limit=@{container=$container;bytes=6442450944L;inspect_and_cgroup='MATCH';owned_fixture_only=$true};OwnedBindingRecord ('records/'+$label+'-memory-limit.json') $limit
+$proof.outcomes=@(@{kind='generation';scope='REGISTERED_P05_REMEDY';termination='EXITED';exit_code=137;label=$label;result_directory=$null;memory_limit_bytes=6442450944L;resource_state='OOM_OBSERVED';memory_event_record=('records/'+$label+'-memory-events.json')})
+$match=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $proof (Join-Path $PSScriptRoot 'inputs.json')
+if($match.observed_captured_native.generation -ne 1 -or $match.observed_captured_native.execution -ne 0){throw 'Owned OOM control promoted B/X'}
+foreach($failure in @('container','delta','limit','build-after-oom')){
+    $ee=$events|ConvertTo-Json -Depth 12|ConvertFrom-Json -AsHashtable;$pp=$proof|ConvertTo-Json -Depth 12|ConvertFrom-Json -AsHashtable;$mm=$limit.Clone()
+    switch($failure){'container'{$ee.container='2'*64};'delta'{$ee.counters.delta.oom=0};'limit'{$mm.bytes=4294967296L};'build-after-oom'{$pp.counts.build=1}}
+    OwnedBindingRecord ('records/'+$label+'-memory-events.json') $ee;OwnedBindingRecord ('records/'+$label+'-memory-limit.json') $mm
+    $rejected=$false;try{$null=AssertFollowupEvidenceBinding $bindingRoot $stage $followupSubject $pp (Join-Path $PSScriptRoot 'inputs.json')}catch{$rejected=$true};if(-not $rejected){throw ('Owned OOM evidence negative accepted: '+$failure)}
+}
+$script:collectionClock=[pscustomobject]@{Elapsed=[TimeSpan]::FromSeconds(121)}
+$rejected=$false;try{$null=CollectionHash (Join-Path $bindingRoot 'records/case-ledger.json')}catch{$rejected=$_.Exception.Message -ceq 'Total evidence collection time limit'};if(-not $rejected){throw 'Collector total deadline ignored'}
+$script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
 $exportRoot=Join-Path $root 'owned-export-provenance'
 if($env:RUNNER_TEMP -and -not $IsWindows){
     $run=if($env:GITHUB_RUN_ID){$env:GITHUB_RUN_ID}else{'0'}
@@ -507,10 +791,10 @@ try {
 $savedPath=$env:PATH
 try {
     $env:PATH=$directories -join [IO.Path]::PathSeparator
-    $all=@(Get-Command -Name $name -CommandType Application -All)
+    $all=@(Get-Command -Name $applicationName -CommandType Application -All)
     if($all.Count -ne 2){throw 'Duplicate application baseline missing'}
-    $selected=Application $name
-    if($selected -isnot [string] -or $selected -cne (Join-Path $directories[0] $name)){throw 'Application precedence/path selection failed'}
+    $selected=Application $applicationName
+    if($selected -isnot [string] -or $selected -cne (Join-Path $directories[0] $applicationName)){throw 'Application precedence/path selection failed'}
     $rejected=$false;try{[void](Application 'p05-tool-not-present')}catch{$rejected=$true}
     if(-not $rejected){throw 'Missing application was accepted'}
 } finally {$env:PATH=$savedPath}

@@ -1,3 +1,82 @@
+# PREPARE-06 C# r5와 로컬 보존 한도의 좁은 추가 승인
+
+2026-10-02 실제 사용자 답변 `두 exact 효과 승인`은 human 11,379 bytes /
+`cced4a06c71eacd8c28e855ddfd20c92d7c82bb2cfe7bc8d29313302dd857390`과
+machine 50,057 bytes / `5d66340b2e0559bedc827e9fc3fc48f1d4af549e37b1cd2d6af5c9a089b488a7`에 결속한다.
+[r5 projection](../../src/dev/prepare-p05/remedy-csharp-r5.json)은 LF를 CRLF로 복원하여
+승인 원문의 terminal CRLF까지 size/SHA를 확인한다. 아래 R2 원문과 이전 6 GiB 승인·소비·실패는 역사 기록으로 유지한다.
+
+`csharp-r5` / `csharp-candidate-r5`는 같은 `9150f7d56bb47f1a809fa23623f1ba1413e93fa9`의
+r4 `grammar.js` 62,851 bytes / `b6946fac28ee1e470aa3155f5a3b8deddfd6cd0c6c47ac52c587e3e69a683e5e`를
+별도 r5 copy에 복사한다. `method_declaration.returns`와 `object_creation_expression.type`의
+기존 `prec(2, alias('var', $.identifier))`를 각각 한 번 `prec.dynamic(2, prec(2, alias('var', $.identifier)))`로 감싼다.
+결과는 62,885 bytes / `da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7`이어야 한다.
+r4 copy의 scanner(r1에서 승인된 bytes 유지) 23,949 bytes / `164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227`,
+도구·runtime·npm·image·입력·기대·비교기를 유지한다. 이 수정은 시험할 가설이며 지원 성공이나 최종 provider 채택이 아니다.
+
+G1/B1/X27/edit5와 기존 owned G1/B1/X1·isolation8을 별도 fresh dispatch에서 수행한다.
+r4와 같은 27개 입력/5개 edit의 원문 size/SHA·feature·positive/negative·구조 기대를 전수 대조한다.
+`pinned-tsql-r1`, `trixie-r1` 및 위 r5 human subject가 필요하며 옛 R2 subject로 r5를 실행할 수 없다.
+r1~r5의 변경 없는 `src/parser.c` 다섯 identity는 lossless source-copy r3 schema로 보관한다.
+기존 r4의 정확한 네 identity/r2 schema는 유지한다. source object는 고유 SHA별 한 개로 보관하고
+모든 원래 path/copy proof와 decoded·compressed identity를 확인한다. 원 capture와 runner 원본은 보존한다.
+C# 펼침192 MiB·outer/inner64 MiB·회수/collector120초·일반 파일64 MiB는 유지한다.
+
+새 승인은 kit 준비 증거의 누적 로컬 보존 상한만 앞으로 8 GiB (`8589934592` bytes)로 높인다.
+이 상한은 로컬 kit의 `.work`·`artifacts`·`docs/plans`·`docs/prompts` 실제 파일 합계에 적용한다.
+로컬 finite-batch/dispatch guard와 회수 helper가 승인 subject를 대조하고 실행 전 공간을 예약한다.
+hosted workflow/collector의 runner 한도와 별개이며, 해당 로컬 guard의 검증·독립 리뷰 전에는 native dispatch하지 않는다.
+회수 전에 실제 보존량 + outer 실제 크기 + inner 최대64 MiB + stage expanded 한도 + 기록64 MiB를 예약하고
+C# r5는 승인 machine의 추가64 MiB 여유를 포함한 469,762,048 bytes를 실행 전에 예약한다.
+MSSQL의 기존 예약은 402,653,184 bytes다. manifest 확인 후 실제 보존량을 다시 대조한다.
+runner8 GiB, PG generation-only6 GiB, 다른 native4 GiB 및 모든 개별 실행·격리 한도는 그대로다.
+과거 한도 초과·소비량·UNKNOWN을 새 상한으로 소급 수정하지 않는다.
+
+# PREPARE-06 후속 exact R2 실행 계약
+
+2026-10-01 실제 사용자 답변 `R2 exact 효과·기대 정정 승인`은 human
+22,330 bytes / `a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2`,
+machine 235,604 bytes / `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4`,
+신규 원문 subject 16,877 bytes / `9fc51da6cd0ad60d6e28cefed4f37b2a3c5f651bccd9eacca61ef3494d41e603`에 결속한다.
+승인 기록은 `20261001-prepare-06/followup-exact-authorization-accepted-r2.json`이다.
+tracked `remedy-followup-r2.json`의 LF projection은 승인된 machine의 CRLF 원문과 terminal LF를 복원해 전체 size/SHA를 대조한다.
+
+## C# 후보 원본의 손실 없는 보관
+
+`csharp-r4` collector는 r1~r4 후보에 복사된 변경 없는 `src/parser.c`를 SHA-256별 `source-objects/<sha256>.c.gz` 한 개로 보관한다. `records/lossless-csharp-sources.json`의 r2 schema는 정확한 네 원래 path·uncompressed bytes/SHA·candidate copy proof와 compressed bytes/SHA를 연결한다. runner의 원본 파일을 삭제하거나 변경하지 않으며, 원래 identity는 압축을 푼 bytes다. consumer는 copy proof·64 MiB 파일 한도를 확인하고, decoder와 별도로 압축 stream 전체 bytes를 읽어 SHA를 검증한다. 이 대조는 덧붙인 bytes/member의 identity 변경도 거부한다. decoder 자체가 임의 gzip의 single-member EOF를 증명한다는 주장은 하지 않는다. decode 전후와 최종 manifest의 compressed identity를 각각 결속한다.
+
+펼침 budget은 ZIP manifest의 물리적 bytes + 고유 source object의 decoded bytes + metadata reserve8 MiB로 계산한다. 같은 SHA의 네 원래 경로는 논리 identity로 기록하며 중복 materialize하지 않는다. C#192 MiB, outer/inner64 MiB, 총 회수120초, local6 GiB 및 collector120초 한도는 유지한다. 원 capture/raw·case·expectation·scanner·grammar·generated-C export의 identity도 유지한다. 자체 검사는 네 path 각각의 누락·추가 path·압축 identity/manifest drift·tail/member 변경·실제64 MiB×4의 고유 decoded256 MiB 거부·NUL/CRLF·collision·deadline을 포함한다. upstream 실행 전 실패로 후보 bytes가 없다면 NOT_APPLICABLE, 일부만 있으면 NOT_VERIFIED로 보존하며 지원 PASS로 승격하지 않는다.
+
+## 후속 stage 실행 범위
+
+| stage | producer | G/B/X/edit | source/image receive | native memory |
+|---|---|---|---|---|
+| `csharp-r4` | `csharp-candidate-r4` | 1/1/27/5 | 1 GiB | 4 GiB |
+| `pg-legacy-g6-r1` | `postgresql-legacy-candidate-r1-g6` | 1/1/12/1 | 1.5 GiB | 이 producer의 generation만 6 GiB; B/X 및 owned/diagnostic은 4 GiB |
+| `mssql-patch-r1` | `mssql-candidate-r1` | 1/1/41/1 | 1 GiB | 4 GiB |
+
+C#은 r1→r2→r3를 보존하며 r4 conflict 한 행만 별도 copy에 추가한다. PG는 같은 legacy patch를 재구성하고 유효한 baseline4를 재실행하지 않는다. MSSQL은 원본 C/JSON 두 producer를 보존하며 별도 네 파일 patch와 24 ESM module/42 literal import의 G1만 수행한다. source/dependency/scanner/tool identity는 G/B/X 전에 각각 확인한다. module metadata와 고정 입력만 읽으며 package/lifecycle/install/application 실행은 없다. 기존 26 route·256행·A/B 및 exact3 입력/기대/receipt는 유지한다.
+
+별도 `P05-MSSQL-BRACKET-COUNTEREXAMPLE-r1`은 기존20byte `e463eaca…`를 단일 delimited identifier byte[7,18)로 요구한다. `P05-MSSQL-BRACKET-UNTERMINATED-r1`은 실제 닫는 `]`를 제거한19byte `65434d11…`의 오류를 요구한다. 공식 identifier 규칙에 따른 이 좁은 기대 amendment를 채택했으며, 옛 negative 기대와 결과는 역사 증거로 보존한다. `SELECT  FROM t;`의 기존 negative/recovery 의무와 temporal/graph 구조 의무는 유지한다. 신규12개의 원문·source/member/hash·error window와 기존68개를 검사하고 stage별 frozen 입력만 materialize한다.
+
+PG G 시작 전 host `MemAvailable`과 실제 cgroup2 membership/mount에서 확인한 모든 부모의 가용 한도가 8 GiB 이상이어야 한다. UNKNOWN/부족이면 G를 시작하지 않는다. 같은 생성 container의 Docker inspect와 `memory.max=6442450944`, before/after `memory.events`를 기록한다. 다른 operation으로 예외를 확대하거나 자동 fallback하지 않는다. 기존 전체 isolation8·owned G→B→회수→fresh-container X·capture·cleanup을 통과해야 upstream을 실행한다.
+
+PG memory counter는 동일 container의 원문·command·hash와 전후 단조 증가를 대조한다. `oom`/`oom_kill`/`oom_group_kill` 증가면 원 exit/termination을 유지해 OOM으로 기록하고 B/X를 시작하지 않는다. `max` 증가만으로 OOM을 주장하지 않는다. 이전 patch와 현재 patch의 machine provenance도 구분하며 C# r3와 PG legacy는 이전 exact3 subject, C# r4와 MSSQL 네 파일은 새 R2 subject에 연결한다.
+
+[Linux kernel의 memory interface 정의](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#memory-interface-files)에 따라 실제 cgroup2 hierarchy root에는 `memory.current`/`memory.max`가 없다. mount root `/`, root 경로 `/sys/fs/cgroup`, 가용 memory controller와 두 interface 부재가 모두 관측된 경우만 root limit를 NOT_APPLICABLE로 기록한다. 이는 usage0 또는 임의 unlimited 관측이 아니다. 다른 부모의 미확인·부족 값은 계속 거부하며 host 가용8 GiB 조건은 유지한다.
+
+개별 G300/B120/X10초·CPU1/PIDs64/tmpfs2 GiB·input64 KiB/output8 MiB·network none/read-only/user65534/cap-drop/no-new-privileges는 유지한다. HTTP52/각120초/총600초, 일반 file64 MiB/PG exact LFS100 MiB, runner8 GiB, artifact256 MiB/7일, packed outer/inner64 MiB·회수120초·C#/MS 펼침192 MiB/PG256 MiB는 유지하며 local retained cap만6 GiB로 승인했다. 예약·poll·완료·실패·summary·collector는 같은 stage의 counter와 한도를 사용한다. 과거 UNKNOWN과 실패의 한도를 소급 수정하지 않는다.
+
+collector는 workflow가 전달한 stage/subject를 summary 및 전체 frozen case/expectation/edit ledger와 비교하고, 시도 횟수의 상한·관측된 command/outcome·출력 hash·cleanup·acquisition 완료/실패 counter를 확인한다. G 실패로 B/X가 NOT_RUN인 근거는 그대로 보관하며 quota를 실제 수행 수로 표시하지 않는다. 결속 실패도 bounded 원본 artifact를 보존하되 성공한 생성물 export나 지원 PASS로 승격하지 않는다. collection의 export/hash/manifest/ZIP 전체에는 별도의 총120초 clock을 적용한다. 로컬 회수는 download 전에 현재 retained bytes와 outer 실제 크기·inner 최대64 MiB·stage별 최대 expanded·기록64 MiB를6 GiB 안에 예약하고, 실제 manifest를 읽은 뒤 다시 확인한다. 이는 hosted runner8 GiB를6 GiB로 변경하지 않는다.
+
+R2 helper 검사와 실제 native 실행 결과는 각각의 immutable receipt로 판정한다. 이 계약 변경 시점에 R2 native와 최종 provider 채택은 **NOT_RUN/NOT_ADOPTED**다. 새 코드의 독립 리뷰·필수 CI·actual merge/postmerge 뒤 현재 main의 fresh dispatch에서 `pinned-tsql-r1`, `trixie-r1`, 위 human subject를 명시한다. S01/MASTER·업무 corpus/.svc 제품·S08 전체78셀은 시작하지 않는다.
+
+## MSSQL R2 재실행의 probe 입력이름 정합
+
+[run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)의 `mssql-patch-r1` 41행 중 기존 28행과 SELECT negative 1행은 판정했다. 신규 12행은 probe가 case 이름에 `A-Z0-9-`만 허용해 `-r1` 접미사를 파싱 전에 exit64로 거부했으므로 NOT_VERIFIED이며 grammar 실패나 PASS가 아니다. case-ID 계약은 `run.ps1`·`remedy.ps1`의 `^[A-Z0-9-]+(?:-r[0-9]+)?$`이다.
+
+2026-10-02 실제 사용자 답변 `probe 수정 후 같은 41행 재실행`에 따라 probe는 선택적 `-r<숫자>` 접미사를 분리한 뒤 나머지에 기존 문자 집합을 적용한다. 승인된 subject projection과 machine identity는 변경하지 않으며 `RemedyProbePin`이 `mssql-patch-r1`에만 새 probe 5,910 bytes / `5171da776dd6dbcdf379b106522e7d716ddcf45174bfd870aee40174cbe91a70`를 적용하고 이전 pin을 `amends`로 보존한다. 다른 stage의 tool gate는 이전 probe pin을 유지하므로 현재 probe로 재실행할 수 없다. 재실행은 같은 입력·기대·comparator·G1/B1/X41/edit1·한도로 새 유한 batch에서 1회만 수행하며, 이 변경은 provider 채택을 뜻하지 않는다. 재실행 결과 40/41 중 `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`의 window 정정은 [기대 amendment](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)에 따로 기록했다(원래 판정 보존, 정정 window로 같은 증거 재판정).
+
 # P05 source closure 실행 순서
 
 소유: PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20), S01 readiness 전. [고정 후보 등록부](../../src/contracts/language-sources.json), [feature disposition](language-feature-disposition.md), [위험별 case](source-feature-feasibility.md)를 함께 사용한다. 초기 T-SQL G1/B2/X56, C# G1/B2/X20, TS/TSX G2/B4/X16, Swift G1/B1/X3의95개 실행 결과와 당시 PG16개 미실행은 보존된 역사적 관측이다. 후속 original/r1/r2 및 실제 PG/SQL 결과는 아래 run별로 구분한다. 기존 26-route/256행 채택은 scope 근거이며 source 지원 근거가 아니다.
@@ -43,7 +122,7 @@ A가 닫혀도 G/B/X가 닫혔다고 기록하지 않는다. 기존 generated pa
 | json | root grammar.js/json, node-types | parser.c, headers; scanner 없음 | strict negative/edit; JSONC는 대체 근거 아님 |
 | yaml | root grammar.js/json; 선택 root schema | root parser/scanner/headers | 다른 schema 및 test-suite submodule은 별도 입력/효과 |
 | xml | xml/grammar.js/json; common/common.mjs | xml parser/scanner, common/scanner.h, headers | XML1.1/DTD 경계; 별도 dtd parser 자동 포함 금지 |
-| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js | parser.c, headers; scanner 없음 | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
+| tsql | root grammar.js/json; grammar/*.js 및 functions/*.js (2026-10-02 채택 후보 meloncholera@8620fbc: grammar.js·grammar/**/*.js 24 ESM module) | parser.c, headers; scanner 없음 (채택 후보는 src/scanner.c 2,046 bytes 포함) | P05-TSQL-CASE/STATEMENTS/GO와 identifier·필수 modern 절 |
 | postgresql-sql | postgres/grammar.js/json, node-types | 원133byte pointer와 별도 승인·취득한 exact LFS object, scanner/headers | run36796853218 baseline8 실행, WITH OIDS 실패/구조7개 관측; noopt state overflow로 재생성8개 NOT_RUN, 과거 exit137 원인 미확정 |
 
 TS/TSX의 고정 lockfile은 `tree-sitter-javascript@0.23.1`을, C++은 `tree-sitter-c@0.24.1`을 가리킨다. range나 현재 language-route pin으로 대체하지 않고 lock integrity 및 실제 package bytes를 확인한다. grammar 상속에 불필요한 binding install script는 실행하지 않는다. PostgreSQL의 grammar.json→C 생성과 upstream PostgreSQL grammar→Tree-sitter converter는 다른 closure다. 후자의 원본 PG pin·converter 도구·변환 script가 확인되지 않으면 그 재현은 미실행으로 남긴다.
@@ -71,7 +150,7 @@ selected pointer bytes의 정합성은 실제 generated C artifact 확보를 뜻
 3. 실제 native 격리를 검증한다. env 제거만으로 host filesystem/network 격리를 입증하지 않는다. tool/OS/digest·경계와 회수 절차의 독립 리뷰 후 실행한다.
 4. C#/TSQL/TS/TSX/PG 기존 artifact baseline을 보존한다. Swift 및 승인된 동일-source regeneration은 별도 producer로 build한다. source 대응이 불일치하면 원래 실패를 덮지 않는다.
 5. 등록 P05 case family의 구체 원문, 구조 사실, negative/recovery/edit를 검토·고정하고 제한 실행한다. official syntax에서 기대를 얻으며 candidate tree를 golden으로 복사하지 않는다.
-6. 각 결과를 upstream 선언/정적 관찰/재현 실패/검증된 remedy로 구별한다. 실제 gap에 대해 적합한 기존 후보를 비교한 뒤 exact replacement/patch/추가 효과 승인을 요청한다. 승인 없는 grammar patch 또는 required syntax 재분류는 하지 않는다.
+6. 각 결과를 upstream 선언/정적 관찰/재현 실패/검증된 remedy로 구별한다. 실제 gap에 대해 적합한 기존 후보를 비교한 뒤 exact replacement/patch/추가 효과 승인을 요청한다. 승인 없는 grammar patch 또는 required syntax 재분류는 하지 않는다. PREPARE 이후 Session의 patch는 [validation](validation.md)의 사전 승인 범위를 따른다.
 7. 현재 P01~P14, 실제 PR/CI/merge/post-merge, tracking과 immutable checkpoint를 대조한다. 알려진 필수 gap이나 누락 권한/능력이 남으면 exact blocker를 기록하고 #20을 OPEN으로 유지한다.
 
 source·도구·입력·출력·예산·cleanup은 각 실행 receipt에 결속한다. 미래 S05/S06의 제품 native producer나 S08의 78-cell qualification을 여기서 완료했다고 표시하지 않는다.
@@ -90,7 +169,7 @@ supervisor는 ready stream의 완료 read를 즉시 drain하되 매 read의 time
 
 `patch-r1`은 별도 scratch의 C#/TS/TSX/Swift 네 파일에 exact literal patch만 적용한다. 원본 producer에는 추가32입력만, 후보에는 원21+추가32입력을 계획한다(G5/B8/X85, producer edit16). `sql-pg-r1`은 Derek 고정30파일의 **평가만** 수행하고 TSQL28+negative2, PG exact LFS baseline8 및 옵션 변경 regeneration8을 계획한다(G2/B3/X46, edit3). SQL 채택/교체/patch와 다음 grammar patch는 자동 승인되지 않는다. PG object는97,664,793bytes/SHA-256과100MiB 단일 파일 예외를 대조하며 원 pointer를 보존한다. PG generation의 `--disable-optimizations` 및 같은 container의 `memory.events` 전후 관측은 기존 exit137의 무변경 반복과 구별한다.
 
-기존 supervisor·회수·전체8개 isolation·자체 G/B/X·새 container의 EXE/ELF/hash 확인·cleanup과 개별 limits를 재사용한다. 각 stage의 더 작은 G/B/X 상한을 적용하고 quoted include/ABI를 build 전에 검사한다. 실패한 producer는 후속 NOT_RUN을 남기며 독립 producer는 안전한 한도 안에서 계속한다. 원 probe/comparator와 구문 기대는 변경하지 않는다. negative의 ERROR도 원 exit2로 보존하므로 job의 성공/실패 표시는 최종 지원 판정을 대신하지 않는다. 후보별 required syntax·구조·negative·legacy/recovery/edit 검증과 독립 리뷰를 통과하기 전 kit source 등록부에 채택하지 않는다.
+기존 supervisor·회수·전체8개 isolation·자체 G/B/X·새 container의 EXE/ELF/hash 확인·cleanup과 개별 limits를 재사용한다. 각 stage의 더 작은 G/B/X 상한을 적용하고 quoted include/ABI를 build 전에 검사한다. 실패한 producer는 후속 NOT_RUN을 남기며 독립 producer는 안전한 한도 안에서 계속한다. 원 probe/comparator와 구문 기대는 변경하지 않는다(예외: `mssql-patch-r1` 재실행의 probe 입력이름 정합은 위 "MSSQL R2 재실행의 probe 입력이름 정합" 절). negative의 ERROR도 원 exit2로 보존하므로 job의 성공/실패 표시는 최종 지원 판정을 대신하지 않는다. 후보별 required syntax·구조·negative·legacy/recovery/edit 검증과 독립 리뷰를 통과하기 전 kit source 등록부에 채택하지 않는다.
 
 ## 실제 archive 취득 경계
 
@@ -210,4 +289,16 @@ PG 새4개는 `WITHOUT OIDS`·`WITH (fillfactor = 70)` positive와 `WITH;`·중�
 
 전체8개 isolation과 owned vertical control,48개 exact container의 종료/PID0/제거,813개 host command root 종료를 확인했다. 실제 source HTTP50회/26,700,503bytes, source/image receive-counter949,981,821bytes는 해당1GiB threshold 이내였다. daemon quiescence는 NOT_PROVEN이며 과거 UNKNOWN/overshoot를 소급 복원하지 않는다.
 
-[등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, negative 거부2개, 구조 실패2개, mapping 미해결2개다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
+[등록 구문·구조·negative/recovery 판정](source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)은 필수 syntax 실패13개, positive 구조11개, 당시 frozen negative 기대와 일치한 거부2개, 구조 실패2개, mapping 미해결2개다. 거부2개 중 실제 SELECT 괄호 negative1개와 공식 구문에 반하는 bracket 기대1개를 구별하며 과거 원 기대·집계를 보존한다. BARE의 등록 손상 입력은 오류 없이 수용해 edit support가 실패했다. 같은 후보의 무변경 재실행은 해결책이 아니며 적합한 기존 후보의 정적 비교 뒤 정확한 새 취득/시험 효과만 추가 결정한다. 후보 시험 성공을 최종 source 채택으로 표시하지 않는다. C#/PG의 남은 generation·legacy gap, source 재구성·최종 채택과 P01~P14 판정은 실제 후속 checkpoint에 연결한다.
+
+SQL ESM 준비 검사는 pinned bytes와 literal import closure를 먼저 확인하고 loader/evaluation 단어를 거부한다. `meloncholera/tree-sitter-mssql@8620fbc`의 `grammar/statements/create-function.js`만 2,539 bytes / SHA-256 `f395d3e20195f86c3e3902f0ca05f32e0b6df242ecc744e54732ca71d8161b4a`, UTF-16 index1289의 `require`1회가 검토된 주석 원문임을 구별한다. 같은 path·전체 hash·bytes·단일 위치가 모두 일치해야 하며 주석 제거/임의 단어 허용은 없다. public MIT 원문 fixture의 정상 검사와 변경 bytes·위치·추가 loader·다른 path 거부를 self-check한다. 이는 static 입력 검사 보완이며 해당 후보 JS 실행·grammar 수정·provider 채택은 별도 exact 승인 전 NOT_RUN이다.
+
+## exact3 종료 후 단계별 재개 조건
+
+[실제 세 run과 기대값 충돌](source-feature-feasibility.md#승인된-exact3의-실제-관측과-기대값-충돌)은 A/G/B/X를 분리한다. C# r3는 source/scanner의 승인 hash 대조 후 G conflict로 B/X27이 NOT_RUN이다. PG는 실제 LFS baseline B/X4와 legacy candidate의 G OOM/X12 NOT_RUN을 구분한다. MSSQL은 고정36파일의 commit/blob/size와 취득한 SHA를 확인하고, 원본 C의 B/X30 및 JSON-only 재생성 G/B/X30을 각각 수행했다. MSSQL의 JS module 실행·수정·최종 provider 채택은 이 JSON-only 시험에 포함되지 않는다.
+
+각 failed job도 실제 command/input/tool/raw/한도와 cleanup의 근거다. probe exit2는 등록 syntax/edit의 결과이며 invocation/IO/runtime/bounds 실패 exit64~71이나 resource kill과 구별한다. 관측 row는 원 registered edit·command label·actual ledger state/dependency·command 원문·probe identity에 결속하고, negative 거부의 PASS를 positive syntax support로 표시하지 않는다. materialization이 없는 NOT_RUN 입력은 frozen identity로만 기록하며 실제 file read나 parse를 주장하지 않는다.
+
+공식 구문과 frozen 기대가 충돌하면 해당 expectation의 정확한 원문/primary 근거/영향을 별도 검토·채택한다. 허용 구문을 grammar에서 제거해 기대에 맞추거나 다른 유효 input으로 손상 의무를 대신하지 않는다. 기존 receipt/input/기대는 immutable로 보존하고, 새 revision에는 기존과 새 판정의 applicability를 명시한다. unresolved expectation은 P05의 evidence-integrity 잔여 조건이며 승인된 26-route scope 자체를 미채택으로 되돌리지 않는다.
+
+세 run의 회수는 download/확장/manifest/hash 총120초 안에 완료됐고 전체8개 isolation, owned 수직 경로, 성공한 generation artifact의 lossless export 및 모든 생성 container의 종료/PID0/제거와 host root 종료를 검증했다. upstream 생성 artifact는 MSSQL1개이며 C#/PG candidate는 G 실패로 export 대상이 없다. `pg-legacy-r1`은 실제 채택한 exact3 human subject SHA-256 `dba0d5409f845fdcd1c2a0f373bac5cf90edf3b21033d5d060f59ced06dcd9ef`와 machine subject `80a69edf69a32263fc92efe3b5363583a6ee4b28e281752e33453333af617824`가 명시한1,610,612,736-byte source/image receive-counter 예외를 사용했다. C#/MSSQL은 일반1,073,741,824-byte 한도이며 예약·polling·완료/실패·summary의 stage mapping은 동일하다. 과거 실패에 새 한도를 소급하지 않는다. 저장4 GiB를 유지하며 daemon quiescence와 역사적 미기록 network는 NOT_PROVEN/UNKNOWN이다. C#/PG의 추가 연산은 새 exact remedy·개별 한도 결정 전 NOT_RUN으로 남기고 같은 deterministic 실패를 반복하지 않는다.

@@ -28,7 +28,11 @@
 
 ## 채택값·관측·남은 입력
 
+2026-10-02 사용자 결정으로 6 route(csharp·typescript·tsx·swift·postgresql-sql·tsql)의 patched 후보를 채택했다. 근거와 후속 Session 의무는 [6-route 채택 절](../validation/source-feature-feasibility.md#prepare-06-6-route-최종-채택-2026-10-02)과 [등록부](../../src/contracts/language-sources.json)를 따른다. 아래 checkpoint 기록은 역사적 관측이다.
+
 이 절의 PR #21/#22 초기 checkpoint 관측과 수치 예산은 역사적 기록이다. 후속 승인·실제 A/B r2·SQL30·PG baseline/noopt 결과와 현재 필수 격차는 [P05 관측표](../validation/source-feature-feasibility.md#prepare-06의-실제-ab-및-sql-결과)와 [source closure](../validation/p05-source-closure.md)를 따른다. 새 [NET461 업무 계약](../validation/net461-workload.md)은 기존 scope에 연결한 별도 workload/format이며 전체 corpus·제품·78셀은 NOT_RUN이다.
+
+후속 PR #43~#45의 wiring/export 보완을 통합한 main `ea262f5a8568118fbc7d3346d140c777e496573b`에서 승인 exact3 시험을 실제 수행했다. [새 관측](../validation/source-feature-feasibility.md#승인된-exact3의-실제-관측과-기대값-충돌)은 C# 생성 conflict, PG의 이번 OOM과 baseline 새4개, MSSQL의 두 producer60개·구조/negative/recovery 결과를 구분한다. T-SQL bracket negative 기대의 공식 구문 충돌도 별도 채택 전까지 남는다. 기존 A/B·exact3 효과 및 지속 예산을 다시 묻지 않으며 추가 source 변경·개별 한도·기대값 정정과 최종 채택만 결정 대상으로 관리한다. 이 결과 때문에 P05는 미완료이며 #20은 OPEN, S01/MASTER는 미착수다.
 
 공개 entry는 단일 root module의 `src/kit`이다. 첫 Inspect/Identity request/result/error·소유권·취소·한도를 설계했으며 구현과 external-consumer 실행은 S01에 속한다. E0/manifest r1은 mode provenance와 관측 전용 assessment를 명시한다. S05는 base64 bytes를 사용하는 bounded JSON transport와 실제 old-tree edit 경로를 소유하며 S06이 같은 producer를 확장한다.
 

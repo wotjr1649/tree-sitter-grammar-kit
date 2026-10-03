@@ -1,0 +1,1302 @@
+{
+  "final_provider_adoption": false,
+  "official_basis": {
+    "inference": "GLR runtime total dynamic precedence explains observed implicit_type(1) winning over generation-only prec(2); context dynamic2 remedy is proposed, not verified",
+    "url": "https://tree-sitter.github.io/tree-sitter/creating-parsers/2-the-grammar-dsl.html"
+  },
+  "private_source_egress": false,
+  "local_storage_amendment": {
+    "proposed_bytes": 8589934592,
+    "past_over_cap_reclassified": false,
+    "scope": "only kit .work/artifacts/docs/plans/docs/prompts cumulative retained preparation evidence",
+    "applicable_only_after_new_user_approval": true,
+    "previous_bytes": 6442450944,
+    "all_prior_ledger_and_UNKNOWN_retained": true,
+    "prior_deletion": false,
+    "other_receive_counter_unchanged": 1073741824,
+    "mssql_pending_reservation_bytes": 402653184,
+    "PG_receive_counter_unchanged": 1610612736,
+    "required_current_total": 6568637715,
+    "observed_bytes": 6165984531
+  },
+  "unchanged_inputs": {
+    "bytes": 127407,
+    "path": "src/dev/prepare-p05/inputs.json",
+    "sha256": "f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4"
+  },
+  "rows": [
+    {
+      "id": "P05-CS-ID-ASYNC",
+      "input_bytes": 27,
+      "expected": {
+        "facts": "async는 type 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "e364d9ad635a78d72a0a8d61495f4a96e586a3e1e9ea480ac3188cd34044c896",
+      "edit": {
+        "start_byte": 12,
+        "restore_utf8": "{",
+        "expected": "손상 단계 결과 보존; 복구 후 fresh/incremental ordered node facts와 원본 syntax/구조 일치",
+        "replacement_utf8": "",
+        "old_end_byte": 13,
+        "review": "공식 syntax 독립 리뷰 확인; 삭제 위치 부근 오류/누락, 후속 source, 복구 후 fresh/incremental ordered 구조를 검사",
+        "max_edits": 2,
+        "negative_expected": {
+          "error_near_end": 13,
+          "error_near_start": 11,
+          "damaged_sha256": "767de2e4f1a82f5035760fecb185746fa1ac3c50fbbd560ebce72be5d4b68e06",
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class async  int value; }\n",
+          "preserve_following_source": true
+        }
+      }
+    },
+    {
+      "id": "P05-CS-ID-AWAIT",
+      "input_bytes": 51,
+      "expected": {
+        "facts": "await는 field/local 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "a61663218fb68dc8641625c84cdc3e2f0db85d97770d6948c3116e7e1d0efca0",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-ID-VAR",
+      "input_bytes": 52,
+      "expected": {
+        "facts": "var는 type/local 이름",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "250804a70b35d0d23603dde3daedbcea5a3a0c7986db674cb6f8e1578b496935",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-SHEBANG",
+      "input_bytes": 51,
+      "expected": {
+        "facts": "첫 행 shebang과 후속 invocation",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "57f057c874507f3c51eddd642fd8db635d248110fa6565aca48e3649f563b150",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-PROPERTY",
+      "input_bytes": 64,
+      "expected": {
+        "facts": "directive 이름/인수/행과 후속 invocation",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "19de16897c74826f7d69b98db19e2d49dcbf86810a7c32288ce19483c8066707",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-PACKAGE",
+      "input_bytes": 61,
+      "expected": {
+        "facts": "package 인수는 source text만 보존",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "437a7169a0e0b8528dfe6989d792e8f226c89d17ce463221cbe2ee3dc4891314",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-SDK",
+      "input_bytes": 57,
+      "expected": {
+        "facts": "sdk 인수와 후속 statement",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "da8de53d77b26a6dcdfc33e53f5dae8a8d6c3e17ddb902165c7f78dc673192da",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-PROJECT",
+      "input_bytes": 56,
+      "expected": {
+        "facts": "project 상대 경로 text와 후속 statement",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "bacf7c9760ccdbcb5d99a928af595d485fd08ca5338be0edd83daa546183f421",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-INCLUDE",
+      "input_bytes": 50,
+      "expected": {
+        "facts": "승인된 source-only 범위: include 이름/경로/행과 후속 statement, 파일 읽기 없음",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "c02c5338a854ccc13235976c58cc1c1b32af39238cce92ea72946ed0066fc608",
+      "edit": null
+    },
+    {
+      "id": "P05-CS-DIRECTIVE-RAW",
+      "input_bytes": 53,
+      "expected": {
+        "facts": "raw string 내부는 directive로 분류하지 않음",
+        "syntax": "NO_ERROR_OR_MISSING",
+        "source_span": "원본 UTF-8 범위/순서/행 보존"
+      },
+      "feature_ids": [
+        "csharp-B01",
+        "csharp-V11"
+      ],
+      "route": "csharp",
+      "input_sha256": "2feee5fbf505483331586ac6cfca70990402b6f4e0b71c035694a794f717921c",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-ARG",
+      "input_bytes": 61,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "parameter/invocation argument async는 identifier; 진짜 async modifier와 분리",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "5da3ee047a35361274b3dbde8c3a748296b2fb2d7f869b721e78c3e0ba372462",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-AWAIT-ARG",
+      "input_bytes": 61,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "non-async method의 parameter/invocation await identifier",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "fbcc0bafaa43d530edecbe988c05b7d665c71dfe83f6ba547f4d3c6fb4de1a45",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-VAR-ARG",
+      "input_bytes": 57,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "parameter/invocation var identifier; implicit_type과 분리",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "60f17aa51b051248be05b58fad25b2fc6bc7c2949f27354d885b38cfc9a19970",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-VAR-TYPE",
+      "input_bytes": 55,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "var declaration/return/constructed type 이름 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "83689d329d9bea619a53c5e56d5a08bddc2806216212444b3dab84a62ad39344",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-METHOD",
+      "input_bytes": 54,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "method async modifier와 await_expression 유지; symbol lookup/runtime 제외",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "9eb9e3811bc7d757b63082d6e8c775630704a2d9310ef8ecf2f9452575304fdc",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-LOCAL",
+      "input_bytes": 71,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "local function async modifier/type/name/parameters/body 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "a8b6db79d60ed39e0c985d983c65e3cbb9f4407d7db29333233505a7a302deb3",
+      "edit": {
+        "start_byte": 43,
+        "old_end_byte": 44,
+        "replacement_utf8": "",
+        "restore_utf8": ")",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { async Task<int> Local( { return await F(); } } }\n",
+          "damaged_sha256": "accf90f3325d01c9b8d2b57dfd3a9d79b315904feeff73633967405990e3ceb6",
+          "error_near_start": 41,
+          "error_near_end": 47,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      }
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-LAMBDA",
+      "input_bytes": 56,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "lambda async modifier/parameters/body/await 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "624f29c993eab8d7e8c09b0c8fc0379cf69a29befa871380c75d358bbc6789c7",
+      "edit": {
+        "start_byte": 36,
+        "old_end_byte": 37,
+        "replacement_utf8": "",
+        "restore_utf8": ")",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { var f = async ( => await F(); } }\n",
+          "damaged_sha256": "95bd1312f1e65a31c19c9b5f8748bab00ca17d5341ad820d6b0a15ad0a2ee463",
+          "error_near_start": 34,
+          "error_near_end": 40,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      }
+    },
+    {
+      "id": "P05-REMEDY-CS-ASYNC-DELEGATE",
+      "input_bytes": 64,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "anonymous method async modifier와 block/await 구조",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "a70083b76c3fb6b4877bfe47d90c1826d1e601fc00495f1c9a6591be2be8e596",
+      "edit": {
+        "start_byte": 44,
+        "old_end_byte": 45,
+        "replacement_utf8": "",
+        "restore_utf8": "{",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "class C { void M() { var f = async delegate  await F(); }; } }\n",
+          "damaged_sha256": "f9d4985798ff970534f5965b3b9f8befc0af4340a1d084c3d714792a971d4c41",
+          "error_near_start": 42,
+          "error_near_end": 48,
+          "preserve_following_source": true
+        },
+        "expected": "5stage/2comparison; damaged/restored incremental=fresh; 복구 후 async modifier/parameters/body와 원 ordered facts 동일"
+      }
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-CRLF",
+      "input_bytes": 47,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "leading horizontal whitespace/CRLF, include 이름·argument·행 경계와 다음 statement 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "a9669a0fd161759524361e38895c3c8be3a1b2766ab3a4b779716a2a2e355c38",
+      "edit": {
+        "start_byte": 3,
+        "old_end_byte": 4,
+        "replacement_utf8": "",
+        "restore_utf8": ":",
+        "max_edits": 2,
+        "negative_expected": {
+          "syntax": "ERROR_OR_MISSING_REQUIRED",
+          "damaged_input_utf8": "  #include helpers.cs\r\nConsole.WriteLine(1);\r\n",
+          "damaged_sha256": "6416d7294484fa10e226d97639a60dd508b8eb1be09cd75c6fd8bced55b4afc1",
+          "error_near_start": 2,
+          "error_near_end": 12,
+          "preserve_following_source": true
+        },
+        "expected": "CRLF bytes 그대로5stage/2comparison; damaged/restored incremental=fresh; restored 원 directive·후속 statement 구조 동일"
+      }
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-EOF",
+      "input_bytes": 20,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "EOF에서 이름·argument·directive 전체 source 범위",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "21e6e4c1ee0d8e56de64132a47766a1682f5cd351d12a32b0e6ccf99b4d5a42a",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-DIRECTIVE-SAMELINE",
+      "input_bytes": 43,
+      "expected": {
+        "syntax": "ERROR_OR_MISSING_REQUIRED",
+        "facts": "directive는 whitespace를 제외한 행 시작; same-line prefix 오류와 앞 statement 보존",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "622f3ca6d59d4de4b7032b6314dd4b966946aeea9a8472d50d17d6c0e7503773",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-TOPLEVEL-RAW",
+      "input_bytes": 39,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "top-level raw string content는 directive가 아니며 기존 scanner path 유지",
+        "source_span": "원 UTF-8 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "ee5faf39bf423b174575f306391808d9a9379b0c5ba473ff541e43969f244777",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-REGULAR",
+      "input_bytes": 29,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "regular interpolation 내용은 directive가 아님; string text와 interpolation expression1/경계 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "189b9a9b06a1210f61b2a79fa6706efda3801fde321ec3c64c2c3ca395831d3c",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-VERBATIM",
+      "input_bytes": 31,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "verbatim interpolation의 다음 행 #:include는 string content; directive node0, expression1/경계 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "c5d2ad9582f67ec9e0746bc61374f1eef7e8d5edc08d6fe341eaf6bd07d4f7bd",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-INTERPOLATED-RAW",
+      "input_bytes": 35,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "raw interpolation의 행 시작 #:include는 content; directive node0, expression1/quote/행 유지",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c",
+        "csharp-B01"
+      ],
+      "route": "csharp",
+      "input_sha256": "97c5850d651b74a19bb9058cbf313b8448b9dd9e736b91ecec5278d7f593825a",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-INCLUDE-NO-ARG-LANGUAGE",
+      "input_bytes": 32,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "언어는 #:를 ignored directive로 보존; name include/argument 부재/다음 statement 확인. SDK의 missing argument 판정은 기존 제외, required 다섯 원 positive의 argument 기대는 그대로",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "54db733deec1ac360450a93a9b1420e8d40dd42ec0132049a0c4549b8d2579cd",
+      "edit": null
+    },
+    {
+      "id": "P05-REMEDY-CS-UNKNOWN-IGNORED",
+      "input_bytes": 38,
+      "expected": {
+        "syntax": "NO_ERROR_OR_MISSING",
+        "facts": "unknown tool name도 #: ignored source; name/argument/행/후속 보존. SDK가 unknown을 인정한다는 주장이 아님",
+        "source_span": "원 byte/point/order 보존"
+      },
+      "feature_ids": [
+        "csharp-B01",
+        "csharp-V14c"
+      ],
+      "route": "csharp",
+      "input_sha256": "901892bec127297e1a9009b1749d0ccf70f847ef02862be0c22bca4ce3ffe270",
+      "edit": null
+    }
+  ],
+  "patch": {
+    "id": "P05-CSHARP-REMEDY-r5",
+    "base_file": {
+      "bytes": 62851,
+      "path": ".work/campaign-01-prepare-04/probes/native-36874388926-1/expanded/candidates/P05-CSHARP-REMEDY-r4/grammar.js",
+      "sha256": "b6946fac28ee1e470aa3155f5a3b8deddfd6cd0c6c47ac52c587e3e69a683e5e"
+    },
+    "file": "grammar.js",
+    "other_grammar_changes": false,
+    "proposed_result": {
+      "sha256": "da01e654f8cf2fc2dd5665615a54c726eaefb4f445e5fd7b90f002407c64ebe7",
+      "bytes": 62885
+    },
+    "scanner": {
+      "bytes": 23949,
+      "path": ".work/campaign-01-prepare-04/probes/native-36874388926-1/expanded/candidates/P05-CSHARP-REMEDY-r4/src/scanner.c",
+      "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227"
+    },
+    "predecessor": "P05-CSHARP-REMEDY-r4",
+    "replacements": [
+      {
+        "new": "      field('returns', choice(prec.dynamic(2, prec(2, alias('var', $.identifier))), $.type)),",
+        "rule": "method_declaration",
+        "field": "returns",
+        "old": "      field('returns', choice(prec(2, alias('var', $.identifier)), $.type)),"
+      },
+      {
+        "new": "      field('type', choice(prec.dynamic(2, prec(2, alias('var', $.identifier))), $.type)),",
+        "rule": "object_creation_expression",
+        "field": "type",
+        "old": "      field('type', choice(prec(2, alias('var', $.identifier)), $.type)),"
+      }
+    ]
+  },
+  "stage": "csharp-r5",
+  "source": {
+    "repository": "https://github.com/tree-sitter/tree-sitter-c-sharp",
+    "previous_approved_binding": {
+      "bytes": 2941,
+      "path": "artifacts/sessions/campaign-01-2026-09-29/preparation/20261001-prepare-06/followup-exact-authorization-accepted-r2.json",
+      "sha256": "5a4e0f41b4a944346681f8278a6d260c83c39ee90b518217f97b1f8a695c21ef"
+    },
+    "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+    "originals_preserved": true
+  },
+  "budget_total": {
+    "development_finite_batch_CI_job_minutes_max": 150,
+    "known_upstream_B": 27,
+    "PG_run_36882649292_completed_job_seconds": 296,
+    "still_approved_MSSQL_B_max": 1,
+    "known_upstream_X": 333,
+    "new_CSharp_producer_edits_max": 5,
+    "consumption_baseline": {
+      "bytes": 117056,
+      "path": "docs/plans/campaign-01-2026-09-29/prepare-06/consumption-batch16-close-r1.json",
+      "sha256": "7889ce3f8c5845ba2a7a872d6b1968d7ce05931c3a4acc72abb3ac97c282bb1d"
+    },
+    "still_approved_MSSQL_receive_reserved_bytes": 1073741824,
+    "PG_run_usage_reconciliation": "immutable batch16 actual usage carried",
+    "planned_CI_job_minutes_reservation": 573.3499333333334,
+    "still_approved_MSSQL_edits_max": 1,
+    "new_CSharp_B_max": 1,
+    "two_native_finite_batches_wall_seconds_max": 21600,
+    "still_approved_MSSQL_artifact_reserved_bytes": 67108864,
+    "combined_additional_receive_artifact_reserved_bytes": 2281701376,
+    "planned_manual_jobs": 24,
+    "observed_CI_job_minutes": 263.34993333333335,
+    "known_upstream_G": 22,
+    "still_approved_MSSQL_retained_reserved_bytes": 402653184,
+    "new_CSharp_recovery_retained_reserved_bytes": 469762048,
+    "development_finite_batch_wall_seconds_max": 10800,
+    "new_CSharp_X_max": 27,
+    "two_native_CI_job_minutes_max": 160,
+    "new_CSharp_artifact_reserved_bytes": 67108864,
+    "observed_manual_jobs": 22,
+    "still_approved_MSSQL_G_max": 1,
+    "planned_recorded_transfer_plus_reservation_bytes": 21568149908,
+    "still_approved_MSSQL_X_max": 41,
+    "observed_wall_upper_seconds": 139869.0,
+    "new_CSharp_G_max": 1,
+    "planned_wall_upper_reservation_seconds": 172269.0,
+    "new_CSharp_receive_reserved_bytes": 1073741824,
+    "additional_effect_finite_batch_limits": "one finite batch at a time; existing continuing same-scope development/CI budget retained, no old quota reapproval",
+    "measured_conservative_transfer_bytes": 19286448532,
+    "cumulative_network_total": "UNKNOWN_WITH_ALL_PRIOR_CONSUMPTION_RETAINED"
+  },
+  "S01_MASTER": false,
+  "state": "PROPOSED_NOT_AUTHORIZED_NOT_APPLIED",
+  "schema": "tsgk.prepare06.csharp-r5-local-storage-proposal/r2",
+  "isolation": {
+    "filesystem": "read-only + task-owned bounded work tmpfs",
+    "user": 65534,
+    "network": "none",
+    "unrelated_secrets": 0,
+    "fresh_G_B_capture_X_container": true,
+    "capabilities": "drop all",
+    "no_new_privileges": true,
+    "process_and_container_cleanup": "exact roots/create IDs/PID0/remove required"
+  },
+  "destinations": [
+    "RUNNER_TEMP/tsgk-p05-remedy-<run>-<attempt>/candidates/P05-CSHARP-REMEDY-r5",
+    ".work/campaign-01-prepare-04/probes/native-<run>-1",
+    "artifacts/sessions/campaign-01-2026-09-29/preparation/20261001-prepare-06",
+    "GitHub Actions artifact in wotjr1649/tree-sitter-grammar-kit only"
+  ],
+  "grammar_result_bytes_written": false,
+  "unchanged_tool_runtime_image": {
+    "actual_tool_gate": {
+      "bytes": 237,
+      "path": ".work/campaign-01-prepare-04/probes/native-36874388926-1/expanded/records/exact-remedy-tool-gate.json",
+      "sha256": "2c8172e66319bf095ce34da0fc623d5409b465caae42e45dce6deae5b4b0308f"
+    },
+    "approved_projection": {
+      "bytes": 229495,
+      "path": "src/dev/prepare-p05/remedy-followup-r2.json",
+      "sha256": "6372d231f57cc463c1a3089a2de9716a604b8759a98885c191326c827423ecaf"
+    },
+    "actual_toolchain": {
+      "bytes": 699,
+      "path": ".work/campaign-01-prepare-04/probes/native-36874388926-1/expanded/records/toolchain-profile.json",
+      "sha256": "9889659adc8f5b2dbb82e4b428784c769612bb92a4862494fed4cd579ef56190"
+    },
+    "source_repository": {
+      "commit": "9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "files": [
+        {
+          "bytes": 61851,
+          "path": "grammar.js",
+          "git_blob_sha1": "c4fd33dc3090240227b6480941d748eea0e72004"
+        },
+        {
+          "bytes": 1133,
+          "path": "LICENSE",
+          "git_blob_sha1": "c8921f694d834542874bd0403afe97adb8f5dab3"
+        },
+        {
+          "bytes": 55496,
+          "path": "package-lock.json",
+          "git_blob_sha1": "7410ac3aec670579224b620876a3e31a72e2123c"
+        },
+        {
+          "bytes": 1427,
+          "path": "package.json",
+          "git_blob_sha1": "a3d32d9228cd6510e409e61fc0c139cd8767a8b7"
+        },
+        {
+          "bytes": 2794,
+          "path": "queries/highlights.scm",
+          "git_blob_sha1": "5e2904c9461bd05fd4a42a8b275251f707729570"
+        },
+        {
+          "bytes": 848,
+          "path": "queries/tags.scm",
+          "git_blob_sha1": "ffb2dd2392c5ab3559f56f2e7c35620336595a05"
+        },
+        {
+          "bytes": 2118,
+          "path": "README.md",
+          "git_blob_sha1": "998f65b857d1df2371324a53116a0bf09099638b"
+        },
+        {
+          "bytes": 289830,
+          "path": "src/grammar.json",
+          "git_blob_sha1": "672d461b76fb5c786350233aa42b4b811cc74758"
+        },
+        {
+          "bytes": 133257,
+          "path": "src/node-types.json",
+          "git_blob_sha1": "71949396ef786608f08a802a79bc1de1fe0126a6"
+        },
+        {
+          "bytes": 32021728,
+          "path": "src/parser.c",
+          "git_blob_sha1": "3772b5c874104cf7bc24b3f247bc696f7fbcdfb2"
+        },
+        {
+          "bytes": 23064,
+          "path": "src/scanner.c",
+          "git_blob_sha1": "66121a77f3f4dca536b6d8bf5f76a4937d3cdc0c"
+        },
+        {
+          "bytes": 985,
+          "path": "src/tree_sitter/alloc.h",
+          "git_blob_sha1": "1abdd1201578605b8d05a3001f01ebc0d58826d9"
+        },
+        {
+          "bytes": 10431,
+          "path": "src/tree_sitter/array.h",
+          "git_blob_sha1": "a17a574f04e0c20c38463149640badc5126063f8"
+        },
+        {
+          "bytes": 7624,
+          "path": "src/tree_sitter/parser.h",
+          "git_blob_sha1": "858107deb9e4a1ffcd2ed5e6ffe98a5fcab3e1f6"
+        },
+        {
+          "bytes": 953,
+          "path": "tree-sitter.json",
+          "git_blob_sha1": "59dd1e6138edc686017dea03c91cd452a587b400"
+        }
+      ],
+      "url": "https://codeload.github.com/tree-sitter/tree-sitter-c-sharp/tar.gz/9150f7d56bb47f1a809fa23623f1ba1413e93fa9",
+      "repository": "tree-sitter/tree-sitter-c-sharp"
+    },
+    "phase_verification": {
+      "B": "generated parser/scanner/headers/runtime83/probe/ABI15/ELF and compiler/loader bytes",
+      "A": "repository/revision/archive/blob/size/license/regular paths and tool/runtime/npm bytes",
+      "receive": "outer+inner bounds/member identities/all original bytes/cleanup",
+      "X": "captured EXE/hash/mode/runtime dependencies/frozen input+expectations in fresh isolated container",
+      "G": "exact grammar/scanner/dependencies/patch-result/CLI+Node identities"
+    },
+    "npm": [
+      {
+        "version": "0.23.1",
+        "url": "https://registry.npmjs.org/tree-sitter-javascript/-/tree-sitter-javascript-0.23.1.tgz",
+        "package": "tree-sitter-javascript",
+        "integrity": "sha512-/bnhbrTD9frUYHQTiYnPcxyHORIw157ERBa6dqzaKxvR/x3PC4Yzd+D1pZIMS6zNg2v3a8BZ0oK7jHqsQo9fWA=="
+      },
+      {
+        "version": "0.24.1",
+        "url": "https://registry.npmjs.org/tree-sitter-c/-/tree-sitter-c-0.24.1.tgz",
+        "package": "tree-sitter-c",
+        "integrity": "sha512-lkYwWN3SRecpvaeqmFKkuPNR3ZbtnvHU+4XAEEkJdrp3JfSp2pBrhXOtvfsENUneye76g889Y0ddF2DM0gEDpA=="
+      }
+    ],
+    "acquisition_pack": {
+      "bytes": 127407,
+      "path": "src/dev/prepare-p05/inputs.json",
+      "sha256": "f998fb4e73b022cfc7b50196d471a72a0b7bbb4aabce2996be5f1bf596a5a1e4"
+    },
+    "repository_pack_count": 24,
+    "tools": {
+      "node": {
+        "path": "/usr/local/bin/node",
+        "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "version": "v24.21.0"
+      },
+      "abi": 15,
+      "probe": {
+        "bytes": 5536,
+        "path": "src/dev/prepare-p05/probe.c.in",
+        "sha256": "ed66e83d65d4dd795fe7017b9d8109d73cec6b1fe926c06d8e00a909404c4482"
+      },
+      "libc": {
+        "sha256": "9792e3cbb541c8f44c7acf5f14f4022ea62998ecc787d326bed4d8b6547dfd92",
+        "version": "glibc2.41"
+      },
+      "converter_execution": false,
+      "npm_lifecycle": false,
+      "cli": {
+        "bytes": 8594290,
+        "url": "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-linux-x64.gz",
+        "sha256": "20a1f39ec1c45f2211492dcb8881c802b643b554bb196869a29ac3778277fa77"
+      },
+      "runtime": {
+        "commit": "659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+        "files": [
+          {
+            "path": "LICENSE",
+            "sha256": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+            "bytes": 1080
+          },
+          {
+            "path": "lib/include/tree_sitter/api.h",
+            "sha256": "efe63c187bb941be6e36dfb0597846bfe1976a0917c04a16e3edf6ee7cf6f9b7",
+            "bytes": 49952
+          },
+          {
+            "path": "lib/src/alloc.c",
+            "sha256": "c7d15b9015568f439af4adf28ead9e2bd14901221819276727c11227a29576da",
+            "bytes": 1542
+          },
+          {
+            "path": "lib/src/alloc.h",
+            "sha256": "6a59c4997fe6df7fa2c00fcaff9cf0882e26309d1743bea05983ea56e0ca0c91",
+            "bytes": 917
+          },
+          {
+            "path": "lib/src/array.h",
+            "sha256": "3a66fd611d88de00207bf40466b2393170c2110b17ce0d16e3716ef3a00e3d8e",
+            "bytes": 13467
+          },
+          {
+            "path": "lib/src/atomic.h",
+            "sha256": "bbc630cb913ac64274ce4412bc9d504174220323993f306ded74abe502867e74",
+            "bytes": 1384
+          },
+          {
+            "path": "lib/src/error_costs.h",
+            "sha256": "0e8d1a21e0d60981e762989108231df6610d95591892f631c6c78a9ef831a2ab",
+            "bytes": 294
+          },
+          {
+            "path": "lib/src/get_changed_ranges.c",
+            "sha256": "6fcee7d2663ac67d88b9e79a03ff4854dde1e8d30d3c985d945bad8017532c52",
+            "bytes": 17733
+          },
+          {
+            "path": "lib/src/get_changed_ranges.h",
+            "sha256": "f394bd0b6fce006be460fd16cbea3cc96e248c810a4d97e8830463c29c85e4a5",
+            "bytes": 836
+          },
+          {
+            "path": "lib/src/host.h",
+            "sha256": "e1982b9795b9c52b5ab564d8b9876189d65a97ca02f78351e1740b0985992fd2",
+            "bytes": 520
+          },
+          {
+            "path": "lib/src/language.c",
+            "sha256": "16ca0511cd57ff301c63a19b4f10821552153224affa23908d4fc0d2bbca353e",
+            "bytes": 11440
+          },
+          {
+            "path": "lib/src/language.h",
+            "sha256": "9371240c2060bd7c145b41a32b2535bbca3c3ac1713a4684e272e268ac924c22",
+            "bytes": 9030
+          },
+          {
+            "path": "lib/src/length.h",
+            "sha256": "7fc186fb4bf50233059e8be9ca68efe95e66d34ced4b8a8f38f14497352faeb1",
+            "bytes": 1275
+          },
+          {
+            "path": "lib/src/lexer.c",
+            "sha256": "eb6ca639beaea9fb99bfb0faa0bd0f8e8df785a52dc09321582dc858a448eb34",
+            "bytes": 16062
+          },
+          {
+            "path": "lib/src/lexer.h",
+            "sha256": "7d76308f7a2d3246a3e28fb27698be928f848130d1bfacc39f9f623127671b74",
+            "bytes": 1263
+          },
+          {
+            "path": "lib/src/lib.c",
+            "sha256": "a9830f5a1e72db564afef45f690510cf0aa751075ed855789e26c9f25f087b80",
+            "bytes": 405
+          },
+          {
+            "path": "lib/src/node.c",
+            "sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
+            "bytes": 25151
+          },
+          {
+            "path": "lib/src/parser.c",
+            "sha256": "97a49276242294bc1b1a22908671a202f92d2a213a872edbe467a9e121822615",
+            "bytes": 79954
+          },
+          {
+            "path": "lib/src/parser.h",
+            "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+            "bytes": 7624
+          },
+          {
+            "path": "lib/src/point.c",
+            "sha256": "04a101f16f40a651814c0f307fadf3f351d0f24013fa6d8b89c85bf1c6a5e717",
+            "bytes": 547
+          },
+          {
+            "path": "lib/src/point.h",
+            "sha256": "0929027be2ff54627be560f3bafc1af59e81ac6d5a8d5864455601a0dbee50ff",
+            "bytes": 1307
+          },
+          {
+            "path": "lib/src/portable/endian.h",
+            "sha256": "528ca0666737e1a66218e2179004d5af2154393c6564ac9c57c110c5d8f57f85",
+            "bytes": 7325
+          },
+          {
+            "path": "lib/src/query.c",
+            "sha256": "f7e9b04c50f9d5bae3c01cf5860fd45d24d89b2d2e5748de758b0a39bc146c83",
+            "bytes": 171255
+          },
+          {
+            "path": "lib/src/reduce_action.h",
+            "sha256": "8f40396e431d7ff558694ca248eed1332b6cf6f7e6255f06cddfde78020bd308",
+            "bytes": 772
+          },
+          {
+            "path": "lib/src/reusable_node.h",
+            "sha256": "10be747ea4c733ca181dc43d55d155ac8e5b8caa247079621cca0ce633347bfb",
+            "bytes": 2747
+          },
+          {
+            "path": "lib/src/stack.c",
+            "sha256": "f70b7e5823e82901801193562908037db4c1a73721e48da0fe54cdb2a6b5856d",
+            "bytes": 28636
+          },
+          {
+            "path": "lib/src/stack.h",
+            "sha256": "dea9df947fa871b253528dca48611aa174181a286ec2734c16d4038e040834f6",
+            "bytes": 4872
+          },
+          {
+            "path": "lib/src/subtree.c",
+            "sha256": "ec4d623ca1c290f6c1fb8a9dcfc08dcc5fc2a452fa1b27587b9a73c1a74438b0",
+            "bytes": 36750
+          },
+          {
+            "path": "lib/src/subtree.h",
+            "sha256": "552633ba7b8be2d266031bb04776c17ba7bc5fe270d1afd5203eb4889e8b7f09",
+            "bytes": 12548
+          },
+          {
+            "path": "lib/src/tree.c",
+            "sha256": "a0f63bc46fc4fcb88d35caa6fe89d7fc18edb895bc781db20f11d5c58988fb06",
+            "bytes": 5144
+          },
+          {
+            "path": "lib/src/tree.h",
+            "sha256": "628701f470166ad550471a673dce078f28a7851193939f02a342c30c3a8ef39c",
+            "bytes": 915
+          },
+          {
+            "path": "lib/src/tree_cursor.c",
+            "sha256": "5638f6702b6d0b40755fcba32d85ca0fc44ab51bd3546525b4787a304a7b503c",
+            "bytes": 23140
+          },
+          {
+            "path": "lib/src/tree_cursor.h",
+            "sha256": "3e8d9671ab1397bcaeb3e0cbf153a61a99e214782b43c09e5cde5a01e8283a1a",
+            "bytes": 1285
+          },
+          {
+            "path": "lib/src/ts_assert.h",
+            "sha256": "ac1ec4b7ba388a9d8708feeb6c5c766b2927cecfd6db644b939772e1dc086526",
+            "bytes": 205
+          },
+          {
+            "path": "lib/src/unicode.h",
+            "sha256": "968175f1e018e4130c403fe08d12b4d103e6fe6c1dbbf658e58ab9af378530a4",
+            "bytes": 2084
+          },
+          {
+            "path": "lib/src/unicode/ICU_SHA",
+            "sha256": "2879b4cf5a2c625c6509c26e341b9c8b0c50fde284113b449e00567bdf4e593c",
+            "bytes": 41
+          },
+          {
+            "path": "lib/src/unicode/LICENSE",
+            "sha256": "6a18c5fac70d7860b57f5b72b4e2c9a1ba6b3d2741eef7ff9767c5379364f10d",
+            "bytes": 21001
+          },
+          {
+            "path": "lib/src/unicode/README.md",
+            "sha256": "73bbccbcf2e6648385d188d914b16ae56b4553a0f1efb033e6b6d6242e41df1d",
+            "bytes": 1270
+          },
+          {
+            "path": "lib/src/unicode/ptypes.h",
+            "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+            "bytes": 72
+          },
+          {
+            "path": "lib/src/unicode/umachine.h",
+            "sha256": "2d79c0903d9e73e247b948bc0a12b6a785257ca0273bddab56fb59561f8d7391",
+            "bytes": 14865
+          },
+          {
+            "path": "lib/src/unicode/urename.h",
+            "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+            "bytes": 72
+          },
+          {
+            "path": "lib/src/unicode/utf.h",
+            "sha256": "a87e9710c9cad7b08a945f4fb8b9d4629189897cc535f8ac927640c210a94b69",
+            "bytes": 72
+          },
+          {
+            "path": "lib/src/unicode/utf16.h",
+            "sha256": "c370d9069f37fad2b53981c06dc648bbc21923db1655517a31bb237df4fba041",
+            "bytes": 23878
+          },
+          {
+            "path": "lib/src/unicode/utf8.h",
+            "sha256": "39651224b2ca2452359c7f3339f3cc0a841fe7db64f8a00c9c5ec19c0389645c",
+            "bytes": 31698
+          },
+          {
+            "path": "lib/src/wasm-stdlib/README.md",
+            "sha256": "37bb3e39b390ed1cedf9127edb00bf2baf896f277ca34a8722694aa41fb3546a",
+            "bytes": 1255
+          },
+          {
+            "path": "lib/src/wasm-stdlib/external_scanner_allocator.c",
+            "sha256": "b13eb3c31b8b952578260b858462e821985d347d1dae186e71566ff36d875b1f",
+            "bytes": 4275
+          },
+          {
+            "path": "lib/src/wasm-stdlib/external_scanner_stdlib.h",
+            "sha256": "462bb994df614cb18899b03b1435f2749414e4722ba8cf450266a149426cea0c",
+            "bytes": 107108
+          },
+          {
+            "path": "lib/src/wasm-stdlib/imports.txt",
+            "sha256": "4fb97410d22925f88857d9adfecc2b955c08819e7d55de4e460d417bf1a2215d",
+            "bytes": 276
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc.c",
+            "sha256": "1b70f41eda904b816e641d5841c7ad0b637cf5bc637e1f3d0965f75789711ff5",
+            "bytes": 1346
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/LICENSE",
+            "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+            "bytes": 6204
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/README.md",
+            "sha256": "a5714bd844b272c950cb055fcabbd04e4da0ee02f35e5d5340caa4f3af9626fb",
+            "bytes": 685
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/alpha.h",
+            "sha256": "bf14a0a8e2e3722e8d618d00f903be102a0214c4ab30d96dc8d7f3e15c5106e7",
+            "bytes": 12783
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/casemap.h",
+            "sha256": "e69896dc36e5b1c0f0f30917cad6dcda2f55c2d691be1b84625880ebf22fb618",
+            "bytes": 16079
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/isblank.c",
+            "sha256": "2fe71bd5c48604d04f2582e35e1230c2c302bd175ebcfa3c7ed15cf191156bd3",
+            "bytes": 173
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswalnum.c",
+            "sha256": "647f8fc54b33790c1de8a26acd2f5b7212952c2e60db0ada433f9ddd639ce186",
+            "bytes": 191
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswalpha.c",
+            "sha256": "c22480b08b6943bbecfb6e0ab6677bf3b41c0371d5df51286f437b3cb37c130e",
+            "bytes": 333
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswblank.c",
+            "sha256": "6f3a3161506c01d7a425c766e6de722101618d14548b56998bc147e86077e744",
+            "bytes": 193
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswdigit.c",
+            "sha256": "d7e9bda18ff14bd8ace47884d8bd021130e95c69a2dc747f83effc1a2714895b",
+            "bytes": 201
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswlower.c",
+            "sha256": "e51bb97002c407e416bfca5689abef2e9b9dc625bef19ae684753722e98d0392",
+            "bytes": 181
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswpunct.c",
+            "sha256": "6bc6c0a07485c87aa556c265f37968c42d635e4a2fd89e701efdb57f8a111b66",
+            "bytes": 303
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswspace.c",
+            "sha256": "c8592c0fb5463b314c38926e3df26b9efdfe5f1437958ba20c7c36f81facba80",
+            "bytes": 616
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswupper.c",
+            "sha256": "f6b68aa9983a6fb5c09479e1349a2b35721cb7aef308192584fdea5585032cd8",
+            "bytes": 181
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/iswxdigit.c",
+            "sha256": "1f6dc78efe7c313ddcf47401101f903ce194af5dacd89922f483a995075f52cb",
+            "bytes": 222
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/punct.h",
+            "sha256": "45382a2b630fc896057871ac9abe9e3f1580048f1f3b1c96505aaf3dc522832d",
+            "bytes": 10440
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/ctype/towctrans.c",
+            "sha256": "43f4374b7dfcd24a957b4be4cfa304611e24912529183174ec724fcbaedf82cd",
+            "bytes": 1715
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/memchr.c",
+            "sha256": "1ea082084a8cfcc6aee5dc962e0ddd2167d2ce38e529a22d138bdfaab83c223a",
+            "bytes": 2818
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/memcmp.c",
+            "sha256": "44ec5045d00709ddd9ae59b4b0e7ac7e78a8401d27acc4cb95bb46acb2d103f2",
+            "bytes": 1413
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/memcpy.c",
+            "sha256": "4ad219f8d43467d894ef2cfd3d6d17ae958710c689097c15d41b68ee99c74769",
+            "bytes": 2756
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/memmove.c",
+            "sha256": "202adc3108340168e8604c1ed848e84df51a806726ebc992b597218a50c9a8d9",
+            "bytes": 965
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/memset.c",
+            "sha256": "a7a8ff014b6a196342bbe3e8bdd7ae7ee91f0003f96e328d915f1af13066dad8",
+            "bytes": 2324
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/stpncpy.c",
+            "sha256": "12f0e4fd1005104a6c1200af5b90e1694d75ad0fb2586305b560341be0ef6481",
+            "bytes": 819
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strchr.c",
+            "sha256": "629d401b95d07ddff9560eb5a9cfbda1652caaec273dc6a79013a56b1790af53",
+            "bytes": 147
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strchrnul.c",
+            "sha256": "3eaa363698e2dfb472a59ed35c445d970a06d4da9d94a47eb918c0a3e2f74e7b",
+            "bytes": 2295
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strcmp.c",
+            "sha256": "3e1793ea2dd358e5c884c4dd232083605d0f6775f7ebe19d03d64fe97068a78f",
+            "bytes": 150
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strlen.c",
+            "sha256": "767f030f94a4868eb88c8b28e0aa535f53deb2f23b79ba5627d6d8ba6b460d7d",
+            "bytes": 2036
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strncat.c",
+            "sha256": "784dbc83b122671f97711ab6cbcb1ee871513e8d0da3462a8ce267e1367353af",
+            "bytes": 179
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strncmp.c",
+            "sha256": "df801c43304b27dcda67f219a7a3ca34a8fb06f4e63d21e8a6bcb36b03c3c012",
+            "bytes": 220
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/strncpy.c",
+            "sha256": "88301f7a48004250e1833e9155c7d2fa607ffdddca3b1b1804774d93c82acb96",
+            "bytes": 123
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/wcschr.c",
+            "sha256": "c9ac14e131c281bef6ab9228ae4e0aea824b3b96c32ed4c2b1a573d7529e7194",
+            "bytes": 171
+          },
+          {
+            "path": "lib/src/wasm-stdlib/libc/string/wcslen.c",
+            "sha256": "4baada75103e9906fa85dd6650c07752c1803b36cbdfc1b5e0678c5e3f3223a6",
+            "bytes": 109
+          },
+          {
+            "path": "lib/src/wasm-stdlib/stdio.c",
+            "sha256": "463ff7c94b4f9df0164aa3d966eeb5765a7f9acecdf477119e2fe54891e34b0e",
+            "bytes": 6791
+          },
+          {
+            "path": "lib/src/wasm_store.c",
+            "sha256": "e630e55f3984cc9111646a719f793f5b7b4823632767129c4583aa2b1521e746",
+            "bytes": 70668
+          },
+          {
+            "path": "lib/src/wasm_store.h",
+            "sha256": "4f70d0500b0775e5d862a8e7d191b3853d73378c65e020e01767838a18debe0e",
+            "bytes": 1137
+          }
+        ],
+        "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/659cda7c7f86ebe31cc825dc5da59e9add172dc7",
+        "repository": "tree-sitter/tree-sitter"
+      },
+      "ld": {
+        "path": "/usr/bin/ld",
+        "sha256": "d2766988b6a1b1d1518cdc09242e726d1f24e151e16410ada3092b11ffd9081b",
+        "version": "2.44"
+      },
+      "acquisition_profile": "pinned-tsql-r1",
+      "loader": {
+        "sha256": "c8438e4fde1934e61c88311633f00949ff645d5c04cdb8671fa3d78164d2f307",
+        "path": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "new_dependency_installation": false,
+      "platform": "linux/amd64",
+      "profile": "trixie-r1",
+      "gcc": {
+        "path": "/usr/bin/gcc",
+        "sha256": "a23ecab8ff08f09ad8c80602c2c5df7f49e09c25905cb8975902e101bf72635f",
+        "version": "Debian 14.2.0-19"
+      },
+      "image": "node@sha256:98ad2493de85738f55c11fe22e8586caf1fd917b7a8075c57ab9c55116e06492"
+    }
+  },
+  "other_repository_mutation": false,
+  "producer": "csharp-candidate-r5",
+  "limits": {
+    "B_seconds": 120,
+    "source_image_receive_bytes": 1073741824,
+    "consumer_memory_sampled_bytes": 1073741824,
+    "inner_bytes": 67108864,
+    "X_seconds": 10,
+    "G_seconds": 300,
+    "acquisition_seconds": 600,
+    "outer_bytes": 67108864,
+    "expanded_PG_bytes": 268435456,
+    "output_bytes": 8388608,
+    "cpu": 1,
+    "finite_batch_CI_job_minutes": 150,
+    "finite_batch_wall_seconds": 10800,
+    "consumer_command_seconds": 120,
+    "capture_seconds": 10,
+    "tree_nodes": 10000,
+    "tree_depth": 256,
+    "generation_capture_bytes": 536870912,
+    "receiver_seconds": 120,
+    "hard_memory_bytes": 4294967296,
+    "input_bytes": 65536,
+    "edits_per_input": 4,
+    "evidence_job_bytes": 268435456,
+    "consumer_sample_ms": 20,
+    "pids": 64,
+    "build_capture_bytes": 134217728,
+    "runner_retained_bytes": 8589934592,
+    "HTTP_seconds": 120,
+    "native_job_minutes": 80,
+    "expanded_CSharp_bytes": 201326592,
+    "diagnostic_output_bytes": 1048576,
+    "tmpfs_bytes": 2147483648,
+    "individual_file_bytes": 67108864,
+    "new_paid_KRW": 0,
+    "local_retained_bytes_proposed": 8589934592,
+    "local_retained_bytes_current": 6442450944,
+    "record_reservation_bytes": 67108864,
+    "expanded_MSSQL_bytes": 201326592,
+    "PG_exact_LFS_file_bytes": 104857600,
+    "artifact_retention_days": 7,
+    "captures_max": 169,
+    "diagnostics_max": 16
+  },
+  "source_baseline_failure": {
+    "bytes": 70225,
+    "path": "artifacts/sessions/campaign-01-2026-09-29/preparation/20261001-prepare-06/remedy-registered-facts-36874388926-r4.json",
+    "sha256": "74dc761d152d573acbf8bcc27e152be04e7a9a16cb782e186fad4b3e7e34c370"
+  },
+  "closed_consumption": {
+    "bytes": 117056,
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-06/consumption-batch16-close-r1.json",
+    "sha256": "7889ce3f8c5845ba2a7a872d6b1968d7ce05931c3a4acc72abb3ac97c282bb1d"
+  },
+  "operations": {
+    "B": 1,
+    "owned_X": 1,
+    "owned_G": 1,
+    "HTTP": 52,
+    "producer_edit": 5,
+    "X": 27,
+    "manual_per_finite_batch": 1,
+    "image_pull": 1,
+    "G": 1,
+    "preflight": 8,
+    "owned_B": 1,
+    "upstream_acquisition_pack": 1
+  },
+  "native_evaluation": "NOT_RUN",
+  "minimal_wiring": "exact new stage/subject/projection/copy identity and CSharp lossless five-copy identity set; retain old four-copy stage and all frozen oracles/comparator",
+  "previous_proposed_subject": {
+    "sha256": "cbf2515ab75c69e72ee8d6319faa56d8f8c30d90ae25a56b56a9861a7f1a1be3",
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-06/csharp-r5-storage-effects-proposed-r1.json",
+    "bytes": 48974
+  },
+  "previous_closed_native_batch": {
+    "bytes": 9632,
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-06/batch-16.json",
+    "sha256": "0594f7baa779efe7b661a1378f913e45a796a11cb5ed2ca5b9102762a82632e3"
+  },
+  "active_development_budget": {
+    "sha256": "dc3992a5e8343ed19e630c918f1fc2e567942fda4f7588dd721d4fa222d8fc35",
+    "path": "docs/plans/campaign-01-2026-09-29/prepare-06/batch-17.json",
+    "bytes": 1869
+  },
+  "proposal_revision_reason": "closed native16의 active 표기를 개발 전용17로 정정. patch/input/result/tool/native 한도는 동일하며 현재 local6GiB와 미승인8GiB 제안을 분리.",
+  "verified_at": "2026-10-01T17:09:30.0531742+00:00"
+}

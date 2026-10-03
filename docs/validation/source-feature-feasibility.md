@@ -1,6 +1,60 @@
+# PREPARE-06 6-route 최종 채택 (2026-10-02)
+
+2026-10-02 실제 사용자 결정에 따라 등록 사례가 모두 PASS인 후보를 채택하고, 범위 밖 격차는 후속 Session 의무로 기록한다. 채택 상태·재구성 patch·결과 hash·native 근거·격차는 [후보 등록부](../../src/contracts/language-sources.json)의 각 route `adoption`/`known_gaps`가 소유한다. 모든 후보는 고정 upstream commit에 저장소 안의 patch subject를 적용하고 tree-sitter CLI 0.27.0 `generate --abi 15`로 `parser.c`를 다시 만든다.
+
+| route | 채택 후보 | upstream | 등록 native 근거 (linux/amd64) |
+|---|---|---|---|
+| `csharp` | P05-CSHARP-REMEDY-r5 (patch r1→r5) | tree-sitter/tree-sitter-c-sharp@9150f7d | [run36917832850](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36917832850): 27행·edit5 PASS |
+| `typescript` | P05-TS-TSX-REMEDY-r2 | tree-sitter/tree-sitter-typescript@75b3874 | [run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494): 4행·edit1 PASS |
+| `tsx` | P05-TS-TSX-REMEDY-r2 | tree-sitter/tree-sitter-typescript@75b3874 | [run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494): 8행·edit1 PASS |
+| `swift` | P05-SWIFT-REMEDY-r1 | alex-pinkus/tree-sitter-swift@35245fb (parser.c 재생성 필수) | [run36741763343](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36741763343): 14행·edit3 PASS |
+| `postgresql-sql` | P05-PG-LEGACY-REMEDY-r1 | gmr/tree-sitter-postgres@59d0d8c (optimized generation, 6 GiB) | [run36882649292](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292): 12행·edit1 PASS |
+| `tsql` | P05-MSSQL-REMEDY-r1 (4파일 patch) | **meloncholera/tree-sitter-mssql@8620fbc** (Crary 후보 대체) | [run36947507308](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36947507308): 41행·edit1 PASS |
+
+T-SQL은 원 Crary·Derek 후보가 등록 구문 다수에서 실패해 meloncholera 후보로 교체했고, 등록부의 `superseded_candidate`에 이전 identity를 보존한다. 첫 재실행 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)은 probe 입력이름 결함으로 12행이 파싱 전에 거부되어 [PR #53](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/53) 뒤 다시 실행했다. `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`은 0폭 `MISSING keyword_end`가 byte 51에 있어 등록 window [27,50)을 사용자 승인으로 [27,52)로 정정했고, 원래 기대와 40/41 결과는 보존한다. 정정은 추적 subject [remedy-expectation-amendments-r1.json](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)이 소유하며 승인된 `remedy-followup-r2.json` projection은 변경하지 않는다.
+
+채택은 등록된 bounded 사례의 근거이며 전체 언어 지원 주장이 아니다. 후속 의무: S03/S05 등록 사례 밖 구문(C# async/var/await, TS 5.x–7, PostgreSQL 9.6–18 checkpoint, T-SQL 전체 statement), S04 patch 재구성·parser.c 재생성·npm/ESM closure 재현성(Swift 재생성 필수, PG noopt 미성공), S06 scanner/ABI 관측, S07 SQL Server runtime NOT_RUN, S08 Windows amd64·macOS arm64 qualification. 나머지 20 route의 native와 S08 78셀, 업무 corpus/.svc 제품은 **NOT_RUN**이다.
+
+이 절 아래의 PREPARE-06 절, 위험표의 "다음 증거"와 "현재 P05가 남는 이유"는 채택 이전 시점의 역사적 관측이다. 현재 상태는 이 채택 절과 등록부가 우선하며, T-SQL 행과 SQL-1/SQL-2 근거는 당시 Crary 후보를 가리킨다.
+
+# PREPARE-06 회수된 R2 결과와 승인된 C# r5
+
+[C# r4 run36874388926/1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36874388926)은
+actual main `38406304006ab4ca6c2e4849974115a80c8bcd7e`에서 G1/B1/X27/edit5를 수행했다.
+등록 positive26와 negative1의 syntax 기대는 충족했지만, `P05-REMEDY-CS-VAR-TYPE` / `csharp-B01`의
+반환형 `var` byte[23,26)와 `new var()`의 type byte[44,47)가 `identifier` 대신 `implicit_type`으로 관측되었다.
+구조는 26 PASS/1 FAIL이며 recovery/edit5 일치가 이 구조 실패를 해결하지 않는다.
+원 입력·r4 tree·후보·scanner와 실패를 보존한다.
+
+[PG G6 run36882649292/1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292)은
+같은 main의 별도 G1/B1/X12/edit1이다. 실제 LFS 97,664,793 bytes /
+`a9090d5082ae5c23892d05aa59e61476f9bd39ad634228f2046024debdf815b5`를 대조했다.
+legacy patch의 최적화 generation은 163.003초/exit0였으며 noopt 실행으로 재분류하지 않는다.
+등록 positive10·negative2·구조12·edit1의 기대를 충족하고 복구 incremental/fresh가 일치했다.
+오류가 넓게 남는 damage tree와 byte-window 안의 국소 오류를 각각 기록한다. 이 결과는 등록된 입력의 bounded 근거다.
+유효한 옛 baseline4는 identity를 대조해 재사용했으며 새 실행으로 표시하지 않는다.
+옛 noopt/4 GiB 실패와 UNKNOWN은 유지한다.
+
+실제 `두 exact 효과 승인`은 [r5 실행 계약](p05-source-closure.md)의 별도 두 줄 patch G1/B1/X27/edit5 및
+로컬 보존6→8 GiB에 한정한다. 이 계약 통합 시점 r5와 MSSQL 네 파일/24 ESM G1/B1/X41/edit1은
+**NOT_RUN**이다. TS/TSX·Swift의 유효한 등록 결과는 기존 identity로 재사용한다.
+여섯 route의 후보 시험은 최종 source 채택을 대신하지 않는다. 업무 corpus/.svc 제품과 S08 전체78셀도 **NOT_RUN**이다.
+
+# PREPARE-06 후속 R2의 좁은 승인
+
+## 첫 C# R2 실행의 회수 실패
+
+[run36856318411/attempt1](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36856318411)은 PR50 actual main `efaeac7d49b9b3c8ac17d796e9d28aa0aba102f6`의 fresh `csharp-r4` dispatch다. `pinned-tsql-r1`·`trixie-r1`·승인 human subject를 명시했고 checkout 확인은 성공했다. job은158초 후 failure였으며 native step의 `Required P05 inputs failed` 뒤 collector의 `Exact stage expanded evidence reserve exceeded`로 artifact가0개였다.
+
+이 로그는 개별 generation/build/execution 실패의 원인, 실제 수행 횟수, 원 native 출력 또는 정확한 container cleanup을 복원하지 못한다. 해당 값은 **UNKNOWN/회수 불가**로 보존하며 G/B/X0이나 syntax PASS로 표시하지 않는다. 이전 실패·receipt·27입력/5edit 기대는 유지한다. collector가 네 후보의 동일32,021,728-byte parser C를 반복 보관하는 경로를 고치고 손실 없는 source-object 검사를 거친 fresh revision에서만 후속 실행한다. 기존 후보 source/grammar patch와 개별 자원·회수 한도는 변경하지 않는다.
+
+2026-10-01 human `a68d0717a75b6b769f3ea44eef4591c49bfedfc14f578abfc65657c43bffd1f2`와 machine `d6781d9736d1871488563ac458d22f97e78a0311194d417370e24a0fa01763d4`에 실제 `R2 exact 효과·기대 정정 승인` 답변을 연결했다. C# r4 conflict 한 행 G1/B1/X27/edit5, 같은 PG legacy patch의 generation-only6 GiB G1/B1/X12/edit1, MSSQL 네 파일/24 ESM module G1/B1/X41/edit1을 별도 후보로 검증한다. 원본/r1/r2/r3·실패·옛 UNKNOWN은 보존한다. exact stage·원문·도구·한도는 [P05 source closure](p05-source-closure.md)의 후속 R2 계약에 따른다.
+
+공식 delimited identifier 규칙과 충돌한 옛20byte bracket negative의 원문/기대/판정은 유지하고, 별도 valid counterexample와 실제 미종결 negative를 채택했다. 필수 bracket/negative·temporal/graph·BARE recovery 요구와 26 route/256행은 유지한다. 후보 시험 및 새로운 기대 등록은 최종 provider 채택 근거를 대신하지 않는다. PR50 통합 시점의 R2 native는 **NOT_RUN**이었다. 이후 위 fresh run의 실제 native 횟수·결과는 회수 불가 UNKNOWN이며 기존 C#/PG/T-SQL 필수 격차는 미해결이다.
+
 # Campaign 01 source와 feature feasibility
 
-기준일 `2026-09-29`, PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). 모든 후보는 [등록된 26개 immutable identity](../../src/contracts/language-sources.json) 그대로다. feature ID는 [disposition](language-feature-disposition.md)를 가리킨다. 이 표는 P05 조사 결과이며 grammar 채택 변경이나 native 실행 허가가 아니다.
+기준일 `2026-09-29`, PREPARE [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). 모든 후보는 [등록된 26개 immutable identity](../../src/contracts/language-sources.json)를 기준으로 조사했다(2026-10-02 채택 이후 T-SQL identity는 위 채택 절 참조). feature ID는 [disposition](language-feature-disposition.md)를 가리킨다. 이 표는 P05 조사 결과이며 그 자체로 grammar 채택 변경이나 native 실행 허가가 아니다.
 
 ## 관측 등급
 
@@ -82,7 +136,7 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 
 ## 남은 승인과 readiness
 
-### PREPARE-06의 실제 A/B 및 SQL 결과
+#### PREPARE-06의 실제 A/B 및 SQL 결과
 
 실제 사용자 A/B 승인은 기존 정확한 r2 후보 시험과 SQLPG-only counter 한도에 연결됐다. 아래 결과는 그 실행이며 최종 provider 채택은 여전히 별도 결정이다. 과거 원본/r1 실패와 미실행을 유지한다.
 
@@ -90,13 +144,29 @@ T-SQL root grammar가 읽는 `grammar/precedences.js`, `grammar/builtins.js`, `g
 |---|---|---|
 | [A run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494), C# r2 / TS r2 / TSX r2 | G3/B2/X12/edit2. C#은 `new var` 생성 conflict로27개 NOT_RUN. TS4/TSX8은 positive 구조10개와 negative 거부2개, edit2의 incremental/fresh·원본 복원 확인 | C# 정확한 추가 conflict/remedy 결정과 회귀 필요. TS/TSX bounded remedy 관측은 원본/r1의 기존 실패를 덮지 않음 |
 | [B run36796853218](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36796853218), PG LFS baseline / noopt | G1/B1/X8/edit1. `WITH OIDS` required syntax 실패, quoted/dollar/ON CONFLICT 및 PG18 네 case의 등록 구조7개 확인. noopt387042 states >65535로8개 NOT_RUN | legacy remedy와 generation 경로 결정. OIDS edit의 동일 복구도 원본 syntax 실패를 해소하지 않음. 과거 exit137 원인은 UNKNOWN 유지 |
-| [SQL run36803412644](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36803412644), DerekStride97614d0 regeneration | G1/B1/X30/edit1. 필수 syntax 실패13개, bounded positive 구조11개, 올바른 negative 거부2개, transaction/MATCH 구조 실패2개, configuration mapping 미해결2개 | 후보의 실제 gap. 기존 Crary source의56행/46실패와 별도로 보존. 다른 후보의 정적 비교는 새 취득/native/provider 채택 근거가 아님 |
+| [SQL run36803412644](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36803412644), DerekStride97614d0 regeneration | G1/B1/X30/edit1. 필수 syntax 실패13개, bounded positive 구조11개, 당시 frozen negative 기대와 일치한 거부2개, transaction/MATCH 구조 실패2개, configuration mapping 미해결2개 | 두 거부 중 SELECT 괄호 손상1개는 실제 negative다. bracket1개는 아래 공식 identifier 규칙과 충돌한 과거 기대 일치이며 올바른 거부로 승격하지 않는다. 원30행·기대·receipt와 Crary56행/46실패를 보존 |
 
 SQL의 ERROR 없는15개를15개 지원 PASS로 계산하지 않는다. `@@VERSION`/`@@version`은 동일 generic unary-expression/identifier 분류라 검토된 configuration-variable mapping이 남는다. transaction은 BEGIN/COMMIT를 단일 block으로 묶고 MATCH는 graph path를 일반 invocation/arithmetic/operator로 해석한다. 다른 provider의 node 이름을 강제하지 않으며 해당 후보의 primary rule·역할·원문 범위로 판정한다.
 
-`P05-TSQL-ID-BARE` 원본의 identifier 구조는 확인했으나 등록 손상 `SELECT  FROM t;`를 ERROR 없이 수용했다. damaged/restored incremental=fresh 및 원본 복원은 일치해도 등록 negative/recovery는 실패다. 원본 positive와 negative 두 건을 포함한 전체 등록 case의 통과는12/30이며 전체 언어·feature 지원 수치가 아니다. source text·기대값·comparator·범위를 결과에 맞춰 바꾸지 않았다.
+`P05-TSQL-ID-BARE` 원본의 identifier 구조는 확인했으나 등록 손상 `SELECT  FROM t;`를 ERROR 없이 수용했다. damaged/restored incremental=fresh 및 원본 복원은 일치해도 등록 negative/recovery는 실패다. 과거 frozen 기대를 적용한 전체 case 집계12/30은 보존하되, 그 안의 bracket 거부1개에는 공식 구문과의 기대 충돌이 있다. 이를 현재 지원/올바른 negative 수치로 쓰지 않는다. source text·원 기대값·comparator·범위를 소급 변경하지 않았다.
 
 각 새 run의 toolchain·전체8개 isolation·owned G→B→회수→fresh-container X와 exact container 종료/PID0/제거를 확인했다. host root cleanup과 Docker daemon quiescence는 다르며 후자는 NOT_PROVEN이다. P06의 승인·실행 경계 관측은 P05의 필수 grammar gap 또는 최종 source 채택을 대신하지 않는다. 업무/.svc 제품·전체 corpus·다른20route의 미래 native·S08 78셀은 NOT_RUN이다. [NET461 준비 계약](net461-workload.md)은 별도 scope/roles/format/owner 경로다.
+
+### 승인된 exact3의 실제 관측과 기대값 충돌
+
+PR [#43](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/43)의 exact3 wiring과 [#44](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/44)·[#45](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/45)의 실패 증거 export/충돌 보존 수정을 거친 main `ea262f5a8568118fbc7d3346d140c777e496573b`에서 아래 fresh dispatch를 수행했다. 세 run 모두 `pinned-tsql-r1`/`trixie-r1`, 고정 CLI/runtime/probe와 원 input/기대를 사용했다. 표의 G/B/X는 upstream 연산이며 각 run의 owned G/B/X1회·전체 isolation8개는 별도다.
+
+| Run / 정확한 시험 source | 생성·빌드·실행 | 등록 사실과 남은 필수 조건 |
+|---|---|---|
+| [C# r3 / 36819840255](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36819840255), 9150f7d + 승인 r1/r2/r3 | G1/B0/X0, edit0 | `var` 뒤 alias에서 `method_declaration`/`implicit_type`/`_reserved_identifier` conflict, exit1. 27행/5 edit는 NOT_RUN. 생성 충돌의 추가 exact remedy가 필요하며 `F(await)`/named var 구조가 해결됐다고 표시하지 않음 |
+| [PG legacy-r1 / 36820514519](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36820514519), 59d0d8c + 승인 WITH OIDS | G1/B1/X4, edit0 | 실제 LFS baseline의 새 positive2/negative2를 별도 관측. candidate12행은 optimized G exit137 뒤 NOT_RUN. 같은 container의 cgroup `oom_kill`0→1/`oom`0→1을 보존해 이번 4 GiB OOM을 입증; 과거 exit137 원인은 UNKNOWN 유지. `pg-legacy-r1`의 승인된 source/image receive-counter 한도는1,610,612,736 bytes이며 관측된 host receive upper bound는1,160,613,353 bytes(protocol/runner traffic 포함, payload/청구량이 아님). 새 개별 생성 한도/경로 결정과 legacy/18/edit 검증 필요 |
+| [MSSQL / 36823237886](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36823237886), meloncholera8620fbc original C / JSON regeneration | G1/B2/X60, edit2 | producer별 positive28개는 syntax-clean이나 temporal 생성 열·AS NODE·AS EDGE의 구조3개 실패. positive 구조25개, 등록 negative 거부1개, 기대값 충돌1개를 구분. BARE edit는 damaged/fresh 일치·원본 복원에도 손상 입력을 ERROR 없이 수용하여 recovery 실패. 등록 case 완료는 각 producer당25/30, 합계50/60이며 전체 지원 수치가 아님 |
+
+MSSQL의 [고정 grammar](https://github.com/meloncholera/tree-sitter-mssql/tree/8620fbcfca9438e1ff7104835bcb8305aba3bdfa/grammar)는 `@@VERSION`/`@@version`을 전용 hidden `_tsql_system_variable` token으로 읽고 CST의 `identifier`에 전체 원문 범위를 보존한다. 이는 이전 Derek 후보의 generic unary-expression `@@` 분류와 다른 검토 대상 mapping이다. VECTOR의 named type/size 및 LEDGER의 nested option은 원문·역할·범위로 확인하며 DB type/value 실행은 제외한다. temporal `GENERATED ALWAYS AS ROW START/END`를 generic identifier 나열로, graph `AS NODE/EDGE`를 `table_data_placement`의 option/filegroup으로 받아들이는 tree는 구조 PASS가 아니다.
+
+등록 `P05-REMEDY-TSQL-BRACKET-NEGATIVE`의 원문 `SELECT [a FROM [t];`에는 마지막 닫는 `]`가 있다. [Microsoft의 delimited identifier 규칙](https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver15)은 내부 `[`·공간·예약어를 허용하고 `]`만 이중화하도록 설명한다. 따라서 `[a FROM [t]`를 단일 identifier로 수용한 결과는 기존 ERROR 기대와 충돌한다는 **source 기반 추론**이다. 원 input/hash/기대와 역사적 실패는 변경하지 않았으며, grammar를 좁혀 유효 identifier를 거부하거나 기존 FAIL을 PASS로 소급하지 않는다. 이 기대의 좁은 정정과 실제 미종결 bracket companion은 별도 의미 리뷰·채택·실행에 결속해야 한다. 필수 bracket/escaped identifier/negative 의무와 26 route·256행은 유지한다.
+
+이 기대값 충돌은 `P05-TSQL-ID-BARE`의 실제 손상 `SELECT  FROM t;` 수용과 분리한다. FROM은 [공식 reserved keyword](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/reserved-keywords-transact-sql?view=sql-server-ver17)이며 이 손상 입력의 negative/recovery 실패는 유지한다. 기대·원문·comparator를 결과에 맞춰 완화하지 않고, 별도 승인한 source 변경 및 영향 회귀로 해결한다. exact3 시험은 끝났지만 추가 source remedy/개별 한도/기대값 정정 및 최종6 route 채택은 미완료다.
 
 ### PREPARE-05의 추가 관측
 
