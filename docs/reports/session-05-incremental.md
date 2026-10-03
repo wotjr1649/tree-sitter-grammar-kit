@@ -135,6 +135,41 @@ CI run 37121192095(head `0271e06`)에서 compiler link 수정은 효과가 있�
 * Linux 대용량 fixture의 cgroup 메모리. cgroup은 page cache도 센다. 22m fixture가 4 GiB에 닿으면 측정 결과가 달라질 수 있지만 route failure로 세지는 않는다.
 * macOS 대용량 fixture. sampled 메모리이고 runner RAM은 7 GB다.
 
+## PR CI 3회차 실패와 workflow 방식 재현
+
+CI run 37122458270(head `e220b82`)에서는 foundation이 세 OS 모두 통과했고 native prepare(ubuntu)도 약 7분에 통과했다. native routes는 세 OS 모두 route 실행 전에 멈췄다.
+
+* windows-2025·macos-15: `select-compiler.ps1:14`에서 `InvalidOperation`이 났다. `& $cc --version | Select-Object -First 1`은 첫 줄을 받으면 pipeline을 멈추므로 `$LASTEXITCODE`가 설정되지 않는다. 새 step shell에는 이전 값도 없으므로 StrictMode가 그 변수 읽기를 거부한다. sanitizer step(Linux)에서는 앞의 `sudo` 명령이 이미 값을 설정해 두어서 드러나지 않았다. `run-routes.ps1`·`run-corpus.ps1`도 같은 형태였다. 거기서는 앞의 `go build` 값이 남아 있어 `--version` 실패를 이전 값으로 읽었다.
+* ubuntu sanitizer step: runner 사용자가 root 전용 파일인 `/proc/sys/vm/mmap_rnd_bits`를 직접 읽으려다 실패했다.
+
+로컬에서 workflow의 step 본문을 그대로 꺼내 GitHub runner와 같은 형태(`$ErrorActionPreference = 'stop'`, 끝의 `exit $LASTEXITCODE`)로 감쌌다. 그다음 RUNNER_TEMP 같은 디렉터리와 runner 변수를 준 새 `pwsh -NoProfile` process에서 실행했다. 수정 전 HEAD에서 CI와 같은 오류(`'$LASTEXITCODE' 변수가 설정되지 않음`, step exit 1)를 재현했다.
+
+수정 `b025247`:
+
+* 세 helper는 `--version` 출력을 모두 받은 뒤 첫 줄을 고른다.
+* sanitizer step은 `sudo sysctl -n`으로 값을 읽고 형식을 확인한다. 복원은 finally에 그대로 둔다.
+* `select-compiler.ps1`에 시험용 `-Candidates`를 더했다.
+* 회귀 guard를 두 개 추가했다.
+  * `TestSelectCompilerFreshShell`: 새 pwsh process에서 일반 compiler와 그 link로 `select-compiler.ps1`을 실행하고, 해석한 실제 파일이 돌아오는지 확인한다.
+  * `TestCIScriptPatterns`: helper의 잘린 native pipeline과 workflow의 `/proc/sys` 직접 읽기를 거부한다.
+  * 수정 전 script·workflow로 되돌리면 두 시험 모두 실패한다.
+
+수정 뒤 같은 방식으로 Windows routes step 전체를 실행했다(`-Large` 포함). step exit 0, 사례 137개(PASS 119, FAIL 10, BLOCKED 8), failures 0이었다. compiler 후보만 symlink로 바꾸고 3개 route(json, go, csharp와 csharp-svc)를 실행한 변형도 step exit 0이었고, 해석한 실제 파일을 썼다. foundation step은 CI에서 세 OS 모두 통과했으므로 다시 실행하지 않았다.
+
+Linux·macOS route step의 나머지 줄을 정적으로 점검한 결과:
+
+* Linux route step은 sanitizer step과 다른 이름의 cgroup을 만든다. 이 생성 방식(`sudo mkdir`·`chown`·`echo $PID`, 위임 뒤 사용자 쓰기)은 foundation에서 통과했다.
+* `select-compiler`는 `/usr/bin/gcc`를 해석한 경로를 돌려준다.
+* run-routes는 외부 도구로 go, compiler, tsgk만 쓰므로 GNU와 BSD 도구 차이는 없다. 경로는 모두 `Join-Path`로 만든다.
+* macOS `/usr/bin/clang`은 일반 파일 shim이다. build 환경은 `DEVELOPER_DIR`·`SDKROOT`가 있으면 넘기며, foundation macOS native suite가 이 경로로 통과했다.
+* root 권한이 필요한 읽기는 이제 `sysctl`뿐이고 `sudo`로 한다.
+
+Linux 없이는 확인할 수 없는 위험:
+
+* Linux sanitizer step의 ASan/UBSan/LSan 실행과 420초 예산. 아직 한 번도 끝까지 실행되지 않았다.
+* `sudo sysctl -w`와 복원.
+* 세 OS의 26 route와 대용량 fixture 실측. Linux cgroup은 page cache를 세고, macOS는 7 GB에 sampled 메모리다.
+
 ## acceptance 연결
 
 A01 `TestIncrementalSequence`; A02 `TestMalformedThenRepair`; A03·A04 `TestFaultControlsDetected`; A05 `TestEdgeStructures`, `TestCompareTrees`; A06·A16·A17 `TestEncodingsAndPoints`, `TestApplyEdits`, `TestEncodingSteps`, `TestCP949Table`, `TestCP949TableHeader`; A07 `TestEditRejections`; A08 `TestStatefulScanner`; A09 `TestFrames`, `TestBatchTrailingBytes`; A18 선언 상한 `TestSixtyFourDeclarations`; A10·A13·A19 `TestLimitsAndCancellation`, `TestBatchRecords`; A11 `TestBuildIdentity`; A12 위 mutant; A13 sanitizer는 CI Linux 단계; A14·A22 위 26 route와 `TestNativeRoutesRegistry`, `TestRouteCaseFiles`; A15 `TestOfflineClosure`; A18 `TestSummaryGate`, `TestLargeFixtureIdentity`와 위 대용량 표; A20 위 corpus와 `TestBatchRecords`; A21 `src/testdata/native/dynamic-sql/expected.json`; NET461 SVC는 `TestObserveServiceHost`, `TestObserveServiceHostUTF16`, `TestSvcComposite`와 SVC 사례.
