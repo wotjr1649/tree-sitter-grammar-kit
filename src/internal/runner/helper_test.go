@@ -191,7 +191,10 @@ func frameHelper(arg string) int {
 	}
 	in := bufio.NewReader(os.Stdin)
 	out := bufio.NewWriter(os.Stdout)
-	base := os.Getenv("TSGK_PIDS")          // helperSpec always sets it
+	base := os.Getenv("TSGK_PIDS") // helperSpec always sets it
+	if action == "escape" {        // the holder exists before any frame watchdog runs
+		spawn("sleep", true)
+	}
 	os.WriteFile(base+".ready", nil, 0o600) // start-up is over (awaitStart)
 	for i := 0; ; i++ {
 		var hdr [4]byte
@@ -211,8 +214,7 @@ func frameHelper(arg string) int {
 			switch action {
 			case "hang":
 				time.Sleep(time.Hour)
-			case "escape": // an escaped descendant keeps stdout open while the frame hangs
-				spawn("sleep", true)
+			case "escape": // the escaped descendant keeps stdout open while the frame hangs
 				time.Sleep(time.Hour)
 			case "crash-holder": // the helper dies mid-frame; an escaped descendant keeps stdout
 				spawn("sleep", true)

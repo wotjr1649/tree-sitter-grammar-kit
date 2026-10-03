@@ -68,11 +68,15 @@ func TestFrameEscapedStdoutHolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	holders := readPIDs(t, pids)
 	defer func() {
-		for _, pid := range readPIDs(t, pids) {
+		for _, pid := range holders {
 			killPID(pid)
 		}
 	}()
+	if len(holders) == 0 {
+		t.Fatal("no escaped stdout holder was recorded")
+	}
 	if el := time.Since(start); el > 15*time.Second {
 		t.Fatalf("batch took %v", el)
 	}

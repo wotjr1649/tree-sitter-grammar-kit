@@ -168,9 +168,14 @@ func TestTreeTermination(t *testing.T) {
 	for _, cancelled := range []bool{false, true} {
 		s, pids := helperSpec(t, "tree")
 		ctx, cancel := context.WithCancel(context.Background())
-		// Expiry waits until the whole tree is recorded, so start-up cannot outlast it.
+		// Expiry waits until the whole tree is recorded, so start-up cannot outlast it; it must
+		// still come within the base bound of the 1.5 s wall or cancel.
+		start := time.Now()
 		fired := make(chan time.Time, 1)
 		expire := func() {
+			if d := time.Since(start); d > 1500*time.Millisecond+5*time.Second {
+				t.Errorf("expiry came %v after start", d)
+			}
 			if !waitFor(func() bool { return countPIDs(pids) >= 3 }) {
 				t.Error("tree not recorded before expiry")
 			}
@@ -253,6 +258,13 @@ func TestEscapedQuietDescendant(t *testing.T) {
 	s, pids := helperSpec(t, "escape-quiet")
 	r := run(t, s)
 	escaped := readPIDs(t, pids)
+	if r.Capabilities.EscapedDescendants != Contained {
+		t.Cleanup(func() {
+			for _, pid := range escaped {
+				killPID(pid)
+			}
+		})
+	}
 	if r.Status != StatusCompleted || r.ExitCode != 0 {
 		t.Fatalf("escape handshake: %+v stderr %s", r, r.Stderr)
 	}
@@ -270,15 +282,12 @@ func TestEscapedQuietDescendant(t *testing.T) {
 		t.Fatalf("process-group backend must scope its verification: %+v", r.Cleanup)
 	}
 	// Only a live process answers the ping written after the run: proof that the runner left
-	// it running, without a single liveness probe taken while its parent is being reaped.
+	// it running. The pid is recorded twice (parent and escapee); the former probe-then-kill
+	// loop probed it again after killing it and failed when it was already reaped.
 	if err := os.WriteFile(pids+".ping", nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	answered := waitFor(func() bool { return exists(pids + ".pong") })
-	for _, pid := range escaped {
-		killPID(pid)
-	}
-	if !answered {
+	if !waitFor(func() bool { return exists(pids + ".pong") }) {
 		t.Fatalf("expected the documented limitation: escaped pids %v did not answer after the run", escaped)
 	}
 }
