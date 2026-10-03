@@ -27,9 +27,9 @@ Campaign `TSGK-C1-20260929-R1`, 추적 `TSGK-C1-S06`, Issue #8, Milestone 7, bra
 
 ## 계약 결정과 runtime 관측
 
-* **query 시간 상한.** pinned runtime의 `ts_query_cursor_next_capture`는 앞선 match가 끝나지 않으면 progress callback이 취소한 뒤에도 cursor를 계속 전진시킨다(취소가 유지되지 않음). owned 시험에서 1 ms 예산 query가 60초 넘게 돌았다. driver는 첫 만료에서 취소하고 loop를 멈추며, 그 뒤에도 callback이 불리면 step 없는 typed `RESOURCE_LIMIT`/`QUERY_TIME_LIMIT` frame으로 끝난다(수정 뒤 171 ms). 이 경로에서는 부분 capture가 남지 않는다. capture·match 상한은 부분 capture를 `partial`로 남긴다.
+* **query 시간 상한.** pinned runtime의 `ts_query_cursor_next_capture`는 앞선 match가 끝나지 않으면 progress callback이 취소한 뒤에도 cursor를 계속 전진시킨다(취소가 유지되지 않음). 개발 중 로컬 진단에서 1 ms 예산 query가 60초 넘게 돌았고, 수정 뒤에는 171 ms에 끝났다. 이 두 수치의 실행 기록은 보존하지 않았다. 지금은 driver가 첫 만료에서 취소하고 loop를 멈춘다. 그 뒤에도 callback이 불리면 step 없는 typed `RESOURCE_LIMIT`/`QUERY_TIME_LIMIT` frame으로 끝난다(`TestQueryLimits/time`과 mutant `query-time-not-enforced`가 지킨다). 이 경로에서는 부분 capture가 남지 않는다. capture·match 상한은 부분 capture를 `partial`로 남긴다.
 * **node API와 cursor의 차이**(API claim). 첫 owned 실행에서 `ts_node_next_sibling`이 zero-width MISSING `)`를 건너뛰었다. runtime 원본(`lib/src/node.c` 190–301행)은 형제를 byte 위치로 찾는다. 그래서 zero-width 경계의 형제 차이만 `position_navigation`으로 개수·첫 사례를 기록하고 실패로 세지 않는다. 다른 차이는 모두 FAIL이다. route 실행에서는 두 종류의 runtime 차이가 FAIL로 기록됐다. T-SQL aliased `field` node에서는 `ts_node_child_by_field_id`가 그 안의 손자를 `name`으로 돌려준다. C# ERROR node에서는 cursor가 보고한 child field를 `child_by_field_id`가 찾지 못한다. kit 결함이 아니라 runtime의 실제 API 동작이며, 아래 route 결과에 처분 대상으로 남겼다.
-* **동적 SQL known miss.** 등록 fixture는 known miss 세 곳을 사실에서 빼고 범위로 기록했다. grammar는 그중 `AT DATA_SOURCE`와 `WITH RESULT SETS`에서 부분 `execute_statement`를 만든다. 추출은 mapping `dynamic-sql-r1`의 known_misses 목록을 구현해 세 곳을 known miss 범위로 보고하며(`AT DATA_SOURCE`: 따옴표 없는 `DATA_SOURCE` linked server, `WITH RESULT SETS`: EXEC 바로 뒤 `WITH`로 시작하는 ERROR, EXEC 없는 첫 호출: 첫 child가 `sp_executesql`인 ERROR), 등록 기대값은 바꾸지 않았다.
+* **동적 SQL known miss.** 등록 fixture는 known miss 세 곳을 사실에서 빼고 범위로 기록했다. grammar는 그중 `AT DATA_SOURCE`와 `WITH RESULT SETS`에서 부분 `execute_statement`를 만든다. 추출은 mapping `dynamic-sql-r1`의 known_misses 목록을 구현해 세 곳을 known miss 범위로 보고한다. 등록 기대값은 바꾸지 않았다. 판정 규칙은 [tree/protocol](../specs/tree-and-adapter-protocol.md) `S06 구현`에 있다. `AT DATA_SOURCE`는 따옴표 없는 `DATA_SOURCE` linked server로 알아본다. `WITH RESULT SETS`는 EXEC 바로 뒤(공백만 사이)에 text가 `WITH RESULT SETS`로 시작하는 ERROR로 알아본다. EXEC 없는 첫 호출은 text가 `sp_executesql`(`sys.` 한정, `[]`·`""` 허용)로 시작하는 ERROR로 알아본다. comment는 제외한다.
 * **선언 query와 출력 상한.** 선언 사실은 S05 `locate`처럼 첫 후보에서 멈춰야 하므로 첫 후보 단계마다 pattern이 필요하다. 하지만 모든 깊이를 경로 전체로 잡으면 32 MiB summary가 16 MiB 출력 상한을 넘는다. 그래서 선언 node 한 번과 부모→후보 edge만 잡는다. node의 부모는 하나뿐이라 edge가 경로를 정한다.
 * **pack query 일부 선택.** 대용량 합성 fixture에 C# 동적 SQL query를 실행하면, 그 구조 후보 pattern이 모든 `binary_expression`을 잡아 출력 상한(`OUTPUT_LIMIT`)에 닿았다. driver는 predicate를 평가하지 않기 때문이다. profile이 pack query 일부만 고를 수 있게 했다. 대용량은 선언 query만 쓰며, 고른 query는 pack과 정확히 같아야 한다.
 
@@ -91,9 +91,9 @@ CI 방식 route step(12분 45초)의 결과는 failures 0이다(`artifacts/.../s
 * route query 사례 26개의 기대 capture stream이 26/26 PASS다. 기대값은 별도 작성자가 source와 query 의미에서 도출했고 실행 결과에서 가져오지 않았다.
 * edit step의 incremental/fresh query 비교는 140 사례 PASS, 선언 사실 재현은 50 사례 PASS다(C#·T-SQL·PostgreSQL의 모든 등록 사례와 동적 SQL fixture).
 * 동적 SQL(A16): T-SQL fixture 사실 13개와 known miss 3개, C# fixture 사실 13개가 등록값과 순서까지 같다. C# 사실은 모두 `heuristic: true`이고 `CommandType.StoredProcedure` 오탐을 포함한다. `AS USER/LOGIN`·pass-through·`EXEC @module_var`는 사실에 없다.
-* API claim은 129 사례 PASS, 6개 route의 23 사례 FAIL이다. 모두 node API의 field lookup이 cursor와 다르다.
-  * 직렬화에 없는 field를 `child_by_field_id`가 돌려준 경우(aliased 또는 숨은 node 안으로 내려감): Swift 8, T-SQL 5, Python 2.
-  * 반대로 cursor가 보고한 field를 `child_by_field_id`가 찾지 못한 경우: C# 4·TypeScript 2·SVC inline C# 1(ERROR 안), Swift 1(`swift-gap-if-switch-expression-r1`, `bound_identifier`).
+* API claim은 129 사례 PASS, 6개 route의 23 사례 FAIL이다. 모두 node API의 field lookup이 cursor와 다르다. 사례별 node type은 `artifacts/.../session-06/api-findings-b76c466.json`에 있다.
+  * cursor 직렬화에 그 field가 없는데 `child_by_field_id`가 node를 돌려준 경우: T-SQL 5(`assignment`·`pivot_clause`)와 Python 2(`match_statement`)는 손자를 돌려준다(child 안으로 내려감). Swift 8(`function_declaration`·`parameter`·`type_annotation`)은 직접 child를 돌려주지만 cursor는 그 child에 그 field를 보고하지 않는다.
+  * cursor가 보고한 field를 `child_by_field_id`가 찾지 못한 경우: 8건 모두 ERROR node다(C# 4, TypeScript 2, SVC inline C# 1, Swift 1).
   * kit가 충실히 보고한 runtime API 동작이며 S08로 넘긴다.
 * 대용량(A15·A17, `native-query-large`, 선언 query):
   * 세 fixture 모두 `COMPLETED`이고 S05 선언 항목을 재현했다.
@@ -104,13 +104,15 @@ CI 방식 route step(12분 45초)의 결과는 failures 0이다(`artifacts/.../s
     | 8m-errors | 1236459520 bytes | 10.3초 | 3663466 bytes |
     | 32mib-errors | 5201428480 bytes | 43.1초 | 15658478 bytes |
 
+    응답 크기는 그 실행의 기록 set manifest member bytes다(`artifacts/.../session-06/large-record-set-manifest-b76c466.json`).
+
   * 32 MiB 응답은 출력 상한 16777216의 93%다. pack 선언 항목이나 fixture가 조금만 커져도 `OUTPUT_LIMIT`로 바뀔 수 있는 여유다.
   * 모든 node를 잡는 query를 쓴 상한 초과 입력 하나는 `RESOURCE_LIMIT`/`OUTPUT_LIMIT`다. capture를 잘라 완료로 보고하지 않는다.
   * 같은 실행의 S05 r3 대용량 3개도 8 GiB에서 `COMPLETED`다(32 MiB peak 5157142528).
 
 ## 분리 context 리뷰와 처분
 
-같은 분리 context reviewer(general-purpose subagent, GitHub 승인 아님)가 세 차례 리뷰했다. 기록은 `artifacts/.../session-06/review-r1.json`·`review-r2.json`이다.
+같은 분리 context reviewer(general-purpose subagent, GitHub 승인 아님)가 네 차례 리뷰했다. 기록은 `artifacts/.../session-06/review-r1.json`~`review-r4.json`이다.
 
 **r1** (`ac70005..297c13a`, EXECUTED `go vet`·`go test ./src/kit` + STATIC): BLOCKER 0, MATERIAL 2, MINOR 10, NOTE 6. 처분은 `da9278f`, `98c1bc1`, `139ea3c`다.
 
@@ -135,7 +137,7 @@ r1 수정 과정에서 두 회귀가 생겼고, 로컬 route 실행에서 잡아
 * 깊이별 선언 pattern이 32 MiB 응답을 출력 상한 위로 밀었다. 선택적 quantifier 변형은 소유 node마다 match를 두 번 만들었다. 선언 node 한 번과 첫 후보·마지막 단계의 부모→후보 edge만 잡게 바꿨다.
 * extra capture를 전역에서 지웠더니, tree-sitter-mssql에서 extra인 batch 수준 ERROR가 빠져 known miss를 놓쳤다. comment만 제외하게 바꿨다.
 
-**r2** (`297c13a..139ea3c`, EXECUTED + STATIC): r1 항목 16건이 RESOLVED였다. m7은 대부분 해결이고 남은 한계(`;` 없는 문장 뒤의 known-miss 범위)는 문서화했다. n3은 보고서 미수정으로 NOT RESOLVED였다. 새 MINOR 2건과 NOTE 4건이 나왔다.
+**r2** (`297c13a..139ea3c`, EXECUTED + STATIC): 다시 확인한 r1 항목 15건 중 13건이 RESOLVED였다. m7은 대부분 해결이고 남은 한계(`;` 없는 문장 뒤의 known-miss 범위)는 문서화했다. n3은 보고서를 고치지 않아 NOT RESOLVED였다. 기록만 하기로 한 n2·n4·n5는 다시 확인하지 않았다. 새 MINOR 2건과 NOTE 4건이 나왔다.
 
 * R2-m1: 중첩 member도 필수로 했다.
 * R2-m2: capability는 정상 r2 응답에서만 판정한다.
@@ -147,6 +149,8 @@ r1 수정 과정에서 두 회귀가 생겼고, 로컬 route 실행에서 잡아
 처분은 `b76c466`이다.
 
 **r3** (`139ea3c..b76c466`, EXECUTED + STATIC): R2 네 항목이 모두 RESOLVED이고 새 결함은 없다. status→exit 표가 `run.go`와 `protocol.go`에 중복된다는 참고는 동작 결함이 아니어서 코드를 바꾸지 않았다.
+
+**r4** (보고서 commit, STATIC): n3·R2-n3은 RESOLVED였다. 근거와 맞지 않는 서술 두 가지(r2 집계, known-miss 규칙 서술)와 근거가 보존되지 않은 서술은 이 개정에서 고쳤다. API 분류, 응답 크기, query 시간 수치가 여기에 해당한다.
 
 ## Q 행 연결과 남은 범위
 
