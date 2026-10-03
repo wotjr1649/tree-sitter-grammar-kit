@@ -37,7 +37,7 @@ Windows 로컬 실행은 Go 1.27.1, PowerShell 7.6.6, 기존 MSYS2 UCRT64 GCC 16
 
 `prepare-routes.ps1`이 S01이 결속한 source에서 26 route 입력을 만들었다. 채택 6 route는 patch chain을 적용해 모든 adoption hash가 일치했고, typescript는 `tsgk reproduce`로 다시 생성해 6개 출력이 모두 등록 기준과 같았다(PASS, npm `tree-sitter-javascript@0.23.1` 632551 bytes 다운로드). 나머지 5개 채택 route는 S04 출력을 같은 hash로 재사용했다. 최종 후보 `02577a1`의 `run-routes.ps1` 결과(`routes-windows-02577a1.json`; `fb8934a`, `e81fa10` 결과도 보존):
 
-* 26 route 모두 GCC로 build됐다. build 이식성 patch는 필요 없었다(parser compile 최장 PostgreSQL 6.9초).
+* 26 route 모두 GCC로 build됐다. build 이식성 patch는 필요 없었다(parser compile 최장은 PostgreSQL: `fb8934a` 6.9초, `e81fa10` 5.2초, host 부하가 있던 `02577a1` 14.3초).
 * 사례 137개(route 기본 52, gap 42, NET461 C#·XML 21, SVC 22) 모두 `COMPLETED`: PASS 119, FAIL 10, BLOCKED 8. edit가 있는 모든 사례에서 incremental equality와 route가 PASS다. FAIL은 아래 grammar gap 10건이다.
 * SVC 22건 중 진단 없는 directive만 있거나 C# inline을 parse한 14건이 PASS다. BLOCKED 8건: inline 경계·언어를 해석하지 못함(`SVC_INLINE_UNRESOLVED` 4건: directive 중복, directive 뒤 남는 class, `%>` 없음, Language 생략), VB(`SVC_INLINE_UNSUPPORTED`), `%>`를 지운 중간 step(`SVC_INLINE_NOT_PARSED`), 닫히지 않은 quote 진단(`SVC_DIRECTIVE_DIAGNOSTICS` 2건). 이 형식은 inline이 없는 step의 incremental 비교를 하지 않는다(한계).
 
@@ -58,9 +58,9 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 |---|---|---|---|---|---|
 | `cs-large-22m` | 21997719 | `COMPLETED`, summary(`DESCENDANT_LIMIT`, 11463151 node), errors 0, 선언 PASS | 10.5초(`02577a1`: 31.2초) | 21.6초(72.7초) | 3.33 GB |
 | `cs-large-8m-errors` | 7999000 | `COMPLETED`, summary, errors 2257(목록 1000건 상한, truncated), 선언 FAIL(기대값) | 4.0초(7.0초) | 8.0초(14.7초) | 1.23 GB |
-| `cs-large-32mib-errors` | 33554432 | `RESOURCE_LIMIT`(`MEMORY_LIMIT`, Job Object hard cap 4 GiB) | — | 13.5초 | 4.30 GB |
+| `cs-large-32mib-errors` | 33554432 | `RESOURCE_LIMIT`(`MEMORY_LIMIT`, Job Object hard cap 4 GiB) | — | 13.5초(36.8초) | 4.30 GB |
 
-시간은 `e81fa10` 실행 값이고 괄호는 같은 입력의 최종 후보 실행 값이다. 최종 실행 동안 host에 다른 부하가 있어 시간만 늘었고 상태·node 수·digest 판정은 같았다(시간은 host 관측값이며 비교 대상이 아니다). 32 MiB C#은 이 grammar에서 4 GiB 안에 parse되지 않는다. S05-A18에 따라 이 결과를 그대로 기록하고 상한은 올리지 않는다. 값을 올릴지는 사용자 결정이다. 48 MiB를 넘는 encoded 요청은 실행 전 `REQUEST_TOO_LARGE`, driver frame 머리는 `FRAME_TOO_LARGE`다. 세 host 측정은 `native routes` job이 같은 fixture로 한다(실행 전). 깊은 중첩은 owned grammar로 foundation의 세 OS 시험에 들어 있다.
+시간은 `e81fa10` 실행 값이고 괄호는 같은 입력의 최종 후보 실행 값이다. 최종 실행 동안 host에 다른 부하가 있어 시간만 늘었고 상태·node 수·errors 수·선언 판정은 같았다(시간은 host 관측값이며 비교 대상이 아니다). route summary의 대용량 항목에는 digest를 기록하지 않는다. 32 MiB C#은 이 grammar에서 4 GiB 안에 parse되지 않는다. S05-A18에 따라 이 결과를 그대로 기록하고 상한은 올리지 않는다. 값을 올릴지는 사용자 결정이다. 48 MiB를 넘는 encoded 요청은 실행 전 `REQUEST_TOO_LARGE`, driver frame 머리는 `FRAME_TOO_LARGE`다. 세 host 측정은 `native routes` job이 같은 fixture로 한다(실행 전). 깊은 중첩은 owned grammar로 foundation의 세 OS 시험에 들어 있다.
 
 ## 비공개 corpus(A20, Windows 로컬, 개수만)
 
@@ -72,7 +72,7 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 * full tree gate: 517개 파일이 descendant 50000을 넘었고 모두 완료됐다(보존은 record만).
 * svc 20개는 모두 directive와 CodeBehind 관측, inline 없음(`inline: ABSENT`)이다.
 * `02577a1`의 첫 corpus 실행은 csharp 단계 중 host 메모리 부족으로 Claude Code가 중단시켰다. 남은 process가 없음을 확인했고 부분 출력은 보존했다(`private-corpus-02577a1-attempt-killed-low-memory`). 메모리가 회복된 뒤 orchestrator 요청으로 `81a0538`에서 한 번 다시 실행한 것이 위 결과다.
-* `58f079b`와 비교하면 17957 record 모두 실행 상태·판정·code·`has_error`·node 수·digest·errors·출력 형식·SVC coverage·encoding이 같다. svc 20개는 모두 `%>`가 있고 진단이 없는 directive라 바뀐 SVC 판정에서도 PASS다. 공개 summary에서 달라진 것은 commit, wall(host 부하 차이), 관측하지 않은 `has_error` 키 표기(`svc:` → `svc:null`)뿐이다.
+* `58f079b`와 비교하면 17957 record 모두 실행 상태·판정·code·`has_error`·node 수·digest·errors·출력 형식·SVC coverage·encoding이 같다. svc 20개는 모두 `%>`가 있고 진단이 없는 directive라 바뀐 SVC 판정에서도 PASS다. 공개 summary에서 달라진 것은 commit, wall(host 부하 차이), 관측하지 않은 `has_error` 키 표기(`svc:` → `svc:null`), 네 group의 `executable_sha256`이다. `build_identity`는 네 group 모두 같다. 같은 identity로 다시 build하면 Windows PE bytes가 달라진다(platform-support S05 native build).
 * helper 결과 취합 결함으로 네 번의 시도가 완전한 기록을 남기지 못했다: `0685eaf`·`9c047c1`은 parse를 마친 뒤 strict mode 속성 접근 오류로 멈췄고, `e81fa10`은 주석 처리 실수로 `has_error`를 기록하지 않았다. 모두 보존했다(`private-corpus-*-attempt*`). parse 자체의 결과 개수는 시도마다 같았다.
 
 ## 분리 context 리뷰와 처분
@@ -86,7 +86,7 @@ grammar gap 처분(kit가 충실히 보고한 결과, kit 결함 아님, S08로 
 * MINOR R1-m1~m6: batch 배열 null과 parse하지 않은 step의 `has_error` 기록, cleanup 실패를 다른 상태보다 먼저 판정, partial tree 최하위 node의 field, 응답 파일 이름 충돌과 쓰기 실패 exit, 응답 code와 첫 미완료 tree의 일치, corpus 전체 wall(`--run-wall`).
 * NOTE R1-n1~n4: locator 구분자 일치, protocol 오류 시 frame buffer 해제, route helper의 BLOCKED claim·대용량 build 실패 집계, build identity와 executable bytes 관계(같은 identity로 다시 build하면 Windows PE bytes가 달라질 수 있어 executable hash를 build마다 기록) — 모두 반영했다.
 
-재리뷰 r2(`861e215..52ef70c`, EXECUTED, `review-r2.json`)는 R1의 13건을 RESOLVED로 확인했다. 남은 R1-M3에서 `%>` 없는 `.svc`가 PASS인 경로를 MATERIAL R2-M1로, 줄인 run wall을 결과에 남기지 않는 점을 MINOR로, NOTE 2건을 보고했다. 처분 `02577a1`: `%>`가 없으면 inline `UNRESOLVED`와 `SVC_INLINE_UNRESOLVED`, directive 진단이 있으면 관측 전용 판정에서 `SVC_DIRECTIVE_DIAGNOSTICS`(BLOCKED), 줄인 run wall을 결과 operation과 policy identity에 기록, 관측하지 않은 `has_error`를 null로 표기. 재리뷰 r3(`52ef70c..02577a1`, STATIC: host 메모리 부족으로 시험은 실행하지 않음)은 R2 4건을 모두 RESOLVED로 확인했고 BLOCKER·MATERIAL은 0이다. NOTE 3건은 다음과 같이 처분했다: C# inline을 parse한 사례에는 directive 진단을 assessment에 반영하지 않는다는 범위를 계약에 명시했다. 관측기가 이름 아닌 문자·빈 값을 진단하지 않아 `n461-svc-multiline-n-r1` 음성 사례가 PASS인 점은 한계로 남긴다. `58f079b` 공개 summary의 `svc:` 키는 수정 전 산출물이며, 최종 실행 `private-corpus-81a0538`에서는 `svc:null`이다.
+재리뷰 r2(`861e215..52ef70c`, EXECUTED, `review-r2.json`)는 R1의 13건을 RESOLVED로 확인했다. 남은 R1-M3에서 `%>` 없는 `.svc`가 PASS인 경로를 MATERIAL R2-M1로, 줄인 run wall을 결과에 남기지 않는 점을 MINOR로, NOTE 2건을 보고했다. 처분 `02577a1`: `%>`가 없으면 inline `UNRESOLVED`와 `SVC_INLINE_UNRESOLVED`, directive 진단이 있으면 관측 전용 판정에서 `SVC_DIRECTIVE_DIAGNOSTICS`(BLOCKED), 줄인 run wall을 결과 operation과 policy identity에 기록, 관측하지 않은 `has_error`를 null로 표기. 재리뷰 r3(`52ef70c..02577a1`, STATIC: host 메모리 부족으로 시험은 실행하지 않음)은 R2 4건을 모두 RESOLVED로 확인했고 BLOCKER·MATERIAL은 0이다. NOTE 3건은 다음과 같이 처분했다: C# inline을 parse한 사례에는 directive 진단을 assessment에 반영하지 않는다는 범위를 계약에 명시했다. 재리뷰 r4(`02577a1..57e4afb`, EXECUTED, `review-r4.json`)는 최종 증거와 맞지 않는 보고서 수치 3건(PostgreSQL compile 시간의 출처, 32 MiB 최종 wall 누락, corpus summary 차이에서 `executable_sha256` 누락)과 확인할 수 없는 digest 서술을 보고했고 모두 고쳤다. SVC 판정 code가 여럿 해당할 때의 우선순위(첫 번째로 맞는 조건: directive 없음, `%>` 없음, inline 해석 실패, 기대값, 진단)는 계약에 순서를 정하지 않은 구현 순서로 기록한다. 관측기가 이름 아닌 문자·빈 값을 진단하지 않아 `n461-svc-multiline-n-r1` 음성 사례가 PASS인 점은 한계로 남긴다. `58f079b` 공개 summary의 `svc:` 키는 수정 전 산출물이며, 최종 실행 `private-corpus-81a0538`에서는 `svc:null`이다.
 
 ## acceptance 연결
 
