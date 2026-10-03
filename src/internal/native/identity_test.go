@@ -55,7 +55,7 @@ func TestBuildIdentity(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	request := func(root string, g []kit.NativeInput) BuildRequest {
-		return BuildRequest{Work: work, Runtime: rt, GrammarRoot: root, Grammar: g, Symbol: "tree_sitter_tsgk_plain", Compiler: cc, CompilerID: compiler}
+		return testBuildRequest(work, rt, root, g, cc, compiler)
 	}
 
 	changed := t.TempDir()
@@ -123,8 +123,7 @@ func TestBuildCompilerLink(t *testing.T) {
 	sum, n := digestOf(t, cc)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // stop at the first compiler step: only the refusal before it matters here
-	req := BuildRequest{Work: dir, Runtime: rt, GrammarRoot: fixtureRoot(t, "plain"), Grammar: fixtureGrammar(t, "plain"),
-		Symbol: "tree_sitter_tsgk_plain", Compiler: link, CompilerID: kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n}}
+	req := testBuildRequest(dir, rt, fixtureRoot(t, "plain"), fixtureGrammar(t, "plain"), link, kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n})
 	b, err := NewBuild(ctx, req)
 	var ne *Error
 	if b == nil || !errors.As(err, &ne) || ne.Code != "CANCELLED" {

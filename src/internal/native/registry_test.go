@@ -208,3 +208,31 @@ func TestRouteCaseFiles(t *testing.T) {
 		}
 	}
 }
+
+// Regressions only a Linux CI host shows: a test build that bypasses testBuildRequest
+// misses the delegated cgroup parent (MEMORY_HARD_CAP_UNSUPPORTED), and a CI helper
+// script without a final exit hands its last native exit code (tsgk 3 for the expected
+// 32 MiB RESOURCE_LIMIT) to the workflow's $LASTEXITCODE check.
+func TestHostSettingsReachCI(t *testing.T) {
+	literal := "BuildRequest" + "{" // split so this file does not match itself
+	files, _ := filepath.Glob("*_test.go")
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n := strings.Count(string(data), literal); n > 0 && !(f == "native_test.go" && n == 1) {
+			t.Errorf("%s builds a BuildRequest literal outside testBuildRequest", f)
+		}
+	}
+	for _, rel := range []string{"src/dev/s05-native/run-routes.ps1", "src/dev/s05-native/prepare-routes.ps1"} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "..", filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		lines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+		if !strings.HasPrefix(lines[len(lines)-1], "exit 0") {
+			t.Errorf("%s must end with an explicit exit 0", rel)
+		}
+	}
+}

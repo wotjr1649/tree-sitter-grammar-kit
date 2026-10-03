@@ -247,3 +247,4 @@ foreach ($d in @('archives', 'src', 'subjects', 'repro-work', 'npm', 'patched'))
 }
 $stats | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Destination 'prepared.json') -Encoding utf8NoBOM
 Write-Output ("prepared routes={0} downloaded_bytes={1} regenerated={2} reused={3}" -f $stats.routes.Count, $stats.downloaded_bytes, $stats.regenerated.Count, $stats.reused.Count)
+exit 0 # failures throw; never leak the last native command's exit code to the caller

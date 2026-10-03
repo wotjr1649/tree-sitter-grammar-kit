@@ -71,6 +71,14 @@ var (
 	buildWork  string
 )
 
+// testBuildRequest is the one place a test build request is made, so no test build can
+// miss the host settings: Linux refuses a build without the delegated cgroup parent
+// (MEMORY_HARD_CAP_UNSUPPORTED), and identities only compare under the same sanitizer mode.
+func testBuildRequest(work, rt, root string, g []kit.NativeInput, cc string, id kit.ToolIdentity) BuildRequest {
+	return BuildRequest{Work: work, Runtime: rt, GrammarRoot: root, Grammar: g, Symbol: "tree_sitter_tsgk_plain", Compiler: cc, CompilerID: id,
+		Sanitize: os.Getenv("TSGK_NATIVE_SANITIZE") == "1", CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")}
+}
+
 // fixtureBuild builds (once per test binary) the owned fixture with the given defines.
 func fixtureBuild(t *testing.T, name string, defines ...string) *Build {
 	t.Helper()
@@ -91,9 +99,9 @@ func fixtureBuild(t *testing.T, name string, defines ...string) *Build {
 	sum, n := digestOf(t, cc)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	b, err := NewBuild(ctx, BuildRequest{Work: buildWork, Runtime: rt, GrammarRoot: fixtureRoot(t, name), Grammar: fixtureGrammar(t, name),
-		Symbol: "tree_sitter_tsgk_" + name, Compiler: cc, CompilerID: kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n},
-		Defines: defines, Sanitize: os.Getenv("TSGK_NATIVE_SANITIZE") == "1", CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")})
+	req := testBuildRequest(buildWork, rt, fixtureRoot(t, name), fixtureGrammar(t, name), cc, kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n})
+	req.Symbol, req.Defines = "tree_sitter_tsgk_"+name, defines
+	b, err := NewBuild(ctx, req)
 	if err != nil {
 		if b != nil { // nil when the build was refused before any step ran
 			for _, s := range b.Steps {

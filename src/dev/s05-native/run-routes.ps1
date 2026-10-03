@@ -197,4 +197,7 @@ $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $Desti
 if (Test-Path -LiteralPath (Join-Path $Destination 'roots')) { Remove-Item -LiteralPath (Join-Path $Destination 'roots') -Recurse -Force }
 Write-Output ("routes={0} failures={1}" -f $summary.routes.Count, $summary.failures.Count)
 foreach ($f in $summary.failures) { Write-Output "FAILURE $f" }
+# Exit explicitly: otherwise the caller's $LASTEXITCODE is the last tsgk exit (3 for the
+# expected 32 MiB RESOURCE_LIMIT) and a clean run reads as failed.
 if ($summary.failures.Count) { exit 1 }
+exit 0
