@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을 구현했다(아래 `S04 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -18,7 +18,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `verify (--root PATH \| --archive FILE) --expected FILE [--profile FILE]` | 외부 신뢰 expected와 exact set 대조, ZIP은 풀지 않고 검사 | READ_DATA, 02 |
 | `schema check --input FILE` | node-types 구조·참조 검증 | READ_DATA, 03 |
 | `schema diff --before FILE --after FILE` | node/field/type/required/multiple/supertype 변경 | READ_DATA, 03 |
-| `reproduce --root PATH --profile FILE --out PATH` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
+| `reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH --allow EXEC_GENERATOR` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
 | `incremental --root PATH --edits FILE --profile FILE --out PATH` | 매 edit의 incremental/fresh 결과 | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
 | `oracle record --root PATH --profile FILE --out PATH` | native ordered tree/query/API record | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `reproduce`, `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
+* `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -99,6 +99,22 @@ tsgk schema diff  --before FILE --after FILE [--out PATH]
 * 필수 인자가 없거나 하위 명령이 `check`·`diff`가 아니면 파일을 읽기 전에 exit 2(`USAGE`)다. 읽을 수 없는 입력은 `SCHEMA_UNREADABLE` exit 4다.
 * exit: check는 PASS 0, FAIL 1, BLOCKED 3이다. diff는 같으면 0, 차이가 있으면 1, 잘못된 입력 schema는 `SCHEMA_INVALID` exit 2, 해석하지 않는 key만 가진 입력은 `SCHEMA_KEY_UNSUPPORTED` exit 3이다. 한도 3, 취소 130은 공통 규칙과 같다.
 * `--out`은 S01 publication 규칙을 따르되 입력 root가 없으므로 기존 대상 거부와 hard link publication만 적용한다(입력 파일 자신도 기존 대상이라 덮어쓰지 않는다). 기본 한도는 `kit.DefaultSchemaLimits`다.
+
+## S04 구현 — reproduce, reproduce profile r1
+
+```text
+tsgk reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH ... --allow EXEC_GENERATOR [--cgroup-parent DIR]
+```
+
+`reproduce`는 process를 시작하는 유일한 명령이며 `--allow EXEC_GENERATOR`가 없으면 실행 전 `CAPABILITY_NOT_GRANTED`(exit 3)다. 공개 offline API(`src/kit`)는 profile 해석(`kit.ParseReproduceProfile`)만 제공하고 실행은 CLI의 `src/internal/reproduce`가 [S04 runner](platform-support.md)로 한다. profile, `--work`, `--out`의 부모는 `--root` 밖이어야 한다(`PROFILE_INSIDE_INPUT`, `WORK_INSIDE_INPUT`, `OUTPUT_INSIDE_INPUT`).
+
+profile `tsgk-reproduce/r1`은 S02와 같은 strict decoder로 읽는다. 필수 필드는 `schema`, `id`, `route`, `mode`(`js`|`json`), `generator`(`name`·`version`·`sha256`·`bytes`), `abi`(14 또는 15, 그 밖은 `ABI_UNSUPPORTED`), `optimize`(bool, false면 `--disable-optimization`), `grammar`(진입 파일; js는 `grammar_js`, json은 `grammar_json` 역할 input이어야 함), `inputs`, `outputs`, `limits`다. `js_runtime`은 js에서 필수, json에서 금지다(`JS_RUNTIME_REQUIRED`, `JS_RUNTIME_IN_JSON_MODE`). `inputs`는 정렬·중복 없는 portable path의 `path`·`role`(grammar_js, js_helper, lock, dependency, grammar_json, scanner, header, metadata)·`sha256`·`bytes`이고 이것이 불변 source snapshot 전부다. `outputs`는 생성기 출력 디렉터리 기준 `path`와 `reference`(`PRESENT`면 `sha256`·`bytes` 필수, `ABSENT`면 금지)다. `limits`의 `wall_seconds`·`output_bytes`·`storage_bytes`·`memory_bytes`·`input_files`·`input_bytes`·`file_bytes`는 모두 필수이고 0이나 generator 연산 상한(300초, 8388608, 536870912, 4294967296, 64, 67108864, 16777216) 초과는 `PROFILE_LIMIT_INVALID`다. 메모리만 `route`가 `postgresql-sql`일 때 6442450944까지 허용한다. 예시는 `src/contracts/examples/reproduce-r1.json`, 거부 예시는 `invalid/reproduce-*.json`이다.
+
+실행 순서: profile 검증 → `--root`의 선언 파일만 읽어 각 경로 구성요소의 link·특수 파일을 거부하고 크기·hash를 대조(`SOURCE_MISSING`, `SOURCE_LINK_REJECTED`, `SOURCE_MISMATCH`) → 도구를 `--tool`의 경로에서 읽어 크기·hash를 대조한 뒤 `--work` 안 새 도구 디렉터리에 복사하고 그 사본을 실행(`TOOL_MISSING`, `TOOL_IDENTITY_MISMATCH`; PATH 탐색·설치·대체 없음) → Windows·Linux는 hard memory backend가 없으면 `MEMORY_HARD_CAP_UNSUPPORTED`(macOS는 sampled, non-strict) → `--work` 안에 매번 새로 만든 빈 작업 공간 A, B를 차례로 만들고(기존 디렉터리는 재사용하지 않음) snapshot을 쓴 뒤 `generate --abi N [--disable-optimization] --output <ws>/out [--js-runtime <node 사본>] <grammar>`를 실행한다. 환경은 `PATH=`(비움)와 작업 공간 안의 HOME·USERPROFILE·APPDATA·LOCALAPPDATA·XDG_CONFIG_HOME·XDG_CACHE_HOME·TMP·TEMP·TMPDIR·TREE_SITTER_DIR·TREE_SITTER_LIBDIR뿐이다. 실행 전 거부는 작업 공간과 결과를 만들지 않는다.
+
+비교: 등록 output마다 A와 B의 bytes(`EQUAL`·`DIFFERENT`·`MISSING`)와 A와 기준(`MATCH`·`MISMATCH`·`REFERENCE_ABSENT`·`OUTPUT_MISSING`)을 따로 기록한다. 출력 디렉터리의 등록되지 않은 파일은 `UNREGISTERED_OUTPUT`으로 남기고 A·B 사이에서도 비교한다. 작업 공간 source 사본에 대한 쓰기는 `WORKSPACE_SOURCE_WRITTEN`, 실행 뒤 원본 root가 달라지면 `SOURCE_CHANGED`다. 정규화는 하지 않는다(byte identity). claim은 `generator_ran`, `deterministic`, `reference_match`, `js_reproduction`(js 모드에서 세 claim이 모두 PASS일 때만), `json_regeneration`(json 모드)이며 값은 `PASS`·`FAIL`·`NOT_CLAIMED`다. json 실행은 `js_reproduction`을 주장하지 않는다. 기준이 없으면 `reference_match`는 `NOT_CLAIMED`이고 assessment는 `BLOCKED`다. A가 실패하면 B는 `NOT_RUN`이다. 생성기의 0이 아닌 종료는 `FAILED`(`GENERATOR_EXIT_NONZERO`), runner 한도는 `RESOURCE_LIMIT`, cleanup 미확인은 `FAILED`(`PROCESS_CLEANUP_UNVERIFIED`)다. `run_identity`는 profile 전체·도구 hash·snapshot·argv·환경 이름·backend capability를 묶으며 어느 하나가 바뀌면 달라진다. 저장 용량은 실행 뒤 작업 공간 합계로 관측한다(실행 중 quota는 아님).
+
+publication: `--out`은 새로 만들어야 하며 있으면 실행 전 `OUTPUT_EXISTS`다. `workspace-a|b/out/`에 생성물을, `stdout.log`·`stderr.log`에 원 출력을 두고 마지막에 `result.json`(`tsgk-reproduce-result/r1`)을 쓴다. 실패한 실행도 partial 생성물과 실패 report를 남긴다. 그 뒤 작업 공간을 지우며 지우지 못하면 `WORKSPACE_CLEANUP_FAILED`로 완료가 아니다. 결과 쓰기 실패는 `EVIDENCE_WRITE_FAILED`(exit 4)다. stdout에는 같은 report 한 줄을 쓴다. exit: 완료 PASS 0, FAIL 1, BLOCKED 3, `RESOURCE_LIMIT` 3, 생성기·cleanup 실패 1, 취소 130.
 
 ## discovery와 strict profile
 

@@ -1,0 +1,92 @@
+{
+  "schema": "tsgk-reproduce/r1",
+  "id": "example-js-r1",
+  "route": "swift",
+  "mode": "json",
+  "generator": {
+    "name": "tree-sitter",
+    "version": "0.27.0",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "bytes": 10485760
+  },
+  "js_runtime": {
+    "name": "node",
+    "version": "24.21.0",
+    "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32",
+    "bytes": 91684536
+  },
+  "abi": 15,
+  "optimize": true,
+  "grammar": "src/grammar.json",
+  "inputs": [
+    {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "bytes": 1024
+    },
+    {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "bytes": 256
+    },
+    {
+      "path": "src/grammar.json",
+      "role": "grammar_json",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bytes": 4096
+    },
+    {
+      "path": "src/scanner.c",
+      "role": "scanner",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "bytes": 2048
+    }
+  ],
+  "outputs": [
+    {
+      "path": "grammar.json",
+      "reference": "PRESENT",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "bytes": 4096
+    },
+    {
+      "path": "node-types.json",
+      "reference": "PRESENT",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "bytes": 2048
+    },
+    {
+      "path": "parser.c",
+      "reference": "ABSENT"
+    },
+    {
+      "path": "tree_sitter/alloc.h",
+      "reference": "PRESENT",
+      "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "bytes": 985
+    },
+    {
+      "path": "tree_sitter/array.h",
+      "reference": "PRESENT",
+      "sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+      "bytes": 10031
+    },
+    {
+      "path": "tree_sitter/parser.h",
+      "reference": "PRESENT",
+      "sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+      "bytes": 7471
+    }
+  ],
+  "limits": {
+    "wall_seconds": 300,
+    "output_bytes": 8388608,
+    "storage_bytes": 536870912,
+    "memory_bytes": 4294967296,
+    "input_files": 64,
+    "input_bytes": 67108864,
+    "file_bytes": 16777216
+  }
+}

@@ -18,6 +18,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/reproduce"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
@@ -43,16 +44,19 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"reproduce": "S04", "incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
+var future = map[string]string{"incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff>")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce")
 		return exitUsage
 	}
 	cmd := args[0]
 	if cmd == "schema" {
 		return runSchema(ctx, args[1:], stdout, stderr)
+	}
+	if cmd == "reproduce" {
+		return runReproduce(ctx, args[1:], stdout, stderr)
 	}
 	if owner, ok := future[cmd]; ok {
 		fmt.Fprintf(stderr, "tsgk: UNSUPPORTED_COMMAND: %s는 %s 범위이며 이 build에서 구현되지 않았다\n", cmd, owner)
@@ -252,6 +256,88 @@ func runSchema(ctx context.Context, args []string, stdout, stderr io.Writer) int
 		result, err = kit.SchemaDiff(cctx, kit.SchemaDiffRequest{Baseline: inputs[0], Candidate: inputs[1], Limits: limits})
 	}
 	return finish(result, err, *out, "", stdout, stderr)
+}
+
+// runReproduce runs one tsgk-reproduce/r1 profile through the runner. It is the only
+// command that starts a process, and only with --allow EXEC_GENERATOR.
+func runReproduce(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("reproduce", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	root := fs.String("root", "", "source root (read only)")
+	profile := fs.String("profile", "", "tsgk-reproduce/r1 profile outside the root")
+	out := fs.String("out", "", "new result directory outside the root (no clobber)")
+	work := fs.String("work", "", "existing caller-owned directory for the two workspaces, outside the root")
+	cgroup := fs.String("cgroup-parent", "", "delegated cgroup v2 directory (Linux hard memory cap)")
+	var tools, allow multi
+	fs.Var(&tools, "tool", "NAME=PATH executable for a profile tool (repeatable)")
+	fs.Var(&allow, "allow", "granted capability (EXEC_GENERATOR)")
+	if err := fs.Parse(args); err != nil {
+		return exitUsage
+	}
+	if fs.NArg() != 0 || *root == "" || *profile == "" || *out == "" || *work == "" {
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH... --allow EXEC_GENERATOR")
+		return exitUsage
+	}
+	paths := map[string]string{}
+	for _, t := range tools {
+		name, p, ok := strings.Cut(t, "=")
+		if !ok || name == "" || p == "" {
+			fmt.Fprintln(stderr, "tsgk: USAGE: --tool NAME=PATH")
+			return exitUsage
+		}
+		paths[name] = p
+	}
+	abs := map[string]string{}
+	for name, p := range map[string]string{"root": *root, "out": *out, "work": *work} {
+		a, err := filepath.Abs(p)
+		if err != nil {
+			fmt.Fprintf(stderr, "tsgk: USAGE: --%s: %v\n", name, err)
+			return exitUsage
+		}
+		abs[name] = a
+	}
+	// Workspaces, outputs and the trust document stay outside the subject root.
+	for name, code := range map[string]string{"work": "WORK_INSIDE_INPUT", "out": "OUTPUT_INSIDE_INPUT"} {
+		dir := abs[name]
+		if name == "out" {
+			dir = filepath.Dir(dir)
+		}
+		real, err := filepath.EvalSymlinks(dir)
+		if err != nil || unresolvedAlias(real) || inside(real, abs["root"]) {
+			fmt.Fprintf(stderr, "tsgk: %s: --%s는 검증 대상 root 밖의 확인 가능한 경로여야 한다\n", code, name)
+			return exitUsage
+		}
+	}
+	if documentInside(*profile, abs["root"]) {
+		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
+		return exitUsage
+	}
+	data, err := readDocument(*profile)
+	if err != nil {
+		fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
+		return exitIO
+	}
+	cctx, cancel := context.WithTimeout(ctx, 2*time.Duration(kit.GenWallSeconds)*time.Second+time.Minute)
+	defer cancel()
+	res, rerr := reproduce.Reproduce(cctx, reproduce.Request{Root: abs["root"], Profile: data, Tools: paths, Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup})
+	stdout.Write(reproduce.Encode(res))
+	if rerr != nil {
+		var re *reproduce.Error
+		if errors.As(rerr, &re) {
+			fmt.Fprintf(stderr, "tsgk: %s: %s\n", re.Kind, re.Code)
+			return exitFor(re.Kind)
+		}
+		return exitIO
+	}
+	switch res.ExecutionStatus {
+	case kit.StatusCompleted:
+		return assessExit(res.Assessment)
+	case kit.StatusCancelled:
+		return exitCanceled
+	case kit.StatusResourceLimit:
+		return exitBlocked
+	}
+	return exitFail
 }
 
 // finish renders the API result as one JSON line, maps the exit code and publishes --out.

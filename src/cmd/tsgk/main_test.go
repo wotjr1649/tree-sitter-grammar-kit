@@ -59,7 +59,7 @@ func TestExitCodes(t *testing.T) {
 	}{
 		{nil, 2, "USAGE"},
 		{[]string{"verify", "--root", root}, 2, "requires --expected"},
-		{[]string{"reproduce"}, 2, "UNSUPPORTED_COMMAND"},
+		{[]string{"reproduce"}, 2, "USAGE"},
 		{[]string{"incremental"}, 2, "UNSUPPORTED_COMMAND"},
 		{[]string{"schema", "check"}, 2, "requires --input"},
 		{[]string{"schema", "diff", "--before", "a.json"}, 2, "requires --after"},
@@ -340,13 +340,34 @@ func TestExternalConsumerAndCLI(t *testing.T) {
 	}
 }
 
-// S01-A11: the product closure contains no process, network or plugin capability.
+// S01-A11/S04-A14: the public offline API closure has no process, network or plugin
+// capability and no runner; the CLI reaches os/exec only through the S04 runner (reproduce)
+// and never imports network or plugin packages.
 func TestOfflineClosure(t *testing.T) {
-	out := goRun(t, repoRoot(t), "list", "-deps", "./src/kit", "./src/cmd/tsgk")
-	for _, pkg := range strings.Fields(string(out)) {
-		switch pkg {
-		case "os/exec", "net", "net/http", "plugin", "crypto/tls", "net/url":
-			t.Fatalf("forbidden capability in product closure: %s", pkg)
+	for _, pkg := range strings.Fields(string(goRun(t, repoRoot(t), "list", "-deps", "./src/kit"))) {
+		switch {
+		case pkg == "os/exec", pkg == "net", strings.HasPrefix(pkg, "net/"), pkg == "plugin", pkg == "crypto/tls",
+			strings.Contains(pkg, "/src/internal/"), strings.HasPrefix(pkg, "golang.org/x/"):
+			t.Fatalf("forbidden capability in the offline API closure: %s", pkg)
+		}
+	}
+	// golang.org/x/sys/windows imports net for socket type definitions only; the CLI closure
+	// still has no HTTP, TLS or plugin package and no repository package imports net.
+	for _, pkg := range strings.Fields(string(goRun(t, repoRoot(t), "list", "-deps", "./src/cmd/tsgk"))) {
+		switch {
+		case strings.HasPrefix(pkg, "net/http"), pkg == "net/url", pkg == "net/smtp", pkg == "net/rpc", pkg == "plugin", pkg == "crypto/tls":
+			t.Fatalf("forbidden capability in the CLI closure: %s", pkg)
+		}
+	}
+	out := goRun(t, repoRoot(t), "list", "-f", `{{.ImportPath}}: {{join .Imports " "}}`, "./src/...")
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		pkg, imports, _ := strings.Cut(line, ": ")
+		imports = " " + imports + " "
+		if strings.Contains(imports, " os/exec ") && !strings.HasSuffix(pkg, "/src/internal/runner") && !strings.HasSuffix(pkg, "/src/internal/foundation") {
+			t.Fatalf("%s starts processes outside the runner", pkg)
+		}
+		if strings.Contains(imports, " net ") || strings.Contains(imports, " net/") || strings.Contains(imports, " plugin ") {
+			t.Fatalf("%s imports a network or plugin package", pkg)
 		}
 	}
 }
