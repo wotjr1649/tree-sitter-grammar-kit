@@ -25,7 +25,7 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 	}
 	check := func(t *testing.T, p, target string) {
 		t.Helper()
-		want, err := filepath.EvalSymlinks(target)
+		want, err := os.Stat(target)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -35,12 +35,15 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 		}
 		lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 		got := strings.TrimSpace(lines[len(lines)-1])
-		same := got == want
-		if runtime.GOOS == "windows" {
-			same = strings.EqualFold(got, want)
+		// The selected path must name the target file itself, not a link to it. Compare by
+		// file identity: a directory link earlier in the path (an Xcode.app alias) may be
+		// kept by PowerShell and resolved by Go, which is the same file either way.
+		fi, err := os.Lstat(got)
+		if err != nil {
+			t.Fatalf("%s: selected %q: %v", p, got, err)
 		}
-		if !same {
-			t.Fatalf("%s: selected %q, want the resolved file %q", p, got, want)
+		if fi.Mode()&os.ModeSymlink != 0 || !os.SameFile(fi, want) {
+			t.Fatalf("%s: selected %q, want the resolved file %s", p, got, target)
 		}
 	}
 	t.Run("regular", func(t *testing.T) { check(t, cc, cc) })

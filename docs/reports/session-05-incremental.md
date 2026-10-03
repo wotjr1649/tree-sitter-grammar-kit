@@ -167,7 +167,7 @@ Linux·macOS route step의 나머지 줄을 정적으로 점검한 결과:
 push 전 후속(`936eae8`):
 
 * darwin의 linked 사례는 `/usr/bin/clang` shim 대신 `xcrun --find clang`이 돌려주는 실제 clang binary를 link한다. 기대값도 그 실제 파일이다. xcrun이 경로를 주지 못하면 그 하위 사례만 건너뛴다.
-* 일반 사례와 linked 사례는 subtest로 나눴다.
+* 일반 사례와 linked 사례는 subtest로 나눴다. 기대 경로는 문자열로 비교하지 않는다. 대신 같은 파일인지(`os.SameFile`)와 돌려받은 경로 자체가 link가 아닌지를 본다. PowerShell은 경로 중간의 디렉터리 link(예: `Xcode.app` 별칭)를 남기고 Go는 해석하므로, 문자열로 비교하면 같은 파일이 다른 경로로 보일 수 있다(재리뷰 r14 MINOR). link를 해석하지 않는 script로 되돌리면 linked 사례가 실패한다.
 * platform-support에는 wrapper·shim compiler를 link 대상으로 지원하지 않는다고 적었다.
 * routes step harness를 CI job env(`CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`)로 다시 실행했다. 로컬 `TSGK_*` 변수는 뺐다. 결과는 step exit 0, 사례 137개(PASS 119, FAIL 10, BLOCKED 8), failures 0이었다.
 
