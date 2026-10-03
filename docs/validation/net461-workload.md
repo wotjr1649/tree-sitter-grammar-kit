@@ -102,7 +102,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 | S04 / #6 | wall·memory 강제 방식의 resource policy 필드 |
 | S05 / #7 | `index-euc-kr` 취득, 표가 필요한 cp949 검증·AMBIGUOUS 판정 완성과 decode 실행, UTF-16/cp949/동적 SQL/대용량/깊은 중첩 fixture와 세 OS 측정, 선언 node 종류 순회 검사, full tree gate·상한 값의 profile revision |
 | S06 / #8 | 동적 SQL 위치 사실 추출, 사실 query 세트(S05 선언 사실 재현), `real-world-source-r3`(windows/amd64 전용, 8 GiB)와 `native-query-large`의 같은 범위 |
-| S07 / #9 | 비공개 corpus workload 등록, 로컬 실행 identity와 evidence 결속 |
+| S07 / #9 | 비공개 corpus workload 등록, 로컬 실행 identity와 evidence 결속(구현: [identity/evidence](../specs/identity-and-evidence.md) `S07 구현`의 `private-corpus-r1`, 연산 `private-corpus-replay`) |
 | S08 / #10 | `real-world-source-r2`와 판별 규칙으로 비공개 corpus 전체 로컬 qualification, 세 OS는 OWNED_FIXTURE 비교 |
 
 [profile r0](../specs/cli-and-profile.md)는 encoding 선언, wall·memory, full tree gate를 표현하지 못하고, [tree envelope r0](../specs/tree-and-adapter-protocol.md)의 `input.encoding`은 판별 encoding과 출처를 표현하지 못한다. 위 표의 담당 Session이 각 r0 확장 revision을 고정하기 전에는 그 필드에 의존하는 실행을 하지 않는다. S01은 표가 필요한 cp949 검증·AMBIGUOUS 판정과 cp949 decode를 하지 않으며, 그 경로는 S05가 표를 pin한 뒤 완성한다.

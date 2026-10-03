@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을 구현했다(아래 `S04 구현`, `S05 구현`, `S06 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을, S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을 구현했다(아래 `S04 구현`~`S07 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05, `oracle record`는 S06이 구현했다.
+* `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05, `oracle record`는 S06, `replay`와 `evidence verify`는 S07이 구현했다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -160,6 +160,26 @@ query 열은 query 실행 하나의 시간 예산이며 process wall 안에 들�
 **`real-world-source-r3`(2026-10-03 사용자 결정 `C1-REAL-WORLD-SOURCE-WINDOWS-R3`).** S05의 `real-world-source-r2`는 역사로 보존한다. r3는 r2와 같은 값이고 메모리만 8589934592(8 GiB, Windows Job Object hard)이며 windows/amd64에서만 실행한다. 값은 결정 receipt의 규칙대로 정했다. `cs-large-32mib-errors`를 로컬 Windows에서 12 GiB 측정 상한으로 실행한 peak commit은 5157146624 bytes였고, 여기에 약 20%를 더한 값 이상인 8·10·12 GiB 중 가장 작은 값이 8 GiB다. 다른 host에서 r3(`incremental`)나 `native-query-large`(`oracle record`) profile을 실행하면 두 명령 모두 build 전에 `OPERATION_PLATFORM_SCOPE`(BLOCKED, exit 3)이며 이유는 "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"이다. route helper는 그 host의 대용량 행을 `NOT_APPLICABLE`로 기록하고 실행하지 않는다. grammar route 26개의 세 OS 검증은 그대로다. driver의 `memory_bytes` 상한도 8589934592로 올렸다. 다른 상한은 바꾸지 않았다.
 
 사례 결과는 `S05 구현`의 모든 필드에 다음을 더한다. tree마다 `queries`(query마다 `id`, `sha256`, status·code, `evaluation`, 오류, pattern 수, capture 이름, predicate 단계, match 수, `partial`, 평가된 `captures`)를 둔다. 완료되지 않은 tree에는 모든 query를 `NOT_RUN`/`TREE_NOT_COMPLETED`로 둔다. full tree에는 S05 선언 항목(`declarations`)과 API 판정(`api{revision, consistent, first_difference, position_navigation_divergences, first_divergence}`)도 둔다. edit step에는 incremental/fresh query 비교(`query_comparison`)를 둔다. 사례 수준에는 S06 claim 다섯 개(`oracle_claims`), query 기대값 결과(`query_expectations`), pack 사실(`facts`: 재현한 선언 항목과 S05 일치 여부, 동적 SQL 사실과 known miss, XML 구조 capture 수, 첫 차이)를 둔다. full tree envelope의 `capabilities`는 producer의 `query`·`api` 값이고 `captures`는 `null`이다(capture는 query identity와 함께 query마다 있다). 판정은 S05 claim과 S06 claim 중 가장 나쁜 값이다.
+
+## S07 구현 — replay, evidence verify
+
+```text
+tsgk replay          --input DIR --profile FILE [--out PATH]
+tsgk evidence verify --input DIR --profile FILE [--out PATH]
+```
+
+두 명령은 READ_DATA만 쓴다. process·network·tool을 시작하지 않고 evidence 안의 코드를 import·실행하지 않으며 archive를 풀지 않는다(archive member도 hash만 확인하는 불투명 member다). `--input`은 evidence set root이고 S01 guard(no-follow, link·special 거부, 깊이 64)로 전체를 한 번 나열한다. `--profile`은 caller가 신뢰하는 등록 문서이며 `--input` 안에 있으면 `PROFILE_INSIDE_INPUT`(exit 2)이다. 결과는 한 줄 JSON이고 `--out`은 S01 publication 규칙(no-clobber, 입력 밖)을 따른다. exit: `PASS` 0, `FAIL` 1(완료된 검사가 불일치를 찾았거나 다시 계산한 subject 판정이 FAIL), `UNRESOLVED`·`BLOCKED`·`NOT_ASSESSED` 3, 실행 전 거부 2, I/O·publication 4, 취소 130. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S07 구현`이 소유한다.
+
+registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema`, `id`, `reducer`(등록된 reducer id, 그 밖은 `REDUCER_UNSUPPORTED`/BLOCKED), `operation`(아래 표, reducer의 연산과 같아야 함), `subject`(`run`, `attempt`, `platform`, `commit`, `evidence_mode`, `execution_status`, `assessment`: 기록된 subject run과 그 원 판정), `identities`(역할 → 값, reducer가 관측하는 역할을 빠짐없이 정확히 결속), `records`(`null`이면 reducer가 workload에서 expected record를 정하고, 목록이면 그 순서의 독립 expected 목록), `members`(`path`·`role`·`bytes`·`sha256`: 독립 inventory. 경로는 portable이고 대소문자만 다른 중복은 `MEMBER_DUPLICATE`)다. 예시는 `src/contracts/examples/replay-r1.json`, 거부 예시는 `invalid/replay-*.json`이다.
+
+| `operation` | 파일 | 파일당 | 합계 | record 수 | record 하나 | 출력 | wall | host |
+|---|---|---|---|---|---|---|---|---|
+| `evidence-replay` | 10000 | 16777216 | 268435456 | 100000 | 16777216 | 16777216 | 120초 | 세 OS |
+| `private-corpus-replay` | 26000 | 2147483648 | 2147483648 | 26000 | 16777216 | 67108864 | 1800초 | 로컬(비공개 corpus) |
+
+`evidence-replay`는 S07 예산 연산(파일 10000, 파일당 16 MiB, 합계 256 MiB, wall 120초, 출력 16 MiB)이다. record 수 상한은 record 묶음(사례, inventory record, ledger row) 하나에 적용한다. `private-corpus-replay`는 [NET461 등록부](../validation/net461-workload.md)의 S07 비공개 replay 값(파일 26000, record 합계 2 GiB, wall 1800초)이다. 큰 raw는 member 하나를 hash하며 한 번 stream으로 읽고 record 값을 하나씩(`record_bytes` 이하) decode한다. 필요한 member가 파일당 한도나 record 한도를 넘으면 그 member를 읽지 않고 결과는 `RECORDED_NOT_RECOMPUTED`/`UNRESOLVED`와 `RAW_OVER_LIMIT`이다(exit 3). 그 밖의 한도는 `RESOURCE_LIMIT`(exit 3)다. memory는 강제하지 않는다(in-process, 위 한도로 묶는다).
+
+policy `tsgk-evidence-policy/r1`(strict, 모르는 필드 거부): `schema`, `id`, `evidence_sha256`(입력 root의 `evidence.json` bytes에 대한 caller 신뢰 anchor), `required`(`node`, `kind`, `identities`), `carry_forward`(`node`, `origin`, `relation`, `authorized_by`), `eligibility`(`null` 또는 `{nodes, modes}`)다. 예시는 `src/contracts/examples/evidence-policy-r1.json`, 거부 예시는 `invalid/evidence-*.json`이다. graph 문서 `tsgk-evidence/r1`은 입력 root의 `evidence.json`이며 node(`id`, `kind`, 세 축, `recorded_assessment`, `identities`, `files`, `refs`)를 담는다. 검사는 `evidence-replay` 한도로 한다.
 
 ## discovery와 strict profile
 

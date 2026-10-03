@@ -1,0 +1,24 @@
+{
+  "schema": "tsgk-evidence-policy/r1",
+  "id": "example-final-qualification",
+  "evidence_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+  "required": [
+    {
+      "node": "csharp-windows-amd64",
+      "kind": "run",
+      "identities": {
+        "workload": "csharp",
+        "platform": "windows/amd64"
+      }
+    }
+  ],
+  "carry_forward": [],
+  "eligibility": {
+    "nodes": [
+      "csharp-windows-amd64"
+    ],
+    "modes": [
+      "NEW_RUN"
+    ]
+  }
+}

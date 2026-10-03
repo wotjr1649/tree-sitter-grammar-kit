@@ -127,19 +127,10 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 		res.Explanation = append(res.Explanation, "evidence 검증을 끝내지 못했다: "+e.Code)
 		return res, e
 	}
-	if e := strictDoc("policy", req.Policy, EvidencePolicySchema); e != nil {
+	pol, e := parseEvidencePolicy(req.Policy)
+	if e != nil {
 		return bad(e)
 	}
-	var pol evidencePolicy
-	type policyDoc struct {
-		Schema         string `json:"schema"`
-		evidencePolicy `json:",inline"`
-	}
-	var pd policyDoc
-	if e := decodeTyped("policy", req.Policy, &pd); e != nil {
-		return bad(e)
-	}
-	pol = pd.evidencePolicy
 	res.PolicyID = pol.ID
 	res.Identities = append(res.Identities, IdentityRef{Role: "evidence-policy", Schema: EvidencePolicySchema, SHA256: digestHex(req.Policy)})
 	lim := ReplayOperations()["evidence-replay"]
@@ -363,6 +354,26 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 		return bad(e)
 	}
 	return res, nil
+}
+
+// parseEvidencePolicy decodes a tsgk-evidence-policy/r1 document: the shared strict
+// decoder first (duplicate names, exact integers), then the typed shape with unknown members
+// rejected.
+func parseEvidencePolicy(data []byte) (evidencePolicy, *Error) {
+	if e := strictDoc("policy", data, EvidencePolicySchema); e != nil {
+		return evidencePolicy{}, e
+	}
+	var pd struct {
+		Schema         string `json:"schema"`
+		evidencePolicy `json:",inline"`
+	}
+	if e := decodeTyped("policy", data, &pd); e != nil {
+		return evidencePolicy{}, e
+	}
+	if !validID(pd.ID) || len(pd.EvidenceSHA256) != 64 {
+		return evidencePolicy{}, fail(KindInvalidInput, "POLICY_VALUE_INVALID", "policy", nil)
+	}
+	return pd.evidencePolicy, nil
 }
 
 // checkCarry applies the adopted relation: authorized for this node and origin, every

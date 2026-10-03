@@ -1,0 +1,33 @@
+{
+  "schema": "tsgk-replay/r1",
+  "id": "example-gate-compare",
+  "reducer": "bs-gate-compare-r1",
+  "operation": "evidence-replay",
+  "subject": {
+    "run": "36337813324",
+    "attempt": 1,
+    "platform": "linux/amd64",
+    "commit": "6724e03dd9b998b58b4e3525d60dc1e6ce3925e3",
+    "evidence_mode": "NEW_RUN",
+    "execution_status": "COMPLETED",
+    "assessment": "PASS"
+  },
+  "identities": {},
+  "records": [
+    "CANCEL"
+  ],
+  "members": [
+    {
+      "path": "../recomputed/CANCEL.json",
+      "role": "recomputed-gate",
+      "bytes": 54,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "path": "recorded/CANCEL.json",
+      "role": "recorded-gate",
+      "bytes": 54,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+    }
+  ]
+}

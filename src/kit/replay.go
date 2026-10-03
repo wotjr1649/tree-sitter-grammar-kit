@@ -709,8 +709,11 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 			x.finding("IDENTITY_MISMATCH", k, "등록 identity와 raw의 identity가 다르다(stale 또는 혼합)")
 		}
 	}
-	if x.recorded.ExecutionStatus != "" && (x.recorded != res.Recorded) {
-		x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
+	if x.recorded.ExecutionStatus != "" {
+		if x.recorded != res.Recorded {
+			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
+		}
+		res.Recorded = x.recorded // what the raw records; the registration's stays in subject
 	}
 	for _, g := range x.gates {
 		g.finish()

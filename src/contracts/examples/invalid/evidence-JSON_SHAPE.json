@@ -1,0 +1,34 @@
+{
+  "schema": "tsgk-evidence-policy/r1",
+  "id": "example-final-qualification",
+  "evidence_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+  "required": [
+    {
+      "node": "csharp-windows-amd64",
+      "kind": "run",
+      "identities": {
+        "workload": "csharp",
+        "platform": "windows/amd64"
+      }
+    }
+  ],
+  "carry_forward": [
+    {
+      "node": "x",
+      "origin": "y",
+      "relation": "unchanged-dependency-r1",
+      "authorized_by": "z",
+      "ignore": [
+        "comparator"
+      ]
+    }
+  ],
+  "eligibility": {
+    "nodes": [
+      "csharp-windows-amd64"
+    ],
+    "modes": [
+      "NEW_RUN"
+    ]
+  }
+}
