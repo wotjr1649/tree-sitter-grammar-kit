@@ -43,6 +43,7 @@ type QueryOut struct {
 	Matches      uint64          `json:"matches"`
 	Partial      bool            `json:"partial"`
 	Captures     []kit.Capture   `json:"captures"`
+	structural   []kit.Capture   // the runtime stream before host evaluation
 }
 
 var supportedPredicates = map[string]bool{"eq?": true, "not-eq?": true, "any-of?": true, "not-any-of?": true}
@@ -163,7 +164,7 @@ func queryOuts(t Tree, sources []QuerySource, encoding string, src []byte) []Que
 		for _, row := range q.Captures {
 			caps = append(caps, captureOf(q, row))
 		}
-		o.Evaluation, o.Captures = EvalStructural, caps
+		o.Evaluation, o.Captures, o.structural = EvalStructural, caps, caps
 		if len(q.Predicates) > 0 {
 			reason := predicateSupport(q, encoding)
 			switch {
@@ -197,6 +198,11 @@ func compareQueries(a, b []QueryOut) (bool, string) {
 		}
 		if d := kit.CompareCaptures(x.Captures, y.Captures); d != nil {
 			return false, fmt.Sprintf("query %s capture %d %s %s != %s", x.ID, d.Index, d.Field, d.Left, d.Right)
+		}
+		// a query without an evaluated stream (UNSUPPORTED predicates) still has the runtime's
+		// structural stream on both trees
+		if d := kit.CompareCaptures(x.structural, y.structural); d != nil {
+			return false, fmt.Sprintf("query %s structural capture %d %s %s != %s", x.ID, d.Index, d.Field, d.Left, d.Right)
 		}
 	}
 	return true, ""
@@ -242,16 +248,36 @@ func compareAPI(nodes []kit.TreeNode, a *WireAPI) (*APIDifference, []APIDifferen
 	diff := func(check string, node int64, got, want int64) *APIDifference {
 		return &APIDifference{check, node, strconv.FormatInt(got, 10), strconv.FormatInt(want, 10)}
 	}
-	zero := func(i int64) bool { return i >= 0 && nodes[i].StartByte == nodes[i].EndByte }
-	// positional reports whether got is null or a sibling of x on the side of the check
-	positional := func(x, got int64, step int) bool {
-		if got == -1 {
-			return true
-		}
-		if got < 0 || got >= int64(n) || nodes[got].Parent != nodes[x].Parent {
+	// positional reports whether the node API's sibling got differs from the cursor's only by
+	// skipping zero-width siblings at x's boundary (x's end going forward, its start going
+	// back), as the pinned runtime's position-based search does: every sibling it passed over
+	// in that direction, the cursor's sibling included, is such a node, and got is null or
+	// the next sibling after them. got == x is never accepted.
+	positional := func(x, got int64, step int, named bool) bool {
+		p := nodes[x].Parent
+		if p < 0 || got == x {
 			return false
 		}
-		return (step > 0) == (got > x)
+		b := nodes[x].EndByte
+		if step < 0 {
+			b = nodes[x].StartByte
+		}
+		sib := children[p]
+		skipped := 0
+		for k := slices.Index(sib, x) + step; k >= 0 && k < len(sib); k += step {
+			c := sib[k]
+			if named && !nodes[c].Named {
+				continue
+			}
+			if c == got {
+				return skipped > 0
+			}
+			if nodes[c].StartByte != b || nodes[c].EndByte != b {
+				return false
+			}
+			skipped++
+		}
+		return got == -1 && skipped > 0
 	}
 	sibling := func(i int64, step int, named bool) int64 {
 		p := nodes[i].Parent
@@ -291,7 +317,7 @@ func compareAPI(nodes []kit.TreeNode, a *WireAPI) (*APIDifference, []APIDifferen
 			if row[k] == want[k] {
 				continue
 			}
-			if k >= 1 && k <= 4 && (zero(x) || zero(want[k])) && positional(x, row[k], []int{-1, 1, -1, 1}[k-1]) {
+			if k >= 1 && k <= 4 && positional(x, row[k], []int{-1, 1, -1, 1}[k-1], k >= 3) {
 				divergences = append(divergences, *diff("position_navigation:"+checks[k], x, row[k], want[k]))
 				continue
 			}

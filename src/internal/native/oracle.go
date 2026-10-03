@@ -94,6 +94,19 @@ type OracleRecord struct {
 	Complete bool `json:"complete"`
 }
 
+// hostPlatform is this host as goos/goarch (a test may substitute another host).
+var hostPlatform = runtime.GOOS + "/" + runtime.GOARCH
+
+// platformScope refuses, before any build, an operation whose platform scope excludes this
+// host (real-world-source-r3 and native-query-large run on windows/amd64 only).
+func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
+	if len(op.Platforms) == 0 || slices.Contains(op.Platforms, hostPlatform) {
+		return kit.Finding{}, nil
+	}
+	return finding("OPERATION_PLATFORM_SCOPE", "error", "", op.Name+"는 "+fmt.Sprint(op.Platforms)+"에서만 실행한다: "+kit.R3PlatformReason),
+		refuse(kit.KindUnsupported, "OPERATION_PLATFORM_SCOPE", nil)
+}
+
 // createExclusive is the single file-creation path of a record set: it never replaces an
 // existing file (a test may substitute it to inject a write failure).
 var createExclusive = func(path string, data []byte) error {
@@ -117,7 +130,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	start := time.Now()
 	res := OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{}}},
-		ResultSchema: OracleResultSchema, Cases: []CaseLine{}, Platform: runtime.GOOS + "/" + runtime.GOARCH}
+		ResultSchema: OracleResultSchema, Cases: []CaseLine{}, Platform: hostPlatform}
 	stop := func(err *Error) (OracleResult, error) {
 		res.Findings = append(res.Findings, finding(err.Code, "error", "", "실행 전 거부했다"))
 		if err.Kind == kit.KindUnsupported {
@@ -141,10 +154,10 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	n := prof.Native
 	op := kit.NativeOperations()[n.Operation]
 	res.ProfileID, res.Route, res.Operation, res.ProfileSHA256 = n.ID, n.Route, op, n.SHA256
-	if len(op.Platforms) > 0 && !slices.Contains(op.Platforms, res.Platform) {
-		res.Findings = append(res.Findings, finding("OPERATION_PLATFORM_SCOPE", "error", "", n.Operation+"는 "+fmt.Sprint(op.Platforms)+"에서만 실행한다: "+kit.R3PlatformReason))
+	if f, err := platformScope(op); err != nil {
+		res.Findings = append(res.Findings, f)
 		res.Assessment = kit.AssessBlocked
-		return res, refuse(kit.KindUnsupported, "OPERATION_PLATFORM_SCOPE", nil)
+		return res, err
 	}
 	var pack *kit.FactPack
 	if prof.FactPack != nil {
@@ -238,7 +251,10 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 			}
 			if !writeFailed {
 				data, err := json.Marshal(OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true})
-				if err == nil && write("records/"+name, append(data, '\n')) {
+				if err != nil {
+					res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "record를 직렬화하지 못했다"))
+					writeFailed = true
+				} else if write("records/"+name, append(data, '\n')) {
 					members = append(members, kit.OracleMember{Path: "records/" + name, Role: "record", Case: c.ID, Bytes: uint64(len(data) + 1), SHA256: sha(append(data, '\n')),
 						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
 				}
@@ -263,7 +279,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 			res.Assessment = kit.AssessNotAssessed
 		}
 	} else {
-		m := kit.OracleManifest{Schema: kit.OracleManifestSchema, Policy: policy, Protocol: ProtocolR2, Queries: qids, FactPack: prof.FactPack,
+		m := kit.OracleManifest{Schema: kit.OracleManifestSchema, Policy: policy, Protocol: ProtocolR2, Queries: qids, FactPack: prof.FactPack, Cases: []string{},
 			Comparators: []string{kit.TreeDigestScheme, kit.CaptureCompareScheme, APICapability, PredicatePolicy},
 			Workload:    map[string]string{"profile_id": n.ID, "profile_sha256": n.SHA256, "route": n.Route, "operation": n.Operation, "output": n.Output},
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
@@ -277,7 +293,11 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		for _, mem := range members {
 			if mem.Role == "record" {
 				m.Records++
+				m.Cases = append(m.Cases, mem.Case)
 			}
+		}
+		if berr == nil && len(m.Cases) != len(prof.OracleCases) {
+			m.ExecutionStatus = kit.StatusFailed // a case without its record is not a complete run
 		}
 		data, err := json.Marshal(m)
 		if err == nil && write("manifest.json", append(data, '\n')) {
@@ -434,7 +454,7 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 					cr.Oracle.FactReproduction = ClaimFail
 				}
 			case kit.FactDynamicSQL:
-				ds := kit.DeriveDynamicSQL(prof.FactPack.Route, caps, src)
+				ds := kit.DeriveDynamicSQL(prof.FactPack.Route, oc.Encoding, caps, src)
 				f.DynamicSQL = &ds
 				if oc.DynamicSQL != nil {
 					if d := compareDynamicSQL(*oc.DynamicSQL, ds); d != "" {

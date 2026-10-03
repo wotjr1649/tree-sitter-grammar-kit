@@ -149,6 +149,11 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	}
 	op := kit.NativeOperations()[prof.Operation]
 	res.ProfileID, res.Route, res.Operation, res.Output, res.ProfileSHA256 = prof.ID, prof.Route, op, prof.Output, prof.SHA256
+	if f, err := platformScope(op); err != nil {
+		res.Findings = append(res.Findings, f)
+		res.Assessment = kit.AssessBlocked
+		return res, err
+	}
 	if _, err := os.Lstat(req.Out); err == nil {
 		return stop(refuse(kit.KindInvalidInput, "OUTPUT_EXISTS", nil))
 	}

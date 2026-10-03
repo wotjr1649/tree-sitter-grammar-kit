@@ -343,21 +343,25 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if err != nil {
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
+	r2 := req.Revision() == ProtocolR2
+	if r2 && resp.Protocol == ProtocolR2 {
+		// a required capability the producer does not declare blocks the case before any
+		// of its observations is interpreted
+		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
+			out.Producer = &resp.Producer
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
+		}
+		if x.API && (resp.Producer.API == nil || *resp.Producer.API != APICapability) {
+			out.Producer = &resp.Producer
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
+		}
+	}
 	checked, err := Check(resp, req, versions, points, res.ExitCode)
 	if err != nil {
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
 	out.ResponseStatus, out.ResponseCode, out.Producer = resp.Status, resp.Code, &resp.Producer
-	r2 := req.Revision() == ProtocolR2
 	if r2 {
-		// a required capability the producer does not declare blocks the case before any
-		// of its observations is interpreted
-		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
-		}
-		if x.API && *resp.Producer.API != APICapability {
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
-		}
 		out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
 	}
 	build := kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}

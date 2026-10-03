@@ -1357,12 +1357,12 @@ static const char *emit_queries(Buf *out, Req *r, TSTree *t) {
     }
     const TSQuery *q = qq->q;
     /* a capture that the walk did not reach would break the record linkage */
-    const char *code = run->code;
-    for (uint32_t k = 0; !code && k < run->n; k++) {
+    bool unmapped = false;
+    for (uint32_t k = 0; !unmapped && k < run->n; k++) {
       uint32_t *v = idmap_slot(&m, run->rows[k].node.id, false);
-      if (!v || *v == UINT32_MAX) code = "CAPTURE_NODE_UNMAPPED";
+      unmapped = !v || *v == UINT32_MAX;
     }
-    bool unmapped = code && !strcmp(code, "CAPTURE_NODE_UNMAPPED");
+    const char *code = unmapped ? "CAPTURE_NODE_UNMAPPED" : run->code;
     if (code && !first) first = code;
     puts_(out, ",\"status\":"); putstr(out, !code ? "COMPLETED" : unmapped ? "FAILED" : "RESOURCE_LIMIT");
     puts_(out, ",\"code\":"); putstr(out, code ? code : "");

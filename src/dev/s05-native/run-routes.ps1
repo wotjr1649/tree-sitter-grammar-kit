@@ -8,9 +8,10 @@
 # (src/testdata/native/queries), the fact query pack (src/contracts/fact-query-pack.json)
 # for its routes, the dynamic SQL fixtures, and with -Large the native-query-large cases.
 # Writes one result directory per run and summary.json under -Destination. Exit 1 when a
-# build fails, a case does not complete, or an incremental equality/route, query equality,
-# API, fact reproduction or dynamic SQL claim fails; language and query expectation
-# failures are findings for disposition and do not fail the run.
+# build fails, a case does not complete, a record set does not verify, or an incremental
+# equality/route, query equality, query expectation, fact reproduction or dynamic SQL claim
+# fails; language expectation failures and API claims (the runtime node API disagreeing
+# with its cursor) are findings for disposition and do not fail the run.
 param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
@@ -257,7 +258,7 @@ function Add-OracleResult([string]$Label, $Run) {
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "oracle $Label/$($c.id): $($c.execution_status) $($c.code)" }
     if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route)" }
     if ($c.oracle_claims) {
-      foreach ($k in @('query_equality', 'fact_reproduction', 'dynamic_sql')) {
+      foreach ($k in @('query_equality', 'query_expectations', 'fact_reproduction', 'dynamic_sql')) {
         if ($c.oracle_claims.$k -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): $k $($c.oracle_claims.$k)" }
       }
       # an API claim FAIL is the runtime's node API disagreeing with its cursor (recorded with

@@ -390,6 +390,32 @@ func (t Tree) incomplete() (string, string, bool) {
 
 func isNull(v jsontext.Value) bool { return string(v) == "null" }
 
+// requireMembers rejects a decoded r2 object or array of objects that lacks a member: the
+// strict decoder would otherwise leave an absent member at its zero value, and an absent
+// predicate list must never read as "no predicates".
+func requireMembers(raw jsontext.Value, array bool, names ...string) error {
+	var objs []map[string]jsontext.Value
+	if array {
+		if err := jsonv2.Unmarshal(raw, &objs); err != nil {
+			return invalid("RESPONSE_MALFORMED", err)
+		}
+	} else {
+		var one map[string]jsontext.Value
+		if err := jsonv2.Unmarshal(raw, &one); err != nil {
+			return invalid("RESPONSE_MALFORMED", err)
+		}
+		objs = append(objs, one)
+	}
+	for i, o := range objs {
+		for _, n := range names {
+			if _, ok := o[n]; !ok {
+				return invalid("RESPONSE_INVALID", fmt.Errorf("object %d lacks %s", i, n))
+			}
+		}
+	}
+	return nil
+}
+
 // checkTree validates a tree object against the step's source length and, for r2, the
 // requested queries and API observations.
 func checkTree(w WireTree, sourceBytes uint64, nodes uint64, req Request) (Tree, error) {
@@ -493,6 +519,9 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 		}
 		return nil
 	}
+	if err := requireMembers(t.Wire.Queries, true, "id", "status", "code", "query_ms", "error", "patterns", "capture_names", "predicates", "matches", "partial", "types", "captures"); err != nil {
+		return err
+	}
 	if err := jsonv2.Unmarshal(t.Wire.Queries, &t.Queries, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return invalid("RESPONSE_MALFORMED", err)
 	}
@@ -505,11 +534,11 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 		}
 		switch q.Status {
 		case kit.StatusCompleted:
-			if q.Code != "" || q.Error != nil || q.Captures == nil || q.Partial {
+			if q.Code != "" || q.Error != nil || q.Captures == nil || q.Partial || q.Predicates == nil || q.CaptureNames == nil || q.Types == nil {
 				return bad(i, "completed shape")
 			}
 		case kit.StatusResourceLimit:
-			if !queryLimitCodes[q.Code] || q.Error != nil || q.Captures == nil || !q.Partial {
+			if !queryLimitCodes[q.Code] || q.Error != nil || q.Captures == nil || !q.Partial || q.Predicates == nil || q.CaptureNames == nil || q.Types == nil {
 				return bad(i, "limit shape")
 			}
 		case kit.StatusFailed:
@@ -536,6 +565,7 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 			}
 		}
 		seen := int64(-1)
+		patternOf := map[int64]int64{}
 		for k, row := range q.Captures {
 			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
 				row[3] < 0 || uint64(row[3]) >= t.Wire.DescendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
@@ -554,6 +584,11 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 				return bad(i, fmt.Sprintf("capture %d match order", k))
 			}
 			seen = max(seen, row[0])
+			// one match belongs to one pattern
+			if p, ok := patternOf[row[0]]; ok && p != row[1] {
+				return bad(i, fmt.Sprintf("capture %d pattern of match", k))
+			}
+			patternOf[row[0]] = row[1]
 			if t.Nodes != nil {
 				n := t.Nodes[row[3]]
 				c := captureOf(q, row)
@@ -562,6 +597,10 @@ func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
 					return invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
 				}
 			}
+		}
+		// the match count is the number of matches the stream returned
+		if q.Matches != uint64(seen+1) {
+			return bad(i, "match count")
 		}
 	}
 	return nil
@@ -590,6 +629,9 @@ func (t *Tree) checkAPI(req Request) error {
 	if !want {
 		return bad("unrequested")
 	}
+	if err := requireMembers(t.Wire.API, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names"); err != nil {
+		return err
+	}
 	var a WireAPI
 	if err := jsonv2.Unmarshal(t.Wire.API, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return invalid("RESPONSE_MALFORMED", err)
@@ -613,8 +655,8 @@ func (t *Tree) checkAPI(req Request) error {
 			return bad("field lookup row")
 		}
 	}
-	for _, r := range a.Points {
-		if len(r) != 4 {
+	for k, r := range a.Points {
+		if len(r) != 4 || r[0] != int64(req.Points[k].Byte) {
 			return bad("point row")
 		}
 	}
@@ -668,7 +710,7 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 		if p.Query != "UNSUPPORTED" || p.API != nil || p.Predicates != nil || p.SymbolCount != nil || p.FieldCount != nil {
 			return c, invalid("RESPONSE_INVALID", errors.New("r1 producer"))
 		}
-	} else if p.API == nil || p.Predicates == nil || p.SymbolCount == nil || p.FieldCount == nil || p.Query == "" {
+	} else if p.API == nil || p.Predicates == nil || *p.Predicates != "NOT_EVALUATED" || p.SymbolCount == nil || p.FieldCount == nil || p.Query == "" {
 		return c, invalid("RESPONSE_INVALID", errors.New("r2 producer capabilities"))
 	}
 	if r.Status == "INVALID_REQUEST" {
@@ -730,7 +772,8 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 	// and in r2 a QUERY_TIME_LIMIT the runtime ran past) reports the count only.
 	if r.Status != kit.StatusCompleted {
 		if len(c.Steps) == 0 {
-			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" && (r.Code != "QUERY_TIME_LIMIT" || req.Revision() != ProtocolR2) {
+			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" &&
+				(r.Code != "QUERY_TIME_LIMIT" || req.Revision() != ProtocolR2 || len(req.Queries) == 0 || r.Status != kit.StatusResourceLimit) {
 				return c, invalid("RESPONSE_INVALID", errors.New("noncomplete response without steps"))
 			}
 		} else {

@@ -154,3 +154,31 @@ func TestOracleRecordSet(t *testing.T) {
 		}
 	})
 }
+
+// C1-REAL-WORLD-SOURCE-WINDOWS-R3: on a host outside the operation's platform scope both
+// commands refuse before any build or output; no native tool is needed to see it.
+func TestPlatformScope(t *testing.T) {
+	orig := hostPlatform
+	hostPlatform = "linux/amd64"
+	defer func() { hostPlatform = orig }()
+	zero := strings.Repeat("0", 64)
+	common := `"route":"owned","symbol":"tree_sitter_tsgk_plain","encoding":"UTF-8","output":"auto","compiler":{"name":"cc","version":"x","sha256":"` + zero +
+		`","bytes":1},"grammar":[{"path":"src/parser.c","role":"parser","sha256":"` + zero + `","bytes":1}],"declarations":null`
+	caseBase := `{"id":"c","input":{"path":"c.txt","role":"case","sha256":"` + zero + `","bytes":1},"edits":[],"points":[],"expect":[]`
+	dir := t.TempDir()
+	out := filepath.Join(dir, "out")
+	inc := []byte(`{"schema":"tsgk-incremental/r1","id":"p","operation":"real-world-source-r3",` + common + `,"cases":[` + caseBase + `}]}`)
+	ores, err := Incremental(context.Background(), IncrementalRequest{Root: dir, Profile: inc, Out: out, Allow: []string{AllowBuild, AllowExec}})
+	if err == nil || !strings.Contains(err.Error(), "OPERATION_PLATFORM_SCOPE") || ores.Assessment != kit.AssessBlocked || ores.Build != nil {
+		t.Fatalf("incremental r3 on linux: %v %+v", err, ores.Findings)
+	}
+	orc := []byte(`{"schema":"tsgk-oracle/r1","id":"p","operation":"native-query-large",` + common + `,"queries":[],"fact_pack":null,"api":false,"cases":[` + caseBase +
+		`,"query_expect":[],"dynamic_sql_expect":null}]}`)
+	res, err := Oracle(context.Background(), OracleRequest{Root: dir, Profile: orc, Out: out, Allow: []string{AllowBuild, AllowExec}})
+	if err == nil || !strings.Contains(err.Error(), "OPERATION_PLATFORM_SCOPE") || res.Assessment != kit.AssessBlocked || res.Build != nil {
+		t.Fatalf("oracle native-query-large on linux: %v %+v", err, res.Findings)
+	}
+	if _, err := os.Stat(out); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("output created by a refused run: %v", err)
+	}
+}

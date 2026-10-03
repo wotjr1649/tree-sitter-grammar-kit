@@ -268,6 +268,22 @@ func TestAPIObservations(t *testing.T) {
 			t.Fatalf("tampered %s not detected: %+v", tc.check, d)
 		}
 	}
+	// the zero-width MISSING node naming itself as its previous sibling is a difference, not
+	// a positional divergence
+	for i, n := range tree {
+		if n.IsMissing && n.StartByte == n.EndByte {
+			self := w
+			self.Nodes = make([][]int64, len(w.Nodes))
+			for k := range w.Nodes {
+				self.Nodes[k] = slices.Clone(w.Nodes[k])
+			}
+			self.Nodes[i][1] = int64(i)
+			if d, _ := compareAPI(tree, &self); d == nil || d.Check != "prev_sibling" {
+				t.Fatalf("self as sibling accepted: %+v", d)
+			}
+			break
+		}
+	}
 	lookups := w
 	lookups.FieldLookups = w.FieldLookups[1:]
 	if d, _ := compareAPI(tree, &lookups); d == nil {
@@ -368,5 +384,42 @@ func TestQueryEquality(t *testing.T) {
 	c := []QueryOut{{ID: "q", Status: kit.StatusResourceLimit, Code: "CAPTURE_LIMIT", Evaluation: EvalStructural, Captures: a[0].Captures}}
 	if eq, _ := compareQueries(a, c); eq {
 		t.Fatal("changed status not detected")
+	}
+}
+
+// S06-A04/A11: an r2 query result without its predicate list (or with a wrong match count)
+// is rejected, never read as "no predicates" or accepted as consistent.
+func TestQueryMembersRequired(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	req := baseRequest("a = f(1);", "native-query")
+	req.Protocol, req.Limits = ProtocolR2, LimitsFor(kit.NativeOperations()["native-query"])
+	req.Queries = []QuerySource{{ID: "q", Source: []byte("((identifier) @id (#match? @id \"^a\"))")}}
+	res, resp, err := rawExec(t, b, Frame(req.Encode()), "native-query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	versions, points, _ := kit.ApplyEdits(kit.EncodingUTF8, req.Source, nil, 65536)
+	tamper := func(f func(q map[string]any)) error {
+		r := resp
+		var qs []map[string]any
+		if err := jsonv2.Unmarshal(resp.Steps[0].Incremental.Queries, &qs); err != nil {
+			t.Fatal(err)
+		}
+		f(qs[0])
+		raw, _ := jsonv2.Marshal(qs)
+		steps := slices.Clone(resp.Steps)
+		steps[0].Incremental.Queries = raw
+		r.Steps = steps
+		_, err := Check(r, req, versions, points, res.ExitCode)
+		return err
+	}
+	if err := tamper(func(map[string]any) {}); err != nil {
+		t.Fatalf("untampered response rejected: %v", err)
+	}
+	if err := tamper(func(q map[string]any) { delete(q, "predicates") }); err == nil {
+		t.Fatal("a result without predicates was accepted")
+	}
+	if err := tamper(func(q map[string]any) { q["matches"] = 7.0 }); err == nil {
+		t.Fatal("a wrong match count was accepted")
 	}
 }

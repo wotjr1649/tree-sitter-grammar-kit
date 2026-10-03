@@ -76,9 +76,11 @@ func NativeOperations() map[string]NativeOperation {
 		ParseMillis: 10000, MemoryBytes: 4294967296, Errors: 1000, PartialNodes: 1000, ParseWall: 10 * time.Second, EditWall: 10 * time.Second,
 		MaxEdits: 4, MaxCases: 1000, Outputs: []string{OutputTree}, RunWall: 3600 * time.Second}
 	nq := pe
-	nq.Name, nq.Matches, nq.Captures, nq.QueryMillis = "native-query", 10000, 10000, 10000
+	// the query budget is a part of the registered process wall, so a slow query ends as a
+	// typed QUERY_TIME_LIMIT before the runner's wall (10 s and 90 s) ends the process
+	nq.Name, nq.Matches, nq.Captures, nq.QueryMillis = "native-query", 10000, 10000, 4000
 	ql := r3
-	ql.Name, ql.MaxEdits, ql.Outputs, ql.Matches, ql.Captures, ql.QueryMillis = "native-query-large", 0, []string{OutputAuto}, 1000000, 1000000, 90000
+	ql.Name, ql.MaxEdits, ql.Outputs, ql.Matches, ql.Captures, ql.QueryMillis = "native-query-large", 0, []string{OutputAuto}, 1000000, 1000000, 20000
 	return map[string]NativeOperation{pe.Name: pe, rw.Name: rw, r3.Name: r3, pc.Name: pc, nq.Name: nq, ql.Name: ql}
 }
 

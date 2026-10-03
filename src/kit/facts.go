@@ -1,11 +1,13 @@
 package kit
 
 import (
-	"bytes"
 	"cmp"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf16"
+	"unicode/utf8"
 )
 
 // FactPackSchema is the versioned fact query pack (src/contracts/fact-query-pack.json).
@@ -153,10 +155,13 @@ func parseFactPack(data []byte) (FactPack, *Error) {
 	return p, nil
 }
 
-// DeclarationQuery generates the declaration query of a pack route from its items: per
-// item i the declaration node as @decl.i and, unless the locator is "node", the locator
-// path as a nested pattern whose levels are captured @owner.i, @s<k>.i and finally
-// @name.i. The pack stores the generated text; this function is its reproducible origin.
+// DeclarationQuery generates the declaration query of a pack route from its items. Per item
+// i the declaration node is @decl.i and, unless the locator is "node", for every prefix of
+// the locator path (depth d = 1..len) one nested pattern captures the owner as @c.i.d.0
+// and the node at each level k as @c.i.d.k. The last level of a pattern takes any node
+// (field: F as "F: _", child/children: T as "(T)"), so the first candidate of a level is
+// chosen whether or not deeper levels exist below it. The pack stores the generated text;
+// this function is its reproducible origin.
 func DeclarationQuery(items []NativeDeclaration) string {
 	var b strings.Builder
 	for i, d := range items {
@@ -166,23 +171,22 @@ func DeclarationQuery(items []NativeDeclaration) string {
 			continue
 		}
 		segs := splitPath(d.Name)
-		inner := ""
-		for k := len(segs) - 1; k >= 0; k-- {
-			kind, arg, _ := strings.Cut(segs[k], ":")
-			capture := "@s" + strconv.Itoa(k) + "." + n
-			if k == len(segs)-1 {
-				capture = "@name." + n
-			}
-			node := "(" + arg + inner + ")"
-			if kind == "field" {
-				node = arg + ": _"
-				if inner != "" {
-					node = arg + ": (_" + inner + ")"
+		for depth := 1; depth <= len(segs); depth++ {
+			pre := "@c." + n + "." + strconv.Itoa(depth) + "."
+			inner := ""
+			for k := depth - 1; k >= 0; k-- {
+				kind, arg, _ := strings.Cut(segs[k], ":")
+				node := "(" + arg + inner + ")"
+				if kind == "field" {
+					node = arg + ": _"
+					if inner != "" {
+						node = arg + ": (_" + inner + ")"
+					}
 				}
+				inner = " " + node + " " + pre + strconv.Itoa(k+1)
 			}
-			inner = " " + node + " " + capture
+			b.WriteString("(" + d.Node + inner + ") " + pre + "0\n")
 		}
-		b.WriteString("(" + d.Node + inner + ") @owner." + n + "\n")
 	}
 	return b.String()
 }
@@ -204,64 +208,58 @@ type ByteSpan struct {
 }
 
 // DeriveDeclarations reproduces the S05 declaration structure items from the captures of
-// the pack's declaration query: one item per name of each declaration node in preorder,
-// following the locator semantics (field:F and child:T take the first such child, so for
-// those levels only the earliest node under the same path prefix is kept; children:T keeps
-// every node), names in document order, NAME_MISSING without a name, HAS_ERROR when the
-// declaration node has an error.
+// the pack's declaration query, following the S05 locator walk: from the declaration node,
+// each level takes, below every current node, the first candidate (field:F, child:T) or
+// every candidate (children:T) in document order, where the candidates of a level are the
+// nodes the depth-k patterns captured below that node; a level without a candidate ends the
+// walk. One item per name in document order; NAME_MISSING without a name; HAS_ERROR when
+// the declaration node has an error; items in declaration-node preorder, then item order.
 func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []DeclarationItem {
-	type chain struct{ nodes []Capture }
 	decl := map[int]map[int64]Capture{} // item -> node -> capture
+	// item -> depth -> chains (level 0 owner .. level depth)
+	chains := map[int]map[int][][]Capture{}
 	matches := map[uint32][]Capture{}
 	for _, c := range caps {
-		prefix, idx, ok := strings.Cut(c.Name, ".")
-		i, err := strconv.Atoi(idx)
-		if !ok || err != nil || i < 0 || i >= len(items) {
-			continue
-		}
-		if prefix == "decl" {
+		parts := strings.Split(c.Name, ".")
+		switch {
+		case len(parts) == 2 && parts[0] == "decl":
+			i, err := strconv.Atoi(parts[1])
+			if err != nil || i < 0 || i >= len(items) {
+				continue
+			}
 			if decl[i] == nil {
 				decl[i] = map[int64]Capture{}
 			}
 			decl[i][c.Node] = c
-			continue
+		case len(parts) == 4 && parts[0] == "c":
+			matches[c.Match] = append(matches[c.Match], c)
 		}
-		matches[c.Match] = append(matches[c.Match], c)
 	}
-	// chains per item and owner node: [owner, s0, ..., name]
-	chains := map[int]map[int64][]chain{}
 	for _, mc := range matches {
-		var owner *Capture
+		var item, depth = -1, -1
 		levels := map[int]Capture{}
-		item, depth := -1, 0
-		for k := range mc {
-			c := mc[k]
-			prefix, idx, _ := strings.Cut(c.Name, ".")
-			item, _ = strconv.Atoi(idx)
-			switch {
-			case prefix == "owner":
-				owner = &mc[k]
-			case prefix == "name":
-				depth = len(splitPath(items[item].Name))
-				levels[depth-1] = c
-			case strings.HasPrefix(prefix, "s"):
-				lv, err := strconv.Atoi(prefix[1:])
-				if err == nil {
-					levels[lv] = c
-				}
+		for _, c := range mc {
+			parts := strings.Split(c.Name, ".")
+			i, e1 := strconv.Atoi(parts[1])
+			d, e2 := strconv.Atoi(parts[2])
+			k, e3 := strconv.Atoi(parts[3])
+			if e1 != nil || e2 != nil || e3 != nil || i < 0 || i >= len(items) || k < 0 || k > d || (item >= 0 && (i != item || d != depth)) {
+				item = -2
+				break
 			}
+			item, depth, levels[k] = i, d, c
 		}
-		if owner == nil || item < 0 || len(levels) != depth {
+		if item < 0 || len(levels) != depth+1 {
 			continue
 		}
-		ch := chain{nodes: []Capture{*owner}}
-		for lv := range depth {
-			ch.nodes = append(ch.nodes, levels[lv])
+		ch := make([]Capture, depth+1)
+		for k := range ch {
+			ch[k] = levels[k]
 		}
 		if chains[item] == nil {
-			chains[item] = map[int64][]chain{}
+			chains[item] = map[int][][]Capture{}
 		}
-		chains[item][owner.Node] = append(chains[item][owner.Node], ch)
+		chains[item][depth] = append(chains[item][depth], ch)
 	}
 	type key struct {
 		node int64
@@ -277,36 +275,6 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 	out := []DeclarationItem{}
 	for _, k := range keys {
 		d, c := items[k.item], decl[k.item][k.node]
-		segs := splitPath(d.Name)
-		list := chains[k.item][k.node]
-		for lv := range segs {
-			if !strings.HasPrefix(segs[lv], "children:") {
-				// keep only chains whose node at this level is the first under its prefix
-				first := map[string]int64{}
-				pre := func(ch chain) string {
-					var b strings.Builder
-					for _, n := range ch.nodes[:lv+1] {
-						b.WriteString(strconv.FormatInt(n.Node, 10) + "/")
-					}
-					return b.String()
-				}
-				for _, ch := range list {
-					p, n := pre(ch), ch.nodes[lv+1].Node
-					if v, ok := first[p]; !ok || n < v {
-						first[p] = n
-					}
-				}
-				list = slices.DeleteFunc(slices.Clone(list), func(ch chain) bool { return ch.nodes[lv+1].Node != first[pre(ch)] })
-			}
-		}
-		var names []Capture
-		for _, ch := range list {
-			n := ch.nodes[len(ch.nodes)-1]
-			if !slices.ContainsFunc(names, func(x Capture) bool { return x.Node == n.Node }) {
-				names = append(names, n)
-			}
-		}
-		slices.SortFunc(names, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
 		status := "PASS"
 		if c.HasError {
 			status = "HAS_ERROR"
@@ -316,11 +284,41 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			out = append(out, item)
 			continue
 		}
-		if len(names) == 0 {
+		segs := splitPath(d.Name)
+		// cur holds the walked paths (node chains from the owner) at the current level
+		cur := [][]Capture{{c}}
+		for lv := 1; lv <= len(segs) && len(cur) > 0; lv++ {
+			var next [][]Capture
+			for _, path := range cur {
+				var cands [][]Capture
+				for _, ch := range chains[k.item][lv] {
+					same := true
+					for j := range path {
+						same = same && ch[j].Node == path[j].Node
+					}
+					if same {
+						cands = append(cands, ch)
+					}
+				}
+				slices.SortFunc(cands, func(a, b []Capture) int { return cmp.Compare(a[lv].Node, b[lv].Node) })
+				cands = slices.CompactFunc(cands, func(a, b []Capture) bool { return a[lv].Node == b[lv].Node })
+				if len(cands) > 0 && !strings.HasPrefix(segs[lv-1], "children:") {
+					cands = cands[:1]
+				}
+				next = append(next, cands...)
+			}
+			cur = next
+		}
+		if len(cur) == 0 {
 			item.Status = "NAME_MISSING"
 			out = append(out, item)
 			continue
 		}
+		names := make([]Capture, 0, len(cur))
+		for _, p := range cur {
+			names = append(names, p[len(p)-1])
+		}
+		slices.SortFunc(names, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
 		for _, n := range names {
 			it := item
 			it.Name = &ByteSpan{n.StartByte, n.EndByte}
@@ -415,7 +413,47 @@ func (x capIndex) childrenOf(parent, child string) map[int64][]Capture {
 	return out
 }
 
-func text(src []byte, c Capture) string { return string(src[c.StartByte:c.EndByte]) }
+// srcText is a tree's original bytes with their declared encoding: text comparisons of
+// the dynamic SQL rules decode the node bytes, so UTF-16 and CP949 sources are judged the
+// same way as UTF-8 ones.
+type srcText struct {
+	b   []byte
+	enc string
+}
+
+func (s srcText) span(start, end uint32) string {
+	b := s.b[start:end]
+	switch s.enc {
+	case EncodingUTF16LE, EncodingUTF16BE:
+		u := make([]uint16, 0, len(b)/2)
+		for i := 0; i+1 < len(b); i += 2 {
+			if s.enc == EncodingUTF16LE {
+				u = append(u, uint16(b[i])|uint16(b[i+1])<<8)
+			} else {
+				u = append(u, uint16(b[i])<<8|uint16(b[i+1]))
+			}
+		}
+		return string(utf16.Decode(u))
+	case EncodingCP949:
+		var r strings.Builder
+		for i := 0; i < len(b); i++ {
+			if b[i] < 0x80 || i+1 >= len(b) {
+				r.WriteByte(b[i])
+				continue
+			}
+			if c, ok := CP949Rune(b[i], b[i+1]); ok {
+				r.WriteRune(c)
+				i++
+				continue
+			}
+			r.WriteRune(utf8.RuneError)
+		}
+		return r.String()
+	}
+	return string(b)
+}
+
+func text(src srcText, c Capture) string { return src.span(c.StartByte, c.EndByte) }
 
 // unquote removes [] or "" quoting of a T-SQL identifier.
 func unquote(s string) string {
@@ -426,9 +464,13 @@ func unquote(s string) string {
 }
 
 // DeriveDynamicSQL derives dynamic-sql-r1 location facts for a tsql or csharp tree from the
-// captures of the pack's dynamic SQL query and the tree's source bytes. Facts are in
-// document order of their site; tsql known misses are reported with their ranges.
-func DeriveDynamicSQL(route string, caps []Capture, src []byte) DynamicSQLFacts {
+// captures of the pack's dynamic SQL query and the tree's source bytes in their encoding
+// (UTF-8, UTF-16LE/BE or CP949; text is compared after decoding, ranges stay original
+// bytes). Facts are in document order of their site; tsql known misses are reported with
+// their ranges. Extra nodes (comments) are never a construct part or an argument.
+func DeriveDynamicSQL(route, enc string, caps []Capture, srcBytes []byte) DynamicSQLFacts {
+	src := srcText{srcBytes, enc}
+	caps = slices.DeleteFunc(slices.Clone(caps), func(c Capture) bool { return c.Extra })
 	x := indexCaptures(caps)
 	out := DynamicSQLFacts{Mapping: "dynamic-sql-r1", Items: []DynamicSQLFact{}, KnownMisses: []KnownMiss{}, Unlisted: []string{}}
 	switch route {
@@ -446,7 +488,7 @@ func fact(construct, kind string, arg Capture, variable *string, heuristic bool)
 	return DynamicSQLFact{construct, kind, arg.StartByte, arg.EndByte, arg.StartPoint, arg.EndPoint, variable, heuristic}
 }
 
-func deriveTSQL(x capIndex, src []byte, out *DynamicSQLFacts) {
+func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 	children := x.childrenOf("exec.parent", "exec.child")
 	procs := map[int64]Capture{}
 	for _, pc := range x.pairs("proc.exec", "proc") {
@@ -475,15 +517,28 @@ func deriveTSQL(x capIndex, src []byte, out *DynamicSQLFacts) {
 		fieldName[pc[0].Node] = pc[1]
 	}
 	semis := x.byName["semi"]
-	semiEnd := func(from uint32) uint32 {
+	var execs []Capture
+	execs = append(execs, x.byName["exec"]...)
+	slices.SortFunc(execs, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+	// a known miss runs from the EXEC to the end of the first ";" after it that starts
+	// before the next EXEC; without one it is the EXEC alone
+	semiEnd := func(e Capture) uint32 {
+		limit := uint32(len(src.b))
+		for _, n := range execs {
+			if n.StartByte > e.StartByte {
+				limit = n.StartByte
+				break
+			}
+		}
 		for _, s := range semis {
-			if s.StartByte >= from {
+			if s.StartByte >= e.EndByte && s.StartByte < limit {
 				return s.EndByte
 			}
 		}
-		return from
+		return e.EndByte
 	}
 	withErrors := x.byName["errwith"]
+	withResultSets := regexp.MustCompile(`(?i)^WITH\s+RESULT\s+SETS\b`)
 	kind := func(arg Capture) (string, *string) {
 		switch arg.Type {
 		case "literal":
@@ -518,13 +573,11 @@ func deriveTSQL(x capIndex, src []byte, out *DynamicSQLFacts) {
 		}
 		return "other", nil
 	}
-	var execs []Capture
-	execs = append(execs, x.byName["exec"]...)
-	slices.SortFunc(execs, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
 	for _, e := range execs {
-		// WITH RESULT SETS: the statement's options are an ERROR right after the EXEC
+		// WITH RESULT SETS: the statement's options are an ERROR right after the EXEC (only
+		// whitespace between) whose text begins WITH RESULT SETS
 		withMiss := slices.ContainsFunc(withErrors, func(w Capture) bool {
-			return w.StartByte >= e.EndByte && len(bytes.TrimSpace(src[e.EndByte:w.StartByte])) == 0
+			return w.StartByte >= e.EndByte && strings.TrimSpace(src.span(e.EndByte, w.StartByte)) == "" && withResultSets.MatchString(text(src, w))
 		})
 		construct := ""
 		var arg *Capture
@@ -570,13 +623,13 @@ func deriveTSQL(x capIndex, src []byte, out *DynamicSQLFacts) {
 			if at := slices.IndexFunc(kids, func(c Capture) bool { return c.Type == "keyword_at" }); at >= 0 {
 				construct = "EXEC_PAREN_AT"
 				if at+1 < len(kids) && kids[at+1].Type == "identifier" && strings.EqualFold(text(src, kids[at+1]), "DATA_SOURCE") {
-					out.KnownMisses = append(out.KnownMisses, KnownMiss{MissAtDataSource, e.StartByte, semiEnd(e.EndByte)})
+					out.KnownMisses = append(out.KnownMisses, KnownMiss{MissAtDataSource, e.StartByte, semiEnd(e)})
 					continue
 				}
 			}
 		}
 		if withMiss {
-			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissWithResultSets, e.StartByte, semiEnd(e.EndByte)})
+			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissWithResultSets, e.StartByte, semiEnd(e)})
 			continue
 		}
 		if arg == nil {
@@ -585,8 +638,11 @@ func deriveTSQL(x capIndex, src []byte, out *DynamicSQLFacts) {
 		k, v := kind(*arg)
 		out.Items = append(out.Items, fact(construct, k, *arg, v, false))
 	}
+	// the first call of a batch without EXEC: an ERROR that starts with sp_executesql,
+	// optionally qualified by sys (brackets or quotes allowed)
+	firstCall := regexp.MustCompile(`(?i)^(?:(?:\[sys\]|"sys"|sys)\s*\.\s*)?(?:\[sp_executesql\]|"sp_executesql"|sp_executesql)\b`)
 	for _, pc := range x.pairs("err", "err.first") {
-		if strings.EqualFold(unquote(text(src, pc[1])), "sp_executesql") {
+		if firstCall.MatchString(text(src, pc[0])) {
 			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissBatchFirstNoExe, pc[0].StartByte, pc[0].EndByte})
 		}
 	}
@@ -599,7 +655,7 @@ var (
 	CommandAPIProperties = []string{"CommandText"}
 )
 
-func deriveCSharp(x capIndex, src []byte, out *DynamicSQLFacts) {
+func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 	lastIdent := map[int64]Capture{} // type node -> its last identifier
 	for _, n := range []struct{ parent, child string }{{"qn", "qn.name"}, {"aq", "aq.name"}, {"gn", "gn.name"}} {
 		for _, pc := range x.pairs(n.parent, n.child) {

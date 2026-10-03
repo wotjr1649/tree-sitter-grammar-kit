@@ -76,9 +76,10 @@ func TestFactQueryPack(t *testing.T) {
 	}
 }
 
-// DeriveDeclarations follows the locator semantics: field:/child: take the first such node
-// under the same path, children: keeps every node, names come in document order, a
-// declaration without a name is NAME_MISSING and one with an error is HAS_ERROR.
+// DeriveDeclarations follows the S05 locator walk: field:/child: take the first candidate
+// below the current node whether or not deeper levels exist below it, children: keeps
+// every candidate, names come in document order, a declaration without a name is
+// NAME_MISSING (taking precedence over HAS_ERROR), and items follow declaration preorder.
 func TestDeriveDeclarations(t *testing.T) {
 	items := []NativeDeclaration{
 		{"member_declaration", "field_declaration", "child:variable_declaration/children:variable_declarator/field:name"},
@@ -89,19 +90,28 @@ func TestDeriveDeclarations(t *testing.T) {
 		return Capture{Match: match, Name: name, Node: node, StartByte: start, EndByte: end}
 	}
 	caps := []Capture{
-		c(0, "decl.1", 10, 0, 50), // class with a name
-		c(1, "owner.1", 10, 0, 50), c(1, "name.1", 12, 6, 7),
-		c(2, "owner.1", 10, 0, 50), c(2, "name.1", 13, 8, 9), // a second name field child: not the first
-		c(3, "decl.0", 20, 10, 30),
-		// declarators a and b under the first variable_declaration (node 21); one under a
-		// second variable_declaration (node 30) that child: must not take
-		c(4, "owner.0", 20, 10, 30), c(4, "s0.0", 21, 12, 29), c(4, "s1.0", 24, 16, 17), c(4, "name.0", 25, 16, 17),
-		c(5, "owner.0", 20, 10, 30), c(5, "s0.0", 21, 12, 29), c(5, "s1.0", 22, 13, 14), c(5, "name.0", 23, 13, 14),
-		c(6, "owner.0", 20, 10, 30), c(6, "s0.0", 30, 25, 28), c(6, "s1.0", 31, 26, 27), c(6, "name.0", 32, 26, 27),
-		c(7, "decl.1", 40, 31, 40), // class without a name
-		c(8, "decl.2", 45, 41, 49),
+		c(0, "decl.1", 10, 0, 9), // class with two name-field children: the first is the name
+		c(1, "c.1.1.0", 10, 0, 9), c(1, "c.1.1.1", 12, 6, 7),
+		c(2, "c.1.1.0", 10, 0, 9), c(2, "c.1.1.1", 13, 8, 9),
+		c(3, "decl.0", 20, 10, 30), // field: two declarators under the first declaration
+		c(4, "c.0.1.0", 20, 10, 30), c(4, "c.0.1.1", 21, 12, 24),
+		c(5, "c.0.1.0", 20, 10, 30), c(5, "c.0.1.1", 30, 25, 29), // a second declaration is not taken
+		c(6, "c.0.2.0", 20, 10, 30), c(6, "c.0.2.1", 21, 12, 24), c(6, "c.0.2.2", 22, 13, 14),
+		c(7, "c.0.2.0", 20, 10, 30), c(7, "c.0.2.1", 21, 12, 24), c(7, "c.0.2.2", 24, 16, 17),
+		c(8, "c.0.2.0", 20, 10, 30), c(8, "c.0.2.1", 30, 25, 29), c(8, "c.0.2.2", 31, 26, 27),
+		c(9, "c.0.3.0", 20, 10, 30), c(9, "c.0.3.1", 21, 12, 24), c(9, "c.0.3.2", 22, 13, 14), c(9, "c.0.3.3", 23, 13, 14),
+		c(10, "c.0.3.0", 20, 10, 30), c(10, "c.0.3.1", 21, 12, 24), c(10, "c.0.3.2", 24, 16, 17), c(10, "c.0.3.3", 25, 16, 17),
+		c(11, "c.0.3.0", 20, 10, 30), c(11, "c.0.3.1", 30, 25, 29), c(11, "c.0.3.2", 31, 26, 27), c(11, "c.0.3.3", 32, 26, 27),
+		c(12, "decl.1", 40, 31, 40), // class without a name, with an error
+		c(13, "decl.2", 45, 41, 49),
+		// a field whose first declaration has no named declarator: S05 stops there
+		c(14, "decl.0", 50, 50, 70),
+		c(15, "c.0.1.0", 50, 50, 70), c(15, "c.0.1.1", 51, 52, 55),
+		c(16, "c.0.1.0", 50, 50, 70), c(16, "c.0.1.1", 53, 56, 69),
+		c(17, "c.0.2.0", 50, 50, 70), c(17, "c.0.2.1", 53, 56, 69), c(17, "c.0.2.2", 54, 57, 58),
+		c(18, "c.0.3.0", 50, 50, 70), c(18, "c.0.3.1", 53, 56, 69), c(18, "c.0.3.2", 54, 57, 58), c(18, "c.0.3.3", 55, 57, 58),
 	}
-	for i := range caps { // the unnamed class has an error, which NAME_MISSING takes precedence over
+	for i := range caps {
 		caps[i].HasError = caps[i].Node == 40
 	}
 	got := DeriveDeclarations(items, caps)
@@ -116,6 +126,7 @@ func TestDeriveDeclarations(t *testing.T) {
 		{"field_declaration", 10, &ByteSpan{16, 17}, "PASS"},
 		{"class_declaration", 31, nil, "NAME_MISSING"},
 		{"indexer_declaration", 41, nil, "PASS"},
+		{"field_declaration", 50, nil, "NAME_MISSING"},
 	}
 	if len(got) != len(want) {
 		t.Fatalf("items %+v", got)

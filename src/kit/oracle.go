@@ -366,15 +366,20 @@ type OracleManifest struct {
 	ExecutionStatus string            `json:"execution_status"`
 	Assessment      string            `json:"assessment"`
 	Records         int               `json:"records"`
+	Cases           []string          `json:"cases"` // the profile's case ids in order
 	Members         []OracleMember    `json:"members"`
 	Complete        bool              `json:"complete"`
 }
 
-// OracleSetReport is the result of VerifyOracleSet.
+// OracleSetReport is the result of VerifyOracleSet. Valid means the set is complete and
+// intact; whether its run succeeded is ExecutionStatus and Assessment, so a valid set of a
+// failed run is a complete record of that failure, not a reference of passing results.
 type OracleSetReport struct {
-	Valid    bool      `json:"valid"`
-	Records  int       `json:"records"`
-	Findings []Finding `json:"findings"`
+	Valid           bool      `json:"valid"`
+	Records         int       `json:"records"`
+	ExecutionStatus string    `json:"execution_status"`
+	Assessment      string    `json:"assessment"`
+	Findings        []Finding `json:"findings"`
 }
 
 var memberPath = regexp.MustCompile(`^(records|raw)/[0-9]{5}-[A-Za-z0-9._-]{1,128}\.json$`)
@@ -399,8 +404,10 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		add(e.Code, e.Path, "manifest가 완결되지 않았거나 형식이 틀렸다")
 		return r
 	}
+	r.ExecutionStatus, r.Assessment = m.ExecutionStatus, m.Assessment
 	listed := map[string]bool{"manifest.json": true}
 	records := 0
+	perCase := map[string]int{}
 	for _, mem := range m.Members {
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		if !memberPath.MatchString(mem.Path) || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
@@ -419,13 +426,19 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		if mem.Role == "record" {
 			records++
+			perCase[mem.Case]++
 			if code := checkRecord(b, mem); code != "" {
 				add(code, mem.Path, "record가 완결되지 않았거나 member identity와 다르다")
 			}
 		}
 	}
-	if records != m.Records {
+	if records != m.Records || len(m.Cases) != m.Records {
 		add("RECORD_COUNT_MISMATCH", "manifest.json", "record 수가 manifest와 다르다")
+	}
+	for _, c := range m.Cases {
+		if perCase[c] != 1 {
+			add("CASE_RECORD_MISMATCH", "manifest.json", "사례마다 record가 정확히 하나여야 한다: "+c)
+		}
 	}
 	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -448,7 +461,7 @@ func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
 	if e != nil {
 		return e
 	}
-	keys := []string{"schema", "workload", "producer", "policy", "protocol", "comparators", "queries", "fact_pack", "execution_status", "assessment", "records", "members", "complete"}
+	keys := []string{"schema", "workload", "producer", "policy", "protocol", "comparators", "queries", "fact_pack", "execution_status", "assessment", "records", "cases", "members", "complete"}
 	mm, e := t.object(v, keys)
 	if e != nil {
 		return e
@@ -462,11 +475,41 @@ func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
 	} else if s != OracleManifestSchema {
 		return t.bad("SCHEMA_UNSUPPORTED", mm["schema"])
 	}
+	for _, k := range []string{"workload", "producer"} {
+		obj, e := t.object(mm[k], mm[k].keys)
+		if e != nil {
+			return e
+		}
+		for _, v := range obj {
+			if _, e := t.str(v); e != nil {
+				return e
+			}
+		}
+	}
+	for _, f := range []struct {
+		dst  *string
+		name string
+	}{{&m.Protocol, "protocol"}, {&m.ExecutionStatus, "execution_status"}, {&m.Assessment, "assessment"}} {
+		if *f.dst, e = t.str(mm[f.name]); e != nil {
+			return e
+		}
+	}
 	n, e := t.uint(mm["records"])
 	if e != nil {
 		return e
 	}
 	m.Records = int(min(n, 1<<31))
+	ids, e := t.array(mm["cases"])
+	if e != nil {
+		return e
+	}
+	for _, iv := range ids {
+		s, e := t.str(iv)
+		if e != nil {
+			return e
+		}
+		m.Cases = append(m.Cases, s)
+	}
 	list, e := t.array(mm["members"])
 	if e != nil {
 		return e

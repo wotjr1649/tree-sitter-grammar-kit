@@ -15,7 +15,7 @@ func oracleSet(t *testing.T) (fstest.MapFS, OracleManifest) {
 		`","bytes":6},"execution_status":"COMPLETED","steps":[{"step":0,"source_bytes":6,"source_sha256":"` + in + `"}],"complete":true}` + "\n")
 	raw := []byte(`{"protocol":"tsgk-native/r2"}`)
 	m := OracleManifest{Schema: OracleManifestSchema, Workload: map[string]string{"profile_id": "w"}, Producer: map[string]string{}, Protocol: "tsgk-native/r2",
-		Comparators: []string{}, Queries: []IdentityRef{}, ExecutionStatus: StatusCompleted, Assessment: AssessPass, Records: 1, Complete: true,
+		Comparators: []string{}, Queries: []IdentityRef{}, ExecutionStatus: StatusCompleted, Assessment: AssessPass, Records: 1, Cases: []string{"c1"}, Complete: true,
 		Members: []OracleMember{
 			{Path: "raw/00000-c1.json", Role: "raw", Case: "c1", Bytes: uint64(len(raw)), SHA256: digestHex(raw), InputBytes: 6, InputSHA256: in, ExecutionStatus: StatusCompleted},
 			{Path: "records/00000-c1.json", Role: "record", Case: "c1", Bytes: uint64(len(rec)), SHA256: digestHex(rec), InputBytes: 6, InputSHA256: in, ExecutionStatus: StatusCompleted},
@@ -94,6 +94,20 @@ func TestVerifyOracleSet(t *testing.T) {
 			c["manifest.json"].Data = manifestBytes(t, mm)
 			return c
 		}(), "RECORD_COUNT_MISMATCH"},
+		"case-without-record": {func() fstest.MapFS {
+			// record and raw dropped together with the record count: the case list still names c2
+			c := clone()
+			mm := m
+			mm.Cases = []string{"c1", "c2"}
+			mm.Records = 2
+			c["manifest.json"].Data = manifestBytes(t, mm)
+			return c
+		}(), "RECORD_COUNT_MISMATCH"},
+		"manifest-value-type": {func() fstest.MapFS {
+			c := clone()
+			c["manifest.json"].Data = bytes.Replace(c["manifest.json"].Data, []byte(`"execution_status":"COMPLETED"`), []byte(`"execution_status":1`), 1)
+			return c
+		}(), "JSON_TYPE"},
 		"record-incomplete": {rebind(bytes.Replace(recData, []byte(`,"complete":true}`), []byte(`}`), 1)), "RECORD_INCOMPLETE"},
 		"record-input":      {rebind(bytes.Replace(recData, []byte(`"bytes":6`), []byte(`"bytes":7`), 1)), "RECORD_INPUT_MISMATCH"},
 		"record-step":       {rebind(bytes.Replace(recData, []byte(`"source_bytes":6`), []byte(`"source_bytes":5`), 1)), "RECORD_STEP_MISMATCH"},
