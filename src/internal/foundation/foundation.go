@@ -51,6 +51,9 @@ var required = []string{
 	"src/dev/prepare-p05/remedy-r2.json",
 	"src/dev/prepare-p05/remedy-csharp-r5.json",
 	"src/dev/prepare-p05/remedy-expectation-amendments-r1.json",
+	"src/kit/kit.go", "src/cmd/tsgk/main.go",
+	"src/testdata/consumer/main.go", "src/testdata/consumer/go.mod.tmpl",
+	"docs/reports/session-01-inventory-identity.md",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}
