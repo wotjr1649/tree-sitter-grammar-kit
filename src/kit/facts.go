@@ -156,26 +156,36 @@ func parseFactPack(data []byte) (FactPack, *Error) {
 }
 
 // DeclarationQuery generates the declaration query of a pack route from its items. Per item
-// i the declaration node is @decl.i and, unless the locator is "node", for every prefix of
-// the locator path (depth d = 1..len) one nested pattern captures the owner as @c.i.d.0
-// and the node at each level k as @c.i.d.k. The last level of a pattern takes any node
-// (field: F as "F: _", child/children: T as "(T)"), so the first candidate of a level is
-// chosen whether or not deeper levels exist below it. The pack stores the generated text;
-// this function is its reproducible origin.
+// i the declaration node is @c.i.0.0. Unless the locator is "node", a pattern is emitted
+// for every depth d whose level takes a first candidate (field:, child:) and for the last
+// depth; it captures the consecutive levels from the previous emitted depth to d as
+// @c.i.d.k, so each adjacent pair is a parent-to-candidate edge. The last level of a
+// pattern takes any node (field: F as "F: _"), so a first candidate is captured whether or
+// not deeper levels exist below it; children: levels are only needed through the deeper
+// names they lead to. A node has one parent, so an edge identifies its path. The pack
+// stores the generated text; this function is its reproducible origin.
 func DeclarationQuery(items []NativeDeclaration) string {
 	var b strings.Builder
 	for i, d := range items {
 		n := strconv.Itoa(i)
-		b.WriteString("(" + d.Node + ") @decl." + n + "\n")
+		b.WriteString("(" + d.Node + ") @c." + n + ".0.0\n")
 		if d.Name == "node" {
 			continue
 		}
 		segs := splitPath(d.Name)
+		prev := 0
 		for depth := 1; depth <= len(segs); depth++ {
+			if depth < len(segs) && strings.HasPrefix(segs[depth-1], "children:") {
+				continue
+			}
 			pre := "@c." + n + "." + strconv.Itoa(depth) + "."
 			inner := ""
 			for k := depth - 1; k >= 0; k-- {
 				kind, arg, _ := strings.Cut(segs[k], ":")
+				capture := ""
+				if k+1 >= prev && k+1 > 0 {
+					capture = " " + pre + strconv.Itoa(k+1)
+				}
 				node := "(" + arg + inner + ")"
 				if kind == "field" {
 					node = arg + ": _"
@@ -183,9 +193,14 @@ func DeclarationQuery(items []NativeDeclaration) string {
 						node = arg + ": (_" + inner + ")"
 					}
 				}
-				inner = " " + node + " " + pre + strconv.Itoa(k+1)
+				inner = " " + node + capture
 			}
-			b.WriteString("(" + d.Node + inner + ") " + pre + "0\n")
+			owner := ""
+			if prev == 0 {
+				owner = " " + pre + "0"
+			}
+			b.WriteString("(" + d.Node + inner + ")" + owner + "\n")
+			prev = depth
 		}
 	}
 	return b.String()
@@ -210,56 +225,60 @@ type ByteSpan struct {
 // DeriveDeclarations reproduces the S05 declaration structure items from the captures of
 // the pack's declaration query, following the S05 locator walk: from the declaration node,
 // each level takes, below every current node, the first candidate (field:F, child:T) or
-// every candidate (children:T) in document order, where the candidates of a level are the
-// nodes the depth-k patterns captured below that node; a level without a candidate ends the
-// walk. One item per name in document order; NAME_MISSING without a name; HAS_ERROR when
-// the declaration node has an error; items in declaration-node preorder, then item order.
+// every candidate (children:T) in document order; a level without a candidate ends the walk.
+// One item per name in document order; NAME_MISSING without a name; HAS_ERROR when the
+// declaration node has an error; items in declaration-node preorder, then item order.
 func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []DeclarationItem {
-	decl := map[int]map[int64]Capture{} // item -> node -> capture
-	// item -> depth -> chains (level 0 owner .. level depth)
-	chains := map[int]map[int][][]Capture{}
+	type edge struct {
+		item, level int
+		parent      int64
+	}
+	decl := map[int]map[int64]Capture{} // item -> declaration node -> capture
+	cands := map[edge][]Capture{}       // candidates below a parent at a level
 	matches := map[uint32][]Capture{}
 	for _, c := range caps {
-		parts := strings.Split(c.Name, ".")
-		switch {
-		case len(parts) == 2 && parts[0] == "decl":
-			i, err := strconv.Atoi(parts[1])
-			if err != nil || i < 0 || i >= len(items) {
-				continue
-			}
-			if decl[i] == nil {
-				decl[i] = map[int64]Capture{}
-			}
-			decl[i][c.Node] = c
-		case len(parts) == 4 && parts[0] == "c":
+		if strings.HasPrefix(c.Name, "c.") {
 			matches[c.Match] = append(matches[c.Match], c)
 		}
 	}
 	for _, mc := range matches {
-		var item, depth = -1, -1
-		levels := map[int]Capture{}
+		lv := map[int]Capture{}
+		item, depth := -1, -1
+		ok := true
 		for _, c := range mc {
 			parts := strings.Split(c.Name, ".")
+			if len(parts) != 4 {
+				ok = false
+				break
+			}
 			i, e1 := strconv.Atoi(parts[1])
 			d, e2 := strconv.Atoi(parts[2])
 			k, e3 := strconv.Atoi(parts[3])
-			if e1 != nil || e2 != nil || e3 != nil || i < 0 || i >= len(items) || k < 0 || k > d || (item >= 0 && (i != item || d != depth)) {
-				item = -2
+			if e1 != nil || e2 != nil || e3 != nil || i < 0 || i >= len(items) || k > d || (item >= 0 && (i != item || d != depth)) {
+				ok = false
 				break
 			}
-			item, depth, levels[k] = i, d, c
+			item, depth, lv[k] = i, d, c
 		}
-		if item < 0 || len(levels) != depth+1 {
+		if !ok || item < 0 {
 			continue
 		}
-		ch := make([]Capture, depth+1)
-		for k := range ch {
-			ch[k] = levels[k]
+		if depth == 0 {
+			if decl[item] == nil {
+				decl[item] = map[int64]Capture{}
+			}
+			decl[item][lv[0].Node] = lv[0]
+			continue
 		}
-		if chains[item] == nil {
-			chains[item] = map[int][][]Capture{}
+		// every adjacent pair of captured levels is a parent-to-candidate edge
+		for k := 1; k <= depth; k++ {
+			p, hp := lv[k-1]
+			c, hc := lv[k]
+			if hp && hc {
+				e := edge{item, k, p.Node}
+				cands[e] = append(cands[e], c)
+			}
 		}
-		chains[item][depth] = append(chains[item][depth], ch)
 	}
 	type key struct {
 		node int64
@@ -285,27 +304,17 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			continue
 		}
 		segs := splitPath(d.Name)
-		// cur holds the walked paths (node chains from the owner) at the current level
-		cur := [][]Capture{{c}}
+		cur := []Capture{c}
 		for lv := 1; lv <= len(segs) && len(cur) > 0; lv++ {
-			var next [][]Capture
-			for _, path := range cur {
-				var cands [][]Capture
-				for _, ch := range chains[k.item][lv] {
-					same := true
-					for j := range path {
-						same = same && ch[j].Node == path[j].Node
-					}
-					if same {
-						cands = append(cands, ch)
-					}
+			var next []Capture
+			for _, p := range cur {
+				cs := slices.Clone(cands[edge{k.item, lv, p.Node}])
+				slices.SortFunc(cs, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+				cs = slices.CompactFunc(cs, func(a, b Capture) bool { return a.Node == b.Node })
+				if len(cs) > 0 && !strings.HasPrefix(segs[lv-1], "children:") {
+					cs = cs[:1]
 				}
-				slices.SortFunc(cands, func(a, b []Capture) int { return cmp.Compare(a[lv].Node, b[lv].Node) })
-				cands = slices.CompactFunc(cands, func(a, b []Capture) bool { return a[lv].Node == b[lv].Node })
-				if len(cands) > 0 && !strings.HasPrefix(segs[lv-1], "children:") {
-					cands = cands[:1]
-				}
-				next = append(next, cands...)
+				next = append(next, cs...)
 			}
 			cur = next
 		}
@@ -314,12 +323,8 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			out = append(out, item)
 			continue
 		}
-		names := make([]Capture, 0, len(cur))
-		for _, p := range cur {
-			names = append(names, p[len(p)-1])
-		}
-		slices.SortFunc(names, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
-		for _, n := range names {
+		slices.SortFunc(cur, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+		for _, n := range cur {
 			it := item
 			it.Name = &ByteSpan{n.StartByte, n.EndByte}
 			out = append(out, it)
@@ -467,10 +472,10 @@ func unquote(s string) string {
 // captures of the pack's dynamic SQL query and the tree's source bytes in their encoding
 // (UTF-8, UTF-16LE/BE or CP949; text is compared after decoding, ranges stay original
 // bytes). Facts are in document order of their site; tsql known misses are reported with
-// their ranges. Extra nodes (comments) are never a construct part or an argument.
+// their ranges. Comments (extra nodes that are not ERROR) are never a construct part or an
+// argument.
 func DeriveDynamicSQL(route, enc string, caps []Capture, srcBytes []byte) DynamicSQLFacts {
 	src := srcText{srcBytes, enc}
-	caps = slices.DeleteFunc(slices.Clone(caps), func(c Capture) bool { return c.Extra })
 	x := indexCaptures(caps)
 	out := DynamicSQLFacts{Mapping: "dynamic-sql-r1", Items: []DynamicSQLFact{}, KnownMisses: []KnownMiss{}, Unlisted: []string{}}
 	switch route {
@@ -490,6 +495,9 @@ func fact(construct, kind string, arg Capture, variable *string, heuristic bool)
 
 func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 	children := x.childrenOf("exec.parent", "exec.child")
+	for k, list := range children { // comments (extra, not ERROR) are never construct parts
+		children[k] = slices.DeleteFunc(list, func(c Capture) bool { return c.Extra && !c.IsError })
+	}
 	procs := map[int64]Capture{}
 	for _, pc := range x.pairs("proc.exec", "proc") {
 		procs[pc[0].Node] = pc[1]
@@ -679,7 +687,9 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 	}
 	argExpr := map[int64]Capture{} // argument -> its last named child (the expression)
 	for _, pc := range x.pairs("arg", "arg.expr") {
-		argExpr[pc[0].Node] = pc[1]
+		if !pc[1].Extra {
+			argExpr[pc[0].Node] = pc[1]
+		}
 	}
 	kind := func(v Capture) (string, *string) {
 		switch v.Type {
