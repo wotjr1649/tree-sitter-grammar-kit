@@ -27,6 +27,10 @@ func alive(pid int) bool {
 	return code == 259 // STILL_ACTIVE
 }
 
+// ownGroup is true on Windows: detachAttr's CREATE_NEW_PROCESS_GROUP is the only grouping,
+// and the job still holds the process.
+func ownGroup() bool { return true }
+
 func killPID(pid int) {
 	if h, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, uint32(pid)); err == nil {
 		windows.TerminateProcess(h, 1)

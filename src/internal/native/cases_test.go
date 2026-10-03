@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -473,11 +474,26 @@ func TestLimitsAndCancellation(t *testing.T) {
 	t.Run("cancellation", func(t *testing.T) {
 		req := baseRequest(repeatSource("a = f(1, [2, 3], (4));\n", 1400000), "real-world-source-r2")
 		req.Output = kit.OutputAuto
+		// The caller cancels a running driver that has read all but the last request byte and
+		// waits for it, so it cannot answer first; a timer raced the parse time (#65). The
+		// spec is Exec's, made interactive to hold back that byte.
+		if err := b.Verify(); err != nil {
+			t.Fatal(err)
+		}
+		op, frame := kit.NativeOperations()["real-world-source-r2"], Frame(req.Encode())
 		ctx, cancel := context.WithCancel(context.Background())
-		time.AfterFunc(300*time.Millisecond, cancel)
-		res, err := b.Exec(ctx, "single", Frame(req.Encode()), 90*time.Second, kit.NativeOperations()["real-world-source-r2"], os.Getenv("TSGK_CGROUP_PARENT"))
-		if err != nil || res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
-			t.Fatalf("cancel: %v %s %+v", err, res.Status, res.Cleanup)
+		defer cancel()
+		p, err := runner.Start(ctx, runner.Spec{Path: b.Executable, Args: []string{"single"}, Dir: b.Dir, Interactive: true,
+			StdoutBytes: int64(op.OutputBytes) + 4, StderrBytes: 65536, Wall: 90 * time.Second, Grace: 5 * time.Second,
+			Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, werr := p.Stdin().Write(frame[:len(frame)-1])
+		cancel()
+		res := p.Wait() // also on a failed write, so the backend is released
+		if werr != nil || res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
+			t.Fatalf("cancel: %v %s %+v", werr, res.Status, res.Cleanup)
 		}
 	})
 	t.Run("deep-nesting", func(t *testing.T) {

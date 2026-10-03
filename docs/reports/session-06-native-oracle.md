@@ -184,6 +184,52 @@ PR #67 run 37141714979(head `a78d5cc`)에서 foundation windows-2025만 실패�
   * 전체 mutant 27/27(`76db754`). CI 방식 foundation step은 `76db754`와 `8ec1767`에서 exit 0이다.
 * 분리 리뷰 r5·r6에서 MINOR 1건(실제 timer 경로의 시험 부재)과 NOTE 4건이 나왔다. 범위 밖으로 기록만 한 R5-n3(native·runner의 여유 큰 시간 가정)을 빼고 모두 처분했다. r7(STATIC)은 R6-n1을 RESOLVED로 확인했다. 함께 지적한 보고서 서술 세 곳(R7-1~3: mutant 생존 시점, 반복 횟수의 근거, CI 결과의 출처)은 이 절에서 고쳤다.
 
+## post-merge CI 실패와 수정 (#65)
+
+merge commit `8b93110`의 post-merge run 37145206819(attempt 1)에서 foundation macos-15만 실패했다. orchestrator 보고와 그가 저장한 로그(`.work/orchestrator/ci-37145206819-failed.log`)에 따르면 ubuntu·windows foundation은 통과했고 native job은 건너뛰었다. 실패한 시험은 `src/internal/runner` `TestEscapedQuietDescendant`이고, 0.23초 만에 "expected the documented limitation: escaped pid 3856 already gone"으로 끝났다. 같은 tree가 PR run 37143724041의 macOS에서는 통과했다.
+
+* 원인(시험 결함, 분리 리뷰 r8이 정적으로 특정):
+  * escapee pid는 두 번 기록된다. helper의 `spawnIO`가 한 번, escapee(`sleep` mode)가 자기 pid를 한 번 기록한다.
+  * 이전 판정 loop는 pid마다 `alive(pid)`를 본 뒤 바로 `killPID(pid)`를 했다. 그래서 두 번째 항목에서 방금 SIGKILL한 같은 pid를 다시 probe했다. 그 사이 macOS에서 escapee가 zombie가 되거나 회수되면 `alive`가 false가 되어 "already gone"으로 실패한다. kill 신호가 처리되는 시점에 따라 결과가 달라지므로 간헐적이다.
+  * 0.23초는 helper의 200 ms sleep과 맞는다. Linux CI(cgroup)와 Windows(Job Object)는 이 loop에 이르지 않는다. `TestEscapedDescendant`는 probe 없이 kill만 하므로 이 문제가 없다.
+  * orchestrator 가설("escapee가 group을 떠나기 전에 runner가 group을 끝낸다")은 Go 소스로 확인한 결과 성립하지 않는다. darwin의 `forkAndExecInChild`(`syscall/exec_libc2.go`)는 exec 전에 `setsid`를 부른다. `forkExec`(`syscall/exec_unix.go`)는 exec 성공(CLOEXEC pipe의 EOF)을 확인한 뒤에야 돌아온다. 그래서 helper의 `cmd.Start`가 돌아온 시점에 escapee는 이미 group 밖에 있다.
+  * macOS에서 재현하지는 않았다. 로컬은 Windows뿐이다.
+* 수정: 판정은 probe 대신 handshake를 쓴다.
+  * escapee(새 helper mode `escapee`)는 `.ready`를 만들고, helper는 그것을 본 뒤에만 끝난다(최대 20초, 넘으면 exit 69). posix에서는 escapee가 그 전에 자기 group의 leader인지(`Getpgrp() == Getpid()`) 확인한다. Windows에서는 group 확인이 없다(`ownGroup`이 항상 true). 시험은 run이 `COMPLETED`/exit 0인지 먼저 확인한다.
+  * NOT_CONTAINED 증명은 ping/pong이다. run이 끝난 뒤 시험이 `.ping`을 쓰고, escapee는 그 ping을 본 경우에만 `.pong`을 쓴다. 살아 있는 process만 답할 수 있으므로 runner가 escapee를 끝내지 않았다는 증거다. 답이 20초 안에 없으면 실패한다. escapee는 `t.Cleanup`에서 끝내므로 실패 경로에서도 남지 않는다. 중복 기록된 pid는 그대로 두었고, 이제는 해가 없다.
+  * Job Object·cgroup backend의 판정(`requireDead`)과 `Scope=PROCESS_GROUP` 검사는 그대로다.
+* 함께 고친 #65 사례:
+  * 300 ms + 200 ms 정책 frame 사례(`TestFrameStatusMapping`의 small policy 사례, `tail`, `request-cap`, `TestFrameEscapedStdoutHolder`): runner에 비공개 시험 hook `testHookBatchStarted`를 두었다. 시험은 이 hook에서 frame helper가 `.ready`를 만들 때까지 기다린다. 그래서 첫 frame의 watchdog에 helper 시작 시간이 들어가지 않는다.
+  * `TestFrameEscapedStdoutHolder`의 stdout holder는 helper가 `.ready` 전에 만든다. 이전에는 frame 1의 watchdog 안에서 만들었다. 시험은 holder pid가 기록됐는지도 확인한다.
+  * `batch-wall`: 비공개 시험 hook `testHookWall`은 실제 wall timer가 울린 뒤, wall을 기록하기 전에 실행된다. 시험은 frame 2가 helper에 도착했다는 `.at`을 볼 때까지 wall 기록을 미룬다. 그래서 frame 0·1이 끝나기 전에 wall이 기록되지 않는다. timer 경로 자체는 그대로 쓴다.
+  * native `TestLimitsAndCancellation/cancellation`: `Exec`와 같은 spec을 interactive로 시작한다. 요청 frame의 마지막 1 byte만 빼고 쓴 뒤 취소한다. 그 시점의 driver는 요청을 거의 다 읽고 남은 byte를 기다리는 실행 중 상태라 먼저 답할 수 없다. 단언(`CANCELLED`, cleanup `Verified`)은 그대로다. 다만 `Exec` 함수 자체 대신 그 spec의 사본을 쓴다.
+  * 두 hook 모두 nil이면 제품 경로는 이전과 같다. runner·driver 상한과 기대값은 바꾸지 않았다.
+* 같은 종류의 가정을 runner·native 시험 전체에서 정적으로 점검했다. 고친 것은 다음 두 가지다.
+  * `TestTreeTermination`: wall 1.5초 또는 취소 전에 3단계 tree가 모두 시작해야 했다. 지금은 만료(wall hook 또는 취소)가 기록된 pid 3개를 기다린다. 만료가 시작 뒤 1.5초 + 5초 안에 오는지(이전 상한과 같은 여유), 종료가 만료 뒤 grace + 5초 안에 끝나는지를 따로 확인한다.
+  * `TestPipeHoldingDescendant`(`orphan`): 200 ms 안에 손자가 시작해야 했다. 지금은 helper가 손자의 pid 기록을 기다린 뒤 끝난다.
+* 고치지 않고 이름만 남기는 여유는 다음과 같다.
+  * small policy의 frame 1·2 응답: process 시작이 없는 왕복 하나에 500 ms.
+  * `own-memory`: 표본 메모리 관측에 frame watchdog 20초.
+  * `TestFrameCrashWithStdoutHolder`(10초)·`TestFrameEscapedStdoutHolder`(15초)·`TestPipeHoldingDescendant`(15초)의 hang 감지 상한. run 37145206819의 macOS에서 실제 소요는 2.53초 이하였다.
+  * native `parse-timeout`: 4.6 MB parse가 `ParseMillis` 1 ms보다 오래 걸린다고 가정한다. 전체 parse 시간은 따로 재지 않았다.
+  * native `TestQueryLimits/time`: 약 60 KB 입력의 query가 `QueryMillis` 1 ms를 넘는다고 가정한다. driver는 정수 ms로 `now - start > limit`을 보므로 실제로는 2 ms 이상 걸려야 한다. 여유는 재지 않았고 위의 `parse-timeout`보다 작다.
+  * `requireDead`: 종료 뒤 5초.
+* commit: `f603cdc`, `ee36047`, `9aa971b`, 리뷰 수정 `e168458`, `2f95de7`, `a6f0a9e`.
+* 검증(Windows amd64 로컬, Job Object backend):
+  * 반복: 영향받은 runner 시험 7개(`TestTreeTermination`, `TestPipeHoldingDescendant`, `TestEscapedDescendant`, `TestEscapedQuietDescendant`, `TestFrameEscapedStdoutHolder`, `TestFrameCrashWithStdoutHolder`, `TestFrameStatusMapping`)를 `-count=100 -failfast`로 `ee36047`(662초)과 `2f95de7`(658초)에서 돌렸고 모두 통과했다. native `TestLimitsAndCancellation/cancellation`은 `a6f0a9e`에서 100회 통과했다(`.work/session-06-postmerge/repeat100-*.log`).
+  * targeted mutant: `2f95de7`에서 10/10을 검출했다(`.work/session-06-postmerge/mutants-2f95de7.json`). 검출한 mutant는 다음과 같다.
+    * wall timer 10배 지연, wall을 취소로 기록, 취소 무시(runner 시험과 native 시험 각각), 잔여 descendant 미종료, Job 종료 no-op
+    * frame watchdog 제거(두 시험), batch wall을 `FAILED`로 기록, batch wall 무시
+    * native 취소 무시 mutant는 90초 wall에서야 끝났다. driver가 남은 1 byte를 기다리며 실행 중이었다는 뜻이다.
+    * `a6f0a9e`는 쓰기 실패 경로만 바꿨고 mutant를 다시 돌리지 않았다.
+  * CI 방식 foundation step(`형식과 foundation 검사`, `TSGK_NATIVE_REQUIRED=1`): `a6f0a9e`에서 exit 0, 119초였다. skip 목록은 S06 때의 harness 실행과 같다. 그 밖에 `go vet`(windows·`GOOS=linux`·`GOOS=darwin`), `gofmt`, `go build`, `git diff --check`가 통과했다.
+  * 실행하지 못한 것: macOS·Linux(process-group, cgroup) 실행, `-race`. NOT_CONTAINED 분기는 macOS CI에서만 실행된다.
+* 분리 context 리뷰:
+  * r8(STATIC): MATERIAL 1, MINOR 2, NOTE 3.
+    * MATERIAL은 만료 시점부터만 재면 늦은 wall을 놓친다는 지적이었다.
+    * MINOR 2건은 원인 미특정과 사전 취소로 인한 의미 축소였다.
+  * r9(STATIC): 6건 모두 RESOLVED로 확인했다. 새로 나온 NOTE 1건(쓰기 실패 시 runner 미정리)은 `a6f0a9e`에서 고쳤다. 그 수정은 다시 리뷰받지 않았다.
+
 ## 남은 일과 한계
 
 * 세 OS CI(foundation, native prepare, native routes 세 job, Linux sanitizer), PR·merge·post-merge는 이 세션 범위 밖이며 orchestrator가 한다.
