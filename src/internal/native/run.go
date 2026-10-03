@@ -129,16 +129,44 @@ type Comparison struct {
 	First *kit.TreeDifference `json:"first_difference"`
 }
 
+// SvcInline is the inline C# part of a composite: its included ranges and tree.
+type SvcInline struct {
+	IncludedRanges []kit.Span    `json:"included_ranges"`
+	Tree           *TreeEnvelope `json:"tree"`
+}
+
+// SvcComposite is the tsgk-svc-composite/r1 record of one step.
+type SvcComposite struct {
+	Schema     string             `json:"schema"`
+	Format     string             `json:"format"`
+	Input      TreeInput          `json:"input"`
+	Identities []kit.IdentityRef  `json:"identities"`
+	Directive  *kit.SvcDirective  `json:"directive"`
+	Language   kit.SvcLanguage    `json:"language"`
+	CodeBehind *kit.SvcCodeBehind `json:"code_behind"`
+	Inline     *SvcInline         `json:"inline"`
+	Coverage   kit.SvcCoverage    `json:"coverage"`
+}
+
+func composite(o kit.SvcObservation, in TreeInput, ids []kit.IdentityRef, tree *TreeEnvelope) *SvcComposite {
+	c := &SvcComposite{Schema: kit.SvcCompositeSchema, Format: kit.SvcFormat, Input: in, Identities: ids, Directive: o.Directive, Language: o.Language, CodeBehind: o.CodeBehind, Coverage: o.Coverage}
+	if o.IncludedRanges != nil {
+		c.Inline = &SvcInline{IncludedRanges: o.IncludedRanges, Tree: tree}
+	}
+	return c
+}
+
 // StepResult is one step of a case.
 type StepResult struct {
-	Step         int         `json:"step"`
-	SourceBytes  uint64      `json:"source_bytes"`
-	SourceSHA256 string      `json:"source_sha256"`
-	Edit         *StepEdit   `json:"edit"`
-	Route        *RouteOut   `json:"route"`
-	Comparison   *Comparison `json:"comparison"`
-	Incremental  TreeOut     `json:"incremental"`
-	Fresh        *TreeOut    `json:"fresh"`
+	Composite    *SvcComposite `json:"composite,omitempty"`
+	Step         int           `json:"step"`
+	SourceBytes  uint64        `json:"source_bytes"`
+	SourceSHA256 string        `json:"source_sha256"`
+	Edit         *StepEdit     `json:"edit"`
+	Route        *RouteOut     `json:"route"`
+	Comparison   *Comparison   `json:"comparison"`
+	Incremental  TreeOut       `json:"incremental"`
+	Fresh        *TreeOut      `json:"fresh"`
 }
 
 // ExpectationResult is one evaluated expectation.
@@ -172,6 +200,7 @@ type Context struct {
 	Route        string
 	Output       string
 	Declarations *kit.Declarations
+	Format       string
 	CgroupParent string
 	PolicyRef    kit.IdentityRef
 }
@@ -218,6 +247,29 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		return notRun(kit.StatusNotRun, kit.AssessNotAssessed, ke.Code)
 	}
 	req := x.request(c, source)
+	var svc []kit.SvcObservation
+	if x.Format == kit.SvcFormat {
+		for _, v := range versions {
+			svc = append(svc, kit.ObserveServiceHost(c.Encoding, v))
+		}
+		for _, o := range svc {
+			req.Ranges = append(req.Ranges, o.IncludedRanges)
+		}
+		if slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { return o.IncludedRanges == nil }) {
+			// No C# inline code to parse in some step: the composite is the directive
+			// observation alone and no driver process runs.
+			for k, o := range svc {
+				sum := sha256.Sum256(versions[k])
+				in := TreeInput{Bytes: uint64(len(versions[k])), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
+				out.Steps = append(out.Steps, StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)})
+			}
+			out.ExecutionStatus, out.Assessment = kit.StatusCompleted, kit.AssessPass
+			if svc[0].IncludedRanges != nil || len(c.Expect) > 0 {
+				out.Assessment, out.Code = kit.AssessBlocked, "SVC_INLINE_NOT_PARSED"
+			}
+			return out
+		}
+	}
 	payload := req.Encode()
 	if len(payload) > MaxRequestFrame {
 		return notRun(kit.StatusResourceLimit, kit.AssessBlocked, "REQUEST_TOO_LARGE")
@@ -270,6 +322,9 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		if cs.Fresh != nil {
 			f := x.treeOut(*cs.Fresh, in, ids, c.Points)
 			sr.Fresh = &f
+		}
+		if svc != nil {
+			sr.Composite = composite(svc[k], in, ids, sr.Incremental.Tree)
 		}
 		if cs.Step.Route != nil {
 			r := RouteOut{Route: *cs.Step.Route}

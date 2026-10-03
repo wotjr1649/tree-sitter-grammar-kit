@@ -283,6 +283,8 @@ func TestFrames(t *testing.T) {
 		"too-many-edits":   {Frame(manyEdits(5)), "EDIT_COUNT_LIMIT"},
 		"locator":          {Frame(declRequest("field:")), "LOCATOR_INVALID"},
 		"encoding-unknown": {Frame(bytes.Replace(valid, []byte(`"UTF-8"`), []byte(`"UTF-32"`), 1)), "ENCODING_UNSUPPORTED"},
+		"ranges-count":     {Frame(rangeRequest(2, 1)), "RANGES_INVALID"},
+		"ranges-outside":   {Frame(rangeRequest(1, 99)), "RANGES_INVALID"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			res, resp, err := rawExec(t, b, tc.stdin, "native-parse-edit")
@@ -343,6 +345,14 @@ func TestFrames(t *testing.T) {
 			t.Errorf("%s: malformed response accepted", name)
 		}
 	}
+}
+
+func rangeRequest(steps int, end uint32) []byte {
+	r := baseRequest("a = 1;", "native-parse-edit")
+	for i := 0; i < steps; i++ {
+		r.Ranges = append(r.Ranges, []kit.Span{{StartByte: 0, EndByte: end, EndPoint: kit.Point{Column: end}}})
+	}
+	return r.Encode()
 }
 
 func editRequest() []byte {

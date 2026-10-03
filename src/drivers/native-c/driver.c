@@ -42,6 +42,7 @@ const TSLanguage *tsgk_language(void);
 #define MAX_EDITS 4
 #define MAX_DECLS 64
 #define MAX_POINTS 64
+#define MAX_RANGES 16
 #define MAX_TEXT 128
 
 enum { ENC_UTF8, ENC_UTF16LE, ENC_UTF16BE, ENC_CP949 };
@@ -250,6 +251,9 @@ typedef struct {
   int ndecls;
   Point points[MAX_POINTS];
   int npoints;
+  TSRange ranges[MAX_EDITS + 1][MAX_RANGES];
+  int nranges[MAX_EDITS + 1];
+  int nsteps_ranges;
   uint8_t *source;
   uint32_t source_len;
   Edit edits[MAX_EDITS];
@@ -413,6 +417,30 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
     p->byte = (uint32_t)v;
     lit(&c, "}");
   }
+  /* Included ranges per step (SVC-SERVICEHOST-r1 inline code): [] or one list per step. */
+  lit(&c, "],\"ranges\":[");
+  while (!c.err && !peek(&c, ']')) {
+    if (r->nsteps_ranges && !lit(&c, ",")) break;
+    if (r->nsteps_ranges == MAX_EDITS + 1) return "RANGES_INVALID";
+    int k = r->nsteps_ranges++;
+    lit(&c, "[");
+    while (!c.err && !peek(&c, ']')) {
+      if (r->nranges[k] && !lit(&c, ",")) break;
+      if (r->nranges[k] == MAX_RANGES) return "RANGES_INVALID";
+      TSRange *g = &r->ranges[k][r->nranges[k]++];
+      uint64_t v[6];
+      lit(&c, "{\"start_byte\":"); v[0] = num(&c);
+      lit(&c, ",\"end_byte\":"); v[1] = num(&c);
+      lit(&c, ",\"start_point\":["); v[2] = num(&c);
+      lit(&c, ","); v[3] = num(&c);
+      lit(&c, "],\"end_point\":["); v[4] = num(&c);
+      lit(&c, ","); v[5] = num(&c);
+      lit(&c, "]}");
+      for (int i = 0; i < 6; i++) if (v[i] > UINT32_MAX) return "RANGES_INVALID";
+      *g = (TSRange){{(uint32_t)v[2], (uint32_t)v[3]}, {(uint32_t)v[4], (uint32_t)v[5]}, (uint32_t)v[0], (uint32_t)v[1]};
+    }
+    lit(&c, "]");
+  }
   lit(&c, "],\"source\":");
   if (c.err) return c.err;
   r->source = b64(&c, r->input_bytes, &r->source_len);
@@ -560,6 +588,30 @@ static const char *apply_edits(Req *r, Src *v) {
     if (b) return b;
   }
   return NULL;
+}
+
+/* Included ranges: none, or one non-empty ordered list per step inside that step's source
+ * with points equal to the driver's own computation. */
+static const char *check_ranges(Req *r, Src *v) {
+  if (!r->nsteps_ranges) return NULL;
+  if (r->nsteps_ranges != r->nedits + 1) return "RANGES_INVALID";
+  for (int k = 0; k < r->nsteps_ranges; k++) {
+    if (!r->nranges[k]) return "RANGES_INVALID";
+    uint32_t prev = 0;
+    for (int i = 0; i < r->nranges[k]; i++) {
+      TSRange *g = &r->ranges[k][i];
+      TSPoint a = point_at(r->enc, v[k].s, g->start_byte), b = point_at(r->enc, v[k].s, g->end_byte);
+      if (g->start_byte < prev || g->start_byte > g->end_byte || g->end_byte > v[k].n ||
+          a.row != g->start_point.row || a.column != g->start_point.column || b.row != g->end_point.row || b.column != g->end_point.column)
+        return "RANGES_INVALID";
+      prev = g->end_byte;
+    }
+  }
+  return NULL;
+}
+
+static void set_ranges(TSParser *p, Req *r, int k) {
+  if (r->nsteps_ranges) ts_parser_set_included_ranges(p, r->ranges[k], (uint32_t)r->nranges[k]);
 }
 
 /* ---- parsing ---- */
@@ -1119,6 +1171,7 @@ static int handle(const uint8_t *data, size_t n) {
   Src v[MAX_EDITS + 1];
   memset(v, 0, sizeof v);
   code = valid_source(r.enc, r.source, r.source_len) ? apply_edits(&r, v) : "SOURCE_ENCODING_INVALID";
+  if (!code) code = check_ranges(&r, v);
   if (code) {
     for (int k = 1; k <= r.nedits; k++) t_free(v[k].s);
     respond("INVALID_REQUEST", code, r.source_len, 0, NULL, MAX_OUTPUT);
@@ -1136,6 +1189,7 @@ static int handle(const uint8_t *data, size_t n) {
   } else {
     uint64_t ms;
     const char *pcode;
+    set_ranges(a, &r, 0);
     TSTree *prev = parse(a, NULL, &v[0], r.enc, r.parse_ms, &pcode, &ms);
     step_header(&steps, 0, &v[0], NULL, NULL, r.enc);
     puts_(&steps, ",\"route\":null,\"incremental\":");
@@ -1152,6 +1206,7 @@ static int handle(const uint8_t *data, size_t n) {
       TSNode oldroot = ts_tree_root_node(prev);
       bool changed = ts_node_has_changes(oldroot);
       uint32_t oldend = ts_node_end_byte(oldroot);
+      set_ranges(a, &r, k + 1);
 #ifdef TSGK_FAULT_OMIT_OLD_TREE
       TSTree *inc = parse(a, NULL, &v[k + 1], r.enc, r.parse_ms, &pcode, &ms);
 #else
@@ -1166,6 +1221,7 @@ static int handle(const uint8_t *data, size_t n) {
       }
       uint64_t fms;
       const char *fcode;
+      set_ranges(b, &r, k + 1);
 #ifdef TSGK_FAULT_FRESH_WITH_OLD
       TSTree *fresh = parse(b, prev, &v[k + 1], r.enc, r.parse_ms, &fcode, &fms);
 #else

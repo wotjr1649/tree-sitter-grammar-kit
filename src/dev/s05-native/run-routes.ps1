@@ -67,13 +67,14 @@ function New-Root($r) {
   return $root
 }
 
-function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls) {
+function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, [string]$Format = '') {
   # the profile requires byte-ascending paths
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
   $profile = [ordered]@{ schema = 'tsgk-incremental/r1'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
     compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases) }
+  if ($Format) { $profile.format = $Format }
   $pf = Join-Path $Destination "profiles/$Id.json"
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pf) | Out-Null
   $profile | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
@@ -88,57 +89,77 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   return @{ code = $code; res = $res }
 }
 
-foreach ($r in $registry.routes) {
-  if ($Routes.Count -and $Routes -notcontains $r.route) { continue }
-  $root = New-Root $r
-  $cases = @()
-  foreach ($kind in @('routes', 'gaps')) {
-    $file = Join-Path $repo "src/testdata/native/$kind/$($r.route).json"
-    if (-not (Test-Path -LiteralPath $file)) { continue }
-    $doc = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
-    foreach ($c in $doc.cases) {
-      $bytes = $utf8.GetBytes($c.source_utf8)
-      $rel = "cases/$($c.id).txt"
-      $path = Join-Path $root $rel
-      New-Item -ItemType Directory -Force -Path (Split-Path -Parent $path) | Out-Null
-      [IO.File]::WriteAllBytes($path, $bytes)
-      $cur = $bytes
-      $edits = @()
-      foreach ($e in $c.edits) {
-        $find = $utf8.GetBytes($e.find); $repl = $utf8.GetBytes($e.replace)
-        $at = Find-Bytes $cur $find
-        if ($at -lt 0) { throw "$($c.id): edit target not found" }
-        $edits += [ordered]@{ start_byte = $at; old_end_byte = $at + $find.Length; new_end_byte = $at + $repl.Length
-          old = [Convert]::ToBase64String($find); new = [Convert]::ToBase64String($repl) }
-        $next = [byte[]]::new($cur.Length - $find.Length + $repl.Length)
-        [Array]::Copy($cur, 0, $next, 0, $at)
-        [Array]::Copy($repl, 0, $next, $at, $repl.Length)
-        [Array]::Copy($cur, $at + $find.Length, $next, $at + $repl.Length, $cur.Length - $at - $find.Length)
-        $cur = $next
-      }
-      $expect = @($c.expect | ForEach-Object { [ordered]@{ step = $_.step; syntax = $_.syntax; contains = @($_.contains); declarations = '' } })
-      $cases += [ordered]@{ id = $c.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = (Get-ShaBytes $bytes); bytes = $bytes.Length }; edits = $edits; points = @(); expect = $expect }
+# Writes a case file's sources under the root and converts find/replace edits to bytes.
+function Convert-Cases([string]$File, [string]$Root) {
+  $doc = Get-Content -LiteralPath $File -Raw | ConvertFrom-Json
+  $out = @()
+  foreach ($c in $doc.cases) {
+    $bytes = $utf8.GetBytes($c.source_utf8)
+    $rel = "cases/$($c.id).txt"
+    $path = Join-Path $Root $rel
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $path) | Out-Null
+    [IO.File]::WriteAllBytes($path, $bytes)
+    $cur = $bytes
+    $edits = @()
+    foreach ($e in $c.edits) {
+      $find = $utf8.GetBytes($e.find); $repl = $utf8.GetBytes($e.replace)
+      $at = Find-Bytes $cur $find
+      if ($at -lt 0) { throw "$($c.id): edit target not found" }
+      $edits += [ordered]@{ start_byte = $at; old_end_byte = $at + $find.Length; new_end_byte = $at + $repl.Length
+        old = [Convert]::ToBase64String($find); new = [Convert]::ToBase64String($repl) }
+      $next = [byte[]]::new($cur.Length - $find.Length + $repl.Length)
+      [Array]::Copy($cur, 0, $next, 0, $at)
+      [Array]::Copy($repl, 0, $next, $at, $repl.Length)
+      [Array]::Copy($cur, $at + $find.Length, $next, $at + $repl.Length, $cur.Length - $at - $find.Length)
+      $cur = $next
     }
+    $expect = @($c.expect | ForEach-Object { [ordered]@{ step = $_.step; syntax = $_.syntax; contains = @($_.contains); declarations = '' } })
+    $out += [ordered]@{ id = $c.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = (Get-ShaBytes $bytes); bytes = $bytes.Length }; edits = $edits; points = @(); expect = $expect }
   }
-  if (-not $cases.Count) { $summary.failures += "$($r.route): no registered cases"; continue }
-  $run = Invoke-Profile $r $root "s05-$($r.route)" 'native-parse-edit' 'tree' $cases (Get-Declarations $r.route)
-  $res = $run.res
-  $entry = [ordered]@{ route = $r.route; exit = $run.code; execution_status = $res.execution_status; assessment = $res.assessment; build = $null; cases = @() }
+  return $out
+}
+
+function Add-Result([string]$Label, $Run) {
+  $res = $Run.res
+  $entry = [ordered]@{ route = $Label; exit = $Run.code; execution_status = $res.execution_status; assessment = $res.assessment; build = $null; cases = @() }
   if ($res.build) {
     $entry.build = [ordered]@{ identity = $res.build.identity; executable_sha256 = $res.build.executable_sha256; compiler_version = $res.build.compiler_version
       steps = @($res.build.steps | ForEach-Object { [ordered]@{ name = $_.name; status = $_.result.status; exit = $_.result.exit_code; wall_ms = $_.result.wall_ms } }) }
   }
-  foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $summary.failures += "$($r.route): $($f.code)" } }
+  foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $script:summary.failures += "${Label}: $($f.code)" } }
   foreach ($c in @($res.cases)) {
     $fails = @($c.expectations | Where-Object { $_.result -ne 'PASS' } | ForEach-Object { "step $($_.step): $($_.result) $($_.detail)" })
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; expectation_failures = $fails
-      steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $_.incremental.has_error; digest = $_.incremental.digest; equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null }) } }) }
-    if ($c.execution_status -ne 'COMPLETED') { $summary.failures += "$($r.route)/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -eq 'FAIL' -or $c.claims.incremental_route -eq 'FAIL') { $summary.failures += "$($r.route)/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
+      steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $_.incremental.has_error; digest = $_.incremental.digest; equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
+            svc_coverage = $(if ($_.composite) { $_.composite.coverage } else { $null }) } }) }
+    if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "$Label/$($c.id): $($c.execution_status) $($c.code)" }
+    if ($c.claims.incremental_equality -eq 'FAIL' -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
   }
-  if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $summary.failures += "$($r.route): $($res.execution_status) build or refusal" }
-  $summary.routes += $entry
-  Write-Output ("route {0}: exit={1} status={2} assessment={3} cases={4}" -f $r.route, $run.code, $res.execution_status, $res.assessment, @($res.cases).Count)
+  if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $script:summary.failures += "${Label}: $($res.execution_status) build or refusal" }
+  $script:summary.routes += $entry
+  Write-Output ("route {0}: exit={1} status={2} assessment={3} cases={4}" -f $Label, $Run.code, $res.execution_status, $res.assessment, @($res.cases).Count)
+}
+
+foreach ($r in $registry.routes) {
+  if ($Routes.Count -and $Routes -notcontains $r.route) { continue }
+  $root = New-Root $r
+  $cases = @()
+  foreach ($kind in @('routes', 'gaps', 'n461')) {
+    $file = Join-Path $repo "src/testdata/native/$kind/$($r.route).json"
+    if (Test-Path -LiteralPath $file) { $cases += Convert-Cases $file $root }
+  }
+  if (-not $cases.Count) { $summary.failures += "$($r.route): no registered cases"; continue }
+  Add-Result $r.route (Invoke-Profile $r $root "s05-$($r.route)" 'native-parse-edit' 'tree' $cases (Get-Declarations $r.route))
+}
+
+# SVC-SERVICEHOST-r1 composite cases: the C# route with the format set.
+$svcFile = Join-Path $repo 'src/testdata/native/n461/svc.json'
+if ((Test-Path -LiteralPath $svcFile) -and (-not $Routes.Count -or $Routes -contains 'csharp')) {
+  $r = $registry.routes | Where-Object { $_.route -eq 'csharp' }
+  $root = New-Root $r
+  $root2 = Join-Path $Destination 'roots/csharp-svc'
+  Move-Item -LiteralPath $root -Destination $root2
+  Add-Result 'csharp-svc' (Invoke-Profile $r $root2 's05-csharp-svc' 'native-parse-edit' 'tree' (Convert-Cases $svcFile $root2) $null 'SVC-SERVICEHOST-r1')
 }
 
 if ($Large) {

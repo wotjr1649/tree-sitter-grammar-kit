@@ -60,7 +60,7 @@ var required = []string{
 	"src/dev/s04-reproduce/ci-owned.ps1", "src/testdata/reproduce/expected.json", "src/testdata/reproduce/src/grammar.json",
 	"src/drivers/native-c/driver.c", "src/drivers/native-c/runtime-manifest.json", "src/contracts/native-routes.json",
 	"src/contracts/native-large-fixtures.json", "src/dev/s05-native/prepare-routes.ps1", "src/dev/s05-native/run-routes.ps1",
-	"src/dev/s05-native/select-compiler.ps1",
+	"src/dev/s05-native/select-compiler.ps1", "src/dev/s05-native/run-corpus.ps1",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

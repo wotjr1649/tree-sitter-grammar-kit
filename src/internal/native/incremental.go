@@ -27,7 +27,8 @@ const (
 
 // IncrementalRequest is one `tsgk incremental` run. Paths are absolute.
 type IncrementalRequest struct {
-	Root         string
+	Root         string // case inputs
+	GrammarRoot  string // grammar files; empty means Root
 	Profile      []byte
 	Runtime      string
 	Compiler     string
@@ -147,7 +148,11 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	}
 	runCtx, cancel := context.WithTimeout(ctx, op.RunWall)
 	defer cancel()
-	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: req.Root, Grammar: prof.Grammar, Symbol: prof.Symbol,
+	groot := req.GrammarRoot
+	if groot == "" {
+		groot = req.Root
+	}
+	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, Grammar: prof.Grammar, Symbol: prof.Symbol,
 		Compiler: req.Compiler, CompilerID: prof.Compiler, CgroupParent: req.CgroupParent})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
@@ -163,7 +168,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", "driver build이 완료되지 않았다"))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
-		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, CgroupParent: req.CgroupParent, PolicyRef: policy}
+		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, CgroupParent: req.CgroupParent, PolicyRef: policy}
 		if op.Batch {
 			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases)
 		} else {
@@ -303,6 +308,17 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 			total += c.Input.Bytes
 			r := x.request(c, src)
 			r.Points, r.Edits = nil, nil
+			if x.Format == kit.SvcFormat {
+				o := kit.ObserveServiceHost(c.Encoding, src)
+				sum := sha256.Sum256(src)
+				in := TreeInput{Bytes: uint64(len(src)), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
+				out[i].Steps = []StepResult{{Step: 0, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)}}
+				if o.IncludedRanges == nil { // directive observation only: no frame
+					out[i].ExecutionStatus, out[i].Assessment, out[i].Code = kit.StatusCompleted, kit.AssessPass, ""
+					continue
+				}
+				r.Ranges = [][]kit.Span{o.IncludedRanges}
+			}
 			idx = append(idx, i)
 			reqs = append(reqs, r)
 			frames = append(frames, runner.Frame{ID: c.ID, Request: r.Encode()})
@@ -391,6 +407,11 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 // recordResult keeps only the retained record of a corpus file: status, has_error,
 // descendant count, digest, the capped ERROR/MISSING list and the encoding.
 func recordResult(c CaseResult, resp Response, checked Checked, x Context) CaseResult {
+	var comp *SvcComposite
+	if len(c.Steps) == 1 {
+		comp = c.Steps[0].Composite // the directive observation made before the frame
+	}
+	c.Steps = nil
 	c.ResponseStatus, c.ResponseCode, c.Producer = resp.Status, resp.Code, &resp.Producer
 	switch resp.Status {
 	case kit.StatusCompleted:
@@ -411,7 +432,7 @@ func recordResult(c CaseResult, resp Response, checked Checked, x Context) CaseR
 				DescendantCount: w.DescendantCount, Status: cs.Incremental.Status, PartialTrees: []PartialTree{}, Identities: []kit.IdentityRef{}}
 			t.Summary = s
 		}
-		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: t})
+		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: t, Composite: comp})
 	}
 	return c
 }

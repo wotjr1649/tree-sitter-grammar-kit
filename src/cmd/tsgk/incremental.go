@@ -19,7 +19,8 @@ import (
 func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("incremental", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	root := fs.String("root", "", "grammar and case root (read only)")
+	root := fs.String("root", "", "case root (read only)")
+	groot := fs.String("grammar-root", "", "grammar file root (read only; default --root)")
 	profile := fs.String("profile", "", "tsgk-incremental/r1 profile outside the root")
 	rt := fs.String("runtime", "", "pinned Tree-sitter runtime source directory")
 	out := fs.String("out", "", "new result directory outside the root (no clobber)")
@@ -31,7 +32,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
-	usage := "tsgk: USAGE: tsgk incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+	usage := "tsgk: USAGE: tsgk incremental --root PATH [--grammar-root PATH] --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 	if fs.NArg() != 0 || *root == "" || *profile == "" || *rt == "" || *out == "" || *work == "" || len(tools) != 1 {
 		fmt.Fprintln(stderr, usage)
 		return exitUsage
@@ -42,7 +43,10 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 		return exitUsage
 	}
 	abs := map[string]string{}
-	for k, p := range map[string]string{"root": *root, "out": *out, "work": *work, "runtime": *rt, "cc": cc} {
+	if *groot == "" {
+		*groot = *root
+	}
+	for k, p := range map[string]string{"root": *root, "grammar-root": *groot, "out": *out, "work": *work, "runtime": *rt, "cc": cc} {
 		a, err := filepath.Abs(p)
 		if err != nil {
 			fmt.Fprintf(stderr, "tsgk: USAGE: --%s: %v\n", k, err)
@@ -56,12 +60,12 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 			dir = filepath.Dir(dir)
 		}
 		real, err := filepath.EvalSymlinks(dir)
-		if err != nil || unresolvedAlias(real) || inside(real, abs["root"]) {
+		if err != nil || unresolvedAlias(real) || inside(real, abs["root"]) || inside(real, abs["grammar-root"]) {
 			fmt.Fprintf(stderr, "tsgk: %s: --%s는 검증 대상 root 밖의 확인 가능한 경로여야 한다\n", code, k)
 			return exitUsage
 		}
 	}
-	if documentInside(*profile, abs["root"]) {
+	if documentInside(*profile, abs["root"]) || documentInside(*profile, abs["grammar-root"]) {
 		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
 		return exitUsage
 	}
@@ -70,7 +74,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 		fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
 		return exitIO
 	}
-	res, rerr := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
+	res, rerr := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
 		Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup})
 	line, merr := json.Marshal(res)
 	if merr != nil {

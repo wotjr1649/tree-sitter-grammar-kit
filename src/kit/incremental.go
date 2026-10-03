@@ -128,6 +128,7 @@ type IncrementalProfile struct {
 	Symbol       string            `json:"symbol"`
 	Encoding     string            `json:"encoding"`
 	Output       string            `json:"output"`
+	Format       string            `json:"format,omitempty"` // "" or SVC-SERVICEHOST-r1 (inline C# by included range)
 	Compiler     ToolIdentity      `json:"compiler"`
 	Grammar      []NativeInput     `json:"grammar"`
 	Declarations *Declarations     `json:"declarations"`
@@ -207,7 +208,7 @@ func parseIncremental(data []byte) (IncrementalProfile, *Error) {
 	if e != nil {
 		return p, e
 	}
-	m, e := t.object(v, []string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"})
+	m, e := t.object(v, []string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, "format")
 	if e != nil {
 		return p, e
 	}
@@ -258,6 +259,13 @@ func parseIncremental(data []byte) (IncrementalProfile, *Error) {
 	}
 	if !allowed {
 		return p, t.bad("OUTPUT_NOT_ALLOWED", m["output"])
+	}
+	if x := m["format"]; x != nil {
+		if p.Format, e = t.str(x); e != nil {
+			return p, e
+		} else if p.Format != SvcFormat || p.Symbol != "tree_sitter_c_sharp" {
+			return p, t.bad("FORMAT_UNSUPPORTED", x)
+		}
 	}
 	if p.Compiler, e = parseTool(t, m["compiler"]); e != nil {
 		return p, e

@@ -38,6 +38,7 @@ type Request struct {
 	Limits       Limits
 	Declarations []kit.NativeDeclaration
 	Points       []kit.NativePoint
+	Ranges       [][]kit.Span // included ranges per step (SVC inline code); nil for whole input
 	Source       []byte
 	Edits        []kit.Edit
 }
@@ -63,6 +64,20 @@ func (r Request) Encode() []byte {
 			b.WriteByte(',')
 		}
 		fmt.Fprintf(&b, `{"id":%q,"byte":%d}`, p.ID, p.Byte)
+	}
+	b.WriteString(`],"ranges":[`)
+	for k, step := range r.Ranges {
+		if k > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteByte('[')
+		for i, g := range step {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			fmt.Fprintf(&b, `{"start_byte":%d,"end_byte":%d,"start_point":[%d,%d],"end_point":[%d,%d]}`, g.StartByte, g.EndByte, g.StartPoint.Row, g.StartPoint.Column, g.EndPoint.Row, g.EndPoint.Column)
+		}
+		b.WriteByte(']')
 	}
 	fmt.Fprintf(&b, `],"source":"%s","edits":[`, b64(r.Source))
 	for i, e := range r.Edits {

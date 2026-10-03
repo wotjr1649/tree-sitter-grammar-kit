@@ -248,6 +248,7 @@ func SourceEncodingValid(enc string, s []byte) bool
 func CP949Pair(lead, trail byte) bool
 func CP949Rune(lead, trail byte) (rune, bool)
 func ValidLanguageSymbol(s string) bool
+func ObserveServiceHost(enc string, src []byte) SvcObservation
 func NativeOperations() map[string]NativeOperation
 func ParseIncrementalProfile(data []byte) (IncrementalProfile, error)
 ```

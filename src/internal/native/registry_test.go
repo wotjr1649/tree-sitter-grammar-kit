@@ -148,6 +148,7 @@ func TestLargeFixtureIdentity(t *testing.T) {
 
 type routeCases struct {
 	Schema, Route string
+	Format        string
 	Cases         []struct {
 		ID, Kind   string
 		Features   []string
@@ -163,7 +164,7 @@ func TestRouteCaseFiles(t *testing.T) {
 	var reg struct{ Routes []registryRoute }
 	readJSON(t, "src/contracts/native-routes.json", &reg)
 	seen := map[string]bool{}
-	for _, kind := range []string{"routes", "gaps"} {
+	for _, kind := range []string{"routes", "gaps", "n461"} {
 		dir := filepath.Join("..", "..", "testdata", "native", kind)
 		entries, _ := os.ReadDir(dir)
 		if kind == "routes" && len(entries) != 26 {
@@ -172,7 +173,11 @@ func TestRouteCaseFiles(t *testing.T) {
 		for _, e := range entries {
 			var rc routeCases
 			readJSON(t, "src/testdata/native/"+kind+"/"+e.Name(), &rc)
-			if rc.Schema != "tsgk-native-route-cases/r1" || rc.Route+".json" != e.Name() || len(rc.Cases) == 0 {
+			name := rc.Route + ".json"
+			if rc.Format == kit.SvcFormat {
+				name = "svc.json" // the C# route with the SVC-SERVICEHOST-r1 composite
+			}
+			if rc.Schema != "tsgk-native-route-cases/r1" || name != e.Name() || len(rc.Cases) == 0 || (rc.Format != "" && rc.Format != kit.SvcFormat) {
 				t.Fatalf("%s/%s header", kind, e.Name())
 			}
 			if kind == "routes" && len(rc.Cases) < 2 {
