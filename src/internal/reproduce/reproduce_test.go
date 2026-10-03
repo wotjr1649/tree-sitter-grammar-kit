@@ -88,6 +88,11 @@ func fakeGenerate(args []string) int {
 		files["extra.txt"] = "unregistered"
 	case strings.Contains(mode, "MODE:write-source"):
 		os.WriteFile("injected.txt", []byte("x"), 0o644)
+	case strings.Contains(mode, "MODE:grow-b"):
+		// Only workspace B writes an extra 64 KiB, so only B can exceed storage_bytes.
+		if filepath.Base(filepath.Dir(out)) != "" && strings.HasSuffix(filepath.Dir(out), "-b") {
+			files["padding.bin"] = strings.Repeat("x", 65536)
+		}
 	case strings.Contains(mode, "MODE:touch-root "):
 		_, target, _ := strings.Cut(mode, "MODE:touch-root ")
 		f, _ := os.OpenFile(strings.TrimSpace(target), os.O_APPEND|os.O_WRONLY, 0)
@@ -584,6 +589,32 @@ func TestStorageLimit(t *testing.T) {
 		if want == kit.AssessBlocked && (res.ExecutionStatus != kit.StatusResourceLimit || !hasFinding(res, "STORAGE_LIMIT") || res.Runs[1].State != "NOT_RUN") {
 			t.Fatalf("limit %d: %+v %+v", limit, res.Report, res.Runs)
 		}
+	}
+}
+
+// R2-02/R2-03: when only workspace B exceeds storage the run is RESOURCE_LIMIT/BLOCKED and
+// no mode claim stays PASS; the cause is recorded beside any other.
+func TestStorageLimitWorkspaceB(t *testing.T) {
+	skipWithoutHardBackend(t)
+	f := newFixture(t, kit.ModeJS, "MODE:grow-b")
+	f.profile["limits"].(map[string]any)["storage_bytes"] = 1 << 20
+	res, err := f.run(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, b := res.Runs[0].StorageBytes, res.Runs[1].StorageBytes
+	if b <= a {
+		t.Fatalf("fixture did not grow B: %d %d", a, b)
+	}
+	g := newFixture(t, kit.ModeJS, "MODE:grow-b")
+	g.profile["limits"].(map[string]any)["storage_bytes"] = a
+	res, err = g.run(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ExecutionStatus != kit.StatusResourceLimit || res.Assessment != kit.AssessBlocked || !hasFinding(res, "STORAGE_LIMIT") ||
+		res.Claims.JSReproduction == ClaimPass || res.Runs[1].State != "EXECUTED" {
+		t.Fatalf("%+v %+v", res.Report, res.Claims)
 	}
 }
 

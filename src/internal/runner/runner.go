@@ -217,6 +217,7 @@ type Process struct {
 	result  Result
 
 	mu          sync.Mutex
+	residual    int // descendants terminated by supervise after an interactive exit
 	reason      string
 	kill        chan struct{}
 	sampledPeak uint64
@@ -347,7 +348,8 @@ func (p *Process) launch() error {
 func (p *Process) Stdin() io.WriteCloser { return p.stdin }
 
 // Stdout returns the interactive output; reading past StdoutBytes terminates the tree
-// with OUTPUT_LIMIT and returns ErrOutputLimit.
+// with OUTPUT_LIMIT and returns ErrOutputLimit. Read it before Wait: once the main process
+// has exited the read side is closed after Grace, so later reads end in an error.
 func (p *Process) Stdout() io.Reader { return p.stdout }
 
 // Capabilities returns the backend capabilities used for this process.
@@ -385,6 +387,7 @@ func (p *Process) supervise(ctx context.Context) {
 	for {
 		select {
 		case <-p.exited:
+			p.release()
 			return
 		case <-ctx.Done():
 			p.Terminate(ReasonCancelled)
@@ -405,20 +408,35 @@ func (p *Process) supervise(ctx context.Context) {
 			}
 		case <-p.kill:
 			select {
-			case <-p.exited: // already reaped: Wait handles any residual tree
+			case <-p.exited: // already reaped: do not signal a possibly reused group
+				p.release()
 				return
 			default:
 			}
 			p.stopTree()
 			<-p.exited
-			if p.spec.Interactive {
-				// R1-06: a descendant outside the backend's reach may still hold stdout;
-				// unblock a pending interactive read after the grace period.
-				time.AfterFunc(p.spec.Grace, func() { p.outPipe.Close() })
-			}
+			p.release()
 			return
 		}
 	}
+}
+
+// release runs once the main process has exited. For an interactive process the caller
+// may still be blocked reading stdout: remaining descendants are terminated now (as Wait
+// would), and the read side is closed after Grace in case a holder outside the backend's
+// reach keeps it open. The caller reads before Wait; unread bytes then end in ErrClosed,
+// never in a forged EOF.
+func (p *Process) release() {
+	if !p.spec.Interactive {
+		return
+	}
+	if n, err := p.tree.live(); err == nil && n > 0 {
+		p.mu.Lock()
+		p.residual = n
+		p.mu.Unlock()
+		p.tree.stop(true)
+	}
+	time.AfterFunc(p.spec.Grace, func() { p.outPipe.Close() })
 }
 
 // stopTree asks politely, waits at most Grace for the tree to leave, then forces.
@@ -467,6 +485,10 @@ func (p *Process) Wait() Result {
 	} else if n > 0 {
 		r.Cleanup.ResidualAfterExit = n
 		p.tree.stop(true)
+	} else {
+		p.mu.Lock()
+		r.Cleanup.ResidualAfterExit = p.residual
+		p.mu.Unlock()
 	}
 	verified := p.waitEmpty(p.spec.Grace)
 	// Output pipes reach EOF only when every holder is gone.

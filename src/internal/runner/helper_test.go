@@ -166,6 +166,10 @@ func frameHelper(arg string) int {
 			case "escape": // an escaped descendant keeps stdout open while the frame hangs
 				spawn("sleep", true)
 				time.Sleep(time.Hour)
+			case "crash-holder": // the helper dies mid-frame; an escaped descendant keeps stdout
+				spawn("sleep", true)
+				time.Sleep(100 * time.Millisecond)
+				return 3
 			case "crash":
 				return 3
 			case "big":

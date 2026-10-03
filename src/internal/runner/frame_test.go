@@ -68,6 +68,31 @@ func TestFrameEscapedStdoutHolder(t *testing.T) {
 	}
 }
 
+// R1-06: a helper that crashes mid-frame while an escaped descendant holds stdout gives
+// FAILED for that frame within bounds, without any limit firing first.
+func TestFrameCrashWithStdoutHolder(t *testing.T) {
+	s, pids := helperSpec(t, "frames:crash-holder@1")
+	s.Grace = time.Second
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 20 * time.Second, FrameGrace: time.Second,
+		StdoutBytes: 1 << 20, BatchWall: 60 * time.Second}
+	start := time.Now()
+	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}, {ID: "c", Request: []byte("z")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		for _, pid := range readPIDs(t, pids) {
+			killPID(pid)
+		}
+	}()
+	if el := time.Since(start); el > 10*time.Second {
+		t.Fatalf("batch took %v; the crash was not released before the watchdog", el)
+	}
+	if r.Frames[0].Status != FrameCompleted || r.Frames[1].Status != FrameFailed || r.Frames[2].Status != FrameRequeued {
+		t.Fatalf("%+v %+v", r.Frames, r.Process)
+	}
+}
+
 // S04-A16: an owned helper terminated at frame k keeps completed frames and attributes the
 // in-flight frame by the limit that ended it.
 func TestFrameStatusMapping(t *testing.T) {

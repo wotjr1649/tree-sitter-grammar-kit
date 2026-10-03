@@ -294,9 +294,17 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 	return res, nil
 }
 
-// settle keeps an execution that did not complete (source change, cleanup or evidence
-// failure) from carrying an earlier PASS assessment.
+// settle keeps an execution that did not complete (source change, storage limit, cleanup
+// or evidence failure) from carrying an earlier PASS assessment or mode claim; the
+// observational claims (generator_ran, deterministic, reference_match) stay as observed.
 func settle(res *Result) {
+	if res.ExecutionStatus != kit.StatusCompleted {
+		for _, c := range []*string{&res.Claims.JSReproduction, &res.Claims.JSONRegeneration} {
+			if *c == ClaimPass {
+				*c = ClaimNone
+			}
+		}
+	}
 	switch {
 	case res.ExecutionStatus == kit.StatusResourceLimit:
 		res.Assessment = kit.AssessBlocked
@@ -309,19 +317,26 @@ func settle(res *Result) {
 // the declared snapshot does not contain it: node_modules in work or any ancestor, and the
 // global folder <prefix>/lib/node of the copied runtime (<work>/tsgk-tools-*/node).
 func jsLeak(work string) string {
-	if _, err := os.Stat(filepath.Join(work, "lib", "node")); err == nil {
-		return filepath.Join(work, "lib", "node")
+	chains := []string{work}
+	if real, err := filepath.EvalSymlinks(work); err == nil && real != work {
+		chains = append(chains, real) // Node resolves from real paths (macOS /var -> /private/var)
 	}
-	for d := work; ; {
-		if _, err := os.Stat(filepath.Join(d, "node_modules")); err == nil {
-			return filepath.Join(d, "node_modules")
+	for _, w := range chains {
+		if _, err := os.Stat(filepath.Join(w, "lib", "node")); err == nil {
+			return filepath.Join(w, "lib", "node")
 		}
-		up := filepath.Dir(d)
-		if up == d {
-			return ""
+		for d := w; ; {
+			if _, err := os.Stat(filepath.Join(d, "node_modules")); err == nil {
+				return filepath.Join(d, "node_modules")
+			}
+			up := filepath.Dir(d)
+			if up == d {
+				break
+			}
+			d = up
 		}
-		d = up
 	}
+	return ""
 }
 
 func newReport() kit.Report {
@@ -687,9 +702,6 @@ func status(res *Result, storage uint64) {
 	for _, r := range res.Runs {
 		switch {
 		case r.State == "NOT_RUN":
-		case r.StorageBytes > int64(storage):
-			res.ExecutionStatus = kit.StatusResourceLimit
-			res.Findings = append(res.Findings, kit.Finding{Code: "STORAGE_LIMIT", Severity: "error", Path: r.Workspace, Message: "실행 뒤 작업 공간 용량이 profile 한도를 넘었다"})
 		case r.Process == nil:
 			res.ExecutionStatus = kit.StatusFailed
 			res.Findings = append(res.Findings, kit.Finding{Code: "WORKSPACE_" + r.State, Severity: "error", Path: r.Workspace, Message: "작업 공간 실행을 시작하지 못했다"})
@@ -702,6 +714,12 @@ func status(res *Result, storage uint64) {
 		case !r.Process.Cleanup.Verified:
 			res.ExecutionStatus = kit.StatusFailed
 			res.Findings = append(res.Findings, kit.Finding{Code: "PROCESS_CLEANUP_UNVERIFIED", Severity: "error", Path: r.Workspace, Message: "process tree 정리를 확인하지 못했다"})
+		}
+		if r.State == "EXECUTED" && r.StorageBytes > int64(storage) {
+			res.Findings = append(res.Findings, kit.Finding{Code: "STORAGE_LIMIT", Severity: "error", Path: r.Workspace, Message: "실행 뒤 작업 공간 용량이 profile 한도를 넘었다"})
+			if res.ExecutionStatus == kit.StatusCompleted {
+				res.ExecutionStatus = kit.StatusResourceLimit
+			}
 		}
 		if res.ExecutionStatus != kit.StatusCompleted {
 			break
