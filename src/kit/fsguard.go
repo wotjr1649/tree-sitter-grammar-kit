@@ -29,12 +29,8 @@ func openRoot(root string) (*os.Root, string, *Error) {
 	if root == "" || strings.ContainsRune(root, 0) {
 		return nil, "", fail(KindInvalidInput, "ROOT_INVALID", "", nil)
 	}
-	if runtime.GOOS == "windows" {
-		s := strings.ReplaceAll(root, "/", `\`)
-		if strings.HasPrefix(s, `\\`) {
-			// UNC shares imply network access; \\?\ and \\.\ are device namespaces.
-			return nil, "", fail(KindInvalidInput, "ROOT_NOT_LOCAL", "", nil)
-		}
+	if notLocal(root) {
+		return nil, "", fail(KindInvalidInput, "ROOT_NOT_LOCAL", "", nil)
 	}
 	abs, err := filepath.Abs(root)
 	if err != nil {
@@ -43,6 +39,9 @@ func openRoot(root string) (*os.Root, string, *Error) {
 	resolved, err := filepath.EvalSymlinks(abs)
 	if err != nil {
 		return nil, "", fail(KindInvalidInput, "ROOT_NOT_FOUND", "", err)
+	}
+	if notLocal(resolved) { // a link may resolve to a UNC share or device namespace
+		return nil, "", fail(KindInvalidInput, "ROOT_NOT_LOCAL", "", nil)
 	}
 	// The root itself may be a deliberate platform alias (symlink or Windows junction that
 	// EvalSymlinks keeps); entries below it are never followed.
@@ -58,6 +57,11 @@ func openRoot(root string) (*os.Root, string, *Error) {
 		return nil, "", fail(KindIO, "ROOT_UNREADABLE", "", err)
 	}
 	return r, resolved, nil
+}
+
+// notLocal reports Windows UNC shares (network access) and \\?\ or \\.\ device namespaces.
+func notLocal(p string) bool {
+	return runtime.GOOS == "windows" && strings.HasPrefix(strings.ReplaceAll(p, "/", `\`), `\\`)
 }
 
 var windowsDevices = map[string]bool{"CON": true, "PRN": true, "AUX": true, "NUL": true,

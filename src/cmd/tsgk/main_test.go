@@ -153,6 +153,21 @@ func TestOutPublication(t *testing.T) {
 			t.Fatal("output created inside the aliased input")
 		}
 	})
+	t.Run("junction-to-root-subdirectory", func(t *testing.T) {
+		if filepath.Separator != '\\' {
+			t.Skip("junctions are Windows reparse points; Unix symlinks resolve")
+		}
+		j := filepath.Join(t.TempDir(), "j")
+		if err := exec.Command("cmd", "/c", "mklink", "/J", j, filepath.Join(root, "alpha")).Run(); err != nil {
+			t.Skipf("junction unavailable: %v", err)
+		}
+		if code, _, stderr := cli(t, ctx, "inspect", "--root", root, "--grammar", "alpha", "--out", filepath.Join(j, "r.json")); code != 4 || !strings.Contains(stderr, "OUTPUT_PARENT_ALIAS") {
+			t.Fatalf("junction into the input: %d %s", code, stderr)
+		}
+		if _, err := os.Lstat(filepath.Join(root, "alpha", "r.json")); !os.IsNotExist(err) {
+			t.Fatal("output created inside the input through a junction")
+		}
+	})
 	failed := filepath.Join(outDir, "failed.json")
 	if code, _, _ := cli(t, ctx, "identity", "--root", root, "--grammar", "../x", "--out", failed); code != 2 {
 		t.Fatal("failed run must not succeed")

@@ -162,7 +162,7 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 		return failWith(e)
 	}
 	for p := range declared {
-		if i := c.index[strings.ToLower(p)]; i == 0 || c.res.Records[i-1].Path != p { // declarations match exact record paths
+		if !c.exact[p] { // declarations match exact record paths
 			return failWith(fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil))
 		}
 	}
@@ -183,13 +183,15 @@ type corpus struct {
 	declared map[string]string
 	cp949    bool
 	res      CorpusResult
-	index    map[string]int // lower-case path -> record index + 1
+	index    map[string][]int // lower-case path -> record indexes (case-sensitive filesystems may hold several)
+	exact    map[string]bool
 	excluded int
 	projSrc  map[string][]byte
 }
 
 func (c *corpus) walk() *Error {
-	c.index = map[string]int{}
+	c.index = map[string][]int{}
+	c.exact = map[string]bool{}
 	c.projSrc = map[string][]byte{}
 	c.res.Records = []CorpusRecord{}
 	listed := uint64(0)
@@ -229,7 +231,8 @@ func (c *corpus) walk() *Error {
 	}
 	slices.SortFunc(c.res.Records, func(a, b CorpusRecord) int { return strings.Compare(a.Path, b.Path) })
 	for i, rec := range c.res.Records {
-		c.index[strings.ToLower(rec.Path)] = i + 1
+		c.index[strings.ToLower(rec.Path)] = append(c.index[strings.ToLower(rec.Path)], i)
+		c.exact[rec.Path] = true
 	}
 	return nil
 }
@@ -296,7 +299,6 @@ func (c *corpus) file(p, name string, fi fs.FileInfo) *Error {
 		rec.Generated, rec.GeneratedBasis = true, "MARKER"
 	}
 	c.res.Records = append(c.res.Records, rec)
-	c.index[strings.ToLower(p)] = len(c.res.Records)
 	return nil
 }
 
@@ -459,9 +461,25 @@ func (c *corpus) resolveItem(project string, it rawItem) ProjectItem {
 		return out
 	}
 	out.Resolved = joined
-	if i := c.index[strings.ToLower(joined)]; i > 0 {
+	// Exact match first; otherwise one case-insensitive match (Windows rules). Several
+	// case-insensitive candidates without an exact match are ambiguous.
+	matches := c.index[strings.ToLower(joined)]
+	pick := -1
+	for _, i := range matches {
+		if c.res.Records[i].Path == joined {
+			pick = i
+		}
+	}
+	if pick < 0 && len(matches) == 1 {
+		pick = matches[0]
+	}
+	if pick < 0 && len(matches) > 1 {
+		out.State = "UNRESOLVED"
+		return out
+	}
+	if pick >= 0 {
 		out.State = "MEMBER"
-		rec := &c.res.Records[i-1]
+		rec := &c.res.Records[pick]
 		if !slices.Contains(rec.DeclaredBy, project) {
 			rec.DeclaredBy = append(rec.DeclaredBy, project)
 		}

@@ -269,6 +269,28 @@ func TestCorpusLimits(t *testing.T) {
 		_, err = Corpus(testCtx(t), CorpusRequest{Root: root, Limits: at, Encoding: EncodingPolicy{Files: []FileEncoding{{"B.cs", "utf-8"}}}})
 		kindOf(t, err, KindInvalidInput, "DECLARATION_UNMATCHED")
 	})
+	t.Run("case-sensitive-names", func(t *testing.T) {
+		cs := t.TempDir()
+		writeTree(t, cs, map[string]string{"A.cs": "upper", "a.cs": "lower", "p/x.csproj": `<Project><ItemGroup><Compile Include="..\A.cs" /><Compile Include="..\B.CS" /></ItemGroup></Project>`, "b.cs": "b"})
+		if entries, _ := os.ReadDir(cs); len(entries) != 4 {
+			t.Skip("case-insensitive filesystem")
+		}
+		res, err := Corpus(testCtx(t), CorpusRequest{Root: cs, Limits: DefaultCorpusLimits(), Encoding: EncodingPolicy{Files: []FileEncoding{{"A.cs", "utf-8"}}}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, r := range res.Records {
+			if r.Path == "A.cs" && (r.Encoding.Source != SourceDeclaration || len(r.DeclaredBy) != 1) {
+				t.Fatalf("exact record: %+v", r)
+			}
+			if r.Path == "a.cs" && (r.Encoding.Source == SourceDeclaration || len(r.DeclaredBy) != 0) {
+				t.Fatalf("other-case record: %+v", r)
+			}
+			if r.Path == "b.cs" && len(r.DeclaredBy) != 1 {
+				t.Fatalf("single case-insensitive match: %+v", r)
+			}
+		}
+	})
 	t.Run("hardlink-is-record-scoped", func(t *testing.T) {
 		hl := t.TempDir()
 		writeTree(t, hl, map[string]string{"a.cs": "x", "b.cs": "y"})

@@ -103,6 +103,8 @@ inspect는 26 route 모두 완료했다. identity는 22 route에서 완료했고
 | MINOR | CLI `PATH=VALUE`를 첫 `=`에서 분리 | 마지막 `=`에서 분리. `=`가 든 path 시험 추가 |
 | MINOR | A15 finding code가 `ENCODING_TABLE_REQUIRED`가 아님 | finding code를 record code와 같게 |
 
+수정분 재리뷰는 6건을 해결로 확인했고, `--out` junction 건이 root 하위 디렉터리를 가리키는 junction에서 남는다는 점과 새 MINOR 2건(UNC를 가리키는 symlink root, 대소문자 구분 filesystem의 index 충돌)을 보고했다. 경로에 해석되지 않은 junction·mount point가 남으면 `OUTPUT_PARENT_ALIAS`로 거부하고, 해석된 root도 UNC/device 검사를 하며, corpus 선언은 정확한 path 집합으로, `.csproj`는 정확 일치 우선·단일 대소문자 무시 일치만 `MEMBER`로 고쳤다. 각 수정에 시험을 더했다(대소문자 구분 시험은 Windows·macOS 기본 filesystem에서 skip).
+
 리뷰가 남긴 정의 문제(discovery 기반 identity가 같은 source를 두 번 읽어 `total_bytes`에 두 번 셈)는 CLI 계약에 "실제로 읽은 bytes 합계"로 명시했다.
 
 ## 남은 일과 한계

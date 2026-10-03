@@ -41,7 +41,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
-* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 대상의 부모 디렉터리나 그 조상이 root와 같은 파일 identity이면(대소문자·symlink·junction 별칭 포함) 입력 안으로 보고 거부한다. 같은 디렉터리에 임시 파일을 완성·동기화한 뒤 hard link로 최종 이름에 놓아, 그 사이 다른 쓰기가 만든 대상도 덮어쓰지 않는다. 임시 파일은 항상 지운다. hard link를 지원하지 않는 filesystem은 publication 실패(exit 4)다.
+* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 부모 디렉터리는 `EvalSymlinks`로 해석하고, 그래도 경로에 junction·volume mount point가 남아 대상을 root와 비교할 수 없으면 `OUTPUT_PARENT_ALIAS`로 거부한다. 해석한 부모 디렉터리나 그 조상이 root와 같은 파일 identity이면(대소문자·symlink·junction으로 지정한 root 포함) 입력 안으로 보고 `OUTPUT_INSIDE_INPUT`으로 거부한다. 같은 디렉터리에 임시 파일을 완성·동기화한 뒤 hard link로 최종 이름에 놓아, 그 사이 다른 쓰기가 만든 대상도 덮어쓰지 않는다. 임시 파일은 항상 지운다. hard link를 지원하지 않는 filesystem은 publication 실패(exit 4)다.
 
 ### discovery `known-paths-r1`
 

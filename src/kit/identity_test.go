@@ -359,6 +359,13 @@ func TestGuards(t *testing.T) {
 		_, err = identity(t, `\\?\`+root, Selection{Grammar: "."})
 		kindOf(t, err, KindInvalidInput, "ROOT_NOT_LOCAL")
 	}
+	if runtime.GOOS == "windows" {
+		unc := filepath.Join(t.TempDir(), "unc")
+		if err := os.Symlink(`\\localhost\c$`, unc); err == nil {
+			_, err = identity(t, unc, Selection{Grammar: "."})
+			kindOf(t, err, KindInvalidInput, "ROOT_NOT_LOCAL")
+		}
+	}
 	if len(opened) != 0 {
 		t.Fatalf("content read before rejection: %v", opened)
 	}

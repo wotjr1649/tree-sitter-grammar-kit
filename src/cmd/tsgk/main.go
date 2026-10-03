@@ -197,6 +197,9 @@ func publish(out, root string, data []byte) (string, error) {
 		return "OUTPUT_PARENT_INVALID", err
 	}
 	final := filepath.Join(parent, filepath.Base(abs))
+	if unresolvedAlias(parent) {
+		return "OUTPUT_PARENT_ALIAS", errors.New("destination path keeps a junction or mount point that cannot be compared with the root")
+	}
 	if inside(parent, root) {
 		return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside the input root")
 	}
@@ -241,6 +244,21 @@ func inside(dir, root string) bool {
 	}
 	for p := dir; ; {
 		if info, err := os.Stat(p); err == nil && os.SameFile(info, rootInfo) {
+			return true
+		}
+		up := filepath.Dir(p)
+		if up == p {
+			return false
+		}
+		p = up
+	}
+}
+
+// unresolvedAlias reports a directory component that EvalSymlinks left in place (Windows
+// junctions and volume mount points); its target cannot be compared with the root.
+func unresolvedAlias(dir string) bool {
+	for p := dir; ; {
+		if info, err := os.Lstat(p); err == nil && info.Mode()&(os.ModeSymlink|os.ModeIrregular) != 0 {
 			return true
 		}
 		up := filepath.Dir(p)
