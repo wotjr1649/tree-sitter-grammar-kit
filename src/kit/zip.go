@@ -320,7 +320,7 @@ func (z *zipArchive) readMember(r *run, e *zipEntry, where string, hardMax, tota
 		n, err := src.Read(buf)
 		if n > 0 {
 			st.size += uint64(n)
-			if st.size > e.usize { // the stream claims less than it inflates to
+			if st.size > e.usize { // the stream claims less than it inflates to; usize <= hardMax
 				return nil, zipFail("ZIP_SIZE_MISMATCH", where)
 			}
 			r.totalRead += uint64(n)
