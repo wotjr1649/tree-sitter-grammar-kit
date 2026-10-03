@@ -231,6 +231,34 @@ func TestEscapedDescendant(t *testing.T) {
 	t.Logf("NOT_CONTAINED backend reported: %s", r.Cleanup.Detail)
 }
 
+// R1-04: an escaped descendant that holds no pipe is invisible to the process-group
+// backends; their verified cleanup covers only the group (Scope=PROCESS_GROUP), while the
+// Job Object and cgroup backends still terminate it.
+func TestEscapedQuietDescendant(t *testing.T) {
+	s, pids := helperSpec(t, "escape-quiet")
+	r := run(t, s)
+	escaped := readPIDs(t, pids)
+	if r.Cleanup.Scope != r.Capabilities.TreeCleanup || r.Cleanup.Scope == "" {
+		t.Fatalf("cleanup scope %q, backend %q", r.Cleanup.Scope, r.Capabilities.TreeCleanup)
+	}
+	if r.Capabilities.EscapedDescendants == Contained {
+		if !r.Cleanup.Verified {
+			t.Fatalf("%+v", r)
+		}
+		requireDead(t, escaped, 1)
+		return
+	}
+	if r.Cleanup.Scope != "PROCESS_GROUP" {
+		t.Fatalf("process-group backend must scope its verification: %+v", r.Cleanup)
+	}
+	for _, pid := range escaped {
+		if !alive(pid) {
+			t.Fatalf("expected the documented limitation: escaped pid %d already gone", pid)
+		}
+		killPID(pid)
+	}
+}
+
 // S04-A16: the memory cap maps to RESOURCE_LIMIT/MEMORY_LIMIT; hard where the kernel
 // enforces it, sampled (non-strict) otherwise.
 func TestMemoryLimit(t *testing.T) {

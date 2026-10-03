@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
+	"runtime"
 	"time"
 )
 
@@ -44,6 +46,39 @@ type BatchPolicy struct {
 func DefaultBatchPolicy() BatchPolicy {
 	return BatchPolicy{RequestBytes: 50331648, ResponseBytes: 16777216, FrameWall: 60 * time.Second, FrameGrace: 5 * time.Second,
 		StdoutBytes: 268435456, BatchWall: 3600 * time.Second}
+}
+
+// RequestPolicy is the runner side of the adopted real-world resource policy for one
+// native request process (S04-A16). The driver-side 60 s progress callback and allocator
+// hook belong to S05; this policy bounds the process from outside.
+type RequestPolicy struct {
+	ParseWall time.Duration // process wall of a single parse request
+	EditWall  time.Duration // process wall of an edit request
+	MaxEdits  int           // edits per request
+	Memory    uint64        // bytes; hard where the backend enforces it
+	Grace     time.Duration // termination grace
+}
+
+// DefaultRequestPolicy is the adopted policy: 90 s parse, 300 s edit request with at most
+// 4 edits, 4 GiB memory and a 5 s termination grace.
+func DefaultRequestPolicy() RequestPolicy {
+	return RequestPolicy{ParseWall: 90 * time.Second, EditWall: 300 * time.Second, MaxEdits: 4, Memory: 4294967296, Grace: 5 * time.Second}
+}
+
+// Apply sets spec's wall, memory and grace for a parse (edits == 0) or edit request and
+// refuses more than MaxEdits edits before any launch. Memory is hard on Windows and Linux
+// and sampled (non-strict) on macOS. RunBatch callers apply it before setting batch limits.
+func (p RequestPolicy) Apply(s *Spec, edits int) error {
+	if edits < 0 || edits > p.MaxEdits {
+		return blocked("EDIT_COUNT_LIMIT", fmt.Errorf("%d edits, at most %d", edits, p.MaxEdits))
+	}
+	s.Wall = p.ParseWall
+	if edits > 0 {
+		s.Wall = p.EditWall
+	}
+	s.Memory = Memory{Bytes: p.Memory, Hard: runtime.GOOS != "darwin"}
+	s.Grace = p.Grace
+	return nil
 }
 
 // Frame is one request of a batch.

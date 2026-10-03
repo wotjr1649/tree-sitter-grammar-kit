@@ -190,7 +190,12 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 	if err := os.Mkdir(toolDir, 0o700); err != nil {
 		return block(refuse(kit.KindIO, "WORK_INVALID", err))
 	}
-	defer removeAll(toolDir)
+	toolsRemoved := false
+	defer func() {
+		if !toolsRemoved { // refusals before launch still remove the copies
+			removeAll(toolDir)
+		}
+	}()
 	wanted := []kit.ToolIdentity{prof.Generator}
 	if prof.JSRuntime != nil {
 		wanted = append(wanted, *prof.JSRuntime)
@@ -216,6 +221,11 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 	if hard && res.Capabilities.Memory != runner.MemoryHard {
 		return block(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", fmt.Errorf("backend %s", res.Capabilities.Backend)))
 	}
+	if prof.Mode == kit.ModeJS {
+		if leak := jsLeak(req.Work); leak != "" {
+			return block(refuse(kit.KindUnsupported, "JS_CLOSURE_LEAK", errors.New(leak)))
+		}
+	}
 	res.Argv = argv(prof, "<workspace>/out", "<tools>/"+filepath.Base(paths[nodeName(prof)]))
 	res.EnvNames = envNames()
 	res.RunIdentity = runIdentity(prof, snap.digest, res.Argv, res.EnvNames, res.Capabilities)
@@ -233,7 +243,7 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 		wsDirs = append(wsDirs, dir)
 		run := execute(ctx, base, prof, snap, dir, name, paths)
 		res.Runs = append(res.Runs, run)
-		if run.Process == nil || !run.Process.Succeeded() || run.State != "EXECUTED" {
+		if run.Process == nil || !run.Process.Succeeded() || run.State != "EXECUTED" || run.StorageBytes > int64(prof.Limits.StorageBytes) {
 			break
 		}
 	}
@@ -251,7 +261,7 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 			res.Findings = append(res.Findings, kit.Finding{Code: "SOURCE_CHANGED", Severity: "error", Message: "실행 중 source root가 바뀌었다"})
 		}
 	}
-	status(&res)
+	status(&res, prof.Limits.StorageBytes)
 	// PUBLISH, then remove the workspaces; a failure of either is never a completed success.
 	perr := publish(req.Out, &res, wsDirs)
 	res.Workspaces = "REMOVED"
@@ -262,17 +272,56 @@ func Reproduce(ctx context.Context, req Request) (Result, error) {
 			res.ExecutionStatus = kit.StatusFailed
 		}
 	}
+	toolsRemoved = true
+	if err := removeAll(toolDir); err != nil {
+		res.Workspaces = "CLEANUP_FAILED: " + err.Error()
+		res.Findings = append(res.Findings, kit.Finding{Code: "TOOL_CLEANUP_FAILED", Severity: "error", Path: filepath.Base(toolDir), Message: "도구 사본을 지우지 못해 완료로 보고하지 않는다"})
+		res.ExecutionStatus = kit.StatusFailed
+	}
+	settle(&res)
 	if perr != nil {
 		res.ExecutionStatus = kit.StatusFailed
 		res.Findings = append(res.Findings, kit.Finding{Code: "EVIDENCE_WRITE_FAILED", Severity: "error", Message: "결과 publication이 실패했다"})
+		settle(&res)
 		writeResult(req.Out, &res) // a partial publication keeps its failure report when it can
 		return res, refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", perr)
 	}
 	if err := writeResult(req.Out, &res); err != nil {
 		res.ExecutionStatus = kit.StatusFailed
+		settle(&res)
 		return res, refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", err)
 	}
 	return res, nil
+}
+
+// settle keeps an execution that did not complete (source change, cleanup or evidence
+// failure) from carrying an earlier PASS assessment.
+func settle(res *Result) {
+	switch {
+	case res.ExecutionStatus == kit.StatusResourceLimit:
+		res.Assessment = kit.AssessBlocked
+	case res.ExecutionStatus != kit.StatusCompleted && res.Assessment == kit.AssessPass:
+		res.Assessment = kit.AssessNotAssessed
+	}
+}
+
+// jsLeak names a module location Node would search from a workspace below work although
+// the declared snapshot does not contain it: node_modules in work or any ancestor, and the
+// global folder <prefix>/lib/node of the copied runtime (<work>/tsgk-tools-*/node).
+func jsLeak(work string) string {
+	if _, err := os.Stat(filepath.Join(work, "lib", "node")); err == nil {
+		return filepath.Join(work, "lib", "node")
+	}
+	for d := work; ; {
+		if _, err := os.Stat(filepath.Join(d, "node_modules")); err == nil {
+			return filepath.Join(d, "node_modules")
+		}
+		up := filepath.Dir(d)
+		if up == d {
+			return ""
+		}
+		d = up
+	}
 }
 
 func newReport() kit.Report {
@@ -633,11 +682,14 @@ func compare(res *Result, p kit.ReproduceProfile) {
 }
 
 // status derives execution status and assessment from the runs and claims.
-func status(res *Result) {
+func status(res *Result, storage uint64) {
 	res.ExecutionStatus = kit.StatusCompleted
 	for _, r := range res.Runs {
 		switch {
 		case r.State == "NOT_RUN":
+		case r.StorageBytes > int64(storage):
+			res.ExecutionStatus = kit.StatusResourceLimit
+			res.Findings = append(res.Findings, kit.Finding{Code: "STORAGE_LIMIT", Severity: "error", Path: r.Workspace, Message: "실행 뒤 작업 공간 용량이 profile 한도를 넘었다"})
 		case r.Process == nil:
 			res.ExecutionStatus = kit.StatusFailed
 			res.Findings = append(res.Findings, kit.Finding{Code: "WORKSPACE_" + r.State, Severity: "error", Path: r.Workspace, Message: "작업 공간 실행을 시작하지 못했다"})

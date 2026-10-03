@@ -88,6 +88,11 @@ func fakeGenerate(args []string) int {
 		files["extra.txt"] = "unregistered"
 	case strings.Contains(mode, "MODE:write-source"):
 		os.WriteFile("injected.txt", []byte("x"), 0o644)
+	case strings.Contains(mode, "MODE:touch-root "):
+		_, target, _ := strings.Cut(mode, "MODE:touch-root ")
+		f, _ := os.OpenFile(strings.TrimSpace(target), os.O_APPEND|os.O_WRONLY, 0)
+		f.Write([]byte("// changed during the run"))
+		f.Close()
 	case strings.Contains(mode, "MODE:read-home"):
 		// A configuration or cache in the isolated home would change the result.
 		if data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), "poison")); err == nil {
@@ -156,6 +161,7 @@ func newFixture(t *testing.T, mode, grammar string) *fixture {
 	}
 	f := &fixture{root: t.TempDir(), work: t.TempDir(), tool: exe, tools: map[string]string{"tree-sitter": exe, "node": exe}}
 	f.out = filepath.Join(t.TempDir(), "result")
+	grammar = strings.ReplaceAll(grammar, "{ROOT}", f.root)
 	src := map[string]string{"grammar.js": grammar, "common/helper.js": "module.exports = 1;\n", "src/grammar.json": grammar, "src/scanner.c": "int x;\n"}
 	var inputs []map[string]any
 	for _, name := range []string{"common/helper.js", "grammar.js", "src/grammar.json", "src/scanner.c"} {
@@ -391,6 +397,14 @@ func TestSourceWritesAndFailedPublication(t *testing.T) {
 	if treeDigest(t, f.root) != before || !hasFinding(res, "WORKSPACE_SOURCE_WRITTEN") {
 		t.Fatalf("%+v", res.Findings)
 	}
+	h := newFixture(t, kit.ModeJS, "MODE:touch-root "+filepath.Join("{ROOT}", "src", "scanner.c"))
+	res, err = h.run(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFinding(res, "SOURCE_CHANGED") || res.ExecutionStatus != kit.StatusFailed || res.Assessment == kit.AssessPass || res.SourceBefore == res.SourceAfter {
+		t.Fatalf("root change not reported: %+v", res.Report)
+	}
 	g := newFixture(t, kit.ModeJS, "MODE:exit3")
 	res, err = g.run(t)
 	if err != nil {
@@ -517,8 +531,20 @@ func TestEvidenceAndCleanupFailures(t *testing.T) {
 	}
 	res, err := f.run(t)
 	removeAll = os.RemoveAll
-	if err != nil || res.ExecutionStatus != kit.StatusFailed || !hasFinding(res, "WORKSPACE_CLEANUP_FAILED") {
+	if err != nil || res.ExecutionStatus != kit.StatusFailed || !hasFinding(res, "WORKSPACE_CLEANUP_FAILED") || res.Assessment == kit.AssessPass {
 		t.Fatalf("cleanup failure: %v %+v", err, res.Report)
+	}
+	k := newFixture(t, kit.ModeJS, "MODE:ok")
+	removeAll = func(p string) error {
+		if strings.Contains(filepath.Base(p), "tsgk-tools-") {
+			return errors.New("injected tool cleanup failure")
+		}
+		return os.RemoveAll(p)
+	}
+	res, err = k.run(t)
+	removeAll = os.RemoveAll
+	if err != nil || res.ExecutionStatus != kit.StatusFailed || !hasFinding(res, "TOOL_CLEANUP_FAILED") || res.Assessment == kit.AssessPass {
+		t.Fatalf("tool cleanup failure: %v %+v", err, res.Report)
 	}
 	g := newFixture(t, kit.ModeJS, "MODE:ok")
 	orig := writeFile
@@ -530,7 +556,54 @@ func TestEvidenceAndCleanupFailures(t *testing.T) {
 	}
 	res, err = g.run(t)
 	writeFile = orig
-	if !isCode(err, "EVIDENCE_WRITE_FAILED") || res.ExecutionStatus != kit.StatusFailed {
+	if !isCode(err, "EVIDENCE_WRITE_FAILED") || res.ExecutionStatus != kit.StatusFailed || res.Assessment == kit.AssessPass {
 		t.Fatalf("evidence failure: %v %+v", err, res.Report)
+	}
+}
+
+// S04-A11: the observed workspace storage at the profile limit passes; one byte under
+// it ends RESOURCE_LIMIT/STORAGE_LIMIT (an observation after the run, not a quota).
+func TestStorageLimit(t *testing.T) {
+	skipWithoutHardBackend(t)
+	f := newFixture(t, kit.ModeJS, "MODE:ok")
+	res, err := f.run(t)
+	if err != nil || res.Assessment != kit.AssessPass {
+		t.Fatalf("%v %+v", err, res.Report)
+	}
+	used := res.Runs[0].StorageBytes
+	if used <= 0 || res.Runs[1].StorageBytes != used {
+		t.Fatalf("storage observations %d %d", used, res.Runs[1].StorageBytes)
+	}
+	for limit, want := range map[int64]string{used: kit.AssessPass, used - 1: kit.AssessBlocked} {
+		g := newFixture(t, kit.ModeJS, "MODE:ok")
+		g.profile["limits"].(map[string]any)["storage_bytes"] = limit
+		res, err := g.run(t)
+		if err != nil || res.Assessment != want {
+			t.Fatalf("limit %d: %v %+v", limit, err, res.Report)
+		}
+		if want == kit.AssessBlocked && (res.ExecutionStatus != kit.StatusResourceLimit || !hasFinding(res, "STORAGE_LIMIT") || res.Runs[1].State != "NOT_RUN") {
+			t.Fatalf("limit %d: %+v %+v", limit, res.Report, res.Runs)
+		}
+	}
+}
+
+// R1-03: a node_modules reachable from the workspace but outside the declared snapshot
+// blocks a JS run before launch; a JSON run does not resolve modules and is unaffected.
+func TestJSClosureLeak(t *testing.T) {
+	skipWithoutHardBackend(t)
+	f := newFixture(t, kit.ModeJS, "MODE:ok")
+	if err := os.MkdirAll(filepath.Join(f.work, "node_modules", "undeclared"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.run(t); !isCode(err, "JS_CLOSURE_LEAK") {
+		t.Fatalf("leak not refused: %v", err)
+	}
+	if names := entries(t, f.work); len(names) != 1 {
+		t.Fatalf("work entries after refusal: %v", names)
+	}
+	g := newFixture(t, kit.ModeJSON, "MODE:ok")
+	g.work = f.work
+	if res, err := g.run(t); err != nil || res.Assessment != kit.AssessPass {
+		t.Fatalf("json run: %v %+v", err, res.Report)
 	}
 }

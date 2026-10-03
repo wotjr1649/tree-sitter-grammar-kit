@@ -92,7 +92,11 @@ type Capabilities struct {
 
 // Cleanup records the process-tree termination and its verification.
 type Cleanup struct {
-	Method            string `json:"method"`
+	Method string `json:"method"`
+	// Scope is what Verified covers: the whole tree (JOB_OBJECT, CGROUP) or only the
+	// process group (PROCESS_GROUP); a descendant that left the group is not observed
+	// there unless it still holds an output pipe.
+	Scope             string `json:"scope"`
 	ResidualAfterExit int    `json:"residual_after_exit"`
 	Verified          bool   `json:"verified"`
 	Detail            string `json:"detail,omitempty"`
@@ -207,6 +211,7 @@ type Process struct {
 	out     *capture
 	errs    *capture
 	exited  chan struct{}
+	superv  chan struct{} // closed when supervise returns
 	waitErr error
 	done    chan struct{}
 	result  Result
@@ -250,7 +255,7 @@ func Start(ctx context.Context, spec Spec) (*Process, error) {
 		t.close()
 		return nil, blocked("MEMORY_CONTROL_UNSUPPORTED", nil)
 	}
-	p := &Process{spec: spec, tree: t, caps: caps, exited: make(chan struct{}), done: make(chan struct{}), kill: make(chan struct{})}
+	p := &Process{spec: spec, tree: t, caps: caps, exited: make(chan struct{}), superv: make(chan struct{}), done: make(chan struct{}), kill: make(chan struct{})}
 	if err := p.launch(); err != nil {
 		t.close()
 		return nil, err
@@ -368,6 +373,7 @@ func (p *Process) currentReason() string {
 }
 
 func (p *Process) supervise(ctx context.Context) {
+	defer close(p.superv)
 	wall := time.NewTimer(p.spec.Wall)
 	defer wall.Stop()
 	var tick <-chan time.Time
@@ -398,8 +404,18 @@ func (p *Process) supervise(ctx context.Context) {
 				}
 			}
 		case <-p.kill:
+			select {
+			case <-p.exited: // already reaped: Wait handles any residual tree
+				return
+			default:
+			}
 			p.stopTree()
 			<-p.exited
+			if p.spec.Interactive {
+				// R1-06: a descendant outside the backend's reach may still hold stdout;
+				// unblock a pending interactive read after the grace period.
+				time.AfterFunc(p.spec.Grace, func() { p.outPipe.Close() })
+			}
 			return
 		}
 	}
@@ -432,10 +448,12 @@ func (p *Process) waitEmpty(d time.Duration) bool {
 // collects the bounded output and returns the result. It is safe to call once.
 func (p *Process) Wait() Result {
 	<-p.exited
+	<-p.superv
 	r := &p.result
 	r.WallMillis = time.Since(p.start).Milliseconds()
 	r.Capabilities = p.caps
 	r.Cleanup.Method = p.caps.TreeCleanup
+	r.Cleanup.Scope = p.caps.TreeCleanup
 	r.ExitCode = -1
 	if p.cmd.ProcessState != nil {
 		r.ExitCode = p.cmd.ProcessState.ExitCode()
@@ -478,6 +496,8 @@ func (p *Process) Wait() Result {
 		r.StdoutBytes, r.StdoutTruncated = cr.n, cr.n > cr.limit
 	}
 	r.Stderr, r.StderrBytes, r.StderrTruncated = p.errs.result()
+	p.outPipe.Close()
+	p.errPipe.Close()
 	r.Memory.Limit = p.spec.Memory.Bytes
 	r.Memory.Enforcement = p.caps.Memory
 	r.Memory.Metric = p.caps.MemoryMetric

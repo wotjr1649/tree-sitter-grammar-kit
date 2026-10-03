@@ -2,7 +2,9 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -13,6 +15,56 @@ func TestDefaultBatchPolicy(t *testing.T) {
 	if p.RequestBytes != 50331648 || p.ResponseBytes != 16777216 || p.FrameWall != 60*time.Second || p.FrameGrace != 5*time.Second ||
 		p.StdoutBytes != 268435456 || p.BatchWall != 3600*time.Second {
 		t.Fatalf("batch policy drifted from the adopted values: %+v", p)
+	}
+}
+
+// S04-A16: the single-request process policy is the adopted one and refuses a fifth edit
+// before any launch.
+func TestDefaultRequestPolicy(t *testing.T) {
+	p := DefaultRequestPolicy()
+	if p.ParseWall != 90*time.Second || p.EditWall != 300*time.Second || p.MaxEdits != 4 || p.Memory != 4294967296 || p.Grace != 5*time.Second {
+		t.Fatalf("request policy drifted from the adopted values: %+v", p)
+	}
+	for edits, wall := range map[int]time.Duration{0: 90 * time.Second, 1: 300 * time.Second, 4: 300 * time.Second} {
+		var s Spec
+		if err := p.Apply(&s, edits); err != nil || s.Wall != wall || s.Memory.Bytes != 4294967296 || s.Grace != 5*time.Second {
+			t.Fatalf("%d edits: %v %+v", edits, err, s)
+		}
+		if s.Memory.Hard != (runtime.GOOS != "darwin") {
+			t.Fatalf("memory hardness on %s: %+v", runtime.GOOS, s.Memory)
+		}
+	}
+	for _, edits := range []int{5, -1} {
+		var s Spec
+		var re *Error
+		if err := p.Apply(&s, edits); !errors.As(err, &re) || re.Code != "EDIT_COUNT_LIMIT" || !re.Blocked {
+			t.Fatalf("%d edits accepted: %v", edits, err)
+		}
+	}
+}
+
+// R1-06: a frame hung while an escaped descendant holds stdout still ends within the
+// declared bounds on every backend.
+func TestFrameEscapedStdoutHolder(t *testing.T) {
+	s, pids := helperSpec(t, "frames:escape@1")
+	s.Grace = time.Second
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 300 * time.Millisecond, FrameGrace: 200 * time.Millisecond,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	start := time.Now()
+	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}, {ID: "c", Request: []byte("z")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		for _, pid := range readPIDs(t, pids) {
+			killPID(pid)
+		}
+	}()
+	if el := time.Since(start); el > 15*time.Second {
+		t.Fatalf("batch took %v", el)
+	}
+	if r.Frames[0].Status != FrameCompleted || r.Frames[1].Status != FrameResourceLimit || r.Frames[2].Status != FrameRequeued {
+		t.Fatalf("%+v", r.Frames)
 	}
 }
 

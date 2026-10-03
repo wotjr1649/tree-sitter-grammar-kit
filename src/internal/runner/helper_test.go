@@ -32,10 +32,15 @@ func self() string {
 }
 
 // spawn starts the helper again in mode, inheriting stdout/stderr, and records its pid.
-func spawn(mode string, detach bool) *exec.Cmd {
+func spawn(mode string, detach bool) *exec.Cmd { return spawnIO(mode, detach, true) }
+
+// spawnIO starts the helper; without inherit its stdio is the null device.
+func spawnIO(mode string, detach, inherit bool) *exec.Cmd {
 	cmd := exec.Command(self())
 	cmd.Env = []string{"TSGK_RUNNER_HELPER=" + mode, "TSGK_PIDS=" + os.Getenv("TSGK_PIDS")}
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if inherit {
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	}
 	if detach {
 		detachAttr(cmd)
 	}
@@ -104,6 +109,10 @@ func helper(mode string) int {
 		spawn("sleep", true)
 		time.Sleep(200 * time.Millisecond)
 		return 0
+	case "escape-quiet": // the same, but the escaped descendant holds no output pipe
+		spawnIO("sleep", true, false)
+		time.Sleep(200 * time.Millisecond)
+		return 0
 	case "memory":
 		mib, _ := strconv.Atoi(arg)
 		var keep [][]byte
@@ -153,6 +162,9 @@ func frameHelper(arg string) int {
 		if i == k {
 			switch action {
 			case "hang":
+				time.Sleep(time.Hour)
+			case "escape": // an escaped descendant keeps stdout open while the frame hangs
+				spawn("sleep", true)
 				time.Sleep(time.Hour)
 			case "crash":
 				return 3

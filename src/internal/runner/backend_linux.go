@@ -131,7 +131,8 @@ func newTree(s *Spec, probe bool) (tree, Capabilities, error) {
 	return t, caps, nil
 }
 
-// checkCgroupParent requires a cgroup v2 directory whose children get the memory controller.
+// checkCgroupParent requires a cgroup v2 directory whose children already get the memory
+// controller; the runner never changes the delegated parent itself.
 func checkCgroupParent(parent string) error {
 	if !filepath.IsAbs(parent) {
 		return errors.New("cgroup parent must be absolute")
@@ -141,9 +142,7 @@ func checkCgroupParent(parent string) error {
 		return err
 	}
 	if !strings.Contains(" "+strings.TrimSpace(string(ctl))+" ", " memory ") {
-		if err := os.WriteFile(filepath.Join(parent, "cgroup.subtree_control"), []byte("+memory"), 0); err != nil {
-			return fmt.Errorf("memory controller not delegated: %w", err)
-		}
+		return errors.New("memory controller not enabled in the delegated parent's cgroup.subtree_control")
 	}
 	return nil
 }
