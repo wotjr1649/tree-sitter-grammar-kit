@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -41,7 +42,7 @@ func rawExec(t *testing.T, b *Build, stdin []byte, op string) (runner.Result, Re
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	o := kit.NativeOperations()[op]
-	res, err := b.Exec(ctx, "single", stdin, 90*time.Second, o, "")
+	res, err := b.Exec(ctx, "single", stdin, 90*time.Second, o, os.Getenv("TSGK_CGROUP_PARENT"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -443,7 +444,7 @@ func TestLimitsAndCancellation(t *testing.T) {
 		req.Output = kit.OutputAuto
 		ctx, cancel := context.WithCancel(context.Background())
 		time.AfterFunc(300*time.Millisecond, cancel)
-		res, err := b.Exec(ctx, "single", Frame(req.Encode()), 90*time.Second, kit.NativeOperations()["real-world-source-r2"], "")
+		res, err := b.Exec(ctx, "single", Frame(req.Encode()), 90*time.Second, kit.NativeOperations()["real-world-source-r2"], os.Getenv("TSGK_CGROUP_PARENT"))
 		if err != nil || res.Status != runner.StatusCancelled || !res.Cleanup.Verified {
 			t.Fatalf("cancel: %v %s %+v", err, res.Status, res.Cleanup)
 		}

@@ -236,6 +236,24 @@ func ParseReproduceProfile(data []byte) (ReproduceProfile, error)
 
 `tsgk-reproduce/r1` 문서를 S02와 같은 strict decoder로 해석해 `ReproduceProfile`(`SHA256`, `ID`, `Route`, `Mode`, `Generator`, `JSRuntime`, `ABI`, `Optimize`, `Grammar`, `Inputs`, `Outputs`, `Limits`)을 돌려준다. 오류는 `*Error`(`INVALID_INPUT`, code는 [CLI 계약](cli-and-profile.md)의 `S04 구현` 절)다. 상수 `ModeJS`, `ModeJSON`, `ReferencePresent`, `ReferenceAbsent`와 generator 연산 상한 `Gen*`를 공개한다. 이 함수는 파일·process·network를 쓰지 않는다. 생성기 실행은 공개 API가 아니며 CLI `reproduce`가 내부 runner로 한다. 공개 package의 dependency closure에는 runner, `os/exec`, `golang.org/x/sys`, network package가 없다(`TestOfflineClosure`).
 
+## S05 함수 — tree 비교, edit 검사, cp949, incremental profile
+
+```go
+func CompareTrees(a, b []TreeNode) *TreeDifference
+func TreeDigest(nodes []TreeNode) string
+func ValidateTree(nodes []TreeNode, inputBytes uint64) error
+func ApplyEdits(enc string, source []byte, edits []Edit, maxBytes uint64) ([][]byte, []EditPoints, error)
+func PointAt(enc string, s []byte, off int) Point
+func SourceEncodingValid(enc string, s []byte) bool
+func CP949Pair(lead, trail byte) bool
+func CP949Rune(lead, trail byte) (rune, bool)
+func ValidLanguageSymbol(s string) bool
+func NativeOperations() map[string]NativeOperation
+func ParseIncrementalProfile(data []byte) (IncrementalProfile, error)
+```
+
+모두 offline이며 파일·process·network를 쓰지 않는다. `CompareTrees`는 S05의 하나뿐인 의미 tree 비교 함수로, 공개 `TreeNode`(`tsgk-tree/r1` node) 12개 필드를 preorder 순서대로 정렬·중복 제거 없이 비교하고 첫 차이(`node`, `field`, `left`, `right`; 한쪽이 접두면 `node_count`)를 낸다. `TreeDigest`는 `tsgk-tree-digest/r1`, `ValidateTree`는 완료 tree 구조 규칙(root 하나, 연속 preorder ancestry, 입력 안 범위)을 검사하며 같은 범위의 형제·부모-자식 중복과 zero-width node를 허용한다. `ApplyEdits`는 [tree/protocol](tree-and-adapter-protocol.md)의 edit·encoding 경계 규칙을 적용해 중간 source와 native edit point를 돌려주고, 위반은 `*Error`(`INVALID_INPUT`, code는 같은 절)로 첫 parse 전에 거부한다. cp949 함수는 내장한 WHATWG `index-euc-kr`(identifier·sha256은 `EUCKRIdentifier`·`EUCKRIndexSHA256`, 고지 `src/kit/data/NOTICE-index-euc-kr.md`)를 쓰며, S01 encoding 판정도 같은 표로 AMBIGUOUS(`AMBIGUOUS_ENCODING`)와 표 밖 쌍(`CP949_UNMAPPED`, 선언이면 `DECLARED_ENCODING_INVALID`)을 완성한다. `ParseIncrementalProfile`은 [CLI 계약](cli-and-profile.md) `S05 구현`의 profile을 해석하고, `NativeOperations`는 그 연산 상한을 돌려준다. driver build·실행은 공개 API가 아니며 CLI `incremental`이 내부 `src/internal/native`와 runner로 한다(`TestOfflineClosure`가 공개 closure에 runner·`os/exec`·network가 없음을 확인).
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.

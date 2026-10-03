@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을 구현했다(아래 `S04 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을 구현했다(아래 `S04 구현`, `S05 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -19,7 +19,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `schema check --input FILE` | node-types 구조·참조 검증 | READ_DATA, 03 |
 | `schema diff --before FILE --after FILE` | node/field/type/required/multiple/supertype 변경 | READ_DATA, 03 |
 | `reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH --allow EXEC_GENERATOR` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
-| `incremental --root PATH --edits FILE --profile FILE --out PATH` | 매 edit의 incremental/fresh 결과 | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
+| `incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | 매 edit의 incremental/fresh 결과(edit는 profile 안) | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
 | `oracle record --root PATH --profile FILE --out PATH` | native ordered tree/query/API record | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `incremental`, `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다.
+* `oracle`, `replay`, `evidence`, `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05가 구현했다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -115,6 +115,28 @@ profile `tsgk-reproduce/r1`은 S02와 같은 strict decoder로 읽는다. 필수
 비교: 등록 output마다 A와 B의 bytes(`EQUAL`·`DIFFERENT`·`MISSING`)와 A와 기준(`MATCH`·`MISMATCH`·`REFERENCE_ABSENT`·`OUTPUT_MISSING`)을 따로 기록한다. 출력 디렉터리의 등록되지 않은 파일은 `UNREGISTERED_OUTPUT`으로 남기고 A·B 사이에서도 비교한다. 작업 공간 source 사본에 대한 쓰기는 `WORKSPACE_SOURCE_WRITTEN`, 실행 뒤 원본 root가 달라지면 `SOURCE_CHANGED`다. 정규화는 하지 않는다(byte identity). claim은 `generator_ran`, `deterministic`, `reference_match`, `js_reproduction`(js 모드에서 세 claim이 모두 PASS일 때만), `json_regeneration`(json 모드)이며 값은 `PASS`·`FAIL`·`NOT_CLAIMED`다. json 실행은 `js_reproduction`을 주장하지 않는다. 기준이 없으면 `reference_match`는 `NOT_CLAIMED`이고 assessment는 `BLOCKED`다. A가 실패하면 B는 `NOT_RUN`이다. 생성기의 0이 아닌 종료는 `FAILED`(`GENERATOR_EXIT_NONZERO`), runner 한도는 `RESOURCE_LIMIT`, cleanup 미확인은 `FAILED`(`PROCESS_CLEANUP_UNVERIFIED`)다. `run_identity`는 profile 전체·도구 hash·snapshot·argv·환경 이름·backend capability를 묶으며 어느 하나가 바뀌면 달라진다. 저장 용량은 실행 뒤 작업 공간 합계로 관측하며(실행 중 quota는 아님) `storage_bytes`를 넘으면 그 작업 공간에서 멈추고 `STORAGE_LIMIT` finding을 남긴다. 다른 실패 원인이 없으면 `RESOURCE_LIMIT`(assessment `BLOCKED`)이고, 있으면 그 원인의 상태에 이 finding이 더해진다.
 
 publication: `--out`은 새로 만들어야 하며 있으면 실행 전 `OUTPUT_EXISTS`다. `workspace-a|b/out/`에 생성물을, `stdout.log`·`stderr.log`에 원 출력을 두고 마지막에 `result.json`(`tsgk-reproduce-result/r1`)을 쓴다. 실패한 실행도 partial 생성물과 실패 report를 남긴다. 그 뒤 작업 공간과 도구 사본 디렉터리를 지우며 지우지 못하면 `WORKSPACE_CLEANUP_FAILED`·`TOOL_CLEANUP_FAILED`로 완료가 아니다. 실행이 완료되지 않은 결과(source 변경, 저장 용량 초과, cleanup·결과 쓰기 실패)는 assessment `PASS`를 갖지 않고(`NOT_ASSESSED`, 한도면 `BLOCKED`), `js_reproduction`·`json_regeneration`도 `PASS`로 남지 않는다(`NOT_CLAIMED`). 관측 claim(`generator_ran`, `deterministic`, `reference_match`)은 관측한 그대로 둔다. 저장 용량 초과는 다른 실패 원인과 함께 finding으로 남는다. 결과 쓰기 실패는 `EVIDENCE_WRITE_FAILED`(exit 4)다. stdout에는 같은 report 한 줄을 쓴다. exit: 완료 PASS 0, FAIL 1, BLOCKED 3, `RESOURCE_LIMIT` 3, 생성기·cleanup 실패 1, 취소 130.
+
+## S05 구현 — incremental, incremental profile r1
+
+```text
+tsgk incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE [--cgroup-parent DIR]
+```
+
+`incremental`은 profile의 grammar로 [`tsgk-native/r1` driver](tree-and-adapter-protocol.md)를 build하고 사례마다 driver process 하나를 S04 runner로 실행한다. 두 capability가 없으면 실행 전 `CAPABILITY_NOT_GRANTED`(exit 3)이며 `--out`을 만들지 않는다. profile·`--work`·`--out`의 부모는 `--root` 밖이다(`PROFILE_INSIDE_INPUT`, `WORK_INSIDE_INPUT`, `OUTPUT_INSIDE_INPUT`). `--out`이 있으면 `OUTPUT_EXISTS`(exit 2)다. 처음 계획한 `--edits FILE`은 profile의 사례 안 `edits`로 합쳤다.
+
+profile `tsgk-incremental/r1`은 S02와 같은 strict decoder로 읽는다. 필드는 모두 필수다. `schema`, `id`, `route`(1~128자 ID), `operation`, `symbol`(`^tree_sitter_[a-z0-9_]{1,64}$`; shim에 쓰는 유일한 caller 값이며 그 밖은 `SYMBOL_INVALID`), `encoding`(`UTF-8`·`UTF-16LE`·`UTF-16BE`·`CP949`), `output`, `compiler`(`name`·`version`·`sha256`·`bytes`; `--tool cc=PATH`의 내용이 같아야 함), `grammar`(정렬·중복 없는 portable path의 `path`·`role`(`parser` 정확히 하나, `scanner`, `header`)·`sha256`·`bytes`, 최대 64개·파일당 104857600·합계 134217728 bytes), `declarations`(`null` 또는 `{mapping, items[{fact, node, name}]}`, 최대 64개, `name`은 `node` 또는 `field:`·`child:`·`children:` locator 경로), `cases`다. 사례는 `id`, `input`(`role: case`), 선택 `encoding`(기본은 profile 값), `edits`(`start_byte`·`old_end_byte`·`new_end_byte`·`old`·`new`, `old`·`new`는 패딩 있는 표준 base64), `points`(`{id, byte}`, 최대 64), `expect`(`{step, syntax: NO_ERROR|ERROR|ANY, contains: [named type], declarations: ""|PASS|FAIL|NOT_APPLICABLE}`)다. 예시는 `src/contracts/examples/incremental-r1.json`, 거부 예시는 `invalid/incremental-*.json`이다.
+
+| `operation` | 입력 | node / full gate | 출력 | parse당 | process wall | edit | 사례 |
+|---|---|---|---|---|---|---|---|
+| `native-parse-edit` | 65536 | 10000 / 10000 | 8388608 | 10초 | 10초 | 4 (`tree`만) | 1000 |
+| `real-world-source-r2` | 33554432 | 25000000 / 50000 | 16777216 | 60초 | parse 90초, edit 300초 | 4 (`tree`만) | 64 |
+| `private-corpus-local` | 33554432 | 25000000 / 50000 | 16777216 | 60초 | batch 3600초, frame 60초+5초 | 0 (`record`만) | 26000 |
+
+세 연산 모두 tree depth 100000, 메모리 4294967296(Windows·Linux hard, macOS sampled non-strict), ERROR/MISSING 1000건, partial tree 1000 node이고 run 전체 wall은 3600초다. `private-corpus-local`은 process 하나에 사례 500개 또는 입력 268435456 bytes까지 `batch` frame으로 보내며, batch 한도나 치명 frame(`ALLOCATION_LIMIT`) 뒤에 답하지 않은 사례는 새 process로 다시 보낸다(재시도로 세지 않음). 마지막 응답 뒤 stdout bytes·cleanup 미확인·비정상 exit가 있으면 그 batch의 어떤 frame도 완료로 받지 않는다. run wall 안에 처리하지 못한 사례는 `NOT_RUN`이다.
+
+실행 순서: profile 검증 → hard memory backend 확인(macOS 제외, 없으면 `MEMORY_HARD_CAP_UNSUPPORTED`) → `--work` 안 새 build 디렉터리에 runtime(내장 manifest와 hash 대조, `RUNTIME_MISMATCH`)·grammar(`SOURCE_MISMATCH`, link 거부)·driver source·shim 복사 → 컴파일러 `--version`과 compile/link(아래 [플랫폼](platform-support.md) `S05 native build`) → 사례마다 입력 hash 확인(`SOURCE_MISMATCH`), edit 검사(`kit.ApplyEdits`), 실행 직전 executable hash 재확인(`EXECUTABLE_MISMATCH`), runner 실행, response 검증 → 판정 → `--out/result.json`(`tsgk-incremental-result/r1`)과 `--out/responses/<사례>.json`(원 response payload) → build 디렉터리 삭제 확인(`BUILD_CLEANUP_FAILED`면 완료가 아님). stdout에는 같은 결과 한 줄을 쓴다.
+
+사례 결과는 `execution_status`, `assessment`, `code`(첫 실패 사유), claim 세 개(`incremental_equality`, `incremental_route`, `expectations`; `PASS`·`FAIL`·`BLOCKED`·`NOT_CLAIMED`), driver status·code·producer, runner 결과, step별 source bytes·sha256, edit와 point, route 계측과 `proven`, 비교(`equal`, `first_difference`), 공개 `tsgk-tree/r1`·`tsgk-tree-summary/r1` envelope, 기대값 결과다. 판정은 [tree/protocol](tree-and-adapter-protocol.md) `S05 구현`의 비교 projection을 따른다. exit: 모든 사례가 완료되고 PASS면 0, FAIL 1, BLOCKED·`RESOURCE_LIMIT` 3, 실행 전 거부 2, 실패(FAILED·cleanup·결과 쓰기) 4, 취소 130이다.
 
 ## discovery와 strict profile
 

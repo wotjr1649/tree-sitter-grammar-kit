@@ -166,7 +166,16 @@ func TestFrameStatusMapping(t *testing.T) {
 			if !r.Process.Cleanup.Verified {
 				t.Fatalf("cleanup not verified: %+v", r.Process.Cleanup)
 			}
+			if r.TrailingBytes != 0 {
+				t.Fatalf("trailing bytes %d", r.TrailingBytes)
+			}
 		})
+	}
+	// S05-A09: bytes after the last response are counted, never silently dropped.
+	s, _ := helperSpec(t, "frames:tail")
+	r, err := RunBatch(context.Background(), s, small, frames(2))
+	if err != nil || r.TrailingBytes != 4 || r.Frames[1].Status != FrameCompleted {
+		t.Fatalf("trailing stdout: %v %d %+v", err, r.TrailingBytes, r.Frames)
 	}
 	t.Run("request-cap", func(t *testing.T) {
 		s, _ := helperSpec(t, "frames:echo")

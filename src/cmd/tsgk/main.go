@@ -44,11 +44,11 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"incremental": "S05", "oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
+var future = map[string]string{"oracle": "S06", "replay": "S07", "evidence": "S07", "parity": "S08"}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce | tsgk incremental")
 		return exitUsage
 	}
 	cmd := args[0]
@@ -57,6 +57,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if cmd == "reproduce" {
 		return runReproduce(ctx, args[1:], stdout, stderr)
+	}
+	if cmd == "incremental" {
+		return runIncremental(ctx, args[1:], stdout, stderr)
 	}
 	if owner, ok := future[cmd]; ok {
 		fmt.Fprintf(stderr, "tsgk: UNSUPPORTED_COMMAND: %s는 %s 범위이며 이 build에서 구현되지 않았다\n", cmd, owner)
