@@ -44,11 +44,11 @@ func (m *multi) String() string     { return strings.Join(*m, ",") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 // future commands are owned by later sessions; this build rejects them clearly.
-var future = map[string]string{"parity": "S08"}
+var future = map[string]string{}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce | tsgk incremental | tsgk oracle record | tsgk replay | tsgk evidence verify")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk <inspect|identity|corpus|verify> --root PATH [--out PATH] | tsgk schema <check|diff> | tsgk reproduce | tsgk incremental | tsgk oracle record | tsgk replay | tsgk evidence verify | tsgk qualify")
 		return exitUsage
 	}
 	cmd := args[0]
@@ -66,6 +66,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if cmd == "replay" {
 		return runReplay(ctx, "replay", args[1:], stdout, stderr)
+	}
+	if cmd == "qualify" {
+		return runQualify(ctx, args[1:], stdout, stderr)
 	}
 	if cmd == "evidence" {
 		if len(args) < 2 || args[1] != "verify" {
@@ -387,6 +390,8 @@ func finish(result any, err error, out, publishRoot string, stdout, stderr io.Wr
 	case kit.ReplayResult:
 		code = replayExit(v.Assessment)
 	case kit.EvidenceResult:
+		code = replayExit(v.Assessment)
+	case kit.QualificationResult:
 		code = replayExit(v.Assessment)
 	}
 	if out == "" {
