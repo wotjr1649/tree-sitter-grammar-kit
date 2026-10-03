@@ -1,0 +1,101 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "html",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(attribute (attribute_name) @attribute)\n(style_element (start_tag (tag_name) @raw_text_tag))\n(script_element (start_tag (tag_name) @raw_text_tag))\n(self_closing_tag (tag_name) @self_closing)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "html-query-r1",
+      "source_case": "html-feature-r1",
+      "features": [
+        "html-B01",
+        "html-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "lang"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "charset"
+            },
+            {
+              "name": "raw_text_tag",
+              "type": "tag_name",
+              "text": "style"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "class"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "id"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "action"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "method"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "type"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "name"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "required"
+            },
+            {
+              "name": "self_closing",
+              "type": "tag_name",
+              "text": "br"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "type"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "disabled"
+            },
+            {
+              "name": "raw_text_tag",
+              "type": "tag_name",
+              "text": "script"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

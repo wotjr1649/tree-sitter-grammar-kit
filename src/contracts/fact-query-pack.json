@@ -1,0 +1,256 @@
+{
+ "schema": "tsgk-fact-query-pack/r1",
+ "revision": "fact-queries-r1",
+ "mapping": "declaration-facts-r1",
+ "dynamic_sql": "dynamic-sql-r1",
+ "xml_structure": "xml-structure-r1",
+ "routes": [
+  {
+   "route": "csharp",
+   "declarations": [
+    {
+     "fact": "type_declaration",
+     "node": "class_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "struct_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "interface_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "enum_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "record_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "delegate_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "namespace_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "type_declaration",
+     "node": "file_scoped_namespace_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "method_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "constructor_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "destructor_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "property_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "event_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "enum_member_declaration",
+     "name": "field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "field_declaration",
+     "name": "child:variable_declaration/children:variable_declarator/field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "event_field_declaration",
+     "name": "child:variable_declaration/children:variable_declarator/field:name"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "indexer_declaration",
+     "name": "node"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "operator_declaration",
+     "name": "field:operator"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "conversion_operator_declaration",
+     "name": "field:type"
+    },
+    {
+     "fact": "member_declaration",
+     "node": "extension_declaration",
+     "name": "node"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(class_declaration) @decl.0\n(class_declaration name: _ @name.0) @owner.0\n(struct_declaration) @decl.1\n(struct_declaration name: _ @name.1) @owner.1\n(interface_declaration) @decl.2\n(interface_declaration name: _ @name.2) @owner.2\n(enum_declaration) @decl.3\n(enum_declaration name: _ @name.3) @owner.3\n(record_declaration) @decl.4\n(record_declaration name: _ @name.4) @owner.4\n(delegate_declaration) @decl.5\n(delegate_declaration name: _ @name.5) @owner.5\n(namespace_declaration) @decl.6\n(namespace_declaration name: _ @name.6) @owner.6\n(file_scoped_namespace_declaration) @decl.7\n(file_scoped_namespace_declaration name: _ @name.7) @owner.7\n(method_declaration) @decl.8\n(method_declaration name: _ @name.8) @owner.8\n(constructor_declaration) @decl.9\n(constructor_declaration name: _ @name.9) @owner.9\n(destructor_declaration) @decl.10\n(destructor_declaration name: _ @name.10) @owner.10\n(property_declaration) @decl.11\n(property_declaration name: _ @name.11) @owner.11\n(event_declaration) @decl.12\n(event_declaration name: _ @name.12) @owner.12\n(enum_member_declaration) @decl.13\n(enum_member_declaration name: _ @name.13) @owner.13\n(field_declaration) @decl.14\n(field_declaration (variable_declaration (variable_declarator name: _ @name.14) @s1.14) @s0.14) @owner.14\n(event_field_declaration) @decl.15\n(event_field_declaration (variable_declaration (variable_declarator name: _ @name.15) @s1.15) @s0.15) @owner.15\n(indexer_declaration) @decl.16\n(operator_declaration) @decl.17\n(operator_declaration operator: _ @name.17) @owner.17\n(conversion_operator_declaration) @decl.18\n(conversion_operator_declaration type: _ @name.18) @owner.18\n(extension_declaration) @decl.19\n"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "facts": "dynamic_sql",
+     "source": "(object_creation_expression type: _ @oc.type) @oc\n(object_creation_expression arguments: (argument_list . (argument) @oc.arg)) @oc.a\n(argument (_) @arg.expr) @arg\n(qualified_name name: _ @qn.name) @qn\n(alias_qualified_name name: _ @aq.name) @aq\n(generic_name . (identifier) @gn.name) @gn\n(initializer_expression (assignment_expression left: (identifier) @ini.left right: _ @ini.right) @ini.as)\n(assignment_expression left: (member_access_expression name: (identifier) @ma.name) right: _ @ma.right) @ma.as\n(binary_expression operator: _ @bin.op) @bin\n"
+    }
+   ]
+  },
+  {
+   "route": "tsql",
+   "declarations": [
+    {
+     "fact": "create_object",
+     "node": "create_procedure",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_function",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_view",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_table",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_trigger",
+     "name": "child:object_reference"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_type",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_schema",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_synonym",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_sequence",
+     "name": "field:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "create_index",
+     "name": "field:name"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(create_procedure) @decl.0\n(create_procedure name: _ @name.0) @owner.0\n(create_function) @decl.1\n(create_function name: _ @name.1) @owner.1\n(create_view) @decl.2\n(create_view name: _ @name.2) @owner.2\n(create_table) @decl.3\n(create_table name: _ @name.3) @owner.3\n(create_trigger) @decl.4\n(create_trigger (object_reference) @name.4) @owner.4\n(create_type) @decl.5\n(create_type name: _ @name.5) @owner.5\n(create_schema) @decl.6\n(create_schema name: _ @name.6) @owner.6\n(create_synonym) @decl.7\n(create_synonym name: _ @name.7) @owner.7\n(create_sequence) @decl.8\n(create_sequence name: _ @name.8) @owner.8\n(create_index) @decl.9\n(create_index name: _ @name.9) @owner.9\n"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "facts": "dynamic_sql",
+     "source": "(execute_statement) @exec\n(execute_statement _ @exec.child) @exec.parent\n(execute_statement procedure: (object_reference) @proc) @proc.exec\n(object_reference name: _ @ref.name) @ref\n(object_reference schema: _ @ref.schema) @ref.s\n(exec_argument name: _ @arg.name) @arg\n(exec_argument value: _ @arg.value) @arg.v\n(binary_expression operator: _ @bin.op) @bin\n(field name: _ @field.name) @field\n\";\" @semi\n(ERROR . (identifier) @err.first) @err\n(ERROR . (keyword_with) @errwith.first) @errwith\n"
+    }
+   ]
+  },
+  {
+   "route": "postgresql-sql",
+   "declarations": [
+    {
+     "fact": "create_object",
+     "node": "CreateStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "ViewStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateFunctionStmt",
+     "name": "child:func_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "IndexStmt",
+     "name": "child:opt_single_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateTrigStmt",
+     "name": "child:name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateSchemaStmt",
+     "name": "child:opt_single_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "CreateSeqStmt",
+     "name": "child:qualified_name"
+    },
+    {
+     "fact": "create_object",
+     "node": "DefineStmt",
+     "name": "child:any_name"
+    }
+   ],
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "facts": "declarations",
+     "source": "(CreateStmt) @decl.0\n(CreateStmt (qualified_name) @name.0) @owner.0\n(ViewStmt) @decl.1\n(ViewStmt (qualified_name) @name.1) @owner.1\n(CreateFunctionStmt) @decl.2\n(CreateFunctionStmt (func_name) @name.2) @owner.2\n(IndexStmt) @decl.3\n(IndexStmt (opt_single_name) @name.3) @owner.3\n(CreateTrigStmt) @decl.4\n(CreateTrigStmt (name) @name.4) @owner.4\n(CreateSchemaStmt) @decl.5\n(CreateSchemaStmt (opt_single_name) @name.5) @owner.5\n(CreateSeqStmt) @decl.6\n(CreateSeqStmt (qualified_name) @name.6) @owner.6\n(DefineStmt) @decl.7\n(DefineStmt (any_name) @name.7) @owner.7\n"
+    }
+   ]
+  },
+  {
+   "route": "xml",
+   "declarations": [],
+   "queries": [
+    {
+     "id": "facts.xml_structure",
+     "facts": "xml_structure",
+     "source": "(STag (Name) @element.name) @element\n(EmptyElemTag (Name) @element.name) @element\n(Attribute (Name) @attribute.name (AttValue) @attribute.value) @attribute\n"
+    }
+   ]
+  }
+ ]
+}

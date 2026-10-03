@@ -255,6 +255,21 @@ func ParseIncrementalProfile(data []byte) (IncrementalProfile, error)
 
 모두 offline이며 파일·process·network를 쓰지 않는다. `CompareTrees`는 S05의 하나뿐인 의미 tree 비교 함수로, 공개 `TreeNode`(`tsgk-tree/r1` node) 12개 필드를 preorder 순서대로 정렬·중복 제거 없이 비교하고 첫 차이(`node`, `field`, `left`, `right`; 한쪽이 접두면 `node_count`)를 낸다. `TreeDigest`는 `tsgk-tree-digest/r1`, `ValidateTree`는 완료 tree 구조 규칙(root 하나, 연속 preorder ancestry, 입력 안 범위)을 검사하며 같은 범위의 형제·부모-자식 중복과 zero-width node를 허용한다. `ApplyEdits`는 [tree/protocol](tree-and-adapter-protocol.md)의 edit·encoding 경계 규칙을 적용해 중간 source와 native edit point를 돌려주고, 위반은 `*Error`(`INVALID_INPUT`, code는 같은 절)로 첫 parse 전에 거부한다. cp949 함수는 내장한 WHATWG `index-euc-kr`(identifier·sha256은 `EUCKRIdentifier`·`EUCKRIndexSHA256`, 고지 `src/kit/data/NOTICE-index-euc-kr.md`)를 쓰며, S01 encoding 판정도 같은 표로 AMBIGUOUS(`AMBIGUOUS_ENCODING`)와 표 밖 쌍(`CP949_UNMAPPED`, 선언이면 `DECLARED_ENCODING_INVALID`)을 완성한다. `ParseIncrementalProfile`은 [CLI 계약](cli-and-profile.md) `S05 구현`의 profile을 해석하고, `NativeOperations`는 그 연산 상한을 돌려준다. driver build·실행은 공개 API가 아니며 CLI `incremental`이 내부 `src/internal/native`와 runner로 한다(`TestOfflineClosure`가 공개 closure에 runner·`os/exec`·network가 없음을 확인).
 
+## S06 함수 — capture 비교, oracle profile, 기록 set 검증, 사실 query 세트
+
+```go
+func CompareCaptures(a, b []Capture) *CaptureDifference
+func ParseOracleProfile(data []byte) (OracleProfile, error)
+func VerifyOracleSet(fsys fs.FS) OracleSetReport
+func ParseFactPack(data []byte) (FactPack, error)
+func DeclarationQuery(items []NativeDeclaration) string
+func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []DeclarationItem
+func DeriveDynamicSQL(route string, caps []Capture, src []byte) DynamicSQLFacts
+func CaptureText(src []byte, c Capture) (string, error)
+```
+
+모두 offline이며 process·network를 쓰지 않는다. `VerifyOracleSet`만 호출자가 준 `fs.FS`를 읽는다. `Capture`는 runtime이 돌려준 순서의 capture 하나다(`match`, `pattern`, `capture`, `name`, preorder `node`, `type`, node flag 다섯 개, byte·point 범위). `CompareCaptures`는 하나뿐인 capture stream 비교 함수(`tsgk-capture-compare/r1`)다. stream 순서대로 모든 필드를 정렬·중복 제거 없이 비교하고 첫 차이(`index`, `field`, `left`, `right`; 한쪽이 접두면 `capture_count`)를 낸다. `ParseOracleProfile`은 [CLI 계약](cli-and-profile.md) `S06 구현`의 `tsgk-oracle/r1`을 S05와 같은 strict decoder로 해석한다. `VerifyOracleSet`은 [tree/protocol](tree-and-adapter-protocol.md) `S06 구현`의 기록 set 완결성(마지막 `complete` member, member bytes·sha256, 목록 밖 파일, record 수, record의 입력·step 0 결속)을 검사하고 finding을 모아 `valid`를 낸다. 고치거나 추정하지 않는다. `ParseFactPack`은 `tsgk-fact-query-pack/r1`을 해석하고 파일 bytes의 sha256을 identity로 돌려준다. `DeclarationQuery`는 선언 query text를 만들며 pack의 text가 그 결과와 같다(`TestFactQueryPack`). `DeriveDeclarations`와 `DeriveDynamicSQL`은 pack query의 capture(과 동적 SQL은 원본 bytes)에서 같은 절의 규칙으로 사실을 도출한다. 소비자가 같은 pack과 기록으로 사실을 다시 만들 수 있게 공개한다. `CaptureText`는 capture의 원본 text를 돌려주고 UTF-8이 아니면 오류다. `NativeOperations`에는 `native-query`, `native-query-large`(windows/amd64), `real-world-source-r3`(windows/amd64, 8 GiB)가 더해졌고 `NativeOperation`에는 `platforms`·`matches`·`captures`·`query_ms`가 더해졌다. driver build·실행·기록 set 발행은 공개 API가 아니며 CLI `oracle record`가 내부 `src/internal/native`로 한다. 공개 closure에 runner·`os/exec`·network가 없음은 `TestOfflineClosure`가 계속 확인한다.
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.

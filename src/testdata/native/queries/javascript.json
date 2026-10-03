@@ -1,0 +1,66 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "javascript",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(import_statement source: (string) @source)\n(function_declaration name: (identifier) @function)\n(class_declaration name: (identifier) @class)\n(method_definition name: (property_identifier) @method)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "javascript-query-r1",
+      "source_case": "javascript-feature-r1",
+      "features": [
+        "javascript-B01",
+        "javascript-V15"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "source",
+              "type": "string",
+              "text": "'node:fs/promises'"
+            },
+            {
+              "name": "source",
+              "type": "string",
+              "text": "'node:path'"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "loadConfig"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Cache"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "constructor"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "get"
+            },
+            {
+              "name": "method",
+              "type": "property_identifier",
+              "text": "set"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

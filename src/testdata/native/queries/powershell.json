@@ -1,0 +1,76 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "powershell",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(enum_statement (simple_name) @enum)\n(class_statement (simple_name) @class)\n(function_statement (function_name) @function)\n(command command_name: (command_name) @command)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "powershell-query-r1",
+      "source_case": "powershell-feature-r1",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "enum",
+              "type": "simple_name",
+              "text": "Level"
+            },
+            {
+              "name": "class",
+              "type": "simple_name",
+              "text": "Item"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "Get-Total"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "Write-Warning"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "Write-Output"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "Get-Total"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "ForEach-Object"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "Write-Error"
+            },
+            {
+              "name": "command",
+              "type": "command_name",
+              "text": "Write-Verbose"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

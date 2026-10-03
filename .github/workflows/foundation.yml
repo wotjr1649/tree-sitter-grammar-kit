@@ -237,8 +237,11 @@ jobs:
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
 
   native-routes:
-    # S05: build the driver and run the registered edit/feature/gap cases of the 26 routes
-    # and the synthetic large C# fixtures on each host with its existing compiler.
+    # S05/S06: build the driver and run the registered edit/feature/gap cases of the 26
+    # routes (tsgk incremental, r1) and record them with the route query cases, the fact
+    # query pack and the dynamic SQL fixtures (tsgk oracle record, r2) on each host with its
+    # existing compiler. The large C# fixtures (real-world-source-r3, native-query-large)
+    # run on windows/amd64 only and are NOT_APPLICABLE elsewhere (C1-REAL-WORLD-SOURCE-WINDOWS-R3).
     name: native routes (${{ matrix.os }})
     needs: native-prepare
     strategy:
@@ -326,7 +329,7 @@ jobs:
             sudo sysctl -w "vm.mmap_rnd_bits=$bits"
             if ($LASTEXITCODE -ne 0) { throw 'sysctl restore failed' }
           }
-      - name: 26 route native build와 등록 사례 실행
+      - name: 26 route native build와 등록 사례·query 기록 실행
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
@@ -345,7 +348,7 @@ jobs:
           }
           $cc = & src/dev/s05-native/select-compiler.ps1
           $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large
+          & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large -Oracle
           if ($LASTEXITCODE -ne 0) { throw 'route run reported failures' }
       - name: route 결과 보관
         if: always()

@@ -1,0 +1,76 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "bash",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(function_definition name: (word) @function)\n(for_statement variable: (variable_name) @loop)\n(variable_assignment name: (variable_name) @variable)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "bash-query-r1",
+      "source_case": "bash-feature-r1",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "LOG_DIR"
+            },
+            {
+              "name": "function",
+              "type": "word",
+              "text": "log"
+            },
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "level"
+            },
+            {
+              "name": "function",
+              "type": "word",
+              "text": "classify"
+            },
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "n"
+            },
+            {
+              "name": "loop",
+              "type": "variable_name",
+              "text": "name"
+            },
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "level"
+            },
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "total"
+            },
+            {
+              "name": "variable",
+              "type": "variable_name",
+              "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "python",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(import_statement name: (dotted_name) @import)\n(class_definition name: (identifier) @class)\n(function_definition name: (identifier) @function)\n(type_alias_statement left: (type) @type_alias)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "python-query-r1",
+      "source_case": "python-feature-r1",
+      "features": [
+        "python-B03",
+        "python-V312"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "import",
+              "type": "dotted_name",
+              "text": "asyncio"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Item"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "label"
+            },
+            {
+              "name": "type_alias",
+              "type": "type",
+              "text": "Pair[T]"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "classify"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

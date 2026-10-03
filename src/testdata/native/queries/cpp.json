@@ -1,0 +1,51 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "cpp",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(namespace_definition name: (namespace_identifier) @namespace)\n(struct_specifier name: (type_identifier) @struct)\n(concept_definition name: (identifier) @concept)\n(class_specifier name: (type_identifier) @class)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "cpp-query-r1",
+      "source_case": "cpp-feature-r1",
+      "features": [
+        "cpp-B01",
+        "cpp-V20"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "namespace",
+              "type": "namespace_identifier",
+              "text": "inventory"
+            },
+            {
+              "name": "struct",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "concept",
+              "type": "identifier",
+              "text": "Countable"
+            },
+            {
+              "name": "class",
+              "type": "type_identifier",
+              "text": "Store"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

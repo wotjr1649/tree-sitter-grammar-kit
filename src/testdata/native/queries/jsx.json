@@ -1,0 +1,85 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "jsx",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(jsx_opening_element name: (identifier) @open)\n(jsx_closing_element name: (identifier) @close)\n(jsx_self_closing_element name: (identifier) @self_closing)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "jsx-query-r1",
+      "source_case": "jsx-feature-r1",
+      "features": [
+        "jsx-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "open",
+              "type": "identifier",
+              "text": "span"
+            },
+            {
+              "name": "close",
+              "type": "identifier",
+              "text": "span"
+            },
+            {
+              "name": "open",
+              "type": "identifier",
+              "text": "section"
+            },
+            {
+              "name": "open",
+              "type": "identifier",
+              "text": "h2"
+            },
+            {
+              "name": "close",
+              "type": "identifier",
+              "text": "h2"
+            },
+            {
+              "name": "open",
+              "type": "identifier",
+              "text": "ul"
+            },
+            {
+              "name": "open",
+              "type": "identifier",
+              "text": "li"
+            },
+            {
+              "name": "self_closing",
+              "type": "identifier",
+              "text": "Badge"
+            },
+            {
+              "name": "close",
+              "type": "identifier",
+              "text": "li"
+            },
+            {
+              "name": "close",
+              "type": "identifier",
+              "text": "ul"
+            },
+            {
+              "name": "close",
+              "type": "identifier",
+              "text": "section"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

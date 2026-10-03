@@ -327,3 +327,46 @@ func TestQueryAcrossEdits(t *testing.T) {
 		t.Fatalf("step 1 stream %v", got)
 	}
 }
+
+// S06-A06/A11: a capture row whose node index names another node of the tree is rejected;
+// the record never links a capture to the wrong node.
+func TestCaptureLink(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	req := baseRequest("a = f(1);", "native-query")
+	req.Protocol, req.Limits = ProtocolR2, LimitsFor(kit.NativeOperations()["native-query"])
+	req.Queries = []QuerySource{{ID: "q", Source: []byte("(identifier) @id")}}
+	res, resp, err := rawExec(t, b, Frame(req.Encode()), "native-query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	versions, points, _ := kit.ApplyEdits(kit.EncodingUTF8, req.Source, nil, 65536)
+	if _, err := Check(resp, req, versions, points, res.ExitCode); err != nil {
+		t.Fatalf("valid response rejected: %v", err)
+	}
+	var qs []WireQuery
+	if err := jsonv2.Unmarshal(resp.Steps[0].Incremental.Queries, &qs); err != nil || len(qs[0].Captures) < 2 {
+		t.Fatalf("%v %+v", err, qs)
+	}
+	qs[0].Captures[0][3] = qs[0].Captures[1][3] // the first identifier linked to the second's node
+	tampered, _ := jsonv2.Marshal(qs)
+	resp.Steps[0].Incremental.Queries = tampered
+	if _, err := Check(resp, req, versions, points, res.ExitCode); err == nil || err.(*Error).Code != "CAPTURE_LINK_MISMATCH" {
+		t.Fatalf("relinked capture accepted: %v", err)
+	}
+}
+
+// S06-A02/A11: the incremental/fresh query comparison fails on a changed capture or status.
+func TestQueryEquality(t *testing.T) {
+	a := []QueryOut{{ID: "q", Status: kit.StatusCompleted, Evaluation: EvalStructural, Captures: []kit.Capture{{Name: "x", Node: 1}, {Name: "y", Node: 2}}}}
+	if eq, _ := compareQueries(a, a); !eq {
+		t.Fatal("equal results differ")
+	}
+	b := []QueryOut{{ID: "q", Status: kit.StatusCompleted, Evaluation: EvalStructural, Captures: []kit.Capture{{Name: "x", Node: 1}, {Name: "y", Node: 3}}}}
+	if eq, first := compareQueries(a, b); eq || first == "" {
+		t.Fatal("changed capture node not detected")
+	}
+	c := []QueryOut{{ID: "q", Status: kit.StatusResourceLimit, Code: "CAPTURE_LIMIT", Evaluation: EvalStructural, Captures: a[0].Captures}}
+	if eq, _ := compareQueries(a, c); eq {
+		t.Fatal("changed status not detected")
+	}
+}

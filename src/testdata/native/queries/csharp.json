@@ -1,0 +1,66 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "csharp",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(record_declaration name: (identifier) @record)\n(enum_declaration name: (identifier) @enum)\n(class_declaration name: (identifier) @class)\n(method_declaration name: (identifier) @method)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "csharp-query-r1",
+      "source_case": "csharp-feature-r1",
+      "features": [
+        "csharp-B05",
+        "csharp-V09"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Item"
+            },
+            {
+              "name": "enum",
+              "type": "identifier",
+              "text": "Status"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Store"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "Add"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "Total"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "Describe"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "Names"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "swift",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(class_declaration name: (type_identifier) @type)\n(protocol_declaration name: (type_identifier) @protocol)\n(protocol_function_declaration name: (simple_identifier) @requirement)\n(function_declaration name: (simple_identifier) @function)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "swift-query-r1",
+      "source_case": "swift-feature-r1",
+      "features": [
+        "swift-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Item"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "Level"
+            },
+            {
+              "name": "protocol",
+              "type": "type_identifier",
+              "text": "Store"
+            },
+            {
+              "name": "requirement",
+              "type": "simple_identifier",
+              "text": "add"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "StoreError"
+            },
+            {
+              "name": "type",
+              "type": "type_identifier",
+              "text": "MemoryStore"
+            },
+            {
+              "name": "function",
+              "type": "simple_identifier",
+              "text": "add"
+            },
+            {
+              "name": "function",
+              "type": "simple_identifier",
+              "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

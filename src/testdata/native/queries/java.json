@@ -1,0 +1,76 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "java",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(class_declaration name: (identifier) @class)\n(interface_declaration name: (identifier) @interface)\n(record_declaration name: (identifier) @record)\n(method_declaration name: (identifier) @method)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "java-query-r1",
+      "source_case": "java-feature-r1",
+      "features": [
+        "java-B01",
+        "java-V14"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Inventory"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Item"
+            },
+            {
+              "name": "interface",
+              "type": "identifier",
+              "text": "Event"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Added"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Removed"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "add"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "filter"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "describe"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -303,8 +303,10 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 }
 
 // checkFactPack binds the profile's pack queries to the pack file: same revision and
-// sha256, the route present, every pack query of the route present in the profile with
-// the same source, and the route's declaration items equal to the profile's declarations.
+// sha256, the route present, at least one pack query of the route in the profile and every
+// one present with the pack's source (a profile may select a subset, e.g. the declaration
+// query alone for large inputs), and for the declaration query the route's items equal to
+// the profile's declarations.
 func checkFactPack(prof kit.OracleProfile, data []byte) (kit.FactPack, *Error) {
 	bad := func(what string) (kit.FactPack, *Error) {
 		return kit.FactPack{}, refuse(kit.KindInvalidInput, "FACT_PACK_MISMATCH", errors.New(what))
@@ -327,9 +329,14 @@ func checkFactPack(prof kit.OracleProfile, data []byte) (kit.FactPack, *Error) {
 		return bad("route")
 	}
 	r := p.Routes[i]
+	selected := 0
 	for _, q := range r.Queries {
 		j := slices.IndexFunc(prof.Queries, func(o kit.OracleQuery) bool { return o.ID == q.ID })
-		if j < 0 || prof.Queries[j].Source != q.Source {
+		if j < 0 {
+			continue
+		}
+		selected++
+		if prof.Queries[j].Source != q.Source {
 			return bad("query " + q.ID)
 		}
 		if q.Facts == kit.FactDeclarations {
@@ -341,6 +348,9 @@ func checkFactPack(prof kit.OracleProfile, data []byte) (kit.FactPack, *Error) {
 				return bad("declarations")
 			}
 		}
+	}
+	if selected == 0 {
+		return bad("no pack query selected")
 	}
 	return p, nil
 }
@@ -383,6 +393,9 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 		r := pack.Routes[slices.IndexFunc(pack.Routes, func(r kit.FactPackRoute) bool { return r.Route == prof.FactPack.Route })]
 		t := cr.Steps[0].Incremental
 		for _, q := range r.Queries {
+			if !slices.ContainsFunc(prof.Queries, func(o kit.OracleQuery) bool { return o.ID == q.ID }) {
+				continue // not selected by this profile
+			}
 			i := slices.IndexFunc(t.Queries, func(o QueryOut) bool { return o.ID == q.ID })
 			if i < 0 || t.Queries[i].Status != kit.StatusCompleted {
 				f.Difference = "pack query " + q.ID + " not completed"

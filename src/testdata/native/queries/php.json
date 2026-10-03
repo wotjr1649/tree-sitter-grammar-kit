@@ -1,0 +1,56 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "php",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(enum_declaration name: (name) @enum)\n(class_declaration name: (name) @class)\n(method_declaration name: (name) @method)\n(function_definition name: (name) @function)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "php-query-r1",
+      "source_case": "php-feature-r1",
+      "features": [
+        "php-B01",
+        "php-V80"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "enum",
+              "type": "name",
+              "text": "Level"
+            },
+            {
+              "name": "class",
+              "type": "name",
+              "text": "Item"
+            },
+            {
+              "name": "method",
+              "type": "name",
+              "text": "__construct"
+            },
+            {
+              "name": "method",
+              "type": "name",
+              "text": "count"
+            },
+            {
+              "name": "function",
+              "type": "name",
+              "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -380,21 +380,24 @@ func indexCaptures(caps []Capture) capIndex {
 	return x
 }
 
-// pairs returns, for every match holding both captures, the (parent, child) pair.
+// pairs returns, for every match holding the parent capture, one (parent, child) pair per
+// child capture of that match (a pattern can capture several children in one match).
 func (x capIndex) pairs(parent, child string) [][2]Capture {
 	var out [][2]Capture
 	for _, mc := range x.byMatch {
-		var p, c *Capture
+		var p *Capture
 		for k := range mc {
-			switch mc[k].Name {
-			case parent:
+			if mc[k].Name == parent {
 				p = &mc[k]
-			case child:
-				c = &mc[k]
 			}
 		}
-		if p != nil && c != nil {
-			out = append(out, [2]Capture{*p, *c})
+		if p == nil {
+			continue
+		}
+		for _, c := range mc {
+			if c.Name == child {
+				out = append(out, [2]Capture{*p, c})
+			}
 		}
 	}
 	slices.SortFunc(out, func(a, b [2]Capture) int {

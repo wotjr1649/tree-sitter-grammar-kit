@@ -1,0 +1,115 @@
+{
+  "schema": "tsgk-native-query-cases/r1",
+  "route": "r",
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(binary_operator lhs: (identifier) @function rhs: (function_definition))\n(call function: (identifier) @call)\n"
+    }
+  ],
+  "cases": [
+    {
+      "id": "r-query-r1",
+      "source_case": "r-feature-r1",
+      "features": [
+        "r-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "library"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "data.frame"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "c"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "c"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "level"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "is.na"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "return"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "summarise"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "seq_len"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "nrow"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "list"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "vapply"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "character"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "sapply"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "subset"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "summarise"
+            },
+            {
+              "name": "call",
+              "type": "identifier",
+              "text": "print"
+            }
+          ],
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -76,6 +76,7 @@ func snapshot(t *testing.T, dir string) map[string]string {
 // an existing output or a concurrent run on the same output is refused without touching
 // it; a member write failure leaves no manifest and no completed set.
 func TestOracleRecordSet(t *testing.T) {
+	t.Parallel() // independent builds and outputs: run after the sequential (timing) tests
 	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "ids", Source: "(identifier) @id"}}, "a = f(1);\n", "{ b = 2; }\n")
 	base := t.TempDir()
 	out := filepath.Join(base, "set")
