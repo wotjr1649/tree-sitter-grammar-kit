@@ -19,14 +19,14 @@ generator 실행 전에 공식 release asset digest를 기록했다(`artifacts/.
 
 ## 관측 revision과 로컬 검사
 
-구현 commit `f8fd305`(runner·frame), `519c319`(reproduce), `cc3ab68`(등록부·CI owned 재현)과 리뷰 수정 `a4c3fdb`, `4afd455`, `3c412ea`에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`로 [validation](../validation/validation.md)의 갱신된 명령 블록(고정 module 취득 → `GOPROXY=off`·`-mod=readonly`)을 실행했다. Linux·macOS 실행과 세 OS CI는 PR 단계에서 따로 기록한다.
+구현 commit `f8fd305`(runner·frame), `519c319`(reproduce), `cc3ab68`(등록부·CI owned 재현)과 리뷰 수정 `a4c3fdb`, `4afd455`, `3c412ea`, `f0f2423`에서 Windows amd64, Go 1.27.1, `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`로 [validation](../validation/validation.md)의 갱신된 명령 블록(고정 module 취득 → `GOPROXY=off`·`-mod=readonly`)을 실행했다. Linux·macOS 실행과 세 OS CI는 PR 단계에서 따로 기록한다.
 
 | 검사 | 결과 |
 |---|---|
 | `go mod download`·`go mod verify`(proxy·sumdb), `gofmt -l src`, `go vet ./src/...`(windows, `GOOS=linux`, `GOOS=darwin`), `go build ./src/...`, `git diff --check` | 통과 |
 | `go test ./src/... -count=1` | `src/kit`, `src/cmd/tsgk`, `src/internal/foundation`, `src/internal/runner`, `src/internal/reproduce` 통과 |
 | runner·frame 시험 반복 | `-count=5`와 `-count=3`에서 모두 통과 |
-| targeted mutant 14종(`cc3ab68`), 18종(`a4c3fdb`), 20종(`3c412ea`) | 14/14, 18/18, 20/20 검출. `cc3ab68` 첫 실행은 미사용 변수로 컴파일되지 않은 mutant 3종이 있어 11/14로 기록했고(검출 실패가 아님), 컴파일되는 형태로 고친 재실행이 14/14다. receipt 모두 보존 |
+| targeted mutant 14종(`cc3ab68`), 18종(`a4c3fdb`), 20종(`3c412ea`, `f0f2423`) | 14/14, 18/18, 20/20, 20/20 검출. `cc3ab68` 첫 실행은 미사용 변수로 컴파일되지 않은 mutant 3종이 있어 11/14로 기록했고(검출 실패가 아님), 컴파일되는 형태로 고친 재실행이 14/14다. receipt 모두 보존 |
 | `src/dev/s04-reproduce/ci-owned.ps1`(로컬 Windows) | asset digest 확인 뒤 owned fixture 재현 PASS, Job Object hard memory backend |
 | Windows capability receipt | `windows-job-object`, tree cleanup `JOB_OBJECT`, 그룹 이탈 하위 process 포함, memory `HARD`(job commit bytes) |
 
@@ -95,7 +95,7 @@ A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26
 
 `4afd455`에서 mutant 20종(새 2종: 주 process 종료 뒤 release 제거, 완료되지 않은 실행의 mode claim 정리 제거)은 18/20이었다. release 제거는 시험을 go test 제한 180초까지 멈추게 했고(결함이 드러났지만 시험이 실패로 끝나지 않음), mode claim 시험은 그 경로를 타지 않았다. 시험에 10초 자체 제한을 두고 source 변경 시험에서 mode claim을 확인하도록 고친 `3c412ea`에서 20/20이다(`mutants-4afd455.json`, `mutants-3c412ea.json` 보존).
 
-재리뷰 r3(`f0e38d2..1af8d18`, `review-r3.json`)는 R1-06과 R2-01~04를 모두 RESOLVED로 확인했고, `TestStorageLimitWorkspaceB`가 B의 출력에 파일을 더해 결정성 실패로 먼저 끝나므로 "B만 넘고 나머지 claim은 PASS" 경로를 시험하지 않는다는 MINOR R3-01과 CLI 계약 문구 NOTE R3-02를 보고했다. fake generator가 B의 격리 home에만 64 KiB를 쓰도록 바꿔 출력은 같고 저장 용량만 넘게 했고(deterministic·reference PASS, `js_reproduction` NOT_CLAIMED 확인), 문구를 고쳤다.
+재리뷰 r3(`f0e38d2..1af8d18`, `review-r3.json`)는 R1-06과 R2-01~04를 모두 RESOLVED로 확인했고, `TestStorageLimitWorkspaceB`가 B의 출력에 파일을 더해 결정성 실패로 먼저 끝나므로 "B만 넘고 나머지 claim은 PASS" 경로를 시험하지 않는다는 MINOR R3-01과 CLI 계약 문구 NOTE R3-02를 보고했다. fake generator가 B의 격리 home에만 64 KiB를 쓰도록 바꿔 출력은 같고 저장 용량만 넘게 했고(deterministic·reference PASS, `js_reproduction` NOT_CLAIMED 확인), 문구를 고쳤다(`f0f2423`). 이 commit에서 전체 로컬 명령 블록과 mutant 20/20(`mutants-f0f2423.json`)을 다시 확인했다.
 
 ## 남은 일과 한계
 
