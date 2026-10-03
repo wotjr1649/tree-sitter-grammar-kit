@@ -56,6 +56,8 @@ var required = []string{
 	"src/testdata/consumer/main.go", "src/testdata/consumer/go.mod.tmpl",
 	"docs/reports/session-01-inventory-identity.md",
 	"docs/reports/session-03-schema-contract.md",
+	"go.sum", "docs/reports/session-04-reproducibility.md", "src/contracts/reproduction-routes.json",
+	"src/dev/s04-reproduce/ci-owned.ps1", "src/testdata/reproduce/expected.json", "src/testdata/reproduce/src/grammar.json",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

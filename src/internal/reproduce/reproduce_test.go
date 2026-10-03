@@ -62,6 +62,10 @@ func fakeGenerate(args []string) int {
 		}
 	}
 	files := fakeOutputs(string(grammar), abi, opt, jsClosure(js != ""))
+	// A reused workspace shows up as different bytes, so determinism catches it.
+	if prior, _ := os.ReadDir(out); len(prior) != 0 {
+		files["parser.c"] += " STALE"
+	}
 	mode := string(grammar)
 	switch {
 	case strings.Contains(mode, "MODE:exit3"):

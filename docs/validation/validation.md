@@ -43,6 +43,8 @@ Core boundaries have concrete owners: CheckFiles enforces the src/root-module la
 
 Mandatory jobs are `foundation (windows-2025)`, `foundation (ubuntu-24.04)`, and `foundation (macos-15)`. Assert Go version/OS/arch and actual checkout SHA; require and record runner ImageOS/ImageVersion, without claiming a pinned image-version assertion. Tests, vet, build, policy, and CGO dependency checks must all succeed. Skipped, cancelled, or missing checks are not PASS. The checkout must match the event's github.sha. PR CI checks the synthetic merge of head and base, not a separate branch-head lane. Record PR head, synthetic checkout SHA, and actual merge commit separately; verify the actual commit after merge.
 
+S04부터 foundation job은 세 가지를 더 한다. Linux에서는 시험 전에 위임 cgroup v2(`/sys/fs/cgroup/tsgk-<run>-<attempt>`, supervisor·jobs leaf)를 만들고 `TSGK_CGROUP_PARENT`로 넘겨 runner의 hard memory cap과 `cgroup.kill`을 실제로 시험한다. cgroup 없이 실행된 hosted Linux 시험은 capability 시험이 실패한다. `src/dev/s04-reproduce/ci-owned.ps1`은 [재현 등록부](../../src/contracts/reproduction-routes.json)의 tree-sitter 0.27.0 release asset을 받아 digest가 맞을 때만 풀고, owned fixture `src/testdata/reproduce`를 JSON mode(`node` 없음)로 두 작업 공간에서 생성해 `expected.json`의 기준 출력과 대조한다. 모든 출력은 runner temp에 둔다. 이 검사는 실제 도구 실행과 세 OS 사이 생성물 동일성의 근거이며 26 route 재현의 세 OS 결과를 대신하지 않는다.
+
 P05 개발 helper의 application discovery 회귀 검사는 각 host의 checkout 밖 task scratch에서 같은 이름의 두 경로를 만들고, 실제 `Get-Command` 결과에서 첫 번째 단일 경로를 선택하며 없는 tool을 거부하는지 검사한다. fixture process는 실행하지 않는다. 이 검사는 upstream acquisition/native 또는 실제 격리 preflight의 성공 근거가 아니다.
 
 같은 self-check는 별도 acquisition/capture 승인 대상과 frozen process 판정의 반례도 검사한다. 빈/이전 승인, running/paused 상태 불일치, 다른 host PID, 추가 child, 위조된 command는 거부한다. 실제 Docker/tmpfs capability는 승인된 hosted preflight에서 별도로 확인한다.

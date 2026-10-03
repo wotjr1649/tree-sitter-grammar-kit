@@ -123,6 +123,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
+      - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.0)
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP "s04-owned-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          if ($IsLinux) {
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            $cgroup = "$base/jobs"
+          }
+          & src/dev/s04-reproduce/ci-owned.ps1 -Destination $dest -Platform $env:PLATFORM -CgroupParent $cgroup
       - name: Verify clean validation output
         run: |
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
