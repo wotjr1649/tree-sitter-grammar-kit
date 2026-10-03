@@ -62,6 +62,26 @@ func recordPID(pid int) {
 	}
 }
 
+// waitFor polls cond for up to 20 s; handshakes use it instead of fixed sleeps.
+func waitFor(cond func() bool) bool {
+	for deadline := time.Now().Add(20 * time.Second); time.Now().Before(deadline); time.Sleep(5 * time.Millisecond) {
+		if cond() {
+			return true
+		}
+	}
+	return false
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func countPIDs(path string) int {
+	data, _ := os.ReadFile(path)
+	return len(strings.Fields(string(data)))
+}
+
 func helper(mode string) int {
 	name, arg, _ := strings.Cut(mode, ":")
 	switch name {
@@ -100,18 +120,38 @@ func helper(mode string) int {
 		spawn("sleep", false)
 		time.Sleep(time.Hour)
 		return 0
-	case "orphan": // the parent exits at once; a grandchild keeps the stdout pipe open
+	case "orphan": // the parent exits once the grandchild runs; it keeps the stdout pipe open
 		spawn("tree-child", false)
-		time.Sleep(200 * time.Millisecond)
+		if !waitFor(func() bool { return countPIDs(os.Getenv("TSGK_PIDS")) >= 2 }) {
+			fmt.Fprintln(os.Stderr, "grandchild not recorded")
+			return 69
+		}
 		fmt.Print("parent-done")
 		return 0
 	case "escape": // a descendant leaves the process group (setsid / detached on Windows)
 		spawn("sleep", true)
 		time.Sleep(200 * time.Millisecond)
 		return 0
-	case "escape-quiet": // the same, but the escaped descendant holds no output pipe
-		spawnIO("sleep", true, false)
-		time.Sleep(200 * time.Millisecond)
+	case "escape-quiet": // the same, but the escaped descendant holds no output pipe; the
+		// helper exits only after the descendant reports that it runs outside the group
+		spawnIO("escapee", true, false)
+		if !waitFor(func() bool { return exists(os.Getenv("TSGK_PIDS") + ".ready") }) {
+			fmt.Fprintln(os.Stderr, "escaped descendant not ready")
+			return 69
+		}
+		return 0
+	case "escapee": // leads its own group, then answers one ping while it is alive
+		recordPID(os.Getpid())
+		base := os.Getenv("TSGK_PIDS")
+		if !ownGroup() {
+			return 66
+		}
+		if err := os.WriteFile(base+".ready", nil, 0o600); err != nil {
+			return 67
+		}
+		waitFor(func() bool { return exists(base + ".ping") })
+		os.WriteFile(base+".pong", nil, 0o600)
+		time.Sleep(time.Hour)
 		return 0
 	case "memory":
 		mib, _ := strconv.Atoi(arg)
@@ -150,6 +190,8 @@ func frameHelper(arg string) int {
 	}
 	in := bufio.NewReader(os.Stdin)
 	out := bufio.NewWriter(os.Stdout)
+	base := os.Getenv("TSGK_PIDS")          // helperSpec always sets it
+	os.WriteFile(base+".ready", nil, 0o600) // start-up is over (awaitStart)
 	for i := 0; ; i++ {
 		var hdr [4]byte
 		if _, err := io.ReadFull(in, hdr[:]); err != nil {
@@ -164,6 +206,7 @@ func frameHelper(arg string) int {
 			return 65
 		}
 		if i == k {
+			os.WriteFile(base+".at", nil, 0o600) // frame k is in flight here
 			switch action {
 			case "hang":
 				time.Sleep(time.Hour)

@@ -104,6 +104,10 @@ type BatchResult struct {
 	TrailingBytes int64         `json:"trailing_bytes"`
 }
 
+// testHookBatchStarted, when a test sets it, runs after the process starts and before the
+// first frame, so a test can keep process start-up out of the first frame's watchdog.
+var testHookBatchStarted func()
+
 // RunBatch sends frames one at a time to a single supervised process and reads one
 // response frame per request. spec's Wall, StdoutBytes and Interactive come from pol.
 func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (BatchResult, error) {
@@ -114,6 +118,9 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 	p, err := Start(ctx, spec)
 	if err != nil {
 		return BatchResult{}, err
+	}
+	if testHookBatchStarted != nil {
+		testHookBatchStarted()
 	}
 	out := BatchResult{Frames: make([]FrameResult, len(frames))}
 	for i, f := range frames {

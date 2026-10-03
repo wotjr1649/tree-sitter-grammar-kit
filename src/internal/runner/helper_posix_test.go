@@ -14,3 +14,6 @@ func detachAttr(cmd *exec.Cmd) { cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: 
 func alive(pid int) bool { return syscall.Kill(pid, 0) == nil && !zombie(pid) }
 
 func killPID(pid int) { syscall.Kill(pid, syscall.SIGKILL) }
+
+// ownGroup reports that this process leads its own process group (it left its parent's).
+func ownGroup() bool { return syscall.Getpgrp() == syscall.Getpid() }

@@ -168,13 +168,22 @@ func TestTreeTermination(t *testing.T) {
 	for _, cancelled := range []bool{false, true} {
 		s, pids := helperSpec(t, "tree")
 		ctx, cancel := context.WithCancel(context.Background())
+		// Expiry waits until the whole tree is recorded, so start-up cannot outlast it.
+		fired := make(chan time.Time, 1)
+		expire := func() {
+			if !waitFor(func() bool { return countPIDs(pids) >= 3 }) {
+				t.Error("tree not recorded before expiry")
+			}
+			fired <- time.Now()
+		}
 		if cancelled {
-			time.AfterFunc(1500*time.Millisecond, cancel)
+			time.AfterFunc(1500*time.Millisecond, func() { expire(); cancel() })
 		} else {
 			s.Wall = 1500 * time.Millisecond
+			testHookWall = expire
 		}
-		start := time.Now()
 		r, err := Run(ctx, s)
+		testHookWall = nil
 		cancel()
 		if err != nil {
 			t.Fatal(err)
@@ -186,8 +195,13 @@ func TestTreeTermination(t *testing.T) {
 		if r.Status != want || r.Reason != reason || !r.Cleanup.Verified {
 			t.Fatalf("cancelled=%v: %+v", cancelled, r)
 		}
-		if el := time.Since(start); el > 1500*time.Millisecond+s.Grace+5*time.Second {
-			t.Fatalf("termination took %v", el)
+		select {
+		case at := <-fired:
+			if el := time.Since(at); el > s.Grace+5*time.Second {
+				t.Fatalf("termination took %v after expiry", el)
+			}
+		default:
+			t.Fatal("expiry did not run")
 		}
 		requireDead(t, readPIDs(t, pids), 3)
 	}
@@ -233,11 +247,15 @@ func TestEscapedDescendant(t *testing.T) {
 
 // R1-04: an escaped descendant that holds no pipe is invisible to the process-group
 // backends; their verified cleanup covers only the group (Scope=PROCESS_GROUP), while the
-// Job Object and cgroup backends still terminate it.
+// Job Object and cgroup backends still terminate it. The helper exits only after the
+// descendant reports that it leads its own group (post-merge CI 37145206819).
 func TestEscapedQuietDescendant(t *testing.T) {
 	s, pids := helperSpec(t, "escape-quiet")
 	r := run(t, s)
 	escaped := readPIDs(t, pids)
+	if r.Status != StatusCompleted || r.ExitCode != 0 {
+		t.Fatalf("escape handshake: %+v stderr %s", r, r.Stderr)
+	}
 	if r.Cleanup.Scope != r.Capabilities.TreeCleanup || r.Cleanup.Scope == "" {
 		t.Fatalf("cleanup scope %q, backend %q", r.Cleanup.Scope, r.Capabilities.TreeCleanup)
 	}
@@ -251,11 +269,17 @@ func TestEscapedQuietDescendant(t *testing.T) {
 	if r.Cleanup.Scope != "PROCESS_GROUP" {
 		t.Fatalf("process-group backend must scope its verification: %+v", r.Cleanup)
 	}
+	// Only a live process answers the ping written after the run: proof that the runner left
+	// it running, without a single liveness probe taken while its parent is being reaped.
+	if err := os.WriteFile(pids+".ping", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	answered := waitFor(func() bool { return exists(pids + ".pong") })
 	for _, pid := range escaped {
-		if !alive(pid) {
-			t.Fatalf("expected the documented limitation: escaped pid %d already gone", pid)
-		}
 		killPID(pid)
+	}
+	if !answered {
+		t.Fatalf("expected the documented limitation: escaped pids %v did not answer after the run", escaped)
 	}
 }
 

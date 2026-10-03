@@ -374,6 +374,10 @@ func (p *Process) currentReason() string {
 	return p.reason
 }
 
+// testHookWall, when a test sets it, runs after the wall timer fires and before the wall is
+// recorded, so a test can hold the expiry until the process reaches the state it examines.
+var testHookWall func()
+
 func (p *Process) supervise(ctx context.Context) {
 	defer close(p.superv)
 	wall := time.NewTimer(p.spec.Wall)
@@ -392,6 +396,9 @@ func (p *Process) supervise(ctx context.Context) {
 		case <-ctx.Done():
 			p.Terminate(ReasonCancelled)
 		case <-wall.C:
+			if testHookWall != nil {
+				testHookWall()
+			}
 			p.Terminate(ReasonWall)
 		case <-p.tree.notify():
 			p.Terminate(ReasonMemory)

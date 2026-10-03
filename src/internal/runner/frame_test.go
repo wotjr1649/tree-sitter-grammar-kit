@@ -43,11 +43,24 @@ func TestDefaultRequestPolicy(t *testing.T) {
 	}
 }
 
+// awaitStart keeps helper start-up out of the first frame's watchdog: the batch sends its
+// first frame only after the helper reports that it reads frames (#65).
+func awaitStart(t *testing.T, pids string) {
+	prev := testHookBatchStarted
+	testHookBatchStarted = func() {
+		if !waitFor(func() bool { return exists(pids + ".ready") }) {
+			t.Error("frame helper not ready")
+		}
+	}
+	t.Cleanup(func() { testHookBatchStarted = prev })
+}
+
 // R1-06: a frame hung while an escaped descendant holds stdout still ends within the
 // declared bounds on every backend.
 func TestFrameEscapedStdoutHolder(t *testing.T) {
 	s, pids := helperSpec(t, "frames:escape@1")
 	s.Grace = time.Second
+	awaitStart(t, pids)
 	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 300 * time.Millisecond, FrameGrace: 200 * time.Millisecond,
 		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
 	start := time.Now()
@@ -124,24 +137,35 @@ func TestFrameStatusMapping(t *testing.T) {
 		action string
 		pol    func(*BatchPolicy)
 		mem    uint64
+		wallAt bool
 		want   []string
 		detail string
 	}{
-		{"all", "echo", nil, 0, []string{FrameCompleted, FrameCompleted, FrameCompleted, FrameCompleted}, ""},
-		{"own-watchdog", "hang@2", nil, 0, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonFrameWatchdog},
-		{"own-response-cap", "big@2", nil, 0, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonResponseBytes},
+		{"all", "echo", nil, 0, false, []string{FrameCompleted, FrameCompleted, FrameCompleted, FrameCompleted}, ""},
+		{"own-watchdog", "hang@2", nil, 0, false, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonFrameWatchdog},
+		{"own-response-cap", "big@2", nil, 0, false, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonResponseBytes},
 		// The frame watchdog outlasts the sampling interval so a sampled backend (macOS ps
 		// RSS) cannot lose the race to it; the helper holds 1 GiB until it is ended.
 		{"own-memory", "alloc@2", func(p *BatchPolicy) { p.FrameWall = 20 * time.Second }, 192 << 20,
-			[]string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonMemory},
-		{"batch-stdout", "fat@2", func(p *BatchPolicy) { p.StdoutBytes = 500 }, 0, []string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonOutput},
+			false, []string{FrameCompleted, FrameCompleted, FrameResourceLimit, FrameRequeued}, ReasonMemory},
+		{"batch-stdout", "fat@2", func(p *BatchPolicy) { p.StdoutBytes = 500 }, 0, false, []string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonOutput},
 		{"batch-wall", "hang@2", func(p *BatchPolicy) { p.FrameWall, p.BatchWall = 20*time.Second, 1500*time.Millisecond }, 0,
-			[]string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonWall},
-		{"crash", "crash@2", nil, 0, []string{FrameCompleted, FrameCompleted, FrameFailed, FrameRequeued}, ReasonExited},
+			true, []string{FrameCompleted, FrameCompleted, FrameRequeued, FrameRequeued}, ReasonWall},
+		{"crash", "crash@2", nil, 0, false, []string{FrameCompleted, FrameCompleted, FrameFailed, FrameRequeued}, ReasonExited},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, _ := helperSpec(t, "frames:"+c.action)
+			s, pids := helperSpec(t, "frames:"+c.action)
+			awaitStart(t, pids)
+			if c.wallAt {
+				// The batch wall expires only once frame 2 is in flight, after frames 0 and 1.
+				testHookWall = func() {
+					if !waitFor(func() bool { return exists(pids + ".at") }) {
+						t.Error("frame 2 not reached before the batch wall")
+					}
+				}
+				t.Cleanup(func() { testHookWall = nil })
+			}
 			if c.mem != 0 {
 				s.Memory.Bytes = c.mem
 			}
@@ -175,13 +199,15 @@ func TestFrameStatusMapping(t *testing.T) {
 		})
 	}
 	// S05-A09: bytes after the last response are counted, never silently dropped.
-	s, _ := helperSpec(t, "frames:tail")
+	s, pids := helperSpec(t, "frames:tail")
+	awaitStart(t, pids)
 	r, err := RunBatch(context.Background(), s, small, frames(2))
 	if err != nil || r.TrailingBytes != 4 || r.Frames[1].Status != FrameCompleted {
 		t.Fatalf("trailing stdout: %v %d %+v", err, r.TrailingBytes, r.Frames)
 	}
 	t.Run("request-cap", func(t *testing.T) {
-		s, _ := helperSpec(t, "frames:echo")
+		s, pids := helperSpec(t, "frames:echo")
+		awaitStart(t, pids)
 		f := frames(3)
 		f[1].Request = make([]byte, small.RequestBytes+1)
 		r, err := RunBatch(context.Background(), s, small, f)
