@@ -22,6 +22,20 @@ func main() {
 	emit("inspect", inspect, err)
 	identity, err := kit.Identity(ctx, kit.IdentityRequest{Root: root, Selection: sel, Limits: kit.DefaultLimits()})
 	emit("identity", identity, err)
+	if len(os.Args) < 4 {
+		return
+	}
+	expected, err := os.ReadFile(os.Args[3])
+	if err != nil {
+		panic(err)
+	}
+	verify, err := kit.Verify(ctx, kit.VerifyRequest{Root: root, Selection: sel, Expected: expected, Limits: kit.DefaultLimits(), ArchiveLimits: kit.DefaultArchiveLimits()})
+	emit("verify", verify, err)
+	if len(os.Args) < 5 {
+		return
+	}
+	archive, err := kit.Verify(ctx, kit.VerifyRequest{Archive: os.Args[4], Expected: expected, Limits: kit.DefaultLimits(), ArchiveLimits: kit.DefaultArchiveLimits()})
+	emit("verify-archive", archive, err)
 }
 
 func emit(name string, v any, err error) {

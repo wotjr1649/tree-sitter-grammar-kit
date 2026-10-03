@@ -42,7 +42,7 @@ func testCtx(t *testing.T) context.Context {
 func kindOf(t *testing.T, err error, kind, code string) {
 	t.Helper()
 	var e *Error
-	if !errors.As(err, &e) || e.Kind != kind || e.Code != code {
+	if !errors.As(err, &e) || e == nil || e.Kind != kind || e.Code != code {
 		t.Fatalf("want %s/%s, got %v", kind, code, err)
 	}
 }

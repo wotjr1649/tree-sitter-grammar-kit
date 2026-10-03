@@ -101,9 +101,9 @@ func (e *Error) Error() string
 func (e *Error) Unwrap() error
 ```
 
-필드의 문자열 값과 JSON 이름은 [CLI/profile](cli-and-profile.md)과 [E0/identity](identity-and-evidence.md)의 닫힌 값 집합을 사용한다. `Error.Kind`는 `INVALID_INPUT`, `IO`, `CANCELLED`, `RESOURCE_LIMIT`, `UNSUPPORTED`이고 `Code`는 안정적인 기계 값이다(예: `GRAMMAR_INVALID`, `SELECTION_INVALID`, `LINK_OR_SPECIAL_REJECTED`, `HARDLINK_REJECTED`, `ROOT_NOT_LOCAL`, `NO_GRAMMAR_SELECTED`, `EMPTY_SELECTION`, `FILE_COUNT_LIMIT`, `FILE_BYTES_LIMIT`, `TOTAL_BYTES_LIMIT`, `DEPTH_LIMIT`, `RECORD_LIMIT`, `OUTPUT_LIMIT`, `WALL_LIMIT`, `SOURCE_CHANGED`, `READ_FAILED`, `CANCELLED`). `errors.As`로 `*kit.Error`를 구분하고 취소는 `errors.Is(err, context.Canceled/DeadlineExceeded)`도 보존한다. 오류 문자열은 machine identity가 아니다. 성공한 관측(unknown layout, 미해결 closure, encoding `BLOCKED`/`UNRESOLVED`)은 실행 오류가 아니라 결과 안의 finding과 필드다. S02/S03의 verify/schema 함수와 추가 result는 해당 구현 전에 같은 owner에서 별도 revision으로 고정한다.
+필드의 문자열 값과 JSON 이름은 [CLI/profile](cli-and-profile.md)과 [E0/identity](identity-and-evidence.md)의 닫힌 값 집합을 사용한다. `Error.Kind`는 `INVALID_INPUT`, `IO`, `CANCELLED`, `RESOURCE_LIMIT`, `UNSUPPORTED`이고 `Code`는 안정적인 기계 값이다(예: `GRAMMAR_INVALID`, `SELECTION_INVALID`, `LINK_OR_SPECIAL_REJECTED`, `HARDLINK_REJECTED`, `ROOT_NOT_LOCAL`, `NO_GRAMMAR_SELECTED`, `EMPTY_SELECTION`, `FILE_COUNT_LIMIT`, `FILE_BYTES_LIMIT`, `TOTAL_BYTES_LIMIT`, `DEPTH_LIMIT`, `RECORD_LIMIT`, `OUTPUT_LIMIT`, `WALL_LIMIT`, `SOURCE_CHANGED`, `READ_FAILED`, `CANCELLED`). `errors.As`로 `*kit.Error`를 구분하고 취소는 `errors.Is(err, context.Canceled/DeadlineExceeded)`도 보존한다. 오류 문자열은 machine identity가 아니다. 성공한 관측(unknown layout, 미해결 closure, encoding `BLOCKED`/`UNRESOLVED`)은 실행 오류가 아니라 결과 안의 finding과 필드다. S02의 verify 함수와 추가 result는 아래 `S02 함수와 추가 필드` 절이 고정한다. S03의 schema 함수는 구현 전에 같은 owner에서 별도 revision으로 고정한다.
 
-Root는 절대화한 뒤 한 번 `EvalSymlinks`로 해석하고 root 자체는 따라가서 디렉터리인지 확인한다(macOS `/var` → `/private/var`, root를 가리키는 symlink·Windows junction 같은 alias를 의도적으로 허용). 존재하지 않거나 디렉터리가 아닌 root는 `INVALID_INPUT`이고, Windows UNC share와 `\\?\`·`\\.\` device namespace root는 network·device 접근을 피하려고 `ROOT_NOT_LOCAL`로 거부하며, 입력 문자열과 해석된 경로를 모두 검사한다. root 아래 항목은 따라가지 않는다. caller가 명시한 Root와 Selection만 읽는다. 부모 저장소 탐색·Git·Node·shell·compiler·target JS·network·plugin·stdout/stderr·os.Exit·chdir·process 환경 변경·파일 생성은 API 효과에 포함되지 않는다. 제품 dependency closure(`src/kit`, `src/cmd/tsgk`)에는 `os/exec`, `net`, `plugin`이 없다. archive 확장은 S02의 명시된 입력 계약 이전에 지원하지 않는다. `parser.c` 부재는 inspect/identity 자체의 실패 조건이 아니다.
+Root는 절대화한 뒤 한 번 `EvalSymlinks`로 해석하고 root 자체는 따라가서 디렉터리인지 확인한다(macOS `/var` → `/private/var`, root를 가리키는 symlink·Windows junction 같은 alias를 의도적으로 허용). 존재하지 않거나 디렉터리가 아닌 root는 `INVALID_INPUT`이고, Windows UNC share와 `\\?\`·`\\.\` device namespace root는 network·device 접근을 피하려고 `ROOT_NOT_LOCAL`로 거부하며, 입력 문자열과 해석된 경로를 모두 검사한다. root 아래 항목은 따라가지 않는다. caller가 명시한 Root와 Selection만 읽는다. 부모 저장소 탐색·Git·Node·shell·compiler·target JS·network·plugin·stdout/stderr·os.Exit·chdir·process 환경 변경·파일 생성은 API 효과에 포함되지 않는다. 제품 dependency closure(`src/kit`, `src/cmd/tsgk`)에는 `os/exec`, `net`, `plugin`이 없다. archive는 S02의 `Verify`가 `zip-r1`로만 읽는다. `parser.c` 부재는 inspect/identity 자체의 실패 조건이 아니다.
 
 `Selection.Grammar`의 전체 값 `"."`은 이미 확인한 Root 자체를 선택하는 sentinel이다. 빈 값은 오류다. source 등록부의 `grammar_subdirectory`에도 같은 규칙을 적용한다. sentinel은 파일/member 경로나 내부 segment 허용 규칙이 아니다. `./x`, `x/.`, `x/../y`, 절대·drive·UNC·역슬래시 경로는 거부하고 다른 값은 [portable path 계약](trust-and-execution.md)을 따른다. `Selection.Files`의 role은 grammar/generated/scanner/query/corpus/metadata 중 하나이고 중복 path는 오류다.
 
@@ -112,6 +112,56 @@ Root는 절대화한 뒤 한 번 `EvalSymlinks`로 해석하고 root 자체는 �
 caller는 호출 중 request의 slice와 source snapshot을 변경하지 않는다. 열린 파일의 크기·수정 시각·파일 identity가 열기 전 관측과 다르거나 읽은 bytes가 크기와 다르면 `IO/SOURCE_CHANGED`다. 이것은 관측 가능한 변경의 검출이며 적대적 동시 교체를 막는 sandbox가 아니다. API는 caller 입력을 변경하거나 반환 후 보관하지 않으며 결과는 호출별로 새로 할당해 caller가 소유한다. iterator나 close할 native 자원은 반환하지 않는다. 서로 독립적인 불변 root에 대한 concurrent 호출을 지원하며 S01 시험이 8개 root의 동시 호출 결과를 순차 결과와 대조한다. shared root를 외부 process가 바꾸는 상황을 안전한 snapshot으로 보장하지 않는다.
 
 실패 시 오류와 함께 반환된 report는 `COMPLETED`/`PASS`가 될 수 없다. 실패 결과는 E0 축·policy·실패 finding만 담고 entries/manifest/records는 비운다. `IdentityResult.SetSHA256`은 완전한 선택 집합을 읽지 못하면 비어 있다. 결과의 JSON encoding(+CLI 줄바꿈 1 byte)이 `OutputBytes`(corpus는 `ReportBytes`)를 넘으면 `RESOURCE_LIMIT`이다. CLI의 파일 publication은 API 반환 후 별도 no-clobber 단계이며 publication 실패도 CLI 실패다.
+
+## S02 함수와 추가 필드 — 설계 r3
+
+S02는 r2에 아래를 더한다. 기존 S01 함수의 의미와 결과는 profile을 주지 않으면 바뀌지 않는다.
+
+```go
+func Verify(ctx context.Context, request VerifyRequest) (VerifyResult, error)
+func DefaultArchiveLimits() ArchiveLimits // entries 10000, archive bytes 268435456, nesting depth 2
+
+const (
+    ProfileSchema    = "tsgk-profile/r1"
+    ExpectedSchema   = "tsgk-expected/r1"
+    ArchiveProfile   = "zip-r1"
+    MaxDocumentBytes = 16777216 // profile·expected 문서 상한, subject 한도와 별개
+    AssessPass, AssessFail = "PASS", "FAIL"
+    SubjectDirectory, SubjectArchive = "DIRECTORY", "ARCHIVE"
+    ScopeKnownPaths, ScopeListed, ScopeArchiveMembers = "known-paths-r1", "listed-r1", "archive-members-r1"
+)
+
+type IdentityRequest struct { /* r2 필드 */ Profile []byte } // nil 또는 strict tsgk-profile/r1 원문
+type CorpusRequest struct { /* r2 필드 */ Profile []byte }   // encoding·더 낮은 한도만
+type ArchiveLimits struct{ Entries, Bytes, Depth uint64 }      // 모두 양수
+type VerifyRequest struct {
+    Root, Archive    string   // 정확히 하나
+    ArchiveRoot      string   // "" 또는 portable member 디렉터리
+    Nested           []string // 명시 선택한 중첩 ZIP member
+    Selection        Selection // 디렉터리: Grammar(+Files); archive: Grammar는 "" 이어야 한다
+    Expected         []byte   // strict tsgk-expected/r1 원문, 필수
+    Profile          []byte
+    Limits           Limits
+    ArchiveLimits    ArchiveLimits // archive subject에서만 사용
+    Encoding         EncodingPolicy
+    LargeFileProfile string
+}
+type VerifyResult struct {
+    Report
+    Policy          Policy // archive subject면 ArchiveProfile·ArchiveEntries·ArchiveBytes·ArchiveDepth 포함
+    Subject, Scope, Grammar, ArchiveRoot string
+    Nested          []string
+    Expected        ExpectedRef // Provenance, SetSHA256, FileCount, DocumentSHA256
+    Actual          Manifest
+    ActualSetSHA256 string
+    Differences     []Difference // Code, Path, Expected *FileIdentity, Actual *FileIdentity
+    Excluded        uint64
+}
+```
+
+profile과 expected는 원문 bytes로 받아 CLI와 같은 strict decoder를 거친다. 직접 API 호출도 같은 path·JSON·크기 규칙과 같은 `Error.Code`를 받는다(외부 consumer 시험이 디렉터리와 archive verify의 CLI·API JSON bytes와 오류 code를 대조한다). 문서는 파일 경로가 아니라 bytes이므로 trust 문서가 subject 안에 있는지는 caller 책임이다(CLI는 디렉터리 subject에서 이를 거부한다). verify의 완료된 비교는 `error == nil`이며 차이는 `Assessment == FAIL`과 `Differences`로 나타난다. 잘못된 입력·지원하지 않는 기능·한도·취소·I/O는 S01과 같은 `*Error` 종류로 구분한다. S02 code 예: `SUBJECT_INVALID`, `EXPECTED_REQUIRED`, `DOCUMENT_BYTES_LIMIT`, `JSON_*`, `SCHEMA_UNSUPPORTED`, `PROFILE_LIMIT_ABOVE_OPERATION`, `PROFILE_LIMIT_NOT_APPLICABLE`, `SELECTION_SOURCE_CONFLICT`, `ENCODING_SOURCE_CONFLICT`, `ENCODING_POLICY_MISMATCH`, `EXPECTED_SET_MISMATCH`, `ARCHIVE_PATH_*`, `ZIP_*`, `ARCHIVE_ENTRY_LIMIT`, `ARCHIVE_BYTES_LIMIT`, `ARCHIVE_DEPTH_LIMIT`, `NESTED_MEMBER_NOT_FOUND`. 값 집합과 판정은 [CLI/profile](cli-and-profile.md)과 [trust](trust-and-execution.md)가 소유한다.
+
+Verify의 효과는 Root(또는 Archive 파일 하나)와 caller가 준 bytes를 읽는 것뿐이다. archive를 풀거나 파일을 만들지 않는다. 취소 확인은 S01 지점에 더해 central directory entry마다, archive 원본 hash와 member 해제의 1 MiB 읽기 사이에 한다. 결과는 호출별로 새로 할당되며 request의 slice를 보관하지 않는다.
 
 ## 외부 소비자 검증
 

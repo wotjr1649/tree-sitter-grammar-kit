@@ -1,0 +1,1 @@
+{"schema":"tsgk-profile/r0","id":"scannerless-example","files":[{"path":"src/grammar.json","role":"grammar","required":true}],"limits":{"files":10000}}

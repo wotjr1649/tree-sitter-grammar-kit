@@ -1,0 +1,41 @@
+{
+  "schema": "tsgk-profile/r1",
+  "id": "scannerless-example",
+  "files": [
+    {
+      "path": "grammar.js",
+      "role": "grammar",
+      "required": true
+    },
+    {
+      "path": "queries/highlights.scm",
+      "role": "query",
+      "required": false
+    },
+    {
+      "path": "src/grammar.json",
+      "role": "grammar",
+      "required": true
+    },
+    {
+      "path": "src/node-types.json",
+      "role": "generated",
+      "required": true
+    }
+  ],
+  "limits": {
+    "files": 100,
+    "file_bytes": 1048576,
+    "total_bytes": 4194304,
+    "depth": 8,
+    "output_bytes": 1048576
+  },
+  "encoding": {
+    "files": [
+      {
+        "path": "grammar.js",
+        "encoding": "utf-8"
+      }
+    ]
+  }
+}

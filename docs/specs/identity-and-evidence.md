@@ -4,7 +4,7 @@
 
 manifest r0와 그 hash preimage는 아래 역사적 설계로 보존한다. S01 착수 전 채택 설계는 `tsgk-manifest/r1`이며 `algorithm: sha256`, `mode_policy`, `files`를 가진다. 각 파일은 portable `path`, `role`, `mode`(`100644` 또는 `100755`), `mode_provenance`, `size`(bytes), 소문자 64자리 `sha256`으로 나타낸다. path의 UTF-8 bytes 오름차순으로 정렬하고 중복을 거부한다. 디렉터리·symlink·special file은 파일 항목이 아니다. 기본 `mode_policy=portable-default`, `mode_provenance=POLICY_DEFAULT`, mode `100644`는 관측된 executable bit가 아니다. 별도 filesystem mode는 실제 관측 가능할 때 출처와 다른 policy로 등록한다. API/offline 경로가 Git process를 실행해 mode를 추정하지 않는다.
 
-기본 선택 집합은 [discovery](cli-and-profile.md)의 발견 파일이고 strict profile은 exact 목록을 소유한다. verify는 `--expected`의 역할·mode 정책·목록으로 root를 다시 읽고 누락/중복/변조/선택 집합 내 추가 파일을 거부한다. 선택 밖 파일은 report에 excluded로 표시하며 전체 저장소 무결성을 주장하지 않는다. 출처 신뢰는 호출자가 제공하는 expected anchor에서 오고, 같은 root에서 즉석 생성한 manifest로 자체 인증하지 않는다.
+기본 선택 집합은 [discovery](cli-and-profile.md)의 발견 파일이고 strict profile은 exact 목록을 소유한다. verify는 `--expected`의 역할·mode 정책·목록으로 root를 다시 읽고 누락/중복/변조/선택 집합 내 추가 파일을 거부한다. 선택 밖 파일은 비교하지 않으며(archive는 그 member 수를 `excluded`로 표시) 전체 저장소 무결성을 주장하지 않는다. 출처 신뢰는 호출자가 제공하는 expected anchor에서 오고, 같은 root에서 즉석 생성한 manifest로 자체 인증하지 않는다. S02 구현의 expected `tsgk-expected/r1`, 비교 범위와 difference code는 [CLI/profile](cli-and-profile.md)의 `S02 구현` 절이 소유한다. expected의 `set_sha256`은 아래 r2 preimage로 다시 계산해 문서 안 값과 같아야 하며, 결과는 `expected-set`과 actual `source-set` identity를 따로 기록한다.
 
 파일 집합 hash의 preimage는 ASCII `tsgk-files/r0\n` 다음으로 각 항목의 `path\0role\0mode\0size\0sha256\n` UTF-8 bytes를 정렬 순서로 연결한 것이다. portable path와 role은 제어문자/NUL을 허용하지 않으며 size는 정규 10진수다. manifest 원문 bytes의 SHA-256도 별도로 보존한다. 의미가 같아도 raw JSON key order/공백이 바뀌면 raw hash는 달라진다. hash는 서명이나 게시자 인증이 아니다.
 

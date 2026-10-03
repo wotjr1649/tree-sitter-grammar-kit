@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"io"
 	"io/fs"
+	"maps"
 	"path"
 	"slices"
 	"strings"
@@ -55,6 +56,7 @@ type CorpusRequest struct {
 	Root     string
 	Limits   CorpusLimits
 	Encoding EncodingPolicy
+	Profile  []byte // nil, or a strict tsgk-profile/r1 with encoding and narrower limits only
 }
 
 // CorpusRecord is one file. PRESENCE_ONLY records carry existence and size only.
@@ -128,13 +130,7 @@ type CorpusResult struct {
 // whole run RESOURCE_LIMIT with no partial PASS. pg-large-source-r1 never applies here.
 func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 	l := req.Limits
-	encPolicy := "detect-r1"
-	if req.Encoding.Profile == "cp949" {
-		encPolicy += ";profile=cp949"
-	}
-	policy := Policy{Operation: CorpusOperation, Discovery: "bounded-inventory-r1", Files: l.Files, Records: l.Records, FileBytes: l.FileBytes, TotalBytes: l.TotalBytes,
-		Depth: l.Depth, OutputBytes: l.ReportBytes, WallMillis: l.Wall.Milliseconds(), EncodingPolicy: encPolicy,
-		Exclusions: append(append([]string{}, corpusExcluded...), "links-not-followed", "presence-only-credential-and-vendor-binary")}
+	policy := corpusPolicy(l, req.Encoding)
 	failWith := func(e *Error) (CorpusResult, error) {
 		out := CorpusResult{Report: newReport("corpus"), Policy: policy, Records: []CorpusRecord{}, Projects: []ProjectRecord{}}
 		failReport(&out.Report, e)
@@ -142,6 +138,15 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 	}
 	if !l.valid() {
 		return failWith(fail(KindInvalidInput, "LIMITS_INVALID", "", nil))
+	}
+	var prof *profile
+	if req.Profile != nil {
+		var e *Error
+		if prof, e = corpusProfile(&req); e != nil {
+			return failWith(e)
+		}
+		l = req.Limits
+		policy = corpusPolicy(l, req.Encoding)
 	}
 	declared, e := declarations(req.Encoding)
 	if e != nil {
@@ -161,7 +166,7 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 	if e := c.walk(); e != nil {
 		return failWith(e)
 	}
-	for p := range declared {
+	for _, p := range slices.Sorted(maps.Keys(declared)) {
 		if !c.exact[p] { // declarations match exact record paths
 			return failWith(fail(KindInvalidInput, "DECLARATION_UNMATCHED", p, nil))
 		}
@@ -170,10 +175,48 @@ func Corpus(ctx context.Context, req CorpusRequest) (CorpusResult, error) {
 		return failWith(e)
 	}
 	c.finish()
+	if prof != nil {
+		c.res.Identities = append(c.res.Identities, prof.ref())
+	}
 	if e := sealOutput(c.res, l.ReportBytes); e != nil {
 		return failWith(e)
 	}
 	return c.res, nil
+}
+
+func corpusPolicy(l CorpusLimits, enc EncodingPolicy) Policy {
+	return Policy{Operation: CorpusOperation, Discovery: "bounded-inventory-r1", Files: l.Files, Records: l.Records, FileBytes: l.FileBytes, TotalBytes: l.TotalBytes,
+		Depth: l.Depth, OutputBytes: l.ReportBytes, WallMillis: l.Wall.Milliseconds(), EncodingPolicy: encodingPolicyName(enc),
+		Exclusions: append(append([]string{}, corpusExcluded...), "links-not-followed", "presence-only-credential-and-vendor-binary")}
+}
+
+// corpusProfile applies a profile to a corpus request. A corpus has no file selection;
+// each profile limit must stay within both the caller's limits and the tracked
+// private-corpus-local values, so a profile can never raise either.
+func corpusProfile(req *CorpusRequest) (*profile, *Error) {
+	prof, e := parseProfile(req.Profile)
+	if e != nil {
+		return nil, e
+	}
+	if prof.files != nil {
+		return nil, fail(KindInvalidInput, "PROFILE_FILES_NOT_APPLICABLE", "profile#/files", nil)
+	}
+	if req.Encoding, e = prof.encodingFrom(req.Encoding); e != nil {
+		return nil, e
+	}
+	l, t := req.Limits, DefaultCorpusLimits()
+	got, e := prof.narrow(map[string]uint64{"files": min(l.Files, t.Files), "records": min(l.Records, t.Records), "file_bytes": min(l.FileBytes, t.FileBytes),
+		"total_bytes": min(l.TotalBytes, t.TotalBytes), "depth": min(l.Depth, t.Depth), "output_bytes": min(l.ReportBytes, t.ReportBytes)})
+	if e != nil {
+		return nil, e
+	}
+	for k, dst := range map[string]*uint64{"files": &l.Files, "records": &l.Records, "file_bytes": &l.FileBytes, "total_bytes": &l.TotalBytes, "depth": &l.Depth, "output_bytes": &l.ReportBytes} {
+		if _, set := prof.limits[k]; set {
+			*dst = got[k]
+		}
+	}
+	req.Limits = l
+	return prof, nil
 }
 
 type corpus struct {

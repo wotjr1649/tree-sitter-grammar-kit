@@ -58,7 +58,8 @@ func TestExitCodes(t *testing.T) {
 		stderr string
 	}{
 		{nil, 2, "USAGE"},
-		{[]string{"verify", "--root", root}, 2, "UNSUPPORTED_COMMAND"},
+		{[]string{"verify", "--root", root}, 2, "requires --expected"},
+		{[]string{"reproduce"}, 2, "UNSUPPORTED_COMMAND"},
 		{[]string{"schema", "check"}, 2, "UNSUPPORTED_COMMAND"},
 		{[]string{"bogus"}, 2, "UNKNOWN_COMMAND"},
 		{[]string{"inspect", "--root", root, "--profile", "p.json"}, 2, "PROFILE_UNSUPPORTED"},
@@ -297,15 +298,24 @@ func TestExternalConsumerAndCLI(t *testing.T) {
 	root := t.TempDir()
 	writeTree(t, root, fixture)
 	offline := []string{"PATH=", "SystemRoot=" + os.Getenv("SystemRoot")}
+	exp := expectedFromIdentity(t, context.Background(), root)
+	archive := zipOf(t, root, "", alphaFiles...)
 	for _, grammar := range []string{"alpha", ".", "../escape"} {
-		_, lines, _ := runBin(t, offline, consumer, root, grammar)
+		_, lines, _ := runBin(t, offline, consumer, root, grammar, exp, archive)
 		api := map[string][2]string{}
 		for _, line := range strings.Split(strings.TrimSpace(lines), "\n") {
 			parts := strings.SplitN(line, "\t", 3)
 			api[parts[0]] = [2]string{parts[1], parts[2]}
 		}
-		for _, cmd := range []string{"inspect", "identity"} {
-			code, stdout, stderr := runBin(t, offline, bin, cmd, "--root", root, "--grammar", grammar)
+		for _, cmd := range []string{"inspect", "identity", "verify", "verify-archive"} {
+			args := []string{cmd, "--root", root, "--grammar", grammar}
+			switch cmd {
+			case "verify":
+				args = append(args, "--expected", exp)
+			case "verify-archive":
+				args = []string{"verify", "--archive", archive, "--expected", exp}
+			}
+			code, stdout, stderr := runBin(t, offline, bin, args...)
 			if strings.TrimSuffix(stdout, "\n") != api[cmd][1] {
 				t.Fatalf("%s %s: CLI and API results differ\nCLI %s\nAPI %s", cmd, grammar, stdout, api[cmd][1])
 			}

@@ -1,0 +1,53 @@
+{
+  "schema": "tsgk-expected/r1",
+  "provenance": "example: identity of a reviewed reference checkout, kept outside the subject",
+  "file_count": null,
+  "set_sha256": "02bba04884133f539cb6996d043fd94a0be9cc17f0dfdaa072498f53562900d6",
+  "manifest": {
+    "schema": "tsgk-manifest/r2",
+    "algorithm": "sha256",
+    "mode_policy": "portable-default",
+    "encoding_policy": "detect-r1",
+    "files": [
+      {
+        "path": "grammar.js",
+        "role": "grammar",
+        "mode": "100644",
+        "mode_provenance": "POLICY_DEFAULT",
+        "size": 72,
+        "sha256": "15ef4a7ce706ba5be988c7842a0799ba4444df535b94d15ed94e79377e96105a",
+        "encoding": {
+          "assessment": "PASS",
+          "encoding": "UTF-8",
+          "source": "VALIDATION"
+        }
+      },
+      {
+        "path": "src/grammar.json",
+        "role": "grammar",
+        "mode": "100644",
+        "mode_provenance": "POLICY_DEFAULT",
+        "size": 19,
+        "sha256": "9579cf52285b23b618b615d704b19d04ff591ae513f6ae34ef37e2b9a067cb12",
+        "encoding": {
+          "assessment": "PASS",
+          "encoding": "UTF-8",
+          "source": "VALIDATION"
+        }
+      },
+      {
+        "path": "src/node-types.json",
+        "role": "generated",
+        "mode": "100644",
+        "mode_provenance": "POLICY_DEFAULT",
+        "size": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "encoding": {
+          "assessment": "PASS",
+          "encoding": "UTF-8",
+          "source": "VALIDATION"
+        }
+      }
+    ]
+  }
+}
