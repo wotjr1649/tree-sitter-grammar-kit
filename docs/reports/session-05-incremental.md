@@ -184,7 +184,11 @@ merge commit `2ad2c6a`의 post-merge run 37126164541에서 macos-15 foundation�
 * 원인: 이 사례는 frame watchdog 500 ms(`FrameWall` 300 ms + `FrameGrace` 200 ms)를 썼다. macOS 메모리 상한은 100 ms마다 `/bin/ps` process를 실행해 표본을 얻으므로, 할당이 상한을 넘은 뒤 그것을 관측하기까지 걸리는 시간이 runner 부하에 따라 달라진다. 관측이 500 ms를 넘으면 watchdog이 먼저 끝낸다. 시험 결함이며 runner 동작은 맞다. 먼저 걸린 상한이 원인이 되고, 기본 정책의 frame watchdog은 65초다.
 * 수정: `own-memory` 사례만 `FrameWall`을 20초로 둔다. helper는 1 GiB를 잡고 끝날 때까지 유지하므로 메모리 상한만 그 frame을 끝낼 수 있다. 기대값(`RESOURCE_LIMIT`/`MEMORY_LIMIT`)과 watchdog 사례(`own-watchdog`)는 바꾸지 않았다. 표본이 끝내 상한을 넘지 못하면 20초 뒤 `FRAME_WATCHDOG`으로 실패하므로 결함은 계속 드러난다.
 * 같은 종류의 경쟁을 정적으로 점검했다. 표본 메모리를 짧은 시간 상한과 겨루는 사례는 이것 하나였다. `TestMemoryLimit`은 30초 wall이고, native `ALLOCATION_LIMIT`는 driver 안에서 센다. Linux CI는 cgroup hard 상한을 쓰고, Windows는 job object hard 상한을 쓴다.
-* 시간 여유에 기대는 사례는 고치지 않고 기록만 한다. 하나는 small policy를 쓰는 frame 사례들이다. 첫 frame 500 ms 안에 helper 시작이 들어 있다. 다른 하나는 native `TestLimitsAndCancellation/cancellation`이다. 32 MB parse가 300 ms 안에 끝나지 않는다고 가정한다. 1 ns `WALL_LIMIT` 사례는 #61이 다룬다.
+* 시간 여유에 기대는 사례는 고치지 않고 기록만 한다.
+  * 300 ms + 200 ms 정책을 쓰는 frame 사례들(`TestFrameStatusMapping`의 small policy 사례, `TestFrameEscapedStdoutHolder`): 첫 frame 500 ms 안에 helper 시작이 들어 있다.
+  * `batch-wall` 사례: helper 시작과 frame 0·1 응답이 `BatchWall` 1.5초 안에 끝나야 한다.
+  * native `TestLimitsAndCancellation/cancellation`: 32 MB parse가 300 ms 안에 끝나지 않는다고 가정한다.
+  * 1 ns `WALL_LIMIT` 사례(`src/kit`)는 #61이 다룬다.
 * 로컬(Windows): `go test ./src/internal/runner -run 'TestFrameStatusMapping$' -count=50` 통과, `go test ./src/... -count=1`·`go vet`·`gofmt` 통과. Windows는 hard 상한이라 표본 경로는 macOS CI에서만 실행된다.
 
 ## acceptance 연결
