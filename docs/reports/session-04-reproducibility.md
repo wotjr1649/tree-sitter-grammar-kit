@@ -97,6 +97,12 @@ A01 `TestReproducePass`(두 작업 공간, output별 A↔B·기준 판정)와 26
 
 재리뷰 r3(`f0e38d2..1af8d18`, `review-r3.json`)는 R1-06과 R2-01~04를 모두 RESOLVED로 확인했고, `TestStorageLimitWorkspaceB`가 B의 출력에 파일을 더해 결정성 실패로 먼저 끝나므로 "B만 넘고 나머지 claim은 PASS" 경로를 시험하지 않는다는 MINOR R3-01과 CLI 계약 문구 NOTE R3-02를 보고했다. fake generator가 B의 격리 home에만 64 KiB를 쓰도록 바꿔 출력은 같고 저장 용량만 넘게 했고(deterministic·reference PASS, `js_reproduction` NOT_CLAIMED 확인), 문구를 고쳤다(`f0f2423`). 이 commit에서 전체 로컬 명령 블록과 mutant 20/20(`mutants-f0f2423.json`)을 다시 확인했다.
 
+## PR CI 실패와 수정
+
+PR #63 최종 후보 CI run 37106058599 attempt 1에서 `foundation (ubuntu-24.04)`만 실패했다(windows-2025, macos-15 성공). `TestEscapedQuietDescendant`가 Linux cgroup backend에서 `Cleanup.Verified=false`였고, 원인은 `backend release failed: remove .../jobs/tsgk-4723-21: device or resource busy`였다. kit runner 결함이다. `cgroup.kill` 뒤 종료 중인 task는 `cgroup.procs`에서 먼저 빠지지만, 커널은 그 task를 해제한 뒤(이 시험에서는 고아가 된 이탈 process가 회수된 뒤)에야 `cgroup.events`를 `populated 0`으로 바꾸고 leaf 삭제를 허용한다. runner는 `cgroup.procs`가 빈 시점을 tree가 빈 것으로 보고 곧바로 `rmdir`해 EBUSY가 났다. 같은 실행을 바꾸지 않고 다시 돌리지 않았다.
+
+수정: cgroup backend의 tree 확인이 `cgroup.procs`가 비어도 `populated 0`이 될 때까지 비지 않은 것으로 센다. 그래서 Wait의 grace 상한 대기 안에서 해제를 기다리고, 상한 안에 해제되지 않으면 cleanup을 verified로 보고하지 않는다(시험과 Verified 요구는 그대로). `TestCgroupLiveUntilReleased`는 leaf 파일 상태(procs 비었고 `populated 1`)를 정확히 재현해 이 판정을 고정한다. 새 시험과 수정된 backend는 Linux 전용이라 이 Windows 호스트에서는 컴파일·교차 vet만 했고 실행은 다음 PR CI가 한다.
+
 ## 남은 일과 한계
 
 * 세 OS CI(A13, Linux cgroup·macOS sampled backend의 실제 시험 포함)는 PR 단계에서 실행한다. Linux·macOS backend 코드는 로컬에서 교차 vet만 했고 실행하지 않았다.

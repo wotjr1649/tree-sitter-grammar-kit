@@ -159,12 +159,31 @@ func (c *cgroupTree) stop(force bool) {
 	}
 }
 
+// live counts the leaf's processes. cgroup.procs drops a killed task as soon as it starts
+// exiting, but the kernel releases it (and allows rmdir) only once cgroup.events reports
+// "populated 0", e.g. after an orphaned zombie is reaped. Until then the tree is not empty,
+// so Wait's bounded grace wait covers the release and an unreleased leaf stays unverified.
 func (c *cgroupTree) live() (int, error) {
 	data, err := os.ReadFile(filepath.Join(c.dir, "cgroup.procs"))
 	if err != nil {
 		return 0, err
 	}
-	return len(strings.Fields(string(data))), nil
+	if n := len(strings.Fields(string(data))); n > 0 {
+		return n, nil
+	}
+	events, err := os.ReadFile(filepath.Join(c.dir, "cgroup.events"))
+	if err != nil {
+		return 0, err
+	}
+	for _, line := range strings.Split(string(events), "\n") {
+		if f := strings.Fields(line); len(f) == 2 && f[0] == "populated" {
+			if f[1] == "0" {
+				return 0, nil
+			}
+			return 1, nil
+		}
+	}
+	return 0, errors.New("cgroup.events has no populated key")
 }
 
 func (c *cgroupTree) limitHit() bool {
