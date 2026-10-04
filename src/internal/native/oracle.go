@@ -200,7 +200,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
 	policy := PolicyRef(op, n.Output)
-	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: kit.OracleSchema, SHA256: n.SHA256}, policy)
+	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: n.Schema, SHA256: n.SHA256}, policy)
 	var queries []QuerySource
 	var qids []kit.IdentityRef
 	for _, q := range prof.Queries {

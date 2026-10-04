@@ -12,12 +12,15 @@ import (
 )
 
 // Oracle schemas (Session 06): the profile, the per-case record and the completed set
-// manifest written last.
+// manifest written last. Profile r2 is r1 on tsgk-incremental/r2 (expectation anchors).
 const (
-	OracleSchema         = "tsgk-oracle/r1"
+	OracleSchema         = "tsgk-oracle/r2"
 	OracleRecordSchema   = "tsgk-oracle-record/r1"
 	OracleManifestSchema = "tsgk-oracle-manifest/r1"
 )
+
+// oracleSchemaR1 is still decoded (without anchors) so earlier evidence replays.
+const oracleSchemaR1 = "tsgk-oracle/r1"
 
 // MaxQueryBytes bounds one query source; MaxQueries bounds the queries of a profile.
 const (
@@ -83,7 +86,7 @@ type OracleCase struct {
 	DynamicSQL  *DynamicSQLExpectation `json:"dynamic_sql_expect"`
 }
 
-// OracleProfile is a decoded tsgk-oracle/r1 profile. Native holds the shared members (its
+// OracleProfile is a decoded tsgk-oracle/r2 (or r1) profile. Native holds the shared members (its
 // Cases are the base of OracleCases, in the same order).
 type OracleProfile struct {
 	Native      IncrementalProfile `json:"-"`
@@ -95,7 +98,7 @@ type OracleProfile struct {
 
 var queryStatus = map[string]bool{StatusCompleted: true, StatusResourceLimit: true, "INVALID_QUERY": true, StatusFailed: true, "UNSUPPORTED": true, StatusNotRun: true}
 
-// ParseOracleProfile strictly decodes a tsgk-oracle/r1 profile: the incremental profile
+// ParseOracleProfile strictly decodes a tsgk-oracle/r2 (or r1) profile: the incremental profile
 // members (with a query operation), the queries, the optional fact pack binding, the API
 // switch and per case the query and dynamic SQL expectations.
 func ParseOracleProfile(data []byte) (OracleProfile, error) {
@@ -108,7 +111,7 @@ func ParseOracleProfile(data []byte) (OracleProfile, error) {
 
 func parseOracle(data []byte) (OracleProfile, *Error) {
 	var o OracleProfile
-	n, x, e := parseNative(data, OracleSchema, "oracle", []string{"queries", "fact_pack", "api"}, []string{"query_expect", "dynamic_sql_expect"})
+	n, x, e := parseNative(data, []string{OracleSchema, oracleSchemaR1}, "oracle", []string{"queries", "fact_pack", "api"}, []string{"query_expect", "dynamic_sql_expect"})
 	if e != nil {
 		return o, e
 	}

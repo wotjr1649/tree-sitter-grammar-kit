@@ -46,7 +46,7 @@ func TestIncrementalCLI(t *testing.T) {
 	enc := base64.StdEncoding.EncodeToString
 	edit := map[string]any{"start_byte": 4, "old_end_byte": 5, "new_end_byte": 5, "old": enc([]byte("f")), "new": enc([]byte("g"))}
 	profile := map[string]any{
-		"schema": "tsgk-incremental/r1", "id": "cli-plain", "route": "owned-plain", "operation": "native-parse-edit", "symbol": "tree_sitter_tsgk_plain",
+		"schema": "tsgk-incremental/r2", "id": "cli-plain", "route": "owned-plain", "operation": "native-parse-edit", "symbol": "tree_sitter_tsgk_plain",
 		"encoding": "UTF-8", "output": "tree", "compiler": map[string]any{"name": "cc", "version": "test", "sha256": sum(ccData), "bytes": len(ccData)},
 		"grammar": []any{fileEntry(t, root, "src/parser.c", "parser"), fileEntry(t, root, "src/tree_sitter/alloc.h", "header"),
 			fileEntry(t, root, "src/tree_sitter/array.h", "header"), fileEntry(t, root, "src/tree_sitter/parser.h", "header")},

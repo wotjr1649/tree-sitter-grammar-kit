@@ -182,7 +182,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
 	policy := PolicyRef(op, prof.Output)
-	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: kit.IncrementalSchema, SHA256: prof.SHA256}, policy)
+	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: prof.Schema, SHA256: prof.SHA256}, policy)
 	if berr != nil {
 		var ne *Error
 		errors.As(berr, &ne)

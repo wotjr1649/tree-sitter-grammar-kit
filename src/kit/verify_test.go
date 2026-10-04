@@ -87,7 +87,7 @@ func TestStrictDocuments(t *testing.T) {
 // Tracked examples: valid ones decode, each invalid one fails with the code in its name.
 func TestContractExamples(t *testing.T) {
 	dir := filepath.Join("..", "contracts", "examples")
-	for _, name := range []string{"profile-r1.json", "expected-r1.json", "reproduce-r1.json", "incremental-r1.json", "replay-r1.json", "evidence-policy-r1.json"} {
+	for _, name := range []string{"profile-r1.json", "expected-r1.json", "reproduce-r1.json", "incremental-r2.json", "replay-r1.json", "evidence-policy-r1.json"} {
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			t.Fatal(err)

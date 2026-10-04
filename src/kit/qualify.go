@@ -12,7 +12,7 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r2"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r3"
 	QualificationResultSchema    = "tsgk-qualification-result/r3"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
@@ -170,10 +170,10 @@ type QualRole struct {
 	Workloads     []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r2 document: the exact
+// QualificationInventory is a decoded tsgk-qualification-inventory/r3 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
-// adds the route error node types, the rows' production alternatives and the cases'
-// alternatives and W samples to r1.
+// added the route error node types, the rows' production alternatives and the cases'
+// alternatives and W samples to r1; r3 adds the step expectation anchors.
 type QualificationInventory struct {
 	SHA256       string         `json:"-"`
 	Schema       string         `json:"schema"`
@@ -307,9 +307,14 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			default:
 				return badW("CASE_INVALID", cp+"/role")
 			}
-			for _, e := range c.Expect {
+			sizes := stepSizes(c.Input.Bytes, c.Edits)
+			for j, e := range c.Expect {
 				if e.Step < 0 || e.Step > len(c.Edits) {
 					return badW("CASE_STEP_INVALID", cp)
+				}
+				// an anchor names a valid type and a range inside its step's source
+				if len(e.Anchors) > MaxExpectAnchors || slices.ContainsFunc(e.Anchors, func(a ExpectAnchor) bool { return !validAnchor(a, sizes[e.Step]) }) {
+					return badW("CASE_INVALID", fmt.Sprintf("%s/expect/%d/anchors", cp, j))
 				}
 			}
 			for _, q := range c.QueryExpect {

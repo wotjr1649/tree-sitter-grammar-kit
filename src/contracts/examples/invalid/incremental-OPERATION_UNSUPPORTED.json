@@ -1,5 +1,5 @@
 {
-  "schema": "tsgk-incremental/r1",
+  "schema": "tsgk-incremental/r2",
   "id": "example-plain",
   "route": "owned-plain",
   "operation": "native-query",
