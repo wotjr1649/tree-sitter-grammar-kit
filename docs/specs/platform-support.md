@@ -11,8 +11,8 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 | regenerate | NOT_RUN | S04 tool closure·독립 생성·기준 비교 |
 | native parse | NOT_RUN | S05~06 compiler/runtime/scanner/실행 결과 |
 | supervision | NOT_RUN | OS별 timeout/output/memory/child cleanup adverse test |
-| full qualification | S08 구현(`tsgk qualify`), 결과는 CI receipt | 등록 profile의 모든 필수 gate |
-| cross-OS semantic parity | S08 구현(`tsgk qualify` 비교), 결과는 CI receipt | S08 동일 의미 identity·attempt의 완전한 OS 집합 |
+| full qualification | AVAILABLE(S08 `tsgk qualify`); VERIFIED 여부는 CI receipt | 등록 profile의 모든 필수 gate |
+| cross-OS semantic parity | AVAILABLE(S08 `tsgk qualify` 비교); VERIFIED 여부는 CI receipt | S08 동일 의미 identity·attempt의 완전한 OS 집합 |
 
 각 행의 상태는 AVAILABLE(기능 존재), VERIFIED(정확한 시험 근거), UNSUPPORTED, NOT_RUN을 구분한다. foundation 성공은 제품/native 지원 근거가 아니다. 실제 관측값은 [Session 00 보고](../reports/session-00-foundation.md)와 CI receipt가 소유한다.
 

@@ -291,7 +291,7 @@ func ParseQualificationInventory(data []byte) (QualificationInventory, error)
 func QualificationLimits() ReplayLimits
 ```
 
-offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r1`을 strict decode하고 칸 수·identity 중복·coverage 규칙을 검사한다. `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
+offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. 다만 host 디렉터리가 없거나 그 안에 link·special 파일이 있으면 S01 guard가 호출 전체를 `KindInvalidInput`으로 끝낸다. host당 record 수가 한도를 넘으면 `RECORDS_LIMIT`(`RESOURCE_LIMIT`)다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r1`을 strict decode하고 칸 수·identity 중복·coverage 규칙을 검사한다. `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
 
 ## 외부 소비자 검증
 

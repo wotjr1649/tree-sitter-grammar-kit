@@ -131,12 +131,12 @@ BrightScript v0.1.2 historical replay의 비교 규칙이며 `bs-gate-compare-r1
 각 workload의 set(`records/<set>/`)은 다음 순서로 판정한다.
 
 1. 공유 set 규칙: manifest strict decode와 `complete`, member 경로·역할·중복, 크기·sha256, record 완결성(`checkRecord`), record 수, 사례마다 record 하나, 목록 밖 파일(`MEMBER_UNLISTED`).
-2. 등록 대조: manifest가 결속한 workload profile이 host의 `profiles/<workload>.json`이어야 하고(`WORKLOAD_MISMATCH`), 그 profile의 route·연산·출력·symbol·format·encoding·api·grammar 파일·query source·fact pack·사례(id, 입력 sha256·bytes, edit, 기대값, query 기대값)가 inventory와 같아야 한다(`REGISTRATION_MISMATCH`). host compiler와 profile id만 다를 수 있다. set의 route·연산·출력이 다르면 `ROUTE_MISMATCH`다(다른 route의 set을 쓰는 dialect 병합도 여기서 걸린다). 사례 목록과 순서는 inventory와 같아야 한다.
+2. 등록 대조: manifest가 결속한 workload profile이 host의 `profiles/<workload>.json`이어야 하고(`WORKLOAD_MISMATCH`), 그 profile의 route·연산·출력·symbol·format·encoding·api·grammar 파일·선언 mapping 항목·query source·fact pack·사례(id, 입력 sha256·bytes, encoding, edit, 기대값, query 기대값, registered point, 동적 SQL 기대 사실·known miss)가 inventory와 같아야 한다(`REGISTRATION_MISMATCH`). host compiler, profile id와 사례 입력의 root 안 경로만 다를 수 있다. set의 route·연산·출력이 다르면 `ROUTE_MISMATCH`다(다른 route의 set을 쓰는 dialect 병합도 여기서 걸린다). 사례 목록과 순서는 inventory와 같아야 한다.
 3. S07 gate: record마다 `oracle-set-r1`의 사례 검사(사례 결속, 상태-판정 일관성, tree 구조·digest·node 수, incremental/fresh 비교, route 증명, 기대값, query 비교, 판정 fold, producer·policy 혼합)를 inventory 사례를 등록값으로 다시 계산한다. query 기대값은 inventory의 원본·edit·capture 기대값으로 다시 계산해 기록 claim과 대조한다(`QUERY_EXPECTATION_MISMATCH`).
 4. kit 축(`mechanism`): 위 검사와 gate가 모두 통과하고, 사례가 등록 상태(기본 `COMPLETED`, 한도 초과 사례는 `RESOURCE_LIMIT`)로 끝나고, kit claim(incremental equality·route, query equality, 사실 재현, 동적 SQL)이 FAIL·BLOCKED가 아니면 PASS다. 사실 재현·동적 SQL claim은 기록값을 쓴다(S07과 같이 원본 decode가 필요해 다시 계산하지 않는다). API claim FAIL은 runtime node API와 cursor의 차이이며 처분 대상 관측으로 센다(`api_claim_failures`). 한도를 넘어 읽지 못한 member가 있으면 PASS가 아니라 `BLOCKED`다.
-5. 요구 축(`requirement`): 칸의 각 REQ 행 × 필수 kind 의무를 그 kind를 덮는 requirement 사례의 결과로 정한다. P는 `NO_ERROR`·구조 기대 step, N은 `ERROR` step, R은 `ERROR`·보존 구조 step의 기대값 결과, E는 incremental equality·route(와 query equality), Q는 다시 계산한 query 기대값이다. 여러 사례는 가장 나쁜 값(FAIL > BLOCKED > PASS)이고 덮는 사례가 없으면 `NOT_COVERED`다. FAIL이 하나라도 있으면 FAIL, 없고 `NOT_COVERED`·BLOCKED가 있으면 `INCOMPLETE`, 모두 PASS면 PASS다.
+5. 요구 축(`requirement`): 칸의 각 REQ 행 × 필수 kind 의무를 그 kind를 덮는 requirement 사례의 결과로 정한다. P는 `NO_ERROR`·구조 기대 step, N은 `ERROR` step, R은 `ERROR`·보존 구조 step의 기대값 결과, E는 incremental equality·route(와 query equality), Q는 다시 계산한 query 기대값이다. 여러 사례는 가장 나쁜 값(FAIL > BLOCKED > PASS)이고 덮는 사례가 없으면 `NOT_COVERED`다. 칸의 모든 등록 검사(`registered_checks`)도 요구 축에 들어간다. requirement·support 사례의 모든 등록 기대값(어느 kind도 덮지 않는 step, 행을 덮지 않는 사례 포함)과 다시 계산한 query 기대값을 접고, SVC 관측 전용 사례는 verdict gate가 다시 계산한 판정을 쓰며, 등록 상태로 끝나지 않은 사례는 BLOCKED다. 통과하지 않은 사례는 `check_failures`에 남는다. 의무나 등록 검사에 FAIL이 하나라도 있으면 FAIL, 없고 `NOT_COVERED`·BLOCKED가 있으면 `INCOMPLETE`, 모두 PASS면 PASS다.
 
-detector 사례(역사 결함 검출기)는 자기 추가 역할 행에서만 PASS/FAIL이며 요구 행을 덮지 못한다. 필수 mainstream 사례의 FAIL은 detector 결과와 무관하게 그 칸을 FAIL로 둔다.
+detector 사례(역사 결함 검출기)는 추가 역할 workload에만 둘 수 있고 자기 역할 행에서만 PASS/FAIL이며 요구 행을 덮지 못한다. support 사례도 요구 행을 덮지 못한다. 추가 역할 행은 set들의 kit 축(`mechanism`)과 등록 검사·detector 결과(`registered_checks`)를 따로 가진다. kit 축 FAIL이나 검사 FAIL이면 FAIL, 그 밖에 PASS가 아니면 INCOMPLETE, 실행해야 할 set이 없으면 MISSING이다. 필수 mainstream 사례의 FAIL은 detector 결과와 무관하게 그 칸을 FAIL로 둔다.
 
 ### platform 간 의미 비교
 
@@ -146,10 +146,10 @@ route마다 판정된 host가 둘 이상이면 사례별 의미 요약을 platfo
 
 E0 `Report`에 `inventory_id`, `candidate`, `limits`, `run`(공통 cohort), `hosts`(platform → run identity sha256), `completeness`, `cells`(route·platform·`status`·`mechanism`·`requirement`·`comparison`·`counts`·`obligations`·set 판정), `extra_roles`, `comparisons`, `totals`, `mechanism_gate`, `support_claim`, `bytes_read`, 한국어 `explanation`을 더한다.
 
-* 칸 `status`: 근거가 없으면 `MISSING`, kit 축·요구 축·비교 중 FAIL이 있으면 `FAIL`, 남은 것이 사례 없음·BLOCKED·비교 미실시뿐이면 `INCOMPLETE`, 모두 PASS면 `PASS`다.
-* `completeness`는 inventory의 칸이 정확히 한 번씩 근거를 가지고, 같은 platform host가 중복되지 않으며, host 근거에 inventory 밖 파일이 없을 때만 PASS다(`CELL_DUPLICATE`, `HOST_UNREGISTERED`, `HOST_FILE_UNREGISTERED`, `COMPLETENESS_FAILED`).
-* `mechanism_gate`는 kit 쪽 검사(완결성, cohort·자격, 모든 칸의 kit 축과 비교, 실행된 추가 역할 행)가 모두 통과했을 때만 PASS다. 문법 요구 FAIL·사례 없음은 이 값을 바꾸지 않는다. CI qualification job은 이 값으로 성공 여부를 정한다.
-* `support_claim`은 모든 필수 칸이 PASS일 때만 `SUPPORTED`이고 그 밖에는 `BLOCKED`다. 추가 역할 행은 필수 칸을 대신하지 않는다. assessment는 FAIL > BLOCKED > PASS 순이다.
+* 칸 `status`: 근거가 없으면 `MISSING`, kit 축·요구 축·비교 중 FAIL이 있으면 `FAIL`, 남은 것이 사례 없음·BLOCKED(한도 초과로 읽지 못한 member로 kit 축이 BLOCKED인 경우 포함)·비교 미실시뿐이면 `INCOMPLETE`, 모두 PASS면 `PASS`다.
+* `completeness`는 inventory의 칸이 정확히 한 번씩 근거를 가지고, 실행하는 추가 역할 행도 자기 platform의 set을 가지며, 같은 platform host가 중복되지 않고, host 근거에 inventory 밖 파일이 없을 때만 PASS다(`CELL_DUPLICATE`, `HOST_UNREGISTERED`, `HOST_FILE_UNREGISTERED`, `COMPLETENESS_FAILED`). cohort 기준은 자기 검사를 통과한 첫 host이므로 거부된 host 하나가 다른 host를 `COHORT_MISMATCH`로 만들지 않는다.
+* `mechanism_gate`는 kit 쪽 검사(완결성, cohort·자격, 모든 칸의 kit 축과 비교, 실행된 추가 역할 행의 kit 축)가 모두 통과했을 때만 PASS다. 문법 요구 FAIL·사례 없음·등록 검사 결과는 이 값을 바꾸지 않는다. CI qualification job은 이 값으로 성공 여부를 정한다.
+* `support_claim`은 모든 필수 칸, 실행된 모든 추가 역할 행이 PASS이고 `mechanism_gate`가 PASS일 때만 `SUPPORTED`이고 그 밖에는 `BLOCKED`다. 추가 역할 행은 필수 칸을 대신하지 않는다. `NOT_RUN`·`EXTERNAL` 역할 행은 route 지원 claim을 막지 않지만 campaign 완료 판단에서는 따로 남는다. assessment는 FAIL > BLOCKED > PASS 순이다.
 
 ## 준비 tracking의 적용 대상과 보존 결과
 
