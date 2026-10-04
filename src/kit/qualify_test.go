@@ -528,6 +528,67 @@ func TestQualifyComparison(t *testing.T) {
 	}
 }
 
+// S08-A07: an SVC composite names its platform's native build as producer, as every tree
+// does. With a different build on each host only that differs, so the comparison passes
+// and the build stays a host observation; a composite producer other than the run's build
+// is a mixed result on that host; a real composite difference still fails the comparison.
+func TestQualifyCompositeHostIdentity(t *testing.T) {
+	other := strings.Repeat("9", 64)
+	host := func(build string, edit func(c map[string]any)) qfxMut {
+		return qfxMut{record: func(s string, recs []map[string]any) {
+			if s != "s06-fxa" {
+				return
+			}
+			for _, rc := range recs {
+				for _, st := range rc["steps"].([]any) {
+					for _, k := range []string{"incremental", "fresh"} {
+						if tr, ok := st.(map[string]any)[k].(map[string]any); ok {
+							tr["tree"].(map[string]any)["identities"].([]IdentityRef)[0].SHA256 = build
+						}
+					}
+				}
+			}
+			ids := func() []IdentityRef {
+				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+			}
+			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": "C#", "identities": ids(),
+				"inline": map[string]any{"tree": map[string]any{"identities": ids()}}}
+			if edit != nil {
+				edit(c)
+			}
+			recs[0]["steps"].([]any)[0].(map[string]any)["composite"] = c
+		}, manifest: func(s string, m map[string]any) {
+			if s == "s06-fxa" {
+				m["producer"].(map[string]string)["build_identity"] = build
+			}
+		}}
+	}
+	f := newQfx(t)
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": host(fxProducer, nil)}))
+	for _, pl := range qfxPlatforms {
+		if c := cellOf(r, "fxa", pl.ID); c.Comparison != AssessPass || c.Mechanism != AssessPass {
+			t.Fatalf("build-only composite difference on %s: %s %s %v", pl.ID, c.Comparison, c.Mechanism, r.Comparisons[0].Differences)
+		}
+	}
+	if l := cellOf(r, "fxa", "linux-amd64"); l.Set.Host["build_identity"] != other {
+		t.Fatalf("host build identity not retained: %v", l.Set.Host)
+	}
+
+	f = newQfx(t)
+	mixed := host(other, func(c map[string]any) { c["identities"].([]IdentityRef)[0].SHA256 = fxProducer })
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": mixed, "darwin-arm64": host(fxProducer, nil)}))
+	if l := cellOf(r, "fxa", "linux-amd64"); l.Mechanism == AssessPass || !slices.ContainsFunc(l.Set.Gates, func(g ReplayGate) bool { return g.ID == "case-binding" && g.Code == "MIXED_IDENTITY" }) {
+		t.Fatalf("composite from another build accepted: %s %+v", l.Mechanism, l.Set.Gates)
+	}
+
+	f = newQfx(t)
+	vb := host(fxProducer, func(c map[string]any) { c["language"] = "VB" })
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": vb}))
+	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
+		t.Fatalf("composite difference not reported: %s %v", c.Comparison, r.Comparisons[0].Differences)
+	}
+}
+
 // S08-A08: a registered historical detector passes its row while a required mainstream
 // failure still fails its cell and keeps the support claim blocked.
 func TestQualifyDetectorAndGap(t *testing.T) {

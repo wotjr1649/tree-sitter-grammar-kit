@@ -177,6 +177,44 @@ type qQuery struct {
 	Error      *json.RawMessage `json:"error"`
 }
 
+// compositeSemantic is an SVC composite as platforms must agree on it: every field except
+// the producer identities, which name the platform's native build (a host observation kept
+// as build_identity and bound to the run on each host by checkSeen).
+func compositeSemantic(raw jsontext.Value) any {
+	if raw == nil {
+		return nil
+	}
+	var v any
+	if json.Unmarshal(raw, &v) != nil {
+		return string(raw) // compared as recorded; an undecodable composite is not projected
+	}
+	var drop func(v any)
+	drop = func(v any) {
+		switch t := v.(type) {
+		case map[string]any:
+			for k, e := range t {
+				if ids, ok := e.([]any); ok && k == "identities" {
+					kept := []any{}
+					for _, id := range ids {
+						if m, ok := id.(map[string]any); !ok || m["role"] != "producer" {
+							kept = append(kept, id)
+						}
+					}
+					t[k] = kept
+					continue
+				}
+				drop(e)
+			}
+		case []any:
+			for _, e := range t {
+				drop(e)
+			}
+		}
+	}
+	drop(v)
+	return v
+}
+
 // semantic is the projection two platforms must agree on: tree identity and shape, query
 // streams, API observations, comparisons and judgements; host timing, memory and paths are
 // not part of it.
@@ -771,11 +809,11 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, 
 		Proven             *bool
 		Comparison         any
 		QueryEqual         *bool
-		Composite          jsontext.Value
+		Composite          any
 	}
 	steps := []step{}
 	for _, st := range extra.Steps {
-		x := step{Incremental: st.Incremental.semantic(), Fresh: st.Fresh.semantic(), Composite: st.Composite}
+		x := step{Incremental: st.Incremental.semantic(), Fresh: st.Fresh.semantic(), Composite: compositeSemantic(st.Composite)}
 		if st.Route != nil {
 			x.Proven = &st.Route.Proven
 		}

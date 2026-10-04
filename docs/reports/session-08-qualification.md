@@ -88,6 +88,11 @@ general-purpose subagent 두 개가 각각 따로 리뷰했다(GitHub approval �
 
 **이전 실행(`0cdf3fd`, r5)**: wall 711초, `has_error` 230(csharp 48, tsql 181, xml 1), 처분 grammar gap 178·unsupported 39·source damage 11·`UNDISPOSITIONED` 2. S05 실행(`81a0538`)과 모든 파일 결과가 같았고 S07 replay도 PASS였다.
 
+## PR #71 hosted CI에서 고친 결함
+
+* run 37179971362(head `70a59fb`): Linux·macOS foundation의 `TestModuleProxyConsumer`가 끝난 뒤 `t.TempDir` 정리에서 실패했다. Go가 module cache 디렉터리를 읽기 전용으로 만들기 때문이다. consumer build에 `-modcacherw`를 더했다(`2385188`). 단언은 그대로다.
+* run 37180620293(head `2385188`): 78칸은 모두 kit 축 PASS, 비교 FAIL 0이었으나 `n461-svc` 행이 세 OS에서 kit 축 FAIL이었다. SVC composite 9 사례가 Windows와 Linux·macOS 사이 `Composite`에서 달랐고, 다른 필드는 composite의 producer identity(platform의 native build, `tsgk-native-build/r1`)뿐이었다. source·policy identity는 세 OS가 같아 입력 bytes 차이가 아니다. 계약상 build identity는 비교하지 않는 host 관측인데 비교기가 composite를 원문으로 비교했다(kit 결함). composite 비교에서 producer identity만 빼고, 대신 host마다 composite의 producer·policy identity를 run 값과 대조한다(`TestQualifyCompositeHostIdentity`; 원문 비교와 대조 제거 mutant를 각각 잡는다). 같은 artifact를 고친 CLI로 다시 집계하면 `mechanism_gate` PASS, 78칸 결과와 totals는 원래와 같고 `n461-svc`는 kit 축 PASS·검사 BLOCKED라 `INCOMPLETE`다. 로컬 세 host 경로 점검은 복제본이 같은 build identity를 써서 이 결함을 드러내지 못했다.
+
 ## 분리 context 리뷰와 처분
 
 **r1**(general-purpose subagent, `3fa7ed3..6e7ca58`, EXECUTED `go vet`·qualify 시험 + STATIC): BLOCKER 0, MATERIAL 2, MINOR 6, NOTE 1. 처분은 `ddf45bb`(code)와 `475ad4c`(문서)다.
