@@ -5,13 +5,20 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"regexp"
+	"slices"
 	"time"
 )
 
-// IncrementalSchema is the native incremental profile accepted by this build. Decoding is
-// offline; building and running the driver belongs to the CLI's runner, never to this
-// package.
-const IncrementalSchema = "tsgk-incremental/r1"
+// IncrementalSchema is the native incremental profile revision this build writes and
+// accepts; r2 adds the optional step expectation anchors to r1. Decoding is offline;
+// building and running the driver belongs to the CLI's runner, never to this package.
+const IncrementalSchema = "tsgk-incremental/r2"
+
+// incrementalSchemaR1 is still decoded (without anchors) so earlier evidence replays.
+const incrementalSchemaR1 = "tsgk-incremental/r1"
+
+// MaxExpectAnchors bounds the anchors of one step expectation.
+const MaxExpectAnchors = 64
 
 // Native output forms (tsgk-native/r1).
 const (
@@ -119,13 +126,73 @@ type NativePoint struct {
 }
 
 // StepExpectation is an independent language expectation for one step: Syntax NO_ERROR,
-// ERROR or ANY on the root, named node types that must appear (full trees), and the
-// declaration assessment ("" means not expected).
+// ERROR or ANY on the root, named node types that must appear anywhere (full trees), named
+// nodes that must appear at exactly one byte range (Anchors, full trees; r2 profiles), and
+// the declaration assessment ("" means not expected).
 type StepExpectation struct {
-	Step         int      `json:"step"`
-	Syntax       string   `json:"syntax"`
-	Contains     []string `json:"contains"`
-	Declarations string   `json:"declarations"`
+	Step         int            `json:"step"`
+	Syntax       string         `json:"syntax"`
+	Contains     []string       `json:"contains"`
+	Anchors      []ExpectAnchor `json:"anchors,omitempty"`
+	Declarations string         `json:"declarations"`
+}
+
+// ExpectAnchor pins a named node of exactly Type with exactly [StartByte, EndByte) in the
+// step's source, so a construct cannot pass on a same-typed node elsewhere in the tree.
+type ExpectAnchor struct {
+	Type      string `json:"type"`
+	StartByte uint32 `json:"start_byte"`
+	EndByte   uint32 `json:"end_byte"`
+}
+
+// anchorFound reports whether nodes (a full tree) hold a named node of exactly a's type and
+// byte range: the S05 evaluation's anchor check, recomputed by replay and qualify.
+func anchorFound(nodes []TreeNode, a ExpectAnchor) bool {
+	for _, n := range nodes {
+		if n.Named && n.Type == a.Type && n.StartByte == a.StartByte && n.EndByte == a.EndByte {
+			return true
+		}
+	}
+	return false
+}
+
+// unknownSize marks a step whose source length the edits do not determine.
+const unknownSize = ^uint64(0)
+
+// stepSizes returns the source byte length of every step (0 is the input) as the edits
+// produce it; after an edit whose old text does not fit the current length the length is
+// unknownSize (the edit itself is rejected when the case runs).
+func stepSizes(input uint64, edits []Edit) []uint64 {
+	out := []uint64{input}
+	cur := input
+	for _, e := range edits {
+		if cur != unknownSize && uint64(len(e.Old)) <= cur {
+			cur = cur - uint64(len(e.Old)) + uint64(len(e.New))
+		} else {
+			cur = unknownSize
+		}
+		out = append(out, cur)
+	}
+	return out
+}
+
+// validAnchorType is the anchor type form: 1..128 printable ASCII bytes without '"' or '\'.
+func validAnchorType(s string) bool {
+	if s == "" || len(s) > 128 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < 0x20 || s[i] > 0x7e || s[i] == '"' || s[i] == '\\' {
+			return false
+		}
+	}
+	return true
+}
+
+// validAnchor checks one anchor against its step's source length (unknownSize skips the
+// range bound): a valid type, start <= end and end within the source.
+func validAnchor(a ExpectAnchor, size uint64) bool {
+	return validAnchorType(a.Type) && a.StartByte <= a.EndByte && (size == unknownSize || uint64(a.EndByte) <= size)
 }
 
 // IncrementalCase is one registered input with its edit sequence.
@@ -138,9 +205,11 @@ type IncrementalCase struct {
 	Expect   []StepExpectation `json:"expect"`
 }
 
-// IncrementalProfile is a decoded tsgk-incremental/r1 profile.
+// IncrementalProfile is a decoded tsgk-incremental/r2 (or r1) profile; Schema is the
+// revision the document declared.
 type IncrementalProfile struct {
 	SHA256       string            `json:"-"`
+	Schema       string            `json:"-"`
 	ID           string            `json:"id"`
 	Route        string            `json:"route"`
 	Operation    string            `json:"operation"`
@@ -160,7 +229,8 @@ var symbolPattern = regexp.MustCompile(`^tree_sitter_[a-z0-9_]{1,64}$`)
 // shim accepts; nothing else is ever written into generated C.
 func ValidLanguageSymbol(s string) bool { return symbolPattern.MatchString(s) }
 
-// ParseIncrementalProfile strictly decodes a tsgk-incremental/r1 profile.
+// ParseIncrementalProfile strictly decodes a tsgk-incremental/r2 profile, or an r1 profile
+// (which has no anchors).
 func ParseIncrementalProfile(data []byte) (IncrementalProfile, error) {
 	p, e := parseIncremental(data)
 	if e != nil {
@@ -221,7 +291,7 @@ func nativeInput(t typed, v *jv, roles map[string]bool) (NativeInput, *Error) {
 }
 
 func parseIncremental(data []byte) (IncrementalProfile, *Error) {
-	p, _, e := parseNative(data, IncrementalSchema, "incremental", nil, nil)
+	p, _, e := parseNative(data, []string{IncrementalSchema, incrementalSchemaR1}, "incremental", nil, nil)
 	return p, e
 }
 
@@ -233,10 +303,12 @@ type nativeExtras struct {
 	cases []map[string]*jv
 }
 
-// parseNative decodes the members shared by tsgk-incremental/r1 and tsgk-oracle/r1; extra
-// top-level and case-level members are required and returned undecoded. A query operation
-// (S06) is accepted only by a revision with queries, and the other operations only without.
-func parseNative(data []byte, schema, doc string, topExtra, caseExtra []string) (IncrementalProfile, nativeExtras, *Error) {
+// parseNative decodes the members shared by tsgk-incremental and tsgk-oracle; extra
+// top-level and case-level members are required and returned undecoded. schemas lists the
+// accepted revisions, the current one (which takes expectation anchors) first. A query
+// operation (S06) is accepted only by the oracle profile, and the other operations only by
+// the incremental one.
+func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra []string) (IncrementalProfile, nativeExtras, *Error) {
 	var p IncrementalProfile
 	t := typed{doc: doc}
 	x := nativeExtras{t: t, top: map[string]*jv{}}
@@ -253,8 +325,10 @@ func parseNative(data []byte, schema, doc string, topExtra, caseExtra []string) 
 	}
 	if s, e := t.str(m["schema"]); e != nil {
 		return p, x, e
-	} else if s != schema {
+	} else if !slices.Contains(schemas, s) {
 		return p, x, t.bad("SCHEMA_UNSUPPORTED", m["schema"])
+	} else {
+		p.Schema = s
 	}
 	sum := sha256.Sum256(data)
 	p.SHA256 = hex.EncodeToString(sum[:])
@@ -276,7 +350,7 @@ func parseNative(data []byte, schema, doc string, topExtra, caseExtra []string) 
 		return p, x, e
 	}
 	op, ok := ops[p.Operation]
-	if !ok || (op.Matches > 0) != (schema == OracleSchema) {
+	if !ok || (op.Matches > 0) != (doc == "oracle") {
 		return p, x, t.bad("OPERATION_UNSUPPORTED", m["operation"])
 	}
 	if p.Symbol, e = t.str(m["symbol"]); e != nil {
@@ -327,8 +401,9 @@ func parseNative(data []byte, schema, doc string, topExtra, caseExtra []string) 
 		return p, x, t.bad("CASES_COUNT_INVALID", m["cases"])
 	}
 	seen := map[string]bool{}
+	anchors := p.Schema == schemas[0]
 	for _, item := range list {
-		c, cm, e := parseCase(t, item, p, op, caseExtra)
+		c, cm, e := parseCase(t, item, p, op, caseExtra, anchors)
 		if e != nil {
 			return p, x, e
 		}
@@ -447,7 +522,9 @@ func splitPath(s string) []string {
 	return out
 }
 
-func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra []string) (IncrementalCase, map[string]*jv, *Error) {
+// parseCase decodes one case; anchors says whether the profile revision takes expectation
+// anchors.
+func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra []string, anchors bool) (IncrementalCase, map[string]*jv, *Error) {
 	var c IncrementalCase
 	m, e := t.object(v, append([]string{"id", "input", "edits", "points", "expect"}, extra...), "encoding")
 	if e != nil {
@@ -541,8 +618,13 @@ func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra [
 	if e != nil {
 		return c, nil, e
 	}
+	var optional []string
+	if anchors {
+		optional = []string{"anchors"}
+	}
+	sizes := stepSizes(c.Input.Bytes, c.Edits)
 	for _, item := range expect {
-		f, e := t.object(item, []string{"step", "syntax", "contains", "declarations"})
+		f, e := t.object(item, []string{"step", "syntax", "contains", "declarations"}, optional...)
 		if e != nil {
 			return c, nil, e
 		}
@@ -571,6 +653,11 @@ func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra [
 			}
 			x.Contains = append(x.Contains, s)
 		}
+		if av := f["anchors"]; av != nil {
+			if x.Anchors, e = parseAnchors(t, av, sizes[x.Step]); e != nil {
+				return c, nil, e
+			}
+		}
 		if x.Declarations, e = t.str(f["declarations"]); e != nil {
 			return c, nil, e
 		}
@@ -585,4 +672,47 @@ func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra [
 		c.Expect = append(c.Expect, x)
 	}
 	return c, m, nil
+}
+
+// parseAnchors decodes the anchors of one step expectation: at most MaxExpectAnchors
+// {type, start_byte, end_byte} with a valid type, start <= end and end within the step's
+// source length (size, from the input bytes and the edits). Anything else is
+// EXPECT_ANCHOR_INVALID.
+func parseAnchors(t typed, v *jv, size uint64) ([]ExpectAnchor, *Error) {
+	list, e := t.array(v)
+	if e != nil {
+		return nil, e
+	}
+	if len(list) > MaxExpectAnchors {
+		return nil, t.bad("EXPECT_ANCHOR_INVALID", v)
+	}
+	var out []ExpectAnchor
+	for _, item := range list {
+		f, e := t.object(item, []string{"type", "start_byte", "end_byte"})
+		if e != nil {
+			return nil, e
+		}
+		var a ExpectAnchor
+		if a.Type, e = t.str(f["type"]); e != nil {
+			return nil, e
+		}
+		for _, x := range []struct {
+			dst  *uint32
+			name string
+		}{{&a.StartByte, "start_byte"}, {&a.EndByte, "end_byte"}} {
+			n, e := t.uint(f[x.name])
+			if e != nil {
+				return nil, e
+			}
+			if n > 0xffffffff {
+				return nil, t.bad("EXPECT_ANCHOR_INVALID", f[x.name])
+			}
+			*x.dst = uint32(n)
+		}
+		if !validAnchor(a, size) {
+			return nil, t.bad("EXPECT_ANCHOR_INVALID", item)
+		}
+		out = append(out, a)
+	}
+	return out, nil
 }

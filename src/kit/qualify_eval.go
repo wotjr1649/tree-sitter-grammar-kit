@@ -978,7 +978,7 @@ func sameEdit(a, b Edit) bool {
 }
 
 func sameExpect(a, b StepExpectation) bool {
-	return a.Step == b.Step && a.Syntax == b.Syntax && slices.Equal(a.Contains, b.Contains) && a.Declarations == b.Declarations
+	return a.Step == b.Step && a.Syntax == b.Syntax && slices.Equal(a.Contains, b.Contains) && slices.Equal(a.Anchors, b.Anchors) && a.Declarations == b.Declarations
 }
 
 func jsonEqual(a, b any) bool {

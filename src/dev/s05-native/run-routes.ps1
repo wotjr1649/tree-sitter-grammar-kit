@@ -39,11 +39,41 @@ $r3Reason = 'NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)'
 
 function Get-Sha([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Get-ShaBytes([byte[]]$Data) { [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($Data)).ToLowerInvariant() }
-function Find-Bytes([byte[]]$Hay, [byte[]]$Needle) {
+function Find-Bytes([byte[]]$Hay, [byte[]]$Needle, [int]$From = 0) {
   if ($Needle.Length -eq 0) { return $Hay.Length }
   # Latin-1 maps every byte to one char, so an ordinal string search is a byte search.
   $l1 = [Text.Encoding]::Latin1
-  return $l1.GetString($Hay).IndexOf($l1.GetString($Needle), [StringComparison]::Ordinal)
+  return $l1.GetString($Hay).IndexOf($l1.GetString($Needle), $From, [StringComparison]::Ordinal)
+}
+
+# Converts a case-file anchor {type, text, occurrence} to the profile anchor: the byte range
+# of the occurrence-th (1-based, default 1) start offset of the text's UTF-8 bytes in the
+# step's source; every offset counts, so occurrences may overlap. Only the members type and
+# text (strings) and occurrence (absent or an integer, never null) are accepted, by exact
+# name: a misspelt member would otherwise fall back to occurrence 1. The inventory generator
+# (src/internal/foundation) converts the same way and TestAnchorConversion compares both.
+function Resolve-Anchor([byte[]]$Source, $Anchor, [string]$Case) {
+  $names = @($Anchor.PSObject.Properties | ForEach-Object { $_.Name })
+  $unknown = @($names | Where-Object { $_ -cnotin @('type', 'text', 'occurrence') })
+  if ($unknown.Count) { throw "${Case}: anchor member $($unknown -join ',') is not type, text or occurrence" }
+  if ($names -cnotcontains 'type' -or $names -cnotcontains 'text' -or $Anchor.type -isnot [string] -or $Anchor.text -isnot [string]) {
+    throw "${Case}: anchor type and text must be strings"
+  }
+  $n = 1
+  if ($names -ccontains 'occurrence') {
+    $n = $Anchor.occurrence
+    if ($null -eq $n -or ($n -isnot [int] -and $n -isnot [long])) { throw "${Case}: anchor $($Anchor.type) occurrence is not an integer" }
+  }
+  $text = $utf8.GetBytes([string]$Anchor.text)
+  if ($n -lt 1 -or $text.Length -eq 0 -or $Anchor.type -eq '') { throw "${Case}: anchor $($Anchor.type) has an empty type or text, or occurrence $n" }
+  $at = -1
+  $from = 0
+  for ($k = 0; $k -lt $n; $k++) {
+    $at = Find-Bytes $Source $text $from
+    if ($at -lt 0) { throw "${Case}: anchor $($Anchor.type) occurrence $n not found" }
+    $from = $at + 1
+  }
+  return [ordered]@{ type = [string]$Anchor.type; start_byte = $at; end_byte = $at + $text.Length }
 }
 
 $cli = Join-Path $Destination ('tsgk' + $(if ($IsWindows) { '.exe' } else { '' }))
@@ -87,7 +117,7 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
-  $profile = [ordered]@{ schema = 'tsgk-incremental/r1'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
+  $profile = [ordered]@{ schema = 'tsgk-incremental/r2'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
     compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases) }
   if ($Format) { $profile.format = $Format }
   $pf = Join-Path $Destination "profiles/$Id.json"
@@ -104,7 +134,8 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   return @{ code = $code; res = $res }
 }
 
-# Writes a case file's sources under the root and converts find/replace edits to bytes.
+# Writes a case file's sources under the root and converts find/replace edits to bytes and
+# text anchors to the byte ranges of their step's source (Resolve-Anchor).
 function Convert-Cases([string]$File, [string]$Root) {
   $doc = Get-Content -LiteralPath $File -Raw | ConvertFrom-Json
   $out = @()
@@ -115,6 +146,8 @@ function Convert-Cases([string]$File, [string]$Root) {
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $path) | Out-Null
     [IO.File]::WriteAllBytes($path, $bytes)
     $cur = $bytes
+    $versions = [Collections.Generic.List[byte[]]]::new()
+    $versions.Add($cur)
     $edits = @()
     foreach ($e in $c.edits) {
       $find = $utf8.GetBytes($e.find); $repl = $utf8.GetBytes($e.replace)
@@ -127,8 +160,15 @@ function Convert-Cases([string]$File, [string]$Root) {
       [Array]::Copy($repl, 0, $next, $at, $repl.Length)
       [Array]::Copy($cur, $at + $find.Length, $next, $at + $repl.Length, $cur.Length - $at - $find.Length)
       $cur = $next
+      $versions.Add($cur)
     }
-    $expect = @($c.expect | ForEach-Object { [ordered]@{ step = $_.step; syntax = $_.syntax; contains = @($_.contains); declarations = '' } })
+    $expect = @($c.expect | ForEach-Object {
+        $x = [ordered]@{ step = $_.step; syntax = $_.syntax; contains = @($_.contains); declarations = '' }
+        if ($_.PSObject.Properties['anchors'] -and @($_.anchors).Count) {
+          $src = $versions[[int]$_.step]
+          $x.anchors = @(foreach ($a in $_.anchors) { Resolve-Anchor $src $a $c.id })
+        }
+        $x })
     $out += [ordered]@{ id = $c.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = (Get-ShaBytes $bytes); bytes = $bytes.Length }; edits = $edits; points = @(); expect = $expect }
   }
   return $out
@@ -163,7 +203,7 @@ function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [stri
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
   $factPack = $null
   if ($UsePack) { $factPack = [ordered]@{ revision = $pack.revision; sha256 = (Get-Sha $packFile); route = $r.route } }
-  $profile = [ordered]@{ schema = 'tsgk-oracle/r1'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
+  $profile = [ordered]@{ schema = 'tsgk-oracle/r2'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
     compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases); queries = @($Queries); fact_pack = $factPack; api = $Api }
   if ($Format) { $profile.format = $Format }
   $pf = Join-Path $Destination "profiles/$Id.json"

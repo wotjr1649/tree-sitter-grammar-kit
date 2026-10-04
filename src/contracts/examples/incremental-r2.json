@@ -32,7 +32,7 @@
       {
         "fact": "type_declaration",
         "node": "assignment",
-        "name": "name"
+        "name": "field:name"
       }
     ]
   },
@@ -67,6 +67,13 @@
           "contains": [
             "assignment",
             "call"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "start_byte": 0,
+              "end_byte": 9
+            }
           ],
           "declarations": "PASS"
         },

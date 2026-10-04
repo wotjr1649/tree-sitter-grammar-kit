@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -39,14 +41,113 @@ type caseFile struct {
 			Replace string `json:"replace"`
 		} `json:"edits"`
 		Expect []struct {
-			Step     int      `json:"step"`
-			Syntax   string   `json:"syntax"`
-			Contains []string `json:"contains"`
+			Step     int            `json:"step"`
+			Syntax   string         `json:"syntax"`
+			Contains []string       `json:"contains"`
+			Anchors  []anchorSource `json:"anchors"`
 		} `json:"expect"`
 		// the registered S05 verdict of an SVC observation-only case
 		ExpectAssessment string `json:"expect_assessment"`
 		ExpectCode       string `json:"expect_code"`
 	} `json:"cases"`
+}
+
+// anchorSource is an anchor as a case file writes it: the named node type and the exact
+// source text of its range, at the occurrence-th (1-based, default 1) start offset of that
+// text's UTF-8 bytes in the step's source. Every offset counts, so occurrences may overlap.
+type anchorSource struct {
+	Type       string `json:"type"`
+	Text       string `json:"text"`
+	Occurrence *int   `json:"occurrence"`
+}
+
+// UnmarshalJSON decodes an anchor strictly, as run-routes.ps1 (Resolve-Anchor) reads it: only
+// the members type, text and occurrence (exact names), type and text strings, and an absent
+// occurrence or an integer one; a misspelt member or an explicit null never falls back to
+// the default occurrence.
+func (a *anchorSource) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Type       string         `json:"type"`
+		Text       string         `json:"text"`
+		Occurrence jsontext.Value `json:"occurrence"`
+	}
+	if err := jsonv2.Unmarshal(b, &raw, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return fmt.Errorf("anchor %s: %w", b, err)
+	}
+	*a = anchorSource{Type: raw.Type, Text: raw.Text}
+	if raw.Occurrence != nil {
+		var n int
+		if string(raw.Occurrence) == "null" || jsonv2.Unmarshal(raw.Occurrence, &n) != nil {
+			return fmt.Errorf("anchor %s: occurrence %s is not an integer", raw.Type, raw.Occurrence)
+		}
+		a.Occurrence = &n
+	}
+	return nil
+}
+
+// resolveAnchor converts a case-file anchor to the byte range run-routes.ps1 (Convert-Cases)
+// writes into the profile expectation.
+func resolveAnchor(src []byte, a anchorSource) (kit.ExpectAnchor, error) {
+	n := 1
+	if a.Occurrence != nil {
+		n = *a.Occurrence
+	}
+	text := []byte(a.Text)
+	if n < 1 || len(text) == 0 || a.Type == "" {
+		return kit.ExpectAnchor{}, fmt.Errorf("anchor %q: empty type or text, or occurrence %d", a.Type, n)
+	}
+	at, from := -1, 0
+	for k := 0; k < n; k++ {
+		i := bytes.Index(src[from:], text)
+		if i < 0 {
+			return kit.ExpectAnchor{}, fmt.Errorf("anchor %s: occurrence %d of %q not found", a.Type, n, a.Text)
+		}
+		at, from = from+i, from+i+1
+	}
+	return kit.ExpectAnchor{Type: a.Type, StartByte: uint32(at), EndByte: uint32(at + len(text))}, nil
+}
+
+// convertCase turns a registered case (find/replace edits on UTF-8 text, anchors by text)
+// into the byte edits and anchored expectations run-routes.ps1 sends: each find is the
+// first occurrence in the current version, and anchors[i] belongs to expect[i].
+func convertCase(id, src string, edits []struct{ Find, Replace string }, expect []kit.StepExpectation, anchors [][]anchorSource) (kit.QualCase, error) {
+	cur := []byte(src)
+	versions := [][]byte{cur}
+	var out []kit.Edit
+	for _, e := range edits {
+		find, repl := []byte(e.Find), []byte(e.Replace)
+		at := len(cur)
+		if len(find) > 0 {
+			at = bytes.Index(cur, find)
+		}
+		if at < 0 {
+			return kit.QualCase{}, fmt.Errorf("%s: edit target not found", id)
+		}
+		out = append(out, kit.Edit{StartByte: uint32(at), OldEndByte: uint32(at + len(find)), NewEndByte: uint32(at + len(repl)), Old: find, New: repl})
+		cur = append(append(append([]byte{}, cur[:at]...), repl...), cur[at+len(find):]...)
+		versions = append(versions, cur)
+	}
+	if out == nil {
+		out = []kit.Edit{}
+	}
+	expect = slices.Clone(expect)
+	for i, as := range anchors {
+		if len(as) == 0 {
+			continue
+		}
+		if expect[i].Step < 0 || expect[i].Step >= len(versions) {
+			return kit.QualCase{}, fmt.Errorf("%s: anchored expectation on step %d", id, expect[i].Step)
+		}
+		for _, a := range as {
+			x, err := resolveAnchor(versions[expect[i].Step], a)
+			if err != nil {
+				return kit.QualCase{}, fmt.Errorf("%s: %w", id, err)
+			}
+			expect[i].Anchors = append(expect[i].Anchors, x)
+		}
+	}
+	return kit.QualCase{ID: id, Role: "requirement", Input: kit.NativeInput{SHA256: shaHex([]byte(src)), Bytes: uint64(len(src))}, Edits: out, Expect: expect,
+		QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}, Alternatives: []string{}}, nil
 }
 
 type queryFile struct {
@@ -207,58 +308,17 @@ func buildInventory(t *testing.T, root string) []byte {
 		}
 		return nil
 	}
-	// convert turns a registered case (find/replace edits on UTF-8 text) into the byte
-	// edits run-routes.ps1 sends: each find is the first occurrence in the current version.
-	convert := func(id, src string, edits []struct{ Find, Replace string }, expect []kit.StepExpectation) kit.QualCase {
-		cur := []byte(src)
-		var out []kit.Edit
-		for _, e := range edits {
-			find, repl := []byte(e.Find), []byte(e.Replace)
-			at := len(cur)
-			if len(find) > 0 {
-				at = bytes.Index(cur, find)
-			}
-			if at < 0 {
-				t.Fatalf("%s: edit target not found", id)
-			}
-			out = append(out, kit.Edit{StartByte: uint32(at), OldEndByte: uint32(at + len(find)), NewEndByte: uint32(at + len(repl)), Old: find, New: repl})
-			cur = append(append(append([]byte{}, cur[:at]...), repl...), cur[at+len(find):]...)
+	convert := func(sc srcCase, id string) kit.QualCase {
+		c, err := convertCase(id, sc.src, sc.edits, sc.expect, sc.anchors)
+		if err != nil {
+			t.Fatal(err)
 		}
-		if out == nil {
-			out = []kit.Edit{}
-		}
-		return kit.QualCase{ID: id, Role: "requirement", Input: kit.NativeInput{SHA256: shaHex([]byte(src)), Bytes: uint64(len(src))}, Edits: out, Expect: expect,
-			QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}, Alternatives: []string{}}
-	}
-	type srcCase struct {
-		id, src                  string
-		features                 []string
-		alternatives             []string
-		sample                   *kit.QualSample
-		edits                    []struct{ Find, Replace string }
-		expect                   []kit.StepExpectation
-		expectAssess, expectCode string
+		return c
 	}
 	load := func(p string) ([]srcCase, string) {
 		var f caseFile
 		decode(p, &f)
-		var out []srcCase
-		for _, c := range f.Cases {
-			sc := srcCase{id: c.ID, src: c.Source, features: c.Features, alternatives: c.Alternatives, sample: c.Sample, expect: []kit.StepExpectation{},
-				expectAssess: c.ExpectAssessment, expectCode: c.ExpectCode}
-			for _, e := range c.Edits {
-				sc.edits = append(sc.edits, struct{ Find, Replace string }{e.Find, e.Replace})
-			}
-			for _, e := range c.Expect {
-				contains := e.Contains
-				if contains == nil {
-					contains = []string{}
-				}
-				sc.expect = append(sc.expect, kit.StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: contains})
-			}
-			out = append(out, sc)
-		}
-		return out, f.Format
+		return loadCases(f), f.Format
 	}
 	cover := func(c *kit.QualCase, features []string, rows map[string][]string, kinds []string) {
 		for _, f := range features {
@@ -334,7 +394,7 @@ func buildInventory(t *testing.T, root string) []byte {
 			}
 			cs, _ := load(p)
 			for _, sc := range cs {
-				c := convert(sc.id, sc.src, sc.edits, sc.expect)
+				c := convert(sc, sc.id)
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode // the kit rejects them outside SVC
 				if sc.alternatives != nil {
 					c.Alternatives = sc.alternatives // the kit rejects one of a row the case does not cover with P
@@ -357,7 +417,7 @@ func buildInventory(t *testing.T, root string) []byte {
 				t.Fatalf("%s: source case %s", q.ID, q.SourceCase)
 			}
 			sc := routeCases[i]
-			c := convert(q.ID, sc.src, sc.edits, sc.expect)
+			c := convert(sc, q.ID)
 			c.QueryExpect = q.QueryExpect
 			src := sc.src
 			c.Source = &src
@@ -401,7 +461,7 @@ func buildInventory(t *testing.T, root string) []byte {
 				if err := supportCaseFields(sc.id, sc.alternatives, sc.sample); err != nil {
 					t.Fatal(err) // never dropped silently
 				}
-				c := convert(sc.id, sc.src, sc.edits, sc.expect)
+				c := convert(sc, sc.id)
 				c.Role = "support"
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode
 				svc.Cases = append(svc.Cases, c)
@@ -448,6 +508,39 @@ func buildInventory(t *testing.T, root string) []byte {
 		t.Fatal(err)
 	}
 	return append(data, '\n')
+}
+
+// srcCase is one registered case as its case file states it; anchors[i] are expect[i]'s.
+type srcCase struct {
+	id, src                  string
+	features                 []string
+	alternatives             []string
+	sample                   *kit.QualSample
+	edits                    []struct{ Find, Replace string }
+	expect                   []kit.StepExpectation
+	anchors                  [][]anchorSource
+	expectAssess, expectCode string
+}
+
+func loadCases(f caseFile) []srcCase {
+	var out []srcCase
+	for _, c := range f.Cases {
+		sc := srcCase{id: c.ID, src: c.Source, features: c.Features, alternatives: c.Alternatives, sample: c.Sample, expect: []kit.StepExpectation{},
+			expectAssess: c.ExpectAssessment, expectCode: c.ExpectCode}
+		for _, e := range c.Edits {
+			sc.edits = append(sc.edits, struct{ Find, Replace string }{e.Find, e.Replace})
+		}
+		for _, e := range c.Expect {
+			contains := e.Contains
+			if contains == nil {
+				contains = []string{}
+			}
+			sc.expect = append(sc.expect, kit.StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: contains})
+			sc.anchors = append(sc.anchors, e.Anchors)
+		}
+		out = append(out, sc)
+	}
+	return out
 }
 
 // supportCaseFields rejects requirement-only fields on a support case source (the n461 SVC

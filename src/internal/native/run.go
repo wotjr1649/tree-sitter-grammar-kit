@@ -617,6 +617,18 @@ func evaluate(expect []kit.StepExpectation, steps []CheckedStep) ([]ExpectationR
 				}
 			}
 		}
+		if r.Result == ClaimPass && len(e.Anchors) > 0 {
+			if t.Form != "full" {
+				r.Result, r.Detail = ClaimBlocked, "anchors need a full tree"
+			} else {
+				for _, a := range e.Anchors {
+					if !anchored(t.Nodes, a) {
+						r.Result, r.Detail = ClaimFail, fmt.Sprintf("missing anchor %s [%d,%d)", a.Type, a.StartByte, a.EndByte)
+						break
+					}
+				}
+			}
+		}
 		if r.Result == ClaimPass && e.Declarations != "" {
 			if t.Wire.Declarations == nil {
 				r.Result, r.Detail = ClaimBlocked, "no declarations"
@@ -635,4 +647,15 @@ func evaluate(expect []kit.StepExpectation, steps []CheckedStep) ([]ExpectationR
 		out = append(out, r)
 	}
 	return out, claim
+}
+
+// anchored reports whether a full tree holds a named node of exactly the anchor's type and
+// byte range; kit replays the same check from the recorded tree.
+func anchored(nodes []kit.TreeNode, a kit.ExpectAnchor) bool {
+	for _, n := range nodes {
+		if n.Named && n.Type == a.Type && n.StartByte == a.StartByte && n.EndByte == a.EndByte {
+			return true
+		}
+	}
+	return false
 }

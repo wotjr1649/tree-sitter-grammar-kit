@@ -15,7 +15,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-// runIncremental builds the native driver for a tsgk-incremental/r1 profile and runs its
+// runIncremental builds the native driver for a tsgk-incremental/r2 (or r1) profile and runs its
 // cases through the S04 runner (S05). Only this command, oracle record and reproduce
 // start processes.
 func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer) int {

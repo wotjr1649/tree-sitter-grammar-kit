@@ -1,5 +1,5 @@
 {
-  "schema": "tsgk-incremental/r1",
+  "schema": "tsgk-incremental/r2",
   "id": "example-plain",
   "route": "owned-plain",
   "operation": "native-parse-edit",
@@ -74,6 +74,13 @@
           "step": 1,
           "syntax": "NO_ERROR",
           "contains": [],
+          "anchors": [
+            {
+              "type": "assignment",
+              "start_byte": 0,
+              "end_byte": 41
+            }
+          ],
           "declarations": ""
         }
       ]

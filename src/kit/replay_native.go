@@ -97,11 +97,12 @@ type rcStep struct {
 }
 
 type rcExpect struct {
-	Step         int      `json:"step"`
-	Syntax       string   `json:"syntax"`
-	Contains     []string `json:"contains"`
-	Declarations string   `json:"declarations"`
-	Result       string   `json:"result"`
+	Step         int            `json:"step"`
+	Syntax       string         `json:"syntax"`
+	Contains     []string       `json:"contains"`
+	Anchors      []ExpectAnchor `json:"anchors"`
+	Declarations string         `json:"declarations"`
+	Result       string         `json:"result"`
 }
 
 // rcCase is the part of a recorded S05 case or S06 record the reducer reads; the rest
@@ -329,7 +330,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		exps = want.Expect
 	} else {
 		for _, e := range c.Expectations {
-			exps = append(exps, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains, Declarations: e.Declarations})
+			exps = append(exps, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains, Anchors: e.Anchors, Declarations: e.Declarations})
 		}
 	}
 	ec, ecOK := claimNotClaimed, true
@@ -355,7 +356,8 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 		} else if i < len(c.Expectations) {
 			r := c.Expectations[i]
-			eg.check(r.Step == e.Step && r.Syntax == e.Syntax && slices.Equal(r.Contains, e.Contains) && r.Declarations == e.Declarations && r.Result == res,
+			eg.check(r.Step == e.Step && r.Syntax == e.Syntax && slices.Equal(r.Contains, e.Contains) && slices.Equal(r.Anchors, e.Anchors) &&
+				r.Declarations == e.Declarations && r.Result == res,
 				name, "EXPECTATION_MISMATCH", fmt.Sprintf("기대값 %d을 다시 계산한 결과가 기록과 다르다", i))
 		}
 		switch res {
@@ -519,6 +521,19 @@ func expectResult(e StepExpectation, t *rcTree) (string, bool) {
 		}
 		for _, ty := range e.Contains {
 			if !seen[ty] {
+				return claimFail, true
+			}
+		}
+	}
+	if len(e.Anchors) > 0 {
+		if t.Form != "full" {
+			return claimBlocked, true
+		}
+		if t.Tree == nil {
+			return "", false
+		}
+		for _, a := range e.Anchors {
+			if !anchorFound(t.Tree.Nodes, a) {
 				return claimFail, true
 			}
 		}

@@ -1,5 +1,5 @@
 {
- "schema": "tsgk-qualification-inventory/r2",
+ "schema": "tsgk-qualification-inventory/r3",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,

@@ -167,12 +167,12 @@ func TestPlatformScope(t *testing.T) {
 	caseBase := `{"id":"c","input":{"path":"c.txt","role":"case","sha256":"` + zero + `","bytes":1},"edits":[],"points":[],"expect":[]`
 	dir := t.TempDir()
 	out := filepath.Join(dir, "out")
-	inc := []byte(`{"schema":"tsgk-incremental/r1","id":"p","operation":"real-world-source-r3",` + common + `,"cases":[` + caseBase + `}]}`)
+	inc := []byte(`{"schema":"tsgk-incremental/r2","id":"p","operation":"real-world-source-r3",` + common + `,"cases":[` + caseBase + `}]}`)
 	ores, err := Incremental(context.Background(), IncrementalRequest{Root: dir, Profile: inc, Out: out, Allow: []string{AllowBuild, AllowExec}})
 	if err == nil || !strings.Contains(err.Error(), "OPERATION_PLATFORM_SCOPE") || ores.Assessment != kit.AssessBlocked || ores.Build != nil {
 		t.Fatalf("incremental r3 on linux: %v %+v", err, ores.Findings)
 	}
-	orc := []byte(`{"schema":"tsgk-oracle/r1","id":"p","operation":"native-query-large",` + common + `,"queries":[],"fact_pack":null,"api":false,"cases":[` + caseBase +
+	orc := []byte(`{"schema":"tsgk-oracle/r2","id":"p","operation":"native-query-large",` + common + `,"queries":[],"fact_pack":null,"api":false,"cases":[` + caseBase +
 		`,"query_expect":[],"dynamic_sql_expect":null}]}`)
 	res, err := Oracle(context.Background(), OracleRequest{Root: dir, Profile: orc, Out: out, Allow: []string{AllowBuild, AllowExec}})
 	if err == nil || !strings.Contains(err.Error(), "OPERATION_PLATFORM_SCOPE") || res.Assessment != kit.AssessBlocked || res.Build != nil {
