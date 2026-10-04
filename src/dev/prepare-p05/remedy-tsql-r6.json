@@ -410,9 +410,9 @@
           "claim": "a leading ; in a VIEW fails with Msg 102"
         },
         {
-          "url": "https://www.dbdelta.com/",
+          "url": "https://www.dbdelta.com/always-use-semicolon-statement-terminators/",
           "kind": "SEARCHED_NOT_ACCEPTED",
-          "claim": "Dan Guzman blog article of 2014-04-14 cited by review r3 (exact page not re-fetched here): the T-SQL parser currently ignores extraneous and misplaced semicolons - a general claim without the shape or an execution result"
+          "claim": "Dan Guzman, 2014-04-14: \"Although the T-SQL parser currently ignores extraneous and misplaced semi-colons, I suggest they be specified in the appropriate place ...\" and \"the purpose of semicolons is to terminate SQL statements, not begin them\" - a general claim without the shape or an execution result"
         }
       ],
       "reason": "the published sources do not show the engine accepting a ; before the first statement of a block; generalizing from the batch level would be inference. A user decision could accept the general claims instead (reported to the orchestrator)"
