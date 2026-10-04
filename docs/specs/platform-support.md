@@ -15,7 +15,7 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 | supervision(runner) | VERIFIED(backend별) | Windows Job Object hard, Linux 위임 cgroup v2 hard, macOS process group sampled. macOS에서는 그룹을 떠난 조용한 하위 process를 정리하지 못하며 `NOT_CONTAINED`로 기록한다 |
 | full qualification(`qualify`) | AVAILABLE. 현재 판정은 **지원 claim BLOCKED** | 78칸 kit 축 PASS 78. 요구 축 FAIL 12(넘겨받은 grammar gap), INCOMPLETE 66(필수 feature 사례 부족, [#70](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/70)) |
 | cross-OS semantic parity | VERIFIED(78칸, 비교 FAIL 0) | S08 동일 의미 identity와 attempt의 완전한 OS 집합. host build identity는 비교하지 않고 host별로 결속한다 |
-| race 진단 | AVAILABLE(Linux, 비필수 진단 lane) | `CGO_ENABLED=1` `go test -race`. CGO-free 필수 gate와 분리된다. macOS·Windows는 NOT_RUN |
+| race 진단 | AVAILABLE(Linux CI 비필수 진단 lane); Windows 로컬 VERIFIED | `CGO_ENABLED=1` `go test -race`. CGO-free 필수 gate와 분리된다. Windows는 로컬 실행 근거다(Go 1.27.1, MSYS2 gcc 16.2.0, 고정 runtime으로 native 시험 포함, 6 package ok, DATA RACE 0, #74). macOS는 NOT_RUN |
 
 각 행의 상태는 AVAILABLE(기능 존재), VERIFIED(정확한 시험 근거), UNSUPPORTED, NOT_RUN을 구분한다. foundation 성공은 제품/native 지원 근거가 아니다. 실제 관측값은 Session 보고서와 CI receipt가 소유한다.
 
