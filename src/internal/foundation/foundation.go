@@ -51,6 +51,7 @@ var required = []string{
 	"src/dev/prepare-p05/remedy-fact-oracles.json", "src/dev/prepare-p05/remedy-sources.json",
 	"src/dev/prepare-p05/remedy-r2.json",
 	"src/dev/prepare-p05/remedy-csharp-r5.json",
+	"src/dev/prepare-p05/remedy-tsql-r6.json",
 	"src/dev/prepare-p05/remedy-expectation-amendments-r1.json",
 	"src/kit/kit.go", "src/cmd/tsgk/main.go",
 	"src/testdata/consumer/main.go", "src/testdata/consumer/go.mod.tmpl",

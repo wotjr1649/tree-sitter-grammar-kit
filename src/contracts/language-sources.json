@@ -716,7 +716,8 @@
         "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded",
         "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
         "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
-        "S08: Windows amd64·macOS arm64 qualification"
+        "S08: Windows amd64·macOS arm64 qualification",
+        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap(src/dev/prepare-p05/remedy-tsql-r6.json gaps)"
       ],
       "superseded_candidate": {
         "repository": "Crary-Systems/tree-sitter-tsql",
@@ -728,28 +729,54 @@
         "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
         "candidate": "P05-MSSQL-REMEDY-r1",
         "patch_subjects": [
-          "src/dev/prepare-p05/remedy-followup-r2.json"
+          "src/dev/prepare-p05/remedy-followup-r2.json",
+          "src/dev/prepare-p05/remedy-tsql-r6.json"
         ],
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 6225,
-            "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
+            "bytes": 7629,
+            "sha256": "f380211a79653b53f1369b6f9e3ba05e7ab7f13b3ab45a96506622cc40012362"
           },
           {
             "path": "grammar/keywords.js",
-            "bytes": 25233,
-            "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
+            "bytes": 25284,
+            "sha256": "1295a9121f7f22f002c5a675ff8689516ecdc111f547b7a49ba7bc223ea05156"
           },
           {
             "path": "grammar/column-lists.js",
-            "bytes": 9051,
-            "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400"
+            "bytes": 9795,
+            "sha256": "e8ebb5294f44d907a92433ddf6d914a319fd45a6e49d08f71da90dee4ee5e24e"
           },
           {
             "path": "grammar/statements/create.js",
-            "bytes": 22558,
-            "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
+            "bytes": 23742,
+            "sha256": "6e1225e4e562a1988a4fcb0e9cf38e4ae33a085215808058dfec8bc77727ea04"
+          },
+          {
+            "path": "grammar/expressions.js",
+            "bytes": 16867,
+            "sha256": "208a8bcfd8e8b518a270c334f3ff04b59b3c821ceeea6f831affb6c3bbf624c9"
+          },
+          {
+            "path": "grammar/helpers.js",
+            "bytes": 4218,
+            "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc"
+          },
+          {
+            "path": "grammar/statements/drop.js",
+            "bytes": 4738,
+            "sha256": "ef01480cb610d9eef174253f0c54dae508a835e474f373ced5ae756823210d59"
+          },
+          {
+            "path": "grammar/statements/index.js",
+            "bytes": 24813,
+            "sha256": "9129876e85ba2843d71edf652de3f1fd78c2b2ef61cfb66b2c408ce22ce08fe7"
+          },
+          {
+            "path": "grammar/statements/select.js",
+            "bytes": 26584,
+            "sha256": "5d7a3b92d2f9e57b383a8174d6fdcc99386ac4ec65f344e3157e62613eb5897a"
           }
         ],
         "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
@@ -764,6 +791,19 @@
         },
         "expectation_amendments": [
           "src/dev/prepare-p05/remedy-expectation-amendments-r1.json"
+        ],
+        "revisions": [
+          {
+            "revision": "r6",
+            "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+            "decisions": [
+              "C1-TSQL-PATCH-R6",
+              "C1-TSQL-PATCH-R6-ADDENDUM-R1"
+            ],
+            "session": "S08",
+            "generation": "등록 tree-sitter 0.27.0·node 24.21.0으로 로컬 Windows 재생성; native-routes/reproduction-routes의 parser.c identity가 기준",
+            "native_evidence": "S08 hosted three-OS CI(총괄 실행) 전까지 로컬 Windows 검증만 있음"
+          }
         ]
       }
     },

@@ -1626,8 +1626,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "0c2db4895b33385590646dd6a7b12afc08f94dc85ef893f402059dd320a8fd99",
-     "bytes": 26919442
+     "sha256": "0bda1704e3a2caf2455aaf3dc3fc28f8c79a983814d650e25502dac764e77f9f",
+     "bytes": 29036208
     },
     {
      "path": "src/scanner.c",
@@ -1662,18 +1662,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "4d15bb38eed50171b78d54ab290f88d4b0b866f0eecc6a93cc899deca900cfd4",
-      "bytes": 674776
+      "sha256": "024411fa7281b0eacf1f6f528b244d8c1e2b43e75af3ac766bcbc456e9fc963a",
+      "bytes": 706647
      },
      {
       "path": "node-types.json",
-      "sha256": "6e3659d7fa299b11dc6dee4b0cbc4386daf80245f20bfaf9929ddb89288f87ed",
-      "bytes": 406460
+      "sha256": "18feb0d02c0aac9c7eced733926616b557ba67c0bd6257295707a32afae97aba",
+      "bytes": 409678
      },
      {
       "path": "parser.c",
-      "sha256": "0c2db4895b33385590646dd6a7b12afc08f94dc85ef893f402059dd320a8fd99",
-      "bytes": 26919442
+      "sha256": "0bda1704e3a2caf2455aaf3dc3fc28f8c79a983814d650e25502dac764e77f9f",
+      "bytes": 29036208
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -1699,32 +1699,32 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92",
-      "bytes": 6225
+      "sha256": "f380211a79653b53f1369b6f9e3ba05e7ab7f13b3ab45a96506622cc40012362",
+      "bytes": 7629
      },
      {
       "path": "grammar/column-lists.js",
       "role": "js_helper",
-      "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400",
-      "bytes": 9051
+      "sha256": "e8ebb5294f44d907a92433ddf6d914a319fd45a6e49d08f71da90dee4ee5e24e",
+      "bytes": 9795
      },
      {
       "path": "grammar/expressions.js",
       "role": "js_helper",
-      "sha256": "ae97f4c54a3b436de71ad75a80172d0e23942ca05d10ee5e957017e85773eb22",
-      "bytes": 16738
+      "sha256": "208a8bcfd8e8b518a270c334f3ff04b59b3c821ceeea6f831affb6c3bbf624c9",
+      "bytes": 16867
      },
      {
       "path": "grammar/helpers.js",
       "role": "js_helper",
-      "sha256": "ddf28d342fef7195fe9cf923e0930811ffe1bd8dbf0d702e6ef3641ef355b892",
-      "bytes": 4145
+      "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc",
+      "bytes": 4218
      },
      {
       "path": "grammar/keywords.js",
       "role": "js_helper",
-      "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782",
-      "bytes": 25233
+      "sha256": "1295a9121f7f22f002c5a675ff8689516ecdc111f547b7a49ba7bc223ea05156",
+      "bytes": 25284
      },
      {
       "path": "grammar/statements/alter.js",
@@ -1747,8 +1747,8 @@
      {
       "path": "grammar/statements/create.js",
       "role": "js_helper",
-      "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e",
-      "bytes": 22558
+      "sha256": "6e1225e4e562a1988a4fcb0e9cf38e4ae33a085215808058dfec8bc77727ea04",
+      "bytes": 23742
      },
      {
       "path": "grammar/statements/delete.js",
@@ -1765,14 +1765,14 @@
      {
       "path": "grammar/statements/drop.js",
       "role": "js_helper",
-      "sha256": "099eb1998c5ab0c6a89c693ad09faf06586bf85ed661de0d450e62741872b880",
-      "bytes": 4386
+      "sha256": "ef01480cb610d9eef174253f0c54dae508a835e474f373ced5ae756823210d59",
+      "bytes": 4738
      },
      {
       "path": "grammar/statements/index.js",
       "role": "js_helper",
-      "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff",
-      "bytes": 23575
+      "sha256": "9129876e85ba2843d71edf652de3f1fd78c2b2ef61cfb66b2c408ce22ce08fe7",
+      "bytes": 24813
      },
      {
       "path": "grammar/statements/insert.js",
@@ -1801,8 +1801,8 @@
      {
       "path": "grammar/statements/select.js",
       "role": "js_helper",
-      "sha256": "75ea8ee0a680bd2ea0b6edc07f4f22a57dab1d4058d043a088dec327d07f6525",
-      "bytes": 23474
+      "sha256": "5d7a3b92d2f9e57b383a8174d6fdcc99386ac4ec65f344e3157e62613eb5897a",
+      "bytes": 26584
      },
      {
       "path": "grammar/statements/service-broker.js",
@@ -1877,28 +1877,107 @@
       "pointer": "/patches/1/files/3",
       "field": "operations",
       "target": "grammar/statements/create.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/0",
+      "field": "replacements",
+      "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/1",
+      "field": "replacements",
+      "target": "grammar/column-lists.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/2",
+      "field": "replacements",
+      "target": "grammar/expressions.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/3",
+      "field": "replacements",
+      "target": "grammar/helpers.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/4",
+      "field": "replacements",
+      "target": "grammar/keywords.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/5",
+      "field": "replacements",
+      "target": "grammar/statements/create.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/6",
+      "field": "replacements",
+      "target": "grammar/statements/drop.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/7",
+      "field": "replacements",
+      "target": "grammar/statements/index.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/8",
+      "field": "replacements",
+      "target": "grammar/statements/select.js"
      }
     ],
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 6225,
-      "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
+      "bytes": 7629,
+      "sha256": "f380211a79653b53f1369b6f9e3ba05e7ab7f13b3ab45a96506622cc40012362"
      },
      {
       "path": "grammar/keywords.js",
-      "bytes": 25233,
-      "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
+      "bytes": 25284,
+      "sha256": "1295a9121f7f22f002c5a675ff8689516ecdc111f547b7a49ba7bc223ea05156"
      },
      {
       "path": "grammar/column-lists.js",
-      "bytes": 9051,
-      "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400"
+      "bytes": 9795,
+      "sha256": "e8ebb5294f44d907a92433ddf6d914a319fd45a6e49d08f71da90dee4ee5e24e"
      },
      {
       "path": "grammar/statements/create.js",
-      "bytes": 22558,
-      "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
+      "bytes": 23742,
+      "sha256": "6e1225e4e562a1988a4fcb0e9cf38e4ae33a085215808058dfec8bc77727ea04"
+     },
+     {
+      "path": "grammar/expressions.js",
+      "bytes": 16867,
+      "sha256": "208a8bcfd8e8b518a270c334f3ff04b59b3c821ceeea6f831affb6c3bbf624c9"
+     },
+     {
+      "path": "grammar/helpers.js",
+      "bytes": 4218,
+      "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc"
+     },
+     {
+      "path": "grammar/statements/drop.js",
+      "bytes": 4738,
+      "sha256": "ef01480cb610d9eef174253f0c54dae508a835e474f373ced5ae756823210d59"
+     },
+     {
+      "path": "grammar/statements/index.js",
+      "bytes": 24813,
+      "sha256": "9129876e85ba2843d71edf652de3f1fd78c2b2ef61cfb66b2c408ce22ce08fe7"
+     },
+     {
+      "path": "grammar/statements/select.js",
+      "bytes": 26584,
+      "sha256": "5d7a3b92d2f9e57b383a8174d6fdcc99386ac4ec65f344e3157e62613eb5897a"
      }
     ]
    }
