@@ -204,7 +204,7 @@ function Convert-QueryCases($r, [string]$Root) {
     $c = @(Convert-Cases $tmp $Root)[0]
     Remove-Item -LiteralPath $tmp
     $c.query_expect = @($q.query_expect | ForEach-Object { [ordered]@{ query = $_.query; step = $_.step; status = $_.status; code = $_.code
-          captures = $(if ($null -eq $_.captures) { $null } else { @($_.captures | ForEach-Object { [ordered]@{ name = $_.name; type = $_.type; text = $_.text } }) }); error = $_.error } })
+          captures = $(if ($null -eq $_.captures) { $null } else { ,@($_.captures | ForEach-Object { [ordered]@{ name = $_.name; type = $_.type; text = $_.text } }) }); error = $_.error } })
     $c.dynamic_sql_expect = $null
     $cases += $c
   }

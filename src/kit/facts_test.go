@@ -137,3 +137,42 @@ func TestDeriveDeclarations(t *testing.T) {
 		}
 	}
 }
+
+// One match can hold two nodes for one level: the runtime returned both names of
+// `CREATE TABLE m_2024 PARTITION OF m` (nodes 99 and 104) in a single match. The name is
+// the first in document order, as when the nodes come in separate matches.
+func TestDeriveDeclarationsSameLevelInOneMatch(t *testing.T) {
+	items := []NativeDeclaration{{"create_object", "CreateStmt", "child:qualified_name"}}
+	c := func(match uint32, name string, node int64, start, end uint32) Capture {
+		return Capture{Match: match, Name: name, Node: node, StartByte: start, EndByte: end}
+	}
+	for _, order := range [][2]int64{{99, 104}, {104, 99}} {
+		span := map[int64][2]uint32{99: {170, 176}, 104: {190, 191}}
+		caps := []Capture{
+			c(2, "c.0.0.0", 96, 157, 240),
+			c(3, "c.0.1.0", 96, 157, 240),
+			c(3, "c.0.1.1", order[0], span[order[0]][0], span[order[0]][1]),
+			c(3, "c.0.1.1", order[1], span[order[1]][0], span[order[1]][1]),
+		}
+		got := DeriveDeclarations(items, caps)
+		if len(got) != 1 || got[0].Name == nil || *got[0].Name != (ByteSpan{170, 176}) || got[0].Status != "PASS" {
+			t.Fatalf("capture order %v: %+v", order, got)
+		}
+	}
+	// Two sibling parents on one level of a match (children: walks both): each candidate
+	// links only to its own parent. A1 [0,10) has B1 [4,5) and the zero-width B0 at the
+	// shared boundary 10 (node 13 < A2's node 14, so A1's); A2 [10,20) has none, so it
+	// yields no name. Linking by range alone would give A2 the name of B0, without any
+	// rule A2 would also get B1.
+	items = []NativeDeclaration{{"member_declaration", "field_declaration", "children:variable_declarator/field:name"}}
+	caps := []Capture{
+		c(0, "c.0.0.0", 10, 0, 20),
+		c(1, "c.0.2.0", 10, 0, 20),
+		c(1, "c.0.2.1", 11, 0, 10), c(1, "c.0.2.1", 14, 10, 20),
+		c(1, "c.0.2.2", 12, 4, 5), c(1, "c.0.2.2", 13, 10, 10),
+	}
+	got := DeriveDeclarations(items, caps)
+	if len(got) != 1 || got[0].Name == nil || *got[0].Name != (ByteSpan{4, 5}) {
+		t.Fatalf("sibling parents: %+v", got)
+	}
+}
