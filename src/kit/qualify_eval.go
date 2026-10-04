@@ -44,6 +44,7 @@ type qhost struct {
 	idSHA    string
 	rejected []Finding
 	unused   int
+	records  uint64
 }
 
 func (h *qhost) reject(code, path, msg string) {
@@ -124,6 +125,7 @@ func (h *qhost) readWalked(path string) ([]byte, *Error) {
 type qset struct {
 	QualSet
 	kinds     map[string]map[string]string // case → kind → PASS | FAIL | BLOCKED
+	checks    map[string]string            // case → registered-check result
 	summaries map[string]string            // case → canonical semantic summary
 	order     []string
 }
@@ -339,21 +341,33 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 		case x.Status != RoleExecuted:
 			row.Status = x.Status
 		default:
-			row.Status = CellPass
-			for _, s := range byPlat[p.ID] {
-				row.Sets = append(row.Sets, s.QualSet)
-				switch {
-				case s.Evidence == "MISSING":
-					if row.Status == CellPass {
-						row.Status = CellMissing
+			row.Status, row.Mechanism, row.Checks = CellPass, AssessPass, claimPass
+			missing := false
+			for _, w := range x.Workloads {
+				for _, s := range byPlat[p.ID] {
+					if s.Set != w.Set {
+						continue
 					}
-				case s.Mechanism == AssessFail || slices.ContainsFunc(sortedKeys(s.Detectors), func(k string) bool { return s.Detectors[k] == claimFail }):
-					row.Status = CellFail
-				case s.Mechanism != AssessPass || slices.ContainsFunc(sortedKeys(s.Detectors), func(k string) bool { return s.Detectors[k] != claimPass }):
-					if row.Status == CellPass {
-						row.Status = CellIncomplete
+					row.Sets = append(row.Sets, s.QualSet)
+					if s.Evidence == "MISSING" {
+						missing = true
+						continue
 					}
+					row.Mechanism = worseMechanism(row.Mechanism, s.Mechanism)
+					v, _ := foldChecks(w.Cases, s)
+					for _, d := range sortedKeys(s.Detectors) {
+						v = worseClaim(v, s.Detectors[d])
+					}
+					row.Checks = worseClaim(row.Checks, v)
 				}
+			}
+			switch {
+			case missing:
+				row.Status, row.Mechanism = CellMissing, AssessNotAssessed
+			case row.Mechanism == AssessFail || row.Checks == claimFail:
+				row.Status = CellFail
+			case row.Mechanism != AssessPass || row.Checks != claimPass:
+				row.Status = CellIncomplete
 			}
 		}
 		rows = append(rows, row)
@@ -361,10 +375,19 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 	return rows, cmps, nil
 }
 
+// worseMechanism orders kit-axis values: FAIL > BLOCKED/NOT_ASSESSED > PASS.
+func worseMechanism(a, b string) string {
+	rank := map[string]int{AssessPass: 0, AssessBlocked: 1, AssessNotAssessed: 1, AssessFail: 2}
+	if rank[b] > rank[a] {
+		return b
+	}
+	return a
+}
+
 // evalSet verifies and judges one workload's record set on one host.
 func (q *qualifier) evalSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{},
-		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, summaries: map[string]string{}}
+		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
 	h := q.hosts[p.ID]
 	if h == nil {
 		return s, nil
@@ -374,6 +397,7 @@ func (q *qualifier) evalSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 	if h.files[manPath] == nil {
 		return s, nil
 	}
+	markUsed(h, dir, "profiles/"+w.Profile+".json")
 	if h.id == nil || len(h.rejected) > 0 {
 		s.Evidence = "REJECTED"
 		s.Mechanism = AssessFail
@@ -530,6 +554,9 @@ func (q *qualifier) evalSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 		}
 		s.Records++
 		perCase[mem.Case]++
+		if h.records++; h.records > uint64(q.lim.Records) {
+			return nil, fail(KindResourceLimit, "RECORDS_LIMIT", full, nil)
+		}
 		if code := checkRecord(b, mem); code != "" {
 			add(code, full, "record가 완결되지 않았거나 member identity와 다르다")
 			continue
@@ -707,6 +734,27 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, 
 		}
 	}
 	s.kinds[qc.ID] = kinds
+	switch {
+	case c.ExecutionStatus != wantStatus:
+		s.checks[qc.ID] = claimBlocked
+	case !completed:
+		s.checks[qc.ID] = claimPass // the registered non-completion (an over-limit input) happened
+	case len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(st rcStep) bool { return st.Incremental != nil || st.Composite == nil }):
+		// SVC observation-only: the S05 verdict the verdict gate recomputed
+		s.checks[qc.ID] = map[string]string{AssessPass: claimPass, AssessFail: claimFail}[c.Assessment]
+		if s.checks[qc.ID] == "" {
+			s.checks[qc.ID] = claimBlocked
+		}
+	default:
+		v := claimPass
+		for _, r := range stepRes {
+			v = worseClaim(v, r)
+		}
+		if qe != "" {
+			v = worseClaim(v, qe)
+		}
+		s.checks[qc.ID] = v
+	}
 	if qc.Role == "detector" {
 		d := claimPass
 		for _, r := range stepRes {
@@ -793,6 +841,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	if !jsonEqual(n.Grammar, w.Grammar) {
 		return "grammar"
 	}
+	if !jsonEqual(n.Declarations, w.Declarations) {
+		return "declarations"
+	}
 	if (p.FactPack == nil) != (w.FactPack == nil) || (p.FactPack != nil && *p.FactPack != *w.FactPack) {
 		return "fact_pack"
 	}
@@ -810,7 +861,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	for i, c := range n.Cases {
 		r := w.Cases[i]
 		if c.ID != r.ID || c.Input.SHA256 != r.Input.SHA256 || c.Input.Bytes != r.Input.Bytes || !slices.EqualFunc(c.Edits, r.Edits, sameEdit) ||
-			!slices.EqualFunc(c.Expect, r.Expect, sameExpect) || (len(p.OracleCases[i].QueryExpect)+len(r.QueryExpect) > 0 && !jsonEqual(p.OracleCases[i].QueryExpect, r.QueryExpect)) {
+			!slices.EqualFunc(c.Expect, r.Expect, sameExpect) || (len(p.OracleCases[i].QueryExpect)+len(r.QueryExpect) > 0 && !jsonEqual(p.OracleCases[i].QueryExpect, r.QueryExpect)) ||
+			(c.Encoding != "" && c.Encoding != EncodingUTF8) || (len(c.Points)+len(r.Points) > 0 && !slices.Equal(c.Points, r.Points)) ||
+			!jsonEqual(p.OracleCases[i].DynamicSQL, r.DynamicSQL) {
 			return "cases/" + c.ID
 		}
 	}

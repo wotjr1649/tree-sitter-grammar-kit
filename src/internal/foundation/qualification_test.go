@@ -103,6 +103,12 @@ func buildInventory(t *testing.T, root string) []byte {
 		Files []struct {
 			Path, Route, SHA256 string
 			Bytes               uint64
+			Facts               []kit.DynamicSQLFact
+			NonFacts            []struct {
+				What      string
+				StartByte uint32 `json:"start_byte"`
+				EndByte   uint32 `json:"end_byte"`
+			} `json:"non_facts"`
 		}
 	}
 	decode("src/testdata/native/dynamic-sql/expected.json", &dyn)
@@ -111,11 +117,38 @@ func buildInventory(t *testing.T, root string) []byte {
 		Fixtures []struct {
 			ID, SHA256 string
 			Bytes      uint64
+			Points     []kit.NativePoint
 			Expect     []struct{ Syntax, Declarations string }
 		}
 	}
 	decode("src/contracts/native-large-fixtures.json", &large)
 	reqs := requirementRows(t, string(read("docs/validation/language-feature-disposition.md")))
+	var mapping struct {
+		Revision string
+		Routes   []struct {
+			Route string
+			Facts []struct{ Fact, Node, Name string }
+		}
+	}
+	decode("src/contracts/fact-mapping.json", &mapping)
+	// the declaration items run-routes.ps1 passes (Get-Declarations)
+	declsOf := func(route string) *kit.Declarations {
+		for _, r := range mapping.Routes {
+			if r.Route != route {
+				continue
+			}
+			d := &kit.Declarations{Mapping: mapping.Revision}
+			for _, f := range r.Facts {
+				if f.Node != "" && (f.Fact == "type_declaration" || f.Fact == "member_declaration" || f.Fact == "create_object") {
+					d.Items = append(d.Items, kit.NativeDeclaration{Fact: f.Fact, Node: f.Node, Name: f.Name})
+				}
+			}
+			if len(d.Items) > 0 {
+				return d
+			}
+		}
+		return nil
+	}
 
 	grammarOf := func(route string) (string, []kit.NativeInput) {
 		for _, r := range routes.Routes {
@@ -255,7 +288,7 @@ func buildInventory(t *testing.T, root string) []byte {
 		rows := reqs[route]
 		symbol, grammar := grammarOf(route)
 		w := kit.QualWorkload{Set: "s06-" + route, Profile: "s06-" + route, Route: route, Operation: "native-query", Output: "tree", Symbol: symbol,
-			Grammar: grammar, FactPack: packRef(route), API: true}
+			Grammar: grammar, Declarations: declsOf(route), FactPack: packRef(route), API: true}
 		for _, kind := range []string{"routes", "gaps", "n461"} {
 			p := "src/testdata/native/" + kind + "/" + route + ".json"
 			if _, err := os.Stat(filepath.Join(root, p)); err != nil {
@@ -293,8 +326,14 @@ func buildInventory(t *testing.T, root string) []byte {
 		}
 		for _, f := range dyn.Files {
 			if f.Route == route {
+				d := &kit.DynamicSQLExpectation{Facts: f.Facts, KnownMisses: []kit.ByteSpan{}}
+				for _, n := range f.NonFacts {
+					if n.What == "KNOWN_MISS" {
+						d.KnownMisses = append(d.KnownMisses, kit.ByteSpan{StartByte: n.StartByte, EndByte: n.EndByte})
+					}
+				}
 				w.Cases = append(w.Cases, kit.QualCase{ID: "dynamic-sql-" + route, Role: "support", Input: kit.NativeInput{SHA256: f.SHA256, Bytes: f.Bytes},
-					Edits: []kit.Edit{}, Expect: []kit.StepExpectation{}, QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}})
+					Edits: []kit.Edit{}, Expect: []kit.StepExpectation{}, QueryExpect: []kit.QueryExpectation{}, DynamicSQL: d, Covers: map[string][]string{}})
 			}
 		}
 		var req []kit.QualRequirement
@@ -316,14 +355,14 @@ func buildInventory(t *testing.T, root string) []byte {
 	// the NET461 large-file profile: windows/amd64 only (C1-REAL-WORLD-SOURCE-WINDOWS-R3)
 	symbol, grammar := grammarOf(large.Route)
 	lw := kit.QualWorkload{Set: "s06-large", Profile: "s06-large", Route: large.Route, Operation: "native-query-large", Output: "auto", Symbol: symbol,
-		Grammar: grammar, Queries: packQueries(large.Route, "declarations"), FactPack: packRef(large.Route)}
+		Grammar: grammar, Declarations: declsOf(large.Route), Queries: packQueries(large.Route, "declarations"), FactPack: packRef(large.Route)}
 	for _, f := range large.Fixtures {
 		var ex []kit.StepExpectation
 		for _, e := range f.Expect {
 			ex = append(ex, kit.StepExpectation{Step: 0, Syntax: e.Syntax, Contains: []string{}, Declarations: e.Declarations})
 		}
 		lw.Cases = append(lw.Cases, kit.QualCase{ID: f.ID, Role: "support", Input: kit.NativeInput{SHA256: f.SHA256, Bytes: f.Bytes}, Edits: []kit.Edit{}, Expect: ex,
-			QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}})
+			QueryExpect: []kit.QueryExpectation{}, Points: f.Points, Covers: map[string][]string{}})
 	}
 	over := lw
 	over.Set, over.Profile, over.Queries, over.FactPack = "s06-large-over", "s06-large-over", []kit.QualQuery{{ID: "all.nodes", SHA256: shaHex([]byte("_ @node\n"))}}, nil
@@ -366,12 +405,15 @@ func requirementRows(t *testing.T, md string) map[string]map[string][]string {
 			continue
 		}
 		f := strings.Split(line, "|")
-		if len(f) != 9 {
-			continue
-		}
 		row := strings.TrimSpace(f[1])
 		m := id.FindStringSubmatch(row)
-		if m == nil || strings.TrimSpace(f[3]) != "REQ" {
+		if m == nil {
+			continue
+		}
+		if len(f) != 9 {
+			t.Fatalf("feature row %s: %d columns", row, len(f))
+		}
+		if strings.TrimSpace(f[3]) != "REQ" {
 			continue
 		}
 		if out[m[1]] == nil {
@@ -410,6 +452,17 @@ func TestQualificationInventory(t *testing.T) {
 	}
 	if inv.Cells != 78 || len(inv.Routes) != 26 || len(inv.Platforms) != 3 || inv.Cells != len(campaign.Routes)*len(campaign.Platforms) {
 		t.Fatalf("cells %d routes %d platforms %d", inv.Cells, len(inv.Routes), len(inv.Platforms))
+	}
+	// the adopted disposition: 178 REQ rows, 826 row x kind obligations
+	rows, obligations := 0, 0
+	for _, r := range inv.Routes {
+		rows += len(r.Requirements)
+		for _, q := range r.Requirements {
+			obligations += len(q.Kinds)
+		}
+	}
+	if rows != 178 || obligations != 826 {
+		t.Fatalf("requirement rows %d obligations %d", rows, obligations)
 	}
 	for i, r := range inv.Routes {
 		if r.Route != campaign.Routes[i] {

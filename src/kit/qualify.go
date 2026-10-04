@@ -74,33 +74,36 @@ type QualQuery struct {
 // support) and the requirement rows and kinds it covers under CoverageRule. Source is the
 // UTF-8 input, kept only when query expectations are recomputed from it.
 type QualCase struct {
-	ID           string              `json:"id"`
-	Role         string              `json:"role"`
-	Input        NativeInput         `json:"input"`
-	Edits        []Edit              `json:"edits"`
-	Expect       []StepExpectation   `json:"expect"`
-	QueryExpect  []QueryExpectation  `json:"query_expect"`
-	ExpectStatus string              `json:"expect_status"`
-	Covers       map[string][]string `json:"covers"`
-	Source       *string             `json:"source"`
+	ID           string                 `json:"id"`
+	Role         string                 `json:"role"`
+	Input        NativeInput            `json:"input"`
+	Edits        []Edit                 `json:"edits"`
+	Expect       []StepExpectation      `json:"expect"`
+	QueryExpect  []QueryExpectation     `json:"query_expect"`
+	Points       []NativePoint          `json:"points"`
+	DynamicSQL   *DynamicSQLExpectation `json:"dynamic_sql_expect"`
+	ExpectStatus string                 `json:"expect_status"`
+	Covers       map[string][]string    `json:"covers"`
+	Source       *string                `json:"source"`
 }
 
 // QualWorkload is the registered workload a host runs for one cell or role: the record set
 // directory under records/, the workload profile under profiles/ and the semantic profile
 // fields the host profile must match exactly (host compiler and profile id excluded).
 type QualWorkload struct {
-	Set       string        `json:"set"`
-	Profile   string        `json:"profile"`
-	Route     string        `json:"route"`
-	Operation string        `json:"operation"`
-	Output    string        `json:"output"`
-	Symbol    string        `json:"symbol"`
-	Format    string        `json:"format"`
-	Grammar   []NativeInput `json:"grammar"`
-	Queries   []QualQuery   `json:"queries"`
-	FactPack  *FactPackRef  `json:"fact_pack"`
-	API       bool          `json:"api"`
-	Cases     []QualCase    `json:"cases"`
+	Set          string        `json:"set"`
+	Profile      string        `json:"profile"`
+	Route        string        `json:"route"`
+	Operation    string        `json:"operation"`
+	Output       string        `json:"output"`
+	Symbol       string        `json:"symbol"`
+	Format       string        `json:"format"`
+	Grammar      []NativeInput `json:"grammar"`
+	Declarations *Declarations `json:"declarations"`
+	Queries      []QualQuery   `json:"queries"`
+	FactPack     *FactPackRef  `json:"fact_pack"`
+	API          bool          `json:"api"`
+	Cases        []QualCase    `json:"cases"`
 }
 
 // QualRoute is one mandatory syntax route: its workload and required feature rows.
@@ -181,7 +184,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		plat[p.ID] = true
 	}
 	sets, routes := map[string]bool{}, map[string]bool{}
-	checkWorkload := func(w QualWorkload, path string, reqs map[string][]string) *Error {
+	checkWorkload := func(w QualWorkload, path string, reqs map[string][]string, role bool) *Error {
 		badW := func(code, sub string) *Error { return fail(KindInvalidInput, code, doc+"#/"+path+sub, nil) }
 		if !validID(w.Set) || !validID(w.Profile) || sets[w.Set] || !validID(w.Route) || w.Operation == "" || w.Output == "" || !ValidLanguageSymbol(w.Symbol) {
 			return badW("WORKLOAD_INVALID", "")
@@ -210,13 +213,30 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			}
 			ids[c.ID] = true
 			switch c.Role {
-			case "requirement", "support":
+			case "requirement":
+			case "support":
+				if len(c.Covers) > 0 {
+					return badW("SUPPORT_COVERS", cp)
+				}
 			case "detector":
 				if len(c.Covers) > 0 {
 					return badW("DETECTOR_COVERS", cp) // a historical detector never satisfies a mainstream requirement
 				}
+				if !role {
+					return badW("DETECTOR_IN_ROUTE", cp) // detectors belong to a separately named role row
+				}
 			default:
 				return badW("CASE_INVALID", cp+"/role")
+			}
+			for _, e := range c.Expect {
+				if e.Step < 0 || e.Step > len(c.Edits) {
+					return badW("CASE_STEP_INVALID", cp)
+				}
+			}
+			for _, q := range c.QueryExpect {
+				if q.Step < 0 || q.Step > len(c.Edits) {
+					return badW("CASE_STEP_INVALID", cp)
+				}
 			}
 			if c.ExpectStatus != "" && c.ExpectStatus != StatusResourceLimit {
 				return badW("CASE_INVALID", cp+"/expect_status")
@@ -262,7 +282,10 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			}
 			reqs[q.Row] = q.Kinds
 		}
-		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), reqs); e != nil {
+		if len(r.Requirements) == 0 {
+			return bad("REQUIREMENT_INVALID", fmt.Sprintf("routes/%d/requirements", i)) // a route without rows would pass vacuously
+		}
+		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), reqs, false); e != nil {
 			return inv, e
 		}
 	}
@@ -289,7 +312,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 				return bad("ROLE_INVALID", p)
 			}
 			for j, w := range x.Workloads {
-				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), map[string][]string{}); e != nil {
+				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), map[string][]string{}, true); e != nil {
 					return inv, e
 				}
 			}
@@ -410,17 +433,26 @@ type QualCell struct {
 	Comparison  string           `json:"comparison"`
 	Counts      QualCounts       `json:"counts"`
 	Obligations []QualObligation `json:"obligations"`
-	Set         QualSet          `json:"set"`
+	// Checks folds every registered expectation of the cell's cases (also steps and cases
+	// that cover no row kind): a FAIL fails the requirement axis, a BLOCKED leaves it
+	// INCOMPLETE. CheckFailures names the cases that did not pass.
+	Checks        string   `json:"registered_checks"`
+	CheckFailures []string `json:"check_failures"`
+	Set           QualSet  `json:"set"`
 }
 
 // QualRoleRow is one extra-role row on one platform.
 type QualRoleRow struct {
-	ID       string    `json:"id"`
-	Role     string    `json:"role"`
-	Platform string    `json:"platform"`
-	Status   string    `json:"status"` // PASS | FAIL | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE
-	Reason   string    `json:"reason"`
-	Sets     []QualSet `json:"sets"`
+	ID       string `json:"id"`
+	Role     string `json:"role"`
+	Platform string `json:"platform"`
+	Status   string `json:"status"` // PASS | FAIL | INCOMPLETE | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE
+	Reason   string `json:"reason"`
+	// Mechanism is the worst kit axis of the row's sets; Checks folds their registered
+	// expectations and detector results ("" when the row executes nothing).
+	Mechanism string    `json:"mechanism"`
+	Checks    string    `json:"registered_checks"`
+	Sets      []QualSet `json:"sets"`
 }
 
 // QualComparison is the cross-platform semantic comparison of one workload.
@@ -533,18 +565,23 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	// one run cohort: the same repository run, attempt, event, checkout and head on every host
 	var first *qhost
+	for _, eligible := range []bool{true, false} {
+		for _, p := range inv.Platforms {
+			if hx := q.hosts[p.ID]; first == nil && hx != nil && hx.id != nil && (len(hx.rejected) == 0) == eligible {
+				first = hx
+			}
+		}
+	}
+	if first != nil {
+		res.Run = first.id
+	}
 	for _, p := range inv.Platforms {
 		hx := q.hosts[p.ID]
 		if hx == nil || hx.id == nil {
 			continue
 		}
 		res.Hosts[p.ID] = hx.idSHA
-		if first == nil {
-			first = hx
-			res.Run = hx.id
-			continue
-		}
-		if hx.id.cohort() != first.id.cohort() {
+		if hx != first && hx.id.cohort() != first.id.cohort() {
 			hx.reject("COHORT_MISMATCH", "run-identity.json", "다른 run·attempt·event·checkout의 host를 한 qualification에 섞었다")
 		}
 	}
@@ -585,7 +622,16 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	if len(res.Cells) != inv.Cells || len(cells) != inv.Cells {
 		completeness = false
 	}
-	for _, hx := range q.hosts {
+	for _, x := range res.ExtraRoles {
+		if x.Status == CellMissing {
+			completeness = false
+		}
+	}
+	for _, pl := range inv.Platforms {
+		hx := q.hosts[pl.ID]
+		if hx == nil {
+			continue
+		}
 		for _, p := range sortedKeys(hx.files) {
 			if !hx.used[p] {
 				if hx.unused++; hx.unused <= 10 {
@@ -610,9 +656,13 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	for _, x := range res.ExtraRoles {
 		failed = failed || x.Status == CellFail
-		gate = gate && x.Status != CellFail && x.Status != CellMissing && x.Status != CellIncomplete
+		if x.Mechanism != "" {
+			gate = gate && x.Mechanism == AssessPass
+			allPass = allPass && x.Status == CellPass
+		}
 	}
 	res.MechanismGate = map[bool]string{true: AssessPass, false: AssessFail}[gate]
+	allPass = allPass && gate // SUPPORTED needs every kit-side check, not only the cells
 	switch {
 	case failed:
 		res.Assessment = AssessFail
@@ -679,23 +729,44 @@ func (q *qualifier) cell(route QualRoute, p QualPlatform, s *qset, cmp *QualComp
 			c.Obligations = append(c.Obligations, ob)
 		}
 	}
+	c.Checks, c.CheckFailures = foldChecks(route.Workload.Cases, s)
 	switch {
-	case failedOb > 0:
+	case failedOb > 0 || c.Checks == claimFail:
 		c.Requirement = AssessFail
-	case notCovered+blocked > 0:
+	case notCovered+blocked > 0 || c.Checks != claimPass:
 		c.Requirement = CellIncomplete
 	default:
 		c.Requirement = AssessPass
 	}
 	switch {
-	case c.Mechanism != AssessPass || c.Requirement == AssessFail || c.Comparison == AssessFail:
+	case c.Mechanism == AssessFail || c.Requirement == AssessFail || c.Comparison == AssessFail:
 		c.Status = CellFail
-	case c.Requirement == CellIncomplete || c.Comparison != AssessPass:
+	case c.Mechanism != AssessPass || c.Requirement == CellIncomplete || c.Comparison != AssessPass:
 		c.Status = CellIncomplete
 	default:
 		c.Status = CellPass
 	}
 	return c
+}
+
+// foldChecks folds the registered-check result of every non-detector case of a workload;
+// a case without a judged record is BLOCKED.
+func foldChecks(cases []QualCase, s *qset) (string, []string) {
+	out, bad := claimPass, []string{}
+	for _, qc := range cases {
+		if qc.Role == "detector" {
+			continue
+		}
+		v := s.checks[qc.ID]
+		if v == "" {
+			v = claimBlocked
+		}
+		if v != claimPass && len(bad) < 50 {
+			bad = append(bad, qc.ID+"="+v)
+		}
+		out = worseClaim(out, v)
+	}
+	return out, bad
 }
 
 func totals(cells []QualCell) QualTotals {
@@ -732,7 +803,7 @@ func explainQualification(res QualificationResult) []string {
 		fmt.Sprintf("필수 칸 %d개: PASS %d, FAIL %d, INCOMPLETE %d, MISSING %d. 완결성 %s.", t.Cells, t.Status[CellPass], t.Status[CellFail], t.Status[CellIncomplete], t.Status[CellMissing], res.Completeness),
 		fmt.Sprintf("kit 축 PASS %d칸, 요구 축 PASS %d칸, 세 platform 비교 FAIL %d칸.", t.MechanismPass, t.RequirementPass, t.ComparisonFail),
 		fmt.Sprintf("필수 의무 %d개: PASS %d, FAIL %d, BLOCKED %d, 사례 없음 %d.", t.Obligations.Obligations, t.Obligations.Pass, t.Obligations.Fail, t.Obligations.Blocked, t.Obligations.NotCovered),
-		fmt.Sprintf("kit 검사 gate %s(완결성·cohort·자격·칸별 kit 축·비교·추가 역할 실행 행).", res.MechanismGate),
+		fmt.Sprintf("kit 검사 gate %s(완결성·cohort·자격·칸별 kit 축·비교·실행된 추가 역할 행의 kit 축).", res.MechanismGate),
 	}
 	if res.SupportClaim != "SUPPORTED" {
 		out = append(out, "지원 claim은 BLOCKED다: 모든 필수 칸이 PASS일 때만 SUPPORTED다. 추가 역할 행은 필수 칸을 대신하지 않는다.")

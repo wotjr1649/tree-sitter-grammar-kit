@@ -305,6 +305,65 @@ func TestQualifyBaseline(t *testing.T) {
 	if r.Assessment != AssessPass || r.SupportClaim != "SUPPORTED" || r.Totals.Status[CellPass] != 6 {
 		t.Fatalf("all covered: %s %s %v", r.Assessment, r.SupportClaim, r.Totals.Status)
 	}
+	// every cell passes, but the executed role row has no set on its platform
+	f.root = t.TempDir()
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {skip: func(s string) bool { return s == "s06-fxh" }}}))
+	if r.SupportClaim == "SUPPORTED" || r.Assessment == AssessPass || r.Completeness != AssessFail || r.MechanismGate != AssessFail {
+		t.Fatalf("missing role row: %s %s %s %s", r.SupportClaim, r.Assessment, r.Completeness, r.MechanismGate)
+	}
+}
+
+// Review r1 M1: a registered expectation that covers no row kind (here the NO_ERROR step
+// after an edit) still decides the requirement axis; a failing detector fails its role
+// row without touching the kit gate.
+func TestQualifyRegisteredChecks(t *testing.T) {
+	f := newQfx(t)
+	f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+	for _, r := range f.inv.Routes {
+		r.Workload.Cases[1].Expect = []StepExpectation{{Step: 1, Syntax: "NO_ERROR", Contains: []string{}}}
+	}
+	bad := func(set string, recs []map[string]any) {
+		switch set {
+		case "s06-fxa":
+			nodes := fxTree("betz", true)
+			st := recs[1]["steps"].([]any)[1].(map[string]any)
+			for _, k := range []string{"incremental", "fresh"} {
+				tr := st[k].(map[string]any)
+				tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["has_error"] = nodes, TreeDigest(nodes), true
+			}
+			recs[1]["expectations"] = []any{map[string]any{"step": 1, "syntax": "NO_ERROR", "contains": []string{}, "declarations": "", "result": "FAIL"}}
+			recs[1]["claims"].(map[string]string)["expectations"], recs[1]["assessment"] = "FAIL", "FAIL"
+		case "s06-fxb":
+			recs[1]["expectations"] = []any{map[string]any{"step": 1, "syntax": "NO_ERROR", "contains": []string{}, "declarations": "", "result": "PASS"}}
+			recs[1]["claims"].(map[string]string)["expectations"] = "PASS"
+		case "s06-fxh":
+			nodes := fxTree("alpha", true)
+			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["has_error"] = nodes, TreeDigest(nodes), true
+			recs[0]["expectations"].([]any)[0].(map[string]any)["result"] = "FAIL"
+			recs[0]["claims"].(map[string]string)["expectations"], recs[0]["assessment"] = "FAIL", "FAIL"
+		}
+	}
+	muts := map[string]qfxMut{}
+	for _, p := range qfxPlatforms {
+		muts[p.ID] = qfxMut{record: bad}
+	}
+	r := f.run(t, f.all(t, muts))
+	a, b := cellOf(r, "fxa", "windows-amd64"), cellOf(r, "fxb", "windows-amd64")
+	if a.Counts.Fail != 0 || a.Checks != claimFail || a.Requirement != AssessFail || a.Status != CellFail || !slices.Contains(a.CheckFailures, "c2=FAIL") {
+		t.Fatalf("uncovered expectation: %+v %s %s %v", a.Counts, a.Checks, a.Requirement, a.CheckFailures)
+	}
+	if b.Status != CellPass || b.Checks != claimPass {
+		t.Fatalf("passing route: %s %s %v", b.Status, b.Checks, b.CheckFailures)
+	}
+	for _, x := range r.ExtraRoles {
+		if x.ID == "fx-history" && x.Platform == "windows-amd64" && (x.Status != CellFail || x.Mechanism != AssessPass || x.Checks != claimFail) {
+			t.Fatalf("failing detector row: %s %s %s", x.Status, x.Mechanism, x.Checks)
+		}
+	}
+	if r.MechanismGate != AssessPass || r.Assessment != AssessFail || r.SupportClaim != "BLOCKED" {
+		t.Fatalf("gate %s assessment %s support %s", r.MechanismGate, r.Assessment, r.SupportClaim)
+	}
 }
 
 // S08-A04: a missing host or set, or a duplicate row, fails completeness.
@@ -488,6 +547,9 @@ func TestQualifyDetectorAndGap(t *testing.T) {
 	if c.Mechanism != AssessPass || c.Requirement != AssessFail || c.Status != CellFail || r.SupportClaim != "BLOCKED" || r.MechanismGate != AssessPass {
 		t.Fatalf("mainstream gap: %s %s %s %s", c.Mechanism, c.Requirement, c.Status, r.SupportClaim)
 	}
+	if ob := c.Obligations[slices.IndexFunc(c.Obligations, func(o QualObligation) bool { return o.Kind == "P" })]; ob.Result != claimFail || !slices.Contains(ob.Cases, "c1") {
+		t.Fatalf("the failing case must stay on its obligation: %+v", ob)
+	}
 	for _, x := range r.ExtraRoles {
 		if x.ID == "fx-history" && x.Platform == "windows-amd64" && (x.Status != CellPass || x.Sets[0].Detectors["d1"] != "PASS") {
 			t.Fatalf("detector row: %s %v", x.Status, x.Sets[0].Detectors)
@@ -519,6 +581,12 @@ func TestQualifyEligibility(t *testing.T) {
 				t.Fatalf("%s: %s %s %v", name, r.Assessment, c.Set.Evidence, setCodes(c))
 			}
 		})
+	}
+	// one host of an old commit: only its cells are rejected, the others keep their cohort
+	f0 := newQfx(t)
+	r0 := f0.run(t, f0.all(t, map[string]qfxMut{"windows-amd64": {identity: func(id map[string]any) { id["sha"], id["checkout"] = strings.Repeat("b", 40), strings.Repeat("b", 40) }}}))
+	if c := cellOf(r0, "fxa", "linux-amd64"); c.Set.Evidence != ModeNewRun || slices.Contains(setCodes(c), "COHORT_MISMATCH") || r0.Run == nil || r0.Run.SHA != qfxCandidate {
+		t.Fatalf("rejected host as cohort base: %s %v %+v", c.Set.Evidence, setCodes(c), r0.Run)
 	}
 	// a host without a run identity is not a run
 	f := newQfx(t)
@@ -598,9 +666,10 @@ func TestQualifyLimitsAndCancel(t *testing.T) {
 		t.Fatalf("cancel: %v %s", err, res.ExecutionStatus)
 	}
 	for name, l := range map[string]func(ReplayLimits) ReplayLimits{
-		"total":  func(l ReplayLimits) ReplayLimits { l.TotalBytes = 2000; return l },
-		"files":  func(l ReplayLimits) ReplayLimits { l.Files = 3; return l },
-		"output": func(l ReplayLimits) ReplayLimits { l.OutputBytes = 100; return l },
+		"total":   func(l ReplayLimits) ReplayLimits { l.TotalBytes = 2000; return l },
+		"files":   func(l ReplayLimits) ReplayLimits { l.Files = 3; return l },
+		"output":  func(l ReplayLimits) ReplayLimits { l.OutputBytes = 100; return l },
+		"records": func(l ReplayLimits) ReplayLimits { l.Records = 2; return l },
 	} {
 		testHookQualifyLimits = l
 		res, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs})
@@ -647,6 +716,13 @@ func TestQualificationInventoryGuards(t *testing.T) {
 		"kinds":           func(inv *QualificationInventory) { inv.Kinds = []string{"P"} },
 		"role-status":     func(inv *QualificationInventory) { inv.ExtraRoles[1].Status = "PASS" },
 		"role-mainstream": func(inv *QualificationInventory) { inv.ExtraRoles[1].Role = "mainstream" },
+		"no-rows":         func(inv *QualificationInventory) { inv.Routes[0].Requirements = nil },
+		"step-range":      func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].Expect[0].Step = 1 },
+		"step-negative":   func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[2].QueryExpect[0].Step = -1 },
+		"support-covers":  func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].Role = "support" },
+		"route-detector": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Role, inv.Routes[0].Workload.Cases[1].Covers = "detector", map[string][]string{}
+		},
 	} {
 		f := newQfx(t)
 		mut(&f.inv)

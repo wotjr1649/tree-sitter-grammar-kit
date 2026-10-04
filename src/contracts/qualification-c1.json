@@ -72,6 +72,111 @@
       "bytes": 7624
      }
     ],
+    "declarations": {
+     "mapping": "declaration-facts-r1",
+     "items": [
+      {
+       "fact": "type_declaration",
+       "node": "class_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "struct_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "interface_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "enum_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "record_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "delegate_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "namespace_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "type_declaration",
+       "node": "file_scoped_namespace_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "method_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "constructor_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "destructor_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "property_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "event_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "enum_member_declaration",
+       "name": "field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "field_declaration",
+       "name": "child:variable_declaration/children:variable_declarator/field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "event_field_declaration",
+       "name": "child:variable_declaration/children:variable_declarator/field:name"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "indexer_declaration",
+       "name": "node"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "operator_declaration",
+       "name": "field:operator"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "conversion_operator_declaration",
+       "name": "field:type"
+      },
+      {
+       "fact": "member_declaration",
+       "node": "extension_declaration",
+       "name": "node"
+      }
+     ]
+    },
     "queries": [
      {
       "id": "q.structure",
@@ -161,6 +266,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -239,6 +346,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B04": [
@@ -307,6 +416,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -379,6 +490,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -449,6 +562,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -527,6 +642,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -594,6 +711,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B01": [
@@ -667,6 +786,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-V14c": [
@@ -743,6 +864,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -766,6 +889,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -816,6 +941,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -886,6 +1013,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -909,6 +1038,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -959,6 +1090,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1029,6 +1162,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1052,6 +1187,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1102,6 +1239,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1172,6 +1311,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1195,6 +1336,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1245,6 +1388,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1315,6 +1460,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1338,6 +1485,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1388,6 +1537,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1505,6 +1656,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "csharp-B05": [
@@ -1528,6 +1681,220 @@
       "edits": [],
       "expect": [],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": {
+       "facts": [
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 657,
+         "end_byte": 672,
+         "start_point": {
+          "row": 19,
+          "column": 36
+         },
+         "end_point": {
+          "row": 19,
+          "column": 51
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 717,
+         "end_byte": 733,
+         "start_point": {
+          "row": 20,
+          "column": 36
+         },
+         "end_point": {
+          "row": 20,
+          "column": 52
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 778,
+         "end_byte": 797,
+         "start_point": {
+          "row": 21,
+          "column": 36
+         },
+         "end_point": {
+          "row": 21,
+          "column": 55
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "variable",
+         "start_byte": 864,
+         "end_byte": 867,
+         "start_point": {
+          "row": 22,
+          "column": 58
+         },
+         "end_point": {
+          "row": 22,
+          "column": 61
+         },
+         "variable": "sql",
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "concatenation",
+         "start_byte": 914,
+         "end_byte": 938,
+         "start_point": {
+          "row": 23,
+          "column": 38
+         },
+         "end_point": {
+          "row": 23,
+          "column": 62
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "concatenation",
+         "start_byte": 987,
+         "end_byte": 1027,
+         "start_point": {
+          "row": 24,
+          "column": 37
+         },
+         "end_point": {
+          "row": 24,
+          "column": 77
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1106,
+         "end_byte": 1121,
+         "start_point": {
+          "row": 25,
+          "column": 66
+         },
+         "end_point": {
+          "row": 25,
+          "column": 81
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "other",
+         "start_byte": 1170,
+         "end_byte": 1185,
+         "start_point": {
+          "row": 26,
+          "column": 40
+         },
+         "end_point": {
+          "row": 26,
+          "column": 55
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "variable",
+         "start_byte": 1236,
+         "end_byte": 1239,
+         "start_point": {
+          "row": 27,
+          "column": 42
+         },
+         "end_point": {
+          "row": 27,
+          "column": 45
+         },
+         "variable": "sql",
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1292,
+         "end_byte": 1307,
+         "start_point": {
+          "row": 28,
+          "column": 41
+         },
+         "end_point": {
+          "row": 28,
+          "column": 56
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1391,
+         "end_byte": 1406,
+         "start_point": {
+          "row": 29,
+          "column": 71
+         },
+         "end_point": {
+          "row": 29,
+          "column": 86
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "concatenation",
+         "start_byte": 1439,
+         "end_byte": 1459,
+         "start_point": {
+          "row": 30,
+          "column": 29
+         },
+         "end_point": {
+          "row": 30,
+          "column": 49
+         },
+         "variable": null,
+         "heuristic": true
+        },
+        {
+         "construct": "CSHARP_COMMAND",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1621,
+         "end_byte": 1636,
+         "start_point": {
+          "row": 34,
+          "column": 29
+         },
+         "end_point": {
+          "row": 34,
+          "column": 44
+         },
+         "variable": null,
+         "heuristic": true
+        }
+       ],
+       "known_misses": []
+      },
       "expect_status": "",
       "covers": {},
       "source": null
@@ -1713,6 +2080,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -1790,6 +2158,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "go-B01": [
@@ -1860,6 +2230,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "go-B03": [
@@ -1996,6 +2368,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "go-B02": [
@@ -2110,6 +2484,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -2187,6 +2562,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "python-B01": [
@@ -2262,6 +2639,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "python-B01": [
@@ -2383,6 +2762,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "python-B03": [
@@ -2535,6 +2916,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -2612,6 +2994,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "javascript-B01": [
@@ -2687,6 +3071,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "javascript-B01": [
@@ -2813,6 +3199,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "javascript-B01": [
@@ -2940,6 +3328,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -3017,6 +3406,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "jsx-B01": [
@@ -3084,6 +3475,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "jsx-B01": [
@@ -3230,6 +3623,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "jsx-B01": [
@@ -3332,6 +3727,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -3409,6 +3805,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-B01": [
@@ -3479,6 +3877,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-B01": [
@@ -3542,6 +3942,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V45": [
@@ -3604,6 +4006,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V50": [
@@ -3670,6 +4074,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V50": [
@@ -3736,6 +4142,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V40": [
@@ -3805,6 +4213,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V50": [
@@ -3865,6 +4275,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-V50": [
@@ -3993,6 +4405,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "typescript-B01": [
@@ -4135,6 +4549,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -4212,6 +4627,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4275,6 +4692,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4342,6 +4761,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4410,6 +4831,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-V29": [
@@ -4478,6 +4901,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B02": [
@@ -4548,6 +4973,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4614,6 +5041,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4732,6 +5161,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsx-B01": [
@@ -4815,6 +5246,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -4892,6 +5324,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "java-B01": [
@@ -4959,6 +5393,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "java-B01": [
@@ -5091,6 +5527,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "java-B01": [
@@ -5199,6 +5637,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -5276,6 +5715,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "kotlin-B01": [
@@ -5335,6 +5776,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "kotlin-B02": [
@@ -5472,6 +5915,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "kotlin-B01": [
@@ -5571,6 +6016,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -5648,6 +6094,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "c-B01": [
@@ -5707,6 +6155,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "c-B01": [
@@ -5849,6 +6299,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "c-B01": [
@@ -5960,6 +6412,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -6037,6 +6490,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "cpp-B01": [
@@ -6104,6 +6559,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "cpp-B01": [
@@ -6211,6 +6668,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "cpp-B01": [
@@ -6327,6 +6786,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -6404,6 +6864,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "rust-B01": [
@@ -6467,6 +6929,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "rust-B02": [
@@ -6594,6 +7058,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "rust-B01": [
@@ -6699,6 +7165,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -6776,6 +7243,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-B01": [
@@ -6835,6 +7304,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-B02": [
@@ -6896,6 +7367,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -6956,6 +7429,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -7020,6 +7495,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V55": [
@@ -7082,6 +7559,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -7146,6 +7625,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -7208,6 +7689,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -7268,6 +7751,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-V59": [
@@ -7396,6 +7881,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "swift-B01": [
@@ -7532,6 +8019,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -7609,6 +8097,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "dart-B01": [
@@ -7668,6 +8158,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "dart-B02": [
@@ -7805,6 +8297,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "dart-B01": [
@@ -7933,6 +8427,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -8010,6 +8505,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "php-B01": [
@@ -8077,6 +8574,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "php-B01": [
@@ -8189,6 +8688,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "php-B01": [
@@ -8316,6 +8817,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -8393,6 +8895,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "ruby-B01": [
@@ -8452,6 +8956,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "ruby-B02": [
@@ -8579,6 +9085,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "ruby-B02": [
@@ -8683,6 +9191,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -8760,6 +9269,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "r-B01": [
@@ -8823,6 +9334,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "r-B01": [
@@ -8999,6 +9512,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "r-B01": [
@@ -9094,6 +9609,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -9171,6 +9687,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "bash-B01": [
@@ -9234,6 +9752,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "bash-B02": [
@@ -9366,6 +9886,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "bash-B01": [
@@ -9464,6 +9986,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -9541,6 +10064,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "powershell-B01": [
@@ -9600,6 +10125,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "powershell-B02": [
@@ -9732,6 +10259,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "powershell-B01": [
@@ -9836,6 +10365,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -9913,6 +10443,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "html-B01": [
@@ -9976,6 +10508,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "html-B01": [
@@ -10133,6 +10667,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "html-B01": [
@@ -10222,6 +10758,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -10299,6 +10836,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "css-B01": [
@@ -10395,6 +10934,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "css-B01": [
@@ -10576,6 +11117,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "css-B01": [
@@ -10908,6 +11451,7 @@
       "bytes": 7039
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -10985,6 +11529,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "json-B01": [
@@ -11044,6 +11590,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "json-B01": [
@@ -11196,6 +11744,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "json-B01": [
@@ -11289,6 +11839,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -11366,6 +11917,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "yaml-B01": [
@@ -11433,6 +11986,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "yaml-B02": [
@@ -11585,6 +12140,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "yaml-B01": [
@@ -11692,6 +12249,7 @@
       "bytes": 7624
      }
     ],
+    "declarations": null,
     "queries": [
      {
       "id": "q.structure",
@@ -11777,6 +12335,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "xml-B01": [
@@ -11836,6 +12396,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "xml-B01": [
@@ -11910,6 +12472,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -11933,6 +12497,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -11983,6 +12549,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -12053,6 +12621,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -12076,6 +12646,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -12126,6 +12698,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {},
       "source": null
@@ -12278,6 +12852,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "xml-B01": [
@@ -12366,6 +12942,61 @@
       "bytes": 7624
      }
     ],
+    "declarations": {
+     "mapping": "declaration-facts-r1",
+     "items": [
+      {
+       "fact": "create_object",
+       "node": "create_procedure",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_function",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_view",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_table",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_trigger",
+       "name": "child:object_reference"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_type",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_schema",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_synonym",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_sequence",
+       "name": "field:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "create_index",
+       "name": "field:name"
+      }
+     ]
+    },
     "queries": [
      {
       "id": "q.structure",
@@ -12455,6 +13086,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B01": [
@@ -12530,6 +13163,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -12597,6 +13232,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -12663,6 +13300,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B04": [
@@ -12723,6 +13362,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -12789,6 +13430,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -12851,6 +13494,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -12911,6 +13556,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B02": [
@@ -13034,6 +13681,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "tsql-B03": [
@@ -13057,6 +13706,233 @@
       "edits": [],
       "expect": [],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": {
+       "facts": [
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "literal_unicode",
+         "start_byte": 329,
+         "end_byte": 345,
+         "start_point": {
+          "row": 8,
+          "column": 6
+         },
+         "end_point": {
+          "row": 8,
+          "column": 22
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "literal_char",
+         "start_byte": 354,
+         "end_byte": 369,
+         "start_point": {
+          "row": 9,
+          "column": 6
+         },
+         "end_point": {
+          "row": 9,
+          "column": 21
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "variable",
+         "start_byte": 381,
+         "end_byte": 385,
+         "start_point": {
+          "row": 10,
+          "column": 9
+         },
+         "end_point": {
+          "row": 10,
+          "column": 13
+         },
+         "variable": "@sql",
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "concatenation",
+         "start_byte": 394,
+         "end_byte": 436,
+         "start_point": {
+          "row": 11,
+          "column": 6
+         },
+         "end_point": {
+          "row": 11,
+          "column": 48
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN_AT",
+         "argument_kind": "literal_unicode",
+         "start_byte": 518,
+         "end_byte": 534,
+         "start_point": {
+          "row": 13,
+          "column": 6
+         },
+         "end_point": {
+          "row": 13,
+          "column": 22
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN_AT",
+         "argument_kind": "variable",
+         "start_byte": 556,
+         "end_byte": 560,
+         "start_point": {
+          "row": 14,
+          "column": 6
+         },
+         "end_point": {
+          "row": 14,
+          "column": 10
+         },
+         "variable": "@sql",
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "literal_unicode",
+         "start_byte": 670,
+         "end_byte": 686,
+         "start_point": {
+          "row": 16,
+          "column": 19
+         },
+         "end_point": {
+          "row": 16,
+          "column": 35
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "variable",
+         "start_byte": 711,
+         "end_byte": 715,
+         "start_point": {
+          "row": 17,
+          "column": 23
+         },
+         "end_point": {
+          "row": 17,
+          "column": 27
+         },
+         "variable": "@sql",
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "bare_word",
+         "start_byte": 738,
+         "end_byte": 744,
+         "start_point": {
+          "row": 18,
+          "column": 21
+         },
+         "end_point": {
+          "row": 18,
+          "column": 27
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "literal_unicode",
+         "start_byte": 779,
+         "end_byte": 796,
+         "start_point": {
+          "row": 19,
+          "column": 33
+         },
+         "end_point": {
+          "row": 19,
+          "column": 50
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "other",
+         "start_byte": 849,
+         "end_byte": 853,
+         "start_point": {
+          "row": 20,
+          "column": 22
+         },
+         "end_point": {
+          "row": 20,
+          "column": 26
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "literal_unicode",
+         "start_byte": 919,
+         "end_byte": 945,
+         "start_point": {
+          "row": 22,
+          "column": 6
+         },
+         "end_point": {
+          "row": 22,
+          "column": 32
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "EXEC_PAREN",
+         "argument_kind": "literal_char",
+         "start_byte": 975,
+         "end_byte": 1001,
+         "start_point": {
+          "row": 23,
+          "column": 6
+         },
+         "end_point": {
+          "row": 23,
+          "column": 32
+         },
+         "variable": null,
+         "heuristic": false
+        }
+       ],
+       "known_misses": [
+        {
+         "start_byte": 1160,
+         "end_byte": 1191
+        },
+        {
+         "start_byte": 1226,
+         "end_byte": 1274
+        },
+        {
+         "start_byte": 1311,
+         "end_byte": 1374
+        }
+       ]
+      },
       "expect_status": "",
       "covers": {},
       "source": null
@@ -13179,6 +14055,51 @@
       "bytes": 7624
      }
     ],
+    "declarations": {
+     "mapping": "declaration-facts-r1",
+     "items": [
+      {
+       "fact": "create_object",
+       "node": "CreateStmt",
+       "name": "child:qualified_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "ViewStmt",
+       "name": "child:qualified_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "CreateFunctionStmt",
+       "name": "child:func_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "IndexStmt",
+       "name": "child:opt_single_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "CreateTrigStmt",
+       "name": "child:name"
+      },
+      {
+       "fact": "create_object",
+       "node": "CreateSchemaStmt",
+       "name": "child:opt_single_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "CreateSeqStmt",
+       "name": "child:qualified_name"
+      },
+      {
+       "fact": "create_object",
+       "node": "DefineStmt",
+       "name": "child:any_name"
+      }
+     ]
+    },
     "queries": [
      {
       "id": "q.structure",
@@ -13264,6 +14185,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B01": [
@@ -13331,6 +14254,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B02": [
@@ -13392,6 +14317,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V10": [
@@ -13455,6 +14382,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V13": [
@@ -13522,6 +14451,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V16": [
@@ -13586,6 +14517,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V10": [
@@ -13657,6 +14590,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V18": [
@@ -13721,6 +14656,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-V10": [
@@ -13788,6 +14725,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B04": [
@@ -13848,6 +14787,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B04": [
@@ -13908,6 +14849,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B04": [
@@ -13970,6 +14913,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B04": [
@@ -14032,6 +14977,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B03": [
@@ -14115,6 +15062,8 @@
        }
       ],
       "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B04": [
@@ -14243,6 +15192,8 @@
         "error": null
        }
       ],
+      "points": null,
+      "dynamic_sql_expect": null,
       "expect_status": "",
       "covers": {
        "postgresql-sql-B02": [
@@ -14404,6 +15355,7 @@
        "bytes": 7624
       }
      ],
+     "declarations": null,
      "queries": [
       {
        "id": "facts.declarations",
@@ -14470,6 +15422,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14493,6 +15447,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14543,6 +15499,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14611,6 +15569,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14634,6 +15594,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14710,6 +15672,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14765,6 +15729,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14788,6 +15754,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14838,6 +15806,8 @@
         }
        ],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14854,6 +15824,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14870,6 +15842,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14886,6 +15860,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14902,6 +15878,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14918,6 +15896,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14934,6 +15914,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14950,6 +15932,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14981,6 +15965,8 @@
        ],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -14997,6 +15983,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15028,6 +16016,8 @@
        ],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15044,6 +16034,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15060,6 +16052,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15076,6 +16070,8 @@
        "edits": [],
        "expect": [],
        "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15137,6 +16133,111 @@
        "bytes": 7624
       }
      ],
+     "declarations": {
+      "mapping": "declaration-facts-r1",
+      "items": [
+       {
+        "fact": "type_declaration",
+        "node": "class_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "struct_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "interface_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "enum_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "record_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "delegate_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "namespace_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "file_scoped_namespace_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "method_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "constructor_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "destructor_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "property_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "event_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "enum_member_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "field_declaration",
+        "name": "child:variable_declaration/children:variable_declarator/field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "event_field_declaration",
+        "name": "child:variable_declaration/children:variable_declarator/field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "indexer_declaration",
+        "name": "node"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "operator_declaration",
+        "name": "field:operator"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "conversion_operator_declaration",
+        "name": "field:type"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "extension_declaration",
+        "name": "node"
+       }
+      ]
+     },
      "queries": [
       {
        "id": "facts.declarations",
@@ -15169,6 +16270,17 @@
         }
        ],
        "query_expect": [],
+       "points": [
+        {
+         "id": "P01",
+         "byte": 241
+        },
+        {
+         "id": "P02",
+         "byte": 21997690
+        }
+       ],
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15192,6 +16304,21 @@
         }
        ],
        "query_expect": [],
+       "points": [
+        {
+         "id": "P01",
+         "byte": 241
+        },
+        {
+         "id": "P02",
+         "byte": 7998971
+        },
+        {
+         "id": "P03",
+         "byte": 1930
+        }
+       ],
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15215,6 +16342,21 @@
         }
        ],
        "query_expect": [],
+       "points": [
+        {
+         "id": "P01",
+         "byte": 241
+        },
+        {
+         "id": "P02",
+         "byte": 33551447
+        },
+        {
+         "id": "P03",
+         "byte": 1930
+        }
+       ],
+       "dynamic_sql_expect": null,
        "expect_status": "",
        "covers": {},
        "source": null
@@ -15261,6 +16403,111 @@
        "bytes": 7624
       }
      ],
+     "declarations": {
+      "mapping": "declaration-facts-r1",
+      "items": [
+       {
+        "fact": "type_declaration",
+        "node": "class_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "struct_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "interface_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "enum_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "record_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "delegate_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "namespace_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "type_declaration",
+        "node": "file_scoped_namespace_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "method_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "constructor_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "destructor_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "property_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "event_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "enum_member_declaration",
+        "name": "field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "field_declaration",
+        "name": "child:variable_declaration/children:variable_declarator/field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "event_field_declaration",
+        "name": "child:variable_declaration/children:variable_declarator/field:name"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "indexer_declaration",
+        "name": "node"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "operator_declaration",
+        "name": "field:operator"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "conversion_operator_declaration",
+        "name": "field:type"
+       },
+       {
+        "fact": "member_declaration",
+        "node": "extension_declaration",
+        "name": "node"
+       }
+      ]
+     },
      "queries": [
       {
        "id": "all.nodes",
@@ -15289,6 +16536,21 @@
         }
        ],
        "query_expect": [],
+       "points": [
+        {
+         "id": "P01",
+         "byte": 241
+        },
+        {
+         "id": "P02",
+         "byte": 7998971
+        },
+        {
+         "id": "P03",
+         "byte": 1930
+        }
+       ],
+       "dynamic_sql_expect": null,
        "expect_status": "RESOURCE_LIMIT",
        "covers": {},
        "source": null
