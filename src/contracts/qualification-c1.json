@@ -13003,6 +13003,10 @@
       "sha256": "b251c313124e45c4db8fc470a5963f54d7b53df488a4ad9928203bd81d7e0a41"
      },
      {
+      "id": "q.r6-structure",
+      "sha256": "69d06e3e323dc1d792cfd177d710561bcdd1fa9fab6e446b82cc1ec6286b02eb"
+     },
+     {
       "id": "facts.declarations",
       "sha256": "bfca18365c23af4a2cbcff969760772237fe443be4b6d8f4585f92f64489df23"
      },
@@ -13173,6 +13177,196 @@
        ],
        "tsql-B05": [
         "N",
+        "E"
+       ]
+      },
+      "source": null
+     },
+     {
+      "id": "tsql-r6-feature-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "096e9f4af2cb75a3ac07f9a55b2a5990c481775f6cb5a284b0d1ef4c47d15aa6",
+       "bytes": 1106
+      },
+      "edits": [
+       {
+        "start_byte": 396,
+        "old_end_byte": 408,
+        "new_end_byte": 407,
+        "old": "T05MSU5FID0gT0ZG",
+        "new": "T05MSU5FID0gT04="
+       },
+       {
+        "start_byte": 189,
+        "old_end_byte": 206,
+        "new_end_byte": 210,
+        "old": "UFJJTUFSWSBLRVkgKElkKSw=",
+        "new": "UFJJTUFSWSBLRVkgKElkIEFTQyks"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "execute_statement",
+         "create_table",
+         "alter_table",
+         "drop_index",
+         "with_options",
+         "create_database",
+         "filespec",
+         "backup_statement",
+         "restore_statement",
+         "restore_move",
+         "encryption_mechanism",
+         "assignment",
+         "where",
+         "subquery",
+         "set_operation",
+         "top_clause",
+         "order_by"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "restore_statement",
+         "set_operation"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "tsql-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "tsql-B04": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "source": null
+     },
+     {
+      "id": "tsql-r6-negative-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "87b6486ce30ec7e559af4824d8b9f5569f3d3e70d43f3f0112f91eb1c8fb63c6",
+       "bytes": 185
+      },
+      "edits": [
+       {
+        "start_byte": 25,
+        "old_end_byte": 33,
+        "new_end_byte": 32,
+        "old": "YiBpbnQsKTs=",
+        "new": "YiBpbnQpOw=="
+       },
+       {
+        "start_byte": 36,
+        "old_end_byte": 112,
+        "new_end_byte": 133,
+        "old": "U0VMRUNUIFRPUCAxIGEgRlJPTSB0IE9SREVSIEJZIGEgVU5JT04gQUxMIFNFTEVDVCBUT1AgMSBhIEZST00gdSBPUkRFUiBCWSBhOw==",
+        "new": "U0VMRUNUIGEgRlJPTSAoU0VMRUNUIFRPUCAxIGEgRlJPTSB0IE9SREVSIEJZIGEgVU5JT04gQUxMIFNFTEVDVCBUT1AgMSBhIEZST00gdSBPUkRFUiBCWSBhKSBBUyBkOw=="
+       },
+       {
+        "start_byte": 155,
+        "old_end_byte": 163,
+        "new_end_byte": 162,
+        "old": "QVMgO1dJVEg=",
+        "new": "QVMgV0lUSA=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "table_var_declaration",
+         "go_statement"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_var_declaration",
+         "set_operation",
+         "create_view",
+         "cte"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "tsql-B04": [
+        "P",
+        "N",
+        "R",
         "E"
        ]
       },
@@ -13693,6 +13887,187 @@
        ]
       },
       "source": "SET NOCOUNT ON;\nGO\n\nCREATE TABLE dbo.Items (\n    Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,\n    Name NVARCHAR(100) NOT NULL,\n    Quantity INT NOT NULL DEFAULT 0,\n    Price DECIMAL(10, 2) NULL\n);\nGO\n\nCREATE OR ALTER PROCEDURE dbo.AddItem\n    @Name NVARCHAR(100),\n    @Quantity INT = 0\nAS\nBEGIN\n    DECLARE @Existing INT;\n    SELECT @Existing = Id FROM dbo.Items WHERE Name = @Name;\n    IF @Existing IS NULL\n    BEGIN\n        INSERT INTO dbo.Items (Name, Quantity) VALUES (@Name, @Quantity);\n    END\n    ELSE\n    BEGIN\n        UPDATE dbo.Items SET Quantity = Quantity + @Quantity WHERE Id = @Existing;\n    END\nEND\nGO\n\n-- Report items with their stock level.\nWITH Levels AS (\n    SELECT Name, Quantity,\n        CASE WHEN Quantity \u003e 100 THEN N'bulk' ELSE N'normal' END AS StockLevel\n    FROM dbo.Items\n)\nSELECT TOP (10) l.Name, l.StockLevel, COUNT(*) OVER (PARTITION BY l.StockLevel) AS LevelCount\nFROM Levels AS l\nWHERE l.Quantity \u003e= 0\nORDER BY l.Name;\nGO\n\nBEGIN TRY\n    BEGIN TRANSACTION;\n    EXEC dbo.AddItem @Name = N'bolt', @Quantity = 120;\n    COMMIT TRANSACTION;\nEND TRY\nBEGIN CATCH\n    ROLLBACK TRANSACTION;\n    THROW;\nEND CATCH\nGO\n"
+     },
+     {
+      "id": "tsql-r6-query-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "096e9f4af2cb75a3ac07f9a55b2a5990c481775f6cb5a284b0d1ef4c47d15aa6",
+       "bytes": 1106
+      },
+      "edits": [
+       {
+        "start_byte": 396,
+        "old_end_byte": 408,
+        "new_end_byte": 407,
+        "old": "T05MSU5FID0gT0ZG",
+        "new": "T05MSU5FID0gT04="
+       },
+       {
+        "start_byte": 189,
+        "old_end_byte": 206,
+        "new_end_byte": 210,
+        "old": "UFJJTUFSWSBLRVkgKElkKSw=",
+        "new": "UFJJTUFSWSBLRVkgKElkIEFTQyks"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "execute_statement",
+         "create_table",
+         "alter_table",
+         "drop_index",
+         "with_options",
+         "create_database",
+         "filespec",
+         "backup_statement",
+         "restore_statement",
+         "restore_move",
+         "encryption_mechanism",
+         "assignment",
+         "where",
+         "subquery",
+         "set_operation",
+         "top_clause",
+         "order_by"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "restore_statement",
+         "set_operation"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.r6-structure",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "환자"
+         },
+         {
+          "name": "exec",
+          "type": "identifier",
+          "text": "sp_who"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "c"
+         },
+         {
+          "name": "column",
+          "type": "identifier",
+          "text": "Id"
+         },
+         {
+          "name": "column",
+          "type": "identifier",
+          "text": "Code"
+         },
+         {
+          "name": "column",
+          "type": "identifier",
+          "text": "Kind"
+         },
+         {
+          "name": "column",
+          "type": "identifier",
+          "text": "Flag"
+         },
+         {
+          "name": "restore",
+          "type": "identifier",
+          "text": "@db"
+         },
+         {
+          "name": "move_from",
+          "type": "literal",
+          "text": "'Sample_dat'"
+         },
+         {
+          "name": "move_to",
+          "type": "literal",
+          "text": "'new.mdf'"
+         },
+         {
+          "name": "assigned",
+          "type": "identifier",
+          "text": "@s"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "Memo"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "Memo"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "Memo"
+         },
+         {
+          "name": "branch_order",
+          "type": "identifier",
+          "text": "Id"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "Memo"
+         },
+         {
+          "name": "branch_order",
+          "type": "identifier",
+          "text": "Kind"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B01": [
+        "Q"
+       ],
+       "tsql-B02": [
+        "Q"
+       ],
+       "tsql-B03": [
+        "Q"
+       ],
+       "tsql-B04": [
+        "Q"
+       ]
+      },
+      "source": ";/* Owned synthetic r6 case. */\nSELECT 이름, 금액2 FROM 환자;\nGO\nsp_who\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s \u003c\u003e N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nGO\n"
      },
      {
       "id": "dynamic-sql-tsql",

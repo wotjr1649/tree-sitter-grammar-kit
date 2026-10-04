@@ -5,6 +5,10 @@
     {
       "id": "q.structure",
       "source": "(create_table name: (object_reference name: (identifier) @table))\n(column_definition name: (identifier) @column)\n(create_procedure name: (object_reference name: (identifier) @procedure))\n(execute_statement procedure: (object_reference name: (identifier) @exec))\n"
+    },
+    {
+      "id": "q.r6-structure",
+      "source": "(execute_statement procedure: (object_reference name: (identifier) @exec))\n(column_definition . name: (identifier) @column)\n(restore_statement name: (identifier) @restore)\n(restore_move logical_file: (literal) @move_from os_file: (literal) @move_to)\n(assignment left: (field name: (identifier) @assigned))\n(query_specification (select (top_clause)) (order_by (order_target (field name: (identifier) @branch_order))))\n(relation (object_reference name: (identifier) @table))\n"
     }
   ],
   "cases": [
@@ -56,6 +60,112 @@
               "name": "exec",
               "type": "identifier",
               "text": "AddItem"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-query-r1",
+      "source_case": "tsql-r6-feature-r1",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "query_expect": [
+        {
+          "query": "q.r6-structure",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "환자"
+            },
+            {
+              "name": "exec",
+              "type": "identifier",
+              "text": "sp_who"
+            },
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "c"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Id"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Code"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Kind"
+            },
+            {
+              "name": "column",
+              "type": "identifier",
+              "text": "Flag"
+            },
+            {
+              "name": "restore",
+              "type": "identifier",
+              "text": "@db"
+            },
+            {
+              "name": "move_from",
+              "type": "literal",
+              "text": "'Sample_dat'"
+            },
+            {
+              "name": "move_to",
+              "type": "literal",
+              "text": "'new.mdf'"
+            },
+            {
+              "name": "assigned",
+              "type": "identifier",
+              "text": "@s"
+            },
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "Memo"
+            },
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "Memo"
+            },
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "Memo"
+            },
+            {
+              "name": "branch_order",
+              "type": "identifier",
+              "text": "Id"
+            },
+            {
+              "name": "table",
+              "type": "identifier",
+              "text": "Memo"
+            },
+            {
+              "name": "branch_order",
+              "type": "identifier",
+              "text": "Kind"
             }
           ],
           "error": null
