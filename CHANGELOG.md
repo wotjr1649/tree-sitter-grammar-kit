@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- 단계 기대값에 anchor를 더했다(#76). `contains`는 같은 type이 다른 줄에 있어도 통과하므로, 대상 구조를 잘못 parse한 사례가 통과할 수 있었다. TypeScript generic tagged template이 `binary_expression`으로 parse됐는데도 다른 곳의 `call_expression` 때문에 통과한 것이 그 예다.
+  - 기대값의 선택 필드 `anchors`(`{type, start_byte, end_byte}`)는 그 step의 full tree에 정확히 그 type·byte 범위의 named node가 있어야 통과한다. 없으면 FAIL, full tree가 아니면 BLOCKED다. S05 판정, replay, qualify가 같은 규칙으로 다시 계산한다. anchor가 없는 기대값의 판정은 그대로다.
+  - profile이 `tsgk-incremental/r2`·`tsgk-oracle/r2`, inventory가 `tsgk-qualification-inventory/r3`이 됐다. 형식이 틀리거나 step source 밖인 anchor는 profile에서 `EXPECT_ANCHOR_INVALID`, inventory에서 `CASE_INVALID`다. r1 profile은 이전 근거를 replay할 수 있게 anchor 없이 계속 읽는다.
+  - 원본 사례 파일은 anchor를 `{type, text, occurrence}`로 적는다. `run-routes.ps1`과 inventory 생성기가 같은 방식으로 byte 범위로 바꾸고, foundation test가 둘을 독립 구현과 대조한다. 아직 anchor를 단 등록 사례는 없다.
 - `DeriveDeclarations`가 한 match 안에 같은 level의 node가 여럿일 때 마지막 node만 남기던 결함을 고쳤다. PostgreSQL `CREATE TABLE … PARTITION OF …`의 선언 이름이 이 결함 때문에 잘못 나왔다(#77).
 - 개발 helper `run-routes.ps1`이 capture 기대값을 잘못 직렬화하던 결함을 고쳤다(#77).
   - capture가 하나이면 scalar가 되어 `JSON_TYPE`으로 거부됐다.
