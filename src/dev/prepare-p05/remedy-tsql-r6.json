@@ -89,7 +89,8 @@
           "claim": "Thom A, 2020/2022: a leading ; inside a VIEW (single-statement body) fails with Msg 102 Incorrect syntax near ';' (engine output shown). Limiting the patch to batch level is this subject's reading of the two sources, not a stated rule."
         }
       ],
-      "change": "batch: repeat(;) before the first item, after each item and before a lone GO; module bodies unchanged"
+      "change": "batch: repeat(;) before the first item, after each item and before a lone GO; statement lists of BEGIN ... END blocks, TRY/CATCH and module bodies (_body_item): a lone ; item and repeat(;) after a statement. A view or inline function body (one statement) is unchanged",
+      "scope_note": "Bertrand states the rule for statements in general; the corpus re-run showed 12 of the 13 files with this class have the extra ; inside a procedure or block body, so r6 applies it to statement lists as well as batches"
     },
     {
       "id": "r6-default-with-values",
@@ -179,7 +180,7 @@
           "claim": "SELECT { @local_variable { = | += | -= | *= | /= | %= | &= | ^= | |= } expression } [ ,...n ] [ ; ]"
         }
       ],
-      "change": "select term alternative _select_compound_assignment aliased assignment, whose left side is a @local_variable only; plain = unchanged"
+      "change": "select term alternative select_compound_assignment (a visible rule, so its fields stay on the node) aliased assignment, whose left side is local_variable (an @name) only; plain = unchanged"
     },
     {
       "id": "r6-where-without-from",
@@ -213,7 +214,7 @@
           "claim": "You don't have to specify the EXECUTE keyword when executing modules if the statement is the first one in a batch."
         }
       ],
-      "change": "batch may begin with implicit_execute aliased execute_statement (only when no ; precedes it); the rule is visible so its procedure field is not inherited by batch. CHECKPOINT [checkpoint_duration] and SHUTDOWN [WITH NOWAIT] become statements so that those reserved-word statements are not read as module calls",
+      "change": "batch may begin with implicit_execute aliased execute_statement (only when no ; precedes it); the rule is visible so its procedure field is not inherited by batch. CHECKPOINT [checkpoint_duration] and SHUTDOWN [WITH NOWAIT] become statements so that those reserved-word statements are not read as module calls; as keywords they also end a preceding statement, so `SELECT 1 CHECKPOINT` or `FROM t checkpoint` (an alias in r5) is now two statements, which matches their reserved status",
       "statement_basis": [
         {
           "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/checkpoint-transact-sql?view=sql-server-ver17",
@@ -226,7 +227,7 @@
           "claim": "SHUTDOWN [ WITH NOWAIT ]"
         }
       ],
-      "over_acceptance": "Module names follow the identifier rules, which exclude reserved keywords (reserved-keywords-transact-sql). A bare reserved keyword that is not a statement (e.g. PERCENT;) at a batch start is still read as a module call. A reserved word set on the module name was tried and rejected: since a batch may follow a statement without GO, the set applied to every statement-end state and broke valid inputs such as CREATE STATISTICS ... WITH SAMPLE 50 PERCENT",
+      "over_acceptance": "Module names follow the identifier rules, which exclude reserved keywords (reserved-keywords-transact-sql). A bare reserved keyword that is not a statement (e.g. PERCENT;) at a batch start is still read as a module call. A reserved word set on the module name was tried and rejected: since a batch may follow a statement without GO, the set applied to every statement-end state and broke valid inputs such as CREATE STATISTICS ... WITH SAMPLE 50 PERCENT. Review r2 accepted this recorded over-acceptance (invalid inputs only) as MINOR",
       "expectation_change": "C1-TSQL-PATCH-R6-ADDENDUM-R1 dynamic_sql_expected_change (separate commit)"
     },
     {
@@ -257,9 +258,19 @@
           "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/backup-master-key-transact-sql?view=sql-server-ver17",
           "kind": "OFFICIAL_MICROSOFT",
           "claim": "BACKUP MASTER KEY TO { FILE = 'path_to_file' | URL = 'Azure Blob storage URL' } ENCRYPTION BY PASSWORD = 'password'"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/backup-certificate-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "BACKUP CERTIFICATE certname TO FILE = 'path_to_file' [ WITH [FORMAT = 'PFX',] PRIVATE KEY ( FILE = 'path_to_private_key_file' , ENCRYPTION BY PASSWORD = 'encryption_password' [ , DECRYPTION BY PASSWORD = 'decryption_password' ] ) ]; examples C and D order the items freely and add ALGORITHM = 'AES_256'"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-master-key-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "RESTORE MASTER KEY FROM { FILE = 'path_to_file' | URL = 'Azure Blob storage URL' } DECRYPTION BY PASSWORD = 'password' ENCRYPTION BY PASSWORD = 'password' [ FORCE ]"
         }
       ],
-      "change": "restore_statement, restore_move (logical name as a literal or, as in the official example L3, a bare identifier; physical name a literal), BACKUP [SERVICE] MASTER KEY; FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY not modeled"
+      "change": "restore_statement, restore_move (logical name as a literal or, as in the official example L3, a bare identifier; physical name a literal), BACKUP [SERVICE] MASTER KEY, BACKUP CERTIFICATE (PRIVATE KEY item list), RESTORE MASTER KEY; FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY and RESTORE SERVICE MASTER KEY not modeled"
     },
     {
       "id": "r6-drop-index-options",
@@ -316,7 +327,7 @@
         }
       ],
       "structure_basis": "An ORDER BY after a branch with TOP inside a subquery belongs to that branch: attached to the union it would leave a derived table with ORDER BY and no TOP, which the ORDER BY page makes invalid. After a last branch without TOP it stays the union's (with OFFSET/FETCH, as at top level). Top-level set_operation unchanged. OFFSET/FETCH is part of the ORDER BY clause and TOP cannot share a query scope with it, so an ORDER BY followed by OFFSET/FETCH after a last TOP branch is the union's. Review r1 (separate context) agreed for the two-TOP-branch shape, which the SQLServerCentral result confirms; for a TOP branch only last (earlier branch without TOP) the branch attachment is the only reading consistent with the ORDER BY and TOP pages but has no engine observation, and r5 parsed that shape with the union attachment.",
-      "change": "subquery uses _subquery_query_expression/_subquery_set_operation; _ordered_top_branch (dynamic precedence 1) keeps TOP ... ORDER BY inside the branch query_specification"
+      "change": "subquery uses _subquery_query_expression/_subquery_set_operation; _ordered_top_branch (dynamic precedence 1) keeps TOP ... ORDER BY inside the branch query_specification; the union trailing clauses inside a subquery take OFFSET/FETCH only after their own ORDER BY, so an OFFSET without ORDER BY there is now an error (r5 accepted it; the top-level set_operation is unchanged and still accepts it)"
     }
   ],
   "gaps": [
@@ -634,6 +645,23 @@
       ]
     },
     {
+      "target": "grammar/statements/create-procedure.js",
+      "base_file": {
+        "bytes": 3811,
+        "sha256": "6f30d8156863bdccac89214cc116fff86d5e6aea5f9ba6f316ee58d9731db7b4"
+      },
+      "result": {
+        "bytes": 4058,
+        "sha256": "8116697c046f90e53a2c79fc82cb1d999f503fcee00fa856389f177ba00ad85a"
+      },
+      "replacements": [
+        {
+          "old": "  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  _body_item: ($) => prec.right(seq(choice($.statement, $.block), optional(';'))),\n};\n",
+          "new": "  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  //\n  // tsgk r6: as at batch level, extra `;` may stand between and before the\n  // statements of a statement list (`BEGIN; ...`, `AS BEGIN ;WITH c AS ...`).\n  // A view or inline function body is one statement and does not use this.\n  _body_item: ($) => choice(prec.right(seq(choice($.statement, $.block), repeat(';'))), ';'),\n};\n"
+        }
+      ]
+    },
+    {
       "target": "grammar/statements/create.js",
       "base_file": {
         "bytes": 22558,
@@ -686,8 +714,8 @@
         "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff"
       },
       "result": {
-        "bytes": 25368,
-        "sha256": "4250e1eb3068e73354b4b2d35bf45c9f733388eaa118b4a4759d12f69fc122dc"
+        "bytes": 26579,
+        "sha256": "6a300f1aadbaee9e638822d260d77aaba7ca9b175c25d4ecdaaf12b0b5b17aa1"
       },
       "replacements": [
         {
@@ -700,7 +728,7 @@
         },
         {
           "old": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice($.keyword_database, $.keyword_log),\n        $.identifier,\n        $.keyword_to,\n        comma_list($.option, true),\n        optional($.with_clause),\n      ),\n    ),\n\n",
-          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice($.keyword_database, $.keyword_log),\n        field('name', $.identifier),\n        optional(seq($.keyword_from, comma_list($.option, true))),\n        optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n      ),\n    ),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
+          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n          // tsgk r6: BACKUP CERTIFICATE name TO FILE = 'path' [WITH [FORMAT =\n          // 'PFX',] PRIVATE KEY (FILE = 'path', ENCRYPTION BY PASSWORD = 'p'\n          // [, DECRYPTION BY PASSWORD = 'p'])]; the official examples also\n          // order the key items freely and add ALGORITHM = '...'.\n          seq(\n            $.keyword_certificate,\n            field('name', $.identifier),\n            $.keyword_to,\n            $.option,\n            optional(\n              seq(\n                $.keyword_with,\n                optional(seq($.option, ',')),\n                $.keyword_private,\n                $.keyword_key,\n                paren_list(choice($.option, $.encryption_mechanism), true),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            field('name', $.identifier),\n            optional(seq($.keyword_from, comma_list($.option, true))),\n            optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n          ),\n          // tsgk r6: RESTORE MASTER KEY FROM { FILE | URL } = 'path'\n          // DECRYPTION BY PASSWORD = 'p' ENCRYPTION BY PASSWORD = 'p' [FORCE]\n          seq(\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_from,\n            $.option,\n            $.encryption_mechanism,\n            $.encryption_mechanism,\n            optional($.keyword_force),\n          ),\n        ),\n      ),\n    ),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
         }
       ]
     },

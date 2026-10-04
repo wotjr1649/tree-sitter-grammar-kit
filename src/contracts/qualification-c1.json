@@ -12914,8 +12914,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "b232d9be9e4e2fe3d457cd4e9a1f53dcc4fed4bbeb05708481f13ec5d71238b4",
-      "bytes": 29138594
+      "sha256": "749b12cc22033dea1a02da41be8d2b0a584b2c6c6c623fb04d50100dc43165e2",
+      "bytes": 29185744
      },
      {
       "path": "src/scanner.c",
@@ -13188,21 +13188,21 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "9c7501821bffc89d3160ac23dcc90c885a481bc164f11cab169e99a2817402cc",
-       "bytes": 1274
+       "sha256": "3de1ee88bc830bf1445787172f262c2666df5984c40cbaf27d6cd93ec5bdf945",
+       "bytes": 1633
       },
       "edits": [
        {
-        "start_byte": 399,
-        "old_end_byte": 411,
-        "new_end_byte": 410,
+        "start_byte": 498,
+        "old_end_byte": 510,
+        "new_end_byte": 509,
         "old": "T05MSU5FID0gT0ZG",
         "new": "T05MSU5FID0gT04="
        },
        {
-        "start_byte": 192,
-        "old_end_byte": 209,
-        "new_end_byte": 213,
+        "start_byte": 291,
+        "old_end_byte": 308,
+        "new_end_byte": 312,
         "old": "UFJJTUFSWSBLRVkgKElkKSw=",
         "new": "UFJJTUFSWSBLRVkgKElkIEFTQyks"
        }
@@ -13213,6 +13213,8 @@
         "syntax": "NO_ERROR",
         "contains": [
          "execute_statement",
+         "create_procedure",
+         "block",
          "create_table",
          "alter_table",
          "drop_index",
@@ -13956,21 +13958,21 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "9c7501821bffc89d3160ac23dcc90c885a481bc164f11cab169e99a2817402cc",
-       "bytes": 1274
+       "sha256": "3de1ee88bc830bf1445787172f262c2666df5984c40cbaf27d6cd93ec5bdf945",
+       "bytes": 1633
       },
       "edits": [
        {
-        "start_byte": 399,
-        "old_end_byte": 411,
-        "new_end_byte": 410,
+        "start_byte": 498,
+        "old_end_byte": 510,
+        "new_end_byte": 509,
         "old": "T05MSU5FID0gT0ZG",
         "new": "T05MSU5FID0gT04="
        },
        {
-        "start_byte": 192,
-        "old_end_byte": 209,
-        "new_end_byte": 213,
+        "start_byte": 291,
+        "old_end_byte": 308,
+        "new_end_byte": 312,
         "old": "UFJJTUFSWSBLRVkgKElkKSw=",
         "new": "UFJJTUFSWSBLRVkgKElkIEFTQyks"
        }
@@ -13981,6 +13983,8 @@
         "syntax": "NO_ERROR",
         "contains": [
          "execute_statement",
+         "create_procedure",
+         "block",
          "create_table",
          "alter_table",
          "drop_index",
@@ -14034,6 +14038,11 @@
           "name": "exec",
           "type": "identifier",
           "text": "sp_who"
+         },
+         {
+          "name": "table",
+          "type": "identifier",
+          "text": "t"
          },
          {
           "name": "table",
@@ -14151,7 +14160,7 @@
         "Q"
        ]
       },
-      "source": ";/* Owned synthetic r6 case. */\nSELECT 상품명, 가격2 FROM 상품;\nGO\nsp_who\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCHECKPOINT 10;\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', MOVE Sample_log TO 'new.ldf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s \u003c\u003e N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nSELECT a FROM (SELECT Code AS a FROM dbo.Memo\n    UNION SELECT TOP 5 Code FROM dbo.Memo ORDER BY a OFFSET 0 ROWS) AS e;\nGO\n"
+      "source": ";/* Owned synthetic r6 case. */\nSELECT 상품명, 가격2 FROM 상품;\nGO\nsp_who\nGO\nCREATE PROCEDURE dbo.Tick @n INT AS\nBEGIN;\n    ;WITH t AS (SELECT 1 AS v) SELECT v FROM t;;\nEND\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCHECKPOINT 10;\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', MOVE Sample_log TO 'new.ldf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nBACKUP CERTIFICATE Cert1 TO FILE = 'cert1.cer' WITH PRIVATE KEY (FILE = 'cert1.pvk', ENCRYPTION BY PASSWORD = 'placeholder');\nRESTORE MASTER KEY FROM FILE = 'mk.key' DECRYPTION BY PASSWORD = 'placeholder' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s \u003c\u003e N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nSELECT a FROM (SELECT Code AS a FROM dbo.Memo\n    UNION SELECT TOP 5 Code FROM dbo.Memo ORDER BY a OFFSET 0 ROWS) AS e;\nGO\nCHECKPOINT;\nGO\n"
      },
      {
       "id": "dynamic-sql-tsql",

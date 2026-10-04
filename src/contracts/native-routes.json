@@ -1626,8 +1626,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "b232d9be9e4e2fe3d457cd4e9a1f53dcc4fed4bbeb05708481f13ec5d71238b4",
-     "bytes": 29138594
+     "sha256": "749b12cc22033dea1a02da41be8d2b0a584b2c6c6c623fb04d50100dc43165e2",
+     "bytes": 29185744
     },
     {
      "path": "src/scanner.c",
@@ -1662,18 +1662,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "2c6ae4e3821d6e3866da4079c4b3ae5904518b4dadb87801f40ebc3500778a7d",
-      "bytes": 709543
+      "sha256": "2c6f28e8369b9059e0935eb771da7593adf6dec9d564a93334308e6eb8ee5480",
+      "bytes": 717042
      },
      {
       "path": "node-types.json",
-      "sha256": "72897bc90a6e25e7c523fbc2bf128015f0131c50fb56b016faaedba8e685209e",
-      "bytes": 410992
+      "sha256": "568b40b14dc59776b3b730496349dde107b8e006fce7db4fca36f47de35c97bb",
+      "bytes": 411762
      },
      {
       "path": "parser.c",
-      "sha256": "b232d9be9e4e2fe3d457cd4e9a1f53dcc4fed4bbeb05708481f13ec5d71238b4",
-      "bytes": 29138594
+      "sha256": "749b12cc22033dea1a02da41be8d2b0a584b2c6c6c623fb04d50100dc43165e2",
+      "bytes": 29185744
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -1741,8 +1741,8 @@
      {
       "path": "grammar/statements/create-procedure.js",
       "role": "js_helper",
-      "sha256": "6f30d8156863bdccac89214cc116fff86d5e6aea5f9ba6f316ee58d9731db7b4",
-      "bytes": 3811
+      "sha256": "8116697c046f90e53a2c79fc82cb1d999f503fcee00fa856389f177ba00ad85a",
+      "bytes": 4058
      },
      {
       "path": "grammar/statements/create.js",
@@ -1771,8 +1771,8 @@
      {
       "path": "grammar/statements/index.js",
       "role": "js_helper",
-      "sha256": "4250e1eb3068e73354b4b2d35bf45c9f733388eaa118b4a4759d12f69fc122dc",
-      "bytes": 25368
+      "sha256": "6a300f1aadbaee9e638822d260d77aaba7ca9b175c25d4ecdaaf12b0b5b17aa1",
+      "bytes": 26579
      },
      {
       "path": "grammar/statements/insert.js",
@@ -1912,23 +1912,29 @@
       "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
       "pointer": "/files/5",
       "field": "replacements",
-      "target": "grammar/statements/create.js"
+      "target": "grammar/statements/create-procedure.js"
      },
      {
       "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
       "pointer": "/files/6",
       "field": "replacements",
-      "target": "grammar/statements/drop.js"
+      "target": "grammar/statements/create.js"
      },
      {
       "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
       "pointer": "/files/7",
       "field": "replacements",
-      "target": "grammar/statements/index.js"
+      "target": "grammar/statements/drop.js"
      },
      {
       "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
       "pointer": "/files/8",
+      "field": "replacements",
+      "target": "grammar/statements/index.js"
+     },
+     {
+      "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+      "pointer": "/files/9",
       "field": "replacements",
       "target": "grammar/statements/select.js"
      }
@@ -1971,13 +1977,18 @@
      },
      {
       "path": "grammar/statements/index.js",
-      "bytes": 25368,
-      "sha256": "4250e1eb3068e73354b4b2d35bf45c9f733388eaa118b4a4759d12f69fc122dc"
+      "bytes": 26579,
+      "sha256": "6a300f1aadbaee9e638822d260d77aaba7ca9b175c25d4ecdaaf12b0b5b17aa1"
      },
      {
       "path": "grammar/statements/select.js",
       "bytes": 27110,
       "sha256": "1619ce3fd0b8833f08dfbc2da6193ce309247b148d75fb5eaf6e2586ba6537a7"
+     },
+     {
+      "path": "grammar/statements/create-procedure.js",
+      "bytes": 4058,
+      "sha256": "8116697c046f90e53a2c79fc82cb1d999f503fcee00fa856389f177ba00ad85a"
      }
     ]
    }
