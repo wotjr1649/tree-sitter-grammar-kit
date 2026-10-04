@@ -25,8 +25,15 @@ type campaignDefinition struct {
 		Issue, Milestone        int
 		AcceptanceIDs           []string `json:"acceptance_ids"`
 		ImplementationStatus    string   `json:"implementation_status"`
+		Integration             *struct {
+			PRs          []int  `json:"prs"`
+			MergeCommit  string `json:"merge_commit"`
+			PostMergeRun int64  `json:"post_merge_run"`
+		} `json:"integration"`
 	}
 }
+
+var mergeCommitPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
 // Validate tracked acceptance definitions, never infer product or preparation success.
 func checkCampaignDefinition(c campaignDefinition, workload string) error {
@@ -48,9 +55,29 @@ func checkCampaignDefinition(c campaignDefinition, workload string) error {
 	if len(c.Sessions) != 8 {
 		return fmt.Errorf("campaign session count mismatch")
 	}
+	// INTEGRATED records a merged session with its PRs, merge commit and post-merge run. It
+	// says nothing about qualification or support, which only the qualify CI receipt owns.
 	for i, s := range c.Sessions {
-		if s.ImplementationStatus != "NOT_IMPLEMENTED" {
-			return fmt.Errorf("preparation implementation status must remain NOT_IMPLEMENTED")
+		switch s.ImplementationStatus {
+		case "NOT_IMPLEMENTED":
+			if s.Integration != nil {
+				return fmt.Errorf("implementation status NOT_IMPLEMENTED carries integration evidence: %02d", i+1)
+			}
+		case "INTEGRATED":
+			if i > 0 && c.Sessions[i-1].ImplementationStatus != "INTEGRATED" {
+				return fmt.Errorf("implementation status INTEGRATED before its predecessor: %02d", i+1)
+			}
+			in := s.Integration
+			if in == nil || len(in.PRs) == 0 || !mergeCommitPattern.MatchString(in.MergeCommit) || in.PostMergeRun <= 0 {
+				return fmt.Errorf("implementation status INTEGRATED without PR, merge commit and post-merge run: %02d", i+1)
+			}
+			for _, pr := range in.PRs {
+				if pr <= 0 {
+					return fmt.Errorf("implementation status INTEGRATED with an invalid PR number: %02d", i+1)
+				}
+			}
+		default:
+			return fmt.Errorf("unknown implementation status %q: %02d", s.ImplementationStatus, i+1)
 		}
 		id, predecessor := fmt.Sprintf("%02d", i+1), fmt.Sprintf("%02d", i)
 		if i == 0 {
@@ -436,6 +463,15 @@ func TestCampaignDefinitions(t *testing.T) {
 		{"wrong-predecessor", "session mapping", func(c *campaignDefinition, _ *string) { c.Sessions[4].Predecessor = "06" }},
 		{"missing-acceptance", "acceptance", func(_ *campaignDefinition, w *string) { *w = strings.Replace(*w, "| S05-A04 |", "| REMOVED |", 1) }},
 		{"false-implementation", "implementation status", func(c *campaignDefinition, _ *string) { c.Sessions[0].ImplementationStatus = "IMPLEMENTED" }},
+		{"qualified-status", "implementation status", func(c *campaignDefinition, _ *string) { c.Sessions[7].ImplementationStatus = "QUALIFIED" }},
+		{"integrated-without-evidence", "without PR", func(c *campaignDefinition, _ *string) { c.Sessions[2].Integration = nil }},
+		{"integrated-short-merge", "without PR", func(c *campaignDefinition, _ *string) { c.Sessions[3].Integration.MergeCommit = "5aee01d" }},
+		{"integrated-no-run", "without PR", func(c *campaignDefinition, _ *string) { c.Sessions[4].Integration.PostMergeRun = 0 }},
+		{"integrated-bad-pr", "invalid PR", func(c *campaignDefinition, _ *string) { c.Sessions[5].Integration.PRs = []int{0} }},
+		{"integrated-out-of-order", "before its predecessor", func(c *campaignDefinition, _ *string) {
+			c.Sessions[5].ImplementationStatus, c.Sessions[5].Integration = "NOT_IMPLEMENTED", nil
+		}},
+		{"not-implemented-with-evidence", "carries integration", func(c *campaignDefinition, _ *string) { c.Sessions[7].ImplementationStatus = "NOT_IMPLEMENTED" }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var candidate campaignDefinition

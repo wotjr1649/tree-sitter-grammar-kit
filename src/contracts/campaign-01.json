@@ -85,7 +85,14 @@
         "S01-A18",
         "S01-A19"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          59
+        ],
+        "merge_commit": "7a513bdf38c57ed52fc22e5f0ab45197653c9f76",
+        "post_merge_run": 37093333636
+      }
     },
     {
       "id": "02",
@@ -111,7 +118,14 @@
         "S02-A15",
         "S02-A16"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          60
+        ],
+        "merge_commit": "a3d3eca4cf0a489fbd98ef3bd907abece1ccd730",
+        "post_merge_run": 37097071286
+      }
     },
     {
       "id": "03",
@@ -139,7 +153,14 @@
         "S03-A17",
         "S03-A18"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          62
+        ],
+        "merge_commit": "24bdba5ca5038b6b6e810779a9c49ba3147c0c3d",
+        "post_merge_run": 37100908178
+      }
     },
     {
       "id": "04",
@@ -167,7 +188,14 @@
         "S04-A17",
         "S04-A18"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          63
+        ],
+        "merge_commit": "5aee01db4469c2b17da802791c105fe7dbe4371d",
+        "post_merge_run": 37107024777
+      }
     },
     {
       "id": "05",
@@ -199,7 +227,15 @@
         "S05-A21",
         "S05-A22"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          64,
+          66
+        ],
+        "merge_commit": "ac700058e06cf82d02340a7010b137dfec720276",
+        "post_merge_run": 37128152464
+      }
     },
     {
       "id": "06",
@@ -226,7 +262,15 @@
         "S06-A16",
         "S06-A17"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          67,
+          68
+        ],
+        "merge_commit": "dc2430a74b2b6cab0056fedea7850873996ef991",
+        "post_merge_run": 37150364323
+      }
     },
     {
       "id": "07",
@@ -252,7 +296,14 @@
         "S07-A15",
         "S07-A16"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          69
+        ],
+        "merge_commit": "3fa7ed36185edcf3d937040e89cc92f85c17563e",
+        "post_merge_run": 37157781534
+      }
     },
     {
       "id": "08",
@@ -279,7 +330,14 @@
         "S08-A16",
         "S08-A17"
       ],
-      "implementation_status": "NOT_IMPLEMENTED"
+      "implementation_status": "INTEGRATED",
+      "integration": {
+        "prs": [
+          71
+        ],
+        "merge_commit": "03ea1f08f81a691708d3229c8928c9e180e8ae51",
+        "post_merge_run": 37184449649
+      }
     }
   ]
 }
