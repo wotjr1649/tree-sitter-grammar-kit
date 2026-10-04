@@ -1,9 +1,52 @@
 # 변경 기록
 
-## Unreleased
+## Unreleased — release 후보 v0.1.0 준비
+
+첫 release 후보의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md)에 있다. tag, Release, package는 아직 발행하지 않았다.
+
+### VERIFIED(Windows amd64, Linux amd64, macOS arm64)
+
+- offline core와 그 공개 API(`src/kit`): `inspect`, `identity`, `verify`(디렉터리와 ZIP, 압축을 풀지 않음), `schema check`/`schema diff`. CGO-free이고 CLI와 API 결과 bytes가 같다.
+
+### experimental(호환성 약속 없음)
+
+- `corpus`(비공개 corpus inventory)
+- `reproduce`(두 작업 공간 생성 비교)
+- `incremental`·`oracle record`(native parse/edit/query 기록; 승인 capability와 host compiler 필요)
+- `replay`·`evidence verify`
+- `qualify`(26 route × 3 platform 집계)
+
+### 상태
+
+- 26 route 지원 claim은 **BLOCKED**다. 필수 feature 사례가 부족하고(#70) 채택 route에 grammar gap이 남아 있다. 최종 qualification 근거는 main `03ea1f0`의 CI run 37184449649이다.
+
+### 알려진 한계
+
+- tree-sitter runtime의 field 조회와 cursor가 다른 API claim FAIL 23 사례(6 route)
+- T-SQL 과잉 수용(r6에서 3종, r5부터 2종)
+- `--out`이 `subst`·bind mount 별칭을 검출하지 못함
+- 동적 SQL 탐지는 첫 문장이 아닌 `;sp_executesql`을 known miss로 둠
+- BrightScript·cooklang 역할 NOT_RUN, `n461-svc` 역할 INCOMPLETE(SVC negative 기대값 8개, #70)
+- `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
+- 시험 시간 여유(#65)
+
+### Session 이력
 
 - Session 00: Go CGO-free foundation, 제품·검증 계약, 세 OS CI와 순차 개발 campaign을 준비한다.
-- Session 01: `tsgk inspect`/`identity`/`corpus`와 공개 offline API `src/kit`를 구현한다. manifest r2(판별 encoding 결속), E0 report, known-paths discovery와 정적 closure 관측, no-follow guard·유한 한도·kit wall/caller 취소 구분, no-clobber `--out`, 비공개 corpus inventory(N461 역할·PRESENCE_ONLY·`.csproj` 선언 관측)를 포함한다.
+- Session 01: `tsgk inspect`/`identity`/`corpus`와 공개 offline API `src/kit`를 구현한다. 다음을 포함한다.
+  - manifest r2(판별 encoding 결속), E0 report
+  - known-paths discovery와 정적 closure 관측
+  - no-follow guard, 유한 한도, kit wall과 caller 취소의 구분
+  - no-clobber `--out`
+  - 비공개 corpus inventory(N461 역할, PRESENCE_ONLY, `.csproj` 선언 관측)
 - Session 02~07: strict verify, schema, reproduce, incremental, oracle record, replay·evidence verify (각 Session 보고서 참고).
-- Session 08: `tsgk qualify`와 `kit.Qualify`, qualification inventory(`src/contracts/qualification-c1.json`), CI의 host 실행 identity·기록 set 보관과 qualification job, module proxy 소비자 시험을 더한다. 지원 claim은 BLOCKED다(필수 feature 사례 coverage 부족과 채택 route의 grammar gap).
-- tag/Release/package은 발행하지 않았다.
+- Session 08: 다음을 더한다. 지원 claim은 BLOCKED다.
+  - `tsgk qualify`와 `kit.Qualify`
+  - qualification inventory(`src/contracts/qualification-c1.json`)
+  - CI의 host 실행 identity·기록 set 보관과 qualification job
+  - module proxy 소비자 시험
+  - T-SQL patch r6
+- release 후보 준비(#72):
+  - `src/contracts/campaign-01.json`에 Session 통합 상태(`INTEGRATED`, PR, merge commit, post-merge run)를 기록하고 guard로 검사한다.
+  - 플랫폼 지원 상태표를 현재 근거로 갱신한다.
+  - Linux `race diagnostic` job을 추가한다(비필수, CGO 진단 lane).

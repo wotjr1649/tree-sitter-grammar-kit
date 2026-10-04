@@ -4,7 +4,7 @@ Campaign의 추가 `NET461-WINFORMS-DX202-WCF` 업무 profile은 [업무 workloa
 
 `tree-sitter-grammar-kit`의 CLI `tsgk`와 작은 공개 offline Go API는 같은 코어로 grammar의 파일·생성물·구조·실행 결과와 그 근거를 검사·비교한다. 첫 사용자는 `go-treesitter`의 grammar 도입·업데이트 담당자다. 제품은 독립 도구이며 소비자의 Go 변환·scanner 이식·runtime·최종 채택 판단을 소유하지 않는다. 일반 application 파싱 경로에 kit 실행을 요구하지 않는다.
 
-첫 release 후보의 최소 범위는 검증된 offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API다. Session 01~08 campaign은 그 위에 reproduction·incremental·native oracle·bounded replay·qualification을 순차 개발한다. 독립 offline 기능의 사용 가능성과 campaign 전체 목표 충족은 구분한다. campaign 완료는 release 승인이 아니다. 현재는 foundation 검사만 구현했다.
+첫 release 후보의 최소 범위는 검증된 offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API다. Session 01~08 campaign은 그 위에 reproduction·incremental·native oracle·bounded replay·qualification을 순차 개발한다. 독립 offline 기능의 사용 가능성과 campaign 전체 목표 충족은 구분한다. campaign 완료는 release 승인이 아니다. Session 01~08은 통합됐고, release 후보 claim과 현재 근거는 [플랫폼 지원 계약](platform-support.md)이 소유한다.
 
 kit는 grammar·runtime·정책 조합이 실사용 코드를 믿고 파싱하는지 검증하고 검증된 tree·capture·사실을 내는 신뢰 계층이다. 소스 색인·검색 서비스, MSBuild 평가와 의미 분석은 범위 밖이며 kit 출력을 쓰는 별도 소비자가 맡는다.
 
