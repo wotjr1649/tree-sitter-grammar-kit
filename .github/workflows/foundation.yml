@@ -168,8 +168,10 @@ jobs:
   race:
     # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
     # CGO-free foundation gate above stays the required core check and is not relaxed.
+    # It waits for the three native route jobs so at most three heavy jobs run at once.
     name: race diagnostic (ubuntu-24.04)
-    needs: foundation
+    needs: native-routes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
@@ -210,6 +212,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'go env failed' }
           if ($cgo -ne '1') { throw 'race diagnostic needs CGO_ENABLED=1' }
           Write-Output "$goIdentity cgo=$cgo checkout_sha=$checkoutSha run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+          # Same delegated cgroup v2 as foundation: hosted Linux runner tests require the hard cap.
+          $base = "/sys/fs/cgroup/tsgk-race-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          sudo mkdir -p "$base/supervisor" "$base/jobs"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+          sudo chown -R "$(id -u):$(id -g)" $base
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+          Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+          Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+          $env:TSGK_CGROUP_PARENT = "$base/jobs"
           go test -race -count=1 -timeout 600s ./src/...
           if ($LASTEXITCODE -ne 0) { throw 'race diagnostic failed' }
 
