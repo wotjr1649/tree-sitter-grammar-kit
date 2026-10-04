@@ -283,8 +283,18 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 
 모두 offline이며 process·network를 쓰지 않는다. `Replay`와 `VerifyEvidence`는 호출자가 준 root만 S01 guard로 읽고, `ctx`의 deadline이 필요하다(없으면 `DEADLINE_REQUIRED`). 연산 wall에 닿으면 `RESOURCE_LIMIT`, 호출자 취소·deadline은 `CANCELLED`다. 실패는 `*Error`와 함께 실패 report를 돌려준다. 등록되지 않은 reducer·schema·연산은 `KindUnsupported`이고, 손상되었거나 불완전한 evidence는 오류가 아니라 `evidence_valid: false`와 `FAIL` 결과다. `ReplayResult`는 E0 `Report`에 `subject`, `recorded`, `recomputed`, `evidence_valid`, `observed_identities`, `gates`, `consumption`, `members`, `bytes_read`, 한국어 `explanation`을 더한다. `ReplayOperations`는 `evidence-replay`와 `private-corpus-replay`의 한도를, `Reducers`는 등록 reducer(다시 계산하는 gate와 기록으로 남는 것)를 돌려준다. `CompareGates`는 BrightScript `S07-REPLAY-2ULP-r1` 비교이며 그 workload에만 쓴다. 차이는 오류 text가 보관된 verifier의 code로 시작한다. `VerifyEvidence`는 `tsgk-evidence/r1` graph를 `tsgk-evidence-policy/r1`로 검사하고 E0에 `nodes`, `files`, `modes`, `explanation`을 더한 `EvidenceResult`를 돌려준다. 계약은 [identity/evidence](identity-and-evidence.md) `S07 구현`과 [CLI/profile](cli-and-profile.md) `S07 구현`이다. 같은 입력의 두 호출은 같은 결과이며 동시 호출은 서로 상태를 공유하지 않는다.
 
+## S08 함수 — qualification
+
+```go
+func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, error)
+func ParseQualificationInventory(data []byte) (QualificationInventory, error)
+func QualificationLimits() ReplayLimits
+```
+
+offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. 다만 host 디렉터리가 없거나 그 안에 link·special 파일이 있으면 S01 guard가 호출 전체를 `KindInvalidInput`으로 끝낸다. host당 record 수가 한도를 넘으면 `RECORDS_LIMIT`(`RESOURCE_LIMIT`)다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r1`을 strict decode하고 칸 수·identity 중복·coverage 규칙을 검사한다. `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.
 
-S01의 local replace는 초기 소비 경계만 검증한다. S08은 준비된 source-export/versioned local module-proxy를 사용해 developer checkout 경로와 unpublished tag에 의존하지 않는 배포 형식도 검증한다. publication은 수행하지 않는다.
+S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModuleProxyConsumer`는 checkout의 추적 파일로 module zip(`github.com/wotjr1649/tree-sitter-grammar-kit@v0.0.0-20261004000000-000000000000`)을 만들고 파일 module proxy(`GOPROXY=file://…`, 고정 `golang.org/x/sys`는 module cache의 download 파일)로만 별도 module이 그 version을 require해 build한다. replace·checkout 경로·network·tag가 없다. module zip에 실행 파일·native library·object 파일이 있으면 실패한다. 그 module의 `kit.Qualify` 결과가 `PATH`를 비운 환경에서 CLI `qualify`와 같은 bytes인지 확인한다. publication은 수행하지 않는다. CLI만으로 하는 grammar 갱신 흐름(기준 identity → 후보 verify FAIL과 변경 파일 → node schema diff의 검토 항목, 입력 불변·자동 채택 없음)은 `TestGrammarUpdateWorkflow`가 확인한다.

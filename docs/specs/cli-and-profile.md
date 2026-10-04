@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을, S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을 구현했다(아래 `S04 구현`~`S07 구현` 절). 나머지 명령은 담당 Session이 구현하기 전의 계약이다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을, S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -23,7 +23,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `oracle record --root PATH --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
-| `parity --left PATH --right PATH --profile FILE` | 동일 의미 identity의 결과 대조 | READ_DATA, 08 |
+| `qualify --inventory FILE --candidate SHA --host PLATFORM=DIR ...` | 한 후보의 host 실행 기록을 등록 칸(26 route × 3 OS)과 추가 역할 행으로 집계, 세 host 의미 비교 | READ_DATA, 08 |
 
 명령은 network·tool 설치를 묵시적으로 하지 않는다. `--allow CAPABILITY`를 반복 지정해 실행 권한을 전달하되 profile 요청과 실제 backend가 모두 충족되어야 한다. fetch 준비는 별도 명시 절차이고 위 offline 명령에 자동 fetch 옵션을 숨기지 않는다. `--git-provenance` 같은 외부 Git 호출은 S01에서 별도 opt-in 계약·권한을 먼저 확정하기 전 구현하지 않는다.
 
@@ -37,7 +37,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 
 * `--root`의 기본값은 현재 디렉터리이고 `--grammar`의 기본값은 root sentinel `.`이다. `--file`과 `--declare`의 `PATH=VALUE`는 마지막 `=`에서 나누므로 path에 `=`가 있어도 된다. 부모 탐색은 없다. `--file`을 하나라도 주면 discovery 대신 그 목록만 선택한다.
 * `--encoding-profile`은 profile 단위 cp949 선언이다. identity의 기본값은 선언 없음, corpus의 기본값은 `cp949`([NET461 등록부](../validation/net461-workload.md)의 corpus profile)다. `--declare`는 파일별 선언이며 사용자가 제공한 로컬 manifest의 값을 결과 관측 전에 옮길 때만 쓴다. 선택되지 않은 path의 선언은 오류다. `--profile`은 아래 `S02 구현` 절의 profile r1 규칙을 따른다.
-* `parity`는 담당 Session 전까지 exit 2와 `UNSUPPORTED_COMMAND`로 거부한다. 가짜 성공은 없다. `incremental`은 S05, `oracle record`는 S06, `replay`와 `evidence verify`는 S07이 구현했다.
+* 모르는 명령(S00의 `parity` 포함)은 exit 2와 `UNKNOWN_COMMAND`다. 가짜 성공은 없다. `incremental`은 S05, `oracle record`는 S06, `replay`와 `evidence verify`는 S07, `qualify`는 S08이 구현했다.
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
@@ -180,6 +180,28 @@ registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema
 `evidence-replay`는 S07 예산 연산(파일 10000, 파일당 16 MiB, 합계 256 MiB, wall 120초, 출력 16 MiB)이다. record 수 상한은 record 묶음(사례, inventory record, ledger row) 하나에 적용한다. `private-corpus-replay`는 [NET461 등록부](../validation/net461-workload.md)의 S07 비공개 replay 값(파일 26000, record 합계 2 GiB, wall 1800초)이다. 큰 raw는 member 하나를 hash하며 한 번 stream으로 읽고 record 값을 하나씩(`record_bytes` 이하) decode한다. 등록 member가 파일당 한도(필요한 member는 record 한도도)를 넘으면 그 member를 읽지 않고, 다른 실패가 없으면 결과는 `RECORDED_NOT_RECOMPUTED`/`UNRESOLVED`와 `RAW_OVER_LIMIT`이다(exit 3). 그 밖의 한도는 `RESOURCE_LIMIT`(exit 3)이고, `evidence verify`에서 graph 파일이 한도를 넘어도 `RESOURCE_LIMIT`다. memory는 강제하지 않는다(in-process, 위 한도로 묶는다).
 
 policy `tsgk-evidence-policy/r1`(strict, 모르는 필드 거부): `schema`, `id`, `evidence_sha256`(입력 root의 `evidence.json` bytes에 대한 caller 신뢰 anchor), `required`(`node`, `kind`, `identities`), `carry_forward`(`node`, `origin`, `relation`, `authorized_by`), `eligibility`(`null` 또는 `{nodes, modes}`)다. 예시는 `src/contracts/examples/evidence-policy-r1.json`, 거부 예시는 `invalid/evidence-*.json`이다. graph 문서 `tsgk-evidence/r1`은 입력 root의 `evidence.json`이며 node(`id`, `kind`, 세 축, `recorded_assessment`, `identities`, `files`, `refs`)를 담는다. 검사는 `evidence-replay` 한도로 한다.
+
+## S08 구현 — qualify, qualification inventory r1
+
+```text
+tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--out PATH]
+```
+
+READ_DATA만 쓴다. process·network·tool을 시작하지 않는다. `--inventory`는 caller가 신뢰하는 `tsgk-qualification-inventory/r1`이고 어느 host 디렉터리 안에 있어도 `INVENTORY_INSIDE_INPUT`(exit 2)이다. `--candidate`는 모든 host가 실행해야 하는 commit(40자리 16진)이며 그 밖은 `CANDIDATE_INVALID`(exit 2)다. `--host`는 inventory의 platform id와 그 host의 실행 디렉터리다. `--out`은 S01 publication 규칙을 따르고 어느 host 디렉터리 안이어도 `OUTPUT_INSIDE_INPUT`이다. exit: `PASS` 0(모든 필수 칸·실행된 추가 역할 행 PASS와 `mechanism_gate` PASS, 지원 claim `SUPPORTED`), `FAIL` 1(완결성·cohort·자격·kit 축·비교 실패, 필수 요구·등록 검사 FAIL, 추가 역할 행 FAIL), `BLOCKED` 3(실패는 없고 사례 없는 의무, 등록 검사 BLOCKED, kit 축 BLOCKED, INCOMPLETE 추가 역할 행이 남음), 실행 전 거부 2, I/O·publication 4, 취소 130. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다.
+
+host 디렉터리는 `src/dev/s05-native/run-routes.ps1 -Oracle`의 출력에서 CI가 올리는 부분이다: `run-identity.json`(`tsgk-run-identity/r1`, `src/dev/s08-qualify/run-identity.ps1`이 씀), `profiles/<workload>.json`(실행에 쓴 `tsgk-oracle/r1` profile), `records/<set>/`(S06 기록 set), helper의 `summary.json`(보존만 하며 근거가 아님). 그 밖의 파일은 `HOST_FILE_UNREGISTERED`로 완결성을 실패시킨다.
+
+inventory `tsgk-qualification-inventory/r1`(S02 strict decoder, 모르는 필드 거부): `id`, `campaign`, `qualification_cells`(= route 수 × platform 수, 다르면 `CELL_COUNT_MISMATCH`), `coverage_rule`(`tsgk-coverage-rule/r1`), `kinds`(`P N R E Q W`), `platforms`(`id`, `goos`, `goarch`), `routes`(`route`, `workload`, `requirements`), `extra_roles`다. `workload`는 `set`, `profile`, `route`, `operation`, `output`, `symbol`, `format`, `grammar`, `queries`(id·source sha256), `fact_pack`, `api`, `cases`이고 case는 `id`, `role`(`requirement`·`support`·`detector`), `input`(sha256·bytes), `edits`, `expect`, `query_expect`, `expect_status`(빈 값은 `COMPLETED`), `covers`(요구 행 → kind), `source`(query 기대값을 다시 계산할 case의 UTF-8 원본)다. `covers`는 아래 규칙을 지켜야 한다(`COVERAGE_RULE_VIOLATION`). detector는 요구 행을 덮지 못한다(`DETECTOR_COVERS`). 두 route가 같은 set을 쓰면 거부한다(SQL dialect 병합 방지). 추가 역할은 `maintained`·`historical`·`owned`이고 상태는 `EXECUTED`(workload 필수)·`NOT_RUN`·`EXTERNAL`, `not_applicable`은 platform별 이유다.
+
+`tsgk-coverage-rule/r1`: P는 `NO_ERROR`와 named 구조(`contains`)를 기대하는 step, N은 `ERROR`를 기대하는 step, R은 `ERROR`와 보존 구조를 기대하는 step, E는 edit 하나 이상(incremental/fresh 비교), Q는 capture 기대값이 있는 query 사례다. W(허가된 실사용 sample)는 등록된 생산자가 없어 언제나 덮이지 않는다. 사례는 `features`에 적힌 그 route의 REQ 행만 덮는다(N461 역할 id와 gap 설명 문구는 행이 아니다). query 사례는 자기 행의 Q만 덮는다.
+
+추적되는 inventory는 `src/contracts/qualification-c1.json`이다. campaign 정의(26 route, 세 platform), [feature disposition](../validation/language-feature-disposition.md)의 REQ 행, `native-routes.json`, fact query pack, 등록 사례(`src/testdata/native`)에서 `run-routes.ps1`과 같은 방식으로 만들며, `TestQualificationInventory`가 다시 만들어 bytes로 대조한다(`TSGK_WRITE_INVENTORY=1`이면 다시 쓴다).
+
+| `operation` | host당 파일 | 파일당 | host당 합계 | record 수 | 출력 | wall | host |
+|---|---|---|---|---|---|---|---|
+| `qualification` | 10000 | 67108864 | 536870912 | 100000 | 16777216 | 360초(전체) | 세 OS 근거, 집계는 어디서나 |
+
+`qualification`은 S08이 정한 연산이다. 파일당 64 MiB는 windows 전용 NET461 대용량 기록(최대 56 MiB)을 읽기 위해서이고, host당 합계는 그 host 근거 전체(로컬 windows 약 225 MB)를 한 번 읽는 크기다. 한도를 넘은 member는 읽지 않고 그 set의 kit 축을 `BLOCKED`로 둔다. 칸은 `INCOMPLETE`이고 `mechanism_gate`는 FAIL이다(PASS가 아니다). host당 record 수 한도(`RECORDS_LIMIT`), 파일·byte 한도와 wall은 `RESOURCE_LIMIT`(exit 3)다. host 디렉터리가 없거나 link·special 파일이 있으면 exit 2다. memory는 강제하지 않는다(record 하나씩 decode).
 
 ## discovery와 strict profile
 

@@ -85,8 +85,14 @@ type rcStep struct {
 		Equal bool `json:"equal"`
 	} `json:"query_comparison"`
 	Composite *struct {
-		Directive *SvcDirective `json:"directive"`
-		Coverage  SvcCoverage   `json:"coverage"`
+		Directive  *SvcDirective `json:"directive"`
+		Coverage   SvcCoverage   `json:"coverage"`
+		Identities []IdentityRef `json:"identities"`
+		Inline     *struct {
+			Tree *struct {
+				Identities []IdentityRef `json:"identities"`
+			} `json:"tree"`
+		} `json:"inline"`
 	} `json:"composite"`
 }
 
@@ -184,6 +190,17 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		ok = len(c.Steps) == len(want.Edits)+1
 	}
 	bind.check(ok, name, "CASE_BINDING_MISMATCH", "case id, 입력 identity 또는 step 수가 workload 등록과 다르다")
+	// an SVC composite names the run's producer and policy too (checked by checkSeen)
+	for _, s := range c.Steps {
+		if s.Composite == nil {
+			continue
+		}
+		ids := s.Composite.Identities
+		if s.Composite.Inline != nil && s.Composite.Inline.Tree != nil {
+			ids = append(slices.Clone(ids), s.Composite.Inline.Tree.Identities...)
+		}
+		x.seeRun(ids)
+	}
 	if len(c.Steps) > 0 && c.Steps[0].Incremental != nil {
 		out.hasError = c.Steps[0].Incremental.HasError
 	}
@@ -237,12 +254,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 						bind.fail(name, "MIXED_IDENTITY", fmt.Sprintf("step %d tree의 source identity가 step과 다르다", s.Step))
 					}
 				case "producer", "policy":
-					// compared with the run's value once the whole document is read, so the
-					// member order of the document does not matter
-					if x.seen[id.Role] == nil {
-						x.seen[id.Role] = map[string]bool{}
-					}
-					x.seen[id.Role][id.SHA256] = true
+					x.seeRun([]IdentityRef{id})
 				}
 			}
 		}
@@ -426,6 +438,20 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		out.assess, out.complete = AssessUnresolved, false
 	}
 	return out
+}
+
+// seeRun records the producer and policy identities a case names; they are compared with
+// the run's values once the whole document is read, so member order does not matter.
+func (x *replayEnv) seeRun(ids []IdentityRef) {
+	for _, id := range ids {
+		if id.Role != "producer" && id.Role != "policy" {
+			continue
+		}
+		if x.seen[id.Role] == nil {
+			x.seen[id.Role] = map[string]bool{}
+		}
+		x.seen[id.Role][id.SHA256] = true
+	}
 }
 
 // checkSeen compares the producer and policy every tree named with the run's values; a

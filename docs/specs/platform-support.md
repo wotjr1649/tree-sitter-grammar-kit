@@ -11,8 +11,8 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 | regenerate | NOT_RUN | S04 tool closure·독립 생성·기준 비교 |
 | native parse | NOT_RUN | S05~06 compiler/runtime/scanner/실행 결과 |
 | supervision | NOT_RUN | OS별 timeout/output/memory/child cleanup adverse test |
-| full qualification | NOT_RUN | 등록 profile의 모든 필수 gate |
-| cross-OS semantic parity | NOT_RUN | S08 동일 의미 identity·attempt의 완전한 OS 집합 |
+| full qualification | AVAILABLE(S08 `tsgk qualify`); VERIFIED 여부는 CI receipt | 등록 profile의 모든 필수 gate |
+| cross-OS semantic parity | AVAILABLE(S08 `tsgk qualify` 비교); VERIFIED 여부는 CI receipt | S08 동일 의미 identity·attempt의 완전한 OS 집합 |
 
 각 행의 상태는 AVAILABLE(기능 존재), VERIFIED(정확한 시험 근거), UNSUPPORTED, NOT_RUN을 구분한다. foundation 성공은 제품/native 지원 근거가 아니다. 실제 관측값은 [Session 00 보고](../reports/session-00-foundation.md)와 CI receipt가 소유한다.
 
@@ -50,3 +50,7 @@ hard memory를 요구한 요청은 hard backend가 없으면 실행 전에 `MEMO
 `oracle record`는 S05 native build와 같은 build·실행 경로(같은 driver source, 같은 closure identity, 실행 직전 executable hash 재확인)를 쓰며 세 host 모두에서 `native-query`를 실행한다. query와 API 관측은 pinned runtime의 공개 API만 쓰고 OS별 분기는 없다. 기록의 의미 비교(tree digest, capture stream, 사실)는 host와 무관하고 executable hash·시간·process 결과는 host 관측이다.
 
 `real-world-source-r3`와 `native-query-large`는 windows/amd64 전용이다(사용자 결정 `C1-REAL-WORLD-SOURCE-WINDOWS-R3`: NET461 workload는 Windows에서 실행되는 WinForms/.NET Framework 4.6.1). 메모리는 8589934592(8 GiB)이고 Job Object hard 상한이다. Linux·macOS에서는 실행하지도 측정하지도 않으며, CLI는 build 전에 `OPERATION_PLATFORM_SCOPE`로 거부하고 route helper는 결과를 `NOT_APPLICABLE`로 둔다. S05가 세 host에서 남긴 `real-world-source-r2` 결과(4 GiB에서 32 MiB 입력이 Linux·Windows hard 상한으로 `RESOURCE_LIMIT`, macOS sampled에서 PASS)는 역사로 보존한다. hosted windows-2025 runner(RAM 약 16 GB)는 로컬 Windows 측정 peak(5157146624 bytes)가 들어가는 8 GiB 상한을 수용할 수 있는 크기다. 실제 hosted 측정값은 CI route 결과가 소유한다. grammar route 26개의 세 OS 검증은 바뀌지 않는다.
+
+## S08 qualification
+
+PR·push CI의 `qualification (ubuntu-24.04)` job이 같은 run·attempt의 세 `native routes` host 근거(실행 identity, S06 기록 set, workload profile)를 받아 `tsgk qualify`로 78칸과 추가 역할 행을 만든다. 집계 자체는 어느 OS에서나 같은 offline 계산이며 native 실행은 각 host job이 한다. job은 `mechanism_gate`(완결성, cohort·자격, 칸별 kit 축과 세 host 의미 비교, 실행된 추가 역할 행)로 실패를 정하고, 문법 요구 FAIL·사례 없음은 결과 행렬에만 남는다(지원 claim `BLOCKED`). 칸·축·비교 규칙은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다. windows 전용 NET461 대용량 workload(`n461-large`)는 Linux·macOS 행이 `NOT_APPLICABLE`이다.

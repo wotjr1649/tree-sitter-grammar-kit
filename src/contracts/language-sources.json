@@ -716,7 +716,8 @@
         "S05/S03: tsql-B01..B05·V16·V22는 등록 행 PASS이나 전체 statement 범위는 bounded",
         "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
         "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
-        "S08: Windows amd64·macOS arm64 qualification"
+        "S08: Windows amd64·macOS arm64 qualification",
+        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음, ENCRYPTION/DECRYPTION BY 뒤 공용 option 모양(BY CERTIFICATE c), r5부터의 빈 BEGIN END와 `;` 없는 BEGIN WITH(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
       ],
       "superseded_candidate": {
         "repository": "Crary-Systems/tree-sitter-tsql",
@@ -728,28 +729,59 @@
         "decision": "2026-10-02 사용자 결정(PREPARE #20): 등록 사례가 모두 PASS인 후보 채택, 범위 밖 격차는 후속 Session 의무",
         "candidate": "P05-MSSQL-REMEDY-r1",
         "patch_subjects": [
-          "src/dev/prepare-p05/remedy-followup-r2.json"
+          "src/dev/prepare-p05/remedy-followup-r2.json",
+          "src/dev/prepare-p05/remedy-tsql-r6.json"
         ],
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 6225,
-            "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
+            "bytes": 7768,
+            "sha256": "5d8f928a310050f83ce6b4dfa86fe4512f6571ab24b657d5daecb5a1d7cd63bb"
           },
           {
             "path": "grammar/keywords.js",
-            "bytes": 25233,
-            "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
+            "bytes": 25394,
+            "sha256": "ff5ccc9437f392b3b10a7fe985c5a8d725bff4341c9c0beaa2cdd1a00e95e974"
           },
           {
             "path": "grammar/column-lists.js",
-            "bytes": 9051,
-            "sha256": "c248a2a1819f06e42e72b9def7ecaf31666a8463d59e338db63a5b648fd2c400"
+            "bytes": 9795,
+            "sha256": "e8ebb5294f44d907a92433ddf6d914a319fd45a6e49d08f71da90dee4ee5e24e"
           },
           {
             "path": "grammar/statements/create.js",
-            "bytes": 22558,
-            "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
+            "bytes": 24037,
+            "sha256": "d0112d74cab9a13a0ce9c3abca6ecb2f87b4290ac4ec850b66185ae2988651ac"
+          },
+          {
+            "path": "grammar/expressions.js",
+            "bytes": 16867,
+            "sha256": "208a8bcfd8e8b518a270c334f3ff04b59b3c821ceeea6f831affb6c3bbf624c9"
+          },
+          {
+            "path": "grammar/helpers.js",
+            "bytes": 4218,
+            "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc"
+          },
+          {
+            "path": "grammar/statements/drop.js",
+            "bytes": 4770,
+            "sha256": "03b03cb1a25b58757fe461036769582320348ec25982674754265233c9ecb43b"
+          },
+          {
+            "path": "grammar/statements/index.js",
+            "bytes": 27591,
+            "sha256": "3be45f5645e2f4b12f9bd7b6b3b223011bd8c6ed2b93e051f53de0a7d7f6fc20"
+          },
+          {
+            "path": "grammar/statements/select.js",
+            "bytes": 27110,
+            "sha256": "1619ce3fd0b8833f08dfbc2da6193ce309247b148d75fb5eaf6e2586ba6537a7"
+          },
+          {
+            "path": "grammar/statements/create-procedure.js",
+            "bytes": 4068,
+            "sha256": "7b4bda9d315b2b23ab4a0fb2b038959ec6b400c825c04dcf3b193e541c392afc"
           }
         ],
         "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
@@ -764,6 +796,19 @@
         },
         "expectation_amendments": [
           "src/dev/prepare-p05/remedy-expectation-amendments-r1.json"
+        ],
+        "revisions": [
+          {
+            "revision": "r6",
+            "subject": "src/dev/prepare-p05/remedy-tsql-r6.json",
+            "decisions": [
+              "C1-TSQL-PATCH-R6",
+              "C1-TSQL-PATCH-R6-ADDENDUM-R1"
+            ],
+            "session": "S08",
+            "generation": "등록 tree-sitter 0.27.0·node 24.21.0으로 로컬 Windows 재생성; native-routes/reproduction-routes의 parser.c identity가 기준",
+            "native_evidence": "S08 hosted three-OS CI(총괄 실행) 전까지 로컬 Windows 검증만 있음"
+          }
         ]
       }
     },

@@ -77,7 +77,7 @@ S07은 E0를 확장하고 새 report 체계를 만들지 않는다. `tsgk-replay
 * 한도: reducer에 필요한 member든 소비하지 않는 member든 파일당 한도를 넘으면 읽지 않는다(`RAW_OVER_LIMIT` 경고). 그때까지 찾은 실패(혼합 identity 포함)는 그대로 FAIL이고, 실패가 없으면 결과는 `RECORDED_NOT_RECOMPUTED`/`UNRESOLVED`이며 subject는 기록대로 남는다. 소비하지 않는 member가 한도를 넘어도 다른 member의 역할·소비 검사는 그대로 한다. 읽는 도중 한도를 넘게 커진 파일과 합계 한도는 `RESOURCE_LIMIT`다. reducer가 subject 결과를 하나도 다시 계산하지 못하면(예: 등록 row의 raw가 모두 없음) 결과는 `RECORDED_NOT_RECOMPUTED`다.
 * 결과 `assessment`는 evidence가 유효하면(`evidence_valid`: finding 없음, gate 실패 없음) 다시 계산한 subject 판정이고, 유효하지 않으면 `FAIL`이다. 다시 계산한 gate가 하나도 없으면 결과 `evidence_mode`는 `RECORDED_NOT_RECOMPUTED`다. 등록되지 않은 reducer·schema·연산은 `UNSUPPORTED`(NOT_RUN/NOT_RUN/BLOCKED)이고 replay 성공이 되지 않는다.
 * member: registration의 `members`가 독립 inventory다. root의 모든 파일은 member이거나 reducer가 결속한 inventory의 항목이어야 하며(`MEMBER_UNLISTED`), member는 등록한 bytes·sha256과 같아야 한다(`MEMBER_MISSING`, `MEMBER_MISMATCH`). member 역할은 reducer가 선언한 역할(`member_roles`)이어야 하고(`MEMBER_ROLE_UNKNOWN`), reducer가 소비하지 않은 member는 `MEMBER_UNUSED`다. evidence가 아닌 동반 파일(예: 실행에 쓴 binary)은 역할 `retained`로 등록하며 hash만 확인하고 결과의 `retained_members`로 센다. 같은 bundle이 만든 manifest(S06 `manifest.json`, PREPARE `evidence-manifest.json`)는 무결성 metadata이며 registration이 그 bytes를 결속할 때만 그 목록을 쓴다.
-* identity: reducer가 raw에서 관측한 identity(`observed_identities`)와 registration의 `identities`를 역할마다 정확히 비교한다. 다르면 `IDENTITY_MISMATCH`(stale·혼합), 결속하지 않은 관측 역할은 `IDENTITY_UNBOUND`, 관측하지 않는 역할은 `IDENTITY_UNKNOWN`이다. tree마다 붙은 producer·policy·source identity가 run의 값과 다르면 `MIXED_IDENTITY`다. summary·manifest만 고쳐 hash를 다시 맞춰도 reducer가 record에서 다시 센 값과 달라 거부된다.
+* identity: reducer가 raw에서 관측한 identity(`observed_identities`)와 registration의 `identities`를 역할마다 정확히 비교한다. 다르면 `IDENTITY_MISMATCH`(stale·혼합), 결속하지 않은 관측 역할은 `IDENTITY_UNBOUND`, 관측하지 않는 역할은 `IDENTITY_UNKNOWN`이다. tree마다 붙은 producer·policy·source identity와 SVC composite(`identities`, `inline.tree.identities`)의 producer·policy identity가 run의 값과 다르면 `MIXED_IDENTITY`다. summary·manifest만 고쳐 hash를 다시 맞춰도 reducer가 record에서 다시 센 값과 달라 거부된다.
 * 소비: reducer는 workload(또는 registration의 `records`)에서 expected record와 순서를 정하고 record마다 정확히 한 번 소비한다. `consumption`은 `expected`, `consumed`, `missing`, `duplicate`, `unused`, `out_of_order`(뒤에 등록된 record 다음에 나온 record), `excluded`(다른 cohort, 소비하지 않음)와 첫 문제를 적는다. 누락·중복·미사용·순서 오류가 있으면 `CONSUMPTION_INCOMPLETE`다.
 
 ### 등록 reducer
@@ -114,6 +114,42 @@ BrightScript v0.1.2 historical replay의 비교 규칙이며 `bs-gate-compare-r1
 * 승계는 기본 거부다. 채택한 관계는 `unchanged-dependency-r1` 하나뿐이다. policy의 `carry_forward` 규칙이 그 node·원 결과·관계·허가자를 적어야 하고(없으면 `CARRY_FORWARD_UNAUTHORIZED`, 다르면 `CARRY_RELATION_UNSUPPORTED`), run·attempt를 뺀 모든 dependency identity(source·tool·input·query·policy·comparator·protocol·workload·platform)가 원 결과와 같아야 한다(`CARRY_DEPENDENCY_CHANGED`). 원 결과는 완료된 NEW_RUN이고(`CARRY_ORIGIN_INCOMPLETE`) 판정은 바뀌지 않는다(`CARRY_ASSESSMENT_CHANGED`).
 * `required` node는 종류와 적힌 identity가 정확히 같아야 한다(`IDENTITY_MISMATCH`). `eligibility`가 있으면 그 node의 evidence mode가 목록에 있어야 하며, S08 최종 qualification처럼 `NEW_RUN`만 받는 자격에 replay·carry·record node는 무결성이 맞아도 `ELIGIBILITY_REJECTED`다.
 * hash 일치는 무결성이다. 게시자 인증(authenticity)은 지원하지 않으며 결과 coverage에 `unsupported: authenticity`로 남는다.
+
+## S08 구현 — 현재 후보 qualification
+
+`kit.Qualify`(CLI `tsgk qualify`)는 한 후보 commit의 host 실행 기록을 inventory의 필수 칸(route × platform)과 추가 역할 행으로 집계한다. host 디렉터리만 S01 guard(no-follow, link·special 거부)로 읽으며 다른 platform·attempt·후보·replay의 근거로 칸을 채우지 않는다.
+
+### 실행 identity와 cohort·자격
+
+* host마다 `run-identity.json`(`tsgk-run-identity/r1`: `repository`, `workflow`, `run_id`, `run_attempt`, `event`, `sha`, `head_sha`, `checkout`, `job`, `runner_os`, `runner_arch`, `image`, `goos`, `goarch`, `go_version`, `evidence_mode`)이 있어야 한다. CI의 route step이 지정한 run 변수와 `go env`, `git rev-parse HEAD`만으로 쓴다(환경 전체를 기록하지 않는다). 없거나 형식이 틀리면 `RUN_IDENTITY_MISSING`·`RUN_IDENTITY_INVALID`다.
+* `goos/goarch`가 칸의 platform과 다르면 `PLATFORM_MISMATCH`(잘못된 architecture), `evidence_mode`가 `NEW_RUN`이 아니거나 `checkout`·`sha`가 후보 commit이 아니면 `ELIGIBILITY_REJECTED`다. 기록 set의 `producer.platform`도 칸의 platform이어야 한다.
+* 모든 host의 `repository`·`workflow`·`run_id`·`run_attempt`·`event`·`sha`·`head_sha`가 같아야 한다(`COHORT_MISMATCH`). 거부된 host의 칸은 `REJECTED`/FAIL이고 다른 host로 고치지 않는다.
+* 실행 identity는 run이 스스로 쓴 주장이다. 근거 bytes의 진위는 CI artifact 경로(같은 run·attempt의 artifact 이름)와 결과가 결속한 hash로만 보장하며 게시자 인증은 없다.
+
+### set 판정과 두 축
+
+각 workload의 set(`records/<set>/`)은 다음 순서로 판정한다.
+
+1. 공유 set 규칙: manifest strict decode와 `complete`, member 경로·역할·중복, 크기·sha256, record 완결성(`checkRecord`), record 수, 사례마다 record 하나, 목록 밖 파일(`MEMBER_UNLISTED`).
+2. 등록 대조: manifest가 결속한 workload profile이 host의 `profiles/<workload>.json`이어야 하고(`WORKLOAD_MISMATCH`), 그 profile의 route·연산·출력·symbol·format·encoding·api·grammar 파일·선언 mapping 항목·query source·fact pack·사례(id, 입력 sha256·bytes, encoding, edit, 기대값, query 기대값, registered point, 동적 SQL 기대 사실·known miss)가 inventory와 같아야 한다(`REGISTRATION_MISMATCH`). host compiler, profile id와 사례 입력의 root 안 경로만 다를 수 있다. set의 route·연산·출력이 다르면 `ROUTE_MISMATCH`다(다른 route의 set을 쓰는 dialect 병합도 여기서 걸린다). 사례 목록과 순서는 inventory와 같아야 한다.
+3. S07 gate: record마다 `oracle-set-r1`의 사례 검사(사례 결속, 상태-판정 일관성, tree 구조·digest·node 수, incremental/fresh 비교, route 증명, 기대값, query 비교, 판정 fold, producer·policy 혼합)를 inventory 사례를 등록값으로 다시 계산한다. query 기대값은 inventory의 원본·edit·capture 기대값으로 다시 계산해 기록 claim과 대조한다(`QUERY_EXPECTATION_MISMATCH`).
+4. kit 축(`mechanism`): 위 검사와 gate가 모두 통과하고, 사례가 등록 상태(기본 `COMPLETED`, 한도 초과 사례는 `RESOURCE_LIMIT`)로 끝나고, kit claim(incremental equality·route, query equality, 사실 재현, 동적 SQL)이 FAIL·BLOCKED가 아니면 PASS다. 사실 재현·동적 SQL claim은 기록값을 쓴다(S07과 같이 원본 decode가 필요해 다시 계산하지 않는다). API claim FAIL은 runtime node API와 cursor의 차이이며 처분 대상 관측으로 센다(`api_claim_failures`). 한도를 넘어 읽지 못한 member가 있으면 PASS가 아니라 `BLOCKED`다.
+5. 요구 축(`requirement`): 칸의 각 REQ 행 × 필수 kind 의무를 그 kind를 덮는 requirement 사례의 결과로 정한다. P는 `NO_ERROR`·구조 기대 step, N은 `ERROR` step, R은 `ERROR`·보존 구조 step의 기대값 결과, E는 incremental equality·route(와 query equality), Q는 다시 계산한 query 기대값이다. 여러 사례는 가장 나쁜 값(FAIL > BLOCKED > PASS)이고 덮는 사례가 없으면 `NOT_COVERED`다. 칸의 모든 등록 검사(`registered_checks`)도 요구 축에 들어간다. requirement·support 사례의 모든 등록 기대값(어느 kind도 덮지 않는 step, 행을 덮지 않는 사례 포함)과 다시 계산한 query 기대값을 접고, SVC 관측 전용 사례는 verdict gate가 다시 계산한 판정을 쓰며, 등록 상태로 끝나지 않은 사례는 BLOCKED다. 통과하지 않은 사례는 `check_failures`에 남는다. 의무나 등록 검사에 FAIL이 하나라도 있으면 FAIL, 없고 `NOT_COVERED`·BLOCKED가 있으면 `INCOMPLETE`, 모두 PASS면 PASS다.
+
+detector 사례(역사 결함 검출기)는 추가 역할 workload에만 둘 수 있고 자기 역할 행에서만 PASS/FAIL이며 요구 행을 덮지 못한다. support 사례도 요구 행을 덮지 못한다. 추가 역할 행은 set들의 kit 축(`mechanism`)과 등록 검사·detector 결과(`registered_checks`)를 따로 가진다. kit 축 FAIL이나 검사 FAIL이면 FAIL, 그 밖에 PASS가 아니면 INCOMPLETE, 실행해야 할 set이 없으면 MISSING이다. 필수 mainstream 사례의 FAIL은 detector 결과와 무관하게 그 칸을 FAIL로 둔다.
+
+### platform 간 의미 비교
+
+route마다 판정된 host가 둘 이상이면 사례별 의미 요약을 platform끼리 정확히 비교한다. 요약은 사례의 상태·판정·code·claim, 등록 기대값 결과, 다시 계산한 query 기대값과 step마다 incremental·fresh tree의 상태·code·형식·node 수·`has_error`·digest(`tsgk-tree-digest/r1`, 순서·type·field·flag·byte/point 범위 전체), query별 상태·code·평가·capture stream 전체의 hash, API 관측 문서, 비교 결과, route 증명 여부, SVC 관측이다. 정렬·중복 제거·ERROR/MISSING 제거·범위 보정을 하지 않는다. set identity 중 runtime·protocol·comparator·policy·query·fact pack·route·연산도 같아야 한다. 차이는 첫 차이 위치와 함께 `differences`에 남고 그 route의 모든 칸이 FAIL이다. host 관측(process wall·peak memory, parse 시간, build·executable·compiler identity·version)은 비교하지 않고 칸의 `host_observations`에 원값으로 남는다. SVC 관측은 composite 전체를 비교하되 그 안의 producer identity(platform의 native build)만 빼며, 그 값은 host마다 run의 build와 대조된다.
+
+### 결과 `tsgk-qualification-result/r1`
+
+E0 `Report`에 `inventory_id`, `candidate`, `limits`, `run`(공통 cohort), `hosts`(platform → run identity sha256), `completeness`, `cells`(route·platform·`status`·`mechanism`·`requirement`·`comparison`·`counts`·`obligations`·`registered_checks`·`check_failures`·set 판정), `extra_roles`(id·role·platform·`status`·`reason`·`mechanism`·`registered_checks`·set 판정; MISSING 행은 `mechanism=NOT_ASSESSED`이고 `registered_checks`가 빈 값이며, 실행하지 않는 `NOT_RUN`·`EXTERNAL`·`NOT_APPLICABLE` 행은 둘 다 빈 값이다. gate는 `mechanism`이 빈 값인 행만 건너뛴다), `comparisons`, `totals`, `mechanism_gate`, `support_claim`, `bytes_read`, 한국어 `explanation`을 더한다.
+
+* 칸 `status`: 근거가 없으면 `MISSING`, kit 축·요구 축·비교 중 FAIL이 있으면 `FAIL`, 남은 것이 사례 없음·BLOCKED(한도 초과로 읽지 못한 member로 kit 축이 BLOCKED인 경우 포함)·비교 미실시뿐이면 `INCOMPLETE`, 모두 PASS면 `PASS`다.
+* `completeness`는 inventory의 칸이 정확히 한 번씩 근거를 가지고, 실행하는 추가 역할 행도 자기 platform의 set을 가지며, 같은 platform host가 중복되지 않고, host 근거에 inventory 밖 파일이 없을 때만 PASS다(`CELL_DUPLICATE`, `HOST_UNREGISTERED`, `HOST_FILE_UNREGISTERED`, `COMPLETENESS_FAILED`). cohort 기준은 자기 검사를 통과한 첫 host이므로 거부된 host 하나가 다른 host를 `COHORT_MISMATCH`로 만들지 않는다.
+* `mechanism_gate`는 kit 쪽 검사(완결성, cohort·자격, 모든 칸의 kit 축과 비교, 실행된 추가 역할 행의 kit 축)가 모두 통과했을 때만 PASS다. 문법 요구 FAIL·사례 없음·등록 검사 결과는 이 값을 바꾸지 않는다. CI qualification job은 이 값으로 성공 여부를 정한다.
+* `support_claim`은 모든 필수 칸, 실행된 모든 추가 역할 행이 PASS이고 `mechanism_gate`가 PASS일 때만 `SUPPORTED`이고 그 밖에는 `BLOCKED`다. 추가 역할 행은 필수 칸을 대신하지 않는다. `NOT_RUN`·`EXTERNAL` 역할 행은 route 지원 claim을 막지 않지만 campaign 완료 판단에서는 따로 남는다. assessment는 FAIL > BLOCKED > PASS 순이다.
 
 ## 준비 tracking의 적용 대상과 보존 결과
 

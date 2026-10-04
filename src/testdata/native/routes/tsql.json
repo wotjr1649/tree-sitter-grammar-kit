@@ -102,6 +102,238 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "tsql-r6-feature-r1",
+      "kind": "feature",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": ";/* Owned synthetic r6 case. */\nSELECT 상품명, 가격2 FROM 상품;\nGO\nsp_who\nGO\nCREATE PROCEDURE dbo.Tick @n INT AS\nBEGIN\n    SET @n = @n + 1;;\n    ;WITH t AS (SELECT 1 AS v) SELECT v FROM t;;\nEND\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCHECKPOINT 10;\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', MOVE Sample_log TO 'new.ldf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nBACKUP CERTIFICATE Cert1 TO FILE = 'cert1.cer' WITH PRIVATE KEY (FILE = 'cert1.pvk', ENCRYPTION BY PASSWORD = 'placeholder');\nRESTORE MASTER KEY FROM FILE = 'mk.key' DECRYPTION BY PASSWORD = 'placeholder' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s <> N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nSELECT a FROM (SELECT Code AS a FROM dbo.Memo\n    UNION SELECT TOP 5 Code FROM dbo.Memo ORDER BY a OFFSET 0 ROWS) AS e;\nGO\nCHECKPOINT;\nGO\n",
+      "edits": [
+        {
+          "find": "ONLINE = OFF",
+          "replace": "ONLINE = ON"
+        },
+        {
+          "find": "PRIMARY KEY (Id),",
+          "replace": "PRIMARY KEY (Id ASC),"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "declarations": "",
+          "contains": [
+            "execute_statement",
+            "create_procedure",
+            "block",
+            "create_table",
+            "alter_table",
+            "drop_index",
+            "with_options",
+            "checkpoint_statement",
+            "create_database",
+            "filespec",
+            "backup_statement",
+            "restore_statement",
+            "restore_move",
+            "encryption_mechanism",
+            "assignment",
+            "where",
+            "subquery",
+            "set_operation",
+            "top_clause",
+            "order_by",
+            "offset_fetch"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "restore_statement",
+            "set_operation"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-negative-r1",
+      "kind": "recovery",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "DECLARE @t TABLE (a int, b int,);\nGO\n",
+      "edits": [
+        {
+          "find": "b int,);",
+          "replace": "b int);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "table_var_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-negative-r2",
+      "kind": "recovery",
+      "features": [
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT TOP 1 a FROM t ORDER BY a UNION ALL SELECT TOP 1 a FROM u ORDER BY a;\nGO\n",
+      "edits": [
+        {
+          "find": "SELECT TOP 1 a FROM t ORDER BY a UNION ALL SELECT TOP 1 a FROM u ORDER BY a;",
+          "replace": "SELECT a FROM (SELECT TOP 1 a FROM t ORDER BY a UNION ALL SELECT TOP 1 a FROM u ORDER BY a) AS d;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "go_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "subquery",
+            "set_operation"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-negative-r3",
+      "kind": "recovery",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "CREATE VIEW dbo.v AS ;WITH c AS (SELECT 1 AS x) SELECT x FROM c;\nGO\n",
+      "edits": [
+        {
+          "find": "AS ;WITH",
+          "replace": "AS WITH"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "cte"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_view",
+            "cte"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-begin-semicolon-r1",
+      "kind": "feature",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE PROCEDURE dbo.Walk @n INT AS\nBEGIN\n    ;WITH s AS (SELECT 1 AS v) SELECT v FROM s;\n    WHILE (@n > 0)\n    BEGIN;\n        SET @n = @n - 1;\n    END;\n    IF (@n = 0)\n    BEGIN ;WITH t AS (SELECT 2 AS w) SELECT w FROM t;\n    END\nEND\nGO\nSELECT 1 AS a;\n/* comment */;\nBEGIN\n    SELECT 2 AS b;\n    /* nested */;\n    BEGIN\n        SELECT 3 AS c;\n    END\nEND\nGO\n",
+      "edits": [
+        {
+          "find": "    BEGIN;\n",
+          "replace": "    BEGIN\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_procedure",
+            "block",
+            "while_statement",
+            "if_statement",
+            "cte"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block",
+            "while_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-begin-empty-r1",
+      "kind": "recovery",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS x;\nGO\nBEGIN; END\nGO\n",
+      "edits": [
+        {
+          "find": "BEGIN; END",
+          "replace": "BEGIN; SELECT 1 AS a; END"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

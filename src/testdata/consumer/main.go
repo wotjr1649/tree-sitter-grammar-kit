@@ -17,6 +17,15 @@ import (
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+	if os.Args[1] == "qualify" { // qualify INVENTORY CANDIDATE PLATFORM DIR: S08 aggregation, read only
+		inv, err := os.ReadFile(os.Args[2])
+		if err != nil {
+			panic(err)
+		}
+		res, err := kit.Qualify(ctx, kit.QualifyRequest{Inventory: inv, Candidate: os.Args[3], Hosts: []kit.QualifyHost{{Platform: os.Args[4], Root: os.Args[5]}}})
+		emit("qualify", res, err)
+		return
+	}
 	if os.Args[1] == "schema" { // schema BEFORE AFTER: both files are caller-owned snapshots
 		before, after := readInput(os.Args[2]), readInput(os.Args[3])
 		check, err := kit.SchemaCheck(ctx, kit.SchemaCheckRequest{Input: before, Limits: kit.DefaultSchemaLimits()})

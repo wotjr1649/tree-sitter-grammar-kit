@@ -215,6 +215,22 @@
           },
           "variable": null,
           "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1174,
+          "end_byte": 1190,
+          "start_point": {
+            "row": 28,
+            "column": 14
+          },
+          "end_point": {
+            "row": 28,
+            "column": 30
+          },
+          "variable": null,
+          "heuristic": false
         }
       ],
       "non_facts": [
@@ -259,12 +275,6 @@
           "start_byte": 1072,
           "end_byte": 1077,
           "note": "EXEC @module_var is not dynamic SQL; range is the module variable"
-        },
-        {
-          "what": "KNOWN_MISS",
-          "start_byte": 1160,
-          "end_byte": 1191,
-          "note": "procedure call as the first statement of a batch without EXEC; range is the statement through ;"
         },
         {
           "what": "KNOWN_MISS",
