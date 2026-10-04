@@ -71,9 +71,12 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 
 // Static guards for lines no Windows run can reach: a native command piped into
 // Select-Object -First (pipeline stopped early, $LASTEXITCODE unset or stale) in a CI
-// helper, and a direct read of a root-only /proc/sys file in the workflow.
+// helper, an array built inside $(if ...) without the unary comma (the subexpression
+// unrolls a one-element array to a scalar and an empty one to $null), and a direct read
+// of a root-only /proc/sys file in the workflow.
 func TestCIScriptPatterns(t *testing.T) {
 	cut := regexp.MustCompile(`&\s*\$\w+[^|\n]*\|\s*Select-Object\s+-First`)
+	unroll := regexp.MustCompile(`\$\(if [^\n]*\{\s*@\(`)
 	files, _ := filepath.Glob(filepath.Join("..", "..", "dev", "s05-native", "*.ps1"))
 	if len(files) == 0 {
 		t.Fatal("no CI helper scripts found")
@@ -85,6 +88,9 @@ func TestCIScriptPatterns(t *testing.T) {
 		}
 		if m := cut.Find(data); m != nil {
 			t.Errorf("%s pipes a native command into Select-Object -First: %s", f, m)
+		}
+		if m := unroll.Find(data); m != nil {
+			t.Errorf("%s builds an array inside $(if ...) without ,@(...): %s", f, m)
 		}
 	}
 	wf, err := os.ReadFile(filepath.Join("..", "..", "..", ".github", "workflows", "foundation.yml"))
