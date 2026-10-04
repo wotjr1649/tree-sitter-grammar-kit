@@ -107,7 +107,9 @@ func TestModuleProxyConsumer(t *testing.T) {
 	defer cancel()
 	build := exec.CommandContext(ctx, "go", "build", "-o", consumer, ".")
 	build.Dir = module
-	build.Env = goEnv("GOPROXY="+fileURL(proxy), "GOFLAGS=-mod=mod", "GOSUMDB=off", "GONOSUMDB=", "GOPRIVATE=", "GOMODCACHE="+cache)
+	// -modcacherw: the module cache lives in a t.TempDir, which Unix cleanup could not
+	// remove if Go left it read-only.
+	build.Env = goEnv("GOPROXY="+fileURL(proxy), "GOFLAGS=-mod=mod -modcacherw", "GOSUMDB=off", "GONOSUMDB=", "GOPRIVATE=", "GOMODCACHE="+cache)
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("consumer build through the module proxy: %v\n%s", err, out)
 	}
