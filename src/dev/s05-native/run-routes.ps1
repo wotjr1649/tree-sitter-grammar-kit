@@ -7,11 +7,14 @@
 # `tsgk oracle record` (tsgk-native/r2): the same cases plus the route's query case
 # (src/testdata/native/queries), the fact query pack (src/contracts/fact-query-pack.json)
 # for its routes, the dynamic SQL fixtures, and with -Large the native-query-large cases.
-# Writes one result directory per run and summary.json under -Destination. Exit 1 when a
-# build fails, a case does not complete, a record set does not verify, or an incremental
-# equality/route, query equality, query expectation, fact reproduction or dynamic SQL claim
-# fails; language expectation failures and API claims (the runtime node API disagreeing
-# with its cursor) are findings for disposition and do not fail the run.
+# Writes one result directory per run and summary.json under -Destination. Exit 1 (the kit
+# axis) when a build is refused or fails, a result has an error finding, a case does not
+# complete, a record set does not verify, an incremental equality claim is FAIL or BLOCKED,
+# an incremental route claim is FAIL, or a query equality, fact reproduction or dynamic SQL
+# claim is FAIL or BLOCKED. Requirement-axis results do not fail the run: language
+# expectation failures, query expectation claims (judged by `tsgk qualify` as Q) and a
+# route BLOCKED on an error tree are recorded in requirement_results, API claims (the
+# runtime node API disagreeing with its cursor) in api_findings, for disposition.
 param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
@@ -90,7 +93,7 @@ $compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = (Get-Sha $ccIt
 $work = Join-Path $Destination 'work'
 New-Item -ItemType Directory -Path $work | Out-Null
 $summary = [ordered]@{ schema = 'tsgk-s05-route-run/r1'; platform = $Platform; compiler = [ordered]@{ path = $Compiler; version_line = $ccVersion; sha256 = $compilerId.sha256; bytes = $compilerId.bytes }
-  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); api_findings = @(); failures = @() }
+  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); api_findings = @(); requirement_results = @(); failures = @() }
 
 function Get-Declarations([string]$Route) {
   $m = $facts.routes | Where-Object { $_.route -eq $Route } | Select-Object -First 1
@@ -174,6 +177,19 @@ function Convert-Cases([string]$File, [string]$Root) {
   return $out
 }
 
+# Requirement-axis results (judged by `tsgk qualify`, not by this job): a query
+# expectation claim that is not PASS, with its failures, and an incremental route BLOCKED
+# because the grammar left an error in the tree. Recorded for disposition only.
+function Add-RequirementResult([string]$Label, $Case, $QueryFailures) {
+  $qe = $(if ($Case.PSObject.Properties['oracle_claims'] -and $Case.oracle_claims) { $Case.oracle_claims.query_expectations } else { $null })
+  if ($qe -in @('FAIL', 'BLOCKED')) {
+    $script:summary.requirement_results += [ordered]@{ case = "$Label/$($Case.id)"; claim = 'query_expectations'; result = $qe; code = $Case.code; failures = @($QueryFailures) }
+  }
+  if ($Case.claims.incremental_route -eq 'BLOCKED') {
+    $script:summary.requirement_results += [ordered]@{ case = "$Label/$($Case.id)"; claim = 'incremental_route'; result = 'BLOCKED'; code = $Case.code; failures = @() }
+  }
+}
+
 function Add-Result([string]$Label, $Run) {
   $res = $Run.res
   $entry = [ordered]@{ route = $Label; exit = $Run.code; execution_status = $res.execution_status; assessment = $res.assessment; build = $null; cases = @() }
@@ -188,7 +204,8 @@ function Add-Result([string]$Label, $Run) {
       steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $(if ($_.incremental) { $_.incremental.has_error } else { $null }); digest = $(if ($_.incremental) { $_.incremental.digest } else { $null }); equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
             svc_coverage = $(if ($_.PSObject.Properties['composite']) { $_.composite.coverage } else { $null }) } }) }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "$Label/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
+    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
+    Add-RequirementResult $Label $c @()
   }
   if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $script:summary.failures += "${Label}: $($res.execution_status) build or refusal" }
   $script:summary.routes += $entry
@@ -296,9 +313,10 @@ function Add-OracleResult([string]$Label, $Run) {
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; oracle = $c.oracle_claims
       query_expectation_failures = $qfails; facts = $facts }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "oracle $Label/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route)" }
+    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "oracle $Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route)" }
+    Add-RequirementResult "oracle $Label" $c $qfails
     if ($c.oracle_claims) {
-      foreach ($k in @('query_equality', 'query_expectations', 'fact_reproduction', 'dynamic_sql')) {
+      foreach ($k in @('query_equality', 'fact_reproduction', 'dynamic_sql')) {
         if ($c.oracle_claims.$k -in @('FAIL', 'BLOCKED')) { $script:summary.failures += "oracle $Label/$($c.id): $k $($c.oracle_claims.$k)" }
       }
       # an API claim FAIL is the runtime's node API disagreeing with its cursor (recorded with

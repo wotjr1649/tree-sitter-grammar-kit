@@ -173,6 +173,22 @@ func foldClaims(claims []string) string {
 	return out
 }
 
+// routeStepClaim is the S05 route rule for one edit step: PASS when proven; BLOCKED when
+// the instrumented edit with changes reused no node at all (noReuse) and the old and the
+// new incremental trees are full trees (the form whose has_error the tree gate recomputes
+// from the nodes) and either has an error; FAIL otherwise. Only r2 reducers and qualify pass
+// noReuse: under r1 every unproven route is a FAIL.
+func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
+	full := func(t *rcTree) bool { return t != nil && t.Form == "full" && t.Tree != nil }
+	switch {
+	case proven:
+		return claimPass
+	case noReuse && full(old) && full(cur) && (old.HasError || cur.HasError):
+		return claimBlocked
+	}
+	return claimFail
+}
+
 // replayCase recomputes one case. want is the workload's registration of the case (nil
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
@@ -312,12 +328,11 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 		}
 		rg := x.gate("incremental-route")
-		for _, s := range c.Steps[1:] {
-			proven := s.Route != nil && s.Route.EditHasChanges && s.Route.ReusedNodes > 0 && s.Route.FreshReusedNodes == 0
-			rg.check(s.Route == nil || s.Route.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
-			if !proven {
-				ir = claimFail
-			}
+		for k, s := range c.Steps[1:] {
+			r := s.Route
+			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
+			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
+			ir = worseClaim(ir, routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental))
 		}
 	}
 	x.gate("incremental-equality").check(ie == c.Claims.IncrementalEquality, name, "CLAIM_MISMATCH", "incremental_equality claim이 다시 계산한 값과 다르다")

@@ -72,6 +72,7 @@ type fxNative struct {
 	cases   []map[string]any
 	top     map[string]any
 	extra   map[string][]byte // extra files written into the root
+	reducer string            // the registered reducer id
 }
 
 func newFxNative() *fxNative {
@@ -79,7 +80,7 @@ func newFxNative() *fxNative {
 	in := func(id, s string) map[string]any {
 		return map[string]any{"path": "cases/" + id + ".txt", "role": "case", "sha256": sum([]byte(s)), "bytes": len(s)}
 	}
-	f := &fxNative{extra: map[string][]byte{}}
+	f := &fxNative{extra: map[string][]byte{}, reducer: "native-result-r1"}
 	f.profile = map[string]any{"schema": "tsgk-incremental/r1", "id": "fx", "route": "owned-plain", "operation": "native-parse-edit", "symbol": "tree_sitter_fx",
 		"encoding": "UTF-8", "output": "tree", "compiler": map[string]any{"name": "cc", "version": "1", "sha256": fxCompiler, "bytes": 1},
 		"grammar":      []any{map[string]any{"path": "src/parser.c", "role": "parser", "sha256": fxCompiler, "bytes": 1}},
@@ -149,7 +150,7 @@ func (f *fxNative) write(t *testing.T, edit func(root string, reg map[string]any
 		}
 		members = append(members, map[string]any{"path": p, "role": role, "bytes": len(files[p]), "sha256": sum(files[p])})
 	}
-	reg := map[string]any{"schema": ReplaySchema, "id": "fx-replay", "reducer": "native-result-r1", "operation": "evidence-replay",
+	reg := map[string]any{"schema": ReplaySchema, "id": "fx-replay", "reducer": f.reducer, "operation": "evidence-replay",
 		"subject":    map[string]any{"run": "100", "attempt": 1, "platform": "windows/amd64", "commit": "abc", "evidence_mode": "NEW_RUN", "execution_status": f.top["execution_status"], "assessment": f.top["assessment"]},
 		"identities": map[string]string{"workload": sum(prof), "policy": fxPolicy, "operation": "native-parse-edit", "platform": "windows/amd64", "producer": fxProducer, "executable": fxExe, "compiler": fxCompiler, "runtime": fxRuntime},
 		"records":    nil, "members": members}
@@ -332,6 +333,110 @@ func TestReplayMutantControls(t *testing.T) {
 	replayFails(t, f, nil, "STATUS_ASSESSMENT_INCONSISTENT")
 }
 
+// fxNoReuse makes c2's edit step reuse no node, with an error in its step 0 tree when
+// errTree, and records the route claim, verdict and code as given (with the matching
+// summary and run verdict).
+func fxNoReuse(errTree bool, route, assess, code string) *fxNative {
+	f := newFxNative()
+	c := f.cases[1]
+	steps := c["steps"].([]any)
+	steps[0].(map[string]any)["incremental"] = fxTreeOut("beta", errTree)
+	r := steps[1].(map[string]any)["route"].(map[string]any)
+	r["reused_nodes"], r["proven"] = 0, false
+	c["claims"].(map[string]string)["incremental_route"] = route
+	c["assessment"], c["code"] = assess, code
+	sum := f.top["summary"].(map[string]any)
+	sum["assessments"] = map[string]int{"PASS": 1, assess: 1}
+	if code != "" {
+		sum["codes"] = map[string]int{code: 1}
+	}
+	if errTree {
+		sum["has_error"] = 1
+	}
+	f.top["assessment"] = assess
+	return f
+}
+
+// under sets the reducer a fixture registers.
+func under(reducer string, f *fxNative) *fxNative {
+	f.reducer = reducer
+	return f
+}
+
+// An edit step that reuses no node next to a full error tree is unobservable under the r2
+// reducers: incremental_route is recomputed BLOCKED as the native run records it, so a
+// BLOCKED record replays valid to BLOCKED and the old FAIL record of the same observation
+// is a claim mismatch. Under r1 the same bytes replay exactly as before the rule: the old
+// FAIL record is valid and a BLOCKED record is a mismatch. On a clean tree the same
+// observation is FAIL under both, and a BLOCKED record of it is a mismatch.
+func TestReplayRouteOnErrorTree(t *testing.T) {
+	const code = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"
+	const notObserved = "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"
+	valid := map[string]*fxNative{
+		"r2-error-tree-blocked": under("native-result-r2", fxNoReuse(true, "BLOCKED", AssessBlocked, code)),
+		"r1-error-tree-fail":    under("native-result-r1", fxNoReuse(true, "FAIL", AssessFail, notObserved)),
+		"r2-clean-tree-fail":    under("native-result-r2", fxNoReuse(false, "FAIL", AssessFail, notObserved)),
+		"r1-clean-tree-fail":    under("native-result-r1", fxNoReuse(false, "FAIL", AssessFail, notObserved)),
+	}
+	for name, f := range valid {
+		t.Run(name, func(t *testing.T) {
+			assess := f.top["assessment"]
+			root, reg := f.write(t, func(root string, reg map[string]any) {
+				reg["subject"].(map[string]any)["assessment"] = assess
+			})
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			g := gateOf(r, "incremental-route")
+			if err != nil || r.Reducer.ID != f.reducer || !r.EvidenceValid || r.Assessment != assess || r.Recomputed.Assessment != assess || g.Failed != 0 {
+				t.Fatalf("replay %v: %s %s valid %v recomputed %+v findings %v gate %+v", err, r.Reducer.ID, r.Assessment, r.EvidenceValid, r.Recomputed, r.Findings, g)
+			}
+		})
+	}
+	// the recorded claim disagrees with the one the named reducer recomputes
+	mismatch := map[string]*fxNative{
+		"r2-error-tree-recorded-fail":    under("native-result-r2", fxNoReuse(true, "FAIL", AssessFail, notObserved)),
+		"r1-error-tree-recorded-blocked": under("native-result-r1", fxNoReuse(true, "BLOCKED", AssessBlocked, code)),
+		"r2-clean-tree-recorded-blocked": under("native-result-r2", fxNoReuse(false, "BLOCKED", AssessBlocked, code)),
+		"r1-clean-tree-recorded-blocked": under("native-result-r1", fxNoReuse(false, "BLOCKED", AssessBlocked, code)),
+	}
+	for name, f := range mismatch {
+		t.Run(name, func(t *testing.T) {
+			replayFails(t, f, func(root string, reg map[string]any) {
+				reg["subject"].(map[string]any)["assessment"] = f.top["assessment"]
+			}, "CLAIM_MISMATCH")
+		})
+	}
+	// a fresh parse that reused nodes is a FAIL even next to an error tree
+	f := under("native-result-r2", fxNoReuse(true, "BLOCKED", AssessBlocked, code))
+	f.cases[1]["steps"].([]any)[1].(map[string]any)["route"].(map[string]any)["fresh_reused_nodes"] = 1
+	replayFails(t, f, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessBlocked
+	}, "CLAIM_MISMATCH")
+}
+
+// The r2 error-tree exception needs full old and new trees (only their has_error is
+// recomputed from nodes): with the error tree in summary form a recorded BLOCKED is a
+// claim mismatch and a recorded FAIL replays without one.
+func TestReplayRouteNeedsFullTrees(t *testing.T) {
+	summary := func(f *fxNative) *fxNative {
+		tr := f.cases[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		tr["form"] = "summary"
+		delete(tr, "tree")
+		return under("native-result-r2", f)
+	}
+	f := summary(fxNoReuse(true, "BLOCKED", AssessBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"))
+	replayFails(t, f, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessBlocked
+	}, "CLAIM_MISMATCH")
+	f = summary(fxNoReuse(true, "FAIL", AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"))
+	root, reg := f.write(t, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessFail
+	})
+	r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+	if g := gateOf(r, "incremental-route"); err != nil || g.Failed != 0 || r.Recomputed.Assessment != AssessFail {
+		t.Fatalf("summary error tree recorded FAIL: %v %s %+v gate %+v findings %v", err, r.Assessment, r.Recomputed, g, r.Findings)
+	}
+}
+
 // S07-A04/A12: an unknown reducer, schema or operation is unsupported, never a replayed
 // success; a gate the reducer cannot recompute stays recorded and unresolved.
 func TestReplayUnsupported(t *testing.T) {
@@ -364,8 +469,19 @@ func TestReplayUnsupported(t *testing.T) {
 			t.Fatalf("reducer %s must declare its gates and what it does not recompute", ri.ID)
 		}
 	}
-	if !slices.Equal(names, []string{"bs-gate-compare-r1", "native-result-r1", "oracle-set-r1", "prepare-native-r1", "private-corpus-r1"}) {
+	if !slices.Equal(names, []string{"bs-gate-compare-r1", "native-result-r1", "native-result-r2", "oracle-set-r1", "oracle-set-r2", "prepare-native-r1", "private-corpus-r1", "private-corpus-r2"}) {
 		t.Fatalf("registry %v", names)
+	}
+	// an r2 revision differs from its r1 only in id, revision and the route rule it adds; r1
+	// stays byte-for-byte the reducer that judged the evidence recorded before the rule
+	table := reducerTable()
+	for _, id := range []string{"native-result", "oracle-set", "private-corpus"} {
+		r1, r2 := table[id+"-r1"].info, table[id+"-r2"].info
+		if r2.Revision != "r2" || r2.Operation != r1.Operation || !slices.Equal(r2.Gates, r1.Gates) || !slices.Equal(r2.Recorded, r1.Recorded) ||
+			!slices.Equal(r2.Inputs, r1.Inputs) || !slices.Equal(r2.Roles, r1.Roles) || !strings.HasPrefix(r2.Description, r1.Description+"; r2: ") ||
+			reducerText(r1) == reducerText(r2) {
+			t.Fatalf("%s revisions: %+v %+v", id, r1, r2)
+		}
 	}
 }
 

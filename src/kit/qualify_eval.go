@@ -60,8 +60,9 @@ func (q *qualifier) openHost(p QualPlatform, dir string) (*qhost, *Error) {
 	}
 	// each host has its own byte budget; the wall and cancellation are shared
 	hr := &run{caller: q.r.caller, wall: q.r.wall, cancel: q.r.cancel}
+	// the records are new CI evidence: they are judged with the oracle-set-r2 S05 route rule
 	x := &replayEnv{r: hr, g: newGuard(root), lim: q.lim, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{}, verified: map[string]bool{},
-		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}, errorTreeRoute: true}
 	h := &qhost{platform: p, x: x, files: x.files, used: map[string]bool{}}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
@@ -679,6 +680,11 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		}
 	}
 	for _, k := range sortedKeys(kit) {
+		// a BLOCKED route is a route the grammar's error tree left unobservable (recomputed
+		// by the incremental-route gate): the E obligation is BLOCKED, the kit has not failed
+		if k == "incremental_route" && kit[k] == claimBlocked {
+			continue
+		}
 		if completed && (kit[k] == claimFail || kit[k] == claimBlocked) {
 			add("KIT_CLAIM_FAILED", path, fmt.Sprintf("사례 %s의 %s가 %s다", qc.ID, k, kit[k]))
 		}
