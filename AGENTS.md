@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project and entry point
-- This project provides a planned Go CLI and small public offline Go API for grammar, generated-artifact, and runtime verification evidence. Only foundation checks are implemented; specifications do not imply completed product features.
+- This project provides a Go CLI and small public offline Go API for grammar, generated-artifact, and runtime verification evidence. The offline core (inspect, identity, verify, schema) is verified; other areas are experimental and 26-route support is BLOCKED; see [platform support](docs/specs/platform-support.md). Specifications do not imply completed product features.
 - Start ordinary development, fixes, and reviews from the request and affected code and checks. Find task-specific development rules through the [documentation map](docs/README.md).
 - Apply campaign gates only when the current request or an applicable authoritative assignment explicitly selects campaign scope. Filenames, local artifacts, and incidental Issue references alone do not select it; ordinary work has no session-prompt prerequisite.
 
