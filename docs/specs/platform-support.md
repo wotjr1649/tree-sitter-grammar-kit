@@ -9,7 +9,7 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 | capability | 현재 상태 | 근거와 범위 |
 |---|---|---|
 | foundation build/test | VERIFIED(세 OS) | 필수 CI. Go/OS/arch, runner image, checkout SHA를 확인한다. `CGO_ENABLED=0` active closure에 `CgoFiles`와 `runtime/cgo`가 없다 |
-| offline 제품 기능(`inspect`·`identity`·`corpus`·`verify`·`schema`와 공개 API) | VERIFIED(세 OS) | S01~S03 기능·경계·결정성 시험. CLI와 API 결과 bytes 동일. checkout 밖 consumer와 module proxy consumer |
+| offline 제품 기능(`inspect`·`identity`·`verify`·`schema`와 공개 API) | VERIFIED(세 OS) | S01~S03 기능·경계·결정성 시험. CLI와 API 결과 bytes 동일. checkout 밖 consumer와 module proxy consumer |
 | regenerate(`reproduce`) | VERIFIED: owned fixture(세 OS), 채택 6 route(Linux CI), 26 route(Windows 로컬). NOT_RUN: 26 route의 Linux·macOS 재생성 | S04 tool closure, 독립 두 작업 공간, 기준 비교. 비채택 route는 이전 CLI 생성물과 drift가 있고 기록돼 있다 |
 | native parse·edit·query(`incremental`·`oracle record`) | VERIFIED(세 OS 등록 사례) | 27 route, failures 0. Linux ASan/UBSan suite. compiler identity는 host별이다 |
 | supervision(runner) | VERIFIED(backend별) | Windows Job Object hard, Linux 위임 cgroup v2 hard, macOS process group sampled. macOS에서는 그룹을 떠난 조용한 하위 process를 정리하지 못하며 `NOT_CONTAINED`로 기록한다 |
@@ -23,17 +23,18 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 
 첫 release 후보의 범위는 [제품 범위](scope.md)가 정한다.
 
-- **VERIFIED(세 OS):** offline `inspect`, `identity`, `verify`, `schema`와 그 공개 API(`src/kit`). `corpus`도 같은 core와 시험을 쓴다.
-- **experimental:** `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API.
+- **VERIFIED(세 OS):** offline `inspect`, `identity`, `verify`, `schema`와 그 공개 API(`src/kit`).
+- **experimental:** `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API.
   - 위 표의 근거로 동작하지만 호환성은 약속하지 않는다.
   - native 실행에는 승인된 capability(`BUILD_NATIVE`, `EXEC_NATIVE`, `EXEC_GENERATOR`)와 host compiler가 필요하다.
 - **주장하지 않음:** 26개 route 지원. 지원 claim은 BLOCKED이며 [#70](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/70)과 넘겨받은 grammar gap이 남아 있다.
 - **알려진 한계**
   - tree-sitter runtime의 field 조회와 cursor가 다른 API claim FAIL 23 사례(6 route)
-  - T-SQL r6 과잉 수용 3건
+  - T-SQL 과잉 수용(r6에서 3종, r5부터 2종)
   - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
   - 동적 SQL 탐지는 첫 문장이 아닌 `;sp_executesql`을 known miss로 둠
-  - BrightScript·cooklang 역할 NOT_RUN
+  - BrightScript·cooklang 역할 NOT_RUN, `n461-svc` 역할 INCOMPLETE(SVC negative 기대값 8개, #70)
+  - `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
   - [#65](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/65)의 시험 시간 여유
 - release는 binary를 배포하지 않고 소스 tag만 낸다. 임의 입력에 대한 지원을 인증하지 않는다.
 

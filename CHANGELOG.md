@@ -6,10 +6,11 @@
 
 ### VERIFIED(Windows amd64, Linux amd64, macOS arm64)
 
-- offline core와 그 공개 API(`src/kit`): `inspect`, `identity`, `corpus`, `verify`(디렉터리와 ZIP, 압축을 풀지 않음), `schema check`/`schema diff`. CGO-free이고 CLI와 API 결과 bytes가 같다.
+- offline core와 그 공개 API(`src/kit`): `inspect`, `identity`, `verify`(디렉터리와 ZIP, 압축을 풀지 않음), `schema check`/`schema diff`. CGO-free이고 CLI와 API 결과 bytes가 같다.
 
 ### experimental(호환성 약속 없음)
 
+- `corpus`(비공개 corpus inventory)
 - `reproduce`(두 작업 공간 생성 비교)
 - `incremental`·`oracle record`(native parse/edit/query 기록; 승인 capability와 host compiler 필요)
 - `replay`·`evidence verify`
@@ -22,10 +23,11 @@
 ### 알려진 한계
 
 - tree-sitter runtime의 field 조회와 cursor가 다른 API claim FAIL 23 사례(6 route)
-- T-SQL r6 과잉 수용 3건
+- T-SQL 과잉 수용(r6에서 3종, r5부터 2종)
 - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
 - 동적 SQL 탐지는 첫 문장이 아닌 `;sp_executesql`을 known miss로 둠
-- BrightScript·cooklang 역할 NOT_RUN
+- BrightScript·cooklang 역할 NOT_RUN, `n461-svc` 역할 INCOMPLETE(SVC negative 기대값 8개, #70)
+- `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
 - 시험 시간 여유(#65)
 
 ### Session 이력
