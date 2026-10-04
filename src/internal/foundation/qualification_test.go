@@ -326,7 +326,7 @@ func buildInventory(t *testing.T, root string) []byte {
 		}
 		for _, f := range dyn.Files {
 			if f.Route == route {
-				d := &kit.DynamicSQLExpectation{Facts: f.Facts, KnownMisses: []kit.ByteSpan{}}
+				d := &kit.DynamicSQLExpectation{Facts: append([]kit.DynamicSQLFact{}, f.Facts...), KnownMisses: []kit.ByteSpan{}}
 				for _, n := range f.NonFacts {
 					if n.What == "KNOWN_MISS" {
 						d.KnownMisses = append(d.KnownMisses, kit.ByteSpan{StartByte: n.StartByte, EndByte: n.EndByte})

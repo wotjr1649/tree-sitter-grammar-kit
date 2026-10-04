@@ -25,7 +25,10 @@ foreach ($route in @($r.cells | ForEach-Object { $_.route } | Select-Object -Uni
   }
   Write-Output ("{0,-15} {1}" -f $route, ($row -join ' '))
 }
-foreach ($x in $r.extra_roles) { Write-Output ("role {0} {1} {2}" -f $x.id, $x.platform, $x.status) }
+foreach ($x in $r.extra_roles) { Write-Output ("role {0} {1} {2} mechanism={3} checks={4}" -f $x.id, $x.platform, $x.status, $x.mechanism, $x.registered_checks) }
+foreach ($c in $r.cells) {
+  if (@($c.check_failures).Count) { Write-Output ("CHECKS {0}@{1} {2}" -f $c.route, $c.platform, (@($c.check_failures) -join ' ')) }
+}
 foreach ($f in $r.findings) { Write-Output ("FINDING {0} {1}" -f $f.code, $f.path) }
 foreach ($c in $r.cells) {
   foreach ($f in $c.set.findings) { Write-Output ("CELL {0}@{1} {2} {3}" -f $c.route, $c.platform, $f.code, $f.path) }

@@ -311,6 +311,11 @@ func TestQualifyBaseline(t *testing.T) {
 	if r.SupportClaim == "SUPPORTED" || r.Assessment == AssessPass || r.Completeness != AssessFail || r.MechanismGate != AssessFail {
 		t.Fatalf("missing role row: %s %s %s %s", r.SupportClaim, r.Assessment, r.Completeness, r.MechanismGate)
 	}
+	for _, x := range r.ExtraRoles {
+		if x.ID == "fx-history" && x.Platform == "windows-amd64" && (x.Status != CellMissing || x.Checks != "") {
+			t.Fatalf("missing row reports checks: %s %q", x.Status, x.Checks)
+		}
+	}
 }
 
 // Review r1 M1: a registered expectation that covers no row kind (here the NO_ERROR step
@@ -720,6 +725,7 @@ func TestQualificationInventoryGuards(t *testing.T) {
 		"step-range":      func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].Expect[0].Step = 1 },
 		"step-negative":   func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[2].QueryExpect[0].Step = -1 },
 		"support-covers":  func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].Role = "support" },
+		"over-covers":     func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].ExpectStatus = StatusResourceLimit },
 		"route-detector": func(inv *QualificationInventory) {
 			inv.Routes[0].Workload.Cases[1].Role, inv.Routes[0].Workload.Cases[1].Covers = "detector", map[string][]string{}
 		},

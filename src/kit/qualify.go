@@ -238,8 +238,8 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 					return badW("CASE_STEP_INVALID", cp)
 				}
 			}
-			if c.ExpectStatus != "" && c.ExpectStatus != StatusResourceLimit {
-				return badW("CASE_INVALID", cp+"/expect_status")
+			if c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
+				return badW("CASE_INVALID", cp+"/expect_status") // an over-limit case judges no row
 			}
 			for _, q := range c.QueryExpect {
 				if !qs[q.Query] {
@@ -686,7 +686,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 
 // cell folds one route × platform evaluation into the cell's axes.
 func (q *qualifier) cell(route QualRoute, p QualPlatform, s *qset, cmp *QualComparison) QualCell {
-	c := QualCell{Route: route.Route, Platform: p.ID, Comparison: cmp.Result, Obligations: []QualObligation{}}
+	c := QualCell{Route: route.Route, Platform: p.ID, Comparison: cmp.Result, Obligations: []QualObligation{}, CheckFailures: []string{}}
 	c.Set = s.QualSet
 	if c.Set.Evidence == "MISSING" {
 		c.Status, c.Mechanism, c.Requirement = CellMissing, AssessNotAssessed, AssessNotAssessed
@@ -806,7 +806,7 @@ func explainQualification(res QualificationResult) []string {
 		fmt.Sprintf("kit 검사 gate %s(완결성·cohort·자격·칸별 kit 축·비교·실행된 추가 역할 행의 kit 축).", res.MechanismGate),
 	}
 	if res.SupportClaim != "SUPPORTED" {
-		out = append(out, "지원 claim은 BLOCKED다: 모든 필수 칸이 PASS일 때만 SUPPORTED다. 추가 역할 행은 필수 칸을 대신하지 않는다.")
+		out = append(out, "지원 claim은 BLOCKED다: 모든 필수 칸과 실행된 추가 역할 행이 PASS이고 kit 검사 gate가 PASS일 때만 SUPPORTED다. 추가 역할 행은 필수 칸을 대신하지 않는다.")
 	}
 	return out
 }

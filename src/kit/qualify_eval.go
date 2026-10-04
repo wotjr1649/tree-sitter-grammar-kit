@@ -363,7 +363,7 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 			}
 			switch {
 			case missing:
-				row.Status, row.Mechanism = CellMissing, AssessNotAssessed
+				row.Status, row.Mechanism, row.Checks = CellMissing, AssessNotAssessed, ""
 			case row.Mechanism == AssessFail || row.Checks == claimFail:
 				row.Status = CellFail
 			case row.Mechanism != AssessPass || row.Checks != claimPass:
