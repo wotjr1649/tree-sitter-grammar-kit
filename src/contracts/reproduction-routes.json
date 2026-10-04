@@ -283,8 +283,8 @@
       "candidate": "P05-MSSQL-REMEDY-r1",
       "prepare_generated": {
         "parser.c": {
-          "bytes": 29214306,
-          "sha256": "cd923f73e98f66f6d157cdd61bca3f845437f67134bc9682809c9aa7587ad2e7"
+          "bytes": 29214301,
+          "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04"
         },
         "tree_sitter/parser.h": {
           "bytes": 7624,

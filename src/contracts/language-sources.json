@@ -770,8 +770,8 @@
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 27357,
-            "sha256": "69e39c42bd4199653fa04fa2f0551cfb7fef45b109dcf8ff149d29d581d616b9"
+            "bytes": 27591,
+            "sha256": "3be45f5645e2f4b12f9bd7b6b3b223011bd8c6ed2b93e051f53de0a7d7f6fc20"
           },
           {
             "path": "grammar/statements/select.js",

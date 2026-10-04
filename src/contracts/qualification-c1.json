@@ -12914,8 +12914,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "cd923f73e98f66f6d157cdd61bca3f845437f67134bc9682809c9aa7587ad2e7",
-      "bytes": 29214306
+      "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04",
+      "bytes": 29214301
      },
      {
       "path": "src/scanner.c",
@@ -13492,6 +13492,53 @@
        ],
        "tsql-B04": [
         "P",
+        "E"
+       ]
+      },
+      "source": null
+     },
+     {
+      "id": "tsql-r6-begin-empty-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "af376cc98e2a2dbc228a2c7cfaf593fea3b4c8b0135ca4a11089b7b912591f09",
+       "bytes": 32
+      },
+      "edits": [
+       {
+        "start_byte": 18,
+        "old_end_byte": 28,
+        "new_end_byte": 43,
+        "old": "QkVHSU47IEVORA==",
+        "new": "QkVHSU47IFNFTEVDVCAxIEFTIGE7IEVORA=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B04": [
+        "P",
+        "N",
         "E"
        ]
       },

@@ -304,6 +304,36 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "tsql-r6-begin-empty-r1",
+      "kind": "recovery",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS x;\nGO\nBEGIN; END\nGO\n",
+      "edits": [
+        {
+          "find": "BEGIN; END",
+          "replace": "BEGIN; SELECT 1 AS a; END"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

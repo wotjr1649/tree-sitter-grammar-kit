@@ -1626,8 +1626,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "cd923f73e98f66f6d157cdd61bca3f845437f67134bc9682809c9aa7587ad2e7",
-     "bytes": 29214306
+     "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04",
+     "bytes": 29214301
     },
     {
      "path": "src/scanner.c",
@@ -1662,8 +1662,8 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "12b32be8c6cf418a2ad91c5b3414258931052d63358a40fb99aa380f6b37bfbe",
-      "bytes": 719693
+      "sha256": "b9cf854c223f0dc215f1251a17b6b8cbeedc38748d7ad04f799f2e4124c0a075",
+      "bytes": 720146
      },
      {
       "path": "node-types.json",
@@ -1672,8 +1672,8 @@
      },
      {
       "path": "parser.c",
-      "sha256": "cd923f73e98f66f6d157cdd61bca3f845437f67134bc9682809c9aa7587ad2e7",
-      "bytes": 29214306
+      "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04",
+      "bytes": 29214301
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -1771,8 +1771,8 @@
      {
       "path": "grammar/statements/index.js",
       "role": "js_helper",
-      "sha256": "69e39c42bd4199653fa04fa2f0551cfb7fef45b109dcf8ff149d29d581d616b9",
-      "bytes": 27357
+      "sha256": "3be45f5645e2f4b12f9bd7b6b3b223011bd8c6ed2b93e051f53de0a7d7f6fc20",
+      "bytes": 27591
      },
      {
       "path": "grammar/statements/insert.js",
@@ -1977,8 +1977,8 @@
      },
      {
       "path": "grammar/statements/index.js",
-      "bytes": 27357,
-      "sha256": "69e39c42bd4199653fa04fa2f0551cfb7fef45b109dcf8ff149d29d581d616b9"
+      "bytes": 27591,
+      "sha256": "3be45f5645e2f4b12f9bd7b6b3b223011bd8c6ed2b93e051f53de0a7d7f6fc20"
      },
      {
       "path": "grammar/statements/select.js",

@@ -115,7 +115,8 @@
         }
       ],
       "evidence_note": "evidence supplied by the orchestrator after review r4 and re-verified from the page; it replaces the earlier gap-empty-statement-at-block-start (searched: Bertrand, larnu, Guzman)",
-      "change": "block: BEGIN, optional ;, statements, END. BEGIN TRY/CATCH and the CREATE FUNCTION body BEGIN are unchanged (their syntax pages are separate and were not shown to allow it)"
+      "change": "block: BEGIN statements END as before, or BEGIN ; with at least one statement then END (the page: an empty block is a syntax error even with a semicolon after each keyword; review r6 R6-1). It applies to IF/WHILE/bare blocks and to the BEGIN ... END of procedure and trigger bodies (procedure_body). BEGIN TRY/CATCH (no [ ; ] in the TRY...CATCH syntax) and the CREATE FUNCTION body BEGIN are unchanged; BEGIN;; stays an error (one optional ;)",
+      "over_acceptance": "kept from r5, outside this change: an empty BEGIN END block and BEGIN WITH c AS ... without the ; that the page requires before a CTE are accepted (review r6 N6-a)"
     },
     {
       "id": "r6-default-with-values",
@@ -741,13 +742,13 @@
         "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff"
       },
       "result": {
-        "bytes": 27357,
-        "sha256": "69e39c42bd4199653fa04fa2f0551cfb7fef45b109dcf8ff149d29d581d616b9"
+        "bytes": 27591,
+        "sha256": "3be45f5645e2f4b12f9bd7b6b3b223011bd8c6ed2b93e051f53de0a7d7f6fc20"
       },
       "replacements": [
         {
           "old": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  block: ($) => seq($.keyword_begin, repeat($._body_item), $.keyword_end),\n\n  statement: ($) =>\n",
-          "new": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  // tsgk r6: BEGIN [ ; ] { sql_statement | statement_block } END [ ; ] — a\n  // `;` may directly follow BEGIN (`BEGIN;`, `BEGIN ;WITH c AS ...`).\n  block: ($) => seq($.keyword_begin, optional(';'), repeat($._body_item), $.keyword_end),\n\n  statement: ($) =>\n"
+          "new": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  // tsgk r6: BEGIN [ ; ] { sql_statement | statement_block } END [ ; ] — a\n  // `;` may directly follow BEGIN (`BEGIN;`, `BEGIN ;WITH c AS ...`). With\n  // that `;` the block needs a statement: SQL Server rejects an empty block\n  // even with semicolons (the bare `BEGIN END` form stays as before).\n  block: ($) =>\n    choice(\n      seq($.keyword_begin, repeat($._body_item), $.keyword_end),\n      seq($.keyword_begin, ';', repeat1($._body_item), $.keyword_end),\n    ),\n\n  statement: ($) =>\n"
         },
         {
           "old": "      $.update_statistics_statement,\n      $.kill_statement,\n      $.backup_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n",
