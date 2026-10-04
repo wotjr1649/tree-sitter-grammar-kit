@@ -21,8 +21,8 @@ orchestrator 조정(2026-10-04, 선택지 A)에 따라 S08은 qualification 장�
 
 * `gofmt`, `go vet ./src/...`, `go test ./src/kit ./src/cmd/tsgk ./src/internal/foundation`: 통과(`CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`).
 * 새 시험: `TestQualifyBaseline`(A01·A02), `TestQualifyCompleteness`(A04), `TestQualifyCohort`(A05), `TestQualifyComparison`(A06·A07), `TestQualifyDetectorAndGap`(A08), `TestQualifyEligibility`(A09), `TestQualifyMechanism`(A12), `TestQualifyLimitsAndCancel`(A11), `TestQualificationInventoryGuards`, `TestQualificationInventory`, `TestQualifyCLI`, `TestModuleProxyConsumer`, `TestGrammarUpdateWorkflow`.
-* **targeted mutant 29/29 검출**(`.work/session-08/mutants.py`, 로컬 `mutants-0cdf3fd.json`): 실패 route 칸 제외, 다른 host로 빈 칸 채우기, dialect 병합(set route 미검사, 두 route가 set 공유), 역사 relabel(evidence mode·후보 commit 미검사), cohort·architecture(identity·set) 미검사, 등록 대조·workload 결속 생략, 비교에서 capture·digest·API 제외, host 관측 비교, 칸이 비교 실패 무시, 사례 없음을 PASS로, detector의 요구 행 덮기, detector로 gap 숨김, kit claim 무시, 기록 query claim 신뢰, record 수 미검사, 등록되지 않은 파일 허용, 중복 host 허용, 빈 칸 완결성 무시, gate가 kit 축 무시, coverage 규칙·칸 수 미검사, 모든 칸 PASS 없이 SUPPORTED. 모두 의도한 시험이 실패했다(compile 실패로 대신하지 않음).
-* **CI 방식 재현(ci-sim, `9aa1500`)**: workflow의 `26 route native build와 등록 사례·query 기록 실행` step과 `78칸 qualification 집계` step을 그대로 꺼내 새 `pwsh -NoProfile`에서 job env와 RUNNER_TEMP 형태 디렉터리로 실행했다. route step은 exit 0(755초, routes 27, failures 0)이고 실행 identity를 썼다. artifact 경로를 그대로 복사해 qualification step을 실행했다. Windows 26칸은 모두 kit 축 PASS이고 추가 역할 `n461-svc`·`n461-large`도 PASS다. Linux·macOS host가 없어 52칸은 `MISSING`이고 완결성·`mechanism_gate`가 FAIL이며 step이 실패했다(한 host만 있는 로컬의 예상 결과). Windows에서 실행 파일 이름에 `.exe`를 붙인 것만 job과 다르다(job은 ubuntu).
+* **targeted mutant**: `0cdf3fd`에서 29/29, 리뷰 r1 수정 뒤 33/33 검출(`.work/session-08/mutants.py`, 로컬 `mutants-0cdf3fd.json`·`mutants-r1.json`). r1에서 더한 mutant는 등록 검사 무시, 거부된 host를 cohort 기준으로 사용, 역할 행 MISSING의 완결성 무시, detector 결과 무시다. `SUPPORTED`에 gate를 요구하는 줄을 지우는 mutant는 동등 mutant라 뺐다(모든 칸과 실행 역할 행이 PASS이면 gate도 PASS다). 29개 목록: 실패 route 칸 제외, 다른 host로 빈 칸 채우기, dialect 병합(set route 미검사, 두 route가 set 공유), 역사 relabel(evidence mode·후보 commit 미검사), cohort·architecture(identity·set) 미검사, 등록 대조·workload 결속 생략, 비교에서 capture·digest·API 제외, host 관측 비교, 칸이 비교 실패 무시, 사례 없음을 PASS로, detector의 요구 행 덮기, detector로 gap 숨김, kit claim 무시, 기록 query claim 신뢰, record 수 미검사, 등록되지 않은 파일 허용, 중복 host 허용, 빈 칸 완결성 무시, gate가 kit 축 무시, coverage 규칙·칸 수 미검사, 모든 칸 PASS 없이 SUPPORTED. 모두 의도한 시험이 실패했다(compile 실패로 대신하지 않음).
+* **CI 방식 재현(ci-sim, `9aa1500`)**: workflow의 `26 route native build와 등록 사례·query 기록 실행` step과 `78칸 qualification 집계` step을 그대로 꺼내 새 `pwsh -NoProfile`에서 job env와 RUNNER_TEMP 형태 디렉터리로 실행했다. route step은 exit 0(755초, routes 27, failures 0)이고 실행 identity를 썼다. artifact 경로를 그대로 복사해 qualification step을 실행했다. Windows 26칸은 모두 kit 축 PASS다. 리뷰 r1 수정 뒤 같은 근거를 다시 집계하면(`ddf45bb`) 등록 대조(선언 mapping·point·동적 SQL 기대값 포함)도 그대로 맞고, 추가 역할 `n461-large`는 PASS, `n461-svc`는 kit 축 PASS·등록 검사 BLOCKED라 `INCOMPLETE`다. SVC 음성 사례 8개(inline 해석 불가·VB·진단)가 S05 계약대로 `BLOCKED`로 끝나지만 등록된 기대 결과가 없어 통과로 셀 수 없기 때문이다. Linux·macOS host가 없어 52칸은 `MISSING`이고 완결성·`mechanism_gate`가 FAIL이며 step이 실패했다(한 host만 있는 로컬의 예상 결과). Windows에서 실행 파일 이름에 `.exe`를 붙인 것만 job과 다르다(job은 ubuntu).
 * **세 host 경로 점검**: Windows host 근거를 실행 identity와 manifest platform만 바꾼 두 복제본으로 `tsgk qualify`를 돌리면 완결성 PASS, kit 축 78/78, 비교 FAIL 0, `mechanism_gate` PASS, 405 MB를 12.5초에 읽었다. 이것은 집계 경로와 한도의 점검이며 교차 OS 근거가 아니다.
 
 ## Windows 칸(ci-sim, 후보 `9aa1500`)
@@ -32,7 +32,7 @@ orchestrator 조정(2026-10-04, 선택지 A)에 따라 S08은 qualification 장�
 | FAIL(요구 FAIL, kit PASS) | 4 | csharp, typescript, tsx, swift |
 | INCOMPLETE(사례 없는 의무, kit PASS) | 22 | 나머지 22 route |
 
-의무 826개 중 PASS 308, FAIL 9, 사례 없음 509다. kind별 사례 없음은 P 66, N 124, R 130, E 47, Q 108, W 34다. 요구 FAIL 9건은 넘겨받은 grammar gap이다: csharp B01·B03·V08·V09의 P(contextual keyword 식별자 등), typescript V40·V50의 P(TypeScript 5.0–5.3 구문), tsx B01·B02의 N과 swift V59의 N(lenient acceptance: 오류여야 할 입력을 받아들임). API claim FAIL은 26 route 22건, SVC 1건이다(S06과 같은 runtime field lookup 차이). 세 host 비교는 hosted CI에서 처음 실행된다.
+의무 826개 중 PASS 308, FAIL 9, 사례 없음 509다. 등록 검사(모든 등록 기대값)는 22 route가 PASS, 4 route가 FAIL이다(csharp gap 2, typescript gap 4, tsx gap 2, swift gap 2 사례). kind별 사례 없음은 P 66, N 124, R 130, E 47, Q 108, W 34다. 요구 FAIL 9건은 넘겨받은 grammar gap이다: csharp B01·B03·V08·V09의 P(contextual keyword 식별자 등), typescript V40·V50의 P(TypeScript 5.0–5.3 구문), tsx B01·B02의 N과 swift V59의 N(lenient acceptance: 오류여야 할 입력을 받아들임). API claim FAIL은 26 route 22건, SVC 1건이다(S06과 같은 runtime field lookup 차이). 세 host 비교는 hosted CI에서 처음 실행된다.
 
 **#70과의 차이**: #70은 R 미덮음을 97로 적었다. kit 규칙은 R에 보존 구조 기대(`ERROR`+`contains`)를 요구하므로 `contains`가 빈 recovery 사례 26개는 N·E만 덮고 R은 덮지 않는다. 그래서 행렬의 R 미덮음은 130, 합계는 509다.
 
@@ -55,6 +55,17 @@ orchestrator 조정(2026-10-04, 선택지 A)에 따라 S08은 qualification 장�
 
 * C# 40개의 원인은 소유 최소 재현으로 확인했다. `class C { }`와 개행 뒤 `#pragma warning restore 1591`을 파일 끝 개행 없이 두면 root `has_error`가 true인데 cursor tree에는 ERROR·MISSING node가 없다(빠진 지시문 끝이 숨은 node다). 끝 개행이 있으면 오류가 없다. `#region`/`#endregion`을 개행 없이 끝내면 보이는 ERROR가 생긴다. kit는 runtime의 `has_error`와 cursor에 보이는 node만 보고하므로 이런 파일의 ERROR 목록은 비어 있다.
 * 판정: route 있는 모든 파일이 실행·집계되었고 kit 결함 0이지만 `UNDISPOSITIONED` 2개가 남아 S08-A16 행은 **통과가 아니다**. 사용자 처분이 기록되면 다시 센다. 비율 임계값은 없다. 이 행은 78칸과 별도다.
+
+S07 `private-corpus-r1`로 이 실행을 다시 검증했다(`ddf45bb` 이전 `6e7ca58`의 CLI): `REPLAYED_RAW`/PASS, evidence 유효, 0.9초(로컬 `private-replay-receipt-s08.json`).
+
+## 분리 context 리뷰와 처분
+
+**r1**(general-purpose subagent, `3fa7ed3..6e7ca58`, EXECUTED `go vet`·qualify 시험 + STATIC): BLOCKER 0, MATERIAL 2, MINOR 6, NOTE 1. 처분은 `ddf45bb`(code)와 `475ad4c`(문서)다.
+
+* M1: 어느 kind도 덮지 않는 등록 기대값(edit 뒤 `NO_ERROR` step, 행이 없는 N461 사례, 추가 역할의 support 사례)이 어느 축에도 없었다. 칸에 `registered_checks`(모든 등록 기대값과 query 기대값, SVC 관측 판정)를 두어 요구 축에 접고, 추가 역할 행은 kit 축(`mechanism`)과 검사(`registered_checks`)를 따로 가진다(`TestQualifyRegisteredChecks`).
+* M2: 추가 역할 행이 MISSING·INCOMPLETE여도 `SUPPORTED`·exit 0이 가능했다. 실행할 역할 행의 set이 없으면 완결성 FAIL이고, `SUPPORTED`는 gate와 실행 역할 행 PASS를 요구한다(`TestQualifyBaseline`).
+* m3: 거부된 host가 cohort 기준이 되어 정상 host를 `COHORT_MISMATCH`로 만들었다. 자기 검사를 통과한 첫 host를 기준으로 한다(`TestQualifyEligibility`). m4: host 순회를 platform 순서로 고정했다. m5: 등록 대조에 선언 mapping, point, 동적 SQL 기대값, 사례 encoding을 더하고 inventory가 그 값을 가진다. m6: 요구 행 없는 route, 범위 밖 step, 요구 행을 덮는 support 사례, route 안 detector를 inventory parser가 거부하고, 생성기는 열 수가 틀린 REQ 행에서 실패하며 178행·826 의무를 고정한다. m7: 한도 초과로 kit 축이 BLOCKED인 칸은 `INCOMPLETE`이고, host 디렉터리 없음·link는 호출 전체 오류라고 문서에 적었으며, host당 record 수 한도를 강제한다(`RECORDS_LIMIT`). platform 표 상태를 `AVAILABLE`로 고쳤다. m8: set이 있으면 그 파일과 profile을 처음부터 그 칸의 근거로 표시해 원인이 다른 completeness 실패로 번지지 않는다.
+* n9: set과 실행 identity는 hash가 아니라 같은 artifact 안에 있다는 것으로 묶인다(한계로 기록). PR의 후보 commit은 merge commit(`github.sha`)이다. 실패 job만 재실행하면 attempt가 섞여 완결성이 실패하므로 run 전체를 다시 실행한다([validation](../validation/validation.md)).
 
 ## acceptance 연결
 
@@ -92,7 +103,8 @@ orchestrator 조정(2026-10-04, 선택지 A)에 따라 S08은 qualification 장�
 
 * 지원 claim은 BLOCKED다. 필수 의무 509개가 사례 없이 남았고(#70) 채택 route의 grammar gap 9건이 FAIL이다.
 * 세 OS 실행·비교, PR·merge·post-merge는 orchestrator가 한다.
-* 사실 재현·동적 SQL claim은 S07과 같이 기록값을 쓴다(다시 계산하지 않음).
+* 사실 재현·동적 SQL claim은 S07과 같이 기록값을 쓴다(다시 계산하지 않음). 그 기대값과 선언 mapping은 inventory와 대조한다.
+* `n461-svc` 행은 SVC 음성 사례 8개에 등록된 기대 결과가 없어 `INCOMPLETE`다. 기대 결과 등록은 후속 사례 작업이다.
 * 실행 identity는 run이 스스로 쓴 주장이며 진위는 artifact 경로와 hash로만 보장한다(게시자 인증 없음).
 * `go test -race`는 실행하지 않았다(CGO 없는 build).
 * BrightScript maintained·historical, Cooklang audit 행은 `NOT_RUN`이다(bundle 미준비, 다운로드 없음).
