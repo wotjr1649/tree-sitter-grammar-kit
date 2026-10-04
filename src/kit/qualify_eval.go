@@ -242,11 +242,11 @@ func (t *qTree) semantic() any {
 }
 
 // workload evaluates one workload on every registered platform and compares the hosts.
-func (q *qualifier) workload(w QualWorkload, platforms []QualPlatform) (map[string]*qset, *QualComparison, *Error) {
+func (q *qualifier) workload(w QualWorkload, errNodes []string, platforms []QualPlatform) (map[string]*qset, *QualComparison, *Error) {
 	sets := map[string]*qset{}
 	cmp := &QualComparison{Set: w.Set, Platforms: []string{}, Differences: []string{}}
 	for _, p := range platforms {
-		s, e := q.evalSet(w, p)
+		s, e := q.evalSet(w, errNodes, p)
 		if e != nil {
 			return nil, nil, e
 		}
@@ -353,7 +353,7 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 					ps = append(ps, p)
 				}
 			}
-			sets, cmp, e := q.workload(w, ps)
+			sets, cmp, e := q.workload(w, nil, ps)
 			if e != nil {
 				return nil, nil, e
 			}
@@ -423,7 +423,7 @@ func worseMechanism(a, b string) string {
 }
 
 // evalSet verifies and judges one workload's record set on one host.
-func (q *qualifier) evalSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
+func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (*qset, *Error) {
 	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{},
 		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
 	h := q.hosts[p.ID]
@@ -622,7 +622,7 @@ func (q *qualifier) evalSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
 		x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, &c, &extra, add, full)
+		q.judgeCase(s, qc, errNodes, &c, &extra, add, full)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
@@ -662,7 +662,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, add func(code, path, msg string), path string) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -749,9 +749,16 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, 
 	}
 	kinds := map[string]string{}
 	if completed {
-		kinds["P"] = fold(func(e StepExpectation) bool { return e.Syntax == "NO_ERROR" && len(e.Contains) > 0 })
-		kinds["N"] = fold(func(e StepExpectation) bool { return e.Syntax == "ERROR" })
-		kinds["R"] = fold(func(e StepExpectation) bool { return e.Syntax == "ERROR" && len(e.Contains) > 0 })
+		for _, k := range []string{"P", "N", "R"} {
+			kinds[k] = fold(func(e StepExpectation) bool { return stepCovers(e, k, errNodes) })
+		}
+		if qc.Sample != nil {
+			// a registered sample: its step 0 parse, within the sample node bound
+			kinds["W"] = fold(func(e StepExpectation) bool { return stepCovers(e, "W", errNodes) })
+			if t := firstTree(extra); kinds["W"] != "" && (t == nil || t.DescendantCount > SampleMaxNodes) {
+				kinds["W"] = worseClaim(kinds["W"], claimBlocked) // over the bound it is not a W sample
+			}
+		}
 		if len(qc.Edits) > 0 {
 			kinds["E"] = claimPass
 			for _, v := range []string{c.Claims.IncrementalEquality, c.Claims.IncrementalRoute} {
@@ -837,6 +844,14 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, 
 	sum, _ := json.Marshal(map[string]any{"status": c.ExecutionStatus, "assessment": c.Assessment, "code": c.Code, "claims": c.Claims, "oracle": c.Oracle,
 		"expectations": stepRes, "query_expectations": qe, "query_detail": qeDetail, "steps": steps})
 	s.summaries[qc.ID] = string(sum)
+}
+
+// firstTree is the recorded step 0 incremental tree, nil when absent.
+func firstTree(r *qRecord) *qTree {
+	if len(r.Steps) == 0 {
+		return nil
+	}
+	return r.Steps[0].Incremental
 }
 
 // gateRef returns the host env's gate for this set evaluation.

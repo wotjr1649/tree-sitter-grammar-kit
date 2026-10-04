@@ -12,16 +12,35 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r1"
-	QualificationResultSchema    = "tsgk-qualification-result/r2"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r2"
+	QualificationResultSchema    = "tsgk-qualification-result/r3"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
-	// CoverageRule names how a registered case covers a requirement row's case kinds:
-	// P a step expecting NO_ERROR with named structure, N a step expecting ERROR, R a step
-	// expecting ERROR with named structure kept, E at least one edit (incremental/fresh
-	// comparison), Q a query case with registered capture expectations. W (licensed
-	// real-world sample) has no registered producer and is never covered.
-	CoverageRule = "tsgk-coverage-rule/r1"
+	// CoverageRule names how a registered case covers a requirement row's case kinds. An
+	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
+	// error node types in contains. P is a NO_ERROR step with named structure that is not
+	// an error step, N an error step, R an error step that also names a structure node
+	// other than the error node types, E at least one edit (incremental/fresh comparison),
+	// Q a query case with registered capture expectations, W a case with a registered
+	// public sample whose step 0 expects NO_ERROR without an error node type. A row's P
+	// obligation is covered only when its production alternatives are COMPLETE and every
+	// alternative is listed by a case that covers the row with P.
+	CoverageRule = "tsgk-coverage-rule/r2"
 )
+
+// Production alternative registration status of a requirement row.
+const (
+	AlternativesComplete = "COMPLETE"
+	AlternativesPending  = "PENDING"
+)
+
+// Bounds and licenses of a registered W sample: public, permissively licensed source
+// pinned by repository, commit, path and sha256.
+const (
+	SampleMaxBytes = 65536
+	SampleMaxNodes = 10000
+)
+
+var sampleLicenses = []string{"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "PostgreSQL"}
 
 // Cell, obligation and role row values of a qualification result.
 const (
@@ -57,10 +76,25 @@ type QualPlatform struct {
 
 func (p QualPlatform) pair() string { return p.GOOS + "/" + p.GOARCH }
 
-// QualRequirement is one required feature row and the case kinds it requires.
+// QualRequirement is one required feature row, the case kinds it requires and its
+// registered production alternatives: AlternativesStatus is COMPLETE when Alternatives
+// (ids "<row>.aNN") lists every production alternative of the row, PENDING otherwise.
 type QualRequirement struct {
-	Row   string   `json:"row"`
-	Kinds []string `json:"kinds"`
+	Row                string   `json:"row"`
+	Kinds              []string `json:"kinds"`
+	AlternativesStatus string   `json:"alternatives_status"`
+	Alternatives       []string `json:"alternatives"`
+}
+
+// QualSample pins the public, permissively licensed real-world source of a W case; its
+// sha256 and bytes are the case input's.
+type QualSample struct {
+	Repository string `json:"repository"`
+	Commit     string `json:"commit"`
+	Path       string `json:"path"`
+	License    string `json:"license"`
+	SHA256     string `json:"sha256"`
+	Bytes      uint64 `json:"bytes"`
 }
 
 // QualQuery binds one registered query source by sha256.
@@ -74,7 +108,9 @@ type QualQuery struct {
 // support) and the requirement rows and kinds it covers under CoverageRule. Source is the
 // UTF-8 input, kept only when query expectations are recomputed from it. ExpectAssessment
 // and ExpectCode register the S05 verdict an SVC observation-only case must end with
-// (PASS without a code or BLOCKED with one); "" keeps the default check.
+// (PASS without a code or BLOCKED with one); "" keeps the default check. Alternatives
+// names the production alternatives the case exercises (each of a row it covers with P);
+// Sample registers the public source that makes it a W producer.
 type QualCase struct {
 	ID               string                 `json:"id"`
 	Role             string                 `json:"role"`
@@ -88,6 +124,8 @@ type QualCase struct {
 	ExpectAssessment string                 `json:"expect_assessment"`
 	ExpectCode       string                 `json:"expect_code"`
 	Covers           map[string][]string    `json:"covers"`
+	Alternatives     []string               `json:"alternatives"`
+	Sample           *QualSample            `json:"sample"`
 	Source           *string                `json:"source"`
 }
 
@@ -110,9 +148,11 @@ type QualWorkload struct {
 	Cases        []QualCase    `json:"cases"`
 }
 
-// QualRoute is one mandatory syntax route: its workload and required feature rows.
+// QualRoute is one mandatory syntax route: its workload, required feature rows and the
+// named node types its grammar uses for a parse error (ErrorNodes, beside ERROR).
 type QualRoute struct {
 	Route        string            `json:"route"`
+	ErrorNodes   []string          `json:"error_nodes"`
 	Workload     QualWorkload      `json:"workload"`
 	Requirements []QualRequirement `json:"requirements"`
 }
@@ -128,8 +168,10 @@ type QualRole struct {
 	Workloads     []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r1 document: the exact
-// route × platform cell set and the registered workloads, from the adopted registries.
+// QualificationInventory is a decoded tsgk-qualification-inventory/r2 document: the exact
+// route × platform cell set and the registered workloads, from the adopted registries. r2
+// adds the route error node types, the rows' production alternatives and the cases'
+// alternatives and W samples to r1.
 type QualificationInventory struct {
 	SHA256       string         `json:"-"`
 	Schema       string         `json:"schema"`
@@ -144,10 +186,41 @@ type QualificationInventory struct {
 }
 
 var (
-	hex64   = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	hex40   = regexp.MustCompile(`^[0-9a-f]{40}$`)
-	rowName = regexp.MustCompile(`^[a-z][a-z-]*-[A-Z][0-9]+[a-z]*$`)
+	hex64    = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	hex40    = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	rowName  = regexp.MustCompile(`^[a-z][a-z-]*-[A-Z][0-9]+[a-z]*$`)
+	altSufx  = regexp.MustCompile(`^\.a[0-9]{2,}$`)
+	nodeName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+	repoName = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
 )
+
+// routeRules is what a workload's cases are checked against: the required kinds per
+// row, the row of each registered alternative id and the route's error node types.
+type routeRules struct {
+	reqs     map[string][]string
+	alts     map[string]string
+	errNodes []string
+}
+
+// samplePath accepts a relative slash path inside the pinned repository.
+func samplePath(p string) bool {
+	if p == "" || strings.HasPrefix(p, "/") || strings.ContainsAny(p, "\\:\x00") {
+		return false
+	}
+	for _, s := range strings.Split(p, "/") {
+		if s == "" || s == "." || s == ".." {
+			return false
+		}
+	}
+	return true
+}
+
+// validSample checks a W sample registration against its case.
+func validSample(c QualCase) bool {
+	s := c.Sample
+	return c.Role == "requirement" && repoName.MatchString(s.Repository) && hex40.MatchString(s.Commit) && samplePath(s.Path) &&
+		slices.Contains(sampleLicenses, s.License) && s.SHA256 == c.Input.SHA256 && s.Bytes == c.Input.Bytes && s.Bytes > 0 && s.Bytes <= SampleMaxBytes
+}
 
 // ParseQualificationInventory strictly decodes and checks an inventory: the declared cell
 // count is the exact route × platform product, identifiers are unique, every coverage
@@ -188,7 +261,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		plat[p.ID] = true
 	}
 	sets, routes := map[string]bool{}, map[string]bool{}
-	checkWorkload := func(w QualWorkload, path string, reqs map[string][]string, role bool) *Error {
+	checkWorkload := func(w QualWorkload, path string, rules routeRules, role bool) *Error {
 		badW := func(code, sub string) *Error { return fail(KindInvalidInput, code, doc+"#/"+path+sub, nil) }
 		if !validID(w.Set) || !validID(w.Profile) || sets[w.Set] || !validID(w.Route) || w.Operation == "" || w.Output == "" || !ValidLanguageSymbol(w.Symbol) {
 			return badW("WORKLOAD_INVALID", "")
@@ -265,16 +338,28 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 					return badW("CASE_SOURCE_MISMATCH", cp)
 				}
 			}
+			if c.Sample != nil && !validSample(c) {
+				return badW("CASE_INVALID", cp+"/sample") // license, pin, bounds or input identity
+			}
 			for _, row := range sortedKeys(c.Covers) {
-				want, ok := reqs[row]
+				want, ok := rules.reqs[row]
 				if !ok {
 					return badW("COVERS_UNKNOWN_ROW", cp)
 				}
 				for _, k := range c.Covers[row] {
-					if !slices.Contains(want, k) || !coverageHolds(c, k) {
+					if !slices.Contains(want, k) || !coverageHolds(c, k, rules.errNodes) {
 						return badW("COVERAGE_RULE_VIOLATION", cp)
 					}
 				}
+			}
+			// each listed alternative is a registered one of a row the case covers with P
+			alts := map[string]bool{}
+			for _, a := range c.Alternatives {
+				row, ok := rules.alts[a]
+				if !ok || alts[a] || !slices.Contains(c.Covers[row], "P") {
+					return badW("CASE_INVALID", cp+"/alternatives")
+				}
+				alts[a] = true
 			}
 		}
 		return nil
@@ -284,22 +369,38 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			return bad("ROUTE_INVALID", fmt.Sprintf("routes/%d", i))
 		}
 		routes[r.Route] = true
-		reqs := map[string][]string{}
+		for j, n := range r.ErrorNodes {
+			if !nodeName.MatchString(n) || n == "ERROR" || slices.Contains(r.ErrorNodes[:j], n) {
+				return bad("ROUTE_INVALID", fmt.Sprintf("routes/%d/error_nodes/%d", i, j))
+			}
+		}
+		rules := routeRules{reqs: map[string][]string{}, alts: map[string]string{}, errNodes: r.ErrorNodes}
 		for j, q := range r.Requirements {
-			if !rowName.MatchString(q.Row) || !strings.HasPrefix(q.Row, r.Route+"-") || reqs[q.Row] != nil || len(q.Kinds) == 0 {
-				return bad("REQUIREMENT_INVALID", fmt.Sprintf("routes/%d/requirements/%d", i, j))
+			rp := fmt.Sprintf("routes/%d/requirements/%d", i, j)
+			if !rowName.MatchString(q.Row) || !strings.HasPrefix(q.Row, r.Route+"-") || rules.reqs[q.Row] != nil || len(q.Kinds) == 0 {
+				return bad("REQUIREMENT_INVALID", rp)
 			}
 			for _, k := range q.Kinds {
 				if !slices.Contains(caseKinds, k) {
-					return bad("REQUIREMENT_INVALID", fmt.Sprintf("routes/%d/requirements/%d", i, j))
+					return bad("REQUIREMENT_INVALID", rp)
 				}
 			}
-			reqs[q.Row] = q.Kinds
+			rules.reqs[q.Row] = q.Kinds
+			if (q.AlternativesStatus != AlternativesComplete && q.AlternativesStatus != AlternativesPending) ||
+				(q.AlternativesStatus == AlternativesComplete && len(q.Alternatives) == 0) {
+				return bad("REQUIREMENT_INVALID", rp+"/alternatives_status") // a COMPLETE row lists at least one alternative
+			}
+			for _, a := range q.Alternatives {
+				if !strings.HasPrefix(a, q.Row) || !altSufx.MatchString(a[len(q.Row):]) || rules.alts[a] != "" {
+					return bad("REQUIREMENT_INVALID", rp+"/alternatives")
+				}
+				rules.alts[a] = q.Row
+			}
 		}
 		if len(r.Requirements) == 0 {
 			return bad("REQUIREMENT_INVALID", fmt.Sprintf("routes/%d/requirements", i)) // a route without rows would pass vacuously
 		}
-		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), reqs, false); e != nil {
+		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), rules, false); e != nil {
 			return inv, e
 		}
 	}
@@ -326,7 +427,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 				return bad("ROLE_INVALID", p)
 			}
 			for j, w := range x.Workloads {
-				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), map[string][]string{}, true); e != nil {
+				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), routeRules{reqs: map[string][]string{}, alts: map[string]string{}}, true); e != nil {
 					return inv, e
 				}
 			}
@@ -341,21 +442,44 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 	return inv, nil
 }
 
-// coverageHolds applies CoverageRule to one registered case and kind.
-func coverageHolds(c QualCase, kind string) bool {
+// coverageHolds applies CoverageRule to one registered case and kind; errNodes are the
+// route's registered error node types.
+func coverageHolds(c QualCase, kind string, errNodes []string) bool {
 	switch kind {
-	case "P":
-		return slices.ContainsFunc(c.Expect, func(e StepExpectation) bool { return e.Syntax == "NO_ERROR" && len(e.Contains) > 0 })
-	case "N":
-		return slices.ContainsFunc(c.Expect, func(e StepExpectation) bool { return e.Syntax == "ERROR" })
-	case "R":
-		return slices.ContainsFunc(c.Expect, func(e StepExpectation) bool { return e.Syntax == "ERROR" && len(e.Contains) > 0 })
+	case "P", "N", "R":
+		return slices.ContainsFunc(c.Expect, func(e StepExpectation) bool { return stepCovers(e, kind, errNodes) })
+	case "W":
+		return c.Sample != nil && slices.ContainsFunc(c.Expect, func(e StepExpectation) bool { return stepCovers(e, kind, errNodes) })
 	case "E":
 		return len(c.Edits) > 0
 	case "Q":
 		return slices.ContainsFunc(c.QueryExpect, func(q QueryExpectation) bool { return q.Captures != nil })
 	}
-	return false // W: no registered producer
+	return false
+}
+
+// stepCovers reports whether one step expectation produces a step kind (P, N, R or W)
+// under CoverageRule. An ERROR step counts for N, and for R with named structure. A
+// NO_ERROR step that names a registered error node type is also an error step: it counts
+// for N, for R when it also names another node type, and never for P or W. Its own
+// expectation (NO_ERROR and contains) is judged unchanged.
+func stepCovers(e StepExpectation, kind string, errNodes []string) bool {
+	named := slices.ContainsFunc(e.Contains, func(n string) bool { return slices.Contains(errNodes, n) })
+	errStep := e.Syntax == "ERROR" || (e.Syntax == "NO_ERROR" && named)
+	switch kind {
+	case "P":
+		return e.Syntax == "NO_ERROR" && len(e.Contains) > 0 && !named
+	case "N":
+		return errStep
+	case "R":
+		if e.Syntax == "ERROR" {
+			return len(e.Contains) > 0
+		}
+		return errStep && slices.ContainsFunc(e.Contains, func(n string) bool { return !slices.Contains(errNodes, n) })
+	case "W":
+		return e.Step == 0 && e.Syntax == "NO_ERROR" && !named
+	}
+	return false
 }
 
 // RunIdentity is a host's tsgk-run-identity/r1 document, written by the run itself: the
@@ -401,11 +525,15 @@ type QualifyRequest struct {
 }
 
 // QualObligation is one required row × kind of a cell with its result and covering cases.
+// A P obligation also counts the row's registered production alternatives and those no
+// covering case lists (both absent on other kinds).
 type QualObligation struct {
-	Row    string   `json:"row"`
-	Kind   string   `json:"kind"`
-	Result string   `json:"result"` // PASS | FAIL | BLOCKED | NOT_COVERED
-	Cases  []string `json:"cases"`
+	Row                   string   `json:"row"`
+	Kind                  string   `json:"kind"`
+	Result                string   `json:"result"` // PASS | FAIL | BLOCKED | NOT_COVERED
+	Cases                 []string `json:"cases"`
+	Alternatives          *int     `json:"alternatives,omitempty"`
+	AlternativesUncovered *int     `json:"alternatives_uncovered,omitempty"`
 }
 
 // QualCounts counts a cell's obligations by result.
@@ -489,10 +617,11 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r2 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r3 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
-// per-platform claims (r2 adds platform_claims to r1).
+// per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
+// obligations to r2).
 type QualificationResult struct {
 	Report
 	ResultSchema string            `json:"result_schema"`
@@ -615,7 +744,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	comparisons := map[string]*QualComparison{}
 	for _, route := range inv.Routes {
-		sets, cmp, e := q.workload(route.Workload, inv.Platforms)
+		sets, cmp, e := q.workload(route.Workload, route.ErrorNodes, inv.Platforms)
 		if e != nil {
 			res.BytesRead = q.bytesRead()
 			return bad(e)
@@ -765,6 +894,22 @@ func (q *qualifier) cell(route QualRoute, p QualPlatform, s *qset, cmp *QualComp
 					ob.Result = v
 				} else {
 					ob.Result = worseClaim(ob.Result, v)
+				}
+			}
+			if k == "P" {
+				// one example never completes a family: every registered alternative of a
+				// COMPLETE row needs a covering case that lists it
+				n, un := len(req.Alternatives), 0
+				for _, a := range req.Alternatives {
+					if !slices.ContainsFunc(route.Workload.Cases, func(qc QualCase) bool {
+						return qc.Role == "requirement" && slices.Contains(qc.Covers[req.Row], "P") && slices.Contains(qc.Alternatives, a)
+					}) {
+						un++
+					}
+				}
+				ob.Alternatives, ob.AlternativesUncovered = &n, &un
+				if req.AlternativesStatus != AlternativesComplete || un > 0 {
+					ob.Result = ObligationNotCovered
 				}
 			}
 			switch ob.Result {

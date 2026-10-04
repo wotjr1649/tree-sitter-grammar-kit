@@ -65,6 +65,7 @@ var required = []string{
 	"src/contracts/fact-query-pack.json", "docs/reports/session-06-native-oracle.md",
 	"src/contracts/examples/replay-r1.json", "src/contracts/examples/evidence-policy-r1.json", "docs/reports/session-07-evidence-replay.md",
 	"src/contracts/qualification-c1.json", "docs/reports/session-08-qualification.md", "src/dev/s08-qualify/run-identity.ps1", "src/dev/s08-qualify/gate.ps1",
+	"src/contracts/feature-alternatives.json", "src/testdata/native/samples/NOTICE.md",
 }
 
 var localDirs = []string{"docs/prompts", "docs/plans", "artifacts", "_ref", ".work", "bin", "dist", "coverage"}

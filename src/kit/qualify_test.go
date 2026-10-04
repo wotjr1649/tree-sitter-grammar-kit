@@ -17,8 +17,9 @@ var qfxPlatforms = []QualPlatform{{"windows-amd64", "windows", "amd64"}, {"linux
 
 const qfxQuery = "(word) @w\n"
 
-// qfx is a synthetic qualification: routes fxa (P, E and Q all covered) and fxb (also
-// requires N, which no case covers), three platforms and one historical detector role.
+// qfx is a synthetic qualification: routes fxa (P, E and Q all covered; the row's one
+// registered alternative is COMPLETE and listed by c1) and fxb (also requires N, which no
+// case covers), three platforms and one historical detector role.
 type qfx struct {
 	inv  QualificationInventory
 	root string
@@ -29,7 +30,8 @@ func qfxCases(route string) []QualCase {
 	row := route + "-B01"
 	return []QualCase{
 		{ID: "c1", Role: "requirement", Input: NativeInput{SHA256: sum([]byte(alpha)), Bytes: 5}, Edits: []Edit{},
-			Expect: []StepExpectation{{Step: 0, Syntax: "NO_ERROR", Contains: []string{"word"}}}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{row: {"P"}}},
+			Expect: []StepExpectation{{Step: 0, Syntax: "NO_ERROR", Contains: []string{"word"}}}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{row: {"P"}},
+			Alternatives: []string{row + ".a01"}},
 		{ID: "c2", Role: "requirement", Input: NativeInput{SHA256: sum([]byte(beta)), Bytes: 4}, Edits: []Edit{{StartByte: 3, OldEndByte: 4, NewEndByte: 4, Old: []byte("a"), New: []byte("z")}},
 			Expect: []StepExpectation{}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{row: {"E"}}},
 		{ID: "q1", Role: "requirement", Input: NativeInput{SHA256: sum([]byte(alpha)), Bytes: 5}, Edits: []Edit{}, Expect: []StepExpectation{},
@@ -52,10 +54,11 @@ func newQfx(t *testing.T) *qfx {
 		if r == "fxb" {
 			kinds = []string{"P", "N", "E", "Q"}
 		}
-		f.inv.Routes = append(f.inv.Routes, QualRoute{Route: r, Workload: qfxWorkload("s06-"+r, r, qfxCases(r)), Requirements: []QualRequirement{{Row: r + "-B01", Kinds: kinds}}})
+		f.inv.Routes = append(f.inv.Routes, QualRoute{Route: r, Workload: qfxWorkload("s06-"+r, r, qfxCases(r)),
+			Requirements: []QualRequirement{{Row: r + "-B01", Kinds: kinds, AlternativesStatus: AlternativesComplete, Alternatives: []string{r + "-B01.a01"}}}})
 	}
 	det := qfxCases("fxh")[:1]
-	det[0].ID, det[0].Role, det[0].Covers = "d1", "detector", map[string][]string{}
+	det[0].ID, det[0].Role, det[0].Covers, det[0].Alternatives = "d1", "detector", map[string][]string{}, nil
 	f.inv.ExtraRoles = []QualRole{
 		{ID: "fx-history", Role: "historical", Status: RoleExecuted, Reason: "registered historical defect detector", Platforms: []string{"windows-amd64"},
 			NotApplicable: map[string]string{"linux-amd64": "windows only", "darwin-arm64": "windows only"}, Workloads: []QualWorkload{qfxWorkload("s06-fxh", "fxh", det)}},
@@ -1001,7 +1004,7 @@ func TestQualificationInventoryGuards(t *testing.T) {
 			inv.Routes[0].Workload.Cases[0].Covers["fxa-B01"] = []string{"P", "E"}
 		},
 		"cover-row": func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[0].Covers["fxa-B09"] = []string{"P"} },
-		"cover-w": func(inv *QualificationInventory) {
+		"cover-w": func(inv *QualificationInventory) { // a case without a registered sample never covers W
 			inv.Routes[0].Requirements[0].Kinds = append(inv.Routes[0].Requirements[0].Kinds, "W")
 			inv.Routes[0].Workload.Cases[0].Covers["fxa-B01"] = []string{"P", "W"}
 		},
@@ -1030,5 +1033,273 @@ func TestQualificationInventoryGuards(t *testing.T) {
 	}
 	if _, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: "HEAD"}); err == nil {
 		t.Fatal("candidate must be a commit id")
+	}
+}
+
+func obligation(c QualCell, row, kind string) QualObligation {
+	for _, o := range c.Obligations {
+		if o.Row == row && o.Kind == kind {
+			return o
+		}
+	}
+	return QualObligation{}
+}
+
+// expectCode parses a mutated fixture inventory and requires the error code.
+func expectCode(t *testing.T, name, code string, mut func(inv *QualificationInventory)) {
+	t.Helper()
+	f := newQfx(t)
+	mut(&f.inv)
+	if _, err := ParseQualificationInventory(f.invBytes(t)); err == nil || !strings.Contains(err.Error(), code) {
+		t.Fatalf("%s: want %s, got %v", name, code, err)
+	}
+}
+
+// #76 coverage rule r2, production alternatives: a row's P obligation is covered only when
+// its alternatives are COMPLETE and each is listed by a case covering the row with P; the
+// result is then the worst covering case. A PENDING row or an unlisted alternative leaves
+// P NOT_COVERED, and the obligation counts its alternatives.
+func TestQualifyAlternatives(t *testing.T) {
+	covered := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+		return f
+	}
+	f := covered()
+	r := f.run(t, f.all(t, nil))
+	ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "P")
+	if r.SupportClaim != "SUPPORTED" || ob.Result != claimPass || ob.Alternatives == nil || *ob.Alternatives != 1 || *ob.AlternativesUncovered != 0 {
+		t.Fatalf("complete and covered: %s %+v", r.SupportClaim, ob)
+	}
+	if e := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "E"); e.Alternatives != nil || e.AlternativesUncovered != nil {
+		t.Fatalf("alternative counts on a non-P obligation: %+v", e)
+	}
+	if b, _ := json.Marshal(obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "Q")); strings.Contains(string(b), "alternatives") {
+		t.Fatalf("non-P obligation encodes alternative counts: %s", b)
+	}
+	if b, _ := json.Marshal(ob); !strings.Contains(string(b), `"alternatives":1,"alternatives_uncovered":0`) {
+		t.Fatalf("P obligation encoding: %s", b)
+	}
+
+	// a second registered alternative no case lists
+	f = covered()
+	f.inv.Routes[0].Requirements[0].Alternatives = append(f.inv.Routes[0].Requirements[0].Alternatives, "fxa-B01.a02")
+	r = f.run(t, f.all(t, nil))
+	c := cellOf(r, "fxa", "windows-amd64")
+	ob = obligation(c, "fxa-B01", "P")
+	if ob.Result != ObligationNotCovered || *ob.Alternatives != 2 || *ob.AlternativesUncovered != 1 || c.Status != CellIncomplete || r.SupportClaim != "BLOCKED" {
+		t.Fatalf("one alternative uncovered: %+v %s %s", ob, c.Status, r.SupportClaim)
+	}
+
+	// PENDING: the alternatives are not all registered yet, whatever the cases list
+	f = covered()
+	f.inv.Routes[0].Requirements[0].AlternativesStatus = AlternativesPending
+	r = f.run(t, f.all(t, nil))
+	c = cellOf(r, "fxa", "windows-amd64")
+	ob = obligation(c, "fxa-B01", "P")
+	if ob.Result != ObligationNotCovered || *ob.AlternativesUncovered != 0 || c.Requirement != CellIncomplete || r.Totals.NotCoveredByKind["P"] != 3 {
+		t.Fatalf("pending row: %+v %s %v", ob, c.Requirement, r.Totals.NotCoveredByKind)
+	}
+	// PENDING without any alternative: the same
+	f.inv.Routes[0].Requirements[0].Alternatives = nil
+	f.inv.Routes[0].Workload.Cases[0].Alternatives = nil
+	f.root = t.TempDir()
+	r = f.run(t, f.all(t, nil))
+	if ob = obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "P"); ob.Result != ObligationNotCovered || *ob.Alternatives != 0 {
+		t.Fatalf("pending empty row: %+v", ob)
+	}
+
+	// the case listing the alternative fails: the row fails
+	f = covered()
+	gap := func(s string, recs []map[string]any) {
+		if s != "s06-fxa" {
+			return
+		}
+		nodes := fxTree("alpha", true)
+		tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["has_error"] = nodes, TreeDigest(nodes), true
+		recs[0]["expectations"].([]any)[0].(map[string]any)["result"] = "FAIL"
+		recs[0]["claims"].(map[string]string)["expectations"], recs[0]["assessment"] = "FAIL", "FAIL"
+	}
+	muts := map[string]qfxMut{}
+	for _, p := range qfxPlatforms {
+		muts[p.ID] = qfxMut{record: gap}
+	}
+	r = f.run(t, f.all(t, muts))
+	c = cellOf(r, "fxa", "windows-amd64")
+	if ob = obligation(c, "fxa-B01", "P"); ob.Result != claimFail || c.Status != CellFail || c.Mechanism != AssessPass || *ob.AlternativesUncovered != 0 {
+		t.Fatalf("failing alternative case: %+v %s %s", ob, c.Status, c.Mechanism)
+	}
+}
+
+// #76 inventory r2 guards for alternatives: a row's status is COMPLETE (with at least one
+// alternative) or PENDING, its ids are "<row>.aNN" and unique; a case lists only known
+// alternatives of rows it covers with P.
+func TestQualificationInventoryAlternatives(t *testing.T) {
+	for name, mut := range map[string]func(inv *QualificationInventory){
+		"unknown-id": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[0].Alternatives = []string{"fxa-B01.a09"}
+		},
+		"other-route-id": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[0].Alternatives = []string{"fxb-B01.a01"}
+		},
+		"row-not-p": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Alternatives = []string{"fxa-B01.a01"}
+		},
+		"duplicate": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[0].Alternatives = []string{"fxa-B01.a01", "fxa-B01.a01"}
+		},
+		"support-case": func(inv *QualificationInventory) {
+			c := &inv.Routes[0].Workload.Cases[1]
+			c.Role, c.Covers, c.Alternatives = "support", map[string][]string{}, []string{"fxa-B01.a01"}
+		},
+	} {
+		expectCode(t, name, "CASE_INVALID", mut)
+	}
+	for name, mut := range map[string]func(inv *QualificationInventory){
+		"status-empty":   func(inv *QualificationInventory) { inv.Routes[0].Requirements[0].AlternativesStatus = "" },
+		"status-other":   func(inv *QualificationInventory) { inv.Routes[0].Requirements[0].AlternativesStatus = "DONE" },
+		"complete-empty": func(inv *QualificationInventory) { inv.Routes[0].Requirements[0].Alternatives = nil },
+		"foreign-prefix": func(inv *QualificationInventory) {
+			inv.Routes[0].Requirements[0].Alternatives = []string{"fxb-B01.a01"}
+		},
+		"bad-suffix": func(inv *QualificationInventory) {
+			inv.Routes[0].Requirements[0].Alternatives = []string{"fxa-B01.alt1"}
+		},
+		"short-suffix": func(inv *QualificationInventory) { inv.Routes[0].Requirements[0].Alternatives = []string{"fxa-B01.a1"} },
+		"dup-id": func(inv *QualificationInventory) {
+			inv.Routes[0].Requirements[0].Alternatives = []string{"fxa-B01.a01", "fxa-B01.a01"}
+		},
+	} {
+		expectCode(t, name, "REQUIREMENT_INVALID", mut)
+	}
+	// controls: a PENDING row may list some alternatives, and a case may list none
+	f := newQfx(t)
+	f.inv.Routes[0].Requirements[0].AlternativesStatus = AlternativesPending
+	f.inv.Routes[1].Workload.Cases[0].Alternatives = nil
+	if _, err := ParseQualificationInventory(f.invBytes(t)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// #76 per-route error node types: a NO_ERROR step naming a registered error node type
+// derives N, and R when it also names another node type; it never derives P. The step
+// still passes its own NO_ERROR + contains expectation. Without the registration the
+// same contains derives nothing new.
+func TestQualifyErrorNodes(t *testing.T) {
+	// fxb: c1 expects NO_ERROR with doc and word, and covers N and R instead of P
+	errCase := func(errNodes []string, contains []string, kinds ...string) *qfx {
+		f := newQfx(t)
+		r := &f.inv.Routes[1]
+		r.ErrorNodes = errNodes
+		r.Requirements[0] = QualRequirement{Row: "fxb-B01", Kinds: []string{"N", "R", "E", "Q"}, AlternativesStatus: AlternativesPending}
+		c := &r.Workload.Cases[0]
+		c.Expect[0].Contains, c.Covers, c.Alternatives = contains, map[string][]string{"fxb-B01": kinds}, nil
+		return f
+	}
+	contains := func(list []string) func(string, []map[string]any) {
+		return func(s string, recs []map[string]any) {
+			if s == "s06-fxb" {
+				recs[0]["expectations"].([]any)[0].(map[string]any)["contains"] = list
+			}
+		}
+	}
+	f := errCase([]string{"word"}, []string{"doc", "word"}, "N", "R")
+	mut := qfxMut{record: contains([]string{"doc", "word"})}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut, "linux-amd64": mut, "darwin-arm64": mut}))
+	c := cellOf(r, "fxb", "windows-amd64")
+	if c.Status != CellPass || c.Checks != claimPass || obligation(c, "fxb-B01", "N").Result != claimPass || obligation(c, "fxb-B01", "R").Result != claimPass {
+		t.Fatalf("registered error node: %s %s %+v %v", c.Status, c.Checks, c.Counts, setCodes(c))
+	}
+	// the registered error node alone: N, not R
+	if _, err := ParseQualificationInventory(errCase([]string{"word"}, []string{"word"}, "N").invBytes(t)); err != nil {
+		t.Fatalf("error node alone for N: %v", err)
+	}
+	for name, f := range map[string]*qfx{
+		"error-node-alone-r": errCase([]string{"word"}, []string{"word"}, "N", "R"),
+		"error-step-p":       errCase([]string{"word"}, []string{"doc", "word"}, "P"),
+		"unregistered-n":     errCase(nil, []string{"doc", "word"}, "N"),
+		"unregistered-r":     errCase(nil, []string{"doc", "word"}, "R"),
+		"other-route-n":      errCase([]string{"other"}, []string{"doc", "word"}, "N"),
+	} {
+		if _, err := ParseQualificationInventory(f.invBytes(t)); err == nil || !strings.Contains(err.Error(), "COVERAGE_RULE_VIOLATION") {
+			t.Fatalf("%s: %v", name, err)
+		}
+	}
+	for name, nodes := range map[string][]string{"error": {"ERROR"}, "dup": {"word", "word"}, "name": {"bad node"}, "empty": {""}} {
+		expectCode(t, name, "ROUTE_INVALID", func(inv *QualificationInventory) { inv.Routes[0].ErrorNodes = nodes })
+	}
+}
+
+// #76 W producer: a requirement case with a registered public sample (permissive SPDX
+// license, 40-hex commit, relative path, the case input's sha256 and bytes, at most 65536
+// bytes) covers W when its step 0 expects NO_ERROR; the recorded step 0 tree must stay
+// within 10000 nodes.
+func TestQualifySampleW(t *testing.T) {
+	sample := func() *QualSample {
+		return &QualSample{Repository: "owner/name", Commit: strings.Repeat("a", 40), Path: "src/alpha.txt", License: "MIT", SHA256: sum([]byte("alpha")), Bytes: 5}
+	}
+	withW := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+		f.inv.Routes[0].Requirements[0].Kinds = []string{"P", "E", "Q", "W"}
+		c := &f.inv.Routes[0].Workload.Cases[0]
+		c.Sample, c.Covers["fxa-B01"] = sample(), []string{"P", "W"}
+		return f
+	}
+	f := withW()
+	r := f.run(t, f.all(t, nil))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if ob := obligation(c, "fxa-B01", "W"); ob.Result != claimPass || c.Status != CellPass || r.SupportClaim != "SUPPORTED" {
+		t.Fatalf("valid sample: %+v %s %s", ob, c.Status, r.SupportClaim)
+	}
+	for _, lic := range []string{"Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "PostgreSQL"} {
+		f := withW()
+		f.inv.Routes[0].Workload.Cases[0].Sample.License = lic
+		if _, err := ParseQualificationInventory(f.invBytes(t)); err != nil {
+			t.Fatalf("license %s: %v", lic, err)
+		}
+	}
+	// over the node bound the sample is not W evidence
+	big := func(s string, recs []map[string]any) {
+		if s == "s06-fxa" {
+			recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["descendant_count"] = SampleMaxNodes + 1
+		}
+	}
+	f = withW()
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: big}}))
+	if ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "W"); ob.Result != claimBlocked || cellOf(r, "fxa", "windows-amd64").Status == CellPass {
+		t.Fatalf("over the node bound: %+v", ob)
+	}
+	// a sample case whose step 0 expects an error does not cover W
+	f = withW()
+	c0 := &f.inv.Routes[0].Workload.Cases[0]
+	c0.Expect[0].Syntax = "ERROR"
+	c0.Covers["fxa-B01"], c0.Alternatives = []string{"W"}, nil
+	if _, err := ParseQualificationInventory(f.invBytes(t)); err == nil || !strings.Contains(err.Error(), "COVERAGE_RULE_VIOLATION") {
+		t.Fatalf("error step 0 covering W: %v", err)
+	}
+	for name, mut := range map[string]func(s *QualSample, c *QualCase){
+		"license-gpl":   func(s *QualSample, _ *QualCase) { s.License = "GPL-3.0-only" },
+		"license-empty": func(s *QualSample, _ *QualCase) { s.License = "" },
+		"sha-mismatch":  func(s *QualSample, _ *QualCase) { s.SHA256 = sum([]byte("other")) },
+		"bytes-differ":  func(s *QualSample, _ *QualCase) { s.Bytes = 6 },
+		"over-size": func(s *QualSample, c *QualCase) {
+			s.Bytes, c.Input.Bytes = SampleMaxBytes+1, SampleMaxBytes+1
+		},
+		"commit":      func(s *QualSample, _ *QualCase) { s.Commit = "main" },
+		"repository":  func(s *QualSample, _ *QualCase) { s.Repository = "https://github.com/owner/name" },
+		"path-escape": func(s *QualSample, _ *QualCase) { s.Path = "../alpha.txt" },
+		"path-abs":    func(s *QualSample, _ *QualCase) { s.Path = "/alpha.txt" },
+		"support-case": func(_ *QualSample, c *QualCase) {
+			c.Role, c.Covers, c.Alternatives = "support", map[string][]string{}, nil
+		},
+	} {
+		expectCode(t, name, "CASE_INVALID", func(inv *QualificationInventory) {
+			inv.Routes[0].Requirements[0].Kinds = []string{"P", "E", "Q", "W"}
+			c := &inv.Routes[0].Workload.Cases[0]
+			c.Sample, c.Covers["fxa-B01"] = sample(), []string{"P", "W"}
+			mut(c.Sample, c)
+		})
 	}
 }

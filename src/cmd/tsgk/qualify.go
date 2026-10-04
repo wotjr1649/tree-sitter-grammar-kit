@@ -17,7 +17,7 @@ import (
 func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("qualify", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	inventory := fs.String("inventory", "", "qualification inventory (tsgk-qualification-inventory/r1), outside every host directory")
+	inventory := fs.String("inventory", "", "qualification inventory (tsgk-qualification-inventory/r2), outside every host directory")
 	candidate := fs.String("candidate", "", "candidate commit every host must have run (40 hex)")
 	out := fs.String("out", "", "new result file outside every host directory (no clobber)")
 	var hosts multi
