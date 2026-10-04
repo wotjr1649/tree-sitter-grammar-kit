@@ -1,5 +1,5 @@
 #Requires -Version 7
-# S08 development helper: prints the 78-cell matrix of a tsgk-qualification-result/r1 and
+# S08 development helper: prints the 78-cell matrix of a tsgk-qualification-result/r2 and
 # fails (exit 1) only on the kit gate: completeness, run cohort and eligibility, every
 # cell's kit mechanism and cross-platform comparison, the executed extra-role rows
 # (mechanism_gate). Grammar requirement failures and uncovered obligations are matrix
@@ -14,7 +14,7 @@ Set-StrictMode -Version Latest
 if ($QualifyExit -notin @(0, 1, 3)) { Write-Output "qualify ended without a complete result (exit $QualifyExit)"; exit 1 }
 if (-not (Test-Path -LiteralPath $Result -PathType Leaf)) { Write-Output 'qualification result missing'; exit 1 }
 $r = Get-Content -LiteralPath $Result -Raw | ConvertFrom-Json
-if ($r.result_schema -ne 'tsgk-qualification-result/r1') { Write-Output 'not a qualification result'; exit 1 }
+if ($r.result_schema -ne 'tsgk-qualification-result/r2') { Write-Output 'not a qualification result'; exit 1 }
 foreach ($line in $r.explanation) { Write-Output $line }
 $platforms = @($r.cells | ForEach-Object { $_.platform } | Select-Object -Unique)
 Write-Output ("{0,-15} {1}" -f 'route', ($platforms -join ' '))

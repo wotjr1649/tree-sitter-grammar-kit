@@ -13,7 +13,7 @@ import (
 // Qualification schemas (Session 08).
 const (
 	QualificationInventorySchema = "tsgk-qualification-inventory/r1"
-	QualificationResultSchema    = "tsgk-qualification-result/r1"
+	QualificationResultSchema    = "tsgk-qualification-result/r2"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds:
 	// P a step expecting NO_ERROR with named structure, N a step expecting ERROR, R a step
@@ -475,9 +475,10 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r1 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r2 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
-// comparisons and the support claim, which is SUPPORTED only when every cell passes.
+// comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
+// per-platform claims (r2 adds platform_claims to r1).
 type QualificationResult struct {
 	Report
 	ResultSchema string            `json:"result_schema"`
@@ -495,10 +496,16 @@ type QualificationResult struct {
 	// eligibility, every cell's mechanism and comparison, every executed extra-role row.
 	// Requirement failures and uncovered obligations (grammar gaps, missing cases) do not
 	// change it; they keep SupportClaim BLOCKED.
-	MechanismGate string   `json:"mechanism_gate"`
-	SupportClaim  string   `json:"support_claim"`
-	BytesRead     uint64   `json:"bytes_read"`
-	Explanation   []string `json:"explanation"`
+	MechanismGate string `json:"mechanism_gate"`
+	SupportClaim  string `json:"support_claim"`
+	// PlatformClaims is the support claim of each registered platform (SUPPORTED or
+	// BLOCKED): global evidence integrity (completeness PASS, no finding), every route's
+	// single cell of the platform with mechanism and requirement PASS, and every executed
+	// extra-role row of the platform with mechanism and status PASS. The cross-platform
+	// comparison stays in SupportClaim only.
+	PlatformClaims map[string]string `json:"platform_claims"`
+	BytesRead      uint64            `json:"bytes_read"`
+	Explanation    []string          `json:"explanation"`
 }
 
 // testHookQualifyLimits lets a test lower the qualification limits.
@@ -513,10 +520,11 @@ var testHookQualifyLimits func(ReplayLimits) ReplayLimits
 // mechanism, every required obligation and the cross-platform comparison pass.
 func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, error) {
 	res := QualificationResult{Report: newReport("qualify"), ResultSchema: QualificationResultSchema, Hosts: map[string]string{}, Cells: []QualCell{},
-		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail}
+		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail, PlatformClaims: map[string]string{}}
 	res.Assessment = AssessNotAssessed
 	bad := func(e *Error) (QualificationResult, error) {
 		failReport(&res.Report, e)
+		res.PlatformClaims = map[string]string{} // a run that did not complete claims no platform
 		res.Explanation = append(res.Explanation, explainFailure(e))
 		return res, e
 	}
@@ -647,6 +655,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	res.Totals = totals(res.Cells)
 	failed := !completeness || len(q.findings) > 0
+	res.PlatformClaims = platformClaims(inv, res.Cells, res.ExtraRoles, !failed)
 	gate := !failed
 	allPass := true
 	for _, c := range res.Cells {
@@ -674,7 +683,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res.Findings = append(res.Findings, q.findings...)
 	res.Coverage.Observed = slices.Clone(res.Coverage.Requested)
 	res.BytesRead = q.bytesRead()
-	res.Explanation = explainQualification(res)
+	res.Explanation = explainQualification(res, inv.Platforms)
 	if e := sealOutput(res, lim.OutputBytes); e != nil {
 		return bad(e)
 	}
@@ -682,6 +691,36 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 		return bad(e)
 	}
 	return res, nil
+}
+
+// platformClaims decides each platform's support claim. integrity is global (completeness
+// PASS and no finding): a finding means the evidence set itself cannot be trusted. Each
+// route must have exactly one cell of the platform with mechanism and requirement PASS,
+// and every executed extra-role row of the platform (non-empty mechanism) must have
+// mechanism and status PASS; NOT_RUN, EXTERNAL and NOT_APPLICABLE rows do not block. The
+// cross-platform comparison is not part of it.
+func platformClaims(inv QualificationInventory, cells []QualCell, roles []QualRoleRow, integrity bool) map[string]string {
+	out := map[string]string{}
+	for _, p := range inv.Platforms {
+		ok := integrity
+		for _, r := range inv.Routes {
+			n := 0
+			for _, c := range cells {
+				if c.Route == r.Route && c.Platform == p.ID {
+					n++
+					ok = ok && c.Mechanism == AssessPass && c.Requirement == AssessPass
+				}
+			}
+			ok = ok && n == 1
+		}
+		for _, x := range roles {
+			if x.Platform == p.ID && x.Mechanism != "" {
+				ok = ok && x.Mechanism == AssessPass && x.Status == CellPass
+			}
+		}
+		out[p.ID] = map[bool]string{true: "SUPPORTED", false: "BLOCKED"}[ok]
+	}
+	return out
 }
 
 // cell folds one route × platform evaluation into the cell's axes.
@@ -797,7 +836,7 @@ func totals(cells []QualCell) QualTotals {
 	return t
 }
 
-func explainQualification(res QualificationResult) []string {
+func explainQualification(res QualificationResult, platforms []QualPlatform) []string {
 	t := res.Totals
 	out := []string{
 		fmt.Sprintf("필수 칸 %d개: PASS %d, FAIL %d, INCOMPLETE %d, MISSING %d. 완결성 %s.", t.Cells, t.Status[CellPass], t.Status[CellFail], t.Status[CellIncomplete], t.Status[CellMissing], res.Completeness),
@@ -808,5 +847,10 @@ func explainQualification(res QualificationResult) []string {
 	if res.SupportClaim != "SUPPORTED" {
 		out = append(out, "지원 claim은 BLOCKED다: 모든 필수 칸과 실행된 추가 역할 행이 PASS이고 kit 검사 gate가 PASS일 때만 SUPPORTED다. 추가 역할 행은 필수 칸을 대신하지 않는다.")
 	}
+	var pc []string
+	for _, p := range platforms {
+		pc = append(pc, p.ID+" "+res.PlatformClaims[p.ID])
+	}
+	out = append(out, "platform별 claim: "+strings.Join(pc, ", ")+". 근거 무결성(완결성 PASS, finding 없음)과 그 platform의 모든 칸 kit 축·요구 축 PASS, 실행된 추가 역할 행 PASS일 때만 SUPPORTED이며 platform 간 비교는 넣지 않는다.")
 	return out
 }
