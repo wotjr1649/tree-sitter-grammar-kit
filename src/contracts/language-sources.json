@@ -717,7 +717,7 @@
         "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
         "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
         "S08: Windows amd64·macOS arm64 qualification",
-        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
+        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), block·본문 첫 문장 앞의 `;`, CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
       ],
       "superseded_candidate": {
         "repository": "Crary-Systems/tree-sitter-tsql",
@@ -770,8 +770,8 @@
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 26579,
-            "sha256": "6a300f1aadbaee9e638822d260d77aaba7ca9b175c25d4ecdaaf12b0b5b17aa1"
+            "bytes": 27193,
+            "sha256": "aec97ee8bf1f5dbeef871e03996d98c6f54a4b18345c83fdd1cfe96fe5b361ed"
           },
           {
             "path": "grammar/statements/select.js",
@@ -780,8 +780,8 @@
           },
           {
             "path": "grammar/statements/create-procedure.js",
-            "bytes": 4058,
-            "sha256": "8116697c046f90e53a2c79fc82cb1d999f503fcee00fa856389f177ba00ad85a"
+            "bytes": 4068,
+            "sha256": "7b4bda9d315b2b23ab4a0fb2b038959ec6b400c825c04dcf3b193e541c392afc"
           }
         ],
         "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",

@@ -66,7 +66,7 @@
     {
       "id": "r6-empty-statement",
       "feature": "tsql-B01",
-      "private_error_files": 13,
+      "private_error_files": 5,
       "also": "one of the two block-comment-position files (a ; before the file-start comment)",
       "state": "PATCHED",
       "shape": ";WITH c AS (SELECT 1 AS x) SELECT x FROM c;;  and  ;/* c */ at batch start",
@@ -89,8 +89,8 @@
           "claim": "Thom A, 2020/2022: a leading ; inside a VIEW (single-statement body) fails with Msg 102 Incorrect syntax near ';' (engine output shown). Limiting the patch to batch level is this subject's reading of the two sources, not a stated rule."
         }
       ],
-      "change": "batch: repeat(;) before the first item, after each item and before a lone GO; statement lists of BEGIN ... END blocks, TRY/CATCH and module bodies (_body_item): a lone ; item and repeat(;) after a statement. A view or inline function body (one statement) is unchanged",
-      "scope_note": "Bertrand states the rule for statements in general; the corpus re-run showed 12 of the 13 files with this class have the extra ; inside a procedure or block body, so r6 applies it to statement lists as well as batches"
+      "change": "batch: repeat(;) before the first item, after each item and before a lone GO; statement lists of BEGIN ... END blocks, TRY/CATCH and module bodies (_body_item): repeat(;) after a statement only. A view or inline function body (one statement) is unchanged",
+      "scope_note": "Bertrand states the rule for terminators between statements in general, so r6 applies extra ; after a statement in any statement list. A ; before the first statement of a block or body is not covered (see gap-empty-statement-at-block-start; review r3 R3-1). With this rule a body no longer ends at ;; (CREATE PROCEDURE p AS SELECT 1;; SELECT 2 keeps both statements in the body, matching the body-runs-to-GO rule)"
     },
     {
       "id": "r6-default-with-values",
@@ -270,7 +270,8 @@
           "claim": "RESTORE MASTER KEY FROM { FILE = 'path_to_file' | URL = 'Azure Blob storage URL' } DECRYPTION BY PASSWORD = 'password' ENCRYPTION BY PASSWORD = 'password' [ FORCE ]"
         }
       ],
-      "change": "restore_statement, restore_move (logical name as a literal or, as in the official example L3, a bare identifier; physical name a literal), BACKUP [SERVICE] MASTER KEY, BACKUP CERTIFICATE (PRIVATE KEY item list), RESTORE MASTER KEY; FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY and RESTORE SERVICE MASTER KEY not modeled"
+      "change": "restore_statement, restore_move (logical name as a literal or, as in the official example L3, a bare identifier; physical name a literal), BACKUP [SERVICE] MASTER KEY, BACKUP CERTIFICATE (PRIVATE KEY item list), RESTORE MASTER KEY (DECRYPTION BY then ENCRYPTION BY); FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY and RESTORE SERVICE MASTER KEY not modeled",
+      "over_acceptance": "the item after ENCRYPTION/DECRYPTION BY is the shared option shape (name [=] value), as in the existing BACKUP MASTER KEY rule, so BY CERTIFICATE c or another name is also accepted where only PASSWORD = is documented (review r3 R3-2)"
     },
     {
       "id": "r6-drop-index-options",
@@ -390,6 +391,31 @@
         }
       ],
       "reason": "no source shows the engine accepting a comma after a final table constraint"
+    },
+    {
+      "id": "gap-empty-statement-at-block-start",
+      "feature": "tsql-B01",
+      "private_error_files": 8,
+      "state": "GRAMMAR_GAP",
+      "shape": "AS BEGIN ;WITH c AS (...) SELECT ...  /  WHILE (...) BEGIN; ...  (a ; before the first statement of a block or module body)",
+      "searched": [
+        {
+          "url": "https://sqlblog.org/2022/04/06/why-ctes-start-with-terminator",
+          "kind": "SEARCHED",
+          "claim": "no BEGIN, procedure, TRY or IF/WHILE example; the view/inline TVF exception is explained by there being no preceding statement to terminate, which also describes a block start"
+        },
+        {
+          "url": "https://wp.larnu.uk/fundamentals-the-semicolon-is-a-statement-terminator/",
+          "kind": "SEARCHED",
+          "claim": "a leading ; in a VIEW fails with Msg 102"
+        },
+        {
+          "url": "https://www.dbdelta.com/",
+          "kind": "SEARCHED_NOT_ACCEPTED",
+          "claim": "Dan Guzman blog article of 2014-04-14 cited by review r3 (exact page not re-fetched here): the T-SQL parser currently ignores extraneous and misplaced semicolons - a general claim without the shape or an execution result"
+        }
+      ],
+      "reason": "the published sources do not show the engine accepting a ; before the first statement of a block; generalizing from the batch level would be inference. A user decision could accept the general claims instead (reported to the orchestrator)"
     },
     {
       "id": "gap-xml-method-on-cast",
@@ -651,13 +677,13 @@
         "sha256": "6f30d8156863bdccac89214cc116fff86d5e6aea5f9ba6f316ee58d9731db7b4"
       },
       "result": {
-        "bytes": 4058,
-        "sha256": "8116697c046f90e53a2c79fc82cb1d999f503fcee00fa856389f177ba00ad85a"
+        "bytes": 4068,
+        "sha256": "7b4bda9d315b2b23ab4a0fb2b038959ec6b400c825c04dcf3b193e541c392afc"
       },
       "replacements": [
         {
           "old": "  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  _body_item: ($) => prec.right(seq(choice($.statement, $.block), optional(';'))),\n};\n",
-          "new": "  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  //\n  // tsgk r6: as at batch level, extra `;` may stand between and before the\n  // statements of a statement list (`BEGIN; ...`, `AS BEGIN ;WITH c AS ...`).\n  // A view or inline function body is one statement and does not use this.\n  _body_item: ($) => choice(prec.right(seq(choice($.statement, $.block), repeat(';'))), ';'),\n};\n"
+          "new": "  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  //\n  // tsgk r6: as at batch level, extra `;` may follow a statement of a\n  // statement list (`SELECT 1;; SELECT 2`). A `;` before the first statement\n  // of a block or body (`BEGIN; ...`, `AS BEGIN ;WITH ...`) is not\n  // established and stays an error.\n  _body_item: ($) => prec.right(seq(choice($.statement, $.block), repeat(';'))),\n};\n"
         }
       ]
     },
@@ -714,8 +740,8 @@
         "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff"
       },
       "result": {
-        "bytes": 26579,
-        "sha256": "6a300f1aadbaee9e638822d260d77aaba7ca9b175c25d4ecdaaf12b0b5b17aa1"
+        "bytes": 27193,
+        "sha256": "aec97ee8bf1f5dbeef871e03996d98c6f54a4b18345c83fdd1cfe96fe5b361ed"
       },
       "replacements": [
         {
@@ -728,7 +754,7 @@
         },
         {
           "old": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice($.keyword_database, $.keyword_log),\n        $.identifier,\n        $.keyword_to,\n        comma_list($.option, true),\n        optional($.with_clause),\n      ),\n    ),\n\n",
-          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n          // tsgk r6: BACKUP CERTIFICATE name TO FILE = 'path' [WITH [FORMAT =\n          // 'PFX',] PRIVATE KEY (FILE = 'path', ENCRYPTION BY PASSWORD = 'p'\n          // [, DECRYPTION BY PASSWORD = 'p'])]; the official examples also\n          // order the key items freely and add ALGORITHM = '...'.\n          seq(\n            $.keyword_certificate,\n            field('name', $.identifier),\n            $.keyword_to,\n            $.option,\n            optional(\n              seq(\n                $.keyword_with,\n                optional(seq($.option, ',')),\n                $.keyword_private,\n                $.keyword_key,\n                paren_list(choice($.option, $.encryption_mechanism), true),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            field('name', $.identifier),\n            optional(seq($.keyword_from, comma_list($.option, true))),\n            optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n          ),\n          // tsgk r6: RESTORE MASTER KEY FROM { FILE | URL } = 'path'\n          // DECRYPTION BY PASSWORD = 'p' ENCRYPTION BY PASSWORD = 'p' [FORCE]\n          seq(\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_from,\n            $.option,\n            $.encryption_mechanism,\n            $.encryption_mechanism,\n            optional($.keyword_force),\n          ),\n        ),\n      ),\n    ),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
+          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n          // tsgk r6: BACKUP CERTIFICATE name TO FILE = 'path' [WITH [FORMAT =\n          // 'PFX',] PRIVATE KEY (FILE = 'path', ENCRYPTION BY PASSWORD = 'p'\n          // [, DECRYPTION BY PASSWORD = 'p'])]; the official examples also\n          // order the key items freely and add ALGORITHM = '...'.\n          seq(\n            $.keyword_certificate,\n            field('name', $.identifier),\n            $.keyword_to,\n            $.option,\n            optional(\n              seq(\n                $.keyword_with,\n                optional(seq($.option, ',')),\n                $.keyword_private,\n                $.keyword_key,\n                paren_list(\n                  choice(\n                    $.option,\n                    alias($._encryption_by_option, $.encryption_mechanism),\n                    alias($._decryption_by_option, $.encryption_mechanism),\n                  ),\n                  true,\n                ),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            field('name', $.identifier),\n            optional(seq($.keyword_from, comma_list($.option, true))),\n            optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n          ),\n          // tsgk r6: RESTORE MASTER KEY FROM { FILE | URL } = 'path'\n          // DECRYPTION BY PASSWORD = 'p' ENCRYPTION BY PASSWORD = 'p' [FORCE]\n          seq(\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_from,\n            $.option,\n            alias($._decryption_by_option, $.encryption_mechanism),\n            alias($._encryption_by_option, $.encryption_mechanism),\n            optional($.keyword_force),\n          ),\n        ),\n      ),\n    ),\n\n  // ENCRYPTION | DECRYPTION BY PASSWORD = 'p' — the `name = value` item is an\n  // option, as in BACKUP MASTER KEY; certificates and keys are not allowed.\n  _encryption_by_option: ($) => seq($.keyword_encryption, $.keyword_by, $.option),\n\n  _decryption_by_option: ($) => seq($.keyword_decryption, $.keyword_by, $.option),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
         }
       ]
     },

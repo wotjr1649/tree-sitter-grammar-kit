@@ -9,7 +9,7 @@
 | `tsx` | P05-TS-TSX-REMEDY-r2 | tree-sitter/tree-sitter-typescript@75b3874 | [run36795440494](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36795440494): 8행·edit1 PASS |
 | `swift` | P05-SWIFT-REMEDY-r1 | alex-pinkus/tree-sitter-swift@35245fb (parser.c 재생성 필수) | [run36741763343](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36741763343): 14행·edit3 PASS |
 | `postgresql-sql` | P05-PG-LEGACY-REMEDY-r1 | gmr/tree-sitter-postgres@59d0d8c (optimized generation, 6 GiB) | [run36882649292](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36882649292): 12행·edit1 PASS |
-| `tsql` | P05-MSSQL-REMEDY-r1 (4파일 patch) + S08 r6 (9파일 patch) | **meloncholera/tree-sitter-mssql@8620fbc** (Crary 후보 대체) | [run36947507308](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36947507308): 41행·edit1 PASS (r1 시점) |
+| `tsql` | P05-MSSQL-REMEDY-r1 (4파일 patch) + S08 r6 (10파일 patch) | **meloncholera/tree-sitter-mssql@8620fbc** (Crary 후보 대체) | [run36947507308](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36947507308): 41행·edit1 PASS (r1 시점) |
 
 T-SQL은 원 Crary·Derek 후보가 등록 구문 다수에서 실패해 meloncholera 후보로 교체했고, 등록부의 `superseded_candidate`에 이전 identity를 보존한다. 첫 재실행 [run36935408325](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/36935408325)은 probe 입력이름 결함으로 12행이 파싱 전에 거부되어 [PR #53](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/53) 뒤 다시 실행했다. `P05-MSSQL-TEMPORAL-BOUNDARY-NEGATIVE-r1`은 0폭 `MISSING keyword_end`가 byte 51에 있어 등록 window [27,50)을 사용자 승인으로 [27,52)로 정정했고, 원래 기대와 40/41 결과는 보존한다. 정정은 추적 subject [remedy-expectation-amendments-r1.json](../../src/dev/prepare-p05/remedy-expectation-amendments-r1.json)이 소유하며 승인된 `remedy-followup-r2.json` projection은 변경하지 않는다.
 
