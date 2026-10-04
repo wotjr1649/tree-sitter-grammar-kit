@@ -67,6 +67,13 @@ S07 `private-corpus-r1`로 이 실행을 다시 검증했다(`ddf45bb` 이전 `6
 * m3: 거부된 host가 cohort 기준이 되어 정상 host를 `COHORT_MISMATCH`로 만들었다. 자기 검사를 통과한 첫 host를 기준으로 한다(`TestQualifyEligibility`). m4: host 순회를 platform 순서로 고정했다. m5: 등록 대조에 선언 mapping, point, 동적 SQL 기대값, 사례 encoding을 더하고 inventory가 그 값을 가진다. m6: 요구 행 없는 route, 범위 밖 step, 요구 행을 덮는 support 사례, route 안 detector를 inventory parser가 거부하고, 생성기는 열 수가 틀린 REQ 행에서 실패하며 178행·826 의무를 고정한다. m7: 한도 초과로 kit 축이 BLOCKED인 칸은 `INCOMPLETE`이고, host 디렉터리 없음·link는 호출 전체 오류라고 문서에 적었으며, host당 record 수 한도를 강제한다(`RECORDS_LIMIT`). platform 표 상태를 `AVAILABLE`로 고쳤다. m8: set이 있으면 그 파일과 profile을 처음부터 그 칸의 근거로 표시해 원인이 다른 completeness 실패로 번지지 않는다.
 * n9: set과 실행 identity는 hash가 아니라 같은 artifact 안에 있다는 것으로 묶인다(한계로 기록). PR의 후보 commit은 merge commit(`github.sha`)이다. 실패 job만 재실행하면 attempt가 섞여 완결성이 실패하므로 run 전체를 다시 실행한다([validation](../validation/validation.md)).
 
+**r2**(같은 reviewer, `6e7ca58..0edaa0e`, EXECUTED `go vet`·kit·CLI·foundation 시험 + STATIC): r1 항목이 모두 해소되었거나 문서로 정리되었고 새 BLOCKER·MATERIAL은 없다. MINOR 2, NOTE 5가 나왔다. 처분은 다음 commit이다.
+
+* r2-1: exit·지원 claim 문구(CLI 계약, README, 결과 explanation)와 결과 필드 목록이 새 동작(실행 역할 행 PASS와 gate 필요, `registered_checks`·`check_failures`, 역할 행 `mechanism`)을 따라오지 않았다. 네 곳을 고쳤다.
+* r2-2: MISSING 역할 행이 `registered_checks: PASS`를, MISSING 칸이 `check_failures: null`을 냈다. MISSING 행의 검사는 빈 값, 칸 목록은 빈 배열이다.
+* n1: 사실이 0개인 동적 SQL fixture가 생겨도 inventory가 `[]`를 쓰게 했다. n4: `expect_status=RESOURCE_LIMIT` 사례가 요구 행을 덮으면 inventory가 거부한다. n6: CI 로그(`gate.ps1`)가 칸의 `check_failures`와 역할 행의 kit 축·검사를 출력한다.
+* n2(선언 항목 필터의 빈 node 값), n3(cohort 기준이 다수결이 아님, 결과는 fail-closed)는 기록만 한다. n5: `n461-svc`의 SVC 음성 사례 8개에 기대 결과를 등록하는 일은 후속 사례 작업이며 추적 Issue는 orchestrator가 정한다.
+
 ## acceptance 연결
 
 | ID | 근거 |
