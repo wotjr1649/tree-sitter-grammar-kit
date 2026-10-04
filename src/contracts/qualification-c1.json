@@ -269,6 +269,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -349,6 +351,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B04": [
         "N",
@@ -419,6 +423,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -493,6 +499,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -565,6 +573,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -645,6 +655,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -714,6 +726,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B01": [
         "P",
@@ -789,6 +803,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-V14c": [
         "P",
@@ -867,6 +883,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -892,6 +910,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -944,6 +964,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1016,6 +1038,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1041,6 +1065,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1093,6 +1119,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1165,6 +1193,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1190,6 +1220,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1242,6 +1274,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1314,6 +1348,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1339,6 +1375,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1391,6 +1429,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1463,6 +1503,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1488,6 +1530,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1540,6 +1584,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -1659,6 +1705,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "csharp-B05": [
         "Q"
@@ -1896,6 +1944,8 @@
        "known_misses": []
       },
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      }
@@ -2161,6 +2211,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "go-B01": [
         "P",
@@ -2233,6 +2285,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "go-B03": [
         "N",
@@ -2371,6 +2425,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "go-B02": [
         "Q"
@@ -2565,6 +2621,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "python-B01": [
         "P",
@@ -2642,6 +2700,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "python-B01": [
         "N",
@@ -2765,6 +2825,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "python-B03": [
         "Q"
@@ -2997,6 +3059,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "javascript-B01": [
         "P",
@@ -3074,6 +3138,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "javascript-B01": [
         "N",
@@ -3202,6 +3268,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "javascript-B01": [
         "Q"
@@ -3409,6 +3477,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "jsx-B01": [
         "P",
@@ -3478,6 +3548,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "jsx-B01": [
         "N",
@@ -3626,6 +3698,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "jsx-B01": [
         "Q"
@@ -3808,6 +3882,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-B01": [
         "P",
@@ -3880,6 +3956,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-B01": [
         "N",
@@ -3945,6 +4023,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V45": [
         "P",
@@ -4009,6 +4089,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V50": [
         "P",
@@ -4077,6 +4159,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V50": [
         "P",
@@ -4145,6 +4229,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V40": [
         "P",
@@ -4216,6 +4302,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V50": [
         "P",
@@ -4278,6 +4366,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-V50": [
         "P",
@@ -4408,6 +4498,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "typescript-B01": [
         "Q"
@@ -4630,6 +4722,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "P",
@@ -4695,6 +4789,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "N",
@@ -4764,6 +4860,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "P",
@@ -4834,6 +4932,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-V29": [
         "P",
@@ -4904,6 +5004,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B02": [
         "P",
@@ -4976,6 +5078,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "P",
@@ -5044,6 +5148,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "P",
@@ -5164,6 +5270,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsx-B01": [
         "Q"
@@ -5327,6 +5435,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "java-B01": [
         "P",
@@ -5396,6 +5506,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "java-B01": [
         "N",
@@ -5530,6 +5642,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "java-B01": [
         "Q"
@@ -5718,6 +5832,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "kotlin-B01": [
         "P",
@@ -5779,6 +5895,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "kotlin-B02": [
         "N",
@@ -5918,6 +6036,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "kotlin-B01": [
         "Q"
@@ -6097,6 +6217,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "c-B01": [
         "P",
@@ -6158,6 +6280,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "c-B01": [
         "N",
@@ -6302,6 +6426,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "c-B01": [
         "Q"
@@ -6493,6 +6619,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "cpp-B01": [
         "P",
@@ -6562,6 +6690,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "cpp-B01": [
         "N",
@@ -6671,6 +6801,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "cpp-B01": [
         "Q"
@@ -6867,6 +6999,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "rust-B01": [
         "P",
@@ -6932,6 +7066,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "rust-B02": [
         "N",
@@ -7061,6 +7197,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "rust-B01": [
         "Q"
@@ -7246,6 +7384,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-B01": [
         "P",
@@ -7307,6 +7447,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-B02": [
         "N",
@@ -7370,6 +7512,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7432,6 +7576,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7498,6 +7644,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V55": [
         "P",
@@ -7562,6 +7710,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7628,6 +7778,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7692,6 +7844,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7754,6 +7908,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-V59": [
         "P",
@@ -7884,6 +8040,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "swift-B01": [
         "Q"
@@ -8100,6 +8258,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "dart-B01": [
         "P",
@@ -8161,6 +8321,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "dart-B02": [
         "N",
@@ -8300,6 +8462,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "dart-B01": [
         "Q"
@@ -8508,6 +8672,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "php-B01": [
         "P",
@@ -8577,6 +8743,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "php-B01": [
         "N",
@@ -8691,6 +8859,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "php-B01": [
         "Q"
@@ -8898,6 +9068,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "ruby-B01": [
         "P",
@@ -8959,6 +9131,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "ruby-B02": [
         "N",
@@ -9088,6 +9262,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "ruby-B02": [
         "Q"
@@ -9272,6 +9448,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "r-B01": [
         "P",
@@ -9337,6 +9515,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "r-B01": [
         "N",
@@ -9515,6 +9695,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "r-B01": [
         "Q"
@@ -9690,6 +9872,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "bash-B01": [
         "P",
@@ -9755,6 +9939,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "bash-B02": [
         "N",
@@ -9889,6 +10075,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "bash-B01": [
         "Q"
@@ -10067,6 +10255,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "powershell-B01": [
         "P",
@@ -10128,6 +10318,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "powershell-B02": [
         "N",
@@ -10262,6 +10454,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "powershell-B01": [
         "Q"
@@ -10446,6 +10640,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "html-B01": [
         "P",
@@ -10511,6 +10707,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "html-B01": [
         "N",
@@ -10670,6 +10868,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "html-B01": [
         "Q"
@@ -10839,6 +11039,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "css-B01": [
         "P",
@@ -10937,6 +11139,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "css-B01": [
         "N",
@@ -11120,6 +11324,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "css-B01": [
         "Q"
@@ -11532,6 +11738,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "json-B01": [
         "P",
@@ -11593,6 +11801,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "json-B01": [
         "N",
@@ -11747,6 +11957,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "json-B01": [
         "Q"
@@ -11920,6 +12132,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "yaml-B01": [
         "P",
@@ -11989,6 +12203,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "yaml-B02": [
         "N",
@@ -12143,6 +12359,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "yaml-B01": [
         "Q"
@@ -12338,6 +12556,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "xml-B01": [
         "P",
@@ -12399,6 +12619,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "xml-B01": [
         "N",
@@ -12475,6 +12697,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12500,6 +12724,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12552,6 +12778,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12624,6 +12852,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12649,6 +12879,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12701,6 +12933,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      },
@@ -12855,6 +13089,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "xml-B01": [
         "Q"
@@ -13097,6 +13333,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "P",
@@ -13174,6 +13412,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "N",
@@ -13260,6 +13500,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "P",
@@ -13328,6 +13570,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B04": [
         "P",
@@ -13379,6 +13623,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -13430,6 +13676,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "P",
@@ -13485,6 +13733,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "P",
@@ -13535,6 +13785,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B04": [
         "P",
@@ -13601,6 +13853,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -13669,6 +13923,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B04": [
         "P",
@@ -13731,6 +13987,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -13799,6 +14057,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -13863,6 +14123,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -13925,6 +14187,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B02": [
         "P",
@@ -14050,6 +14314,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B03": [
         "Q"
@@ -14254,6 +14520,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "Q"
@@ -14340,6 +14608,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "tsql-B01": [
         "Q"
@@ -14602,6 +14872,8 @@
        ]
       },
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {},
       "source": null
      }
@@ -14856,6 +15128,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B01": [
         "P",
@@ -14925,6 +15199,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B02": [
         "N",
@@ -14988,6 +15264,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V10": [
         "P",
@@ -15053,6 +15331,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V13": [
         "P",
@@ -15122,6 +15402,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V16": [
         "P",
@@ -15188,6 +15470,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V10": [
         "P",
@@ -15261,6 +15545,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V18": [
         "P",
@@ -15327,6 +15613,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-V10": [
         "P",
@@ -15396,6 +15684,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B04": [
         "P",
@@ -15458,6 +15748,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B04": [
         "P",
@@ -15520,6 +15812,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B04": [
         "P",
@@ -15584,6 +15878,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B04": [
         "P",
@@ -15648,6 +15944,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B03": [
         "P",
@@ -15733,6 +16031,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B04": [
         "P",
@@ -15863,6 +16163,8 @@
       "points": null,
       "dynamic_sql_expect": null,
       "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
       "covers": {
        "postgresql-sql-B02": [
         "Q"
@@ -16093,6 +16395,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16118,6 +16422,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16170,6 +16476,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16240,6 +16548,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16265,6 +16575,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16343,6 +16655,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16400,6 +16714,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16425,6 +16741,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16477,6 +16795,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16495,6 +16815,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16513,6 +16835,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
        "source": null
       },
@@ -16531,6 +16855,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16549,6 +16875,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
        "source": null
       },
@@ -16567,6 +16895,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16585,6 +16915,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16603,6 +16935,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
        "covers": {},
        "source": null
       },
@@ -16636,6 +16970,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
        "covers": {},
        "source": null
       },
@@ -16654,6 +16990,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
        "source": null
       },
@@ -16687,6 +17025,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_NOT_PARSED",
        "covers": {},
        "source": null
       },
@@ -16705,6 +17045,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16723,6 +17065,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
        "source": null
       },
@@ -16741,6 +17085,8 @@
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "SVC_INLINE_UNSUPPORTED",
        "covers": {},
        "source": null
       }
@@ -16950,6 +17296,8 @@
        ],
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -16988,6 +17336,8 @@
        ],
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       },
@@ -17026,6 +17376,8 @@
        ],
        "dynamic_sql_expect": null,
        "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       }
@@ -17220,6 +17572,8 @@
        ],
        "dynamic_sql_expect": null,
        "expect_status": "RESOURCE_LIMIT",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "source": null
       }

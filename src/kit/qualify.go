@@ -72,19 +72,23 @@ type QualQuery struct {
 // QualCase is one registered case of a workload: its exact input, edits and expectations,
 // the status it must end with ("" is COMPLETED), its role (requirement, detector or
 // support) and the requirement rows and kinds it covers under CoverageRule. Source is the
-// UTF-8 input, kept only when query expectations are recomputed from it.
+// UTF-8 input, kept only when query expectations are recomputed from it. ExpectAssessment
+// and ExpectCode register the S05 verdict an SVC observation-only case must end with
+// (PASS without a code or BLOCKED with one); "" keeps the default check.
 type QualCase struct {
-	ID           string                 `json:"id"`
-	Role         string                 `json:"role"`
-	Input        NativeInput            `json:"input"`
-	Edits        []Edit                 `json:"edits"`
-	Expect       []StepExpectation      `json:"expect"`
-	QueryExpect  []QueryExpectation     `json:"query_expect"`
-	Points       []NativePoint          `json:"points"`
-	DynamicSQL   *DynamicSQLExpectation `json:"dynamic_sql_expect"`
-	ExpectStatus string                 `json:"expect_status"`
-	Covers       map[string][]string    `json:"covers"`
-	Source       *string                `json:"source"`
+	ID               string                 `json:"id"`
+	Role             string                 `json:"role"`
+	Input            NativeInput            `json:"input"`
+	Edits            []Edit                 `json:"edits"`
+	Expect           []StepExpectation      `json:"expect"`
+	QueryExpect      []QueryExpectation     `json:"query_expect"`
+	Points           []NativePoint          `json:"points"`
+	DynamicSQL       *DynamicSQLExpectation `json:"dynamic_sql_expect"`
+	ExpectStatus     string                 `json:"expect_status"`
+	ExpectAssessment string                 `json:"expect_assessment"`
+	ExpectCode       string                 `json:"expect_code"`
+	Covers           map[string][]string    `json:"covers"`
+	Source           *string                `json:"source"`
 }
 
 // QualWorkload is the registered workload a host runs for one cell or role: the record set
@@ -240,6 +244,16 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			}
 			if c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
 				return badW("CASE_INVALID", cp+"/expect_status") // an over-limit case judges no row
+			}
+			if c.ExpectAssessment != "" || c.ExpectCode != "" {
+				// a registered SVC observation-only verdict: a composite-format case that covers
+				// no row and needs no tree, PASS without a code or BLOCKED with one
+				observed := w.Format == SvcFormat && len(c.Covers) == 0 && c.Role != "detector" && len(c.Expect) == 0 && len(c.QueryExpect) == 0 &&
+					c.DynamicSQL == nil && c.ExpectStatus == ""
+				verdict := (c.ExpectAssessment == AssessPass && c.ExpectCode == "") || (c.ExpectAssessment == AssessBlocked && c.ExpectCode != "")
+				if !observed || !verdict {
+					return badW("CASE_INVALID", cp+"/expect_assessment")
+				}
 			}
 			for _, q := range c.QueryExpect {
 				if !qs[q.Query] {

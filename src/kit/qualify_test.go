@@ -901,6 +901,66 @@ func TestQualifyPlatformClaims(t *testing.T) {
 	}
 }
 
+// #76 a registered SVC observation-only verdict: the check passes exactly when the
+// recorded assessment and code are the registered ones; any difference fails the row.
+func TestQualifySvcExpectedAssessment(t *testing.T) {
+	run := func(assess, code string) QualRoleRow {
+		f := newQfx(t)
+		w := f.svcRole()
+		w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = assess, code
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: qfxSvcObserved}}))
+		return roleRow(r, "fx-svc", "windows-amd64")
+	}
+	if x := run(AssessBlocked, "SVC_INLINE_UNRESOLVED"); x.Status != CellPass || x.Checks != claimPass || x.Mechanism != AssessPass {
+		t.Fatalf("expected verdict: %s %s %s", x.Status, x.Checks, x.Mechanism)
+	}
+	for _, w := range [][2]string{{AssessBlocked, "SVC_INLINE_UNSUPPORTED"}, {AssessPass, ""}} {
+		if x := run(w[0], w[1]); x.Status != CellFail || x.Checks != claimFail || x.Mechanism != AssessPass {
+			t.Fatalf("other verdict %v: %s %s %s", w, x.Status, x.Checks, x.Mechanism)
+		}
+	}
+}
+
+// #76 inventory guard: the registered verdict belongs only to an SVC-format case that
+// covers no row and needs no tree, as a PASS without code or a BLOCKED with one.
+func TestQualificationInventorySvcExpectation(t *testing.T) {
+	// the fxa route workload in the SVC format; c2 has no step or query expectation
+	base := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcFormat
+		c := &f.inv.Routes[0].Workload.Cases[1]
+		c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		return f
+	}
+	if _, err := ParseQualificationInventory(base().invBytes(t)); err != nil {
+		t.Fatalf("registered SVC verdict rejected: %v", err)
+	}
+	for name, mut := range map[string]func(inv *QualificationInventory){
+		"covering": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Covers = map[string][]string{"fxa-B01": {"E"}}
+		},
+		"non-svc": func(inv *QualificationInventory) { inv.Routes[0].Workload.Format = "" },
+		"step-expect": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Expect = []StepExpectation{{Step: 1, Syntax: "ERROR", Contains: []string{}}}
+		},
+		"code-only":    func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = "" },
+		"blocked-bare": func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectCode = "" },
+		"pass-code":    func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = AssessPass },
+		"fail":         func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = AssessFail },
+		"over-limit":   func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectStatus = StatusResourceLimit },
+		"other-route": func(inv *QualificationInventory) {
+			c := &inv.Routes[1].Workload.Cases[1] // fxb stays in the default format
+			c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		},
+	} {
+		f := base()
+		mut(&f.inv)
+		if _, err := ParseQualificationInventory(f.invBytes(t)); err == nil || !strings.Contains(err.Error(), "CASE_INVALID") {
+			t.Fatalf("%s: %v", name, err)
+		}
+	}
+}
+
 // Inventory guards: the declared cells are the exact product, coverage claims obey the
 // rule, two routes cannot share a set (collapsed dialects) and sources match inputs.
 func TestQualificationInventoryGuards(t *testing.T) {

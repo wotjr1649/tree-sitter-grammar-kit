@@ -777,6 +777,10 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, c *rcCase, extra *qRecord, 
 		s.checks[qc.ID] = claimBlocked
 	case !completed:
 		s.checks[qc.ID] = claimPass // the registered non-completion (an over-limit input) happened
+	case qc.ExpectAssessment != "":
+		// a registered SVC observation-only verdict: exactly the recorded assessment and code
+		// (the record gates recompute them; for an SVC observation-only case the verdict gate)
+		s.checks[qc.ID] = map[bool]string{true: claimPass, false: claimFail}[c.Assessment == qc.ExpectAssessment && c.Code == qc.ExpectCode]
 	case len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(st rcStep) bool { return st.Incremental != nil || st.Composite == nil }):
 		// SVC observation-only: the S05 verdict the verdict gate recomputed
 		s.checks[qc.ID] = map[string]string{AssessPass: claimPass, AssessFail: claimFail}[c.Assessment]
