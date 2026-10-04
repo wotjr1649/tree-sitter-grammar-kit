@@ -4,17 +4,17 @@ A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go A
 
 ## Status and scope
 
-Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)):
+Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)). For the first release candidate (v0.1.0), the offline core is **VERIFIED** on Windows amd64, Linux amd64 and macOS arm64. The other areas are **experimental**: they work as their reports show, but they carry no compatibility promise. See the [platform contract](docs/specs/platform-support.md) for the evidence and the known limitations.
 
-| Area | CLI | Public API (`src/kit`) | Notes |
-|---|---|---|---|
-| Inventory and identity | `inspect`, `identity`, `corpus` | `Inspect`, `Identity`, `Corpus` | offline; a fingerprint identifies bytes, it does not authenticate a source |
-| Strict verification | `verify` | `Verify` | exact-set check against a caller-trusted expected document; ZIP inspected without extraction |
-| Node schema | `schema check`, `schema diff` | `SchemaCheck`, `SchemaDiff` | static `node-types.json` facts and review risks, not runtime trees |
-| Reproduction | `reproduce` | profile parsing only | runs a pinned generator in two workspaces (EXEC_GENERATOR) |
-| Native parse/edit and query records | `incremental`, `oracle record` | comparators, profile parsing, record-set verification | build and run the pinned runtime with a host compiler (BUILD_NATIVE, EXEC_NATIVE); not part of the offline API |
-| Evidence replay | `replay`, `evidence verify` | `Replay`, `VerifyEvidence`, `CompareGates` | registered data-only reducers; integrity, not authenticity |
-| Qualification | `qualify` | `Qualify`, `ParseQualificationInventory` | aggregates one candidate's three host runs into the 26 route x 3 platform cells; read-only |
+| Area | CLI | Public API (`src/kit`) | Release status | Notes |
+|---|---|---|---|---|
+| Inventory and identity | `inspect`, `identity`, `corpus` | `Inspect`, `Identity`, `Corpus` | VERIFIED | offline; a fingerprint identifies bytes, it does not authenticate a source |
+| Strict verification | `verify` | `Verify` | VERIFIED | exact-set check against a caller-trusted expected document; ZIP inspected without extraction |
+| Node schema | `schema check`, `schema diff` | `SchemaCheck`, `SchemaDiff` | VERIFIED | static `node-types.json` facts and review risks, not runtime trees |
+| Reproduction | `reproduce` | profile parsing only | experimental | runs a pinned generator in two workspaces (EXEC_GENERATOR) |
+| Native parse/edit and query records | `incremental`, `oracle record` | comparators, profile parsing, record-set verification | experimental | build and run the pinned runtime with a host compiler (BUILD_NATIVE, EXEC_NATIVE); not part of the offline API |
+| Evidence replay | `replay`, `evidence verify` | `Replay`, `VerifyEvidence`, `CompareGates` | experimental | registered data-only reducers; integrity, not authenticity |
+| Qualification | `qualify` | `Qualify`, `ParseQualificationInventory` | experimental | aggregates one candidate's three host runs into the 26 route x 3 platform cells; read-only |
 
 A grammar update workflow uses only the offline commands: take the baseline snapshot's `identity` as the expected document, `verify` the candidate against it (changed files are reported as FAIL), and `schema diff` the two `node-types.json` files for review risks. Nothing is adopted automatically.
 
