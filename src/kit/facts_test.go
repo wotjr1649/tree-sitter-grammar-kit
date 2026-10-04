@@ -137,3 +137,26 @@ func TestDeriveDeclarations(t *testing.T) {
 		}
 	}
 }
+
+// One match can hold two nodes for one level: the runtime returned both names of
+// `CREATE TABLE m_2024 PARTITION OF m` (nodes 99 and 104) in a single match. The name is
+// the first in document order, as when the nodes come in separate matches.
+func TestDeriveDeclarationsSameLevelInOneMatch(t *testing.T) {
+	items := []NativeDeclaration{{"create_object", "CreateStmt", "child:qualified_name"}}
+	c := func(match uint32, name string, node int64, start, end uint32) Capture {
+		return Capture{Match: match, Name: name, Node: node, StartByte: start, EndByte: end}
+	}
+	for _, order := range [][2]int64{{99, 104}, {104, 99}} {
+		span := map[int64][2]uint32{99: {170, 176}, 104: {190, 191}}
+		caps := []Capture{
+			c(2, "c.0.0.0", 96, 157, 240),
+			c(3, "c.0.1.0", 96, 157, 240),
+			c(3, "c.0.1.1", order[0], span[order[0]][0], span[order[0]][1]),
+			c(3, "c.0.1.1", order[1], span[order[1]][0], span[order[1]][1]),
+		}
+		got := DeriveDeclarations(items, caps)
+		if len(got) != 1 || got[0].Name == nil || *got[0].Name != (ByteSpan{170, 176}) || got[0].Status != "PASS" {
+			t.Fatalf("capture order %v: %+v", order, got)
+		}
+	}
+}

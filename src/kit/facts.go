@@ -242,7 +242,10 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 		}
 	}
 	for _, mc := range matches {
-		lv := map[int]Capture{}
+		// One match can hold several nodes for the same level (the runtime returned both
+		// names of PostgreSQL `CREATE TABLE a PARTITION OF b` in one match), so every
+		// capture of a level is kept; the walk below picks the first in document order.
+		lv := map[int][]Capture{}
 		item, depth := -1, -1
 		ok := true
 		for _, c := range mc {
@@ -258,7 +261,8 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 				ok = false
 				break
 			}
-			item, depth, lv[k] = i, d, c
+			item, depth = i, d
+			lv[k] = append(lv[k], c)
 		}
 		if !ok || item < 0 {
 			continue
@@ -267,16 +271,21 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			if decl[item] == nil {
 				decl[item] = map[int64]Capture{}
 			}
-			decl[item][lv[0].Node] = lv[0]
+			for _, c := range lv[0] {
+				decl[item][c.Node] = c
+			}
 			continue
 		}
-		// every adjacent pair of captured levels is a parent-to-candidate edge
+		// every adjacent pair of captured levels is a parent-to-candidate edge; with several
+		// nodes on a level, a candidate belongs only to a parent whose range contains it
 		for k := 1; k <= depth; k++ {
-			p, hp := lv[k-1]
-			c, hc := lv[k]
-			if hp && hc {
-				e := edge{item, k, p.Node}
-				cands[e] = append(cands[e], c)
+			for _, p := range lv[k-1] {
+				for _, c := range lv[k] {
+					if c.StartByte >= p.StartByte && c.EndByte <= p.EndByte {
+						e := edge{item, k, p.Node}
+						cands[e] = append(cands[e], c)
+					}
+				}
 			}
 		}
 	}
