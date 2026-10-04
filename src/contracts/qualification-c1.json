@@ -13007,6 +13007,10 @@
       "sha256": "3873c504301578837306f5fbe483433cfc58fb3ae30cebe913c12d029825ba63"
      },
      {
+      "id": "q.r6-begin",
+      "sha256": "5cca4ecb56cff2f575328d63276e1745a21021cb2944b276e845c8885e871674"
+     },
+     {
       "id": "facts.declarations",
       "sha256": "bfca18365c23af4a2cbcff969760772237fe443be4b6d8f4585f92f64489df23"
      },
@@ -13431,6 +13435,63 @@
         "P",
         "N",
         "R",
+        "E"
+       ]
+      },
+      "source": null
+     },
+     {
+      "id": "tsql-r6-begin-semicolon-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "62412c0212b2c47e45c47e493e89a4b57bb167815ba629ba0cb4181ad70c63fc",
+       "bytes": 360
+      },
+      "edits": [
+       {
+        "start_byte": 109,
+        "old_end_byte": 120,
+        "new_end_byte": 119,
+        "old": "ICAgIEJFR0lOOwo=",
+        "new": "ICAgIEJFR0lOCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "create_procedure",
+         "block",
+         "while_statement",
+         "if_statement",
+         "cte"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block",
+         "while_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "E"
+       ],
+       "tsql-B04": [
+        "P",
         "E"
        ]
       },
@@ -14161,6 +14222,86 @@
        ]
       },
       "source": ";/* Owned synthetic r6 case. */\nSELECT 상품명, 가격2 FROM 상품;\nGO\nsp_who\nGO\nCREATE PROCEDURE dbo.Tick @n INT AS\nBEGIN\n    SET @n = @n + 1;;\n    ;WITH t AS (SELECT 1 AS v) SELECT v FROM t;;\nEND\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCHECKPOINT 10;\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', MOVE Sample_log TO 'new.ldf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nBACKUP CERTIFICATE Cert1 TO FILE = 'cert1.cer' WITH PRIVATE KEY (FILE = 'cert1.pvk', ENCRYPTION BY PASSWORD = 'placeholder');\nRESTORE MASTER KEY FROM FILE = 'mk.key' DECRYPTION BY PASSWORD = 'placeholder' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s \u003c\u003e N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nSELECT a FROM (SELECT Code AS a FROM dbo.Memo\n    UNION SELECT TOP 5 Code FROM dbo.Memo ORDER BY a OFFSET 0 ROWS) AS e;\nGO\nCHECKPOINT;\nGO\n"
+     },
+     {
+      "id": "tsql-r6-begin-query-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "62412c0212b2c47e45c47e493e89a4b57bb167815ba629ba0cb4181ad70c63fc",
+       "bytes": 360
+      },
+      "edits": [
+       {
+        "start_byte": 109,
+        "old_end_byte": 120,
+        "new_end_byte": 119,
+        "old": "ICAgIEJFR0lOOwo=",
+        "new": "ICAgIEJFR0lOCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "create_procedure",
+         "block",
+         "while_statement",
+         "if_statement",
+         "cte"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block",
+         "while_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.r6-begin",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "block_cte",
+          "type": "identifier",
+          "text": "s"
+         },
+         {
+          "name": "block_cte",
+          "type": "identifier",
+          "text": "t"
+         },
+         {
+          "name": "nested_alias",
+          "type": "identifier",
+          "text": "c"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "covers": {
+       "tsql-B01": [
+        "Q"
+       ],
+       "tsql-B04": [
+        "Q"
+       ]
+      },
+      "source": "CREATE PROCEDURE dbo.Walk @n INT AS\nBEGIN\n    ;WITH s AS (SELECT 1 AS v) SELECT v FROM s;\n    WHILE (@n \u003e 0)\n    BEGIN;\n        SET @n = @n - 1;\n    END;\n    IF (@n = 0)\n    BEGIN ;WITH t AS (SELECT 2 AS w) SELECT w FROM t;\n    END\nEND\nGO\nSELECT 1 AS a;\n/* comment */;\nBEGIN\n    SELECT 2 AS b;\n    /* nested */;\n    BEGIN\n        SELECT 3 AS c;\n    END\nEND\nGO\n"
      },
      {
       "id": "dynamic-sql-tsql",

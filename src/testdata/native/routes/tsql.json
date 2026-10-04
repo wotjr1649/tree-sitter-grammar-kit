@@ -266,6 +266,44 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "tsql-r6-begin-semicolon-r1",
+      "kind": "feature",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE PROCEDURE dbo.Walk @n INT AS\nBEGIN\n    ;WITH s AS (SELECT 1 AS v) SELECT v FROM s;\n    WHILE (@n > 0)\n    BEGIN;\n        SET @n = @n - 1;\n    END;\n    IF (@n = 0)\n    BEGIN ;WITH t AS (SELECT 2 AS w) SELECT w FROM t;\n    END\nEND\nGO\nSELECT 1 AS a;\n/* comment */;\nBEGIN\n    SELECT 2 AS b;\n    /* nested */;\n    BEGIN\n        SELECT 3 AS c;\n    END\nEND\nGO\n",
+      "edits": [
+        {
+          "find": "    BEGIN;\n",
+          "replace": "    BEGIN\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_procedure",
+            "block",
+            "while_statement",
+            "if_statement",
+            "cte"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block",
+            "while_statement"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

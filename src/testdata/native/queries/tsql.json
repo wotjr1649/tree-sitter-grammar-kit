@@ -9,6 +9,10 @@
     {
       "id": "q.r6-structure",
       "source": "(execute_statement procedure: (object_reference name: (identifier) @exec))\n(column_definition . name: (identifier) @column)\n(restore_statement name: (identifier) @restore)\n(restore_move logical_file: (literal) @move_from os_file: (literal) @move_to)\n(restore_move logical_file: (identifier) @move_from_name)\n(assignment left: (field name: (identifier) @assigned))\n(query_specification (select (top_clause)) (order_by (order_target (field name: (identifier) @branch_order))))\n(set_operation (offset_fetch) @union_offset)\n(relation (object_reference name: (identifier) @table))\n"
+    },
+    {
+      "id": "q.r6-begin",
+      "source": "(block (statement (cte (identifier) @block_cte)))\n(block (block (statement (query_specification (select (select_expression (term alias: (identifier) @nested_alias)))))))\n"
     }
   ],
   "cases": [
@@ -191,6 +195,40 @@
               "name": "union_offset",
               "type": "offset_fetch",
               "text": "OFFSET 0 ROWS"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "tsql-r6-begin-query-r1",
+      "source_case": "tsql-r6-begin-semicolon-r1",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "query_expect": [
+        {
+          "query": "q.r6-begin",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "block_cte",
+              "type": "identifier",
+              "text": "s"
+            },
+            {
+              "name": "block_cte",
+              "type": "identifier",
+              "text": "t"
+            },
+            {
+              "name": "nested_alias",
+              "type": "identifier",
+              "text": "c"
             }
           ],
           "error": null
