@@ -437,7 +437,7 @@ func judgeIncremental(out *CaseResult) string {
 	out.Claims.IncrementalEquality, out.Claims.IncrementalRoute = ClaimPass, ClaimPass
 	for k, s := range out.Steps[1:] {
 		if s.Comparison == nil {
-			out.Claims.IncrementalEquality = ClaimBlocked
+			out.Claims.IncrementalEquality = worse(out.Claims.IncrementalEquality, ClaimBlocked)
 		} else if !s.Comparison.Equal {
 			out.Claims.IncrementalEquality = ClaimFail
 			if out.Code == "" {

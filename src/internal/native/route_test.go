@@ -98,3 +98,29 @@ func TestBlockedRouteCode(t *testing.T) {
 		t.Fatalf("oracle %+v assessment %s code %q", *out.Oracle, out.Assessment, out.Code)
 	}
 }
+
+// The incremental_equality claim folds the worst step (FAIL > BLOCKED > PASS), as replay
+// recomputes it: a later step without a comparison never masks an earlier FAIL, and a
+// FAIL after a BLOCKED step is a FAIL.
+func TestIncrementalEqualityFold(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		comps [2]*Comparison
+		claim string
+		code  string
+	}{
+		{"fail-then-blocked", [2]*Comparison{{Equal: false}, nil}, ClaimFail, "INCREMENTAL_FRESH_MISMATCH_STEP_1"},
+		{"blocked-then-fail", [2]*Comparison{nil, {Equal: false}}, ClaimFail, "INCREMENTAL_FRESH_MISMATCH_STEP_2"},
+		{"pass-then-blocked", [2]*Comparison{{Equal: true}, nil}, ClaimBlocked, ""},
+		{"pass", [2]*Comparison{{Equal: true}, {Equal: true}}, ClaimPass, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out := routeCase([3]bool{}, [2]*Route{reused, reused})
+			out.Steps[1].Comparison, out.Steps[2].Comparison = tc.comps[0], tc.comps[1]
+			judgeIncremental(out)
+			if out.Claims.IncrementalEquality != tc.claim || out.Code != tc.code || out.Claims.IncrementalRoute != ClaimPass {
+				t.Fatalf("claims %+v code %q, want equality %s code %q", out.Claims, out.Code, tc.claim, tc.code)
+			}
+		})
+	}
+}
