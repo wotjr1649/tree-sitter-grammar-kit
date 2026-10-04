@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을, S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
+S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을, S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했고 C2는 이를 r2로 바꿨다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
 
@@ -181,21 +181,50 @@ registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema
 
 policy `tsgk-evidence-policy/r1`(strict, 모르는 필드 거부): `schema`, `id`, `evidence_sha256`(입력 root의 `evidence.json` bytes에 대한 caller 신뢰 anchor), `required`(`node`, `kind`, `identities`), `carry_forward`(`node`, `origin`, `relation`, `authorized_by`), `eligibility`(`null` 또는 `{nodes, modes}`)다. 예시는 `src/contracts/examples/evidence-policy-r1.json`, 거부 예시는 `invalid/evidence-*.json`이다. graph 문서 `tsgk-evidence/r1`은 입력 root의 `evidence.json`이며 node(`id`, `kind`, 세 축, `recorded_assessment`, `identities`, `files`, `refs`)를 담는다. 검사는 `evidence-replay` 한도로 한다.
 
-## S08 구현 — qualify, qualification inventory r1
+## S08 구현 — qualify, qualification inventory r2
 
 ```text
 tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--out PATH]
 ```
 
-READ_DATA만 쓴다. process·network·tool을 시작하지 않는다. `--inventory`는 caller가 신뢰하는 `tsgk-qualification-inventory/r1`이고 어느 host 디렉터리 안에 있어도 `INVENTORY_INSIDE_INPUT`(exit 2)이다. `--candidate`는 모든 host가 실행해야 하는 commit(40자리 16진)이며 그 밖은 `CANDIDATE_INVALID`(exit 2)다. `--host`는 inventory의 platform id와 그 host의 실행 디렉터리다. `--out`은 S01 publication 규칙을 따르고 어느 host 디렉터리 안이어도 `OUTPUT_INSIDE_INPUT`이다. exit: `PASS` 0(모든 필수 칸·실행된 추가 역할 행 PASS와 `mechanism_gate` PASS, 지원 claim `SUPPORTED`), `FAIL` 1(완결성·cohort·자격·kit 축·비교 실패, 필수 요구·등록 검사 FAIL, 추가 역할 행 FAIL), `BLOCKED` 3(실패는 없고 사례 없는 의무, 등록 검사 BLOCKED, kit 축 BLOCKED, INCOMPLETE 추가 역할 행이 남음), 실행 전 거부 2, I/O·publication 4, 취소 130. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다.
+READ_DATA만 쓴다. process·network·tool을 시작하지 않는다. `--inventory`는 caller가 신뢰하는 `tsgk-qualification-inventory/r2`이고 어느 host 디렉터리 안에 있어도 `INVENTORY_INSIDE_INPUT`(exit 2)이다. `--candidate`는 모든 host가 실행해야 하는 commit(40자리 16진)이며 그 밖은 `CANDIDATE_INVALID`(exit 2)다. `--host`는 inventory의 platform id와 그 host의 실행 디렉터리다. `--out`은 S01 publication 규칙을 따르고 어느 host 디렉터리 안이어도 `OUTPUT_INSIDE_INPUT`이다. exit: `PASS` 0(모든 필수 칸·실행된 추가 역할 행 PASS와 `mechanism_gate` PASS, 지원 claim `SUPPORTED`), `FAIL` 1(완결성·cohort·자격·kit 축·비교 실패, 필수 요구·등록 검사 FAIL, 추가 역할 행 FAIL), `BLOCKED` 3(실패는 없고 사례 없는 의무, 등록 검사 BLOCKED, kit 축 BLOCKED, INCOMPLETE 추가 역할 행이 남음), 실행 전 거부 2, I/O·publication 4, 취소 130. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다.
 
 host 디렉터리는 `src/dev/s05-native/run-routes.ps1 -Oracle`의 출력에서 CI가 올리는 부분이다: `run-identity.json`(`tsgk-run-identity/r1`, `src/dev/s08-qualify/run-identity.ps1`이 씀), `profiles/<workload>.json`(실행에 쓴 `tsgk-oracle/r1` profile), `records/<set>/`(S06 기록 set), helper의 `summary.json`(보존만 하며 근거가 아님). 그 밖의 파일은 `HOST_FILE_UNREGISTERED`로 완결성을 실패시킨다.
 
-inventory `tsgk-qualification-inventory/r1`(S02 strict decoder, 모르는 필드 거부): `id`, `campaign`, `qualification_cells`(= route 수 × platform 수, 다르면 `CELL_COUNT_MISMATCH`), `coverage_rule`(`tsgk-coverage-rule/r1`), `kinds`(`P N R E Q W`), `platforms`(`id`, `goos`, `goarch`), `routes`(`route`, `workload`, `requirements`), `extra_roles`다. `workload`는 `set`, `profile`, `route`, `operation`, `output`, `symbol`, `format`, `grammar`, `queries`(id·source sha256), `fact_pack`, `api`, `cases`이고 case는 `id`, `role`(`requirement`·`support`·`detector`), `input`(sha256·bytes), `edits`, `expect`, `query_expect`, `expect_status`(빈 값은 `COMPLETED`), `expect_assessment`·`expect_code`(SVC 관측 전용 사례가 끝나야 할 S05 판정과 code, 빈 값은 등록 없음), `covers`(요구 행 → kind), `source`(query 기대값을 다시 계산할 case의 UTF-8 원본)다. `expect_assessment`·`expect_code`는 `format`이 `SVC-SERVICEHOST-r1`인 workload에서 `covers`가 없고 tree가 필요 없는(`expect`·`query_expect`·`dynamic_sql_expect` 없음, `expect_status` 빈 값) detector가 아닌 사례에만 쓸 수 있고, `PASS`와 빈 code 또는 `BLOCKED`와 빈 값이 아닌 code의 짝이어야 한다. 그 밖은 `CASE_INVALID`다. 원본 사례 파일 `src/testdata/native/n461/svc.json`의 같은 이름 필드에서 inventory로 옮긴다. `covers`는 아래 규칙을 지켜야 한다(`COVERAGE_RULE_VIOLATION`). detector는 요구 행을 덮지 못한다(`DETECTOR_COVERS`). 두 route가 같은 set을 쓰면 거부한다(SQL dialect 병합 방지). 추가 역할은 `maintained`·`historical`·`owned`이고 상태는 `EXECUTED`(workload 필수)·`NOT_RUN`·`EXTERNAL`, `not_applicable`은 platform별 이유다.
+inventory `tsgk-qualification-inventory/r2`(S02 strict decoder, 모르는 필드 거부): `id`, `campaign`, `qualification_cells`(= route 수 × platform 수, 다르면 `CELL_COUNT_MISMATCH`), `coverage_rule`(`tsgk-coverage-rule/r2`), `kinds`(`P N R E Q W`), `platforms`(`id`, `goos`, `goarch`), `routes`(`route`, `error_nodes`, `workload`, `requirements`), `extra_roles`다. r2는 r1에 route의 `error_nodes`, 요구 행의 `alternatives_status`·`alternatives`, case의 `alternatives`·`sample`을 더한다. `error_nodes`는 그 route 문법이 parse 오류를 ERROR 대신 나타내는 named node type 목록이다(빈 목록 가능, 중복·`ERROR`·이름 형식 위반은 `ROUTE_INVALID`). 요구 행은 `row`, `kinds`, `alternatives_status`(`COMPLETE`·`PENDING`), `alternatives`(`<row>.aNN` id, NN은 두 자리 이상 숫자)이고 `COMPLETE`인데 대안이 없거나 상태·id 형식·중복이 틀리면 `REQUIREMENT_INVALID`다. `workload`는 `set`, `profile`, `route`, `operation`, `output`, `symbol`, `format`, `grammar`, `queries`(id·source sha256), `fact_pack`, `api`, `cases`이고 case는 `id`, `role`(`requirement`·`support`·`detector`), `input`(sha256·bytes), `edits`, `expect`, `query_expect`, `expect_status`(빈 값은 `COMPLETED`), `expect_assessment`·`expect_code`(SVC 관측 전용 사례가 끝나야 할 S05 판정과 code, 빈 값은 등록 없음), `covers`(요구 행 → kind), `alternatives`(사례가 실행하는 production 대안 id), `sample`(W 생산자 등록, 아래), `source`(query 기대값을 다시 계산할 case의 UTF-8 원본)다. `alternatives`의 id는 그 route에 등록된 대안이어야 하고 사례가 그 대안의 행을 P로 덮어야 하며 한 사례 안에서 중복되지 않는다. 그 밖은 `CASE_INVALID`다. `sample`은 `repository`(`owner/name`), `commit`(40자리 16진), `path`(저장소 안 상대 slash 경로), `license`(SPDX id `MIT`·`Apache-2.0`·`BSD-2-Clause`·`BSD-3-Clause`·`PostgreSQL`), `sha256`, `bytes`이고 `requirement` 사례에만 쓸 수 있다. `sha256`·`bytes`는 사례 `input`과 같고 `bytes`는 1..65536이다. 그 밖은 `CASE_INVALID`다. 원본 사례 파일(`src/testdata/native/{routes,gaps,n461}/*.json`)의 같은 이름 필드에서 inventory로 옮기며, sample마다 [`src/testdata/native/samples/NOTICE.md`](../../src/testdata/native/samples/NOTICE.md)에 `## <repository>@<commit>` 항목과 그 license 고지가 있어야 한다(`TestSampleNotices`). 비공개 corpus는 W 생산자가 아니다. `expect_assessment`·`expect_code`는 `format`이 `SVC-SERVICEHOST-r1`인 workload에서 `covers`가 없고 tree가 필요 없는(`expect`·`query_expect`·`dynamic_sql_expect` 없음, `expect_status` 빈 값) detector가 아닌 사례에만 쓸 수 있고, `PASS`와 빈 code 또는 `BLOCKED`와 빈 값이 아닌 code의 짝이어야 한다. 그 밖은 `CASE_INVALID`다. 원본 사례 파일 `src/testdata/native/n461/svc.json`의 같은 이름 필드에서 inventory로 옮긴다. `covers`는 아래 규칙을 지켜야 한다(`COVERAGE_RULE_VIOLATION`). detector는 요구 행을 덮지 못한다(`DETECTOR_COVERS`). 두 route가 같은 set을 쓰면 거부한다(SQL dialect 병합 방지). 추가 역할은 `maintained`·`historical`·`owned`이고 상태는 `EXECUTED`(workload 필수)·`NOT_RUN`·`EXTERNAL`, `not_applicable`은 platform별 이유다.
 
-`tsgk-coverage-rule/r1`: P는 `NO_ERROR`와 named 구조(`contains`)를 기대하는 step, N은 `ERROR`를 기대하는 step, R은 `ERROR`와 보존 구조를 기대하는 step, E는 edit 하나 이상(incremental/fresh 비교), Q는 capture 기대값이 있는 query 사례다. W(허가된 실사용 sample)는 등록된 생산자가 없어 언제나 덮이지 않는다. 사례는 `features`에 적힌 그 route의 REQ 행만 덮는다(N461 역할 id와 gap 설명 문구는 행이 아니다). query 사례는 자기 행의 Q만 덮는다.
+`tsgk-coverage-rule/r2`: 오류 step은 `ERROR`를 기대하는 step이거나, `NO_ERROR`를 기대하면서 `contains`에 route의 `error_nodes` 중 하나를 적은 step이다(html은 `erroneous_end_tag`). 오류 step의 자기 기대값 판정은 바뀌지 않는다. `NO_ERROR`+`contains` step은 tree에 오류가 없고 적은 node가 모두 있어야 PASS다. 사례 kind는 다음과 같이 정해진다.
 
-추적되는 inventory는 `src/contracts/qualification-c1.json`이다. campaign 정의(26 route, 세 platform), [feature disposition](../validation/language-feature-disposition.md)의 REQ 행, `native-routes.json`, fact query pack, 등록 사례(`src/testdata/native`)에서 `run-routes.ps1`과 같은 방식으로 만들며, `TestQualificationInventory`가 다시 만들어 bytes로 대조한다(`TSGK_WRITE_INVENTORY=1`이면 다시 쓴다).
+* P: `NO_ERROR`와 named 구조(`contains`)를 기대하는 step 중 오류 step이 아닌 것.
+* N: 오류 step.
+* R: `ERROR`와 named 구조를 기대하는 step, 또는 `contains`에 error node 말고 다른 node type도 적은 `NO_ERROR` 오류 step.
+* E: edit 하나 이상(incremental/fresh 비교).
+* Q: capture 기대값이 있는 query 사례.
+* W: 유효한 `sample`이 있고 step 0이 `NO_ERROR`를 기대하는(오류 step이 아닌) `requirement` 사례. W 판정은 step 0 결과이며, 기록된 step 0 tree의 `descendant_count`가 10000을 넘거나 tree가 없으면 BLOCKED다.
+
+error node를 등록하지 않은 route에서는 같은 `contains`가 N·R을 만들지 않는다. 사례는 `features`에 적힌 그 route의 REQ 행만 덮는다(N461 역할 id와 gap 설명 문구는 행이 아니다). query 사례는 자기 행의 Q만 덮는다.
+
+P 의무는 행의 `alternatives_status`가 `COMPLETE`이고, 행의 모든 대안 id가 그 행을 P로 덮으며 `alternatives`에 그 id를 적은 `requirement` 사례를 하나 이상 가질 때만 덮인다. 그때 결과는 P로 덮는 모든 사례 중 가장 나쁜 것이므로, 대안 사례 하나가 FAIL이면 행이 FAIL이다. 그 밖(`PENDING`이거나 사례 없는 대안이 남음)의 P는 `NOT_COVERED`다. 이때 P를 덮는 사례가 FAIL이어도 의무는 `NOT_COVERED`이고, 그 FAIL은 `registered_checks`로 요구 축을 FAIL로 만든다. 예시 하나로 계열을 완료하지 않는다는 [disposition 완료 경계](../validation/language-feature-disposition.md)를 기계화한 것이다.
+
+추적되는 inventory는 `src/contracts/qualification-c1.json`이다. 다음 입력으로 `run-routes.ps1`과 같은 방식으로 만든다. `TestQualificationInventory`가 다시 만들어 bytes로 대조한다(`TSGK_WRITE_INVENTORY=1`이면 다시 쓴다).
+
+* campaign 정의(26 route, 세 platform).
+* [feature disposition](../validation/language-feature-disposition.md)의 REQ 행.
+* production 대안 등록부 [`src/contracts/feature-alternatives.json`](../../src/contracts/feature-alternatives.json).
+* `native-routes.json`. route별 선택 필드 `error_nodes`도 여기서 온다.
+* fact query pack.
+* 등록 사례(`src/testdata/native`).
+
+등록부 `tsgk-feature-alternatives/r1`은 `routes.<route>.<row>`마다 `status`(`COMPLETE`·`PENDING`)와 `alternatives`를 가진다. 대안 하나는 `id`(`<row>.aNN`), `kind`(`production`·`fact`), `variant_of`(null 또는 다른 등록 대안 id), `fact`, `production`, `ref`(https URL)다. `TestFeatureAlternatives`가 다음을 검사한다.
+
+* disposition의 REQ 행이 모두 있고 다른 행은 없다.
+* id는 전체에서 유일하고 자기 행으로 시작한다.
+* `ref`는 https URL이다.
+* `variant_of`는 자기 자신이 아닌 등록 id다.
+* kind에 맞는 `production` 또는 `fact`가 비어 있지 않다.
+* `COMPLETE` 행은 대안이 하나 이상이다.
+
+처음 등록부는 모든 행이 `PENDING`이고 대안이 비어 있으므로 모든 P 의무가 `NOT_COVERED`다.
 
 | `operation` | host당 파일 | 파일당 | host당 합계 | record 수 | 출력 | wall | host |
 |---|---|---|---|---|---|---|---|
