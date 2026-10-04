@@ -408,31 +408,76 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, resp.Code)
 	}
 	out.ExecutionStatus = kit.StatusCompleted
+	blocked := ""
 	if len(c.Edits) > 0 {
-		out.Claims.IncrementalEquality, out.Claims.IncrementalRoute = ClaimPass, ClaimPass
-		for _, s := range out.Steps[1:] {
-			if s.Comparison == nil {
-				out.Claims.IncrementalEquality = ClaimBlocked
-			} else if !s.Comparison.Equal {
-				out.Claims.IncrementalEquality = ClaimFail
-				if out.Code == "" {
-					out.Code = fmt.Sprintf("INCREMENTAL_FRESH_MISMATCH_STEP_%d", s.Step)
-				}
-			}
-			if s.Route == nil || !s.Route.Proven {
-				out.Claims.IncrementalRoute = ClaimFail
-				if out.Code == "" {
-					out.Code = fmt.Sprintf("INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_%d", s.Step)
-				}
-			}
-		}
+		blocked = judgeIncremental(&out)
 	}
 	out.Expectations, out.Claims.Expectations = evaluate(c.Expect, checked.Steps)
 	if out.Claims.Expectations == ClaimFail && out.Code == "" {
 		out.Code = "EXPECTATION_FAILED"
 	}
-	foldAssessment(&out)
+	finishCase(&out, blocked)
 	return out
+}
+
+// finishCase folds a completed case's assessment; a blocked route code is the case code
+// only when no claim set a failure code.
+func finishCase(out *CaseResult, blocked string) {
+	foldAssessment(out)
+	if out.Code == "" {
+		out.Code = blocked
+	}
+}
+
+// judgeIncremental sets the incremental_equality and incremental_route claims of a
+// completed case with edits and the code of the first failing step; it returns the code
+// of the first blocked route step, which is the case code only when nothing fails.
+func judgeIncremental(out *CaseResult) string {
+	blocked := ""
+	out.Claims.IncrementalEquality, out.Claims.IncrementalRoute = ClaimPass, ClaimPass
+	for k, s := range out.Steps[1:] {
+		if s.Comparison == nil {
+			out.Claims.IncrementalEquality = ClaimBlocked
+		} else if !s.Comparison.Equal {
+			out.Claims.IncrementalEquality = ClaimFail
+			if out.Code == "" {
+				out.Code = fmt.Sprintf("INCREMENTAL_FRESH_MISMATCH_STEP_%d", s.Step)
+			}
+		}
+		switch stepRoute(out.Steps[k], s) {
+		case ClaimFail:
+			out.Claims.IncrementalRoute = ClaimFail
+			if out.Code == "" {
+				out.Code = fmt.Sprintf("INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_%d", s.Step)
+			}
+		case ClaimBlocked:
+			out.Claims.IncrementalRoute = worse(out.Claims.IncrementalRoute, ClaimBlocked)
+			if blocked == "" {
+				blocked = fmt.Sprintf("%s%d", routeUnobservablePrefix, s.Step)
+			}
+		}
+	}
+	return blocked
+}
+
+// routeUnobservablePrefix starts the code of a case whose first blocked route step is the
+// suffix: the step reused no node and its old or new tree has an error.
+const routeUnobservablePrefix = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_"
+
+// stepRoute judges the incremental route of edit step s, whose old tree is the
+// incremental tree of step old. A proven route passes. An instrumented edit with changes
+// whose parses reused no node at all is unobservable, BLOCKED, when the old or the new
+// tree has an error: tree-sitter reuses no node around an ERROR, so the missing reuse says
+// nothing about the kit. Every other unproven route fails.
+func stepRoute(old, s StepResult) string {
+	switch r := s.Route; {
+	case r != nil && r.Proven:
+		return ClaimPass
+	case r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0 &&
+		((old.Incremental != nil && old.Incremental.HasError) || (s.Incremental != nil && s.Incremental.HasError)):
+		return ClaimBlocked
+	}
+	return ClaimFail
 }
 
 // foldAssessment sets a completed case's assessment to the worst of its claims: any FAIL

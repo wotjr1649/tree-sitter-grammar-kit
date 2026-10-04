@@ -332,6 +332,76 @@ func TestReplayMutantControls(t *testing.T) {
 	replayFails(t, f, nil, "STATUS_ASSESSMENT_INCONSISTENT")
 }
 
+// fxNoReuse makes c2's edit step reuse no node, with an error in its step 0 tree when
+// errTree, and records the route claim, verdict and code as given (with the matching
+// summary and run verdict).
+func fxNoReuse(errTree bool, route, assess, code string) *fxNative {
+	f := newFxNative()
+	c := f.cases[1]
+	steps := c["steps"].([]any)
+	steps[0].(map[string]any)["incremental"] = fxTreeOut("beta", errTree)
+	r := steps[1].(map[string]any)["route"].(map[string]any)
+	r["reused_nodes"], r["proven"] = 0, false
+	c["claims"].(map[string]string)["incremental_route"] = route
+	c["assessment"], c["code"] = assess, code
+	sum := f.top["summary"].(map[string]any)
+	sum["assessments"] = map[string]int{"PASS": 1, assess: 1}
+	if code != "" {
+		sum["codes"] = map[string]int{code: 1}
+	}
+	if errTree {
+		sum["has_error"] = 1
+	}
+	f.top["assessment"] = assess
+	return f
+}
+
+// An edit step that reuses no node around an error tree is unobservable: the reducer
+// recomputes incremental_route BLOCKED as the native run does, so a BLOCKED record replays
+// valid to BLOCKED and a FAIL record of the same observation is a claim mismatch. On a
+// clean tree the same observation stays FAIL, and a BLOCKED record of it is a mismatch.
+func TestReplayRouteOnErrorTree(t *testing.T) {
+	const code = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"
+	for _, tc := range []struct {
+		name    string
+		errTree bool
+		route   string
+		assess  string
+		code    string
+	}{
+		{"error-tree-blocked", true, "BLOCKED", AssessBlocked, code},
+		{"clean-tree-fail", false, "FAIL", AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, reg := fxNoReuse(tc.errTree, tc.route, tc.assess, tc.code).write(t, func(root string, reg map[string]any) {
+				reg["subject"].(map[string]any)["assessment"] = tc.assess
+			})
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			g := gateOf(r, "incremental-route")
+			if err != nil || !r.EvidenceValid || r.Assessment != tc.assess || r.Recomputed.Assessment != tc.assess || g.Failed != 0 {
+				t.Fatalf("replay %v: %s valid %v recomputed %+v findings %v gate %+v", err, r.Assessment, r.EvidenceValid, r.Recomputed, r.Findings, g)
+			}
+		})
+	}
+	// the recorded claim disagrees with the recomputed one
+	for name, f := range map[string]*fxNative{
+		"error-tree-recorded-fail":    fxNoReuse(true, "FAIL", AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"),
+		"clean-tree-recorded-blocked": fxNoReuse(false, "BLOCKED", AssessBlocked, code),
+	} {
+		t.Run(name, func(t *testing.T) {
+			replayFails(t, f, func(root string, reg map[string]any) {
+				reg["subject"].(map[string]any)["assessment"] = f.top["assessment"]
+			}, "CLAIM_MISMATCH")
+		})
+	}
+	// a fresh parse that reused nodes is a FAIL even around an error tree
+	f := fxNoReuse(true, "BLOCKED", AssessBlocked, code)
+	f.cases[1]["steps"].([]any)[1].(map[string]any)["route"].(map[string]any)["fresh_reused_nodes"] = 1
+	replayFails(t, f, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessBlocked
+	}, "CLAIM_MISMATCH")
+}
+
 // S07-A04/A12: an unknown reducer, schema or operation is unsupported, never a replayed
 // success; a gate the reducer cannot recompute stays recorded and unresolved.
 func TestReplayUnsupported(t *testing.T) {

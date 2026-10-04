@@ -312,10 +312,16 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 		}
 		rg := x.gate("incremental-route")
-		for _, s := range c.Steps[1:] {
-			proven := s.Route != nil && s.Route.EditHasChanges && s.Route.ReusedNodes > 0 && s.Route.FreshReusedNodes == 0
-			rg.check(s.Route == nil || s.Route.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
-			if !proven {
+		for k, s := range c.Steps[1:] {
+			r := s.Route
+			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
+			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
+			switch {
+			case proven:
+			case r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0 && (c.Steps[k].Incremental.HasError || s.Incremental.HasError):
+				// no node reused around an error tree: the route is unobservable, not failed
+				ir = worseClaim(ir, claimBlocked)
+			default:
 				ir = claimFail
 			}
 		}

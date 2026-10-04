@@ -1413,3 +1413,70 @@ func TestQualifySampleW(t *testing.T) {
 		})
 	}
 }
+
+// qfxRouteNoReuse makes fxa's E case (c2) reuse no node at its edit step, with an error in
+// its step 0 tree when errTree, and records the route claim with its verdict and code.
+func qfxRouteNoReuse(errTree bool, route, code string) func(string, []map[string]any) {
+	return func(s string, recs []map[string]any) {
+		if s != "s06-fxa" {
+			return
+		}
+		c := recs[1]
+		steps := c["steps"].([]any)
+		if errTree {
+			tr := steps[0].(map[string]any)["incremental"].(map[string]any)
+			nodes := slices.Clone(tr["tree"].(map[string]any)["nodes"].([]TreeNode))
+			nodes[0].HasError = true
+			tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["has_error"] = nodes, TreeDigest(nodes), true
+		}
+		r := steps[1].(map[string]any)["route"].(map[string]any)
+		r["reused_nodes"], r["proven"] = 0, false
+		c["claims"].(map[string]string)["incremental_route"] = route
+		c["assessment"], c["code"] = route, code
+	}
+}
+
+// #76 axis separation: a route that could not be observed because the grammar left an
+// error in the tree is not a kit failure. The recomputed BLOCKED route keeps the kit axis
+// PASS (no KIT_CLAIM_FAILED) and makes the E obligation BLOCKED, so the cell is INCOMPLETE
+// and never PASS. A route that is not proven on clean trees still fails the kit axis, and
+// an error-tree route recorded as FAIL is a claim mismatch.
+func TestQualifyRouteOnErrorTree(t *testing.T) {
+	f := newQfx(t)
+	r := f.run(t, f.all(t, qfxAll(qfxMut{record: qfxRouteNoReuse(true, claimBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1")})))
+	for _, p := range qfxPlatforms {
+		c := cellOf(r, "fxa", p.ID)
+		ob := obligation(c, "fxa-B01", "E")
+		if c.Mechanism != AssessPass || slices.Contains(setCodes(c), "KIT_CLAIM_FAILED") || ob.Result != claimBlocked ||
+			c.Requirement != CellIncomplete || c.Status != CellIncomplete || c.Comparison != AssessPass {
+			t.Fatalf("%s blocked route: mechanism %s requirement %s status %s E %+v codes %v gates %+v", p.ID, c.Mechanism, c.Requirement, c.Status, ob, setCodes(c), c.Set.Gates)
+		}
+	}
+	if r.MechanismGate != AssessPass || r.Assessment == AssessPass || r.Assessment == AssessFail {
+		t.Fatalf("blocked route: gate %s assessment %s %v", r.MechanismGate, r.Assessment, r.Findings)
+	}
+	for name, mut := range map[string]struct {
+		rec  func(string, []map[string]any)
+		code string
+	}{
+		"clean-tree-fail":          {qfxRouteNoReuse(false, claimFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"), "KIT_CLAIM_FAILED"},
+		"error-tree-recorded-fail": {qfxRouteNoReuse(true, claimFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"), ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newQfx(t)
+			r := f.run(t, f.all(t, qfxAll(qfxMut{record: mut.rec})))
+			c := cellOf(r, "fxa", "windows-amd64")
+			if c.Mechanism != AssessFail || c.Status != CellFail || r.MechanismGate != AssessFail || (mut.code != "" && !slices.Contains(setCodes(c), mut.code)) {
+				t.Fatalf("%s: mechanism %s status %s gate %s codes %v", name, c.Mechanism, c.Status, r.MechanismGate, setCodes(c))
+			}
+			if name == "error-tree-recorded-fail" {
+				g := slices.IndexFunc(c.Set.Gates, func(g ReplayGate) bool { return g.ID == "incremental-route" })
+				if g < 0 || c.Set.Gates[g].Code != "CLAIM_MISMATCH" {
+					t.Fatalf("recorded FAIL over a recomputed BLOCKED not caught: %+v", c.Set.Gates)
+				}
+			} else if ob := obligation(c, "fxa-B01", "E"); ob.Result != claimFail {
+				t.Fatalf("clean-tree route FAIL: E %+v", ob)
+			}
+		})
+	}
+}

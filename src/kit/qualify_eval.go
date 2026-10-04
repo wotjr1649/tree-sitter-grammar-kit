@@ -679,6 +679,11 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		}
 	}
 	for _, k := range sortedKeys(kit) {
+		// a BLOCKED route is a route the grammar's error tree left unobservable (recomputed
+		// by the incremental-route gate): the E obligation is BLOCKED, the kit has not failed
+		if k == "incremental_route" && kit[k] == claimBlocked {
+			continue
+		}
 		if completed && (kit[k] == claimFail || kit[k] == claimBlocked) {
 			add("KIT_CLAIM_FAILED", path, fmt.Sprintf("사례 %s의 %s가 %s다", qc.ID, k, kit[k]))
 		}
