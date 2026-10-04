@@ -3,6 +3,7 @@ package foundation
 import (
 	"bytes"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"net/url"
 	"os"
@@ -45,11 +46,11 @@ type featureAlternatives struct {
 
 var altSuffix = regexp.MustCompile(`^\.a[0-9]{2,}$`)
 
+// decodeAlternatives strictly decodes the registry with encoding/json/v2: unknown members,
+// duplicate member names (case-sensitive) and data after the one JSON value are errors.
 func decodeAlternatives(data []byte) (featureAlternatives, error) {
 	var a featureAlternatives
-	d := json.NewDecoder(bytes.NewReader(data))
-	d.DisallowUnknownFields()
-	err := d.Decode(&a)
+	err := jsonv2.Unmarshal(data, &a, jsonv2.RejectUnknownMembers(true))
 	return a, err
 }
 
@@ -137,8 +138,19 @@ func TestFeatureAlternatives(t *testing.T) {
 	if err := checkAlternatives(reg, reqs); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := decodeAlternatives(bytes.Replace(data, []byte(`"status"`), []byte(`"covered": true, "status"`), 1)); err == nil {
-		t.Fatal("unknown registry field accepted")
+	for name, bad := range map[string][]byte{
+		"unknown-field": bytes.Replace(data, []byte(`"status"`), []byte(`"covered": true, "status"`), 1),
+		"duplicate-row": bytes.Replace(data, []byte(`"bash-B01": {`), []byte(`"bash-B01": {"status": "COMPLETE", "alternatives": []}, "bash-B01": {`), 1),
+		"duplicate-key": bytes.Replace(data, []byte(`"status": "PENDING"`), []byte(`"status": "COMPLETE", "status": "PENDING"`), 1),
+		"folded-key":    bytes.Replace(data, []byte(`"status": "PENDING"`), []byte(`"Status": "PENDING"`), 1),
+		"trailing-data": append(slices.Clone(data), []byte("{}\n")...),
+	} {
+		if bytes.Equal(bad, data) {
+			t.Fatalf("%s: mutation did not apply", name)
+		}
+		if _, err := decodeAlternatives(bad); err == nil {
+			t.Fatalf("%s: registry accepted", name)
+		}
 	}
 	// base for the mutations: one row COMPLETE with a production and a fact variant of it
 	base := func() featureAlternatives {
@@ -218,28 +230,60 @@ type sampleRef struct {
 	sample   kit.QualSample
 }
 
-// checkSampleNotices requires a NOTICE entry for every sample: a "## <repository>@<commit>"
-// heading whose section names the sample's SPDX license id.
-func checkSampleNotices(samples []sampleRef, notice string) error {
-	sections := map[string]string{}
+// noticeEntry is one NOTICE.md entry: "## <repository>@<commit>", then the exact lines
+// "Path: <path>" and "License: <SPDX id>" (the first two non-empty lines), then the
+// upstream notice text.
+type noticeEntry struct{ head, path, license, text string }
+
+func parseNotice(notice string) ([]noticeEntry, error) {
+	var out []noticeEntry
 	for _, s := range strings.Split("\n"+notice, "\n## ")[1:] {
 		head, body, _ := strings.Cut(s, "\n")
-		sections[strings.TrimSpace(head)] = body
+		var lines []string
+		for _, l := range strings.Split(body, "\n") {
+			if strings.TrimSpace(l) != "" {
+				lines = append(lines, strings.TrimRight(l, " \t"))
+			}
+		}
+		e := noticeEntry{head: strings.TrimSpace(head)}
+		if len(lines) < 3 || !strings.HasPrefix(lines[0], "Path: ") || !strings.HasPrefix(lines[1], "License: ") {
+			return nil, fmt.Errorf("NOTICE entry %q: want Path:, License: and the notice text", e.head)
+		}
+		e.path, e.license, e.text = strings.TrimPrefix(lines[0], "Path: "), strings.TrimPrefix(lines[1], "License: "), strings.Join(lines[2:], "\n")
+		for _, x := range out {
+			if x.head == e.head && x.path == e.path {
+				return nil, fmt.Errorf("NOTICE entry %q %s listed twice", e.head, e.path)
+			}
+		}
+		out = append(out, e)
+	}
+	return out, nil
+}
+
+// checkSampleNotices requires for every sample the NOTICE entry of its repository, commit
+// and path whose License line is exactly the sample's SPDX id.
+func checkSampleNotices(samples []sampleRef, notice string) error {
+	entries, err := parseNotice(notice)
+	if err != nil {
+		return err
 	}
 	for _, s := range samples {
-		body, ok := sections[s.sample.Repository+"@"+s.sample.Commit]
-		if !ok {
-			return fmt.Errorf("%s %s: no NOTICE entry for %s@%s", s.file, s.id, s.sample.Repository, s.sample.Commit)
+		i := slices.IndexFunc(entries, func(e noticeEntry) bool {
+			return e.head == s.sample.Repository+"@"+s.sample.Commit && e.path == s.sample.Path
+		})
+		if i < 0 {
+			return fmt.Errorf("%s %s: no NOTICE entry for %s@%s %s", s.file, s.id, s.sample.Repository, s.sample.Commit, s.sample.Path)
 		}
-		if !strings.Contains(body, s.sample.License) {
-			return fmt.Errorf("%s %s: NOTICE entry without license %s", s.file, s.id, s.sample.License)
+		if entries[i].license != s.sample.License {
+			return fmt.Errorf("%s %s: NOTICE entry license %q is not %s", s.file, s.id, entries[i].license, s.sample.License)
 		}
 	}
 	return nil
 }
 
-// TestSampleNotices checks every case that registers a W sample has its NOTICE entry, with
-// controls for a missing entry and a missing license.
+// TestSampleNotices checks every case that registers a W sample has its exact NOTICE entry,
+// with controls for a missing entry, another commit or path, a substring license match and
+// a malformed entry.
 func TestSampleNotices(t *testing.T) {
 	root := repository(t)
 	var samples []sampleRef
@@ -265,22 +309,37 @@ func TestSampleNotices(t *testing.T) {
 	if err := checkSampleNotices(samples, notice); err != nil {
 		t.Fatal(err)
 	}
-	s := sampleRef{file: "routes/x.json", id: "x-sample", sample: kit.QualSample{Repository: "owner/name", Commit: strings.Repeat("a", 40), Path: "src/a.txt", License: "MIT"}}
+	commit := strings.Repeat("a", 40)
+	s := sampleRef{file: "routes/x.json", id: "x-sample", sample: kit.QualSample{Repository: "owner/name", Commit: commit, Path: "src/a.txt", License: "MIT"}}
 	if err := checkSampleNotices([]sampleRef{s}, notice); err == nil || !strings.Contains(err.Error(), "no NOTICE entry") {
 		t.Fatalf("sample without NOTICE entry: %v", err)
 	}
-	entry := notice + "\n## owner/name@" + strings.Repeat("a", 40) + "\n\n`src/a.txt`, MIT\n\nCopyright (c) Owner\n"
-	if err := checkSampleNotices([]sampleRef{s}, entry); err != nil {
+	entry := func(license, text string) string {
+		return notice + "\n## owner/name@" + commit + "\n\nPath: src/a.txt\nLicense: " + license + "\n\n" + text + "\n"
+	}
+	if err := checkSampleNotices([]sampleRef{s}, entry("MIT", "Copyright (c) Owner\n\nPermission is hereby granted, free of charge")); err != nil {
 		t.Fatalf("control: %v", err)
 	}
-	other := s
-	other.sample.Commit = strings.Repeat("b", 40)
-	if err := checkSampleNotices([]sampleRef{other}, entry); err == nil {
-		t.Fatal("entry of another commit accepted")
-	}
-	other = s
-	other.sample.License = "Apache-2.0"
-	if err := checkSampleNotices([]sampleRef{other}, entry); err == nil || !strings.Contains(err.Error(), "without license") {
-		t.Fatalf("entry without the license: %v", err)
+	for name, tc := range map[string]struct {
+		mut    func(*sampleRef)
+		notice string
+		want   string
+	}{
+		"other-commit": {func(r *sampleRef) { r.sample.Commit = strings.Repeat("b", 40) }, entry("MIT", "MIT License"), "no NOTICE entry"},
+		"other-path":   {func(r *sampleRef) { r.sample.Path = "src/b.txt" }, entry("MIT", "MIT License"), "no NOTICE entry"},
+		// only a BSD notice text contains "MIT" (as in "LIMITED"): never a MIT entry
+		"bsd-text-mit": {nil, entry("BSD-3-Clause", "Copyright (c) Owner\nTHE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY, INCLUDING BUT NOT LIMITED TO MIT"), "is not MIT"},
+		"license-word": {nil, entry("MIT-0", "MIT No Attribution"), "is not MIT"},
+		"no-path":      {nil, notice + "\n## owner/name@" + commit + "\nLicense: MIT\nMIT License\nCopyright\n", "want Path:"},
+		"no-text":      {nil, notice + "\n## owner/name@" + commit + "\nPath: src/a.txt\nLicense: MIT\n", "want Path:"},
+		"twice":        {nil, entry("MIT", "MIT License") + "\n## owner/name@" + commit + "\nPath: src/a.txt\nLicense: MIT\nMIT License\n", "listed twice"},
+	} {
+		r := s
+		if tc.mut != nil {
+			tc.mut(&r)
+		}
+		if err := checkSampleNotices([]sampleRef{r}, tc.notice); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatalf("%s: want %q, got %v", name, tc.want, err)
+		}
 	}
 }

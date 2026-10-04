@@ -11,7 +11,7 @@
 - coverage 규칙이 `tsgk-coverage-rule/r2`, inventory가 `tsgk-qualification-inventory/r2`, 결과가 `tsgk-qualification-result/r3`이 됐다(#76).
   - 행의 P 의무는 production 대안 등록부 `src/contracts/feature-alternatives.json`에서 그 행이 `COMPLETE`이고, 모든 대안을 그 대안을 적은(`alternatives`) P 사례가 덮을 때만 덮인다. 그 밖은 `NOT_COVERED`다. 결과의 P 의무에 `alternatives`·`alternatives_uncovered`를 더한다.
   - 등록부는 178개 REQ 행 전부를 `PENDING`, 대안 없음으로 시작한다. 따라서 지금은 모든 P 의무가 `NOT_COVERED`이고 그 칸은 PASS가 되지 않는다. 정책이 처음부터 요구한 경계를 반영한 것이다.
-  - route별 `error_nodes`(`native-routes.json`, html은 `erroneous_end_tag`)를 등록했다. 이 node를 `contains`에 적은 `NO_ERROR` step은 N, 다른 구조 node가 함께 있으면 R을 만든다. P와 W는 만들지 않는다.
+  - route별 `error_nodes`(`native-routes.json`, html은 `erroneous_end_tag`)를 등록했다. 이 node를 `contains`에 적은 `NO_ERROR` step은 N, 다른 구조 node가 함께 있으면 R을 만든다. P와 W는 만들지 않는다. 이런 route에서 P·W step은 기록된 full tree에 error node가 없어야 한다(`has_error`는 이 node를 보지 않는다). 있으면 FAIL이고, full tree가 아니면 BLOCKED다(#81).
   - W 생산자를 등록했다. `sample`(repository·commit·path·SPDX license·sha256·bytes)이 있는 요구 사례가 대상이다. license는 MIT·Apache-2.0·BSD-2/3-Clause·PostgreSQL이다. 크기는 65536 bytes 이하이고 step 0 tree는 10000 node 이하다. step 0이 `NO_ERROR`를 기대하는 사례가 W를 덮는다. sample마다 `src/testdata/native/samples/NOTICE.md`에 고지 항목이 있어야 한다.
 
 ## v0.1.0 — 2026-10-04

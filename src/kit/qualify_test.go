@@ -1130,6 +1130,76 @@ func TestQualifyAlternatives(t *testing.T) {
 	if ob = obligation(c, "fxa-B01", "P"); ob.Result != claimFail || c.Status != CellFail || c.Mechanism != AssessPass || *ob.AlternativesUncovered != 0 {
 		t.Fatalf("failing alternative case: %+v %s %s", ob, c.Status, c.Mechanism)
 	}
+
+	// a PENDING row with a failing P case: the obligation stays NOT_COVERED and the
+	// failure reaches the requirement axis through the registered checks
+	f = covered()
+	f.inv.Routes[0].Requirements[0].AlternativesStatus = AlternativesPending
+	r = f.run(t, f.all(t, muts))
+	c = cellOf(r, "fxa", "windows-amd64")
+	if ob = obligation(c, "fxa-B01", "P"); ob.Result != ObligationNotCovered || c.Counts.Fail != 0 || c.Checks != claimFail ||
+		!slices.Contains(c.CheckFailures, "c1=FAIL") || c.Requirement != AssessFail || c.Status != CellFail {
+		t.Fatalf("pending row with a failing P case: %+v %+v %s %v %s %s", ob, c.Counts, c.Checks, c.CheckFailures, c.Requirement, c.Status)
+	}
+}
+
+// qfxErrorNode adds a named node of type typ under the word node of a recorded step's
+// incremental tree (has_error stays false: tree-sitter does not flag named error nodes).
+func qfxErrorNode(set, typ string, step int) func(string, []map[string]any) {
+	return func(s string, recs []map[string]any) {
+		if s != set {
+			return
+		}
+		tr := recs[0]["steps"].([]any)[step].(map[string]any)["incremental"].(map[string]any)
+		nodes := tr["tree"].(map[string]any)["nodes"].([]TreeNode)
+		nodes = append(slices.Clone(nodes), TreeNode{Parent: 1, Type: typ, Named: true, EndByte: nodes[1].EndByte, EndPoint: nodes[1].EndPoint})
+		tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["descendant_count"] = nodes, TreeDigest(nodes), len(nodes)
+	}
+}
+
+func qfxAll(m qfxMut) map[string]qfxMut {
+	out := map[string]qfxMut{}
+	for _, p := range qfxPlatforms {
+		out[p.ID] = m
+	}
+	return out
+}
+
+// Review #81: a P step on a route with registered error node types passes only when its
+// recorded tree holds none of them (has_error does not see them). A registered error node
+// in the tree fails P; a route without the registration keeps P.
+func TestQualifyErrorNodesInTree(t *testing.T) {
+	covered := func(errNodes []string) *qfx {
+		f := newQfx(t)
+		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+		f.inv.Routes[0].ErrorNodes = errNodes
+		return f
+	}
+	f := covered([]string{"bad"})
+	r := f.run(t, f.all(t, qfxAll(qfxMut{record: qfxErrorNode("s06-fxa", "bad", 0)})))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if ob := obligation(c, "fxa-B01", "P"); ob.Result != claimFail || c.Mechanism != AssessPass || c.Checks != claimPass || c.Status != CellFail {
+		t.Fatalf("P with a registered error node in the tree: %+v %s %s %s %v", ob, c.Mechanism, c.Checks, c.Status, setCodes(c))
+	}
+	// the same tree on a route that registers another type, or none: P passes
+	for _, nodes := range [][]string{{"other"}, nil} {
+		f = covered(nodes)
+		r = f.run(t, f.all(t, qfxAll(qfxMut{record: qfxErrorNode("s06-fxa", "bad", 0)})))
+		if ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "P"); ob.Result != claimPass {
+			t.Fatalf("error nodes %v: %+v", nodes, ob)
+		}
+	}
+	// a P step without a full tree on an error-node route is BLOCKED, never PASS
+	f = covered([]string{"bad"})
+	record := func(s string, recs []map[string]any) {
+		if s == "s06-fxa" {
+			recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+		}
+	}
+	r = f.run(t, f.all(t, qfxAll(qfxMut{record: record})))
+	if ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "P"); ob.Result != claimBlocked {
+		t.Fatalf("P without a full tree: %+v", ob)
+	}
 }
 
 // #76 inventory r2 guards for alternatives: a row's status is COMPLETE (with at least one
@@ -1270,6 +1340,46 @@ func TestQualifySampleW(t *testing.T) {
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: big}}))
 	if ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "W"); ob.Result != claimBlocked || cellOf(r, "fxa", "windows-amd64").Status == CellPass {
 		t.Fatalf("over the node bound: %+v", ob)
+	}
+	// Review #81: on an error-node route the step 0 tree must hold no registered error
+	// node (FAIL when it does) and must be a full tree to check (BLOCKED otherwise). The
+	// sample step names no structure, so only this check can tell the cases apart.
+	bare := func() *qfx {
+		f := withW()
+		f.inv.Routes[0].ErrorNodes = []string{"bad"}
+		f.inv.Routes[0].Requirements[0] = QualRequirement{Row: "fxa-B01", Kinds: []string{"E", "Q", "W"}, AlternativesStatus: AlternativesPending}
+		c := &f.inv.Routes[0].Workload.Cases[0]
+		c.Expect[0].Contains, c.Covers["fxa-B01"], c.Alternatives = []string{}, []string{"W"}, nil
+		return f
+	}
+	noContains := func(s string, recs []map[string]any) {
+		if s == "s06-fxa" {
+			recs[0]["expectations"].([]any)[0].(map[string]any)["contains"] = []string{}
+		}
+	}
+	for name, tc := range map[string]struct {
+		mut  func(string, []map[string]any)
+		want string
+	}{
+		"clean":      {nil, claimPass},
+		"error-node": {qfxErrorNode("s06-fxa", "bad", 0), claimFail},
+		"no-full-tree": {func(s string, recs []map[string]any) {
+			if s == "s06-fxa" {
+				recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+			}
+		}, claimBlocked},
+	} {
+		f := bare()
+		mut := func(s string, recs []map[string]any) {
+			noContains(s, recs)
+			if tc.mut != nil {
+				tc.mut(s, recs)
+			}
+		}
+		r := f.run(t, f.all(t, qfxAll(qfxMut{record: mut})))
+		if ob := obligation(cellOf(r, "fxa", "windows-amd64"), "fxa-B01", "W"); ob.Result != tc.want {
+			t.Fatalf("%s: W %+v, want %s", name, ob, tc.want)
+		}
 	}
 	// a sample case whose step 0 expects an error does not cover W
 	f = withW()

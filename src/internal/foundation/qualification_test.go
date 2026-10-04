@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -131,8 +132,10 @@ func buildInventory(t *testing.T, root string) []byte {
 	}
 	decode("src/contracts/native-large-fixtures.json", &large)
 	reqs := requirementRows(t, string(read("docs/validation/language-feature-disposition.md")))
-	var alternatives featureAlternatives
-	decode(alternativesPath, &alternatives)
+	alternatives, err := decodeAlternatives(read(alternativesPath)) // strict: no duplicate keys or trailing data
+	if err != nil {
+		t.Fatalf("%s: %v", alternativesPath, err)
+	}
 	var mapping struct {
 		Revision string
 		Routes   []struct {
@@ -395,6 +398,9 @@ func buildInventory(t *testing.T, root string) []byte {
 			svc = kit.QualWorkload{Set: "s06-csharp-svc", Profile: "s06-csharp-svc", Route: "csharp", Operation: "native-query", Output: "tree", Symbol: symbol,
 				Format: format, Grammar: grammar, Queries: packQueries("csharp", ""), API: true}
 			for _, sc := range cs {
+				if err := supportCaseFields(sc.id, sc.alternatives, sc.sample); err != nil {
+					t.Fatal(err) // never dropped silently
+				}
 				c := convert(sc.id, sc.src, sc.edits, sc.expect)
 				c.Role = "support"
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode
@@ -442,6 +448,24 @@ func buildInventory(t *testing.T, root string) []byte {
 		t.Fatal(err)
 	}
 	return append(data, '\n')
+}
+
+// supportCaseFields rejects requirement-only fields on a support case source (the n461 SVC
+// cases): a support case covers no row, so it can list no alternative and carry no sample.
+func supportCaseFields(id string, alternatives []string, sample *kit.QualSample) error {
+	if alternatives != nil || sample != nil {
+		return fmt.Errorf("%s: support case with alternatives or sample", id)
+	}
+	return nil
+}
+
+func TestSupportCaseFields(t *testing.T) {
+	if err := supportCaseFields("s", nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if supportCaseFields("s", []string{}, nil) == nil || supportCaseFields("s", nil, &kit.QualSample{}) == nil {
+		t.Fatal("support case with requirement-only fields accepted")
+	}
 }
 
 // requirementRows returns route → row → required kinds for REQ rows, with "#order" keeping

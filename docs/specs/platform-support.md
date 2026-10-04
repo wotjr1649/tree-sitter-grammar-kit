@@ -75,4 +75,4 @@ hard memory를 요구한 요청은 hard backend가 없으면 실행 전에 `MEMO
 
 ## S08 qualification
 
-PR·push CI의 `qualification (ubuntu-24.04)` job이 같은 run·attempt의 세 `native routes` host 근거(실행 identity, S06 기록 set, workload profile)를 받아 `tsgk qualify`로 78칸과 추가 역할 행을 만든다. 집계 자체는 어느 OS에서나 같은 offline 계산이며 native 실행은 각 host job이 한다. job은 `mechanism_gate`(완결성, cohort·자격, 칸별 kit 축과 세 host 의미 비교, 실행된 추가 역할 행)로 실패를 정하고, 문법 요구 FAIL·사례 없음은 결과 행렬에만 남는다(지원 claim `BLOCKED`). 칸·축·비교 규칙은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다. windows 전용 NET461 대용량 workload(`n461-large`)는 Linux·macOS 행이 `NOT_APPLICABLE`이다.
+PR·push CI의 `qualification (ubuntu-24.04)` job이 같은 run·attempt의 세 `native routes` host 근거(실행 identity, S06 기록 set, workload profile)를 받아 `tsgk qualify`로 78칸과 추가 역할 행을 만든다. 집계 자체는 어느 OS에서나 같은 offline 계산이며 native 실행은 각 host job이 한다. job은 `mechanism_gate`(완결성, cohort·자격, 칸별 kit 축과 세 host 의미 비교, 실행된 추가 역할 행)로 실패를 정하고, 문법 요구 FAIL과 미충족 의무(`NOT_COVERED`: 사례 없음, production 대안 미완·`PENDING` 행)는 결과 행렬에만 남는다(지원 claim `BLOCKED`). 칸·축·비교 규칙은 [identity/evidence](identity-and-evidence.md) `S08 구현`이 소유한다. windows 전용 NET461 대용량 workload(`n461-large`)는 Linux·macOS 행이 `NOT_APPLICABLE`이다.

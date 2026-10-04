@@ -21,7 +21,9 @@ const (
 	// an error step, N an error step, R an error step that also names a structure node
 	// other than the error node types, E at least one edit (incremental/fresh comparison),
 	// Q a query case with registered capture expectations, W a case with a registered
-	// public sample whose step 0 expects NO_ERROR without an error node type. A row's P
+	// public sample whose step 0 expects NO_ERROR without an error node type. On a route
+	// with error node types a P or W step's result also needs its recorded full tree to
+	// hold none of them (FAIL when it does, BLOCKED without a full tree). A row's P
 	// obligation is covered only when its production alternatives are COMPLETE and every
 	// alternative is listed by a case that covers the row with P.
 	CoverageRule = "tsgk-coverage-rule/r2"
@@ -1002,7 +1004,7 @@ func explainQualification(res QualificationResult, platforms []QualPlatform) []s
 	out := []string{
 		fmt.Sprintf("필수 칸 %d개: PASS %d, FAIL %d, INCOMPLETE %d, MISSING %d. 완결성 %s.", t.Cells, t.Status[CellPass], t.Status[CellFail], t.Status[CellIncomplete], t.Status[CellMissing], res.Completeness),
 		fmt.Sprintf("kit 축 PASS %d칸, 요구 축 PASS %d칸, 세 platform 비교 FAIL %d칸.", t.MechanismPass, t.RequirementPass, t.ComparisonFail),
-		fmt.Sprintf("필수 의무 %d개: PASS %d, FAIL %d, BLOCKED %d, 사례 없음 %d.", t.Obligations.Obligations, t.Obligations.Pass, t.Obligations.Fail, t.Obligations.Blocked, t.Obligations.NotCovered),
+		fmt.Sprintf("필수 의무 %d개: PASS %d, FAIL %d, BLOCKED %d, 미충족(사례 없음, production 대안 미완·PENDING 행) %d.", t.Obligations.Obligations, t.Obligations.Pass, t.Obligations.Fail, t.Obligations.Blocked, t.Obligations.NotCovered),
 		fmt.Sprintf("kit 검사 gate %s(완결성·cohort·자격·칸별 kit 축·비교·실행된 추가 역할 행의 kit 축).", res.MechanismGate),
 	}
 	if res.SupportClaim != "SUPPORTED" {

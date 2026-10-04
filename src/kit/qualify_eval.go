@@ -749,12 +749,31 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	}
 	kinds := map[string]string{}
 	if completed {
-		for _, k := range []string{"P", "N", "R"} {
+		// a P or W step also needs a recorded tree without the route's error node types
+		// (has_error does not see them): FAIL when one is there, BLOCKED when the step has
+		// no full tree to check
+		clean := func(k string) string {
+			out := ""
+			for i, e := range qc.Expect {
+				if !stepCovers(e, k, errNodes) {
+					continue
+				}
+				v := worseClaim(stepRes[i], errorNodesAbsent(c, e.Step, errNodes))
+				if out == "" {
+					out = v
+				} else {
+					out = worseClaim(out, v)
+				}
+			}
+			return out
+		}
+		kinds["P"] = clean("P")
+		for _, k := range []string{"N", "R"} {
 			kinds[k] = fold(func(e StepExpectation) bool { return stepCovers(e, k, errNodes) })
 		}
 		if qc.Sample != nil {
 			// a registered sample: its step 0 parse, within the sample node bound
-			kinds["W"] = fold(func(e StepExpectation) bool { return stepCovers(e, "W", errNodes) })
+			kinds["W"] = clean("W")
 			if t := firstTree(extra); kinds["W"] != "" && (t == nil || t.DescendantCount > SampleMaxNodes) {
 				kinds["W"] = worseClaim(kinds["W"], claimBlocked) // over the bound it is not a W sample
 			}
@@ -844,6 +863,28 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	sum, _ := json.Marshal(map[string]any{"status": c.ExecutionStatus, "assessment": c.Assessment, "code": c.Code, "claims": c.Claims, "oracle": c.Oracle,
 		"expectations": stepRes, "query_expectations": qe, "query_detail": qeDetail, "steps": steps})
 	s.summaries[qc.ID] = string(sum)
+}
+
+// errorNodesAbsent checks one step's recorded incremental tree for the route's error node
+// types: PASS without any (or when the route registers none), FAIL when one is there and
+// BLOCKED when the step has no full tree to check (an absent step or a summary form).
+func errorNodesAbsent(c *rcCase, step int, errNodes []string) string {
+	if len(errNodes) == 0 {
+		return claimPass
+	}
+	if step >= len(c.Steps) || c.Steps[step].Incremental == nil {
+		return claimBlocked
+	}
+	t := c.Steps[step].Incremental
+	if t.Form != "full" || t.Tree == nil {
+		return claimBlocked
+	}
+	for _, n := range t.Tree.Nodes {
+		if slices.Contains(errNodes, n.Type) {
+			return claimFail
+		}
+	}
+	return claimPass
 }
 
 // firstTree is the recorded step 0 incremental tree, nil when absent.
