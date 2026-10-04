@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,9 +17,10 @@ import (
 )
 
 // The qualification inventory (src/contracts/qualification-c1.json) is generated from the
-// adopted registries: campaign routes and platforms, REQ rows of the feature disposition,
-// the native route registry and the registered cases, built exactly as
-// src/dev/s05-native/run-routes.ps1 builds each oracle workload. Regenerate with
+// adopted registries: campaign routes and platforms, REQ rows of the feature disposition
+// with their production alternatives (src/contracts/feature-alternatives.json), the native
+// route registry (with each route's error node types) and the registered cases, built
+// exactly as src/dev/s05-native/run-routes.ps1 builds each oracle workload. Regenerate with
 // TSGK_WRITE_INVENTORY=1 go test ./src/internal/foundation -run TestQualificationInventory.
 const inventoryPath = "src/contracts/qualification-c1.json"
 
@@ -28,8 +30,11 @@ type caseFile struct {
 		ID       string   `json:"id"`
 		Kind     string   `json:"kind"`
 		Features []string `json:"features"`
-		Source   string   `json:"source_utf8"`
-		Edits    []struct {
+		// the production alternatives the case exercises and its W sample registration
+		Alternatives []string        `json:"alternatives"`
+		Sample       *kit.QualSample `json:"sample"`
+		Source       string          `json:"source_utf8"`
+		Edits        []struct {
 			Find    string `json:"find"`
 			Replace string `json:"replace"`
 		} `json:"edits"`
@@ -84,6 +89,7 @@ func buildInventory(t *testing.T, root string) []byte {
 	var routes struct {
 		Routes []struct {
 			Route, Symbol string
+			ErrorNodes    []string `json:"error_nodes"`
 			Files         []struct {
 				Path, Role, SHA256 string
 				Bytes              uint64
@@ -126,6 +132,10 @@ func buildInventory(t *testing.T, root string) []byte {
 	}
 	decode("src/contracts/native-large-fixtures.json", &large)
 	reqs := requirementRows(t, string(read("docs/validation/language-feature-disposition.md")))
+	alternatives, err := decodeAlternatives(read(alternativesPath)) // strict: no duplicate keys or trailing data
+	if err != nil {
+		t.Fatalf("%s: %v", alternativesPath, err)
+	}
 	var mapping struct {
 		Revision string
 		Routes   []struct {
@@ -166,6 +176,14 @@ func buildInventory(t *testing.T, root string) []byte {
 		}
 		t.Fatalf("route %s not in native-routes.json", route)
 		return "", nil
+	}
+	errorNodesOf := func(route string) []string {
+		for _, r := range routes.Routes {
+			if r.Route == route && r.ErrorNodes != nil {
+				return r.ErrorNodes
+			}
+		}
+		return []string{}
 	}
 	packQueries := func(route, only string) []kit.QualQuery {
 		out := []kit.QualQuery{}
@@ -210,11 +228,13 @@ func buildInventory(t *testing.T, root string) []byte {
 			out = []kit.Edit{}
 		}
 		return kit.QualCase{ID: id, Role: "requirement", Input: kit.NativeInput{SHA256: shaHex([]byte(src)), Bytes: uint64(len(src))}, Edits: out, Expect: expect,
-			QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}}
+			QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}, Alternatives: []string{}}
 	}
 	type srcCase struct {
 		id, src                  string
 		features                 []string
+		alternatives             []string
+		sample                   *kit.QualSample
 		edits                    []struct{ Find, Replace string }
 		expect                   []kit.StepExpectation
 		expectAssess, expectCode string
@@ -224,7 +244,8 @@ func buildInventory(t *testing.T, root string) []byte {
 		decode(p, &f)
 		var out []srcCase
 		for _, c := range f.Cases {
-			sc := srcCase{id: c.ID, src: c.Source, features: c.Features, expect: []kit.StepExpectation{}, expectAssess: c.ExpectAssessment, expectCode: c.ExpectCode}
+			sc := srcCase{id: c.ID, src: c.Source, features: c.Features, alternatives: c.Alternatives, sample: c.Sample, expect: []kit.StepExpectation{},
+				expectAssess: c.ExpectAssessment, expectCode: c.ExpectCode}
 			for _, e := range c.Edits {
 				sc.edits = append(sc.edits, struct{ Find, Replace string }{e.Find, e.Replace})
 			}
@@ -259,21 +280,33 @@ func buildInventory(t *testing.T, root string) []byte {
 			}
 		}
 	}
-	derived := func(c kit.QualCase) []string {
+	// derived is the coverage rule r2 for one case: a NO_ERROR step naming one of the route's
+	// error node types is an error step (N, and R with another node type, never P or W)
+	derived := func(c kit.QualCase, errNodes []string) []string {
+		named := func(e kit.StepExpectation) bool {
+			return slices.ContainsFunc(e.Contains, func(n string) bool { return slices.Contains(errNodes, n) })
+		}
+		other := func(e kit.StepExpectation) bool {
+			return slices.ContainsFunc(e.Contains, func(n string) bool { return !slices.Contains(errNodes, n) })
+		}
 		var ks []string
-		for _, k := range []string{"P", "N", "R", "E", "Q"} {
+		for _, k := range []string{"P", "N", "R", "E", "Q", "W"} {
 			ok := false
 			switch k {
 			case "P":
-				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Syntax == "NO_ERROR" && len(e.Contains) > 0 })
+				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Syntax == "NO_ERROR" && len(e.Contains) > 0 && !named(e) })
 			case "N":
-				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Syntax == "ERROR" })
+				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Syntax == "ERROR" || (e.Syntax == "NO_ERROR" && named(e)) })
 			case "R":
-				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Syntax == "ERROR" && len(e.Contains) > 0 })
+				ok = slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool {
+					return (e.Syntax == "ERROR" && len(e.Contains) > 0) || (e.Syntax == "NO_ERROR" && named(e) && other(e))
+				})
 			case "E":
 				ok = len(c.Edits) > 0
 			case "Q":
 				ok = slices.ContainsFunc(c.QueryExpect, func(q kit.QueryExpectation) bool { return q.Captures != nil })
+			case "W":
+				ok = c.Sample != nil && slices.ContainsFunc(c.Expect, func(e kit.StepExpectation) bool { return e.Step == 0 && e.Syntax == "NO_ERROR" && !named(e) })
 			}
 			if ok {
 				ks = append(ks, k)
@@ -291,6 +324,7 @@ func buildInventory(t *testing.T, root string) []byte {
 	for _, route := range campaign.Routes {
 		rows := reqs[route]
 		symbol, grammar := grammarOf(route)
+		errNodes := errorNodesOf(route)
 		w := kit.QualWorkload{Set: "s06-" + route, Profile: "s06-" + route, Route: route, Operation: "native-query", Output: "tree", Symbol: symbol,
 			Grammar: grammar, Declarations: declsOf(route), FactPack: packRef(route), API: true}
 		for _, kind := range []string{"routes", "gaps", "n461"} {
@@ -302,7 +336,11 @@ func buildInventory(t *testing.T, root string) []byte {
 			for _, sc := range cs {
 				c := convert(sc.id, sc.src, sc.edits, sc.expect)
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode // the kit rejects them outside SVC
-				cover(&c, sc.features, rows, derived(c))
+				if sc.alternatives != nil {
+					c.Alternatives = sc.alternatives // the kit rejects one of a row the case does not cover with P
+				}
+				c.Sample = sc.sample // the kit checks it against the input
+				cover(&c, sc.features, rows, derived(c, errNodes))
 				w.Cases = append(w.Cases, c)
 			}
 		}
@@ -324,7 +362,7 @@ func buildInventory(t *testing.T, root string) []byte {
 			src := sc.src
 			c.Source = &src
 			cover(&c, q.Features, rows, []string{"Q"}) // a query case covers its listed rows' Q only
-			if !slices.Contains(derived(c), "Q") {
+			if !slices.Contains(derived(c, errNodes), "Q") {
 				t.Fatalf("%s: query case without capture expectations", q.ID)
 			}
 			w.Cases = append(w.Cases, c)
@@ -338,19 +376,31 @@ func buildInventory(t *testing.T, root string) []byte {
 					}
 				}
 				w.Cases = append(w.Cases, kit.QualCase{ID: "dynamic-sql-" + route, Role: "support", Input: kit.NativeInput{SHA256: f.SHA256, Bytes: f.Bytes},
-					Edits: []kit.Edit{}, Expect: []kit.StepExpectation{}, QueryExpect: []kit.QueryExpectation{}, DynamicSQL: d, Covers: map[string][]string{}})
+					Edits: []kit.Edit{}, Expect: []kit.StepExpectation{}, QueryExpect: []kit.QueryExpectation{}, DynamicSQL: d, Covers: map[string][]string{},
+					Alternatives: []string{}})
 			}
 		}
 		var req []kit.QualRequirement
 		for _, row := range rows["#order"] {
-			req = append(req, kit.QualRequirement{Row: row, Kinds: rows[row]})
+			a, ok := alternatives.Routes[route][row]
+			if !ok {
+				t.Fatalf("%s: REQ row not in %s", row, alternativesPath)
+			}
+			ids := []string{}
+			for _, x := range a.Alternatives {
+				ids = append(ids, x.ID)
+			}
+			req = append(req, kit.QualRequirement{Row: row, Kinds: rows[row], AlternativesStatus: a.Status, Alternatives: ids})
 		}
-		inv.Routes = append(inv.Routes, kit.QualRoute{Route: route, Workload: w, Requirements: req})
+		inv.Routes = append(inv.Routes, kit.QualRoute{Route: route, ErrorNodes: errNodes, Workload: w, Requirements: req})
 		if route == "csharp" {
 			cs, format := load("src/testdata/native/n461/svc.json")
 			svc = kit.QualWorkload{Set: "s06-csharp-svc", Profile: "s06-csharp-svc", Route: "csharp", Operation: "native-query", Output: "tree", Symbol: symbol,
 				Format: format, Grammar: grammar, Queries: packQueries("csharp", ""), API: true}
 			for _, sc := range cs {
+				if err := supportCaseFields(sc.id, sc.alternatives, sc.sample); err != nil {
+					t.Fatal(err) // never dropped silently
+				}
 				c := convert(sc.id, sc.src, sc.edits, sc.expect)
 				c.Role = "support"
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode
@@ -368,7 +418,7 @@ func buildInventory(t *testing.T, root string) []byte {
 			ex = append(ex, kit.StepExpectation{Step: 0, Syntax: e.Syntax, Contains: []string{}, Declarations: e.Declarations})
 		}
 		lw.Cases = append(lw.Cases, kit.QualCase{ID: f.ID, Role: "support", Input: kit.NativeInput{SHA256: f.SHA256, Bytes: f.Bytes}, Edits: []kit.Edit{}, Expect: ex,
-			QueryExpect: []kit.QueryExpectation{}, Points: f.Points, Covers: map[string][]string{}})
+			QueryExpect: []kit.QueryExpectation{}, Points: f.Points, Covers: map[string][]string{}, Alternatives: []string{}})
 	}
 	over := lw
 	over.Set, over.Profile, over.Queries, over.FactPack = "s06-large-over", "s06-large-over", []kit.QualQuery{{ID: "all.nodes", SHA256: shaHex([]byte("_ @node\n"))}}, nil
@@ -398,6 +448,24 @@ func buildInventory(t *testing.T, root string) []byte {
 		t.Fatal(err)
 	}
 	return append(data, '\n')
+}
+
+// supportCaseFields rejects requirement-only fields on a support case source (the n461 SVC
+// cases): a support case covers no row, so it can list no alternative and carry no sample.
+func supportCaseFields(id string, alternatives []string, sample *kit.QualSample) error {
+	if alternatives != nil || sample != nil {
+		return fmt.Errorf("%s: support case with alternatives or sample", id)
+	}
+	return nil
+}
+
+func TestSupportCaseFields(t *testing.T) {
+	if err := supportCaseFields("s", nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if supportCaseFields("s", []string{}, nil) == nil || supportCaseFields("s", nil, &kit.QualSample{}) == nil {
+		t.Fatal("support case with requirement-only fields accepted")
+	}
 }
 
 // requirementRows returns route → row → required kinds for REQ rows, with "#order" keeping
@@ -469,6 +537,21 @@ func TestQualificationInventory(t *testing.T) {
 	}
 	if rows != 178 || obligations != 826 {
 		t.Fatalf("requirement rows %d obligations %d", rows, obligations)
+	}
+	// coverage rule r2 inputs: the registered error node types and each row's registry status
+	for _, r := range inv.Routes {
+		want := []string{}
+		if r.Route == "html" {
+			want = []string{"erroneous_end_tag"}
+		}
+		if !slices.Equal(r.ErrorNodes, want) {
+			t.Fatalf("%s error nodes %v", r.Route, r.ErrorNodes)
+		}
+		for _, q := range r.Requirements {
+			if q.AlternativesStatus != kit.AlternativesComplete && q.AlternativesStatus != kit.AlternativesPending {
+				t.Fatalf("%s: alternatives status %q", q.Row, q.AlternativesStatus)
+			}
+		}
 	}
 	for i, r := range inv.Routes {
 		if r.Route != campaign.Routes[i] {

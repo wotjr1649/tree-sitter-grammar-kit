@@ -1335,6 +1335,9 @@
   },
   {
    "route": "html",
+   "error_nodes": [
+    "erroneous_end_tag"
+   ],
    "repository": "tree-sitter/tree-sitter-html",
    "commit": "73a3947324f6efddf9e17c0ea58d454843590cc0",
    "grammar_dir": ".",

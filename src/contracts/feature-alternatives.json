@@ -1,0 +1,769 @@
+{
+ "schema": "tsgk-feature-alternatives/r1",
+ "routes": {
+  "bash": {
+   "bash-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "bash-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "bash-V4": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "bash-V53": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "c": {
+   "c-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "c-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "c-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "c-V11": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "c-V23": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "c-V23pp": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "cpp": {
+   "cpp-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "cpp-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "cpp-V14": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "cpp-V17": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "cpp-V20": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "cpp-V23": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "csharp": {
+   "csharp-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-B04": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-B05": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V08": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V09": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V10": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V11": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V12": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V13": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V14a": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V14b": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V14c": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "csharp-V73": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "css": {
+   "css-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M04": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M05": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M06": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M07": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M08": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M09": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M10": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M11": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M12": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M13": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M14": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M15": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M16": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M17": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M18": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M19": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M20": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M21": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M22": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M23": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M24": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M25": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M26": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M27": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M28": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M29": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "css-M30": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "dart": {
+   "dart-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-V213": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-V30": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-V310": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "dart-V36": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "go": {
+   "go-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "go-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "go-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "go-B04": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "go-V18": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "go-V27": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "html": {
+   "html-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "html-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "html-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "java": {
+   "java-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "java-V14": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "java-V21": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "java-V25": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "java-V9": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "javascript": {
+   "javascript-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-V15": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-V16": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-V20": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "javascript-V22": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "json": {
+   "json-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "json-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "jsx": {
+   "jsx-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "jsx-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "jsx-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "jsx-B04": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "kotlin": {
+   "kotlin-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "kotlin-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "kotlin-V14": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "kotlin-V22": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "kotlin-V24": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "php": {
+   "php-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-V56": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-V72": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-V80": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-V82": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "php-V84": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "postgresql-sql": {
+   "postgresql-sql-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-B04": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-V10": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-V13": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-V16": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "postgresql-sql-V18": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "powershell": {
+   "powershell-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "powershell-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "powershell-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "powershell-V7": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "python": {
+   "python-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V310": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V311": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V312": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V313": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V314": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V38": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "python-V39": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "r": {
+   "r-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "r-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "r-V40": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "r-V42": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "ruby": {
+   "ruby-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "ruby-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "ruby-V27": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "ruby-V31": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "ruby-V40": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "rust": {
+   "rust-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "rust-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "rust-L01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "rust-V18": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "rust-V24": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "swift": {
+   "swift-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V51": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V55": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V59": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V61": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V62": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "swift-V64": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "tsql": {
+   "tsql-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-B04": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-B05": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-V16": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsql-V22": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "tsx": {
+   "tsx-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsx-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "tsx-V29": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "typescript": {
+   "typescript-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V28": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V3": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V40": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V45": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V50": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "typescript-V59": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "xml": {
+   "xml-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "xml-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "xml-V11": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  },
+  "yaml": {
+   "yaml-B01": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "yaml-B02": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "yaml-B03": {
+    "status": "PENDING",
+    "alternatives": []
+   },
+   "yaml-V12": {
+    "status": "PENDING",
+    "alternatives": []
+   }
+  }
+ }
+}

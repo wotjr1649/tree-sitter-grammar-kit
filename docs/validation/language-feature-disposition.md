@@ -4,7 +4,7 @@
 
 ## 읽는 법과 완료 경계
 
-표의 한 행은 사양의 이름 있는 production 계열이다. `구문 사실`에 나열한 항목 각각과 `근거 장`의 해당 production 대안 전부가 범위다. 예시 하나만 통과해 계열 전체를 완료 처리하지 않는다. 기본 계열과 version delta의 합집합으로 하한에서 유효했던 구문도 보존한다. delta는 기본 계열에 더해지는 명시적 추적 항목이며 중복 fixture를 강제하지 않는다. 문법상 허용 여부와 binding/type checking/실행 결과는 별도로 다룬다.
+표의 한 행은 사양의 이름 있는 production 계열이다. `구문 사실`에 나열한 항목 각각과 `근거 장`의 해당 production 대안 전부가 범위다. 예시 하나만 통과해 계열 전체를 완료 처리하지 않는다. "production 대안 전부"의 기계적 경계는 [production 대안 등록부](../../src/contracts/feature-alternatives.json)다. 행마다 대안 id(`<행>.aNN`)와 `COMPLETE`·`PENDING` 상태를 둔다. qualification(`tsgk-coverage-rule/r2`)은 `COMPLETE`이고 대안마다 그 대안을 적은 사례가 있는 행만 P로 인정한다. 기본 계열과 version delta의 합집합으로 하한에서 유효했던 구문도 보존한다. delta는 기본 계열에 더해지는 명시적 추적 항목이며 중복 fixture를 강제하지 않는다. 문법상 허용 여부와 binding/type checking/실행 결과는 별도로 다룬다.
 
 - `REQ` = `REQUIRED_SYNTAX`, `SEM` = `SEMANTIC_ONLY`, `RUN` = `LIBRARY_RUNTIME_ONLY`, `EXT` = `EXCLUDED_EXTENSION`. 제외 이유는 해당 행에 있다. 후보의 미지원은 EXT 사유가 아니다.
 - `P` valid syntax, `N` 문법 위반 negative, `R` 손상 후 recovery, `E` 실제 old-tree edit/fresh 비교, `Q` node/field/query 구조, `W` 실사용 source. N은 type error를 syntax error로 바꾸지 않는다. 표의 case 종류는 필수이며 한 case가 여러 항목을 덮을 수 있다. 임의의 동일 개수 quota는 없다.

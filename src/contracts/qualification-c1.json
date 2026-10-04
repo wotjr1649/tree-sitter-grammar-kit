@@ -1,9 +1,9 @@
 {
- "schema": "tsgk-qualification-inventory/r1",
+ "schema": "tsgk-qualification-inventory/r2",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,
- "coverage_rule": "tsgk-coverage-rule/r1",
+ "coverage_rule": "tsgk-coverage-rule/r2",
  "kinds": [
   "P",
   "N",
@@ -32,6 +32,7 @@
  "routes": [
   {
    "route": "csharp",
+   "error_nodes": [],
    "workload": {
     "set": "s06-csharp",
     "profile": "s06-csharp",
@@ -300,6 +301,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -362,6 +365,8 @@
         "N"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -436,6 +441,8 @@
         "N"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -512,6 +519,8 @@
         "N"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -592,6 +601,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -669,6 +680,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -740,6 +753,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -812,6 +827,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -886,6 +903,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -913,6 +932,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -967,6 +988,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1041,6 +1064,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1068,6 +1093,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1122,6 +1149,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1196,6 +1225,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1223,6 +1254,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1277,6 +1310,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1351,6 +1386,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1378,6 +1415,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1432,6 +1471,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1506,6 +1547,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1533,6 +1576,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1587,6 +1632,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -1715,6 +1762,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\nnamespace Demo.Inventory;\n\npublic record Item(string Name, int Quantity, decimal Price);\n\npublic enum Status { Active, Retired }\n\npublic class Store\n{\n    private readonly List\u003cItem\u003e _items = new();\n\n    public int Count =\u003e _items.Count;\n\n    // Adds an item after validating it.\n    public void Add(Item item)\n    {\n        if (item is null)\n        {\n            throw new ArgumentNullException(nameof(item));\n        }\n        _items.Add(item);\n    }\n\n    public decimal Total()\n    {\n        decimal sum = 0m;\n        foreach (var item in _items)\n        {\n            sum += item.Price * item.Quantity;\n        }\n        return sum;\n    }\n\n    public string Describe(Item item) =\u003e item.Quantity switch\n    {\n        0 =\u003e \"empty\",\n        \u003c 10 =\u003e $\"low: {item.Name}\",\n        _ =\u003e $\"ok: {item.Name}\",\n    };\n\n    public IEnumerable\u003cstring\u003e Names() =\u003e\n        from i in _items where i.Quantity \u003e 0 orderby i.Name select i.Name;\n}\n"
      },
      {
@@ -1947,6 +1996,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      }
     ]
@@ -1959,7 +2010,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-B02",
@@ -1967,7 +2020,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-B03",
@@ -1977,7 +2032,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-B04",
@@ -1987,7 +2044,9 @@
       "R",
       "E",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-B05",
@@ -1996,7 +2055,9 @@
       "N",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V73",
@@ -2004,7 +2065,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V08",
@@ -2014,7 +2077,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V09",
@@ -2024,7 +2089,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V10",
@@ -2033,7 +2100,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V11",
@@ -2043,7 +2112,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V12",
@@ -2053,7 +2124,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V13",
@@ -2062,7 +2135,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V14a",
@@ -2072,7 +2147,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V14b",
@@ -2081,7 +2158,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "csharp-V14c",
@@ -2090,12 +2169,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "go",
+   "error_nodes": [],
    "workload": {
     "set": "s06-go",
     "profile": "s06-go",
@@ -2234,6 +2316,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -2297,6 +2381,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -2435,6 +2521,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "package inventory\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Item is a stock entry.\ntype Item struct {\n\tName  string `json:\"name\"`\n\tCount int    `json:\"count\"`\n}\n\ntype Store[K comparable, V any] struct {\n\titems map[K]V\n}\n\nconst maxItems = 1_000\n\nvar ErrFull = errors.New(\"store is full\")\n\nfunc (s *Store[K, V]) Put(key K, value V) error {\n\tif len(s.items) \u003e= maxItems {\n\t\treturn ErrFull\n\t}\n\ts.items[key] = value\n\treturn nil\n}\n\nfunc Summarize(items []Item) string {\n\tvar b strings.Builder\n\ttotal := 0\n\tfor i, it := range items {\n\t\tswitch {\n\t\tcase it.Count == 0:\n\t\t\tcontinue\n\t\tcase it.Count \u003e 100:\n\t\t\tfmt.Fprintf(\u0026b, \"%d:%s(bulk) \", i, it.Name)\n\t\tdefault:\n\t\t\tfmt.Fprintf(\u0026b, \"%d:%s \", i, it.Name)\n\t\t}\n\t\ttotal += it.Count\n\t}\n\tch := make(chan int, 1)\n\tgo func() { ch \u003c- total }()\n\tdefer close(ch)\n\treturn b.String() + fmt.Sprint(\u003c-ch)\n}\n"
      }
     ]
@@ -2447,7 +2535,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "go-B02",
@@ -2456,7 +2546,9 @@
       "N",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "go-B03",
@@ -2466,7 +2558,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "go-B04",
@@ -2476,7 +2570,9 @@
       "R",
       "E",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "go-V18",
@@ -2485,7 +2581,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "go-V27",
@@ -2494,12 +2592,15 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "python",
+   "error_nodes": [],
    "workload": {
     "set": "s06-python",
     "profile": "s06-python",
@@ -2649,6 +2750,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -2712,6 +2815,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -2835,6 +2940,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "# -*- coding: utf-8 -*-\n\"\"\"Inventory helpers.\"\"\"\nfrom __future__ import annotations\n\nimport asyncio\nfrom dataclasses import dataclass, field\n\n\n@dataclass\nclass Item:\n    name: str\n    count: int = 0\n    tags: list[str] = field(default_factory=list)\n\n    def label(self, /, upper: bool = False) -\u003e str:\n        text = f\"{self.name}: {self.count!r}\"\n        return text.upper() if upper else text\n\n\ntype Pair[T] = tuple[T, T]\n\n\ndef classify(item: Item) -\u003e str:\n    match item:\n        case Item(count=0):\n            return \"empty\"\n        case Item(name=str(n), count=c) if c \u003e 100:\n            return f\"bulk {n}\"\n        case _:\n            return \"normal\"\n\n\nasync def total(items: list[Item]) -\u003e int:\n    await asyncio.sleep(0)\n    if (n := len(items)) == 0:\n        return 0\n    squares = [i.count ** 2 for i in items if i.count \u003e 0]\n    try:\n        return sum(squares) // n\n    except (ZeroDivisionError, ValueError) as exc:\n        raise RuntimeError(\"bad\") from exc\n    finally:\n        pass\n"
      }
     ]
@@ -2847,7 +2954,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-B02",
@@ -2857,7 +2966,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-B03",
@@ -2868,7 +2979,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V38",
@@ -2877,7 +2990,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V39",
@@ -2885,7 +3000,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V310",
@@ -2895,7 +3012,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V311",
@@ -2904,7 +3023,9 @@
       "N",
       "R",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V312",
@@ -2914,7 +3035,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V313",
@@ -2922,7 +3045,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "python-V314",
@@ -2932,12 +3057,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "javascript",
+   "error_nodes": [],
    "workload": {
     "set": "s06-javascript",
     "profile": "s06-javascript",
@@ -3087,6 +3215,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -3150,6 +3280,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -3278,6 +3410,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "#!/usr/bin/env node\n'use strict';\n\nimport { readFile } from 'node:fs/promises';\nimport path from 'node:path';\n\nconst DEFAULTS = { retries: 3, verbose: false };\n\n/**\n * Loads a config file and merges defaults.\n */\nexport async function loadConfig(file, options = {}) {\n  const text = await readFile(path.resolve(file), 'utf8');\n  const { retries = DEFAULTS.retries, ...rest } = JSON.parse(text);\n  return { ...DEFAULTS, ...rest, retries };\n}\n\nclass Cache {\n  #store = new Map();\n  static instances = 0;\n\n  constructor(limit = 10) {\n    this.limit = limit;\n    Cache.instances += 1;\n  }\n\n  get(key) {\n    return this.#store.get(key) ?? null;\n  }\n\n  set(key, value) {\n    if (this.#store.size \u003e= this.limit) {\n      const [first] = this.#store.keys();\n      this.#store.delete(first);\n    }\n    this.#store.set(key, value);\n    return this;\n  }\n}\n\nexport const cache = new Cache(2 ** 4);\n\nfor (const [k, v] of Object.entries(DEFAULTS)) {\n  console.log(`${k} -\u003e ${v}`, /^\\d+$/u.test(String(v)));\n}\n\nexport default cache;\n"
      }
     ]
@@ -3292,7 +3426,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-V15",
@@ -3302,7 +3438,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-V16",
@@ -3312,7 +3450,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-V20",
@@ -3322,7 +3462,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-V22",
@@ -3332,7 +3474,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-B02",
@@ -3341,7 +3485,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "javascript-L01",
@@ -3350,12 +3496,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "jsx",
+   "error_nodes": [],
    "workload": {
     "set": "s06-jsx",
     "profile": "s06-jsx",
@@ -3497,6 +3646,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -3560,6 +3711,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -3705,6 +3858,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "import React, { useState } from 'react';\n\nconst items = ['alpha', 'beta', 'gamma'];\n\nfunction Badge({ label, ...props }) {\n  return \u003cspan className=\"badge\" {...props}\u003e{label}\u003c/span\u003e;\n}\n\nexport function List({ title, onSelect }) {\n  const [selected, setSelected] = useState(null);\n  const handle = (item) =\u003e {\n    setSelected(item);\n    onSelect?.(item);\n  };\n  return (\n    \u003csection aria-label={title}\u003e\n      \u003ch2\u003e{title} \u0026amp; more\u003c/h2\u003e\n      {/* list of items */}\n      \u003cul\u003e\n        {items.map((item) =\u003e (\n          \u003cli key={item} onClick={() =\u003e handle(item)}\u003e\n            {item === selected ? \u003cBadge label={item} /\u003e : item}\n          \u003c/li\u003e\n        ))}\n      \u003c/ul\u003e\n      \u003c\u003e\n        \u003cLayout.Footer disabled text=\"done\" /\u003e\n      \u003c/\u003e\n    \u003c/section\u003e\n  );\n}\n"
      }
     ]
@@ -3719,7 +3874,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "jsx-B02",
@@ -3729,7 +3886,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "jsx-B03",
@@ -3739,7 +3898,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "jsx-B04",
@@ -3749,12 +3910,15 @@
       "R",
       "E",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "typescript",
+   "error_nodes": [],
    "workload": {
     "set": "s06-typescript",
     "profile": "s06-typescript",
@@ -3905,6 +4069,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -3964,6 +4130,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4032,6 +4200,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4098,6 +4268,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4168,6 +4340,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4243,6 +4417,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4311,6 +4487,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4375,6 +4553,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4508,6 +4688,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "import type { Readable } from 'node:stream';\nimport { EventEmitter } from 'node:events';\n\nexport interface Item {\n  readonly id: number;\n  name: string;\n  tags?: string[];\n}\n\ntype Status = 'active' | 'retired';\ntype Keys\u003cT\u003e = { [K in keyof T]-?: T[K] extends Function ? never : K }[keyof T];\n\nenum Level {\n  Low = 1,\n  High,\n}\n\ndeclare module 'node:events' {\n  interface EventEmitter {\n    tagged?: boolean;\n  }\n}\n\nexport abstract class Repository\u003cT extends Item\u003e extends EventEmitter {\n  protected items = new Map\u003cnumber, T\u003e();\n\n  constructor(private readonly label: string) {\n    super();\n  }\n\n  abstract validate(item: T): item is T;\n\n  add(item: T): this {\n    if (!this.validate(item)) {\n      throw new Error(`invalid ${this.label}`);\n    }\n    this.items.set(item.id, item);\n    return this;\n  }\n\n  find(id: number): T | undefined {\n    return this.items.get(id) as T | undefined;\n  }\n}\n\nexport function level(n: number): Level {\n  return n \u003e 10 ? Level.High : Level.Low;\n}\n\nconst config = { retries: 3 } as const satisfies Record\u003cstring, number\u003e;\n"
      }
     ]
@@ -4522,7 +4704,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-B02",
@@ -4531,7 +4715,9 @@
       "N",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V28",
@@ -4540,7 +4726,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V3",
@@ -4550,7 +4738,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V40",
@@ -4559,7 +4749,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V45",
@@ -4569,7 +4761,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V50",
@@ -4579,7 +4773,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "typescript-V59",
@@ -4589,12 +4785,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "tsx",
+   "error_nodes": [],
    "workload": {
     "set": "s06-tsx",
     "profile": "s06-tsx",
@@ -4738,6 +4937,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4797,6 +4998,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4869,6 +5072,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -4941,6 +5146,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5013,6 +5220,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5087,6 +5296,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5157,6 +5368,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5280,6 +5493,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "import React, { useState } from 'react';\n\ntype ButtonProps = {\n  label: string;\n  onPress?: (id: number) =\u003e void;\n};\n\ninterface ListProps\u003cT\u003e {\n  items: T[];\n  render: (item: T) =\u003e React.ReactNode;\n}\n\nconst identity = \u003cT,\u003e(value: T): T =\u003e value;\n\nexport function Button({ label, onPress }: ButtonProps): JSX.Element {\n  const [count, setCount] = useState\u003cnumber\u003e(0);\n  return (\n    \u003cbutton type=\"button\" onClick={() =\u003e { setCount(count + 1); onPress?.(count); }}\u003e\n      {label}: {count}\n    \u003c/button\u003e\n  );\n}\n\nexport function List\u003cT extends { id: number }\u003e({ items, render }: ListProps\u003cT\u003e) {\n  if (items.length === 0) {\n    return \u003cp className=\"empty\"\u003eNo items\u003c/p\u003e;\n  }\n  return (\n    \u003cul\u003e\n      {items.map((item) =\u003e (\n        \u003cli key={item.id}\u003e{render(identity(item))}\u003c/li\u003e\n      ))}\n    \u003c/ul\u003e\n  );\n}\n\nexport const App = () =\u003e (\n  \u003c\u003e\n    \u003cButton label=\"Add\" /\u003e\n    \u003cList\u003c{ id: number }\u003e items={[{ id: 1 }]} render={(i) =\u003e \u003cspan\u003e{i.id}\u003c/span\u003e} /\u003e\n  \u003c/\u003e\n);\n"
      }
     ]
@@ -5294,7 +5509,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsx-B02",
@@ -5304,7 +5521,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsx-V29",
@@ -5314,12 +5533,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "java",
+   "error_nodes": [],
    "workload": {
     "set": "s06-java",
     "profile": "s06-java",
@@ -5455,6 +5677,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5514,6 +5738,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5652,6 +5878,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "package com.example.inventory;\n\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.function.Predicate;\n\n/** A simple inventory. */\npublic class Inventory {\n    public record Item(String name, int count) {}\n\n    public sealed interface Event permits Added, Removed {}\n    public record Added(Item item) implements Event {}\n    public record Removed(String name) implements Event {}\n\n    private static final String HELP = \"\"\"\n        Inventory help\n        \"\"\";\n\n    private final List\u003cItem\u003e items = new ArrayList\u003c\u003e();\n\n    public void add(Item item) {\n        if (item == null) {\n            throw new IllegalArgumentException(\"item\");\n        }\n        items.add(item);\n    }\n\n    public List\u003cItem\u003e filter(Predicate\u003cItem\u003e test) {\n        var result = new ArrayList\u003cItem\u003e();\n        for (Item item : items) {\n            if (test.test(item)) {\n                result.add(item);\n            }\n        }\n        return result;\n    }\n\n    public static String describe(Event event) {\n        return switch (event) {\n            case Added a when a.item().count() \u003e 100 -\u003e \"bulk \" + a.item().name();\n            case Added a -\u003e \"added \" + a.item().name();\n            case Removed r -\u003e \"removed \" + r.name();\n        };\n    }\n\n    public long total() {\n        // Sum of all counts.\n        return items.stream().mapToLong(Item::count).sum();\n    }\n}\n"
      }
     ]
@@ -5666,7 +5894,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "java-V9",
@@ -5675,7 +5905,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "java-V14",
@@ -5685,7 +5917,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "java-V21",
@@ -5695,7 +5929,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "java-V25",
@@ -5705,12 +5941,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "kotlin",
+   "error_nodes": [],
    "workload": {
     "set": "s06-kotlin",
     "profile": "s06-kotlin",
@@ -5844,6 +6083,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -5903,6 +6144,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -6043,6 +6286,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "package com.example.inventory\n\nimport kotlin.math.max\n\n/** An item in stock. */\ndata class Item(val name: String, val count: Int = 0)\n\nenum class Level { LOW, HIGH }\n\ninterface Repository\u003cT\u003e {\n    fun add(item: T)\n    fun all(): List\u003cT\u003e\n}\n\nclass InMemoryRepository : Repository\u003cItem\u003e {\n    private val items = mutableListOf\u003cItem\u003e()\n\n    override fun add(item: Item) {\n        require(item.count \u003e= 0) { \"negative count\" }\n        items.add(item)\n    }\n\n    override fun all(): List\u003cItem\u003e = items.toList()\n\n    val total: Int\n        get() = items.sumOf { it.count }\n}\n\nfun level(item: Item?): Level {\n    val count = item?.count ?: 0\n    return when {\n        count \u003e 100 -\u003e Level.HIGH\n        else -\u003e Level.LOW\n    }\n}\n\nfun main() {\n    val repo = InMemoryRepository()\n    for (i in 1..3) {\n        repo.add(Item(\"item$i\", i * 10))\n    }\n    // Print a summary line.\n    println(\"total=${repo.total}, best=${max(repo.total, 1)}\")\n}\n"
      }
     ]
@@ -6057,7 +6302,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "kotlin-B02",
@@ -6067,7 +6314,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "kotlin-V14",
@@ -6076,7 +6325,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "kotlin-V22",
@@ -6086,7 +6337,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "kotlin-V24",
@@ -6096,12 +6349,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "c",
+   "error_nodes": [],
    "workload": {
     "set": "s06-c",
     "profile": "s06-c",
@@ -6229,6 +6485,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -6288,6 +6546,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -6433,6 +6693,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "#include \u003cstdio.h\u003e\n#include \u003cstdlib.h\u003e\n#include \u003cstring.h\u003e\n\n#define MAX_ITEMS 16\n#define SQUARE(x) ((x) * (x))\n\ntypedef struct {\n    char name[32];\n    int count;\n} Item;\n\nenum level { LEVEL_LOW, LEVEL_HIGH };\n\nstatic Item items[MAX_ITEMS];\nstatic size_t item_count = 0;\n\n/* Adds an item; returns 0 on success. */\nint add_item(const char *name, int count)\n{\n    if (item_count \u003e= MAX_ITEMS) {\n        return -1;\n    }\n    Item *it = \u0026items[item_count++];\n    strncpy(it-\u003ename, name, sizeof it-\u003ename - 1);\n    it-\u003ecount = count;\n    return 0;\n}\n\nstatic enum level classify(const Item *it)\n{\n    switch (it-\u003ecount) {\n    case 0:\n        return LEVEL_LOW;\n    default:\n        return it-\u003ecount \u003e 100 ? LEVEL_HIGH : LEVEL_LOW;\n    }\n}\n\nint main(void)\n{\n    add_item(\"bolt\", 120);\n    add_item(\"nut\", 4);\n    long total = 0;\n    for (size_t i = 0; i \u003c item_count; i++) {\n        total += SQUARE(items[i].count);\n        printf(\"%s: %d\\n\", items[i].name, (int)classify(\u0026items[i]));\n    }\n#ifdef VERBOSE\n    printf(\"total=%ld\\n\", total);\n#endif\n    return total \u003e 0 ? EXIT_SUCCESS : EXIT_FAILURE;\n}\n"
      }
     ]
@@ -6447,7 +6709,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "c-B02",
@@ -6456,7 +6720,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "c-V11",
@@ -6465,7 +6731,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "c-V23",
@@ -6475,7 +6743,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "c-V23pp",
@@ -6484,7 +6754,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "c-L01",
@@ -6492,12 +6764,15 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "cpp",
+   "error_nodes": [],
    "workload": {
     "set": "s06-cpp",
     "profile": "s06-cpp",
@@ -6639,6 +6914,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -6698,6 +6975,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -6811,6 +7090,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "#include \u003calgorithm\u003e\n#include \u003ciostream\u003e\n#include \u003cmap\u003e\n#include \u003cmemory\u003e\n#include \u003cstring\u003e\n#include \u003cvector\u003e\n\nnamespace inventory {\n\nstruct Item {\n    std::string name;\n    int count = 0;\n};\n\ntemplate \u003ctypename T\u003e\nconcept Countable = requires(T t) { t.count; };\n\nclass Store {\npublic:\n    explicit Store(std::size_t limit) : limit_(limit) {}\n    virtual ~Store() = default;\n\n    bool add(Item item) {\n        if (items_.size() \u003e= limit_) {\n            return false;\n        }\n        items_.push_back(std::move(item));\n        return true;\n    }\n\n    template \u003cCountable T\u003e\n    static int weight(const T\u0026 value) noexcept { return value.count * 2; }\n\n    [[nodiscard]] int total() const {\n        int sum = 0;\n        for (const auto\u0026 [name, count] : index()) {\n            sum += count;\n        }\n        return sum;\n    }\n\nprivate:\n    std::map\u003cstd::string, int\u003e index() const {\n        std::map\u003cstd::string, int\u003e out;\n        for (const auto\u0026 it : items_) out[it.name] += it.count;\n        return out;\n    }\n\n    std::size_t limit_;\n    std::vector\u003cItem\u003e items_;\n};\n\n}  // namespace inventory\n\nint main() {\n    auto store = std::make_unique\u003cinventory::Store\u003e(8);\n    store-\u003eadd({\"bolt\", 3});\n    auto doubled = [factor = 2](int x) { return x * factor; };\n    std::cout \u003c\u003c doubled(store-\u003etotal()) \u003c\u003c '\\n';\n    return 0;\n}\n"
      }
     ]
@@ -6825,7 +7106,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "cpp-V14",
@@ -6834,7 +7117,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "cpp-V17",
@@ -6844,7 +7129,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "cpp-V20",
@@ -6854,7 +7141,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "cpp-V23",
@@ -6864,7 +7153,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "cpp-L01",
@@ -6872,12 +7163,15 @@
       "P",
       "N",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "rust",
+   "error_nodes": [],
    "workload": {
     "set": "s06-rust",
     "profile": "s06-rust",
@@ -7015,6 +7309,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7074,6 +7370,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7204,6 +7502,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "use std::collections::HashMap;\nuse std::fmt;\n\n/// An item in stock.\n#[derive(Debug, Clone, PartialEq)]\npub struct Item {\n    pub name: String,\n    pub count: u32,\n}\n\n#[derive(Debug)]\npub enum Event {\n    Added(Item),\n    Removed { name: String },\n}\n\npub trait Store {\n    fn add(\u0026mut self, item: Item) -\u003e Result\u003c(), String\u003e;\n    fn total(\u0026self) -\u003e u64;\n}\n\n#[derive(Default)]\npub struct MemoryStore\u003c'a\u003e {\n    items: HashMap\u003cString, Item\u003e,\n    label: \u0026'a str,\n}\n\nimpl\u003c'a\u003e Store for MemoryStore\u003c'a\u003e {\n    fn add(\u0026mut self, item: Item) -\u003e Result\u003c(), String\u003e {\n        if item.name.is_empty() {\n            return Err(format!(\"empty name in {}\", self.label));\n        }\n        self.items.insert(item.name.clone(), item);\n        Ok(())\n    }\n\n    fn total(\u0026self) -\u003e u64 {\n        self.items.values().map(|i| i.count as u64).sum()\n    }\n}\n\nimpl fmt::Display for Event {\n    fn fmt(\u0026self, f: \u0026mut fmt::Formatter\u003c'_\u003e) -\u003e fmt::Result {\n        match self {\n            Event::Added(item) if item.count \u003e 100 =\u003e write!(f, \"bulk {}\", item.name),\n            Event::Added(item) =\u003e write!(f, \"added {}\", item.name),\n            Event::Removed { name } =\u003e write!(f, \"removed {name}\"),\n        }\n    }\n}\n\nmacro_rules! square {\n    ($x:expr) =\u003e {\n        $x * $x\n    };\n}\n\nfn main() {\n    let mut store = MemoryStore { label: \"main\", ..Default::default() };\n    for n in 1..=3 {\n        let _ = store.add(Item { name: format!(\"item{n}\"), count: square!(n) });\n    }\n    let Some(first) = store.items.values().next() else {\n        return;\n    };\n    println!(\"{} {}\", first.name, store.total());\n}\n"
      }
     ]
@@ -7218,7 +7518,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "rust-B02",
@@ -7228,7 +7530,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "rust-V18",
@@ -7238,7 +7542,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "rust-V24",
@@ -7248,7 +7554,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "rust-L01",
@@ -7257,12 +7565,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "swift",
+   "error_nodes": [],
    "workload": {
     "set": "s06-swift",
     "profile": "s06-swift",
@@ -7396,6 +7707,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7455,6 +7768,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7521,6 +7836,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7585,6 +7902,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7653,6 +7972,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7719,6 +8040,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7787,6 +8110,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7853,6 +8178,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -7917,6 +8244,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -8047,6 +8376,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "import Foundation\n\n/// An item in stock.\nstruct Item: Equatable {\n    let name: String\n    var count: Int = 0\n}\n\nenum Level {\n    case low, high\n}\n\nprotocol Store {\n    func add(_ item: Item) throws\n    var total: Int { get }\n}\n\nenum StoreError: Error {\n    case full(limit: Int)\n}\n\nfinal class MemoryStore: Store {\n    private var items: [String: Item] = [:]\n    let limit: Int\n\n    init(limit: Int) {\n        self.limit = limit\n    }\n\n    func add(_ item: Item) throws {\n        guard items.count \u003c limit else {\n            throw StoreError.full(limit: limit)\n        }\n        items[item.name] = item\n    }\n\n    var total: Int {\n        items.values.reduce(0) { $0 + $1.count }\n    }\n}\n\nfunc level(of item: Item?) -\u003e Level {\n    switch item?.count ?? 0 {\n    case 0..\u003c100:\n        return .low\n    default:\n        return .high\n    }\n}\n\nlet store = MemoryStore(limit: 4)\nfor i in 1...3 {\n    try? store.add(Item(name: \"item\\(i)\", count: i * 10))\n}\n// Print a summary.\nprint(\"total: \\(store.total), level: \\(level(of: nil))\")\n"
      }
     ]
@@ -8061,7 +8392,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-B02",
@@ -8071,7 +8404,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V51",
@@ -8081,7 +8416,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V55",
@@ -8091,7 +8428,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V59",
@@ -8101,7 +8440,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V61",
@@ -8111,7 +8452,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V62",
@@ -8121,7 +8464,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "swift-V64",
@@ -8131,12 +8476,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "dart",
+   "error_nodes": [],
    "workload": {
     "set": "s06-dart",
     "profile": "s06-dart",
@@ -8270,6 +8618,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -8329,6 +8679,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -8469,6 +8821,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "import 'dart:async';\nimport 'dart:math' as math;\n\n/// An item in stock.\nclass Item {\n  final String name;\n  final int count;\n\n  const Item(this.name, [this.count = 0]);\n\n  Item copyWith({int? count}) =\u003e Item(name, count ?? this.count);\n\n  @override\n  String toString() =\u003e 'Item($name, $count)';\n}\n\nenum Level { low, high }\n\nmixin Logging {\n  void log(String message) =\u003e print('[log] $message');\n}\n\nclass Store with Logging {\n  final _items = \u003cString, Item\u003e{};\n  late final int limit;\n\n  Store(this.limit);\n\n  void add(Item item) {\n    if (_items.length \u003e= limit) {\n      throw StateError('full');\n    }\n    _items[item.name] = item;\n    log('added ${item.name}');\n  }\n\n  int get total =\u003e _items.values.fold(0, (sum, i) =\u003e sum + i.count);\n\n  Level levelOf(String name) {\n    final count = _items[name]?.count ?? 0;\n    return count \u003e 100 ? Level.high : Level.low;\n  }\n}\n\nFuture\u003cvoid\u003e main() async {\n  final store = Store(4)..add(const Item('bolt', 120));\n  for (var i = 0; i \u003c 3; i++) {\n    store.add(Item('item$i', math.max(i, 1)));\n  }\n  await Future.delayed(Duration.zero);\n  print('total=${store.total}');\n}\n"
      }
     ]
@@ -8483,7 +8837,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-B02",
@@ -8493,7 +8849,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-V213",
@@ -8502,7 +8860,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-V30",
@@ -8512,7 +8872,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-V36",
@@ -8521,7 +8883,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-V310",
@@ -8531,7 +8895,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "dart-L01",
@@ -8539,12 +8905,15 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "php",
+   "error_nodes": [],
    "workload": {
     "set": "s06-php",
     "profile": "s06-php",
@@ -8692,6 +9061,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -8751,6 +9122,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -8869,6 +9242,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003cbody\u003e\n\u003ch1\u003eInventory\u003c/h1\u003e\n\u003c?php\nenum Level: string\n{\n    case Low = 'low';\n    case High = 'high';\n}\n\nfinal class Item\n{\n    public function __construct(\n        public readonly string $name,\n        private int $count = 0,\n    ) {}\n\n    public function count(): int\n    {\n        return $this-\u003ecount;\n    }\n}\n\nfunction level(?Item $item): Level\n{\n    $count = $item?-\u003ecount() ?? 0;\n    return match (true) {\n        $count \u003e 100 =\u003e Level::High,\n        default =\u003e Level::Low,\n    };\n}\n\n$items = [new Item('bolt', 120), new Item(name: 'nut', count: 4)];\n$total = array_sum(array_map(fn(Item $i): int =\u003e $i-\u003ecount(), $items));\nforeach ($items as $i =\u003e $item) {\n    // Print one row per item.\n    echo \"\u003cp\u003e{$item-\u003ename}: \" . level($item)-\u003evalue . \"\u003c/p\u003e\\n\";\n}\n?\u003e\n\u003cfooter\u003eTotal: \u003c?= $total ?\u003e\u003c/footer\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n"
      }
     ]
@@ -8883,7 +9258,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-V56",
@@ -8893,7 +9270,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-V72",
@@ -8903,7 +9282,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-V80",
@@ -8913,7 +9294,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-V82",
@@ -8922,7 +9305,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-V84",
@@ -8932,7 +9317,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "php-L01",
@@ -8941,12 +9328,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "ruby",
+   "error_nodes": [],
    "workload": {
     "set": "s06-ruby",
     "profile": "s06-ruby",
@@ -9080,6 +9470,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -9139,6 +9531,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -9269,6 +9663,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "# frozen_string_literal: true\n\nrequire 'json'\n\nmodule Inventory\n  Item = Struct.new(:name, :count) do\n    def bulk?\n      count \u003e 100\n    end\n  end\n\n  class Store\n    include Enumerable\n    attr_reader :limit\n\n    def initialize(limit = 10)\n      @limit = limit\n      @items = {}\n    end\n\n    def add(item)\n      raise ArgumentError, \"store is full\" if @items.size \u003e= limit\n\n      @items[item.name] = item\n      self\n    end\n\n    def each(\u0026block)\n      @items.each_value(\u0026block)\n    end\n\n    def summary\n      map { |i| \"#{i.name}=#{i.count}\" }.join(\", \")\n    end\n\n    def self.level(count)\n      case count\n      when 0 then :empty\n      when 1..100 then :normal\n      else :bulk\n      end\n    end\n  end\nend\n\nstore = Inventory::Store.new(4)\n[[\"bolt\", 120], [\"nut\", 4]].each do |name, count|\n  store.add(Inventory::Item.new(name, count))\nend\nputs store.summary\nputs Inventory::Store.level(store.sum(\u0026:count)).to_s\n"
      }
     ]
@@ -9283,7 +9679,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "ruby-B02",
@@ -9293,7 +9691,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "ruby-V27",
@@ -9303,7 +9703,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "ruby-V31",
@@ -9312,7 +9714,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "ruby-V40",
@@ -9321,12 +9725,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "r",
+   "error_nodes": [],
    "workload": {
     "set": "s06-r",
     "profile": "s06-r",
@@ -9464,6 +9871,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -9527,6 +9936,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -9702,6 +10113,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "# Inventory helpers\nlibrary(stats)\n\nitems \u003c- data.frame(\n  name = c(\"bolt\", \"nut\", \"washer\"),\n  count = c(120L, 4L, 0L),\n  stringsAsFactors = FALSE\n)\n\nlevel \u003c- function(count, threshold = 100) {\n  if (is.na(count)) {\n    return(NA_character_)\n  } else if (count \u003e threshold) {\n    \"bulk\"\n  } else {\n    \"normal\"\n  }\n}\n\nsummarise \u003c- function(df, ...) {\n  total \u003c- 0\n  for (i in seq_len(nrow(df))) {\n    total \u003c- total + df$count[[i]]\n  }\n  list(total = total, levels = vapply(df$count, level, character(1), ...))\n}\n\nsquares \u003c- sapply(items$count, \\(x) x^2)\nresult \u003c- items |\u003e subset(count \u003e 0) |\u003e summarise()\nwhile (FALSE) next\nrepeat {\n  break\n}\nprint(result[[\"total\"]])\n"
      }
     ]
@@ -9716,7 +10129,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "r-B02",
@@ -9725,7 +10140,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "r-V40",
@@ -9735,7 +10152,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "r-V42",
@@ -9745,12 +10164,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "bash",
+   "error_nodes": [],
    "workload": {
     "set": "s06-bash",
     "profile": "s06-bash",
@@ -9888,6 +10310,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -9947,6 +10371,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -10085,6 +10511,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "#!/usr/bin/env bash\nset -euo pipefail\n\nreadonly LOG_DIR=\"${LOG_DIR:-/tmp/logs}\"\ndeclare -A counts\ncounts[bolt]=120\ncounts[nut]=4\n\n# Print a message with a timestamp.\nlog() {\n  local level=\"$1\"\n  shift\n  printf '%s [%s] %s\\n' \"$(date +%T)\" \"$level\" \"$*\" \u003e\u00262\n}\n\nclassify() {\n  local n=$1\n  if (( n \u003e 100 )); then\n    echo bulk\n  elif [[ $n -eq 0 ]]; then\n    echo empty\n  else\n    echo normal\n  fi\n}\n\nfor name in \"${!counts[@]}\"; do\n  level=$(classify \"${counts[$name]}\")\n  case \"$level\" in\n    bulk) log INFO \"$name is bulk\" ;;\n    empty|normal) log DEBUG \"$name: $level\" ;;\n    *) log WARN \"unknown\" ;;\n  esac\ndone\n\nmkdir -p \"$LOG_DIR\"\ntotal=0\nwhile read -r line; do\n  total=$((total + ${#line}))\ndone \u003c \u003c(printf '%s\\n' \"${!counts[@]}\")\ncat \u003c\u003cEOF \u003e \"$LOG_DIR/summary.txt\"\ntotal=$total\nEOF\necho \"done: $total\" | tee -a \"$LOG_DIR/run.log\"\n"
      }
     ]
@@ -10099,7 +10527,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "bash-B02",
@@ -10109,7 +10539,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "bash-V4",
@@ -10119,7 +10551,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "bash-V53",
@@ -10128,12 +10562,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "powershell",
+   "error_nodes": [],
    "workload": {
     "set": "s06-powershell",
     "profile": "s06-powershell",
@@ -10267,6 +10704,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -10326,6 +10765,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -10464,6 +10905,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "# Inventory report script\n$ErrorActionPreference = 'Stop'\n\nenum Level {\n    Low\n    High\n}\n\nclass Item {\n    [string]$Name\n    [int]$Count\n\n    Item([string]$name, [int]$count) {\n        $this.Name = $name\n        $this.Count = $count\n    }\n\n    [Level] GetLevel() {\n        if ($this.Count -gt 100) {\n            return [Level]::High\n        }\n        return [Level]::Low\n    }\n}\n\nfunction Get-Total {\n    [CmdletBinding()]\n    param(\n        [Parameter(Mandatory = $true)]\n        [Item[]]$Items\n    )\n    process {\n        $sum = 0\n        foreach ($item in $Items) {\n            $sum += $item.Count\n        }\n        $sum\n    }\n}\n\n$items = @(\n    [Item]::new('bolt', 120),\n    [Item]::new('nut', 4)\n)\n$table = @{ Name = 'inventory'; Size = $items.Count }\nswitch ($items.Count) {\n    0 { Write-Warning 'empty' }\n    default { Write-Output \"count: $($items.Count)\" }\n}\ntry {\n    Get-Total -Items $items | ForEach-Object { \"total=$_\" }\n}\ncatch {\n    Write-Error $_.Exception.Message\n}\nfinally {\n    Write-Verbose 'done'\n}\n"
      }
     ]
@@ -10478,7 +10921,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "powershell-B02",
@@ -10488,7 +10933,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "powershell-L01",
@@ -10497,7 +10944,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "powershell-V7",
@@ -10507,12 +10956,17 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "html",
+   "error_nodes": [
+    "erroneous_end_tag"
+   ],
    "workload": {
     "set": "s06-html",
     "profile": "s06-html",
@@ -10656,6 +11110,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -10715,6 +11171,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -10878,6 +11336,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "\u003c!DOCTYPE html\u003e\n\u003chtml lang=\"en\"\u003e\n\u003chead\u003e\n  \u003cmeta charset=\"utf-8\"\u003e\n  \u003ctitle\u003eInventory \u0026amp; Stock\u003c/title\u003e\n  \u003cstyle\u003e\n    body { font-family: sans-serif; }\n  \u003c/style\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n  \u003c!-- Main content --\u003e\n  \u003cheader class=\"top\" id=\"top\"\u003e\n    \u003ch1\u003eInventory\u003c/h1\u003e\n  \u003c/header\u003e\n  \u003cmain\u003e\n    \u003ctable\u003e\n      \u003ctr\u003e\u003cth\u003eName\u003c/th\u003e\u003cth\u003eCount\u003c/th\u003e\u003c/tr\u003e\n      \u003ctr\u003e\u003ctd\u003ebolt\u003c/td\u003e\u003ctd\u003e120\u003c/td\u003e\u003c/tr\u003e\n      \u003ctr\u003e\u003ctd\u003enut\u003c/td\u003e\u003ctd\u003e4\u003c/td\u003e\u003c/tr\u003e\n    \u003c/table\u003e\n    \u003cform action=\"/add\" method=\"post\"\u003e\n      \u003cinput type=\"text\" name=\"item\" required\u003e\n      \u003cbr/\u003e\n      \u003cbutton type=\"submit\" disabled\u003eAdd\u003c/button\u003e\n    \u003c/form\u003e\n  \u003c/main\u003e\n  \u003cscript\u003e\n    const rows = document.querySelectorAll(\"tr\");\n    console.log(rows.length \u003e 2 ? \"many\" : \"few\");\n  \u003c/script\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n"
      }
     ]
@@ -10892,7 +11352,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "html-B02",
@@ -10902,7 +11364,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "html-B03",
@@ -10912,12 +11376,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "css",
+   "error_nodes": [],
    "workload": {
     "set": "s06-css",
     "profile": "s06-css",
@@ -11088,6 +11555,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -11151,6 +11620,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -11340,6 +11811,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "@charset \"utf-8\";\n@import url(\"base.css\") screen;\n@namespace svg url(\"http://www.w3.org/2000/svg\");\n\n:root {\n  --accent: #3366ff;\n  --gap: calc(1rem + 2px);\n}\n\n/* Layout */\nbody \u003e main .card:hover,\n#top::before {\n  display: flex;\n  margin: 0 auto !important;\n  color: var(--accent, blue);\n  background: linear-gradient(to right, rgb(0 0 0 / 50%), transparent);\n}\n\na[href^=\"https\"]:not(.internal) ~ span + em {\n  font: italic bold 12px/1.5 \"Helvetica Neue\", sans-serif;\n}\n\n@media screen and (min-width: 600px) {\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n}\n\n@supports (display: grid) {\n  .grid { gap: var(--gap); }\n}\n\n@keyframes fade {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n\n@font-face {\n  font-family: \"Inter\";\n  src: url(\"inter.woff2\") format(\"woff2\");\n}\n"
      }
     ]
@@ -11354,7 +11827,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M01",
@@ -11363,7 +11838,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M02",
@@ -11372,7 +11849,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M03",
@@ -11381,7 +11860,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M04",
@@ -11391,7 +11872,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M05",
@@ -11400,7 +11883,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M06",
@@ -11408,7 +11893,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M07",
@@ -11416,7 +11903,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M08",
@@ -11425,7 +11914,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M09",
@@ -11435,7 +11926,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M10",
@@ -11443,7 +11936,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M11",
@@ -11453,7 +11948,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M12",
@@ -11461,7 +11958,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M13",
@@ -11470,7 +11969,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M14",
@@ -11479,7 +11980,9 @@
       "N",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M15",
@@ -11487,7 +11990,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M16",
@@ -11495,7 +12000,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M17",
@@ -11503,7 +12010,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M18",
@@ -11511,7 +12020,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M19",
@@ -11519,7 +12030,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M20",
@@ -11528,7 +12041,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M21",
@@ -11536,7 +12051,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M22",
@@ -11544,7 +12061,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M23",
@@ -11553,7 +12072,9 @@
       "N",
       "R",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M24",
@@ -11562,7 +12083,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M25",
@@ -11570,7 +12093,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M26",
@@ -11578,7 +12103,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M27",
@@ -11589,7 +12116,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M28",
@@ -11599,7 +12128,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M29",
@@ -11607,7 +12138,9 @@
       "P",
       "N",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "css-M30",
@@ -11617,12 +12150,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "json",
+   "error_nodes": [],
    "workload": {
     "set": "s06-json",
     "profile": "s06-json",
@@ -11750,6 +12286,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -11809,6 +12347,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -11964,6 +12504,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "{\n  \"name\": \"inventory\",\n  \"version\": 3,\n  \"active\": true,\n  \"owner\": null,\n  \"ratio\": -1.25e-3,\n  \"tags\": [\"tools\", \"hardware\", \"caf\\u00e9\"],\n  \"items\": [\n    {\"id\": 1, \"name\": \"bolt\", \"count\": 120, \"price\": 0.25},\n    {\"id\": 2, \"name\": \"nut\", \"count\": 4, \"price\": 0.1},\n    {\"id\": 3, \"name\": \"washer\", \"count\": 0, \"price\": 0.05}\n  ],\n  \"limits\": {\n    \"max\": 1000,\n    \"min\": 0,\n    \"notes\": \"line1\\nline2 \\\"quoted\\\"\"\n  }\n}\n"
      }
     ]
@@ -11978,7 +12520,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "json-B02",
@@ -11987,12 +12531,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "yaml",
+   "error_nodes": [],
    "workload": {
     "set": "s06-yaml",
     "profile": "s06-yaml",
@@ -12152,6 +12699,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12211,6 +12760,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12372,6 +12923,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "%YAML 1.2\n---\n# Inventory configuration\nname: inventory\nversion: 3\nenabled: true\nowner: ~\ndefaults: \u0026defaults\n  retries: 3\n  timeout: 2.5\nservices:\n  api:\n    \u003c\u003c: *defaults\n    port: 8080\n    tags: [web, \"public\", 'v1']\n  worker:\n    \u003c\u003c: *defaults\n    queues:\n      - high\n      - low\n    env: {MODE: batch, DEBUG: false}\ndescription: |\n  Multi-line literal\n  block scalar.\nsummary: \u003e-\n  Folded text that\n  continues here.\nitems:\n  - id: 1\n    name: bolt\n  - id: 2\n    name: !!str 0042\n...\n"
      }
     ]
@@ -12386,7 +12939,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "yaml-B02",
@@ -12396,7 +12951,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "yaml-B03",
@@ -12406,7 +12963,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "yaml-V12",
@@ -12415,12 +12974,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "xml",
+   "error_nodes": [],
    "workload": {
     "set": "s06-xml",
     "profile": "s06-xml",
@@ -12568,6 +13130,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12627,6 +13191,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12700,6 +13266,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12727,6 +13295,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12781,6 +13351,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12855,6 +13427,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12882,6 +13456,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -12936,6 +13512,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13099,6 +13677,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?\u003e\n\u003c!DOCTYPE inventory [\n  \u003c!ELEMENT inventory (item*)\u003e\n  \u003c!ATTLIST item id CDATA #REQUIRED\u003e\n  \u003c!ENTITY company \"Acme\"\u003e\n]\u003e\n\u003c!-- Inventory export --\u003e\n\u003cinventory xmlns=\"urn:example:inventory\" xmlns:x=\"urn:example:extra\"\u003e\n  \u003citem id=\"1\"\u003e\n    \u003cname\u003ebolt\u003c/name\u003e\n    \u003ccount\u003e120\u003c/count\u003e\n    \u003cx:note\u003eMade by \u0026company; \u0026#169;\u003c/x:note\u003e\n  \u003c/item\u003e\n  \u003citem id=\"2\"\u003e\n    \u003cname\u003enut\u003c/name\u003e\n    \u003ccount\u003e4\u003c/count\u003e\n    \u003cdescription\u003e\u003c![CDATA[Small \u003cmetal\u003e part]]\u003e\u003c/description\u003e\n  \u003c/item\u003e\n  \u003c?process mode=\"fast\"?\u003e\n  \u003cempty/\u003e\n\u003c/inventory\u003e\n"
      }
     ]
@@ -13113,7 +13693,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "xml-B02",
@@ -13123,7 +13705,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "xml-V11",
@@ -13132,12 +13716,15 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "tsql",
+   "error_nodes": [],
    "workload": {
     "set": "s06-tsql",
     "profile": "s06-tsql",
@@ -13361,6 +13948,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13424,6 +14013,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13528,6 +14119,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13580,6 +14173,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13633,6 +14228,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13686,6 +14283,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13745,6 +14344,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13794,6 +14395,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13862,6 +14465,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13932,6 +14537,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -13996,6 +14603,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -14066,6 +14675,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -14132,6 +14743,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -14196,6 +14809,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -14324,6 +14939,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "SET NOCOUNT ON;\nGO\n\nCREATE TABLE dbo.Items (\n    Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,\n    Name NVARCHAR(100) NOT NULL,\n    Quantity INT NOT NULL DEFAULT 0,\n    Price DECIMAL(10, 2) NULL\n);\nGO\n\nCREATE OR ALTER PROCEDURE dbo.AddItem\n    @Name NVARCHAR(100),\n    @Quantity INT = 0\nAS\nBEGIN\n    DECLARE @Existing INT;\n    SELECT @Existing = Id FROM dbo.Items WHERE Name = @Name;\n    IF @Existing IS NULL\n    BEGIN\n        INSERT INTO dbo.Items (Name, Quantity) VALUES (@Name, @Quantity);\n    END\n    ELSE\n    BEGIN\n        UPDATE dbo.Items SET Quantity = Quantity + @Quantity WHERE Id = @Existing;\n    END\nEND\nGO\n\n-- Report items with their stock level.\nWITH Levels AS (\n    SELECT Name, Quantity,\n        CASE WHEN Quantity \u003e 100 THEN N'bulk' ELSE N'normal' END AS StockLevel\n    FROM dbo.Items\n)\nSELECT TOP (10) l.Name, l.StockLevel, COUNT(*) OVER (PARTITION BY l.StockLevel) AS LevelCount\nFROM Levels AS l\nWHERE l.Quantity \u003e= 0\nORDER BY l.Name;\nGO\n\nBEGIN TRY\n    BEGIN TRANSACTION;\n    EXEC dbo.AddItem @Name = N'bolt', @Quantity = 120;\n    COMMIT TRANSACTION;\nEND TRY\nBEGIN CATCH\n    ROLLBACK TRANSACTION;\n    THROW;\nEND CATCH\nGO\n"
      },
      {
@@ -14536,6 +15153,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": ";/* Owned synthetic r6 case. */\nSELECT 상품명, 가격2 FROM 상품;\nGO\nsp_who\nGO\nCREATE PROCEDURE dbo.Tick @n INT AS\nBEGIN\n    SET @n = @n + 1;;\n    ;WITH t AS (SELECT 1 AS v) SELECT v FROM t;;\nEND\nGO\n;WITH c AS (SELECT 1 AS x) SELECT x FROM c;;\nCREATE TABLE dbo.Memo (\n    Id INT NOT NULL CONSTRAINT PK_Memo PRIMARY KEY (Id),\n    Code VARCHAR(10) DEFAULT ('x') NOT NULL,\n    Kind INT,\n);\nALTER TABLE dbo.Memo ADD Flag BIT NOT NULL CONSTRAINT DF_Memo_Flag DEFAULT 0 WITH VALUES;\nDROP INDEX IX_Memo ON dbo.Memo WITH (ONLINE = OFF);\nCHECKPOINT 10;\nCREATE DATABASE Sample ON PRIMARY (NAME = Sample_dat, FILENAME = 'sample.mdf', SIZE = 10MB)\n    LOG ON (NAME = Sample_log, FILENAME = 'sample.ldf', FILEGROWTH = 10 %);\nBACKUP DATABASE Sample TO DISK = 'sample.bak';\nRESTORE DATABASE @db FROM DISK = @file WITH MOVE 'Sample_dat' TO 'new.mdf', MOVE Sample_log TO 'new.ldf', REPLACE, STATS = 10;\nBACKUP SERVICE MASTER KEY TO FILE = 'smk.key' ENCRYPTION BY PASSWORD = 'placeholder';\nBACKUP CERTIFICATE Cert1 TO FILE = 'cert1.cer' WITH PRIVATE KEY (FILE = 'cert1.pvk', ENCRYPTION BY PASSWORD = 'placeholder');\nRESTORE MASTER KEY FROM FILE = 'mk.key' DECRYPTION BY PASSWORD = 'placeholder' ENCRYPTION BY PASSWORD = 'placeholder';\nDECLARE @s NVARCHAR(MAX) = N'';\nSELECT @s += Code + N',' FROM dbo.Memo;\nSELECT 1 AS a WHERE @s \u003c\u003e N'';\nIF ((SELECT COUNT(*) FROM dbo.Memo) = 0) PRINT N'empty';\nSELECT a FROM (SELECT TOP 5 Id AS a FROM dbo.Memo ORDER BY Id DESC\n    UNION ALL SELECT TOP 5 Kind FROM dbo.Memo ORDER BY Kind) AS d;\nSELECT a FROM (SELECT Code AS a FROM dbo.Memo\n    UNION SELECT TOP 5 Code FROM dbo.Memo ORDER BY a OFFSET 0 ROWS) AS e;\nGO\nCHECKPOINT;\nGO\n"
      },
      {
@@ -14618,6 +15237,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "CREATE PROCEDURE dbo.Walk @n INT AS\nBEGIN\n    ;WITH s AS (SELECT 1 AS v) SELECT v FROM s;\n    WHILE (@n \u003e 0)\n    BEGIN;\n        SET @n = @n - 1;\n    END;\n    IF (@n = 0)\n    BEGIN ;WITH t AS (SELECT 2 AS w) SELECT w FROM t;\n    END\nEND\nGO\nSELECT 1 AS a;\n/* comment */;\nBEGIN\n    SELECT 2 AS b;\n    /* nested */;\n    BEGIN\n        SELECT 3 AS c;\n    END\nEND\nGO\n"
      },
      {
@@ -14875,6 +15496,8 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
       "source": null
      }
     ]
@@ -14889,7 +15512,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-B02",
@@ -14900,7 +15525,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-B03",
@@ -14910,7 +15537,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-B04",
@@ -14920,7 +15549,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-B05",
@@ -14929,7 +15560,9 @@
       "N",
       "R",
       "E"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-V16",
@@ -14939,7 +15572,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "tsql-V22",
@@ -14949,12 +15584,15 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   },
   {
    "route": "postgresql-sql",
+   "error_nodes": [],
    "workload": {
     "set": "s06-postgresql-sql",
     "profile": "s06-postgresql-sql",
@@ -15148,6 +15786,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15207,6 +15847,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15273,6 +15915,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15345,6 +15989,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15411,6 +16057,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15484,6 +16132,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15554,6 +16204,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15627,6 +16279,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15693,6 +16347,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15757,6 +16413,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15821,6 +16479,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15887,6 +16547,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -15958,6 +16620,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -16040,6 +16704,8 @@
         "E"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
@@ -16173,6 +16839,8 @@
         "Q"
        ]
       },
+      "alternatives": [],
+      "sample": null,
       "source": "CREATE TABLE items (\n    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    name text NOT NULL UNIQUE,\n    quantity integer NOT NULL DEFAULT 0 CHECK (quantity \u003e= 0),\n    price numeric(10, 2),\n    tags text[] DEFAULT '{}'\n);\n\nCREATE INDEX items_name_idx ON items USING btree (lower(name));\n\n-- Upsert a row.\nINSERT INTO items (name, quantity, price)\nVALUES ('bolt', 120, 0.25), ('nut', 4, 0.10)\nON CONFLICT (name) DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity\nRETURNING id;\n\nUPDATE items SET price = price * 1.1 WHERE quantity \u003e 100;\n\nWITH levels AS (\n    SELECT name, quantity,\n           CASE WHEN quantity \u003e 100 THEN 'bulk' ELSE 'normal' END AS level\n    FROM items\n)\nSELECT l.name, l.level, count(*) OVER (PARTITION BY l.level) AS level_count\nFROM levels AS l\nWHERE l.quantity BETWEEN 0 AND 1000\nORDER BY l.name\nLIMIT 10;\n\nCREATE FUNCTION item_total(p_name text) RETURNS numeric\nLANGUAGE sql STABLE\nAS $$ SELECT quantity * price FROM items WHERE name = p_name $$;\n\nBEGIN;\nDELETE FROM items WHERE quantity = 0;\nCOMMIT;\n"
      }
     ]
@@ -16187,7 +16855,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-B02",
@@ -16198,7 +16868,9 @@
       "E",
       "Q",
       "W"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-B03",
@@ -16208,7 +16880,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-B04",
@@ -16218,7 +16892,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-V10",
@@ -16228,7 +16904,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-V13",
@@ -16238,7 +16916,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-V16",
@@ -16248,7 +16928,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-V18",
@@ -16258,7 +16940,9 @@
       "R",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     },
     {
      "row": "postgresql-sql-L01",
@@ -16267,7 +16951,9 @@
       "N",
       "E",
       "Q"
-     ]
+     ],
+     "alternatives_status": "PENDING",
+     "alternatives": []
     }
    ]
   }
@@ -16398,6 +17084,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16425,6 +17113,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16479,6 +17169,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16551,6 +17243,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16578,6 +17272,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16658,6 +17354,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16717,6 +17415,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16744,6 +17444,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16798,6 +17500,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16818,6 +17522,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16838,6 +17544,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16858,6 +17566,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16878,6 +17588,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16898,6 +17610,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16918,6 +17632,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16938,6 +17654,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16973,6 +17691,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -16993,6 +17713,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17028,6 +17750,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_NOT_PARSED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17048,6 +17772,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17068,6 +17794,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_UNRESOLVED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17088,6 +17816,8 @@
        "expect_assessment": "BLOCKED",
        "expect_code": "SVC_INLINE_UNSUPPORTED",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       }
      ]
@@ -17299,6 +18029,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17339,6 +18071,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       },
       {
@@ -17379,6 +18113,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       }
      ]
@@ -17575,6 +18311,8 @@
        "expect_assessment": "",
        "expect_code": "",
        "covers": {},
+       "alternatives": [],
+       "sample": null,
        "source": null
       }
      ]
