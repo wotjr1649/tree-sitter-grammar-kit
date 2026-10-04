@@ -1,8 +1,15 @@
 # 변경 기록
 
-## Unreleased — release 후보 v0.1.0 준비
+## Unreleased
 
-첫 release 후보의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md)에 있다. tag, Release, package는 아직 발행하지 않았다.
+- `DeriveDeclarations`가 한 match 안에 같은 level의 node가 여럿일 때 마지막 node만 남기던 결함을 고쳤다. PostgreSQL `CREATE TABLE … PARTITION OF …`의 선언 이름이 이 결함 때문에 잘못 나왔다(#77).
+- 개발 helper `run-routes.ps1`이 capture 기대값을 잘못 직렬화하던 결함을 고쳤다(#77).
+  - capture가 하나이면 scalar가 되어 `JSON_TYPE`으로 거부됐다.
+  - capture가 0개이면 `null`, 즉 "검사하지 않음"이 됐다.
+
+## v0.1.0 — 2026-10-04
+
+첫 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md)에 있다. tag `v0.1.0`(`3625072`)과 GitHub Release로 소스만 발행했다. binary와 package는 없다.
 
 ### VERIFIED(Windows amd64, Linux amd64, macOS arm64)
 
