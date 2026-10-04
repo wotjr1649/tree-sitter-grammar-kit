@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- native CI의 요구 축과 kit 축을 분리했다(#76). 오늘의 grammar에서 정직하게 실패하는 등록 사례가 kit 결함처럼 job과 mechanism gate를 실패시켰다.
+  - 오류 tree 위의 incremental route를 BLOCKED로 둔다. route 계측이 있고 바뀐 것이 있는데 incremental·fresh 어느 parse도 node를 재사용하지 않은 edit step에서, 이전 tree와 새 incremental tree가 모두 full tree이고 그중 하나가 `has_error`인 경우다. summary·record 형식 tree는 replay가 `has_error`를 다시 계산하지 못하므로 FAIL로 남는다. tree-sitter는 오류 tree에서도 node를 재사용할 수 있지만, grammar의 오류 tree에서는 재사용할 node가 남지 않을 수 있으므로 이 무재사용을 kit 결함이 아니라 관측 불가로 취급한다. code는 `INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_<n>`이고, 다른 실패 code가 없을 때만 사례 code가 된다. 깨끗한 tree, 계측 없음, 변경 없음, fresh 재사용은 그대로 FAIL이다. S05 판정, r2 replay reducer와 qualify의 `incremental-route` gate가 같은 규칙으로 다시 계산한다.
+  - replay reducer `native-result-r2`·`oracle-set-r2`·`private-corpus-r2`를 더했다(#87). 각 r1과 같고 이 route 규칙만 더한다. r1은 그대로 남아 규칙 이전의 근거를 전과 같은 결과로 replay한다. reducer는 registration의 `reducer` id로 고른다. `tsgk qualify`는 새 CI 근거를 r2 규칙으로 판정한다.
+  - qualify는 route BLOCKED를 `KIT_CLAIM_FAILED`로 세지 않는다. kit 축은 PASS로 남고 E 의무가 BLOCKED가 되므로 칸은 `INCOMPLETE`다. FULL PASS에는 여전히 E PASS가 필요하다. 기록과 다시 계산한 route claim이 다르면 gate 실패다.
+  - `run-routes.ps1`은 oracle `query_expectations` FAIL·BLOCKED와 route BLOCKED로 job을 실패시키지 않는다. 이 결과는 요구 축 결과(Q는 `tsgk qualify`가 판정)로 보고, 실패 내용과 함께 `summary.json`의 `requirement_results`에 기록한다. 그 밖의 job 실패 조건은 그대로다. set 검증 실패, error finding, build 실패·거부, 완료되지 않은 사례, incremental equality FAIL·BLOCKED, route FAIL, query equality·fact reproduction·dynamic SQL FAIL·BLOCKED가 이에 해당한다.
+  - 결과·record schema는 claim 값(`BLOCKED` 포함)과 code를 열거하지 않으므로 revision을 올리지 않았다.
+  - 실제 route 결함이 오류 tree BLOCKED 뒤에 숨지 않도록, foundation 시험이 등록 route마다 route·gap 사례 파일(n461 제외)에 모든 step이 `NO_ERROR`인 edit 사례가 하나 이상 있는지 확인한다(#87). 지금 26 route 모두 충족한다.
+  - 알려진 한계: SVC 관측 전용 기록은 parse하지 않으므로 route claim이 없고 route gate를 거치지 않는다(#87). 이런 사례는 route 근거가 되지 않는다.
+- native `incremental_equality` claim이 앞 step의 FAIL 뒤에 비교 없는 step이 오면 BLOCKED로 덮이던 결함을 고쳤다(#76). 이제 replay처럼 step 중 가장 나쁜 값(FAIL > BLOCKED > PASS)이다.
+
 - 단계 기대값에 anchor를 더했다(#76). `contains`는 같은 type이 다른 줄에 있어도 통과하므로, 대상 구조를 잘못 parse한 사례가 통과할 수 있었다. TypeScript generic tagged template이 `binary_expression`으로 parse됐는데도 다른 곳의 `call_expression` 때문에 통과한 것이 그 예다.
   - 기대값의 선택 필드 `anchors`(`{type, start_byte, end_byte}`)는 그 step의 full tree에 정확히 그 type·byte 범위의 named node가 있어야 통과한다. 없으면 FAIL, full tree가 아니면 BLOCKED다. S05 판정, replay, qualify가 같은 규칙으로 다시 계산한다. anchor가 없는 기대값의 판정은 그대로다.
   - profile이 `tsgk-incremental/r2`·`tsgk-oracle/r2`, inventory가 `tsgk-qualification-inventory/r3`이 됐다. 형식이 틀리거나 step source 밖인 anchor는 profile에서 `EXPECT_ANCHOR_INVALID`, inventory에서 `CASE_INVALID`다. r1 profile은 이전 근거를 replay할 수 있게 anchor 없이 계속 읽는다.

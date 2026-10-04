@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
@@ -477,7 +478,8 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 	}
 	if cr.ExecutionStatus == kit.StatusCompleted {
 		foldAssessment(cr)
-		if cr.Assessment == kit.AssessFail && cr.Code == "" {
+		if cr.Assessment == kit.AssessFail && (cr.Code == "" || strings.HasPrefix(cr.Code, routeUnobservablePrefix)) {
+			// a blocked route code names the case only when nothing fails
 			cr.Code = "ORACLE_CLAIM_FAILED"
 		}
 	}
