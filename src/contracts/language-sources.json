@@ -717,7 +717,7 @@
         "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
         "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
         "S08: Windows amd64·macOS arm64 qualification",
-        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
+        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음, ENCRYPTION/DECRYPTION BY 뒤 공용 option 모양(BY CERTIFICATE c), r5부터의 빈 BEGIN END와 `;` 없는 BEGIN WITH(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
       ],
       "superseded_candidate": {
         "repository": "Crary-Systems/tree-sitter-tsql",
