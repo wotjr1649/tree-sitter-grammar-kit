@@ -538,8 +538,10 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res.Assessment = AssessNotAssessed
 	bad := func(e *Error) (QualificationResult, error) {
 		failReport(&res.Report, e)
-		res.PlatformClaims = map[string]string{} // a run that did not complete claims no platform
-		res.Explanation = append(res.Explanation, explainFailure(e))
+		// a run that did not complete claims nothing: also after aggregation (output limit,
+		// wall or cancellation), where the claims and their explanation were already set
+		res.SupportClaim, res.PlatformClaims = "BLOCKED", map[string]string{}
+		res.Explanation = []string{explainFailure(e)}
 		return res, e
 	}
 	inv, e := parseInventory(req.Inventory)

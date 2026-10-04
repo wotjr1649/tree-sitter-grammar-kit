@@ -839,6 +839,21 @@ func TestQualifyPlatformClaims(t *testing.T) {
 	if !slices.ContainsFunc(r.Explanation, func(s string) bool { return strings.Contains(s, "windows-amd64 SUPPORTED") }) {
 		t.Fatalf("explanation without platform claims: %v", r.Explanation)
 	}
+	// the same all-pass evidence ending at the output limit after aggregation claims nothing,
+	// in the fields and in the explanation
+	f = covered()
+	hosts := f.all(t, nil)
+	var hs []QualifyHost
+	for _, p := range qfxPlatforms {
+		hs = append(hs, QualifyHost{Platform: p.ID, Root: hosts[p.ID]})
+	}
+	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.OutputBytes = 100; return l }
+	r, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs})
+	testHookQualifyLimits = nil
+	if err == nil || r.SupportClaim != "BLOCKED" || len(r.PlatformClaims) != 0 ||
+		slices.ContainsFunc(r.Explanation, func(s string) bool { return strings.Contains(s, "SUPPORTED") }) {
+		t.Fatalf("output limit after aggregation: %v %s %v %v", err, r.SupportClaim, r.PlatformClaims, r.Explanation)
+	}
 
 	// another platform's requirement fails: that platform and the global claim are BLOCKED
 	f = covered()
@@ -876,7 +891,7 @@ func TestQualifyPlatformClaims(t *testing.T) {
 
 	// a finding (evidence outside the inventory on one host) blocks every platform
 	f = covered()
-	hosts := f.all(t, nil)
+	hosts = f.all(t, nil)
 	os.MkdirAll(filepath.Join(hosts["darwin-arm64"], "records", "s06-extra"), 0o755)
 	os.WriteFile(filepath.Join(hosts["darwin-arm64"], "records", "s06-extra", "manifest.json"), []byte("{}"), 0o644)
 	r = f.run(t, hosts)
@@ -918,6 +933,20 @@ func TestQualifySvcExpectedAssessment(t *testing.T) {
 		if x := run(w[0], w[1]); x.Status != CellFail || x.Checks != claimFail || x.Mechanism != AssessPass {
 			t.Fatalf("other verdict %v: %s %s %s", w, x.Status, x.Checks, x.Mechanism)
 		}
+	}
+	// a registered verdict on a tree record (not observation-only, so its code is not
+	// recomputed by the verdict gate) never confirms the registration
+	f := newQfx(t)
+	w := f.svcRole()
+	w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+	claimed := func(s string, recs []map[string]any) {
+		if s == "s06-fxs" {
+			recs[0]["assessment"], recs[0]["code"] = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		}
+	}
+	x := roleRow(f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: claimed}})), "fx-svc", "windows-amd64")
+	if x.Checks != claimFail || x.Status == CellPass {
+		t.Fatalf("tree record with a registered verdict: %s %s %s", x.Status, x.Checks, x.Mechanism)
 	}
 }
 
