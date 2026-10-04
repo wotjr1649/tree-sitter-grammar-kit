@@ -9,6 +9,7 @@
   - `run-routes.ps1`은 oracle `query_expectations` FAIL·BLOCKED와 route BLOCKED로 job을 실패시키지 않는다. 이 결과는 요구 축 결과(Q는 `tsgk qualify`가 판정)로 보고, 실패 내용과 함께 `summary.json`의 `requirement_results`에 기록한다. 그 밖의 job 실패 조건은 그대로다. set 검증 실패, error finding, build 실패·거부, 완료되지 않은 사례, incremental equality FAIL·BLOCKED, route FAIL, query equality·fact reproduction·dynamic SQL FAIL·BLOCKED가 이에 해당한다.
   - 결과·record schema는 claim 값(`BLOCKED` 포함)과 code를 열거하지 않으므로 revision을 올리지 않았다.
   - 실제 route 결함이 오류 tree BLOCKED 뒤에 숨지 않도록, foundation 시험이 등록 route마다 route·gap 사례 파일(n461 제외)에 모든 step이 `NO_ERROR`인 edit 사례가 하나 이상 있는지 확인한다(#87). 지금 26 route 모두 충족한다.
+  - 알려진 한계: SVC 관측 전용 기록은 parse하지 않으므로 route claim이 없고 route gate를 거치지 않는다(#87). 이런 사례는 route 근거가 되지 않는다.
 - native `incremental_equality` claim이 앞 step의 FAIL 뒤에 비교 없는 step이 오면 BLOCKED로 덮이던 결함을 고쳤다(#76). 이제 replay처럼 step 중 가장 나쁜 값(FAIL > BLOCKED > PASS)이다.
 
 - 단계 기대값에 anchor를 더했다(#76). `contains`는 같은 type이 다른 줄에 있어도 통과하므로, 대상 구조를 잘못 parse한 사례가 통과할 수 있었다. TypeScript generic tagged template이 `binary_expression`으로 parse됐는데도 다른 곳의 `call_expression` 때문에 통과한 것이 그 예다.
