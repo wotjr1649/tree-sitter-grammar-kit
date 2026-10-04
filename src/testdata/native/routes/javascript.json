@@ -102,6 +102,5748 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-javascript-B01-01",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a12",
+        "javascript-B01.a13",
+        "javascript-B01.a14",
+        "javascript-B01.a15",
+        "javascript-B01.a16",
+        "javascript-B01.a17",
+        "javascript-B01.a18",
+        "javascript-B01.a19",
+        "javascript-B01.a20",
+        "javascript-B01.a26",
+        "javascript-B01.a27",
+        "javascript-B01.a28",
+        "javascript-B01.a29",
+        "javascript-B01.a30",
+        "javascript-B01.a31",
+        "javascript-B01.a32",
+        "javascript-B01.a33",
+        "javascript-B01.a34",
+        "javascript-B01.a35",
+        "javascript-B01.a36",
+        "javascript-B01.a37",
+        "javascript-B01.a01",
+        "javascript-B01.a02",
+        "javascript-B01.a03",
+        "javascript-B01.a04",
+        "javascript-B01.a05",
+        "javascript-B01.a07",
+        "javascript-B01.a08",
+        "javascript-B01.a09",
+        "javascript-B01.a10",
+        "javascript-B01.a38",
+        "javascript-B01.a39",
+        "javascript-B01.a40",
+        "javascript-B01.a94",
+        "javascript-B01.a426",
+        "javascript-B01.a424",
+        "javascript-B01.a425",
+        "javascript-B01.a361",
+        "javascript-B01.a362",
+        "javascript-B01.a363",
+        "javascript-B01.a89",
+        "javascript-B01.a101",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var a\t=\u000b1\f; var b﻿= 2\r\nvar c = 3 var d = 4 var e = 5\r// line comment\n/* multi\n   line */ /**/ /***/ /* a * b / c **/\nvar f = 6\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a\t=\u000b1\f;"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var b﻿= 2"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var c = 3"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var d = 4"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var e = 5"
+            },
+            {
+              "type": "comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\n   line */"
+            },
+            {
+              "type": "comment",
+              "text": "/**/"
+            },
+            {
+              "type": "comment",
+              "text": "/***/"
+            },
+            {
+              "type": "comment",
+              "text": "/* a * b / c **/"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var f = 6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-02",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a42",
+        "javascript-B01.a43",
+        "javascript-B01.a44",
+        "javascript-B01.a45",
+        "javascript-B01.a46",
+        "javascript-B01.a47",
+        "javascript-B01.a48",
+        "javascript-B01.a49",
+        "javascript-B01.a50",
+        "javascript-B01.a51",
+        "javascript-B01.a52",
+        "javascript-B01.a54",
+        "javascript-B01.a55",
+        "javascript-B01.a223",
+        "javascript-B01.a214",
+        "javascript-B01.a215",
+        "javascript-B01.a216",
+        "javascript-B01.a217",
+        "javascript-B01.a218",
+        "javascript-B01.a219",
+        "javascript-B01.a220",
+        "javascript-B01.a221",
+        "javascript-B01.a222",
+        "javascript-B01.a193",
+        "javascript-B01.a194",
+        "javascript-B01.a168",
+        "javascript-B01.a253",
+        "javascript-B01.a56",
+        "javascript-B01.a57",
+        "javascript-B01.a58",
+        "javascript-B01.a59",
+        "javascript-B01.a60",
+        "javascript-B01.a61",
+        "javascript-B01.a62",
+        "javascript-B01.a63",
+        "javascript-B01.a64",
+        "javascript-B01.a65",
+        "javascript-B01.a66",
+        "javascript-B01.a67",
+        "javascript-B01.a68",
+        "javascript-B01.a69",
+        "javascript-B01.a70",
+        "javascript-B01.a71",
+        "javascript-B01.a72",
+        "javascript-B01.a73",
+        "javascript-B01.a74",
+        "javascript-B01.a75",
+        "javascript-B01.a76",
+        "javascript-B01.a77",
+        "javascript-B01.a78",
+        "javascript-B01.a79",
+        "javascript-B01.a80",
+        "javascript-B01.a81",
+        "javascript-B01.a82",
+        "javascript-B01.a83",
+        "javascript-B01.a84",
+        "javascript-B01.a85",
+        "javascript-B01.a86",
+        "javascript-B01.a87",
+        "javascript-B01.a88",
+        "javascript-B01.a89",
+        "javascript-B01.a90",
+        "javascript-B01.a91",
+        "javascript-B01.a92",
+        "javascript-B01.a93",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a111",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var $ = 1, _x = 2, a1 = 3, \\u0061bc = 4, ab\\u0063 = 5, ünï = 6, é = 7, 𝑥 = 8;\nvar yield = 1, let = 2, async = 3, of = 4, get = 5, set = 6, from = 7, as = 8, target = 9, meta = 10;\nvar await = 11;\nawait: for (;;) { break await; }\nyield: for (;;) { continue yield; }\nvar o = { enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 };\no.enum = o.class + o.new;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "identifier",
+            "labeled_statement",
+            "statement_identifier",
+            "object",
+            "pair",
+            "property_identifier",
+            "member_expression"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "$"
+            },
+            {
+              "type": "identifier",
+              "text": "_x"
+            },
+            {
+              "type": "identifier",
+              "text": "a1"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u0061bc"
+            },
+            {
+              "type": "identifier",
+              "text": "ab\\u0063"
+            },
+            {
+              "type": "identifier",
+              "text": "ünï"
+            },
+            {
+              "type": "identifier",
+              "text": "é"
+            },
+            {
+              "type": "identifier",
+              "text": "𝑥"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "yield = 1"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "let = 2"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "async = 3"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "of = 4"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "get = 5"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "set = 6"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "from = 7"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "as = 8"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "target = 9"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "meta = 10"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "await = 11"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "await: for (;;) { break await; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break await;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "yield: for (;;) { continue yield; }"
+            },
+            {
+              "type": "statement_identifier",
+              "text": "yield",
+              "occurrence": 2
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue yield;"
+            },
+            {
+              "type": "object",
+              "text": "{ enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 }"
+            },
+            {
+              "type": "pair",
+              "text": "enum: 1"
+            },
+            {
+              "type": "pair",
+              "text": "class: 2"
+            },
+            {
+              "type": "pair",
+              "text": "await: 37"
+            },
+            {
+              "type": "pair",
+              "text": "yield: 38"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.enum"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.class"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.new"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-03",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a145",
+        "javascript-B01.a146",
+        "javascript-B01.a148",
+        "javascript-B01.a149",
+        "javascript-B01.a150",
+        "javascript-B01.a151",
+        "javascript-B01.a152",
+        "javascript-B01.a153",
+        "javascript-B01.a154",
+        "javascript-B01.a155",
+        "javascript-B01.a156",
+        "javascript-B01.a157",
+        "javascript-B01.a158",
+        "javascript-B01.a159",
+        "javascript-B01.a160",
+        "javascript-B01.a161",
+        "javascript-B01.a162",
+        "javascript-B01.a147",
+        "javascript-B01.a164",
+        "javascript-B01.a165",
+        "javascript-B01.a166",
+        "javascript-B01.a167",
+        "javascript-B01.a168",
+        "javascript-B01.a236",
+        "javascript-B01.a163",
+        "javascript-B01.a89",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a111",
+        "javascript-B01.a112",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var n = [0, 7, 10, 1.5, .5, 5., 1e3, 1E-3, 2.5e+10, 0x1F, 0XaB, 0.0, 12.75e2];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "10",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "1.5"
+            },
+            {
+              "type": "number",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "5."
+            },
+            {
+              "type": "number",
+              "text": "1e3"
+            },
+            {
+              "type": "number",
+              "text": "1E-3"
+            },
+            {
+              "type": "number",
+              "text": "2.5e+10"
+            },
+            {
+              "type": "number",
+              "text": "0x1F"
+            },
+            {
+              "type": "number",
+              "text": "0XaB"
+            },
+            {
+              "type": "number",
+              "text": "0.0"
+            },
+            {
+              "type": "number",
+              "text": "12.75e2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-04",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a169",
+        "javascript-B01.a170",
+        "javascript-B01.a171",
+        "javascript-B01.a172",
+        "javascript-B01.a173",
+        "javascript-B01.a174",
+        "javascript-B01.a175",
+        "javascript-B01.a176",
+        "javascript-B01.a177",
+        "javascript-B01.a178",
+        "javascript-B01.a179",
+        "javascript-B01.a21",
+        "javascript-B01.a22",
+        "javascript-B01.a23",
+        "javascript-B01.a24",
+        "javascript-B01.a25",
+        "javascript-B01.a180",
+        "javascript-B01.a181",
+        "javascript-B01.a182",
+        "javascript-B01.a183",
+        "javascript-B01.a184",
+        "javascript-B01.a185",
+        "javascript-B01.a186",
+        "javascript-B01.a187",
+        "javascript-B01.a188",
+        "javascript-B01.a189",
+        "javascript-B01.a190",
+        "javascript-B01.a191",
+        "javascript-B01.a192",
+        "javascript-B01.a237",
+        "javascript-B01.a41",
+        "javascript-B01.a89",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var s = [\"\", '', \"a'b\", 'a\"b', \"\\' \\\" \\\\ \\b \\f \\n \\r \\t \\v\", '\\0', \"\\x41\\u0041\", \"\\q\\%\", 'x\\\ny', 'c\\\rr', 'd\\\r\ne', 'l\\ s', 'p\\ s'];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "string",
+            "escape_sequence",
+            "string_fragment"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"\""
+            },
+            {
+              "type": "string",
+              "text": "''"
+            },
+            {
+              "type": "string",
+              "text": "\"a'b\""
+            },
+            {
+              "type": "string",
+              "text": "'a\"b'"
+            },
+            {
+              "type": "string",
+              "text": "\"\\' \\\" \\\\ \\b \\f \\n \\r \\t \\v\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\v"
+            },
+            {
+              "type": "string",
+              "text": "'\\0'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\0"
+            },
+            {
+              "type": "string",
+              "text": "\"\\x41\\u0041\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "string",
+              "text": "\"\\q\\%\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\q"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\%"
+            },
+            {
+              "type": "string",
+              "text": "'x\\\ny'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n"
+            },
+            {
+              "type": "string",
+              "text": "'c\\\rr'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\r",
+              "occurrence": 1
+            },
+            {
+              "type": "string",
+              "text": "'d\\\r\ne'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\r\n"
+            },
+            {
+              "type": "string",
+              "text": "'l\\ s'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\ "
+            },
+            {
+              "type": "string",
+              "text": "'p\\ s'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\ "
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-05",
+      "features": [
+        "javascript-B01",
+        "javascript-B02"
+      ],
+      "alternatives": [
+        "javascript-B01.a195",
+        "javascript-B01.a196",
+        "javascript-B01.a197",
+        "javascript-B01.a198",
+        "javascript-B01.a199",
+        "javascript-B01.a200",
+        "javascript-B01.a201",
+        "javascript-B01.a202",
+        "javascript-B01.a203",
+        "javascript-B01.a204",
+        "javascript-B01.a205",
+        "javascript-B01.a206",
+        "javascript-B01.a207",
+        "javascript-B01.a208",
+        "javascript-B01.a209",
+        "javascript-B01.a210",
+        "javascript-B01.a211",
+        "javascript-B01.a212",
+        "javascript-B01.a213",
+        "javascript-B01.a06",
+        "javascript-B01.a11",
+        "javascript-B01.a230",
+        "javascript-B01.a431",
+        "javascript-B01.a430",
+        "javascript-B02.a140",
+        "javascript-B01.a75",
+        "javascript-B01.a89",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129",
+        "javascript-B01.a140",
+        "javascript-B01.a141",
+        "javascript-B01.a291",
+        "javascript-B01.a329"
+      ],
+      "source_utf8": "var a = 4, b = 2, g = 1, i = 1, x;\nvar r1 = /ab+c/gi, r2 = /[/\\]]+/, r3 = /\\//, r4 = /=/, r5 = /[]/, r6 = /a/;\nvar d = a / b / g;\na /= 2;\nx = (a) / 2 / i;\nx = a\n/b/g\nif (/re/.test(\"re\")) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "binary_expression",
+            "augmented_assignment_expression",
+            "parenthesized_expression"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/ab+c/gi"
+            },
+            {
+              "type": "regex",
+              "text": "/[/\\]]+/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\//"
+            },
+            {
+              "type": "regex",
+              "text": "/=/"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/"
+            },
+            {
+              "type": "regex",
+              "text": "/a/"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a / b / g"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a /= 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(a) / 2 / i"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a\n/b/g"
+            },
+            {
+              "type": "regex",
+              "text": "/re/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-06",
+      "features": [
+        "javascript-B01",
+        "javascript-V15"
+      ],
+      "alternatives": [
+        "javascript-B01.a426",
+        "javascript-B01.a427",
+        "javascript-B01.a428",
+        "javascript-B01.a429",
+        "javascript-B01.a277",
+        "javascript-B01.a390",
+        "javascript-V15.a02",
+        "javascript-B01.a57",
+        "javascript-B01.a66",
+        "javascript-B01.a71",
+        "javascript-B01.a73",
+        "javascript-B01.a74",
+        "javascript-B01.a79",
+        "javascript-B01.a81",
+        "javascript-B01.a85",
+        "javascript-B01.a89",
+        "javascript-B01.a91",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a115",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var a = 1\nvar b = 2\na\n++b\nfunction f() {\n  return\n  a\n}\nfunction g() { throw new Error(\"e\")\n}\ndo {} while (false) a = 3\nfor (;;) { break\n}\nvar c = 1; { 1\n2 } 3\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "update_expression",
+            "return_statement",
+            "do_statement",
+            "expression_statement",
+            "statement_block",
+            "throw_statement"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var b = 2"
+            },
+            {
+              "type": "expression_statement",
+              "text": "++b"
+            },
+            {
+              "type": "update_expression",
+              "text": "++b"
+            },
+            {
+              "type": "return_statement",
+              "text": "return"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new Error(\"e\")"
+            },
+            {
+              "type": "do_statement",
+              "text": "do {} while (false)"
+            },
+            {
+              "type": "expression_statement",
+              "text": "a = 3"
+            },
+            {
+              "type": "break_statement",
+              "text": "break"
+            },
+            {
+              "type": "statement_block",
+              "text": "{ 1\n2 }"
+            },
+            {
+              "type": "expression_statement",
+              "text": "3",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-07",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a274",
+        "javascript-B01.a275",
+        "javascript-B01.a276",
+        "javascript-B01.a277",
+        "javascript-B01.a278",
+        "javascript-B01.a279",
+        "javascript-B01.a280",
+        "javascript-B01.a281",
+        "javascript-B01.a282",
+        "javascript-B01.a283",
+        "javascript-B01.a284",
+        "javascript-B01.a285",
+        "javascript-B01.a286",
+        "javascript-B01.a287",
+        "javascript-B01.a288",
+        "javascript-B01.a289",
+        "javascript-B01.a293",
+        "javascript-B01.a294",
+        "javascript-B01.a295",
+        "javascript-B01.a296",
+        "javascript-B01.a297",
+        "javascript-B01.a298",
+        "javascript-B01.a299",
+        "javascript-B01.a300",
+        "javascript-B01.a301",
+        "javascript-B01.a302",
+        "javascript-B01.a303",
+        "javascript-B01.a304",
+        "javascript-B01.a305",
+        "javascript-B01.a306",
+        "javascript-B01.a307",
+        "javascript-B01.a308",
+        "javascript-B01.a309",
+        "javascript-B01.a310",
+        "javascript-B01.a311",
+        "javascript-B01.a312",
+        "javascript-B01.a313",
+        "javascript-B01.a314",
+        "javascript-B01.a315",
+        "javascript-B01.a316",
+        "javascript-B01.a317",
+        "javascript-B01.a318",
+        "javascript-B01.a319",
+        "javascript-B01.a320",
+        "javascript-B01.a321",
+        "javascript-B01.a322",
+        "javascript-B01.a323",
+        "javascript-B01.a324",
+        "javascript-B01.a325",
+        "javascript-B01.a326",
+        "javascript-B01.a327",
+        "javascript-B01.a339",
+        "javascript-B01.a340",
+        "javascript-B01.a272",
+        "javascript-B01.a273",
+        "javascript-B01.a65",
+        "javascript-B01.a73",
+        "javascript-B01.a77",
+        "javascript-B01.a78",
+        "javascript-B01.a88",
+        "javascript-B01.a89",
+        "javascript-B01.a90",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a103",
+        "javascript-B01.a104",
+        "javascript-B01.a105",
+        "javascript-B01.a106",
+        "javascript-B01.a107",
+        "javascript-B01.a108",
+        "javascript-B01.a109",
+        "javascript-B01.a110",
+        "javascript-B01.a111",
+        "javascript-B01.a112",
+        "javascript-B01.a113",
+        "javascript-B01.a114",
+        "javascript-B01.a115",
+        "javascript-B01.a116",
+        "javascript-B01.a117",
+        "javascript-B01.a118",
+        "javascript-B01.a119",
+        "javascript-B01.a120",
+        "javascript-B01.a121",
+        "javascript-B01.a122",
+        "javascript-B01.a123",
+        "javascript-B01.a124",
+        "javascript-B01.a125",
+        "javascript-B01.a126",
+        "javascript-B01.a127",
+        "javascript-B01.a128",
+        "javascript-B01.a129",
+        "javascript-B01.a130",
+        "javascript-B01.a131",
+        "javascript-B01.a132",
+        "javascript-B01.a133",
+        "javascript-B01.a134",
+        "javascript-B01.a135",
+        "javascript-B01.a136",
+        "javascript-B01.a137",
+        "javascript-B01.a138",
+        "javascript-B01.a139",
+        "javascript-B01.a140",
+        "javascript-B01.a141",
+        "javascript-B01.a290",
+        "javascript-B01.a291",
+        "javascript-B01.a292",
+        "javascript-B01.a328",
+        "javascript-B01.a329",
+        "javascript-B01.a330",
+        "javascript-B01.a331",
+        "javascript-B01.a332",
+        "javascript-B01.a333",
+        "javascript-B01.a334",
+        "javascript-B01.a335",
+        "javascript-B01.a336",
+        "javascript-B01.a337",
+        "javascript-B01.a338"
+      ],
+      "source_utf8": "var a = 1, b = 2, c, o = { p: 1 };\nc = a + b - a * b / a % b;\nc = a << 1 >> 1 >>> 1;\nc = a < b, a > b, a <= b, a >= b, a == b, a != b, a === b, a !== b;\nc = a & b | a ^ b, ~a, !a, a && b || c;\nc = a ? b : c;\na++; b--; ++a; --b;\na += 1; a -= 1; a *= 2; a /= 2; a %= 2; a <<= 1; a >>= 1; a >>>= 1; a &= 1; a |= 1; a ^= 1;\nc = typeof a, void 0, delete o.p, -a, +a;\nc = a instanceof Object, \"p\" in o;\nfor (var k = 0, j = (\"p\" in o) ? 1 : 0; k < 1; k++) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "unary_expression",
+            "update_expression",
+            "ternary_expression",
+            "sequence_expression",
+            "augmented_assignment_expression",
+            "assignment_expression"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1, b = 2, c, o = { p: 1 };"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a + b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a + b - a * b / a % b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b / a"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b / a % b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1 >> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1 >> 1 >>> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a > b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a <= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a >= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a == b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a != b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a === b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a !== b"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "c = a < b, a > b, a <= b, a >= b, a == b, a != b, a === b, a !== b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a & b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ^ b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a & b | a ^ b"
+            },
+            {
+              "type": "unary_expression",
+              "text": "~a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!a"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a && b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a && b || c"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "a ? b : c"
+            },
+            {
+              "type": "update_expression",
+              "text": "a++"
+            },
+            {
+              "type": "update_expression",
+              "text": "b--"
+            },
+            {
+              "type": "update_expression",
+              "text": "++a"
+            },
+            {
+              "type": "update_expression",
+              "text": "--b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a += 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a -= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a *= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a /= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a %= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a <<= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a >>= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a >>>= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a &= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a |= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ^= 1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "typeof a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "void 0"
+            },
+            {
+              "type": "unary_expression",
+              "text": "delete o.p"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "+a",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_expression",
+              "text": "a instanceof Object"
+            },
+            {
+              "type": "binary_expression",
+              "text": "\"p\" in o",
+              "occurrence": 1
+            },
+            {
+              "type": "assignment_expression",
+              "text": "c = a ? b : c"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var k = 0, j = (\"p\" in o) ? 1 : 0; k < 1; k++) {}"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(\"p\" in o)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-08",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a224",
+        "javascript-B01.a225",
+        "javascript-B01.a226",
+        "javascript-B01.a227",
+        "javascript-B01.a228",
+        "javascript-B01.a229",
+        "javascript-B01.a231",
+        "javascript-B01.a234",
+        "javascript-B01.a235",
+        "javascript-B01.a142",
+        "javascript-B01.a143",
+        "javascript-B01.a144",
+        "javascript-B01.a238",
+        "javascript-B01.a239",
+        "javascript-B01.a240",
+        "javascript-B01.a241",
+        "javascript-B01.a242",
+        "javascript-B01.a243",
+        "javascript-B01.a244",
+        "javascript-B01.a245",
+        "javascript-B01.a246",
+        "javascript-B01.a247",
+        "javascript-B01.a248",
+        "javascript-B01.a249",
+        "javascript-B01.a250",
+        "javascript-B01.a251",
+        "javascript-B01.a252",
+        "javascript-B01.a253",
+        "javascript-B01.a254",
+        "javascript-B01.a255",
+        "javascript-B01.a420",
+        "javascript-B01.a421",
+        "javascript-B01.a422",
+        "javascript-B01.a423",
+        "javascript-B01.a257",
+        "javascript-B01.a258",
+        "javascript-B01.a259",
+        "javascript-B01.a260",
+        "javascript-B01.a261",
+        "javascript-B01.a262",
+        "javascript-B01.a263",
+        "javascript-B01.a264",
+        "javascript-B01.a265",
+        "javascript-B01.a266",
+        "javascript-B01.a267",
+        "javascript-B01.a419",
+        "javascript-B01.a268",
+        "javascript-B01.a269",
+        "javascript-B01.a270",
+        "javascript-B01.a271",
+        "javascript-B01.a232",
+        "javascript-B01.a233",
+        "javascript-B01.a416",
+        "javascript-B01.a410",
+        "javascript-B01.a411",
+        "javascript-B01.a412",
+        "javascript-B01.a413",
+        "javascript-B01.a414",
+        "javascript-B01.a369",
+        "javascript-B01.a370",
+        "javascript-B01.a417",
+        "javascript-B01.a418",
+        "javascript-B01.a256",
+        "javascript-B01.a368",
+        "javascript-B01.a71",
+        "javascript-B01.a74",
+        "javascript-B01.a75",
+        "javascript-B01.a79",
+        "javascript-B01.a80",
+        "javascript-B01.a81",
+        "javascript-B01.a84",
+        "javascript-B01.a86",
+        "javascript-B01.a89",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a111",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var o = { a: 1, \"b\": 2, 3: 3, get g() { return this.a; }, set g(v) { this.a = v; }, if: 1, };\nvar e = {}, arr = [], arr2 = [1, , 2, ], arr3 = [, ,], arr4 = [1, 2];\nvar f = function () { return this; }, named = function n(x, y) { return x; };\nvar v = o.a + o[\"b\"] + new Date().getTime() + new Date + f()(1) + o.g.toString()[0] + f().a;\nvar p = (1, 2);\nvar q = null, t = true, u = false;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object",
+            "pair",
+            "method_definition",
+            "array",
+            "function_expression",
+            "formal_parameters",
+            "member_expression",
+            "subscript_expression",
+            "new_expression",
+            "call_expression",
+            "parenthesized_expression",
+            "null",
+            "true",
+            "false",
+            "this"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{ a: 1, \"b\": 2, 3: 3, get g() { return this.a; }, set g(v) { this.a = v; }, if: 1, }"
+            },
+            {
+              "type": "pair",
+              "text": "a: 1"
+            },
+            {
+              "type": "pair",
+              "text": "\"b\": 2"
+            },
+            {
+              "type": "pair",
+              "text": "3: 3"
+            },
+            {
+              "type": "method_definition",
+              "text": "get g() { return this.a; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set g(v) { this.a = v; }"
+            },
+            {
+              "type": "pair",
+              "text": "if: 1"
+            },
+            {
+              "type": "object",
+              "text": "{}"
+            },
+            {
+              "type": "array",
+              "text": "[]"
+            },
+            {
+              "type": "array",
+              "text": "[1, , 2, ]"
+            },
+            {
+              "type": "array",
+              "text": "[, ,]"
+            },
+            {
+              "type": "array",
+              "text": "[1, 2]"
+            },
+            {
+              "type": "function_expression",
+              "text": "function () { return this; }"
+            },
+            {
+              "type": "function_expression",
+              "text": "function n(x, y) { return x; }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(x, y)"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.a"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "o[\"b\"]"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Date()"
+            },
+            {
+              "type": "call_expression",
+              "text": "new Date().getTime()"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Date",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "f()(1)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "o.g.toString()[0]"
+            },
+            {
+              "type": "member_expression",
+              "text": "f().a"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(1, 2)"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "1, 2",
+              "occurrence": 2
+            },
+            {
+              "type": "null",
+              "text": "null"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "this",
+              "text": "this",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B01-09",
+      "features": [
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B01.a341",
+        "javascript-B01.a342",
+        "javascript-B01.a343",
+        "javascript-B01.a344",
+        "javascript-B01.a345",
+        "javascript-B01.a346",
+        "javascript-B01.a347",
+        "javascript-B01.a348",
+        "javascript-B01.a349",
+        "javascript-B01.a350",
+        "javascript-B01.a351",
+        "javascript-B01.a352",
+        "javascript-B01.a353",
+        "javascript-B01.a354",
+        "javascript-B01.a363",
+        "javascript-B01.a364",
+        "javascript-B01.a361",
+        "javascript-B01.a362",
+        "javascript-B01.a360",
+        "javascript-B01.a359",
+        "javascript-B01.a365",
+        "javascript-B01.a366",
+        "javascript-B01.a367",
+        "javascript-B01.a368",
+        "javascript-B01.a371",
+        "javascript-B01.a372",
+        "javascript-B01.a373",
+        "javascript-B01.a374",
+        "javascript-B01.a357",
+        "javascript-B01.a358",
+        "javascript-B01.a375",
+        "javascript-B01.a376",
+        "javascript-B01.a377",
+        "javascript-B01.a378",
+        "javascript-B01.a379",
+        "javascript-B01.a380",
+        "javascript-B01.a381",
+        "javascript-B01.a382",
+        "javascript-B01.a383",
+        "javascript-B01.a384",
+        "javascript-B01.a385",
+        "javascript-B01.a386",
+        "javascript-B01.a387",
+        "javascript-B01.a388",
+        "javascript-B01.a389",
+        "javascript-B01.a391",
+        "javascript-B01.a392",
+        "javascript-B01.a393",
+        "javascript-B01.a394",
+        "javascript-B01.a395",
+        "javascript-B01.a396",
+        "javascript-B01.a397",
+        "javascript-B01.a398",
+        "javascript-B01.a399",
+        "javascript-B01.a400",
+        "javascript-B01.a401",
+        "javascript-B01.a402",
+        "javascript-B01.a403",
+        "javascript-B01.a404",
+        "javascript-B01.a405",
+        "javascript-B01.a406",
+        "javascript-B01.a408",
+        "javascript-B01.a407",
+        "javascript-B01.a409",
+        "javascript-B01.a415",
+        "javascript-B01.a356",
+        "javascript-B01.a355",
+        "javascript-B01.a57",
+        "javascript-B01.a58",
+        "javascript-B01.a59",
+        "javascript-B01.a62",
+        "javascript-B01.a63",
+        "javascript-B01.a64",
+        "javascript-B01.a66",
+        "javascript-B01.a67",
+        "javascript-B01.a72",
+        "javascript-B01.a73",
+        "javascript-B01.a74",
+        "javascript-B01.a75",
+        "javascript-B01.a77",
+        "javascript-B01.a79",
+        "javascript-B01.a81",
+        "javascript-B01.a83",
+        "javascript-B01.a85",
+        "javascript-B01.a87",
+        "javascript-B01.a89",
+        "javascript-B01.a91",
+        "javascript-B01.a92",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a103",
+        "javascript-B01.a104",
+        "javascript-B01.a115",
+        "javascript-B01.a116",
+        "javascript-B01.a123",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "function f(x) {\n  var a = 1, b;\n  ;\n  if (x) a = 2; else { a = 3; }\n  if (!x) b = 1;\n  do a--; while (a > 0);\n  while (a < 3) a++;\n  for (a = 0; a < 2; a++) {}\n  for (;;) break;\n  for (var i = 0, j = 1; i < j; i++) continue;\n  for (b in x) {}\n  for (var k in x) {}\n  outer: for (var m in x) { continue outer; }\n  inner: { break inner; }\n  with (x) { a = b; }\n  switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }\n  switch (a) { }\n  switch (a) { default: }\n  try { throw new Error(\"e\"); } catch (err) { a = err; }\n  try {} finally {}\n  try {} catch (e2) {} finally {}\n  debugger;\n  return a;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "variable_declaration",
+            "empty_statement",
+            "if_statement",
+            "else_clause",
+            "do_statement",
+            "while_statement",
+            "for_statement",
+            "for_in_statement",
+            "continue_statement",
+            "break_statement",
+            "labeled_statement",
+            "with_statement",
+            "switch_statement",
+            "switch_body",
+            "switch_case",
+            "switch_default",
+            "try_statement",
+            "catch_clause",
+            "finally_clause",
+            "throw_statement",
+            "debugger_statement",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function f(x) {\n  var a = 1, b;\n  ;\n  if (x) a = 2; else { a = 3; }\n  if (!x) b = 1;\n  do a--; while (a > 0);\n  while (a < 3) a++;\n  for (a = 0; a < 2; a++) {}\n  for (;;) break;\n  for (var i = 0, j = 1; i < j; i++) continue;\n  for (b in x) {}\n  for (var k in x) {}\n  outer: for (var m in x) { continue outer; }\n  inner: { break inner; }\n  with (x) { a = b; }\n  switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }\n  switch (a) { }\n  switch (a) { default: }\n  try { throw new Error(\"e\"); } catch (err) { a = err; }\n  try {} finally {}\n  try {} catch (e2) {} finally {}\n  debugger;\n  return a;\n}"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1, b;"
+            },
+            {
+              "type": "empty_statement",
+              "text": ";",
+              "occurrence": 2
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x) a = 2; else { a = 3; }"
+            },
+            {
+              "type": "else_clause",
+              "text": "else { a = 3; }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (!x) b = 1;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do a--; while (a > 0);"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (a < 3) a++;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (a = 0; a < 2; a++) {}"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) break;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var i = 0, j = 1; i < j; i++) continue;"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (b in x) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var k in x) {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "outer: for (var m in x) { continue outer; }"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue outer;"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "inner: { break inner; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break inner;"
+            },
+            {
+              "type": "break_statement",
+              "text": "break;",
+              "occurrence": 1
+            },
+            {
+              "type": "with_statement",
+              "text": "with (x) { a = b; }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 1: a = 2; break;"
+            },
+            {
+              "type": "switch_default",
+              "text": "default: a = 3;"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 2:"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 3:"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { }"
+            },
+            {
+              "type": "switch_body",
+              "text": "{ }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { default: }"
+            },
+            {
+              "type": "switch_default",
+              "text": "default:",
+              "occurrence": 2
+            },
+            {
+              "type": "try_statement",
+              "text": "try { throw new Error(\"e\"); } catch (err) { a = err; }"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new Error(\"e\");"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (err) { a = err; }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} finally {}"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally {}",
+              "occurrence": 1
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} catch (e2) {} finally {}"
+            },
+            {
+              "type": "debugger_statement",
+              "text": "debugger;"
+            },
+            {
+              "type": "return_statement",
+              "text": "return a;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-01",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a108",
+        "javascript-V15.a109",
+        "javascript-V15.a110",
+        "javascript-V15.a111",
+        "javascript-V15.a112",
+        "javascript-V15.a113",
+        "javascript-V15.a114",
+        "javascript-V15.a116",
+        "javascript-V15.a117",
+        "javascript-V15.a118",
+        "javascript-V15.a119",
+        "javascript-V15.a120",
+        "javascript-V15.a121",
+        "javascript-V15.a122",
+        "javascript-V15.a123",
+        "javascript-V15.a124",
+        "javascript-V15.a125",
+        "javascript-V15.a126",
+        "javascript-V15.a127",
+        "javascript-V15.a128",
+        "javascript-V15.a129",
+        "javascript-V15.a130",
+        "javascript-B01.a369",
+        "javascript-V15.a131",
+        "javascript-V15.a132",
+        "javascript-V15.a133",
+        "javascript-B01.a370",
+        "javascript-V15.a115",
+        "javascript-V15.a106",
+        "javascript-B01.a364",
+        "javascript-V15.a134",
+        "javascript-V15.a135",
+        "javascript-V15.a136",
+        "javascript-V15.a137",
+        "javascript-V15.a138",
+        "javascript-V15.a139",
+        "javascript-V15.a140",
+        "javascript-V15.a141",
+        "javascript-V15.a87",
+        "javascript-V15.a88",
+        "javascript-V15.a89",
+        "javascript-V15.a90",
+        "javascript-V15.a91",
+        "javascript-V15.a92",
+        "javascript-V15.a93",
+        "javascript-V15.a94",
+        "javascript-V15.a95",
+        "javascript-V15.a96",
+        "javascript-V15.a97",
+        "javascript-V15.a98",
+        "javascript-V15.a99",
+        "javascript-V15.a100",
+        "javascript-V15.a101",
+        "javascript-V15.a102",
+        "javascript-V15.a103",
+        "javascript-V15.a104",
+        "javascript-V15.a64",
+        "javascript-V15.a63",
+        "javascript-V15.a65",
+        "javascript-V15.a62",
+        "javascript-B01.a59",
+        "javascript-B01.a61",
+        "javascript-B01.a73",
+        "javascript-B01.a77",
+        "javascript-B01.a87",
+        "javascript-B01.a89",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-V15.a16",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a103",
+        "javascript-B01.a115",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "let a = 1, b;\nconst c = 2;\nlet [x, , y = 3, ...rest] = [1, 2, 3];\nconst { p, q: { r } = {}, s = 4, [k]: comp, } = obj;\nvar [z] = arr, { w } = obj, [...[v1, v2]] = arr, [, ...{ length }] = arr;\nconst {} = obj, [] = arr, [,] = arr;\nfor (let i = 0; i < 1; i++) {}\nfor (const key in obj) {}\nfor (let [m, n] of pairs) {}\nfor (var e of arr) {}\nfor (x of arr) {}\nfor (const { u } of objs) {}\nfor (var [f1] in obj) {}\n[a, b] = [b, a];\n[, ...[d]] = arr;\n[...rest] = arr;\n[] = arr;\n[a, , b = 1, ...[c2]] = arr;\n({ a, b: [b2 = 1, ...more], c: { d2 } = {}, e2 = 5, } = obj);\n({} = obj);\ntry {} catch ({ message }) {}\ntry {} catch ([first]) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "variable_declarator",
+            "array_pattern",
+            "object_pattern",
+            "pair_pattern",
+            "shorthand_property_identifier_pattern",
+            "assignment_pattern",
+            "rest_pattern",
+            "computed_property_name",
+            "object_assignment_pattern",
+            "for_statement",
+            "for_in_statement",
+            "assignment_expression",
+            "catch_clause"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "let a = 1, b;"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "const c = 2;"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[x, , y = 3, ...rest]"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "y = 3"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ p, q: { r } = {}, s = 4, [k]: comp, }"
+            },
+            {
+              "type": "pair_pattern",
+              "text": "q: { r } = {}"
+            },
+            {
+              "type": "object_assignment_pattern",
+              "text": "s = 4"
+            },
+            {
+              "type": "pair_pattern",
+              "text": "[k]: comp"
+            },
+            {
+              "type": "computed_property_name",
+              "text": "[k]"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var [z] = arr, { w } = obj, [...[v1, v2]] = arr, [, ...{ length }] = arr;"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...[v1, v2]"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...{ length }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{}",
+              "occurrence": 2
+            },
+            {
+              "type": "array_pattern",
+              "text": "[]",
+              "occurrence": 1
+            },
+            {
+              "type": "array_pattern",
+              "text": "[,]"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (let i = 0; i < 1; i++) {}"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "let i = 0;"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (const key in obj) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (let [m, n] of pairs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var e of arr) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (x of arr) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (const { u } of objs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var [f1] in obj) {}"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[a, b] = [b, a]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[a, b]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[, ...[d]]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[...rest]"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[] = arr",
+              "occurrence": 2
+            },
+            {
+              "type": "array_pattern",
+              "text": "[a, , b = 1, ...[c2]]"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, b: [b2 = 1, ...more], c: { d2 } = {}, e2 = 5, }"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[b2 = 1, ...more]"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "{ d2 } = {}"
+            },
+            {
+              "type": "object_assignment_pattern",
+              "text": "e2 = 5"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "{} = obj",
+              "occurrence": 2
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch ({ message }) {}"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ message }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch ([first]) {}"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[first]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-02",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a143",
+        "javascript-V15.a144",
+        "javascript-V15.a145",
+        "javascript-V15.a218",
+        "javascript-V15.a147",
+        "javascript-V15.a148",
+        "javascript-V15.a149",
+        "javascript-V15.a150",
+        "javascript-V15.a151",
+        "javascript-V15.a152",
+        "javascript-V15.a153",
+        "javascript-V15.a53",
+        "javascript-V15.a54",
+        "javascript-V15.a55",
+        "javascript-V15.a56",
+        "javascript-V15.a57",
+        "javascript-V15.a60",
+        "javascript-V15.a58",
+        "javascript-V15.a59",
+        "javascript-V15.a83",
+        "javascript-V15.a84",
+        "javascript-V15.a61",
+        "javascript-V15.a154",
+        "javascript-V15.a155",
+        "javascript-V15.a142",
+        "javascript-V15.a159",
+        "javascript-V15.a160",
+        "javascript-V15.a86",
+        "javascript-B01.a61",
+        "javascript-B01.a74",
+        "javascript-B01.a81",
+        "javascript-B01.a93",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-V15.a16",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a111",
+        "javascript-B01.a113",
+        "javascript-B01.a128",
+        "javascript-B01.a129",
+        "javascript-V15.a17",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "function f(a, b = 2, ...rest) { return [...rest, a]; }\nfunction g({ x, y } = {}, [z] = [], ...[w]) {}\nfunction h(...args) {}\nconst i = () => 1, j = x => x * 2, k = (x, y) => { return x + y; }, l = (...args) => args;\nconst m = ([a], { b }) => a + b, n = (a, ...[b]) => b, n2 = (x, ...{ length }) => length, n3 = ({ a } = {}) => a;\nf(...[1, 2], 3, ...arr);\nconst o2 = { x, y, method() {}, *gen() { yield 1; }, [\"comp\" + 1]: 1, get [k]() { return 1; }, set [k](v) {} };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "formal_parameters",
+            "assignment_pattern",
+            "rest_pattern",
+            "arrow_function",
+            "spread_element",
+            "array",
+            "object",
+            "shorthand_property_identifier",
+            "method_definition",
+            "computed_property_name",
+            "call_expression"
+          ],
+          "anchors": [
+            {
+              "type": "formal_parameters",
+              "text": "(a, b = 2, ...rest)"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "b = 2"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "spread_element",
+              "text": "...rest",
+              "occurrence": 2
+            },
+            {
+              "type": "formal_parameters",
+              "text": "({ x, y } = {}, [z] = [], ...[w])"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "{ x, y } = {}"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "[z] = []"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...[w]"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(...args)",
+              "occurrence": 1
+            },
+            {
+              "type": "arrow_function",
+              "text": "() => 1"
+            },
+            {
+              "type": "arrow_function",
+              "text": "x => x * 2"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(x, y) => { return x + y; }"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(...args) => args"
+            },
+            {
+              "type": "arrow_function",
+              "text": "([a], { b }) => a + b"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(a, ...[b]) => b"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(x, ...{ length }) => length"
+            },
+            {
+              "type": "arrow_function",
+              "text": "({ a } = {}) => a"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(...[1, 2], 3, ...arr)"
+            },
+            {
+              "type": "spread_element",
+              "text": "...[1, 2]"
+            },
+            {
+              "type": "spread_element",
+              "text": "...arr"
+            },
+            {
+              "type": "shorthand_property_identifier",
+              "text": "x",
+              "occurrence": 7
+            },
+            {
+              "type": "method_definition",
+              "text": "method() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*gen() { yield 1; }"
+            },
+            {
+              "type": "pair",
+              "text": "[\"comp\" + 1]: 1"
+            },
+            {
+              "type": "computed_property_name",
+              "text": "[\"comp\" + 1]"
+            },
+            {
+              "type": "method_definition",
+              "text": "get [k]() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set [k](v) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-03",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a164",
+        "javascript-V15.a166",
+        "javascript-V15.a167",
+        "javascript-V15.a168",
+        "javascript-V15.a169",
+        "javascript-V15.a170",
+        "javascript-V15.a171",
+        "javascript-V15.a172",
+        "javascript-V15.a173",
+        "javascript-V15.a174",
+        "javascript-V15.a154",
+        "javascript-V15.a155",
+        "javascript-B01.a420",
+        "javascript-B01.a421",
+        "javascript-V15.a82",
+        "javascript-V15.a76",
+        "javascript-V15.a77",
+        "javascript-V15.a74",
+        "javascript-V15.a75",
+        "javascript-V15.a80",
+        "javascript-V15.a78",
+        "javascript-V15.a79",
+        "javascript-V15.a156",
+        "javascript-V15.a158",
+        "javascript-V15.a159",
+        "javascript-V15.a160",
+        "javascript-V15.a161",
+        "javascript-V15.a162",
+        "javascript-V15.a163",
+        "javascript-V15.a85",
+        "javascript-V15.a50",
+        "javascript-V15.a51",
+        "javascript-V15.a105",
+        "javascript-V15.a107",
+        "javascript-V15.a01",
+        "javascript-V15.a18",
+        "javascript-B01.a60",
+        "javascript-B01.a61",
+        "javascript-B01.a70",
+        "javascript-B01.a74",
+        "javascript-B01.a79",
+        "javascript-B01.a81",
+        "javascript-B01.a82",
+        "javascript-B01.a84",
+        "javascript-B01.a93",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a100",
+        "javascript-V15.a16",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a111",
+        "javascript-B01.a113",
+        "javascript-B01.a129",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "class A { constructor() { this.x = 1; } m() { return 1; } static s() {} get g() { return 1; } set g(v) {} *gen() {} ['c' + 1]() {} static ['d']() {} ; }\nclass B extends A { constructor(...args) { super(...args); new.target; } m() { return super.m() + super['m'](); } }\nconst C = class {}, D = class Named extends (A) {}, E = class extends B {};\nfunction* gen() { yield; yield 1; yield* [2]; const x = yield; }\nconst ge = function* () {}, ge2 = function* named() {};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "method_definition",
+            "class_heritage",
+            "super",
+            "meta_property",
+            "class",
+            "generator_function_declaration",
+            "generator_function",
+            "yield_expression",
+            "computed_property_name"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class A { constructor() { this.x = 1; } m() { return 1; } static s() {} get g() { return 1; } set g(v) {} *gen() {} ['c' + 1]() {} static ['d']() {} ; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "constructor() { this.x = 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "m() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "static s() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "get g() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set g(v) {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*gen() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "['c' + 1]() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static ['d']() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B extends A { constructor(...args) { super(...args); new.target; } m() { return super.m() + super['m'](); } }"
+            },
+            {
+              "type": "class_heritage",
+              "text": "extends A"
+            },
+            {
+              "type": "call_expression",
+              "text": "super(...args)"
+            },
+            {
+              "type": "meta_property",
+              "text": "new.target"
+            },
+            {
+              "type": "member_expression",
+              "text": "super.m"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "super['m']"
+            },
+            {
+              "type": "class",
+              "text": "class {}"
+            },
+            {
+              "type": "class",
+              "text": "class Named extends (A) {}"
+            },
+            {
+              "type": "class_heritage",
+              "text": "extends (A)"
+            },
+            {
+              "type": "class",
+              "text": "class extends B {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* gen() { yield; yield 1; yield* [2]; const x = yield; }"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield",
+              "occurrence": 1
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield* [2]"
+            },
+            {
+              "type": "generator_function",
+              "text": "function* () {}"
+            },
+            {
+              "type": "generator_function",
+              "text": "function* named() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-04",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a52",
+        "javascript-V15.a66",
+        "javascript-V15.a67",
+        "javascript-V15.a68",
+        "javascript-V15.a69",
+        "javascript-V15.a70",
+        "javascript-V15.a71",
+        "javascript-V15.a72",
+        "javascript-V15.a31",
+        "javascript-V15.a32",
+        "javascript-V15.a33",
+        "javascript-V15.a34",
+        "javascript-V15.a35",
+        "javascript-V15.a36",
+        "javascript-V15.a37",
+        "javascript-V15.a38",
+        "javascript-V15.a39",
+        "javascript-V15.a40",
+        "javascript-V15.a41",
+        "javascript-V15.a42",
+        "javascript-V15.a43",
+        "javascript-V15.a44",
+        "javascript-V15.a45",
+        "javascript-V15.a46",
+        "javascript-V15.a47",
+        "javascript-V15.a48",
+        "javascript-V15.a15",
+        "javascript-V15.a03",
+        "javascript-V15.a04",
+        "javascript-V15.a05",
+        "javascript-V15.a06",
+        "javascript-V15.a07",
+        "javascript-V15.a08",
+        "javascript-V15.a09",
+        "javascript-V15.a10",
+        "javascript-V15.a11",
+        "javascript-V15.a12",
+        "javascript-V15.a13",
+        "javascript-V15.a14",
+        "javascript-V15.a73",
+        "javascript-V15.a81",
+        "javascript-V15.a30",
+        "javascript-V15.a49",
+        "javascript-B01.a21",
+        "javascript-B01.a61",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const t1 = `plain`, t2 = `a${1}b${2}c`, t3 = tag`x${1}y`, t4 = `line\ntwo`, t5 = `\\n\\x41A\\u{41}\\0 \\``, t6 = `$ {} $`, t7 = `a\\\nb`, t8 = `${`nested`}`;\na.b`t`;\nf()`t${t1}`;\nconst u = \"\\u{1F600}\", \\u{62}c = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "template_string",
+            "template_substitution",
+            "call_expression",
+            "escape_sequence",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "template_string",
+              "text": "`plain`"
+            },
+            {
+              "type": "template_string",
+              "text": "`a${1}b${2}c`"
+            },
+            {
+              "type": "template_substitution",
+              "text": "${1}",
+              "occurrence": 1
+            },
+            {
+              "type": "template_substitution",
+              "text": "${2}"
+            },
+            {
+              "type": "call_expression",
+              "text": "tag`x${1}y`"
+            },
+            {
+              "type": "template_string",
+              "text": "`line\ntwo`"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\n\\x41A\\u{41}\\0 \\``"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{41}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\`"
+            },
+            {
+              "type": "template_string",
+              "text": "`$ {} $`"
+            },
+            {
+              "type": "template_string",
+              "text": "`a\\\nb`"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n"
+            },
+            {
+              "type": "template_string",
+              "text": "`${`nested`}`"
+            },
+            {
+              "type": "template_string",
+              "text": "`nested`"
+            },
+            {
+              "type": "call_expression",
+              "text": "a.b`t`"
+            },
+            {
+              "type": "call_expression",
+              "text": "f()`t${t1}`"
+            },
+            {
+              "type": "string",
+              "text": "\"\\u{1F600}\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{1F600}"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u{62}c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-05",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a19",
+        "javascript-V15.a20",
+        "javascript-V15.a21",
+        "javascript-V15.a22",
+        "javascript-V15.a23",
+        "javascript-V15.a24",
+        "javascript-V15.a25",
+        "javascript-V15.a26",
+        "javascript-V15.a27",
+        "javascript-V15.a28",
+        "javascript-V15.a29",
+        "javascript-B01.a61",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const n = [0b1010, 0B11, 0o17, 0O7, 0b0, 0o0];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "0b1010"
+            },
+            {
+              "type": "number",
+              "text": "0B11"
+            },
+            {
+              "type": "number",
+              "text": "0o17"
+            },
+            {
+              "type": "number",
+              "text": "0O7"
+            },
+            {
+              "type": "number",
+              "text": "0b0"
+            },
+            {
+              "type": "number",
+              "text": "0o0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-06",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a175",
+        "javascript-V15.a176",
+        "javascript-V15.a177",
+        "javascript-V15.a178",
+        "javascript-V15.a179",
+        "javascript-V15.a180",
+        "javascript-V15.a181",
+        "javascript-V15.a183",
+        "javascript-V15.a184",
+        "javascript-V15.a185",
+        "javascript-V15.a186",
+        "javascript-V15.a187",
+        "javascript-V15.a188",
+        "javascript-V15.a189",
+        "javascript-V15.a190",
+        "javascript-V15.a191",
+        "javascript-V15.a192",
+        "javascript-V15.a193",
+        "javascript-V15.a194",
+        "javascript-V15.a195",
+        "javascript-V15.a196",
+        "javascript-V15.a197",
+        "javascript-V15.a198",
+        "javascript-V15.a199",
+        "javascript-V15.a200",
+        "javascript-V15.a201",
+        "javascript-V15.a202",
+        "javascript-V15.a203",
+        "javascript-V15.a204",
+        "javascript-V15.a205",
+        "javascript-V15.a206",
+        "javascript-V15.a209",
+        "javascript-V15.a210",
+        "javascript-V15.a211",
+        "javascript-V15.a212",
+        "javascript-V15.a213",
+        "javascript-V15.a214",
+        "javascript-V15.a215",
+        "javascript-V15.a216",
+        "javascript-V15.a217",
+        "javascript-V15.a182",
+        "javascript-V15.a146",
+        "javascript-B01.a356",
+        "javascript-B01.a60",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a74",
+        "javascript-B01.a76",
+        "javascript-B01.a89",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a113",
+        "javascript-B01.a129",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "import def from \"./a.js\";\nimport * as ns from \"./b.js\";\nimport { x, y as z, } from \"./c.js\";\nimport {} from \"./d.js\";\nimport def2, * as ns2 from \"./e.js\";\nimport def3, { w } from \"./f.js\";\nimport { q } from \"./g.js\";\nimport \"./side-effect.js\";\nexport var v = 1;\nexport let l = 2;\nexport function fn() {}\nexport function* gfn() {}\nexport class K {}\nexport { v as vv, fn as fn2, };\nexport {};\nexport { z };\nexport * from \"./h.js\";\nexport { x as xx, y } from \"./i.js\";\nexport default function () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_clause",
+            "namespace_import",
+            "named_imports",
+            "import_specifier",
+            "string",
+            "export_statement",
+            "export_clause",
+            "export_specifier",
+            "function_declaration",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import def from \"./a.js\";"
+            },
+            {
+              "type": "import_clause",
+              "text": "def",
+              "occurrence": 1
+            },
+            {
+              "type": "import_statement",
+              "text": "import * as ns from \"./b.js\";"
+            },
+            {
+              "type": "namespace_import",
+              "text": "* as ns",
+              "occurrence": 1
+            },
+            {
+              "type": "named_imports",
+              "text": "{ x, y as z, }"
+            },
+            {
+              "type": "import_specifier",
+              "text": "y as z"
+            },
+            {
+              "type": "import_statement",
+              "text": "import {} from \"./d.js\";"
+            },
+            {
+              "type": "named_imports",
+              "text": "{}",
+              "occurrence": 1
+            },
+            {
+              "type": "import_clause",
+              "text": "def2, * as ns2"
+            },
+            {
+              "type": "import_clause",
+              "text": "def3, { w }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import { q } from \"./g.js\";"
+            },
+            {
+              "type": "import_statement",
+              "text": "import \"./side-effect.js\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export var v = 1;"
+            },
+            {
+              "type": "export_statement",
+              "text": "export let l = 2;"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function fn() {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* gfn() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class K {}"
+            },
+            {
+              "type": "export_clause",
+              "text": "{ v as vv, fn as fn2, }"
+            },
+            {
+              "type": "export_specifier",
+              "text": "v as vv"
+            },
+            {
+              "type": "export_statement",
+              "text": "export {};"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { z };"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * from \"./h.js\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { x as xx, y } from \"./i.js\";"
+            },
+            {
+              "type": "export_specifier",
+              "text": "x as xx"
+            },
+            {
+              "type": "export_statement",
+              "text": "export default function () {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-07",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a207",
+        "javascript-V15.a165",
+        "javascript-B01.a60",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a95"
+      ],
+      "source_utf8": "export default class {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "class"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default class {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-08",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a206",
+        "javascript-V15.a157",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a74",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a113",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "export default function* () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "generator_function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default function* () {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V15-09",
+      "features": [
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V15.a208",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a111",
+        "javascript-B01.a113",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "export default (1 + 2) * 3;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default (1 + 2) * 3;"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(1 + 2) * 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-01",
+      "features": [
+        "javascript-V16",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V16.a26",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a112",
+        "javascript-V16.a01",
+        "javascript-B01.a129",
+        "javascript-V16.a02",
+        "javascript-V16.a28"
+      ],
+      "source_utf8": "let n = 2 ** 3 ** 2;\nn **= 2;\nlet m = (-2) ** 2, m2 = 2 ** -1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "augmented_assignment_expression",
+            "unary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "2 ** 3 ** 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "3 ** 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "n **= 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(-2) ** 2"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(-2)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 ** -1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-02",
+      "features": [
+        "javascript-V16",
+        "javascript-B01",
+        "javascript-V15"
+      ],
+      "alternatives": [
+        "javascript-V16.a53",
+        "javascript-V16.a55",
+        "javascript-V16.a57",
+        "javascript-V16.a56",
+        "javascript-V16.a58",
+        "javascript-V16.a25",
+        "javascript-V16.a40",
+        "javascript-V16.a41",
+        "javascript-V16.a42",
+        "javascript-V16.a43",
+        "javascript-V16.a44",
+        "javascript-V16.a45",
+        "javascript-V16.a48",
+        "javascript-V16.a50",
+        "javascript-V16.a51",
+        "javascript-V16.a52",
+        "javascript-V16.a46",
+        "javascript-V16.a47",
+        "javascript-V16.a20",
+        "javascript-V16.a21",
+        "javascript-V16.a31",
+        "javascript-V16.a32",
+        "javascript-V16.a27",
+        "javascript-V16.a35",
+        "javascript-V16.a36",
+        "javascript-V16.a37",
+        "javascript-V16.a39",
+        "javascript-V16.a24",
+        "javascript-V16.a22",
+        "javascript-B01.a56",
+        "javascript-B01.a60",
+        "javascript-B01.a61",
+        "javascript-B01.a73",
+        "javascript-B01.a74",
+        "javascript-B01.a89",
+        "javascript-B01.a93",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a113",
+        "javascript-B01.a129",
+        "javascript-V15.a17",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "async function af(a, b,) { await af(a, b,); for await (const x of xs) {} for await (y of xs) {} for await (var v of xs) {} }\nconst aa = async () => {}, ab = async x => x, ac = async (x, y) => await x, ad = async function () {}, ae = async function named() {};\nconst af2 = async x => { await x; }, ag2 = async (x,) => x;\nconst obj = { async m() {}, async *ag() { yield 1; }, async [k]() {} };\nclass C { async m() {} async *ag() {} static async s() {} }\nasync function* agen() { yield* other(); yield await 1; }\nconst age = async function* () {}, age2 = async function* named() {};\nconst p = (a, b,) => a;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "await_expression",
+            "for_in_statement",
+            "arrow_function",
+            "function_expression",
+            "method_definition",
+            "generator_function_declaration",
+            "generator_function",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "async function af(a, b,) { await af(a, b,); for await (const x of xs) {} for await (y of xs) {} for await (var v of xs) {} }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(a, b,)",
+              "occurrence": 1
+            },
+            {
+              "type": "await_expression",
+              "text": "await af(a, b,)"
+            },
+            {
+              "type": "call_expression",
+              "text": "af(a, b,)",
+              "occurrence": 2
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const x of xs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (y of xs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (var v of xs) {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async () => {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async x => x"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async (x, y) => await x"
+            },
+            {
+              "type": "function_expression",
+              "text": "async function () {}"
+            },
+            {
+              "type": "function_expression",
+              "text": "async function named() {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async x => { await x; }"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async (x,) => x"
+            },
+            {
+              "type": "method_definition",
+              "text": "async m() {}",
+              "occurrence": 1
+            },
+            {
+              "type": "method_definition",
+              "text": "async m() {}",
+              "occurrence": 2
+            },
+            {
+              "type": "method_definition",
+              "text": "async *ag() { yield 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "async [k]() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C { async m() {} async *ag() {} static async s() {} }"
+            },
+            {
+              "type": "method_definition",
+              "text": "async *ag() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static async s() {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "async function* agen() { yield* other(); yield await 1; }"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield* other()"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield await 1"
+            },
+            {
+              "type": "generator_function",
+              "text": "async function* () {}"
+            },
+            {
+              "type": "generator_function",
+              "text": "async function* named() {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(a, b,) => a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-03",
+      "features": [
+        "javascript-V16",
+        "javascript-B01",
+        "javascript-V15"
+      ],
+      "alternatives": [
+        "javascript-V16.a23",
+        "javascript-V16.a33",
+        "javascript-V16.a34",
+        "javascript-V16.a59",
+        "javascript-V16.a29",
+        "javascript-V16.a30",
+        "javascript-V16.a60",
+        "javascript-V16.a38",
+        "javascript-B01.a59",
+        "javascript-B01.a61",
+        "javascript-B01.a74",
+        "javascript-B01.a87",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-V15.a16",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a127",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const obj2 = { ...src, b: 1, ...(cond ? x : y) };\nconst { a, ...rest } = obj;\nconst { ...all } = obj;\n({ ...rest2 } = obj);\n({ a: a2, ...rest3 } = obj);\nfunction f({ x, ...others }) {}\ntry { f(); } catch { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object",
+            "spread_element",
+            "object_pattern",
+            "rest_pattern",
+            "assignment_expression",
+            "catch_clause"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{ ...src, b: 1, ...(cond ? x : y) }"
+            },
+            {
+              "type": "spread_element",
+              "text": "...src"
+            },
+            {
+              "type": "spread_element",
+              "text": "...(cond ? x : y)"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, ...rest }"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ ...all }"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "{ ...rest2 } = obj"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ ...rest2 }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a: a2, ...rest3 }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ x, ...others }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-04",
+      "features": [
+        "javascript-V16",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V16.a07",
+        "javascript-V16.a08",
+        "javascript-V16.a09",
+        "javascript-V16.a10",
+        "javascript-V16.a11",
+        "javascript-V16.a12",
+        "javascript-V16.a13",
+        "javascript-V16.a14",
+        "javascript-V16.a15",
+        "javascript-V16.a16",
+        "javascript-V16.a17",
+        "javascript-V16.a18",
+        "javascript-V16.a19",
+        "javascript-V16.a03",
+        "javascript-V16.a04",
+        "javascript-V16.a05",
+        "javascript-V16.a06",
+        "javascript-B01.a61",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "tag`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`;\ntag`\\u \\u1 \\u123 \\u{41 \\x4 `;\nconst s = \"a b\", s2 = 'c d';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call_expression",
+            "template_string",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "call_expression",
+              "text": "tag`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`"
+            },
+            {
+              "type": "call_expression",
+              "text": "tag`\\u \\u1 \\u123 \\u{41 \\x4 `"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\u \\u1 \\u123 \\u{41 \\x4 `"
+            },
+            {
+              "type": "string",
+              "text": "\"a b\""
+            },
+            {
+              "type": "string",
+              "text": "'c d'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-05",
+      "features": [
+        "javascript-V16",
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V16.a54",
+        "javascript-V15.a206",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a74",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97"
+      ],
+      "source_utf8": "export default async function () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default async function () {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "async function () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V16-06",
+      "features": [
+        "javascript-V16",
+        "javascript-V15",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V16.a49",
+        "javascript-V15.a206",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a74",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a113",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "export default async function* () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "generator_function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default async function* () {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "async function* () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V20-01",
+      "features": [
+        "javascript-V20",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V20.a08",
+        "javascript-V20.a09",
+        "javascript-V20.a10",
+        "javascript-V20.a11",
+        "javascript-V20.a12",
+        "javascript-V20.a13",
+        "javascript-V20.a07",
+        "javascript-V20.a14",
+        "javascript-V20.a15",
+        "javascript-V20.a16",
+        "javascript-V20.a17",
+        "javascript-V20.a40",
+        "javascript-V20.a41",
+        "javascript-B01.a61",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const n = [10n, 0n, 0x1Fn, 0b1n, 0o7n, 1_0n, 1_000_000, 0b1010_0101, 0o7_7, 0xFF_FF, 1_0.5_5e1_0, .5_5, 5e1_0, 1_0];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "10n"
+            },
+            {
+              "type": "number",
+              "text": "0n",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "0x1Fn"
+            },
+            {
+              "type": "number",
+              "text": "0b1n"
+            },
+            {
+              "type": "number",
+              "text": "0o7n"
+            },
+            {
+              "type": "number",
+              "text": "1_0n"
+            },
+            {
+              "type": "number",
+              "text": "1_000_000"
+            },
+            {
+              "type": "number",
+              "text": "0b1010_0101"
+            },
+            {
+              "type": "number",
+              "text": "0o7_7"
+            },
+            {
+              "type": "number",
+              "text": "0xFF_FF"
+            },
+            {
+              "type": "number",
+              "text": "1_0.5_5e1_0"
+            },
+            {
+              "type": "number",
+              "text": ".5_5",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "5e1_0",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "1_0",
+              "occurrence": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V20-02",
+      "features": [
+        "javascript-V20",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V20.a22",
+        "javascript-V20.a23",
+        "javascript-V20.a24",
+        "javascript-V20.a25",
+        "javascript-V20.a26",
+        "javascript-V20.a27",
+        "javascript-V20.a28",
+        "javascript-V20.a29",
+        "javascript-V20.a30",
+        "javascript-V20.a31",
+        "javascript-V20.a01",
+        "javascript-V20.a02",
+        "javascript-V20.a32",
+        "javascript-V20.a33",
+        "javascript-V20.a34",
+        "javascript-V20.a35",
+        "javascript-V20.a36",
+        "javascript-V20.a37",
+        "javascript-V20.a38",
+        "javascript-B01.a61",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a125",
+        "javascript-B01.a126",
+        "javascript-V20.a03",
+        "javascript-B01.a127",
+        "javascript-B01.a128",
+        "javascript-B01.a129",
+        "javascript-V20.a04",
+        "javascript-V20.a05",
+        "javascript-V20.a06"
+      ],
+      "source_utf8": "const v1 = a?.b, v2 = a?.[0], v3 = a?.(1), v4 = a?.b.c(), v5 = a?.b?.c, v6 = a?.b[0](1), v7 = f()?.x, v8 = a?.b.c;\nconst w1 = a ?? b, w2 = a ?? b ?? c, w3 = (a || b) ?? c, w4 = a?.b ?? (c && d), w5 = x?.5:1;\na &&= b; a ||= b; a ??= b; o.p ??= 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_chain",
+            "member_expression",
+            "subscript_expression",
+            "call_expression",
+            "binary_expression",
+            "augmented_assignment_expression",
+            "ternary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "member_expression",
+              "text": "a?.b",
+              "occurrence": 1
+            },
+            {
+              "type": "subscript_expression",
+              "text": "a?.[0]"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.(1)"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.b.c()"
+            },
+            {
+              "type": "member_expression",
+              "text": "a?.b?.c"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.b[0](1)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "a?.b[0]"
+            },
+            {
+              "type": "member_expression",
+              "text": "f()?.x"
+            },
+            {
+              "type": "member_expression",
+              "text": "a?.b.c",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ?? b",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ?? b ?? c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(a || b) ?? c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a?.b ?? (c && d)"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "x?.5:1"
+            },
+            {
+              "type": "number",
+              "text": ".5"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a &&= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ||= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ??= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "o.p ??= 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V20-03",
+      "features": [
+        "javascript-V20",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V20.a21",
+        "javascript-V20.a20",
+        "javascript-V20.a18",
+        "javascript-V20.a19",
+        "javascript-V20.a39",
+        "javascript-B01.a61",
+        "javascript-B01.a69",
+        "javascript-B01.a76",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a113",
+        "javascript-B01.a129",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "import * as m from \"./m.js\";\nconst mod = import(\"./m.js\"), mod2 = import(`./${name}.js`);\nconst url = import.meta.url;\nexport * as ns from \"./n.js\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "call_expression",
+            "import",
+            "meta_property",
+            "export_statement",
+            "namespace_export"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import * as m from \"./m.js\";"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\")"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(`./${name}.js`)"
+            },
+            {
+              "type": "meta_property",
+              "text": "import.meta"
+            },
+            {
+              "type": "member_expression",
+              "text": "import.meta.url"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * as ns from \"./n.js\";"
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as ns"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V22-01",
+      "features": [
+        "javascript-V22",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V22.a16",
+        "javascript-V22.a17",
+        "javascript-V22.a18",
+        "javascript-V22.a19",
+        "javascript-V22.a20",
+        "javascript-V22.a09",
+        "javascript-V22.a08",
+        "javascript-V22.a21",
+        "javascript-V22.a22",
+        "javascript-V22.a23",
+        "javascript-V22.a15",
+        "javascript-V22.a10",
+        "javascript-V22.a11",
+        "javascript-V22.a13",
+        "javascript-V22.a14",
+        "javascript-B01.a60",
+        "javascript-B01.a77",
+        "javascript-B01.a81",
+        "javascript-B01.a84",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a111",
+        "javascript-B01.a113",
+        "javascript-B01.a115",
+        "javascript-B01.a125",
+        "javascript-B01.a127",
+        "javascript-B01.a129",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "class P {\n  x; y = 1; static z = 2; static w; #a = 1; #b; static #c = 3;\n  ['comp'] = 1; 'str' = 2; 42 = 3; static async = 4; get; set; static;\n  #m() { return this.#a; } get #g() { return 1; } set #g(v) {} static #sm() {} async #am() {} *#gm() {} async *#agm() {}\n  static { P.#c++; } static {}\n  has(o) { return #a in o && #m in o; }\n  t() { return this.#m().#a + this?.#a + this?.self.#a + this.#g; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "field_definition",
+            "private_property_identifier",
+            "method_definition",
+            "class_static_block",
+            "binary_expression",
+            "member_expression",
+            "optional_chain",
+            "computed_property_name"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class P {\n  x; y = 1; static z = 2; static w; #a = 1; #b; static #c = 3;\n  ['comp'] = 1; 'str' = 2; 42 = 3; static async = 4; get; set; static;\n  #m() { return this.#a; } get #g() { return 1; } set #g(v) {} static #sm() {} async #am() {} *#gm() {} async *#agm() {}\n  static { P.#c++; } static {}\n  has(o) { return #a in o && #m in o; }\n  t() { return this.#m().#a + this?.#a + this?.self.#a + this.#g; }\n}"
+            },
+            {
+              "type": "field_definition",
+              "text": "x"
+            },
+            {
+              "type": "field_definition",
+              "text": "y = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "static z = 2"
+            },
+            {
+              "type": "field_definition",
+              "text": "static w"
+            },
+            {
+              "type": "field_definition",
+              "text": "#a = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "#b"
+            },
+            {
+              "type": "field_definition",
+              "text": "static #c = 3"
+            },
+            {
+              "type": "field_definition",
+              "text": "['comp'] = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "'str' = 2"
+            },
+            {
+              "type": "field_definition",
+              "text": "42 = 3"
+            },
+            {
+              "type": "field_definition",
+              "text": "static async = 4"
+            },
+            {
+              "type": "field_definition",
+              "text": "get",
+              "occurrence": 1
+            },
+            {
+              "type": "field_definition",
+              "text": "set",
+              "occurrence": 1
+            },
+            {
+              "type": "field_definition",
+              "text": "static",
+              "occurrence": 5
+            },
+            {
+              "type": "method_definition",
+              "text": "#m() { return this.#a; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "get #g() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set #g(v) {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static #sm() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "async #am() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*#gm() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "async *#agm() {}"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static { P.#c++; }"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static {}"
+            },
+            {
+              "type": "binary_expression",
+              "text": "#a in o"
+            },
+            {
+              "type": "binary_expression",
+              "text": "#m in o"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#m().#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this?.#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this?.self.#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#g"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V22-02",
+      "features": [
+        "javascript-V22",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V22.a07",
+        "javascript-V22.a01",
+        "javascript-V22.a02",
+        "javascript-V22.a03",
+        "javascript-V22.a04",
+        "javascript-V22.a05",
+        "javascript-V22.a06",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a100",
+        "javascript-B01.a101"
+      ],
+      "source_utf8": "#!/usr/bin/env node\nconsole.log(1);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash_bang_line",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "hash_bang_line",
+              "text": "#!/usr/bin/env node"
+            },
+            {
+              "type": "expression_statement",
+              "text": "console.log(1);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-V22-03",
+      "features": [
+        "javascript-V22",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-V22.a25",
+        "javascript-V22.a26",
+        "javascript-V22.a27",
+        "javascript-V22.a28",
+        "javascript-V22.a29",
+        "javascript-V22.a30",
+        "javascript-V22.a32",
+        "javascript-V22.a33",
+        "javascript-V22.a34",
+        "javascript-V22.a12",
+        "javascript-V22.a35",
+        "javascript-V22.a24",
+        "javascript-V22.a31",
+        "javascript-B01.a56",
+        "javascript-B01.a61",
+        "javascript-B01.a64",
+        "javascript-B01.a69",
+        "javascript-B01.a73",
+        "javascript-B01.a76",
+        "javascript-B01.a92",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a100",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a113",
+        "javascript-B01.a128",
+        "javascript-B01.a129",
+        "javascript-B01.a290"
+      ],
+      "source_utf8": "import json from \"./data.json\" with { type: \"json\" };\nimport \"./style.css\" with { type: \"css\", };\nimport {} from \"./y.js\" with {};\nimport { \"string name\" as alias } from \"./m.js\";\nexport { default as cfg } from \"./cfg.json\" with { \"type\": \"json\" };\nexport * from \"./x.js\" with {};\nexport { alias as \"other name\" };\nexport * as \"ns name\" from \"./n.js\";\nconst lazy = await import(\"./m.js\", { with: { type: \"json\" } },);\nconst lazy2 = import(\"./m.js\",);\nconst top = await Promise.resolve(1);\nfor await (const v of []) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_attribute",
+            "object",
+            "import_specifier",
+            "export_statement",
+            "export_specifier",
+            "namespace_export",
+            "call_expression",
+            "await_expression",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import json from \"./data.json\" with { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import \"./style.css\" with { type: \"css\", };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"css\", }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import {} from \"./y.js\" with {};"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with {}",
+              "occurrence": 1
+            },
+            {
+              "type": "import_specifier",
+              "text": "\"string name\" as alias"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { default as cfg } from \"./cfg.json\" with { \"type\": \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { \"type\": \"json\" }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * from \"./x.js\" with {};"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with {}",
+              "occurrence": 2
+            },
+            {
+              "type": "export_specifier",
+              "text": "alias as \"other name\""
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as \"ns name\""
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\", { with: { type: \"json\" } },)"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\",)"
+            },
+            {
+              "type": "await_expression",
+              "text": "await Promise.resolve(1)"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const v of []) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B02-01",
+      "features": [
+        "javascript-B02",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B02.a01",
+        "javascript-B02.a02",
+        "javascript-B02.a03",
+        "javascript-B02.a04",
+        "javascript-B02.a05",
+        "javascript-B02.a06",
+        "javascript-B02.a07",
+        "javascript-B02.a08",
+        "javascript-B02.a09",
+        "javascript-B02.a10",
+        "javascript-B02.a11",
+        "javascript-B02.a12",
+        "javascript-B02.a13",
+        "javascript-B02.a14",
+        "javascript-B02.a17",
+        "javascript-B02.a18",
+        "javascript-B02.a19",
+        "javascript-B02.a20",
+        "javascript-B02.a21",
+        "javascript-B02.a22",
+        "javascript-B02.a23",
+        "javascript-B02.a24",
+        "javascript-B02.a25",
+        "javascript-B02.a26",
+        "javascript-B02.a27",
+        "javascript-B02.a28",
+        "javascript-B02.a29",
+        "javascript-B02.a35",
+        "javascript-B02.a36",
+        "javascript-B02.a37",
+        "javascript-B02.a38",
+        "javascript-B02.a39",
+        "javascript-B02.a41",
+        "javascript-B02.a42",
+        "javascript-B02.a43",
+        "javascript-B02.a44",
+        "javascript-B02.a45",
+        "javascript-B02.a46",
+        "javascript-B02.a47",
+        "javascript-B01.a53",
+        "javascript-B02.a58",
+        "javascript-B02.a59",
+        "javascript-B02.a60",
+        "javascript-B02.a61",
+        "javascript-B02.a62",
+        "javascript-B02.a63",
+        "javascript-B02.a66",
+        "javascript-B02.a67",
+        "javascript-B02.a68",
+        "javascript-B02.a69",
+        "javascript-B02.a70",
+        "javascript-B02.a71",
+        "javascript-B02.a72",
+        "javascript-B02.a73",
+        "javascript-B02.a74",
+        "javascript-B02.a75",
+        "javascript-B02.a76",
+        "javascript-B02.a77",
+        "javascript-B02.a78",
+        "javascript-B02.a92",
+        "javascript-B02.a93",
+        "javascript-B02.a94",
+        "javascript-B02.a95",
+        "javascript-B02.a97",
+        "javascript-B02.a98",
+        "javascript-B02.a99",
+        "javascript-B02.a100",
+        "javascript-B02.a101",
+        "javascript-B02.a102",
+        "javascript-B02.a103",
+        "javascript-B02.a104",
+        "javascript-B02.a105",
+        "javascript-B02.a106",
+        "javascript-B02.a107",
+        "javascript-B02.a108",
+        "javascript-B02.a109",
+        "javascript-B02.a110",
+        "javascript-B02.a140",
+        "javascript-B01.a61",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const base = [/a|b|/, /^a$/m, /\\bx\\B/, /(?=a)(?!b)/, /a*b+c?d{2}e{2,}f{2,3}/, /g*?h+?i??j{1}?k{1,}?l{1,2}?/,\n  /.\\d\\D\\s\\S\\w\\W/, /[abc][^abc][a-z][-a][a-][\\b\\d-]/, /[\\-]/u, /[^]/, /[]/, /\\f\\n\\r\\t\\v\\cA\\cz\\0\\x41\\u0041/,\n  /\\u{1F600}/u, /\\uD83D\\uDE00/u, /\\uD83D/u, /\\uDE00/u, /\\u0041/u, /(a)\\1/, /(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10/,\n  /\\$\\//u, /\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\/u, /\\%/, /(a)(?:b)/, /a-z/, /[a\\-z]/u, /[\\s\\S]/y, /[a-b-c]/];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/a|b|/"
+            },
+            {
+              "type": "regex",
+              "text": "/^a$/m"
+            },
+            {
+              "type": "regex",
+              "text": "/\\bx\\B/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?=a)(?!b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/a*b+c?d{2}e{2,}f{2,3}/"
+            },
+            {
+              "type": "regex",
+              "text": "/g*?h+?i??j{1}?k{1,}?l{1,2}?/"
+            },
+            {
+              "type": "regex",
+              "text": "/.\\d\\D\\s\\S\\w\\W/"
+            },
+            {
+              "type": "regex",
+              "text": "/[abc][^abc][a-z][-a][a-][\\b\\d-]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\-]/u"
+            },
+            {
+              "type": "regex",
+              "text": "/[^]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\f\\n\\r\\t\\v\\cA\\cz\\0\\x41\\u0041/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\u{1F600}/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uD83D\\uDE00/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uD83D/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uDE00/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\u0041/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\$\\//u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\%/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)(?:b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/a-z/"
+            },
+            {
+              "type": "regex",
+              "text": "/[a\\-z]/u"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\s\\S]/y"
+            },
+            {
+              "type": "regex",
+              "text": "/[a-b-c]/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-B02-02",
+      "features": [
+        "javascript-B02",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-B02.a48",
+        "javascript-B02.a49",
+        "javascript-B02.a50",
+        "javascript-B02.a51",
+        "javascript-B02.a52",
+        "javascript-B02.a53",
+        "javascript-B02.a54",
+        "javascript-B02.a55",
+        "javascript-B02.a56",
+        "javascript-B02.a57",
+        "javascript-B02.a64",
+        "javascript-B02.a65",
+        "javascript-B02.a40",
+        "javascript-B02.a15",
+        "javascript-B02.a16",
+        "javascript-B02.a79",
+        "javascript-B02.a80",
+        "javascript-B02.a81",
+        "javascript-B02.a82",
+        "javascript-B02.a83",
+        "javascript-B02.a84",
+        "javascript-B02.a85",
+        "javascript-B02.a86",
+        "javascript-B02.a87",
+        "javascript-B02.a88",
+        "javascript-B02.a89",
+        "javascript-B02.a90",
+        "javascript-B02.a91",
+        "javascript-B02.a141",
+        "javascript-B02.a142",
+        "javascript-B02.a143",
+        "javascript-B02.a144",
+        "javascript-B02.a30",
+        "javascript-B02.a31",
+        "javascript-B02.a32",
+        "javascript-B02.a33",
+        "javascript-B02.a34",
+        "javascript-B02.a96",
+        "javascript-B02.a111",
+        "javascript-B02.a112",
+        "javascript-B02.a113",
+        "javascript-B02.a114",
+        "javascript-B02.a115",
+        "javascript-B02.a116",
+        "javascript-B02.a117",
+        "javascript-B02.a118",
+        "javascript-B02.a119",
+        "javascript-B02.a120",
+        "javascript-B02.a121",
+        "javascript-B02.a122",
+        "javascript-B02.a123",
+        "javascript-B02.a124",
+        "javascript-B02.a125",
+        "javascript-B02.a126",
+        "javascript-B02.a127",
+        "javascript-B02.a128",
+        "javascript-B02.a129",
+        "javascript-B02.a130",
+        "javascript-B02.a131",
+        "javascript-B02.a132",
+        "javascript-B02.a133",
+        "javascript-B02.a134",
+        "javascript-B02.a135",
+        "javascript-B02.a136",
+        "javascript-B02.a137",
+        "javascript-B02.a138",
+        "javascript-B02.a139",
+        "javascript-B01.a61",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "const es2018 = [/(?<year>\\d{4})-\\k<year>/, /(?<Ab>x)/, /(?<\\u{61}\\u{62}>x)/u, /(?<𝑓𝑓>x)/, /(?<𝑓>x)/u, /(?<$_1>y)/,\n  /(?<=a)b(?<!c)/, /\\p{L}\\P{Lu}\\p{Script=Greek}\\p{General_Category=Letter}\\p{Lu}/u, /a.b/s];\nconst later = [/a/d, /(?<y>a)|(?<y>b)/, /(?i:a)(?-i:b)(?m-s:c)(?ims:d)/];\nconst sets = [/[\\p{L}--[a-z]]/v, /[[a-z]&&[aeiou]&&[ae]]/v, /[\\p{L}--\\d--[x]]/v, /[\\q{abc|d|}]/v, /[\\q{}]/v,\n  /[a-z\\d[x]]/v, /[^\\w]/v, /[[^a]]/v, /[\\n\\&\\b]/v, /[]/v, /[a\\-]/v, /[\\p{L}]/v, /[ab]/v];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/(?<year>\\d{4})-\\k<year>/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<Ab>x)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<\\u{61}\\u{62}>x)/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<𝑓𝑓>x)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<𝑓>x)/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<$_1>y)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<=a)b(?<!c)/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\p{L}\\P{Lu}\\p{Script=Greek}\\p{General_Category=Letter}\\p{Lu}/u"
+            },
+            {
+              "type": "regex",
+              "text": "/a.b/s"
+            },
+            {
+              "type": "regex",
+              "text": "/a/d"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<y>a)|(?<y>b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?i:a)(?-i:b)(?m-s:c)(?ims:d)/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}--[a-z]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[[a-z]&&[aeiou]&&[ae]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}--\\d--[x]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\q{abc|d|}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\q{}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[a-z\\d[x]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[^\\w]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[[^a]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\n\\&\\b]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[a\\-]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[ab]/v"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-L01-01",
+      "features": [
+        "javascript-L01",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-L01.a01",
+        "javascript-L01.a03",
+        "javascript-L01.a04",
+        "javascript-L01.a02",
+        "javascript-L01.a05",
+        "javascript-L01.a06",
+        "javascript-L01.a07",
+        "javascript-L01.a08",
+        "javascript-L01.a09",
+        "javascript-L01.a10",
+        "javascript-L01.a11",
+        "javascript-L01.a12",
+        "javascript-L01.a13",
+        "javascript-L01.a14",
+        "javascript-L01.a15",
+        "javascript-L01.a16",
+        "javascript-L01.a17",
+        "javascript-L01.a18",
+        "javascript-L01.a19",
+        "javascript-L01.a20",
+        "javascript-L01.a21",
+        "javascript-B01.a89",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var a = [010, 0777, 08, 09, 078, 0819, 0.5];\nvar e = [\"\\0\\1\\12\\47\\123\\400\\8\\9\\08\", '\\7\\77'];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number",
+            "string",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "010"
+            },
+            {
+              "type": "number",
+              "text": "0777"
+            },
+            {
+              "type": "number",
+              "text": "08",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "09"
+            },
+            {
+              "type": "number",
+              "text": "078"
+            },
+            {
+              "type": "number",
+              "text": "0819"
+            },
+            {
+              "type": "number",
+              "text": "0.5"
+            },
+            {
+              "type": "string",
+              "text": "\"\\0\\1\\12\\47\\123\\400\\8\\9\\08\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\12",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\47"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\123"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\400"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\8"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\9"
+            },
+            {
+              "type": "string",
+              "text": "'\\7\\77'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\77"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-L01-02",
+      "features": [
+        "javascript-L01",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-L01.a23",
+        "javascript-L01.a24",
+        "javascript-L01.a25",
+        "javascript-L01.a26",
+        "javascript-L01.a27",
+        "javascript-L01.a28",
+        "javascript-L01.a29",
+        "javascript-L01.a30",
+        "javascript-L01.a31",
+        "javascript-L01.a32",
+        "javascript-L01.a33",
+        "javascript-L01.a34",
+        "javascript-L01.a35",
+        "javascript-L01.a36",
+        "javascript-L01.a37",
+        "javascript-L01.a38",
+        "javascript-L01.a39",
+        "javascript-L01.a40",
+        "javascript-B01.a89",
+        "javascript-B01.a101",
+        "javascript-B01.a104",
+        "javascript-B01.a112",
+        "javascript-B01.a116",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var x = 1; <!-- html open comment\n--> html close comment at line start\n/* multi\nline */ --> close after a multi-line comment\n  /* a */ /* b */ --> close after delimited comments\n/**/ -->\nx = 2;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "html_comment",
+            "comment",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var x = 1;"
+            },
+            {
+              "type": "html_comment",
+              "text": "<!-- html open comment"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> html close comment at line start"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\nline */"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> close after a multi-line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* a */"
+            },
+            {
+              "type": "comment",
+              "text": "/* b */"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> close after delimited comments"
+            },
+            {
+              "type": "html_comment",
+              "text": "-->",
+              "occurrence": 4
+            },
+            {
+              "type": "expression_statement",
+              "text": "x = 2;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-L01-03",
+      "features": [
+        "javascript-L01",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-L01.a65",
+        "javascript-L01.a66",
+        "javascript-L01.a67",
+        "javascript-L01.a68",
+        "javascript-L01.a22",
+        "javascript-L01.a70",
+        "javascript-L01.a69",
+        "javascript-B01.a67",
+        "javascript-B01.a73",
+        "javascript-B01.a74",
+        "javascript-B01.a75",
+        "javascript-B01.a77",
+        "javascript-B01.a89",
+        "javascript-B01.a95",
+        "javascript-B01.a96",
+        "javascript-B01.a97",
+        "javascript-B01.a101",
+        "javascript-B01.a128",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "if (a) function f() {}\nif (a) function g() {} else function h() {}\nif (a) x = 1; else function i() {}\nif (a) function j() {} else x = 2;\nlbl: function k() {}\n{ function blockFn() {} }\nfor (var z = 0 in obj) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "function_declaration",
+            "else_clause",
+            "labeled_statement",
+            "statement_block",
+            "for_in_statement"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if (a) function f() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function f() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) function g() {} else function h() {}"
+            },
+            {
+              "type": "else_clause",
+              "text": "else function h() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) x = 1; else function i() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function i() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) function j() {} else x = 2;"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function j() {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "lbl: function k() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function k() {}"
+            },
+            {
+              "type": "statement_block",
+              "text": "{ function blockFn() {} }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function blockFn() {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var z = 0 in obj) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-javascript-L01-04",
+      "features": [
+        "javascript-L01",
+        "javascript-B01"
+      ],
+      "alternatives": [
+        "javascript-L01.a41",
+        "javascript-L01.a42",
+        "javascript-L01.a43",
+        "javascript-L01.a44",
+        "javascript-L01.a45",
+        "javascript-L01.a46",
+        "javascript-L01.a47",
+        "javascript-L01.a48",
+        "javascript-L01.a49",
+        "javascript-L01.a50",
+        "javascript-L01.a51",
+        "javascript-L01.a52",
+        "javascript-L01.a53",
+        "javascript-L01.a54",
+        "javascript-L01.a55",
+        "javascript-L01.a56",
+        "javascript-L01.a57",
+        "javascript-L01.a58",
+        "javascript-L01.a59",
+        "javascript-L01.a60",
+        "javascript-L01.a61",
+        "javascript-L01.a62",
+        "javascript-L01.a63",
+        "javascript-L01.a64",
+        "javascript-B01.a89",
+        "javascript-B01.a98",
+        "javascript-B01.a99",
+        "javascript-B01.a101",
+        "javascript-B01.a102",
+        "javascript-B01.a129"
+      ],
+      "source_utf8": "var r = [/]/, /{/, /}/, /a{,5}/, /x{1/, /(?=a)*/, /(?!a)+/, /\\c1/, /[\\c1\\c_]/, /[\\c]/, /\\c/, /\\8/, /\\a/, /\\k/,\n  /\\1/, /\\07/, /[\\07]/, /\\p/, /(?:a){1}\\2(b)/, /(?<n>x)\\k<n>/, /(a)\\1/, /(?<n>x)\\a/,\n  /.(?i:a)(?-i:b)(x)[a]\\d/];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/]/"
+            },
+            {
+              "type": "regex",
+              "text": "/{/"
+            },
+            {
+              "type": "regex",
+              "text": "/}/"
+            },
+            {
+              "type": "regex",
+              "text": "/a{,5}/"
+            },
+            {
+              "type": "regex",
+              "text": "/x{1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?=a)*/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?!a)+/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\c1/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\c1\\c_]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\c]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\c/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\8/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\a/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\k/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\07/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\07]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\p/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?:a){1}\\2(b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<n>x)\\k<n>/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<n>x)\\a/"
+            },
+            {
+              "type": "regex",
+              "text": "/.(?i:a)(?-i:b)(x)[a]\\d/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-B01-R-1",
+      "features": [
+        "javascript-B01"
+      ],
+      "source_utf8": "function before(a, b) {\n  return a / b;\n}\nif (before(4, 2) > 1) {\n  console.log(\"big\");\n}\nclass After {\n  run() { return /ok/g.test(\"ok\"); }\n}\n",
+      "edits": [
+        {
+          "find": "if (before(4, 2) > 1) {",
+          "replace": "if (before(4, 2) > 1 {"
+        },
+        {
+          "find": "if (before(4, 2) > 1 {",
+          "replace": "if (before(4, 2) > 1) {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "if_statement",
+            "class_declaration",
+            "method_definition",
+            "regex"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration",
+            "class_declaration",
+            "method_definition",
+            "regex"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function before(a, b) {\n  return a / b;\n}"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a / b"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "if_statement",
+            "class_declaration",
+            "method_definition",
+            "regex"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V15-R-1",
+      "features": [
+        "javascript-V15"
+      ],
+      "source_utf8": "const config = { host: \"h\", port: 80 };\nconst { host, port: p = 8080, ...rest } = config;\nclass Server extends Base {\n  constructor() {\n    super();\n    this.url = `http://${host}:${p}`;\n  }\n}\nconst handler = (req, ...args) => args.length;\n",
+      "edits": [
+        {
+          "find": "port: p = 8080, ...rest }",
+          "replace": "port: , ...rest }"
+        },
+        {
+          "find": "port: , ...rest }",
+          "replace": "port: p = 8080, ...rest }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object_pattern",
+            "pair_pattern",
+            "assignment_pattern",
+            "rest_pattern",
+            "class_declaration",
+            "class_heritage",
+            "template_string",
+            "arrow_function"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "class_heritage",
+            "template_string",
+            "template_substitution",
+            "arrow_function"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const config = { host: \"h\", port: 80 };"
+            },
+            {
+              "type": "object",
+              "text": "{ host: \"h\", port: 80 }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object_pattern",
+            "pair_pattern",
+            "assignment_pattern",
+            "rest_pattern",
+            "class_declaration",
+            "class_heritage",
+            "template_string",
+            "arrow_function"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V16-R-1",
+      "features": [
+        "javascript-V16"
+      ],
+      "source_utf8": "async function load(list, { retry = 1, ...opts },) {\n  for await (const item of list) {\n    await item;\n  }\n  try {\n    return (-retry) ** 2;\n  } catch {\n    return { ...opts };\n  }\n}\nasync function* stream() {\n  yield* [1, 2];\n}\n",
+      "edits": [
+        {
+          "find": "return (-retry) ** 2;",
+          "replace": "return -retry ** 2;"
+        },
+        {
+          "find": "return -retry ** 2;",
+          "replace": "return (-retry) ** 2;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "object_pattern",
+            "rest_pattern",
+            "for_in_statement",
+            "await_expression",
+            "binary_expression",
+            "catch_clause",
+            "spread_element",
+            "generator_function_declaration",
+            "yield_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "for_in_statement",
+            "await_expression",
+            "catch_clause",
+            "generator_function_declaration",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "object_pattern",
+              "text": "{ retry = 1, ...opts }"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const item of list) {\n    await item;\n  }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "object_pattern",
+            "rest_pattern",
+            "for_in_statement",
+            "await_expression",
+            "binary_expression",
+            "catch_clause",
+            "spread_element",
+            "generator_function_declaration",
+            "yield_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V16-R-2",
+      "features": [
+        "javascript-V16"
+      ],
+      "source_utf8": "const sum = (a, b,) => a + b;\ntry {\n  risky();\n} catch {\n  recover();\n}\n",
+      "edits": [
+        {
+          "find": "} catch {",
+          "replace": "} catch () {"
+        },
+        {
+          "find": "} catch () {",
+          "replace": "} catch {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "catch_clause",
+            "lexical_declaration",
+            "arrow_function",
+            "formal_parameters"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "arrow_function",
+            "formal_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const sum = (a, b,) => a + b;"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(a, b,) => a + b"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(a, b,)"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "catch_clause",
+            "lexical_declaration",
+            "arrow_function",
+            "formal_parameters"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V20-R-1",
+      "features": [
+        "javascript-V20"
+      ],
+      "source_utf8": "const cfg = window.app?.config ?? {};\nconst big = 9_007_199_254_740_993n;\nlet retries = cfg.retries;\nretries ??= 3;\nretries ||= 1;\nconst port = (cfg.port ?? 80) || 8080;\nconst modP = import(\"./mod.js\");\nconsole.log(import.meta.url, cfg?.[\"key\"], cfg.fn?.(1));\n",
+      "edits": [
+        {
+          "find": "(cfg.port ?? 80) || 8080",
+          "replace": "cfg.port ?? 80 || 8080"
+        },
+        {
+          "find": "cfg.port ?? 80 || 8080",
+          "replace": "(cfg.port ?? 80) || 8080"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_chain",
+            "binary_expression",
+            "number",
+            "augmented_assignment_expression",
+            "meta_property",
+            "call_expression",
+            "subscript_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "optional_chain",
+            "augmented_assignment_expression",
+            "meta_property",
+            "subscript_expression"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const cfg = window.app?.config ?? {};"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "const big = 9_007_199_254_740_993n;"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "retries ??= 3"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "retries ||= 1"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_chain",
+            "binary_expression",
+            "number",
+            "augmented_assignment_expression",
+            "meta_property",
+            "call_expression",
+            "subscript_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V20-R-2",
+      "features": [
+        "javascript-V20"
+      ],
+      "source_utf8": "const lead = 0;\nconst million = 1_000_000;\nconst mask = 0xFF_FF;\nconst after = 10n ** 2n;\nfunction tail() { return mask + after; }\n",
+      "edits": [
+        {
+          "find": "1_000_000;",
+          "replace": "1_000_000_;"
+        },
+        {
+          "find": "1_000_000_;",
+          "replace": "1_000_000;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "number",
+            "binary_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const lead = 0;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "number",
+            "binary_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V20-R-3",
+      "features": [
+        "javascript-V20"
+      ],
+      "source_utf8": "const obj = { Cls: class {} };\nconst inst = new obj.Cls();\nconst probe = obj?.Cls;\n",
+      "edits": [
+        {
+          "find": "new obj.Cls()",
+          "replace": "new obj?.Cls()"
+        },
+        {
+          "find": "new obj?.Cls()",
+          "replace": "new obj.Cls()"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "new_expression",
+            "member_expression",
+            "optional_chain"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "member_expression",
+            "optional_chain"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const obj = { Cls: class {} };"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "new_expression",
+            "member_expression",
+            "optional_chain"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-R-1",
+      "features": [
+        "javascript-V22"
+      ],
+      "source_utf8": "#!/usr/bin/env node\nimport data from \"./data.json\" with { type: \"json\" };\nclass Counter {\n  #count = 0;\n  static total = 0;\n  static {\n    Counter.total = 1;\n  }\n  inc() { return ++this.#count; }\n  get #secret() { return 42; }\n  has(o) { return #count in o; }\n}\nawait Promise.resolve(data);\n",
+      "edits": [
+        {
+          "find": "with { type: \"json\" }",
+          "replace": "with { type: }"
+        },
+        {
+          "find": "with { type: }",
+          "replace": "with { type: \"json\" }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash_bang_line",
+            "import_statement",
+            "import_attribute",
+            "class_declaration",
+            "field_definition",
+            "private_property_identifier",
+            "class_static_block",
+            "await_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "hash_bang_line",
+            "class_declaration",
+            "field_definition",
+            "private_property_identifier",
+            "class_static_block",
+            "await_expression"
+          ],
+          "anchors": [
+            {
+              "type": "hash_bang_line",
+              "text": "#!/usr/bin/env node"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash_bang_line",
+            "import_statement",
+            "import_attribute",
+            "class_declaration",
+            "field_definition",
+            "private_property_identifier",
+            "class_static_block",
+            "await_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-R-2",
+      "features": [
+        "javascript-V22"
+      ],
+      "source_utf8": "const zero = 0;\nconst first = 1;\nclass Box {\n  #v = 1;\n  static { Box.ready = true; }\n}\nconst tail = new Box();\n",
+      "edits": [
+        {
+          "find": "first = 1;\n",
+          "replace": "first = 1;\n#!/usr/bin/env node\n"
+        },
+        {
+          "find": "#!/usr/bin/env node\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "class_declaration",
+            "field_definition",
+            "class_static_block"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "class_declaration",
+            "class_static_block"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "class_declaration",
+            "field_definition",
+            "class_static_block"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-R-3",
+      "features": [
+        "javascript-V22"
+      ],
+      "source_utf8": "const before = 0;\nclass Pair {\n  left = 1;\n  right = 2;\n}\nconst p = new Pair();\nfunction tail() { return p.left + p.right; }\n",
+      "edits": [
+        {
+          "find": "left = 1;\n  right = 2;",
+          "replace": "left = 1 right = 2;"
+        },
+        {
+          "find": "left = 1 right = 2;",
+          "replace": "left = 1;\n  right = 2;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "field_definition",
+            "lexical_declaration",
+            "new_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "lexical_declaration",
+            "new_expression"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const before = 0;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "field_definition",
+            "lexical_declaration",
+            "new_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-B02-R-1",
+      "features": [
+        "javascript-B02"
+      ],
+      "source_utf8": "const date = /(?<year>\\d{4})-(?<month>\\d{2})/u;\nconst look = /(?<=\\$)\\d+(?<!\\.)/;\nconst prop = /\\p{Script=Greek}+/u;\nconst dot = /a.b/s;\nconst idx = /a+/d;\nconst set = /[\\p{L}--[a-z]]/v;\nconst dup = /(?<n>a)|(?<n>b)/;\nconst mod = /(?i:a)b/;\nfunction after() { return date.test(\"2024-01\"); }\n",
+      "edits": [
+        {
+          "find": "(?<month>\\d{2})/u;",
+          "replace": "(?<month>\\d{2})"
+        },
+        {
+          "find": "(?<month>\\d{2})\n",
+          "replace": "(?<month>\\d{2})/u;\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "function_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-L01-R-1",
+      "features": [
+        "javascript-L01"
+      ],
+      "source_utf8": "<!-- legacy HTML open comment\nvar mode = 010;\nvar tab = \"\\011\";\nvar nine = 08;\nif (mode) function legacy() { return tab; }\nelse function other() { return nine; }\nlabel: function labelled() {}\n--> HTML close comment at line start\nlegacy();\n",
+      "edits": [
+        {
+          "find": "if (mode) function legacy()",
+          "replace": "if (mode) function* legacy()"
+        },
+        {
+          "find": "if (mode) function* legacy()",
+          "replace": "if (mode) function legacy()"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "html_comment",
+            "variable_declaration",
+            "number",
+            "string",
+            "escape_sequence",
+            "if_statement",
+            "else_clause",
+            "function_declaration",
+            "labeled_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "html_comment",
+            "variable_declaration",
+            "number",
+            "escape_sequence",
+            "function_declaration",
+            "labeled_statement"
+          ],
+          "anchors": [
+            {
+              "type": "html_comment",
+              "text": "<!-- legacy HTML open comment"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var mode = 010;"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var tab = \"\\011\";"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var nine = 08;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "html_comment",
+            "variable_declaration",
+            "number",
+            "string",
+            "escape_sequence",
+            "if_statement",
+            "else_clause",
+            "function_declaration",
+            "labeled_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-L01-R-2",
+      "features": [
+        "javascript-L01"
+      ],
+      "source_utf8": "var flag = true;\nif (flag) function f() {}\nvar after = 1;\n",
+      "edits": [
+        {
+          "find": "var flag = true;\n",
+          "replace": "'use strict';\nvar flag = true;\n"
+        },
+        {
+          "find": "'use strict';\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "if_statement",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "expression_statement",
+            "variable_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "expression_statement",
+              "text": "'use strict';"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var flag = true;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "if_statement",
+            "function_declaration"
+          ]
+        }
+      ]
     }
   ]
 }

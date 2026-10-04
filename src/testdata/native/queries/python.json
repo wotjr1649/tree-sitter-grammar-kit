@@ -5,6 +5,34 @@
     {
       "id": "q.structure",
       "source": "(import_statement name: (dotted_name) @import)\n(class_definition name: (identifier) @class)\n(function_definition name: (identifier) @function)\n(type_alias_statement left: (type) @type_alias)\n"
+    },
+    {
+      "id": "q.probe-b02",
+      "source": "(call function: (identifier) @function arguments: (generator_expression) @genexp)\n(dictionary_comprehension body: (pair key: (identifier) @key value: (binary_operator) @value))\n"
+    },
+    {
+      "id": "q.probe-v38",
+      "source": "(parameters (positional_separator) @slash)\n(named_expression name: (identifier) @name value: (_) @value)\n(interpolation expression: (identifier) @debug)\n"
+    },
+    {
+      "id": "q.probe-v39",
+      "source": "(decorator (_) @expr)\n"
+    },
+    {
+      "id": "q.probe-v310",
+      "source": "(match_statement subject: (_) @subject)\n(case_clause guard: (if_clause) @guard)\n(class_pattern (dotted_name) @class)\n(with_item) @item\n"
+    },
+    {
+      "id": "q.probe-v311",
+      "source": "(typed_parameter type: (type) @annotation)\n(function_definition return_type: (type) @return)\n(except_clause value: (_) @handler)\n"
+    },
+    {
+      "id": "q.probe-v313",
+      "source": "(class_definition name: (identifier) @class type_parameters: (type_parameter) @params)\n(function_definition type_parameters: (type_parameter) @params)\n(type_alias_statement left: (type) @alias)\n"
+    },
+    {
+      "id": "q.probe-v314",
+      "source": "(interpolation expression: (identifier) @expr)\n(interpolation type_conversion: (type_conversion) @conversion)\n(interpolation format_specifier: (format_specifier) @spec)\n"
     }
   ],
   "cases": [
@@ -51,6 +79,272 @@
               "name": "function",
               "type": "identifier",
               "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-B02-Q-1",
+      "source_case": "probe-python-B02-NR-1",
+      "features": [
+        "python-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "sum"
+            },
+            {
+              "name": "genexp",
+              "type": "generator_expression",
+              "text": "(x ** 2 for x in range(10) if x % 2)"
+            },
+            {
+              "name": "key",
+              "type": "identifier",
+              "text": "n"
+            },
+            {
+              "name": "value",
+              "type": "binary_operator",
+              "text": "n * n"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V38-Q-1",
+      "source_case": "probe-python-V38-N-1",
+      "features": [
+        "python-V38"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v38",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "slash",
+              "type": "positional_separator",
+              "text": "/"
+            },
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "n"
+            },
+            {
+              "name": "value",
+              "type": "call",
+              "text": "len(\"abc\")"
+            },
+            {
+              "name": "debug",
+              "type": "identifier",
+              "text": "n"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V39-Q-1",
+      "source_case": "probe-python-V39-PN-1",
+      "features": [
+        "python-V39"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v39",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "expr",
+              "type": "attribute",
+              "text": "buttons[0].clicked.connect"
+            },
+            {
+              "name": "expr",
+              "type": "parenthesized_expression",
+              "text": "(lambda f: f)"
+            },
+            {
+              "name": "expr",
+              "type": "named_expression",
+              "text": "registry := make_registry()"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V310-Q-1",
+      "source_case": "probe-python-V310-NR-1",
+      "features": [
+        "python-V310"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v310",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "subject",
+              "type": "call",
+              "text": "command.split()"
+            },
+            {
+              "name": "guard",
+              "type": "if_clause",
+              "text": "if direction in DIRS"
+            },
+            {
+              "name": "class",
+              "type": "dotted_name",
+              "text": "Point"
+            },
+            {
+              "name": "item",
+              "type": "with_item",
+              "text": "open(\"a\") as a"
+            },
+            {
+              "name": "item",
+              "type": "with_item",
+              "text": "open(\"b\") as b"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V311-Q-1",
+      "source_case": "probe-python-V311-PNR-1",
+      "features": [
+        "python-V311"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v311",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "annotation",
+              "type": "type",
+              "text": "*Ts"
+            },
+            {
+              "name": "return",
+              "type": "type",
+              "text": "tuple[*Ts]"
+            },
+            {
+              "name": "handler",
+              "type": "as_pattern",
+              "text": "ValueError as group"
+            },
+            {
+              "name": "handler",
+              "type": "tuple",
+              "text": "(TypeError, KeyError)"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V313-Q-1",
+      "source_case": "probe-python-V313-PN-1",
+      "features": [
+        "python-V313"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v313",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Box"
+            },
+            {
+              "name": "params",
+              "type": "type_parameter",
+              "text": "[T = int]"
+            },
+            {
+              "name": "params",
+              "type": "type_parameter",
+              "text": "[T: (int, str) = int, *Ts = *tuple[int, str], **P = [int, str]]"
+            },
+            {
+              "name": "alias",
+              "type": "type",
+              "text": "Alias[T = str]"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V314-Q-1",
+      "source_case": "probe-python-V314-PNRE-1",
+      "features": [
+        "python-V314"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v314",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "expr",
+              "type": "identifier",
+              "text": "name"
+            },
+            {
+              "name": "conversion",
+              "type": "type_conversion",
+              "text": "!r"
+            },
+            {
+              "name": "spec",
+              "type": "format_specifier",
+              "text": ":>10"
+            },
+            {
+              "name": "expr",
+              "type": "identifier",
+              "text": "name"
             }
           ],
           "error": null

@@ -101,6 +101,2764 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-go-B01-01",
+      "features": [
+        "go-B01"
+      ],
+      "alternatives": [
+        "go-B01.a001",
+        "go-B01.a002",
+        "go-B01.a003",
+        "go-B01.a004",
+        "go-B01.a005",
+        "go-B01.a006",
+        "go-B01.a014",
+        "go-B01.a128",
+        "go-B01.a129",
+        "go-B01.a130",
+        "go-B01.a131",
+        "go-B01.a133",
+        "go-B01.a134",
+        "go-B01.a135",
+        "go-B01.a136",
+        "go-B01.a137",
+        "go-B01.a138",
+        "go-B01.a007",
+        "go-B01.a015",
+        "go-B01.a019",
+        "go-B01.a020",
+        "go-B01.a024",
+        "go-B01.a056",
+        "go-B01.a057",
+        "go-B01.a058",
+        "go-B01.a061",
+        "go-B01.a069",
+        "go-B01.a070",
+        "go-B01.a072",
+        "go-B01.a073",
+        "go-B01.a076",
+        "go-B01.a077",
+        "go-B01.a079",
+        "go-B01.a080",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a104",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a112",
+        "go-B01.a113",
+        "go-B01.a114",
+        "go-B01.a115",
+        "go-B01.a116",
+        "go-B01.a121",
+        "go-B01.a125"
+      ],
+      "source_utf8": "// Package lex has comments.\npackage lex\n\n/* general */ var a /* inline */ = 1\n/* multi\n   line */\nvar _x9, αβ, ThisIsExported, x٣ = 1, 2, 3, 4\r\nvar t\t= 5\n\nfunc f(x int) int {\n\tx++\n\tx--\n\tfor {\n\t\tif x > 0 {\n\t\t\tbreak\n\t\t}\n\t\tcontinue\n\t}\n\tswitch x {\n\tcase 1:\n\t\tfallthrough\n\tdefault:\n\t}\n\ty := []int{1}[0]\n\t_ = y\n\tif x > 1 { return 2 }; return 1\n}\nvar r = 'a'\nvar s = \"s\"\nvar fl = 1.5\nvar im = 2i\nvar g = (1)\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "comment",
+            "var_declaration",
+            "identifier",
+            "function_declaration",
+            "inc_statement",
+            "dec_statement",
+            "break_statement",
+            "continue_statement",
+            "fallthrough_statement",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "// Package lex has comments."
+            },
+            {
+              "type": "comment",
+              "text": "/* general */"
+            },
+            {
+              "type": "comment",
+              "text": "/* inline */"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\n   line */"
+            },
+            {
+              "type": "identifier",
+              "text": "_x9"
+            },
+            {
+              "type": "identifier",
+              "text": "αβ"
+            },
+            {
+              "type": "identifier",
+              "text": "ThisIsExported"
+            },
+            {
+              "type": "identifier",
+              "text": "x٣"
+            },
+            {
+              "type": "var_spec",
+              "text": "t\t= 5"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var a /* inline */ = 1"
+            },
+            {
+              "type": "inc_statement",
+              "text": "x++"
+            },
+            {
+              "type": "dec_statement",
+              "text": "x--"
+            },
+            {
+              "type": "break_statement",
+              "text": "break"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue"
+            },
+            {
+              "type": "fallthrough_statement",
+              "text": "fallthrough"
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "y := []int{1}[0]"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "_ = y"
+            },
+            {
+              "type": "if_statement",
+              "text": "if x > 1 { return 2 }"
+            },
+            {
+              "type": "return_statement",
+              "text": "return 2"
+            },
+            {
+              "type": "return_statement",
+              "text": "return 1"
+            },
+            {
+              "type": "int_literal",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "int_literal",
+              "text": "4"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var r = 'a'"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var s = \"s\""
+            },
+            {
+              "type": "var_declaration",
+              "text": "var fl = 1.5"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var im = 2i"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var g = (1)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B01-02",
+      "features": [
+        "go-B01",
+        "go-B03"
+      ],
+      "alternatives": [
+        "go-B01.a015",
+        "go-B01.a016",
+        "go-B01.a017",
+        "go-B01.a018",
+        "go-B01.a019",
+        "go-B01.a020",
+        "go-B01.a021",
+        "go-B01.a022",
+        "go-B01.a023",
+        "go-B01.a024",
+        "go-B01.a025",
+        "go-B01.a026",
+        "go-B01.a027",
+        "go-B01.a007",
+        "go-B01.a008",
+        "go-B01.a009",
+        "go-B01.a010",
+        "go-B01.a011",
+        "go-B01.a012",
+        "go-B01.a013",
+        "go-B01.a028",
+        "go-B01.a029",
+        "go-B01.a030",
+        "go-B01.a031",
+        "go-B01.a032",
+        "go-B01.a033",
+        "go-B01.a034",
+        "go-B01.a035",
+        "go-B01.a036",
+        "go-B01.a037",
+        "go-B01.a038",
+        "go-B01.a039",
+        "go-B03.a007",
+        "go-B03.a008",
+        "go-B03.a009",
+        "go-B01.a069",
+        "go-B01.a080",
+        "go-B01.a081",
+        "go-B01.a090",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a124"
+      ],
+      "source_utf8": "package nums\n\nvar ints = []int{0, 7, 42, 1_000_000, 123456789, 0b1011, 0B_1_0, 0o17, 0O_7, 017, 0_17,\n\t0x1F, 0X_aB_cD, 0xabcdef, 0XABCDEF, 0x0123456789}\nvar floats = []float64{0., 72.40, 072.40, 2.71828, 1.e+0, 6.67428e-11, 1E6, .25, .12345E+5, 1_5., 0.15e+0_2,\n\t0x1p-2, 0x2.p10, 0x1.Fp+0, 0X.8p-0, 0X_1FFFP-16, 0x_1p4}\nvar imags = []complex128{0i, 0123i, 0o123i, 0xabci, 0.i, 2.71828i, 1.e+0i, 6.67428e-11i, 1E6i, .25i,\n\t.12345E+5i, 0x1p-2i, 0b101i, 1_000i}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "int_literal",
+            "float_literal",
+            "imaginary_literal",
+            "composite_literal"
+          ],
+          "anchors": [
+            {
+              "type": "int_literal",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "int_literal",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "int_literal",
+              "text": "42",
+              "occurrence": 1
+            },
+            {
+              "type": "int_literal",
+              "text": "1_000_000"
+            },
+            {
+              "type": "int_literal",
+              "text": "123456789",
+              "occurrence": 1
+            },
+            {
+              "type": "int_literal",
+              "text": "0b1011"
+            },
+            {
+              "type": "int_literal",
+              "text": "0B_1_0"
+            },
+            {
+              "type": "int_literal",
+              "text": "0o17"
+            },
+            {
+              "type": "int_literal",
+              "text": "0O_7"
+            },
+            {
+              "type": "int_literal",
+              "text": "017"
+            },
+            {
+              "type": "int_literal",
+              "text": "0_17"
+            },
+            {
+              "type": "int_literal",
+              "text": "0x1F"
+            },
+            {
+              "type": "int_literal",
+              "text": "0X_aB_cD"
+            },
+            {
+              "type": "int_literal",
+              "text": "0xabcdef"
+            },
+            {
+              "type": "int_literal",
+              "text": "0XABCDEF"
+            },
+            {
+              "type": "int_literal",
+              "text": "0x0123456789"
+            },
+            {
+              "type": "float_literal",
+              "text": "0.",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "72.40",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "072.40"
+            },
+            {
+              "type": "float_literal",
+              "text": "2.71828",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "1.e+0",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "6.67428e-11",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "1E6",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": ".25",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": ".12345E+5",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "1_5."
+            },
+            {
+              "type": "float_literal",
+              "text": "0.15e+0_2"
+            },
+            {
+              "type": "float_literal",
+              "text": "0x1p-2",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": "0x2.p10"
+            },
+            {
+              "type": "float_literal",
+              "text": "0x1.Fp+0"
+            },
+            {
+              "type": "float_literal",
+              "text": "0X.8p-0"
+            },
+            {
+              "type": "float_literal",
+              "text": "0X_1FFFP-16"
+            },
+            {
+              "type": "float_literal",
+              "text": "0x_1p4"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0i",
+              "occurrence": 1
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0123i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0o123i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0xabci"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0.i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "2.71828i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "1.e+0i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "6.67428e-11i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "1E6i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": ".25i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": ".12345E+5i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0x1p-2i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "0b101i"
+            },
+            {
+              "type": "imaginary_literal",
+              "text": "1_000i"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B01-03",
+      "features": [
+        "go-B01",
+        "go-B03"
+      ],
+      "alternatives": [
+        "go-B01.a040",
+        "go-B01.a041",
+        "go-B01.a042",
+        "go-B01.a043",
+        "go-B01.a044",
+        "go-B01.a045",
+        "go-B01.a046",
+        "go-B01.a047",
+        "go-B01.a048",
+        "go-B01.a049",
+        "go-B01.a050",
+        "go-B01.a051",
+        "go-B01.a052",
+        "go-B01.a053",
+        "go-B01.a054",
+        "go-B01.a055",
+        "go-B01.a010",
+        "go-B01.a011",
+        "go-B01.a012",
+        "go-B01.a013",
+        "go-B01.a002",
+        "go-B01.a001",
+        "go-B03.a010",
+        "go-B03.a011",
+        "go-B01.a069",
+        "go-B01.a080",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115"
+      ],
+      "source_utf8": "package strs\n\nvar runes = []rune{'a', 'ä', '本', '\\t', '\\000', '\\007', '\\377', '\\x07', '\\xff',\n\t'\\u12e4', '\\U00101234', '\\a', '\\b', '\\f', '\\n', '\\r', '\\v', '\\\\', '\\''}\nvar raw = `abc\n\\n \"quoted\" é`\nvar rawEmpty = ``\nvar interp = \"\\n \\\" \\\\ \\a\\b\\f\\r\\t\\v \\x41 \\101 \\u65e5 \\U00008a9e 日本\"\nvar empty = \"\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "rune_literal",
+            "escape_sequence",
+            "raw_string_literal",
+            "raw_string_literal_content",
+            "interpreted_string_literal",
+            "interpreted_string_literal_content"
+          ],
+          "anchors": [
+            {
+              "type": "rune_literal",
+              "text": "'a'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'ä'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'本'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\t'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\000'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\007'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\377'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\x07'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\xff'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\u12e4'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\U00101234'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\a'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\b'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\f'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\n'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\r'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\v'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\\\'"
+            },
+            {
+              "type": "rune_literal",
+              "text": "'\\''"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "`abc\n\\n \"quoted\" é`"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "``"
+            },
+            {
+              "type": "interpreted_string_literal",
+              "text": "\"\\n \\\" \\\\ \\a\\b\\f\\r\\t\\v \\x41 \\101 \\u65e5 \\U00008a9e 日本\""
+            },
+            {
+              "type": "interpreted_string_literal",
+              "text": "\"\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\101"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u65e5"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\U00008a9e"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\a",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B02-01",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-B03",
+        "go-B04"
+      ],
+      "alternatives": [
+        "go-B02.a001",
+        "go-B02.a002",
+        "go-B02.a003",
+        "go-B02.a004",
+        "go-B02.a005",
+        "go-B02.a007",
+        "go-B02.a008",
+        "go-B02.a009",
+        "go-B02.a010",
+        "go-B02.a011",
+        "go-B02.a012",
+        "go-B02.a013",
+        "go-B02.a014",
+        "go-B02.a015",
+        "go-B02.a016",
+        "go-B02.a017",
+        "go-B02.a018",
+        "go-B02.a019",
+        "go-B02.a020",
+        "go-B02.a021",
+        "go-B02.a022",
+        "go-B02.a023",
+        "go-B02.a024",
+        "go-B02.a025",
+        "go-B02.a026",
+        "go-B02.a027",
+        "go-B02.a028",
+        "go-B02.a029",
+        "go-B02.a030",
+        "go-B02.a031",
+        "go-B02.a032",
+        "go-B02.a033",
+        "go-B02.a034",
+        "go-B02.a035",
+        "go-B02.a036",
+        "go-B02.a037",
+        "go-B02.a038",
+        "go-B02.a039",
+        "go-B02.a040",
+        "go-B02.a041",
+        "go-B02.a052",
+        "go-B02.a053",
+        "go-B02.a054",
+        "go-B02.a055",
+        "go-B02.a056",
+        "go-B02.a043",
+        "go-B02.a045",
+        "go-B02.a048",
+        "go-B02.a049",
+        "go-B02.a050",
+        "go-B02.a051",
+        "go-B03.a014",
+        "go-B04.a068",
+        "go-B04.a069",
+        "go-B04.a070",
+        "go-B01.a052",
+        "go-B01.a053",
+        "go-B02.a042",
+        "go-B01.a058",
+        "go-B01.a059",
+        "go-B01.a064",
+        "go-B01.a065",
+        "go-B01.a066",
+        "go-B01.a069",
+        "go-B01.a071",
+        "go-B01.a075",
+        "go-B01.a078",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a099",
+        "go-B01.a103",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a123",
+        "go-B01.a124"
+      ],
+      "source_utf8": "package types\n\nimport \"io\"\n\ntype (\n\tNamed int\n\tArr [4]int\n\tArr2 [2 * N][N]byte\n\tSl []string\n\tPtr *Named\n\tPP **int\n\tFn func(a, b int, c ...string) (int, error)\n\tFn2 func(int) error\n\tFn3 func()\n\tFn4 func(x int,) (r int)\n\tFn5 func(int, string)\n\tM map[string][]int\n\tCh chan int\n\tSend chan<- int\n\tRecv <-chan int\n\tCC chan<- chan int\n\tCRC chan (<-chan int)\n\tParen (int)\n\tQual io.Reader\n\tS struct {\n\t\tx, y int\n\t\tu float32 \"tag\"\n\t\t_ float32\n\t\tA *[]int `json:\"a\"`\n\t\tF func()\n\t\tNamed\n\t\t*Ptr\n\t\tio.Writer\n\t\t*io.Closer `embedded`\n\t}\n\tEmpty struct{}\n\tI interface {\n\t\tRead(p []byte) (n int, err error)\n\t\tio.Closer\n\t\tString() string\n\t}\n\tEI interface{}\n\tAlias = int\n)\n\ntype Single struct{ a int }\n\nconst N = 3\n\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration",
+            "type_spec",
+            "type_alias",
+            "array_type",
+            "slice_type",
+            "pointer_type",
+            "function_type",
+            "parameter_list",
+            "parameter_declaration",
+            "variadic_parameter_declaration",
+            "map_type",
+            "channel_type",
+            "parenthesized_type",
+            "qualified_type",
+            "struct_type",
+            "field_declaration_list",
+            "field_declaration",
+            "interface_type",
+            "method_elem",
+            "type_elem"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import \"io\""
+            },
+            {
+              "type": "array_type",
+              "text": "[4]int"
+            },
+            {
+              "type": "array_type",
+              "text": "[2 * N][N]byte"
+            },
+            {
+              "type": "slice_type",
+              "text": "[]string"
+            },
+            {
+              "type": "pointer_type",
+              "text": "*Named"
+            },
+            {
+              "type": "pointer_type",
+              "text": "**int"
+            },
+            {
+              "type": "function_type",
+              "text": "func(a, b int, c ...string) (int, error)"
+            },
+            {
+              "type": "variadic_parameter_declaration",
+              "text": "c ...string"
+            },
+            {
+              "type": "function_type",
+              "text": "func(int) error"
+            },
+            {
+              "type": "function_type",
+              "text": "func()",
+              "occurrence": 1
+            },
+            {
+              "type": "function_type",
+              "text": "func(x int,) (r int)"
+            },
+            {
+              "type": "function_type",
+              "text": "func(int, string)"
+            },
+            {
+              "type": "map_type",
+              "text": "map[string][]int"
+            },
+            {
+              "type": "channel_type",
+              "text": "chan int",
+              "occurrence": 1
+            },
+            {
+              "type": "channel_type",
+              "text": "chan<- int"
+            },
+            {
+              "type": "channel_type",
+              "text": "<-chan int",
+              "occurrence": 1
+            },
+            {
+              "type": "channel_type",
+              "text": "chan<- chan int"
+            },
+            {
+              "type": "channel_type",
+              "text": "chan (<-chan int)"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(int)",
+              "occurrence": 2
+            },
+            {
+              "type": "qualified_type",
+              "text": "io.Reader"
+            },
+            {
+              "type": "field_declaration",
+              "text": "x, y int"
+            },
+            {
+              "type": "field_declaration",
+              "text": "u float32 \"tag\""
+            },
+            {
+              "type": "field_declaration",
+              "text": "_ float32"
+            },
+            {
+              "type": "field_declaration",
+              "text": "A *[]int `json:\"a\"`"
+            },
+            {
+              "type": "field_declaration",
+              "text": "Named",
+              "occurrence": 3
+            },
+            {
+              "type": "field_declaration",
+              "text": "*Ptr"
+            },
+            {
+              "type": "field_declaration",
+              "text": "io.Writer"
+            },
+            {
+              "type": "field_declaration",
+              "text": "*io.Closer `embedded`"
+            },
+            {
+              "type": "struct_type",
+              "text": "struct{}"
+            },
+            {
+              "type": "method_elem",
+              "text": "Read(p []byte) (n int, err error)"
+            },
+            {
+              "type": "type_elem",
+              "text": "io.Closer",
+              "occurrence": 2
+            },
+            {
+              "type": "method_elem",
+              "text": "String() string"
+            },
+            {
+              "type": "interface_type",
+              "text": "interface{}"
+            },
+            {
+              "type": "type_alias",
+              "text": "Alias = int"
+            },
+            {
+              "type": "type_declaration",
+              "text": "type Single struct{ a int }"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const N = 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B02-02",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-B04"
+      ],
+      "alternatives": [
+        "go-B02.a042",
+        "go-B02.a044",
+        "go-B02.a045",
+        "go-B02.a046",
+        "go-B02.a047",
+        "go-B02.a048",
+        "go-B02.a049",
+        "go-B02.a050",
+        "go-B02.a051",
+        "go-B02.a057",
+        "go-B02.a058",
+        "go-B02.a052",
+        "go-B02.a059",
+        "go-B02.a060",
+        "go-B02.a061",
+        "go-B02.a062",
+        "go-B02.a063",
+        "go-B02.a026",
+        "go-B02.a028",
+        "go-B02.a029",
+        "go-B02.a030",
+        "go-B02.a031",
+        "go-B04.a001",
+        "go-B04.a002",
+        "go-B01.a058",
+        "go-B01.a065",
+        "go-B01.a069",
+        "go-B01.a071",
+        "go-B01.a073",
+        "go-B01.a075",
+        "go-B01.a079",
+        "go-B01.a080",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a090",
+        "go-B01.a095",
+        "go-B01.a099",
+        "go-B01.a101",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a116",
+        "go-B01.a124"
+      ],
+      "source_utf8": "package decls\n\nconst Pi float64 = 3.14159\nconst zero = 0.0\nconst (\n\tsize int64 = 1024\n\teof        = -1\n\ta, b, c    = 3, 4, \"foo\"\n\tu, v float32 = 0, 3\n)\nconst (\n\tSunday = iota\n\tMonday\n\t_\n)\nvar i int\nvar U, V, W float64\nvar k = 0\nvar x, y float32 = -1, -2\nvar (\n\tj       int\n\tu2, v2, s = 2.0, 3.0, \"bar\"\n)\nvar ()\nconst ()\ntype ()\nfunc IndexRune(s string, r rune) int { return 0 }\nfunc flushICache(begin, end uintptr)\nfunc min2(x int, y int) int { if x < y { return x }; return y }\ntype Point struct{ x, y float64 }\nfunc (p *Point) Length() float64 { return p.x }\nfunc (p *Point) Scale(factor float64) { p.x *= factor }\nfunc (Point) Blank() {}\nfunc (_ Point) Under() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "const_declaration",
+            "const_spec",
+            "iota",
+            "var_declaration",
+            "var_spec",
+            "var_spec_list",
+            "function_declaration",
+            "method_declaration",
+            "parameter_list",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "const_declaration",
+              "text": "const Pi float64 = 3.14159"
+            },
+            {
+              "type": "const_spec",
+              "text": "zero = 0.0"
+            },
+            {
+              "type": "const_spec",
+              "text": "size int64 = 1024"
+            },
+            {
+              "type": "const_spec",
+              "text": "eof        = -1"
+            },
+            {
+              "type": "const_spec",
+              "text": "a, b, c    = 3, 4, \"foo\""
+            },
+            {
+              "type": "const_spec",
+              "text": "u, v float32 = 0, 3"
+            },
+            {
+              "type": "const_spec",
+              "text": "Sunday = iota"
+            },
+            {
+              "type": "const_spec",
+              "text": "Monday"
+            },
+            {
+              "type": "const_spec",
+              "text": "_",
+              "occurrence": 1
+            },
+            {
+              "type": "var_declaration",
+              "text": "var i int"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var U, V, W float64"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var k = 0"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var x, y float32 = -1, -2"
+            },
+            {
+              "type": "var_spec",
+              "text": "j       int"
+            },
+            {
+              "type": "var_spec",
+              "text": "u2, v2, s = 2.0, 3.0, \"bar\""
+            },
+            {
+              "type": "var_declaration",
+              "text": "var ()"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const ()"
+            },
+            {
+              "type": "type_declaration",
+              "text": "type ()"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func IndexRune(s string, r rune) int { return 0 }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func flushICache(begin, end uintptr)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func min2(x int, y int) int { if x < y { return x }; return y }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (p *Point) Length() float64 { return p.x }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (p *Point) Scale(factor float64) { p.x *= factor }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (Point) Blank() {}"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (_ Point) Under() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B03-01",
+      "features": [
+        "go-B01",
+        "go-B03",
+        "go-B04"
+      ],
+      "alternatives": [
+        "go-B03.a001",
+        "go-B03.a003",
+        "go-B03.a002",
+        "go-B03.a004",
+        "go-B03.a005",
+        "go-B03.a006",
+        "go-B03.a007",
+        "go-B03.a008",
+        "go-B03.a009",
+        "go-B03.a010",
+        "go-B03.a011",
+        "go-B03.a012",
+        "go-B03.a013",
+        "go-B03.a014",
+        "go-B03.a015",
+        "go-B03.a016",
+        "go-B03.a017",
+        "go-B03.a018",
+        "go-B03.a019",
+        "go-B03.a020",
+        "go-B03.a021",
+        "go-B03.a022",
+        "go-B03.a023",
+        "go-B03.a024",
+        "go-B03.a025",
+        "go-B03.a026",
+        "go-B03.a027",
+        "go-B03.a028",
+        "go-B03.a029",
+        "go-B03.a030",
+        "go-B03.a031",
+        "go-B03.a032",
+        "go-B03.a033",
+        "go-B03.a034",
+        "go-B03.a035",
+        "go-B03.a036",
+        "go-B03.a037",
+        "go-B03.a038",
+        "go-B03.a039",
+        "go-B03.a040",
+        "go-B03.a041",
+        "go-B03.a042",
+        "go-B03.a043",
+        "go-B03.a044",
+        "go-B03.a045",
+        "go-B03.a046",
+        "go-B03.a047",
+        "go-B03.a048",
+        "go-B03.a049",
+        "go-B03.a050",
+        "go-B03.a051",
+        "go-B03.a052",
+        "go-B03.a053",
+        "go-B03.a054",
+        "go-B03.a055",
+        "go-B03.a056",
+        "go-B03.a057",
+        "go-B03.a058",
+        "go-B03.a059",
+        "go-B03.a060",
+        "go-B03.a061",
+        "go-B03.a062",
+        "go-B03.a063",
+        "go-B03.a064",
+        "go-B03.a065",
+        "go-B03.a066",
+        "go-B03.a067",
+        "go-B03.a068",
+        "go-B03.a069",
+        "go-B03.a070",
+        "go-B03.a071",
+        "go-B03.a072",
+        "go-B03.a073",
+        "go-B03.a074",
+        "go-B03.a075",
+        "go-B03.a076",
+        "go-B03.a077",
+        "go-B03.a078",
+        "go-B03.a079",
+        "go-B03.a080",
+        "go-B03.a081",
+        "go-B04.a067",
+        "go-B04.a068",
+        "go-B04.a069",
+        "go-B04.a070",
+        "go-B01.a058",
+        "go-B01.a059",
+        "go-B01.a064",
+        "go-B01.a065",
+        "go-B01.a066",
+        "go-B01.a069",
+        "go-B01.a075",
+        "go-B01.a078",
+        "go-B01.a079",
+        "go-B01.a081",
+        "go-B01.a082",
+        "go-B01.a085",
+        "go-B01.a086",
+        "go-B01.a087",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a090",
+        "go-B01.a091",
+        "go-B01.a094",
+        "go-B01.a095",
+        "go-B01.a096",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a099",
+        "go-B01.a100",
+        "go-B01.a103",
+        "go-B01.a104",
+        "go-B01.a105",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a108",
+        "go-B01.a109",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a116",
+        "go-B01.a117",
+        "go-B01.a118",
+        "go-B01.a122",
+        "go-B01.a123",
+        "go-B01.a124",
+        "go-B01.a125",
+        "go-B01.a126"
+      ],
+      "source_utf8": "package exprs\n\nimport (\n\t\"fmt\"\n\t\"math\"\n)\n\ntype Point struct{ x, y int }\ntype T struct{ a int; b string }\nfunc (T) Mv(int) int { return 0 }\nfunc (*T) Mp(float32) float32 { return 0 }\n\nfunc f(x, y int, p *T, m map[string]int, s []int, a [4]int, i interface{}, ch chan int, str string) {\n\t_ = x + y - x*y/2%3<<1>>1&3|4^5&^6\n\t_ = x == y || x != y && x < y || x <= y || x > y || x >= y\n\t_, _, _, _, _, _, _ = +x, -x, !true, ^x, *p, &x, <-ch\n\t_ = math.Pi\n\t_ = (x)\n\t_ = fmt.Sprint\n\t_ = []int{1, 2, 3}\n\t_ = [...]string{\"a\", \"b\"}\n\t_ = [2][2]int{{1, 2}, {3, 4}}\n\t_ = map[string]int{\"a\": 1, \"b\": 2}\n\t_ = map[Point]string{{1, 2}: \"a\", Point{3, 4}: \"b\"}\n\t_ = Point{x: 1, y: 2}\n\t_ = Point{1, 2}\n\t_ = &Point{}\n\t_ = [10]string{2: \"x\", 5: \"y\"}\n\t_ = struct{ a int }{a: 1}\n\t_ = []*Point{{1, 2}, &Point{3, 4}}\n\t_ = [][]int{{1}, {2, 3},}\n\t_ = func(a, b int) int { return a + b }\n\t_ = func() {}\n\t_ = p.a\n\t_ = m[\"a\"]\n\t_ = s[1]\n\t_ = s[1,]\n\t_ = s[1:2]\n\t_ = s[:2]\n\t_ = s[1:]\n\t_ = s[:]\n\t_ = s[1:2:3]\n\t_ = s[:2:3]\n\t_ = str[1:]\n\t_ = a[0]\n\t_ = i.(int)\n\t_, _ = i.(fmt.Stringer)\n\tfmt.Println(x, y)\n\tfmt.Println(s...)\n\t_ = make([]int, 10)\n\t_ = make(map[string]int)\n\t_ = new(int)\n\t_ = append(s, 1,)\n\t_ = math.Atan2(1, 2)\n\t_ = T.Mv\n\t_ = (*T).Mp\n\t_ = (*T).Mv\n\t_ = p.Mp\n\t_ = float64(x)\n\t_ = []byte(str)\n\t_ = (*int)(nil)\n\t_ = (func())(nil)\n\t_ = (<-chan int)(ch)\n\t_ = string(rune(x),)\n\t_ = map[string]int(m)\n\t_ = chan int(nil)\n\t_ = 1 + 2i\n\t_ = 'r'\n\t_ = \"str\"\n\t_ = 1.5\n\t_ = 42\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "unary_expression",
+            "selector_expression",
+            "parenthesized_expression",
+            "composite_literal",
+            "literal_value",
+            "keyed_element",
+            "literal_element",
+            "implicit_length_array_type",
+            "func_literal",
+            "index_expression",
+            "slice_expression",
+            "type_assertion_expression",
+            "call_expression",
+            "argument_list",
+            "variadic_argument",
+            "type_conversion_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "x + y - x*y/2%3<<1>>1&3|4^5&^6"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x*y/2%3<<1>>1&3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x == y || x != y && x < y || x <= y || x > y || x >= y"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x != y && x < y"
+            },
+            {
+              "type": "unary_expression",
+              "text": "+x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!true"
+            },
+            {
+              "type": "unary_expression",
+              "text": "^x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "*p"
+            },
+            {
+              "type": "unary_expression",
+              "text": "&x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "<-ch",
+              "occurrence": 1
+            },
+            {
+              "type": "selector_expression",
+              "text": "math.Pi"
+            },
+            {
+              "type": "selector_expression",
+              "text": "fmt.Sprint"
+            },
+            {
+              "type": "selector_expression",
+              "text": "T.Mv"
+            },
+            {
+              "type": "selector_expression",
+              "text": "(*T).Mp"
+            },
+            {
+              "type": "selector_expression",
+              "text": "(*T).Mv"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(x)",
+              "occurrence": 1
+            },
+            {
+              "type": "composite_literal",
+              "text": "[]int{1, 2, 3}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[...]string{\"a\", \"b\"}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[2][2]int{{1, 2}, {3, 4}}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "map[string]int{\"a\": 1, \"b\": 2}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "map[Point]string{{1, 2}: \"a\", Point{3, 4}: \"b\"}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "Point{x: 1, y: 2}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "Point{1, 2}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[10]string{2: \"x\", 5: \"y\"}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "struct{ a int }{a: 1}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[]*Point{{1, 2}, &Point{3, 4}}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[][]int{{1}, {2, 3},}"
+            },
+            {
+              "type": "implicit_length_array_type",
+              "text": "[...]string"
+            },
+            {
+              "type": "literal_value",
+              "text": "{1, 2}",
+              "occurrence": 1
+            },
+            {
+              "type": "keyed_element",
+              "text": "\"a\": 1"
+            },
+            {
+              "type": "keyed_element",
+              "text": "{1, 2}: \"a\""
+            },
+            {
+              "type": "keyed_element",
+              "text": "x: 1"
+            },
+            {
+              "type": "keyed_element",
+              "text": "2: \"x\""
+            },
+            {
+              "type": "unary_expression",
+              "text": "&Point{}"
+            },
+            {
+              "type": "func_literal",
+              "text": "func(a, b int) int { return a + b }"
+            },
+            {
+              "type": "func_literal",
+              "text": "func() {}"
+            },
+            {
+              "type": "index_expression",
+              "text": "m[\"a\"]"
+            },
+            {
+              "type": "index_expression",
+              "text": "s[1]"
+            },
+            {
+              "type": "index_expression",
+              "text": "s[1,]"
+            },
+            {
+              "type": "index_expression",
+              "text": "a[0]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[1:2]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[:2]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[1:]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[:]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[1:2:3]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "s[:2:3]"
+            },
+            {
+              "type": "slice_expression",
+              "text": "str[1:]"
+            },
+            {
+              "type": "type_assertion_expression",
+              "text": "i.(int)"
+            },
+            {
+              "type": "type_assertion_expression",
+              "text": "i.(fmt.Stringer)"
+            },
+            {
+              "type": "call_expression",
+              "text": "fmt.Println(x, y)"
+            },
+            {
+              "type": "call_expression",
+              "text": "fmt.Println(s...)"
+            },
+            {
+              "type": "call_expression",
+              "text": "make([]int, 10)"
+            },
+            {
+              "type": "call_expression",
+              "text": "new(int)"
+            },
+            {
+              "type": "call_expression",
+              "text": "append(s, 1,)"
+            },
+            {
+              "type": "call_expression",
+              "text": "float64(x)"
+            },
+            {
+              "type": "call_expression",
+              "text": "string(rune(x),)"
+            },
+            {
+              "type": "variadic_argument",
+              "text": "s..."
+            },
+            {
+              "type": "type_conversion_expression",
+              "text": "[]byte(str)"
+            },
+            {
+              "type": "type_conversion_expression",
+              "text": "(func())(nil)"
+            },
+            {
+              "type": "type_conversion_expression",
+              "text": "(<-chan int)(ch)"
+            },
+            {
+              "type": "type_conversion_expression",
+              "text": "map[string]int(m)"
+            },
+            {
+              "type": "type_conversion_expression",
+              "text": "chan int(nil)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "1 + 2i"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-B04-01",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-B04"
+      ],
+      "alternatives": [
+        "go-B04.a004",
+        "go-B04.a005",
+        "go-B04.a006",
+        "go-B04.a007",
+        "go-B04.a008",
+        "go-B04.a009",
+        "go-B04.a010",
+        "go-B04.a011",
+        "go-B04.a012",
+        "go-B04.a013",
+        "go-B04.a014",
+        "go-B04.a015",
+        "go-B04.a016",
+        "go-B04.a017",
+        "go-B04.a018",
+        "go-B04.a019",
+        "go-B04.a020",
+        "go-B04.a021",
+        "go-B04.a022",
+        "go-B04.a023",
+        "go-B04.a024",
+        "go-B04.a025",
+        "go-B04.a026",
+        "go-B04.a027",
+        "go-B04.a028",
+        "go-B04.a029",
+        "go-B04.a030",
+        "go-B04.a031",
+        "go-B04.a032",
+        "go-B04.a033",
+        "go-B04.a003",
+        "go-B04.a034",
+        "go-B04.a035",
+        "go-B04.a036",
+        "go-B04.a037",
+        "go-B04.a038",
+        "go-B04.a039",
+        "go-B04.a040",
+        "go-B04.a041",
+        "go-B04.a042",
+        "go-B04.a043",
+        "go-B04.a044",
+        "go-B04.a045",
+        "go-B04.a046",
+        "go-B04.a047",
+        "go-B04.a048",
+        "go-B04.a049",
+        "go-B04.a050",
+        "go-B04.a051",
+        "go-B04.a052",
+        "go-B04.a053",
+        "go-B04.a054",
+        "go-B04.a055",
+        "go-B04.a056",
+        "go-B04.a057",
+        "go-B04.a058",
+        "go-B04.a059",
+        "go-B04.a060",
+        "go-B04.a061",
+        "go-B04.a062",
+        "go-B04.a063",
+        "go-B04.a064",
+        "go-B04.a065",
+        "go-B04.a066",
+        "go-B04.a067",
+        "go-B04.a068",
+        "go-B04.a069",
+        "go-B04.a070",
+        "go-B04.a001",
+        "go-B04.a002",
+        "go-B02.a006",
+        "go-B02.a044",
+        "go-B02.a057",
+        "go-B02.a058",
+        "go-B01.a132",
+        "go-B01.a056",
+        "go-B01.a057",
+        "go-B01.a058",
+        "go-B01.a059",
+        "go-B01.a060",
+        "go-B01.a061",
+        "go-B01.a062",
+        "go-B01.a063",
+        "go-B01.a064",
+        "go-B01.a066",
+        "go-B01.a067",
+        "go-B01.a068",
+        "go-B01.a069",
+        "go-B01.a070",
+        "go-B01.a072",
+        "go-B01.a073",
+        "go-B01.a074",
+        "go-B01.a075",
+        "go-B01.a076",
+        "go-B01.a077",
+        "go-B01.a078",
+        "go-B01.a079",
+        "go-B01.a080",
+        "go-B01.a083",
+        "go-B01.a084",
+        "go-B01.a087",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a092",
+        "go-B01.a093",
+        "go-B01.a095",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a099",
+        "go-B01.a101",
+        "go-B01.a102",
+        "go-B01.a103",
+        "go-B01.a104",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a110",
+        "go-B01.a111",
+        "go-B01.a112",
+        "go-B01.a113",
+        "go-B01.a114",
+        "go-B01.a115",
+        "go-B01.a116",
+        "go-B01.a119",
+        "go-B01.a120",
+        "go-B01.a121",
+        "go-B01.a124",
+        "go-B01.a125",
+        "go-B01.a127"
+      ],
+      "source_utf8": "package stmts\n\nimport (\n\t\"fmt\"\n\tm \"math\"\n\t. \"strings\"\n\t_ \"embed\"\n)\nimport \"os\"\nimport ()\n\nfunc g(ch chan int, xs []int, mp map[string]int, i interface{}) (n int, err error) {\n\t{\n\t}\n\t;\n\tx := 1\n\ta, b := 2, 3\n\tx, c := 4, 5\n\tx = 6\n\ta, b = b, a\n\tx += 1; x -= 1; x *= 2; x /= 2; x %= 3; x &= 1; x |= 2; x ^= 3; x <<= 1; x >>= 1; x &^= 1\n\tx++\n\tx--\n\tch <- 3\n\tfmt.Println(m.Pi, ToUpper(\"a\"), os.Args)\n\tif x > 0 {\n\t} else if y := x; y < 0 {\n\t} else {\n\t}\n\tif v := x * 2; v > 1 {\n\t}\n\tswitch {\n\t}\n\tswitch x {\n\tcase 1, 2:\n\t\tfallthrough\n\tcase 3:\n\tdefault:\n\t}\n\tswitch y := x; y {\n\tcase 0:\n\t}\n\tswitch x := f(); {\n\tcase x < 0:\n\t}\n\tswitch v := i.(type) {\n\tcase nil:\n\tcase int, string:\n\t\t_ = v\n\tcase func(int) float64:\n\tdefault:\n\t}\n\tswitch i.(type) {\n\t}\n\tswitch t := x; u := i.(type) {\n\tcase bool:\n\t\t_, _ = t, u\n\t}\n\tfor x < 10 {\n\t\tx++\n\t}\n\tfor {\n\t\tbreak\n\t}\n\tfor i := 0; i < 10; i++ {\n\t}\n\tfor ; x < 3; {\n\t}\n\tfor x = 0; ; x++ {\n\t\tbreak\n\t}\n\tfor ;; {\n\t\tbreak\n\t}\n\tfor k, v := range mp {\n\t\t_, _ = k, v\n\t}\n\tfor x = range xs {\n\t}\n\tfor range ch {\n\t}\n\tfor i := range 10 {\n\t\t_ = i\n\t}\n\tvar key string\n\tfor key, x = range mp {\n\t}\n\tgo fmt.Println()\n\tgo func() {}()\n\tdefer fmt.Println()\n\tselect {\n\tcase v := <-ch:\n\t\t_ = v\n\tcase v, ok := <-ch:\n\t\t_, _ = v, ok\n\tcase x = <-ch:\n\tcase xs[0], ok = <-ch:\n\tcase <-ch:\n\tcase ch <- 1:\n\tdefault:\n\t}\n\tselect {}\nLoop:\n\tfor {\n\t\tfor {\n\t\t\tcontinue Loop\n\t\t}\n\t\tbreak Loop\n\t}\n\tgoto End\nEnd:\n\tif err != nil {\n\t\treturn\n\t}\n\treturn 1, nil\n}\nfunc f() int { return 0 }\nvar y, ok int\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "package_clause",
+            "import_declaration",
+            "import_spec_list",
+            "import_spec",
+            "package_identifier",
+            "dot",
+            "blank_identifier",
+            "block",
+            "empty_statement",
+            "short_var_declaration",
+            "assignment_statement",
+            "inc_statement",
+            "dec_statement",
+            "send_statement",
+            "expression_statement",
+            "if_statement",
+            "expression_switch_statement",
+            "expression_case",
+            "default_case",
+            "fallthrough_statement",
+            "type_switch_statement",
+            "type_case",
+            "for_statement",
+            "for_clause",
+            "range_clause",
+            "go_statement",
+            "defer_statement",
+            "select_statement",
+            "communication_case",
+            "receive_statement",
+            "labeled_statement",
+            "label_name",
+            "break_statement",
+            "continue_statement",
+            "goto_statement",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "import_spec",
+              "text": "m \"math\""
+            },
+            {
+              "type": "import_spec",
+              "text": ". \"strings\""
+            },
+            {
+              "type": "import_spec",
+              "text": "_ \"embed\""
+            },
+            {
+              "type": "import_declaration",
+              "text": "import \"os\""
+            },
+            {
+              "type": "import_declaration",
+              "text": "import ()"
+            },
+            {
+              "type": "block",
+              "text": "{\n\t}",
+              "occurrence": 1
+            },
+            {
+              "type": "empty_statement",
+              "text": ";",
+              "occurrence": 1
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "a, b := 2, 3"
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "x, c := 4, 5"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "x = 6"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "a, b = b, a"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "x += 1"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "x &^= 1"
+            },
+            {
+              "type": "inc_statement",
+              "text": "x++",
+              "occurrence": 1
+            },
+            {
+              "type": "dec_statement",
+              "text": "x--"
+            },
+            {
+              "type": "send_statement",
+              "text": "ch <- 3"
+            },
+            {
+              "type": "expression_statement",
+              "text": "fmt.Println(m.Pi, ToUpper(\"a\"), os.Args)"
+            },
+            {
+              "type": "if_statement",
+              "text": "if x > 0 {\n\t} else if y := x; y < 0 {\n\t} else {\n\t}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if y := x; y < 0 {\n\t} else {\n\t}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if v := x * 2; v > 1 {\n\t}"
+            },
+            {
+              "type": "expression_switch_statement",
+              "text": "switch {\n\t}"
+            },
+            {
+              "type": "fallthrough_statement",
+              "text": "fallthrough"
+            },
+            {
+              "type": "expression_case",
+              "text": "case 3:"
+            },
+            {
+              "type": "expression_switch_statement",
+              "text": "switch y := x; y {\n\tcase 0:\n\t}"
+            },
+            {
+              "type": "expression_switch_statement",
+              "text": "switch x := f(); {\n\tcase x < 0:\n\t}"
+            },
+            {
+              "type": "type_switch_statement",
+              "text": "switch v := i.(type) {\n\tcase nil:\n\tcase int, string:\n\t\t_ = v\n\tcase func(int) float64:\n\tdefault:\n\t}"
+            },
+            {
+              "type": "type_case",
+              "text": "case nil:"
+            },
+            {
+              "type": "type_case",
+              "text": "case func(int) float64:"
+            },
+            {
+              "type": "type_switch_statement",
+              "text": "switch i.(type) {\n\t}"
+            },
+            {
+              "type": "type_switch_statement",
+              "text": "switch t := x; u := i.(type) {\n\tcase bool:\n\t\t_, _ = t, u\n\t}"
+            },
+            {
+              "type": "for_statement",
+              "text": "for x < 10 {\n\t\tx++\n\t}"
+            },
+            {
+              "type": "for_statement",
+              "text": "for {\n\t\tbreak\n\t}"
+            },
+            {
+              "type": "for_clause",
+              "text": "i := 0; i < 10; i++"
+            },
+            {
+              "type": "for_clause",
+              "text": "; x < 3;"
+            },
+            {
+              "type": "for_clause",
+              "text": "x = 0; ; x++"
+            },
+            {
+              "type": "for_clause",
+              "text": ";;"
+            },
+            {
+              "type": "range_clause",
+              "text": "k, v := range mp"
+            },
+            {
+              "type": "range_clause",
+              "text": "x = range xs"
+            },
+            {
+              "type": "range_clause",
+              "text": "range ch"
+            },
+            {
+              "type": "range_clause",
+              "text": "i := range 10"
+            },
+            {
+              "type": "range_clause",
+              "text": "key, x = range mp"
+            },
+            {
+              "type": "go_statement",
+              "text": "go fmt.Println()"
+            },
+            {
+              "type": "go_statement",
+              "text": "go func() {}()"
+            },
+            {
+              "type": "defer_statement",
+              "text": "defer fmt.Println()"
+            },
+            {
+              "type": "receive_statement",
+              "text": "v := <-ch"
+            },
+            {
+              "type": "receive_statement",
+              "text": "v, ok := <-ch"
+            },
+            {
+              "type": "receive_statement",
+              "text": "x = <-ch"
+            },
+            {
+              "type": "receive_statement",
+              "text": "xs[0], ok = <-ch"
+            },
+            {
+              "type": "communication_case",
+              "text": "case <-ch:"
+            },
+            {
+              "type": "communication_case",
+              "text": "case ch <- 1:"
+            },
+            {
+              "type": "select_statement",
+              "text": "select {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "Loop:\n\tfor {\n\t\tfor {\n\t\t\tcontinue Loop\n\t\t}\n\t\tbreak Loop\n\t}"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue Loop"
+            },
+            {
+              "type": "break_statement",
+              "text": "break Loop"
+            },
+            {
+              "type": "goto_statement",
+              "text": "goto End"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "End:\n\tif err != nil {\n\t\treturn\n\t}"
+            },
+            {
+              "type": "return_statement",
+              "text": "return",
+              "occurrence": 1
+            },
+            {
+              "type": "return_statement",
+              "text": "return 1, nil"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var key string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-V18-01",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-V18"
+      ],
+      "alternatives": [
+        "go-V18.a001",
+        "go-V18.a004",
+        "go-V18.a005",
+        "go-V18.a006",
+        "go-V18.a007",
+        "go-B02.a038",
+        "go-V18.a002",
+        "go-V18.a003",
+        "go-B02.a037",
+        "go-B02.a006",
+        "go-V18.a009",
+        "go-V18.a010",
+        "go-V18.a011",
+        "go-V18.a012",
+        "go-V18.a013",
+        "go-V18.a014",
+        "go-V18.a015",
+        "go-V18.a016",
+        "go-V18.a017",
+        "go-V18.a018",
+        "go-V18.a019",
+        "go-V18.a020",
+        "go-V18.a021",
+        "go-B02.a055",
+        "go-B02.a056",
+        "go-B02.a001",
+        "go-B01.a058",
+        "go-B01.a059",
+        "go-B01.a064",
+        "go-B01.a065",
+        "go-B01.a069",
+        "go-B01.a075",
+        "go-B01.a079",
+        "go-B01.a080",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a091",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a099",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a123",
+        "go-B01.a124",
+        "go-B01.a125",
+        "go-V18.a008"
+      ],
+      "source_utf8": "package gen\n\ntype Number interface {\n\t~int | ~int64 | float64\n}\ntype Ordered interface {\n\t~int | ~string\n\tString() string\n}\ntype OnlyInt interface{ int }\ntype List[T any] struct {\n\tnext *List[T]\n\tval  T\n}\ntype Pair[K comparable, V any] struct {\n\tk K\n\tv V\n}\ntype Tree[T interface{ ~int | ~string }] struct{ left, right *Tree[T] }\ntype Ptr[P *Q, Q any] struct{}\ntype Ptr2[P interface{ *Q }, Q any] struct{}\ntype Ptr3[P *Q,] struct{}\ntype Wrapper[T any] struct {\n\tList[T]\n\t*Pair[string, T]\n}\ntype Set[T comparable] = map[T]struct{}\ntype IntList = List[int]\nfunc Map[S ~[]E, E, R any](s S, f func(E) R) []R { return nil }\nfunc Sum[T Number](xs ...T) (s T) { return }\nfunc (l *List[T]) Push(v T) {}\nfunc (p Pair[K, V]) Key() K { return p.k }\nfunc (p Pair[_, V]) Val() V { return p.v }\nfunc use() {\n\tvar l List[int]\n\t_ = Map[[]int, int, string]\n\t_ = Sum[float64]\n\t_ = Pair[string, int]{k: \"a\", v: 1}\n\t_ = List[int]{}\n\t_ = (*List[int]).Push\n\t_ = l\n\t_ = Map[[]int,]\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration",
+            "type_spec",
+            "type_alias",
+            "type_parameter_list",
+            "type_parameter_declaration",
+            "type_constraint",
+            "type_elem",
+            "negated_type",
+            "generic_type",
+            "type_arguments",
+            "interface_type",
+            "function_declaration",
+            "method_declaration",
+            "index_expression",
+            "composite_literal"
+          ],
+          "anchors": [
+            {
+              "type": "type_elem",
+              "text": "~int | ~int64 | float64"
+            },
+            {
+              "type": "negated_type",
+              "text": "~int64"
+            },
+            {
+              "type": "type_elem",
+              "text": "~int | ~string",
+              "occurrence": 1
+            },
+            {
+              "type": "type_elem",
+              "text": "int",
+              "occurrence": 7
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[T any]",
+              "occurrence": 1
+            },
+            {
+              "type": "generic_type",
+              "text": "List[T]",
+              "occurrence": 1
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[K comparable, V any]"
+            },
+            {
+              "type": "type_parameter_declaration",
+              "text": "T interface{ ~int | ~string }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[P *Q, Q any]"
+            },
+            {
+              "type": "type_constraint",
+              "text": "*Q",
+              "occurrence": 1
+            },
+            {
+              "type": "type_constraint",
+              "text": "interface{ *Q }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[P *Q,]"
+            },
+            {
+              "type": "field_declaration",
+              "text": "List[T]",
+              "occurrence": 2
+            },
+            {
+              "type": "field_declaration",
+              "text": "*Pair[string, T]"
+            },
+            {
+              "type": "type_alias",
+              "text": "Set[T comparable] = map[T]struct{}"
+            },
+            {
+              "type": "type_alias",
+              "text": "IntList = List[int]"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func Map[S ~[]E, E, R any](s S, f func(E) R) []R { return nil }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[S ~[]E, E, R any]"
+            },
+            {
+              "type": "negated_type",
+              "text": "~[]E"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func Sum[T Number](xs ...T) (s T) { return }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (l *List[T]) Push(v T) {}"
+            },
+            {
+              "type": "generic_type",
+              "text": "Pair[K, V]"
+            },
+            {
+              "type": "generic_type",
+              "text": "Pair[_, V]"
+            },
+            {
+              "type": "generic_type",
+              "text": "List[int]",
+              "occurrence": 2
+            },
+            {
+              "type": "type_instantiation_expression",
+              "text": "Map[[]int, int, string]"
+            },
+            {
+              "type": "composite_literal",
+              "text": "Pair[string, int]{k: \"a\", v: 1}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "List[int]{}"
+            },
+            {
+              "type": "selector_expression",
+              "text": "(*List[int]).Push"
+            },
+            {
+              "type": "type_instantiation_expression",
+              "text": "Map[[]int,]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-go-V27-01",
+      "features": [
+        "go-B01",
+        "go-B02",
+        "go-B03",
+        "go-V18",
+        "go-V27"
+      ],
+      "alternatives": [
+        "go-V27.a001",
+        "go-V27.a002",
+        "go-V27.a003",
+        "go-V27.a004",
+        "go-V27.a005",
+        "go-B02.a062",
+        "go-B03.a024",
+        "go-B03.a025",
+        "go-B03.a028",
+        "go-B01.a058",
+        "go-B01.a064",
+        "go-B01.a065",
+        "go-B01.a069",
+        "go-B01.a075",
+        "go-B01.a079",
+        "go-B01.a080",
+        "go-B01.a082",
+        "go-B01.a088",
+        "go-B01.a089",
+        "go-B01.a091",
+        "go-B01.a097",
+        "go-B01.a098",
+        "go-B01.a099",
+        "go-B01.a106",
+        "go-B01.a107",
+        "go-B01.a113",
+        "go-B01.a115",
+        "go-B01.a124",
+        "go-B01.a125",
+        "go-V18.a008"
+      ],
+      "source_utf8": "package gm\n\ntype List[E any] []E\nfunc (l List[E]) Apply[F any](f func(E) F) List[F] { return nil }\ntype Box struct{ v int }\nfunc (b Box) Conv[T ~int | ~int64]() T { return T(b.v) }\nfunc (b *Box) Pair[K comparable, V any](k K, v V,) map[K]V { return nil }\nfunc use(l List[int], b Box) {\n\t_ = l.Apply[string](func(int) string { return \"\" })\n\t_ = b.Conv[int64]()\n\t_ = (&b).Pair[string, int]\n\t_ = Box.Conv[int]\n}\ntype Object struct{ name, color string }\ntype Point3D struct {\n\tObject\n\tx, y, z float64\n}\ntype Line struct {\n\tObject\n\tp, q Point3D\n}\ntype Deep struct{ Line }\nvar line2 = Line{name: \"diagonal\", q: Point3D{1, 1, 1}}\nvar p3 = Point3D{color: \"red\", x: 1}\nvar deep = Deep{name: \"nested\", p: Point3D{}}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_declaration",
+            "type_parameter_list",
+            "call_expression",
+            "index_expression",
+            "selector_expression",
+            "composite_literal",
+            "keyed_element",
+            "field_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "method_declaration",
+              "text": "func (l List[E]) Apply[F any](f func(E) F) List[F] { return nil }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[F any]"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (b Box) Conv[T ~int | ~int64]() T { return T(b.v) }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[T ~int | ~int64]"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (b *Box) Pair[K comparable, V any](k K, v V,) map[K]V { return nil }"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[K comparable, V any]"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func use(l List[int], b Box) {\n\t_ = l.Apply[string](func(int) string { return \"\" })\n\t_ = b.Conv[int64]()\n\t_ = (&b).Pair[string, int]\n\t_ = Box.Conv[int]\n}"
+            },
+            {
+              "type": "func_literal",
+              "text": "func(int) string { return \"\" }"
+            },
+            {
+              "type": "call_expression",
+              "text": "b.Conv[int64]()"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "_ = (&b).Pair[string, int]"
+            },
+            {
+              "type": "selector_expression",
+              "text": "(&b).Pair"
+            },
+            {
+              "type": "assignment_statement",
+              "text": "_ = Box.Conv[int]"
+            },
+            {
+              "type": "type_declaration",
+              "text": "type Deep struct{ Line }"
+            },
+            {
+              "type": "composite_literal",
+              "text": "Line{name: \"diagonal\", q: Point3D{1, 1, 1}}"
+            },
+            {
+              "type": "keyed_element",
+              "text": "name: \"diagonal\""
+            },
+            {
+              "type": "composite_literal",
+              "text": "Point3D{color: \"red\", x: 1}"
+            },
+            {
+              "type": "keyed_element",
+              "text": "color: \"red\""
+            },
+            {
+              "type": "composite_literal",
+              "text": "Deep{name: \"nested\", p: Point3D{}}"
+            },
+            {
+              "type": "keyed_element",
+              "text": "name: \"nested\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B01-NR-1",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package lex\n\nconst (\n\thex    = 0x1F\n\tbin    = 0b1010\n\toctal  = 0o17\n\tunder  = 1_000_000\n\tflt    = 1.5e3\n\timag   = 2i\n\tr      = 'x'\n\tesc    = '\\n'\n\traw    = `C:\\path`\n\tinterp = \"tab\\tquote\\\"\"\n)\n\n// sum adds.\nfunc sum(a, b int) int {\n\treturn a + b\n}\n\n/* block comment */\nfunc diff(a, b int) int {\n\treturn a - b\n}\n",
+      "edits": [
+        {
+          "find": "func sum(a, b int) int {",
+          "replace": "func sum(a, b int) int\n{"
+        },
+        {
+          "find": "func sum(a, b int) int\n{",
+          "replace": "func sum(a, b int) int {"
+        },
+        {
+          "find": "'x'",
+          "replace": "'xy'"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "const_declaration",
+            "int_literal",
+            "float_literal",
+            "imaginary_literal",
+            "rune_literal",
+            "raw_string_literal",
+            "interpreted_string_literal",
+            "comment",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func diff(a, b int) int {\n\treturn a - b\n}"
+            },
+            {
+              "type": "comment",
+              "text": "/* block comment */"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "const_declaration",
+            "int_literal",
+            "float_literal",
+            "imaginary_literal",
+            "rune_literal",
+            "raw_string_literal",
+            "interpreted_string_literal",
+            "comment",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration",
+            "raw_string_literal"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func diff(a, b int) int {\n\treturn a - b\n}"
+            },
+            {
+              "type": "comment",
+              "text": "/* block comment */"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func sum(a, b int) int {\n\treturn a + b\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B02-N-1",
+      "features": [
+        "go-B02"
+      ],
+      "source_utf8": "package types\n\ntype Point struct {\n\tX, Y int `json:\"xy\"`\n\t*Base\n}\n\ntype Base struct{}\n\ntype Shape interface {\n\tArea() float64\n\tBase() *Base\n}\n\ntype Handler func(int) error\n\nvar (\n\tgrid  [3][3]int\n\tnames []string\n\tindex map[string]int\n\tch    <-chan int\n)\n\nfunc (p *Point) Move(dx int) { p.X += dx }\n",
+      "edits": [
+        {
+          "find": "index map[string]int",
+          "replace": "index map[string]"
+        },
+        {
+          "find": "index map[string]",
+          "replace": "index map[string]int"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration",
+            "struct_type",
+            "interface_type",
+            "function_type",
+            "array_type",
+            "slice_type",
+            "map_type",
+            "channel_type",
+            "method_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "type_declaration",
+            "method_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "type_declaration",
+              "text": "type Base struct{}"
+            },
+            {
+              "type": "method_elem",
+              "text": "Area() float64"
+            },
+            {
+              "type": "type_declaration",
+              "text": "type Handler func(int) error"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (p *Point) Move(dx int) { p.X += dx }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration",
+            "struct_type",
+            "interface_type",
+            "function_type",
+            "array_type",
+            "slice_type",
+            "map_type",
+            "channel_type",
+            "method_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B03-R-1",
+      "features": [
+        "go-B03"
+      ],
+      "source_utf8": "package expr\n\ntype pair struct{ a, b int }\n\nfunc compute(xs []int, m map[string]int, v any) int {\n\tp := pair{a: 1, b: 2}\n\ttotal := -xs[0] + (xs[1] * 2)\n\tsub := xs[1:3]\n\t_ = []byte(\"k\")\n\tn, ok := v.(int)\n\tf := func(x int) int { return x << 1 }\n\tif !ok {\n\t\tn = int(float64(total) / 2)\n\t}\n\treturn f(n) + p.a + len(sub) + m[\"k\"]\n}\n\nfunc after() []pair {\n\treturn []pair{{1, 2}, {a: 3}}\n}\n",
+      "edits": [
+        {
+          "find": "(xs[1] * 2)",
+          "replace": "(xs[1] * 2"
+        },
+        {
+          "find": "(xs[1] * 2",
+          "replace": "(xs[1] * 2)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "composite_literal",
+            "unary_expression",
+            "slice_expression",
+            "type_assertion_expression",
+            "func_literal",
+            "type_conversion_expression",
+            "call_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "slice_expression",
+            "type_assertion_expression",
+            "func_literal",
+            "composite_literal"
+          ],
+          "anchors": [
+            {
+              "type": "type_declaration",
+              "text": "type pair struct{ a, b int }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() []pair {\n\treturn []pair{{1, 2}, {a: 3}}\n}"
+            },
+            {
+              "type": "composite_literal",
+              "text": "[]pair{{1, 2}, {a: 3}}"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "composite_literal",
+            "unary_expression",
+            "slice_expression",
+            "type_assertion_expression",
+            "func_literal",
+            "type_conversion_expression",
+            "call_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-R-1",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package stmt\n\nimport (\n\tf \"fmt\"\n\t_ \"os\"\n)\n\nfunc run(ch chan int, done chan struct{}) {\n\tfor i := 0; i < 3; i++ {\n\t\tch <- i\n\t}\n\tfor k, v := range map[string]int{\"a\": 1} {\n\t\tf.Println(k, v)\n\t}\n\tswitch x := 2; x {\n\tcase 1, 2:\n\t\tfallthrough\n\tdefault:\n\t}\n\tvar y interface{} = 1\n\tswitch t := y.(type) {\n\tcase int:\n\t\t_ = t\n\t}\nouter:\n\tfor {\n\t\tselect {\n\t\tcase v := <-ch:\n\t\t\t_ = v\n\t\t\tbreak outer\n\t\tcase <-done:\n\t\t\treturn\n\t\t}\n\t}\n\tgo f.Println(\"bg\")\n\tdefer f.Println(\"end\")\n}\n",
+      "edits": [
+        {
+          "find": "for i := 0; i < 3; i++ {",
+          "replace": "for i := 0; i < 3 {"
+        },
+        {
+          "find": "for i := 0; i < 3 {",
+          "replace": "for i := 0; i < 3; i++ {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "for_statement",
+            "send_statement",
+            "range_clause",
+            "expression_switch_statement",
+            "fallthrough_statement",
+            "type_switch_statement",
+            "labeled_statement",
+            "select_statement",
+            "go_statement",
+            "defer_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "range_clause",
+            "expression_switch_statement",
+            "type_switch_statement",
+            "labeled_statement",
+            "select_statement",
+            "go_statement",
+            "defer_statement"
+          ],
+          "anchors": [
+            {
+              "type": "import_spec",
+              "text": "f \"fmt\""
+            },
+            {
+              "type": "go_statement",
+              "text": "go f.Println(\"bg\")"
+            },
+            {
+              "type": "defer_statement",
+              "text": "defer f.Println(\"end\")"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "for_statement",
+            "send_statement",
+            "range_clause",
+            "expression_switch_statement",
+            "fallthrough_statement",
+            "type_switch_statement",
+            "labeled_statement",
+            "select_statement",
+            "go_statement",
+            "defer_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-V18-N-1",
+      "features": [
+        "go-V18"
+      ],
+      "source_utf8": "package gen\n\ntype Number interface {\n\t~int | ~int64 | float64\n}\n\nfunc Sum[T Number](xs []T) T {\n\tvar s T\n\tfor _, x := range xs {\n\t\ts += x\n\t}\n\treturn s\n}\n\ntype List[T any] struct {\n\titems []T\n}\n\ntype Vec[T any] = List[T]\n\nfunc Map[S ~[]E, E, R any](s S, f func(E) R) []R {\n\treturn nil\n}\n\nvar total = Sum[int]([]int{1, 2})\n",
+      "edits": [
+        {
+          "find": "~int | ~int64 | float64",
+          "replace": "~int | ~ | float64"
+        },
+        {
+          "find": "~int | ~ | float64",
+          "replace": "~int | ~int64 | float64"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_type",
+            "negated_type",
+            "type_parameter_list",
+            "type_alias",
+            "generic_type"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "type_parameter_list",
+            "type_alias",
+            "generic_type"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func Sum[T Number](xs []T) T {\n\tvar s T\n\tfor _, x := range xs {\n\t\ts += x\n\t}\n\treturn s\n}"
+            },
+            {
+              "type": "type_alias",
+              "text": "Vec[T any] = List[T]"
+            },
+            {
+              "type": "type_parameter_list",
+              "text": "[S ~[]E, E, R any]"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_type",
+            "negated_type",
+            "type_parameter_list",
+            "type_alias",
+            "generic_type"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-V27-PNE-1",
+      "features": [
+        "go-V27"
+      ],
+      "source_utf8": "package gm\n\ntype Inner struct {\n\tX int\n}\n\ntype Outer struct {\n\tInner\n\tName string\n}\n\ntype Stack struct {\n\titems []int\n}\n\nfunc (s *Stack) Map[U any](f func(int) U) []U {\n\tout := make([]U, 0, len(s.items))\n\tfor _, v := range s.items {\n\t\tout = append(out, f(v))\n\t}\n\treturn out\n}\n\nvar o = Outer{X: 1, Name: \"a\"}\n",
+      "edits": [
+        {
+          "find": "Name: \"a\"",
+          "replace": "Name: \"b\""
+        },
+        {
+          "find": "Map[U any]",
+          "replace": "Map[]"
+        },
+        {
+          "find": "Map[]",
+          "replace": "Map[U any]"
+        },
+        {
+          "find": "Outer{X: 1,",
+          "replace": "Outer{.X: 1,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_declaration",
+            "type_parameter_list",
+            "composite_literal",
+            "keyed_element"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_declaration",
+            "type_parameter_list",
+            "composite_literal",
+            "keyed_element"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "composite_literal",
+            "keyed_element"
+          ],
+          "anchors": [
+            {
+              "type": "type_declaration",
+              "text": "type Outer struct {\n\tInner\n\tName string\n}"
+            },
+            {
+              "type": "var_declaration",
+              "text": "var o = Outer{X: 1, Name: \"b\"}"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_declaration",
+            "type_parameter_list",
+            "composite_literal",
+            "keyed_element"
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "ERROR",
+          "contains": [
+            "method_declaration",
+            "type_parameter_list"
+          ],
+          "anchors": [
+            {
+              "type": "type_declaration",
+              "text": "type Stack struct {\n\titems []int\n}"
+            },
+            {
+              "type": "method_declaration",
+              "text": "func (s *Stack) Map[U any](f func(int) U) []U {\n\tout := make([]U, 0, len(s.items))\n\tfor _, v := range s.items {\n\t\tout = append(out, f(v))\n\t}\n\treturn out\n}"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -97,6 +97,4774 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-dart-B01-01",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a114",
+        "dart-B01.a115",
+        "dart-B01.a116",
+        "dart-B01.a117",
+        "dart-B01.a118",
+        "dart-B01.a119",
+        "dart-B01.a120",
+        "dart-B01.a121",
+        "dart-B01.a122",
+        "dart-B01.a123",
+        "dart-B01.a124",
+        "dart-B01.a125",
+        "dart-B01.a113",
+        "dart-B01.a189",
+        "dart-B01.a190",
+        "dart-B01.a238",
+        "dart-B01.a239",
+        "dart-B01.a240",
+        "dart-B01.a241",
+        "dart-B01.a242",
+        "dart-B01.a234",
+        "dart-B01.a235",
+        "dart-B01.a243",
+        "dart-B01.a244",
+        "dart-B01.a245",
+        "dart-B01.a246",
+        "dart-B01.a183",
+        "dart-B01.a345",
+        "dart-B01.a346",
+        "dart-B01.a262",
+        "dart-B01.a261",
+        "dart-B01.a260",
+        "dart-B01.a324",
+        "dart-B01.a332",
+        "dart-B01.a339",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "#!/usr/bin/env dart\n// single-line comment\n/* multi /* nested */ line */\n/// documentation comment\nvar $dollar = 1, _under = 2, mixed$_9 = 3, camelCase9 = 4;\nvar hex = 0x1F, hex2 = 0XaB, n = 42, d = 1.5, e1 = 1e10, e2 = 1.5E-3, e3 = .5, e4 = .5e+2;\nvar t = true, f = false;\nObject? nothing = null;\nvar sym1 = #foo, sym2 = #foo.bar, sym3 = #+, sym4 = #void, sym5 = #[], sym6 = #[]=, sym7 = #~, sym8 = #==;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "script_tag",
+            "comment",
+            "documentation_comment",
+            "identifier",
+            "hex_integer_literal",
+            "decimal_integer_literal",
+            "decimal_floating_point_literal",
+            "true",
+            "false",
+            "null_literal",
+            "symbol_literal"
+          ],
+          "anchors": [
+            {
+              "type": "script_tag",
+              "text": "#!/usr/bin/env dart\n"
+            },
+            {
+              "type": "comment",
+              "text": "// single-line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi /* nested */ line */"
+            },
+            {
+              "type": "identifier",
+              "text": "$dollar"
+            },
+            {
+              "type": "identifier",
+              "text": "_under"
+            },
+            {
+              "type": "identifier",
+              "text": "mixed$_9"
+            },
+            {
+              "type": "identifier",
+              "text": "camelCase9"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0x1F"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0XaB"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "42"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.5",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1e10"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.5E-3"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": ".5",
+              "occurrence": 3
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": ".5e+2"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "null_literal",
+              "text": "null"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#foo",
+              "occurrence": 1
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#foo.bar"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#+"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#void"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#[]",
+              "occurrence": 1
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#[]="
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#~"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#=="
+            },
+            {
+              "type": "initialized_identifier_list",
+              "text": "t = true, f = false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-02",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a191",
+        "dart-B01.a192",
+        "dart-B01.a231",
+        "dart-B01.a232",
+        "dart-B01.a188",
+        "dart-B01.a186",
+        "dart-B01.a200",
+        "dart-B01.a201",
+        "dart-B01.a202",
+        "dart-B01.a203",
+        "dart-B01.a204",
+        "dart-B01.a205",
+        "dart-B01.a206",
+        "dart-B01.a207",
+        "dart-B01.a208",
+        "dart-B01.a209",
+        "dart-B01.a210",
+        "dart-B01.a211",
+        "dart-B01.a212",
+        "dart-B01.a213",
+        "dart-B01.a214",
+        "dart-B01.a215",
+        "dart-B01.a216",
+        "dart-B01.a217",
+        "dart-B01.a218",
+        "dart-B01.a219",
+        "dart-B01.a220",
+        "dart-B01.a221",
+        "dart-B01.a222",
+        "dart-B01.a223",
+        "dart-B01.a224",
+        "dart-B01.a225",
+        "dart-B01.a226",
+        "dart-B01.a227",
+        "dart-B01.a228",
+        "dart-B01.a229",
+        "dart-B01.a230",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "void builtins() {\n  int abstract = 0, as = 0, covariant = 0, deferred = 0, dynamic = 0, export = 0, external = 0;\n  int extension = 0, factory = 0, get = 0, implements = 0, import = 0, interface = 0, late = 0;\n  int library = 0, mixin = 0, operator = 0, part = 0, required = 0, set = 0, static = 0, typedef = 0;\n  int Function = 0;\n  int async = 0, hide = 0, of = 0, on = 0, show = 0, sync = 0, await = 0, yield = 0, type = 0;\n  print('$abstract $async $type');\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_signature",
+            "local_variable_declaration",
+            "initialized_variable_definition",
+            "identifier",
+            "string_literal",
+            "template_substitution"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "abstract",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "async",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "type",
+              "occurrence": 2
+            },
+            {
+              "type": "identifier",
+              "text": "Function"
+            },
+            {
+              "type": "initialized_variable_definition",
+              "text": "int Function = 0"
+            },
+            {
+              "type": "template_substitution",
+              "text": "$abstract"
+            },
+            {
+              "type": "template_substitution",
+              "text": "$async"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-03",
+      "features": [
+        "dart-B02",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B02.a022",
+        "dart-B01.a126",
+        "dart-B01.a127",
+        "dart-B01.a128",
+        "dart-B01.a129",
+        "dart-B01.a130",
+        "dart-B01.a131",
+        "dart-B01.a150",
+        "dart-B01.a151",
+        "dart-B01.a152",
+        "dart-B01.a153",
+        "dart-B01.a154",
+        "dart-B01.a132",
+        "dart-B01.a133",
+        "dart-B01.a155",
+        "dart-B01.a156",
+        "dart-B01.a134",
+        "dart-B01.a135",
+        "dart-B01.a136",
+        "dart-B01.a137",
+        "dart-B01.a138",
+        "dart-B01.a139",
+        "dart-B01.a144",
+        "dart-B01.a145",
+        "dart-B01.a140",
+        "dart-B01.a141",
+        "dart-B01.a142",
+        "dart-B01.a143",
+        "dart-B01.a146",
+        "dart-B01.a147",
+        "dart-B01.a148",
+        "dart-B01.a149",
+        "dart-B01.a157",
+        "dart-B01.a158",
+        "dart-B01.a159",
+        "dart-B01.a165",
+        "dart-B01.a166",
+        "dart-B01.a167",
+        "dart-B01.a160",
+        "dart-B01.a168",
+        "dart-B01.a161",
+        "dart-B01.a162",
+        "dart-B01.a163",
+        "dart-B01.a164",
+        "dart-B01.a169",
+        "dart-B01.a170",
+        "dart-B01.a171",
+        "dart-B01.a172",
+        "dart-B01.a173",
+        "dart-B01.a174",
+        "dart-B01.a175",
+        "dart-B01.a176",
+        "dart-B01.a177",
+        "dart-B01.a178",
+        "dart-B01.a179",
+        "dart-B01.a180",
+        "dart-B01.a181",
+        "dart-B01.a182",
+        "dart-B01.a186",
+        "dart-B01.a187",
+        "dart-B01.a188",
+        "dart-B01.a233",
+        "dart-B01.a236",
+        "dart-B01.a237",
+        "dart-B01.a227",
+        "dart-B01.a316",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "class StrHolder {\n  String show() => '$this';\n}\nvar name = 'x', name2 = 'y';\nvar s1 = 'single', s2 = \"double\", s3 = r'raw \\n', s4 = r\"raw dq\";\nvar s5 = '''multi\nline ' '' sq''';\nvar s6 = \"\"\"multi\nline \" \"\" dq\"\"\";\nvar s7 = r'''raw multi''', s8 = r\"\"\"raw multi dq\"\"\";\nvar esc = '\\n\\r\\f\\b\\t\\v\\x41\\u0041\\u{1F600}\\$\\q\\'\"';\nvar esc2 = \"\\\"'\";\nvar i1 = '$name ${name.length} mid ${name} end';\nvar i2 = \"dq $name ${1 + 2} mid ${name2} end\";\nvar i3 = '''tsq ${name} mid ${name} end''';\nvar i4 = \"\"\"tdq $name ${name} mid ${name2} end\"\"\";\nvar i5 = ''''$name' ''';\nvar adj = 'a' \"b\" '''c''' r'd';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "string_literal",
+            "template_substitution",
+            "escape_sequence",
+            "identifier_dollar_escaped",
+            "initialized_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "template_substitution",
+              "text": "$this"
+            },
+            {
+              "type": "string_literal",
+              "text": "'single'"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"double\""
+            },
+            {
+              "type": "string_literal",
+              "text": "r'raw \\n'"
+            },
+            {
+              "type": "string_literal",
+              "text": "r\"raw dq\""
+            },
+            {
+              "type": "string_literal",
+              "text": "'''multi\nline ' '' sq'''"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\"\"multi\nline \" \"\" dq\"\"\""
+            },
+            {
+              "type": "string_literal",
+              "text": "r'''raw multi'''"
+            },
+            {
+              "type": "string_literal",
+              "text": "r\"\"\"raw multi dq\"\"\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{1F600}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\q"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\$"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "string_literal",
+              "text": "'$name ${name.length} mid ${name} end'"
+            },
+            {
+              "type": "template_substitution",
+              "text": "$name",
+              "occurrence": 1
+            },
+            {
+              "type": "template_substitution",
+              "text": "${name.length}"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"dq $name ${1 + 2} mid ${name2} end\""
+            },
+            {
+              "type": "string_literal",
+              "text": "'''tsq ${name} mid ${name} end'''"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\"\"tdq $name ${name} mid ${name2} end\"\"\""
+            },
+            {
+              "type": "string_literal",
+              "text": "''''$name' '''"
+            },
+            {
+              "type": "string_literal",
+              "text": "'a' \"b\" '''c''' r'd'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-04",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a280",
+        "dart-B01.a281",
+        "dart-B01.a282",
+        "dart-B01.a283",
+        "dart-B01.a284",
+        "dart-B01.a285",
+        "dart-B01.a286",
+        "dart-B01.a287",
+        "dart-B01.a288",
+        "dart-B01.a289",
+        "dart-B01.a290",
+        "dart-B01.a291",
+        "dart-B01.a292",
+        "dart-B01.a293",
+        "dart-B01.a294",
+        "dart-B01.a295",
+        "dart-B01.a296",
+        "dart-B01.a297",
+        "dart-B01.a298",
+        "dart-B01.a299",
+        "dart-B01.a300",
+        "dart-B01.a301",
+        "dart-B01.a302",
+        "dart-B01.a303",
+        "dart-B01.a304",
+        "dart-B01.a305",
+        "dart-B01.a306",
+        "dart-B01.a307",
+        "dart-B01.a308",
+        "dart-B01.a309",
+        "dart-B01.a310",
+        "dart-B01.a311",
+        "dart-B01.a251",
+        "dart-B01.a196",
+        "dart-B01.a197",
+        "dart-B01.a193",
+        "dart-B01.a194",
+        "dart-B01.a195",
+        "dart-B01.a347",
+        "dart-B01.a201",
+        "dart-B01.a204",
+        "dart-B01.a209",
+        "dart-B01.a212",
+        "dart-B01.a219",
+        "dart-B01.a222",
+        "dart-B01.a224",
+        "dart-B01.a316",
+        "dart-B01.a330",
+        "dart-B01.a332",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "import 'dart:core';\nimport 'dart:core' as core;\nint? a;\nList<int?>? b;\ncore.int c = 0;\nint Function(int, {required String s})? fn1;\nvoid Function<T>(T) fn2 = <T>(T x) {};\nint Function(int x, [String y]) fn3 = (int x, [String y = '']) => x;\nint Function(int, ) fn3b = (int x) => x;\nFunction fn4 = () {};\ncore.Function qf = () {};\nFunction() noRet = () {};\nvoid Function([int]) optOnly = ([int? a]) {};\nbool isFn(Object o) => o is int Function() || o is int? || o is void Function()?;\ndynamic dyn;\nvoid Function() Function()? nested;\nvoid Function()? Function() nested2 = () => null;\nMap<String, List<int>> m = {};\ntypedef IntFn = int Function(int);\ntypedef int OldFn(int x);\ntypedef OldVoid(@Object() int x);\nvoid voidFn() {}\nclass hide {}\nhide? hidden;\nclass type {}\ntype? typed;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_or_export",
+            "nullable_type",
+            "type_arguments",
+            "type_identifier",
+            "function_type",
+            "parameter_type_list",
+            "named_parameter_types",
+            "optional_positional_parameter_types",
+            "normal_parameter_type",
+            "typed_identifier",
+            "void_type",
+            "type_alias",
+            "annotation"
+          ],
+          "anchors": [
+            {
+              "type": "type_arguments",
+              "text": "<int?>"
+            },
+            {
+              "type": "type_identifier",
+              "text": "core",
+              "occurrence": 4
+            },
+            {
+              "type": "function_type",
+              "text": "int Function(int, {required String s})?"
+            },
+            {
+              "type": "named_parameter_types",
+              "text": "{required String s}"
+            },
+            {
+              "type": "typed_identifier",
+              "text": "String s"
+            },
+            {
+              "type": "function_type",
+              "text": "void Function<T>(T)"
+            },
+            {
+              "type": "parameter_type_list",
+              "text": "(int x, [String y])"
+            },
+            {
+              "type": "optional_positional_parameter_types",
+              "text": "[String y]"
+            },
+            {
+              "type": "normal_parameter_type",
+              "text": "int x",
+              "occurrence": 1
+            },
+            {
+              "type": "parameter_type_list",
+              "text": "(int, )"
+            },
+            {
+              "type": "function_type",
+              "text": "Function",
+              "occurrence": 5
+            },
+            {
+              "type": "type_identifier",
+              "text": "Function",
+              "occurrence": 6
+            },
+            {
+              "type": "function_type",
+              "text": "Function()",
+              "occurrence": 1
+            },
+            {
+              "type": "optional_positional_parameter_types",
+              "text": "[int]"
+            },
+            {
+              "type": "function_type",
+              "text": "void Function() Function()?"
+            },
+            {
+              "type": "function_type",
+              "text": "void Function()? Function()"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<String, List<int>>"
+            },
+            {
+              "type": "type_alias",
+              "text": "typedef IntFn = int Function(int);"
+            },
+            {
+              "type": "type_alias",
+              "text": "typedef int OldFn(int x);"
+            },
+            {
+              "type": "type_alias",
+              "text": "typedef OldVoid(@Object() int x);"
+            },
+            {
+              "type": "void_type",
+              "text": "void",
+              "occurrence": 6
+            },
+            {
+              "type": "type_identifier",
+              "text": "dynamic"
+            },
+            {
+              "type": "type_identifier",
+              "text": "hide",
+              "occurrence": 2
+            },
+            {
+              "type": "type_identifier",
+              "text": "type",
+              "occurrence": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-05",
+      "features": [
+        "dart-B01",
+        "dart-B02"
+      ],
+      "alternatives": [
+        "dart-B01.a001",
+        "dart-B01.a002",
+        "dart-B01.a003",
+        "dart-B01.a004",
+        "dart-B01.a005",
+        "dart-B01.a006",
+        "dart-B01.a007",
+        "dart-B01.a008",
+        "dart-B01.a063",
+        "dart-B01.a064",
+        "dart-B01.a052",
+        "dart-B01.a053",
+        "dart-B01.a054",
+        "dart-B01.a055",
+        "dart-B01.a056",
+        "dart-B01.a057",
+        "dart-B01.a058",
+        "dart-B01.a059",
+        "dart-B01.a258",
+        "dart-B01.a259",
+        "dart-B01.a260",
+        "dart-B01.a037",
+        "dart-B02.a194",
+        "dart-B01.a202",
+        "dart-B01.a214",
+        "dart-B01.a221",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a325",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "var v1 = 1;\nfinal f1 = 2;\nconst c1 = 3, c2 = 4;\nlate final int lf;\nlate int li;\nlate var lv = 0;\nint i1 = 1, i2 = 2;\nfinal int ft = 1;\nfinal ft2 = 1, ft3 = 2;\nclass Vars {\n  static const int sc = 1, sc2 = 2;\n  static final sf = 2;\n  static late final int slf;\n  static late int sl;\n  static var sv = 0;\n  covariant late final num clf;\n  covariant late num cl;\n  covariant num cv = 0;\n  late final int lfm;\n  late int lm;\n  final int fm = 0;\n  var vm = 0, vm2;\n  int tm = 0;\n}\nvoid locals() {\n  late final int a;\n  const b = 1;\n  final c = 2;\n  late var d = 3;\n  int e = 4;\n  var f, g;\n  final int h = 5;\n  late int i;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "static_final_declaration_list",
+            "static_final_declaration",
+            "initialized_identifier_list",
+            "class_definition",
+            "declaration",
+            "inferred_type",
+            "final_builtin",
+            "const_builtin"
+          ],
+          "anchors": [
+            {
+              "type": "initialized_identifier_list",
+              "text": "v1 = 1"
+            },
+            {
+              "type": "static_final_declaration_list",
+              "text": "f1 = 2"
+            },
+            {
+              "type": "static_final_declaration_list",
+              "text": "c1 = 3, c2 = 4"
+            },
+            {
+              "type": "static_final_declaration",
+              "text": "c2 = 4"
+            },
+            {
+              "type": "initialized_identifier_list",
+              "text": "lf",
+              "occurrence": 1
+            },
+            {
+              "type": "initialized_identifier_list",
+              "text": "lv = 0"
+            },
+            {
+              "type": "initialized_identifier_list",
+              "text": "i1 = 1, i2 = 2"
+            },
+            {
+              "type": "static_final_declaration_list",
+              "text": "ft = 1"
+            },
+            {
+              "type": "declaration",
+              "text": "static const int sc = 1, sc2 = 2"
+            },
+            {
+              "type": "declaration",
+              "text": "static final sf = 2"
+            },
+            {
+              "type": "declaration",
+              "text": "static late final int slf"
+            },
+            {
+              "type": "declaration",
+              "text": "static late int sl"
+            },
+            {
+              "type": "declaration",
+              "text": "static var sv = 0"
+            },
+            {
+              "type": "declaration",
+              "text": "covariant late final num clf"
+            },
+            {
+              "type": "declaration",
+              "text": "covariant late num cl"
+            },
+            {
+              "type": "declaration",
+              "text": "covariant num cv = 0"
+            },
+            {
+              "type": "declaration",
+              "text": "late final int lfm"
+            },
+            {
+              "type": "declaration",
+              "text": "late int lm"
+            },
+            {
+              "type": "declaration",
+              "text": "final int fm = 0"
+            },
+            {
+              "type": "declaration",
+              "text": "var vm = 0, vm2"
+            },
+            {
+              "type": "declaration",
+              "text": "int tm = 0"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "late final int a;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "const b = 1;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "late var d = 3;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var f, g;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-06",
+      "features": [
+        "dart-B01",
+        "dart-B02"
+      ],
+      "alternatives": [
+        "dart-B01.a009",
+        "dart-B01.a010",
+        "dart-B01.a011",
+        "dart-B01.a012",
+        "dart-B01.a013",
+        "dart-B01.a014",
+        "dart-B01.a015",
+        "dart-B01.a016",
+        "dart-B01.a017",
+        "dart-B01.a018",
+        "dart-B01.a019",
+        "dart-B01.a020",
+        "dart-B01.a021",
+        "dart-B01.a022",
+        "dart-B01.a023",
+        "dart-B01.a024",
+        "dart-B01.a025",
+        "dart-B01.a026",
+        "dart-B01.a027",
+        "dart-B01.a028",
+        "dart-B01.a029",
+        "dart-B01.a030",
+        "dart-B01.a031",
+        "dart-B01.a032",
+        "dart-B01.a033",
+        "dart-B01.a255",
+        "dart-B02.a195",
+        "dart-B01.a202",
+        "dart-B01.a209",
+        "dart-B01.a219",
+        "dart-B01.a223",
+        "dart-B01.a228",
+        "dart-B01.a230",
+        "dart-B01.a316",
+        "dart-B01.a325",
+        "dart-B01.a332",
+        "dart-B01.a334",
+        "dart-B01.a337",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "int add(int a, int b) => a + b;\nFuture<void> asyncArrow() async => null;\nFuture<int> asyncBlock() async { return 1; }\nStream<int> gen() async* { yield 1; }\nIterable<int> syncGen() sync* { yield 1; }\nvoid positional(int a, [int b = 0, int? c]) {}\nvoid named({required int a, int b = 1, int? c}) {}\nvoid fnParams(int f(int x), int g(int)?, h) {}\nvoid noParams() {}\nvoid trailing(int a,) {}\nvoid optOnly([int a = 0,]) {}\nvoid namedOnly({int a = 0,}) {}\nvoid withMeta(@Object() int a, {@Object() required int b}) {}\nclass Params {\n  int x;\n  int Function(int)? cb;\n  final int y;\n  Params(this.x, int this.y, {this.cb});\n  Params.fn(this.x, this.y, int this.cb(int v)?);\n  void cov(covariant num n, covariant int m) {}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_signature",
+            "function_body",
+            "formal_parameter_list",
+            "formal_parameter",
+            "optional_formal_parameters",
+            "constructor_param",
+            "class_definition",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "function_signature",
+              "text": "int add(int a, int b)"
+            },
+            {
+              "type": "function_body",
+              "text": "=> a + b;"
+            },
+            {
+              "type": "function_body",
+              "text": "async => null;"
+            },
+            {
+              "type": "function_body",
+              "text": "async { return 1; }"
+            },
+            {
+              "type": "function_body",
+              "text": "async* { yield 1; }"
+            },
+            {
+              "type": "function_body",
+              "text": "sync* { yield 1; }",
+              "occurrence": 2
+            },
+            {
+              "type": "block",
+              "text": "{ return 1; }"
+            },
+            {
+              "type": "formal_parameter_list",
+              "text": "()",
+              "occurrence": 1
+            },
+            {
+              "type": "formal_parameter_list",
+              "text": "(int a, [int b = 0, int? c])"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "[int b = 0, int? c]"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "{required int a, int b = 1, int? c}"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "int f(int x)"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "int g(int)?"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "h",
+              "occurrence": 1
+            },
+            {
+              "type": "formal_parameter_list",
+              "text": "(int a,)"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "[int a = 0,]"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "{int a = 0,}"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@Object() int a"
+            },
+            {
+              "type": "constructor_param",
+              "text": "this.x",
+              "occurrence": 1
+            },
+            {
+              "type": "constructor_param",
+              "text": "int this.y"
+            },
+            {
+              "type": "constructor_param",
+              "text": "int this.cb(int v)?"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "covariant num n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-07",
+      "features": [
+        "dart-B01",
+        "dart-B02"
+      ],
+      "alternatives": [
+        "dart-B01.a034",
+        "dart-B01.a035",
+        "dart-B01.a036",
+        "dart-B01.a037",
+        "dart-B01.a038",
+        "dart-B01.a039",
+        "dart-B01.a040",
+        "dart-B01.a041",
+        "dart-B01.a042",
+        "dart-B01.a043",
+        "dart-B01.a044",
+        "dart-B01.a045",
+        "dart-B01.a046",
+        "dart-B01.a047",
+        "dart-B01.a048",
+        "dart-B01.a049",
+        "dart-B01.a050",
+        "dart-B01.a051",
+        "dart-B01.a060",
+        "dart-B01.a061",
+        "dart-B01.a062",
+        "dart-B01.a065",
+        "dart-B01.a066",
+        "dart-B01.a067",
+        "dart-B01.a068",
+        "dart-B01.a069",
+        "dart-B01.a070",
+        "dart-B01.a071",
+        "dart-B01.a072",
+        "dart-B01.a073",
+        "dart-B01.a074",
+        "dart-B01.a075",
+        "dart-B02.a106",
+        "dart-B02.a107",
+        "dart-B02.a108",
+        "dart-B02.a109",
+        "dart-B02.a102",
+        "dart-B02.a103",
+        "dart-B02.a098",
+        "dart-B02.a099",
+        "dart-B02.a083",
+        "dart-B02.a084",
+        "dart-B02.a085",
+        "dart-B02.a086",
+        "dart-B02.a093",
+        "dart-B02.a094",
+        "dart-B02.a095",
+        "dart-B01.a076",
+        "dart-B01.a077",
+        "dart-B01.a078",
+        "dart-B01.a079",
+        "dart-B01.a080",
+        "dart-B01.a081",
+        "dart-B01.a082",
+        "dart-B01.a083",
+        "dart-B01.a084",
+        "dart-B01.a085",
+        "dart-B01.a086",
+        "dart-B01.a087",
+        "dart-B01.a088",
+        "dart-B01.a089",
+        "dart-B01.a090",
+        "dart-B01.a091",
+        "dart-B01.a092",
+        "dart-B01.a096",
+        "dart-B01.a097",
+        "dart-B01.a098",
+        "dart-B01.a099",
+        "dart-B01.a100",
+        "dart-B01.a101",
+        "dart-B01.a102",
+        "dart-B01.a103",
+        "dart-B01.a093",
+        "dart-B01.a247",
+        "dart-B01.a248",
+        "dart-B01.a252",
+        "dart-B01.a253",
+        "dart-B01.a254",
+        "dart-B01.a256",
+        "dart-B01.a257",
+        "dart-B01.a200",
+        "dart-B01.a206",
+        "dart-B01.a208",
+        "dart-B01.a210",
+        "dart-B01.a211",
+        "dart-B01.a216",
+        "dart-B01.a217",
+        "dart-B01.a220",
+        "dart-B01.a221",
+        "dart-B01.a226",
+        "dart-B01.a312",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a323",
+        "dart-B01.a325",
+        "dart-B01.a335",
+        "dart-B01.a337",
+        "dart-B01.a338",
+        "dart-B01.a339",
+        "dart-B01.a342",
+        "dart-B01.a344"
+      ],
+      "source_utf8": "abstract class Base {\n  Base(int a);\n  Base.named(int a);\n  int get value;\n}\nmixin M on Base {}\nabstract class I {}\nclass Ops extends Base with M implements I {\n  int f = 0;\n  Ops? other;\n  static int counter = 0;\n  Ops(int a) : super(a);\n  Ops.body(int a) : super(a) { f = a; }\n  Ops.sup(int a) : super.named(a);\n  Ops.fields() : f = 1, super(0);\n  Ops.thisField() : this.f = 2, super(0);\n  Ops.redirect() : this(0);\n  Ops.redirectNamed() : this.sup(0);\n  Ops.asserted(int a) : assert(a > 0), super(a);\n  Ops.exprs(int a) : f = a > 0 ? 1 : 2, super(a);\n  Ops.cascade(Ops o) : other = o..f = 1, super(0);\n  Ops.thrown() : f = throw 'no', super(0);\n  Ops.assign(int a) : f = counter = a, super(a);\n  factory Ops.make() => Ops(1);\n  factory Ops.redirectFactory(int a) = Ops;\n  external Ops.ext();\n  external factory Ops.extFactory();\n  int get value => f;\n  set value(int v) => f = v;\n  static int get sget => 0;\n  static set sset(int v) {}\n  static void sm() {}\n  void im() {}\n  external int get eget;\n  external set eset(int v);\n  external void ef();\n  external static int get esget;\n  external static set esset(int v);\n  external static void esf();\n  external int operator -(Ops o);\n  Ops operator ~() => this;\n  int operator [](int i) => i;\n  void operator []=(int i, int v) {}\n  Ops operator *(Ops o) => this;\n  Ops operator /(Ops o) => this;\n  Ops operator %(Ops o) => this;\n  Ops operator ~/(Ops o) => this;\n  Ops operator +(Ops o) => this;\n  Ops operator <<(int s) => this;\n  Ops operator >>(int s) => this;\n  bool operator >=(Ops o) => true;\n  bool operator >(Ops o) => true;\n  bool operator <=(Ops o) => true;\n  bool operator <(Ops o) => true;\n  bool operator ==(Object o) => true;\n  Ops operator &(Ops o) => this;\n  Ops operator ^(Ops o) => this;\n  Ops operator |(Ops o) => this;\n}\nclass Const {\n  final int v;\n  const Const(this.v);\n  const Const.zero() : v = 0;\n  const Const.redirect() : this(1);\n  const factory Const.cf(int v) = Const;\n  external const Const.ec(int v);\n}\nclass WithOnly with M2 {}\nmixin M2 {}\nclass MA = Object with M2;\nabstract class MA2 = Object with M2 implements I;\nexternal int extTop();\nexternal int get extGet;\nexternal set extSet(int v);\nint get topGet => 0;\nset topSet(int v) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "class_body",
+            "superclass",
+            "mixins",
+            "interfaces",
+            "mixin_declaration",
+            "constructor_signature",
+            "initializers",
+            "initializer_list_entry",
+            "field_initializer",
+            "redirection",
+            "factory_constructor_signature",
+            "redirecting_factory_constructor_signature",
+            "constant_constructor_signature",
+            "getter_signature",
+            "setter_signature",
+            "operator_signature",
+            "method_signature",
+            "mixin_application_class"
+          ],
+          "anchors": [
+            {
+              "type": "mixin_declaration",
+              "text": "mixin M on Base {}"
+            },
+            {
+              "type": "superclass",
+              "text": "extends Base with M"
+            },
+            {
+              "type": "mixins",
+              "text": "with M",
+              "occurrence": 1
+            },
+            {
+              "type": "interfaces",
+              "text": "implements I",
+              "occurrence": 1
+            },
+            {
+              "type": "superclass",
+              "text": "with M2",
+              "occurrence": 1
+            },
+            {
+              "type": "class_definition",
+              "text": "class WithOnly with M2 {}"
+            },
+            {
+              "type": "mixin_application_class",
+              "text": "MA = Object with M2;"
+            },
+            {
+              "type": "mixin_application",
+              "text": "Object with M2 implements I"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract class MA2 = Object with M2 implements I;"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "Base(int a)"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "Base.named(int a)"
+            },
+            {
+              "type": "initializers",
+              "text": ": super(a)",
+              "occurrence": 1
+            },
+            {
+              "type": "initializer_list_entry",
+              "text": "super(a)",
+              "occurrence": 1
+            },
+            {
+              "type": "initializer_list_entry",
+              "text": "super.named(a)"
+            },
+            {
+              "type": "field_initializer",
+              "text": "f = 1",
+              "occurrence": 1
+            },
+            {
+              "type": "field_initializer",
+              "text": "this.f = 2"
+            },
+            {
+              "type": "assertion",
+              "text": "assert(a > 0)"
+            },
+            {
+              "type": "field_initializer",
+              "text": "f = a > 0 ? 1 : 2"
+            },
+            {
+              "type": "field_initializer",
+              "text": "other = o..f = 1"
+            },
+            {
+              "type": "field_initializer",
+              "text": "f = throw 'no'"
+            },
+            {
+              "type": "field_initializer",
+              "text": "f = counter = a"
+            },
+            {
+              "type": "redirection",
+              "text": ": this(0)"
+            },
+            {
+              "type": "redirection",
+              "text": ": this.sup(0)"
+            },
+            {
+              "type": "method_signature",
+              "text": "Ops.body(int a) : super(a)"
+            },
+            {
+              "type": "factory_constructor_signature",
+              "text": "factory Ops.make()"
+            },
+            {
+              "type": "redirecting_factory_constructor_signature",
+              "text": "factory Ops.redirectFactory(int a) = Ops"
+            },
+            {
+              "type": "declaration",
+              "text": "external Ops.ext()"
+            },
+            {
+              "type": "declaration",
+              "text": "external factory Ops.extFactory()"
+            },
+            {
+              "type": "getter_signature",
+              "text": "int get value",
+              "occurrence": 1
+            },
+            {
+              "type": "setter_signature",
+              "text": "set value(int v)"
+            },
+            {
+              "type": "method_signature",
+              "text": "static int get sget"
+            },
+            {
+              "type": "method_signature",
+              "text": "static set sset(int v)"
+            },
+            {
+              "type": "method_signature",
+              "text": "static void sm()"
+            },
+            {
+              "type": "declaration",
+              "text": "external int get eget"
+            },
+            {
+              "type": "declaration",
+              "text": "external set eset(int v)"
+            },
+            {
+              "type": "declaration",
+              "text": "external void ef()"
+            },
+            {
+              "type": "declaration",
+              "text": "external static int get esget"
+            },
+            {
+              "type": "declaration",
+              "text": "external int operator -(Ops o)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Ops operator ~()"
+            },
+            {
+              "type": "operator_signature",
+              "text": "int operator [](int i)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "void operator []=(int i, int v)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Ops operator *(Ops o)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Ops operator +(Ops o)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Ops operator <<(int s)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "bool operator >=(Ops o)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "bool operator ==(Object o)"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Ops operator &(Ops o)"
+            },
+            {
+              "type": "constant_constructor_signature",
+              "text": "const Const(this.v)"
+            },
+            {
+              "type": "declaration",
+              "text": "const Const.zero() : v = 0"
+            },
+            {
+              "type": "declaration",
+              "text": "const Const.redirect() : this(1)"
+            },
+            {
+              "type": "redirecting_factory_constructor_signature",
+              "text": "const factory Const.cf(int v) = Const"
+            },
+            {
+              "type": "declaration",
+              "text": "external const Const.ec(int v)"
+            },
+            {
+              "type": "function_signature",
+              "text": "int extTop()"
+            },
+            {
+              "type": "getter_signature",
+              "text": "int get extGet"
+            },
+            {
+              "type": "setter_signature",
+              "text": "set extSet(int v)"
+            },
+            {
+              "type": "getter_signature",
+              "text": "int get topGet"
+            },
+            {
+              "type": "setter_signature",
+              "text": "set topSet(int v)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-08",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a104",
+        "dart-B01.a105",
+        "dart-B01.a106",
+        "dart-B01.a107",
+        "dart-B01.a108",
+        "dart-B01.a109",
+        "dart-B01.a110",
+        "dart-B01.a111",
+        "dart-B01.a112",
+        "dart-B01.a198",
+        "dart-B01.a094",
+        "dart-B01.a249",
+        "dart-B01.a250",
+        "dart-B01.a200",
+        "dart-B01.a201",
+        "dart-B01.a207",
+        "dart-B01.a210",
+        "dart-B01.a212",
+        "dart-B01.a221",
+        "dart-B01.a226",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a322",
+        "dart-B01.a323",
+        "dart-B01.a337"
+      ],
+      "source_utf8": "import 'dart:core';\nimport 'dart:core' as core;\nabstract class I {}\nextension Ext<T> on List<T> {\n  int get twice => length * 2;\n  static int helper() => 0;\n}\nextension on int {\n  int get dbl => this * 2;\n}\nenum Color { red, green, blue, }\nenum One { only }\nenum Tagged { @Deprecated('x') tagged }\nclass G<T extends Object?, @Deprecated('u') U> {}\nclass Ann { const Ann(); const Ann.named(); }\n@deprecated\n@core.deprecated\n@Deprecated('m')\n@core.Deprecated('m')\n@Ann.named()\nclass Annotated {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "extension_declaration",
+            "extension_body",
+            "enum_declaration",
+            "enum_body",
+            "enum_constant",
+            "type_parameters",
+            "type_parameter",
+            "type_bound",
+            "annotation",
+            "class_definition"
+          ],
+          "anchors": [
+            {
+              "type": "extension_declaration",
+              "text": "extension Ext<T> on List<T> {\n  int get twice => length * 2;\n  static int helper() => 0;\n}"
+            },
+            {
+              "type": "extension_declaration",
+              "text": "extension on int {\n  int get dbl => this * 2;\n}"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T>",
+              "occurrence": 1
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Color { red, green, blue, }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum One { only }"
+            },
+            {
+              "type": "enum_constant",
+              "text": "@Deprecated('x') tagged"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T extends Object?, @Deprecated('u') U>"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T extends Object?"
+            },
+            {
+              "type": "type_bound",
+              "text": "extends Object?"
+            },
+            {
+              "type": "type_parameter",
+              "text": "@Deprecated('u') U"
+            },
+            {
+              "type": "annotation",
+              "text": "@deprecated"
+            },
+            {
+              "type": "annotation",
+              "text": "@core.deprecated"
+            },
+            {
+              "type": "annotation",
+              "text": "@Deprecated('m')"
+            },
+            {
+              "type": "annotation",
+              "text": "@core.Deprecated('m')"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann.named()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-09",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a261",
+        "dart-B01.a263",
+        "dart-B01.a264",
+        "dart-B01.a265",
+        "dart-B01.a266",
+        "dart-B01.a267",
+        "dart-B01.a268",
+        "dart-B01.a269",
+        "dart-B01.a270",
+        "dart-B01.a271",
+        "dart-B01.a272",
+        "dart-B01.a273",
+        "dart-B01.a276",
+        "dart-B01.a277",
+        "dart-B01.a278",
+        "dart-B01.a279",
+        "dart-B01.a201",
+        "dart-B01.a203",
+        "dart-B01.a205",
+        "dart-B01.a212",
+        "dart-B01.a215",
+        "dart-B01.a218",
+        "dart-B01.a224",
+        "dart-B01.a227",
+        "dart-B01.a317",
+        "dart-B01.a328"
+      ],
+      "source_utf8": "@deprecated\nlibrary my.lib.name;\nimport 'dart:core';\nimport 'dart:math' as math show max, min hide pi;\nimport 'package:demo/later.dart' deferred as later;\nimport 'package:demo/io.dart' if (dart.library.html) 'package:demo/html.dart' if (dart.library.io == 'true') 'package:demo/io2.dart';\n@deprecated\nexport 'dart:math' show max hide min;\nexport 'dart:async';\npart 'part_file.dart';\n@deprecated\npart 'other_part.dart';\nconst lib = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "library_name",
+            "dotted_identifier_list",
+            "library_import",
+            "import_specification",
+            "combinator",
+            "identifier",
+            "configurable_uri",
+            "configuration_uri",
+            "configuration_uri_condition",
+            "uri_test",
+            "library_export",
+            "part_directive",
+            "uri",
+            "annotation"
+          ],
+          "anchors": [
+            {
+              "type": "library_name",
+              "text": "@deprecated\nlibrary my.lib.name;"
+            },
+            {
+              "type": "dotted_identifier_list",
+              "text": "my.lib.name"
+            },
+            {
+              "type": "library_import",
+              "text": "import 'dart:core';"
+            },
+            {
+              "type": "import_specification",
+              "text": "import 'dart:math' as math show max, min hide pi;"
+            },
+            {
+              "type": "combinator",
+              "text": "show max, min"
+            },
+            {
+              "type": "combinator",
+              "text": "hide pi"
+            },
+            {
+              "type": "import_specification",
+              "text": "import 'package:demo/later.dart' deferred as later;"
+            },
+            {
+              "type": "configurable_uri",
+              "text": "'package:demo/io.dart' if (dart.library.html) 'package:demo/html.dart' if (dart.library.io == 'true') 'package:demo/io2.dart'"
+            },
+            {
+              "type": "configuration_uri",
+              "text": "if (dart.library.html) 'package:demo/html.dart'"
+            },
+            {
+              "type": "uri_test",
+              "text": "dart.library.html"
+            },
+            {
+              "type": "uri_test",
+              "text": "dart.library.io == 'true'"
+            },
+            {
+              "type": "library_export",
+              "text": "@deprecated\nexport 'dart:math' show max hide min;"
+            },
+            {
+              "type": "library_export",
+              "text": "export 'dart:async';"
+            },
+            {
+              "type": "part_directive",
+              "text": "part 'part_file.dart';"
+            },
+            {
+              "type": "part_directive",
+              "text": "@deprecated\npart 'other_part.dart';"
+            },
+            {
+              "type": "uri",
+              "text": "'part_file.dart'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-10",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a274",
+        "dart-B01.a275",
+        "dart-B01.a218",
+        "dart-B01.a225",
+        "dart-B01.a317"
+      ],
+      "source_utf8": "part of my.lib.name;\nconst inPart = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "part_of_directive",
+            "dotted_identifier_list"
+          ],
+          "anchors": [
+            {
+              "type": "part_of_directive",
+              "text": "part of my.lib.name;"
+            },
+            {
+              "type": "dotted_identifier_list",
+              "text": "my.lib.name"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-11",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a274",
+        "dart-B01.a275",
+        "dart-B01.a218",
+        "dart-B01.a225"
+      ],
+      "source_utf8": "@deprecated\npart of 'library.dart';\nint inPart2() => 0;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "part_of_directive",
+            "uri",
+            "annotation"
+          ],
+          "anchors": [
+            {
+              "type": "part_of_directive",
+              "text": "@deprecated\npart of 'library.dart';"
+            },
+            {
+              "type": "uri",
+              "text": "'library.dart'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-12",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a198",
+        "dart-B01.a199",
+        "dart-B01.a288",
+        "dart-B01.a111",
+        "dart-B01.a094",
+        "dart-B01.a201",
+        "dart-B01.a212",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "import 'dart:core';\nimport 'dart:core' as core;\nimport 'prefixed.dart' as pre;\ncore.int qualified = 0;\npre.Outer? deep;\n@pre.annotation\n@pre.Outer.annotation\n@core.Deprecated('x')\nvar qn = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_or_export",
+            "type_identifier",
+            "identifier",
+            "annotation"
+          ],
+          "anchors": [
+            {
+              "type": "type_identifier",
+              "text": "core",
+              "occurrence": 4
+            },
+            {
+              "type": "type_identifier",
+              "text": "Outer",
+              "occurrence": 1
+            },
+            {
+              "type": "annotation",
+              "text": "@pre.annotation"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "pre.annotation"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "pre.Outer.annotation"
+            },
+            {
+              "type": "annotation",
+              "text": "@core.Deprecated('x')"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-13",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a184",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "var crlf1 = 1;\r\nvar crlf2 = 2;\r\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "initialized_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "initialized_identifier",
+              "text": "crlf1 = 1"
+            },
+            {
+              "type": "initialized_identifier",
+              "text": "crlf2 = 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-14",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a185",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "var cr1 = 1;\rvar cr2 = 2;\r",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "initialized_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "initialized_identifier",
+              "text": "cr1 = 1"
+            },
+            {
+              "type": "initialized_identifier",
+              "text": "cr2 = 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B01-15",
+      "features": [
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B01.a031",
+        "dart-B01.a001",
+        "dart-B01.a003",
+        "dart-B01.a316",
+        "dart-B01.a325",
+        "dart-B01.a337",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "// @dart=2.12\nclass Mods {\n  int x;\n  final int y;\n  Mods(final this.x, var this.y);\n  Mods.typed(final int this.x, this.y);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "class_definition",
+            "constructor_signature",
+            "formal_parameter_list",
+            "constructor_param"
+          ],
+          "anchors": [
+            {
+              "type": "constructor_param",
+              "text": "final this.x"
+            },
+            {
+              "type": "constructor_param",
+              "text": "var this.y"
+            },
+            {
+              "type": "constructor_param",
+              "text": "final int this.x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B02-01",
+      "features": [
+        "dart-B02",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B02.a001",
+        "dart-B02.a002",
+        "dart-B02.a059",
+        "dart-B02.a060",
+        "dart-B02.a061",
+        "dart-B02.a062",
+        "dart-B02.a063",
+        "dart-B02.a064",
+        "dart-B02.a065",
+        "dart-B02.a066",
+        "dart-B02.a067",
+        "dart-B02.a068",
+        "dart-B02.a069",
+        "dart-B02.a070",
+        "dart-B02.a071",
+        "dart-B02.a072",
+        "dart-B02.a073",
+        "dart-B02.a074",
+        "dart-B02.a075",
+        "dart-B02.a076",
+        "dart-B02.a077",
+        "dart-B02.a078",
+        "dart-B02.a079",
+        "dart-B02.a080",
+        "dart-B02.a081",
+        "dart-B02.a082",
+        "dart-B02.a083",
+        "dart-B02.a084",
+        "dart-B02.a085",
+        "dart-B02.a086",
+        "dart-B02.a087",
+        "dart-B02.a088",
+        "dart-B02.a089",
+        "dart-B02.a090",
+        "dart-B02.a091",
+        "dart-B02.a092",
+        "dart-B02.a096",
+        "dart-B02.a097",
+        "dart-B02.a100",
+        "dart-B02.a101",
+        "dart-B02.a102",
+        "dart-B02.a103",
+        "dart-B02.a104",
+        "dart-B02.a105",
+        "dart-B02.a106",
+        "dart-B02.a107",
+        "dart-B02.a108",
+        "dart-B02.a109",
+        "dart-B02.a110",
+        "dart-B02.a111",
+        "dart-B02.a112",
+        "dart-B02.a113",
+        "dart-B02.a114",
+        "dart-B02.a115",
+        "dart-B02.a116",
+        "dart-B02.a117",
+        "dart-B02.a118",
+        "dart-B02.a119",
+        "dart-B02.a120",
+        "dart-B02.a121",
+        "dart-B02.a122",
+        "dart-B02.a124",
+        "dart-B02.a130",
+        "dart-B02.a131",
+        "dart-B02.a141",
+        "dart-B02.a142",
+        "dart-B02.a143",
+        "dart-B02.a144",
+        "dart-B02.a010",
+        "dart-B02.a011",
+        "dart-B02.a133",
+        "dart-B02.a134",
+        "dart-B02.a098",
+        "dart-B02.a099",
+        "dart-B02.a093",
+        "dart-B02.a094",
+        "dart-B02.a095",
+        "dart-B01.a201",
+        "dart-B01.a217",
+        "dart-B01.a223",
+        "dart-B01.a229",
+        "dart-B01.a316",
+        "dart-B01.a323",
+        "dart-B01.a330",
+        "dart-B01.a335",
+        "dart-B01.a337",
+        "dart-B01.a339",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "class Base {\n  Base operator -() => this;\n  Base operator ~() => this;\n  bool operator ==(Object o) => true;\n  bool operator <(Object o) => true;\n  Base operator |(Object o) => this;\n  Base operator ^(Object o) => this;\n  Base operator &(Object o) => this;\n  Base operator <<(Object o) => this;\n  Base operator +(Object o) => this;\n  Base operator *(Object o) => this;\n  int field = 0;\n  int method() => 0;\n  int call(int x) => x;\n}\nclass Sub extends Base {\n  void supers() {\n    var a = super == 1;\n    var b = super < 1;\n    var c = super | 1 | 2;\n    var d = super ^ 1;\n    var e = super & 1;\n    var f = super << 1;\n    var g = super + 1;\n    var h = super * 1;\n    var i = -super;\n    var j = ~super;\n    var k = super.field;\n    super.field = 2;\n    var l = super.method();\n    var m = super(3);\n  }\n}\nFuture<void> ops(int a, int b, bool p, bool q, Object o, int? n, Future<int> fut) async {\n  a = b; a *= 2; a ~/= 2; a %= 2; a += 2; a -= 2; a <<= 1; a >>= 1; a &= 1; a ^= 1; a |= 1;\n  double dd = 1.0; dd /= 2;\n  n ??= 3;\n  var c = p ? a : b;\n  var nn = n ?? 0 ?? 1;\n  var l = p || q && !p || q;\n  var e = a == b || a != b;\n  var r = a < b || a > b || a <= b || a >= b;\n  var t = o is int || o is! String;\n  var cast = o as int;\n  var bits = a & b | a ^ b;\n  var sh = a << 1 >> 1;\n  var add = a + b - a;\n  var mul = a * b / 1 % 2 ~/ 1;\n  var un = -a + ~a;\n  a++; a--; ++a; --a;\n  var w = await fut;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "assignment_expression",
+            "conditional_expression",
+            "if_null_expression",
+            "logical_or_expression",
+            "logical_and_expression",
+            "equality_expression",
+            "relational_expression",
+            "type_test_expression",
+            "type_cast_expression",
+            "bitwise_or_expression",
+            "bitwise_xor_expression",
+            "bitwise_and_expression",
+            "shift_expression",
+            "additive_expression",
+            "multiplicative_expression",
+            "unary_expression",
+            "postfix_expression",
+            "await_expression",
+            "super"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "a = b"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "a *= 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "n ??= 3"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "p ? a : b"
+            },
+            {
+              "type": "if_null_expression",
+              "text": "n ?? 0 ?? 1"
+            },
+            {
+              "type": "logical_or_expression",
+              "text": "p || q && !p || q"
+            },
+            {
+              "type": "logical_and_expression",
+              "text": "q && !p"
+            },
+            {
+              "type": "equality_expression",
+              "text": "a == b"
+            },
+            {
+              "type": "equality_expression",
+              "text": "a != b"
+            },
+            {
+              "type": "relational_expression",
+              "text": "a < b"
+            },
+            {
+              "type": "relational_expression",
+              "text": "a >= b"
+            },
+            {
+              "type": "type_test_expression",
+              "text": "o is int"
+            },
+            {
+              "type": "type_test_expression",
+              "text": "o is! String"
+            },
+            {
+              "type": "type_cast_expression",
+              "text": "o as int"
+            },
+            {
+              "type": "bitwise_or_expression",
+              "text": "a & b | a ^ b"
+            },
+            {
+              "type": "bitwise_and_expression",
+              "text": "a & b"
+            },
+            {
+              "type": "bitwise_xor_expression",
+              "text": "a ^ b"
+            },
+            {
+              "type": "shift_expression",
+              "text": "a << 1 >> 1"
+            },
+            {
+              "type": "additive_expression",
+              "text": "a + b - a"
+            },
+            {
+              "type": "multiplicative_expression",
+              "text": "a * b / 1 % 2 ~/ 1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a",
+              "occurrence": 1
+            },
+            {
+              "type": "unary_expression",
+              "text": "~a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!p"
+            },
+            {
+              "type": "await_expression",
+              "text": "await fut"
+            },
+            {
+              "type": "postfix_expression",
+              "text": "a++"
+            },
+            {
+              "type": "postfix_expression",
+              "text": "a--"
+            },
+            {
+              "type": "unary_expression",
+              "text": "++a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "--a"
+            },
+            {
+              "type": "equality_expression",
+              "text": "super == 1"
+            },
+            {
+              "type": "relational_expression",
+              "text": "super < 1"
+            },
+            {
+              "type": "bitwise_or_expression",
+              "text": "super | 1 | 2"
+            },
+            {
+              "type": "bitwise_xor_expression",
+              "text": "super ^ 1"
+            },
+            {
+              "type": "bitwise_and_expression",
+              "text": "super & 1"
+            },
+            {
+              "type": "shift_expression",
+              "text": "super << 1"
+            },
+            {
+              "type": "additive_expression",
+              "text": "super + 1"
+            },
+            {
+              "type": "multiplicative_expression",
+              "text": "super * 1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-super"
+            },
+            {
+              "type": "unary_expression",
+              "text": "~super"
+            },
+            {
+              "type": "assignable_expression",
+              "text": "super.field",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": "(3)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B02-02",
+      "features": [
+        "dart-B02",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B02.a003",
+        "dart-B02.a004",
+        "dart-B02.a005",
+        "dart-B02.a006",
+        "dart-B02.a007",
+        "dart-B02.a008",
+        "dart-B02.a009",
+        "dart-B02.a012",
+        "dart-B02.a013",
+        "dart-B02.a014",
+        "dart-B02.a015",
+        "dart-B02.a016",
+        "dart-B02.a017",
+        "dart-B02.a018",
+        "dart-B02.a019",
+        "dart-B02.a020",
+        "dart-B02.a021",
+        "dart-B02.a022",
+        "dart-B02.a023",
+        "dart-B02.a024",
+        "dart-B02.a025",
+        "dart-B02.a044",
+        "dart-B02.a045",
+        "dart-B02.a046",
+        "dart-B02.a125",
+        "dart-B02.a047",
+        "dart-B02.a048",
+        "dart-B02.a049",
+        "dart-B02.a050",
+        "dart-B02.a051",
+        "dart-B02.a052",
+        "dart-B02.a053",
+        "dart-B02.a054",
+        "dart-B02.a055",
+        "dart-B02.a056",
+        "dart-B02.a057",
+        "dart-B02.a058",
+        "dart-B02.a123",
+        "dart-B02.a126",
+        "dart-B02.a127",
+        "dart-B02.a128",
+        "dart-B02.a129",
+        "dart-B02.a132",
+        "dart-B02.a135",
+        "dart-B02.a136",
+        "dart-B02.a137",
+        "dart-B02.a138",
+        "dart-B02.a139",
+        "dart-B02.a140",
+        "dart-B02.a026",
+        "dart-B02.a027",
+        "dart-B02.a028",
+        "dart-B02.a029",
+        "dart-B02.a030",
+        "dart-B02.a031",
+        "dart-B02.a032",
+        "dart-B02.a033",
+        "dart-B02.a034",
+        "dart-B02.a035",
+        "dart-B02.a036",
+        "dart-B02.a037",
+        "dart-B02.a038",
+        "dart-B02.a041",
+        "dart-B02.a042",
+        "dart-B02.a043",
+        "dart-B02.a039",
+        "dart-B02.a040",
+        "dart-B01.a093",
+        "dart-B01.a094",
+        "dart-B01.a095",
+        "dart-B02.a187",
+        "dart-B01.a217",
+        "dart-B01.a223",
+        "dart-B01.a226",
+        "dart-B01.a228",
+        "dart-B01.a229",
+        "dart-B01.a230",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a321",
+        "dart-B01.a327",
+        "dart-B01.a328",
+        "dart-B01.a329",
+        "dart-B01.a331",
+        "dart-B01.a332",
+        "dart-B01.a334",
+        "dart-B01.a337",
+        "dart-B01.a338",
+        "dart-B01.a339",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "class Box {\n  int v = 0;\n  List<int> items = [];\n  Box? next;\n  Box();\n  Box.named();\n  void m() {}\n  int operator [](int i) => i;\n  void operator []=(int i, int v) {}\n  int self() => this.v;\n}\nT identity<T>(T x) => x;\nvoid args({int a = 0}) {}\nvoid pos(int x, {int a = 0}) {}\nFuture<void> exprs(Box b, Box? nb, List<int> list, List<int>? nlist, Map<String, int> map, Stream<int> st) async {\n  var x = b.v;\n  b.v = 1;\n  b.items[0] = 1;\n  nb?.v;\n  nb?.v = 2;\n  nb?[0];\n  nb?[0] = 1;\n  nb!.v;\n  b.next!.v;\n  b..v = 1..m()..[0] = 2..items.add(1)..v += 2;\n  nb?..v = 1..m();\n  b..next?.v = 3;\n  var l = [1, 2, ...list, ...?nlist, if (x > 0) 3 else 4, if (x < 0) 5, for (var i in list) i, for (var i = 0; i < 2; i++) i];\n  var s = <int>{1, 2};\n  var m = {'a': 1, ...map, if (x > 0) 'b': 2, for (var k in map.keys) k: 0};\n  const cl = [1], cs = {1}, cm = {'k': 1};\n  var tl = const <int>[1];\n  var empty = <int>[], emptySet = <int>{}, emptyMap = <String, int>{};\n  var al = [await for (var e in st) e];\n  var f1 = (int a) => a;\n  var f2 = () { return 1; };\n  var f3 = () async => 1;\n  var f4 = () async { return 1; };\n  var f5 = () sync* { yield 1; };\n  var f6 = () async* { yield 1; };\n  var f7 = <T>(T a) => a;\n  var o = new Box();\n  var on = new Box.named();\n  var c = const Object();\n  var lst = List<int>.filled(1, 0);\n  var lst2 = new List<int>.filled(1, 0);\n  var mp = Map<String, int>();\n  var ctor = Box();\n  var call = f1(1);\n  var gcall = identity<int>(1);\n  args();\n  args(a: 1);\n  args(a: 1,);\n  pos(1, a: 2);\n  pos(1);\n  var paren = (1 + 2);\n  var thrown = () => throw 'x';\n  var lit = 1;\n  var lits = [null, true, #s];\n  var tc = x > 0 ? 1 : throw 'no';\n  b..v = x = 2;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "cascade_section",
+            "cascade_selector",
+            "conditional_assignable_selector",
+            "unconditional_assignable_selector",
+            "index_selector",
+            "list_literal",
+            "set_or_map_literal",
+            "pair",
+            "spread_element",
+            "if_element",
+            "for_element",
+            "function_expression",
+            "new_expression",
+            "const_object_expression",
+            "constructor_invocation",
+            "arguments",
+            "named_argument",
+            "throw_expression",
+            "this"
+          ],
+          "anchors": [
+            {
+              "type": "this",
+              "text": "this"
+            },
+            {
+              "type": "assignable_expression",
+              "text": "b.v",
+              "occurrence": 2
+            },
+            {
+              "type": "assignable_expression",
+              "text": "b.items[0]"
+            },
+            {
+              "type": "conditional_assignable_selector",
+              "text": "?.v",
+              "occurrence": 1
+            },
+            {
+              "type": "assignable_expression",
+              "text": "nb?.v",
+              "occurrence": 2
+            },
+            {
+              "type": "conditional_assignable_selector",
+              "text": "?[0]",
+              "occurrence": 1
+            },
+            {
+              "type": "assignable_expression",
+              "text": "nb?[0]",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": "!",
+              "occurrence": 1
+            },
+            {
+              "type": "cascade_section",
+              "text": "..v = 1",
+              "occurrence": 1
+            },
+            {
+              "type": "cascade_section",
+              "text": "..m()",
+              "occurrence": 1
+            },
+            {
+              "type": "cascade_section",
+              "text": "..[0] = 2"
+            },
+            {
+              "type": "cascade_section",
+              "text": "..items.add(1)"
+            },
+            {
+              "type": "cascade_section",
+              "text": "..v += 2"
+            },
+            {
+              "type": "cascade_section",
+              "text": "?..v = 1"
+            },
+            {
+              "type": "cascade_section",
+              "text": "..next?.v = 3"
+            },
+            {
+              "type": "cascade_section",
+              "text": "..v = x = 2"
+            },
+            {
+              "type": "assignment_expression_without_cascade",
+              "text": "x = 2"
+            },
+            {
+              "type": "list_literal",
+              "text": "[1, 2, ...list, ...?nlist, if (x > 0) 3 else 4, if (x < 0) 5, for (var i in list) i, for (var i = 0; i < 2; i++) i]"
+            },
+            {
+              "type": "spread_element",
+              "text": "...list"
+            },
+            {
+              "type": "spread_element",
+              "text": "...?nlist"
+            },
+            {
+              "type": "if_element",
+              "text": "if (x > 0) 3 else 4"
+            },
+            {
+              "type": "if_element",
+              "text": "if (x < 0) 5"
+            },
+            {
+              "type": "for_element",
+              "text": "for (var i in list) i"
+            },
+            {
+              "type": "for_element",
+              "text": "for (var i = 0; i < 2; i++) i"
+            },
+            {
+              "type": "set_or_map_literal",
+              "text": "<int>{1, 2}"
+            },
+            {
+              "type": "pair",
+              "text": "'a': 1"
+            },
+            {
+              "type": "spread_element",
+              "text": "...map"
+            },
+            {
+              "type": "if_element",
+              "text": "if (x > 0) 'b': 2"
+            },
+            {
+              "type": "for_element",
+              "text": "for (var k in map.keys) k: 0"
+            },
+            {
+              "type": "list_literal",
+              "text": "const <int>[1]"
+            },
+            {
+              "type": "list_literal",
+              "text": "<int>[]"
+            },
+            {
+              "type": "set_or_map_literal",
+              "text": "<int>{}"
+            },
+            {
+              "type": "set_or_map_literal",
+              "text": "<String, int>{}"
+            },
+            {
+              "type": "for_element",
+              "text": "await for (var e in st) e"
+            },
+            {
+              "type": "function_expression",
+              "text": "(int a) => a"
+            },
+            {
+              "type": "function_expression",
+              "text": "() { return 1; }"
+            },
+            {
+              "type": "function_expression_body",
+              "text": "async => 1"
+            },
+            {
+              "type": "function_expression_body",
+              "text": "async { return 1; }"
+            },
+            {
+              "type": "function_expression_body",
+              "text": "sync* { yield 1; }",
+              "occurrence": 1
+            },
+            {
+              "type": "function_expression_body",
+              "text": "async* { yield 1; }"
+            },
+            {
+              "type": "function_expression",
+              "text": "<T>(T a) => a"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Box()"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Box.named()"
+            },
+            {
+              "type": "new_expression",
+              "text": "new List<int>.filled(1, 0)"
+            },
+            {
+              "type": "const_object_expression",
+              "text": "const Object()"
+            },
+            {
+              "type": "constructor_invocation",
+              "text": "List<int>.filled(1, 0)",
+              "occurrence": 1
+            },
+            {
+              "type": "selector",
+              "text": "<String, int>()"
+            },
+            {
+              "type": "selector",
+              "text": "<int>(1)"
+            },
+            {
+              "type": "arguments",
+              "text": "(a: 1)"
+            },
+            {
+              "type": "arguments",
+              "text": "(1, a: 2)"
+            },
+            {
+              "type": "named_argument",
+              "text": "a: 2"
+            },
+            {
+              "type": "label",
+              "text": "a:",
+              "occurrence": 1
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(1 + 2)"
+            },
+            {
+              "type": "throw_expression",
+              "text": "throw 'x'"
+            },
+            {
+              "type": "throw_expression_without_cascade",
+              "text": "throw 'no'"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-B02-03",
+      "features": [
+        "dart-B02",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-B02.a145",
+        "dart-B02.a146",
+        "dart-B02.a147",
+        "dart-B02.a148",
+        "dart-B02.a149",
+        "dart-B02.a150",
+        "dart-B02.a151",
+        "dart-B02.a152",
+        "dart-B02.a153",
+        "dart-B02.a154",
+        "dart-B02.a155",
+        "dart-B02.a156",
+        "dart-B02.a157",
+        "dart-B02.a158",
+        "dart-B02.a159",
+        "dart-B02.a160",
+        "dart-B02.a161",
+        "dart-B02.a162",
+        "dart-B02.a163",
+        "dart-B02.a164",
+        "dart-B02.a165",
+        "dart-B02.a166",
+        "dart-B02.a167",
+        "dart-B02.a168",
+        "dart-B02.a169",
+        "dart-B02.a170",
+        "dart-B02.a171",
+        "dart-B02.a172",
+        "dart-B02.a173",
+        "dart-B02.a174",
+        "dart-B02.a175",
+        "dart-B02.a176",
+        "dart-B02.a177",
+        "dart-B02.a178",
+        "dart-B02.a179",
+        "dart-B02.a180",
+        "dart-B02.a181",
+        "dart-B02.a182",
+        "dart-B02.a183",
+        "dart-B02.a184",
+        "dart-B02.a185",
+        "dart-B02.a186",
+        "dart-B02.a187",
+        "dart-B02.a188",
+        "dart-B02.a189",
+        "dart-B02.a190",
+        "dart-B02.a191",
+        "dart-B02.a192",
+        "dart-B02.a193",
+        "dart-B01.a013",
+        "dart-B01.a223",
+        "dart-B01.a226",
+        "dart-B01.a228",
+        "dart-B01.a229",
+        "dart-B01.a230",
+        "dart-B01.a312",
+        "dart-B01.a313",
+        "dart-B01.a314",
+        "dart-B01.a315",
+        "dart-B01.a318",
+        "dart-B01.a319",
+        "dart-B01.a320",
+        "dart-B01.a321",
+        "dart-B01.a325",
+        "dart-B01.a326",
+        "dart-B01.a327",
+        "dart-B01.a328",
+        "dart-B01.a329",
+        "dart-B01.a333",
+        "dart-B01.a334",
+        "dart-B01.a336",
+        "dart-B01.a338",
+        "dart-B01.a340",
+        "dart-B01.a341",
+        "dart-B01.a342",
+        "dart-B01.a343"
+      ],
+      "source_utf8": "Future<void> stmts(List<int> xs, Stream<int> st) async {\n  {}\n  @deprecated var annotated = 1;\n  int lf(int a) => a;\n  @deprecated int lf2() => 0;\n  for (var i = 0; i < 2; i++) {}\n  for (int i = 0, j = 1; i < j; i++, j--) {}\n  var k = 0;\n  for (k = 0; k < 1; k++) {}\n  for (; k < 2;) { k++; }\n  for (;;) { break; }\n  for (final x in xs) {}\n  for (k in xs) {}\n  for (@deprecated var y in xs) {}\n  await for (var e in st) {}\n  while (k < 3) k++;\n  do { k--; } while (k > 0);\n  switch (k) {\n    lbl:\n    case 1:\n      break;\n    case 2:\n      continue lbl;\n    other:\n    default:\n      break;\n  }\n  switch (k) { case 3: }\n  if (k == 0) {} else if (k == 1) {} else {}\n  if (k == 2) k++;\n  try { throw 1; } on int catch (e, s) { rethrow; } on String { } on Object catch (e) { } catch (e) { } finally { }\n  try {} finally {}\n  try {} catch (e, s) {}\n  outer: for (var i in xs) { inner: for (var j in xs) { if (j > 0) break outer; continue inner; } }\n  block: { break block; }\n  assert(k >= 0);\n  assert(k >= 0, 'msg');\n  assert(k >= 0, 'msg',);\n  ;\n  return;\n}\nIterable<int> gens() sync* { yield 1; yield* [2]; }\nint ret() { return 1; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "local_variable_declaration",
+            "local_function_declaration",
+            "for_statement",
+            "for_loop_parts",
+            "while_statement",
+            "do_statement",
+            "switch_statement",
+            "switch_block",
+            "switch_statement_case",
+            "switch_statement_default",
+            "label",
+            "labeled_statement",
+            "if_statement",
+            "try_statement",
+            "catch_clause",
+            "catch_parameters",
+            "finally_clause",
+            "rethrow_expression",
+            "break_statement",
+            "continue_statement",
+            "assert_statement",
+            "return_statement",
+            "yield_statement",
+            "yield_each_statement",
+            "empty_statement",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "block",
+              "text": "{}",
+              "occurrence": 1
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "@deprecated var annotated = 1;"
+            },
+            {
+              "type": "local_function_declaration",
+              "text": "int lf(int a) => a;"
+            },
+            {
+              "type": "local_function_declaration",
+              "text": "@deprecated int lf2() => 0;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var i = 0; i < 2; i++) {}"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(int i = 0, j = 1; i < j; i++, j--)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(k = 0; k < 1; k++)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(; k < 2;)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(;;)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(final x in xs)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(k in xs)"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(@deprecated var y in xs)"
+            },
+            {
+              "type": "for_statement",
+              "text": "await for (var e in st) {}"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (k < 3) k++;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do { k--; } while (k > 0);"
+            },
+            {
+              "type": "switch_statement_case",
+              "text": "lbl:\n    case 1:\n      break;"
+            },
+            {
+              "type": "label",
+              "text": "lbl:"
+            },
+            {
+              "type": "switch_statement_case",
+              "text": "case 2:\n      continue lbl;"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue lbl;"
+            },
+            {
+              "type": "switch_statement_default",
+              "text": "other:\n    default:\n      break;"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (k) { case 3: }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (k == 0) {} else if (k == 1) {} else {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (k == 2) k++;"
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} finally {}"
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} catch (e, s) {}"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (e, s)",
+              "occurrence": 1
+            },
+            {
+              "type": "catch_parameters",
+              "text": "(e, s)",
+              "occurrence": 1
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }"
+            },
+            {
+              "type": "rethrow_expression",
+              "text": "rethrow"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "block: { break block; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break outer;"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue inner;"
+            },
+            {
+              "type": "break_statement",
+              "text": "break;",
+              "occurrence": 1
+            },
+            {
+              "type": "assert_statement",
+              "text": "assert(k >= 0);"
+            },
+            {
+              "type": "assertion",
+              "text": "assert(k >= 0, 'msg')"
+            },
+            {
+              "type": "assertion",
+              "text": "assert(k >= 0, 'msg',)"
+            },
+            {
+              "type": "return_statement",
+              "text": "return;"
+            },
+            {
+              "type": "yield_statement",
+              "text": "yield 1;"
+            },
+            {
+              "type": "yield_each_statement",
+              "text": "yield* [2];"
+            },
+            {
+              "type": "return_statement",
+              "text": "return 1;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V213-01",
+      "features": [
+        "dart-V213",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V213.a03",
+        "dart-V213.a02",
+        "dart-V213.a01",
+        "dart-V213.a14",
+        "dart-V213.a15",
+        "dart-V213.a16",
+        "dart-V213.a17",
+        "dart-B01.a209",
+        "dart-B01.a214",
+        "dart-B01.a217",
+        "dart-B01.a222",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a323",
+        "dart-B01.a337",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "typedef IntList = List<int>;\ntypedef Pair<T> = Map<T, T>;\ntypedef Fn<T> = T Function(T);\nclass Bits { Bits operator >>>(int s) => this; }\nvoid shifts(int a, Bits b) {\n  var x = a >>> 1;\n  a >>>= 2;\n  var y = b >>> 3;\n  var sym = #>>>;\n}\nclass TypeHelper<T> { const TypeHelper(int a, String b); }\n@TypeHelper<int>(42, \"The meaning\")\nlate List<T Function<T>(T)> idFunctions;\nlate S Function<S extends T Function<T>(T)>(S) gf;\nvar callback = [<T>(T value) => value];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias",
+            "operator_signature",
+            "shift_expression",
+            "shift_operator",
+            "assignment_expression",
+            "symbol_literal",
+            "annotation",
+            "type_arguments"
+          ],
+          "anchors": [
+            {
+              "type": "type_alias",
+              "text": "typedef IntList = List<int>;"
+            },
+            {
+              "type": "type_alias",
+              "text": "typedef Pair<T> = Map<T, T>;"
+            },
+            {
+              "type": "type_alias",
+              "text": "typedef Fn<T> = T Function(T);"
+            },
+            {
+              "type": "operator_signature",
+              "text": "Bits operator >>>(int s)"
+            },
+            {
+              "type": "shift_expression",
+              "text": "a >>> 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "a >>>= 2"
+            },
+            {
+              "type": "shift_expression",
+              "text": "b >>> 3"
+            },
+            {
+              "type": "symbol_literal",
+              "text": "#>>>"
+            },
+            {
+              "type": "annotation",
+              "text": "@TypeHelper<int>(42, \"The meaning\")"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<T Function<T>(T)>"
+            },
+            {
+              "type": "type_bound",
+              "text": "extends T Function<T>(T)"
+            },
+            {
+              "type": "function_expression",
+              "text": "<T>(T value) => value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V213-02",
+      "features": [
+        "dart-V213",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V213.a12",
+        "dart-V213.a13",
+        "dart-V213.a18",
+        "dart-V213.a19",
+        "dart-V213.a20",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a323",
+        "dart-B01.a325",
+        "dart-B01.a331",
+        "dart-B01.a335",
+        "dart-B01.a337",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "class C {\n  final int x;\n  const C.new(this.x);\n  C.named(this.x);\n}\nclass D extends C { D(int x) : super.new(x * 2); }\nT id<T>(T v) => v;\nvoid tear() {\n  var f = C.new;\n  var g = C.named;\n  var h = List<int>.filled;\n  var i = id<int>;\n  Type t = List<int>;\n  var j = (List.filled)<int>;\n  var eq = id<int> == id<int>;\n  D.new(1);\n  const C.new(1);\n  new C.new(1);\n  var lt = 1 < 2;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "constructor_tearoff",
+            "type_arguments",
+            "selector",
+            "relational_expression",
+            "const_object_expression",
+            "new_expression"
+          ],
+          "anchors": [
+            {
+              "type": "constant_constructor_signature",
+              "text": "const C.new(this.x)"
+            },
+            {
+              "type": "initializer_list_entry",
+              "text": "super.new(x * 2)"
+            },
+            {
+              "type": "constructor_tearoff",
+              "text": "C.new",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": ".named",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": "<int>",
+              "occurrence": 1
+            },
+            {
+              "type": "selector",
+              "text": ".filled",
+              "occurrence": 1
+            },
+            {
+              "type": "selector",
+              "text": "<int>",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": "<int>",
+              "occurrence": 3
+            },
+            {
+              "type": "selector",
+              "text": "<int>",
+              "occurrence": 4
+            },
+            {
+              "type": "equality_expression",
+              "text": "id<int> == id<int>"
+            },
+            {
+              "type": "expression_statement",
+              "text": "D.new(1);"
+            },
+            {
+              "type": "const_object_expression",
+              "text": "const C.new(1)"
+            },
+            {
+              "type": "new_expression",
+              "text": "new C.new(1)"
+            },
+            {
+              "type": "relational_expression",
+              "text": "1 < 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V213-03",
+      "features": [
+        "dart-V213",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V213.a11",
+        "dart-V213.a04",
+        "dart-V213.a05",
+        "dart-V213.a06",
+        "dart-V213.a07",
+        "dart-V213.a08",
+        "dart-V213.a09",
+        "dart-V213.a10",
+        "dart-B01.a209",
+        "dart-B01.a210",
+        "dart-B01.a211",
+        "dart-B01.a215",
+        "dart-B01.a216",
+        "dart-B01.a219",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a322",
+        "dart-B01.a323",
+        "dart-B01.a324",
+        "dart-B01.a325",
+        "dart-B01.a331",
+        "dart-B01.a335",
+        "dart-B01.a337",
+        "dart-B01.a339",
+        "dart-B01.a342",
+        "dart-B01.a344"
+      ],
+      "source_utf8": "library;\nmixin Describe { String get desc => 'd'; }\nenum Planet<T> with Describe implements Comparable<Planet<T>> {\n  mercury(1),\n  venus.named(2),\n  earth<int>.named(3),\n  saturn.new(4),\n  mars;\n  final int order;\n  const Planet([this.order = 0]);\n  const Planet.named(this.order);\n  int compareTo(Planet<T> o) => order - o.order;\n}\nclass Base { final int a; final int b; final int Function(int) g; Base(this.a, {required this.b, required this.g}); }\nclass Sub extends Base {\n  Sub(super.a, {required super.b, required int super.g(int x)});\n}\nvoid test(String d, void Function() body, {bool skip = false}) {}\nvoid run() {\n  test(skip: true, 'A test description', () {});\n  test('x', skip: false, () {});\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "library_name",
+            "mixin_declaration",
+            "enum_declaration",
+            "enum_body",
+            "enum_constant",
+            "mixins",
+            "interfaces",
+            "super_formal_parameter",
+            "arguments",
+            "named_argument",
+            "argument"
+          ],
+          "anchors": [
+            {
+              "type": "library_name",
+              "text": "library;"
+            },
+            {
+              "type": "mixins",
+              "text": "with Describe"
+            },
+            {
+              "type": "interfaces",
+              "text": "implements Comparable<Planet<T>>"
+            },
+            {
+              "type": "enum_constant",
+              "text": "mercury(1)"
+            },
+            {
+              "type": "enum_constant",
+              "text": "venus.named(2)"
+            },
+            {
+              "type": "enum_constant",
+              "text": "earth<int>.named(3)"
+            },
+            {
+              "type": "enum_constant",
+              "text": "saturn.new(4)"
+            },
+            {
+              "type": "declaration",
+              "text": "final int order"
+            },
+            {
+              "type": "method_signature",
+              "text": "int compareTo(Planet<T> o)"
+            },
+            {
+              "type": "super_formal_parameter",
+              "text": "super.a"
+            },
+            {
+              "type": "super_formal_parameter",
+              "text": "super.b"
+            },
+            {
+              "type": "super_formal_parameter",
+              "text": "int super.g(int x)"
+            },
+            {
+              "type": "arguments",
+              "text": "(skip: true, 'A test description', () {})"
+            },
+            {
+              "type": "named_argument",
+              "text": "skip: true"
+            },
+            {
+              "type": "arguments",
+              "text": "('x', skip: false, () {})"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V30-01",
+      "features": [
+        "dart-V30",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V30.a01",
+        "dart-V30.a02",
+        "dart-V30.a03",
+        "dart-V30.a04",
+        "dart-V30.a05",
+        "dart-V30.a06",
+        "dart-V30.a07",
+        "dart-V30.a08",
+        "dart-V30.a09",
+        "dart-V30.a10",
+        "dart-V30.a11",
+        "dart-V30.a12",
+        "dart-V30.a13",
+        "dart-V30.a14",
+        "dart-V30.a15",
+        "dart-V30.a16",
+        "dart-V30.a17",
+        "dart-V30.a18",
+        "dart-V30.a19",
+        "dart-V30.a20",
+        "dart-V30.a21",
+        "dart-V30.a22",
+        "dart-V30.a23",
+        "dart-V30.a24",
+        "dart-V30.a25",
+        "dart-V30.a26",
+        "dart-V30.a27",
+        "dart-V30.a28",
+        "dart-V30.a29",
+        "dart-V30.a30",
+        "dart-V30.a31",
+        "dart-V30.a32",
+        "dart-V30.a33",
+        "dart-V30.a34",
+        "dart-V30.a35",
+        "dart-V30.a36",
+        "dart-V30.a37",
+        "dart-V30.a38",
+        "dart-V30.a39",
+        "dart-V30.a40",
+        "dart-V30.a41",
+        "dart-V30.a42",
+        "dart-V30.a43",
+        "dart-V30.a44",
+        "dart-V30.a45",
+        "dart-V30.a56",
+        "dart-V30.a57",
+        "dart-V30.a58",
+        "dart-V30.a59",
+        "dart-B01.a201",
+        "dart-B01.a209",
+        "dart-B01.a212",
+        "dart-B01.a314",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a319",
+        "dart-B01.a325",
+        "dart-B01.a332",
+        "dart-B01.a334",
+        "dart-B01.a336",
+        "dart-B01.a337",
+        "dart-B01.a339",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "import 'dart:math' as math;\nclass Point { final int x; final int y; const Point(this.x, this.y); }\nconst zero = 0;\nString describe(Object? o) {\n  switch (o) {\n    case 1 || 2:\n      return 'small';\n    case int x when x > 10 && x < 20:\n      return 'teen';\n    case int a && > 100:\n      return 'big';\n    case == 50:\n      return 'fifty';\n    case String s:\n      return s;\n    case [int a, int b, ...]:\n      return '$a$b';\n    case [_, ...var rest]:\n      return '$rest';\n    case <int>[1]:\n      return 'typed list';\n    case {'k': var v}:\n      return '$v';\n    case <String, int>{'n': 1}:\n      return 'typed map';\n    case (var x, y: var y):\n      return '$x$y';\n    case (int, String) pair:\n      return '$pair';\n    case Point(x: var px, :var y):\n      return '$px$y';\n    case Point? pp:\n      return 'never';\n    case Function():\n      return 'fn';\n    case var v?:\n      return '$v';\n    case final num nn as int:\n      return '$nn';\n    case (var w!):\n      return '$w';\n    case null:\n      return 'null';\n    case true:\n      return 't';\n    case 'str':\n      return 's';\n    case #sym:\n      return 'sym';\n    case -1:\n      return 'neg';\n    case 1.5:\n      return 'f';\n    case zero:\n      return '0';\n    case math.pi:\n      return 'pi';\n    case const Point(1, 2):\n      return 'p';\n    case const [1]:\n      return 'cl';\n    case const {1}:\n      return 'cs';\n    case const <int>{}:\n      return 'ce';\n    case const (1 + 1):\n      return 'two';\n    case final y:\n      return '$y';\n    default:\n      return 'other';\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "switch_statement",
+            "switch_statement_case",
+            "switch_statement_default",
+            "constant_pattern",
+            "variable_pattern",
+            "list_pattern",
+            "rest_pattern",
+            "map_pattern",
+            "record_pattern",
+            "object_pattern",
+            "null_check_pattern",
+            "null_assert_pattern",
+            "cast_pattern",
+            "relational_operator",
+            "logical_or_operator",
+            "logical_and_operator"
+          ],
+          "anchors": [
+            {
+              "type": "switch_statement_case",
+              "text": "case 1 || 2:\n      return 'small';"
+            },
+            {
+              "type": "switch_statement_case",
+              "text": "case int x when x > 10 && x < 20:\n      return 'teen';"
+            },
+            {
+              "type": "logical_and_expression",
+              "text": "x > 10 && x < 20"
+            },
+            {
+              "type": "switch_statement_case",
+              "text": "case int a && > 100:\n      return 'big';"
+            },
+            {
+              "type": "switch_statement_case",
+              "text": "case == 50:\n      return 'fifty';"
+            },
+            {
+              "type": "variable_pattern",
+              "text": "String s"
+            },
+            {
+              "type": "list_pattern",
+              "text": "[int a, int b, ...]"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...var rest"
+            },
+            {
+              "type": "list_pattern",
+              "text": "<int>[1]"
+            },
+            {
+              "type": "map_pattern",
+              "text": "{'k': var v}"
+            },
+            {
+              "type": "map_pattern",
+              "text": "<String, int>{'n': 1}"
+            },
+            {
+              "type": "record_pattern",
+              "text": "(var x, y: var y)"
+            },
+            {
+              "type": "variable_pattern",
+              "text": "(int, String) pair"
+            },
+            {
+              "type": "object_pattern",
+              "text": "Point(x: var px, :var y)"
+            },
+            {
+              "type": "variable_pattern",
+              "text": "Point? pp"
+            },
+            {
+              "type": "object_pattern",
+              "text": "Function()"
+            },
+            {
+              "type": "null_check_pattern",
+              "text": "var v?"
+            },
+            {
+              "type": "cast_pattern",
+              "text": "final num nn as int"
+            },
+            {
+              "type": "null_assert_pattern",
+              "text": "var w!"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "null",
+              "occurrence": 1
+            },
+            {
+              "type": "constant_pattern",
+              "text": "true"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "'str'"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "#sym"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "-1"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "1.5"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "zero",
+              "occurrence": 2
+            },
+            {
+              "type": "constant_pattern",
+              "text": "math.pi"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "const Point(1, 2)"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "const [1]"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "const {1}"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "const <int>{}"
+            },
+            {
+              "type": "constant_pattern",
+              "text": "const (1 + 1)"
+            },
+            {
+              "type": "variable_pattern",
+              "text": "final y"
+            },
+            {
+              "type": "switch_statement_default",
+              "text": "default:\n      return 'other';"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V30-02",
+      "features": [
+        "dart-V30",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V30.a45",
+        "dart-V30.a46",
+        "dart-V30.a47",
+        "dart-V30.a48",
+        "dart-V30.a49",
+        "dart-V30.a50",
+        "dart-V30.a51",
+        "dart-V30.a52",
+        "dart-V30.a53",
+        "dart-V30.a54",
+        "dart-V30.a55",
+        "dart-V30.a58",
+        "dart-V30.a60",
+        "dart-V30.a61",
+        "dart-V30.a62",
+        "dart-V30.a63",
+        "dart-V30.a64",
+        "dart-V30.a65",
+        "dart-V30.a12",
+        "dart-V30.a05",
+        "dart-V30.a11",
+        "dart-V30.a14",
+        "dart-V30.a15",
+        "dart-V30.a16",
+        "dart-V30.a17",
+        "dart-V30.a13",
+        "dart-B01.a211",
+        "dart-B01.a314",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a321",
+        "dart-B01.a325",
+        "dart-B01.a327",
+        "dart-B01.a328",
+        "dart-B01.a329",
+        "dart-B01.a336",
+        "dart-B01.a337",
+        "dart-B01.a339",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "class Point { final int x; final int y; const Point(this.x, this.y); }\nsealed class Shape {}\nclass Square implements Shape { final double side; Square(this.side); }\nclass Circle implements Shape { final double r; Circle(this.r); }\nString area(Shape s) => switch (s) { Square(side: var x) => '$x', Circle c when c.r > 0 => '${c.r}', _ => '?', };\nint empty(Object o) => switch (o) { _ => 0 };\nvoid ifcase(Object o, List<Object> xs) {\n  if (o case int i when i > 0) {} else {}\n  if (o case String s) print(s);\n  var l = [if (o case String s) s else 'x', if (o case int _ when true) 'y'];\n}\nvoid decls() {\n  var (a, b) = (1, 2);\n  var [c, d] = [1, 2];\n  final [c2, d2] = [1, 2];\n  var {'k': e} = {'k': 1};\n  final Point(x: px) = const Point(1, 2);\n  @deprecated var (f, g) = (3, 4);\n  (a, b) = (b, a);\n  [c, d] = [d, c];\n  for (var (k, v) in [(1, 2)]) {}\n  for (final [p] in [[1]]) {}\n  for (final {'q': q} in [{'q': 1}]) {}\n  for (var Point(:x) in [const Point(1, 2)]) {}\n  for (@deprecated var (z) in [1]) {}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "switch_expression",
+            "switch_expression_case",
+            "if_statement",
+            "if_element",
+            "pattern_variable_declaration",
+            "pattern_assignment",
+            "record_pattern",
+            "list_pattern",
+            "map_pattern",
+            "object_pattern",
+            "for_loop_parts"
+          ],
+          "anchors": [
+            {
+              "type": "switch_expression",
+              "text": "switch (s) { Square(side: var x) => '$x', Circle c when c.r > 0 => '${c.r}', _ => '?', }"
+            },
+            {
+              "type": "switch_expression_case",
+              "text": "Square(side: var x) => '$x'"
+            },
+            {
+              "type": "object_pattern",
+              "text": "Square(side: var x)"
+            },
+            {
+              "type": "switch_expression_case",
+              "text": "Circle c when c.r > 0 => '${c.r}'"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (o) { _ => 0 }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (o case int i when i > 0) {} else {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (o case String s) print(s);"
+            },
+            {
+              "type": "if_element",
+              "text": "if (o case String s) s else 'x'"
+            },
+            {
+              "type": "if_element",
+              "text": "if (o case int _ when true) 'y'"
+            },
+            {
+              "type": "pattern_variable_declaration",
+              "text": "var (a, b) = (1, 2)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "(a, b)",
+              "occurrence": 1
+            },
+            {
+              "type": "pattern_variable_declaration",
+              "text": "var [c, d] = [1, 2]"
+            },
+            {
+              "type": "pattern_variable_declaration",
+              "text": "final [c2, d2] = [1, 2]"
+            },
+            {
+              "type": "pattern_variable_declaration",
+              "text": "var {'k': e} = {'k': 1}"
+            },
+            {
+              "type": "map_pattern",
+              "text": "{'k': e}"
+            },
+            {
+              "type": "pattern_variable_declaration",
+              "text": "final Point(x: px) = const Point(1, 2)"
+            },
+            {
+              "type": "object_pattern",
+              "text": "Point(x: px)"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "@deprecated var (f, g) = (3, 4);"
+            },
+            {
+              "type": "pattern_assignment",
+              "text": "(a, b) = (b, a)"
+            },
+            {
+              "type": "pattern_assignment",
+              "text": "[c, d] = [d, c]"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(var (k, v) in [(1, 2)])"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(final [p] in [[1]])"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(final {'q': q} in [{'q': 1}])"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(var Point(:x) in [const Point(1, 2)])"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (@deprecated var (z) in [1]) {}"
+            },
+            {
+              "type": "for_loop_parts",
+              "text": "(@deprecated var (z) in [1])"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V30-03",
+      "features": [
+        "dart-V30",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V30.a66",
+        "dart-V30.a67",
+        "dart-V30.a68",
+        "dart-V30.a69",
+        "dart-V30.a70",
+        "dart-V30.a71",
+        "dart-V30.a72",
+        "dart-V30.a73",
+        "dart-V30.a74",
+        "dart-V30.a75",
+        "dart-V30.a76",
+        "dart-V30.a77",
+        "dart-V30.a78",
+        "dart-B01.a209",
+        "dart-B01.a222",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a330",
+        "dart-B01.a341"
+      ],
+      "source_utf8": "(int, String) rec = (1, 'a');\n({int a, String b}) named = (a: 1, b: 'b');\n(int, {String n}) mixed = (1, n: 'x');\n() empty = ();\n(int,) single = (1,);\n(int, String)? nullable;\n(int x, @deprecated String y) labeled = (1, 's');\n({int a,}) trailingNamed = (a: 1);\nconst cr = const (1, 2);\nvar tr = (1, 2,);\nList<(int, int)> list = [(1, 2)];\ntypedef R = (int, int) Function((int,));\nvar isRec = rec is (int, String);\nclass Ann { const Ann(); }\nconst ann = Ann();\n@ann () emptyRecord() => ();\n@Ann()\nclass Tight {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_type",
+            "record_type_field",
+            "record_type_named_field",
+            "record_literal",
+            "record_field",
+            "nullable_type",
+            "annotation",
+            "class_definition"
+          ],
+          "anchors": [
+            {
+              "type": "record_type",
+              "text": "(int, String)",
+              "occurrence": 1
+            },
+            {
+              "type": "record_literal",
+              "text": "(1, 'a')"
+            },
+            {
+              "type": "record_type",
+              "text": "({int a, String b})"
+            },
+            {
+              "type": "record_type_named_field",
+              "text": "String b"
+            },
+            {
+              "type": "record_literal",
+              "text": "(a: 1, b: 'b')"
+            },
+            {
+              "type": "record_field",
+              "text": "b: 'b'"
+            },
+            {
+              "type": "record_type",
+              "text": "(int, {String n})"
+            },
+            {
+              "type": "record_type",
+              "text": "()",
+              "occurrence": 1
+            },
+            {
+              "type": "record_literal",
+              "text": "()",
+              "occurrence": 2
+            },
+            {
+              "type": "record_type",
+              "text": "(int,)",
+              "occurrence": 1
+            },
+            {
+              "type": "record_literal",
+              "text": "(1,)"
+            },
+            {
+              "type": "record_type",
+              "text": "(int, String)",
+              "occurrence": 2
+            },
+            {
+              "type": "record_type",
+              "text": "(int x, @deprecated String y)"
+            },
+            {
+              "type": "record_type_field",
+              "text": "@deprecated String y"
+            },
+            {
+              "type": "record_type",
+              "text": "({int a,})"
+            },
+            {
+              "type": "record_literal",
+              "text": "const (1, 2)"
+            },
+            {
+              "type": "record_literal",
+              "text": "(1, 2,)"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<(int, int)>"
+            },
+            {
+              "type": "function_type",
+              "text": "(int, int) Function((int,))"
+            },
+            {
+              "type": "type_test_expression",
+              "text": "rec is (int, String)"
+            },
+            {
+              "type": "annotation",
+              "text": "@ann"
+            },
+            {
+              "type": "record_type",
+              "text": "()",
+              "occurrence": 8
+            },
+            {
+              "type": "function_signature",
+              "text": "() emptyRecord()"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V30-04",
+      "features": [
+        "dart-V30",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V30.a79",
+        "dart-V30.a80",
+        "dart-V30.a81",
+        "dart-V30.a82",
+        "dart-V30.a83",
+        "dart-V30.a84",
+        "dart-B01.a200",
+        "dart-B01.a213",
+        "dart-B01.a216",
+        "dart-B01.a226",
+        "dart-B01.a316",
+        "dart-B01.a325",
+        "dart-B01.a344"
+      ],
+      "source_utf8": "abstract class A1 {}\nbase class B1 {}\ninterface class I1 {}\nfinal class F1 {}\nsealed class S1 {}\nabstract base class AB {}\nabstract interface class AI {}\nabstract final class AF {}\nmixin class MC {}\nabstract mixin class AMC {}\nbase mixin class BMC {}\nabstract base mixin class ABMC {}\nbase mixin BM {}\nmixin PM on Object {}\nfinal class FA = Object with MC;\nbase class BA = Object with BM;\nabstract mixin class AMA = Object with MC;\nclass Plain {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "abstract",
+            "base",
+            "interface",
+            "sealed",
+            "mixin",
+            "mixin_declaration",
+            "mixin_application_class"
+          ],
+          "anchors": [
+            {
+              "type": "class_definition",
+              "text": "abstract class A1 {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "base class B1 {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "interface class I1 {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "final class F1 {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "sealed class S1 {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract base class AB {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract interface class AI {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract final class AF {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "mixin class MC {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract mixin class AMC {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "base mixin class BMC {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract base mixin class ABMC {}"
+            },
+            {
+              "type": "mixin_declaration",
+              "text": "base mixin BM {}"
+            },
+            {
+              "type": "mixin_declaration",
+              "text": "mixin PM on Object {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "final class FA = Object with MC;"
+            },
+            {
+              "type": "class_definition",
+              "text": "base class BA = Object with BM;"
+            },
+            {
+              "type": "class_definition",
+              "text": "abstract mixin class AMA = Object with MC;"
+            },
+            {
+              "type": "mixin_application_class",
+              "text": "AMA = Object with MC;"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Plain {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V30-05",
+      "features": [
+        "dart-V30",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V30.a85",
+        "dart-V30.a86",
+        "dart-V30.a87",
+        "dart-V30.a88",
+        "dart-V30.a89",
+        "dart-B01.a207",
+        "dart-B01.a210",
+        "dart-B01.a211",
+        "dart-B01.a217",
+        "dart-B01.a317",
+        "dart-B01.a331"
+      ],
+      "source_utf8": "extension type Meters(int value) {\n  Meters operator +(Meters o) => Meters(value + o.value);\n  String get label => '${value}m';\n}\nextension type const Id._(int v) implements Object {}\nextension type Named.make(String s) {}\nextension type NewName.new(int v) {}\nextension type Gen<T>(@deprecated List<T> items) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "extension_type_declaration",
+            "representation_declaration",
+            "class_body",
+            "interfaces",
+            "type_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "extension_type_declaration",
+              "text": "extension type Meters(int value) {\n  Meters operator +(Meters o) => Meters(value + o.value);\n  String get label => '${value}m';\n}"
+            },
+            {
+              "type": "representation_declaration",
+              "text": "(int value)"
+            },
+            {
+              "type": "method_signature",
+              "text": "Meters operator +(Meters o)"
+            },
+            {
+              "type": "method_signature",
+              "text": "String get label"
+            },
+            {
+              "type": "extension_type_declaration",
+              "text": "extension type const Id._(int v) implements Object {}"
+            },
+            {
+              "type": "representation_declaration",
+              "text": "._(int v)"
+            },
+            {
+              "type": "representation_declaration",
+              "text": ".make(String s)"
+            },
+            {
+              "type": "representation_declaration",
+              "text": ".new(int v)"
+            },
+            {
+              "type": "extension_type_declaration",
+              "text": "extension type Gen<T>(@deprecated List<T> items) {}"
+            },
+            {
+              "type": "representation_declaration",
+              "text": "(@deprecated List<T> items)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V36-01",
+      "features": [
+        "dart-V36",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V36.a01",
+        "dart-V36.a02",
+        "dart-V36.a03",
+        "dart-V36.a04",
+        "dart-V36.a05",
+        "dart-V36.a06",
+        "dart-V36.a07",
+        "dart-V36.a08",
+        "dart-V36.a09",
+        "dart-V36.a10",
+        "dart-V36.a11",
+        "dart-V36.a12",
+        "dart-V36.a13",
+        "dart-B01.a316",
+        "dart-B01.a325",
+        "dart-B01.a337",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "var big = 1__000_000;\nvar hx = 0xFF_FF;\nvar hx2 = 0XA_B;\nvar fl = 1_000.000_1e1_0;\nvar dt = .5_5;\nvar ex = 1e+1_0;\nvoid wild(int _, int _) {\n  var _ = 1;\n  var _ = 2;\n}\nclass W { final int a; W(this.a, _); }\nList<int> nae(int? x) => [?x, 1];\nMap<String?, int?> nam(String? k, int? v) => {?k: v, 'a': ?v, ?k: ?v};\nSet<int> sae(int? x) => {?x};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decimal_integer_literal",
+            "hex_integer_literal",
+            "decimal_floating_point_literal",
+            "formal_parameter",
+            "local_variable_declaration",
+            "list_literal",
+            "set_or_map_literal",
+            "pair"
+          ],
+          "anchors": [
+            {
+              "type": "decimal_integer_literal",
+              "text": "1__000_000"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0xFF_FF"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0XA_B"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1_000.000_1e1_0"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": ".5_5"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1e+1_0"
+            },
+            {
+              "type": "formal_parameter_list",
+              "text": "(int _, int _)"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var _ = 1;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var _ = 2;"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "_",
+              "occurrence": 15
+            },
+            {
+              "type": "list_literal",
+              "text": "[?x, 1]"
+            },
+            {
+              "type": "set_or_map_literal",
+              "text": "{?k: v, 'a': ?v, ?k: ?v}"
+            },
+            {
+              "type": "pair",
+              "text": "?k: v"
+            },
+            {
+              "type": "pair",
+              "text": "'a': ?v"
+            },
+            {
+              "type": "pair",
+              "text": "?k: ?v"
+            },
+            {
+              "type": "set_or_map_literal",
+              "text": "{?x}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V310-01",
+      "features": [
+        "dart-V310",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V310.a01",
+        "dart-V310.a02",
+        "dart-V310.a03",
+        "dart-V310.a04",
+        "dart-V310.a05",
+        "dart-V310.a06",
+        "dart-V310.a07",
+        "dart-V310.a55",
+        "dart-B01.a219",
+        "dart-B01.a221",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a322",
+        "dart-B01.a324",
+        "dart-B01.a325",
+        "dart-B01.a331",
+        "dart-B01.a336",
+        "dart-B01.a337",
+        "dart-B01.a339"
+      ],
+      "source_utf8": "enum Status { none, running }\nclass Point {\n  final int x, y;\n  const Point(this.x, this.y);\n  const Point.origin() : x = 0, y = 0;\n  static Point parse(String s) => const Point(0, 0);\n}\nStatus s1 = .running;\nPoint p1 = .origin();\nPoint p2 = .new(1, 2);\nPoint p3 = const .origin();\nPoint p4 = const .new(1, 2);\nPoint p5 = .parse('x');\nint i = .parse('1');\nbool chk(Status s) => switch (s) { .none => true, .running => false };\nclass Priv { final int _x; final int? _y; Priv({required this._x, this._y}); }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "enum_declaration",
+            "dot_shorthand",
+            "switch_expression",
+            "constant_pattern",
+            "class_definition"
+          ],
+          "anchors": [
+            {
+              "type": "dot_shorthand",
+              "text": ".running",
+              "occurrence": 1
+            },
+            {
+              "type": "dot_shorthand",
+              "text": ".origin",
+              "occurrence": 2
+            },
+            {
+              "type": "selector",
+              "text": "()",
+              "occurrence": 2
+            },
+            {
+              "type": "dot_shorthand",
+              "text": ".new",
+              "occurrence": 1
+            },
+            {
+              "type": "const_object_expression",
+              "text": "const .origin()"
+            },
+            {
+              "type": "const_object_expression",
+              "text": "const .new(1, 2)"
+            },
+            {
+              "type": "dot_shorthand",
+              "text": ".parse",
+              "occurrence": 1
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (s) { .none => true, .running => false }"
+            },
+            {
+              "type": "constant_pattern",
+              "text": ".none"
+            },
+            {
+              "type": "constant_pattern",
+              "text": ".running",
+              "occurrence": 2
+            },
+            {
+              "type": "constructor_param",
+              "text": "this._x"
+            },
+            {
+              "type": "constructor_param",
+              "text": "this._y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-V310-02",
+      "features": [
+        "dart-V310",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-V310.a08",
+        "dart-V310.a09",
+        "dart-V310.a10",
+        "dart-V310.a11",
+        "dart-V310.a12",
+        "dart-V310.a13",
+        "dart-V310.a14",
+        "dart-V310.a15",
+        "dart-V310.a16",
+        "dart-V310.a17",
+        "dart-V310.a18",
+        "dart-V310.a19",
+        "dart-V310.a20",
+        "dart-V310.a21",
+        "dart-V310.a22",
+        "dart-V310.a23",
+        "dart-V310.a24",
+        "dart-V310.a25",
+        "dart-V310.a26",
+        "dart-V310.a27",
+        "dart-V310.a28",
+        "dart-V310.a29",
+        "dart-V310.a30",
+        "dart-V310.a31",
+        "dart-V310.a32",
+        "dart-V310.a33",
+        "dart-V310.a34",
+        "dart-V310.a35",
+        "dart-V310.a36",
+        "dart-V310.a37",
+        "dart-V310.a38",
+        "dart-V310.a39",
+        "dart-V310.a40",
+        "dart-V310.a41",
+        "dart-V310.a42",
+        "dart-V310.a43",
+        "dart-V310.a44",
+        "dart-V310.a45",
+        "dart-V310.a46",
+        "dart-V310.a47",
+        "dart-V310.a48",
+        "dart-V310.a49",
+        "dart-V310.a50",
+        "dart-V310.a51",
+        "dart-V310.a52",
+        "dart-V310.a53",
+        "dart-V310.a54",
+        "dart-B01.a207",
+        "dart-B01.a208",
+        "dart-B01.a210",
+        "dart-B01.a216",
+        "dart-B01.a219",
+        "dart-B01.a226",
+        "dart-B01.a312",
+        "dart-B01.a316",
+        "dart-B01.a317",
+        "dart-B01.a322",
+        "dart-B01.a323",
+        "dart-B01.a325",
+        "dart-B01.a331",
+        "dart-B01.a335",
+        "dart-B01.a337",
+        "dart-B01.a341",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "class Pt(var int x, final int y);\nclass const CP(final int v);\nclass NamedPrim.make(var int a) {}\nclass NewPrim.new(var int a);\nclass Body(var int a) {\n  this : assert(a >= 0);\n}\nclass BodyOnly(final int b) {\n  this;\n}\nclass Opt([var int a = 0, final int? b]) {}\nclass Empty();\nclass Meta(@deprecated var int m);\nclass BodyBlock(var int a) {\n  this {\n    print(a);\n  }\n}\nclass Nam({required var int a, final int c = 1, int d = 2}) {}\nclass Mixed(var int a, {final int b = 0});\nclass FnParam(final int f(int x)?, var g(int));\nclass Sup(super.x, super.y) extends Pt;\nclass Fld(this.f) { int f; }\nclass Generic<T>(final T value);\nclass Concise {\n  final int a;\n  new(this.a);\n  new zero() : a = 0;\n  const new constant() : a = 1;\n  factory one() => Concise(1);\n  factory fromInt(int x) = Concise;\n  factory Concise.legacy() => Concise(2);\n  Concise.classic() : a = 3;\n}\nvoid plain(int x, y) {}\nenum E5(final int v);\nmixin M2;\nmixin M3 on Object, Comparable<int>;\nextension E2 on int;\nextension type ET(int v);\nenum E3(final int v) { a(1), b(2) }\nenum E4(final int v) { c(3); int get twice => v * 2; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "class_body",
+            "constructor_signature",
+            "factory_constructor_signature",
+            "mixin_declaration",
+            "extension_declaration",
+            "extension_type_declaration",
+            "enum_declaration",
+            "enum_body"
+          ],
+          "anchors": [
+            {
+              "type": "class_definition",
+              "text": "class Pt(var int x, final int y);"
+            },
+            {
+              "type": "formal_parameter_list",
+              "text": "(var int x, final int y)"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "var int x"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "final int y"
+            },
+            {
+              "type": "class_definition",
+              "text": "class const CP(final int v);"
+            },
+            {
+              "type": "class_definition",
+              "text": "class NamedPrim.make(var int a) {}"
+            },
+            {
+              "type": "class_definition",
+              "text": "class NewPrim.new(var int a);"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Body(var int a) {\n  this : assert(a >= 0);\n}"
+            },
+            {
+              "type": "declaration",
+              "text": "this : assert(a >= 0)"
+            },
+            {
+              "type": "declaration",
+              "text": "this",
+              "occurrence": 2
+            },
+            {
+              "type": "class_definition",
+              "text": "class BodyOnly(final int b) {\n  this;\n}"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Opt([var int a = 0, final int? b]) {}"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "[var int a = 0, final int? b]"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Empty();"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Meta(@deprecated var int m);"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@deprecated var int m"
+            },
+            {
+              "type": "class_definition",
+              "text": "class BodyBlock(var int a) {\n  this {\n    print(a);\n  }\n}"
+            },
+            {
+              "type": "method_signature",
+              "text": "this",
+              "occurrence": 3
+            },
+            {
+              "type": "class_definition",
+              "text": "class Nam({required var int a, final int c = 1, int d = 2}) {}"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "{required var int a, final int c = 1, int d = 2}"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Mixed(var int a, {final int b = 0});"
+            },
+            {
+              "type": "class_definition",
+              "text": "class FnParam(final int f(int x)?, var g(int));"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "final int f(int x)?"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "var g(int)"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Sup(super.x, super.y) extends Pt;"
+            },
+            {
+              "type": "super_formal_parameter",
+              "text": "super.x"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Fld(this.f) { int f; }"
+            },
+            {
+              "type": "constructor_param",
+              "text": "this.f"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Generic<T>(final T value);"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "new(this.a)"
+            },
+            {
+              "type": "declaration",
+              "text": "new zero() : a = 0"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "new zero()"
+            },
+            {
+              "type": "declaration",
+              "text": "const new constant() : a = 1"
+            },
+            {
+              "type": "constant_constructor_signature",
+              "text": "const new constant()"
+            },
+            {
+              "type": "factory_constructor_signature",
+              "text": "factory one()"
+            },
+            {
+              "type": "redirecting_factory_constructor_signature",
+              "text": "factory fromInt(int x) = Concise"
+            },
+            {
+              "type": "factory_constructor_signature",
+              "text": "factory Concise.legacy()"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "Concise.classic()"
+            },
+            {
+              "type": "function_signature",
+              "text": "void plain(int x, y)"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum E5(final int v);"
+            },
+            {
+              "type": "mixin_declaration",
+              "text": "mixin M2;"
+            },
+            {
+              "type": "mixin_declaration",
+              "text": "mixin M3 on Object, Comparable<int>;"
+            },
+            {
+              "type": "extension_declaration",
+              "text": "extension E2 on int;"
+            },
+            {
+              "type": "extension_type_declaration",
+              "text": "extension type ET(int v);"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum E3(final int v) { a(1), b(2) }"
+            },
+            {
+              "type": "enum_body",
+              "text": "{ c(3); int get twice => v * 2; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-dart-L01-01",
+      "features": [
+        "dart-L01",
+        "dart-B01"
+      ],
+      "alternatives": [
+        "dart-L01.a01",
+        "dart-B01.a219",
+        "dart-B01.a316",
+        "dart-B01.a342"
+      ],
+      "source_utf8": "// @dart=2.19\nvoid legacy({int x: 0, String s: 'a', required int r}) {}\nclass Legacy { Legacy({int y: 1}); }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "function_signature",
+            "optional_formal_parameters",
+            "formal_parameter",
+            "class_definition"
+          ],
+          "anchors": [
+            {
+              "type": "optional_formal_parameters",
+              "text": "{int x: 0, String s: 'a', required int r}"
+            },
+            {
+              "type": "optional_formal_parameters",
+              "text": "{int y: 1}"
+            },
+            {
+              "type": "constructor_signature",
+              "text": "Legacy({int y: 1})"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-B01-NR-1",
+      "features": [
+        "dart-B01"
+      ],
+      "source_utf8": "import 'dart:math' show;\nimport 'dart:async';\n\nclass Account {\n  final String? owner;\n  Account(this.owner);\n}\n\nvoid main() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "import_or_export",
+            "class_definition",
+            "function_signature"
+          ],
+          "anchors": [
+            {
+              "type": "import_or_export",
+              "text": "import 'dart:async';"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Account {\n  final String? owner;\n  Account(this.owner);\n}"
+            },
+            {
+              "type": "function_signature",
+              "text": "void main()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-B02-P-1",
+      "features": [
+        "dart-B02"
+      ],
+      "source_utf8": "List<int> build(List<int> ys, bool a, List<int>? zs) {\n  final sb = StringBuffer()\n    ..write('a')\n    ..write('b');\n  final n = zs?.length ?? 0;\n  return [if (a) 1 else 2, for (var i in ys) i, ...ys, ...?zs, n];\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_signature",
+            "cascade_section",
+            "if_null_expression",
+            "if_element",
+            "for_element",
+            "spread_element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-B02-R-1",
+      "features": [
+        "dart-B02"
+      ],
+      "source_utf8": "void broken(int x) {\n  if (x > 0 {\n    print(x);\n  }\n}\n\nList<int> build(List<int> ys, bool a) {\n  final sb = StringBuffer()\n    ..write('a')\n    ..write('b');\n  return [if (a) 1, for (var i in ys) i, ...ys];\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_signature",
+            "cascade_section",
+            "if_element",
+            "for_element",
+            "spread_element"
+          ],
+          "anchors": [
+            {
+              "type": "function_signature",
+              "text": "void broken(int x)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V213-PE-1",
+      "features": [
+        "dart-V213"
+      ],
+      "source_utf8": "library;\n\ntypedef IntList = List<int>;\ntypedef Mapper<T> = T Function(T);\n\nclass Tag<T> {\n  const Tag(this.value);\n  final T value;\n}\n\nenum Vehicle implements Comparable<Vehicle> {\n  car(tires: 4),\n  bus(tires: 6);\n\n  const Vehicle({required this.tires});\n  final int tires;\n\n  @override\n  int compareTo(Vehicle other) => tires - other.tires;\n}\n\nclass Base {\n  Base(this.x, {this.y = 0});\n  final int x;\n  final int y;\n}\n\nclass Derived extends Base {\n  Derived(super.x, {super.y});\n}\n\n@Tag<int>(1)\nint shift(int v) => v >>> 2;\n\nvoid main() {\n  var make = Base.new;\n  var filled = List<int>.filled;\n  var b = Base(1, y: 2);\n  var c = make(y: 3, 4);\n  var g = shift;\n  var h = identity<int>;\n  print([make, filled, b, c, g, h]);\n}\n\nT identity<T>(T x) => x;\n",
+      "edits": [
+        {
+          "find": "v >>> 2",
+          "replace": "v >>> 3"
+        },
+        {
+          "find": "make(y: 3, 4)",
+          "replace": "make(4, y: 3)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias",
+            "enum_declaration",
+            "enum_constant",
+            "super_formal_parameter",
+            "annotation",
+            "shift_operator",
+            "constructor_tearoff",
+            "named_argument"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V213-N-1",
+      "features": [
+        "dart-V213"
+      ],
+      "source_utf8": "typedef IntList = ;\n\nvoid main() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V30-PE-1",
+      "features": [
+        "dart-V30"
+      ],
+      "source_utf8": "sealed class Shape {}\n\nfinal class Circle extends Shape {\n  Circle(this.radius);\n  final double radius;\n}\n\nbase class Square extends Shape {\n  Square(this.side);\n  final double side;\n}\n\ninterface class Named {}\nabstract interface class Drawable {}\nmixin class Logger {}\n\nextension type Meters(int value) implements Object {\n  Meters operator +(Meters other) => Meters(value + other.value);\n}\n\ndouble area(Shape s) => switch (s) {\n  Circle(radius: var r) when r > 0 => 3.14 * r * r,\n  Square(:final side) => side * side,\n  _ => 0,\n};\n\nvoid main() {\n  var (a, b) = (1, 2);\n  final (int, {String name}) rec = (3, name: 'x');\n  final {'k': value} = {'k': 1};\n  final [first, ...rest] = [1, 2, 3];\n  if (rec case (var n, name: var s)) {\n    print('$n $s $a $b $value $first $rest');\n  }\n  switch (a) {\n    case 1 || 2:\n      print(rec.$1);\n    case int x when x > 2:\n      print(x);\n    default:\n      break;\n  }\n}\n",
+      "edits": [
+        {
+          "find": "Square(:final side) => side * side,",
+          "replace": "Square(side: final s) => s * s,"
+        },
+        {
+          "find": "case 1 || 2:",
+          "replace": "case 1 || 2 || 3:"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "sealed",
+            "base",
+            "interface",
+            "mixin",
+            "extension_type_declaration",
+            "representation_declaration",
+            "switch_expression",
+            "switch_expression_case",
+            "record_literal",
+            "record_type",
+            "pattern_variable_declaration",
+            "object_pattern",
+            "list_pattern",
+            "map_pattern",
+            "record_pattern",
+            "rest_pattern"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V30-NR-1",
+      "features": [
+        "dart-V30"
+      ],
+      "source_utf8": "sealed class Shape {}\n\nString describe(int n) => switch (n) {\n  0 => 'zero'\n  1 => 'one',\n  _ => 'many',\n};\n\nextension type Id(int value) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_definition",
+            "extension_type_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_definition",
+              "text": "sealed class Shape {}"
+            },
+            {
+              "type": "extension_type_declaration",
+              "text": "extension type Id(int value) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V36-PE-1",
+      "features": [
+        "dart-V36"
+      ],
+      "source_utf8": "void main() {\n  var million = 1_000_000;\n  var mac = 0x00_14_22;\n  var tiny = 0.000_001;\n  var grouped = 100__000;\n  var exp = 1_0e1_0;\n  var _ = million;\n  var _ = mac;\n  String? maybe = null;\n  int? count;\n  var list = [1, ?maybe, ?count];\n  var map = {'a': ?count, ?maybe: 2};\n  void each(int _, int _) {}\n  each(tiny.toInt(), grouped + exp.toInt());\n  print([list, map]);\n}\n",
+      "edits": [
+        {
+          "find": "1_000_000;",
+          "replace": "1_000_000_000;"
+        },
+        {
+          "find": "[1, ?maybe, ?count]",
+          "replace": "[1, ?count]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decimal_integer_literal",
+            "hex_integer_literal",
+            "decimal_floating_point_literal",
+            "local_variable_declaration",
+            "list_literal",
+            "set_or_map_literal",
+            "pair",
+            "local_function_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V36-N-1",
+      "features": [
+        "dart-V36"
+      ],
+      "source_utf8": "void main() {\n  var n = 100_;\n  print(n);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V310-PE-1",
+      "features": [
+        "dart-V310"
+      ],
+      "source_utf8": "enum Status { none, running, stopped }\n\nclass Point {\n  final int x, y;\n  Point(this.x, this.y);\n  Point.origin() : x = 0, y = 0;\n  const Point.zero() : x = 0, y = 0;\n}\n\nclass Account {\n  final String _owner;\n  final int _balance;\n  Account({required this._owner, this._balance = 0});\n}\n\nclass Pair(var int left, final int right);\n\nclass const Unit(final int value) {\n  this : assert(value >= 0);\n}\n\nclass Builder {\n  int size;\n  new(this.size);\n  new empty() : size = 0;\n  factory sized(int n) => Builder(n);\n}\n\nvoid main() {\n  Status s = .running;\n  int port = .parse('8080');\n  Point o = .origin();\n  Point z = const .zero();\n  Point p = .new(1, 2);\n  var same = s == .running;\n  switch (s) {\n    case .none:\n      break;\n    default:\n      break;\n  }\n  print([port, o, z, p, same, Account(owner: 'a'), Pair(1, 2), Unit(3), Builder.empty()]);\n}\n",
+      "edits": [
+        {
+          "find": "Status s = .running;",
+          "replace": "Status s = .stopped;"
+        },
+        {
+          "find": "class Pair(var int left, final int right);",
+          "replace": "class Pair(var int left, final int right, int extra);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "dot_shorthand",
+            "enum_declaration",
+            "class_definition",
+            "constructor_signature",
+            "factory_constructor_signature",
+            "constructor_param",
+            "switch_statement_case"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V310-NR-1",
+      "features": [
+        "dart-V310"
+      ],
+      "source_utf8": "enum Status { none, running }\n\nvoid main() {\n  Status s = .;\n  print(s);\n}\n\nclass Later {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "enum_declaration",
+            "function_signature",
+            "class_definition"
+          ],
+          "anchors": [
+            {
+              "type": "enum_declaration",
+              "text": "enum Status { none, running }"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Later {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-L01-P-1",
+      "features": [
+        "dart-L01"
+      ],
+      "source_utf8": "void configure({int retries: 3, String mode: 'fast'}) {\n  print('$retries $mode');\n}\n\nclass Client {\n  Client({this.timeout: 30});\n  final int timeout;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_signature",
+            "optional_formal_parameters",
+            "formal_parameter",
+            "constructor_signature"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-L01-N-1",
+      "features": [
+        "dart-L01"
+      ],
+      "source_utf8": "void configure([int retries: 3]) {\n  print(retries);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

@@ -5,6 +5,30 @@
     {
       "id": "q.structure",
       "source": "(interface_declaration name: (type_identifier) @interface)\n(type_alias_declaration name: (type_identifier) @type)\n(enum_declaration name: (identifier) @enum)\n(method_definition name: (property_identifier) @method)\n"
+    },
+    {
+      "id": "q.probe-V28",
+      "source": "(conditional_type) @conditional\n(infer_type) @infer\n(mapped_type_clause) @mapping\n"
+    },
+    {
+      "id": "q.probe-V3",
+      "source": "(tuple_type) @tuple\n(optional_type) @optional\n(rest_type) @rest\n(asserts) @asserts\n"
+    },
+    {
+      "id": "q.probe-V40",
+      "source": "(template_literal_type) @template\n(override_modifier) @override\n"
+    },
+    {
+      "id": "q.probe-V45",
+      "source": "(instantiation_expression) @instantiation\n(satisfies_expression) @satisfies\n"
+    },
+    {
+      "id": "q.probe-V50",
+      "source": "(import_attribute) @attributes\n(decorator) @decorator\n"
+    },
+    {
+      "id": "q.probe-V59",
+      "source": "(namespace_import (identifier) @deferred)\n(module name: (identifier) @legacy_module)\n(internal_module name: (identifier) @namespace)\n"
     }
   ],
   "cases": [
@@ -61,6 +85,209 @@
               "name": "method",
               "type": "property_identifier",
               "text": "find"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V28-Q-1",
+      "source_case": "probe-typescript-V28-P-1",
+      "features": [
+        "typescript-V28"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V28",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "conditional",
+              "type": "conditional_type",
+              "text": "T extends (infer U)[] ? U : never"
+            },
+            {
+              "name": "infer",
+              "type": "infer_type",
+              "text": "infer U"
+            },
+            {
+              "name": "mapping",
+              "type": "mapped_type_clause",
+              "text": "K in keyof T"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V3-Q-1",
+      "source_case": "probe-typescript-V3-P-1",
+      "features": [
+        "typescript-V3"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V3",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "tuple",
+              "type": "tuple_type",
+              "text": "[string, number?, ...boolean[]]"
+            },
+            {
+              "name": "optional",
+              "type": "optional_type",
+              "text": "number?"
+            },
+            {
+              "name": "rest",
+              "type": "rest_type",
+              "text": "...boolean[]"
+            },
+            {
+              "name": "asserts",
+              "type": "asserts",
+              "text": "asserts value is string"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V40-Q-1",
+      "source_case": "probe-typescript-V40-P-1",
+      "features": [
+        "typescript-V40"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V40",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "template",
+              "type": "template_literal_type",
+              "text": "`get${Capitalize<K>}`"
+            },
+            {
+              "name": "template",
+              "type": "template_literal_type",
+              "text": "`get${string & K}`"
+            },
+            {
+              "name": "template",
+              "type": "template_literal_type",
+              "text": "`data-${string}`"
+            },
+            {
+              "name": "override",
+              "type": "override_modifier",
+              "text": "override"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V45-Q-1",
+      "source_case": "probe-typescript-V45-P-1",
+      "features": [
+        "typescript-V45"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V45",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "instantiation",
+              "type": "instantiation_expression",
+              "text": "box<string>"
+            },
+            {
+              "name": "satisfies",
+              "type": "satisfies_expression",
+              "text": "{ port: 80 } satisfies Options"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V50-Q-1",
+      "source_case": "probe-typescript-V50-P-1",
+      "features": [
+        "typescript-V50"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V50",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attributes",
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "name": "decorator",
+              "type": "decorator",
+              "text": "@sealed"
+            },
+            {
+              "name": "decorator",
+              "type": "decorator",
+              "text": "@logged"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V59-Q-1",
+      "source_case": "probe-typescript-V59-PE-1",
+      "features": [
+        "typescript-V59"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V59",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "deferred",
+              "type": "identifier",
+              "text": "feature"
+            },
+            {
+              "name": "legacy_module",
+              "type": "identifier",
+              "text": "Legacy"
+            },
+            {
+              "name": "namespace",
+              "type": "identifier",
+              "text": "Modern"
             }
           ],
           "error": null

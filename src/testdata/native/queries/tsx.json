@@ -5,6 +5,10 @@
     {
       "id": "q.structure",
       "source": "(type_alias_declaration name: (type_identifier) @type)\n(interface_declaration name: (type_identifier) @interface)\n(function_declaration name: (identifier) @function)\n(jsx_self_closing_element name: (identifier) @component)\n"
+    },
+    {
+      "id": "q.probe-B02",
+      "source": "(arrow_function type_parameters: (type_parameters) @type_params)\n(as_expression) @as\n(jsx_opening_element name: (identifier) @tag)\n"
     }
   ],
   "cases": [
@@ -51,6 +55,49 @@
               "name": "component",
               "type": "identifier",
               "text": "List"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-tsx-B02-Q-1",
+      "source_case": "probe-tsx-B02-P-1",
+      "features": [
+        "tsx-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-B02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "type_params",
+              "type": "type_parameters",
+              "text": "<T,>"
+            },
+            {
+              "name": "type_params",
+              "type": "type_parameters",
+              "text": "<T extends object>"
+            },
+            {
+              "name": "as",
+              "type": "as_expression",
+              "text": "(JSON.parse(\"1\") as unknown) as number"
+            },
+            {
+              "name": "as",
+              "type": "as_expression",
+              "text": "JSON.parse(\"1\") as unknown"
+            },
+            {
+              "name": "tag",
+              "type": "identifier",
+              "text": "div"
             }
           ],
           "error": null

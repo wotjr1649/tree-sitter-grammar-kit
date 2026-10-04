@@ -102,6 +102,5533 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-python-B01-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a021",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a071",
+        "python-B03.a099",
+        "python-B03.a102",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a054",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a108",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a016",
+        "python-B01.a017",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a129",
+        "python-B01.a138",
+        "python-B01.a139",
+        "python-B01.a140",
+        "python-B01.a141",
+        "python-B01.a142",
+        "python-B01.a143",
+        "python-B01.a144",
+        "python-B01.a159",
+        "python-B01.a165"
+      ],
+      "source_utf8": "# -*- coding: utf-8 -*-\n# line structure: comments, joining, blank lines, indentation\ntotal = 1 + \\\n    2\npair = (1,\n        2)\n\nif total:\n\tinner = 3\nelse:\n    inner = 4\nw = 5\n\fff = 1\nif ff:\n    ff = 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "line_continuation",
+            "if_statement",
+            "block",
+            "else_clause"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# -*- coding: utf-8 -*-"
+            },
+            {
+              "type": "comment",
+              "text": "# line structure: comments, joining, blank lines, indentation"
+            },
+            {
+              "type": "binary_operator",
+              "text": "1 + \\\n    2"
+            },
+            {
+              "type": "line_continuation",
+              "text": "\\\n"
+            },
+            {
+              "type": "tuple",
+              "text": "(1,\n        2)"
+            },
+            {
+              "type": "if_statement",
+              "text": "if total:\n\tinner = 3\nelse:\n    inner = 4"
+            },
+            {
+              "type": "block",
+              "text": "inner = 3"
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n    inner = 4"
+            },
+            {
+              "type": "assignment",
+              "text": "ff = 1"
+            },
+            {
+              "type": "if_statement",
+              "text": "if ff:\n    ff = 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B01-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a085",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a012",
+        "python-B01.a013",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a088",
+        "python-B01.a127",
+        "python-B01.a138"
+      ],
+      "source_utf8": "a = 1\r\nb = 2\rc = 3\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "integer"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "a = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "b = 2"
+            },
+            {
+              "type": "assignment",
+              "text": "c = 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B01-03",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a021",
+        "python-B01.a022",
+        "python-B01.a023",
+        "python-B01.a024",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a088",
+        "python-B01.a127",
+        "python-B01.a138"
+      ],
+      "source_utf8": "café = 1\n_x2 = café\nÜnïcode_9 = _x2\nA_b = Ünïcode_9\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "café = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "_x2 = café"
+            },
+            {
+              "type": "assignment",
+              "text": "Ünïcode_9 = _x2"
+            },
+            {
+              "type": "assignment",
+              "text": "A_b = Ünïcode_9"
+            },
+            {
+              "type": "identifier",
+              "text": "Ünïcode_9",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B01-04",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a084",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a027",
+        "python-B01.a028",
+        "python-B01.a029",
+        "python-B01.a030",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a033",
+        "python-B01.a034",
+        "python-B01.a035",
+        "python-B01.a036",
+        "python-B01.a037",
+        "python-B01.a088",
+        "python-B01.a123",
+        "python-B01.a127",
+        "python-B01.a138",
+        "python-B01.a180",
+        "python-B01.a181",
+        "python-B01.a182",
+        "python-B01.a183",
+        "python-B01.a184",
+        "python-B01.a188",
+        "python-B01.a189",
+        "python-B01.a190",
+        "python-B01.a191",
+        "python-B01.a192",
+        "python-B01.a193",
+        "python-B01.a194",
+        "python-B01.a195",
+        "python-B01.a196",
+        "python-B01.a197",
+        "python-B01.a198",
+        "python-B01.a199",
+        "python-B01.a200",
+        "python-B01.a201",
+        "python-B01.a202",
+        "python-B01.a203",
+        "python-B01.a204"
+      ],
+      "source_utf8": "s = 'a' \"b\" '''c\nd''' \"\"\"e\"\"\"\nr = r'\\d', R\"\\w\", u'x', U\"y\"\nbs = b'z' B\"z\" br'\\x' Rb\"q\" rB'w' BR\"e\"\ne = '\\\\ \\' \\\" \\a \\b \\f \\n \\r \\t \\v \\101 \\x41 \\N{BULLET} \\u2022 \\U0001F600'\nq = '\\q'\nj = 'line \\\ncontinued'\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "concatenated_string",
+            "string",
+            "string_content",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "concatenated_string",
+              "text": "'a' \"b\" '''c\nd''' \"\"\"e\"\"\""
+            },
+            {
+              "type": "string",
+              "text": "'''c\nd'''"
+            },
+            {
+              "type": "string",
+              "text": "\"\"\"e\"\"\""
+            },
+            {
+              "type": "string",
+              "text": "r'\\d'"
+            },
+            {
+              "type": "string",
+              "text": "R\"\\w\""
+            },
+            {
+              "type": "string",
+              "text": "u'x'"
+            },
+            {
+              "type": "string",
+              "text": "U\"y\""
+            },
+            {
+              "type": "concatenated_string",
+              "text": "b'z' B\"z\" br'\\x' Rb\"q\" rB'w' BR\"e\""
+            },
+            {
+              "type": "string",
+              "text": "br'\\x'"
+            },
+            {
+              "type": "string",
+              "text": "'\\\\ \\' \\\" \\a \\b \\f \\n \\r \\t \\v \\101 \\x41 \\N{BULLET} \\u2022 \\U0001F600'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\101"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\N{BULLET}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\U0001F600"
+            },
+            {
+              "type": "string",
+              "text": "'\\q'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B01-05",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a085",
+        "python-B02.a087",
+        "python-B02.a107",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a058",
+        "python-B01.a059",
+        "python-B01.a060",
+        "python-B01.a061",
+        "python-B01.a062",
+        "python-B01.a063",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a066",
+        "python-B01.a067",
+        "python-B01.a068",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a071",
+        "python-B01.a072",
+        "python-B01.a073",
+        "python-B01.a074",
+        "python-B01.a075",
+        "python-B01.a076",
+        "python-B01.a077",
+        "python-B01.a078",
+        "python-B01.a079",
+        "python-B01.a080",
+        "python-B01.a081",
+        "python-B01.a082",
+        "python-B01.a083",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a127",
+        "python-B01.a138"
+      ],
+      "source_utf8": "n = [0, 00, 0_0, 7, 1_000, 0b1_01, 0B11, 0o7_7, 0O17, 0x1f, 0XAB_cd]\nf = [3.14, 10., .001, 1e10, 3.14_15e-1_0, 0e0, 1E+5]\nc = [3.14j, 10.J, 10j, .001j, 1e100j, 1_0j]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "list",
+            "integer",
+            "float"
+          ],
+          "anchors": [
+            {
+              "type": "list",
+              "text": "[0, 00, 0_0, 7, 1_000, 0b1_01, 0B11, 0o7_7, 0O17, 0x1f, 0XAB_cd]"
+            },
+            {
+              "type": "list",
+              "text": "[3.14, 10., .001, 1e10, 3.14_15e-1_0, 0e0, 1E+5]"
+            },
+            {
+              "type": "list",
+              "text": "[3.14j, 10.J, 10j, .001j, 1e100j, 1_0j]"
+            },
+            {
+              "type": "integer",
+              "text": "0b1_01"
+            },
+            {
+              "type": "integer",
+              "text": "0XAB_cd"
+            },
+            {
+              "type": "float",
+              "text": "10.",
+              "occurrence": 1
+            },
+            {
+              "type": "float",
+              "text": ".001",
+              "occurrence": 1
+            },
+            {
+              "type": "float",
+              "text": "3.14_15e-1_0"
+            },
+            {
+              "type": "float",
+              "text": "1E+5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B01-06",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a006",
+        "python-B03.a007",
+        "python-B03.a014",
+        "python-B03.a020",
+        "python-B03.a029",
+        "python-B03.a031",
+        "python-B03.a032",
+        "python-B03.a055",
+        "python-B03.a071",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B02.a003",
+        "python-B02.a004",
+        "python-B02.a007",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a011",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B01.a001",
+        "python-B01.a002",
+        "python-B01.a003",
+        "python-B01.a004",
+        "python-B01.a005",
+        "python-B01.a006",
+        "python-B01.a007",
+        "python-B01.a008",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a038",
+        "python-B01.a039",
+        "python-B01.a040",
+        "python-B01.a041",
+        "python-B01.a042",
+        "python-B01.a043",
+        "python-B01.a044",
+        "python-B01.a045",
+        "python-B01.a046",
+        "python-B01.a047",
+        "python-B01.a048",
+        "python-B01.a049",
+        "python-B01.a050",
+        "python-B01.a051",
+        "python-B01.a052",
+        "python-B01.a053",
+        "python-B01.a054",
+        "python-B01.a055",
+        "python-B01.a056",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a071",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a125",
+        "python-B01.a126",
+        "python-B01.a127",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a156",
+        "python-B01.a159",
+        "python-B01.a165",
+        "python-B01.a179",
+        "python-B01.a185",
+        "python-B01.a186",
+        "python-B01.a187"
+      ],
+      "source_utf8": "name = \"x\"; width = 10\na = f\"plain {name} {{literal}} {name!r} {name!s:>{width}} {name!a:^10}\"\nb = F'{name:{width}.{width}}' rf\"\\d{name}\" fR'{name}\\n' Rf\"{width}\" f\"\\t{name}\\n\"\nc = f\"\"\"multi\n{name}\n\"\"\"\nd = f\"{*name, width}\" f\"{name if width else name}\"\ndef gen():\n    yield f\"{yield}\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "format_specifier",
+            "type_conversion",
+            "escape_interpolation"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "name = \"x\""
+            },
+            {
+              "type": "assignment",
+              "text": "width = 10"
+            },
+            {
+              "type": "string",
+              "text": "f\"plain {name} {{literal}} {name!r} {name!s:>{width}} {name!a:^10}\""
+            },
+            {
+              "type": "escape_interpolation",
+              "text": "{{"
+            },
+            {
+              "type": "interpolation",
+              "text": "{name!r}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{name!s:>{width}}"
+            },
+            {
+              "type": "format_specifier",
+              "text": ":>{width}"
+            },
+            {
+              "type": "format_expression",
+              "text": "{width}",
+              "occurrence": 1
+            },
+            {
+              "type": "interpolation",
+              "text": "{name!a:^10}"
+            },
+            {
+              "type": "string",
+              "text": "F'{name:{width}.{width}}'"
+            },
+            {
+              "type": "format_specifier",
+              "text": ":{width}.{width}"
+            },
+            {
+              "type": "string",
+              "text": "rf\"\\d{name}\""
+            },
+            {
+              "type": "string",
+              "text": "fR'{name}\\n'"
+            },
+            {
+              "type": "string",
+              "text": "Rf\"{width}\""
+            },
+            {
+              "type": "string",
+              "text": "f\"\\t{name}\\n\""
+            },
+            {
+              "type": "string",
+              "text": "f\"\"\"multi\n{name}\n\"\"\""
+            },
+            {
+              "type": "interpolation",
+              "text": "{*name, width}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{name if width else name}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{yield}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B02-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a006",
+        "python-B03.a007",
+        "python-B03.a009",
+        "python-B03.a020",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a046",
+        "python-B03.a071",
+        "python-B03.a078",
+        "python-B03.a080",
+        "python-B02.a004",
+        "python-B02.a009",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a014",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a021",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a081",
+        "python-B02.a082",
+        "python-B02.a083",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a087",
+        "python-B02.a088",
+        "python-B02.a089",
+        "python-B02.a090",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B02.a107",
+        "python-B02.a108",
+        "python-B02.a109",
+        "python-B02.a110",
+        "python-B02.a111",
+        "python-B02.a112",
+        "python-B02.a113",
+        "python-B02.a114",
+        "python-B02.a115",
+        "python-B02.a116",
+        "python-B02.a117",
+        "python-B02.a118",
+        "python-B02.a119",
+        "python-B02.a120",
+        "python-B02.a121",
+        "python-B03.a116",
+        "python-B03.a117",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a090",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a126",
+        "python-B01.a127",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a145",
+        "python-B01.a146",
+        "python-B01.a147",
+        "python-B01.a151",
+        "python-B01.a156",
+        "python-B01.a162",
+        "python-B01.a165",
+        "python-B01.a167",
+        "python-B01.a171",
+        "python-B01.a175"
+      ],
+      "source_utf8": "a = (x, True, False, None, ..., 1, \"s\")\nb = (); c = (1,); o = 1,; g = (x); h = (yield_ for yield_ in a)\nl = [1, *a]; m = []\nd = {}; e = {\"k\": 1, **d}; s = {1, *a}\nlc = [x for x in a if x if not x]\nsc = {x for x in a}\ndc = {k: v for k, v in d.items()}\nasync def agen():\n    return [x async for x in aiter_ if x]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "tuple",
+            "parenthesized_expression",
+            "list",
+            "list_splat",
+            "dictionary",
+            "dictionary_splat",
+            "set",
+            "list_comprehension",
+            "set_comprehension",
+            "dictionary_comprehension",
+            "generator_expression",
+            "for_in_clause",
+            "if_clause",
+            "pair",
+            "true",
+            "false",
+            "none",
+            "ellipsis"
+          ],
+          "anchors": [
+            {
+              "type": "tuple",
+              "text": "(x, True, False, None, ..., 1, \"s\")"
+            },
+            {
+              "type": "tuple",
+              "text": "()",
+              "occurrence": 1
+            },
+            {
+              "type": "tuple",
+              "text": "(1,)"
+            },
+            {
+              "type": "expression_list",
+              "text": "1,",
+              "occurrence": 3
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(x)"
+            },
+            {
+              "type": "generator_expression",
+              "text": "(yield_ for yield_ in a)"
+            },
+            {
+              "type": "list",
+              "text": "[1, *a]"
+            },
+            {
+              "type": "list",
+              "text": "[]"
+            },
+            {
+              "type": "dictionary",
+              "text": "{}"
+            },
+            {
+              "type": "dictionary",
+              "text": "{\"k\": 1, **d}"
+            },
+            {
+              "type": "dictionary_splat",
+              "text": "**d"
+            },
+            {
+              "type": "set",
+              "text": "{1, *a}"
+            },
+            {
+              "type": "list_comprehension",
+              "text": "[x for x in a if x if not x]"
+            },
+            {
+              "type": "if_clause",
+              "text": "if x",
+              "occurrence": 1
+            },
+            {
+              "type": "if_clause",
+              "text": "if not x"
+            },
+            {
+              "type": "set_comprehension",
+              "text": "{x for x in a}"
+            },
+            {
+              "type": "dictionary_comprehension",
+              "text": "{k: v for k, v in d.items()}"
+            },
+            {
+              "type": "list_comprehension",
+              "text": "[x async for x in aiter_ if x]"
+            },
+            {
+              "type": "for_in_clause",
+              "text": "async for x in aiter_"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B02-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a003",
+        "python-B02.a004",
+        "python-B02.a005",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a017",
+        "python-B02.a018",
+        "python-B02.a019",
+        "python-B02.a020",
+        "python-B02.a021",
+        "python-B02.a022",
+        "python-B02.a023",
+        "python-B02.a024",
+        "python-B02.a025",
+        "python-B02.a026",
+        "python-B02.a027",
+        "python-B02.a028",
+        "python-B02.a029",
+        "python-B02.a030",
+        "python-B02.a031",
+        "python-B02.a032",
+        "python-B02.a033",
+        "python-B02.a034",
+        "python-B02.a035",
+        "python-B02.a036",
+        "python-B02.a037",
+        "python-B02.a038",
+        "python-B02.a039",
+        "python-B02.a040",
+        "python-B02.a041",
+        "python-B02.a042",
+        "python-B02.a043",
+        "python-B02.a044",
+        "python-B02.a045",
+        "python-B02.a046",
+        "python-B02.a047",
+        "python-B02.a048",
+        "python-B02.a049",
+        "python-B02.a050",
+        "python-B02.a051",
+        "python-B02.a052",
+        "python-B02.a053",
+        "python-B02.a054",
+        "python-B02.a055",
+        "python-B02.a056",
+        "python-B02.a057",
+        "python-B02.a058",
+        "python-B02.a059",
+        "python-B02.a060",
+        "python-B02.a061",
+        "python-B02.a062",
+        "python-B02.a063",
+        "python-B02.a064",
+        "python-B02.a065",
+        "python-B02.a066",
+        "python-B02.a067",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a091",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a064",
+        "python-B01.a069",
+        "python-B01.a085",
+        "python-B01.a086",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a105",
+        "python-B01.a106",
+        "python-B01.a107",
+        "python-B01.a108",
+        "python-B01.a109",
+        "python-B01.a110",
+        "python-B01.a111",
+        "python-B01.a112",
+        "python-B01.a113",
+        "python-B01.a114",
+        "python-B01.a115",
+        "python-B01.a116",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a129",
+        "python-B01.a130",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a133",
+        "python-B01.a134",
+        "python-B01.a135",
+        "python-B01.a137",
+        "python-B01.a138",
+        "python-B01.a148",
+        "python-B01.a159",
+        "python-B01.a165",
+        "python-B01.a167",
+        "python-B01.a168",
+        "python-B01.a169",
+        "python-B01.a171",
+        "python-B01.a172"
+      ],
+      "source_utf8": "r = not a or b and c or d\nq = a and b and c\nt = a < b <= c > d >= e == f != g in h not in i is j is not k\nu = a | b ^ c & d << e >> f + g - h * i / j // k % l @ m\nv = -a + +b - ~c ** -d\nw = a if b else c\nz = lambda: 0\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "boolean_operator",
+            "not_operator",
+            "comparison_operator",
+            "binary_operator",
+            "unary_operator",
+            "conditional_expression",
+            "lambda"
+          ],
+          "anchors": [
+            {
+              "type": "boolean_operator",
+              "text": "not a or b and c or d"
+            },
+            {
+              "type": "boolean_operator",
+              "text": "not a or b and c"
+            },
+            {
+              "type": "not_operator",
+              "text": "not a"
+            },
+            {
+              "type": "boolean_operator",
+              "text": "b and c",
+              "occurrence": 1
+            },
+            {
+              "type": "boolean_operator",
+              "text": "a and b"
+            },
+            {
+              "type": "boolean_operator",
+              "text": "a and b and c"
+            },
+            {
+              "type": "comparison_operator",
+              "text": "a < b <= c > d >= e == f != g in h not in i is j is not k"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a | b ^ c & d << e >> f + g - h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "b ^ c & d << e >> f + g - h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c & d << e >> f + g - h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "d << e >> f + g - h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "d << e"
+            },
+            {
+              "type": "binary_operator",
+              "text": "f + g - h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "h * i / j // k % l @ m"
+            },
+            {
+              "type": "binary_operator",
+              "text": "h * i / j // k % l"
+            },
+            {
+              "type": "unary_operator",
+              "text": "-a"
+            },
+            {
+              "type": "unary_operator",
+              "text": "+b"
+            },
+            {
+              "type": "unary_operator",
+              "text": "~c ** -d"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c ** -d"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "a if b else c"
+            },
+            {
+              "type": "lambda",
+              "text": "lambda: 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B02-03",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a008",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a072",
+        "python-B02.a073",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a077",
+        "python-B02.a078",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a115",
+        "python-B02.a117",
+        "python-B02.a120",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B02.a124",
+        "python-B02.a125",
+        "python-B02.a126",
+        "python-B02.a127",
+        "python-B02.a128",
+        "python-B02.a129",
+        "python-B02.a130",
+        "python-B02.a131",
+        "python-B02.a132",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a162",
+        "python-B01.a167"
+      ],
+      "source_utf8": "p = a.b[0](1)(x for x in y)\nq = a[1:2, ::3, :]\nr = a[i:j], a[i], a[::]\nf(1, *a, k=2, **kw)\nf(k=1, *a)\nf(**kw, k=1)\nf(a, b,)\nf()\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute",
+            "subscript",
+            "call",
+            "slice",
+            "argument_list",
+            "keyword_argument",
+            "list_splat",
+            "dictionary_splat",
+            "generator_expression"
+          ],
+          "anchors": [
+            {
+              "type": "call",
+              "text": "a.b[0](1)(x for x in y)"
+            },
+            {
+              "type": "call",
+              "text": "a.b[0](1)"
+            },
+            {
+              "type": "subscript",
+              "text": "a.b[0]"
+            },
+            {
+              "type": "attribute",
+              "text": "a.b"
+            },
+            {
+              "type": "generator_expression",
+              "text": "(x for x in y)"
+            },
+            {
+              "type": "subscript",
+              "text": "a[1:2, ::3, :]"
+            },
+            {
+              "type": "slice",
+              "text": "1:2"
+            },
+            {
+              "type": "slice",
+              "text": "::3"
+            },
+            {
+              "type": "slice",
+              "text": ":",
+              "occurrence": 4
+            },
+            {
+              "type": "subscript",
+              "text": "a[i:j]"
+            },
+            {
+              "type": "subscript",
+              "text": "a[::]"
+            },
+            {
+              "type": "slice",
+              "text": "::",
+              "occurrence": 2
+            },
+            {
+              "type": "call",
+              "text": "f(1, *a, k=2, **kw)"
+            },
+            {
+              "type": "list_splat",
+              "text": "*a",
+              "occurrence": 1
+            },
+            {
+              "type": "keyword_argument",
+              "text": "k=2"
+            },
+            {
+              "type": "dictionary_splat",
+              "text": "**kw",
+              "occurrence": 1
+            },
+            {
+              "type": "call",
+              "text": "f(k=1, *a)"
+            },
+            {
+              "type": "call",
+              "text": "f(**kw, k=1)"
+            },
+            {
+              "type": "argument_list",
+              "text": "(a, b,)"
+            },
+            {
+              "type": "argument_list",
+              "text": "()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B02-04",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a097",
+        "python-B02.a004",
+        "python-B02.a005",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a085",
+        "python-B02.a091",
+        "python-B02.a092",
+        "python-B02.a093",
+        "python-B02.a094",
+        "python-B02.a095",
+        "python-B02.a096",
+        "python-B02.a097",
+        "python-B02.a098",
+        "python-B02.a099",
+        "python-B02.a100",
+        "python-B02.a101",
+        "python-B02.a102",
+        "python-B02.a103",
+        "python-B02.a104",
+        "python-B02.a105",
+        "python-B02.a106",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a024",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a169"
+      ],
+      "source_utf8": "l1 = lambda a, b=1, *args, c, d=2, **kw: 0\nl2 = lambda *, k: 0\nl3 = lambda **kw: 0\nl4 = lambda a=1, b=2: 0\nl5 = lambda a,: 0\nl6 = lambda *a, c: 0\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lambda",
+            "lambda_parameters",
+            "default_parameter",
+            "list_splat_pattern",
+            "dictionary_splat_pattern",
+            "keyword_separator"
+          ],
+          "anchors": [
+            {
+              "type": "lambda",
+              "text": "lambda a, b=1, *args, c, d=2, **kw: 0"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a, b=1, *args, c, d=2, **kw"
+            },
+            {
+              "type": "default_parameter",
+              "text": "b=1"
+            },
+            {
+              "type": "list_splat_pattern",
+              "text": "*args"
+            },
+            {
+              "type": "dictionary_splat_pattern",
+              "text": "**kw",
+              "occurrence": 1
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "*, k"
+            },
+            {
+              "type": "keyword_separator",
+              "text": "*",
+              "occurrence": 4
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "**kw",
+              "occurrence": 2
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a=1, b=2"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a,",
+              "occurrence": 2
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "*a, c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B02-05",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a008",
+        "python-B03.a014",
+        "python-B03.a020",
+        "python-B03.a029",
+        "python-B03.a031",
+        "python-B03.a032",
+        "python-B03.a055",
+        "python-B03.a071",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a080",
+        "python-B02.a004",
+        "python-B02.a006",
+        "python-B02.a007",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a067",
+        "python-B02.a068",
+        "python-B02.a069",
+        "python-B02.a070",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a090",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a131",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a151",
+        "python-B01.a152",
+        "python-B01.a156",
+        "python-B01.a163",
+        "python-B01.a179"
+      ],
+      "source_utf8": "async def g():\n    await x\n    yield\n    yield 1, 2\n    r = await f() ** 2\ndef h():\n    yield from it\n    z = (yield)\n    w = yield 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "await",
+            "yield"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "async def g():\n    await x\n    yield\n    yield 1, 2\n    r = await f() ** 2"
+            },
+            {
+              "type": "await",
+              "text": "await x"
+            },
+            {
+              "type": "yield",
+              "text": "yield",
+              "occurrence": 1
+            },
+            {
+              "type": "yield",
+              "text": "yield 1, 2"
+            },
+            {
+              "type": "binary_operator",
+              "text": "await f() ** 2"
+            },
+            {
+              "type": "await",
+              "text": "await f()"
+            },
+            {
+              "type": "yield",
+              "text": "yield from it"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(yield)"
+            },
+            {
+              "type": "yield",
+              "text": "yield 1",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B03-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a006",
+        "python-B03.a007",
+        "python-B03.a010",
+        "python-B03.a012",
+        "python-B03.a013",
+        "python-B03.a015",
+        "python-B03.a027",
+        "python-B03.a028",
+        "python-B03.a029",
+        "python-B03.a030",
+        "python-B03.a032",
+        "python-B03.a033",
+        "python-B03.a034",
+        "python-B03.a035",
+        "python-B03.a036",
+        "python-B03.a037",
+        "python-B03.a038",
+        "python-B03.a039",
+        "python-B03.a040",
+        "python-B03.a041",
+        "python-B03.a042",
+        "python-B03.a043",
+        "python-B03.a044",
+        "python-B03.a045",
+        "python-B03.a049",
+        "python-B03.a054",
+        "python-B03.a056",
+        "python-B03.a057",
+        "python-B03.a058",
+        "python-B03.a059",
+        "python-B03.a060",
+        "python-B03.a061",
+        "python-B03.a062",
+        "python-B03.a063",
+        "python-B03.a064",
+        "python-B03.a065",
+        "python-B03.a066",
+        "python-B03.a067",
+        "python-B03.a068",
+        "python-B03.a069",
+        "python-B03.a070",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B03.a130",
+        "python-B03.a131",
+        "python-B03.a132",
+        "python-B03.a133",
+        "python-B03.a134",
+        "python-B03.a139",
+        "python-B03.a141",
+        "python-B03.a142",
+        "python-B03.a143",
+        "python-B03.a144",
+        "python-B03.a145",
+        "python-B03.a146",
+        "python-B03.a147",
+        "python-B03.a148",
+        "python-B03.a149",
+        "python-B03.a150",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a021",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a084",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a090",
+        "python-B01.a091",
+        "python-B01.a092",
+        "python-B01.a093",
+        "python-B01.a094",
+        "python-B01.a095",
+        "python-B01.a096",
+        "python-B01.a097",
+        "python-B01.a098",
+        "python-B01.a099",
+        "python-B01.a100",
+        "python-B01.a101",
+        "python-B01.a102",
+        "python-B01.a103",
+        "python-B01.a104",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a126",
+        "python-B01.a127",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a149",
+        "python-B01.a150",
+        "python-B01.a157",
+        "python-B01.a163",
+        "python-B01.a166",
+        "python-B01.a173"
+      ],
+      "source_utf8": "from __future__ import annotations\nimport os, os.path as osp\nfrom . import a\nfrom .. import (b, c as d,)\nfrom ...pkg.mod import *\nfrom .mod import e as f, g\nx: int\ny: int = 1\n(z): int = 2\no.attr: str\no[0]: str = \"a\"\na = b = 1\nx += 1; x -= 1; x *= 1; x @= m; x /= 1; x %= 1; x &= 1\nx |= 1; x ^= 1; x <<= 1; x >>= 1; x **= 1; x //= 1;\no.attr += 1; (x) += 1; o[0] += 1\nassert x\nassert x, \"msg\"\ndel x, o.attr, o[0]\ndel (x), (a, b), [a, b], ()\npass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "future_import_statement",
+            "import_statement",
+            "aliased_import",
+            "import_from_statement",
+            "relative_import",
+            "import_prefix",
+            "wildcard_import",
+            "assignment",
+            "augmented_assignment",
+            "assert_statement",
+            "delete_statement",
+            "pass_statement",
+            "type"
+          ],
+          "anchors": [
+            {
+              "type": "future_import_statement",
+              "text": "from __future__ import annotations"
+            },
+            {
+              "type": "import_statement",
+              "text": "import os, os.path as osp"
+            },
+            {
+              "type": "aliased_import",
+              "text": "os.path as osp"
+            },
+            {
+              "type": "import_from_statement",
+              "text": "from . import a"
+            },
+            {
+              "type": "relative_import",
+              "text": ".",
+              "occurrence": 2
+            },
+            {
+              "type": "import_from_statement",
+              "text": "from .. import (b, c as d,)"
+            },
+            {
+              "type": "aliased_import",
+              "text": "c as d"
+            },
+            {
+              "type": "import_from_statement",
+              "text": "from ...pkg.mod import *"
+            },
+            {
+              "type": "relative_import",
+              "text": "...pkg.mod"
+            },
+            {
+              "type": "wildcard_import",
+              "text": "*",
+              "occurrence": 1
+            },
+            {
+              "type": "import_from_statement",
+              "text": "from .mod import e as f, g"
+            },
+            {
+              "type": "assignment",
+              "text": "x: int"
+            },
+            {
+              "type": "assignment",
+              "text": "y: int = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "(z): int = 2"
+            },
+            {
+              "type": "assignment",
+              "text": "o.attr: str"
+            },
+            {
+              "type": "assignment",
+              "text": "o[0]: str = \"a\""
+            },
+            {
+              "type": "assignment",
+              "text": "a = b = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "b = 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x += 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x -= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x *= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x @= m"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x /= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x %= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x &= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x |= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x ^= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x <<= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x >>= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x **= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "x //= 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "o.attr += 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "(x) += 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "o[0] += 1"
+            },
+            {
+              "type": "assert_statement",
+              "text": "assert x",
+              "occurrence": 1
+            },
+            {
+              "type": "assert_statement",
+              "text": "assert x, \"msg\""
+            },
+            {
+              "type": "delete_statement",
+              "text": "del x, o.attr, o[0]"
+            },
+            {
+              "type": "delete_statement",
+              "text": "del (x), (a, b), [a, b], ()"
+            },
+            {
+              "type": "pass_statement",
+              "text": "pass"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B03-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a009",
+        "python-B03.a011",
+        "python-B03.a012",
+        "python-B03.a016",
+        "python-B03.a017",
+        "python-B03.a018",
+        "python-B03.a019",
+        "python-B03.a020",
+        "python-B03.a021",
+        "python-B03.a024",
+        "python-B03.a026",
+        "python-B03.a030",
+        "python-B03.a032",
+        "python-B03.a034",
+        "python-B03.a046",
+        "python-B03.a047",
+        "python-B03.a048",
+        "python-B03.a049",
+        "python-B03.a050",
+        "python-B03.a051",
+        "python-B03.a052",
+        "python-B03.a053",
+        "python-B03.a071",
+        "python-B03.a072",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a081",
+        "python-B03.a082",
+        "python-B03.a090",
+        "python-B03.a095",
+        "python-B03.a098",
+        "python-B03.a099",
+        "python-B03.a100",
+        "python-B03.a101",
+        "python-B03.a102",
+        "python-B03.a103",
+        "python-B03.a104",
+        "python-B02.a004",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a023",
+        "python-B02.a024",
+        "python-B02.a025",
+        "python-B02.a035",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a083",
+        "python-B02.a085",
+        "python-B03.a117",
+        "python-B03.a121",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B03.a131",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a084",
+        "python-B01.a086",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a093",
+        "python-B01.a115",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a146",
+        "python-B01.a153",
+        "python-B01.a155",
+        "python-B01.a156",
+        "python-B01.a158",
+        "python-B01.a159",
+        "python-B01.a162",
+        "python-B01.a163",
+        "python-B01.a164",
+        "python-B01.a165",
+        "python-B01.a167",
+        "python-B01.a170",
+        "python-B01.a173",
+        "python-B01.a174",
+        "python-B01.a175",
+        "python-B01.a177"
+      ],
+      "source_utf8": "def f(n):\n    global g, h\n    while n:\n        n -= 1\n        if n == 1:\n            continue\n        elif n == 2:\n            break\n        elif n == 3:\n            pass\n        else:\n            return\n    else:\n        return n, 1\n    if n: pass\n    for i, *rest in n:\n        pass\n    else:\n        pass\n    def inner():\n        nonlocal n\n        raise\n    raise ValueError from None\n    raise ValueError\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "global_statement",
+            "while_statement",
+            "if_statement",
+            "elif_clause",
+            "else_clause",
+            "continue_statement",
+            "break_statement",
+            "return_statement",
+            "for_statement",
+            "nonlocal_statement",
+            "raise_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "def f(n):\n    global g, h\n    while n:\n        n -= 1\n        if n == 1:\n            continue\n        elif n == 2:\n            break\n        elif n == 3:\n            pass\n        else:\n            return\n    else:\n        return n, 1\n    if n: pass\n    for i, *rest in n:\n        pass\n    else:\n        pass\n    def inner():\n        nonlocal n\n        raise\n    raise ValueError from None\n    raise ValueError"
+            },
+            {
+              "type": "global_statement",
+              "text": "global g, h"
+            },
+            {
+              "type": "while_statement",
+              "text": "while n:\n        n -= 1\n        if n == 1:\n            continue\n        elif n == 2:\n            break\n        elif n == 3:\n            pass\n        else:\n            return\n    else:\n        return n, 1"
+            },
+            {
+              "type": "augmented_assignment",
+              "text": "n -= 1"
+            },
+            {
+              "type": "if_statement",
+              "text": "if n == 1:\n            continue\n        elif n == 2:\n            break\n        elif n == 3:\n            pass\n        else:\n            return"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue"
+            },
+            {
+              "type": "elif_clause",
+              "text": "elif n == 2:\n            break"
+            },
+            {
+              "type": "break_statement",
+              "text": "break"
+            },
+            {
+              "type": "elif_clause",
+              "text": "elif n == 3:\n            pass"
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n            return"
+            },
+            {
+              "type": "return_statement",
+              "text": "return",
+              "occurrence": 1
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n        return n, 1"
+            },
+            {
+              "type": "return_statement",
+              "text": "return n, 1"
+            },
+            {
+              "type": "if_statement",
+              "text": "if n: pass"
+            },
+            {
+              "type": "for_statement",
+              "text": "for i, *rest in n:\n        pass\n    else:\n        pass"
+            },
+            {
+              "type": "pattern_list",
+              "text": "i, *rest"
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n        pass"
+            },
+            {
+              "type": "function_definition",
+              "text": "def inner():\n        nonlocal n\n        raise"
+            },
+            {
+              "type": "nonlocal_statement",
+              "text": "nonlocal n"
+            },
+            {
+              "type": "raise_statement",
+              "text": "raise",
+              "occurrence": 1
+            },
+            {
+              "type": "raise_statement",
+              "text": "raise ValueError from None"
+            },
+            {
+              "type": "raise_statement",
+              "text": "raise ValueError",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B03-03",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a023",
+        "python-B03.a024",
+        "python-B03.a025",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a078",
+        "python-B03.a080",
+        "python-B03.a102",
+        "python-B03.a105",
+        "python-B03.a106",
+        "python-B03.a107",
+        "python-B03.a108",
+        "python-B03.a109",
+        "python-B03.a110",
+        "python-B03.a111",
+        "python-B03.a112",
+        "python-B03.a113",
+        "python-B03.a114",
+        "python-B03.a115",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a086",
+        "python-B02.a108",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B03.a116",
+        "python-B03.a119",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B03.a128",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a149",
+        "python-B01.a151",
+        "python-B01.a156",
+        "python-B01.a159",
+        "python-B01.a160",
+        "python-B01.a161",
+        "python-B01.a162",
+        "python-B01.a167",
+        "python-B01.a173",
+        "python-B01.a176",
+        "python-B01.a178"
+      ],
+      "source_utf8": "try:\n    pass\nfinally:\n    pass\ntry:\n    pass\nexcept ValueError:\n    pass\nexcept (TypeError, KeyError) as e:\n    pass\nexcept:\n    pass\nelse:\n    pass\nfinally:\n    pass\nwith a as b, c:\n    pass\nwith open(p) as (x, y):\n    pass\nasync def g():\n    async with a as b, c:\n        pass\n    async for x in y:\n        pass\n    else:\n        pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "except_clause",
+            "else_clause",
+            "finally_clause",
+            "with_statement",
+            "with_clause",
+            "with_item",
+            "for_statement"
+          ],
+          "anchors": [
+            {
+              "type": "try_statement",
+              "text": "try:\n    pass\nfinally:\n    pass"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally:\n    pass",
+              "occurrence": 1
+            },
+            {
+              "type": "try_statement",
+              "text": "try:\n    pass\nexcept ValueError:\n    pass\nexcept (TypeError, KeyError) as e:\n    pass\nexcept:\n    pass\nelse:\n    pass\nfinally:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except ValueError:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except (TypeError, KeyError) as e:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except:\n    pass"
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n    pass"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally:\n    pass",
+              "occurrence": 2
+            },
+            {
+              "type": "with_statement",
+              "text": "with a as b, c:\n    pass"
+            },
+            {
+              "type": "with_clause",
+              "text": "a as b, c",
+              "occurrence": 1
+            },
+            {
+              "type": "with_item",
+              "text": "a as b",
+              "occurrence": 1
+            },
+            {
+              "type": "with_item",
+              "text": "c",
+              "occurrence": 4
+            },
+            {
+              "type": "with_statement",
+              "text": "with open(p) as (x, y):\n    pass"
+            },
+            {
+              "type": "with_item",
+              "text": "open(p) as (x, y)"
+            },
+            {
+              "type": "function_definition",
+              "text": "async def g():\n    async with a as b, c:\n        pass\n    async for x in y:\n        pass\n    else:\n        pass"
+            },
+            {
+              "type": "with_statement",
+              "text": "async with a as b, c:\n        pass"
+            },
+            {
+              "type": "for_statement",
+              "text": "async for x in y:\n        pass\n    else:\n        pass"
+            },
+            {
+              "type": "else_clause",
+              "text": "else:\n        pass"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B03-04",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a008",
+        "python-B03.a009",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a022",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a046",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a072",
+        "python-B03.a073",
+        "python-B03.a074",
+        "python-B03.a075",
+        "python-B03.a076",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a080",
+        "python-B03.a081",
+        "python-B03.a082",
+        "python-B03.a083",
+        "python-B03.a084",
+        "python-B03.a085",
+        "python-B03.a086",
+        "python-B03.a087",
+        "python-B03.a088",
+        "python-B03.a089",
+        "python-B03.a090",
+        "python-B03.a091",
+        "python-B03.a092",
+        "python-B03.a093",
+        "python-B03.a094",
+        "python-B03.a095",
+        "python-B03.a096",
+        "python-B03.a097",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a083",
+        "python-B02.a085",
+        "python-B02.a089",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B02.a126",
+        "python-B02.a129",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a090",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a128",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a137",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a146",
+        "python-B01.a151",
+        "python-B01.a154",
+        "python-B01.a156",
+        "python-B01.a173",
+        "python-B01.a175"
+      ],
+      "source_utf8": "@dec\n@mod.dec(1)\nclass C(Base, metaclass=M):\n    x = 1\nclass D: pass\nclass E(): pass\ndef f(a, b=1, *args, c, d=2, **kw) -> int: return 0\ndef g(*, k): pass\ndef h(a=1, b=2,): pass\ndef i(a, b,): ...\ndef j(**kw): pass\ndef k(*args: int): pass\ndef m(): pass\nasync def n(x: int = 0) -> None:\n    pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decorated_definition",
+            "decorator",
+            "class_definition",
+            "argument_list",
+            "keyword_argument",
+            "function_definition",
+            "parameters",
+            "default_parameter",
+            "typed_parameter",
+            "typed_default_parameter",
+            "list_splat_pattern",
+            "dictionary_splat_pattern",
+            "keyword_separator"
+          ],
+          "anchors": [
+            {
+              "type": "decorated_definition",
+              "text": "@dec\n@mod.dec(1)\nclass C(Base, metaclass=M):\n    x = 1"
+            },
+            {
+              "type": "decorator",
+              "text": "@dec"
+            },
+            {
+              "type": "decorator",
+              "text": "@mod.dec(1)"
+            },
+            {
+              "type": "class_definition",
+              "text": "class C(Base, metaclass=M):\n    x = 1"
+            },
+            {
+              "type": "argument_list",
+              "text": "(Base, metaclass=M)"
+            },
+            {
+              "type": "keyword_argument",
+              "text": "metaclass=M"
+            },
+            {
+              "type": "class_definition",
+              "text": "class D: pass"
+            },
+            {
+              "type": "class_definition",
+              "text": "class E(): pass"
+            },
+            {
+              "type": "function_definition",
+              "text": "def f(a, b=1, *args, c, d=2, **kw) -> int: return 0"
+            },
+            {
+              "type": "parameters",
+              "text": "(a, b=1, *args, c, d=2, **kw)"
+            },
+            {
+              "type": "type",
+              "text": "int",
+              "occurrence": 1
+            },
+            {
+              "type": "function_definition",
+              "text": "def g(*, k): pass"
+            },
+            {
+              "type": "keyword_separator",
+              "text": "*",
+              "occurrence": 4
+            },
+            {
+              "type": "parameters",
+              "text": "(a=1, b=2,)"
+            },
+            {
+              "type": "function_definition",
+              "text": "def i(a, b,): ..."
+            },
+            {
+              "type": "parameters",
+              "text": "(a, b,)"
+            },
+            {
+              "type": "parameters",
+              "text": "(**kw)"
+            },
+            {
+              "type": "typed_parameter",
+              "text": "*args: int"
+            },
+            {
+              "type": "parameters",
+              "text": "()",
+              "occurrence": 2
+            },
+            {
+              "type": "function_definition",
+              "text": "async def n(x: int = 0) -> None:\n    pass"
+            },
+            {
+              "type": "typed_default_parameter",
+              "text": "x: int = 0"
+            },
+            {
+              "type": "type",
+              "text": "None"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-B03-05",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a087",
+        "python-B02.a107",
+        "python-B02.a115",
+        "python-B02.a117",
+        "python-B02.a120",
+        "python-B03.a116",
+        "python-B03.a117",
+        "python-B03.a118",
+        "python-B03.a119",
+        "python-B03.a120",
+        "python-B03.a121",
+        "python-B03.a122",
+        "python-B03.a123",
+        "python-B03.a124",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B03.a127",
+        "python-B03.a128",
+        "python-B03.a129",
+        "python-B03.a135",
+        "python-B03.a136",
+        "python-B03.a137",
+        "python-B03.a138",
+        "python-B03.a139",
+        "python-B03.a140",
+        "python-B03.a141",
+        "python-B03.a142",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a127",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a162",
+        "python-B01.a167"
+      ],
+      "source_utf8": "a, b = 1, 2\na, = x\n*a, b = x\n[a, b] = x\n(a, b) = x\n(a,) = x\n() = []\n(a) = 1\na.b.c = 1\na[0].b = 1\nf(x for x in y).b = 1\nf().b = 1\na[0][1] = 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "pattern_list",
+            "list_pattern",
+            "tuple_pattern",
+            "list_splat_pattern",
+            "attribute",
+            "subscript"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "a, b = 1, 2"
+            },
+            {
+              "type": "pattern_list",
+              "text": "a, b",
+              "occurrence": 1
+            },
+            {
+              "type": "pattern_list",
+              "text": "a,",
+              "occurrence": 2
+            },
+            {
+              "type": "pattern_list",
+              "text": "*a, b"
+            },
+            {
+              "type": "list_splat_pattern",
+              "text": "*a"
+            },
+            {
+              "type": "list_pattern",
+              "text": "[a, b]"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(a, b)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(a,)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "()",
+              "occurrence": 1
+            },
+            {
+              "type": "assignment",
+              "text": "(a) = 1"
+            },
+            {
+              "type": "attribute",
+              "text": "a.b.c"
+            },
+            {
+              "type": "attribute",
+              "text": "a[0].b"
+            },
+            {
+              "type": "attribute",
+              "text": "f(x for x in y).b"
+            },
+            {
+              "type": "attribute",
+              "text": "f().b"
+            },
+            {
+              "type": "subscript",
+              "text": "a[0][1]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V38-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V38"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a008",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a021",
+        "python-B03.a026",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a072",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a081",
+        "python-V38.a001",
+        "python-V38.a002",
+        "python-V38.a003",
+        "python-V38.a004",
+        "python-V38.a005",
+        "python-V38.a006",
+        "python-B03.a086",
+        "python-B03.a089",
+        "python-B03.a091",
+        "python-B03.a092",
+        "python-B03.a094",
+        "python-B03.a095",
+        "python-B03.a097",
+        "python-B03.a099",
+        "python-B03.a103",
+        "python-B02.a004",
+        "python-B02.a005",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-V38.a007",
+        "python-V38.a008",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a023",
+        "python-B02.a024",
+        "python-B02.a030",
+        "python-B02.a040",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a090",
+        "python-B02.a091",
+        "python-B02.a092",
+        "python-V38.a009",
+        "python-V38.a010",
+        "python-V38.a011",
+        "python-V38.a012",
+        "python-V38.a013",
+        "python-V38.a014",
+        "python-B02.a100",
+        "python-B02.a101",
+        "python-B02.a102",
+        "python-B02.a103",
+        "python-B02.a106",
+        "python-B01.a001",
+        "python-B01.a002",
+        "python-B01.a003",
+        "python-B01.a004",
+        "python-B01.a005",
+        "python-B01.a006",
+        "python-B01.a008",
+        "python-B01.a010",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a024",
+        "python-B01.a025",
+        "python-B01.a038",
+        "python-B01.a039",
+        "python-B01.a040",
+        "python-B01.a041",
+        "python-V38.a015",
+        "python-B01.a042",
+        "python-B01.a043",
+        "python-B01.a044",
+        "python-B01.a045",
+        "python-B01.a050",
+        "python-B01.a051",
+        "python-B01.a052",
+        "python-B01.a053",
+        "python-B01.a055",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a071",
+        "python-B01.a084",
+        "python-B01.a086",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-V38.a016",
+        "python-B01.a114",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a125",
+        "python-B01.a127",
+        "python-B01.a132",
+        "python-B01.a134",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a156",
+        "python-B01.a165",
+        "python-B01.a169",
+        "python-B01.a173",
+        "python-B01.a177",
+        "python-B01.a185",
+        "python-V38.a017"
+      ],
+      "source_utf8": "if (n := len(a)) > 10:\n    print(f\"{n=} {n = !r:>10}\")\nwhile chunk := read():\n    pass\ndef f(a, b, /, c, d=1, *, e): pass\ndef g(a, b=1, /, c=2): pass\ndef h(a, /): pass\ndef h2(a=1, /): pass\nl1 = lambda a, /, b: 0\nl2 = lambda a=1, /, b=2: 0\nl3 = lambda a, /: 0\nl4 = lambda a=1, /: 0\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "named_expression",
+            "positional_separator",
+            "interpolation",
+            "lambda_parameters",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if (n := len(a)) > 10:\n    print(f\"{n=} {n = !r:>10}\")"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(n := len(a))"
+            },
+            {
+              "type": "named_expression",
+              "text": "n := len(a)"
+            },
+            {
+              "type": "interpolation",
+              "text": "{n=}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{n = !r:>10}"
+            },
+            {
+              "type": "named_expression",
+              "text": "chunk := read()"
+            },
+            {
+              "type": "parameters",
+              "text": "(a, b, /, c, d=1, *, e)"
+            },
+            {
+              "type": "positional_separator",
+              "text": "/",
+              "occurrence": 1
+            },
+            {
+              "type": "parameters",
+              "text": "(a, b=1, /, c=2)"
+            },
+            {
+              "type": "parameters",
+              "text": "(a, /)"
+            },
+            {
+              "type": "parameters",
+              "text": "(a=1, /)"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a, /, b"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a=1, /, b=2"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a, /",
+              "occurrence": 3
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a=1, /",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V39-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V38",
+        "python-V39"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a022",
+        "python-B03.a049",
+        "python-B03.a072",
+        "python-B03.a073",
+        "python-B03.a074",
+        "python-B03.a076",
+        "python-B03.a077",
+        "python-B03.a079",
+        "python-B02.a004",
+        "python-B02.a005",
+        "python-V38.a007",
+        "python-V38.a008",
+        "python-B02.a016",
+        "python-B02.a017",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a073",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a090",
+        "python-B02.a091",
+        "python-B02.a092",
+        "python-B02.a093",
+        "python-B02.a101",
+        "python-B02.a106",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a064",
+        "python-B01.a069",
+        "python-B01.a084",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a091",
+        "python-V38.a016",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a124",
+        "python-B01.a136",
+        "python-B01.a137",
+        "python-B01.a138",
+        "python-B01.a154",
+        "python-B01.a156",
+        "python-B01.a169",
+        "python-B01.a172",
+        "python-B01.a173",
+        "python-V39.a001"
+      ],
+      "source_utf8": "@buttons[0].clicked.connect\ndef on_click(): pass\n@(lambda fn: fn)\ndef ident(): pass\n@registry := make_registry()\ndef tracked(): pass\n@first or second\nclass Picked: pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decorated_definition",
+            "decorator",
+            "subscript",
+            "named_expression",
+            "lambda",
+            "boolean_operator"
+          ],
+          "anchors": [
+            {
+              "type": "decorated_definition",
+              "text": "@buttons[0].clicked.connect\ndef on_click(): pass"
+            },
+            {
+              "type": "decorator",
+              "text": "@buttons[0].clicked.connect"
+            },
+            {
+              "type": "decorator",
+              "text": "@(lambda fn: fn)"
+            },
+            {
+              "type": "decorator",
+              "text": "@registry := make_registry()"
+            },
+            {
+              "type": "named_expression",
+              "text": "registry := make_registry()"
+            },
+            {
+              "type": "decorated_definition",
+              "text": "@first or second\nclass Picked: pass"
+            },
+            {
+              "type": "decorator",
+              "text": "@first or second"
+            },
+            {
+              "type": "boolean_operator",
+              "text": "first or second"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V310-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V310"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-V310.a001",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-V310.a004",
+        "python-V310.a006",
+        "python-V310.a007",
+        "python-V310.a008",
+        "python-V310.a010",
+        "python-V310.a011",
+        "python-V310.a012",
+        "python-V310.a013",
+        "python-V310.a014",
+        "python-V310.a015",
+        "python-V310.a016",
+        "python-V310.a017",
+        "python-V310.a019",
+        "python-V310.a020",
+        "python-V310.a023",
+        "python-V310.a025",
+        "python-V310.a037",
+        "python-V310.a043",
+        "python-V310.a044",
+        "python-V310.a045",
+        "python-V310.a050",
+        "python-V310.a051",
+        "python-V310.a054",
+        "python-V310.a055",
+        "python-V310.a056",
+        "python-V310.a057",
+        "python-B02.a004",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a021",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a085",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a106",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a149",
+        "python-B01.a165",
+        "python-B01.a173",
+        "python-V310.a073",
+        "python-V310.a074",
+        "python-V310.a075"
+      ],
+      "source_utf8": "match command.split():\n    case [action]:\n        pass\n    case [\"go\", direction] if direction:\n        pass\n    case [first, *rest] as whole:\n        pass\n    case (1 | 2) | []:\n        pass\n    case _:\n        pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_statement",
+            "case_clause",
+            "case_pattern",
+            "list_pattern",
+            "splat_pattern",
+            "as_pattern",
+            "union_pattern",
+            "if_clause"
+          ],
+          "anchors": [
+            {
+              "type": "match_statement",
+              "text": "match command.split():\n    case [action]:\n        pass\n    case [\"go\", direction] if direction:\n        pass\n    case [first, *rest] as whole:\n        pass\n    case (1 | 2) | []:\n        pass\n    case _:\n        pass"
+            },
+            {
+              "type": "case_clause",
+              "text": "case [action]:\n        pass"
+            },
+            {
+              "type": "list_pattern",
+              "text": "[action]"
+            },
+            {
+              "type": "case_clause",
+              "text": "case [\"go\", direction] if direction:\n        pass"
+            },
+            {
+              "type": "if_clause",
+              "text": "if direction"
+            },
+            {
+              "type": "case_clause",
+              "text": "case [first, *rest] as whole:\n        pass"
+            },
+            {
+              "type": "as_pattern",
+              "text": "[first, *rest] as whole"
+            },
+            {
+              "type": "list_pattern",
+              "text": "[first, *rest]"
+            },
+            {
+              "type": "splat_pattern",
+              "text": "*rest"
+            },
+            {
+              "type": "case_clause",
+              "text": "case (1 | 2) | []:\n        pass"
+            },
+            {
+              "type": "union_pattern",
+              "text": "(1 | 2) | []"
+            },
+            {
+              "type": "union_pattern",
+              "text": "1 | 2"
+            },
+            {
+              "type": "list_pattern",
+              "text": "[]"
+            },
+            {
+              "type": "case_clause",
+              "text": "case _:\n        pass"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V310-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V310"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-V310.a001",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-V310.a004",
+        "python-V310.a005",
+        "python-V310.a007",
+        "python-V310.a009",
+        "python-V310.a010",
+        "python-V310.a012",
+        "python-V310.a014",
+        "python-V310.a015",
+        "python-V310.a016",
+        "python-V310.a018",
+        "python-V310.a020",
+        "python-V310.a023",
+        "python-V310.a024",
+        "python-V310.a025",
+        "python-V310.a026",
+        "python-V310.a027",
+        "python-V310.a028",
+        "python-V310.a035",
+        "python-V310.a036",
+        "python-V310.a037",
+        "python-V310.a038",
+        "python-V310.a039",
+        "python-V310.a040",
+        "python-V310.a041",
+        "python-V310.a042",
+        "python-V310.a043",
+        "python-V310.a044",
+        "python-V310.a045",
+        "python-V310.a046",
+        "python-V310.a047",
+        "python-V310.a048",
+        "python-V310.a049",
+        "python-V310.a052",
+        "python-V310.a053",
+        "python-V310.a054",
+        "python-V310.a055",
+        "python-V310.a056",
+        "python-V310.a058",
+        "python-B02.a004",
+        "python-B02.a013",
+        "python-B02.a014",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a021",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a057",
+        "python-B01.a059",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a071",
+        "python-B01.a081",
+        "python-B01.a083",
+        "python-B01.a085",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a106",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a129",
+        "python-B01.a130",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a145",
+        "python-B01.a146",
+        "python-B01.a147",
+        "python-B01.a173",
+        "python-V310.a073",
+        "python-V310.a074",
+        "python-V310.a075"
+      ],
+      "source_utf8": "match point, *others:\n    case 0, 0:\n        pass\n    case (x, *_):\n        pass\n    case ():\n        pass\n    case 1 | -1 | 1+2j | -1-2j | \"s\" \"t\" | None | True | False:\n        pass\n    case Color.RED | mod.Color.BLUE:\n        pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_statement",
+            "case_clause",
+            "complex_pattern",
+            "union_pattern",
+            "dotted_name"
+          ],
+          "anchors": [
+            {
+              "type": "match_statement",
+              "text": "match point, *others:\n    case 0, 0:\n        pass\n    case (x, *_):\n        pass\n    case ():\n        pass\n    case 1 | -1 | 1+2j | -1-2j | \"s\" \"t\" | None | True | False:\n        pass\n    case Color.RED | mod.Color.BLUE:\n        pass"
+            },
+            {
+              "type": "case_clause",
+              "text": "case 0, 0:\n        pass"
+            },
+            {
+              "type": "case_clause",
+              "text": "case (x, *_):\n        pass"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(x, *_)"
+            },
+            {
+              "type": "splat_pattern",
+              "text": "*_"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "()"
+            },
+            {
+              "type": "union_pattern",
+              "text": "1 | -1 | 1+2j | -1-2j | \"s\" \"t\" | None | True | False"
+            },
+            {
+              "type": "complex_pattern",
+              "text": "1+2j"
+            },
+            {
+              "type": "complex_pattern",
+              "text": "-1-2j"
+            },
+            {
+              "type": "concatenated_string",
+              "text": "\"s\" \"t\""
+            },
+            {
+              "type": "union_pattern",
+              "text": "Color.RED | mod.Color.BLUE"
+            },
+            {
+              "type": "dotted_name",
+              "text": "mod.Color.BLUE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V310-03",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V310"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-V310.a001",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-V310.a004",
+        "python-V310.a006",
+        "python-V310.a007",
+        "python-V310.a010",
+        "python-V310.a012",
+        "python-V310.a014",
+        "python-V310.a015",
+        "python-V310.a016",
+        "python-V310.a020",
+        "python-V310.a021",
+        "python-V310.a022",
+        "python-V310.a023",
+        "python-V310.a029",
+        "python-V310.a030",
+        "python-V310.a031",
+        "python-V310.a032",
+        "python-V310.a033",
+        "python-V310.a034",
+        "python-V310.a035",
+        "python-V310.a037",
+        "python-V310.a038",
+        "python-V310.a039",
+        "python-V310.a041",
+        "python-V310.a042",
+        "python-V310.a043",
+        "python-V310.a044",
+        "python-V310.a045",
+        "python-V310.a047",
+        "python-V310.a048",
+        "python-V310.a049",
+        "python-V310.a051",
+        "python-V310.a054",
+        "python-V310.a055",
+        "python-V310.a058",
+        "python-V310.a059",
+        "python-V310.a060",
+        "python-V310.a061",
+        "python-V310.a062",
+        "python-V310.a063",
+        "python-V310.a064",
+        "python-V310.a065",
+        "python-V310.a066",
+        "python-V310.a067",
+        "python-V310.a068",
+        "python-V310.a069",
+        "python-V310.a070",
+        "python-V310.a071",
+        "python-V310.a072",
+        "python-B02.a004",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a021",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a057",
+        "python-B01.a059",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a071",
+        "python-B01.a081",
+        "python-B01.a083",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a129",
+        "python-B01.a130",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a145",
+        "python-B01.a146",
+        "python-B01.a147",
+        "python-B01.a173",
+        "python-V310.a073",
+        "python-V310.a074",
+        "python-V310.a075"
+      ],
+      "source_utf8": "match config:\n    case {}:\n        pass\n    case {**rest}:\n        pass\n    case {\"a\": 1, -1: x, 1+2j: y, None: z, True: t, False: u, Color.RED: v, **rest,}:\n        pass\n    case {\"a\": [*_],}:\n        pass\n    case Point():\n        pass\n    case Point(0, y,):\n        pass\n    case mod.Point(x=0, y=1):\n        pass\n    case Point(0, y=1,):\n        pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_statement",
+            "dict_pattern",
+            "class_pattern",
+            "keyword_pattern",
+            "splat_pattern"
+          ],
+          "anchors": [
+            {
+              "type": "match_statement",
+              "text": "match config:\n    case {}:\n        pass\n    case {**rest}:\n        pass\n    case {\"a\": 1, -1: x, 1+2j: y, None: z, True: t, False: u, Color.RED: v, **rest,}:\n        pass\n    case {\"a\": [*_],}:\n        pass\n    case Point():\n        pass\n    case Point(0, y,):\n        pass\n    case mod.Point(x=0, y=1):\n        pass\n    case Point(0, y=1,):\n        pass"
+            },
+            {
+              "type": "dict_pattern",
+              "text": "{}"
+            },
+            {
+              "type": "dict_pattern",
+              "text": "{**rest}"
+            },
+            {
+              "type": "splat_pattern",
+              "text": "**rest",
+              "occurrence": 1
+            },
+            {
+              "type": "dict_pattern",
+              "text": "{\"a\": 1, -1: x, 1+2j: y, None: z, True: t, False: u, Color.RED: v, **rest,}"
+            },
+            {
+              "type": "complex_pattern",
+              "text": "1+2j"
+            },
+            {
+              "type": "splat_pattern",
+              "text": "**rest",
+              "occurrence": 2
+            },
+            {
+              "type": "dict_pattern",
+              "text": "{\"a\": [*_],}"
+            },
+            {
+              "type": "class_pattern",
+              "text": "Point()"
+            },
+            {
+              "type": "class_pattern",
+              "text": "Point(0, y,)"
+            },
+            {
+              "type": "class_pattern",
+              "text": "mod.Point(x=0, y=1)"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "x=0"
+            },
+            {
+              "type": "class_pattern",
+              "text": "Point(0, y=1,)"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "y=1",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V310-04",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V310"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a023",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a078",
+        "python-B03.a080",
+        "python-V310.a002",
+        "python-V310.a003",
+        "python-B03.a108",
+        "python-B03.a109",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a073",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a021",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a149",
+        "python-B01.a151",
+        "python-B01.a156",
+        "python-B01.a173",
+        "python-B01.a178"
+      ],
+      "source_utf8": "with (open(a) as f, open(b) as g,):\n    pass\nwith (a, b):\n    pass\nasync def k():\n    async with (a as b, c):\n        pass\nmatch = case = _ = 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "with_statement",
+            "with_clause",
+            "with_item"
+          ],
+          "anchors": [
+            {
+              "type": "with_statement",
+              "text": "with (open(a) as f, open(b) as g,):\n    pass"
+            },
+            {
+              "type": "with_clause",
+              "text": "(open(a) as f, open(b) as g,)"
+            },
+            {
+              "type": "with_item",
+              "text": "open(a) as f"
+            },
+            {
+              "type": "with_item",
+              "text": "open(b) as g"
+            },
+            {
+              "type": "with_statement",
+              "text": "with (a, b):\n    pass"
+            },
+            {
+              "type": "with_clause",
+              "text": "(a, b)"
+            },
+            {
+              "type": "with_item",
+              "text": "a",
+              "occurrence": 5
+            },
+            {
+              "type": "with_item",
+              "text": "b",
+              "occurrence": 2
+            },
+            {
+              "type": "with_statement",
+              "text": "async with (a as b, c):\n        pass"
+            },
+            {
+              "type": "with_clause",
+              "text": "(a as b, c)"
+            },
+            {
+              "type": "assignment",
+              "text": "match = case = _ = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "case = _ = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "_ = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V311-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V311"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a024",
+        "python-B03.a025",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a072",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a081",
+        "python-B03.a084",
+        "python-V311.a001",
+        "python-V311.a002",
+        "python-V311.a003",
+        "python-B03.a094",
+        "python-B03.a095",
+        "python-V311.a004",
+        "python-V311.a005",
+        "python-B03.a102",
+        "python-B03.a104",
+        "python-V311.a006",
+        "python-V311.a007",
+        "python-V311.a008",
+        "python-B03.a115",
+        "python-B02.a004",
+        "python-B02.a008",
+        "python-B02.a010",
+        "python-B02.a011",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a077",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a108",
+        "python-B02.a128",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a024",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a149",
+        "python-B01.a156",
+        "python-B01.a159",
+        "python-B01.a160",
+        "python-B01.a161",
+        "python-B01.a162",
+        "python-B01.a167",
+        "python-B01.a173",
+        "python-B01.a176",
+        "python-V311.a009",
+        "python-V311.a010"
+      ],
+      "source_utf8": "try:\n    pass\nexcept* ValueError:\n    pass\nexcept* (TypeError, KeyError) as eg:\n    pass\nelse:\n    pass\nfinally:\n    pass\ndef call(*args: *Ts): pass\ndef call2(*args: *Ts, key): pass\nfor x in *a, *b:\n    pass\nt = a[*b]\nt2 = a[1, *b]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "except_clause",
+            "for_statement",
+            "subscript",
+            "list_splat"
+          ],
+          "anchors": [
+            {
+              "type": "try_statement",
+              "text": "try:\n    pass\nexcept* ValueError:\n    pass\nexcept* (TypeError, KeyError) as eg:\n    pass\nelse:\n    pass\nfinally:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except* ValueError:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except* (TypeError, KeyError) as eg:\n    pass"
+            },
+            {
+              "type": "as_pattern",
+              "text": "(TypeError, KeyError) as eg"
+            },
+            {
+              "type": "typed_parameter",
+              "text": "*args: *Ts",
+              "occurrence": 1
+            },
+            {
+              "type": "splat_type",
+              "text": "*Ts",
+              "occurrence": 1
+            },
+            {
+              "type": "typed_parameter",
+              "text": "*args: *Ts",
+              "occurrence": 2
+            },
+            {
+              "type": "for_statement",
+              "text": "for x in *a, *b:\n    pass"
+            },
+            {
+              "type": "expression_list",
+              "text": "*a, *b"
+            },
+            {
+              "type": "subscript",
+              "text": "a[*b]"
+            },
+            {
+              "type": "list_splat",
+              "text": "*b",
+              "occurrence": 2
+            },
+            {
+              "type": "subscript",
+              "text": "a[1, *b]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V312-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V312"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-V312.a001",
+        "python-B03.a008",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a022",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a072",
+        "python-B03.a075",
+        "python-B03.a076",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-B03.a080",
+        "python-B03.a081",
+        "python-B03.a082",
+        "python-B03.a090",
+        "python-B03.a095",
+        "python-B03.a096",
+        "python-V312.a002",
+        "python-V312.a003",
+        "python-V312.a004",
+        "python-V312.a005",
+        "python-V312.a006",
+        "python-V312.a007",
+        "python-V312.a008",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a045",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a077",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a085",
+        "python-B02.a086",
+        "python-B02.a089",
+        "python-B02.a108",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a085",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a090",
+        "python-B01.a106",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a128",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a151",
+        "python-B01.a154",
+        "python-B01.a156",
+        "python-B01.a173",
+        "python-V312.a009",
+        "python-V312.a010",
+        "python-V312.a011",
+        "python-V312.a012"
+      ],
+      "source_utf8": "type Point = tuple[float, float]\ntype ListOrSet[T] = list[T] | set[T]\nclass Box[T: (int, str), *Ts, **P]:\n    pass\ndef first[T](items: list[T]) -> T: ...\nasync def afirst[T,](x: T) -> T: ...\ntype = 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias_statement",
+            "type_parameter",
+            "class_definition",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "type_alias_statement",
+              "text": "type Point = tuple[float, float]"
+            },
+            {
+              "type": "type_alias_statement",
+              "text": "type ListOrSet[T] = list[T] | set[T]"
+            },
+            {
+              "type": "class_definition",
+              "text": "class Box[T: (int, str), *Ts, **P]:\n    pass"
+            },
+            {
+              "type": "type_parameter",
+              "text": "[T: (int, str), *Ts, **P]"
+            },
+            {
+              "type": "constrained_type",
+              "text": "T: (int, str)"
+            },
+            {
+              "type": "splat_type",
+              "text": "*Ts"
+            },
+            {
+              "type": "splat_type",
+              "text": "**P"
+            },
+            {
+              "type": "function_definition",
+              "text": "def first[T](items: list[T]) -> T: ..."
+            },
+            {
+              "type": "type_parameter",
+              "text": "[T]",
+              "occurrence": 4
+            },
+            {
+              "type": "function_definition",
+              "text": "async def afirst[T,](x: T) -> T: ..."
+            },
+            {
+              "type": "type_parameter",
+              "text": "[T,]"
+            },
+            {
+              "type": "assignment",
+              "text": "type = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V312-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V312"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a054",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a071",
+        "python-B02.a073",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B02.a087",
+        "python-B01.a001",
+        "python-B01.a002",
+        "python-B01.a003",
+        "python-B01.a004",
+        "python-B01.a008",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-B02.a107",
+        "python-B02.a122",
+        "python-B02.a123",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a030",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a033",
+        "python-B01.a034",
+        "python-B01.a037",
+        "python-B01.a038",
+        "python-B01.a039",
+        "python-B01.a040",
+        "python-B01.a041",
+        "python-B01.a042",
+        "python-B01.a043",
+        "python-B01.a044",
+        "python-B01.a045",
+        "python-B01.a050",
+        "python-B01.a051",
+        "python-B01.a055",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a064",
+        "python-B01.a065",
+        "python-B01.a069",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a091",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a123",
+        "python-B01.a125",
+        "python-B01.a127",
+        "python-B01.a129",
+        "python-B01.a136",
+        "python-B01.a138",
+        "python-B01.a139",
+        "python-B01.a142",
+        "python-B01.a185",
+        "python-B01.a195",
+        "python-V312.a013",
+        "python-V312.a014",
+        "python-V312.a015",
+        "python-V312.a016"
+      ],
+      "source_utf8": "songs = [\"a\", \"b\"]\nx = f\"{\"\\n\".join(songs)} {songs[0]!r}\"\ny = f\"This is the playlist: {\", \".join([\n    'Take me back to Eden',  # My, my, those eyes like fire\n    'Alkaline',\n])}\"\nz = f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "interpolation",
+              "text": "{\"\\n\".join(songs)}"
+            },
+            {
+              "type": "string",
+              "text": "\"\\n\""
+            },
+            {
+              "type": "interpolation",
+              "text": "{songs[0]!r}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{\", \".join([\n    'Take me back to Eden',  # My, my, those eyes like fire\n    'Alkaline',\n])}"
+            },
+            {
+              "type": "comment",
+              "text": "# My, my, those eyes like fire"
+            },
+            {
+              "type": "string",
+              "text": "f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\""
+            },
+            {
+              "type": "string",
+              "text": "f\"{1+1}\""
+            },
+            {
+              "type": "interpolation",
+              "text": "{1+1}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V313-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V312",
+        "python-V313"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-V312.a001",
+        "python-B03.a012",
+        "python-B03.a020",
+        "python-B03.a022",
+        "python-B03.a049",
+        "python-B03.a072",
+        "python-B03.a075",
+        "python-B03.a076",
+        "python-B03.a078",
+        "python-B03.a079",
+        "python-V312.a002",
+        "python-V312.a003",
+        "python-V312.a004",
+        "python-V312.a005",
+        "python-V312.a006",
+        "python-V312.a007",
+        "python-V312.a008",
+        "python-V313.a001",
+        "python-V313.a002",
+        "python-B02.a004",
+        "python-B02.a011",
+        "python-B02.a012",
+        "python-B02.a013",
+        "python-B02.a015",
+        "python-B02.a016",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a074",
+        "python-B02.a075",
+        "python-B02.a076",
+        "python-B02.a079",
+        "python-B02.a080",
+        "python-B02.a087",
+        "python-B02.a107",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a117",
+        "python-B01.a118",
+        "python-B01.a119",
+        "python-B01.a120",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a127",
+        "python-B01.a131",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a154",
+        "python-B01.a156",
+        "python-B01.a173",
+        "python-V312.a009",
+        "python-V312.a010",
+        "python-V312.a011",
+        "python-V313.a003",
+        "python-V313.a004",
+        "python-V313.a005"
+      ],
+      "source_utf8": "type A[T = int] = list[T]\nclass B[T: int = bool, *Ts = *tuple[int], **P = [int, str]]: pass\ndef c[*Ts = Unpack[tuple[int]], U = str](): pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias_statement",
+            "type_parameter",
+            "class_definition",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "type_alias_statement",
+              "text": "type A[T = int] = list[T]"
+            },
+            {
+              "type": "type_parameter",
+              "text": "[T = int]"
+            },
+            {
+              "type": "class_definition",
+              "text": "class B[T: int = bool, *Ts = *tuple[int], **P = [int, str]]: pass"
+            },
+            {
+              "type": "type_parameter",
+              "text": "[T: int = bool, *Ts = *tuple[int], **P = [int, str]]"
+            },
+            {
+              "type": "function_definition",
+              "text": "def c[*Ts = Unpack[tuple[int]], U = str](): pass"
+            },
+            {
+              "type": "type_parameter",
+              "text": "[*Ts = Unpack[tuple[int]], U = str]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V314-01",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V314"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a006",
+        "python-B03.a007",
+        "python-B03.a029",
+        "python-B03.a032",
+        "python-B02.a004",
+        "python-B02.a010",
+        "python-B02.a012",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B02.a084",
+        "python-B02.a085",
+        "python-B01.a004",
+        "python-V314.a003",
+        "python-V314.a004",
+        "python-V314.a005",
+        "python-V314.a006",
+        "python-V314.a007",
+        "python-V314.a008",
+        "python-V314.a009",
+        "python-V314.a010",
+        "python-B01.a009",
+        "python-B01.a010",
+        "python-V314.a011",
+        "python-B03.a116",
+        "python-B03.a122",
+        "python-B03.a125",
+        "python-B03.a126",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a023",
+        "python-B01.a024",
+        "python-B01.a025",
+        "python-B01.a026",
+        "python-B01.a031",
+        "python-B01.a032",
+        "python-B01.a034",
+        "python-B01.a051",
+        "python-V314.a012",
+        "python-B01.a057",
+        "python-B01.a060",
+        "python-B01.a065",
+        "python-B01.a070",
+        "python-B01.a087",
+        "python-B01.a088",
+        "python-B01.a121",
+        "python-B01.a122",
+        "python-B01.a124",
+        "python-B01.a125",
+        "python-B01.a126",
+        "python-B01.a127",
+        "python-B01.a138",
+        "python-V314.a013",
+        "python-V314.a014",
+        "python-V314.a015"
+      ],
+      "source_utf8": "name = \"w\"; width = 8\nt1 = t\"Hello {name!r:>{width}} {name=}\"\nt2 = T'x' t\"y\" rt\"\\d{name}\" Tr'{name}' tR\"\" RT\"\"\nt3 = t\"\"\"multi\n{name:{width}.{width}}\"\"\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "format_specifier",
+            "type_conversion"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "name = \"w\""
+            },
+            {
+              "type": "assignment",
+              "text": "width = 8"
+            },
+            {
+              "type": "string",
+              "text": "t\"Hello {name!r:>{width}} {name=}\""
+            },
+            {
+              "type": "interpolation",
+              "text": "{name!r:>{width}}"
+            },
+            {
+              "type": "format_specifier",
+              "text": ":>{width}"
+            },
+            {
+              "type": "interpolation",
+              "text": "{name=}"
+            },
+            {
+              "type": "concatenated_string",
+              "text": "T'x' t\"y\" rt\"\\d{name}\" Tr'{name}' tR\"\" RT\"\""
+            },
+            {
+              "type": "string",
+              "text": "rt\"\\d{name}\""
+            },
+            {
+              "type": "string",
+              "text": "Tr'{name}'"
+            },
+            {
+              "type": "string",
+              "text": "tR\"\""
+            },
+            {
+              "type": "string",
+              "text": "RT\"\""
+            },
+            {
+              "type": "string",
+              "text": "t\"\"\"multi\n{name:{width}.{width}}\"\"\""
+            },
+            {
+              "type": "interpolation",
+              "text": "{name:{width}.{width}}"
+            },
+            {
+              "type": "format_specifier",
+              "text": ":{width}.{width}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-python-V314-02",
+      "features": [
+        "python-B01",
+        "python-B02",
+        "python-B03",
+        "python-V311",
+        "python-V314"
+      ],
+      "alternatives": [
+        "python-B03.a001",
+        "python-B03.a002",
+        "python-B03.a003",
+        "python-B03.a004",
+        "python-B03.a005",
+        "python-B03.a012",
+        "python-B03.a025",
+        "python-B03.a049",
+        "python-B03.a071",
+        "python-B03.a111",
+        "python-V311.a006",
+        "python-V314.a001",
+        "python-V314.a002",
+        "python-B02.a001",
+        "python-B02.a002",
+        "python-B02.a004",
+        "python-B02.a018",
+        "python-B02.a020",
+        "python-B02.a022",
+        "python-B02.a024",
+        "python-B02.a046",
+        "python-B02.a048",
+        "python-B02.a050",
+        "python-B02.a053",
+        "python-B02.a056",
+        "python-B02.a062",
+        "python-B02.a066",
+        "python-B02.a068",
+        "python-B02.a070",
+        "python-B02.a075",
+        "python-B02.a080",
+        "python-B01.a011",
+        "python-B01.a014",
+        "python-B01.a015",
+        "python-B01.a018",
+        "python-B01.a019",
+        "python-B01.a020",
+        "python-B01.a023",
+        "python-B01.a025",
+        "python-B01.a088",
+        "python-B01.a089",
+        "python-B01.a123",
+        "python-B01.a124",
+        "python-B01.a132",
+        "python-B01.a138",
+        "python-B01.a144",
+        "python-B01.a160",
+        "python-B01.a173",
+        "python-B01.a176"
+      ],
+      "source_utf8": "try:\n    pass\nexcept ValueError, TypeError:\n    pass\nexcept KeyError,:\n    pass\ntry:\n    pass\nexcept* OSError, KeyError:\n    pass\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "except_clause"
+          ],
+          "anchors": [
+            {
+              "type": "try_statement",
+              "text": "try:\n    pass\nexcept ValueError, TypeError:\n    pass\nexcept KeyError,:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except ValueError, TypeError:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except KeyError,:\n    pass"
+            },
+            {
+              "type": "try_statement",
+              "text": "try:\n    pass\nexcept* OSError, KeyError:\n    pass"
+            },
+            {
+              "type": "except_clause",
+              "text": "except* OSError, KeyError:\n    pass"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-python-B01-R-1",
+      "features": [
+        "python-B01"
+      ],
+      "source_utf8": "def first():\n    return 1\n\n\ndef second():\n    x = 1\n    return x\n\n\ndef third():\n    return 3\n",
+      "edits": [
+        {
+          "find": "    return x\n",
+          "replace": "  return x\n"
+        },
+        {
+          "find": "  return x\n",
+          "replace": "    return x\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_definition",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "def first():\n    return 1"
+            },
+            {
+              "type": "function_definition",
+              "text": "def third():\n    return 3"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-B02-NR-1",
+      "features": [
+        "python-B02"
+      ],
+      "source_utf8": "def scale(values, k):\n    return [v * k for v in values if v]\n\n\ntotal = sum(x ** 2 for x in range(10) if x % 2)\nsquares = {n: n * n for n in range(5)}\n",
+      "edits": [
+        {
+          "find": "if x % 2)",
+          "replace": "if x %)"
+        },
+        {
+          "find": "if x %)",
+          "replace": "if x % 2)"
+        },
+        {
+          "find": "[v * k for v in values if v]",
+          "replace": "[v * k for in values if v]"
+        },
+        {
+          "find": "[v * k for in values if v]",
+          "replace": "[v * k for v in values if v]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "call",
+            "generator_expression",
+            "dictionary_comprehension"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "total = sum(x ** 2 for x in range(10) if x % 2)"
+            },
+            {
+              "type": "dictionary_comprehension",
+              "text": "{n: n * n for n in range(5)}"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-B03-R-1",
+      "features": [
+        "python-B03"
+      ],
+      "source_utf8": "import os\n\n\ndef read(path):\n    try:\n        return open(path).read()\n    except OSError as exc:\n        raise RuntimeError(path) from exc\n\n\n@decorate\ndef after():\n    pass\n",
+      "edits": [
+        {
+          "find": "    except OSError as exc:\n",
+          "replace": "    except OSError as exc\n"
+        },
+        {
+          "find": "    except OSError as exc\n",
+          "replace": "    except OSError as exc:\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "import_statement",
+            "decorated_definition",
+            "decorator"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import os"
+            },
+            {
+              "type": "decorated_definition",
+              "text": "@decorate\ndef after():\n    pass"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V38-N-1",
+      "features": [
+        "python-V38"
+      ],
+      "source_utf8": "import os\n\n\ndef f(a, b, /, c, *, d):\n    return a\n\n\nif (n := len(\"abc\")) > 2:\n    print(f\"{n=}\")\n\n\nlimit = 3\n\n\ndef tail(x):\n    return x + limit\n\n\nprint(os.sep, tail(limit))\n",
+      "edits": [
+        {
+          "find": "def f(a, b, /, c, *, d):",
+          "replace": "def f(a, b, *, c, /, d):"
+        },
+        {
+          "find": "def f(a, b, *, c, /, d):",
+          "replace": "def f(a, b, /, c, *, d):"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V39-PN-1",
+      "features": [
+        "python-V39"
+      ],
+      "source_utf8": "buttons = [make_button()]\n\n\n@buttons[0].clicked.connect\ndef on_click():\n    pass\n\n\n@(lambda f: f)\ndef ident():\n    pass\n\n\n@registry := make_registry()\ndef tracked():\n    pass\n",
+      "edits": [
+        {
+          "find": "@registry := make_registry()",
+          "replace": "@registry = make_registry()"
+        },
+        {
+          "find": "@registry = make_registry()",
+          "replace": "@registry := make_registry()"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decorated_definition",
+            "decorator",
+            "named_expression",
+            "subscript",
+            "lambda"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V310-NR-1",
+      "features": [
+        "python-V310"
+      ],
+      "source_utf8": "import re\n\n\ndef handle(command):\n    match command.split():\n        case [action]:\n            return action\n        case [\"go\", direction] if direction in DIRS:\n            return direction\n        case Point(x=0, y=0) | {\"origin\": True}:\n            return \"origin\"\n        case _:\n            return None\n\n\nwith (open(\"a\") as a, open(\"b\") as b):\n    pass\n",
+      "edits": [
+        {
+          "find": " if direction in DIRS:",
+          "replace": " if :"
+        },
+        {
+          "find": " if :",
+          "replace": " if direction in DIRS:"
+        },
+        {
+          "find": "case Point(x=0, y=0) | {\"origin\": True}:",
+          "replace": "case Point(x=0, y=0) | {\"origin\": True}"
+        },
+        {
+          "find": "case Point(x=0, y=0) | {\"origin\": True}",
+          "replace": "case Point(x=0, y=0) | {\"origin\": True}:"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "import_statement",
+            "with_statement",
+            "with_item"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import re"
+            },
+            {
+              "type": "with_statement",
+              "text": "with (open(\"a\") as a, open(\"b\") as b):\n    pass"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V311-PNR-1",
+      "features": [
+        "python-V311"
+      ],
+      "source_utf8": "from typing import TypeVarTuple\n\nTs = TypeVarTuple(\"Ts\")\n\n\ndef call(*args: *Ts) -> tuple[*Ts]:\n    return args\n\n\ntry:\n    call(1, 2)\nexcept* ValueError as group:\n    print(group)\nexcept* (TypeError, KeyError):\n    pass\n\ndone = True\n",
+      "edits": [
+        {
+          "find": "except* (TypeError, KeyError):",
+          "replace": "except (TypeError, KeyError):"
+        },
+        {
+          "find": "except (TypeError, KeyError):",
+          "replace": "except* (TypeError, KeyError):"
+        },
+        {
+          "find": "except* ValueError as group:",
+          "replace": "except* ValueError as group"
+        },
+        {
+          "find": "except* ValueError as group\n",
+          "replace": "except* ValueError as group:\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_from_statement",
+            "function_definition",
+            "try_statement",
+            "except_clause"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "import_from_statement",
+            "function_definition",
+            "assignment"
+          ],
+          "anchors": [
+            {
+              "type": "import_from_statement",
+              "text": "from typing import TypeVarTuple"
+            },
+            {
+              "type": "function_definition",
+              "text": "def call(*args: *Ts) -> tuple[*Ts]:\n    return args"
+            },
+            {
+              "type": "assignment",
+              "text": "done = True"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V312-NR-1",
+      "features": [
+        "python-V312"
+      ],
+      "source_utf8": "type Pair[T] = tuple[T, T]\n\n\nclass Box[T: (int, str), *Ts, **P]:\n    pass\n\n\ndef first[T](items: list[T]) -> T:\n    return items[0]\n\n\ndone = True\n",
+      "edits": [
+        {
+          "find": "def first[T](",
+          "replace": "def first[]("
+        },
+        {
+          "find": "def first[](",
+          "replace": "def first[T]("
+        },
+        {
+          "find": "**P]:",
+          "replace": "**P:"
+        },
+        {
+          "find": "**P:",
+          "replace": "**P]:"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "type_alias_statement"
+          ],
+          "anchors": [
+            {
+              "type": "type_alias_statement",
+              "text": "type Pair[T] = tuple[T, T]"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V313-PN-1",
+      "features": [
+        "python-V313"
+      ],
+      "source_utf8": "import typing\n\n\nclass Box[T = int]:\n    pass\n\n\ndef make[T: (int, str) = int, *Ts = *tuple[int, str], **P = [int, str]]() -> None:\n    pass\n\n\ntype Alias[T = str] = list[T]\n\n\nsize = 1\n\n\ndef tail(x):\n    return x + size\n\n\nprint(typing.Any, tail(size))\n",
+      "edits": [
+        {
+          "find": "class Box[T = int]:",
+          "replace": "class Box[T = ]:"
+        },
+        {
+          "find": "class Box[T = ]:",
+          "replace": "class Box[T = int]:"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_definition",
+            "function_definition",
+            "type_alias_statement",
+            "type_parameter"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-python-V314-PNRE-1",
+      "features": [
+        "python-V314"
+      ],
+      "source_utf8": "name = \"world\"\ntemplate = t\"Hello {name!r:>10}\"\nraw = rt\"\\d{name}\"\n\n\ndef run():\n    try:\n        return int(name)\n    except ValueError, TypeError:\n        return None\n\n\ndef run_group():\n    try:\n        pass\n    except* OSError, KeyError:\n        pass\n\n\ndone = True\n",
+      "edits": [
+        {
+          "find": "    except ValueError, TypeError:\n",
+          "replace": "    except ValueError, TypeError as exc:\n"
+        },
+        {
+          "find": "    except ValueError, TypeError as exc:\n",
+          "replace": "    except ValueError, TypeError:\n"
+        },
+        {
+          "find": "{name!r:>10}\"",
+          "replace": "{name!r:>10\""
+        },
+        {
+          "find": "{name!r:>10\"",
+          "replace": "{name!r:>10}\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "try_statement",
+            "except_clause"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "function_definition",
+            "try_statement",
+            "except_clause"
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

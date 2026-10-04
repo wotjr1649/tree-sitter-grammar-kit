@@ -98,6 +98,1953 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-html-B01-01",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B01.a001",
+        "html-B01.a002",
+        "html-B01.a003",
+        "html-B01.a004",
+        "html-B01.a076",
+        "html-B01.a032",
+        "html-B02.a003",
+        "html-B02.a005",
+        "html-B03.a038",
+        "html-B03.a042",
+        "html-B03.a044",
+        "html-B03.a049",
+        "html-B03.a050",
+        "html-B03.a002",
+        "html-B03.a009",
+        "html-B03.a010",
+        "html-B03.a011"
+      ],
+      "source_utf8": "﻿<!-- before doctype -->\n<!DOCTYPE html>\n<!-- after doctype -->\n<html lang=en>\n<head><title>T</title></head>\n<body>\n<p>Hi</p>\n</body>\n</html>\n<!-- after html -->\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "doctype",
+            "comment",
+            "element",
+            "start_tag",
+            "end_tag",
+            "attribute",
+            "text"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "<!-- before doctype -->"
+            },
+            {
+              "type": "doctype",
+              "text": "<!DOCTYPE html>"
+            },
+            {
+              "type": "comment",
+              "text": "<!-- after doctype -->"
+            },
+            {
+              "type": "element",
+              "text": "<html lang=en>\n<head><title>T</title></head>\n<body>\n<p>Hi</p>\n</body>\n</html>"
+            },
+            {
+              "type": "start_tag",
+              "text": "<html lang=en>"
+            },
+            {
+              "type": "attribute",
+              "text": "lang=en"
+            },
+            {
+              "type": "element",
+              "text": "<head><title>T</title></head>"
+            },
+            {
+              "type": "element",
+              "text": "<title>T</title>"
+            },
+            {
+              "type": "element",
+              "text": "<body>\n<p>Hi</p>\n</body>"
+            },
+            {
+              "type": "element",
+              "text": "<p>Hi</p>"
+            },
+            {
+              "type": "end_tag",
+              "text": "</html>"
+            },
+            {
+              "type": "comment",
+              "text": "<!-- after html -->"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-02",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B01.a005",
+        "html-B01.a007",
+        "html-B02.a003",
+        "html-B03.a055",
+        "html-B03.a056",
+        "html-B03.a057",
+        "html-B03.a058",
+        "html-B03.a060",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!doctype HTML SYSTEM \"about:legacy-compat\">\n<title>x</title>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "doctype",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "doctype",
+              "text": "<!doctype HTML SYSTEM \"about:legacy-compat\">"
+            },
+            {
+              "type": "element",
+              "text": "<title>x</title>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-03",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B01.a005",
+        "html-B01.a008",
+        "html-B02.a003",
+        "html-B03.a055",
+        "html-B03.a056",
+        "html-B03.a057",
+        "html-B03.a059",
+        "html-B03.a060",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html system 'about:legacy-compat' >\n<title>x</title>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "doctype",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "doctype",
+              "text": "<!DOCTYPE html system 'about:legacy-compat' >"
+            },
+            {
+              "type": "element",
+              "text": "<title>x</title>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-04",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B01.a009",
+        "html-B01.a028",
+        "html-B01.a032",
+        "html-B01.a034",
+        "html-B02.a003",
+        "html-B01.a010",
+        "html-B01.a011",
+        "html-B01.a012",
+        "html-B01.a013",
+        "html-B01.a014",
+        "html-B01.a015",
+        "html-B01.a016",
+        "html-B01.a017",
+        "html-B01.a018",
+        "html-B01.a019",
+        "html-B01.a020",
+        "html-B01.a021",
+        "html-B01.a022",
+        "html-B03.a038",
+        "html-B03.a036",
+        "html-B03.a039",
+        "html-B03.a040",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<html><head><title>v</title><base href=\"/\"><link rel=stylesheet href=a.css><meta charset=\"utf-8\"></head>\n<body><map name=m><area alt=x href=#></map><br><br/><hr><img src=a.png alt=\"\"><input><embed src=a.swf><wbr>\n<table><colgroup><col></colgroup></table>\n<video><source src=a.mp4><track src=a.vtt></video></body></html>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "start_tag",
+            "attribute",
+            "quoted_attribute_value"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<base href=\"/\">"
+            },
+            {
+              "type": "element",
+              "text": "<link rel=stylesheet href=a.css>"
+            },
+            {
+              "type": "element",
+              "text": "<meta charset=\"utf-8\">"
+            },
+            {
+              "type": "element",
+              "text": "<map name=m><area alt=x href=#></map>"
+            },
+            {
+              "type": "element",
+              "text": "<area alt=x href=#>"
+            },
+            {
+              "type": "element",
+              "text": "<br>"
+            },
+            {
+              "type": "self_closing_tag",
+              "text": "<br/>"
+            },
+            {
+              "type": "element",
+              "text": "<hr>"
+            },
+            {
+              "type": "element",
+              "text": "<img src=a.png alt=\"\">"
+            },
+            {
+              "type": "element",
+              "text": "<input>"
+            },
+            {
+              "type": "element",
+              "text": "<embed src=a.swf>"
+            },
+            {
+              "type": "start_tag",
+              "text": "<wbr>"
+            },
+            {
+              "type": "element",
+              "text": "<table><colgroup><col></colgroup></table>"
+            },
+            {
+              "type": "element",
+              "text": "<colgroup><col></colgroup>"
+            },
+            {
+              "type": "element",
+              "text": "<col>"
+            },
+            {
+              "type": "element",
+              "text": "<source src=a.mp4>"
+            },
+            {
+              "type": "element",
+              "text": "<track src=a.vtt>"
+            },
+            {
+              "type": "element",
+              "text": "<video><source src=a.mp4><track src=a.vtt></video>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-05",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B01.a005",
+        "html-B01.a027",
+        "html-B01.a030",
+        "html-B01.a031",
+        "html-B01.a032",
+        "html-B01.a033",
+        "html-B01.a034",
+        "html-B01.a035",
+        "html-B01.a036",
+        "html-B01.a037",
+        "html-B01.a071",
+        "html-B01.a072",
+        "html-B02.a003",
+        "html-B03.a034",
+        "html-B03.a038",
+        "html-B03.a037",
+        "html-B03.a036",
+        "html-B03.a039",
+        "html-B03.a069",
+        "html-B03.a070",
+        "html-B03.a072",
+        "html-B03.a075",
+        "html-B03.a076",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>attrs</title>\n<p id=a class='b c' title=\"d e\" hidden data-x = \"1\" lang= en data-ünï=\"2\" x:y=z >x</p >\n<DIV CLASS=x>upper</div>\n<a href=\"?a=1&amp;b=2&#38;c=3\">link</a>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "attribute",
+            "attribute_name",
+            "attribute_value",
+            "quoted_attribute_value"
+          ],
+          "anchors": [
+            {
+              "type": "start_tag",
+              "text": "<p id=a class='b c' title=\"d e\" hidden data-x = \"1\" lang= en data-ünï=\"2\" x:y=z >"
+            },
+            {
+              "type": "attribute",
+              "text": "id=a"
+            },
+            {
+              "type": "attribute",
+              "text": "class='b c'"
+            },
+            {
+              "type": "attribute",
+              "text": "title=\"d e\""
+            },
+            {
+              "type": "attribute",
+              "text": "hidden"
+            },
+            {
+              "type": "attribute",
+              "text": "data-x = \"1\""
+            },
+            {
+              "type": "attribute",
+              "text": "lang= en"
+            },
+            {
+              "type": "attribute",
+              "text": "data-ünï=\"2\""
+            },
+            {
+              "type": "attribute",
+              "text": "x:y=z"
+            },
+            {
+              "type": "attribute",
+              "text": "CLASS=x"
+            },
+            {
+              "type": "attribute",
+              "text": "href=\"?a=1&amp;b=2&#38;c=3\""
+            },
+            {
+              "type": "quoted_attribute_value",
+              "text": "'b c'"
+            },
+            {
+              "type": "end_tag",
+              "text": "</p >"
+            },
+            {
+              "type": "element",
+              "text": "<DIV CLASS=x>upper</div>"
+            },
+            {
+              "type": "element",
+              "text": "<a href=\"?a=1&amp;b=2&#38;c=3\">link</a>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-06",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a003",
+        "html-B01.a032",
+        "html-B01.a009",
+        "html-B01.a013",
+        "html-B01.a064",
+        "html-B01.a038",
+        "html-B01.a039",
+        "html-B01.a040",
+        "html-B01.a041",
+        "html-B01.a042",
+        "html-B01.a043",
+        "html-B01.a044",
+        "html-B01.a045",
+        "html-B01.a046",
+        "html-B01.a047",
+        "html-B01.a048",
+        "html-B01.a049",
+        "html-B01.a050",
+        "html-B01.a052",
+        "html-B01.a054",
+        "html-B01.a055",
+        "html-B01.a056",
+        "html-B01.a057",
+        "html-B01.a058",
+        "html-B01.a059",
+        "html-B01.a060",
+        "html-B01.a061",
+        "html-B01.a062",
+        "html-B01.a063",
+        "html-B03.a038",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>Omitted</title>\n<p>para one\n<p>para two\n<div>block</div>\n<ul><li>one<li>two</ul>\n<dl><dt>term<dd>def<dt>t2<dd>d2</dl>\n<ruby>漢<rp>(<rt>kan<rp>)</ruby>\n<select><optgroup label=a><option>1<option>2<optgroup label=b><option>3</select>\n<table>\n<caption>cap\n<colgroup><col><col>\n<thead><tr><th>h1<th>h2\n<tbody><tr><td>a<td>b\n<tr><td>c<td>d\n<tfoot><tr><td>f<td>g\n</table>\n<table><col><tr><td>implied colgroup and tbody</table>\n<section><p>last in parent</section>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "start_tag",
+            "text"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<p>para one\n"
+            },
+            {
+              "type": "element",
+              "text": "<p>para two\n"
+            },
+            {
+              "type": "element",
+              "text": "<div>block</div>"
+            },
+            {
+              "type": "element",
+              "text": "<li>one"
+            },
+            {
+              "type": "element",
+              "text": "<li>two"
+            },
+            {
+              "type": "element",
+              "text": "<dt>term"
+            },
+            {
+              "type": "element",
+              "text": "<dd>def"
+            },
+            {
+              "type": "element",
+              "text": "<dt>t2"
+            },
+            {
+              "type": "element",
+              "text": "<dd>d2"
+            },
+            {
+              "type": "element",
+              "text": "<rp>("
+            },
+            {
+              "type": "element",
+              "text": "<rt>kan"
+            },
+            {
+              "type": "element",
+              "text": "<rp>)"
+            },
+            {
+              "type": "element",
+              "text": "<optgroup label=a><option>1<option>2"
+            },
+            {
+              "type": "element",
+              "text": "<option>1"
+            },
+            {
+              "type": "element",
+              "text": "<option>2"
+            },
+            {
+              "type": "element",
+              "text": "<optgroup label=b><option>3"
+            },
+            {
+              "type": "element",
+              "text": "<option>3"
+            },
+            {
+              "type": "element",
+              "text": "<table>\n<caption>cap\n<colgroup><col><col>\n<thead><tr><th>h1<th>h2\n<tbody><tr><td>a<td>b\n<tr><td>c<td>d\n<tfoot><tr><td>f<td>g\n</table>"
+            },
+            {
+              "type": "element",
+              "text": "<caption>cap\n"
+            },
+            {
+              "type": "element",
+              "text": "<colgroup><col><col>\n"
+            },
+            {
+              "type": "element",
+              "text": "<thead><tr><th>h1<th>h2\n"
+            },
+            {
+              "type": "element",
+              "text": "<tr><th>h1<th>h2\n"
+            },
+            {
+              "type": "element",
+              "text": "<th>h1"
+            },
+            {
+              "type": "element",
+              "text": "<th>h2\n"
+            },
+            {
+              "type": "element",
+              "text": "<tbody><tr><td>a<td>b\n<tr><td>c<td>d\n"
+            },
+            {
+              "type": "element",
+              "text": "<tr><td>a<td>b\n"
+            },
+            {
+              "type": "element",
+              "text": "<td>a"
+            },
+            {
+              "type": "element",
+              "text": "<td>b\n"
+            },
+            {
+              "type": "element",
+              "text": "<tr><td>c<td>d\n"
+            },
+            {
+              "type": "element",
+              "text": "<td>c"
+            },
+            {
+              "type": "element",
+              "text": "<td>d\n"
+            },
+            {
+              "type": "element",
+              "text": "<tfoot><tr><td>f<td>g\n"
+            },
+            {
+              "type": "element",
+              "text": "<tr><td>f<td>g\n"
+            },
+            {
+              "type": "element",
+              "text": "<td>f"
+            },
+            {
+              "type": "element",
+              "text": "<td>g\n"
+            },
+            {
+              "type": "element",
+              "text": "<table><col><tr><td>implied colgroup and tbody</table>"
+            },
+            {
+              "type": "element",
+              "text": "<p>last in parent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-07",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a003",
+        "html-B01.a032",
+        "html-B01.a053",
+        "html-B01.a051",
+        "html-B01.a052",
+        "html-B01.a015",
+        "html-B01.a009",
+        "html-B03.a038",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>hr</title>\n<select><option>x<hr><optgroup label=g><option>y<hr><option>z</select>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "start_tag"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<select><option>x<hr><optgroup label=g><option>y<hr><option>z</select>"
+            },
+            {
+              "type": "element",
+              "text": "<option>x"
+            },
+            {
+              "type": "element",
+              "text": "<hr>"
+            },
+            {
+              "type": "element",
+              "text": "<optgroup label=g><option>y"
+            },
+            {
+              "type": "element",
+              "text": "<option>y"
+            },
+            {
+              "type": "element",
+              "text": "<hr>",
+              "occurrence": 2
+            },
+            {
+              "type": "element",
+              "text": "<option>z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-08",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B02.a003",
+        "html-B01.a067",
+        "html-B01.a069",
+        "html-B01.a070",
+        "html-B01.a071",
+        "html-B01.a072",
+        "html-B01.a073",
+        "html-B01.a074",
+        "html-B01.a075",
+        "html-B01.a076",
+        "html-B01.a077",
+        "html-B01.a078",
+        "html-B01.a079",
+        "html-B03.a002",
+        "html-B03.a069",
+        "html-B03.a070",
+        "html-B03.a071",
+        "html-B03.a072",
+        "html-B03.a073",
+        "html-B03.a074",
+        "html-B03.a075",
+        "html-B03.a076",
+        "html-B03.a042",
+        "html-B03.a043",
+        "html-B03.a044",
+        "html-B03.a045",
+        "html-B03.a046",
+        "html-B03.a047",
+        "html-B03.a048",
+        "html-B03.a049",
+        "html-B03.a050",
+        "html-B03.a051"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>text</title>\n<p>CR\rLF\nCRLF\r\n&amp; &#65; &#x41; &#X41; &#10; a &b c</p>\n<!-- simple -->\n<!---->\n<!--My favorite operators are > and <!-->\n<!-- a -- b --!c x<!-y z<w -->\n<!---x -->\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "text",
+            "entity",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "text",
+              "text": "CR\rLF\nCRLF"
+            },
+            {
+              "type": "entity",
+              "text": "&amp;"
+            },
+            {
+              "type": "entity",
+              "text": "&#65;"
+            },
+            {
+              "type": "entity",
+              "text": "&#x41;"
+            },
+            {
+              "type": "entity",
+              "text": "&#X41;"
+            },
+            {
+              "type": "entity",
+              "text": "&#10;"
+            },
+            {
+              "type": "text",
+              "text": "a &b c"
+            },
+            {
+              "type": "comment",
+              "text": "<!-- simple -->"
+            },
+            {
+              "type": "comment",
+              "text": "<!---->"
+            },
+            {
+              "type": "comment",
+              "text": "<!--My favorite operators are > and <!-->"
+            },
+            {
+              "type": "comment",
+              "text": "<!-- a -- b --!c x<!-y z<w -->"
+            },
+            {
+              "type": "comment",
+              "text": "<!---x -->"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-09",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B02.a003",
+        "html-B02.a004",
+        "html-B01.a065",
+        "html-B03.a002"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>pre</title>\n<pre>\nHello</pre>\n<pre>\n\nstarts with newline</pre>\n<textarea>\nx</textarea>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "text"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<pre>\nHello</pre>"
+            },
+            {
+              "type": "text",
+              "text": "Hello"
+            },
+            {
+              "type": "element",
+              "text": "<pre>\n\nstarts with newline</pre>"
+            },
+            {
+              "type": "element",
+              "text": "<textarea>\nx</textarea>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-10",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B02.a003",
+        "html-B01.a080",
+        "html-B01.a081",
+        "html-B01.a082",
+        "html-B01.a083",
+        "html-B03.a002",
+        "html-B03.a064",
+        "html-B03.a065",
+        "html-B03.a066",
+        "html-B03.a067",
+        "html-B03.a068"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>pi</title>\n<p><?target><?ws  ><?pi-t_1 data here><?q data?><?e?></p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<p><?target><?ws  ><?pi-t_1 data here><?q data?><?e?></p>"
+            },
+            {
+              "type": "start_tag",
+              "text": "<p>"
+            },
+            {
+              "type": "end_tag",
+              "text": "</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B01-11",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a003",
+        "html-B01.a023",
+        "html-B03.a077",
+        "html-B03.a078",
+        "html-B03.a079",
+        "html-B01.a076",
+        "html-B01.a032",
+        "html-B01.a034",
+        "html-B03.a002",
+        "html-B03.a038",
+        "html-B03.a036",
+        "html-B03.a039",
+        "html-B03.a042",
+        "html-B03.a044",
+        "html-B03.a049",
+        "html-B03.a050"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>tpl</title>\n<template id=t><p>tmpl <b>x</b></p><!-- c --></template>\n<my-widget data-a=1>custom</my-widget>\n<button is=\"my-button\">b</button>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "start_tag",
+            "end_tag",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<template id=t><p>tmpl <b>x</b></p><!-- c --></template>"
+            },
+            {
+              "type": "element",
+              "text": "<p>tmpl <b>x</b></p>"
+            },
+            {
+              "type": "element",
+              "text": "<b>x</b>"
+            },
+            {
+              "type": "comment",
+              "text": "<!-- c -->"
+            },
+            {
+              "type": "element",
+              "text": "<my-widget data-a=1>custom</my-widget>"
+            },
+            {
+              "type": "element",
+              "text": "<button is=\"my-button\">b</button>"
+            },
+            {
+              "type": "attribute",
+              "text": "is=\"my-button\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B02-01",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a001",
+        "html-B02.a002",
+        "html-B02.a003",
+        "html-B02.a004",
+        "html-B02.a005",
+        "html-B02.a006",
+        "html-B01.a071",
+        "html-B01.a034",
+        "html-B01.a065",
+        "html-B03.a002",
+        "html-B03.a003",
+        "html-B03.a004",
+        "html-B03.a009",
+        "html-B03.a010",
+        "html-B03.a011",
+        "html-B03.a012",
+        "html-B03.a013",
+        "html-B03.a014",
+        "html-B03.a015",
+        "html-B03.a016",
+        "html-B03.a017",
+        "html-B03.a069",
+        "html-B03.a070",
+        "html-B03.a036",
+        "html-B03.a039"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<html><head>\n<title>A &amp; B < C</title>\n<style>p > a { color: red } /* </p> */</style>\n<script>if (a < b && c > d) { x = \"</div>\"; }</script>\n<script type=\"module\">\n  import x from \"./x.js\";\n</script>\n</head><body>\n<textarea>\nraw <b>not bold</b> &amp; ref</textarea>\n<script>a</script >\n<style>b</style\t>\n<title>c</title\n>\n</body></html>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "script_element",
+            "style_element",
+            "raw_text",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<title>A &amp; B < C</title>"
+            },
+            {
+              "type": "text",
+              "text": "B < C"
+            },
+            {
+              "type": "style_element",
+              "text": "<style>p > a { color: red } /* </p> */</style>"
+            },
+            {
+              "type": "raw_text",
+              "text": "p > a { color: red } /* </p> */"
+            },
+            {
+              "type": "script_element",
+              "text": "<script>if (a < b && c > d) { x = \"</div>\"; }</script>"
+            },
+            {
+              "type": "raw_text",
+              "text": "if (a < b && c > d) { x = \"</div>\"; }"
+            },
+            {
+              "type": "script_element",
+              "text": "<script type=\"module\">\n  import x from \"./x.js\";\n</script>"
+            },
+            {
+              "type": "element",
+              "text": "<textarea>\nraw <b>not bold</b> &amp; ref</textarea>"
+            },
+            {
+              "type": "text",
+              "text": "raw <b>not bold</b>"
+            },
+            {
+              "type": "script_element",
+              "text": "<script>a</script >"
+            },
+            {
+              "type": "end_tag",
+              "text": "</script >"
+            },
+            {
+              "type": "style_element",
+              "text": "<style>b</style\t>"
+            },
+            {
+              "type": "end_tag",
+              "text": "</style\t>"
+            },
+            {
+              "type": "element",
+              "text": "<title>c</title\n>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B02-02",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a003",
+        "html-B02.a007",
+        "html-B02.a009",
+        "html-B02.a010",
+        "html-B02.a022",
+        "html-B02.a023",
+        "html-B02.a024",
+        "html-B02.a032",
+        "html-B01.a034",
+        "html-B01.a032",
+        "html-B02.a011",
+        "html-B02.a012",
+        "html-B02.a013",
+        "html-B02.a014",
+        "html-B02.a015",
+        "html-B02.a016",
+        "html-B02.a017",
+        "html-B02.a018",
+        "html-B02.a019",
+        "html-B02.a020",
+        "html-B02.a021",
+        "html-B03.a002",
+        "html-B03.a036",
+        "html-B03.a039",
+        "html-B03.a038",
+        "html-B03.a040",
+        "html-B03.a061",
+        "html-B03.a062",
+        "html-B03.a063"
+      ],
+      "source_utf8": "<!DOCTYPE html><title>svg</title>\n<svg viewBox=\"0 0 10 10\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n  <circle cx=5 cy=5 r=4 />\n  <path d=\"M0 0L10 10\"></path>\n  <a xlink:href=\"#x\" xlink:title=\"t\" xlink:actuate=\"onRequest\" xlink:arcrole=\"r\" xlink:role=\"r\" xlink:show=\"new\" xlink:type=\"simple\"><text xml:lang=\"en\" xml:space=\"preserve\">t</text></a>\n  <foreignObject width=10 height=10><p>HTML in SVG</p></foreignObject>\n  <desc><b>html in desc</b></desc>\n  <title><i>html in title</i></title>\n  <style><![CDATA[ circle { fill: red } ]]]></style>\n  <linearGradient id=g></linearGradient>\n</svg>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "self_closing_tag",
+            "attribute"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<svg viewBox=\"0 0 10 10\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n  <circle cx=5 cy=5 r=4 />\n  <path d=\"M0 0L10 10\"></path>\n  <a xlink:href=\"#x\" xlink:title=\"t\" xlink:actuate=\"onRequest\" xlink:arcrole=\"r\" xlink:role=\"r\" xlink:show=\"new\" xlink:type=\"simple\"><text xml:lang=\"en\" xml:space=\"preserve\">t</text></a>\n  <foreignObject width=10 height=10><p>HTML in SVG</p></foreignObject>\n  <desc><b>html in desc</b></desc>\n  <title><i>html in title</i></title>\n  <style><![CDATA[ circle { fill: red } ]]]></style>\n  <linearGradient id=g></linearGradient>\n</svg>"
+            },
+            {
+              "type": "self_closing_tag",
+              "text": "<circle cx=5 cy=5 r=4 />"
+            },
+            {
+              "type": "element",
+              "text": "<path d=\"M0 0L10 10\"></path>"
+            },
+            {
+              "type": "attribute",
+              "text": "xlink:href=\"#x\""
+            },
+            {
+              "type": "attribute",
+              "text": "xml:lang=\"en\""
+            },
+            {
+              "type": "element",
+              "text": "<text xml:lang=\"en\" xml:space=\"preserve\">t</text>"
+            },
+            {
+              "type": "element",
+              "text": "<foreignObject width=10 height=10><p>HTML in SVG</p></foreignObject>"
+            },
+            {
+              "type": "element",
+              "text": "<p>HTML in SVG</p>"
+            },
+            {
+              "type": "element",
+              "text": "<desc><b>html in desc</b></desc>"
+            },
+            {
+              "type": "element",
+              "text": "<b>html in desc</b>"
+            },
+            {
+              "type": "element",
+              "text": "<title><i>html in title</i></title>"
+            },
+            {
+              "type": "element",
+              "text": "<i>html in title</i>"
+            },
+            {
+              "type": "element",
+              "text": "<style><![CDATA[ circle { fill: red } ]]]></style>"
+            },
+            {
+              "type": "element",
+              "text": "<linearGradient id=g></linearGradient>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B02-03",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B03.a032",
+        "html-B03.a033",
+        "html-B03.a035",
+        "html-B01.a026",
+        "html-B02.a003",
+        "html-B02.a008",
+        "html-B02.a009",
+        "html-B02.a010",
+        "html-B02.a030",
+        "html-B02.a031",
+        "html-B02.a032",
+        "html-B01.a034",
+        "html-B02.a025",
+        "html-B02.a026",
+        "html-B02.a027",
+        "html-B02.a028",
+        "html-B02.a029",
+        "html-B03.a002",
+        "html-B03.a036",
+        "html-B03.a039",
+        "html-B03.a040",
+        "html-B03.a061",
+        "html-B03.a063"
+      ],
+      "source_utf8": "<!DOCTYPE html><title>math</title>\n<math display=\"block\">\n  <mi>x</mi><mo>=</mo><mn>1</mn><ms><![CDATA[x<y]]></ms><mtext><b>bold</b></mtext>\n  <annotation-xml encoding=\"text/html\"><p>html</p></annotation-xml>\n  <annotation-xml encoding=\"application/xhtml+xml\"><div>x</div></annotation-xml>\n  <mspace/>\n  <mi definitionURL=\"u\">d</mi>\n</math>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "self_closing_tag"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<math display=\"block\">\n  <mi>x</mi><mo>=</mo><mn>1</mn><ms><![CDATA[x<y]]></ms><mtext><b>bold</b></mtext>\n  <annotation-xml encoding=\"text/html\"><p>html</p></annotation-xml>\n  <annotation-xml encoding=\"application/xhtml+xml\"><div>x</div></annotation-xml>\n  <mspace/>\n  <mi definitionURL=\"u\">d</mi>\n</math>"
+            },
+            {
+              "type": "element",
+              "text": "<mi>x</mi>"
+            },
+            {
+              "type": "element",
+              "text": "<mo>=</mo>"
+            },
+            {
+              "type": "element",
+              "text": "<mn>1</mn>"
+            },
+            {
+              "type": "element",
+              "text": "<ms><![CDATA[x<y]]></ms>"
+            },
+            {
+              "type": "element",
+              "text": "<mtext><b>bold</b></mtext>"
+            },
+            {
+              "type": "element",
+              "text": "<b>bold</b>"
+            },
+            {
+              "type": "element",
+              "text": "<annotation-xml encoding=\"text/html\"><p>html</p></annotation-xml>"
+            },
+            {
+              "type": "element",
+              "text": "<p>html</p>"
+            },
+            {
+              "type": "element",
+              "text": "<div>x</div>"
+            },
+            {
+              "type": "self_closing_tag",
+              "text": "<mspace/>"
+            },
+            {
+              "type": "element",
+              "text": "<mi definitionURL=\"u\">d</mi>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B02-04",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B02.a033",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066"
+      ],
+      "source_utf8": "<td>cell</td><td>two</td>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "start_tag",
+            "end_tag"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<td>cell</td>"
+            },
+            {
+              "type": "element",
+              "text": "<td>two</td>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B02-05",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B02.a034",
+        "html-B01.a044",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a066"
+      ],
+      "source_utf8": "<li>a<li>b\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<li>a"
+            },
+            {
+              "type": "element",
+              "text": "<li>b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-html-B03-01",
+      "features": [
+        "html-B01",
+        "html-B02",
+        "html-B03"
+      ],
+      "alternatives": [
+        "html-B03.a001",
+        "html-B03.a006",
+        "html-B03.a008",
+        "html-B03.a007",
+        "html-B01.a024",
+        "html-B01.a025",
+        "html-B01.a029",
+        "html-B01.a066",
+        "html-B01.a068",
+        "html-B03.a041",
+        "html-B03.a052",
+        "html-B03.a053",
+        "html-B03.a054",
+        "html-B01.a006",
+        "html-B02.a003",
+        "html-B02.a002",
+        "html-B02.a001",
+        "html-B02.a005",
+        "html-B03.a002",
+        "html-B03.a003",
+        "html-B03.a004",
+        "html-B03.a005",
+        "html-B03.a009",
+        "html-B03.a010",
+        "html-B03.a011",
+        "html-B03.a012",
+        "html-B03.a013",
+        "html-B03.a014",
+        "html-B03.a015",
+        "html-B03.a016",
+        "html-B03.a017",
+        "html-B03.a018",
+        "html-B03.a019",
+        "html-B03.a020",
+        "html-B03.a021",
+        "html-B03.a022",
+        "html-B03.a023",
+        "html-B03.a024",
+        "html-B03.a025",
+        "html-B03.a026",
+        "html-B03.a027",
+        "html-B03.a028",
+        "html-B03.a029",
+        "html-B03.a030",
+        "html-B03.a031"
+      ],
+      "source_utf8": "<!DOCTYPE html>\n<title>a<b</c</title>\n<style>a</b</style>\n<script>a<b</c</script>\n<script><!--<script>x-y--z<w</script>--></script>\n<script><!-- a </b c -- d - e <f --></script>\n<plaintext>everything </p> & <b> here is text\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "script_element",
+            "style_element",
+            "raw_text"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<title>a<b</c</title>"
+            },
+            {
+              "type": "style_element",
+              "text": "<style>a</b</style>"
+            },
+            {
+              "type": "raw_text",
+              "text": "a</b"
+            },
+            {
+              "type": "script_element",
+              "text": "<script>a<b</c</script>"
+            },
+            {
+              "type": "raw_text",
+              "text": "a<b</c",
+              "occurrence": 2
+            },
+            {
+              "type": "script_element",
+              "text": "<script><!--<script>x-y--z<w</script>--></script>"
+            },
+            {
+              "type": "raw_text",
+              "text": "<!--<script>x-y--z<w</script>-->"
+            },
+            {
+              "type": "script_element",
+              "text": "<script><!-- a </b c -- d - e <f --></script>"
+            },
+            {
+              "type": "raw_text",
+              "text": "<!-- a </b c -- d - e <f -->"
+            },
+            {
+              "type": "element",
+              "text": "<plaintext>everything </p> & <b> here is text"
+            },
+            {
+              "type": "start_tag",
+              "text": "<plaintext>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B01-R-1",
+      "features": [
+        "html-B01"
+      ],
+      "source_utf8": "<p>kept</p>\n<span title=\"x",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "element",
+            "start_tag",
+            "end_tag",
+            "text"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<p>kept</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B01-R-2",
+      "features": [
+        "html-B01"
+      ],
+      "source_utf8": "<div>\n  <p id=\"a\"class=\"b\">text</p>\n  <span>after</span>\n</div>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "element",
+            "attribute",
+            "quoted_attribute_value"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B02-N-1",
+      "features": [
+        "html-B02"
+      ],
+      "source_utf8": "<p><b><i>x</b></i> after</p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "erroneous_end_tag",
+            "element",
+            "text"
+          ],
+          "anchors": [
+            {
+              "type": "erroneous_end_tag",
+              "text": "</i>"
+            },
+            {
+              "type": "element",
+              "text": "<p><b><i>x</b></i> after</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B02-N-2",
+      "features": [
+        "html-B02"
+      ],
+      "source_utf8": "<title>A</title>\n</div>\n<p>x</p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<title>A</title>"
+            },
+            {
+              "type": "element",
+              "text": "<p>x</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B02-R-1",
+      "features": [
+        "html-B02"
+      ],
+      "source_utf8": "<p>before</p>\n<script>let a = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "element",
+            "script_element",
+            "raw_text"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B02-R-2",
+      "features": [
+        "html-B02"
+      ],
+      "source_utf8": "<p>before</p>\n<textarea>draft &amp; notes\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "element",
+            "entity"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<p>before</p>"
+            },
+            {
+              "type": "entity",
+              "text": "&amp;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-N-1",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<p>a</p>\n<!-->\n<p>b</p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<p>a</p>"
+            },
+            {
+              "type": "element",
+              "text": "<p>b</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-N-2",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<p>x</></p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-N-3",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<a href=x\"y>link</a>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-N-4",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<p>1 <3 2</p>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-R-1",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<div>\n<!-- note --!>\n<p>after</p>\n</div>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "comment",
+            "element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-Qsrc-1",
+      "features": [
+        "html-B03"
+      ],
+      "source_utf8": "<template id=\"row\"><span class=\"cell\">x</span></template>\n<my-widget data-a=1 data-b='two' data-c=\"three\" hidden></my-widget>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "element",
+            "start_tag",
+            "attribute",
+            "quoted_attribute_value"
+          ]
+        }
+      ]
     }
   ]
 }

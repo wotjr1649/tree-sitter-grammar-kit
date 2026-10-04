@@ -69,7 +69,7 @@
       "source_utf8": "const before: number = 1;\nconst p = <p title=\"x\">A &amp; B &#169; {1 + 1}</p>;\n",
       "edits": [
         {"find": "&amp;", "replace": "&lt;"},
-        {"find": "{1 + 1}</p>", "replace": "{1 + 1}</q>"}
+        {"find": "{1 + 1}</p>", "replace": "{1 + 1}</p"}
       ],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["jsx_element", "jsx_attribute", "jsx_text", "html_character_reference"], "declarations": ""},

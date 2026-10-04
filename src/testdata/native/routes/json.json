@@ -97,6 +97,1196 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-json-B01-01",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a002",
+        "json-B01.a003",
+        "json-B01.a004",
+        "json-B01.a005",
+        "json-B01.a006",
+        "json-B01.a007",
+        "json-B01.a008",
+        "json-B01.a009",
+        "json-B01.a010",
+        "json-B01.a011",
+        "json-B01.a012",
+        "json-B01.a020",
+        "json-B01.a021",
+        "json-B01.a022",
+        "json-B01.a023",
+        "json-B01.a024",
+        "json-B01.a025",
+        "json-B01.a026",
+        "json-B02.a001",
+        "json-B02.a002",
+        "json-B02.a003",
+        "json-B02.a004",
+        "json-B02.a013",
+        "json-B02.a014",
+        "json-B02.a017",
+        "json-B02.a006",
+        "json-B02.a018",
+        "json-B02.a030",
+        "json-B02.a019",
+        "json-B02.a033"
+      ],
+      "source_utf8": "{\"a\": 1, \"b\": [true, false, null],\t\"c\": {\"d\": \"e\"},\r\n \"f\": [], \"g\": {}, \"h\": [0]}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "string",
+            "number",
+            "true",
+            "false",
+            "null"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{\"a\": 1, \"b\": [true, false, null],\t\"c\": {\"d\": \"e\"},\r\n \"f\": [], \"g\": {}, \"h\": [0]}"
+            },
+            {
+              "type": "pair",
+              "text": "\"a\": 1"
+            },
+            {
+              "type": "array",
+              "text": "[true, false, null]"
+            },
+            {
+              "type": "object",
+              "text": "{\"d\": \"e\"}"
+            },
+            {
+              "type": "pair",
+              "text": "\"d\": \"e\""
+            },
+            {
+              "type": "array",
+              "text": "[]"
+            },
+            {
+              "type": "object",
+              "text": "{}"
+            },
+            {
+              "type": "array",
+              "text": "[0]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-02",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B01.a009",
+        "json-B02.a004",
+        "json-B02.a014",
+        "json-B02.a006",
+        "json-B02.a034",
+        "json-B01.a027"
+      ],
+      "source_utf8": " 42 ",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "42"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-03",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B02.a018",
+        "json-B02.a030",
+        "json-B02.a019",
+        "json-B02.a033",
+        "json-B01.a027"
+      ],
+      "source_utf8": "\"s\"",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"s\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-04",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B01.a011",
+        "json-B02.a003",
+        "json-B01.a027"
+      ],
+      "source_utf8": "true\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "true"
+          ],
+          "anchors": [
+            {
+              "type": "true",
+              "text": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-05",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B02.a002",
+        "json-B01.a027"
+      ],
+      "source_utf8": "null",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "null"
+          ],
+          "anchors": [
+            {
+              "type": "null",
+              "text": "null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-06",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a012",
+        "json-B01.a011",
+        "json-B01.a010",
+        "json-B02.a001",
+        "json-B01.a027"
+      ],
+      "source_utf8": "\r\nfalse\t",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "false"
+          ],
+          "anchors": [
+            {
+              "type": "false",
+              "text": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-07",
+      "features": [
+        "json-B01"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B01.a024",
+        "json-B01.a002",
+        "json-B01.a004"
+      ],
+      "source_utf8": "[]",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "array",
+              "text": "[]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-08",
+      "features": [
+        "json-B01"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B01.a020",
+        "json-B01.a003",
+        "json-B01.a005"
+      ],
+      "source_utf8": "{}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B01-09",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a008",
+        "json-B01.a024",
+        "json-B01.a025",
+        "json-B01.a026",
+        "json-B01.a020",
+        "json-B01.a021",
+        "json-B01.a022",
+        "json-B01.a023",
+        "json-B01.a002",
+        "json-B01.a004",
+        "json-B01.a003",
+        "json-B01.a005",
+        "json-B01.a006",
+        "json-B01.a007",
+        "json-B02.a004",
+        "json-B02.a014",
+        "json-B02.a006",
+        "json-B02.a018",
+        "json-B02.a030",
+        "json-B02.a019",
+        "json-B02.a033"
+      ],
+      "source_utf8": "[[1,[2]],{\"a\":[{}]},{\"k\":{\"x\":1,\"y\":2}}]",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "array",
+            "object",
+            "pair",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "array",
+              "text": "[[1,[2]],{\"a\":[{}]},{\"k\":{\"x\":1,\"y\":2}}]"
+            },
+            {
+              "type": "array",
+              "text": "[1,[2]]"
+            },
+            {
+              "type": "array",
+              "text": "[2]"
+            },
+            {
+              "type": "object",
+              "text": "{\"a\":[{}]}"
+            },
+            {
+              "type": "array",
+              "text": "[{}]"
+            },
+            {
+              "type": "object",
+              "text": "{}"
+            },
+            {
+              "type": "pair",
+              "text": "\"k\":{\"x\":1,\"y\":2}"
+            },
+            {
+              "type": "object",
+              "text": "{\"x\":1,\"y\":2}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B02-01",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a026",
+        "json-B01.a002",
+        "json-B01.a004",
+        "json-B01.a007",
+        "json-B01.a008",
+        "json-B01.a009",
+        "json-B01.a010",
+        "json-B01.a011",
+        "json-B01.a012",
+        "json-B02.a004",
+        "json-B02.a005",
+        "json-B02.a006",
+        "json-B02.a007",
+        "json-B02.a008",
+        "json-B02.a009",
+        "json-B02.a010",
+        "json-B02.a011",
+        "json-B02.a012",
+        "json-B02.a013",
+        "json-B02.a014",
+        "json-B02.a015",
+        "json-B02.a016",
+        "json-B02.a017",
+        "json-B02.a034"
+      ],
+      "source_utf8": "[0, -0, 1, -12, 3.5, -0.25, 1e5, 1E5, 1e+5, 1e-5, 2.5E-3, 10.0e+10, 1234567890]",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "0"
+            },
+            {
+              "type": "number",
+              "text": "-0"
+            },
+            {
+              "type": "number",
+              "text": "-12"
+            },
+            {
+              "type": "number",
+              "text": "3.5"
+            },
+            {
+              "type": "number",
+              "text": "-0.25"
+            },
+            {
+              "type": "number",
+              "text": "1e5"
+            },
+            {
+              "type": "number",
+              "text": "1E5"
+            },
+            {
+              "type": "number",
+              "text": "1e+5"
+            },
+            {
+              "type": "number",
+              "text": "1e-5"
+            },
+            {
+              "type": "number",
+              "text": "2.5E-3"
+            },
+            {
+              "type": "number",
+              "text": "10.0e+10"
+            },
+            {
+              "type": "number",
+              "text": "1234567890"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-json-B02-02",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "alternatives": [
+        "json-B01.a001",
+        "json-B01.a013",
+        "json-B01.a014",
+        "json-B01.a015",
+        "json-B01.a016",
+        "json-B01.a017",
+        "json-B01.a018",
+        "json-B01.a019",
+        "json-B01.a026",
+        "json-B01.a002",
+        "json-B01.a004",
+        "json-B01.a007",
+        "json-B01.a008",
+        "json-B01.a009",
+        "json-B01.a010",
+        "json-B01.a011",
+        "json-B01.a012",
+        "json-B02.a018",
+        "json-B02.a019",
+        "json-B02.a020",
+        "json-B02.a021",
+        "json-B02.a022",
+        "json-B02.a023",
+        "json-B02.a024",
+        "json-B02.a025",
+        "json-B02.a026",
+        "json-B02.a027",
+        "json-B02.a028",
+        "json-B02.a029",
+        "json-B02.a030",
+        "json-B02.a031",
+        "json-B02.a032",
+        "json-B02.a033",
+        "json-B02.a035",
+        "json-B02.a036",
+        "json-B02.a037",
+        "json-B02.a038",
+        "json-B02.a039",
+        "json-B02.a040",
+        "json-B02.a041",
+        "json-B02.a034",
+        "json-B02.a042"
+      ],
+      "source_utf8": "[\"\", \"plain\", \"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\", \"\\u00e9 \\u00E9 \\uD834\\uDD1E\", \" !#[]~é€😀\", \"\\u0123\\u4567\\u89AB\\uCDEF\\uabcd\\uef01\"]",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "array",
+            "string",
+            "string_content",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"\""
+            },
+            {
+              "type": "string",
+              "text": "\"plain\""
+            },
+            {
+              "type": "string",
+              "text": "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\/"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\b"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\f"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\r"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t"
+            },
+            {
+              "type": "string",
+              "text": "\"\\u00e9 \\u00E9 \\uD834\\uDD1E\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u00e9"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u00E9"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\uD834"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\uDD1E"
+            },
+            {
+              "type": "string",
+              "text": "\" !#[]~é€😀\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0123"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u4567"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u89AB"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\uCDEF"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\uabcd"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\uef01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B01-R-1",
+      "features": [
+        "json-B01"
+      ],
+      "source_utf8": "{\n  \"name\": \"kit\",\n  \"tags\": [\"a\", \"b\"],\n  \"count\": 2,\n  \"nested\": {\"ok\": true}\n}\n",
+      "edits": [
+        {
+          "find": "[\"a\", \"b\"],",
+          "replace": "[\"a\", \"b\"]"
+        },
+        {
+          "find": "[\"a\", \"b\"]",
+          "replace": "[\"a\", \"b\"],"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "string",
+            "number",
+            "true"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "true"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"count\": 2"
+            },
+            {
+              "type": "pair",
+              "text": "\"nested\": {\"ok\": true}"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "string",
+            "number",
+            "true"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B01-R-2",
+      "features": [
+        "json-B01"
+      ],
+      "source_utf8": "{\n  \"a\": 1,\n  \"b\": [true, null]\n}\n",
+      "edits": [
+        {
+          "find": "  \"a\": 1,\n",
+          "replace": "  \"a\": 1, // note\n"
+        },
+        {
+          "find": " // note",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "true",
+            "null"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "null"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "true",
+            "null"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B01-R-3",
+      "features": [
+        "json-B01"
+      ],
+      "source_utf8": "{\n  \"list\": [\"a\", \"b\"],\n  \"next\": {\"k\": false}\n}\n",
+      "edits": [
+        {
+          "find": "[\"a\", \"b\"]",
+          "replace": "[\"a\", \"b\",]"
+        },
+        {
+          "find": "[\"a\", \"b\",]",
+          "replace": "[\"a\", \"b\"]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "false"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "false"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"next\": {\"k\": false}"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "false"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B02-R-1",
+      "features": [
+        "json-B01",
+        "json-B02"
+      ],
+      "source_utf8": "{\"a\": [1, 2], \"c\": {\"d\": 4}}\n",
+      "edits": [
+        {
+          "find": "\"d\": 4}}\n",
+          "replace": "\"d\": 4}}\n{\"b\": 3}\n"
+        },
+        {
+          "find": "{\"b\": 3}\n",
+          "replace": ""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "number"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"a\": [1, 2]"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "array",
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B02-R-2",
+      "features": [
+        "json-B02"
+      ],
+      "source_utf8": "{\n  \"first\": 1,\n  \"count\": 7,\n  \"price\": -0.5e+2,\n  \"ok\": true,\n  \"list\": [1, 2, 3]\n}\n",
+      "edits": [
+        {
+          "find": "\"count\": 7,",
+          "replace": "\"count\": 007,"
+        },
+        {
+          "find": "\"count\": 007,",
+          "replace": "\"count\": 7,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "number",
+            "true"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "number",
+            "true"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"first\": 1"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "number",
+            "true"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B02-R-3",
+      "features": [
+        "json-B02"
+      ],
+      "source_utf8": "{\n  \"delta\": 1,\n  \"ok\": null\n}\n",
+      "edits": [
+        {
+          "find": "\"delta\": 1,",
+          "replace": "\"delta\": +1,"
+        },
+        {
+          "find": "\"delta\": +1,",
+          "replace": "\"delta\": 1,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "number",
+            "null"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "null"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"ok\": null"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B02-R-4",
+      "features": [
+        "json-B02"
+      ],
+      "source_utf8": "{\n  \"text\": \"a\\u00e9\\n\\\"b\\\"\",\n  \"ok\": false\n}\n",
+      "edits": [
+        {
+          "find": "\\u00e9",
+          "replace": "\\q"
+        },
+        {
+          "find": "\\q",
+          "replace": "\\u00e9"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "string",
+            "escape_sequence",
+            "false"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "false"
+          ],
+          "anchors": [
+            {
+              "type": "pair",
+              "text": "\"ok\": false"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "string",
+            "escape_sequence",
+            "false"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-json-B02-R-5",
+      "features": [
+        "json-B02"
+      ],
+      "source_utf8": "{\n  \"cell\": \"a\\tb\",\n  \"ok\": true\n}\n",
+      "edits": [
+        {
+          "find": "\"a\\tb\"",
+          "replace": "\"a\tb\""
+        },
+        {
+          "find": "\"a\tb\"",
+          "replace": "\"a\\tb\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "string",
+            "escape_sequence",
+            "true"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "true"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "object",
+            "pair",
+            "string",
+            "escape_sequence",
+            "true"
+          ]
+        }
+      ]
     }
   ]
 }

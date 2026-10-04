@@ -5,6 +5,30 @@
     {
       "id": "q.structure",
       "source": "(class_definition name: (identifier) @class)\n(enum_declaration name: (identifier) @enum)\n(function_signature name: (identifier) @function)\n(getter_signature name: (identifier) @getter)\n"
+    },
+    {
+      "id": "q.probe-dart-B02",
+      "source": "(if_element consequence: (_) @then alternative: (_) @else)\n(for_element body: (identifier) @body)\n(spread_element (identifier) @spread)\n"
+    },
+    {
+      "id": "q.probe-dart-V213",
+      "source": "(type_alias . (type_identifier) @alias)\n(super_formal_parameter (identifier) @superparam)\n(constructor_tearoff (type_identifier) @tearoff)\n"
+    },
+    {
+      "id": "q.probe-dart-V30",
+      "source": "(class_definition name: (identifier) @class)\n(extension_type_declaration name: (identifier) @exttype)\n(representation_declaration name: (identifier) @rep)\n"
+    },
+    {
+      "id": "q.probe-dart-V36",
+      "source": "(decimal_integer_literal) @int\n(hex_integer_literal) @hex\n(decimal_floating_point_literal) @float\n"
+    },
+    {
+      "id": "q.probe-dart-V310",
+      "source": "(constructor_param (identifier) @ctorparam)\n(dot_shorthand (identifier) @shorthand)\n"
+    },
+    {
+      "id": "q.probe-dart-L01",
+      "source": "(optional_formal_parameters (decimal_integer_literal) @default)\n(optional_formal_parameters (string_literal) @default)\n"
     }
   ],
   "cases": [
@@ -70,6 +94,309 @@
               "name": "function",
               "type": "identifier",
               "text": "main"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-B02-Q-1",
+      "source_case": "probe-dart-B02-P-1",
+      "features": [
+        "dart-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-B02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "then",
+              "type": "decimal_integer_literal",
+              "text": "1"
+            },
+            {
+              "name": "else",
+              "type": "decimal_integer_literal",
+              "text": "2"
+            },
+            {
+              "name": "body",
+              "type": "identifier",
+              "text": "i"
+            },
+            {
+              "name": "spread",
+              "type": "identifier",
+              "text": "ys"
+            },
+            {
+              "name": "spread",
+              "type": "identifier",
+              "text": "zs"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V213-Q-1",
+      "source_case": "probe-dart-V213-PE-1",
+      "features": [
+        "dart-V213"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-V213",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "alias",
+              "type": "type_identifier",
+              "text": "IntList"
+            },
+            {
+              "name": "alias",
+              "type": "type_identifier",
+              "text": "Mapper"
+            },
+            {
+              "name": "superparam",
+              "type": "identifier",
+              "text": "x"
+            },
+            {
+              "name": "superparam",
+              "type": "identifier",
+              "text": "y"
+            },
+            {
+              "name": "tearoff",
+              "type": "type_identifier",
+              "text": "Base"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V30-Q-1",
+      "source_case": "probe-dart-V30-PE-1",
+      "features": [
+        "dart-V30"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-V30",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Shape"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Circle"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Square"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Named"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Drawable"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Logger"
+            },
+            {
+              "name": "exttype",
+              "type": "identifier",
+              "text": "Meters"
+            },
+            {
+              "name": "rep",
+              "type": "identifier",
+              "text": "value"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V36-Q-1",
+      "source_case": "probe-dart-V36-PE-1",
+      "features": [
+        "dart-V36"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-V36",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "int",
+              "type": "decimal_integer_literal",
+              "text": "1_000_000"
+            },
+            {
+              "name": "hex",
+              "type": "hex_integer_literal",
+              "text": "0x00_14_22"
+            },
+            {
+              "name": "float",
+              "type": "decimal_floating_point_literal",
+              "text": "0.000_001"
+            },
+            {
+              "name": "int",
+              "type": "decimal_integer_literal",
+              "text": "100__000"
+            },
+            {
+              "name": "float",
+              "type": "decimal_floating_point_literal",
+              "text": "1_0e1_0"
+            },
+            {
+              "name": "int",
+              "type": "decimal_integer_literal",
+              "text": "1"
+            },
+            {
+              "name": "int",
+              "type": "decimal_integer_literal",
+              "text": "2"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-V310-Q-1",
+      "source_case": "probe-dart-V310-PE-1",
+      "features": [
+        "dart-V310"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-V310",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "ctorparam",
+              "type": "identifier",
+              "text": "x"
+            },
+            {
+              "name": "ctorparam",
+              "type": "identifier",
+              "text": "y"
+            },
+            {
+              "name": "ctorparam",
+              "type": "identifier",
+              "text": "_owner"
+            },
+            {
+              "name": "ctorparam",
+              "type": "identifier",
+              "text": "_balance"
+            },
+            {
+              "name": "ctorparam",
+              "type": "identifier",
+              "text": "size"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "running"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "parse"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "origin"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "zero"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "running"
+            },
+            {
+              "name": "shorthand",
+              "type": "identifier",
+              "text": "none"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-dart-L01-Q-1",
+      "source_case": "probe-dart-L01-P-1",
+      "features": [
+        "dart-L01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-dart-L01",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "default",
+              "type": "decimal_integer_literal",
+              "text": "3"
+            },
+            {
+              "name": "default",
+              "type": "string_literal",
+              "text": "'fast'"
+            },
+            {
+              "name": "default",
+              "type": "decimal_integer_literal",
+              "text": "30"
             }
           ],
           "error": null

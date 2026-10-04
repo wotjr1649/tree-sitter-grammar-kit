@@ -5,6 +5,14 @@
     {
       "id": "q.structure",
       "source": "(type_spec name: (type_identifier) @type)\n(method_declaration name: (field_identifier) @method)\n(function_declaration name: (identifier) @function)\n(call_expression function: (selector_expression field: (field_identifier) @call))\n"
+    },
+    {
+      "id": "q.probe-v18",
+      "source": "(type_parameter_declaration name: (identifier) @tparam)\n(type_alias name: (type_identifier) @alias)\n"
+    },
+    {
+      "id": "q.probe-v27",
+      "source": "(method_declaration name: (field_identifier) @method)\n(type_parameter_declaration name: (identifier) @tparam)\n(keyed_element key: (literal_element) @key)\n"
     }
   ],
   "cases": [
@@ -66,6 +74,97 @@
               "name": "call",
               "type": "field_identifier",
               "text": "Sprint"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-go-V18-Q-1",
+      "source_case": "probe-go-V18-N-1",
+      "features": [
+        "go-V18"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v18",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "T"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "T"
+            },
+            {
+              "name": "alias",
+              "type": "type_identifier",
+              "text": "Vec"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "T"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "S"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "E"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "R"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-go-V27-Q-1",
+      "source_case": "probe-go-V27-PNE-1",
+      "features": [
+        "go-V27"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v27",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "method",
+              "type": "field_identifier",
+              "text": "Map"
+            },
+            {
+              "name": "tparam",
+              "type": "identifier",
+              "text": "U"
+            },
+            {
+              "name": "key",
+              "type": "literal_element",
+              "text": "X"
+            },
+            {
+              "name": "key",
+              "type": "literal_element",
+              "text": "Name"
             }
           ],
           "error": null

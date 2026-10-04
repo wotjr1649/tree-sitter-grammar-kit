@@ -98,6 +98,2807 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-bash-B01-01",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B01.a025",
+        "bash-B01.a026",
+        "bash-B01.a027",
+        "bash-B01.a028",
+        "bash-B01.a029",
+        "bash-B01.a030",
+        "bash-B01.a047",
+        "bash-B01.a048",
+        "bash-B01.a059",
+        "bash-B01.a031",
+        "bash-B01.a032",
+        "bash-B01.a033",
+        "bash-B01.a034",
+        "bash-B01.a035",
+        "bash-B01.a036",
+        "bash-B01.a037",
+        "bash-B01.a038",
+        "bash-B01.a039",
+        "bash-B01.a040",
+        "bash-B01.a041",
+        "bash-B01.a042",
+        "bash-B01.a043",
+        "bash-B01.a044",
+        "bash-B01.a045",
+        "bash-B01.a046"
+      ],
+      "source_utf8": "# full-line comment\necho a\\ b \\$HOME 'single $x \"q\"' \"double $HOME \\$ \\` \\\" \\\\ x\" # trailing comment\necho \"line \\\ncontinued\" one \\\n  two\necho $'bell\\a bs\\b esc\\e \\E ff\\f nl\\n cr\\r tab\\t vt\\v bsl\\\\ sq\\' dq\\\" qm\\? oct\\101 hex\\x41 ctl\\cA'\necho $\"translated text\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "command",
+            "string",
+            "raw_string",
+            "ansi_c_string",
+            "translated_string"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# full-line comment"
+            },
+            {
+              "type": "command",
+              "text": "echo a\\ b \\$HOME 'single $x \"q\"' \"double $HOME \\$ \\` \\\" \\\\ x\""
+            },
+            {
+              "type": "word",
+              "text": "a\\ b"
+            },
+            {
+              "type": "word",
+              "text": "\\$HOME"
+            },
+            {
+              "type": "raw_string",
+              "text": "'single $x \"q\"'"
+            },
+            {
+              "type": "string",
+              "text": "\"double $HOME \\$ \\` \\\" \\\\ x\""
+            },
+            {
+              "type": "comment",
+              "text": "# trailing comment"
+            },
+            {
+              "type": "command",
+              "text": "echo \"line \\\ncontinued\" one \\\n  two"
+            },
+            {
+              "type": "string",
+              "text": "\"line \\\ncontinued\""
+            },
+            {
+              "type": "command",
+              "text": "echo $'bell\\a bs\\b esc\\e \\E ff\\f nl\\n cr\\r tab\\t vt\\v bsl\\\\ sq\\' dq\\\" qm\\? oct\\101 hex\\x41 ctl\\cA'"
+            },
+            {
+              "type": "ansi_c_string",
+              "text": "$'bell\\a bs\\b esc\\e \\E ff\\f nl\\n cr\\r tab\\t vt\\v bsl\\\\ sq\\' dq\\\" qm\\? oct\\101 hex\\x41 ctl\\cA'"
+            },
+            {
+              "type": "command",
+              "text": "echo $\"translated text\""
+            },
+            {
+              "type": "translated_string",
+              "text": "$\"translated text\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-02",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a071",
+        "bash-B02.a070",
+        "bash-B02.a078",
+        "bash-B02.a079",
+        "bash-B02.a075",
+        "bash-B01.a049",
+        "bash-B01.a050",
+        "bash-B01.a051",
+        "bash-B01.a052",
+        "bash-B01.a053",
+        "bash-B01.a054",
+        "bash-B01.a055",
+        "bash-B01.a056",
+        "bash-B01.a057",
+        "bash-B01.a058",
+        "bash-B01.a077",
+        "bash-B01.a074",
+        "bash-B01.a028",
+        "bash-B02.a200",
+        "bash-B02.a127",
+        "bash-B02.a110",
+        "bash-B02.a111"
+      ],
+      "source_utf8": "name=value\ncount+=1\narr=(one two \"three four\")\narr[3]=five\narr+=(six)\nsparse=([0]=a [5]=b)\necho \"${arr[1]}\" \"${arr[@]}\" \"${arr[*]}\" \"${#arr[@]}\" \"${!arr[@]}\"\ndeclare -a decl=(x y)\ndeclare -a sized[10]\nfn() { local l=1; export E=2; readonly R=3; typeset T=4; }\nFOO=bar BAZ=qux env\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_assignment",
+            "array",
+            "subscript",
+            "expansion",
+            "declaration_command"
+          ],
+          "anchors": [
+            {
+              "type": "variable_assignment",
+              "text": "name=value"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "count+=1"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "arr=(one two \"three four\")"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "arr[3]=five"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "arr+=(six)"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "sparse=([0]=a [5]=b)"
+            },
+            {
+              "type": "array",
+              "text": "(one two \"three four\")"
+            },
+            {
+              "type": "subscript",
+              "text": "arr[3]"
+            },
+            {
+              "type": "array",
+              "text": "([0]=a [5]=b)"
+            },
+            {
+              "type": "expansion",
+              "text": "${arr[1]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${arr[@]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${arr[*]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${#arr[@]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!arr[@]}"
+            },
+            {
+              "type": "declaration_command",
+              "text": "declare -a decl=(x y)"
+            },
+            {
+              "type": "declaration_command",
+              "text": "declare -a sized[10]"
+            },
+            {
+              "type": "function_definition",
+              "text": "fn() { local l=1; export E=2; readonly R=3; typeset T=4; }"
+            },
+            {
+              "type": "declaration_command",
+              "text": "local l=1"
+            },
+            {
+              "type": "declaration_command",
+              "text": "export E=2"
+            },
+            {
+              "type": "declaration_command",
+              "text": "readonly R=3"
+            },
+            {
+              "type": "declaration_command",
+              "text": "typeset T=4"
+            },
+            {
+              "type": "command",
+              "text": "FOO=bar BAZ=qux env"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-03",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B01.a059",
+        "bash-B01.a060",
+        "bash-B01.a061",
+        "bash-B01.a062",
+        "bash-B01.a063",
+        "bash-B01.a064",
+        "bash-B01.a065",
+        "bash-B01.a066",
+        "bash-B01.a067",
+        "bash-B01.a068",
+        "bash-B01.a069",
+        "bash-B01.a070",
+        "bash-B01.a071",
+        "bash-B01.a077",
+        "bash-B01.a078",
+        "bash-B01.a079",
+        "bash-B01.a080",
+        "bash-B01.a081",
+        "bash-B01.a082",
+        "bash-B01.a083",
+        "bash-B01.a084",
+        "bash-B01.a085",
+        "bash-B01.a076",
+        "bash-B01.a072",
+        "bash-B01.a073",
+        "bash-B01.a075",
+        "bash-B01.a049",
+        "bash-B02.a071",
+        "bash-B02.a078"
+      ],
+      "source_utf8": "v=abc\necho $v ${v} ${v:-d} ${v-d} ${v:=d} ${v=d} ${v:+a} ${v+a}\necho ${v:?msg} ${v?msg}\necho ${v:1} ${v:1:2} ${v: -1} ${#v}\necho ${v#a} ${v##a*} ${v%c} ${v%%b*}\necho ${v/b/B} ${v//b/B} ${v/#a/A} ${v/%c/C}\necho ${!v} ${!BASH*} ${!BASH@} ${!arr[*]}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "expansion",
+            "simple_expansion",
+            "command"
+          ],
+          "anchors": [
+            {
+              "type": "variable_assignment",
+              "text": "v=abc"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$v"
+            },
+            {
+              "type": "expansion",
+              "text": "${v}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:-d}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v-d}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:=d}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v=d}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:+a}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v+a}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:?msg}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v?msg}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:1}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v:1:2}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v: -1}"
+            },
+            {
+              "type": "expansion",
+              "text": "${#v}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v#a}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v##a*}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v%c}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v%%b*}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v/b/B}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v//b/B}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v/#a/A}"
+            },
+            {
+              "type": "expansion",
+              "text": "${v/%c/C}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!v}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!BASH*}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!BASH@}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!arr[*]}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-04",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B01.a086",
+        "bash-B01.a087",
+        "bash-B01.a088",
+        "bash-B01.a089",
+        "bash-B01.a090",
+        "bash-B01.a091",
+        "bash-B01.a092",
+        "bash-B01.a093",
+        "bash-B01.a094",
+        "bash-B01.a049",
+        "bash-B02.a071",
+        "bash-B02.a078"
+      ],
+      "source_utf8": "echo {a,b,c} pre{x,y}post {1..5} {a..e} {a,{b,c}d}\necho ~ ~root ~+ ~- ~1 ~+1 ~-1\nPATH=~/bin:~root/bin\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command",
+            "word",
+            "brace_expression"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "echo {a,b,c} pre{x,y}post {1..5} {a..e} {a,{b,c}d}"
+            },
+            {
+              "type": "brace_expression",
+              "text": "{1..5}"
+            },
+            {
+              "type": "brace_expression",
+              "text": "{a..e}"
+            },
+            {
+              "type": "command",
+              "text": "echo ~ ~root ~+ ~- ~1 ~+1 ~-1"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "PATH=~/bin:~root/bin"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-05",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B01.a095",
+        "bash-B01.a096",
+        "bash-B01.a097",
+        "bash-B01.a098",
+        "bash-B01.a099",
+        "bash-B01.a100",
+        "bash-B01.a101",
+        "bash-B01.a114",
+        "bash-B02.a080",
+        "bash-B02.a081",
+        "bash-B01.a003",
+        "bash-B01.a007",
+        "bash-B01.a014",
+        "bash-B01.a049",
+        "bash-B02.a071",
+        "bash-B02.a078"
+      ],
+      "source_utf8": "echo $(date) `date` $(echo $(pwd)) `echo \\`pwd\\``\necho $(( 1 + 2 * 3 ))\ndiff <(ls a) <(ls b)\ntee >(wc -l) < /dev/null\ncontent=$(< file.txt)\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command_substitution",
+            "arithmetic_expansion",
+            "process_substitution",
+            "file_redirect"
+          ],
+          "anchors": [
+            {
+              "type": "command_substitution",
+              "text": "$(date)"
+            },
+            {
+              "type": "command_substitution",
+              "text": "`date`"
+            },
+            {
+              "type": "command_substitution",
+              "text": "$(echo $(pwd))"
+            },
+            {
+              "type": "command_substitution",
+              "text": "$(pwd)"
+            },
+            {
+              "type": "command_substitution",
+              "text": "`echo \\`pwd\\``"
+            },
+            {
+              "type": "arithmetic_expansion",
+              "text": "$(( 1 + 2 * 3 ))"
+            },
+            {
+              "type": "binary_expression",
+              "text": "1 + 2 * 3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 * 3"
+            },
+            {
+              "type": "process_substitution",
+              "text": "<(ls a)"
+            },
+            {
+              "type": "process_substitution",
+              "text": "<(ls b)"
+            },
+            {
+              "type": "process_substitution",
+              "text": ">(wc -l)"
+            },
+            {
+              "type": "redirected_statement",
+              "text": "tee >(wc -l) < /dev/null"
+            },
+            {
+              "type": "file_redirect",
+              "text": "< /dev/null"
+            },
+            {
+              "type": "command_substitution",
+              "text": "$(< file.txt)"
+            },
+            {
+              "type": "file_redirect",
+              "text": "< file.txt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-06",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B01.a102",
+        "bash-B01.a103",
+        "bash-B01.a104",
+        "bash-B01.a105",
+        "bash-B01.a106",
+        "bash-B01.a107",
+        "bash-B01.a108",
+        "bash-B01.a109",
+        "bash-B01.a110",
+        "bash-B01.a111",
+        "bash-B01.a112",
+        "bash-B01.a113"
+      ],
+      "source_utf8": "ls *.txt file?.log [abc]* [!x]* [^y]* [[:alpha:]]* [[=e=]]* [[.hyphen.]]*\nls ?(a|b) *(a) +(b) @(c|d) !(e)\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command",
+            "word"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "ls *.txt file?.log [abc]* [!x]* [^y]* [[:alpha:]]* [[=e=]]* [[.hyphen.]]*"
+            },
+            {
+              "type": "command",
+              "text": "ls ?(a|b) *(a) +(b) @(c|d) !(e)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-07",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a069",
+        "bash-B02.a071",
+        "bash-B02.a076",
+        "bash-B02.a077",
+        "bash-B02.a075",
+        "bash-B02.a080",
+        "bash-B02.a081",
+        "bash-B01.a003",
+        "bash-B01.a004",
+        "bash-B01.a007",
+        "bash-B01.a008",
+        "bash-B01.a009",
+        "bash-B01.a010",
+        "bash-B01.a011",
+        "bash-B01.a012",
+        "bash-B01.a013",
+        "bash-B01.a014",
+        "bash-B01.a114",
+        "bash-B01.a115",
+        "bash-B01.a116",
+        "bash-B01.a117",
+        "bash-B01.a118",
+        "bash-B01.a119",
+        "bash-B01.a124",
+        "bash-B01.a125",
+        "bash-B01.a126",
+        "bash-B01.a127",
+        "bash-B01.a128",
+        "bash-B01.a129",
+        "bash-B01.a130",
+        "bash-B01.a131",
+        "bash-B01.a019",
+        "bash-B01.a020",
+        "bash-B01.a021",
+        "bash-B01.a022",
+        "bash-B01.a024"
+      ],
+      "source_utf8": "cmd < in.txt > out.txt 2> err.txt\ncmd >| forced.txt >> app.txt 3<> rw.txt\ncmd &> both.txt\ncmd >& both2.txt\ncmd 2>&1 1<&0 3>&- 4<&-\ncmd 5>&3- 6<&4-\ncmd <<< \"here string\"\n> only-redirect.txt\n2>err.txt >out.txt cmd arg\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "redirected_statement",
+            "file_redirect",
+            "file_descriptor",
+            "herestring_redirect"
+          ],
+          "anchors": [
+            {
+              "type": "redirected_statement",
+              "text": "cmd < in.txt > out.txt 2> err.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "< in.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "> out.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "2> err.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": ">| forced.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": ">> app.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "3<> rw.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "&> both.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": ">& both2.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "2>&1"
+            },
+            {
+              "type": "file_redirect",
+              "text": "1<&0"
+            },
+            {
+              "type": "file_redirect",
+              "text": "3>&-"
+            },
+            {
+              "type": "file_redirect",
+              "text": "4<&-"
+            },
+            {
+              "type": "file_redirect",
+              "text": "5>&3-"
+            },
+            {
+              "type": "file_redirect",
+              "text": "6<&4-"
+            },
+            {
+              "type": "file_redirect",
+              "text": "> only-redirect.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": "2>err.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": ">out.txt"
+            },
+            {
+              "type": "redirected_statement",
+              "text": "cmd >| forced.txt >> app.txt 3<> rw.txt"
+            },
+            {
+              "type": "herestring_redirect",
+              "text": "<<< \"here string\""
+            },
+            {
+              "type": "redirected_statement",
+              "text": "> only-redirect.txt"
+            },
+            {
+              "type": "command",
+              "text": "2>err.txt >out.txt cmd arg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B01-08",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a080",
+        "bash-B02.a081",
+        "bash-B01.a005",
+        "bash-B01.a006",
+        "bash-B01.a003",
+        "bash-B01.a015",
+        "bash-B01.a016",
+        "bash-B01.a017",
+        "bash-B01.a009",
+        "bash-B01.a014",
+        "bash-B01.a120",
+        "bash-B01.a121",
+        "bash-B01.a122",
+        "bash-B01.a123",
+        "bash-B01.a115",
+        "bash-B01.a095",
+        "bash-B01.a018",
+        "bash-B01.a023"
+      ],
+      "source_utf8": "cat <<EOF\nexpanded $HOME $(date)\nEOF\ncat <<-'EOF'\n\tquoted tab-stripped $x\n\tEOF\ncat 3<<\"END\" > out.txt\nliteral $x\nEND\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "heredoc_redirect",
+            "heredoc_body",
+            "heredoc_start",
+            "heredoc_end"
+          ],
+          "anchors": [
+            {
+              "type": "heredoc_redirect",
+              "text": "<<EOF\nexpanded $HOME $(date)\nEOF"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "expanded $HOME $(date)\n"
+            },
+            {
+              "type": "heredoc_redirect",
+              "text": "<<-'EOF'\n\tquoted tab-stripped $x\n\tEOF"
+            },
+            {
+              "type": "heredoc_start",
+              "text": "'EOF'"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "quoted tab-stripped $x\n\t"
+            },
+            {
+              "type": "heredoc_redirect",
+              "text": "3<<\"END\" > out.txt\nliteral $x\nEND"
+            },
+            {
+              "type": "heredoc_start",
+              "text": "\"END\""
+            },
+            {
+              "type": "file_redirect",
+              "text": "> out.txt"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "literal $x\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-01",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a002",
+        "bash-B02.a005",
+        "bash-B02.a007",
+        "bash-B02.a010",
+        "bash-B02.a011",
+        "bash-B02.a013",
+        "bash-B02.a015",
+        "bash-B02.a016",
+        "bash-B02.a069",
+        "bash-B02.a073",
+        "bash-B02.a078",
+        "bash-B02.a075",
+        "bash-B02.a080",
+        "bash-B02.a081",
+        "bash-B01.a003",
+        "bash-B01.a009",
+        "bash-B01.a014",
+        "bash-B02.a088",
+        "bash-B02.a089",
+        "bash-B02.a087",
+        "bash-B02.a118",
+        "bash-B02.a119",
+        "bash-B02.a120",
+        "bash-B02.a121",
+        "bash-B02.a123",
+        "bash-B02.a124",
+        "bash-B02.a125",
+        "bash-B01.a051",
+        "bash-B02.a094",
+        "bash-B02.a095",
+        "bash-B02.a112",
+        "bash-B02.a115"
+      ],
+      "source_utf8": "echo hello world\nVAR=1 cmd arg >out\nls | grep x | wc -l\n! grep -q x file\ntime ls\ntime -p ls | wc\ncmd1 && cmd2 || cmd3\ncmd1 ; cmd2 & cmd3\nsleep 1 &\nls |\n  wc\ntrue &&\n  false\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command",
+            "pipeline",
+            "list",
+            "negated_command"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "echo hello world"
+            },
+            {
+              "type": "redirected_statement",
+              "text": "VAR=1 cmd arg >out"
+            },
+            {
+              "type": "pipeline",
+              "text": "ls | grep x | wc -l"
+            },
+            {
+              "type": "negated_command",
+              "text": "! grep -q x file"
+            },
+            {
+              "type": "pipeline",
+              "text": "time -p ls | wc"
+            },
+            {
+              "type": "list",
+              "text": "cmd1 && cmd2 || cmd3"
+            },
+            {
+              "type": "command",
+              "text": "cmd2",
+              "occurrence": 2
+            },
+            {
+              "type": "command",
+              "text": "cmd3",
+              "occurrence": 2
+            },
+            {
+              "type": "command",
+              "text": "sleep 1"
+            },
+            {
+              "type": "pipeline",
+              "text": "ls |\n  wc"
+            },
+            {
+              "type": "list",
+              "text": "true &&\n  false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-02",
+      "features": [
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a018",
+        "bash-B02.a026",
+        "bash-B02.a027",
+        "bash-B02.a023",
+        "bash-B02.a033",
+        "bash-B02.a034",
+        "bash-B02.a035",
+        "bash-B02.a036",
+        "bash-B02.a037",
+        "bash-B02.a038",
+        "bash-B02.a039",
+        "bash-B02.a040",
+        "bash-B02.a061",
+        "bash-B02.a062",
+        "bash-B02.a068",
+        "bash-B02.a029",
+        "bash-B02.a030",
+        "bash-B02.a032",
+        "bash-B02.a090",
+        "bash-B02.a091",
+        "bash-B02.a092",
+        "bash-B02.a093",
+        "bash-B02.a128",
+        "bash-B02.a129",
+        "bash-B02.a130",
+        "bash-B02.a131",
+        "bash-B02.a132",
+        "bash-B02.a135",
+        "bash-B02.a102",
+        "bash-B02.a103",
+        "bash-B02.a106",
+        "bash-B02.a107",
+        "bash-B02.a108",
+        "bash-B02.a109",
+        "bash-B02.a114"
+      ],
+      "source_utf8": "until false; do break; done\nwhile true; do continue; done\nfor x in a b c; do echo $x; done\nfor y; do echo $y; done\nfor z in; do :; done\nfor ((i = 0; i < 3; i++)); do echo $i; done\nfor ((;;)) ; do break; done\nselect opt in a b; do break; done\nselect o; do break; done\nfor w\ndo echo $w\ndone\nfor v\nin d e\ndo :\ndone\nfor u do :; done\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "while_statement",
+            "for_statement",
+            "c_style_for_statement",
+            "do_group"
+          ],
+          "anchors": [
+            {
+              "type": "while_statement",
+              "text": "until false; do break; done"
+            },
+            {
+              "type": "while_statement",
+              "text": "while true; do continue; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "for x in a b c; do echo $x; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "for y; do echo $y; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "for z in; do :; done"
+            },
+            {
+              "type": "c_style_for_statement",
+              "text": "for ((i = 0; i < 3; i++)); do echo $i; done"
+            },
+            {
+              "type": "c_style_for_statement",
+              "text": "for ((;;)) ; do break; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "select opt in a b; do break; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "select o; do break; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "for w\ndo echo $w\ndone"
+            },
+            {
+              "type": "for_statement",
+              "text": "for v\nin d e\ndo :\ndone"
+            },
+            {
+              "type": "for_statement",
+              "text": "for u do :; done"
+            },
+            {
+              "type": "do_group",
+              "text": "do :\ndone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-03",
+      "features": [
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a018",
+        "bash-B02.a024",
+        "bash-B02.a025",
+        "bash-B02.a056",
+        "bash-B02.a057",
+        "bash-B02.a041",
+        "bash-B02.a042",
+        "bash-B02.a043",
+        "bash-B02.a046",
+        "bash-B02.a047",
+        "bash-B02.a044",
+        "bash-B02.a045",
+        "bash-B02.a050",
+        "bash-B02.a051",
+        "bash-B02.a048",
+        "bash-B02.a049",
+        "bash-B02.a052",
+        "bash-B02.a053",
+        "bash-B02.a054",
+        "bash-B02.a055",
+        "bash-B02.a029",
+        "bash-B02.a030",
+        "bash-B02.a031",
+        "bash-B02.a032",
+        "bash-B02.a090",
+        "bash-B02.a091",
+        "bash-B02.a133",
+        "bash-B02.a134",
+        "bash-B02.a059",
+        "bash-B02.a060",
+        "bash-B02.a096",
+        "bash-B02.a097",
+        "bash-B02.a098",
+        "bash-B02.a099",
+        "bash-B02.a100",
+        "bash-B02.a101",
+        "bash-B02.a104",
+        "bash-B02.a105",
+        "bash-B02.a109"
+      ],
+      "source_utf8": "if true; then echo a; elif false; then echo b; else echo c; fi\nif true\nthen :\nfi\ncase $x in\n  a|b) echo ab ;;\n  (c) echo c ;;\n  *) echo other\nesac\ncase $y in esac\ncase $z in\n  q) ;;\nesac\ncase $w in\n  x)\nesac\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "elif_clause",
+            "else_clause",
+            "case_statement",
+            "case_item"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if true; then echo a; elif false; then echo b; else echo c; fi"
+            },
+            {
+              "type": "elif_clause",
+              "text": "elif false; then echo b;"
+            },
+            {
+              "type": "else_clause",
+              "text": "else echo c;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if true\nthen :\nfi"
+            },
+            {
+              "type": "case_statement",
+              "text": "case $x in\n  a|b) echo ab ;;\n  (c) echo c ;;\n  *) echo other\nesac"
+            },
+            {
+              "type": "case_item",
+              "text": "a|b) echo ab ;;"
+            },
+            {
+              "type": "case_item",
+              "text": "(c) echo c ;;"
+            },
+            {
+              "type": "case_statement",
+              "text": "case $y in esac"
+            },
+            {
+              "type": "case_statement",
+              "text": "case $z in\n  q) ;;\nesac"
+            },
+            {
+              "type": "case_item",
+              "text": "q) ;;"
+            },
+            {
+              "type": "case_statement",
+              "text": "case $w in\n  x)\nesac"
+            },
+            {
+              "type": "case_item",
+              "text": "x)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-04",
+      "features": [
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a018",
+        "bash-B02.a021",
+        "bash-B02.a022",
+        "bash-B02.a025",
+        "bash-B02.a028",
+        "bash-B02.a067",
+        "bash-B02.a029",
+        "bash-B02.a030",
+        "bash-B02.a031",
+        "bash-B02.a032",
+        "bash-B02.a090",
+        "bash-B02.a091",
+        "bash-B02.a056",
+        "bash-B02.a058",
+        "bash-B02.a059",
+        "bash-B02.a126",
+        "bash-B02.a127",
+        "bash-B02.a136",
+        "bash-B02.a137",
+        "bash-B02.a138",
+        "bash-B02.a139",
+        "bash-B02.a140",
+        "bash-B02.a141",
+        "bash-B02.a142",
+        "bash-B02.a143",
+        "bash-B02.a144",
+        "bash-B02.a145",
+        "bash-B02.a146",
+        "bash-B02.a152",
+        "bash-B02.a150",
+        "bash-B02.a173",
+        "bash-B02.a172",
+        "bash-B02.a174",
+        "bash-B02.a175",
+        "bash-B02.a176",
+        "bash-B02.a177",
+        "bash-B02.a178",
+        "bash-B02.a179",
+        "bash-B02.a180",
+        "bash-B02.a094",
+        "bash-B02.a097",
+        "bash-B02.a098",
+        "bash-B02.a100",
+        "bash-B02.a101",
+        "bash-B02.a110",
+        "bash-B02.a111",
+        "bash-B02.a116"
+      ],
+      "source_utf8": "( cd /tmp && ls )\n{ echo a; echo b; }\n{ echo c\n}\n(( x = 1 + 2 ))\n[[ -f file && ! -d dir || ( -n $s ) ]]\n[[ $a == b* ]]\n[[ $a = c ]]\n[[ $a != d ]]\n[[ $a < e ]]\n[[ $a > f ]]\n[[ $a =~ ^[0-9]+$ ]]\n[[ -z $s ]] ; [[ $s ]]\n[[ 1 -eq 1 && 1 -ne 2 && 1 -lt 2 && 1 -le 2 && 2 -gt 1 && 2 -ge 1 ]]\nif true; then :; elif false; then :; elif true; then :; fi\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "subshell",
+            "compound_statement",
+            "test_command",
+            "binary_expression",
+            "unary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "subshell",
+              "text": "( cd /tmp && ls )"
+            },
+            {
+              "type": "list",
+              "text": "cd /tmp && ls"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ echo a; echo b; }"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ echo c\n}"
+            },
+            {
+              "type": "compound_statement",
+              "text": "(( x = 1 + 2 ))"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ -f file && ! -d dir || ( -n $s ) ]]"
+            },
+            {
+              "type": "binary_expression",
+              "text": "-f file && ! -d dir"
+            },
+            {
+              "type": "unary_expression",
+              "text": "! -d dir"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "( -n $s )"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a == b* ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a = c ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a != d ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a < e ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a > f ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $a =~ ^[0-9]+$ ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ -z $s ]]"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ $s ]]"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a =~ ^[0-9]+$"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ 1 -eq 1 && 1 -ne 2 && 1 -lt 2 && 1 -le 2 && 2 -gt 1 && 2 -ge 1 ]]"
+            },
+            {
+              "type": "binary_expression",
+              "text": "1 -eq 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 -ge 1"
+            },
+            {
+              "type": "if_statement",
+              "text": "if true; then :; elif false; then :; elif true; then :; fi"
+            },
+            {
+              "type": "elif_clause",
+              "text": "elif false; then :;"
+            },
+            {
+              "type": "elif_clause",
+              "text": "elif true; then :;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-05",
+      "features": [
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a137",
+        "bash-B02.a141",
+        "bash-B02.a124",
+        "bash-B02.a147",
+        "bash-B02.a148",
+        "bash-B02.a149",
+        "bash-B02.a150",
+        "bash-B02.a151",
+        "bash-B02.a152",
+        "bash-B02.a153",
+        "bash-B02.a154",
+        "bash-B02.a155",
+        "bash-B02.a156",
+        "bash-B02.a157",
+        "bash-B02.a158",
+        "bash-B02.a159",
+        "bash-B02.a160",
+        "bash-B02.a161",
+        "bash-B02.a162",
+        "bash-B02.a163",
+        "bash-B02.a164",
+        "bash-B02.a165",
+        "bash-B02.a166",
+        "bash-B02.a167",
+        "bash-B02.a168",
+        "bash-B02.a169",
+        "bash-B02.a170",
+        "bash-B02.a171",
+        "bash-B02.a173",
+        "bash-B02.a172",
+        "bash-B02.a094",
+        "bash-B02.a116"
+      ],
+      "source_utf8": "[[ -a f || -b f || -c f || -d f || -e f || -f f || -g f || -h f || -k f || -p f || -r f || -s f || -t 1 ]]\n[[ -u f || -w f || -x f || -G f || -L f || -N f || -O f || -S f ]]\n[[ f -ef g || f -nt g || f -ot g || -o errexit ]]\n[ -n \"$s\" ] && test -z \"$t\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "test_command",
+            "unary_expression",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "test_command",
+              "text": "[[ -a f || -b f || -c f || -d f || -e f || -f f || -g f || -h f || -k f || -p f || -r f || -s f || -t 1 ]]"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a f"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-t 1"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ -u f || -w f || -x f || -G f || -L f || -N f || -O f || -S f ]]"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-S f"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ f -ef g || f -nt g || f -ot g || -o errexit ]]"
+            },
+            {
+              "type": "binary_expression",
+              "text": "f -ef g"
+            },
+            {
+              "type": "binary_expression",
+              "text": "f -nt g"
+            },
+            {
+              "type": "binary_expression",
+              "text": "f -ot g"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-o errexit"
+            },
+            {
+              "type": "list",
+              "text": "[ -n \"$s\" ] && test -z \"$t\""
+            },
+            {
+              "type": "test_command",
+              "text": "[ -n \"$s\" ]"
+            },
+            {
+              "type": "command",
+              "text": "test -z \"$t\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-06",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a136",
+        "bash-B01.a099",
+        "bash-B02.a181",
+        "bash-B02.a182",
+        "bash-B02.a183",
+        "bash-B02.a184",
+        "bash-B02.a185",
+        "bash-B02.a186",
+        "bash-B02.a187",
+        "bash-B02.a188",
+        "bash-B02.a189",
+        "bash-B02.a190",
+        "bash-B02.a191",
+        "bash-B02.a192",
+        "bash-B02.a193",
+        "bash-B02.a194",
+        "bash-B02.a195",
+        "bash-B02.a196",
+        "bash-B02.a197",
+        "bash-B02.a198",
+        "bash-B02.a199"
+      ],
+      "source_utf8": "(( a = 1, b = a++ + a-- - ++a + --a ))\n(( c = -a + +b, d = !a, e = ~b ))\n(( f = 2 ** 3 * 4 / 2 % 3 ))\n(( g = 1 << 2 >> 1 ))\n(( h = (a <= b) + (a >= b) + (a < b) + (a > b) + (a == b) + (a != b) ))\n(( i = a & b ^ c | d ))\n(( j = a && b || c ))\n(( k = a ? b : c ))\n(( a *= 2, a /= 2, a %= 3, a += 1, a -= 1, a <<= 1, a >>= 1, a &= 1, a ^= 1, a |= 1 ))\n(( n = 0x1F + 017 + 2#101 + 36#zz + 10 ))\necho $(( 7 % 3 ))\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "compound_statement",
+            "binary_expression",
+            "arithmetic_expansion",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "compound_statement",
+              "text": "(( a = 1, b = a++ + a-- - ++a + --a ))"
+            },
+            {
+              "type": "postfix_expression",
+              "text": "a++"
+            },
+            {
+              "type": "postfix_expression",
+              "text": "a--"
+            },
+            {
+              "type": "unary_expression",
+              "text": "++a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "--a"
+            },
+            {
+              "type": "compound_statement",
+              "text": "(( c = -a + +b, d = !a, e = ~b ))"
+            },
+            {
+              "type": "binary_expression",
+              "text": "-a + +b"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a",
+              "occurrence": 2
+            },
+            {
+              "type": "unary_expression",
+              "text": "+b"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "~b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 ** 3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "1 << 2"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(a <= b)"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(a != b)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a & b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a && b"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "a ? b : c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a *= 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a <<= 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a |= 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "0x1F + 017"
+            },
+            {
+              "type": "compound_statement",
+              "text": "(( n = 0x1F + 017 + 2#101 + 36#zz + 10 ))"
+            },
+            {
+              "type": "arithmetic_expansion",
+              "text": "$(( 7 % 3 ))"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-07",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a019",
+        "bash-B02.a020",
+        "bash-B02.a063",
+        "bash-B02.a064",
+        "bash-B02.a065",
+        "bash-B02.a066",
+        "bash-B01.a001",
+        "bash-B01.a002",
+        "bash-B02.a021",
+        "bash-B02.a022",
+        "bash-B02.a023",
+        "bash-B02.a025",
+        "bash-B01.a003",
+        "bash-B01.a004",
+        "bash-B01.a007",
+        "bash-B01.a009",
+        "bash-B01.a010",
+        "bash-B01.a014",
+        "bash-B02.a200",
+        "bash-B02.a201",
+        "bash-B02.a202",
+        "bash-B02.a203",
+        "bash-B02.a204",
+        "bash-B02.a205",
+        "bash-B02.a136",
+        "bash-B02.a137",
+        "bash-B02.a173",
+        "bash-B02.a097",
+        "bash-B02.a098",
+        "bash-B02.a101",
+        "bash-B02.a102",
+        "bash-B02.a103",
+        "bash-B02.a108",
+        "bash-B02.a109",
+        "bash-B02.a110",
+        "bash-B02.a111",
+        "bash-B01.a021",
+        "bash-B02.a113",
+        "bash-B02.a116"
+      ],
+      "source_utf8": "f() { echo f; }\ng () ( echo sub )\nfunction h { echo h; }\nfunction i() { echo i; }\nj() { echo j; } > log 2>&1\nfunction k { :; } < input\nl() if true; then :; fi\nm() (( 1 ))\nn() [[ -n x ]]\no() for x in a; do :; done\np()\n{\n  return 0\n}\n{ echo grouped; } > out 2>&1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "compound_statement",
+            "subshell"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "f() { echo f; }"
+            },
+            {
+              "type": "function_definition",
+              "text": "g () ( echo sub )"
+            },
+            {
+              "type": "function_definition",
+              "text": "function h { echo h; }"
+            },
+            {
+              "type": "function_definition",
+              "text": "function i() { echo i; }"
+            },
+            {
+              "type": "function_definition",
+              "text": "j() { echo j; } > log 2>&1"
+            },
+            {
+              "type": "function_definition",
+              "text": "function k { :; } < input"
+            },
+            {
+              "type": "function_definition",
+              "text": "l() if true; then :; fi"
+            },
+            {
+              "type": "function_definition",
+              "text": "m() (( 1 ))"
+            },
+            {
+              "type": "function_definition",
+              "text": "n() [[ -n x ]]"
+            },
+            {
+              "type": "function_definition",
+              "text": "o() for x in a; do :; done"
+            },
+            {
+              "type": "for_statement",
+              "text": "for x in a; do :; done"
+            },
+            {
+              "type": "function_definition",
+              "text": "p()\n{\n  return 0\n}"
+            },
+            {
+              "type": "redirected_statement",
+              "text": "{ echo grouped; } > out 2>&1"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ echo grouped; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-08",
+      "features": [
+        "bash-B01",
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a206",
+        "bash-B02.a207",
+        "bash-B01.a061",
+        "bash-B01.a060",
+        "bash-B02.a208",
+        "bash-B02.a209",
+        "bash-B02.a210",
+        "bash-B02.a211",
+        "bash-B02.a212",
+        "bash-B02.a213",
+        "bash-B02.a214",
+        "bash-B02.a215"
+      ],
+      "source_utf8": "echo $1 $9 ${10} ${11:-x} \"$*\" \"$@\" $# $? $- $$ $! $0\nshift; set -- a b\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "simple_expansion",
+            "expansion",
+            "special_variable_name"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "echo $1 $9 ${10} ${11:-x} \"$*\" \"$@\" $# $? $- $$ $! $0"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$1"
+            },
+            {
+              "type": "expansion",
+              "text": "${10}"
+            },
+            {
+              "type": "expansion",
+              "text": "${11:-x}"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$*"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$@"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$#"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$?"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$-"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$$"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$!"
+            },
+            {
+              "type": "simple_expansion",
+              "text": "$0"
+            },
+            {
+              "type": "command",
+              "text": "shift"
+            },
+            {
+              "type": "command",
+              "text": "set -- a b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-V4-01",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V4"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-V4.a007",
+        "bash-V4.a008",
+        "bash-V4.a009",
+        "bash-V4.a010",
+        "bash-V4.a011",
+        "bash-B01.a057",
+        "bash-B02.a102",
+        "bash-B02.a103",
+        "bash-B02.a106",
+        "bash-B02.a110",
+        "bash-B02.a111",
+        "bash-V4.a006"
+      ],
+      "source_utf8": "coproc cat\ncoproc NAME { cat; }\ncoproc NAME2 while read l; do echo $l; done\ncoproc { cat; }\ncoproc cat > /dev/null\necho \"${NAME[1]}\" \"$NAME_PID\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command"
+          ],
+          "anchors": [
+            {
+              "type": "compound_statement",
+              "text": "{ cat; }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while read l; do echo $l; done"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ cat; }",
+              "occurrence": 2
+            },
+            {
+              "type": "redirected_statement",
+              "text": "coproc cat > /dev/null"
+            },
+            {
+              "type": "expansion",
+              "text": "${NAME[1]}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-V4-02",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V4"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a041",
+        "bash-B02.a046",
+        "bash-B02.a047",
+        "bash-B02.a050",
+        "bash-B02.a051",
+        "bash-V4.a001",
+        "bash-V4.a002",
+        "bash-B02.a052",
+        "bash-V4.a003",
+        "bash-V4.a012",
+        "bash-V4.a013",
+        "bash-V4.a014",
+        "bash-V4.a015",
+        "bash-V4.a016",
+        "bash-B02.a134",
+        "bash-B02.a096",
+        "bash-V4.a005",
+        "bash-B02.a104",
+        "bash-B02.a105",
+        "bash-B02.a109",
+        "bash-B01.a021"
+      ],
+      "source_utf8": "case $x in\n  a) echo a ;&\n  b) echo b ;;&\n  d) ;&\n  c) echo c ;;\nesac\nls |& grep err\ncmd &>> all.log\nexec {fd}> out.txt\necho hi >&$fd\nexec {fd}>&-\ncat {in}< file\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "case_statement",
+            "case_item",
+            "pipeline",
+            "file_redirect"
+          ],
+          "anchors": [
+            {
+              "type": "case_statement",
+              "text": "case $x in\n  a) echo a ;&\n  b) echo b ;;&\n  d) ;&\n  c) echo c ;;\nesac"
+            },
+            {
+              "type": "case_item",
+              "text": "a) echo a ;&"
+            },
+            {
+              "type": "case_item",
+              "text": "b) echo b ;;&"
+            },
+            {
+              "type": "case_item",
+              "text": "d) ;&"
+            },
+            {
+              "type": "case_item",
+              "text": "c) echo c ;;"
+            },
+            {
+              "type": "pipeline",
+              "text": "ls |& grep err"
+            },
+            {
+              "type": "file_redirect",
+              "text": "&>> all.log"
+            },
+            {
+              "type": "file_redirect",
+              "text": "{fd}> out.txt"
+            },
+            {
+              "type": "file_redirect",
+              "text": ">&$fd"
+            },
+            {
+              "type": "file_redirect",
+              "text": "{fd}>&-"
+            },
+            {
+              "type": "file_redirect",
+              "text": "{in}< file"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-V4-03",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V4"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-V4.a017",
+        "bash-V4.a018",
+        "bash-V4.a019",
+        "bash-V4.a020",
+        "bash-V4.a021",
+        "bash-V4.a022",
+        "bash-V4.a023",
+        "bash-V4.a024",
+        "bash-V4.a035",
+        "bash-V4.a036",
+        "bash-V4.a037",
+        "bash-V4.a038",
+        "bash-V4.a039",
+        "bash-B01.a074",
+        "bash-V4.a025",
+        "bash-V4.a026",
+        "bash-V4.a027",
+        "bash-V4.a028",
+        "bash-V4.a029",
+        "bash-V4.a030",
+        "bash-V4.a031",
+        "bash-V4.a032",
+        "bash-V4.a033",
+        "bash-V4.a034",
+        "bash-B02.a116"
+      ],
+      "source_utf8": "declare -A map\nmap[key]=value\nmap=([k1]=v1 [k2]=\"v 2\")\necho \"${map[key]}\" \"${!map[@]}\"\ns=hello\narr=(1 2 3)\necho ${s^} ${s^^} ${s,} ${s,,} ${s^^[aeiou]}\necho ${s@U} ${s@u} ${s@L} ${s@Q} ${s@E} ${s@P} ${s@A} ${s@K} ${s@a} ${s@k}\necho ${s:1:-1} ${arr[-1]}\necho {1..10..2} {01..10} {a..z..3}\necho $'\\u00e9 \\U0001F600'\n[[ -v s && ! -R s ]]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration_command",
+            "expansion",
+            "subscript",
+            "ansi_c_string",
+            "test_command"
+          ],
+          "anchors": [
+            {
+              "type": "declaration_command",
+              "text": "declare -A map"
+            },
+            {
+              "type": "subscript",
+              "text": "map[key]"
+            },
+            {
+              "type": "array",
+              "text": "([k1]=v1 [k2]=\"v 2\")"
+            },
+            {
+              "type": "expansion",
+              "text": "${map[key]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${!map[@]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s^}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s^^}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s,}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s,,}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s^^[aeiou]}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@U}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@u}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@L}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@Q}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@E}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@P}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@A}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@K}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@a}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s@k}"
+            },
+            {
+              "type": "expansion",
+              "text": "${s:1:-1}"
+            },
+            {
+              "type": "expansion",
+              "text": "${arr[-1]}"
+            },
+            {
+              "type": "subscript",
+              "text": "arr[-1]"
+            },
+            {
+              "type": "brace_expression",
+              "text": "{1..10..2}"
+            },
+            {
+              "type": "brace_expression",
+              "text": "{01..10}"
+            },
+            {
+              "type": "brace_expression",
+              "text": "{a..z..3}"
+            },
+            {
+              "type": "ansi_c_string",
+              "text": "$'\\u00e9 \\U0001F600'"
+            },
+            {
+              "type": "test_command",
+              "text": "[[ -v s && ! -R s ]]"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-v s"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-R s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-V4-04",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V4"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-V4.a004",
+        "bash-B01.a015",
+        "bash-B01.a016",
+        "bash-B01.a017",
+        "bash-V4.a016",
+        "bash-B01.a120",
+        "bash-B01.a018"
+      ],
+      "source_utf8": "cat {h}<<EOF\nbody\nEOF\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "heredoc_redirect"
+          ],
+          "anchors": [
+            {
+              "type": "redirected_statement",
+              "text": "cat {h}<<EOF\nbody\nEOF"
+            },
+            {
+              "type": "heredoc_redirect",
+              "text": "{h}<<EOF\nbody\nEOF"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "body\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-V53-01",
+      "features": [
+        "bash-B01",
+        "bash-B02",
+        "bash-V53"
+      ],
+      "alternatives": [
+        "bash-B02.a001",
+        "bash-B02.a003",
+        "bash-B02.a004",
+        "bash-B02.a006",
+        "bash-B02.a008",
+        "bash-B02.a009",
+        "bash-B02.a012",
+        "bash-B02.a014",
+        "bash-B02.a017",
+        "bash-B02.a072",
+        "bash-B02.a074",
+        "bash-B02.a082",
+        "bash-B02.a083",
+        "bash-B02.a084",
+        "bash-B02.a085",
+        "bash-B02.a086",
+        "bash-B02.a117",
+        "bash-B02.a122",
+        "bash-B02.a071",
+        "bash-B02.a078",
+        "bash-B01.a049",
+        "bash-V53.a001",
+        "bash-V53.a002",
+        "bash-V53.a003",
+        "bash-V53.a004",
+        "bash-V53.a005",
+        "bash-V53.a006",
+        "bash-V53.a007",
+        "bash-B02.a111"
+      ],
+      "source_utf8": "x=${ echo current; }\ny=${\techo tab; }\nz=${\necho newline\n}\nr=${| REPLY=12345; }\nw=${ local X=1; echo $X;}\nv=${ echo a; }tail\necho \"${ date; }\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_assignment",
+            "command_substitution"
+          ],
+          "anchors": [
+            {
+              "type": "variable_assignment",
+              "text": "x=${ echo current; }"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${ echo current; }"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "y=${\techo tab; }"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${\techo tab; }"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "z=${\necho newline\n}"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${\necho newline\n}"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "r=${| REPLY=12345; }"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${| REPLY=12345; }"
+            },
+            {
+              "type": "variable_assignment",
+              "text": "w=${ local X=1; echo $X;}"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${ local X=1; echo $X;}"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${ echo a; }"
+            },
+            {
+              "type": "command_substitution",
+              "text": "${ date; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-bash-B02-09",
+      "features": [
+        "bash-B02"
+      ],
+      "alternatives": [
+        "bash-B02.a002",
+        "bash-B02.a086",
+        "bash-B02.a084",
+        "bash-B02.a085"
+      ],
+      "source_utf8": "\n# no commands\n\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# no commands"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-bash-B01-NR-1",
+      "features": [
+        "bash-B01"
+      ],
+      "source_utf8": "name='world'\nfiles=(a.txt \"b c.txt\")\necho \"hello ${name}\" > greeting.txt\ncat <<EOF\ntotal: $((1 + ${#files[@]}))\nEOF\ndiff <(sort a.txt) <(sort b.txt)\n",
+      "edits": [
+        {
+          "find": "${name}\" > greeting.txt",
+          "replace": "${name}\" >"
+        },
+        {
+          "find": "${name}\" >",
+          "replace": "${name}\" > greeting.txt"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "heredoc_redirect",
+            "arithmetic_expansion",
+            "process_substitution"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-bash-B02-R-1",
+      "features": [
+        "bash-B02"
+      ],
+      "source_utf8": "if [ -n \"$1\" ]; then\n  echo arg\nfi\ngreet() { echo hi; }\ncase \"$1\" in\n  x) greet ;;\nesac\n",
+      "edits": [
+        {
+          "find": "; then\n",
+          "replace": ";\n"
+        },
+        {
+          "find": "\"$1\" ];\n",
+          "replace": "\"$1\" ]; then\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_definition",
+            "case_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "greet() { echo hi; }"
+            },
+            {
+              "type": "case_statement",
+              "text": "case \"$1\" in\n  x) greet ;;\nesac"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-bash-V4-NRQ-1",
+      "features": [
+        "bash-V4"
+      ],
+      "source_utf8": "echo log &>> out.log\ndeclare -A color\ncolor[apple]=red\ncase \"$1\" in\n  a) echo one ;&\n  b) echo two ;;&\n  *) echo \"${color[apple]@Q}\" ;;\nesac\necho hi |& cat\n",
+      "edits": [
+        {
+          "find": "&>> out.log",
+          "replace": "&>>"
+        },
+        {
+          "find": "&>>\n",
+          "replace": "&>> out.log\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "case_statement",
+            "subscript",
+            "pipeline"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-bash-V53-PNRE-1",
+      "features": [
+        "bash-V53"
+      ],
+      "source_utf8": "x=${ echo hi; }\ny=${| REPLY=there; }\nz=${\n  pwd\n}\nprintf '%s %s %s' \"$x\" \"$y\" \"$z\"\n",
+      "edits": [
+        {
+          "find": "${ echo hi; }",
+          "replace": "${ ; }"
+        },
+        {
+          "find": "${ ; }",
+          "replace": "${ echo hi; }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_assignment",
+            "command_substitution"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "command_substitution",
+            "command"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_assignment",
+            "command_substitution"
+          ]
+        }
+      ]
     }
   ]
 }

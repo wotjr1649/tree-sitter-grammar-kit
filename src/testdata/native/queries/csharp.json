@@ -5,6 +5,46 @@
     {
       "id": "q.structure",
       "source": "(record_declaration name: (identifier) @record)\n(enum_declaration name: (identifier) @enum)\n(class_declaration name: (identifier) @class)\n(method_declaration name: (identifier) @method)\n"
+    },
+    {
+      "id": "q.probe-B02",
+      "source": "(nullable_type) @nullable\n(array_type) @array\n(pointer_type) @pointer\n(tuple_type) @tuple\n(generic_name) @generic\n"
+    },
+    {
+      "id": "q.probe-B03",
+      "source": "(from_clause name: (identifier) @range)\n(where_clause) @where\n(select_clause) @select\n(lambda_expression) @lambda\n(anonymous_object_creation_expression) @anonymous\n"
+    },
+    {
+      "id": "q.probe-V73",
+      "source": "(type_parameter_constraint) @constraint\n(attribute_target_specifier) @target\n(ref_expression) @ref\n"
+    },
+    {
+      "id": "q.probe-V08",
+      "source": "(switch_expression_arm) @arm\n(range_expression) @range\n"
+    },
+    {
+      "id": "q.probe-V10",
+      "source": "(using_directive) @using\n(file_scoped_namespace_declaration name: (qualified_name) @namespace)\n(record_declaration name: (identifier) @record)\n(lambda_expression type: (predefined_type) @lambda_return)\n"
+    },
+    {
+      "id": "q.probe-V11",
+      "source": "(raw_string_literal) @raw\n(list_pattern) @list\n(slice_pattern) @slice\n"
+    },
+    {
+      "id": "q.probe-V12",
+      "source": "(using_directive name: (identifier) @alias)\n(class_declaration name: (identifier) @class (parameter_list) @primary)\n(collection_expression) @collection\n(spread_element) @spread\n"
+    },
+    {
+      "id": "q.probe-V13",
+      "source": "(indexer_declaration (modifier) @indexer_modifier)\n(escape_sequence) @escape\n(type_parameter_constraints_clause) @where\n"
+    },
+    {
+      "id": "q.probe-V14a",
+      "source": "(receiver_parameter) @receiver\n(assignment_expression left: (conditional_access_expression) @target)\n"
+    },
+    {
+      "id": "q.probe-V14b",
+      "source": "(constructor_declaration name: (identifier) @ctor)\n(event_declaration name: (identifier) @event)\n(accessor_declaration body: (arrow_expression_clause) @field_accessor)\n(operator_declaration operator: _ @op)\n"
     }
   ],
   "cases": [
@@ -56,6 +96,461 @@
               "name": "method",
               "type": "identifier",
               "text": "Names"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B02-Q-1",
+      "source_case": "probe-csharp-B02-P-1",
+      "features": [
+        "csharp-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-B02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "nullable",
+              "type": "nullable_type",
+              "text": "int?"
+            },
+            {
+              "name": "array",
+              "type": "array_type",
+              "text": "int[]"
+            },
+            {
+              "name": "pointer",
+              "type": "pointer_type",
+              "text": "int*"
+            },
+            {
+              "name": "tuple",
+              "type": "tuple_type",
+              "text": "(int Id, string Name)"
+            },
+            {
+              "name": "generic",
+              "type": "generic_name",
+              "text": "List<T>"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B03-Q-1",
+      "source_case": "probe-csharp-B03-P-1",
+      "features": [
+        "csharp-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-B03",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "range",
+              "type": "identifier",
+              "text": "x"
+            },
+            {
+              "name": "where",
+              "type": "where_clause",
+              "text": "where x > 1"
+            },
+            {
+              "name": "select",
+              "type": "select_clause",
+              "text": "select x * 2"
+            },
+            {
+              "name": "lambda",
+              "type": "lambda_expression",
+              "text": "y => y + 1"
+            },
+            {
+              "name": "anonymous",
+              "type": "anonymous_object_creation_expression",
+              "text": "new { Name = \"a\", Size = 2 }"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V73-Q-1",
+      "source_case": "probe-csharp-V73-P-1",
+      "features": [
+        "csharp-V73"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V73",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "constraint",
+              "type": "type_parameter_constraint",
+              "text": "unmanaged"
+            },
+            {
+              "name": "constraint",
+              "type": "type_parameter_constraint",
+              "text": "Enum"
+            },
+            {
+              "name": "constraint",
+              "type": "type_parameter_constraint",
+              "text": "Delegate"
+            },
+            {
+              "name": "target",
+              "type": "attribute_target_specifier",
+              "text": "field:"
+            },
+            {
+              "name": "ref",
+              "type": "ref_expression",
+              "text": "ref a"
+            },
+            {
+              "name": "ref",
+              "type": "ref_expression",
+              "text": "ref b"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V08-Q-1",
+      "source_case": "probe-csharp-V08-P-1",
+      "features": [
+        "csharp-V08"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V08",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "arm",
+              "type": "switch_expression_arm",
+              "text": "(0, 0) => \"origin\""
+            },
+            {
+              "name": "arm",
+              "type": "switch_expression_arm",
+              "text": "{ X: 0 } => \"on-axis\""
+            },
+            {
+              "name": "arm",
+              "type": "switch_expression_arm",
+              "text": "_ => \"other\""
+            },
+            {
+              "name": "range",
+              "type": "range_expression",
+              "text": "1..^1"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V10-Q-1",
+      "source_case": "probe-csharp-V10-P-1",
+      "features": [
+        "csharp-V10"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V10",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "using",
+              "type": "using_directive",
+              "text": "global using System;"
+            },
+            {
+              "name": "namespace",
+              "type": "qualified_name",
+              "text": "Demo.Ten"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Point"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Line"
+            },
+            {
+              "name": "lambda_return",
+              "type": "predefined_type",
+              "text": "int"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V11-Q-1",
+      "source_case": "probe-csharp-V11-PE-1",
+      "features": [
+        "csharp-V11"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V11",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "raw",
+              "type": "raw_string_literal",
+              "text": "\"\"\"\n            {\"name\": \"x\"}\n            \"\"\""
+            },
+            {
+              "name": "list",
+              "type": "list_pattern",
+              "text": "[1, .., var last]"
+            },
+            {
+              "name": "slice",
+              "type": "slice_pattern",
+              "text": ".."
+            },
+            {
+              "name": "list",
+              "type": "list_pattern",
+              "text": "[]"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V12-Q-1",
+      "source_case": "probe-csharp-V12-PE-1",
+      "features": [
+        "csharp-V12"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V12",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "alias",
+              "type": "identifier",
+              "text": "Pair"
+            },
+            {
+              "name": "alias",
+              "type": "identifier",
+              "text": "Numbers"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Service"
+            },
+            {
+              "name": "primary",
+              "type": "parameter_list",
+              "text": "(string name, int retries)"
+            },
+            {
+              "name": "collection",
+              "type": "collection_expression",
+              "text": "[]"
+            },
+            {
+              "name": "collection",
+              "type": "collection_expression",
+              "text": "[.. a, 0, .. b]"
+            },
+            {
+              "name": "spread",
+              "type": "spread_element",
+              "text": ".. a"
+            },
+            {
+              "name": "spread",
+              "type": "spread_element",
+              "text": ".. b"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V13-Q-1",
+      "source_case": "probe-csharp-V13-PE-1",
+      "features": [
+        "csharp-V13"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V13",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "indexer_modifier",
+              "type": "modifier",
+              "text": "public"
+            },
+            {
+              "name": "indexer_modifier",
+              "type": "modifier",
+              "text": "partial"
+            },
+            {
+              "name": "indexer_modifier",
+              "type": "modifier",
+              "text": "public"
+            },
+            {
+              "name": "indexer_modifier",
+              "type": "modifier",
+              "text": "partial"
+            },
+            {
+              "name": "escape",
+              "type": "escape_sequence",
+              "text": "\\e"
+            },
+            {
+              "name": "where",
+              "type": "type_parameter_constraints_clause",
+              "text": "where T : allows ref struct"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V14a-Q-1",
+      "source_case": "probe-csharp-V14a-PE-1",
+      "features": [
+        "csharp-V14a"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V14a",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "receiver",
+              "type": "receiver_parameter",
+              "text": "IEnumerable<T> source"
+            },
+            {
+              "name": "receiver",
+              "type": "receiver_parameter",
+              "text": "string"
+            },
+            {
+              "name": "target",
+              "type": "conditional_access_expression",
+              "text": "customer?.Order"
+            },
+            {
+              "name": "target",
+              "type": "conditional_access_expression",
+              "text": "customer?.Total"
+            },
+            {
+              "name": "target",
+              "type": "conditional_access_expression",
+              "text": "counts?[0]"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-V14b-Q-1",
+      "source_case": "probe-csharp-V14b-PE-1",
+      "features": [
+        "csharp-V14b"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-V14b",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "ctor",
+              "type": "identifier",
+              "text": "Widget"
+            },
+            {
+              "name": "ctor",
+              "type": "identifier",
+              "text": "Widget"
+            },
+            {
+              "name": "ctor",
+              "type": "identifier",
+              "text": "Widget"
+            },
+            {
+              "name": "event",
+              "type": "identifier",
+              "text": "Changed"
+            },
+            {
+              "name": "field_accessor",
+              "type": "arrow_expression_clause",
+              "text": "=> field = value < 0 ? 0 : value"
+            },
+            {
+              "name": "op",
+              "type": "+=",
+              "text": "+="
+            },
+            {
+              "name": "op",
+              "type": "++",
+              "text": "++"
             }
           ],
           "error": null

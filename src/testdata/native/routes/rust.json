@@ -98,6 +98,4979 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-rust-B01-01",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-B01.a163",
+        "rust-B01.a386",
+        "rust-B01.a024",
+        "rust-B01.a025",
+        "rust-B01.a026",
+        "rust-B01.a027",
+        "rust-B01.a028",
+        "rust-B01.a029",
+        "rust-B01.a030",
+        "rust-B01.a031",
+        "rust-B01.a032",
+        "rust-B01.a033",
+        "rust-B01.a034",
+        "rust-B01.a035",
+        "rust-B01.a036",
+        "rust-B01.a037",
+        "rust-B01.a038",
+        "rust-B01.a039",
+        "rust-B01.a040",
+        "rust-B01.a041",
+        "rust-B01.a042",
+        "rust-B01.a384",
+        "rust-B01.a331",
+        "rust-B01.a332",
+        "rust-B01.a333",
+        "rust-B01.a334",
+        "rust-B01.a335",
+        "rust-B01.a336",
+        "rust-B01.a337",
+        "rust-B01.a338",
+        "rust-B01.a339",
+        "rust-B01.a340",
+        "rust-B01.a341",
+        "rust-B01.a342",
+        "rust-B01.a343",
+        "rust-B01.a344",
+        "rust-B01.a067",
+        "rust-B01.a068",
+        "rust-B01.a070",
+        "rust-B01.a062",
+        "rust-B01.a063",
+        "rust-B01.a064",
+        "rust-B01.a065",
+        "rust-B01.a066",
+        "rust-B01.a174",
+        "rust-B01.a061",
+        "rust-B01.a001",
+        "rust-B01.a071",
+        "rust-B01.a072",
+        "rust-B01.a089",
+        "rust-B01.a090",
+        "rust-B02.a242",
+        "rust-B02.a245",
+        "rust-B02.a207",
+        "rust-B02.a191",
+        "rust-B02.a194",
+        "rust-V18.a012",
+        "rust-V18.a011",
+        "rust-V18.a021",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a265",
+        "rust-B01.a267",
+        "rust-B01.a269",
+        "rust-B01.a271",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a355",
+        "rust-B01.a360"
+      ],
+      "source_utf8": "#!/usr/bin/env run-cargo-script\n#![allow(unused)]\n//! inner line doc\n/*! inner block doc */\n/// outer line doc\n/** outer block doc */\nfn documented() {}\n// plain line comment\n////  four slashes are a plain comment\n//\n/* block /* nested */ still block */ /**/ /***/ /* has /** doc-like */ and /*! inner-like */ inside */\n/* multi\n   line\n   * star\n*/\nfn ws()\t{\u000b let\f a = 1;\r\n let b= 2;‎ let c‏= 3;  let d = 4;  }\nfn unicode_été() { let _x = 1; let 你好 = 2; let mixed_١ = 3; let r#type = 4; }\n// comment at end of file without newline\n//",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "shebang",
+            "inner_attribute_item",
+            "line_comment",
+            "block_comment",
+            "doc_comment",
+            "inner_doc_comment_marker",
+            "outer_doc_comment_marker",
+            "function_item",
+            "let_declaration",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "shebang",
+              "text": "#!/usr/bin/env run-cargo-script\n"
+            },
+            {
+              "type": "inner_attribute_item",
+              "text": "#![allow(unused)]"
+            },
+            {
+              "type": "line_comment",
+              "text": "//! inner line doc\n"
+            },
+            {
+              "type": "block_comment",
+              "text": "/*! inner block doc */"
+            },
+            {
+              "type": "line_comment",
+              "text": "/// outer line doc\n"
+            },
+            {
+              "type": "block_comment",
+              "text": "/** outer block doc */"
+            },
+            {
+              "type": "function_item",
+              "text": "fn documented() {}"
+            },
+            {
+              "type": "line_comment",
+              "text": "// plain line comment"
+            },
+            {
+              "type": "line_comment",
+              "text": "////  four slashes are a plain comment"
+            },
+            {
+              "type": "line_comment",
+              "text": "//",
+              "occurrence": 8
+            },
+            {
+              "type": "block_comment",
+              "text": "/* block /* nested */ still block */"
+            },
+            {
+              "type": "block_comment",
+              "text": "/**/"
+            },
+            {
+              "type": "block_comment",
+              "text": "/***/"
+            },
+            {
+              "type": "block_comment",
+              "text": "/* has /** doc-like */ and /*! inner-like */ inside */"
+            },
+            {
+              "type": "block_comment",
+              "text": "/* multi\n   line\n   * star\n*/"
+            },
+            {
+              "type": "function_item",
+              "text": "fn ws()\t{\u000b let\f a = 1;\r\n let b= 2;‎ let c‏= 3;  let d = 4;  }"
+            },
+            {
+              "type": "function_item",
+              "text": "fn unicode_été() { let _x = 1; let 你好 = 2; let mixed_١ = 3; let r#type = 4; }"
+            },
+            {
+              "type": "line_comment",
+              "text": "// comment at end of file without newline"
+            },
+            {
+              "type": "line_comment",
+              "text": "//",
+              "occurrence": 10
+            },
+            {
+              "type": "let_declaration",
+              "text": "let b= 2;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let c‏= 3;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let d = 4;"
+            },
+            {
+              "type": "identifier",
+              "text": "unicode_été"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let _x = 1;"
+            },
+            {
+              "type": "identifier",
+              "text": "_x"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let 你好 = 2;"
+            },
+            {
+              "type": "identifier",
+              "text": "你好"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let mixed_١ = 3;"
+            },
+            {
+              "type": "identifier",
+              "text": "mixed_١"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let r#type = 4;"
+            },
+            {
+              "type": "identifier",
+              "text": "r#type"
+            },
+            {
+              "type": "block",
+              "text": "{\u000b let\f a = 1;\r\n let b= 2;‎ let c‏= 3;  let d = 4;  }"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let\f a = 1;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-02",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-B01.a164",
+        "rust-B01.a165",
+        "rust-B01.a166",
+        "rust-B01.a167",
+        "rust-B01.a168",
+        "rust-B01.a169",
+        "rust-B01.a170",
+        "rust-B01.a171",
+        "rust-B01.a172",
+        "rust-B01.a173",
+        "rust-B01.a175",
+        "rust-B01.a176",
+        "rust-B01.a177",
+        "rust-B01.a178",
+        "rust-B01.a179",
+        "rust-B01.a180",
+        "rust-B01.a181",
+        "rust-B01.a182",
+        "rust-B01.a183",
+        "rust-B01.a184",
+        "rust-B01.a185",
+        "rust-B01.a186",
+        "rust-B01.a187",
+        "rust-B01.a188",
+        "rust-B01.a189",
+        "rust-B01.a190",
+        "rust-B01.a191",
+        "rust-B01.a192",
+        "rust-B01.a193",
+        "rust-B01.a194",
+        "rust-B01.a195",
+        "rust-B01.a196",
+        "rust-B01.a197",
+        "rust-B01.a198",
+        "rust-B01.a199",
+        "rust-B01.a200",
+        "rust-B01.a201",
+        "rust-B01.a202",
+        "rust-B01.a203",
+        "rust-B01.a204",
+        "rust-B01.a205",
+        "rust-B01.a206",
+        "rust-B01.a207",
+        "rust-B01.a208",
+        "rust-B01.a209",
+        "rust-B01.a210",
+        "rust-B01.a211",
+        "rust-B01.a212",
+        "rust-B01.a213",
+        "rust-B01.a214",
+        "rust-B01.a215",
+        "rust-B01.a216",
+        "rust-B01.a217",
+        "rust-B01.a218",
+        "rust-B01.a219",
+        "rust-B01.a220",
+        "rust-B01.a221",
+        "rust-B01.a222",
+        "rust-B01.a223",
+        "rust-B01.a224",
+        "rust-B01.a225",
+        "rust-B01.a226",
+        "rust-B01.a227",
+        "rust-B02.a051",
+        "rust-B02.a052",
+        "rust-B02.a053",
+        "rust-B02.a054",
+        "rust-B02.a055",
+        "rust-B02.a056",
+        "rust-B02.a057",
+        "rust-B02.a058",
+        "rust-B02.a059",
+        "rust-B02.a060",
+        "rust-B02.a148",
+        "rust-B01.a228",
+        "rust-B01.a245",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a257",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a271",
+        "rust-B01.a275",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a281",
+        "rust-B01.a354",
+        "rust-B01.a355",
+        "rust-B01.a360",
+        "rust-B01.a375",
+        "rust-B01.a381",
+        "rust-V18.a041"
+      ],
+      "source_utf8": "macro_rules! tokens { ($($t:tt)*) => {}; }\nfn lits() {\n    let c = ['a', '\\'', '\\\"', '\\x7f', '\\n', '\\r', '\\t', '\\\\', '\\0', '\\u{1F600}', '\\u{1_F6_00}', 'é'];\n    let s = \"plain \\' \\\" \\x41 \\n \\r \\t \\\\ \\0 \\u{e9} ünï\nsecond line \\\n    continued\";\n    let raw = r\"raw \\n no escapes\";\n    let raw2 = r#\"has \"quotes\" inside\"#;\n    let raw3 = r##\"has \"# inside\"##;\n    let b = [b'a', b'\\'', b'\\\"', b'\\x7F', b'\\n', b'\\r', b'\\t', b'\\\\', b'\\0'];\n    let bs = b\"bytes \\x00 \\n \\\" \\\n        continued\";\n    let rbs = br\"raw bytes\";\n    let rbs2 = br#\"raw \"bytes\"\"#;\n    let ints = (0, 42, 1_000_000, 0b1010_1010, 0b_1, 0o777, 0o_7, 0xDEAD_beef, 0x_F, 1u8, 2_i32, 3usize, 0xffu8);\n    let floats = (1.0, 1., 2.5e10, 2.5E-3, 1e10, 1E+5_f64, 3.0f32, 1_000.000_1, 6e_1);\n    let t = ((1, 2), 3);\n    let f0 = t.0; let f00 = t.0.1; let fb = t.0b1; let fo = t.0o1; let fx = t.0x1;\n    let r = 1..2; let m = 1.max(2);\n    tokens!(\"str\"_suffix 'c'suffix b'b'_x 1suffix 2.0_x r\"raw\"sfx <- ~ $ # 'lt);\n    let yes = true; let no = false;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "macro_definition",
+            "char_literal",
+            "escape_sequence",
+            "string_literal",
+            "raw_string_literal",
+            "integer_literal",
+            "float_literal",
+            "boolean_literal",
+            "field_expression",
+            "tuple_expression",
+            "macro_invocation",
+            "token_tree"
+          ],
+          "anchors": [
+            {
+              "type": "char_literal",
+              "text": "'a'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\''",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\\"'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\x7f'"
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\n'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\r'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\t'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\\\'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\0'",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\u{1F600}'"
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\u{1_F6_00}'"
+            },
+            {
+              "type": "char_literal",
+              "text": "'é'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'a'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\''"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\\"'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\x7F'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\n'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\r'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\t'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\\\'"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'\\0'"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"plain \\' \\\" \\x41 \\n \\r \\t \\\\ \\0 \\u{e9} ünï\nsecond line \\\n    continued\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r\"raw \\n no escapes\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r#\"has \"quotes\" inside\"#"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r##\"has \"# inside\"##"
+            },
+            {
+              "type": "string_literal",
+              "text": "b\"bytes \\x00 \\n \\\" \\\n        continued\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "br\"raw bytes\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "br#\"raw \"bytes\"\"#"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0",
+              "occurrence": 10
+            },
+            {
+              "type": "integer_literal",
+              "text": "1_000_000"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0b1010_1010"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0b_1"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0o777"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0o_7"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0xDEAD_beef"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0x_F"
+            },
+            {
+              "type": "integer_literal",
+              "text": "1u8"
+            },
+            {
+              "type": "integer_literal",
+              "text": "2_i32"
+            },
+            {
+              "type": "integer_literal",
+              "text": "0xffu8"
+            },
+            {
+              "type": "float_literal",
+              "text": "1.0"
+            },
+            {
+              "type": "float_literal",
+              "text": "1.",
+              "occurrence": 2
+            },
+            {
+              "type": "float_literal",
+              "text": "2.5e10"
+            },
+            {
+              "type": "float_literal",
+              "text": "2.5E-3"
+            },
+            {
+              "type": "float_literal",
+              "text": "1e10"
+            },
+            {
+              "type": "float_literal",
+              "text": "1E+5_f64"
+            },
+            {
+              "type": "float_literal",
+              "text": "3.0f32"
+            },
+            {
+              "type": "float_literal",
+              "text": "1_000.000_1"
+            },
+            {
+              "type": "float_literal",
+              "text": "6e_1"
+            },
+            {
+              "type": "field_expression",
+              "text": "t.0.1"
+            },
+            {
+              "type": "field_expression",
+              "text": "t.0b1"
+            },
+            {
+              "type": "field_expression",
+              "text": "t.0o1"
+            },
+            {
+              "type": "field_expression",
+              "text": "t.0x1"
+            },
+            {
+              "type": "field_expression",
+              "text": "1.max"
+            },
+            {
+              "type": "range_expression",
+              "text": "1..2"
+            },
+            {
+              "type": "boolean_literal",
+              "text": "true"
+            },
+            {
+              "type": "boolean_literal",
+              "text": "false"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"str\"_suffix"
+            },
+            {
+              "type": "char_literal",
+              "text": "'c'suffix"
+            },
+            {
+              "type": "char_literal",
+              "text": "b'b'_x"
+            },
+            {
+              "type": "integer_literal",
+              "text": "1suffix"
+            },
+            {
+              "type": "float_literal",
+              "text": "2.0_x"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r\"raw\"sfx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-03",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-B01.a071",
+        "rust-B01.a072",
+        "rust-B01.a073",
+        "rust-B01.a074",
+        "rust-B01.a075",
+        "rust-B01.a076",
+        "rust-B01.a077",
+        "rust-B01.a078",
+        "rust-B01.a079",
+        "rust-B01.a080",
+        "rust-B01.a081",
+        "rust-B01.a082",
+        "rust-B01.a083",
+        "rust-B01.a084",
+        "rust-B01.a085",
+        "rust-B01.a086",
+        "rust-B01.a087",
+        "rust-B01.a088",
+        "rust-B01.a089",
+        "rust-B01.a090",
+        "rust-B01.a091",
+        "rust-B01.a092",
+        "rust-B01.a094",
+        "rust-B01.a095",
+        "rust-B01.a096",
+        "rust-B01.a097",
+        "rust-B01.a098",
+        "rust-B01.a099",
+        "rust-B01.a100",
+        "rust-B01.a101",
+        "rust-B01.a102",
+        "rust-B01.a103",
+        "rust-B01.a104",
+        "rust-B01.a105",
+        "rust-B01.a106",
+        "rust-B01.a107",
+        "rust-B01.a108",
+        "rust-B01.a109",
+        "rust-B01.a110",
+        "rust-B01.a111",
+        "rust-B01.a112",
+        "rust-B01.a113",
+        "rust-B01.a114",
+        "rust-B01.a115",
+        "rust-B01.a116",
+        "rust-B01.a117",
+        "rust-B01.a118",
+        "rust-B01.a119",
+        "rust-B01.a120",
+        "rust-B01.a121",
+        "rust-B01.a122",
+        "rust-B01.a123",
+        "rust-B01.a124",
+        "rust-B01.a125",
+        "rust-B01.a126",
+        "rust-B01.a127",
+        "rust-B01.a128",
+        "rust-B01.a129",
+        "rust-B01.a130",
+        "rust-B01.a131",
+        "rust-B01.a132",
+        "rust-B01.a326",
+        "rust-B01.a327",
+        "rust-B01.a328",
+        "rust-B01.a329",
+        "rust-B01.a330",
+        "rust-B01.a093",
+        "rust-B01.a282",
+        "rust-B01.a283",
+        "rust-B01.a284",
+        "rust-B01.a285",
+        "rust-B01.a287",
+        "rust-B01.a288",
+        "rust-B01.a289",
+        "rust-B01.a290",
+        "rust-B01.a291",
+        "rust-B01.a133",
+        "rust-B01.a134",
+        "rust-B01.a135",
+        "rust-B01.a136",
+        "rust-B01.a137",
+        "rust-B01.a382",
+        "rust-B01.a381",
+        "rust-B01.a383",
+        "rust-B01.a385",
+        "rust-B02.a150",
+        "rust-B02.a153",
+        "rust-B02.a187",
+        "rust-V18.a013",
+        "rust-B01.a151",
+        "rust-B01.a152",
+        "rust-B01.a230",
+        "rust-B01.a241",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a273",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a346",
+        "rust-B01.a348",
+        "rust-B01.a350",
+        "rust-B01.a352",
+        "rust-B01.a353",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a358",
+        "rust-B01.a359",
+        "rust-B01.a363",
+        "rust-B01.a365",
+        "rust-B01.a366",
+        "rust-B01.a369",
+        "rust-B01.a370",
+        "rust-B01.a371",
+        "rust-B01.a372",
+        "rust-B01.a373",
+        "rust-B01.a374",
+        "rust-B01.a376",
+        "rust-B01.a377",
+        "rust-B01.a378",
+        "rust-B01.a379"
+      ],
+      "source_utf8": "#![allow(dead_code)]\nextern crate alloc;\nextern crate core as core_alias;\nextern crate std as _;\nextern crate self as this_crate;\nmod missing_file;\nmod outline_inline {\n    #![allow(unused)]\n    use super::Unit as _U;\n    pub mod inner {}\n    pub(crate) fn a() {}\n    pub(self) fn b() {}\n    pub(super) fn c() {}\n    pub(in crate::outline_inline) fn d() {}\n}\nuse std::collections::HashMap;\nuse std::fmt::{self, Display as D, Debug};\nuse std::io::*;\nuse std::{cmp::Ordering, ops::{Add, Sub}};\nuse ::std::mem;\nuse std::vec::Vec as _;\nuse {std::rc::Rc};\nuse ::std::collections::*;\npub const fn cf(x: u32) -> u32 { x }\npub unsafe fn uf() {}\npub extern \"C\" fn ef(x: i32) -> i32 { x }\nextern fn ef2() {}\nconst unsafe extern \"C\" fn cuef() {}\npub(crate) const MAX: u32 = 10;\nconst _: () = ();\nstatic GREETING: &str = \"hi\";\nstatic mut COUNTER: u32 = 0;\ntype Alias<'a, T> where T: 'a = &'a T;\ntype Simple = u8;\npub struct Unit;\nstruct Named<'a, T: 'a + ?Sized, const N: usize = 3> where T: Clone { pub a: &'a T, #[allow(unused)] pub(crate) b: [u8; N], c: u8, }\nstruct Tup(pub u8, #[allow(unused)] String, );\nstruct TupWhere<T>(T) where T: Copy;\nstruct Empty {}\nenum E { A, B(u8, u16), C { x: i32, y: i32 }, #[allow(unused)] D = 4, }\nenum Disc { X = 1, Y = 2 }\nenum Never {}\n#[repr(C)] union U { a: u32, b: f32 }\npub trait Tr<T = u8>: Clone + 'static where T: Copy {\n    #![allow(unused)]\n    const C: u32;\n    const D: u32 = 1;\n    type Item: Clone;\n    type Def = u8;\n    fn req(&self) -> T;\n    fn prov(&mut self, x: u8) -> u8 { x }\n    fn assoc() where Self: Sized;\n    fn by_value(self);\n    fn typed(self: Box<Self>);\n    fn lifetimed<'a>(&'a self, _: &'a u8) {}\n    fn mut_ref(&'static mut self) {}\n}\nunsafe trait UnsafeTr {}\ntrait Marker {}\ntrait Sup: Marker + Sized {}\nimpl<'a, T> Named<'a, T> where T: Clone { pub fn new(a: &'a T) -> Self { todo!() } }\nimpl Clone for Unit { fn clone(&self) -> Self { Unit } }\nunsafe impl UnsafeTr for Unit {}\nimpl<T> Marker for Vec<T> {}\nimpl Unit { #![allow(unused)] pub(crate) fn assoc(mut self, (a, b): (u8, u8), _: u8, #[allow(unused)] c: u8) {} }\nfn generic<'a, 'b: 'a, 'c: 'a + 'b, T: Clone + 'a, U, #[allow(unused)] V>(x: &'a T) where 'b: 'a, for<'d> &'d T: Clone, T: , U: ?Sized, {}\nfn ret() -> u8 { 0 }\nunsafe extern \"C\" { fn ext(x: i32, ...) -> i32; static EXT: i32; pub fn pub_ext(); }\nunsafe extern { }\nextern \"system\" fn sys() {}\nextern r\"C\" fn rawabi() {}\nfn elided(x: &'_ u8) -> &'_ u8 { x }\nmacro_rules! m { () => {} }\nm!();\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "extern_crate_declaration",
+            "mod_item",
+            "visibility_modifier",
+            "use_declaration",
+            "scoped_use_list",
+            "use_list",
+            "use_as_clause",
+            "use_wildcard",
+            "function_item",
+            "function_modifiers",
+            "extern_modifier",
+            "const_item",
+            "static_item",
+            "type_item",
+            "struct_item",
+            "field_declaration_list",
+            "ordered_field_declaration_list",
+            "enum_item",
+            "enum_variant_list",
+            "enum_variant",
+            "union_item",
+            "trait_item",
+            "associated_type",
+            "impl_item",
+            "type_parameters",
+            "lifetime_parameter",
+            "const_parameter",
+            "where_clause",
+            "where_predicate",
+            "self_parameter",
+            "foreign_mod_item",
+            "function_signature_item",
+            "variadic_parameter",
+            "macro_definition",
+            "macro_invocation",
+            "attribute_item",
+            "inner_attribute_item"
+          ],
+          "anchors": [
+            {
+              "type": "inner_attribute_item",
+              "text": "#![allow(dead_code)]"
+            },
+            {
+              "type": "extern_crate_declaration",
+              "text": "extern crate alloc;"
+            },
+            {
+              "type": "extern_crate_declaration",
+              "text": "extern crate std as _;"
+            },
+            {
+              "type": "extern_crate_declaration",
+              "text": "extern crate self as this_crate;"
+            },
+            {
+              "type": "mod_item",
+              "text": "mod missing_file;"
+            },
+            {
+              "type": "mod_item",
+              "text": "mod outline_inline {\n    #![allow(unused)]\n    use super::Unit as _U;\n    pub mod inner {}\n    pub(crate) fn a() {}\n    pub(self) fn b() {}\n    pub(super) fn c() {}\n    pub(in crate::outline_inline) fn d() {}\n}"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::collections::HashMap;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::fmt::{self, Display as D, Debug};"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::io::*;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::{cmp::Ordering, ops::{Add, Sub}};"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::vec::Vec as _;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use {std::rc::Rc};"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use ::std::collections::*;"
+            },
+            {
+              "type": "function_item",
+              "text": "pub const fn cf(x: u32) -> u32 { x }"
+            },
+            {
+              "type": "function_item",
+              "text": "pub unsafe fn uf() {}"
+            },
+            {
+              "type": "function_item",
+              "text": "pub extern \"C\" fn ef(x: i32) -> i32 { x }"
+            },
+            {
+              "type": "function_item",
+              "text": "extern fn ef2() {}"
+            },
+            {
+              "type": "function_item",
+              "text": "const unsafe extern \"C\" fn cuef() {}"
+            },
+            {
+              "type": "const_item",
+              "text": "pub(crate) const MAX: u32 = 10;"
+            },
+            {
+              "type": "const_item",
+              "text": "const _: () = ();"
+            },
+            {
+              "type": "static_item",
+              "text": "static GREETING: &str = \"hi\";"
+            },
+            {
+              "type": "static_item",
+              "text": "static mut COUNTER: u32 = 0;"
+            },
+            {
+              "type": "type_item",
+              "text": "type Alias<'a, T> where T: 'a = &'a T;"
+            },
+            {
+              "type": "type_item",
+              "text": "type Simple = u8;"
+            },
+            {
+              "type": "struct_item",
+              "text": "pub struct Unit;"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct Named<'a, T: 'a + ?Sized, const N: usize = 3> where T: Clone { pub a: &'a T, #[allow(unused)] pub(crate) b: [u8; N], c: u8, }"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct Tup(pub u8, #[allow(unused)] String, );"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct TupWhere<T>(T) where T: Copy;"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct Empty {}"
+            },
+            {
+              "type": "enum_item",
+              "text": "enum E { A, B(u8, u16), C { x: i32, y: i32 }, #[allow(unused)] D = 4, }"
+            },
+            {
+              "type": "enum_item",
+              "text": "enum Disc { X = 1, Y = 2 }"
+            },
+            {
+              "type": "enum_item",
+              "text": "enum Never {}"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[repr(C)]"
+            },
+            {
+              "type": "union_item",
+              "text": "union U { a: u32, b: f32 }"
+            },
+            {
+              "type": "trait_item",
+              "text": "pub trait Tr<T = u8>: Clone + 'static where T: Copy {\n    #![allow(unused)]\n    const C: u32;\n    const D: u32 = 1;\n    type Item: Clone;\n    type Def = u8;\n    fn req(&self) -> T;\n    fn prov(&mut self, x: u8) -> u8 { x }\n    fn assoc() where Self: Sized;\n    fn by_value(self);\n    fn typed(self: Box<Self>);\n    fn lifetimed<'a>(&'a self, _: &'a u8) {}\n    fn mut_ref(&'static mut self) {}\n}"
+            },
+            {
+              "type": "trait_item",
+              "text": "unsafe trait UnsafeTr {}"
+            },
+            {
+              "type": "trait_item",
+              "text": "trait Sup: Marker + Sized {}"
+            },
+            {
+              "type": "impl_item",
+              "text": "impl<'a, T> Named<'a, T> where T: Clone { pub fn new(a: &'a T) -> Self { todo!() } }"
+            },
+            {
+              "type": "impl_item",
+              "text": "impl Clone for Unit { fn clone(&self) -> Self { Unit } }"
+            },
+            {
+              "type": "impl_item",
+              "text": "unsafe impl UnsafeTr for Unit {}"
+            },
+            {
+              "type": "impl_item",
+              "text": "impl<T> Marker for Vec<T> {}"
+            },
+            {
+              "type": "impl_item",
+              "text": "impl Unit { #![allow(unused)] pub(crate) fn assoc(mut self, (a, b): (u8, u8), _: u8, #[allow(unused)] c: u8) {} }"
+            },
+            {
+              "type": "function_item",
+              "text": "fn generic<'a, 'b: 'a, 'c: 'a + 'b, T: Clone + 'a, U, #[allow(unused)] V>(x: &'a T) where 'b: 'a, for<'d> &'d T: Clone, T: , U: ?Sized, {}"
+            },
+            {
+              "type": "function_item",
+              "text": "fn ret() -> u8 { 0 }"
+            },
+            {
+              "type": "foreign_mod_item",
+              "text": "unsafe extern \"C\" { fn ext(x: i32, ...) -> i32; static EXT: i32; pub fn pub_ext(); }"
+            },
+            {
+              "type": "foreign_mod_item",
+              "text": "unsafe extern { }"
+            },
+            {
+              "type": "function_item",
+              "text": "extern \"system\" fn sys() {}"
+            },
+            {
+              "type": "function_item",
+              "text": "extern r\"C\" fn rawabi() {}"
+            },
+            {
+              "type": "function_item",
+              "text": "fn elided(x: &'_ u8) -> &'_ u8 { x }"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! m { () => {} }"
+            },
+            {
+              "type": "visibility_modifier",
+              "text": "pub(self)"
+            },
+            {
+              "type": "visibility_modifier",
+              "text": "pub(super)"
+            },
+            {
+              "type": "visibility_modifier",
+              "text": "pub(in crate::outline_inline)"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use super::Unit as _U;"
+            },
+            {
+              "type": "const_parameter",
+              "text": "const N: usize = 3"
+            },
+            {
+              "type": "const_item",
+              "text": "const C: u32;"
+            },
+            {
+              "type": "associated_type",
+              "text": "type Item: Clone;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "fn typed(self: Box<Self>);"
+            },
+            {
+              "type": "function_item",
+              "text": "fn mut_ref(&'static mut self) {}"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "m!()"
+            },
+            {
+              "type": "where_predicate",
+              "text": "T:",
+              "occurrence": 9
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r\"C\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-04",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-B01.a292",
+        "rust-B01.a293",
+        "rust-B01.a294",
+        "rust-B01.a295",
+        "rust-B01.a296",
+        "rust-B01.a297",
+        "rust-B01.a298",
+        "rust-B01.a299",
+        "rust-B01.a300",
+        "rust-B01.a301",
+        "rust-B01.a302",
+        "rust-B01.a303",
+        "rust-B01.a304",
+        "rust-B01.a305",
+        "rust-B01.a306",
+        "rust-B01.a307",
+        "rust-B01.a308",
+        "rust-B01.a309",
+        "rust-B01.a310",
+        "rust-B01.a311",
+        "rust-B01.a312",
+        "rust-B01.a313",
+        "rust-B01.a314",
+        "rust-B01.a315",
+        "rust-B01.a316",
+        "rust-B01.a317",
+        "rust-B01.a318",
+        "rust-B01.a319",
+        "rust-B01.a320",
+        "rust-B01.a321",
+        "rust-B01.a324",
+        "rust-B01.a325",
+        "rust-V18.a037",
+        "rust-V18.a036",
+        "rust-B01.a157",
+        "rust-B01.a156",
+        "rust-B01.a158",
+        "rust-B01.a159",
+        "rust-B01.a285",
+        "rust-B01.a286",
+        "rust-B01.a291",
+        "rust-B01.a283",
+        "rust-B01.a284",
+        "rust-B01.a282",
+        "rust-B02.a181",
+        "rust-B02.a182",
+        "rust-B01.a092",
+        "rust-B01.a147",
+        "rust-B01.a149",
+        "rust-B01.a152",
+        "rust-B01.a288",
+        "rust-V18.a034",
+        "rust-V18.a032",
+        "rust-B01.a230",
+        "rust-B01.a241",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a273",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a346",
+        "rust-B01.a348",
+        "rust-B01.a353",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a358",
+        "rust-B01.a360",
+        "rust-B01.a361",
+        "rust-B01.a365",
+        "rust-B01.a374",
+        "rust-B01.a376",
+        "rust-B01.a377",
+        "rust-B01.a378",
+        "rust-V18.a040",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "use std::fmt::Debug;\nmacro_rules! ty { () => { u8 }; }\ntrait Tr { type A; }\nfn types<'a, T: Tr + ?Sized>(\n    p: (u8), t0: (), t1: (u8,), t2: (u8, i32), t3: (u8, i32,), n: fn() -> !, rp: *const u8, rm: *mut u8,\n    r: &'a mut u8, r2: &u8, arr: [u8; 4], sl: &[u8], q: <T as Tr>::A, q2: <Vec<u8> as IntoIterator>::Item,\n    f1: fn(i32) -> i32, f2: unsafe extern \"C\" fn(i32, ...), f3: for<'b> fn(&'b u8) -> &'b u8, f4: fn(x: i32, _: u8),\n    f5: extern \"C\" fn(#[allow(unused)] i32, ...), f6: unsafe fn(), f7: extern fn(),\n    m: ty!(), path: std::vec::Vec<u8>, b: Box<dyn Debug + Send + 'a>, paren: &'a (dyn Debug + 'a),\n    tb: &'a (dyn for<'c> Fn(&'c u8)), pb: Box<dyn (Debug) + Send>, od: &dyn Debug,\n) -> impl Debug { let inferred: Vec<_> = Vec::new(); 0u8 }\nfn never() -> ! { loop {} }\nfn par<T: (Clone) + (for<'x> Fn(&'x u8)) + Copy>(t: T) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_item",
+            "parameters",
+            "parameter",
+            "tuple_type",
+            "unit_type",
+            "never_type",
+            "pointer_type",
+            "reference_type",
+            "array_type",
+            "qualified_type",
+            "function_type",
+            "bracketed_type",
+            "dynamic_type",
+            "abstract_type",
+            "generic_type",
+            "scoped_type_identifier",
+            "macro_invocation",
+            "for_lifetimes",
+            "lifetime",
+            "primitive_type"
+          ],
+          "anchors": [
+            {
+              "type": "tuple_type",
+              "text": "(u8,)"
+            },
+            {
+              "type": "tuple_type",
+              "text": "(u8, i32)"
+            },
+            {
+              "type": "tuple_type",
+              "text": "(u8, i32,)"
+            },
+            {
+              "type": "unit_type",
+              "text": "()",
+              "occurrence": 2
+            },
+            {
+              "type": "parameter",
+              "text": "p: (u8)"
+            },
+            {
+              "type": "function_type",
+              "text": "fn() -> !"
+            },
+            {
+              "type": "function_type",
+              "text": "fn(i32) -> i32"
+            },
+            {
+              "type": "function_type",
+              "text": "unsafe extern \"C\" fn(i32, ...)"
+            },
+            {
+              "type": "function_type",
+              "text": "for<'b> fn(&'b u8) -> &'b u8"
+            },
+            {
+              "type": "function_type",
+              "text": "fn(x: i32, _: u8)"
+            },
+            {
+              "type": "function_type",
+              "text": "extern \"C\" fn(#[allow(unused)] i32, ...)"
+            },
+            {
+              "type": "function_type",
+              "text": "unsafe fn()"
+            },
+            {
+              "type": "function_type",
+              "text": "extern fn()"
+            },
+            {
+              "type": "function_type",
+              "text": "for<'x> Fn(&'x u8)"
+            },
+            {
+              "type": "never_type",
+              "text": "!",
+              "occurrence": 2
+            },
+            {
+              "type": "never_type",
+              "text": "!",
+              "occurrence": 4
+            },
+            {
+              "type": "pointer_type",
+              "text": "*const u8"
+            },
+            {
+              "type": "pointer_type",
+              "text": "*mut u8"
+            },
+            {
+              "type": "reference_type",
+              "text": "&'a mut u8"
+            },
+            {
+              "type": "reference_type",
+              "text": "&u8"
+            },
+            {
+              "type": "reference_type",
+              "text": "&[u8]"
+            },
+            {
+              "type": "reference_type",
+              "text": "&'a (dyn Debug + 'a)"
+            },
+            {
+              "type": "reference_type",
+              "text": "&'a (dyn for<'c> Fn(&'c u8))"
+            },
+            {
+              "type": "reference_type",
+              "text": "&dyn Debug"
+            },
+            {
+              "type": "array_type",
+              "text": "[u8; 4]"
+            },
+            {
+              "type": "array_type",
+              "text": "[u8]"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "<T as Tr>::A"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "<Vec<u8> as IntoIterator>::Item"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "std::vec::Vec"
+            },
+            {
+              "type": "bracketed_type",
+              "text": "<T as Tr>"
+            },
+            {
+              "type": "bracketed_type",
+              "text": "<Vec<u8> as IntoIterator>"
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "...",
+              "occurrence": 1
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "...",
+              "occurrence": 2
+            },
+            {
+              "type": "for_lifetimes",
+              "text": "for<'b>"
+            },
+            {
+              "type": "for_lifetimes",
+              "text": "for<'x>"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[allow(unused)]"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "ty!()"
+            },
+            {
+              "type": "generic_type",
+              "text": "std::vec::Vec<u8>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<dyn Debug + Send + 'a>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<dyn (Debug) + Send>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Vec<_>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "dyn Debug + Send + 'a"
+            },
+            {
+              "type": "bounded_type",
+              "text": "dyn Debug + 'a"
+            },
+            {
+              "type": "bounded_type",
+              "text": "dyn (Debug) + Send"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Debug",
+              "occurrence": 1
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Debug",
+              "occurrence": 2
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn for<'c> Fn(&'c u8)"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn (Debug)"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Debug",
+              "occurrence": 3
+            },
+            {
+              "type": "abstract_type",
+              "text": "impl Debug"
+            },
+            {
+              "type": "removed_trait_bound",
+              "text": "?Sized"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T: Tr + ?Sized"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T: (Clone) + (for<'x> Fn(&'x u8)) + Copy"
+            },
+            {
+              "type": "trait_bounds",
+              "text": ": (Clone) + (for<'x> Fn(&'x u8)) + Copy"
+            },
+            {
+              "type": "type_identifier",
+              "text": "_",
+              "occurrence": 3
+            },
+            {
+              "type": "function_item",
+              "text": "fn never() -> ! { loop {} }"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! ty { () => { u8 }; }"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use std::fmt::Debug;"
+            },
+            {
+              "type": "associated_type",
+              "text": "type A;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-05",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-B01.a001",
+        "rust-B01.a002",
+        "rust-B01.a003",
+        "rust-B01.a004",
+        "rust-B01.a005",
+        "rust-B01.a006",
+        "rust-B01.a007",
+        "rust-B01.a008",
+        "rust-B01.a009",
+        "rust-B01.a010",
+        "rust-B01.a011",
+        "rust-B01.a012",
+        "rust-B01.a013",
+        "rust-B01.a014",
+        "rust-B01.a015",
+        "rust-B01.a016",
+        "rust-B01.a017",
+        "rust-B01.a018",
+        "rust-B01.a019",
+        "rust-B01.a020",
+        "rust-B01.a021",
+        "rust-B01.a022",
+        "rust-B01.a023",
+        "rust-B01.a043",
+        "rust-B01.a044",
+        "rust-B01.a045",
+        "rust-B01.a046",
+        "rust-B01.a047",
+        "rust-B01.a048",
+        "rust-B01.a049",
+        "rust-B01.a050",
+        "rust-B01.a051",
+        "rust-B01.a052",
+        "rust-B01.a053",
+        "rust-B01.a054",
+        "rust-B01.a055",
+        "rust-B01.a056",
+        "rust-B01.a057",
+        "rust-B01.a058",
+        "rust-B01.a059",
+        "rust-B01.a060",
+        "rust-B01.a133",
+        "rust-B01.a134",
+        "rust-B01.a135",
+        "rust-B01.a136",
+        "rust-B01.a137",
+        "rust-B01.a138",
+        "rust-B01.a139",
+        "rust-B01.a140",
+        "rust-B01.a141",
+        "rust-B01.a142",
+        "rust-B01.a143",
+        "rust-B01.a144",
+        "rust-B01.a145",
+        "rust-B01.a146",
+        "rust-B01.a147",
+        "rust-B01.a148",
+        "rust-B01.a149",
+        "rust-B01.a150",
+        "rust-B01.a152",
+        "rust-B01.a153",
+        "rust-B01.a154",
+        "rust-B01.a155",
+        "rust-B01.a156",
+        "rust-B01.a158",
+        "rust-B01.a159",
+        "rust-B02.a127",
+        "rust-B02.a128",
+        "rust-B02.a150",
+        "rust-B02.a181",
+        "rust-B02.a182",
+        "rust-B02.a184",
+        "rust-B02.a185",
+        "rust-B02.a186",
+        "rust-B01.a241",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a251",
+        "rust-B01.a254",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a257",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a264",
+        "rust-B01.a266",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a279",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a346",
+        "rust-B01.a350",
+        "rust-B01.a354",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a358",
+        "rust-B01.a360",
+        "rust-B01.a363",
+        "rust-B01.a366",
+        "rust-B01.a369",
+        "rust-B01.a370",
+        "rust-B01.a372",
+        "rust-B01.a373",
+        "rust-B01.a374",
+        "rust-B01.a375",
+        "rust-B01.a378",
+        "rust-V18.a040",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "#![allow(unused_variables)]\n#![doc = \"crate docs\"]\n#[derive(Clone, Debug)]\n#[cfg(any(unix, windows, not(target_os = \"none\"), all()))]\n#[cfg_attr(test, derive(PartialEq), allow(dead_code),)]\n#[cfg(true)]\n#[cfg(any())]\n#[cfg_attr(false, derive(Eq))]\n#[doc = r\"raw doc\"]\n#[deprecated(since = \"1.0\", note = \"x\")]\n#[allow(clippy::all)]\n#[must_use]\n#[inline]\nstruct S { #[cfg(feature = \"x\")] a: u8 }\n#[inline(always)] fn fa() {}\n#[inline(never)] fn fb() {}\n#[collapse_debuginfo(yes)] macro_rules! cd1 { () => {} }\n#[collapse_debuginfo(no)] macro_rules! cd2 { () => {} }\n#[collapse_debuginfo(external)] macro_rules! cd3 { () => {} }\n#[doc = concat!(\"a\", \"b\")]\nmod p {}\n#[rustfmt::skip]\n#[cfg_attr(unix, path = \"x.rs\")]\nfn tool() {}\nmod outer {\n    pub mod inner {\n        pub fn f() {}\n        use super::g as _g2;\n        use self::f as _f;\n        use crate::outer::g as _g3;\n        pub fn up() { super::g(); self::f(); crate::outer::g(); }\n    }\n    pub fn g() {}\n}\nmacro_rules! dollar { () => { use $crate::outer as _o; $crate::outer::g() }; }\ntrait T2 { fn make() -> Self; fn m(&self) {} }\nimpl T2 for u8 { fn make() -> Self { Self::default() } }\nfn paths() {\n    let v = Vec::<u8>::new();\n    let w = ::std::vec::Vec::<u8>::with_capacity(1);\n    let d = <u8 as Default>::default();\n    let e = <Vec<u8>>::new();\n    let f: Box<dyn Fn(u8, u16) -> u32> = Box::new(|a, b| 0);\n    let g: Box<dyn FnMut()> = Box::new(|| ());\n    let h: Box<dyn Iterator<Item = u8>> = Box::new(None.into_iter());\n    let i: Option<Vec<u8>> = None;\n    let j = <u8>::max_value;\n    let k = std::collections::HashMap::<u8, u8>::new();\n    let l: std::vec::Vec::<u8> = Vec::new();\n    dollar!();\n    let x = cfg_select! { unix => { 1 } windows => 2, _ => 3 };\n    cfg_select! { target_os = \"none\" => { fn never_built() {} } _ => {} }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "inner_attribute_item",
+            "attribute_item",
+            "attribute",
+            "token_tree",
+            "struct_item",
+            "macro_definition",
+            "scoped_identifier",
+            "generic_type",
+            "qualified_type",
+            "type_arguments",
+            "type_binding",
+            "function_type",
+            "crate",
+            "super",
+            "self",
+            "macro_invocation",
+            "call_expression"
+          ],
+          "anchors": [
+            {
+              "type": "inner_attribute_item",
+              "text": "#![allow(unused_variables)]"
+            },
+            {
+              "type": "inner_attribute_item",
+              "text": "#![doc = \"crate docs\"]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[derive(Clone, Debug)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg(any(unix, windows, not(target_os = \"none\"), all()))]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg_attr(test, derive(PartialEq), allow(dead_code),)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg(true)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg(any())]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg_attr(false, derive(Eq))]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[doc = r\"raw doc\"]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[deprecated(since = \"1.0\", note = \"x\")]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[allow(clippy::all)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[must_use]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[inline]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg(feature = \"x\")]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[inline(always)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[inline(never)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[collapse_debuginfo(yes)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[collapse_debuginfo(no)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[collapse_debuginfo(external)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[doc = concat!(\"a\", \"b\")]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[rustfmt::skip]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg_attr(unix, path = \"x.rs\")]"
+            },
+            {
+              "type": "attribute",
+              "text": "doc = concat!(\"a\", \"b\")"
+            },
+            {
+              "type": "attribute",
+              "text": "rustfmt::skip"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "rustfmt::skip"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "super::g",
+              "occurrence": 1
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "self::f",
+              "occurrence": 1
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "crate::outer::g",
+              "occurrence": 1
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "super::g",
+              "occurrence": 2
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "self::f",
+              "occurrence": 2
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "crate::outer::g",
+              "occurrence": 2
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "Vec::<u8>::new"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "::std::vec::Vec::<u8>::with_capacity"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "<u8 as Default>::default"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "<Vec<u8>>::new"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "<u8>::max_value"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "std::collections::HashMap::<u8, u8>::new"
+            },
+            {
+              "type": "generic_type",
+              "text": "Vec::<u8>",
+              "occurrence": 1
+            },
+            {
+              "type": "generic_type",
+              "text": "::std::vec::Vec::<u8>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<dyn Fn(u8, u16) -> u32>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<dyn FnMut()>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<dyn Iterator<Item = u8>>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Option<Vec<u8>>"
+            },
+            {
+              "type": "generic_type",
+              "text": "std::collections::HashMap::<u8, u8>"
+            },
+            {
+              "type": "bracketed_type",
+              "text": "<u8 as Default>"
+            },
+            {
+              "type": "qualified_type",
+              "text": "u8 as Default"
+            },
+            {
+              "type": "bracketed_type",
+              "text": "<Vec<u8>>",
+              "occurrence": 1
+            },
+            {
+              "type": "type_binding",
+              "text": "Item = u8"
+            },
+            {
+              "type": "bracketed_type",
+              "text": "<u8>",
+              "occurrence": 5
+            },
+            {
+              "type": "function_type",
+              "text": "Fn(u8, u16) -> u32"
+            },
+            {
+              "type": "function_type",
+              "text": "FnMut()"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use super::g as _g2;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use self::f as _f;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use crate::outer::g as _g3;"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "dollar!()"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "cfg_select! { unix => { 1 } windows => 2, _ => 3 }"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "cfg_select! { target_os = \"none\" => { fn never_built() {} } _ => {} }"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! dollar { () => { use $crate::outer as _o; $crate::outer::g() }; }"
+            },
+            {
+              "type": "metavariable",
+              "text": "$crate",
+              "occurrence": 1
+            },
+            {
+              "type": "metavariable",
+              "text": "$crate",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "Self::default()"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let l: std::vec::Vec::<u8> = Vec::new();"
+            },
+            {
+              "type": "generic_type",
+              "text": "std::vec::Vec::<u8>",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "Vec::new()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-06",
+      "features": [
+        "rust-B01"
+      ],
+      "alternatives": [
+        "rust-B01.a160",
+        "rust-B01.a161",
+        "rust-B01.a162",
+        "rust-B01.a241",
+        "rust-B01.a256",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a355",
+        "rust-B01.a366"
+      ],
+      "source_utf8": "#[proc_macro_derive(MyDerive, attributes(helper, other,),)]\npub fn my_derive(i: u8) -> u8 { i }\n#[proc_macro_derive(Plain)]\npub fn plain(i: u8) -> u8 { i }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute_item",
+            "attribute",
+            "token_tree",
+            "function_item"
+          ],
+          "anchors": [
+            {
+              "type": "attribute_item",
+              "text": "#[proc_macro_derive(MyDerive, attributes(helper, other,),)]"
+            },
+            {
+              "type": "attribute",
+              "text": "proc_macro_derive(MyDerive, attributes(helper, other,),)"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[proc_macro_derive(Plain)]"
+            },
+            {
+              "type": "attribute",
+              "text": "proc_macro_derive(Plain)"
+            },
+            {
+              "type": "token_tree",
+              "text": "(MyDerive, attributes(helper, other,),)"
+            },
+            {
+              "type": "token_tree",
+              "text": "(Plain)"
+            },
+            {
+              "type": "token_tree",
+              "text": "(helper, other,)"
+            },
+            {
+              "type": "function_item",
+              "text": "pub fn my_derive(i: u8) -> u8 { i }"
+            },
+            {
+              "type": "function_item",
+              "text": "pub fn plain(i: u8) -> u8 { i }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-07",
+      "features": [
+        "rust-B01"
+      ],
+      "alternatives": [
+        "rust-B01.a387",
+        "rust-B01.a388",
+        "rust-B01.a099",
+        "rust-B01.a322",
+        "rust-B01.a323",
+        "rust-B01.a241",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a272",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a355",
+        "rust-B01.a361",
+        "rust-B01.a369",
+        "rust-B01.a374"
+      ],
+      "source_utf8": "trait Anon {\n    fn f(u8, &str);\n    fn g(&self, Vec<u8>) -> u8;\n}\nfn bare(x: &Anon) -> Box<Anon + Send> { loop {} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "trait_item",
+            "function_signature_item",
+            "parameters",
+            "reference_type",
+            "generic_type"
+          ],
+          "anchors": [
+            {
+              "type": "function_signature_item",
+              "text": "fn f(u8, &str);"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "fn g(&self, Vec<u8>) -> u8;"
+            },
+            {
+              "type": "generic_type",
+              "text": "Vec<u8>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Box<Anon + Send>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "Anon + Send"
+            },
+            {
+              "type": "parameters",
+              "text": "(u8, &str)"
+            },
+            {
+              "type": "primitive_type",
+              "text": "u8",
+              "occurrence": 1
+            },
+            {
+              "type": "reference_type",
+              "text": "&str"
+            },
+            {
+              "type": "parameters",
+              "text": "(&self, Vec<u8>)"
+            },
+            {
+              "type": "reference_type",
+              "text": "&Anon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B02-01",
+      "features": [
+        "rust-B01",
+        "rust-B02"
+      ],
+      "alternatives": [
+        "rust-B02.a001",
+        "rust-B02.a002",
+        "rust-B02.a003",
+        "rust-B02.a004",
+        "rust-B02.a005",
+        "rust-B02.a006",
+        "rust-B02.a007",
+        "rust-B02.a008",
+        "rust-B02.a009",
+        "rust-B02.a010",
+        "rust-B02.a011",
+        "rust-B02.a012",
+        "rust-B02.a013",
+        "rust-B02.a014",
+        "rust-B02.a015",
+        "rust-B02.a016",
+        "rust-B02.a017",
+        "rust-B02.a018",
+        "rust-B02.a019",
+        "rust-B02.a020",
+        "rust-B02.a021",
+        "rust-B02.a022",
+        "rust-B02.a023",
+        "rust-B02.a024",
+        "rust-B02.a025",
+        "rust-B02.a026",
+        "rust-B02.a027",
+        "rust-B02.a028",
+        "rust-B02.a029",
+        "rust-B02.a030",
+        "rust-B02.a031",
+        "rust-B02.a032",
+        "rust-B02.a033",
+        "rust-B02.a034",
+        "rust-B02.a035",
+        "rust-B02.a036",
+        "rust-B02.a037",
+        "rust-B02.a038",
+        "rust-B02.a039",
+        "rust-B02.a040",
+        "rust-B02.a041",
+        "rust-B02.a042",
+        "rust-B02.a043",
+        "rust-B02.a044",
+        "rust-B02.a045",
+        "rust-B02.a046",
+        "rust-B02.a047",
+        "rust-B02.a048",
+        "rust-B02.a049",
+        "rust-B02.a050",
+        "rust-B02.a061",
+        "rust-B02.a062",
+        "rust-B02.a063",
+        "rust-B02.a064",
+        "rust-B02.a065",
+        "rust-B02.a066",
+        "rust-B02.a067",
+        "rust-B02.a068",
+        "rust-B02.a069",
+        "rust-B02.a070",
+        "rust-B02.a071",
+        "rust-B02.a072",
+        "rust-B02.a073",
+        "rust-B02.a074",
+        "rust-B02.a075",
+        "rust-B02.a076",
+        "rust-B02.a077",
+        "rust-B02.a078",
+        "rust-B02.a079",
+        "rust-B02.a080",
+        "rust-B02.a081",
+        "rust-B02.a082",
+        "rust-B02.a083",
+        "rust-B02.a084",
+        "rust-B02.a085",
+        "rust-B02.a086",
+        "rust-B02.a087",
+        "rust-B02.a088",
+        "rust-B02.a089",
+        "rust-B02.a090",
+        "rust-B02.a091",
+        "rust-B02.a092",
+        "rust-B02.a093",
+        "rust-B02.a094",
+        "rust-B02.a095",
+        "rust-B02.a096",
+        "rust-B02.a097",
+        "rust-B02.a098",
+        "rust-B02.a099",
+        "rust-B02.a100",
+        "rust-B02.a101",
+        "rust-B02.a102",
+        "rust-B02.a103",
+        "rust-B02.a104",
+        "rust-B02.a105",
+        "rust-B02.a106",
+        "rust-B02.a107",
+        "rust-B02.a108",
+        "rust-B02.a109",
+        "rust-B02.a110",
+        "rust-B02.a111",
+        "rust-B02.a112",
+        "rust-B02.a113",
+        "rust-B02.a114",
+        "rust-B02.a115",
+        "rust-B02.a116",
+        "rust-B02.a117",
+        "rust-B02.a118",
+        "rust-B02.a119",
+        "rust-B02.a120",
+        "rust-B02.a121",
+        "rust-B02.a122",
+        "rust-B02.a123",
+        "rust-B02.a124",
+        "rust-B02.a125",
+        "rust-B02.a126",
+        "rust-B02.a127",
+        "rust-B02.a129",
+        "rust-B02.a130",
+        "rust-B02.a131",
+        "rust-B02.a132",
+        "rust-B02.a133",
+        "rust-B02.a134",
+        "rust-B02.a135",
+        "rust-B02.a136",
+        "rust-B02.a137",
+        "rust-B02.a138",
+        "rust-B02.a139",
+        "rust-B02.a140",
+        "rust-B02.a141",
+        "rust-B02.a142",
+        "rust-B02.a143",
+        "rust-B02.a144",
+        "rust-B02.a145",
+        "rust-B02.a146",
+        "rust-B02.a147",
+        "rust-B02.a148",
+        "rust-B02.a149",
+        "rust-B02.a242",
+        "rust-B02.a243",
+        "rust-B02.a181",
+        "rust-B02.a246",
+        "rust-B02.a247",
+        "rust-B02.a245",
+        "rust-B01.a140",
+        "rust-B01.a147",
+        "rust-B01.a229",
+        "rust-B01.a002",
+        "rust-B01.a001",
+        "rust-B01.a231",
+        "rust-B01.a232",
+        "rust-B01.a233",
+        "rust-B01.a234",
+        "rust-B01.a235",
+        "rust-B01.a236",
+        "rust-B01.a237",
+        "rust-B01.a238",
+        "rust-B01.a239",
+        "rust-B01.a240",
+        "rust-B01.a241",
+        "rust-B01.a242",
+        "rust-B01.a243",
+        "rust-B01.a244",
+        "rust-B01.a246",
+        "rust-B01.a247",
+        "rust-B01.a248",
+        "rust-B01.a249",
+        "rust-B01.a250",
+        "rust-B01.a251",
+        "rust-B01.a252",
+        "rust-B01.a253",
+        "rust-B01.a254",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a258",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a265",
+        "rust-B01.a266",
+        "rust-B01.a267",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a273",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a277",
+        "rust-B01.a278",
+        "rust-B01.a279",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a346",
+        "rust-B01.a347",
+        "rust-B01.a349",
+        "rust-B01.a351",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a357",
+        "rust-B01.a359",
+        "rust-B01.a360",
+        "rust-B01.a361",
+        "rust-B01.a362",
+        "rust-B01.a364",
+        "rust-B01.a365",
+        "rust-B01.a368",
+        "rust-B01.a372",
+        "rust-B01.a375",
+        "rust-B01.a377",
+        "rust-B01.a380"
+      ],
+      "source_utf8": "#[derive(Default, Clone, Copy)]\nstruct P { x: i32, y: i32 }\nstruct T2(i32, i32);\nfn f(a: i32, b: i32, v: &mut Vec<i32>, o: Option<i32>, r: Result<i32, ()>) -> Result<i32, ()> {\n    let _ = a + b - a * b / 2 % 3 & 1 | 2 ^ 3 << 1 >> 1;\n    let _ = a == b || a != b && a > b || a < b || a >= b || a <= b;\n    let mut x = 0; x = 1; x += 1; x -= 1; x *= 2; x /= 2; x %= 3; x &= 1; x |= 2; x ^= 3; x <<= 1; x >>= 1;\n    let _ = -a; let _ = !true; let rr = &a; let _ = *rr; let _ = &&a; let m = &mut x; let _ = &&mut x;\n    let _ = a as i64; let _ = r?; let _ = (a + b) * 2;\n    let _ = [1, 2, 3]; let _ = [0; 4]; let _ = []; let _ = [1, 2,]; let _ = v[0];\n    let _ = (); let _ = (1,); let _ = (1, 2); let t = (1, (2, 3)); let _ = t.1.0;\n    let p = P { x: 1, y: 2 }; let _ = P { x, ..p }; let _ = P { ..Default::default() }; let _ = P { x: 1, y, };\n    let _ = T2 { 0: 1, 1: 2 }; let _ = p.x; let _ = T2(1, 2);\n    let _ = f(a, b, v, o, r,); let _ = v.len(); let _ = v.iter().map::<i32, _>(|e| *e).count();\n    let c1 = || 1; let c2 = |a| a + 1; let c3 = move |a: i32, b: i32| -> i32 { a + b };\n    let c4 = |#[allow(unused)] a: i32, (b, c): (i32, i32),| a; let c5 = |_| ();\n    let _ = 1..2; let _ = 1..; let _ = ..2; let _ = ..; let _ = 1..=2; let _ = ..=2;\n    let _ = { 1 }; let _ = unsafe { 1 }; let _ = { #![allow(unused)] 2 };\n    let _ = if a > 0 { 1 } else if a < 0 { -1 } else { 0 };\n    if let Some(z) = o { let _ = z; }\n    let _ = loop { break 5; };\n    'outer: loop { 'inner: while x > 0 { if x == 2 { continue 'outer; } break 'inner; } break 'outer; }\n    while let Some(_) = o { break; }\n    for i in 0..3 { let _ = i; }\n    'lbl: for _ in [1] { continue 'lbl; }\n    let _ = 'blk: { if a > 0 { break 'blk 1; } 2 };\n    let _ = match o { Some(0) => 0, Some(n) if n > 1 => n, Some(n) if let Ok(k) = r && k > n => k, None | Some(_) => { 1 } };\n    match a { #[allow(unused)] _ => {} }\n    match a { 1 => 2, _ => 3, };\n    _ = f(a, b, v, o, r);\n    (x, _) = (1, 2);\n    [x, _, ..] = [1, 2, 3, 4];\n    P { x, .. } = p;\n    #[allow(unused_must_use)] { 1 };\n    let _ = vec![1];\n    return Ok(a);\n}\nfn ret_unit() { return; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "compound_assignment_expr",
+            "assignment_expression",
+            "unary_expression",
+            "reference_expression",
+            "type_cast_expression",
+            "try_expression",
+            "parenthesized_expression",
+            "array_expression",
+            "index_expression",
+            "unit_expression",
+            "tuple_expression",
+            "field_expression",
+            "struct_expression",
+            "field_initializer_list",
+            "shorthand_field_initializer",
+            "base_field_initializer",
+            "call_expression",
+            "closure_expression",
+            "closure_parameters",
+            "range_expression",
+            "block",
+            "unsafe_block",
+            "if_expression",
+            "else_clause",
+            "let_condition",
+            "loop_expression",
+            "while_expression",
+            "for_expression",
+            "label",
+            "break_expression",
+            "continue_expression",
+            "match_expression",
+            "match_block",
+            "match_arm",
+            "match_pattern",
+            "return_expression",
+            "generic_function"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "a + b - a * b / 2 % 3 & 1 | 2 ^ 3 << 1 >> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b / 2 % 3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 ^ 3 << 1 >> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a == b || a != b && a > b || a < b || a >= b || a <= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a != b && a > b"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x = 1"
+            },
+            {
+              "type": "compound_assignment_expr",
+              "text": "x += 1"
+            },
+            {
+              "type": "compound_assignment_expr",
+              "text": "x <<= 1"
+            },
+            {
+              "type": "compound_assignment_expr",
+              "text": "x >>= 1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!true"
+            },
+            {
+              "type": "unary_expression",
+              "text": "*rr"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&&a"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&&mut x"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&mut x",
+              "occurrence": 1
+            },
+            {
+              "type": "type_cast_expression",
+              "text": "a as i64"
+            },
+            {
+              "type": "try_expression",
+              "text": "r?"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(a + b)"
+            },
+            {
+              "type": "array_expression",
+              "text": "[1, 2, 3]"
+            },
+            {
+              "type": "array_expression",
+              "text": "[0; 4]"
+            },
+            {
+              "type": "array_expression",
+              "text": "[]"
+            },
+            {
+              "type": "array_expression",
+              "text": "[1, 2,]"
+            },
+            {
+              "type": "index_expression",
+              "text": "v[0]"
+            },
+            {
+              "type": "unit_expression",
+              "text": "()",
+              "occurrence": 3
+            },
+            {
+              "type": "tuple_expression",
+              "text": "(1,)"
+            },
+            {
+              "type": "tuple_expression",
+              "text": "(1, (2, 3))"
+            },
+            {
+              "type": "field_expression",
+              "text": "t.1.0"
+            },
+            {
+              "type": "field_expression",
+              "text": "p.x"
+            },
+            {
+              "type": "struct_expression",
+              "text": "P { x: 1, y: 2 }"
+            },
+            {
+              "type": "struct_expression",
+              "text": "P { x, ..p }"
+            },
+            {
+              "type": "struct_expression",
+              "text": "P { ..Default::default() }"
+            },
+            {
+              "type": "struct_expression",
+              "text": "P { x: 1, y, }"
+            },
+            {
+              "type": "struct_expression",
+              "text": "T2 { 0: 1, 1: 2 }"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(a, b, v, o, r,)"
+            },
+            {
+              "type": "call_expression",
+              "text": "v.len()"
+            },
+            {
+              "type": "generic_function",
+              "text": "v.iter().map::<i32, _>"
+            },
+            {
+              "type": "closure_expression",
+              "text": "|| 1"
+            },
+            {
+              "type": "closure_expression",
+              "text": "move |a: i32, b: i32| -> i32 { a + b }"
+            },
+            {
+              "type": "range_expression",
+              "text": "1..2"
+            },
+            {
+              "type": "range_expression",
+              "text": "1..",
+              "occurrence": 2
+            },
+            {
+              "type": "range_expression",
+              "text": "..2",
+              "occurrence": 2
+            },
+            {
+              "type": "range_expression",
+              "text": "..",
+              "occurrence": 6
+            },
+            {
+              "type": "range_expression",
+              "text": "1..=2"
+            },
+            {
+              "type": "block",
+              "text": "{ 1 }",
+              "occurrence": 1
+            },
+            {
+              "type": "unsafe_block",
+              "text": "unsafe { 1 }"
+            },
+            {
+              "type": "block",
+              "text": "{ #![allow(unused)] 2 }"
+            },
+            {
+              "type": "if_expression",
+              "text": "if a > 0 { 1 } else if a < 0 { -1 } else { 0 }"
+            },
+            {
+              "type": "let_condition",
+              "text": "let Some(z) = o"
+            },
+            {
+              "type": "break_expression",
+              "text": "break 5"
+            },
+            {
+              "type": "while_expression",
+              "text": "'inner: while x > 0 { if x == 2 { continue 'outer; } break 'inner; }"
+            },
+            {
+              "type": "continue_expression",
+              "text": "continue 'outer"
+            },
+            {
+              "type": "while_expression",
+              "text": "while let Some(_) = o { break; }"
+            },
+            {
+              "type": "for_expression",
+              "text": "for i in 0..3 { let _ = i; }"
+            },
+            {
+              "type": "for_expression",
+              "text": "'lbl: for _ in [1] { continue 'lbl; }"
+            },
+            {
+              "type": "block",
+              "text": "'blk: { if a > 0 { break 'blk 1; } 2 }"
+            },
+            {
+              "type": "break_expression",
+              "text": "break 'blk 1"
+            },
+            {
+              "type": "match_arm",
+              "text": "Some(n) if n > 1 => n,"
+            },
+            {
+              "type": "let_chain",
+              "text": "let Ok(k) = r && k > n"
+            },
+            {
+              "type": "match_arm",
+              "text": "#[allow(unused)] _ => {}"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[x, _, ..] = [1, 2, 3, 4]"
+            },
+            {
+              "type": "return_expression",
+              "text": "return",
+              "occurrence": 2
+            },
+            {
+              "type": "closure_expression",
+              "text": "|#[allow(unused)] a: i32, (b, c): (i32, i32),| a"
+            },
+            {
+              "type": "range_expression",
+              "text": "..=2",
+              "occurrence": 2
+            },
+            {
+              "type": "struct_expression",
+              "text": "P { x, .. }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B02-02",
+      "features": [
+        "rust-B01",
+        "rust-B02"
+      ],
+      "alternatives": [
+        "rust-B02.a190",
+        "rust-B02.a191",
+        "rust-B02.a192",
+        "rust-B02.a193",
+        "rust-B02.a194",
+        "rust-B02.a195",
+        "rust-B02.a196",
+        "rust-B02.a197",
+        "rust-B02.a198",
+        "rust-B02.a199",
+        "rust-B02.a200",
+        "rust-B02.a201",
+        "rust-B02.a202",
+        "rust-B02.a203",
+        "rust-B02.a204",
+        "rust-B02.a206",
+        "rust-B02.a207",
+        "rust-B02.a208",
+        "rust-B02.a209",
+        "rust-B02.a210",
+        "rust-B02.a211",
+        "rust-B02.a212",
+        "rust-B02.a213",
+        "rust-B02.a214",
+        "rust-B02.a215",
+        "rust-B02.a216",
+        "rust-B02.a217",
+        "rust-B02.a218",
+        "rust-B02.a219",
+        "rust-B02.a221",
+        "rust-B02.a222",
+        "rust-B02.a223",
+        "rust-B02.a224",
+        "rust-B02.a225",
+        "rust-B02.a226",
+        "rust-B02.a227",
+        "rust-B02.a228",
+        "rust-B02.a229",
+        "rust-B02.a230",
+        "rust-B02.a231",
+        "rust-B02.a232",
+        "rust-B02.a233",
+        "rust-B02.a234",
+        "rust-B02.a235",
+        "rust-B02.a236",
+        "rust-B02.a237",
+        "rust-B02.a238",
+        "rust-B02.a239",
+        "rust-B02.a181",
+        "rust-B02.a245",
+        "rust-B01.a231",
+        "rust-B01.a236",
+        "rust-B01.a242",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a264",
+        "rust-B01.a265",
+        "rust-B01.a266",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a274",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a279",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a348",
+        "rust-B01.a352",
+        "rust-B01.a354",
+        "rust-B01.a355",
+        "rust-B01.a360",
+        "rust-B01.a362",
+        "rust-B01.a365",
+        "rust-B01.a367",
+        "rust-B01.a372",
+        "rust-B01.a375",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "#[derive(Clone, Copy, PartialEq)]\nenum E { A, B(i32, i32), C { x: i32, y: i32 } }\nstruct S { a: i32, b: (i32, i32) }\nstruct T(i32, i32);\nconst LIMIT: i32 = 10;\nmacro_rules! pm { () => { _ }; }\nfn pats(e: E, s: &S, v: &[i32], o: Option<&i32>, t: (i32, i32, i32), n: i32, c: char) {\n    match n { 0 => {}, -1 => {}, 1 | 2 => {}, LIMIT => {}, i32::MAX => {}, _ => {} }\n    match n { 0..10 => {}, 10..=20 => {}, 21.. => {}, ..-5 => {}, ..=-1 => {}, i32::MIN..=LIMIT => {} }\n    match c { 'a'..='z' => {}, _ => {} }\n    match e { E::A => {}, E::B(x, ..) => {}, E::C { x: 0, .. } => {}, E::C { x, y: _ } => {} }\n    match e { E::B(.., y) => {}, E::B(..) => {}, E::C { x, y, } => {}, E::C { .. } => {}, _ => {} }\n    let S { a, b: (ref c, mut d) } = *s;\n    let &S { ref a, .. } = s;\n    let T { 0: first, 1: _ } = T(1, 2);\n    let T(p, q) = T(1, 2);\n    let (x, y, z) = t;\n    let (single,) = (1,);\n    let (..) = t;\n    let (h, ..) = t;\n    let () = ();\n    let ((a2), b2, _) = t;\n    match v { [] => {}, [one] => {}, [first, .., last] => {}, [x, rest @ ..] => {}, [a, b,] => {} }\n    match o { Some(&0) => {}, Some(&mut_x) => {}, None => {} }\n    match &&n { &&k => {} }\n    match o { Some(r @ &(1..=5)) => {}, Some(ref rr) => {}, _ => {} }\n    match n { ref mut m => {} }\n    match n { x @ (1 | 2) => {}, pm!() => {} }\n    match \"s\" { \"s\" => {}, _ => {} }\n    match 1.5f64 { 1.0 => {}, _ => {} }\n    match true { true => {}, false => {} }\n    match b'a' { b'a' => {}, _ => {} }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_expression",
+            "match_arm",
+            "or_pattern",
+            "range_pattern",
+            "tuple_struct_pattern",
+            "struct_pattern",
+            "field_pattern",
+            "remaining_field_pattern",
+            "ref_pattern",
+            "mut_pattern",
+            "reference_pattern",
+            "tuple_pattern",
+            "slice_pattern",
+            "captured_pattern",
+            "negative_literal",
+            "macro_invocation",
+            "let_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "negative_literal",
+              "text": "-1",
+              "occurrence": 1
+            },
+            {
+              "type": "or_pattern",
+              "text": "1 | 2",
+              "occurrence": 1
+            },
+            {
+              "type": "match_arm",
+              "text": "LIMIT => {},"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "i32::MAX"
+            },
+            {
+              "type": "match_arm",
+              "text": "_ => {}",
+              "occurrence": 1
+            },
+            {
+              "type": "range_pattern",
+              "text": "0..10"
+            },
+            {
+              "type": "range_pattern",
+              "text": "10..=20"
+            },
+            {
+              "type": "range_pattern",
+              "text": "21.."
+            },
+            {
+              "type": "range_pattern",
+              "text": "..-5"
+            },
+            {
+              "type": "range_pattern",
+              "text": "..=-1"
+            },
+            {
+              "type": "range_pattern",
+              "text": "i32::MIN..=LIMIT"
+            },
+            {
+              "type": "range_pattern",
+              "text": "'a'..='z'"
+            },
+            {
+              "type": "match_arm",
+              "text": "E::A => {},"
+            },
+            {
+              "type": "tuple_struct_pattern",
+              "text": "E::B(x, ..)"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "E::C { x: 0, .. }"
+            },
+            {
+              "type": "field_pattern",
+              "text": "x: 0"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "E::C { x, y: _ }"
+            },
+            {
+              "type": "tuple_struct_pattern",
+              "text": "E::B(.., y)"
+            },
+            {
+              "type": "tuple_struct_pattern",
+              "text": "E::B(..)"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "E::C { x, y, }"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "E::C { .. }"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "S { a, b: (ref c, mut d) }"
+            },
+            {
+              "type": "field_pattern",
+              "text": "b: (ref c, mut d)"
+            },
+            {
+              "type": "ref_pattern",
+              "text": "ref c"
+            },
+            {
+              "type": "mut_pattern",
+              "text": "mut d"
+            },
+            {
+              "type": "reference_pattern",
+              "text": "&S { ref a, .. }"
+            },
+            {
+              "type": "field_pattern",
+              "text": "ref a"
+            },
+            {
+              "type": "struct_pattern",
+              "text": "T { 0: first, 1: _ }"
+            },
+            {
+              "type": "tuple_struct_pattern",
+              "text": "T(p, q)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(x, y, z)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(single,)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(..)",
+              "occurrence": 2
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(h, ..)"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "()",
+              "occurrence": 2
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "((a2), b2, _)"
+            },
+            {
+              "type": "slice_pattern",
+              "text": "[]"
+            },
+            {
+              "type": "slice_pattern",
+              "text": "[one]"
+            },
+            {
+              "type": "slice_pattern",
+              "text": "[first, .., last]"
+            },
+            {
+              "type": "slice_pattern",
+              "text": "[x, rest @ ..]"
+            },
+            {
+              "type": "captured_pattern",
+              "text": "rest @ .."
+            },
+            {
+              "type": "slice_pattern",
+              "text": "[a, b,]"
+            },
+            {
+              "type": "reference_pattern",
+              "text": "&0"
+            },
+            {
+              "type": "reference_pattern",
+              "text": "&mut_x"
+            },
+            {
+              "type": "reference_pattern",
+              "text": "&&k"
+            },
+            {
+              "type": "captured_pattern",
+              "text": "r @ &(1..=5)"
+            },
+            {
+              "type": "reference_pattern",
+              "text": "&(1..=5)"
+            },
+            {
+              "type": "ref_pattern",
+              "text": "ref rr"
+            },
+            {
+              "type": "ref_pattern",
+              "text": "ref mut m"
+            },
+            {
+              "type": "captured_pattern",
+              "text": "x @ (1 | 2)"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "pm!()"
+            },
+            {
+              "type": "match_arm",
+              "text": "\"s\" => {},"
+            },
+            {
+              "type": "match_arm",
+              "text": "1.0 => {},"
+            },
+            {
+              "type": "match_arm",
+              "text": "true => {},"
+            },
+            {
+              "type": "match_arm",
+              "text": "b'a' => {},"
+            },
+            {
+              "type": "field_pattern",
+              "text": "0: first"
+            },
+            {
+              "type": "field_pattern",
+              "text": "1: _"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B02-03",
+      "features": [
+        "rust-B01",
+        "rust-B02"
+      ],
+      "alternatives": [
+        "rust-B02.a150",
+        "rust-B02.a151",
+        "rust-B02.a152",
+        "rust-B02.a153",
+        "rust-B02.a154",
+        "rust-B02.a155",
+        "rust-B02.a156",
+        "rust-B02.a157",
+        "rust-B02.a158",
+        "rust-B02.a159",
+        "rust-B02.a160",
+        "rust-B02.a161",
+        "rust-B02.a162",
+        "rust-B02.a163",
+        "rust-B02.a164",
+        "rust-B02.a165",
+        "rust-B02.a166",
+        "rust-B02.a167",
+        "rust-B02.a168",
+        "rust-B02.a169",
+        "rust-B02.a170",
+        "rust-B02.a171",
+        "rust-B02.a172",
+        "rust-B02.a173",
+        "rust-B02.a174",
+        "rust-B02.a175",
+        "rust-B02.a176",
+        "rust-B02.a177",
+        "rust-B02.a178",
+        "rust-B02.a179",
+        "rust-B02.a180",
+        "rust-B02.a181",
+        "rust-B02.a182",
+        "rust-B02.a183",
+        "rust-B02.a184",
+        "rust-B02.a185",
+        "rust-B02.a186",
+        "rust-B02.a187",
+        "rust-B02.a188",
+        "rust-B02.a189",
+        "rust-B02.a240",
+        "rust-B02.a241",
+        "rust-B02.a242",
+        "rust-B02.a243",
+        "rust-B02.a244",
+        "rust-B02.a245",
+        "rust-B02.a246",
+        "rust-B02.a247",
+        "rust-B01.a062",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a257",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a271",
+        "rust-B01.a273",
+        "rust-B01.a274",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a351",
+        "rust-B01.a355",
+        "rust-B01.a357",
+        "rust-B01.a360",
+        "rust-B01.a366",
+        "rust-B01.a372",
+        "rust-B01.a375",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "macro_rules! all_specs {\n    ($b:block $e:expr, $i:ident $it:item $l:lifetime $lit:literal $m:meta $p:pat, $pp:path, $s:stmt; $t:tt $ty:ty, $v:vis) => {};\n}\nmacro_rules! reps {\n    ($($x:expr),* $(,)?) => { $( let _ = $x; )* };\n    ($($k:ident => $v:expr);+) => {};\n    (@inner [$($t:tt)*] { $($u:tt)+ }) => {};\n    ($(a)? $(b)*) => {}\n}\nmacro_rules! brackets [ () => {}; [] => {}; {} => {} ];\nmacro_rules! parens ( ($x:tt) => { $x } );\nmacro_rules! nested { ($($outer:ident($($inner:expr),*));*) => { $( $( let _ = $inner; )* )* }; }\nmacro_rules! keyword_frag { ($self_:ident $r#type:ident) => {}; }\nmacro_rules! trailing_sep { ($($x:expr);* ;) => {}; }\nfn stmts() {\n    ;\n    let a;\n    let b: u8;\n    let c = 1;\n    let d: i32 = 2;\n    fn local_item() {}\n    struct LocalStruct;\n    #[allow(unused)] let e = 3;\n    println!(\"{}\", c);\n    vec![1, 2];\n    reps! { a, b };\n    reps![1, 2,];\n    reps!(1, 2);\n    { 1 }\n    if true { } else { }\n    1 + 1;\n    #[allow(unused)] all_specs!({} 1, x fn f(){} 'a \"s\" foo = \"bar\" Some(_), a::b, let y = 1; tt u8, pub);\n    nested!(a(1, 2); b(3));\n    trailing_sep!(1; 2;);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "macro_definition",
+            "macro_rule",
+            "token_tree_pattern",
+            "token_binding_pattern",
+            "fragment_specifier",
+            "token_repetition_pattern",
+            "token_repetition",
+            "metavariable",
+            "macro_invocation",
+            "token_tree",
+            "empty_statement",
+            "let_declaration",
+            "expression_statement",
+            "function_item",
+            "struct_item"
+          ],
+          "anchors": [
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! all_specs {\n    ($b:block $e:expr, $i:ident $it:item $l:lifetime $lit:literal $m:meta $p:pat, $pp:path, $s:stmt; $t:tt $ty:ty, $v:vis) => {};\n}"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! reps {\n    ($($x:expr),* $(,)?) => { $( let _ = $x; )* };\n    ($($k:ident => $v:expr);+) => {};\n    (@inner [$($t:tt)*] { $($u:tt)+ }) => {};\n    ($(a)? $(b)*) => {}\n}"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! brackets [ () => {}; [] => {}; {} => {} ];"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! parens ( ($x:tt) => { $x } );"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! nested { ($($outer:ident($($inner:expr),*));*) => { $( $( let _ = $inner; )* )* }; }"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! keyword_frag { ($self_:ident $r#type:ident) => {}; }"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! trailing_sep { ($($x:expr);* ;) => {}; }"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$b:block"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$i:ident"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$it:item"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$l:lifetime"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$lit:literal"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$m:meta"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$p:pat"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$pp:path"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$s:stmt"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$t:tt",
+              "occurrence": 1
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$ty:ty"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$v:vis"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$self_:ident"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$r#type:ident"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$($x:expr),*"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$(,)?"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$($k:ident => $v:expr);+"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$(a)?"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$(b)*"
+            },
+            {
+              "type": "token_repetition_pattern",
+              "text": "$($x:expr);*"
+            },
+            {
+              "type": "token_tree_pattern",
+              "text": "[$($t:tt)*]"
+            },
+            {
+              "type": "token_tree_pattern",
+              "text": "{ $($u:tt)+ }"
+            },
+            {
+              "type": "token_tree_pattern",
+              "text": "()",
+              "occurrence": 1
+            },
+            {
+              "type": "token_tree_pattern",
+              "text": "[]"
+            },
+            {
+              "type": "token_tree_pattern",
+              "text": "{}",
+              "occurrence": 7
+            },
+            {
+              "type": "token_repetition",
+              "text": "$( let _ = $x; )*"
+            },
+            {
+              "type": "token_repetition",
+              "text": "$( $( let _ = $inner; )* )*"
+            },
+            {
+              "type": "empty_statement",
+              "text": ";",
+              "occurrence": 19
+            },
+            {
+              "type": "let_declaration",
+              "text": "let a;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let b: u8;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let c = 1;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let d: i32 = 2;"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct LocalStruct;"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let e = 3;"
+            },
+            {
+              "type": "expression_statement",
+              "text": "println!(\"{}\", c);"
+            },
+            {
+              "type": "expression_statement",
+              "text": "vec![1, 2];"
+            },
+            {
+              "type": "expression_statement",
+              "text": "reps! { a, b };"
+            },
+            {
+              "type": "expression_statement",
+              "text": "reps![1, 2,];"
+            },
+            {
+              "type": "expression_statement",
+              "text": "reps!(1, 2);"
+            },
+            {
+              "type": "expression_statement",
+              "text": "{ 1 }"
+            },
+            {
+              "type": "expression_statement",
+              "text": "if true { } else { }"
+            },
+            {
+              "type": "expression_statement",
+              "text": "1 + 1;"
+            },
+            {
+              "type": "expression_statement",
+              "text": "all_specs!({} 1, x fn f(){} 'a \"s\" foo = \"bar\" Some(_), a::b, let y = 1; tt u8, pub);"
+            },
+            {
+              "type": "expression_statement",
+              "text": "nested!(a(1, 2); b(3));"
+            },
+            {
+              "type": "expression_statement",
+              "text": "trailing_sep!(1; 2;);"
+            },
+            {
+              "type": "function_item",
+              "text": "fn local_item() {}"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[allow(unused)]",
+              "occurrence": 1
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[allow(unused)]",
+              "occurrence": 2
+            },
+            {
+              "type": "macro_invocation",
+              "text": "all_specs!({} 1, x fn f(){} 'a \"s\" foo = \"bar\" Some(_), a::b, let y = 1; tt u8, pub)"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "nested!(a(1, 2); b(3))"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "trailing_sep!(1; 2;)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B02-04",
+      "features": [
+        "rust-B01",
+        "rust-B02"
+      ],
+      "alternatives": [
+        "rust-B02.a248",
+        "rust-B02.a220",
+        "rust-B02.a205",
+        "rust-B02.a221",
+        "rust-B01.a230",
+        "rust-B01.a249",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a355",
+        "rust-B01.a362"
+      ],
+      "source_utf8": "fn obsolete(n: i32) {\n    match n { 0...9 => {}, _ => {} }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_expression",
+            "range_pattern"
+          ],
+          "anchors": [
+            {
+              "type": "match_expression",
+              "text": "match n { 0...9 => {}, _ => {} }"
+            },
+            {
+              "type": "match_arm",
+              "text": "0...9 => {},"
+            },
+            {
+              "type": "range_pattern",
+              "text": "0...9"
+            },
+            {
+              "type": "match_arm",
+              "text": "_ => {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-V18-01",
+      "features": [
+        "rust-B01",
+        "rust-V18"
+      ],
+      "alternatives": [
+        "rust-V18.a004",
+        "rust-V18.a001",
+        "rust-V18.a002",
+        "rust-V18.a005",
+        "rust-V18.a042",
+        "rust-V18.a043",
+        "rust-V18.a038",
+        "rust-V18.a039",
+        "rust-V18.a040",
+        "rust-V18.a036",
+        "rust-V18.a037",
+        "rust-V18.a034",
+        "rust-V18.a035",
+        "rust-V18.a032",
+        "rust-V18.a033",
+        "rust-V18.a044",
+        "rust-V18.a045",
+        "rust-V18.a011",
+        "rust-V18.a012",
+        "rust-V18.a021",
+        "rust-V18.a046",
+        "rust-V18.a031",
+        "rust-V18.a029",
+        "rust-V18.a030",
+        "rust-V18.a047",
+        "rust-V18.a048",
+        "rust-V18.a013",
+        "rust-V18.a016",
+        "rust-V18.a017",
+        "rust-V18.a018",
+        "rust-V18.a019",
+        "rust-V18.a014",
+        "rust-V18.a015",
+        "rust-V18.a020",
+        "rust-V18.a049",
+        "rust-V18.a050",
+        "rust-V18.a051",
+        "rust-V18.a052",
+        "rust-V18.a006",
+        "rust-V18.a003",
+        "rust-V18.a053",
+        "rust-V18.a024",
+        "rust-V18.a025",
+        "rust-V18.a026",
+        "rust-V18.a027",
+        "rust-V18.a028",
+        "rust-V18.a007",
+        "rust-V18.a008",
+        "rust-V18.a022",
+        "rust-V18.a023",
+        "rust-V18.a054",
+        "rust-V18.a009",
+        "rust-V18.a010",
+        "rust-V18.a041",
+        "rust-B01.a130",
+        "rust-B01.a131",
+        "rust-B01.a132",
+        "rust-B01.a241",
+        "rust-B01.a244",
+        "rust-B01.a251",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a265",
+        "rust-B01.a266",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a346",
+        "rust-B01.a348",
+        "rust-B01.a350",
+        "rust-B01.a351",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a358",
+        "rust-B01.a360",
+        "rust-B01.a363",
+        "rust-B01.a364",
+        "rust-B01.a365",
+        "rust-B01.a366",
+        "rust-B01.a368",
+        "rust-B01.a369",
+        "rust-B01.a370",
+        "rust-B01.a372",
+        "rust-B01.a374",
+        "rust-B01.a375",
+        "rust-B01.a376",
+        "rust-B01.a378",
+        "rust-B01.a379"
+      ],
+      "source_utf8": "use std::future::Future;\nuse std::fmt::{self, Debug, Display};\nuse crate::inner::{self as me, deep::{*, Thing as T2}};\nmod inner { pub mod deep { pub struct Thing; } }\nasync fn fetch(x: u8) -> u8 { x }\ntrait AsyncTr { async fn run(&self); }\nstruct Holder;\nimpl AsyncTr for Holder { async fn run(&self) {} }\nasync fn use_await() -> u8 {\n    let a = async { 1 };\n    let b = async move { 2 };\n    fetch(1).await + a.await + b.await\n}\nfn dyn_impl(d: &dyn Debug, b: Box<dyn Display + Send + 'static>, i: impl Debug + Clone, ri: &impl Debug) -> impl Iterator<Item = u8> { std::iter::empty() }\nfn raw_idents() { let r#match = 1; let r#try = 2; let r#async = r#match + r#try; fn r#fn<'r#loop>(x: &'r#loop u8) -> &'r#loop u8 { x } }\nstruct Arr<const N: usize, const M: i32 = -1, const B: bool = { true }>;\nfn const_args() -> Arr<3, { 1 + 1 }, true> { todo!() }\nfn const_args2<const N: usize>() -> Arr<N, -2> { todo!() }\ntrait Lending { type Item<'a> where Self: 'a; fn next<'a>(&'a mut self) -> Option<Self::Item<'a>>; }\nfn gat_use<L: for<'a> Lending<Item<'a> = &'a u8>>(l: L) {}\nfn atb<I: Iterator<Item: Clone + Debug>>(i: I) {}\nfn let_else(o: Option<u8>) -> u8 {\n    let Some(x) = o else { return 0; };\n    let [a, b] = [1, 2] else { panic!() };\n    x\n}\nfn inline_const() {\n    let arr = [const { Vec::<u8>::new() }; 3];\n    const { assert!(true) };\n    let v = const { 1 + 1 };\n}\nfn cstr() {\n    let a = c\"hello\";\n    let b = c\"esc \\x41 \\u{e9} \\n \\\n        cont\";\n    let c = cr\"raw c\";\n    let d = cr#\"raw \"c\"\"#;\n}\nfn raw_borrow() {\n    let mut x = 1;\n    let p = &raw const x;\n    let q = &raw mut x;\n    let s = (1, 2);\n    let r = &raw const s.0;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "use_declaration",
+            "scoped_use_list",
+            "use_list",
+            "use_as_clause",
+            "use_wildcard",
+            "function_item",
+            "function_modifiers",
+            "async_block",
+            "await_expression",
+            "dynamic_type",
+            "abstract_type",
+            "identifier",
+            "lifetime",
+            "const_parameter",
+            "const_block",
+            "type_arguments",
+            "associated_type",
+            "where_clause",
+            "type_binding",
+            "let_declaration",
+            "string_literal",
+            "raw_string_literal",
+            "reference_expression",
+            "trait_bounds",
+            "array_expression"
+          ],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use std::fmt::{self, Debug, Display};"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use crate::inner::{self as me, deep::{*, Thing as T2}};"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "self as me"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "Thing as T2"
+            },
+            {
+              "type": "scoped_use_list",
+              "text": "deep::{*, Thing as T2}"
+            },
+            {
+              "type": "use_wildcard",
+              "text": "*"
+            },
+            {
+              "type": "function_item",
+              "text": "async fn fetch(x: u8) -> u8 { x }"
+            },
+            {
+              "type": "function_item",
+              "text": "async fn run(&self) {}"
+            },
+            {
+              "type": "function_item",
+              "text": "fn r#fn<'r#loop>(x: &'r#loop u8) -> &'r#loop u8 { x }"
+            },
+            {
+              "type": "function_item",
+              "text": "fn const_args() -> Arr<3, { 1 + 1 }, true> { todo!() }"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "async fn run(&self);"
+            },
+            {
+              "type": "async_block",
+              "text": "async { 1 }"
+            },
+            {
+              "type": "async_block",
+              "text": "async move { 2 }"
+            },
+            {
+              "type": "await_expression",
+              "text": "fetch(1).await"
+            },
+            {
+              "type": "await_expression",
+              "text": "a.await"
+            },
+            {
+              "type": "await_expression",
+              "text": "b.await"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Debug"
+            },
+            {
+              "type": "bounded_type",
+              "text": "dyn Display + Send + 'static"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Debug + Clone"
+            },
+            {
+              "type": "reference_type",
+              "text": "&impl Debug"
+            },
+            {
+              "type": "abstract_type",
+              "text": "impl Iterator<Item = u8>"
+            },
+            {
+              "type": "identifier",
+              "text": "r#match",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "r#try",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "r#async"
+            },
+            {
+              "type": "identifier",
+              "text": "r#fn"
+            },
+            {
+              "type": "lifetime_parameter",
+              "text": "'r#loop",
+              "occurrence": 1
+            },
+            {
+              "type": "const_parameter",
+              "text": "const M: i32 = -1"
+            },
+            {
+              "type": "const_parameter",
+              "text": "const B: bool = { true }"
+            },
+            {
+              "type": "negative_literal",
+              "text": "-1"
+            },
+            {
+              "type": "generic_type",
+              "text": "Arr<3, { 1 + 1 }, true>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Arr<N, -2>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Self::Item<'a>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Lending<Item<'a> = &'a u8>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Iterator<Item: Clone + Debug>"
+            },
+            {
+              "type": "associated_type",
+              "text": "type Item<'a> where Self: 'a;"
+            },
+            {
+              "type": "higher_ranked_trait_bound",
+              "text": "for<'a> Lending<Item<'a> = &'a u8>"
+            },
+            {
+              "type": "type_binding",
+              "text": "Item<'a> = &'a u8"
+            },
+            {
+              "type": "trait_bounds",
+              "text": ": Clone + Debug"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let Some(x) = o else { return 0; };"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let [a, b] = [1, 2] else { panic!() };"
+            },
+            {
+              "type": "array_expression",
+              "text": "[const { Vec::<u8>::new() }; 3]"
+            },
+            {
+              "type": "const_block",
+              "text": "const { Vec::<u8>::new() }"
+            },
+            {
+              "type": "const_block",
+              "text": "const { assert!(true) }"
+            },
+            {
+              "type": "const_block",
+              "text": "const { 1 + 1 }"
+            },
+            {
+              "type": "string_literal",
+              "text": "c\"hello\""
+            },
+            {
+              "type": "string_literal",
+              "text": "c\"esc \\x41 \\u{e9} \\n \\\n        cont\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "cr\"raw c\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "cr#\"raw \"c\"\"#"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&raw const x"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&raw mut x"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&raw const s.0"
+            },
+            {
+              "type": "negative_literal",
+              "text": "-2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-V24-01",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18",
+        "rust-V24"
+      ],
+      "alternatives": [
+        "rust-V24.a014",
+        "rust-V24.a003",
+        "rust-V24.a015",
+        "rust-V24.a016",
+        "rust-V24.a013",
+        "rust-V24.a001",
+        "rust-V24.a017",
+        "rust-V24.a007",
+        "rust-V24.a008",
+        "rust-V24.a009",
+        "rust-V24.a010",
+        "rust-V24.a011",
+        "rust-V24.a012",
+        "rust-V24.a006",
+        "rust-V24.a025",
+        "rust-V24.a018",
+        "rust-V24.a019",
+        "rust-V24.a020",
+        "rust-V24.a021",
+        "rust-V24.a022",
+        "rust-V24.a023",
+        "rust-V24.a004",
+        "rust-V24.a005",
+        "rust-V24.a024",
+        "rust-V24.a002",
+        "rust-B01.a087",
+        "rust-B01.a088",
+        "rust-B02.a041",
+        "rust-B02.a049",
+        "rust-B01.a236",
+        "rust-B01.a241",
+        "rust-B01.a249",
+        "rust-B01.a254",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a257",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a279",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a347",
+        "rust-B01.a348",
+        "rust-B01.a353",
+        "rust-B01.a355",
+        "rust-B01.a357",
+        "rust-B01.a358",
+        "rust-B01.a360",
+        "rust-B01.a364",
+        "rust-B01.a365",
+        "rust-B01.a366",
+        "rust-B01.a369",
+        "rust-B01.a370",
+        "rust-B01.a371",
+        "rust-B01.a374",
+        "rust-B01.a377",
+        "rust-B01.a378",
+        "rust-B01.a380",
+        "rust-V18.a038",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "unsafe extern \"C\" {\n    pub safe fn abs(x: i32) -> i32;\n    pub unsafe fn strlen(p: *const u8) -> usize;\n    fn plain();\n    pub safe static SAFE_S: i32;\n    unsafe static UNSAFE_S: i32;\n    static mut MUT_S: i32;\n}\n#[unsafe(no_mangle)]\npub extern \"C\" fn exported() {}\n#[unsafe(export_name = \"renamed\")]\npub extern \"C\" fn other() {}\n#[cfg_attr(all(), unsafe(link_section = \".text\"))]\npub fn sectioned() {}\nfn capture<'a, T>(x: &'a T) -> impl Sized + use<'a, T> { x }\nfn capture_none() -> impl Sized + use<> {}\ntrait Tr { fn m(&self) -> impl Sized + use<Self>; }\nfn async_closures() {\n    let a = async || 1;\n    let b = async |x: u8| x;\n    let c = async move |x: u8| -> u8 { x };\n    let d = async move || {};\n}\nfn chains(o: Option<u8>, p: Option<u8>, flag: bool) {\n    if let Some(a) = o && let Some(b) = p && a > b { }\n    if flag && let Some(a) = o { }\n    while let Some(a) = o && a > 0 && #[allow(unused)] let Some(_) = p { break; }\n}\nmacro_rules! frags {\n    ($e:expr) => {};\n    ($e:expr_2021, $p:pat_param | $q:pat_param) => {};\n}\nfn use_frags() { frags!(const { 1 }); frags!(_); frags!(1, Some(_) | None); }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "foreign_mod_item",
+            "function_signature_item",
+            "static_item",
+            "attribute_item",
+            "attribute",
+            "function_item",
+            "use_bounds",
+            "abstract_type",
+            "closure_expression",
+            "let_chain",
+            "let_condition",
+            "if_expression",
+            "while_expression",
+            "macro_definition",
+            "fragment_specifier"
+          ],
+          "anchors": [
+            {
+              "type": "foreign_mod_item",
+              "text": "unsafe extern \"C\" {\n    pub safe fn abs(x: i32) -> i32;\n    pub unsafe fn strlen(p: *const u8) -> usize;\n    fn plain();\n    pub safe static SAFE_S: i32;\n    unsafe static UNSAFE_S: i32;\n    static mut MUT_S: i32;\n}"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "pub safe fn abs(x: i32) -> i32;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "pub unsafe fn strlen(p: *const u8) -> usize;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "fn plain();"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "fn m(&self) -> impl Sized + use<Self>;"
+            },
+            {
+              "type": "static_item",
+              "text": "pub safe static SAFE_S: i32;"
+            },
+            {
+              "type": "static_item",
+              "text": "static mut MUT_S: i32;"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[unsafe(no_mangle)]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[unsafe(export_name = \"renamed\")]"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[cfg_attr(all(), unsafe(link_section = \".text\"))]"
+            },
+            {
+              "type": "attribute",
+              "text": "unsafe(no_mangle)"
+            },
+            {
+              "type": "attribute",
+              "text": "unsafe(export_name = \"renamed\")"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<'a, T>"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<>"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<Self>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<'a, T>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<Self>"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async || 1"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async |x: u8| x"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async move |x: u8| -> u8 { x }"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async move || {}"
+            },
+            {
+              "type": "let_chain",
+              "text": "let Some(a) = o && let Some(b) = p && a > b"
+            },
+            {
+              "type": "let_chain",
+              "text": "flag && let Some(a) = o"
+            },
+            {
+              "type": "let_chain",
+              "text": "let Some(a) = o && a > 0 && #[allow(unused)] let Some(_) = p"
+            },
+            {
+              "type": "if_expression",
+              "text": "if let Some(a) = o && let Some(b) = p && a > b { }"
+            },
+            {
+              "type": "if_expression",
+              "text": "if flag && let Some(a) = o { }"
+            },
+            {
+              "type": "while_expression",
+              "text": "while let Some(a) = o && a > 0 && #[allow(unused)] let Some(_) = p { break; }"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr",
+              "occurrence": 1
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr_2021"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$p:pat_param"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$q:pat_param"
+            },
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! frags {\n    ($e:expr) => {};\n    ($e:expr_2021, $p:pat_param | $q:pat_param) => {};\n}"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "frags!(const { 1 })"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "frags!(_)"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "frags!(1, Some(_) | None)"
+            },
+            {
+              "type": "function_modifiers",
+              "text": "safe",
+              "occurrence": 2
+            },
+            {
+              "type": "static_item",
+              "text": "unsafe static UNSAFE_S: i32;"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[allow(unused)]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-L01-01",
+      "features": [
+        "rust-B01",
+        "rust-B02",
+        "rust-V18",
+        "rust-L01"
+      ],
+      "alternatives": [
+        "rust-L01.a001",
+        "rust-L01.a003",
+        "rust-L01.a004",
+        "rust-L01.a005",
+        "rust-L01.a006",
+        "rust-L01.a007",
+        "rust-L01.a008",
+        "rust-L01.a009",
+        "rust-L01.a010",
+        "rust-L01.a011",
+        "rust-B02.a190",
+        "rust-B02.a236",
+        "rust-B01.a110",
+        "rust-B01.a132",
+        "rust-B01.a190",
+        "rust-V18.a011",
+        "rust-B01.a231",
+        "rust-B01.a241",
+        "rust-B01.a244",
+        "rust-B01.a249",
+        "rust-B01.a255",
+        "rust-B01.a256",
+        "rust-B01.a257",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a262",
+        "rust-B01.a263",
+        "rust-B01.a264",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a270",
+        "rust-B01.a271",
+        "rust-B01.a272",
+        "rust-B01.a275",
+        "rust-B01.a276",
+        "rust-B01.a278",
+        "rust-B01.a279",
+        "rust-B01.a280",
+        "rust-B01.a345",
+        "rust-B01.a346",
+        "rust-B01.a347",
+        "rust-B01.a351",
+        "rust-B01.a352",
+        "rust-B01.a355",
+        "rust-B01.a356",
+        "rust-B01.a357",
+        "rust-B01.a360",
+        "rust-B01.a362",
+        "rust-B01.a363",
+        "rust-B01.a366",
+        "rust-B01.a368",
+        "rust-B01.a369",
+        "rust-B01.a372",
+        "rust-B01.a378",
+        "rust-B01.a379",
+        "rust-B01.a380",
+        "rust-B01.a381"
+      ],
+      "source_utf8": "macro_rules! tts { ($($t:tt)*) => {}; }\nmacro_rules! pat_or { ($p:pat) => {}; }\nmod m { pub mod E { pub struct V; } pub fn f() {} }\nuse m::self as _;\nuse m::E::self;\nuse self::m::E::self as e_mod;\nfn r#gen() -> u8 { let r#gen = 1; r#gen }\nfn tokens() {\n    tts!(# \"spaced\" # # x);\n    tts!(r#\"raw\"# br##\"raw bytes\"## cr#\"raw c\"#);\n    let s = r#\"a \"quoted\" word\"#;\n}\n#[derive(Clone, Copy)]\nenum En { A(u8), B(u8), C }\nfn ors(e: En, o: Option<u8>, r: Result<u8, u8>) {\n    let (En::A(x) | En::B(x)) = e else { return };\n    if let En::A(y) | En::B(y) = e { }\n    while let Some(1 | 2) = o { break; }\n    match e { | En::A(_) | En::B(_) => {}, En::C => {} }\n    match o { Some(1 | 2 | 3) => {}, Some(4..=5 | 7) | None => {}, _ => {} }\n    let f = |(Ok(v) | Err(v)): Result<u8, u8>| v;\n    pat_or!(Some(_) | None);\n}\nfn param_or((Ok(v) | Err(v)): Result<u8, u8>) -> u8 { v }\nfn wheres<T, U>(t: T) where T: Clone + Into<U>, for<'a> &'a T: IntoIterator, Vec<T>: Default, <T as Clone>::Clone: , {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "use_declaration",
+            "self",
+            "function_item",
+            "identifier",
+            "macro_invocation",
+            "token_tree",
+            "raw_string_literal",
+            "or_pattern",
+            "let_declaration",
+            "match_arm",
+            "closure_parameters",
+            "parameter",
+            "where_clause",
+            "where_predicate"
+          ],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use m::self as _;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use m::E::self;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use self::m::E::self as e_mod;"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "m::self as _"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "self::m::E::self as e_mod"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "m::E::self",
+              "occurrence": 1
+            },
+            {
+              "type": "function_item",
+              "text": "fn r#gen() -> u8 { let r#gen = 1; r#gen }"
+            },
+            {
+              "type": "identifier",
+              "text": "r#gen",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "r#gen",
+              "occurrence": 2
+            },
+            {
+              "type": "identifier",
+              "text": "r#gen",
+              "occurrence": 3
+            },
+            {
+              "type": "macro_invocation",
+              "text": "tts!(# \"spaced\" # # x)"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "tts!(r#\"raw\"# br##\"raw bytes\"## cr#\"raw c\"#)"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "pat_or!(Some(_) | None)"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r#\"raw\"#"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "br##\"raw bytes\"##"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "cr#\"raw c\"#"
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "r#\"a \"quoted\" word\"#"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let (En::A(x) | En::B(x)) = e else { return };"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(En::A(x) | En::B(x))"
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(Ok(v) | Err(v))",
+              "occurrence": 1
+            },
+            {
+              "type": "tuple_pattern",
+              "text": "(Ok(v) | Err(v))",
+              "occurrence": 2
+            },
+            {
+              "type": "or_pattern",
+              "text": "En::A(x) | En::B(x)"
+            },
+            {
+              "type": "or_pattern",
+              "text": "En::A(y) | En::B(y)"
+            },
+            {
+              "type": "or_pattern",
+              "text": "1 | 2",
+              "occurrence": 1
+            },
+            {
+              "type": "or_pattern",
+              "text": "1 | 2 | 3"
+            },
+            {
+              "type": "or_pattern",
+              "text": "Some(4..=5 | 7) | None"
+            },
+            {
+              "type": "or_pattern",
+              "text": "4..=5 | 7"
+            },
+            {
+              "type": "or_pattern",
+              "text": "Ok(v) | Err(v)",
+              "occurrence": 1
+            },
+            {
+              "type": "or_pattern",
+              "text": "Ok(v) | Err(v)",
+              "occurrence": 2
+            },
+            {
+              "type": "let_condition",
+              "text": "let En::A(y) | En::B(y) = e"
+            },
+            {
+              "type": "let_condition",
+              "text": "let Some(1 | 2) = o"
+            },
+            {
+              "type": "match_arm",
+              "text": "| En::A(_) | En::B(_) => {},"
+            },
+            {
+              "type": "match_arm",
+              "text": "Some(1 | 2 | 3) => {},"
+            },
+            {
+              "type": "match_arm",
+              "text": "Some(4..=5 | 7) | None => {},"
+            },
+            {
+              "type": "parameter",
+              "text": "(Ok(v) | Err(v)): Result<u8, u8>",
+              "occurrence": 1
+            },
+            {
+              "type": "parameter",
+              "text": "(Ok(v) | Err(v)): Result<u8, u8>",
+              "occurrence": 2
+            },
+            {
+              "type": "where_clause",
+              "text": "where T: Clone + Into<U>, for<'a> &'a T: IntoIterator, Vec<T>: Default, <T as Clone>::Clone: ,"
+            },
+            {
+              "type": "where_predicate",
+              "text": "T: Clone + Into<U>"
+            },
+            {
+              "type": "where_predicate",
+              "text": "for<'a> &'a T: IntoIterator"
+            },
+            {
+              "type": "where_predicate",
+              "text": "Vec<T>: Default"
+            },
+            {
+              "type": "where_predicate",
+              "text": "<T as Clone>::Clone:"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-L01-02",
+      "features": [
+        "rust-B01",
+        "rust-L01"
+      ],
+      "alternatives": [
+        "rust-L01.a002",
+        "rust-B01.a241",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a269",
+        "rust-B01.a271",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a355",
+        "rust-B01.a360",
+        "rust-B01.a372"
+      ],
+      "source_utf8": "fn gen() -> u8 { let gen = 1; gen }\nstruct gen;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_item",
+            "identifier",
+            "let_declaration",
+            "struct_item"
+          ],
+          "anchors": [
+            {
+              "type": "function_item",
+              "text": "fn gen() -> u8 { let gen = 1; gen }"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let gen = 1;"
+            },
+            {
+              "type": "struct_item",
+              "text": "struct gen;"
+            },
+            {
+              "type": "type_identifier",
+              "text": "gen",
+              "occurrence": 4
+            },
+            {
+              "type": "identifier",
+              "text": "gen",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "gen",
+              "occurrence": 2
+            },
+            {
+              "type": "identifier",
+              "text": "gen",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-rust-B01-08",
+      "features": [
+        "rust-B01"
+      ],
+      "alternatives": [
+        "rust-B01.a069",
+        "rust-B01.a187",
+        "rust-B01.a067",
+        "rust-B01.a241",
+        "rust-B01.a259",
+        "rust-B01.a260",
+        "rust-B01.a261",
+        "rust-B01.a268",
+        "rust-B01.a269",
+        "rust-B01.a271",
+        "rust-B01.a278",
+        "rust-B01.a280",
+        "rust-B01.a348",
+        "rust-B01.a355"
+      ],
+      "source_utf8": "fn nul() -> &'static str { \"a\u0000b\" }\nconst S: &str = \"nul:\u0000:end\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_item",
+            "string_literal",
+            "const_item"
+          ],
+          "anchors": [
+            {
+              "type": "function_item",
+              "text": "fn nul() -> &'static str { \"a\u0000b\" }"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"a\u0000b\""
+            },
+            {
+              "type": "const_item",
+              "text": "const S: &str = \"nul:\u0000:end\";"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"nul:\u0000:end\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-B01-NR-1",
+      "features": [
+        "rust-B01"
+      ],
+      "source_utf8": "struct Point {\n    x: i32\n    y: i32,\n}\n\nfn origin<'a>(label: &'a str) -> char {\n    let _ = label;\n    'o'\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_item",
+            "lifetime",
+            "char_literal"
+          ],
+          "anchors": [
+            {
+              "type": "function_item",
+              "text": "fn origin<'a>(label: &'a str) -> char {\n    let _ = label;\n    'o'\n}"
+            },
+            {
+              "type": "lifetime_parameter",
+              "text": "'a",
+              "occurrence": 1
+            },
+            {
+              "type": "char_literal",
+              "text": "'o'"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let _ = label;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-B02-P-1",
+      "features": [
+        "rust-B02"
+      ],
+      "source_utf8": "macro_rules! square {\n    ($x:expr) => { $x * $x };\n}\n\nfn classify(n: i32) -> i32 {\n    let add = |a: i32, b: i32| a + b;\n    match n {\n        0 | 1 => square!(n),\n        x if x < 0 => add(x, 1),\n        _ => loop { break 2; },\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "macro_definition",
+            "macro_rule",
+            "closure_expression",
+            "match_expression",
+            "match_arm",
+            "or_pattern",
+            "loop_expression"
+          ],
+          "anchors": [
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! square {\n    ($x:expr) => { $x * $x };\n}"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$x:expr"
+            },
+            {
+              "type": "closure_expression",
+              "text": "|a: i32, b: i32| a + b"
+            },
+            {
+              "type": "match_arm",
+              "text": "0 | 1 => square!(n),"
+            },
+            {
+              "type": "or_pattern",
+              "text": "0 | 1"
+            },
+            {
+              "type": "match_arm",
+              "text": "x if x < 0 => add(x, 1),"
+            },
+            {
+              "type": "loop_expression",
+              "text": "loop { break 2; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-B02-R-1",
+      "features": [
+        "rust-B02"
+      ],
+      "source_utf8": "macro_rules! square {\n    ($x:expr) => { $x * $x };\n}\n\nfn broken(v: i32) -> i32 {\n    let w = (v + ;\n    w\n}\n\nfn classify(n: i32) -> &'static str {\n    match n {\n        0 => \"zero\",\n        x if x < 0 => \"negative\",\n        _ => \"positive\",\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "macro_definition",
+            "match_expression",
+            "match_arm"
+          ],
+          "anchors": [
+            {
+              "type": "macro_definition",
+              "text": "macro_rules! square {\n    ($x:expr) => { $x * $x };\n}"
+            },
+            {
+              "type": "function_item",
+              "text": "fn classify(n: i32) -> &'static str {\n    match n {\n        0 => \"zero\",\n        x if x < 0 => \"negative\",\n        _ => \"positive\",\n    }\n}"
+            },
+            {
+              "type": "match_arm",
+              "text": "0 => \"zero\","
+            },
+            {
+              "type": "match_arm",
+              "text": "x if x < 0 => \"negative\","
+            },
+            {
+              "type": "match_arm",
+              "text": "_ => \"positive\","
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-V18-P-1",
+      "features": [
+        "rust-V18"
+      ],
+      "source_utf8": "use std::{fmt::{self, Display}, io};\n\nasync fn fetch() -> u32 { 1 }\n\ntrait Lender {\n    type Item<'a> where Self: 'a;\n}\n\nstruct Buf<const N: usize>([u8; N]);\n\nfn show(v: impl Display) -> Box<dyn Display> {\n    let r#match = 1;\n    let fut = async move { fetch().await };\n    let k = const { 3 + 4 };\n    let s = c\"hello\";\n    let raw = cr\"raw\";\n    let Some(x) = Some(r#match) else { return Box::new(k) };\n    let p = &raw const x;\n    let _ = (fut, s, raw, p);\n    Box::new(v)\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "use_declaration",
+            "scoped_use_list",
+            "async_block",
+            "const_block",
+            "associated_type",
+            "const_parameter",
+            "abstract_type",
+            "dynamic_type",
+            "let_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "scoped_use_list",
+              "text": "fmt::{self, Display}"
+            },
+            {
+              "type": "function_item",
+              "text": "async fn fetch() -> u32 { 1 }"
+            },
+            {
+              "type": "associated_type",
+              "text": "type Item<'a> where Self: 'a;"
+            },
+            {
+              "type": "const_parameter",
+              "text": "const N: usize"
+            },
+            {
+              "type": "abstract_type",
+              "text": "impl Display"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Display"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let r#match = 1;"
+            },
+            {
+              "type": "async_block",
+              "text": "async move { fetch().await }"
+            },
+            {
+              "type": "await_expression",
+              "text": "fetch().await"
+            },
+            {
+              "type": "const_block",
+              "text": "const { 3 + 4 }"
+            },
+            {
+              "type": "string_literal",
+              "text": "c\"hello\""
+            },
+            {
+              "type": "raw_string_literal",
+              "text": "cr\"raw\""
+            },
+            {
+              "type": "let_declaration",
+              "text": "let Some(x) = Some(r#match) else { return Box::new(k) };"
+            },
+            {
+              "type": "reference_expression",
+              "text": "&raw const x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-V18-NR-1",
+      "features": [
+        "rust-V18"
+      ],
+      "source_utf8": "async fn fetch() -> u32 { 1 }\n\nfn first(opt: Option<u32>) -> u32 {\n    let Some(x) = opt else return 0;\n    x\n}\n\nfn boxed() -> Box<dyn Fn() -> u32> {\n    Box::new(|| 1)\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_item",
+            "dynamic_type"
+          ],
+          "anchors": [
+            {
+              "type": "function_item",
+              "text": "async fn fetch() -> u32 { 1 }"
+            },
+            {
+              "type": "function_item",
+              "text": "fn boxed() -> Box<dyn Fn() -> u32> {\n    Box::new(|| 1)\n}"
+            },
+            {
+              "type": "dynamic_type",
+              "text": "dyn Fn() -> u32"
+            },
+            {
+              "type": "closure_expression",
+              "text": "|| 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-V24-PE-1",
+      "features": [
+        "rust-V24"
+      ],
+      "source_utf8": "unsafe extern \"C\" {\n    pub safe fn sqrt(x: f64) -> f64;\n    pub unsafe fn strlen(p: *const u8) -> usize;\n    pub safe static COUNT: i32;\n}\n\n#[unsafe(no_mangle)]\npub extern \"C\" fn exported() {}\n\nfn capture<'a, T>(x: &'a T) -> impl Sized + use<'a, T> {\n    x\n}\n\nmacro_rules! old_expr {\n    ($e:expr_2021) => { $e };\n    ($p:pat_param) => { 0 };\n}\n\nfn chain(a: Option<i32>, b: Option<i32>) -> i32 {\n    let add = async |x: i32| x + 1;\n    let _ = add;\n    if let Some(x) = a && x > 0 && let Some(y) = b {\n        return x + y;\n    }\n    0\n}\n",
+      "edits": [
+        {
+          "find": "x > 0 &&",
+          "replace": "x > 1 &&"
+        },
+        {
+          "find": "#[unsafe(no_mangle)]",
+          "replace": "#[unsafe(export_name = \"exp\")]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "foreign_mod_item",
+            "function_signature_item",
+            "attribute_item",
+            "use_bounds",
+            "macro_definition",
+            "fragment_specifier",
+            "closure_expression",
+            "let_chain"
+          ],
+          "anchors": [
+            {
+              "type": "function_signature_item",
+              "text": "pub safe fn sqrt(x: f64) -> f64;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "pub unsafe fn strlen(p: *const u8) -> usize;"
+            },
+            {
+              "type": "static_item",
+              "text": "pub safe static COUNT: i32;"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<'a, T>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<'a, T>"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr_2021"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$p:pat_param"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async |x: i32| x + 1"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[unsafe(no_mangle)]"
+            },
+            {
+              "type": "let_chain",
+              "text": "let Some(x) = a && x > 0 && let Some(y) = b"
+            },
+            {
+              "type": "function_modifiers",
+              "text": "safe",
+              "occurrence": 2
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "function_signature_item",
+              "text": "pub safe fn sqrt(x: f64) -> f64;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "pub unsafe fn strlen(p: *const u8) -> usize;"
+            },
+            {
+              "type": "static_item",
+              "text": "pub safe static COUNT: i32;"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<'a, T>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<'a, T>"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr_2021"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$p:pat_param"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async |x: i32| x + 1"
+            },
+            {
+              "type": "let_chain",
+              "text": "let Some(x) = a && x > 1 && let Some(y) = b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x > 1"
+            },
+            {
+              "type": "function_modifiers",
+              "text": "safe",
+              "occurrence": 2
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "function_signature_item",
+              "text": "pub safe fn sqrt(x: f64) -> f64;"
+            },
+            {
+              "type": "function_signature_item",
+              "text": "pub unsafe fn strlen(p: *const u8) -> usize;"
+            },
+            {
+              "type": "static_item",
+              "text": "pub safe static COUNT: i32;"
+            },
+            {
+              "type": "use_bounds",
+              "text": "use<'a, T>"
+            },
+            {
+              "type": "bounded_type",
+              "text": "impl Sized + use<'a, T>"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$e:expr_2021"
+            },
+            {
+              "type": "token_binding_pattern",
+              "text": "$p:pat_param"
+            },
+            {
+              "type": "closure_expression",
+              "text": "async |x: i32| x + 1"
+            },
+            {
+              "type": "attribute_item",
+              "text": "#[unsafe(export_name = \"exp\")]"
+            },
+            {
+              "type": "attribute",
+              "text": "unsafe(export_name = \"exp\")"
+            },
+            {
+              "type": "function_modifiers",
+              "text": "safe",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-V24-NR-1",
+      "features": [
+        "rust-V24"
+      ],
+      "source_utf8": "unsafe extern \"C\" {\n    pub safe fn abs(x: i32) -> i32;\n}\n\nfn pick(a: Option<i32>, b: Option<i32>) -> i32 {\n    if let Some(x) = a || let Some(y) = b {\n        return 1;\n    }\n    0\n}\n\n#[unsafe(no_mangle)]\npub extern \"C\" fn tail() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "foreign_mod_item",
+            "attribute_item",
+            "function_item"
+          ],
+          "anchors": [
+            {
+              "type": "attribute_item",
+              "text": "#[unsafe(no_mangle)]"
+            },
+            {
+              "type": "function_item",
+              "text": "pub extern \"C\" fn tail() {}"
+            },
+            {
+              "type": "extern_modifier",
+              "text": "extern \"C\"",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-L01-PE-1",
+      "features": [
+        "rust-L01"
+      ],
+      "source_utf8": "mod shapes {\n    pub enum Shape { Circle, Square }\n    pub mod util {}\n}\n\nuse shapes::Shape::self;\nuse shapes::util::self as helpers;\n\nfn area(s: shapes::Shape) -> u32 {\n    match s {\n        shapes::Shape::Circle | shapes::Shape::Square => 1,\n    }\n}\n\nfn first(r: Result<u32, u32>) -> u32 {\n    let (Ok(v) | Err(v)) = r;\n    v\n}\n\nfn bounded<T>(t: T) -> T where T: Clone {\n    t.clone()\n}\n",
+      "edits": [
+        {
+          "find": "use shapes::util::self as helpers;",
+          "replace": "use shapes::util::{self as helpers};"
+        },
+        {
+          "find": "where T: Clone {",
+          "replace": "where T: Clone + Copy {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "use_declaration",
+            "or_pattern",
+            "match_expression",
+            "where_clause",
+            "where_predicate"
+          ],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use shapes::Shape::self;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use shapes::util::self as helpers;"
+            },
+            {
+              "type": "or_pattern",
+              "text": "shapes::Shape::Circle | shapes::Shape::Square"
+            },
+            {
+              "type": "let_declaration",
+              "text": "let (Ok(v) | Err(v)) = r;"
+            },
+            {
+              "type": "or_pattern",
+              "text": "Ok(v) | Err(v)"
+            },
+            {
+              "type": "where_predicate",
+              "text": "T: Clone"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use shapes::Shape::self;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use shapes::util::{self as helpers};"
+            },
+            {
+              "type": "use_list",
+              "text": "{self as helpers}"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "self as helpers"
+            },
+            {
+              "type": "where_predicate",
+              "text": "T: Clone"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use shapes::util::{self as helpers};"
+            },
+            {
+              "type": "where_clause",
+              "text": "where T: Clone + Copy"
+            },
+            {
+              "type": "where_predicate",
+              "text": "T: Clone + Copy"
+            },
+            {
+              "type": "trait_bounds",
+              "text": ": Clone + Copy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-L01-NR-1",
+      "features": [
+        "rust-L01"
+      ],
+      "source_utf8": "use std::fmt::self;\n\nfn same<T, U>(t: T) -> T where T = U {\n    t\n}\n\nfn ok() -> u32 { 0 }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "use_declaration",
+            "function_item"
+          ],
+          "anchors": [
+            {
+              "type": "use_declaration",
+              "text": "use std::fmt::self;"
+            },
+            {
+              "type": "function_item",
+              "text": "fn ok() -> u32 { 0 }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-rust-L01-N-2",
+      "features": [
+        "rust-L01"
+      ],
+      "source_utf8": "fn first(r: Result<u32, u32>) -> u32 {\n    let Ok(v) | Err(v) = r;\n    v\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

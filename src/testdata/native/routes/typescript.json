@@ -100,6 +100,3926 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-typescript-B01-01",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a01",
+        "typescript-B01.a02",
+        "typescript-B01.a03",
+        "typescript-B01.a04",
+        "typescript-B01.a05"
+      ],
+      "source_utf8": "var a = 1, b = 0x1F, c = 1.5e3, d = 'x\\n', e = /ab+c/gi, f = a / b / c\nvar o = { p: 1, get q() { return 1 }, set q(v) {}, \"s\": 2, 3: null, t: true }\nfunction g(x) {\n  if (x) { return x } else if (!x) throw new Error(\"e\")\n  for (var i = 0; i < 3; i++) continue\n  while (false) break\n  do {} while (false)\n  switch (x) { case 1: break; default: }\n  try { g(1) } catch (err) {} finally {}\n  label: for (var k in o) { break label }\n  debugger\n  return typeof x === \"string\" ? x : void 0\n}\n// line comment\n/* block comment */\nvar fe = function (y) { return y }\nwith (o) { fe(1) }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "regex",
+            "binary_expression",
+            "object",
+            "method_definition",
+            "function_declaration",
+            "if_statement",
+            "for_statement",
+            "while_statement",
+            "do_statement",
+            "switch_statement",
+            "try_statement",
+            "labeled_statement",
+            "for_in_statement",
+            "debugger_statement",
+            "ternary_expression",
+            "unary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1, b = 0x1F, c = 1.5e3, d = 'x\\n', e = /ab+c/gi, f = a / b / c"
+            },
+            {
+              "type": "number",
+              "text": "0x1F"
+            },
+            {
+              "type": "number",
+              "text": "1.5e3"
+            },
+            {
+              "type": "string",
+              "text": "'x\\n'"
+            },
+            {
+              "type": "regex",
+              "text": "/ab+c/gi"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a / b / c"
+            },
+            {
+              "type": "object",
+              "text": "{ p: 1, get q() { return 1 }, set q(v) {}, \"s\": 2, 3: null, t: true }"
+            },
+            {
+              "type": "method_definition",
+              "text": "get q() { return 1 }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set q(v) {}"
+            },
+            {
+              "type": "null",
+              "text": "null"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function g(x) {\n  if (x) { return x } else if (!x) throw new Error(\"e\")\n  for (var i = 0; i < 3; i++) continue\n  while (false) break\n  do {} while (false)\n  switch (x) { case 1: break; default: }\n  try { g(1) } catch (err) {} finally {}\n  label: for (var k in o) { break label }\n  debugger\n  return typeof x === \"string\" ? x : void 0\n}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x) { return x } else if (!x) throw new Error(\"e\")"
+            },
+            {
+              "type": "else_clause",
+              "text": "else if (!x) throw new Error(\"e\")"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new Error(\"e\")"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var i = 0; i < 3; i++) continue"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (false) break"
+            },
+            {
+              "type": "do_statement",
+              "text": "do {} while (false)"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (x) { case 1: break; default: }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { g(1) } catch (err) {} finally {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "label: for (var k in o) { break label }"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var k in o) { break label }"
+            },
+            {
+              "type": "debugger_statement",
+              "text": "debugger"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "typeof x === \"string\" ? x : void 0"
+            },
+            {
+              "type": "unary_expression",
+              "text": "typeof x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "void 0"
+            },
+            {
+              "type": "comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* block comment */"
+            },
+            {
+              "type": "function_expression",
+              "text": "function (y) { return y }"
+            },
+            {
+              "type": "with_statement",
+              "text": "with (o) { fe(1) }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-02",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a06",
+        "typescript-B01.a07",
+        "typescript-B01.a08",
+        "typescript-B01.a09",
+        "typescript-B01.a10",
+        "typescript-B01.a11",
+        "typescript-B01.a12",
+        "typescript-B01.a13",
+        "typescript-B01.a14",
+        "typescript-B01.a15"
+      ],
+      "source_utf8": "import def, { a as b, c } from \"./m\";\nimport * as ns from \"./n\";\nexport const k = 1;\nexport default class A extends B { constructor(...xs) { super(...xs); new.target; } m() { return super.m(); } }\nlet [x, , y = 2, ...rest] = [1, 2, 3];\nconst { p, q: { r } = {}, ...others } = { p: 1 };\nconst add = (u, v) => u + v, id = w => w;\nconst s = `a${x}b`, t = tag`c${y}d`;\nfunction* gen() { yield 1; yield* [2]; }\nfor (const item of [1, 2]) {}\nexport { add as plus, id };\nconst K = class extends B { };\n[x, y] = [y, x];\nconst all = [...rest, 4];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_clause",
+            "named_imports",
+            "namespace_import",
+            "export_statement",
+            "class_declaration",
+            "super",
+            "meta_property",
+            "lexical_declaration",
+            "array_pattern",
+            "object_pattern",
+            "rest_pattern",
+            "arrow_function",
+            "template_string",
+            "template_substitution",
+            "generator_function_declaration",
+            "yield_expression",
+            "for_in_statement",
+            "spread_element",
+            "export_clause"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import def, { a as b, c } from \"./m\";"
+            },
+            {
+              "type": "named_imports",
+              "text": "{ a as b, c }"
+            },
+            {
+              "type": "import_specifier",
+              "text": "a as b"
+            },
+            {
+              "type": "namespace_import",
+              "text": "* as ns"
+            },
+            {
+              "type": "export_statement",
+              "text": "export const k = 1;"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class A extends B { constructor(...xs) { super(...xs); new.target; } m() { return super.m(); } }"
+            },
+            {
+              "type": "class_heritage",
+              "text": "extends B"
+            },
+            {
+              "type": "super",
+              "text": "super"
+            },
+            {
+              "type": "meta_property",
+              "text": "new.target"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...xs"
+            },
+            {
+              "type": "spread_element",
+              "text": "...xs",
+              "occurrence": 2
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "let [x, , y = 2, ...rest] = [1, 2, 3];"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[x, , y = 2, ...rest]"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "y = 2"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ p, q: { r } = {}, ...others }"
+            },
+            {
+              "type": "pair_pattern",
+              "text": "q: { r } = {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(u, v) => u + v"
+            },
+            {
+              "type": "arrow_function",
+              "text": "w => w"
+            },
+            {
+              "type": "template_string",
+              "text": "`a${x}b`"
+            },
+            {
+              "type": "template_substitution",
+              "text": "${x}"
+            },
+            {
+              "type": "call_expression",
+              "text": "tag`c${y}d`"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* gen() { yield 1; yield* [2]; }"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield* [2]"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (const item of [1, 2]) {}"
+            },
+            {
+              "type": "export_clause",
+              "text": "{ add as plus, id }"
+            },
+            {
+              "type": "class",
+              "text": "class extends B { }"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[x, y] = [y, x]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[x, y]"
+            },
+            {
+              "type": "array",
+              "text": "[...rest, 4]"
+            },
+            {
+              "type": "spread_element",
+              "text": "...rest",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-03",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a16",
+        "typescript-B01.a17",
+        "typescript-B01.a18",
+        "typescript-B01.a19",
+        "typescript-B01.a20",
+        "typescript-B01.a21",
+        "typescript-B01.a22",
+        "typescript-B01.a23",
+        "typescript-B01.a24",
+        "typescript-B01.a25",
+        "typescript-B01.a26",
+        "typescript-B01.a28",
+        "typescript-B01.a29"
+      ],
+      "source_utf8": "let n = 2 ** 10; n **= 2;\nasync function f(a, b,) { await g(a, b,); }\nconst h = async () => {}, big = 123n, mil = 1_000_000;\nasync function* ag() { for await (const v of src) yield v; }\nconst { a, ...rest } = obj, copy = { ...obj, b: 1 };\ntry { f(); } catch { }\nconst ls = \"a b\";\nconst mod = import(\"./m\");\nclass P { x = 1; static y = 2; }\nexport { mod as \"string name\" };\nconst re = [/(?<year>\\d{4})(?<=a)\\p{L}/su, /a/dg, /[\\p{L}--[a-z]]/v, /(?i:a)b/];\nclass Q { async m() { await f(); } }\nconst ps = \"c d\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "augmented_assignment_expression",
+            "function_declaration",
+            "await_expression",
+            "arrow_function",
+            "number",
+            "generator_function_declaration",
+            "for_in_statement",
+            "object_pattern",
+            "rest_pattern",
+            "spread_element",
+            "catch_clause",
+            "string",
+            "call_expression",
+            "import",
+            "public_field_definition",
+            "export_specifier",
+            "regex",
+            "regex_flags"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "2 ** 10"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "n **= 2"
+            },
+            {
+              "type": "function_declaration",
+              "text": "async function f(a, b,) { await g(a, b,); }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(a, b,)"
+            },
+            {
+              "type": "arguments",
+              "text": "(a, b,)",
+              "occurrence": 2
+            },
+            {
+              "type": "await_expression",
+              "text": "await g(a, b,)"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async () => {}"
+            },
+            {
+              "type": "number",
+              "text": "123n"
+            },
+            {
+              "type": "number",
+              "text": "1_000_000"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "async function* ag() { for await (const v of src) yield v; }"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const v of src) yield v;"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, ...rest }"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest"
+            },
+            {
+              "type": "object",
+              "text": "{ ...obj, b: 1 }"
+            },
+            {
+              "type": "spread_element",
+              "text": "...obj"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch { }"
+            },
+            {
+              "type": "string",
+              "text": "\"a b\""
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m\")"
+            },
+            {
+              "type": "import",
+              "text": "import"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "x = 1"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "static y = 2"
+            },
+            {
+              "type": "export_specifier",
+              "text": "mod as \"string name\""
+            },
+            {
+              "type": "regex",
+              "text": "/(?<year>\\d{4})(?<=a)\\p{L}/su"
+            },
+            {
+              "type": "regex",
+              "text": "/a/dg"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}--[a-z]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/(?i:a)b/"
+            },
+            {
+              "type": "regex_flags",
+              "text": "dg"
+            },
+            {
+              "type": "regex_flags",
+              "text": "v",
+              "occurrence": 3
+            },
+            {
+              "type": "method_definition",
+              "text": "async m() { await f(); }"
+            },
+            {
+              "type": "string",
+              "text": "\"c d\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-04",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a27"
+      ],
+      "source_utf8": "#!/usr/bin/env node\nconst x: number = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash_bang_line",
+            "lexical_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "hash_bang_line",
+              "text": "#!/usr/bin/env node"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "const x: number = 1;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-05",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a30",
+        "typescript-B01.a31",
+        "typescript-B01.a32",
+        "typescript-B01.a33",
+        "typescript-B01.a34",
+        "typescript-B01.a35",
+        "typescript-B01.a36",
+        "typescript-B01.a37",
+        "typescript-B01.a38",
+        "typescript-B01.a39",
+        "typescript-B01.a40"
+      ],
+      "source_utf8": "let s: string = \"a\";\nlet n: number = 1, b: boolean = true, a: any = 0;\nlet big: bigint = 1n, sym: symbol = Symbol(), u: undefined = undefined, nl: null = null;\nlet xs: number[] = [1], ys: Array<string> = [];\nlet o: object = {}, nv: never[] = [], fn: Function = () => {};\nfunction greet(name: string): void {}\nasync function load(): Promise<number> { return 26; }\n[\"a\", \"b\"].forEach(function (x) { x.toUpperCase(); });\n[\"a\"].forEach((x) => x.length);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_annotation",
+            "predefined_type",
+            "array_type",
+            "generic_type",
+            "type_arguments",
+            "function_declaration",
+            "required_parameter",
+            "function_expression",
+            "arrow_function"
+          ],
+          "anchors": [
+            {
+              "type": "type_annotation",
+              "text": ": string"
+            },
+            {
+              "type": "required_parameter",
+              "text": "name: string"
+            },
+            {
+              "type": "type_annotation",
+              "text": ": void"
+            },
+            {
+              "type": "generic_type",
+              "text": "Promise<number>"
+            },
+            {
+              "type": "function_expression",
+              "text": "function (x) { x.toUpperCase(); }"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(x) => x.length"
+            },
+            {
+              "type": "predefined_type",
+              "text": "string"
+            },
+            {
+              "type": "predefined_type",
+              "text": "number"
+            },
+            {
+              "type": "predefined_type",
+              "text": "boolean"
+            },
+            {
+              "type": "predefined_type",
+              "text": "any"
+            },
+            {
+              "type": "predefined_type",
+              "text": "bigint"
+            },
+            {
+              "type": "predefined_type",
+              "text": "symbol"
+            },
+            {
+              "type": "literal_type",
+              "text": "undefined"
+            },
+            {
+              "type": "literal_type",
+              "text": "null"
+            },
+            {
+              "type": "predefined_type",
+              "text": "void"
+            },
+            {
+              "type": "predefined_type",
+              "text": "object"
+            },
+            {
+              "type": "predefined_type",
+              "text": "never"
+            },
+            {
+              "type": "type_identifier",
+              "text": "Function"
+            },
+            {
+              "type": "array_type",
+              "text": "number[]"
+            },
+            {
+              "type": "array_type",
+              "text": "never[]"
+            },
+            {
+              "type": "generic_type",
+              "text": "Array<string>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-06",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a41",
+        "typescript-B01.a42",
+        "typescript-B01.a43",
+        "typescript-B01.a44",
+        "typescript-B01.a45",
+        "typescript-B01.a46",
+        "typescript-B01.a47",
+        "typescript-B01.a48",
+        "typescript-B01.a49"
+      ],
+      "source_utf8": "function printCoord(pt: { x: number; y?: number, z: string }) {}\ntype ID = number | string;\ntype Dir = | \"left\" | \"right\";\ntype One = 1 | -1 | true | false;\ninterface Point { x: number; y: number }\ninterface Point3 extends Point, Named { readonly z: number; m?(): void }\ntype Both = Point & { tag: \"p\" };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object_type",
+            "property_signature",
+            "union_type",
+            "literal_type",
+            "type_alias_declaration",
+            "interface_declaration",
+            "interface_body",
+            "extends_type_clause",
+            "intersection_type",
+            "method_signature"
+          ],
+          "anchors": [
+            {
+              "type": "object_type",
+              "text": "{ x: number; y?: number, z: string }"
+            },
+            {
+              "type": "property_signature",
+              "text": "y?: number"
+            },
+            {
+              "type": "union_type",
+              "text": "number | string"
+            },
+            {
+              "type": "union_type",
+              "text": "| \"left\" | \"right\""
+            },
+            {
+              "type": "literal_type",
+              "text": "\"left\""
+            },
+            {
+              "type": "literal_type",
+              "text": "-1"
+            },
+            {
+              "type": "literal_type",
+              "text": "true"
+            },
+            {
+              "type": "type_alias_declaration",
+              "text": "type ID = number | string;"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Point { x: number; y: number }"
+            },
+            {
+              "type": "extends_type_clause",
+              "text": "extends Point, Named"
+            },
+            {
+              "type": "intersection_type",
+              "text": "Point & { tag: \"p\" }"
+            },
+            {
+              "type": "property_signature",
+              "text": "readonly z: number"
+            },
+            {
+              "type": "method_signature",
+              "text": "m?(): void"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-07",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a50",
+        "typescript-B01.a51",
+        "typescript-B01.a52",
+        "typescript-B01.a53",
+        "typescript-B01.a54",
+        "typescript-B01.a55"
+      ],
+      "source_utf8": "interface StringArray { [index: number]: string; readonly [k: string]: any }\ninterface Box<Type> { contents: Type }\ntype Pair = [string, number];\ntype Fn = (a: string) => void;\ntype Describable = { description: string; (someArg: number): boolean };\ntype SomeConstructor = { new (s: string): object };\ninterface CallOrConstruct { (n?: number): string; new (s: string): Date }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "index_signature",
+            "type_parameters",
+            "tuple_type",
+            "function_type",
+            "call_signature",
+            "construct_signature",
+            "object_type",
+            "interface_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "index_signature",
+              "text": "[index: number]: string"
+            },
+            {
+              "type": "index_signature",
+              "text": "readonly [k: string]: any"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Box<Type> { contents: Type }"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<Type>"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[string, number]"
+            },
+            {
+              "type": "function_type",
+              "text": "(a: string) => void"
+            },
+            {
+              "type": "call_signature",
+              "text": "(someArg: number): boolean"
+            },
+            {
+              "type": "construct_signature",
+              "text": "new (s: string): object"
+            },
+            {
+              "type": "call_signature",
+              "text": "(n?: number): string"
+            },
+            {
+              "type": "construct_signature",
+              "text": "new (s: string): Date"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-08",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a56",
+        "typescript-B01.a57",
+        "typescript-B01.a58",
+        "typescript-B01.a64",
+        "typescript-B01.a66",
+        "typescript-B01.a67",
+        "typescript-B01.a68"
+      ],
+      "source_utf8": "function firstElement<Type>(arr: Type[]): Type | undefined { return arr[0]; }\nfunction longest<Type extends { length: number }>(a: Type, b: Type) { return a; }\nconst arr = combine<string | number>([1, 2], [\"hello\"]);\nfunction getProperty<Type, Key extends keyof Type>(obj: Type, key: Key) { return obj[key]; }\nfunction create<T extends HTMLElement = HTMLDivElement, U = T[]>(element?: T, children?: U): Container<T, U> { return c; }\nlet myIdentity: <Type>(arg: Type) => Type = identity;\nlet gen: { <Type>(arg: Type): Type } = identity;\nfunction createInstance<A extends Animal>(c: new () => A): A { return new c(); }\nfunction create2<Type>(c: { new (): Type }): Type { return new c(); }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_parameters",
+            "type_parameter",
+            "constraint",
+            "default_type",
+            "type_arguments",
+            "call_expression",
+            "index_type_query",
+            "function_type",
+            "call_signature",
+            "constructor_type",
+            "construct_signature"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function firstElement<Type>(arr: Type[]): Type | undefined { return arr[0]; }"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<Type>"
+            },
+            {
+              "type": "constraint",
+              "text": "extends { length: number }"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<string | number>"
+            },
+            {
+              "type": "call_expression",
+              "text": "combine<string | number>([1, 2], [\"hello\"])"
+            },
+            {
+              "type": "type_parameter",
+              "text": "Key extends keyof Type"
+            },
+            {
+              "type": "index_type_query",
+              "text": "keyof Type"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T extends HTMLElement = HTMLDivElement"
+            },
+            {
+              "type": "default_type",
+              "text": "= HTMLDivElement"
+            },
+            {
+              "type": "default_type",
+              "text": "= T[]"
+            },
+            {
+              "type": "function_type",
+              "text": "<Type>(arg: Type) => Type"
+            },
+            {
+              "type": "call_signature",
+              "text": "<Type>(arg: Type): Type"
+            },
+            {
+              "type": "constructor_type",
+              "text": "new () => A"
+            },
+            {
+              "type": "construct_signature",
+              "text": "new (): Type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-09",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a59",
+        "typescript-B01.a60",
+        "typescript-B01.a61",
+        "typescript-B01.a62",
+        "typescript-B01.a63"
+      ],
+      "source_utf8": "function f(x?: number) {}\nfunction makeDate(timestamp: number): Date;\nfunction makeDate(m: number, d: number, y: number): Date;\nfunction makeDate(mOrTimestamp: number, d?: number, y?: number): Date { return new Date(); }\nfunction filterUsers(this: User) {}\nfunction multiply(n: number, ...m: number[]) { return m.map((x) => n * x); }\nfunction sum({ a, b, c }: { a: number; b: number; c: number }) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_parameter",
+            "function_signature",
+            "required_parameter",
+            "this",
+            "rest_pattern",
+            "object_pattern"
+          ],
+          "anchors": [
+            {
+              "type": "optional_parameter",
+              "text": "x?: number"
+            },
+            {
+              "type": "function_signature",
+              "text": "function makeDate(timestamp: number): Date;"
+            },
+            {
+              "type": "function_signature",
+              "text": "function makeDate(m: number, d: number, y: number): Date;"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function makeDate(mOrTimestamp: number, d?: number, y?: number): Date { return new Date(); }"
+            },
+            {
+              "type": "required_parameter",
+              "text": "this: User"
+            },
+            {
+              "type": "this",
+              "text": "this"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...m: number[]"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...m"
+            },
+            {
+              "type": "required_parameter",
+              "text": "{ a, b, c }: { a: number; b: number; c: number }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, b, c }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-10",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a69",
+        "typescript-B01.a70",
+        "typescript-B01.a71",
+        "typescript-B01.a72",
+        "typescript-B01.a73",
+        "typescript-B01.a74",
+        "typescript-B01.a75",
+        "typescript-B01.a78",
+        "typescript-B01.a79"
+      ],
+      "source_utf8": "class Point {\n  x: number;\n  y = 0;\n  name!: string;\n  readonly id: string = \"p\";\n  private static count = 0;\n  protected z?: number;\n  public w: number = 1;\n  [s: string]: any;\n  constructor(x: number, y: string);\n  constructor(s: string);\n  constructor(xs: any, y?: any) { this.x = 0; }\n  get size(): number { return 1; }\n  set size(value: number) {}\n  public static check(s: string): boolean { return true; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "public_field_definition",
+            "accessibility_modifier",
+            "method_signature",
+            "method_definition",
+            "index_signature",
+            "type_annotation"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Point {\n  x: number;\n  y = 0;\n  name!: string;\n  readonly id: string = \"p\";\n  private static count = 0;\n  protected z?: number;\n  public w: number = 1;\n  [s: string]: any;\n  constructor(x: number, y: string);\n  constructor(s: string);\n  constructor(xs: any, y?: any) { this.x = 0; }\n  get size(): number { return 1; }\n  set size(value: number) {}\n  public static check(s: string): boolean { return true; }\n}"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "x: number"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "y = 0"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "name!: string"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "readonly id: string = \"p\""
+            },
+            {
+              "type": "public_field_definition",
+              "text": "private static count = 0"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "protected z?: number"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "public w: number = 1"
+            },
+            {
+              "type": "index_signature",
+              "text": "[s: string]: any"
+            },
+            {
+              "type": "method_signature",
+              "text": "constructor(x: number, y: string)"
+            },
+            {
+              "type": "method_signature",
+              "text": "constructor(s: string)"
+            },
+            {
+              "type": "method_definition",
+              "text": "constructor(xs: any, y?: any) { this.x = 0; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "get size(): number { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set size(value: number) {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "public static check(s: string): boolean { return true; }"
+            },
+            {
+              "type": "accessibility_modifier",
+              "text": "private"
+            },
+            {
+              "type": "accessibility_modifier",
+              "text": "protected"
+            },
+            {
+              "type": "accessibility_modifier",
+              "text": "public"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-11",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a76",
+        "typescript-B01.a77",
+        "typescript-B01.a80",
+        "typescript-B01.a81",
+        "typescript-B01.a82",
+        "typescript-B01.a83",
+        "typescript-B01.a84",
+        "typescript-B01.a85",
+        "typescript-B01.a86",
+        "typescript-B01.a65"
+      ],
+      "source_utf8": "class Box<Type> extends Base<Type> implements Pingable, Other<Type> {\n  contents: Type;\n  sameAs(other: this): boolean { return true; }\n  isFile(): this is FileRep { return true; }\n  getName = (): string => \"x\";\n  getArea(this: Box<Type>) {}\n}\nclass Params {\n  constructor(public readonly x: number, protected y: number, private z?: number) {}\n}\nconst someClass = class<Type> { content: Type; constructor(value: Type) { this.content = value; } };\nabstract class Base2 { abstract getName(): string; abstract name: string; protected abstract get v(): number; printName() {} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_heritage",
+            "extends_clause",
+            "implements_clause",
+            "this_type",
+            "type_predicate_annotation",
+            "type_predicate",
+            "arrow_function",
+            "required_parameter",
+            "optional_parameter",
+            "accessibility_modifier",
+            "class",
+            "abstract_class_declaration",
+            "abstract_method_signature",
+            "type_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Box<Type> extends Base<Type> implements Pingable, Other<Type> {\n  contents: Type;\n  sameAs(other: this): boolean { return true; }\n  isFile(): this is FileRep { return true; }\n  getName = (): string => \"x\";\n  getArea(this: Box<Type>) {}\n}"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<Type>"
+            },
+            {
+              "type": "extends_clause",
+              "text": "extends Base<Type>"
+            },
+            {
+              "type": "implements_clause",
+              "text": "implements Pingable, Other<Type>"
+            },
+            {
+              "type": "this_type",
+              "text": "this"
+            },
+            {
+              "type": "type_predicate_annotation",
+              "text": ": this is FileRep"
+            },
+            {
+              "type": "type_predicate",
+              "text": "this is FileRep"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "getName = (): string => \"x\""
+            },
+            {
+              "type": "arrow_function",
+              "text": "(): string => \"x\""
+            },
+            {
+              "type": "required_parameter",
+              "text": "this: Box<Type>"
+            },
+            {
+              "type": "required_parameter",
+              "text": "public readonly x: number"
+            },
+            {
+              "type": "required_parameter",
+              "text": "protected y: number"
+            },
+            {
+              "type": "optional_parameter",
+              "text": "private z?: number"
+            },
+            {
+              "type": "class",
+              "text": "class<Type> { content: Type; constructor(value: Type) { this.content = value; } }"
+            },
+            {
+              "type": "abstract_class_declaration",
+              "text": "abstract class Base2 { abstract getName(): string; abstract name: string; protected abstract get v(): number; printName() {} }"
+            },
+            {
+              "type": "abstract_method_signature",
+              "text": "abstract getName(): string"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "abstract name: string"
+            },
+            {
+              "type": "abstract_method_signature",
+              "text": "protected abstract get v(): number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-12",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a88",
+        "typescript-B01.a89",
+        "typescript-B01.a90",
+        "typescript-B01.a87"
+      ],
+      "source_utf8": "const myCanvas = document.getElementById(\"main_canvas\") as HTMLCanvasElement;\nconst myCanvas2 = <HTMLCanvasElement>document.getElementById(\"main_canvas\");\nfunction liveDangerously(x?: number | null) { console.log(x!.toFixed()); }\ntype PointInstance = InstanceType<typeof Point>;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "as_expression",
+            "type_assertion",
+            "non_null_expression",
+            "type_query",
+            "generic_type"
+          ],
+          "anchors": [
+            {
+              "type": "as_expression",
+              "text": "document.getElementById(\"main_canvas\") as HTMLCanvasElement"
+            },
+            {
+              "type": "type_assertion",
+              "text": "<HTMLCanvasElement>document.getElementById(\"main_canvas\")"
+            },
+            {
+              "type": "non_null_expression",
+              "text": "x!"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof Point"
+            },
+            {
+              "type": "generic_type",
+              "text": "InstanceType<typeof Point>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-13",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a91",
+        "typescript-B01.a92",
+        "typescript-B01.a93",
+        "typescript-B01.a94",
+        "typescript-B01.a95"
+      ],
+      "source_utf8": "enum Direction { Up = 1, Down, Left, Right }\nenum S { Up = \"UP\", Down = \"DOWN\", }\nenum Het { No = 0, Yes = \"YES\" }\nenum FileAccess { None, Read = 1 << 1, Write = 1 << 2, ReadWrite = Read | Write, G = \"123\".length }\nconst enum E { A = 1, B = A * 2 }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "enum_declaration",
+            "enum_body",
+            "enum_assignment",
+            "property_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "enum_declaration",
+              "text": "enum Direction { Up = 1, Down, Left, Right }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum S { Up = \"UP\", Down = \"DOWN\", }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Het { No = 0, Yes = \"YES\" }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum FileAccess { None, Read = 1 << 1, Write = 1 << 2, ReadWrite = Read | Write, G = \"123\".length }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "const enum E { A = 1, B = A * 2 }"
+            },
+            {
+              "type": "enum_assignment",
+              "text": "Read = 1 << 1"
+            },
+            {
+              "type": "enum_assignment",
+              "text": "G = \"123\".length"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-14",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a96",
+        "typescript-B01.a97",
+        "typescript-B01.a98"
+      ],
+      "source_utf8": "namespace Validation {\n  export interface StringValidator { isAcceptable(s: string): boolean; }\n  const lettersRegexp = /^[A-Za-z]+$/;\n  export namespace Inner { export const x = 1; }\n}\nnamespace Shapes.Polygons { export class Square {} }\nexport interface Pet { name: string }\nexport type Cat = { breed: string };\nexport enum Color { Red }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "internal_module",
+            "nested_identifier",
+            "statement_block",
+            "export_statement",
+            "interface_declaration",
+            "type_alias_declaration",
+            "enum_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "internal_module",
+              "text": "namespace Validation {\n  export interface StringValidator { isAcceptable(s: string): boolean; }\n  const lettersRegexp = /^[A-Za-z]+$/;\n  export namespace Inner { export const x = 1; }\n}"
+            },
+            {
+              "type": "internal_module",
+              "text": "namespace Inner { export const x = 1; }"
+            },
+            {
+              "type": "internal_module",
+              "text": "namespace Shapes.Polygons { export class Square {} }"
+            },
+            {
+              "type": "nested_identifier",
+              "text": "Shapes.Polygons"
+            },
+            {
+              "type": "export_statement",
+              "text": "export namespace Inner { export const x = 1; }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export interface Pet { name: string }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export type Cat = { breed: string };"
+            },
+            {
+              "type": "export_statement",
+              "text": "export enum Color { Red }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-15",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a99",
+        "typescript-B01.a100",
+        "typescript-B01.a101",
+        "typescript-B01.a102",
+        "typescript-B01.a103",
+        "typescript-B01.a104"
+      ],
+      "source_utf8": "type P = keyof Point;\nlet s = \"hello\";\nlet n2: typeof s;\ntype R = ReturnType<typeof f>;\ntype V = typeof obj.a.b;\ntype Age = Person[\"age\"];\ntype I1 = Person[\"age\" | \"name\"];\ntype I2 = Person[keyof Person];\ntype El = (typeof MyArray)[number];\ntype OptionsFlags<Type> = { [Property in keyof Type]: boolean };\ntype RO<T> = { readonly [K in keyof T]?: T[K] };\nconst sym: unique symbol = Symbol();\nfunction isFish(pet: Fish | Bird): pet is Fish { return (pet as Fish).swim !== undefined; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "index_type_query",
+            "type_query",
+            "lookup_type",
+            "mapped_type_clause",
+            "index_signature",
+            "type_predicate_annotation",
+            "type_predicate",
+            "predefined_type"
+          ],
+          "anchors": [
+            {
+              "type": "index_type_query",
+              "text": "keyof Point"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof s"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof f"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof obj.a.b"
+            },
+            {
+              "type": "lookup_type",
+              "text": "Person[\"age\"]"
+            },
+            {
+              "type": "lookup_type",
+              "text": "Person[\"age\" | \"name\"]"
+            },
+            {
+              "type": "lookup_type",
+              "text": "Person[keyof Person]"
+            },
+            {
+              "type": "lookup_type",
+              "text": "(typeof MyArray)[number]"
+            },
+            {
+              "type": "mapped_type_clause",
+              "text": "Property in keyof Type"
+            },
+            {
+              "type": "index_signature",
+              "text": "[Property in keyof Type]: boolean"
+            },
+            {
+              "type": "index_signature",
+              "text": "readonly [K in keyof T]?: T[K]"
+            },
+            {
+              "type": "predefined_type",
+              "text": "unique symbol"
+            },
+            {
+              "type": "type_predicate_annotation",
+              "text": ": pet is Fish"
+            },
+            {
+              "type": "type_predicate",
+              "text": "pet is Fish"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B01-16",
+      "features": [
+        "typescript-B01"
+      ],
+      "alternatives": [
+        "typescript-B01.a105",
+        "typescript-B01.a106",
+        "typescript-B01.a107",
+        "typescript-B01.a108",
+        "typescript-B01.a109",
+        "typescript-B01.a110",
+        "typescript-B01.a111"
+      ],
+      "source_utf8": "@sealed\nclass BugReport {\n  @format(\"Hello, %s\") greeting: string;\n  @enumerable(false) greet() {}\n  @configurable(false) get x() { return 1; }\n  print(@required verbose: boolean) {}\n}\n@f @g class C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decorator",
+            "class_declaration",
+            "call_expression",
+            "public_field_definition",
+            "method_definition",
+            "required_parameter"
+          ],
+          "anchors": [
+            {
+              "type": "decorator",
+              "text": "@sealed"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@sealed\nclass BugReport {\n  @format(\"Hello, %s\") greeting: string;\n  @enumerable(false) greet() {}\n  @configurable(false) get x() { return 1; }\n  print(@required verbose: boolean) {}\n}"
+            },
+            {
+              "type": "decorator",
+              "text": "@format(\"Hello, %s\")"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "@format(\"Hello, %s\") greeting: string"
+            },
+            {
+              "type": "decorator",
+              "text": "@enumerable(false)"
+            },
+            {
+              "type": "method_definition",
+              "text": "greet() {}"
+            },
+            {
+              "type": "decorator",
+              "text": "@configurable(false)"
+            },
+            {
+              "type": "method_definition",
+              "text": "get x() { return 1; }"
+            },
+            {
+              "type": "decorator",
+              "text": "@required"
+            },
+            {
+              "type": "required_parameter",
+              "text": "@required verbose: boolean"
+            },
+            {
+              "type": "decorator",
+              "text": "@f",
+              "occurrence": 2
+            },
+            {
+              "type": "decorator",
+              "text": "@g"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@f @g class C {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-01",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a01",
+        "typescript-B02.a02",
+        "typescript-B02.a03",
+        "typescript-B02.a04",
+        "typescript-B02.a05",
+        "typescript-B02.a21",
+        "typescript-B02.a22",
+        "typescript-B02.a23",
+        "typescript-B02.a24"
+      ],
+      "source_utf8": "declare var foo: number;\ndeclare let bar: string;\ndeclare const baz: boolean;\ndeclare function getWidget(n: number): Widget;\ndeclare function getWidget(s: string): Widget[];\ndeclare class Greeter {\n  constructor(greeting: string);\n  greeting: string;\n  showGreeting(): void;\n}\ndeclare namespace GreetingLib.Options { interface Log { verbose?: boolean; } }\ndeclare namespace myLib { function makeGreeting(s: string): string; let numberOfGreetings: number; }\ndeclare enum Enum { A = 1, B }\ndeclare const enum CE { X }\ninterface Callable { (x: number): string; new (s: string): Callable; [key: string]: any; method(a: number): void; prop: string; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "ambient_declaration",
+            "variable_declaration",
+            "lexical_declaration",
+            "function_signature",
+            "class_declaration",
+            "method_signature",
+            "public_field_definition",
+            "internal_module",
+            "nested_identifier",
+            "enum_declaration",
+            "call_signature",
+            "construct_signature",
+            "index_signature",
+            "property_signature"
+          ],
+          "anchors": [
+            {
+              "type": "ambient_declaration",
+              "text": "declare var foo: number;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare let bar: string;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare const baz: boolean;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare function getWidget(n: number): Widget;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare function getWidget(s: string): Widget[];"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare class Greeter {\n  constructor(greeting: string);\n  greeting: string;\n  showGreeting(): void;\n}"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare namespace GreetingLib.Options { interface Log { verbose?: boolean; } }"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare namespace myLib { function makeGreeting(s: string): string; let numberOfGreetings: number; }"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare enum Enum { A = 1, B }"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare const enum CE { X }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Greeter {\n  constructor(greeting: string);\n  greeting: string;\n  showGreeting(): void;\n}"
+            },
+            {
+              "type": "method_signature",
+              "text": "constructor(greeting: string)"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "greeting: string",
+              "occurrence": 2
+            },
+            {
+              "type": "method_signature",
+              "text": "showGreeting(): void"
+            },
+            {
+              "type": "nested_identifier",
+              "text": "GreetingLib.Options"
+            },
+            {
+              "type": "internal_module",
+              "text": "namespace myLib { function makeGreeting(s: string): string; let numberOfGreetings: number; }"
+            },
+            {
+              "type": "function_signature",
+              "text": "function makeGreeting(s: string): string;"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Callable { (x: number): string; new (s: string): Callable; [key: string]: any; method(a: number): void; prop: string; }"
+            },
+            {
+              "type": "call_signature",
+              "text": "(x: number): string"
+            },
+            {
+              "type": "construct_signature",
+              "text": "new (s: string): Callable"
+            },
+            {
+              "type": "index_signature",
+              "text": "[key: string]: any"
+            },
+            {
+              "type": "method_signature",
+              "text": "method(a: number): void"
+            },
+            {
+              "type": "property_signature",
+              "text": "prop: string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-02",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a06",
+        "typescript-B02.a07",
+        "typescript-B02.a08"
+      ],
+      "source_utf8": "declare module \"path\" {\n  export function normalize(p: string): string;\n  export var sep: string;\n}\ndeclare module \"m\" {\n  import { SomeType } from \"other\";\n  export function f(): SomeType;\n}\ndeclare module \"*.html\" {\n  const content: string;\n  export default content;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "ambient_declaration",
+            "module",
+            "string",
+            "statement_block",
+            "export_statement",
+            "import_statement",
+            "function_signature"
+          ],
+          "anchors": [
+            {
+              "type": "ambient_declaration",
+              "text": "declare module \"path\" {\n  export function normalize(p: string): string;\n  export var sep: string;\n}"
+            },
+            {
+              "type": "module",
+              "text": "module \"path\" {\n  export function normalize(p: string): string;\n  export var sep: string;\n}"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare module \"m\" {\n  import { SomeType } from \"other\";\n  export function f(): SomeType;\n}"
+            },
+            {
+              "type": "module",
+              "text": "module \"m\" {\n  import { SomeType } from \"other\";\n  export function f(): SomeType;\n}"
+            },
+            {
+              "type": "import_statement",
+              "text": "import { SomeType } from \"other\";"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare module \"*.html\" {\n  const content: string;\n  export default content;\n}"
+            },
+            {
+              "type": "module",
+              "text": "module \"*.html\" {\n  const content: string;\n  export default content;\n}"
+            },
+            {
+              "type": "export_statement",
+              "text": "export default content;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-03",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a09",
+        "typescript-B02.a10"
+      ],
+      "source_utf8": "import { Observable } from \"./observable\";\ndeclare module \"./observable\" {\n  interface Observable<T> { map<U>(f: (x: T) => U): Observable<U>; }\n}\ndeclare global {\n  interface Array<T> { toObservable(): Observable<T>; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "ambient_declaration",
+            "module",
+            "interface_declaration",
+            "statement_block"
+          ],
+          "anchors": [
+            {
+              "type": "ambient_declaration",
+              "text": "declare module \"./observable\" {\n  interface Observable<T> { map<U>(f: (x: T) => U): Observable<U>; }\n}"
+            },
+            {
+              "type": "module",
+              "text": "module \"./observable\" {\n  interface Observable<T> { map<U>(f: (x: T) => U): Observable<U>; }\n}"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare global {\n  interface Array<T> { toObservable(): Observable<T>; }\n}"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Array<T> { toObservable(): Observable<T>; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-04",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a11",
+        "typescript-B02.a12",
+        "typescript-B02.a13"
+      ],
+      "source_utf8": "import fs = require(\"fs\");\nimport polygons = Shapes.Polygons;\nexport import Inner = Outer.Inner;\nlet sq = new polygons.Square();\nexport = fs;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_require_clause",
+            "import_alias",
+            "nested_identifier",
+            "export_statement"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import fs = require(\"fs\");"
+            },
+            {
+              "type": "import_require_clause",
+              "text": "fs = require(\"fs\")"
+            },
+            {
+              "type": "import_alias",
+              "text": "import polygons = Shapes.Polygons;"
+            },
+            {
+              "type": "export_statement",
+              "text": "export import Inner = Outer.Inner;"
+            },
+            {
+              "type": "import_alias",
+              "text": "import Inner = Outer.Inner;"
+            },
+            {
+              "type": "export_statement",
+              "text": "export = fs;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-05",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a14"
+      ],
+      "source_utf8": "export as namespace moduleName;\ndeclare function myLib(a: string): string;\ndeclare namespace myLib { let version: string; }\nexport = myLib;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "ambient_declaration",
+            "function_signature",
+            "internal_module"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export as namespace moduleName;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare function myLib(a: string): string;"
+            },
+            {
+              "type": "function_signature",
+              "text": "function myLib(a: string): string;"
+            },
+            {
+              "type": "ambient_declaration",
+              "text": "declare namespace myLib { let version: string; }"
+            },
+            {
+              "type": "internal_module",
+              "text": "namespace myLib { let version: string; }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export = myLib;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-B02-06",
+      "features": [
+        "typescript-B02"
+      ],
+      "alternatives": [
+        "typescript-B02.a15",
+        "typescript-B02.a16",
+        "typescript-B02.a17",
+        "typescript-B02.a18",
+        "typescript-B02.a19",
+        "typescript-B02.a20"
+      ],
+      "source_utf8": "/// <reference path=\"Validation.ts\" />\n/// <reference types=\"node\" preserve=\"true\" />\n/// <reference no-default-lib=\"true\"/>\n/// <amd-module name=\"NamedModule\"/>\n/// <amd-dependency path=\"legacy/moduleA\" name=\"moduleA\"/>\nexport class C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "export_statement",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "/// <reference path=\"Validation.ts\" />"
+            },
+            {
+              "type": "comment",
+              "text": "/// <reference types=\"node\" preserve=\"true\" />"
+            },
+            {
+              "type": "comment",
+              "text": "/// <reference no-default-lib=\"true\"/>"
+            },
+            {
+              "type": "comment",
+              "text": "/// <amd-module name=\"NamedModule\"/>"
+            },
+            {
+              "type": "comment",
+              "text": "/// <amd-dependency path=\"legacy/moduleA\" name=\"moduleA\"/>"
+            },
+            {
+              "type": "export_statement",
+              "text": "export class C {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V28-01",
+      "features": [
+        "typescript-V28"
+      ],
+      "alternatives": [
+        "typescript-V28.a01",
+        "typescript-V28.a02"
+      ],
+      "source_utf8": "type NameOrId<T extends number | string> = T extends number ? IdLabel : NameLabel;\ntype Flatten<T> = T extends any[] ? T[number] : T;\ntype GetReturnType<Type> = Type extends (...args: never[]) => infer Return ? Return : never;\ntype Unpacked<T> = T extends (infer U)[] ? U : T extends Promise<infer U> ? U : T;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "conditional_type",
+            "infer_type",
+            "type_alias_declaration",
+            "constraint",
+            "function_type"
+          ],
+          "anchors": [
+            {
+              "type": "conditional_type",
+              "text": "T extends number ? IdLabel : NameLabel"
+            },
+            {
+              "type": "conditional_type",
+              "text": "T extends any[] ? T[number] : T"
+            },
+            {
+              "type": "conditional_type",
+              "text": "Type extends (...args: never[]) => infer Return ? Return : never"
+            },
+            {
+              "type": "conditional_type",
+              "text": "T extends (infer U)[] ? U : T extends Promise<infer U> ? U : T"
+            },
+            {
+              "type": "conditional_type",
+              "text": "T extends Promise<infer U> ? U : T"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer Return"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer U"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer U",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V28-02",
+      "features": [
+        "typescript-V28"
+      ],
+      "alternatives": [
+        "typescript-V28.a03",
+        "typescript-V28.a04",
+        "typescript-V28.a05",
+        "typescript-V28.a06"
+      ],
+      "source_utf8": "type MutableRequired<T> = { -readonly [P in keyof T]-?: T[P] };\ntype ReadonlyPartial<T> = { +readonly [P in keyof T]+?: T[P] };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "mapped_type_clause",
+            "index_signature",
+            "omitting_type_annotation",
+            "adding_type_annotation"
+          ],
+          "anchors": [
+            {
+              "type": "index_signature",
+              "text": "-readonly [P in keyof T]-?: T[P]"
+            },
+            {
+              "type": "omitting_type_annotation",
+              "text": "-?: T[P]"
+            },
+            {
+              "type": "index_signature",
+              "text": "+readonly [P in keyof T]+?: T[P]"
+            },
+            {
+              "type": "adding_type_annotation",
+              "text": "+?: T[P]"
+            },
+            {
+              "type": "mapped_type_clause",
+              "text": "P in keyof T"
+            },
+            {
+              "type": "mapped_type_clause",
+              "text": "P in keyof T",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V28-03",
+      "features": [
+        "typescript-V28"
+      ],
+      "alternatives": [
+        "typescript-V28.a07",
+        "typescript-V28.a08",
+        "typescript-V28.a09"
+      ],
+      "source_utf8": "function adopt(p: import(\"./module\").Pet) {}\ntype M = typeof import(\"./module\");\ndeclare function styledComponent<Props>(strs: TemplateStringsArray): Component<Props>;\nconst MyTitle = styledComponent<TitleProps>`font-size: 1.5em;`;\nconst u = import.meta.url;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import",
+            "type_query",
+            "call_expression",
+            "type_arguments",
+            "template_string",
+            "meta_property"
+          ],
+          "anchors": [
+            {
+              "type": "type_annotation",
+              "text": ": import(\"./module\").Pet"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./module\")"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof import(\"./module\")"
+            },
+            {
+              "type": "call_expression",
+              "text": "styledComponent<TitleProps>`font-size: 1.5em;`"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<TitleProps>"
+            },
+            {
+              "type": "meta_property",
+              "text": "import.meta"
+            },
+            {
+              "type": "member_expression",
+              "text": "import.meta.url"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-01",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a01",
+        "typescript-V3.a02",
+        "typescript-V3.a03",
+        "typescript-V3.a04",
+        "typescript-V3.a05"
+      ],
+      "source_utf8": "declare function foo(...args: [number, string, boolean]): void;\ndeclare function bind<T, U extends any[], V>(f: (x: T, ...args: U) => V, x: T): (...args: U) => V;\nlet t: [number, string?, boolean?];\nfunction tuple<T extends any[]>(...args: T): T { return args; }\ntype Strs = [number, ...string[]];\nlet x: unknown = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "rest_pattern",
+            "tuple_type",
+            "optional_type",
+            "rest_type",
+            "predefined_type",
+            "function_signature"
+          ],
+          "anchors": [
+            {
+              "type": "required_parameter",
+              "text": "...args: [number, string, boolean]"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[number, string, boolean]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...args: U"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[number, string?, boolean?]"
+            },
+            {
+              "type": "optional_type",
+              "text": "string?"
+            },
+            {
+              "type": "optional_type",
+              "text": "boolean?"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...args: T"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[number, ...string[]]"
+            },
+            {
+              "type": "rest_type",
+              "text": "...string[]"
+            },
+            {
+              "type": "predefined_type",
+              "text": "unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-02",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a06"
+      ],
+      "source_utf8": "/// <reference lib=\"es2017.string\" />\n\"foo\".padStart(4);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "/// <reference lib=\"es2017.string\" />"
+            },
+            {
+              "type": "expression_statement",
+              "text": "\"foo\".padStart(4);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-03",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a07",
+        "typescript-V3.a08",
+        "typescript-V3.a09",
+        "typescript-V3.a10"
+      ],
+      "source_utf8": "function foo(arr: readonly string[]) {}\nfunction bar(pair: readonly [string, string]) {}\nlet x = 10 as const;\nlet y = <const>[10, 20];\nlet z = { text: \"hello\" } as const;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "readonly_type",
+            "array_type",
+            "tuple_type",
+            "as_expression",
+            "type_assertion"
+          ],
+          "anchors": [
+            {
+              "type": "readonly_type",
+              "text": "readonly string[]"
+            },
+            {
+              "type": "readonly_type",
+              "text": "readonly [string, string]"
+            },
+            {
+              "type": "as_expression",
+              "text": "10 as const"
+            },
+            {
+              "type": "as_expression",
+              "text": "{ text: \"hello\" } as const"
+            },
+            {
+              "type": "type_assertion",
+              "text": "<const>[10, 20]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-04",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a11",
+        "typescript-V3.a12",
+        "typescript-V3.a13",
+        "typescript-V3.a14"
+      ],
+      "source_utf8": "let x = foo?.bar.baz();\nlet y = arr?.[0];\nlet z = log?.(`Request started`);\nlet w = foo ?? bar();\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_chain",
+            "member_expression",
+            "subscript_expression",
+            "call_expression",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "member_expression",
+              "text": "foo?.bar"
+            },
+            {
+              "type": "optional_chain",
+              "text": "?."
+            },
+            {
+              "type": "subscript_expression",
+              "text": "arr?.[0]"
+            },
+            {
+              "type": "call_expression",
+              "text": "log?.(`Request started`)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "foo ?? bar()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-05",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a15",
+        "typescript-V3.a16",
+        "typescript-V3.a17",
+        "typescript-V3.a18"
+      ],
+      "source_utf8": "function assert(condition: any, msg?: string): asserts condition {}\nfunction assertIsString(val: any): asserts val is string {}\nclass Animal {\n  declare resident: Dog;\n  assertValid(): asserts this {}\n  isDog(): asserts this is Dog {}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "asserts_annotation",
+            "asserts",
+            "type_predicate",
+            "this",
+            "public_field_definition"
+          ],
+          "anchors": [
+            {
+              "type": "asserts_annotation",
+              "text": ": asserts condition"
+            },
+            {
+              "type": "asserts_annotation",
+              "text": ": asserts val is string"
+            },
+            {
+              "type": "type_predicate",
+              "text": "val is string"
+            },
+            {
+              "type": "asserts_annotation",
+              "text": ": asserts this"
+            },
+            {
+              "type": "asserts_annotation",
+              "text": ": asserts this is Dog"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "declare resident: Dog"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V3-06",
+      "features": [
+        "typescript-V3"
+      ],
+      "alternatives": [
+        "typescript-V3.a19",
+        "typescript-V3.a20",
+        "typescript-V3.a21",
+        "typescript-V3.a22",
+        "typescript-V3.a23",
+        "typescript-V3.a24"
+      ],
+      "source_utf8": "import type { SomeThing } from \"./some-module.js\";\nimport type Def from \"./def.js\";\nimport type * as types from \"./types.js\";\nexport type { SomeThing };\nexport type { Other } from \"./other.js\";\nexport * as utilities from \"./utilities.js\";\nclass Person { #name: string; constructor(name: string) { this.#name = name; } }\nconst response = await fetch(\"...\");\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_clause",
+            "named_imports",
+            "namespace_import",
+            "export_statement",
+            "export_clause",
+            "namespace_export",
+            "private_property_identifier",
+            "await_expression"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import type { SomeThing } from \"./some-module.js\";"
+            },
+            {
+              "type": "import_statement",
+              "text": "import type Def from \"./def.js\";"
+            },
+            {
+              "type": "import_statement",
+              "text": "import type * as types from \"./types.js\";"
+            },
+            {
+              "type": "namespace_import",
+              "text": "* as types"
+            },
+            {
+              "type": "export_statement",
+              "text": "export type { SomeThing };"
+            },
+            {
+              "type": "export_statement",
+              "text": "export type { Other } from \"./other.js\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * as utilities from \"./utilities.js\";"
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as utilities"
+            },
+            {
+              "type": "private_property_identifier",
+              "text": "#name"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#name"
+            },
+            {
+              "type": "await_expression",
+              "text": "await fetch(\"...\")"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V40-01",
+      "features": [
+        "typescript-V40"
+      ],
+      "alternatives": [
+        "typescript-V40.a01",
+        "typescript-V40.a02",
+        "typescript-V40.a03",
+        "typescript-V40.a04",
+        "typescript-V40.a11"
+      ],
+      "source_utf8": "type Arr = readonly any[];\nfunction concat<T extends Arr, U extends Arr>(arr1: T, arr2: U): [...T, ...U] { return [...arr1, ...arr2]; }\ntype Range = [start: number, end: number];\ntype Opt = [name: string, age?: number];\ntype Rest = [first: string, ...rest: any[]];\ntype Lead = [...names: string[], shouldCapitalize: boolean];\ntype Mid = [boolean, ...string[], number];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "tuple_type",
+            "rest_type",
+            "required_parameter",
+            "optional_parameter",
+            "rest_pattern"
+          ],
+          "anchors": [
+            {
+              "type": "tuple_type",
+              "text": "[...T, ...U]"
+            },
+            {
+              "type": "rest_type",
+              "text": "...T"
+            },
+            {
+              "type": "rest_type",
+              "text": "...U"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[start: number, end: number]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "start: number"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[name: string, age?: number]"
+            },
+            {
+              "type": "optional_parameter",
+              "text": "age?: number"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[first: string, ...rest: any[]]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...rest: any[]"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[...names: string[], shouldCapitalize: boolean]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...names: string[]"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[boolean, ...string[], number]"
+            },
+            {
+              "type": "rest_type",
+              "text": "...string[]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V40-02",
+      "features": [
+        "typescript-V40"
+      ],
+      "alternatives": [
+        "typescript-V40.a05",
+        "typescript-V40.a06",
+        "typescript-V40.a07",
+        "typescript-V40.a08"
+      ],
+      "source_utf8": "a &&= b;\na ||= b;\na ??= b;\ntry { f(); } catch (e: unknown) {}\ntry { f(); } catch (e: any) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "augmented_assignment_expression",
+            "catch_clause",
+            "type_annotation",
+            "predefined_type"
+          ],
+          "anchors": [
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a &&= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ||= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ??= b"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (e: unknown) {}"
+            },
+            {
+              "type": "type_annotation",
+              "text": ": unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V40-03",
+      "features": [
+        "typescript-V40"
+      ],
+      "alternatives": [
+        "typescript-V40.a09",
+        "typescript-V40.a10",
+        "typescript-V40.a12"
+      ],
+      "source_utf8": "type EmailLocaleIDs = `${Email | Footer}_id`;\ntype Lang = `${Lowercase<Name>}-${number}`;\ntype Getters<T> = { [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K] };\ntype RemoveKind<T> = { [K in keyof T as Exclude<K, \"kind\">]: T[K] };\ntype AbstractConstructor<T> = abstract new (...args: any[]) => T;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "template_literal_type",
+            "template_type",
+            "mapped_type_clause",
+            "constructor_type"
+          ],
+          "anchors": [
+            {
+              "type": "template_literal_type",
+              "text": "`${Email | Footer}_id`"
+            },
+            {
+              "type": "template_type",
+              "text": "${Email | Footer}"
+            },
+            {
+              "type": "template_literal_type",
+              "text": "`${Lowercase<Name>}-${number}`"
+            },
+            {
+              "type": "template_literal_type",
+              "text": "`get${Capitalize<string & K>}`"
+            },
+            {
+              "type": "mapped_type_clause",
+              "text": "K in keyof T as `get${Capitalize<string & K>}`"
+            },
+            {
+              "type": "mapped_type_clause",
+              "text": "K in keyof T as Exclude<K, \"kind\">"
+            },
+            {
+              "type": "constructor_type",
+              "text": "abstract new (...args: any[]) => T"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V40-04",
+      "features": [
+        "typescript-V40"
+      ],
+      "alternatives": [
+        "typescript-V40.a13",
+        "typescript-V40.a14",
+        "typescript-V40.a15",
+        "typescript-V40.a16",
+        "typescript-V40.a20"
+      ],
+      "source_utf8": "interface Thing { get size(): number; set size(value: number | string | boolean); }\ntype T2 = { get x(): string; set x(v: string) };\nclass Derived extends Base {\n  static [propName: string]: string | number | undefined;\n  override show() {}\n  override readonly x = 1;\n  #someMethod() {}\n  get #someValue() { return 100; }\n  static #count = 0;\n  static { Derived.#count++; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method_signature",
+            "object_type",
+            "index_signature",
+            "override_modifier",
+            "method_definition",
+            "private_property_identifier",
+            "public_field_definition",
+            "class_static_block"
+          ],
+          "anchors": [
+            {
+              "type": "method_signature",
+              "text": "get size(): number"
+            },
+            {
+              "type": "method_signature",
+              "text": "set size(value: number | string | boolean)"
+            },
+            {
+              "type": "object_type",
+              "text": "{ get x(): string; set x(v: string) }"
+            },
+            {
+              "type": "method_signature",
+              "text": "get x(): string"
+            },
+            {
+              "type": "method_signature",
+              "text": "set x(v: string)"
+            },
+            {
+              "type": "index_signature",
+              "text": "static [propName: string]: string | number | undefined"
+            },
+            {
+              "type": "override_modifier",
+              "text": "override"
+            },
+            {
+              "type": "method_definition",
+              "text": "override show() {}"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "override readonly x = 1"
+            },
+            {
+              "type": "method_definition",
+              "text": "#someMethod() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "get #someValue() { return 100; }"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "static #count = 0"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static { Derived.#count++; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V40-05",
+      "features": [
+        "typescript-V40"
+      ],
+      "alternatives": [
+        "typescript-V40.a17",
+        "typescript-V40.a18",
+        "typescript-V40.a19"
+      ],
+      "source_utf8": "interface Colors { [sym: symbol]: number; }\ninterface Options { [optName: `data-${string}`]: unknown; }\ninterface Data { [optName: string | symbol]: any; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "index_signature",
+            "predefined_type",
+            "template_literal_type",
+            "union_type"
+          ],
+          "anchors": [
+            {
+              "type": "index_signature",
+              "text": "[sym: symbol]: number"
+            },
+            {
+              "type": "index_signature",
+              "text": "[optName: `data-${string}`]: unknown"
+            },
+            {
+              "type": "template_literal_type",
+              "text": "`data-${string}`"
+            },
+            {
+              "type": "index_signature",
+              "text": "[optName: string | symbol]: any"
+            },
+            {
+              "type": "union_type",
+              "text": "string | symbol"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V45-01",
+      "features": [
+        "typescript-V45"
+      ],
+      "alternatives": [
+        "typescript-V45.a01",
+        "typescript-V45.a02",
+        "typescript-V45.a03"
+      ],
+      "source_utf8": "import { someFunc, type BaseType } from \"./some-module.js\";\nexport { type BaseType, someFunc };\nclass Person {\n  #name: string;\n  equals(other: unknown) { return other && typeof other === \"object\" && #name in other && this.#name === other.#name; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_specifier",
+            "export_specifier",
+            "binary_expression",
+            "private_property_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "import_specifier",
+              "text": "type BaseType"
+            },
+            {
+              "type": "export_specifier",
+              "text": "type BaseType",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_expression",
+              "text": "#name in other"
+            },
+            {
+              "type": "private_property_identifier",
+              "text": "#name",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V45-02",
+      "features": [
+        "typescript-V45"
+      ],
+      "alternatives": [
+        "typescript-V45.a04",
+        "typescript-V45.a05",
+        "typescript-V45.a06"
+      ],
+      "source_utf8": "/// <reference types=\"pkg\" resolution-mode=\"require\" />\nimport obj from \"./something.json\" assert { type: \"json\" };\nconst obj2 = await import(\"./something.json\", { assert: { type: \"json\" } });\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "import_statement",
+            "import_attribute",
+            "call_expression",
+            "arguments",
+            "object"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "/// <reference types=\"pkg\" resolution-mode=\"require\" />"
+            },
+            {
+              "type": "import_statement",
+              "text": "import obj from \"./something.json\" assert { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "assert { type: \"json\" }"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./something.json\", { assert: { type: \"json\" } })"
+            },
+            {
+              "type": "object",
+              "text": "{ assert: { type: \"json\" } }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V45-03",
+      "features": [
+        "typescript-V45"
+      ],
+      "alternatives": [
+        "typescript-V45.a07",
+        "typescript-V45.a08",
+        "typescript-V45.a09",
+        "typescript-V45.a10",
+        "typescript-V45.a11"
+      ],
+      "source_utf8": "const makeHammerBox = makeBox<Hammer>;\nconst ErrorMap = Map<string, Error>;\ntype X<T> = T extends [infer S extends string, ...unknown[]] ? S : never;\ninterface Consumer<in T> { consume: (arg: T) => void; }\ninterface Producer<out T> { make(): T; }\ninterface State<in out T> { get: () => T; set: (value: T) => void; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "instantiation_expression",
+            "type_arguments",
+            "infer_type",
+            "type_parameter",
+            "type_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "instantiation_expression",
+              "text": "makeBox<Hammer>"
+            },
+            {
+              "type": "instantiation_expression",
+              "text": "Map<string, Error>"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer S extends string"
+            },
+            {
+              "type": "type_parameter",
+              "text": "in T"
+            },
+            {
+              "type": "type_parameter",
+              "text": "out T"
+            },
+            {
+              "type": "type_parameter",
+              "text": "in out T"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V45-04",
+      "features": [
+        "typescript-V45"
+      ],
+      "alternatives": [
+        "typescript-V45.a12",
+        "typescript-V45.a13"
+      ],
+      "source_utf8": "const palette = { red: [255, 0, 0], green: \"#00ff00\" } satisfies Record<Colors, string | RGB>;\nclass Person { accessor name: string; static accessor count = 0; constructor(name: string) { this.name = name; } }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "satisfies_expression",
+            "public_field_definition"
+          ],
+          "anchors": [
+            {
+              "type": "satisfies_expression",
+              "text": "{ red: [255, 0, 0], green: \"#00ff00\" } satisfies Record<Colors, string | RGB>"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "accessor name: string"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "static accessor count = 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V50-01",
+      "features": [
+        "typescript-V50"
+      ],
+      "alternatives": [
+        "typescript-V50.a01",
+        "typescript-V50.a02",
+        "typescript-V50.a03",
+        "typescript-V50.a04",
+        "typescript-V50.a05",
+        "typescript-V50.a06",
+        "typescript-V50.a07"
+      ],
+      "source_utf8": "@register class A {\n  @loggedMethod greet() {}\n  @bound @(decorators[0]) get g() { return 1; }\n  @observable.deep() name = \"x\";\n  @tracked accessor count = 0;\n}\nexport @register class B {}\n@register export class C {}\nexport default @register class D {}\nconst E = @register class {};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decorator",
+            "class_declaration",
+            "method_definition",
+            "public_field_definition",
+            "member_expression",
+            "call_expression",
+            "parenthesized_expression",
+            "export_statement",
+            "class"
+          ],
+          "anchors": [
+            {
+              "type": "decorator",
+              "text": "@register"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@register class A {\n  @loggedMethod greet() {}\n  @bound @(decorators[0]) get g() { return 1; }\n  @observable.deep() name = \"x\";\n  @tracked accessor count = 0;\n}"
+            },
+            {
+              "type": "decorator",
+              "text": "@loggedMethod"
+            },
+            {
+              "type": "method_definition",
+              "text": "greet() {}"
+            },
+            {
+              "type": "decorator",
+              "text": "@bound"
+            },
+            {
+              "type": "decorator",
+              "text": "@(decorators[0])"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(decorators[0])"
+            },
+            {
+              "type": "method_definition",
+              "text": "get g() { return 1; }"
+            },
+            {
+              "type": "decorator",
+              "text": "@observable.deep()"
+            },
+            {
+              "type": "member_expression",
+              "text": "observable.deep"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "@observable.deep() name = \"x\""
+            },
+            {
+              "type": "public_field_definition",
+              "text": "@tracked accessor count = 0"
+            },
+            {
+              "type": "export_statement",
+              "text": "export @register class B {}"
+            },
+            {
+              "type": "export_statement",
+              "text": "@register export class C {}"
+            },
+            {
+              "type": "export_statement",
+              "text": "export default @register class D {}"
+            },
+            {
+              "type": "class",
+              "text": "@register class {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V50-02",
+      "features": [
+        "typescript-V50"
+      ],
+      "alternatives": [
+        "typescript-V50.a08",
+        "typescript-V50.a09",
+        "typescript-V50.a10"
+      ],
+      "source_utf8": "declare function fnGood<const T extends readonly unknown[]>(args: T): void;\ntype HasNames = { names: readonly string[] };\nfunction getNamesExactly<const T extends HasNames>(arg: T): T[\"names\"] { return arg.names; }\nexport type * from \"./types\";\nexport type * as vehicles from \"./vehicles\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_parameter",
+            "constraint",
+            "export_statement",
+            "namespace_export"
+          ],
+          "anchors": [
+            {
+              "type": "type_parameter",
+              "text": "const T extends readonly unknown[]"
+            },
+            {
+              "type": "type_parameter",
+              "text": "const T extends HasNames"
+            },
+            {
+              "type": "export_statement",
+              "text": "export type * from \"./types\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export type * as vehicles from \"./vehicles\";"
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as vehicles"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V50-03",
+      "features": [
+        "typescript-V50"
+      ],
+      "alternatives": [
+        "typescript-V50.a11",
+        "typescript-V50.a12",
+        "typescript-V50.a13"
+      ],
+      "source_utf8": "export function doSomeWork() {\n  using file = new TempFile(\".some_temp_file\");\n}\nasync function func() {\n  await using a = loggy(\"a\");\n  for (using r of resources) {}\n  for (await using r of asyncResources) {}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "statement_block",
+            "function_declaration",
+            "for_in_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function doSomeWork() {\n  using file = new TempFile(\".some_temp_file\");\n}"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "file = new TempFile(\".some_temp_file\")"
+            },
+            {
+              "type": "function_declaration",
+              "text": "async function func() {\n  await using a = loggy(\"a\");\n  for (using r of resources) {}\n  for (await using r of asyncResources) {}\n}"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "a = loggy(\"a\")"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (using r of resources) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (await using r of asyncResources) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V50-04",
+      "features": [
+        "typescript-V50"
+      ],
+      "alternatives": [
+        "typescript-V50.a14"
+      ],
+      "source_utf8": "type TwoOrMore<T> = [first: T, second: T, ...rest: T[]];\ntype Pair<T> = [first: T, T];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "tuple_type",
+            "required_parameter"
+          ],
+          "anchors": [
+            {
+              "type": "tuple_type",
+              "text": "[first: T, second: T, ...rest: T[]]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "...rest: T[]"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[first: T, T]"
+            },
+            {
+              "type": "required_parameter",
+              "text": "first: T",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V50-05",
+      "features": [
+        "typescript-V50"
+      ],
+      "alternatives": [
+        "typescript-V50.a15",
+        "typescript-V50.a16",
+        "typescript-V50.a17",
+        "typescript-V50.a18",
+        "typescript-V50.a19"
+      ],
+      "source_utf8": "import obj from \"./something.json\" with { type: \"json\" };\nexport { val } from \"./data.json\" with { type: \"json\" };\nconst obj2 = await import(\"./something.json\", { with: { type: \"json\" } });\nimport type { TypeFromRequire } from \"pkg\" with { \"resolution-mode\": \"require\" };\ntype T = import(\"pkg\", { with: { \"resolution-mode\": \"import\" } }).TypeFromImport;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_attribute",
+            "export_statement",
+            "call_expression",
+            "import",
+            "object",
+            "pair"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import obj from \"./something.json\" with { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { val } from \"./data.json\" with { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./something.json\", { with: { type: \"json\" } })"
+            },
+            {
+              "type": "import_statement",
+              "text": "import type { TypeFromRequire } from \"pkg\" with { \"resolution-mode\": \"require\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { \"resolution-mode\": \"require\" }"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"pkg\", { with: { \"resolution-mode\": \"import\" } })"
+            },
+            {
+              "type": "type_alias_declaration",
+              "text": "type T = import(\"pkg\", { with: { \"resolution-mode\": \"import\" } }).TypeFromImport;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V59-01",
+      "features": [
+        "typescript-V59"
+      ],
+      "alternatives": [
+        "typescript-V59.a01"
+      ],
+      "source_utf8": "import defer * as feature from \"./some-feature.js\";\nconsole.log(feature.specialConstant);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "namespace_import"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import defer * as feature from \"./some-feature.js\";"
+            },
+            {
+              "type": "namespace_import",
+              "text": "* as feature"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V59-02",
+      "features": [
+        "typescript-V59"
+      ],
+      "alternatives": [
+        "typescript-V59.a02",
+        "typescript-V59.a03"
+      ],
+      "source_utf8": "module Foo { export const bar = 10; }\nmodule A.B { export function f() {} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "module",
+            "nested_identifier",
+            "statement_block",
+            "export_statement"
+          ],
+          "anchors": [
+            {
+              "type": "module",
+              "text": "module Foo { export const bar = 10; }"
+            },
+            {
+              "type": "module",
+              "text": "module A.B { export function f() {} }"
+            },
+            {
+              "type": "nested_identifier",
+              "text": "A.B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V59-03",
+      "features": [
+        "typescript-V59"
+      ],
+      "alternatives": [
+        "typescript-V59.a04"
+      ],
+      "source_utf8": "import blob from \"./blahb.json\" assert { type: \"json\" };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_attribute"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import blob from \"./blahb.json\" assert { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "assert { type: \"json\" }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-typescript-V59-04",
+      "features": [
+        "typescript-V59"
+      ],
+      "alternatives": [
+        "typescript-V59.a05"
+      ],
+      "source_utf8": "import type { A } from \"./a\";\nimport { type B, c } from \"./b\" with { type: \"json\" };\ntype Cond<T> = T extends `x${infer U extends string}` ? U : never;\ntype Tup = [head: string, ...tail: readonly number[][]];\nclass K<const T, in out U> extends Base { override accessor v = 1; static { } #p = 0; }\nconst value = { a: 1 } satisfies Record<string, number>;\nlet q = value?.a ?? 0; q ||= 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "conditional_type",
+            "template_literal_type",
+            "infer_type",
+            "tuple_type",
+            "type_parameter",
+            "override_modifier",
+            "class_static_block",
+            "satisfies_expression",
+            "optional_chain",
+            "augmented_assignment_expression"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import type { A } from \"./a\";"
+            },
+            {
+              "type": "import_specifier",
+              "text": "type B"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "type": "conditional_type",
+              "text": "T extends `x${infer U extends string}` ? U : never"
+            },
+            {
+              "type": "template_literal_type",
+              "text": "`x${infer U extends string}`"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer U extends string"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[head: string, ...tail: readonly number[][]]"
+            },
+            {
+              "type": "type_parameter",
+              "text": "const T"
+            },
+            {
+              "type": "type_parameter",
+              "text": "in out U"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class K<const T, in out U> extends Base { override accessor v = 1; static { } #p = 0; }"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "override accessor v = 1"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static { }"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "#p = 0"
+            },
+            {
+              "type": "satisfies_expression",
+              "text": "{ a: 1 } satisfies Record<string, number>"
+            },
+            {
+              "type": "binary_expression",
+              "text": "value?.a ?? 0"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "q ||= 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-B01-R-1",
+      "features": [
+        "typescript-B01"
+      ],
+      "source_utf8": "let count: = 1;\n\ninterface Item {\n  id: number;\n  label?: string;\n}\n\nfunction first<T>(items: T[]): T | undefined {\n  return items[0];\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "interface_declaration",
+            "property_signature",
+            "function_declaration",
+            "type_parameters",
+            "type_annotation",
+            "union_type"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "interface Item {\n  id: number;\n  label?: string;\n}"
+            },
+            {
+              "type": "property_signature",
+              "text": "label?: string"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function first<T>(items: T[]): T | undefined {\n  return items[0];\n}"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T>"
+            },
+            {
+              "type": "union_type",
+              "text": "T | undefined"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-B02-N-1",
+      "features": [
+        "typescript-B02"
+      ],
+      "source_utf8": "import fs = require(\"fs\";\nexport = fs;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V28-N-1",
+      "features": [
+        "typescript-V28"
+      ],
+      "source_utf8": "type IsString<T> = T extends string ? true;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V28-P-1",
+      "features": [
+        "typescript-V28"
+      ],
+      "source_utf8": "type ElementType<T> = T extends (infer U)[] ? U : never;\ntype Mutable<T> = { -readonly [K in keyof T]-?: T[K] };\ntype Loader = typeof import(\"./loader\");\ntype Config = import(\"./config\").Config;\ndeclare function tag<T>(strings: TemplateStringsArray, ...values: T[]): string;\nconst out = tag<string>`hello ${\"world\"}`;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "conditional_type",
+            "infer_type",
+            "mapped_type_clause",
+            "index_signature",
+            "call_expression",
+            "type_arguments",
+            "template_string"
+          ],
+          "anchors": [
+            {
+              "type": "call_expression",
+              "text": "tag<string>`hello ${\"world\"}`"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<string>"
+            },
+            {
+              "type": "type_query",
+              "text": "typeof import(\"./loader\")"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V3-N-1",
+      "features": [
+        "typescript-V3"
+      ],
+      "source_utf8": "declare const config: { port?: number } | undefined;\nconst port = config?.;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V3-R-1",
+      "features": [
+        "typescript-V3"
+      ],
+      "source_utf8": "declare const input: number | undefined;\n\nclass Counter {\n  #count = 0;\n  inc(): number {\n    return ++this.#count;\n  }\n}\n\ntype Pair = readonly [string, number?];\n\nconst size = input ?? ;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "private_property_identifier",
+            "readonly_type",
+            "tuple_type",
+            "optional_type"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Counter {\n  #count = 0;\n  inc(): number {\n    return ++this.#count;\n  }\n}"
+            },
+            {
+              "type": "public_field_definition",
+              "text": "#count = 0"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#count"
+            },
+            {
+              "type": "readonly_type",
+              "text": "readonly [string, number?]"
+            },
+            {
+              "type": "tuple_type",
+              "text": "[string, number?]"
+            },
+            {
+              "type": "optional_type",
+              "text": "number?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V3-P-1",
+      "features": [
+        "typescript-V3"
+      ],
+      "source_utf8": "import type { Options } from \"./options\";\nexport type { Options };\n\ntype Args = [string, number?, ...boolean[]];\nconst modes = [\"a\", \"b\"] as const;\n\nfunction assertIsString(value: unknown): asserts value is string {\n  if (typeof value !== \"string\") throw new Error(\"not a string\");\n}\n\nclass Box {\n  #secret = 1;\n  read(other?: { inner?: { n: number } }): number {\n    return other?.inner?.n ?? this.#secret;\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "tuple_type",
+            "optional_type",
+            "rest_type",
+            "as_expression",
+            "asserts_annotation",
+            "private_property_identifier",
+            "optional_chain",
+            "binary_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V40-P-1",
+      "features": [
+        "typescript-V40"
+      ],
+      "source_utf8": "type Named = [first: string, ...rest: number[]];\ntype Concat<T extends unknown[], U extends unknown[]> = [...T, ...U];\ntype Getter<K extends string> = `get${Capitalize<K>}`;\ntype Getters<T> = { [K in keyof T as `get${string & K}`]: () => T[K] };\ntype Ctor = abstract new () => object;\n\ninterface Keys {\n  [key: symbol]: string;\n  [key: `data-${string}`]: string;\n}\n\nclass Base {\n  greet(): string { return \"hi\"; }\n}\n\nclass Derived extends Base {\n  #size = 0;\n  override greet(): string { return \"hello\"; }\n  get size(): number { return this.#size; }\n  set size(value: number | string) { this.#size = Number(value); }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "tuple_type",
+            "rest_type",
+            "template_literal_type",
+            "mapped_type_clause",
+            "constructor_type",
+            "index_signature",
+            "override_modifier"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V45-R-1",
+      "features": [
+        "typescript-V45"
+      ],
+      "source_utf8": "const settings = { port: 80 } satisfies ;\n\ninterface Producer<out T> {\n  make(): T;\n}\n\ntype First<T> = T extends [infer H extends string, ...unknown[]] ? H : never;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "interface_declaration",
+            "type_parameter",
+            "method_signature",
+            "conditional_type",
+            "infer_type"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "interface Producer<out T> {\n  make(): T;\n}"
+            },
+            {
+              "type": "type_parameter",
+              "text": "out T"
+            },
+            {
+              "type": "method_signature",
+              "text": "make(): T"
+            },
+            {
+              "type": "type_alias_declaration",
+              "text": "type First<T> = T extends [infer H extends string, ...unknown[]] ? H : never;"
+            },
+            {
+              "type": "conditional_type",
+              "text": "T extends [infer H extends string, ...unknown[]] ? H : never"
+            },
+            {
+              "type": "infer_type",
+              "text": "infer H extends string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V45-P-1",
+      "features": [
+        "typescript-V45"
+      ],
+      "source_utf8": "import { type Options, load } from \"./config\";\nimport data from \"./data.json\" assert { type: \"json\" };\n\ninterface State<in out T> {\n  value: T;\n}\n\ntype Head<T> = T extends [infer H extends string, ...unknown[]] ? H : never;\n\nfunction box<T>(value: T) {\n  return { value };\n}\n\nconst boxString = box<string>;\nconst config = { port: 80 } satisfies Options;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_specifier",
+            "import_attribute",
+            "type_parameter",
+            "infer_type",
+            "instantiation_expression",
+            "satisfies_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V50-R-1",
+      "features": [
+        "typescript-V50"
+      ],
+      "source_utf8": "function pick<const T extends readonly unknown[]>(items: T): T {\n  return items;\n}\n\n@sealed\nclass Service {\n  @logged\n  run(): void {}\n}\n\nconst broken = pick([1, 2;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "decorator",
+            "class_declaration",
+            "method_definition"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function pick<const T extends readonly unknown[]>(items: T): T {\n  return items;\n}"
+            },
+            {
+              "type": "type_parameter",
+              "text": "const T extends readonly unknown[]"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@sealed\nclass Service {\n  @logged\n  run(): void {}\n}"
+            },
+            {
+              "type": "decorator",
+              "text": "@sealed"
+            },
+            {
+              "type": "decorator",
+              "text": "@logged"
+            },
+            {
+              "type": "method_definition",
+              "text": "run(): void {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V50-P-1",
+      "features": [
+        "typescript-V50"
+      ],
+      "source_utf8": "import data from \"./data.json\" with { type: \"json\" };\n\nfunction pick<const T extends readonly unknown[]>(items: T): T {\n  return items;\n}\n\n@sealed\nclass Service {\n  @logged\n  run(): void {}\n}\n\nexport type * from \"./types\";\n\nasync function main() {\n  using res = open();\n  await using conn = connect();\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_attribute",
+            "type_parameter",
+            "decorator",
+            "class_declaration",
+            "export_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V59-PE-1",
+      "features": [
+        "typescript-V59"
+      ],
+      "source_utf8": "import defer * as feature from \"./some-feature.js\";\nimport legacy from \"./legacy.json\" assert { type: \"json\" };\n\nmodule Legacy {\n  export const version = 1;\n}\n\nnamespace Modern {\n  export const version = 2;\n}\n\ndeclare module \"virtual:config\" {\n  export const mode: string;\n}\n\nconsole.log(feature.specialConstant, legacy, Legacy.version, Modern.version);\n",
+      "edits": [
+        {
+          "find": "\"./some-feature.js\"",
+          "replace": "\"./other-feature.js\""
+        },
+        {
+          "find": "module Legacy {",
+          "replace": "namespace Legacy {"
+        },
+        {
+          "find": "import legacy from",
+          "replace": "import defer * as extra from \"./extra.js\";\nimport legacy from"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "namespace_import",
+            "import_attribute",
+            "module",
+            "internal_module",
+            "ambient_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V59-N-1",
+      "features": [
+        "typescript-V59"
+      ],
+      "source_utf8": "import defer { doSomething } from \"some-module\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-typescript-V59-R-1",
+      "features": [
+        "typescript-V59"
+      ],
+      "source_utf8": "import defer * as feature from ;\n\nmodule Legacy {\n  export const version = 1;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "module",
+            "export_statement",
+            "lexical_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "module",
+              "text": "module Legacy {\n  export const version = 1;\n}"
+            },
+            {
+              "type": "export_statement",
+              "text": "export const version = 1;"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "const version = 1;"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

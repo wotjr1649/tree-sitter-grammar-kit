@@ -100,6 +100,5873 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-jsx-B01-J01",
+      "features": [
+        "jsx-B01",
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B01.a01",
+        "jsx-B01.a02",
+        "jsx-B01.a03",
+        "jsx-B01.a04",
+        "jsx-B01.a05",
+        "jsx-B01.a06",
+        "jsx-B01.a07",
+        "jsx-B01.a08",
+        "jsx-B01.a09",
+        "jsx-B01.a10",
+        "jsx-B01.a11",
+        "jsx-B01.a12",
+        "jsx-B01.a13",
+        "jsx-B01.a14",
+        "jsx-B01.a15",
+        "jsx-B04.a01",
+        "jsx-B04.a02"
+      ],
+      "source_utf8": "\nconst a = <div></div>;\nconst b = <br />;\nconst c = <Foo.Bar.Baz />;\nconst d = <A.B></A.B>;\nconst e = <svg:rect width=\"1\"></svg:rect>;\nconst f = <svg:circle />;\nconst g = <custom-element x-y=\"1\"></custom-element>;\nconst h = <$el_1 />;\nconst i = <><span>x</span></>;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "jsx_self_closing_element",
+            "member_expression",
+            "jsx_namespace_name",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "jsx_element",
+              "text": "<div></div>"
+            },
+            {
+              "type": "jsx_opening_element",
+              "text": "<div>"
+            },
+            {
+              "type": "jsx_closing_element",
+              "text": "</div>"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<br />"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<Foo.Bar.Baz />"
+            },
+            {
+              "type": "member_expression",
+              "text": "Foo.Bar.Baz"
+            },
+            {
+              "type": "member_expression",
+              "text": "Foo.Bar"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<A.B></A.B>"
+            },
+            {
+              "type": "member_expression",
+              "text": "A.B",
+              "occurrence": 1
+            },
+            {
+              "type": "member_expression",
+              "text": "A.B",
+              "occurrence": 2
+            },
+            {
+              "type": "jsx_element",
+              "text": "<svg:rect width=\"1\"></svg:rect>"
+            },
+            {
+              "type": "jsx_namespace_name",
+              "text": "svg:rect",
+              "occurrence": 1
+            },
+            {
+              "type": "jsx_namespace_name",
+              "text": "svg:rect",
+              "occurrence": 2
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<svg:circle />"
+            },
+            {
+              "type": "jsx_namespace_name",
+              "text": "svg:circle"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<custom-element x-y=\"1\"></custom-element>"
+            },
+            {
+              "type": "identifier",
+              "text": "custom-element",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "custom-element",
+              "occurrence": 2
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<$el_1 />"
+            },
+            {
+              "type": "identifier",
+              "text": "$el_1"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<><span>x</span></>"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<span>x</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B01-J02",
+      "features": [
+        "jsx-B01"
+      ],
+      "alternatives": [
+        "jsx-B01.a16"
+      ],
+      "source_utf8": "\nasync function* f() { return <await />; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<await />"
+            },
+            {
+              "type": "identifier",
+              "text": "await"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B02-J03",
+      "features": [
+        "jsx-B02"
+      ],
+      "alternatives": [
+        "jsx-B02.a01",
+        "jsx-B02.a02",
+        "jsx-B02.a03",
+        "jsx-B02.a04",
+        "jsx-B02.a05",
+        "jsx-B02.a06",
+        "jsx-B02.a07",
+        "jsx-B02.a08",
+        "jsx-B02.a09",
+        "jsx-B02.a10",
+        "jsx-B02.a11",
+        "jsx-B02.a12",
+        "jsx-B02.a13",
+        "jsx-B02.a14",
+        "jsx-B02.a15",
+        "jsx-B02.a16",
+        "jsx-B02.a17"
+      ],
+      "source_utf8": "\nconst a = <input disabled />;\nconst b = <a href=\"x\" title='y' data-n={1 + 2} {...rest} />;\nconst c = <Comp render=<b>bold</b> frag=<>f</> />;\nconst d = <svg xlink:href=\"#id\" />;\nconst e = <a b=\"\" c='' {...x} {...y} d />;\nconst f = <a title=\"it's\" alt='say \"hi\"' />;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "property_identifier",
+            "string",
+            "jsx_expression",
+            "spread_element",
+            "jsx_element",
+            "jsx_namespace_name"
+          ],
+          "anchors": [
+            {
+              "type": "jsx_attribute",
+              "text": "disabled"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "href=\"x\""
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "title='y'"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "data-n={1 + 2}"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{1 + 2}"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{...rest}"
+            },
+            {
+              "type": "spread_element",
+              "text": "...rest"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "render=<b>bold</b>"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<b>bold</b>"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "frag=<>f</>"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<>f</>"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "xlink:href=\"#id\""
+            },
+            {
+              "type": "jsx_namespace_name",
+              "text": "xlink:href"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "b=\"\""
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "c=''"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{...x}"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{...y}"
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "d",
+              "occurrence": 8
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "title=\"it's\""
+            },
+            {
+              "type": "string",
+              "text": "\"it's\""
+            },
+            {
+              "type": "jsx_attribute",
+              "text": "alt='say \"hi\"'"
+            },
+            {
+              "type": "string",
+              "text": "'say \"hi\"'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B03-J04",
+      "features": [
+        "jsx-B03"
+      ],
+      "alternatives": [
+        "jsx-B03.a01",
+        "jsx-B03.a02",
+        "jsx-B03.a03",
+        "jsx-B03.a04",
+        "jsx-B03.a05",
+        "jsx-B03.a06",
+        "jsx-B03.a07",
+        "jsx-B03.a08",
+        "jsx-B03.a09",
+        "jsx-B03.a10",
+        "jsx-B03.a11",
+        "jsx-B03.a12",
+        "jsx-B03.a13",
+        "jsx-B03.a14",
+        "jsx-B03.a15",
+        "jsx-B03.a16",
+        "jsx-B03.a17",
+        "jsx-B03.a18",
+        "jsx-B03.a19",
+        "jsx-B03.a20",
+        "jsx-B03.a21"
+      ],
+      "source_utf8": "\nconst a = <p>text &amp; more &#169; &#x41; &nbsp;</p>;\nconst b = <ul>{items.map((i) => <li key={i}>{i}</li>)}{/* comment */}{}</ul>;\nconst c = <div>{...children}</div>;\nconst d = <div><>nested</><span /></div>;\nconst e = <div title=\"&quot;q&quot;\" alt='&lt;'>a {\"b\"} c</div>;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_text",
+            "html_character_reference",
+            "jsx_expression",
+            "spread_element",
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "jsx_element",
+              "text": "<p>text &amp; more &#169; &#x41; &nbsp;</p>"
+            },
+            {
+              "type": "jsx_text",
+              "text": "text "
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&amp;"
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&#169;"
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&#x41;"
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&nbsp;"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<ul>{items.map((i) => <li key={i}>{i}</li>)}{/* comment */}{}</ul>"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{items.map((i) => <li key={i}>{i}</li>)}"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<li key={i}>{i}</li>"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{/* comment */}"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{}"
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{...children}"
+            },
+            {
+              "type": "spread_element",
+              "text": "...children"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<div><>nested</><span /></div>"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<>nested</>"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<span />"
+            },
+            {
+              "type": "string",
+              "text": "\"&quot;q&quot;\""
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&quot;",
+              "occurrence": 1
+            },
+            {
+              "type": "string",
+              "text": "'&lt;'"
+            },
+            {
+              "type": "html_character_reference",
+              "text": "&lt;"
+            },
+            {
+              "type": "jsx_text",
+              "text": "a ",
+              "occurrence": 2
+            },
+            {
+              "type": "jsx_expression",
+              "text": "{\"b\"}"
+            },
+            {
+              "type": "jsx_text",
+              "text": " c",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-J05",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a01",
+        "jsx-B04.a02",
+        "jsx-B04.a03",
+        "jsx-B04.a04",
+        "jsx-B04.a05",
+        "jsx-B04.a06"
+      ],
+      "source_utf8": "\nfunction App() { return <div />; }\nconst f = () => <span />;\nconst g = cond ? <a /> : <b />;\nconst h = cond && <i />;\nconst arr = [<li key=\"1\" />, <></>];\nrender(<App />, root);\nconst t = `${<x />}`;\nfunction d(el = <em />) {}\nconst r1 = a < b > c;\nif (a < b && c > d) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "return_statement",
+            "arrow_function",
+            "ternary_expression",
+            "binary_expression",
+            "array",
+            "call_expression",
+            "template_substitution",
+            "assignment_pattern",
+            "jsx_self_closing_element",
+            "jsx_element",
+            "if_statement"
+          ],
+          "anchors": [
+            {
+              "type": "return_statement",
+              "text": "return <div />;"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<div />"
+            },
+            {
+              "type": "arrow_function",
+              "text": "() => <span />"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "cond ? <a /> : <b />"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<a />"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<b />"
+            },
+            {
+              "type": "binary_expression",
+              "text": "cond && <i />"
+            },
+            {
+              "type": "array",
+              "text": "[<li key=\"1\" />, <></>]"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<></>"
+            },
+            {
+              "type": "call_expression",
+              "text": "render(<App />, root)"
+            },
+            {
+              "type": "jsx_self_closing_element",
+              "text": "<App />"
+            },
+            {
+              "type": "template_substitution",
+              "text": "${<x />}"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "el = <em />"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b > c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b && c > d"
+            },
+            {
+              "type": "binary_expression",
+              "text": "c > d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B01-R-1",
+      "features": [
+        "jsx-B01"
+      ],
+      "source_utf8": "const head = <Layout.Header title=\"x\" />;\nconst svg = <svg:rect width=\"1\" />;\nconst body = <main><section>text</section></main>;\nfunction after() { return <footer />; }\n",
+      "edits": [
+        {
+          "find": "<Layout.Header title=\"x\" />;",
+          "replace": "<Layout.Header title=\"x\" /;"
+        },
+        {
+          "find": "<Layout.Header title=\"x\" /;",
+          "replace": "<Layout.Header title=\"x\" />;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "member_expression",
+            "jsx_namespace_name",
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "function_declaration"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "member_expression",
+            "jsx_namespace_name",
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "function_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B01-R-2",
+      "features": [
+        "jsx-B01"
+      ],
+      "source_utf8": "const a = <ui.Panel.Body />;\nconst b = <svg:use />;\nconst c = <div>ok</div>;\n",
+      "edits": [
+        {
+          "find": "<ui.Panel.Body />",
+          "replace": "<ui:Panel.Body />"
+        },
+        {
+          "find": "<ui:Panel.Body />",
+          "replace": "<ui.Panel.Body />"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "member_expression",
+            "jsx_namespace_name",
+            "jsx_element"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "jsx_namespace_name",
+            "jsx_element"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "member_expression",
+            "jsx_namespace_name",
+            "jsx_element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B02-R-1",
+      "features": [
+        "jsx-B02"
+      ],
+      "source_utf8": "const props = { id: \"a\" };\nconst el = <input disabled value=\"v\" data-x='y' onChange={handle} icon=<Icon /> {...props} />;\nconst after = <label htmlFor=\"v\">ok</label>;\n",
+      "edits": [
+        {
+          "find": "value=\"v\" data-x",
+          "replace": "value= data-x"
+        },
+        {
+          "find": "value= data-x",
+          "replace": "value=\"v\" data-x"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "property_identifier",
+            "string",
+            "jsx_expression",
+            "spread_element",
+            "jsx_element"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "jsx_element",
+            "jsx_opening_element",
+            "jsx_attribute"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const props = { id: \"a\" };"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "property_identifier",
+            "string",
+            "jsx_expression",
+            "spread_element",
+            "jsx_element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B02-R-2",
+      "features": [
+        "jsx-B02"
+      ],
+      "source_utf8": "const props = { id: \"a\" };\nconst el = <Box title=\"t\" {...props} />;\nconst after = <label htmlFor=\"v\">ok</label>;\n",
+      "edits": [
+        {
+          "find": "{...props} />",
+          "replace": "{props} />"
+        },
+        {
+          "find": "{props} />",
+          "replace": "{...props} />"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "jsx_expression",
+            "spread_element",
+            "jsx_element"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "jsx_element",
+            "jsx_attribute"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const props = { id: \"a\" };"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_self_closing_element",
+            "jsx_attribute",
+            "jsx_expression",
+            "spread_element",
+            "jsx_element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B03-R-1",
+      "features": [
+        "jsx-B03"
+      ],
+      "source_utf8": "const items = [<li key=\"a\">a</li>];\nconst list = <ul>{...items}{/* empty */}<li>Tom &amp; Jerry</li><>{items.length}</></ul>;\nconst after = <p>done</p>;\n",
+      "edits": [
+        {
+          "find": "Tom &amp; Jerry",
+          "replace": "Tom > Jerry"
+        },
+        {
+          "find": "Tom > Jerry",
+          "replace": "Tom &amp; Jerry"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_expression",
+            "spread_element",
+            "html_character_reference",
+            "jsx_text"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "jsx_element",
+            "jsx_expression",
+            "spread_element"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const items = [<li key=\"a\">a</li>];"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<li key=\"a\">a</li>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_expression",
+            "spread_element",
+            "html_character_reference",
+            "jsx_text"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B03-R-2",
+      "features": [
+        "jsx-B03"
+      ],
+      "source_utf8": "const head = <h1>Title</h1>;\nconst list = <ul><li>{items.length}</li></ul>;\n",
+      "edits": [
+        {
+          "find": "{items.length}</li>",
+          "replace": "{items.length</li>"
+        },
+        {
+          "find": "{items.length</li>",
+          "replace": "{items.length}</li>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_text",
+            "jsx_expression",
+            "member_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "lexical_declaration",
+            "jsx_element",
+            "jsx_text"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const head = <h1>Title</h1>;"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<h1>Title</h1>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_text",
+            "jsx_expression",
+            "member_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B04-R-1",
+      "features": [
+        "jsx-B04"
+      ],
+      "source_utf8": "function App({ items }) {\n  const ok = items.length < 3 && <p>few</p>;\n  return <div>{ok}</div>;\n}\nconst cmp = a < b > c;\n",
+      "edits": [
+        {
+          "find": "return <div>{ok}</div>;",
+          "replace": "return <div>{ok}</div><span />;"
+        },
+        {
+          "find": "return <div>{ok}</div><span />;",
+          "replace": "return <div>{ok}</div>;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "binary_expression",
+            "jsx_element",
+            "jsx_expression",
+            "return_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration",
+            "binary_expression",
+            "jsx_element"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "const ok = items.length < 3 && <p>few</p>;"
+            },
+            {
+              "type": "jsx_element",
+              "text": "<p>few</p>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "binary_expression",
+            "jsx_element",
+            "jsx_expression",
+            "return_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a38",
+        "jsx-B04.a39",
+        "jsx-B04.a40",
+        "jsx-B04.a41",
+        "jsx-B04.a42",
+        "jsx-B04.a43",
+        "jsx-B04.a44",
+        "jsx-B04.a45",
+        "jsx-B04.a46",
+        "jsx-B04.a52",
+        "jsx-B04.a53",
+        "jsx-B04.a54",
+        "jsx-B04.a55",
+        "jsx-B04.a56",
+        "jsx-B04.a57",
+        "jsx-B04.a58",
+        "jsx-B04.a59",
+        "jsx-B04.a60",
+        "jsx-B04.a61",
+        "jsx-B04.a62",
+        "jsx-B04.a63",
+        "jsx-B04.a07",
+        "jsx-B04.a08",
+        "jsx-B04.a09",
+        "jsx-B04.a10",
+        "jsx-B04.a11",
+        "jsx-B04.a14",
+        "jsx-B04.a15",
+        "jsx-B04.a16",
+        "jsx-B04.a17",
+        "jsx-B04.a65",
+        "jsx-B04.a67",
+        "jsx-B04.a68",
+        "jsx-B04.a125",
+        "jsx-B04.a984",
+        "jsx-B04.a745",
+        "jsx-B04.a746",
+        "jsx-B04.a580",
+        "jsx-B04.a581",
+        "jsx-B04.a582",
+        "jsx-B04.a119",
+        "jsx-B04.a134",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var a\t=\u000b1\f; var b﻿= 2\r\nvar c = 3 var d = 4 var e = 5\r// line comment\n/* multi\n   line */ /**/ /***/ /* a * b / c **/\nvar f = 6\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a\t=\u000b1\f;"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var b﻿= 2"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var c = 3"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var d = 4"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var e = 5"
+            },
+            {
+              "type": "comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\n   line */"
+            },
+            {
+              "type": "comment",
+              "text": "/**/"
+            },
+            {
+              "type": "comment",
+              "text": "/***/"
+            },
+            {
+              "type": "comment",
+              "text": "/* a * b / c **/"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var f = 6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a72",
+        "jsx-B04.a73",
+        "jsx-B04.a74",
+        "jsx-B04.a75",
+        "jsx-B04.a76",
+        "jsx-B04.a77",
+        "jsx-B04.a78",
+        "jsx-B04.a79",
+        "jsx-B04.a80",
+        "jsx-B04.a81",
+        "jsx-B04.a82",
+        "jsx-B04.a84",
+        "jsx-B04.a85",
+        "jsx-B04.a344",
+        "jsx-B04.a335",
+        "jsx-B04.a336",
+        "jsx-B04.a337",
+        "jsx-B04.a338",
+        "jsx-B04.a339",
+        "jsx-B04.a340",
+        "jsx-B04.a341",
+        "jsx-B04.a342",
+        "jsx-B04.a343",
+        "jsx-B04.a281",
+        "jsx-B04.a283",
+        "jsx-B04.a241",
+        "jsx-B04.a392",
+        "jsx-B04.a86",
+        "jsx-B04.a87",
+        "jsx-B04.a88",
+        "jsx-B04.a89",
+        "jsx-B04.a90",
+        "jsx-B04.a91",
+        "jsx-B04.a92",
+        "jsx-B04.a93",
+        "jsx-B04.a94",
+        "jsx-B04.a95",
+        "jsx-B04.a96",
+        "jsx-B04.a97",
+        "jsx-B04.a98",
+        "jsx-B04.a99",
+        "jsx-B04.a100",
+        "jsx-B04.a101",
+        "jsx-B04.a102",
+        "jsx-B04.a103",
+        "jsx-B04.a104",
+        "jsx-B04.a105",
+        "jsx-B04.a106",
+        "jsx-B04.a107",
+        "jsx-B04.a108",
+        "jsx-B04.a109",
+        "jsx-B04.a110",
+        "jsx-B04.a111",
+        "jsx-B04.a112",
+        "jsx-B04.a113",
+        "jsx-B04.a114",
+        "jsx-B04.a115",
+        "jsx-B04.a116",
+        "jsx-B04.a117",
+        "jsx-B04.a118",
+        "jsx-B04.a119",
+        "jsx-B04.a120",
+        "jsx-B04.a121",
+        "jsx-B04.a122",
+        "jsx-B04.a123",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a144",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var $ = 1, _x = 2, a1 = 3, \\u0061bc = 4, ab\\u0063 = 5, ünï = 6, é = 7, 𝑥 = 8;\nvar yield = 1, let = 2, async = 3, of = 4, get = 5, set = 6, from = 7, as = 8, target = 9, meta = 10;\nvar await = 11;\nawait: for (;;) { break await; }\nyield: for (;;) { continue yield; }\nvar o = { enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 };\no.enum = o.class + o.new;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "identifier",
+            "labeled_statement",
+            "statement_identifier",
+            "object",
+            "pair",
+            "property_identifier",
+            "member_expression"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "$"
+            },
+            {
+              "type": "identifier",
+              "text": "_x"
+            },
+            {
+              "type": "identifier",
+              "text": "a1"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u0061bc"
+            },
+            {
+              "type": "identifier",
+              "text": "ab\\u0063"
+            },
+            {
+              "type": "identifier",
+              "text": "ünï"
+            },
+            {
+              "type": "identifier",
+              "text": "é"
+            },
+            {
+              "type": "identifier",
+              "text": "𝑥"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "yield = 1"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "let = 2"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "async = 3"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "of = 4"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "get = 5"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "set = 6"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "from = 7"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "as = 8"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "target = 9"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "meta = 10"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "await = 11"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "await: for (;;) { break await; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break await;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "yield: for (;;) { continue yield; }"
+            },
+            {
+              "type": "statement_identifier",
+              "text": "yield",
+              "occurrence": 2
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue yield;"
+            },
+            {
+              "type": "object",
+              "text": "{ enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 }"
+            },
+            {
+              "type": "pair",
+              "text": "enum: 1"
+            },
+            {
+              "type": "pair",
+              "text": "class: 2"
+            },
+            {
+              "type": "pair",
+              "text": "await: 37"
+            },
+            {
+              "type": "pair",
+              "text": "yield: 38"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.enum"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.class"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.new"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a187",
+        "jsx-B04.a189",
+        "jsx-B04.a199",
+        "jsx-B04.a200",
+        "jsx-B04.a201",
+        "jsx-B04.a202",
+        "jsx-B04.a203",
+        "jsx-B04.a204",
+        "jsx-B04.a206",
+        "jsx-B04.a207",
+        "jsx-B04.a209",
+        "jsx-B04.a210",
+        "jsx-B04.a211",
+        "jsx-B04.a212",
+        "jsx-B04.a213",
+        "jsx-B04.a214",
+        "jsx-B04.a215",
+        "jsx-B04.a197",
+        "jsx-B04.a236",
+        "jsx-B04.a237",
+        "jsx-B04.a238",
+        "jsx-B04.a239",
+        "jsx-B04.a241",
+        "jsx-B04.a368",
+        "jsx-B04.a234",
+        "jsx-B04.a119",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a144",
+        "jsx-B04.a145",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var n = [0, 7, 10, 1.5, .5, 5., 1e3, 1E-3, 2.5e+10, 0x1F, 0XaB, 0.0, 12.75e2];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "10",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "1.5"
+            },
+            {
+              "type": "number",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "5."
+            },
+            {
+              "type": "number",
+              "text": "1e3"
+            },
+            {
+              "type": "number",
+              "text": "1E-3"
+            },
+            {
+              "type": "number",
+              "text": "2.5e+10"
+            },
+            {
+              "type": "number",
+              "text": "0x1F"
+            },
+            {
+              "type": "number",
+              "text": "0XaB"
+            },
+            {
+              "type": "number",
+              "text": "0.0"
+            },
+            {
+              "type": "number",
+              "text": "12.75e2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-04",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a242",
+        "jsx-B04.a243",
+        "jsx-B04.a244",
+        "jsx-B04.a245",
+        "jsx-B04.a246",
+        "jsx-B04.a249",
+        "jsx-B04.a250",
+        "jsx-B04.a251",
+        "jsx-B04.a254",
+        "jsx-B04.a255",
+        "jsx-B04.a256",
+        "jsx-B04.a47",
+        "jsx-B04.a48",
+        "jsx-B04.a49",
+        "jsx-B04.a50",
+        "jsx-B04.a51",
+        "jsx-B04.a257",
+        "jsx-B04.a258",
+        "jsx-B04.a261",
+        "jsx-B04.a262",
+        "jsx-B04.a263",
+        "jsx-B04.a264",
+        "jsx-B04.a265",
+        "jsx-B04.a266",
+        "jsx-B04.a267",
+        "jsx-B04.a268",
+        "jsx-B04.a269",
+        "jsx-B04.a270",
+        "jsx-B04.a280",
+        "jsx-B04.a369",
+        "jsx-B04.a69",
+        "jsx-B04.a119",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var s = [\"\", '', \"a'b\", 'a\"b', \"\\' \\\" \\\\ \\b \\f \\n \\r \\t \\v\", '\\0', \"\\x41\\u0041\", \"\\q\\%\", 'x\\\ny', 'c\\\rr', 'd\\\r\ne', 'l\\ s', 'p\\ s'];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "string",
+            "escape_sequence",
+            "string_fragment"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"\""
+            },
+            {
+              "type": "string",
+              "text": "''"
+            },
+            {
+              "type": "string",
+              "text": "\"a'b\""
+            },
+            {
+              "type": "string",
+              "text": "'a\"b'"
+            },
+            {
+              "type": "string",
+              "text": "\"\\' \\\" \\\\ \\b \\f \\n \\r \\t \\v\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\v"
+            },
+            {
+              "type": "string",
+              "text": "'\\0'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\0"
+            },
+            {
+              "type": "string",
+              "text": "\"\\x41\\u0041\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "string",
+              "text": "\"\\q\\%\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\q"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\%"
+            },
+            {
+              "type": "string",
+              "text": "'x\\\ny'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n"
+            },
+            {
+              "type": "string",
+              "text": "'c\\\rr'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\r",
+              "occurrence": 1
+            },
+            {
+              "type": "string",
+              "text": "'d\\\r\ne'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\r\n"
+            },
+            {
+              "type": "string",
+              "text": "'l\\ s'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\ "
+            },
+            {
+              "type": "string",
+              "text": "'p\\ s'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\ "
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-05",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a284",
+        "jsx-B04.a285",
+        "jsx-B04.a286",
+        "jsx-B04.a287",
+        "jsx-B04.a288",
+        "jsx-B04.a289",
+        "jsx-B04.a290",
+        "jsx-B04.a291",
+        "jsx-B04.a292",
+        "jsx-B04.a293",
+        "jsx-B04.a294",
+        "jsx-B04.a295",
+        "jsx-B04.a296",
+        "jsx-B04.a297",
+        "jsx-B04.a298",
+        "jsx-B04.a299",
+        "jsx-B04.a300",
+        "jsx-B04.a301",
+        "jsx-B04.a302",
+        "jsx-B04.a12",
+        "jsx-B04.a19",
+        "jsx-B04.a355",
+        "jsx-B04.a989",
+        "jsx-B04.a988",
+        "jsx-B04.a1000",
+        "jsx-B04.a105",
+        "jsx-B04.a119",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164",
+        "jsx-B04.a180",
+        "jsx-B04.a181",
+        "jsx-B04.a473",
+        "jsx-B04.a522"
+      ],
+      "source_utf8": "var a = 4, b = 2, g = 1, i = 1, x;\nvar r1 = /ab+c/gi, r2 = /[/\\]]+/, r3 = /\\//, r4 = /=/, r5 = /[]/, r6 = /a/;\nvar d = a / b / g;\na /= 2;\nx = (a) / 2 / i;\nx = a\n/b/g\nif (/re/.test(\"re\")) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "binary_expression",
+            "augmented_assignment_expression",
+            "parenthesized_expression"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/ab+c/gi"
+            },
+            {
+              "type": "regex",
+              "text": "/[/\\]]+/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\//"
+            },
+            {
+              "type": "regex",
+              "text": "/=/"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/"
+            },
+            {
+              "type": "regex",
+              "text": "/a/"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a / b / g"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a /= 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(a) / 2 / i"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a\n/b/g"
+            },
+            {
+              "type": "regex",
+              "text": "/re/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-06",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a984",
+        "jsx-B04.a985",
+        "jsx-B04.a986",
+        "jsx-B04.a987",
+        "jsx-B04.a457",
+        "jsx-B04.a647",
+        "jsx-B04.a18",
+        "jsx-B04.a87",
+        "jsx-B04.a96",
+        "jsx-B04.a101",
+        "jsx-B04.a103",
+        "jsx-B04.a104",
+        "jsx-B04.a109",
+        "jsx-B04.a111",
+        "jsx-B04.a115",
+        "jsx-B04.a119",
+        "jsx-B04.a121",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a149",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var a = 1\nvar b = 2\na\n++b\nfunction f() {\n  return\n  a\n}\nfunction g() { throw new Error(\"e\")\n}\ndo {} while (false) a = 3\nfor (;;) { break\n}\nvar c = 1; { 1\n2 } 3\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable_declaration",
+            "update_expression",
+            "return_statement",
+            "do_statement",
+            "expression_statement",
+            "statement_block",
+            "throw_statement"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var b = 2"
+            },
+            {
+              "type": "expression_statement",
+              "text": "++b"
+            },
+            {
+              "type": "update_expression",
+              "text": "++b"
+            },
+            {
+              "type": "return_statement",
+              "text": "return"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new Error(\"e\")"
+            },
+            {
+              "type": "do_statement",
+              "text": "do {} while (false)"
+            },
+            {
+              "type": "expression_statement",
+              "text": "a = 3"
+            },
+            {
+              "type": "break_statement",
+              "text": "break"
+            },
+            {
+              "type": "statement_block",
+              "text": "{ 1\n2 }"
+            },
+            {
+              "type": "expression_statement",
+              "text": "3",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-07",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a454",
+        "jsx-B04.a455",
+        "jsx-B04.a456",
+        "jsx-B04.a457",
+        "jsx-B04.a458",
+        "jsx-B04.a459",
+        "jsx-B04.a460",
+        "jsx-B04.a461",
+        "jsx-B04.a462",
+        "jsx-B04.a463",
+        "jsx-B04.a464",
+        "jsx-B04.a465",
+        "jsx-B04.a466",
+        "jsx-B04.a468",
+        "jsx-B04.a470",
+        "jsx-B04.a471",
+        "jsx-B04.a475",
+        "jsx-B04.a476",
+        "jsx-B04.a477",
+        "jsx-B04.a478",
+        "jsx-B04.a479",
+        "jsx-B04.a480",
+        "jsx-B04.a481",
+        "jsx-B04.a482",
+        "jsx-B04.a483",
+        "jsx-B04.a484",
+        "jsx-B04.a485",
+        "jsx-B04.a486",
+        "jsx-B04.a487",
+        "jsx-B04.a488",
+        "jsx-B04.a490",
+        "jsx-B04.a491",
+        "jsx-B04.a492",
+        "jsx-B04.a493",
+        "jsx-B04.a494",
+        "jsx-B04.a495",
+        "jsx-B04.a496",
+        "jsx-B04.a497",
+        "jsx-B04.a498",
+        "jsx-B04.a499",
+        "jsx-B04.a500",
+        "jsx-B04.a501",
+        "jsx-B04.a502",
+        "jsx-B04.a503",
+        "jsx-B04.a504",
+        "jsx-B04.a508",
+        "jsx-B04.a510",
+        "jsx-B04.a511",
+        "jsx-B04.a512",
+        "jsx-B04.a516",
+        "jsx-B04.a517",
+        "jsx-B04.a553",
+        "jsx-B04.a554",
+        "jsx-B04.a451",
+        "jsx-B04.a452",
+        "jsx-B04.a95",
+        "jsx-B04.a103",
+        "jsx-B04.a107",
+        "jsx-B04.a108",
+        "jsx-B04.a118",
+        "jsx-B04.a119",
+        "jsx-B04.a120",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a136",
+        "jsx-B04.a137",
+        "jsx-B04.a138",
+        "jsx-B04.a139",
+        "jsx-B04.a140",
+        "jsx-B04.a141",
+        "jsx-B04.a142",
+        "jsx-B04.a143",
+        "jsx-B04.a144",
+        "jsx-B04.a145",
+        "jsx-B04.a146",
+        "jsx-B04.a147",
+        "jsx-B04.a149",
+        "jsx-B04.a150",
+        "jsx-B04.a151",
+        "jsx-B04.a152",
+        "jsx-B04.a153",
+        "jsx-B04.a154",
+        "jsx-B04.a155",
+        "jsx-B04.a156",
+        "jsx-B04.a157",
+        "jsx-B04.a158",
+        "jsx-B04.a159",
+        "jsx-B04.a160",
+        "jsx-B04.a162",
+        "jsx-B04.a163",
+        "jsx-B04.a164",
+        "jsx-B04.a165",
+        "jsx-B04.a166",
+        "jsx-B04.a167",
+        "jsx-B04.a168",
+        "jsx-B04.a170",
+        "jsx-B04.a171",
+        "jsx-B04.a172",
+        "jsx-B04.a173",
+        "jsx-B04.a174",
+        "jsx-B04.a175",
+        "jsx-B04.a180",
+        "jsx-B04.a181",
+        "jsx-B04.a472",
+        "jsx-B04.a473",
+        "jsx-B04.a474",
+        "jsx-B04.a521",
+        "jsx-B04.a522",
+        "jsx-B04.a523",
+        "jsx-B04.a524",
+        "jsx-B04.a525",
+        "jsx-B04.a526",
+        "jsx-B04.a527",
+        "jsx-B04.a528",
+        "jsx-B04.a529",
+        "jsx-B04.a530",
+        "jsx-B04.a531"
+      ],
+      "source_utf8": "var a = 1, b = 2, c, o = { p: 1 };\nc = a + b - a * b / a % b;\nc = a << 1 >> 1 >>> 1;\nc = a < b, a > b, a <= b, a >= b, a == b, a != b, a === b, a !== b;\nc = a & b | a ^ b, ~a, !a, a && b || c;\nc = a ? b : c;\na++; b--; ++a; --b;\na += 1; a -= 1; a *= 2; a /= 2; a %= 2; a <<= 1; a >>= 1; a >>>= 1; a &= 1; a |= 1; a ^= 1;\nc = typeof a, void 0, delete o.p, -a, +a;\nc = a instanceof Object, \"p\" in o;\nfor (var k = 0, j = (\"p\" in o) ? 1 : 0; k < 1; k++) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "unary_expression",
+            "update_expression",
+            "ternary_expression",
+            "sequence_expression",
+            "augmented_assignment_expression",
+            "assignment_expression"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1, b = 2, c, o = { p: 1 };"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a + b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a + b - a * b / a % b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b / a"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a * b / a % b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1 >> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a << 1 >> 1 >>> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a > b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a <= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a >= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a == b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a != b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a === b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a !== b"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "c = a < b, a > b, a <= b, a >= b, a == b, a != b, a === b, a !== b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a & b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ^ b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a & b | a ^ b"
+            },
+            {
+              "type": "unary_expression",
+              "text": "~a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!a"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a && b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a && b || c"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "a ? b : c"
+            },
+            {
+              "type": "update_expression",
+              "text": "a++"
+            },
+            {
+              "type": "update_expression",
+              "text": "b--"
+            },
+            {
+              "type": "update_expression",
+              "text": "++a"
+            },
+            {
+              "type": "update_expression",
+              "text": "--b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a += 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a -= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a *= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a /= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a %= 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a <<= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a >>= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a >>>= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a &= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a |= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ^= 1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "typeof a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "void 0"
+            },
+            {
+              "type": "unary_expression",
+              "text": "delete o.p"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "+a",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_expression",
+              "text": "a instanceof Object"
+            },
+            {
+              "type": "binary_expression",
+              "text": "\"p\" in o",
+              "occurrence": 1
+            },
+            {
+              "type": "assignment_expression",
+              "text": "c = a ? b : c"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var k = 0, j = (\"p\" in o) ? 1 : 0; k < 1; k++) {}"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(\"p\" in o)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-08",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a345",
+        "jsx-B04.a346",
+        "jsx-B04.a347",
+        "jsx-B04.a348",
+        "jsx-B04.a349",
+        "jsx-B04.a350",
+        "jsx-B04.a357",
+        "jsx-B04.a366",
+        "jsx-B04.a367",
+        "jsx-B04.a183",
+        "jsx-B04.a184",
+        "jsx-B04.a185",
+        "jsx-B04.a370",
+        "jsx-B04.a371",
+        "jsx-B04.a372",
+        "jsx-B04.a373",
+        "jsx-B04.a375",
+        "jsx-B04.a377",
+        "jsx-B04.a378",
+        "jsx-B04.a380",
+        "jsx-B04.a381",
+        "jsx-B04.a382",
+        "jsx-B04.a383",
+        "jsx-B04.a384",
+        "jsx-B04.a387",
+        "jsx-B04.a388",
+        "jsx-B04.a390",
+        "jsx-B04.a392",
+        "jsx-B04.a393",
+        "jsx-B04.a394",
+        "jsx-B04.a703",
+        "jsx-B04.a704",
+        "jsx-B04.a705",
+        "jsx-B04.a740",
+        "jsx-B04.a405",
+        "jsx-B04.a406",
+        "jsx-B04.a407",
+        "jsx-B04.a411",
+        "jsx-B04.a419",
+        "jsx-B04.a420",
+        "jsx-B04.a421",
+        "jsx-B04.a424",
+        "jsx-B04.a425",
+        "jsx-B04.a426",
+        "jsx-B04.a429",
+        "jsx-B04.a697",
+        "jsx-B04.a433",
+        "jsx-B04.a434",
+        "jsx-B04.a436",
+        "jsx-B04.a438",
+        "jsx-B04.a358",
+        "jsx-B04.a365",
+        "jsx-B04.a682",
+        "jsx-B04.a671",
+        "jsx-B04.a673",
+        "jsx-B04.a676",
+        "jsx-B04.a677",
+        "jsx-B04.a679",
+        "jsx-B04.a613",
+        "jsx-B04.a615",
+        "jsx-B04.a683",
+        "jsx-B04.a684",
+        "jsx-B04.a397",
+        "jsx-B04.a594",
+        "jsx-B04.a101",
+        "jsx-B04.a104",
+        "jsx-B04.a105",
+        "jsx-B04.a109",
+        "jsx-B04.a110",
+        "jsx-B04.a111",
+        "jsx-B04.a114",
+        "jsx-B04.a116",
+        "jsx-B04.a119",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a144",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var o = { a: 1, \"b\": 2, 3: 3, get g() { return this.a; }, set g(v) { this.a = v; }, if: 1, };\nvar e = {}, arr = [], arr2 = [1, , 2, ], arr3 = [, ,], arr4 = [1, 2];\nvar f = function () { return this; }, named = function n(x, y) { return x; };\nvar v = o.a + o[\"b\"] + new Date().getTime() + new Date + f()(1) + o.g.toString()[0] + f().a;\nvar p = (1, 2);\nvar q = null, t = true, u = false;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object",
+            "pair",
+            "method_definition",
+            "array",
+            "function_expression",
+            "formal_parameters",
+            "member_expression",
+            "subscript_expression",
+            "new_expression",
+            "call_expression",
+            "parenthesized_expression",
+            "null",
+            "true",
+            "false",
+            "this"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{ a: 1, \"b\": 2, 3: 3, get g() { return this.a; }, set g(v) { this.a = v; }, if: 1, }"
+            },
+            {
+              "type": "pair",
+              "text": "a: 1"
+            },
+            {
+              "type": "pair",
+              "text": "\"b\": 2"
+            },
+            {
+              "type": "pair",
+              "text": "3: 3"
+            },
+            {
+              "type": "method_definition",
+              "text": "get g() { return this.a; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set g(v) { this.a = v; }"
+            },
+            {
+              "type": "pair",
+              "text": "if: 1"
+            },
+            {
+              "type": "object",
+              "text": "{}"
+            },
+            {
+              "type": "array",
+              "text": "[]"
+            },
+            {
+              "type": "array",
+              "text": "[1, , 2, ]"
+            },
+            {
+              "type": "array",
+              "text": "[, ,]"
+            },
+            {
+              "type": "array",
+              "text": "[1, 2]"
+            },
+            {
+              "type": "function_expression",
+              "text": "function () { return this; }"
+            },
+            {
+              "type": "function_expression",
+              "text": "function n(x, y) { return x; }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(x, y)"
+            },
+            {
+              "type": "member_expression",
+              "text": "o.a"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "o[\"b\"]"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Date()"
+            },
+            {
+              "type": "call_expression",
+              "text": "new Date().getTime()"
+            },
+            {
+              "type": "new_expression",
+              "text": "new Date",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "f()(1)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "o.g.toString()[0]"
+            },
+            {
+              "type": "member_expression",
+              "text": "f().a"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(1, 2)"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "1, 2",
+              "occurrence": 2
+            },
+            {
+              "type": "null",
+              "text": "null"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "this",
+              "text": "this",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B01-09",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a555",
+        "jsx-B04.a556",
+        "jsx-B04.a557",
+        "jsx-B04.a558",
+        "jsx-B04.a559",
+        "jsx-B04.a560",
+        "jsx-B04.a561",
+        "jsx-B04.a562",
+        "jsx-B04.a563",
+        "jsx-B04.a564",
+        "jsx-B04.a565",
+        "jsx-B04.a566",
+        "jsx-B04.a567",
+        "jsx-B04.a568",
+        "jsx-B04.a582",
+        "jsx-B04.a583",
+        "jsx-B04.a580",
+        "jsx-B04.a581",
+        "jsx-B04.a579",
+        "jsx-B04.a578",
+        "jsx-B04.a591",
+        "jsx-B04.a592",
+        "jsx-B04.a593",
+        "jsx-B04.a594",
+        "jsx-B04.a618",
+        "jsx-B04.a619",
+        "jsx-B04.a620",
+        "jsx-B04.a621",
+        "jsx-B04.a576",
+        "jsx-B04.a577",
+        "jsx-B04.a622",
+        "jsx-B04.a623",
+        "jsx-B04.a624",
+        "jsx-B04.a625",
+        "jsx-B04.a626",
+        "jsx-B04.a627",
+        "jsx-B04.a628",
+        "jsx-B04.a629",
+        "jsx-B04.a631",
+        "jsx-B04.a632",
+        "jsx-B04.a641",
+        "jsx-B04.a643",
+        "jsx-B04.a644",
+        "jsx-B04.a645",
+        "jsx-B04.a646",
+        "jsx-B04.a648",
+        "jsx-B04.a649",
+        "jsx-B04.a650",
+        "jsx-B04.a651",
+        "jsx-B04.a652",
+        "jsx-B04.a653",
+        "jsx-B04.a654",
+        "jsx-B04.a655",
+        "jsx-B04.a656",
+        "jsx-B04.a657",
+        "jsx-B04.a658",
+        "jsx-B04.a660",
+        "jsx-B04.a661",
+        "jsx-B04.a662",
+        "jsx-B04.a663",
+        "jsx-B04.a664",
+        "jsx-B04.a667",
+        "jsx-B04.a666",
+        "jsx-B04.a669",
+        "jsx-B04.a680",
+        "jsx-B04.a572",
+        "jsx-B04.a569",
+        "jsx-B04.a87",
+        "jsx-B04.a88",
+        "jsx-B04.a89",
+        "jsx-B04.a92",
+        "jsx-B04.a93",
+        "jsx-B04.a94",
+        "jsx-B04.a96",
+        "jsx-B04.a97",
+        "jsx-B04.a102",
+        "jsx-B04.a103",
+        "jsx-B04.a104",
+        "jsx-B04.a105",
+        "jsx-B04.a107",
+        "jsx-B04.a109",
+        "jsx-B04.a111",
+        "jsx-B04.a113",
+        "jsx-B04.a115",
+        "jsx-B04.a117",
+        "jsx-B04.a119",
+        "jsx-B04.a121",
+        "jsx-B04.a122",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a136",
+        "jsx-B04.a137",
+        "jsx-B04.a149",
+        "jsx-B04.a150",
+        "jsx-B04.a157",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "function f(x) {\n  var a = 1, b;\n  ;\n  if (x) a = 2; else { a = 3; }\n  if (!x) b = 1;\n  do a--; while (a > 0);\n  while (a < 3) a++;\n  for (a = 0; a < 2; a++) {}\n  for (;;) break;\n  for (var i = 0, j = 1; i < j; i++) continue;\n  for (b in x) {}\n  for (var k in x) {}\n  outer: for (var m in x) { continue outer; }\n  inner: { break inner; }\n  with (x) { a = b; }\n  switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }\n  switch (a) { }\n  switch (a) { default: }\n  try { throw new Error(\"e\"); } catch (err) { a = err; }\n  try {} finally {}\n  try {} catch (e2) {} finally {}\n  debugger;\n  return a;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "variable_declaration",
+            "empty_statement",
+            "if_statement",
+            "else_clause",
+            "do_statement",
+            "while_statement",
+            "for_statement",
+            "for_in_statement",
+            "continue_statement",
+            "break_statement",
+            "labeled_statement",
+            "with_statement",
+            "switch_statement",
+            "switch_body",
+            "switch_case",
+            "switch_default",
+            "try_statement",
+            "catch_clause",
+            "finally_clause",
+            "throw_statement",
+            "debugger_statement",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "function f(x) {\n  var a = 1, b;\n  ;\n  if (x) a = 2; else { a = 3; }\n  if (!x) b = 1;\n  do a--; while (a > 0);\n  while (a < 3) a++;\n  for (a = 0; a < 2; a++) {}\n  for (;;) break;\n  for (var i = 0, j = 1; i < j; i++) continue;\n  for (b in x) {}\n  for (var k in x) {}\n  outer: for (var m in x) { continue outer; }\n  inner: { break inner; }\n  with (x) { a = b; }\n  switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }\n  switch (a) { }\n  switch (a) { default: }\n  try { throw new Error(\"e\"); } catch (err) { a = err; }\n  try {} finally {}\n  try {} catch (e2) {} finally {}\n  debugger;\n  return a;\n}"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var a = 1, b;"
+            },
+            {
+              "type": "empty_statement",
+              "text": ";",
+              "occurrence": 2
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x) a = 2; else { a = 3; }"
+            },
+            {
+              "type": "else_clause",
+              "text": "else { a = 3; }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (!x) b = 1;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do a--; while (a > 0);"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (a < 3) a++;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (a = 0; a < 2; a++) {}"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) break;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (var i = 0, j = 1; i < j; i++) continue;"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (b in x) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var k in x) {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "outer: for (var m in x) { continue outer; }"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue outer;"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "inner: { break inner; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break inner;"
+            },
+            {
+              "type": "break_statement",
+              "text": "break;",
+              "occurrence": 1
+            },
+            {
+              "type": "with_statement",
+              "text": "with (x) { a = b; }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { case 1: a = 2; break; default: a = 3; case 2: case 3: }"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 1: a = 2; break;"
+            },
+            {
+              "type": "switch_default",
+              "text": "default: a = 3;"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 2:"
+            },
+            {
+              "type": "switch_case",
+              "text": "case 3:"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { }"
+            },
+            {
+              "type": "switch_body",
+              "text": "{ }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch (a) { default: }"
+            },
+            {
+              "type": "switch_default",
+              "text": "default:",
+              "occurrence": 2
+            },
+            {
+              "type": "try_statement",
+              "text": "try { throw new Error(\"e\"); } catch (err) { a = err; }"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new Error(\"e\");"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (err) { a = err; }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} finally {}"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally {}",
+              "occurrence": 1
+            },
+            {
+              "type": "try_statement",
+              "text": "try {} catch (e2) {} finally {}"
+            },
+            {
+              "type": "debugger_statement",
+              "text": "debugger;"
+            },
+            {
+              "type": "return_statement",
+              "text": "return a;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a584",
+        "jsx-B04.a585",
+        "jsx-B04.a586",
+        "jsx-B04.a587",
+        "jsx-B04.a588",
+        "jsx-B04.a589",
+        "jsx-B04.a590",
+        "jsx-B04.a596",
+        "jsx-B04.a597",
+        "jsx-B04.a598",
+        "jsx-B04.a600",
+        "jsx-B04.a601",
+        "jsx-B04.a602",
+        "jsx-B04.a603",
+        "jsx-B04.a604",
+        "jsx-B04.a606",
+        "jsx-B04.a607",
+        "jsx-B04.a608",
+        "jsx-B04.a609",
+        "jsx-B04.a610",
+        "jsx-B04.a611",
+        "jsx-B04.a612",
+        "jsx-B04.a613",
+        "jsx-B04.a614",
+        "jsx-B04.a616",
+        "jsx-B04.a617",
+        "jsx-B04.a615",
+        "jsx-B04.a595",
+        "jsx-B04.a571",
+        "jsx-B04.a583",
+        "jsx-B04.a630",
+        "jsx-B04.a633",
+        "jsx-B04.a634",
+        "jsx-B04.a635",
+        "jsx-B04.a636",
+        "jsx-B04.a640",
+        "jsx-B04.a642",
+        "jsx-B04.a668",
+        "jsx-B04.a533",
+        "jsx-B04.a534",
+        "jsx-B04.a535",
+        "jsx-B04.a537",
+        "jsx-B04.a538",
+        "jsx-B04.a539",
+        "jsx-B04.a540",
+        "jsx-B04.a541",
+        "jsx-B04.a543",
+        "jsx-B04.a544",
+        "jsx-B04.a545",
+        "jsx-B04.a546",
+        "jsx-B04.a547",
+        "jsx-B04.a548",
+        "jsx-B04.a549",
+        "jsx-B04.a550",
+        "jsx-B04.a551",
+        "jsx-B04.a552",
+        "jsx-B04.a395",
+        "jsx-B04.a391",
+        "jsx-B04.a396",
+        "jsx-B04.a386",
+        "jsx-B04.a89",
+        "jsx-B04.a91",
+        "jsx-B04.a103",
+        "jsx-B04.a107",
+        "jsx-B04.a117",
+        "jsx-B04.a119",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a133",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a136",
+        "jsx-B04.a149",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "let a = 1, b;\nconst c = 2;\nlet [x, , y = 3, ...rest] = [1, 2, 3];\nconst { p, q: { r } = {}, s = 4, [k]: comp, } = obj;\nvar [z] = arr, { w } = obj, [...[v1, v2]] = arr, [, ...{ length }] = arr;\nconst {} = obj, [] = arr, [,] = arr;\nfor (let i = 0; i < 1; i++) {}\nfor (const key in obj) {}\nfor (let [m, n] of pairs) {}\nfor (var e of arr) {}\nfor (x of arr) {}\nfor (const { u } of objs) {}\nfor (var [f1] in obj) {}\n[a, b] = [b, a];\n[, ...[d]] = arr;\n[...rest] = arr;\n[] = arr;\n[a, , b = 1, ...[c2]] = arr;\n({ a, b: [b2 = 1, ...more], c: { d2 } = {}, e2 = 5, } = obj);\n({} = obj);\ntry {} catch ({ message }) {}\ntry {} catch ([first]) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lexical_declaration",
+            "variable_declarator",
+            "array_pattern",
+            "object_pattern",
+            "pair_pattern",
+            "shorthand_property_identifier_pattern",
+            "assignment_pattern",
+            "rest_pattern",
+            "computed_property_name",
+            "object_assignment_pattern",
+            "for_statement",
+            "for_in_statement",
+            "assignment_expression",
+            "catch_clause"
+          ],
+          "anchors": [
+            {
+              "type": "lexical_declaration",
+              "text": "let a = 1, b;"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "const c = 2;"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[x, , y = 3, ...rest]"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "y = 3"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ p, q: { r } = {}, s = 4, [k]: comp, }"
+            },
+            {
+              "type": "pair_pattern",
+              "text": "q: { r } = {}"
+            },
+            {
+              "type": "object_assignment_pattern",
+              "text": "s = 4"
+            },
+            {
+              "type": "pair_pattern",
+              "text": "[k]: comp"
+            },
+            {
+              "type": "computed_property_name",
+              "text": "[k]"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "var [z] = arr, { w } = obj, [...[v1, v2]] = arr, [, ...{ length }] = arr;"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...[v1, v2]"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...{ length }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{}",
+              "occurrence": 2
+            },
+            {
+              "type": "array_pattern",
+              "text": "[]",
+              "occurrence": 1
+            },
+            {
+              "type": "array_pattern",
+              "text": "[,]"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (let i = 0; i < 1; i++) {}"
+            },
+            {
+              "type": "lexical_declaration",
+              "text": "let i = 0;"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (const key in obj) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (let [m, n] of pairs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var e of arr) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (x of arr) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (const { u } of objs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var [f1] in obj) {}"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[a, b] = [b, a]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[a, b]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[, ...[d]]"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[...rest]"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[] = arr",
+              "occurrence": 2
+            },
+            {
+              "type": "array_pattern",
+              "text": "[a, , b = 1, ...[c2]]"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, b: [b2 = 1, ...more], c: { d2 } = {}, e2 = 5, }"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[b2 = 1, ...more]"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "{ d2 } = {}"
+            },
+            {
+              "type": "object_assignment_pattern",
+              "text": "e2 = 5"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "{} = obj",
+              "occurrence": 2
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch ({ message }) {}"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ message }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch ([first]) {}"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[first]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a672",
+        "jsx-B04.a675",
+        "jsx-B04.a678",
+        "jsx-B04.a990",
+        "jsx-B04.a685",
+        "jsx-B04.a686",
+        "jsx-B04.a687",
+        "jsx-B04.a688",
+        "jsx-B04.a689",
+        "jsx-B04.a690",
+        "jsx-B04.a691",
+        "jsx-B04.a360",
+        "jsx-B04.a361",
+        "jsx-B04.a362",
+        "jsx-B04.a363",
+        "jsx-B04.a364",
+        "jsx-B04.a379",
+        "jsx-B04.a374",
+        "jsx-B04.a376",
+        "jsx-B04.a437",
+        "jsx-B04.a439",
+        "jsx-B04.a385",
+        "jsx-B04.a699",
+        "jsx-B04.a700",
+        "jsx-B04.a670",
+        "jsx-B04.a709",
+        "jsx-B04.a710",
+        "jsx-B04.a514",
+        "jsx-B04.a91",
+        "jsx-B04.a104",
+        "jsx-B04.a111",
+        "jsx-B04.a123",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a133",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a144",
+        "jsx-B04.a146",
+        "jsx-B04.a163",
+        "jsx-B04.a164",
+        "jsx-B04.a179",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "function f(a, b = 2, ...rest) { return [...rest, a]; }\nfunction g({ x, y } = {}, [z] = [], ...[w]) {}\nfunction h(...args) {}\nconst i = () => 1, j = x => x * 2, k = (x, y) => { return x + y; }, l = (...args) => args;\nconst m = ([a], { b }) => a + b, n = (a, ...[b]) => b, n2 = (x, ...{ length }) => length, n3 = ({ a } = {}) => a;\nf(...[1, 2], 3, ...arr);\nconst o2 = { x, y, method() {}, *gen() { yield 1; }, [\"comp\" + 1]: 1, get [k]() { return 1; }, set [k](v) {} };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "formal_parameters",
+            "assignment_pattern",
+            "rest_pattern",
+            "arrow_function",
+            "spread_element",
+            "array",
+            "object",
+            "shorthand_property_identifier",
+            "method_definition",
+            "computed_property_name",
+            "call_expression"
+          ],
+          "anchors": [
+            {
+              "type": "formal_parameters",
+              "text": "(a, b = 2, ...rest)"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "b = 2"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "spread_element",
+              "text": "...rest",
+              "occurrence": 2
+            },
+            {
+              "type": "formal_parameters",
+              "text": "({ x, y } = {}, [z] = [], ...[w])"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "{ x, y } = {}"
+            },
+            {
+              "type": "assignment_pattern",
+              "text": "[z] = []"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...[w]"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(...args)",
+              "occurrence": 1
+            },
+            {
+              "type": "arrow_function",
+              "text": "() => 1"
+            },
+            {
+              "type": "arrow_function",
+              "text": "x => x * 2"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(x, y) => { return x + y; }"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(...args) => args"
+            },
+            {
+              "type": "arrow_function",
+              "text": "([a], { b }) => a + b"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(a, ...[b]) => b"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(x, ...{ length }) => length"
+            },
+            {
+              "type": "arrow_function",
+              "text": "({ a } = {}) => a"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(...[1, 2], 3, ...arr)"
+            },
+            {
+              "type": "spread_element",
+              "text": "...[1, 2]"
+            },
+            {
+              "type": "spread_element",
+              "text": "...arr"
+            },
+            {
+              "type": "shorthand_property_identifier",
+              "text": "x",
+              "occurrence": 7
+            },
+            {
+              "type": "method_definition",
+              "text": "method() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*gen() { yield 1; }"
+            },
+            {
+              "type": "pair",
+              "text": "[\"comp\" + 1]: 1"
+            },
+            {
+              "type": "computed_property_name",
+              "text": "[\"comp\" + 1]"
+            },
+            {
+              "type": "method_definition",
+              "text": "get [k]() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set [k](v) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a725",
+        "jsx-B04.a727",
+        "jsx-B04.a728",
+        "jsx-B04.a729",
+        "jsx-B04.a730",
+        "jsx-B04.a731",
+        "jsx-B04.a732",
+        "jsx-B04.a733",
+        "jsx-B04.a734",
+        "jsx-B04.a738",
+        "jsx-B04.a699",
+        "jsx-B04.a700",
+        "jsx-B04.a703",
+        "jsx-B04.a704",
+        "jsx-B04.a430",
+        "jsx-B04.a413",
+        "jsx-B04.a414",
+        "jsx-B04.a409",
+        "jsx-B04.a410",
+        "jsx-B04.a422",
+        "jsx-B04.a415",
+        "jsx-B04.a417",
+        "jsx-B04.a706",
+        "jsx-B04.a708",
+        "jsx-B04.a709",
+        "jsx-B04.a710",
+        "jsx-B04.a711",
+        "jsx-B04.a712",
+        "jsx-B04.a713",
+        "jsx-B04.a513",
+        "jsx-B04.a351",
+        "jsx-B04.a352",
+        "jsx-B04.a570",
+        "jsx-B04.a573",
+        "jsx-B04.a13",
+        "jsx-B04.a182",
+        "jsx-B04.a90",
+        "jsx-B04.a91",
+        "jsx-B04.a100",
+        "jsx-B04.a104",
+        "jsx-B04.a109",
+        "jsx-B04.a111",
+        "jsx-B04.a112",
+        "jsx-B04.a114",
+        "jsx-B04.a123",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a132",
+        "jsx-B04.a133",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a144",
+        "jsx-B04.a146",
+        "jsx-B04.a164",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "class A { constructor() { this.x = 1; } m() { return 1; } static s() {} get g() { return 1; } set g(v) {} *gen() {} ['c' + 1]() {} static ['d']() {} ; }\nclass B extends A { constructor(...args) { super(...args); new.target; } m() { return super.m() + super['m'](); } }\nconst C = class {}, D = class Named extends (A) {}, E = class extends B {};\nfunction* gen() { yield; yield 1; yield* [2]; const x = yield; }\nconst ge = function* () {}, ge2 = function* named() {};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "method_definition",
+            "class_heritage",
+            "super",
+            "meta_property",
+            "class",
+            "generator_function_declaration",
+            "generator_function",
+            "yield_expression",
+            "computed_property_name"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class A { constructor() { this.x = 1; } m() { return 1; } static s() {} get g() { return 1; } set g(v) {} *gen() {} ['c' + 1]() {} static ['d']() {} ; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "constructor() { this.x = 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "m() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "static s() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "get g() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set g(v) {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*gen() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "['c' + 1]() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static ['d']() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B extends A { constructor(...args) { super(...args); new.target; } m() { return super.m() + super['m'](); } }"
+            },
+            {
+              "type": "class_heritage",
+              "text": "extends A"
+            },
+            {
+              "type": "call_expression",
+              "text": "super(...args)"
+            },
+            {
+              "type": "meta_property",
+              "text": "new.target"
+            },
+            {
+              "type": "member_expression",
+              "text": "super.m"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "super['m']"
+            },
+            {
+              "type": "class",
+              "text": "class {}"
+            },
+            {
+              "type": "class",
+              "text": "class Named extends (A) {}"
+            },
+            {
+              "type": "class_heritage",
+              "text": "extends (A)"
+            },
+            {
+              "type": "class",
+              "text": "class extends B {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* gen() { yield; yield 1; yield* [2]; const x = yield; }"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield",
+              "occurrence": 1
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield* [2]"
+            },
+            {
+              "type": "generator_function",
+              "text": "function* () {}"
+            },
+            {
+              "type": "generator_function",
+              "text": "function* named() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-04",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a356",
+        "jsx-B04.a398",
+        "jsx-B04.a399",
+        "jsx-B04.a400",
+        "jsx-B04.a401",
+        "jsx-B04.a402",
+        "jsx-B04.a403",
+        "jsx-B04.a404",
+        "jsx-B04.a303",
+        "jsx-B04.a304",
+        "jsx-B04.a305",
+        "jsx-B04.a306",
+        "jsx-B04.a307",
+        "jsx-B04.a308",
+        "jsx-B04.a309",
+        "jsx-B04.a310",
+        "jsx-B04.a311",
+        "jsx-B04.a312",
+        "jsx-B04.a313",
+        "jsx-B04.a315",
+        "jsx-B04.a316",
+        "jsx-B04.a317",
+        "jsx-B04.a318",
+        "jsx-B04.a319",
+        "jsx-B04.a320",
+        "jsx-B04.a321",
+        "jsx-B04.a70",
+        "jsx-B04.a20",
+        "jsx-B04.a21",
+        "jsx-B04.a22",
+        "jsx-B04.a23",
+        "jsx-B04.a24",
+        "jsx-B04.a25",
+        "jsx-B04.a26",
+        "jsx-B04.a27",
+        "jsx-B04.a28",
+        "jsx-B04.a29",
+        "jsx-B04.a30",
+        "jsx-B04.a31",
+        "jsx-B04.a408",
+        "jsx-B04.a427",
+        "jsx-B04.a282",
+        "jsx-B04.a334",
+        "jsx-B04.a47",
+        "jsx-B04.a91",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const t1 = `plain`, t2 = `a${1}b${2}c`, t3 = tag`x${1}y`, t4 = `line\ntwo`, t5 = `\\n\\x41A\\u{41}\\0 \\``, t6 = `$ {} $`, t7 = `a\\\nb`, t8 = `${`nested`}`;\na.b`t`;\nf()`t${t1}`;\nconst u = \"\\u{1F600}\", \\u{62}c = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "template_string",
+            "template_substitution",
+            "call_expression",
+            "escape_sequence",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "template_string",
+              "text": "`plain`"
+            },
+            {
+              "type": "template_string",
+              "text": "`a${1}b${2}c`"
+            },
+            {
+              "type": "template_substitution",
+              "text": "${1}",
+              "occurrence": 1
+            },
+            {
+              "type": "template_substitution",
+              "text": "${2}"
+            },
+            {
+              "type": "call_expression",
+              "text": "tag`x${1}y`"
+            },
+            {
+              "type": "template_string",
+              "text": "`line\ntwo`"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\n\\x41A\\u{41}\\0 \\``"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{41}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\`"
+            },
+            {
+              "type": "template_string",
+              "text": "`$ {} $`"
+            },
+            {
+              "type": "template_string",
+              "text": "`a\\\nb`"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n"
+            },
+            {
+              "type": "template_string",
+              "text": "`${`nested`}`"
+            },
+            {
+              "type": "template_string",
+              "text": "`nested`"
+            },
+            {
+              "type": "call_expression",
+              "text": "a.b`t`"
+            },
+            {
+              "type": "call_expression",
+              "text": "f()`t${t1}`"
+            },
+            {
+              "type": "string",
+              "text": "\"\\u{1F600}\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{1F600}"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u{62}c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-05",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a195",
+        "jsx-B04.a196",
+        "jsx-B04.a216",
+        "jsx-B04.a217",
+        "jsx-B04.a218",
+        "jsx-B04.a219",
+        "jsx-B04.a221",
+        "jsx-B04.a222",
+        "jsx-B04.a223",
+        "jsx-B04.a224",
+        "jsx-B04.a225",
+        "jsx-B04.a91",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const n = [0b1010, 0B11, 0o17, 0O7, 0b0, 0o0];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "0b1010"
+            },
+            {
+              "type": "number",
+              "text": "0B11"
+            },
+            {
+              "type": "number",
+              "text": "0o17"
+            },
+            {
+              "type": "number",
+              "text": "0O7"
+            },
+            {
+              "type": "number",
+              "text": "0b0"
+            },
+            {
+              "type": "number",
+              "text": "0o0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-06",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a747",
+        "jsx-B04.a748",
+        "jsx-B04.a749",
+        "jsx-B04.a750",
+        "jsx-B04.a751",
+        "jsx-B04.a752",
+        "jsx-B04.a753",
+        "jsx-B04.a756",
+        "jsx-B04.a757",
+        "jsx-B04.a758",
+        "jsx-B04.a759",
+        "jsx-B04.a760",
+        "jsx-B04.a761",
+        "jsx-B04.a762",
+        "jsx-B04.a763",
+        "jsx-B04.a764",
+        "jsx-B04.a765",
+        "jsx-B04.a766",
+        "jsx-B04.a767",
+        "jsx-B04.a768",
+        "jsx-B04.a769",
+        "jsx-B04.a770",
+        "jsx-B04.a771",
+        "jsx-B04.a772",
+        "jsx-B04.a773",
+        "jsx-B04.a774",
+        "jsx-B04.a781",
+        "jsx-B04.a782",
+        "jsx-B04.a783",
+        "jsx-B04.a784",
+        "jsx-B04.a785",
+        "jsx-B04.a788",
+        "jsx-B04.a790",
+        "jsx-B04.a791",
+        "jsx-B04.a792",
+        "jsx-B04.a793",
+        "jsx-B04.a794",
+        "jsx-B04.a795",
+        "jsx-B04.a796",
+        "jsx-B04.a797",
+        "jsx-B04.a754",
+        "jsx-B04.a681",
+        "jsx-B04.a572",
+        "jsx-B04.a90",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a104",
+        "jsx-B04.a106",
+        "jsx-B04.a119",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a146",
+        "jsx-B04.a164",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "import def from \"./a.js\";\nimport * as ns from \"./b.js\";\nimport { x, y as z, } from \"./c.js\";\nimport {} from \"./d.js\";\nimport def2, * as ns2 from \"./e.js\";\nimport def3, { w } from \"./f.js\";\nimport { q } from \"./g.js\";\nimport \"./side-effect.js\";\nexport var v = 1;\nexport let l = 2;\nexport function fn() {}\nexport function* gfn() {}\nexport class K {}\nexport { v as vv, fn as fn2, };\nexport {};\nexport { z };\nexport * from \"./h.js\";\nexport { x as xx, y } from \"./i.js\";\nexport default function () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_clause",
+            "namespace_import",
+            "named_imports",
+            "import_specifier",
+            "string",
+            "export_statement",
+            "export_clause",
+            "export_specifier",
+            "function_declaration",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import def from \"./a.js\";"
+            },
+            {
+              "type": "import_clause",
+              "text": "def",
+              "occurrence": 1
+            },
+            {
+              "type": "import_statement",
+              "text": "import * as ns from \"./b.js\";"
+            },
+            {
+              "type": "namespace_import",
+              "text": "* as ns",
+              "occurrence": 1
+            },
+            {
+              "type": "named_imports",
+              "text": "{ x, y as z, }"
+            },
+            {
+              "type": "import_specifier",
+              "text": "y as z"
+            },
+            {
+              "type": "import_statement",
+              "text": "import {} from \"./d.js\";"
+            },
+            {
+              "type": "named_imports",
+              "text": "{}",
+              "occurrence": 1
+            },
+            {
+              "type": "import_clause",
+              "text": "def2, * as ns2"
+            },
+            {
+              "type": "import_clause",
+              "text": "def3, { w }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import { q } from \"./g.js\";"
+            },
+            {
+              "type": "import_statement",
+              "text": "import \"./side-effect.js\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export var v = 1;"
+            },
+            {
+              "type": "export_statement",
+              "text": "export let l = 2;"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function fn() {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* gfn() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class K {}"
+            },
+            {
+              "type": "export_clause",
+              "text": "{ v as vv, fn as fn2, }"
+            },
+            {
+              "type": "export_specifier",
+              "text": "v as vv"
+            },
+            {
+              "type": "export_statement",
+              "text": "export {};"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { z };"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * from \"./h.js\";"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { x as xx, y } from \"./i.js\";"
+            },
+            {
+              "type": "export_specifier",
+              "text": "x as xx"
+            },
+            {
+              "type": "export_statement",
+              "text": "export default function () {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-07",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a786",
+        "jsx-B04.a726",
+        "jsx-B04.a90",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a127"
+      ],
+      "source_utf8": "export default class {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "class"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default class {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-08",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a785",
+        "jsx-B04.a707",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a104",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a146",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "export default function* () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "generator_function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default function* () {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "function* () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V15-09",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a787",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a144",
+        "jsx-B04.a146",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "export default (1 + 2) * 3;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default (1 + 2) * 3;"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(1 + 2) * 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a469",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a145",
+        "jsx-B04.a148",
+        "jsx-B04.a164",
+        "jsx-B04.a169",
+        "jsx-B04.a532"
+      ],
+      "source_utf8": "let n = 2 ** 3 ** 2;\nn **= 2;\nlet m = (-2) ** 2, m2 = 2 ** -1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "augmented_assignment_expression",
+            "unary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "2 ** 3 ** 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "3 ** 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "n **= 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(-2) ** 2"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(-2)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 ** -1"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a719",
+        "jsx-B04.a721",
+        "jsx-B04.a723",
+        "jsx-B04.a722",
+        "jsx-B04.a724",
+        "jsx-B04.a467",
+        "jsx-B04.a692",
+        "jsx-B04.a693",
+        "jsx-B04.a694",
+        "jsx-B04.a695",
+        "jsx-B04.a696",
+        "jsx-B04.a698",
+        "jsx-B04.a714",
+        "jsx-B04.a716",
+        "jsx-B04.a717",
+        "jsx-B04.a718",
+        "jsx-B04.a701",
+        "jsx-B04.a702",
+        "jsx-B04.a353",
+        "jsx-B04.a354",
+        "jsx-B04.a574",
+        "jsx-B04.a575",
+        "jsx-B04.a515",
+        "jsx-B04.a637",
+        "jsx-B04.a638",
+        "jsx-B04.a639",
+        "jsx-B04.a674",
+        "jsx-B04.a435",
+        "jsx-B04.a359",
+        "jsx-B04.a86",
+        "jsx-B04.a90",
+        "jsx-B04.a91",
+        "jsx-B04.a103",
+        "jsx-B04.a104",
+        "jsx-B04.a119",
+        "jsx-B04.a123",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a146",
+        "jsx-B04.a164",
+        "jsx-B04.a179",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "async function af(a, b,) { await af(a, b,); for await (const x of xs) {} for await (y of xs) {} for await (var v of xs) {} }\nconst aa = async () => {}, ab = async x => x, ac = async (x, y) => await x, ad = async function () {}, ae = async function named() {};\nconst af2 = async x => { await x; }, ag2 = async (x,) => x;\nconst obj = { async m() {}, async *ag() { yield 1; }, async [k]() {} };\nclass C { async m() {} async *ag() {} static async s() {} }\nasync function* agen() { yield* other(); yield await 1; }\nconst age = async function* () {}, age2 = async function* named() {};\nconst p = (a, b,) => a;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "await_expression",
+            "for_in_statement",
+            "arrow_function",
+            "function_expression",
+            "method_definition",
+            "generator_function_declaration",
+            "generator_function",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "async function af(a, b,) { await af(a, b,); for await (const x of xs) {} for await (y of xs) {} for await (var v of xs) {} }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(a, b,)",
+              "occurrence": 1
+            },
+            {
+              "type": "await_expression",
+              "text": "await af(a, b,)"
+            },
+            {
+              "type": "call_expression",
+              "text": "af(a, b,)",
+              "occurrence": 2
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const x of xs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (y of xs) {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (var v of xs) {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async () => {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async x => x"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async (x, y) => await x"
+            },
+            {
+              "type": "function_expression",
+              "text": "async function () {}"
+            },
+            {
+              "type": "function_expression",
+              "text": "async function named() {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async x => { await x; }"
+            },
+            {
+              "type": "arrow_function",
+              "text": "async (x,) => x"
+            },
+            {
+              "type": "method_definition",
+              "text": "async m() {}",
+              "occurrence": 1
+            },
+            {
+              "type": "method_definition",
+              "text": "async m() {}",
+              "occurrence": 2
+            },
+            {
+              "type": "method_definition",
+              "text": "async *ag() { yield 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "async [k]() {}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C { async m() {} async *ag() {} static async s() {} }"
+            },
+            {
+              "type": "method_definition",
+              "text": "async *ag() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static async s() {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "async function* agen() { yield* other(); yield await 1; }"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield* other()"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield await 1"
+            },
+            {
+              "type": "generator_function",
+              "text": "async function* () {}"
+            },
+            {
+              "type": "generator_function",
+              "text": "async function* named() {}"
+            },
+            {
+              "type": "arrow_function",
+              "text": "(a, b,) => a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a389",
+        "jsx-B04.a599",
+        "jsx-B04.a605",
+        "jsx-B04.a991",
+        "jsx-B04.a536",
+        "jsx-B04.a542",
+        "jsx-B04.a992",
+        "jsx-B04.a665",
+        "jsx-B04.a89",
+        "jsx-B04.a91",
+        "jsx-B04.a104",
+        "jsx-B04.a117",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a133",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a162",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const obj2 = { ...src, b: 1, ...(cond ? x : y) };\nconst { a, ...rest } = obj;\nconst { ...all } = obj;\n({ ...rest2 } = obj);\n({ a: a2, ...rest3 } = obj);\nfunction f({ x, ...others }) {}\ntry { f(); } catch { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object",
+            "spread_element",
+            "object_pattern",
+            "rest_pattern",
+            "assignment_expression",
+            "catch_clause"
+          ],
+          "anchors": [
+            {
+              "type": "object",
+              "text": "{ ...src, b: 1, ...(cond ? x : y) }"
+            },
+            {
+              "type": "spread_element",
+              "text": "...src"
+            },
+            {
+              "type": "spread_element",
+              "text": "...(cond ? x : y)"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a, ...rest }"
+            },
+            {
+              "type": "rest_pattern",
+              "text": "...rest",
+              "occurrence": 1
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ ...all }"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "{ ...rest2 } = obj"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ ...rest2 }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ a: a2, ...rest3 }"
+            },
+            {
+              "type": "object_pattern",
+              "text": "{ x, ...others }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-04",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a314",
+        "jsx-B04.a322",
+        "jsx-B04.a323",
+        "jsx-B04.a324",
+        "jsx-B04.a325",
+        "jsx-B04.a326",
+        "jsx-B04.a327",
+        "jsx-B04.a328",
+        "jsx-B04.a329",
+        "jsx-B04.a330",
+        "jsx-B04.a331",
+        "jsx-B04.a332",
+        "jsx-B04.a333",
+        "jsx-B04.a247",
+        "jsx-B04.a248",
+        "jsx-B04.a252",
+        "jsx-B04.a253",
+        "jsx-B04.a91",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "tag`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`;\ntag`\\u \\u1 \\u123 \\u{41 \\x4 `;\nconst s = \"a b\", s2 = 'c d';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call_expression",
+            "template_string",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "call_expression",
+              "text": "tag`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\unicode and \\u{55} \\xg \\u{110000} \\01 \\1 \\u12 \\u{ \\x`"
+            },
+            {
+              "type": "call_expression",
+              "text": "tag`\\u \\u1 \\u123 \\u{41 \\x4 `"
+            },
+            {
+              "type": "template_string",
+              "text": "`\\u \\u1 \\u123 \\u{41 \\x4 `"
+            },
+            {
+              "type": "string",
+              "text": "\"a b\""
+            },
+            {
+              "type": "string",
+              "text": "'c d'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-05",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a720",
+        "jsx-B04.a785",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a104",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129"
+      ],
+      "source_utf8": "export default async function () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default async function () {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "async function () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V16-06",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a715",
+        "jsx-B04.a785",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a104",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a146",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "export default async function* () {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "export_statement",
+            "generator_function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "export_statement",
+              "text": "export default async function* () {}"
+            },
+            {
+              "type": "generator_function_declaration",
+              "text": "async function* () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V20-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a188",
+        "jsx-B04.a190",
+        "jsx-B04.a192",
+        "jsx-B04.a193",
+        "jsx-B04.a194",
+        "jsx-B04.a198",
+        "jsx-B04.a186",
+        "jsx-B04.a208",
+        "jsx-B04.a220",
+        "jsx-B04.a226",
+        "jsx-B04.a240",
+        "jsx-B04.a993",
+        "jsx-B04.a994",
+        "jsx-B04.a91",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const n = [10n, 0n, 0x1Fn, 0b1n, 0o7n, 1_0n, 1_000_000, 0b1010_0101, 0o7_7, 0xFF_FF, 1_0.5_5e1_0, .5_5, 5e1_0, 1_0];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "10n"
+            },
+            {
+              "type": "number",
+              "text": "0n",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "0x1Fn"
+            },
+            {
+              "type": "number",
+              "text": "0b1n"
+            },
+            {
+              "type": "number",
+              "text": "0o7n"
+            },
+            {
+              "type": "number",
+              "text": "1_0n"
+            },
+            {
+              "type": "number",
+              "text": "1_000_000"
+            },
+            {
+              "type": "number",
+              "text": "0b1010_0101"
+            },
+            {
+              "type": "number",
+              "text": "0o7_7"
+            },
+            {
+              "type": "number",
+              "text": "0xFF_FF"
+            },
+            {
+              "type": "number",
+              "text": "1_0.5_5e1_0"
+            },
+            {
+              "type": "number",
+              "text": ".5_5",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "5e1_0",
+              "occurrence": 2
+            },
+            {
+              "type": "number",
+              "text": "1_0",
+              "occurrence": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V20-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a440",
+        "jsx-B04.a441",
+        "jsx-B04.a442",
+        "jsx-B04.a443",
+        "jsx-B04.a444",
+        "jsx-B04.a445",
+        "jsx-B04.a447",
+        "jsx-B04.a448",
+        "jsx-B04.a449",
+        "jsx-B04.a453",
+        "jsx-B04.a124",
+        "jsx-B04.a126",
+        "jsx-B04.a505",
+        "jsx-B04.a506",
+        "jsx-B04.a507",
+        "jsx-B04.a509",
+        "jsx-B04.a518",
+        "jsx-B04.a519",
+        "jsx-B04.a520",
+        "jsx-B04.a91",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a159",
+        "jsx-B04.a160",
+        "jsx-B04.a161",
+        "jsx-B04.a162",
+        "jsx-B04.a163",
+        "jsx-B04.a164",
+        "jsx-B04.a176",
+        "jsx-B04.a177",
+        "jsx-B04.a178"
+      ],
+      "source_utf8": "const v1 = a?.b, v2 = a?.[0], v3 = a?.(1), v4 = a?.b.c(), v5 = a?.b?.c, v6 = a?.b[0](1), v7 = f()?.x, v8 = a?.b.c;\nconst w1 = a ?? b, w2 = a ?? b ?? c, w3 = (a || b) ?? c, w4 = a?.b ?? (c && d), w5 = x?.5:1;\na &&= b; a ||= b; a ??= b; o.p ??= 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "optional_chain",
+            "member_expression",
+            "subscript_expression",
+            "call_expression",
+            "binary_expression",
+            "augmented_assignment_expression",
+            "ternary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "member_expression",
+              "text": "a?.b",
+              "occurrence": 1
+            },
+            {
+              "type": "subscript_expression",
+              "text": "a?.[0]"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.(1)"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.b.c()"
+            },
+            {
+              "type": "member_expression",
+              "text": "a?.b?.c"
+            },
+            {
+              "type": "call_expression",
+              "text": "a?.b[0](1)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "a?.b[0]"
+            },
+            {
+              "type": "member_expression",
+              "text": "f()?.x"
+            },
+            {
+              "type": "member_expression",
+              "text": "a?.b.c",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ?? b",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_expression",
+              "text": "a ?? b ?? c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "(a || b) ?? c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a?.b ?? (c && d)"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "x?.5:1"
+            },
+            {
+              "type": "number",
+              "text": ".5"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a &&= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ||= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "a ??= b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "o.p ??= 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V20-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a431",
+        "jsx-B04.a423",
+        "jsx-B04.a416",
+        "jsx-B04.a418",
+        "jsx-B04.a789",
+        "jsx-B04.a91",
+        "jsx-B04.a99",
+        "jsx-B04.a106",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a146",
+        "jsx-B04.a164",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "import * as m from \"./m.js\";\nconst mod = import(\"./m.js\"), mod2 = import(`./${name}.js`);\nconst url = import.meta.url;\nexport * as ns from \"./n.js\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "call_expression",
+            "import",
+            "meta_property",
+            "export_statement",
+            "namespace_export"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import * as m from \"./m.js\";"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\")"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(`./${name}.js`)"
+            },
+            {
+              "type": "meta_property",
+              "text": "import.meta"
+            },
+            {
+              "type": "member_expression",
+              "text": "import.meta.url"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * as ns from \"./n.js\";"
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as ns"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V22-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a735",
+        "jsx-B04.a736",
+        "jsx-B04.a737",
+        "jsx-B04.a739",
+        "jsx-B04.a741",
+        "jsx-B04.a71",
+        "jsx-B04.a66",
+        "jsx-B04.a742",
+        "jsx-B04.a743",
+        "jsx-B04.a744",
+        "jsx-B04.a489",
+        "jsx-B04.a412",
+        "jsx-B04.a428",
+        "jsx-B04.a446",
+        "jsx-B04.a450",
+        "jsx-B04.a90",
+        "jsx-B04.a107",
+        "jsx-B04.a111",
+        "jsx-B04.a114",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a144",
+        "jsx-B04.a146",
+        "jsx-B04.a149",
+        "jsx-B04.a159",
+        "jsx-B04.a162",
+        "jsx-B04.a164",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "class P {\n  x; y = 1; static z = 2; static w; #a = 1; #b; static #c = 3;\n  ['comp'] = 1; 'str' = 2; 42 = 3; static async = 4; get; set; static;\n  #m() { return this.#a; } get #g() { return 1; } set #g(v) {} static #sm() {} async #am() {} *#gm() {} async *#agm() {}\n  static { P.#c++; } static {}\n  has(o) { return #a in o && #m in o; }\n  t() { return this.#m().#a + this?.#a + this?.self.#a + this.#g; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "field_definition",
+            "private_property_identifier",
+            "method_definition",
+            "class_static_block",
+            "binary_expression",
+            "member_expression",
+            "optional_chain",
+            "computed_property_name"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class P {\n  x; y = 1; static z = 2; static w; #a = 1; #b; static #c = 3;\n  ['comp'] = 1; 'str' = 2; 42 = 3; static async = 4; get; set; static;\n  #m() { return this.#a; } get #g() { return 1; } set #g(v) {} static #sm() {} async #am() {} *#gm() {} async *#agm() {}\n  static { P.#c++; } static {}\n  has(o) { return #a in o && #m in o; }\n  t() { return this.#m().#a + this?.#a + this?.self.#a + this.#g; }\n}"
+            },
+            {
+              "type": "field_definition",
+              "text": "x"
+            },
+            {
+              "type": "field_definition",
+              "text": "y = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "static z = 2"
+            },
+            {
+              "type": "field_definition",
+              "text": "static w"
+            },
+            {
+              "type": "field_definition",
+              "text": "#a = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "#b"
+            },
+            {
+              "type": "field_definition",
+              "text": "static #c = 3"
+            },
+            {
+              "type": "field_definition",
+              "text": "['comp'] = 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "'str' = 2"
+            },
+            {
+              "type": "field_definition",
+              "text": "42 = 3"
+            },
+            {
+              "type": "field_definition",
+              "text": "static async = 4"
+            },
+            {
+              "type": "field_definition",
+              "text": "get",
+              "occurrence": 1
+            },
+            {
+              "type": "field_definition",
+              "text": "set",
+              "occurrence": 1
+            },
+            {
+              "type": "field_definition",
+              "text": "static",
+              "occurrence": 5
+            },
+            {
+              "type": "method_definition",
+              "text": "#m() { return this.#a; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "get #g() { return 1; }"
+            },
+            {
+              "type": "method_definition",
+              "text": "set #g(v) {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "static #sm() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "async #am() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "*#gm() {}"
+            },
+            {
+              "type": "method_definition",
+              "text": "async *#agm() {}"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static { P.#c++; }"
+            },
+            {
+              "type": "class_static_block",
+              "text": "static {}"
+            },
+            {
+              "type": "binary_expression",
+              "text": "#a in o"
+            },
+            {
+              "type": "binary_expression",
+              "text": "#m in o"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#m().#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this?.#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this?.self.#a"
+            },
+            {
+              "type": "member_expression",
+              "text": "this.#g"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V22-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a64",
+        "jsx-B04.a32",
+        "jsx-B04.a33",
+        "jsx-B04.a34",
+        "jsx-B04.a35",
+        "jsx-B04.a36",
+        "jsx-B04.a37",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a132",
+        "jsx-B04.a134"
+      ],
+      "source_utf8": "#!/usr/bin/env node\nconsole.log(1);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash_bang_line",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "hash_bang_line",
+              "text": "#!/usr/bin/env node"
+            },
+            {
+              "type": "expression_statement",
+              "text": "console.log(1);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-V22-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a775",
+        "jsx-B04.a776",
+        "jsx-B04.a777",
+        "jsx-B04.a778",
+        "jsx-B04.a779",
+        "jsx-B04.a780",
+        "jsx-B04.a996",
+        "jsx-B04.a997",
+        "jsx-B04.a998",
+        "jsx-B04.a432",
+        "jsx-B04.a999",
+        "jsx-B04.a755",
+        "jsx-B04.a995",
+        "jsx-B04.a86",
+        "jsx-B04.a91",
+        "jsx-B04.a94",
+        "jsx-B04.a99",
+        "jsx-B04.a103",
+        "jsx-B04.a106",
+        "jsx-B04.a122",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a132",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a146",
+        "jsx-B04.a163",
+        "jsx-B04.a164",
+        "jsx-B04.a472"
+      ],
+      "source_utf8": "import json from \"./data.json\" with { type: \"json\" };\nimport \"./style.css\" with { type: \"css\", };\nimport {} from \"./y.js\" with {};\nimport { \"string name\" as alias } from \"./m.js\";\nexport { default as cfg } from \"./cfg.json\" with { \"type\": \"json\" };\nexport * from \"./x.js\" with {};\nexport { alias as \"other name\" };\nexport * as \"ns name\" from \"./n.js\";\nconst lazy = await import(\"./m.js\", { with: { type: \"json\" } },);\nconst lazy2 = import(\"./m.js\",);\nconst top = await Promise.resolve(1);\nfor await (const v of []) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_statement",
+            "import_attribute",
+            "object",
+            "import_specifier",
+            "export_statement",
+            "export_specifier",
+            "namespace_export",
+            "call_expression",
+            "await_expression",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "import_statement",
+              "text": "import json from \"./data.json\" with { type: \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import \"./style.css\" with { type: \"css\", };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { type: \"css\", }"
+            },
+            {
+              "type": "import_statement",
+              "text": "import {} from \"./y.js\" with {};"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with {}",
+              "occurrence": 1
+            },
+            {
+              "type": "import_specifier",
+              "text": "\"string name\" as alias"
+            },
+            {
+              "type": "export_statement",
+              "text": "export { default as cfg } from \"./cfg.json\" with { \"type\": \"json\" };"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with { \"type\": \"json\" }"
+            },
+            {
+              "type": "export_statement",
+              "text": "export * from \"./x.js\" with {};"
+            },
+            {
+              "type": "import_attribute",
+              "text": "with {}",
+              "occurrence": 2
+            },
+            {
+              "type": "export_specifier",
+              "text": "alias as \"other name\""
+            },
+            {
+              "type": "namespace_export",
+              "text": "* as \"ns name\""
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\", { with: { type: \"json\" } },)"
+            },
+            {
+              "type": "call_expression",
+              "text": "import(\"./m.js\",)"
+            },
+            {
+              "type": "await_expression",
+              "text": "await Promise.resolve(1)"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for await (const v of []) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B02-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a798",
+        "jsx-B04.a799",
+        "jsx-B04.a800",
+        "jsx-B04.a801",
+        "jsx-B04.a802",
+        "jsx-B04.a803",
+        "jsx-B04.a804",
+        "jsx-B04.a805",
+        "jsx-B04.a806",
+        "jsx-B04.a807",
+        "jsx-B04.a808",
+        "jsx-B04.a809",
+        "jsx-B04.a810",
+        "jsx-B04.a811",
+        "jsx-B04.a814",
+        "jsx-B04.a815",
+        "jsx-B04.a816",
+        "jsx-B04.a817",
+        "jsx-B04.a818",
+        "jsx-B04.a819",
+        "jsx-B04.a820",
+        "jsx-B04.a821",
+        "jsx-B04.a822",
+        "jsx-B04.a823",
+        "jsx-B04.a824",
+        "jsx-B04.a825",
+        "jsx-B04.a826",
+        "jsx-B04.a832",
+        "jsx-B04.a833",
+        "jsx-B04.a834",
+        "jsx-B04.a835",
+        "jsx-B04.a836",
+        "jsx-B04.a838",
+        "jsx-B04.a839",
+        "jsx-B04.a840",
+        "jsx-B04.a841",
+        "jsx-B04.a842",
+        "jsx-B04.a843",
+        "jsx-B04.a844",
+        "jsx-B04.a83",
+        "jsx-B04.a855",
+        "jsx-B04.a856",
+        "jsx-B04.a857",
+        "jsx-B04.a858",
+        "jsx-B04.a859",
+        "jsx-B04.a860",
+        "jsx-B04.a863",
+        "jsx-B04.a864",
+        "jsx-B04.a865",
+        "jsx-B04.a866",
+        "jsx-B04.a867",
+        "jsx-B04.a868",
+        "jsx-B04.a869",
+        "jsx-B04.a870",
+        "jsx-B04.a871",
+        "jsx-B04.a872",
+        "jsx-B04.a873",
+        "jsx-B04.a874",
+        "jsx-B04.a875",
+        "jsx-B04.a889",
+        "jsx-B04.a890",
+        "jsx-B04.a891",
+        "jsx-B04.a892",
+        "jsx-B04.a894",
+        "jsx-B04.a895",
+        "jsx-B04.a896",
+        "jsx-B04.a897",
+        "jsx-B04.a898",
+        "jsx-B04.a899",
+        "jsx-B04.a900",
+        "jsx-B04.a901",
+        "jsx-B04.a902",
+        "jsx-B04.a903",
+        "jsx-B04.a904",
+        "jsx-B04.a905",
+        "jsx-B04.a906",
+        "jsx-B04.a907",
+        "jsx-B04.a1000",
+        "jsx-B04.a91",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const base = [/a|b|/, /^a$/m, /\\bx\\B/, /(?=a)(?!b)/, /a*b+c?d{2}e{2,}f{2,3}/, /g*?h+?i??j{1}?k{1,}?l{1,2}?/,\n  /.\\d\\D\\s\\S\\w\\W/, /[abc][^abc][a-z][-a][a-][\\b\\d-]/, /[\\-]/u, /[^]/, /[]/, /\\f\\n\\r\\t\\v\\cA\\cz\\0\\x41\\u0041/,\n  /\\u{1F600}/u, /\\uD83D\\uDE00/u, /\\uD83D/u, /\\uDE00/u, /\\u0041/u, /(a)\\1/, /(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10/,\n  /\\$\\//u, /\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\/u, /\\%/, /(a)(?:b)/, /a-z/, /[a\\-z]/u, /[\\s\\S]/y, /[a-b-c]/];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/a|b|/"
+            },
+            {
+              "type": "regex",
+              "text": "/^a$/m"
+            },
+            {
+              "type": "regex",
+              "text": "/\\bx\\B/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?=a)(?!b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/a*b+c?d{2}e{2,}f{2,3}/"
+            },
+            {
+              "type": "regex",
+              "text": "/g*?h+?i??j{1}?k{1,}?l{1,2}?/"
+            },
+            {
+              "type": "regex",
+              "text": "/.\\d\\D\\s\\S\\w\\W/"
+            },
+            {
+              "type": "regex",
+              "text": "/[abc][^abc][a-z][-a][a-][\\b\\d-]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\-]/u"
+            },
+            {
+              "type": "regex",
+              "text": "/[^]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\f\\n\\r\\t\\v\\cA\\cz\\0\\x41\\u0041/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\u{1F600}/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uD83D\\uDE00/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uD83D/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\uDE00/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\u0041/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\$\\//u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\^\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|\\\\/u"
+            },
+            {
+              "type": "regex",
+              "text": "/\\%/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)(?:b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/a-z/"
+            },
+            {
+              "type": "regex",
+              "text": "/[a\\-z]/u"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\s\\S]/y"
+            },
+            {
+              "type": "regex",
+              "text": "/[a-b-c]/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-B02-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a845",
+        "jsx-B04.a846",
+        "jsx-B04.a847",
+        "jsx-B04.a848",
+        "jsx-B04.a849",
+        "jsx-B04.a850",
+        "jsx-B04.a851",
+        "jsx-B04.a852",
+        "jsx-B04.a853",
+        "jsx-B04.a854",
+        "jsx-B04.a861",
+        "jsx-B04.a862",
+        "jsx-B04.a837",
+        "jsx-B04.a812",
+        "jsx-B04.a813",
+        "jsx-B04.a876",
+        "jsx-B04.a877",
+        "jsx-B04.a878",
+        "jsx-B04.a879",
+        "jsx-B04.a880",
+        "jsx-B04.a881",
+        "jsx-B04.a882",
+        "jsx-B04.a883",
+        "jsx-B04.a884",
+        "jsx-B04.a885",
+        "jsx-B04.a886",
+        "jsx-B04.a887",
+        "jsx-B04.a888",
+        "jsx-B04.a1001",
+        "jsx-B04.a1002",
+        "jsx-B04.a1003",
+        "jsx-B04.a1004",
+        "jsx-B04.a827",
+        "jsx-B04.a828",
+        "jsx-B04.a829",
+        "jsx-B04.a830",
+        "jsx-B04.a831",
+        "jsx-B04.a893",
+        "jsx-B04.a908",
+        "jsx-B04.a909",
+        "jsx-B04.a910",
+        "jsx-B04.a911",
+        "jsx-B04.a912",
+        "jsx-B04.a913",
+        "jsx-B04.a914",
+        "jsx-B04.a915",
+        "jsx-B04.a916",
+        "jsx-B04.a917",
+        "jsx-B04.a918",
+        "jsx-B04.a919",
+        "jsx-B04.a920",
+        "jsx-B04.a921",
+        "jsx-B04.a922",
+        "jsx-B04.a923",
+        "jsx-B04.a924",
+        "jsx-B04.a925",
+        "jsx-B04.a926",
+        "jsx-B04.a927",
+        "jsx-B04.a928",
+        "jsx-B04.a929",
+        "jsx-B04.a930",
+        "jsx-B04.a931",
+        "jsx-B04.a932",
+        "jsx-B04.a933",
+        "jsx-B04.a934",
+        "jsx-B04.a935",
+        "jsx-B04.a936",
+        "jsx-B04.a91",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "const es2018 = [/(?<year>\\d{4})-\\k<year>/, /(?<Ab>x)/, /(?<\\u{61}\\u{62}>x)/u, /(?<𝑓𝑓>x)/, /(?<𝑓>x)/u, /(?<$_1>y)/,\n  /(?<=a)b(?<!c)/, /\\p{L}\\P{Lu}\\p{Script=Greek}\\p{General_Category=Letter}\\p{Lu}/u, /a.b/s];\nconst later = [/a/d, /(?<y>a)|(?<y>b)/, /(?i:a)(?-i:b)(?m-s:c)(?ims:d)/];\nconst sets = [/[\\p{L}--[a-z]]/v, /[[a-z]&&[aeiou]&&[ae]]/v, /[\\p{L}--\\d--[x]]/v, /[\\q{abc|d|}]/v, /[\\q{}]/v,\n  /[a-z\\d[x]]/v, /[^\\w]/v, /[[^a]]/v, /[\\n\\&\\b]/v, /[]/v, /[a\\-]/v, /[\\p{L}]/v, /[ab]/v];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "regex_flags",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/(?<year>\\d{4})-\\k<year>/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<Ab>x)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<\\u{61}\\u{62}>x)/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<𝑓𝑓>x)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<𝑓>x)/u"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<$_1>y)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<=a)b(?<!c)/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\p{L}\\P{Lu}\\p{Script=Greek}\\p{General_Category=Letter}\\p{Lu}/u"
+            },
+            {
+              "type": "regex",
+              "text": "/a.b/s"
+            },
+            {
+              "type": "regex",
+              "text": "/a/d"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<y>a)|(?<y>b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?i:a)(?-i:b)(?m-s:c)(?ims:d)/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}--[a-z]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[[a-z]&&[aeiou]&&[ae]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}--\\d--[x]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\q{abc|d|}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\q{}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[a-z\\d[x]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[^\\w]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[[^a]]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\n\\&\\b]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[a\\-]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\p{L}]/v"
+            },
+            {
+              "type": "regex",
+              "text": "/[ab]/v"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-L01-01",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a191",
+        "jsx-B04.a227",
+        "jsx-B04.a228",
+        "jsx-B04.a205",
+        "jsx-B04.a229",
+        "jsx-B04.a230",
+        "jsx-B04.a231",
+        "jsx-B04.a232",
+        "jsx-B04.a233",
+        "jsx-B04.a235",
+        "jsx-B04.a259",
+        "jsx-B04.a260",
+        "jsx-B04.a271",
+        "jsx-B04.a272",
+        "jsx-B04.a273",
+        "jsx-B04.a274",
+        "jsx-B04.a275",
+        "jsx-B04.a276",
+        "jsx-B04.a277",
+        "jsx-B04.a278",
+        "jsx-B04.a279",
+        "jsx-B04.a119",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var a = [010, 0777, 08, 09, 078, 0819, 0.5];\nvar e = [\"\\0\\1\\12\\47\\123\\400\\8\\9\\08\", '\\7\\77'];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "number",
+            "string",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "number",
+              "text": "010"
+            },
+            {
+              "type": "number",
+              "text": "0777"
+            },
+            {
+              "type": "number",
+              "text": "08",
+              "occurrence": 1
+            },
+            {
+              "type": "number",
+              "text": "09"
+            },
+            {
+              "type": "number",
+              "text": "078"
+            },
+            {
+              "type": "number",
+              "text": "0819"
+            },
+            {
+              "type": "number",
+              "text": "0.5"
+            },
+            {
+              "type": "string",
+              "text": "\"\\0\\1\\12\\47\\123\\400\\8\\9\\08\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\12",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\47"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\123"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\400"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\8"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\9"
+            },
+            {
+              "type": "string",
+              "text": "'\\7\\77'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\77"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-L01-02",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a937",
+        "jsx-B04.a938",
+        "jsx-B04.a939",
+        "jsx-B04.a940",
+        "jsx-B04.a941",
+        "jsx-B04.a942",
+        "jsx-B04.a943",
+        "jsx-B04.a944",
+        "jsx-B04.a945",
+        "jsx-B04.a946",
+        "jsx-B04.a947",
+        "jsx-B04.a948",
+        "jsx-B04.a949",
+        "jsx-B04.a950",
+        "jsx-B04.a951",
+        "jsx-B04.a952",
+        "jsx-B04.a953",
+        "jsx-B04.a954",
+        "jsx-B04.a119",
+        "jsx-B04.a134",
+        "jsx-B04.a137",
+        "jsx-B04.a145",
+        "jsx-B04.a150",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var x = 1; <!-- html open comment\n--> html close comment at line start\n/* multi\nline */ --> close after a multi-line comment\n  /* a */ /* b */ --> close after delimited comments\n/**/ -->\nx = 2;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "html_comment",
+            "comment",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declaration",
+              "text": "var x = 1;"
+            },
+            {
+              "type": "html_comment",
+              "text": "<!-- html open comment"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> html close comment at line start"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\nline */"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> close after a multi-line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* a */"
+            },
+            {
+              "type": "comment",
+              "text": "/* b */"
+            },
+            {
+              "type": "html_comment",
+              "text": "--> close after delimited comments"
+            },
+            {
+              "type": "html_comment",
+              "text": "-->",
+              "occurrence": 4
+            },
+            {
+              "type": "expression_statement",
+              "text": "x = 2;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-L01-03",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a979",
+        "jsx-B04.a980",
+        "jsx-B04.a981",
+        "jsx-B04.a982",
+        "jsx-B04.a659",
+        "jsx-B04.a1005",
+        "jsx-B04.a983",
+        "jsx-B04.a97",
+        "jsx-B04.a103",
+        "jsx-B04.a104",
+        "jsx-B04.a105",
+        "jsx-B04.a107",
+        "jsx-B04.a119",
+        "jsx-B04.a127",
+        "jsx-B04.a128",
+        "jsx-B04.a129",
+        "jsx-B04.a134",
+        "jsx-B04.a163",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "if (a) function f() {}\nif (a) function g() {} else function h() {}\nif (a) x = 1; else function i() {}\nif (a) function j() {} else x = 2;\nlbl: function k() {}\n{ function blockFn() {} }\nfor (var z = 0 in obj) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "function_declaration",
+            "else_clause",
+            "labeled_statement",
+            "statement_block",
+            "for_in_statement"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if (a) function f() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function f() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) function g() {} else function h() {}"
+            },
+            {
+              "type": "else_clause",
+              "text": "else function h() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) x = 1; else function i() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function i() {}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (a) function j() {} else x = 2;"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function j() {}"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "lbl: function k() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function k() {}"
+            },
+            {
+              "type": "statement_block",
+              "text": "{ function blockFn() {} }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "function blockFn() {}"
+            },
+            {
+              "type": "for_in_statement",
+              "text": "for (var z = 0 in obj) {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-jsx-B04-js-L01-04",
+      "features": [
+        "jsx-B04"
+      ],
+      "alternatives": [
+        "jsx-B04.a955",
+        "jsx-B04.a956",
+        "jsx-B04.a957",
+        "jsx-B04.a958",
+        "jsx-B04.a959",
+        "jsx-B04.a960",
+        "jsx-B04.a961",
+        "jsx-B04.a962",
+        "jsx-B04.a963",
+        "jsx-B04.a964",
+        "jsx-B04.a965",
+        "jsx-B04.a966",
+        "jsx-B04.a967",
+        "jsx-B04.a968",
+        "jsx-B04.a969",
+        "jsx-B04.a970",
+        "jsx-B04.a971",
+        "jsx-B04.a972",
+        "jsx-B04.a973",
+        "jsx-B04.a974",
+        "jsx-B04.a975",
+        "jsx-B04.a976",
+        "jsx-B04.a977",
+        "jsx-B04.a978",
+        "jsx-B04.a119",
+        "jsx-B04.a130",
+        "jsx-B04.a131",
+        "jsx-B04.a134",
+        "jsx-B04.a135",
+        "jsx-B04.a164"
+      ],
+      "source_utf8": "var r = [/]/, /{/, /}/, /a{,5}/, /x{1/, /(?=a)*/, /(?!a)+/, /\\c1/, /[\\c1\\c_]/, /[\\c]/, /\\c/, /\\8/, /\\a/, /\\k/,\n  /\\1/, /\\07/, /[\\07]/, /\\p/, /(?:a){1}\\2(b)/, /(?<n>x)\\k<n>/, /(a)\\1/, /(?<n>x)\\a/,\n  /.(?i:a)(?-i:b)(x)[a]\\d/];\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "regex",
+            "regex_pattern",
+            "array"
+          ],
+          "anchors": [
+            {
+              "type": "regex",
+              "text": "/]/"
+            },
+            {
+              "type": "regex",
+              "text": "/{/"
+            },
+            {
+              "type": "regex",
+              "text": "/}/"
+            },
+            {
+              "type": "regex",
+              "text": "/a{,5}/"
+            },
+            {
+              "type": "regex",
+              "text": "/x{1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?=a)*/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?!a)+/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\c1/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\c1\\c_]/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\c]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\c/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\8/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\a/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\k/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\07/"
+            },
+            {
+              "type": "regex",
+              "text": "/[\\07]/"
+            },
+            {
+              "type": "regex",
+              "text": "/\\p/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?:a){1}\\2(b)/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<n>x)\\k<n>/"
+            },
+            {
+              "type": "regex",
+              "text": "/(a)\\1/"
+            },
+            {
+              "type": "regex",
+              "text": "/(?<n>x)\\a/"
+            },
+            {
+              "type": "regex",
+              "text": "/.(?i:a)(?-i:b)(x)[a]\\d/"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
