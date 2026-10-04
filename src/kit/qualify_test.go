@@ -549,7 +549,7 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 				}
 			}
 			ids := func() []IdentityRef {
-				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"source", "tsgk-source-bytes/r1", sum([]byte("svc"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
 			}
 			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": "C#", "identities": ids(),
 				"inline": map[string]any{"tree": map[string]any{"identities": ids()}}}
@@ -579,6 +579,23 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": mixed, "darwin-arm64": host(fxProducer, nil)}))
 	if l := cellOf(r, "fxa", "linux-amd64"); l.Mechanism == AssessPass || !slices.ContainsFunc(l.Set.Gates, func(g ReplayGate) bool { return g.ID == "case-binding" && g.Code == "MIXED_IDENTITY" }) {
 		t.Fatalf("composite from another build accepted: %s %+v", l.Mechanism, l.Set.Gates)
+	}
+
+	f = newQfx(t)
+	inline := host(other, func(c map[string]any) {
+		c["inline"].(map[string]any)["tree"].(map[string]any)["identities"].([]IdentityRef)[0].SHA256 = fxProducer
+	})
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": inline, "darwin-arm64": host(fxProducer, nil)}))
+	if l := cellOf(r, "fxa", "linux-amd64"); l.Mechanism == AssessPass || !slices.ContainsFunc(l.Set.Gates, func(g ReplayGate) bool { return g.ID == "case-binding" && g.Code == "MIXED_IDENTITY" }) {
+		t.Fatalf("composite inline tree from another build accepted: %s %+v", l.Mechanism, l.Set.Gates)
+	}
+
+	// only the producer is left out: a different composite source is still a difference
+	f = newQfx(t)
+	src := host(fxProducer, func(c map[string]any) { c["identities"].([]IdentityRef)[1].SHA256 = sum([]byte("other")) })
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": src}))
+	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
+		t.Fatalf("composite source difference not reported: %s %v", c.Comparison, r.Comparisons[0].Differences)
 	}
 
 	f = newQfx(t)
