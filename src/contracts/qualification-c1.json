@@ -14291,13 +14291,25 @@
          },
          "variable": null,
          "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1174,
+         "end_byte": 1190,
+         "start_point": {
+          "row": 28,
+          "column": 14
+         },
+         "end_point": {
+          "row": 28,
+          "column": 30
+         },
+         "variable": null,
+         "heuristic": false
         }
        ],
        "known_misses": [
-        {
-         "start_byte": 1160,
-         "end_byte": 1191
-        },
         {
          "start_byte": 1226,
          "end_byte": 1274
