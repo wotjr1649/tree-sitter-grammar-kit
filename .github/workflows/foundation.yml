@@ -165,6 +165,54 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
           if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
 
+  race:
+    # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
+    # CGO-free foundation gate above stays the required core check and is not relaxed.
+    name: race diagnostic (ubuntu-24.04)
+    needs: foundation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CGO_ENABLED: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          # Only the modules pinned by go.mod/go.sum (golang.org/x/sys); later steps run with GOPROXY=off.
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: go test -race (진단, CGO)
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          $checkoutSha = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'git rev-parse failed' }
+          if ($checkoutSha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          $goIdentity = go version
+          if ($LASTEXITCODE -ne 0) { throw 'go version failed' }
+          $cgo = go env CGO_ENABLED
+          if ($LASTEXITCODE -ne 0) { throw 'go env failed' }
+          if ($cgo -ne '1') { throw 'race diagnostic needs CGO_ENABLED=1' }
+          Write-Output "$goIdentity cgo=$cgo checkout_sha=$checkoutSha run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+          go test -race -count=1 -timeout 600s ./src/...
+          if ($LASTEXITCODE -ne 0) { throw 'race diagnostic failed' }
+
   native-prepare:
     # S05: one Linux job fetches the 26 pinned route sources, applies the adopted patch
     # chains and regenerates the 6 adopted parsers with tsgk reproduce; every file is
