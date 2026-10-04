@@ -12914,8 +12914,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "78bfef4d7c8d7b770df966fdb873c15c8ef235e01f64d0a3b9813b934f7ee1cc",
-      "bytes": 29189706
+      "sha256": "cd923f73e98f66f6d157cdd61bca3f845437f67134bc9682809c9aa7587ad2e7",
+      "bytes": 29214306
      },
      {
       "path": "src/scanner.c",

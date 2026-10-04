@@ -85,13 +85,37 @@
           "claim": "Aaron Bertrand, 2022-04-06 (no execution output shown): two statements can be separated by one, zero (sometimes), or a hundred statement terminators; a script beginning \";;;; ;; ;;;;;\" with \";;;;; /* I'm a comment */ ;;;;;;;\" lines is given as \"terrible but valid code\"."
         },
         {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/begin-end-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "Example A writes THROW 50001, ... , 1; then /* Concatenate the person name fields comment */; then BEGIN, and inside the block DECLARE ... ; then /* This is a nested BEGIN...END block: */; - a lone ; after a statement and a comment, at batch level and in a block (added after review r4 from evidence the orchestrator supplied)"
+        },
+        {
           "url": "https://wp.larnu.uk/fundamentals-the-semicolon-is-a-statement-terminator/",
           "kind": "INDEPENDENT_ENGINE_OBSERVATION",
           "claim": "Thom A, 2020/2022: a leading ; inside a VIEW (single-statement body) fails with Msg 102 Incorrect syntax near ';' (engine output shown). Limiting the patch to batch level is this subject's reading of the two sources, not a stated rule."
         }
       ],
       "change": "batch: repeat(;) before the first item, after each item and before a lone GO; statement lists of BEGIN ... END blocks, TRY/CATCH and module bodies (_body_item): repeat(;) after a statement only. A view or inline function body (one statement) is unchanged",
-      "scope_note": "Bertrand states the rule for terminators between statements in general, so r6 applies extra ; after a statement in any statement list. A ; before the first statement of a block or body is not covered (see gap-empty-statement-at-block-start; review r3 R3-1). With this rule a body no longer ends at ;; (CREATE PROCEDURE p AS SELECT 1;; SELECT 2 keeps both statements in the body, matching the body-runs-to-GO rule)"
+      "scope_note": "Bertrand states the rule for terminators between statements in general, so r6 applies extra ; after a statement in any statement list. A ; directly after BEGIN is the separate class r6-begin-semicolon (official BEGIN [ ; ]); a ; before the first statement after AS without BEGIN or after BEGIN TRY/CATCH is not established (review r3 R3-1). With this rule a body no longer ends at ;; (CREATE PROCEDURE p AS SELECT 1;; SELECT 2 keeps both statements in the body, matching the body-runs-to-GO rule)"
+    },
+    {
+      "id": "r6-begin-semicolon",
+      "feature": "tsql-B01",
+      "private_error_files": 8,
+      "state": "PATCHED",
+      "shape": "AS BEGIN  ;WITH c AS (...) SELECT ...  /  WHILE (...) BEGIN; ...  /  IF (...) BEGIN ;WITH ...",
+      "contexts": "all 8 private files: a ; directly after the BEGIN of a BEGIN...END block inside CREATE PROCEDURE (IF block 2, procedure-body block 2, WHILE block 4); none after AS without BEGIN, at batch start or after a comment",
+      "r5": "ERROR at the ; after BEGIN",
+      "expected": "block (keyword_begin, anonymous ;, statements, keyword_end); a CTE after BEGIN ; is a statement of that block",
+      "basis": [
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/begin-end-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "BEGIN [ ; ] { sql_statement | statement_block } END [ ; ]; Remarks: semicolons after the BEGIN and END keywords are optional but recommended; you need a semicolon before the WITH keyword that starts a CTE; use a semicolon after BEGIN to prevent confusion with BEGIN TRANSACTION or BEGIN ATOMIC"
+        }
+      ],
+      "evidence_note": "evidence supplied by the orchestrator after review r4 and re-verified from the page; it replaces the earlier gap-empty-statement-at-block-start (searched: Bertrand, larnu, Guzman)",
+      "change": "block: BEGIN, optional ;, statements, END. BEGIN TRY/CATCH and the CREATE FUNCTION body BEGIN are unchanged (their syntax pages are separate and were not shown to allow it)"
     },
     {
       "id": "r6-default-with-values",
@@ -393,31 +417,6 @@
         }
       ],
       "reason": "no source shows the engine accepting a comma after a final table constraint"
-    },
-    {
-      "id": "gap-empty-statement-at-block-start",
-      "feature": "tsql-B01",
-      "private_error_files": 8,
-      "state": "GRAMMAR_GAP",
-      "shape": "AS BEGIN ;WITH c AS (...) SELECT ...  /  WHILE (...) BEGIN; ...  (a ; before the first statement of a block or module body)",
-      "searched": [
-        {
-          "url": "https://sqlblog.org/2022/04/06/why-ctes-start-with-terminator",
-          "kind": "SEARCHED",
-          "claim": "no BEGIN, procedure, TRY or IF/WHILE example; the view/inline TVF exception is explained by there being no preceding statement to terminate, which also describes a block start"
-        },
-        {
-          "url": "https://wp.larnu.uk/fundamentals-the-semicolon-is-a-statement-terminator/",
-          "kind": "SEARCHED",
-          "claim": "a leading ; in a VIEW fails with Msg 102"
-        },
-        {
-          "url": "https://www.dbdelta.com/always-use-semicolon-statement-terminators/",
-          "kind": "SEARCHED_NOT_ACCEPTED",
-          "claim": "Dan Guzman, 2014-04-14: \"Although the T-SQL parser currently ignores extraneous and misplaced semi-colons, I suggest they be specified in the appropriate place ...\" and \"the purpose of semicolons is to terminate SQL statements, not begin them\" - a general claim without the shape or an execution result"
-        }
-      ],
-      "reason": "the published sources do not show the engine accepting a ; before the first statement of a block; generalizing from the batch level would be inference. A user decision could accept the general claims instead (reported to the orchestrator)"
     },
     {
       "id": "gap-xml-method-on-cast",
@@ -742,10 +741,14 @@
         "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff"
       },
       "result": {
-        "bytes": 27193,
-        "sha256": "aec97ee8bf1f5dbeef871e03996d98c6f54a4b18345c83fdd1cfe96fe5b361ed"
+        "bytes": 27357,
+        "sha256": "69e39c42bd4199653fa04fa2f0551cfb7fef45b109dcf8ff149d29d581d616b9"
       },
       "replacements": [
+        {
+          "old": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  block: ($) => seq($.keyword_begin, repeat($._body_item), $.keyword_end),\n\n  statement: ($) =>\n",
+          "new": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  // tsgk r6: BEGIN [ ; ] { sql_statement | statement_block } END [ ; ] — a\n  // `;` may directly follow BEGIN (`BEGIN;`, `BEGIN ;WITH c AS ...`).\n  block: ($) => seq($.keyword_begin, optional(';'), repeat($._body_item), $.keyword_end),\n\n  statement: ($) =>\n"
+        },
         {
           "old": "      $.update_statistics_statement,\n      $.kill_statement,\n      $.backup_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n",
           "new": "      $.update_statistics_statement,\n      $.kill_statement,\n      $.checkpoint_statement,\n      $.shutdown_statement,\n      $.backup_statement,\n      $.restore_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n"
