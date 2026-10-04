@@ -76,7 +76,7 @@ func TestSelectCompilerFreshShell(t *testing.T) {
 // of a root-only /proc/sys file in the workflow.
 func TestCIScriptPatterns(t *testing.T) {
 	cut := regexp.MustCompile(`&\s*\$\w+[^|\n]*\|\s*Select-Object\s+-First`)
-	unroll := regexp.MustCompile(`\$\(if [^\n]*\{\s*@\(`)
+	unroll := regexp.MustCompile(`\$\(\s*if\b[^\n]*\{\s*@\(`)
 	files, _ := filepath.Glob(filepath.Join("..", "..", "dev", "s05-native", "*.ps1"))
 	if len(files) == 0 {
 		t.Fatal("no CI helper scripts found")

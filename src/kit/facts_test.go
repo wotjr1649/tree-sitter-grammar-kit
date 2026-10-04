@@ -159,4 +159,20 @@ func TestDeriveDeclarationsSameLevelInOneMatch(t *testing.T) {
 			t.Fatalf("capture order %v: %+v", order, got)
 		}
 	}
+	// Two sibling parents on one level of a match (children: walks both): each candidate
+	// links only to its own parent. A1 [0,10) has B1 [4,5) and the zero-width B0 at the
+	// shared boundary 10 (node 13 < A2's node 14, so A1's); A2 [10,20) has none, so it
+	// yields no name. Linking by range alone would give A2 the name of B0, without any
+	// rule A2 would also get B1.
+	items = []NativeDeclaration{{"member_declaration", "field_declaration", "children:variable_declarator/field:name"}}
+	caps := []Capture{
+		c(0, "c.0.0.0", 10, 0, 20),
+		c(1, "c.0.2.0", 10, 0, 20),
+		c(1, "c.0.2.1", 11, 0, 10), c(1, "c.0.2.1", 14, 10, 20),
+		c(1, "c.0.2.2", 12, 4, 5), c(1, "c.0.2.2", 13, 10, 10),
+	}
+	got := DeriveDeclarations(items, caps)
+	if len(got) != 1 || got[0].Name == nil || *got[0].Name != (ByteSpan{4, 5}) {
+		t.Fatalf("sibling parents: %+v", got)
+	}
 }

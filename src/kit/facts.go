@@ -277,14 +277,20 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			continue
 		}
 		// every adjacent pair of captured levels is a parent-to-candidate edge; with several
-		// nodes on a level, a candidate belongs only to a parent whose range contains it
+		// nodes on a level, a candidate belongs to its own parent: in preorder that is the
+		// last earlier node of the parent level whose range contains it (exact for siblings,
+		// also when a zero-width candidate sits on a boundary or two siblings share a range)
 		for k := 1; k <= depth; k++ {
-			for _, p := range lv[k-1] {
-				for _, c := range lv[k] {
-					if c.StartByte >= p.StartByte && c.EndByte <= p.EndByte {
-						e := edge{item, k, p.Node}
-						cands[e] = append(cands[e], c)
+			for _, c := range lv[k] {
+				var owner *Capture
+				for i, p := range lv[k-1] {
+					if p.Node < c.Node && c.StartByte >= p.StartByte && c.EndByte <= p.EndByte && (owner == nil || p.Node > owner.Node) {
+						owner = &lv[k-1][i]
 					}
+				}
+				if owner != nil {
+					e := edge{item, k, owner.Node}
+					cands[e] = append(cands[e], c)
 				}
 			}
 		}
