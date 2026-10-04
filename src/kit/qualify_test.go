@@ -179,6 +179,9 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 		prof := map[string]any{"schema": OracleSchema, "id": w.Profile, "route": w.Route, "operation": w.Operation, "symbol": w.Symbol, "encoding": "UTF-8", "output": w.Output,
 			"compiler": map[string]any{"name": "cc", "version": "host", "sha256": fxCompiler, "bytes": 1}, "grammar": w.Grammar, "declarations": nil, "cases": pcases,
 			"queries": []any{map[string]any{"id": "q.x", "source": qfxQuery}}, "fact_pack": nil, "api": w.API}
+		if w.Format != "" {
+			prof["format"] = w.Format
+		}
 		if m.profile != nil {
 			m.profile(w.Set, prof)
 		}
@@ -186,7 +189,7 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 		write("profiles/"+w.Profile+".json", pdata)
 		var recs []map[string]any
 		for _, c := range w.Cases {
-			src := map[string]string{"c1": "alpha", "c2": "beta", "q1": "alpha", "d1": "alpha"}[c.ID]
+			src := map[string]string{"c1": "alpha", "c2": "beta", "q1": "alpha", "d1": "alpha", "s1": "alpha"}[c.ID]
 			recs = append(recs, qfxRecord(c.ID, src, len(c.Edits) > 0, len(c.QueryExpect) > 0))
 		}
 		if m.record != nil {
@@ -757,8 +760,8 @@ func TestQualifyLimitsAndCancel(t *testing.T) {
 		testHookQualifyLimits = l
 		res, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs})
 		testHookQualifyLimits = nil
-		if err == nil || res.ExecutionStatus != StatusResourceLimit || res.Assessment == AssessPass {
-			t.Fatalf("%s: %v %s %s", name, err, res.ExecutionStatus, res.Assessment)
+		if err == nil || res.ExecutionStatus != StatusResourceLimit || res.Assessment == AssessPass || len(res.PlatformClaims) != 0 {
+			t.Fatalf("%s: %v %s %s %v", name, err, res.ExecutionStatus, res.Assessment, res.PlatformClaims)
 		}
 	}
 	// the wall expires during the aggregation
@@ -776,6 +779,213 @@ func TestQualifyLimitsAndCancel(t *testing.T) {
 	if err := os.Symlink(filepath.Join(hosts["linux-amd64"], "summary.json"), filepath.Join(hosts["windows-amd64"], "link.json")); err == nil {
 		if _, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs}); err == nil || !strings.Contains(err.Error(), "LINK_OR_SPECIAL_REJECTED") {
 			t.Fatalf("link: %v", err)
+		}
+	}
+}
+
+func roleRow(r QualificationResult, id, plat string) QualRoleRow {
+	for _, x := range r.ExtraRoles {
+		if x.ID == id && x.Platform == plat {
+			return x
+		}
+	}
+	return QualRoleRow{}
+}
+
+// svcRole adds a windows-only owned role whose SVC-SERVICEHOST-r1 workload has one support
+// case s1 without expectations or covers and returns the role's workload.
+func (f *qfx) svcRole() *QualWorkload {
+	w := qfxWorkload("s06-fxs", "fxs", []QualCase{{ID: "s1", Role: "support", Input: NativeInput{SHA256: sum([]byte("alpha")), Bytes: 5}, Edits: []Edit{},
+		Expect: []StepExpectation{}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{}}})
+	w.Symbol, w.Format = "tree_sitter_c_sharp", SvcFormat
+	f.inv.ExtraRoles = append(f.inv.ExtraRoles, QualRole{ID: "fx-svc", Role: "owned", Status: RoleExecuted, Reason: "owned .svc fixture", Platforms: []string{"windows-amd64"},
+		NotApplicable: map[string]string{"linux-amd64": "windows only", "darwin-arm64": "windows only"}, Workloads: []QualWorkload{w}})
+	return &f.inv.ExtraRoles[len(f.inv.ExtraRoles)-1].Workloads[0]
+}
+
+// qfxSvcObserved turns the s06-fxs record into an SVC observation-only one: a directive
+// without %> (inline code unresolved) and no tree, so the S05 verdict is BLOCKED with
+// SVC_INLINE_UNRESOLVED.
+func qfxSvcObserved(set string, recs []map[string]any) {
+	if set != "s06-fxs" {
+		return
+	}
+	st := recs[0]["steps"].([]any)[0].(map[string]any)
+	st["incremental"], st["fresh"] = nil, nil
+	st["composite"] = map[string]any{"schema": "tsgk-svc-composite/r1", "identities": []IdentityRef{},
+		"directive": SvcDirective{Attributes: []SvcAttribute{}, Diagnostics: []string{"TERMINATOR_MISSING"}},
+		"coverage":  SvcCoverage{Directive: "OBSERVED", CodeBehind: "ABSENT", Inline: "UNRESOLVED"}}
+	recs[0]["assessment"], recs[0]["code"] = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+	recs[0]["oracle_claims"].(map[string]string)["api"] = "NOT_CLAIMED"
+}
+
+// #76 platform claims: a platform is SUPPORTED only with global evidence integrity, its
+// own cells' mechanism and requirement PASS and its executed extra-role rows PASS. Another
+// platform's requirement and the cross-platform comparison stay in the global claim.
+func TestQualifyPlatformClaims(t *testing.T) {
+	covered := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+		return f
+	}
+	claims := func(r QualificationResult) string {
+		return r.PlatformClaims["windows-amd64"] + " " + r.PlatformClaims["linux-amd64"] + " " + r.PlatformClaims["darwin-arm64"]
+	}
+	f := covered()
+	r := f.run(t, f.all(t, nil))
+	if r.SupportClaim != "SUPPORTED" || claims(r) != "SUPPORTED SUPPORTED SUPPORTED" || len(r.PlatformClaims) != 3 {
+		t.Fatalf("all pass: %s %v", r.SupportClaim, r.PlatformClaims)
+	}
+	if !slices.ContainsFunc(r.Explanation, func(s string) bool { return strings.Contains(s, "windows-amd64 SUPPORTED") }) {
+		t.Fatalf("explanation without platform claims: %v", r.Explanation)
+	}
+	// the same all-pass evidence ending at the output limit after aggregation claims nothing,
+	// in the fields and in the explanation
+	f = covered()
+	hosts := f.all(t, nil)
+	var hs []QualifyHost
+	for _, p := range qfxPlatforms {
+		hs = append(hs, QualifyHost{Platform: p.ID, Root: hosts[p.ID]})
+	}
+	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.OutputBytes = 100; return l }
+	r, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs})
+	testHookQualifyLimits = nil
+	if err == nil || r.SupportClaim != "BLOCKED" || len(r.PlatformClaims) != 0 ||
+		slices.ContainsFunc(r.Explanation, func(s string) bool { return strings.Contains(s, "SUPPORTED") }) {
+		t.Fatalf("output limit after aggregation: %v %s %v %v", err, r.SupportClaim, r.PlatformClaims, r.Explanation)
+	}
+
+	// another platform's requirement fails: that platform and the global claim are BLOCKED
+	f = covered()
+	gap := func(s string, recs []map[string]any) {
+		if s != "s06-fxa" {
+			return
+		}
+		nodes := fxTree("alpha", true)
+		tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		tr["tree"].(map[string]any)["nodes"], tr["digest"], tr["has_error"] = nodes, TreeDigest(nodes), true
+		recs[0]["expectations"].([]any)[0].(map[string]any)["result"] = "FAIL"
+		recs[0]["claims"].(map[string]string)["expectations"], recs[0]["assessment"] = "FAIL", "FAIL"
+	}
+	r = f.run(t, f.all(t, map[string]qfxMut{"linux-amd64": {record: gap}}))
+	w, l := cellOf(r, "fxa", "windows-amd64"), cellOf(r, "fxa", "linux-amd64")
+	if l.Requirement != AssessFail || w.Mechanism != AssessPass || w.Requirement != AssessPass || r.SupportClaim != "BLOCKED" || r.Assessment != AssessFail ||
+		claims(r) != "SUPPORTED BLOCKED SUPPORTED" {
+		t.Fatalf("linux requirement: %s %s/%s %s %v", l.Requirement, w.Mechanism, w.Requirement, r.SupportClaim, r.PlatformClaims)
+	}
+
+	// only the comparison fails: the platform claims stand, the global claim is BLOCKED
+	f = covered()
+	api := func(s string, recs []map[string]any) {
+		if s == "s06-fxa" {
+			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil, "position_navigation_divergences": 1}
+		}
+	}
+	r = f.run(t, f.all(t, map[string]qfxMut{"darwin-arm64": {record: api}}))
+	w = cellOf(r, "fxa", "windows-amd64")
+	if w.Comparison != AssessFail || w.Mechanism != AssessPass || w.Requirement != AssessPass || r.SupportClaim != "BLOCKED" || r.MechanismGate != AssessFail ||
+		r.PlatformClaims["windows-amd64"] != "SUPPORTED" {
+		t.Fatalf("comparison only: %s %s/%s %s %s %v", w.Comparison, w.Mechanism, w.Requirement, r.SupportClaim, r.MechanismGate, r.PlatformClaims)
+	}
+
+	// a finding (evidence outside the inventory on one host) blocks every platform
+	f = covered()
+	hosts = f.all(t, nil)
+	os.MkdirAll(filepath.Join(hosts["darwin-arm64"], "records", "s06-extra"), 0o755)
+	os.WriteFile(filepath.Join(hosts["darwin-arm64"], "records", "s06-extra", "manifest.json"), []byte("{}"), 0o644)
+	r = f.run(t, hosts)
+	if len(r.Findings) == 0 || cellOf(r, "fxa", "windows-amd64").Status != CellPass || claims(r) != "BLOCKED BLOCKED BLOCKED" {
+		t.Fatalf("finding: %v %s %v", codes(r.Findings), cellOf(r, "fxa", "windows-amd64").Status, r.PlatformClaims)
+	}
+	// a missing set on one host fails completeness: every platform is BLOCKED
+	f = covered()
+	r = f.run(t, f.all(t, map[string]qfxMut{"linux-amd64": {skip: func(s string) bool { return s == "s06-fxb" }}}))
+	if r.Completeness != AssessFail || claims(r) != "BLOCKED BLOCKED BLOCKED" {
+		t.Fatalf("completeness: %s %v", r.Completeness, r.PlatformClaims)
+	}
+
+	// an executed windows extra-role row is INCOMPLETE: only windows is BLOCKED
+	f = covered()
+	f.svcRole()
+	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: qfxSvcObserved}}))
+	row := roleRow(r, "fx-svc", "windows-amd64")
+	if row.Status != CellIncomplete || row.Mechanism != AssessPass || row.Checks != claimBlocked || cellOf(r, "fxa", "windows-amd64").Status != CellPass ||
+		claims(r) != "BLOCKED SUPPORTED SUPPORTED" || r.SupportClaim != "BLOCKED" {
+		t.Fatalf("windows role row: %s %s %s %v %v", row.Status, row.Mechanism, row.Checks, r.PlatformClaims, codes(r.Findings))
+	}
+}
+
+// #76 a registered SVC observation-only verdict: the check passes exactly when the
+// recorded assessment and code are the registered ones; any difference fails the row.
+func TestQualifySvcExpectedAssessment(t *testing.T) {
+	run := func(assess, code string) QualRoleRow {
+		f := newQfx(t)
+		w := f.svcRole()
+		w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = assess, code
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: qfxSvcObserved}}))
+		return roleRow(r, "fx-svc", "windows-amd64")
+	}
+	if x := run(AssessBlocked, "SVC_INLINE_UNRESOLVED"); x.Status != CellPass || x.Checks != claimPass || x.Mechanism != AssessPass {
+		t.Fatalf("expected verdict: %s %s %s", x.Status, x.Checks, x.Mechanism)
+	}
+	for _, w := range [][2]string{{AssessBlocked, "SVC_INLINE_UNSUPPORTED"}, {AssessPass, ""}} {
+		if x := run(w[0], w[1]); x.Status != CellFail || x.Checks != claimFail || x.Mechanism != AssessPass {
+			t.Fatalf("other verdict %v: %s %s %s", w, x.Status, x.Checks, x.Mechanism)
+		}
+	}
+	// a registered verdict on a tree record (not observation-only, so its code is not
+	// recomputed by the verdict gate) never confirms the registration
+	f := newQfx(t)
+	w := f.svcRole()
+	w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+	claimed := func(s string, recs []map[string]any) {
+		if s == "s06-fxs" {
+			recs[0]["assessment"], recs[0]["code"] = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		}
+	}
+	x := roleRow(f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: claimed}})), "fx-svc", "windows-amd64")
+	if x.Checks != claimFail || x.Status == CellPass {
+		t.Fatalf("tree record with a registered verdict: %s %s %s", x.Status, x.Checks, x.Mechanism)
+	}
+}
+
+// #76 inventory guard: the registered verdict belongs only to an SVC-format case that
+// covers no row and needs no tree, as a PASS without code or a BLOCKED with one.
+func TestQualificationInventorySvcExpectation(t *testing.T) {
+	// the fxa route workload in the SVC format; c2 has no step or query expectation
+	base := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcFormat
+		c := &f.inv.Routes[0].Workload.Cases[1]
+		c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		return f
+	}
+	if _, err := ParseQualificationInventory(base().invBytes(t)); err != nil {
+		t.Fatalf("registered SVC verdict rejected: %v", err)
+	}
+	for name, mut := range map[string]func(inv *QualificationInventory){
+		"covering": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Covers = map[string][]string{"fxa-B01": {"E"}}
+		},
+		"non-svc": func(inv *QualificationInventory) { inv.Routes[0].Workload.Format = "" },
+		"step-expect": func(inv *QualificationInventory) {
+			inv.Routes[0].Workload.Cases[1].Expect = []StepExpectation{{Step: 1, Syntax: "ERROR", Contains: []string{}}}
+		},
+		"code-only":    func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = "" },
+		"blocked-bare": func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectCode = "" },
+		"pass-code":    func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = AssessPass },
+		"fail":         func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectAssessment = AssessFail },
+		"over-limit":   func(inv *QualificationInventory) { inv.Routes[0].Workload.Cases[1].ExpectStatus = StatusResourceLimit },
+		"other-route": func(inv *QualificationInventory) {
+			c := &inv.Routes[1].Workload.Cases[1] // fxb stays in the default format
+			c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		},
+	} {
+		f := base()
+		mut(&f.inv)
+		if _, err := ParseQualificationInventory(f.invBytes(t)); err == nil || !strings.Contains(err.Error(), "CASE_INVALID") {
+			t.Fatalf("%s: %v", name, err)
 		}
 	}
 }

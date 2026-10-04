@@ -38,6 +38,9 @@ type caseFile struct {
 			Syntax   string   `json:"syntax"`
 			Contains []string `json:"contains"`
 		} `json:"expect"`
+		// the registered S05 verdict of an SVC observation-only case
+		ExpectAssessment string `json:"expect_assessment"`
+		ExpectCode       string `json:"expect_code"`
 	} `json:"cases"`
 }
 
@@ -210,17 +213,18 @@ func buildInventory(t *testing.T, root string) []byte {
 			QueryExpect: []kit.QueryExpectation{}, Covers: map[string][]string{}}
 	}
 	type srcCase struct {
-		id, src  string
-		features []string
-		edits    []struct{ Find, Replace string }
-		expect   []kit.StepExpectation
+		id, src                  string
+		features                 []string
+		edits                    []struct{ Find, Replace string }
+		expect                   []kit.StepExpectation
+		expectAssess, expectCode string
 	}
 	load := func(p string) ([]srcCase, string) {
 		var f caseFile
 		decode(p, &f)
 		var out []srcCase
 		for _, c := range f.Cases {
-			sc := srcCase{id: c.ID, src: c.Source, features: c.Features, expect: []kit.StepExpectation{}}
+			sc := srcCase{id: c.ID, src: c.Source, features: c.Features, expect: []kit.StepExpectation{}, expectAssess: c.ExpectAssessment, expectCode: c.ExpectCode}
 			for _, e := range c.Edits {
 				sc.edits = append(sc.edits, struct{ Find, Replace string }{e.Find, e.Replace})
 			}
@@ -297,6 +301,7 @@ func buildInventory(t *testing.T, root string) []byte {
 			cs, _ := load(p)
 			for _, sc := range cs {
 				c := convert(sc.id, sc.src, sc.edits, sc.expect)
+				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode // the kit rejects them outside SVC
 				cover(&c, sc.features, rows, derived(c))
 				w.Cases = append(w.Cases, c)
 			}
@@ -348,6 +353,7 @@ func buildInventory(t *testing.T, root string) []byte {
 			for _, sc := range cs {
 				c := convert(sc.id, sc.src, sc.edits, sc.expect)
 				c.Role = "support"
+				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode
 				svc.Cases = append(svc.Cases, c)
 			}
 		}

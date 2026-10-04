@@ -347,7 +347,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" Service=\"Demo.Services.Other\" Mode=\"Fast\" %>\n<%@ ServiceHost Service=\"Demo.Services.Again\" %>\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_UNRESOLVED"
     },
     {
       "id": "n461-svc-codebehind-p-r1",
@@ -367,7 +369,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind CodeBehind=\"App_Code/OrderService.cs\" %>\npublic class Stray\n{\n}\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_UNRESOLVED"
     },
     {
       "id": "n461-svc-multiline-p-r1",
@@ -397,7 +401,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs %>\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS"
     },
     {
       "id": "n461-svc-quote-r-r1",
@@ -416,7 +422,9 @@
           "replace": "OrderService\" CodeBehind"
         }
       ],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS"
     },
     {
       "id": "n461-svc-terminator-n-r1",
@@ -426,7 +434,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\"\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_UNRESOLVED"
     },
     {
       "id": "n461-svc-terminator-r-r1",
@@ -445,7 +455,9 @@
           "replace": "OrderService\" %>\n"
         }
       ],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_NOT_PARSED"
     },
     {
       "id": "n461-svc-language-p-r1",
@@ -465,7 +477,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_UNRESOLVED"
     },
     {
       "id": "n461-svc-language-vb-n-r1",
@@ -475,7 +489,9 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"VB\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nImports System.ServiceModel\n\nPublic Class EchoService\n    Public Function Echo(ByVal text As String) As String\n        Return text\n    End Function\nEnd Class\n",
       "edits": [],
-      "expect": []
+      "expect": [],
+      "expect_assessment": "BLOCKED",
+      "expect_code": "SVC_INLINE_UNSUPPORTED"
     }
   ]
 }
