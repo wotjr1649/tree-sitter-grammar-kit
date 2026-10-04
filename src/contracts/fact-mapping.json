@@ -145,7 +145,7 @@
     "known_misses": [
       {"case": "EXEC (...) AT DATA_SOURCE name", "reason": "execute_statement accepts only AT identifier"},
       {"case": "EXEC ... WITH RESULT SETS (...)", "reason": "execute_statement accepts only WITH RECOMPILE"},
-      {"case": "procedure call as the first statement of a batch without EXEC", "reason": "the r6 grammar parses it as an execute_statement (a fact), but not after an extra leading ; and not where the parser still recovers it as an ERROR starting with sp_executesql"}
+      {"case": "procedure call as the first statement of a batch without EXEC", "reason": "the r6 grammar parses it as an execute_statement (an SP_EXECUTESQL fact for sp_executesql); it stays a miss after an extra leading ;, reported only when the ERROR node starts with sp_executesql (a ; at the very start of a file is not reported)"}
     ]
   }
 }
