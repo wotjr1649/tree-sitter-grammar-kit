@@ -461,20 +461,23 @@ func judgeIncremental(out *CaseResult) string {
 }
 
 // routeUnobservablePrefix starts the code of a case whose first blocked route step is the
-// suffix: the step reused no node and its old or new tree has an error.
+// suffix: the step reused no node and its old or new full tree has an error.
 const routeUnobservablePrefix = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_"
 
 // stepRoute judges the incremental route of edit step s, whose old tree is the
 // incremental tree of step old. A proven route passes. An instrumented edit with changes
-// whose parses reused no node at all is unobservable, BLOCKED, when the old or the new
-// tree has an error: tree-sitter reuses no node around an ERROR, so the missing reuse says
-// nothing about the kit. Every other unproven route fails.
+// whose parses reused no node at all is treated as unobservable, BLOCKED, when the old and
+// the new tree are full trees and either has an error: a grammar's error tree may leave
+// tree-sitter nothing to reuse, so the missing reuse is not taken as a kit fault. Only a
+// full tree's has_error is recomputed by replay, so other forms do not qualify. Every
+// other unproven route fails.
 func stepRoute(old, s StepResult) string {
+	full := func(t *TreeOut) bool { return t != nil && t.Form == "full" }
 	switch r := s.Route; {
 	case r != nil && r.Proven:
 		return ClaimPass
 	case r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0 &&
-		((old.Incremental != nil && old.Incremental.HasError) || (s.Incremental != nil && s.Incremental.HasError)):
+		full(old.Incremental) && full(s.Incremental) && (old.Incremental.HasError || s.Incremental.HasError):
 		return ClaimBlocked
 	}
 	return ClaimFail

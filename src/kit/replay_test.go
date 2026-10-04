@@ -402,6 +402,30 @@ func TestReplayRouteOnErrorTree(t *testing.T) {
 	}, "CLAIM_MISMATCH")
 }
 
+// The error-tree exception needs full old and new trees (only their has_error is
+// recomputed from nodes): with the error tree in summary form a recorded BLOCKED is a
+// claim mismatch and a recorded FAIL replays without one.
+func TestReplayRouteNeedsFullTrees(t *testing.T) {
+	summary := func(f *fxNative) *fxNative {
+		tr := f.cases[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		tr["form"] = "summary"
+		delete(tr, "tree")
+		return f
+	}
+	f := summary(fxNoReuse(true, "BLOCKED", AssessBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"))
+	replayFails(t, f, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessBlocked
+	}, "CLAIM_MISMATCH")
+	f = summary(fxNoReuse(true, "FAIL", AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"))
+	root, reg := f.write(t, func(root string, reg map[string]any) {
+		reg["subject"].(map[string]any)["assessment"] = AssessFail
+	})
+	r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+	if g := gateOf(r, "incremental-route"); err != nil || g.Failed != 0 || r.Recomputed.Assessment != AssessFail {
+		t.Fatalf("summary error tree recorded FAIL: %v %s %+v gate %+v findings %v", err, r.Assessment, r.Recomputed, g, r.Findings)
+	}
+}
+
 // S07-A04/A12: an unknown reducer, schema or operation is unsupported, never a replayed
 // success; a gate the reducer cannot recompute stays recorded and unresolved.
 func TestReplayUnsupported(t *testing.T) {

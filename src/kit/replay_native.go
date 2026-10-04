@@ -173,6 +173,21 @@ func foldClaims(claims []string) string {
 	return out
 }
 
+// routeStepClaim is the S05 route rule for one edit step: PASS when proven; BLOCKED when
+// the instrumented edit with changes reused no node at all (noReuse) and the old and the
+// new incremental trees are full trees (the form whose has_error the tree gate recomputes
+// from the nodes) and either has an error; FAIL otherwise.
+func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
+	full := func(t *rcTree) bool { return t != nil && t.Form == "full" && t.Tree != nil }
+	switch {
+	case proven:
+		return claimPass
+	case noReuse && full(old) && full(cur) && (old.HasError || cur.HasError):
+		return claimBlocked
+	}
+	return claimFail
+}
+
 // replayCase recomputes one case. want is the workload's registration of the case (nil
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
@@ -316,14 +331,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			r := s.Route
 			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
 			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
-			switch {
-			case proven:
-			case r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0 && (c.Steps[k].Incremental.HasError || s.Incremental.HasError):
-				// no node reused around an error tree: the route is unobservable, not failed
-				ir = worseClaim(ir, claimBlocked)
-			default:
-				ir = claimFail
-			}
+			ir = worseClaim(ir, routeStepClaim(proven, r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental))
 		}
 	}
 	x.gate("incremental-equality").check(ie == c.Claims.IncrementalEquality, name, "CLAIM_MISMATCH", "incremental_equality claim이 다시 계산한 값과 다르다")

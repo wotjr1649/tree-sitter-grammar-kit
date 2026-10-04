@@ -65,6 +65,30 @@ func TestIncrementalRouteOnErrorTree(t *testing.T) {
 	}
 }
 
+// The error-tree exception reads has_error only from full trees, the form whose has_error
+// replay recomputes from the nodes: when the old or the new incremental tree of the step
+// is a summary or record form, an unproven route stays FAIL.
+func TestIncrementalRouteNeedsFullTrees(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		hasError [3]bool
+		summary  int // the step whose incremental tree is not full
+	}{
+		{"old-error-tree-summary", [3]bool{true, false, false}, 0},
+		{"old-error-new-summary", [3]bool{true, false, false}, 1},
+		{"new-error-tree-summary", [3]bool{false, true, false}, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out := routeCase(tc.hasError, [2]*Route{notReused, reused})
+			out.Steps[tc.summary].Incremental.Form = "summary"
+			blocked := judgeIncremental(out)
+			if out.Claims.IncrementalRoute != ClaimFail || out.Code != "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1" || blocked != "" {
+				t.Fatalf("claims %+v code %q blocked %q, want route FAIL", out.Claims, out.Code, blocked)
+			}
+		})
+	}
+}
+
 // A BLOCKED route makes the case BLOCKED, never FAIL, and its code is the case code only
 // when no claim fails: an expectation FAIL keeps EXPECTATION_FAILED, an oracle claim FAIL
 // keeps ORACLE_CLAIM_FAILED.

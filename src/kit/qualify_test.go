@@ -1461,6 +1461,16 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 	}{
 		"clean-tree-fail":          {qfxRouteNoReuse(false, claimFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"), "KIT_CLAIM_FAILED"},
 		"error-tree-recorded-fail": {qfxRouteNoReuse(true, claimFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"), ""},
+		// the error tree is not a full tree: its has_error is not recomputed, so the
+		// exception does not apply and a recorded BLOCKED is a mismatch
+		"summary-error-tree-recorded-blocked": {func(s string, recs []map[string]any) {
+			qfxRouteNoReuse(true, claimBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1")(s, recs)
+			if s == "s06-fxa" {
+				tr := recs[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+				tr["form"] = "summary"
+				delete(tr, "tree")
+			}
+		}, ""},
 	} {
 		t.Run(name, func(t *testing.T) {
 			f := newQfx(t)
@@ -1469,10 +1479,10 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 			if c.Mechanism != AssessFail || c.Status != CellFail || r.MechanismGate != AssessFail || (mut.code != "" && !slices.Contains(setCodes(c), mut.code)) {
 				t.Fatalf("%s: mechanism %s status %s gate %s codes %v", name, c.Mechanism, c.Status, r.MechanismGate, setCodes(c))
 			}
-			if name == "error-tree-recorded-fail" {
+			if mut.code == "" {
 				g := slices.IndexFunc(c.Set.Gates, func(g ReplayGate) bool { return g.ID == "incremental-route" })
 				if g < 0 || c.Set.Gates[g].Code != "CLAIM_MISMATCH" {
-					t.Fatalf("recorded FAIL over a recomputed BLOCKED not caught: %+v", c.Set.Gates)
+					t.Fatalf("recorded route claim differing from the recomputed one not caught: %+v", c.Set.Gates)
 				}
 			} else if ob := obligation(c, "fxa-B01", "E"); ob.Result != claimFail {
 				t.Fatalf("clean-tree route FAIL: E %+v", ob)
