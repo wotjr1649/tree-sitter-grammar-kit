@@ -296,7 +296,7 @@
             },
             {
               "type": "line_comment",
-              "text": "// line comment\r"
+              "text": "// line comment"
             },
             {
               "type": "property_declaration",

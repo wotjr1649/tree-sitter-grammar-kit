@@ -4734,7 +4734,7 @@
             },
             {
               "type": "switch_entry",
-              "text": "default: break\n"
+              "text": "default: break"
             },
             {
               "type": "control_transfer_statement",
@@ -4850,7 +4850,7 @@
             },
             {
               "type": "switch_entry",
-              "text": "case .some(1) where true, .none:\n    break\n"
+              "text": "case .some(1) where true, .none:\n    break"
             },
             {
               "type": "switch_pattern",
@@ -4862,7 +4862,7 @@
             },
             {
               "type": "switch_entry",
-              "text": "case let .some(x):\n    print(x)\n"
+              "text": "case let .some(x):\n    print(x)"
             },
             {
               "type": "switch_pattern",
@@ -4870,7 +4870,7 @@
             },
             {
               "type": "switch_entry",
-              "text": "@unknown default:\n    break\n"
+              "text": "@unknown default:\n    break"
             },
             {
               "type": "attribute",
@@ -6345,7 +6345,7 @@
             },
             {
               "type": "switch_entry",
-              "text": "default: \"other\"\n"
+              "text": "default: \"other\""
             },
             {
               "type": "function_declaration",

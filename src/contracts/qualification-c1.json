@@ -31767,8 +31767,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "e1f7141ad8e8a9f4de873f2d46b3ecabe8a924f1104f2068dde32c94e6bd7026",
-       "bytes": 725
+       "sha256": "0885746378efda05cd6e7a4fcd5521cd4a69c4795cd19e7f0819ead176acf7e7",
+       "bytes": 750
       },
       "edits": [],
       "expect": [
@@ -31783,7 +31783,8 @@
          "object",
          "pair",
          "property_identifier",
-         "member_expression"
+         "member_expression",
+         "binary_expression"
         ],
         "anchors": [
          {
@@ -31945,6 +31946,21 @@
           "type": "member_expression",
           "start_byte": 718,
           "end_byte": 723
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 735,
+          "end_byte": 748
+         },
+         {
+          "type": "identifier",
+          "start_byte": 735,
+          "end_byte": 740
+         },
+         {
+          "type": "identifier",
+          "start_byte": 743,
+          "end_byte": 748
          }
         ],
         "declarations": ""
@@ -42357,8 +42373,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "e1f7141ad8e8a9f4de873f2d46b3ecabe8a924f1104f2068dde32c94e6bd7026",
-       "bytes": 725
+       "sha256": "0885746378efda05cd6e7a4fcd5521cd4a69c4795cd19e7f0819ead176acf7e7",
+       "bytes": 750
       },
       "edits": [],
       "expect": [
@@ -42373,7 +42389,8 @@
          "object",
          "pair",
          "property_identifier",
-         "member_expression"
+         "member_expression",
+         "binary_expression"
         ],
         "anchors": [
          {
@@ -42535,6 +42552,21 @@
           "type": "member_expression",
           "start_byte": 718,
           "end_byte": 723
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 735,
+          "end_byte": 748
+         },
+         {
+          "type": "identifier",
+          "start_byte": 735,
+          "end_byte": 740
+         },
+         {
+          "type": "identifier",
+          "start_byte": 743,
+          "end_byte": 748
          }
         ],
         "declarations": ""
@@ -73131,7 +73163,7 @@
          {
           "type": "line_comment",
           "start_byte": 243,
-          "end_byte": 259
+          "end_byte": 258
          },
          {
           "type": "property_declaration",
@@ -100692,7 +100724,7 @@
          {
           "type": "shebang",
           "start_byte": 0,
-          "end_byte": 32
+          "end_byte": 31
          },
          {
           "type": "inner_attribute_item",
@@ -100702,7 +100734,7 @@
          {
           "type": "line_comment",
           "start_byte": 50,
-          "end_byte": 69
+          "end_byte": 68
          },
          {
           "type": "block_comment",
@@ -100712,7 +100744,7 @@
          {
           "type": "line_comment",
           "start_byte": 92,
-          "end_byte": 111
+          "end_byte": 110
          },
          {
           "type": "block_comment",
@@ -114146,8 +114178,8 @@
          },
          {
           "type": "switch_entry",
-          "start_byte": 526,
-          "end_byte": 541
+          "start_byte": 392,
+          "end_byte": 406
          },
          {
           "type": "control_transfer_statement",
@@ -114281,7 +114313,7 @@
          {
           "type": "switch_entry",
           "start_byte": 196,
-          "end_byte": 239
+          "end_byte": 238
          },
          {
           "type": "switch_pattern",
@@ -114296,7 +114328,7 @@
          {
           "type": "switch_entry",
           "start_byte": 239,
-          "end_byte": 271
+          "end_byte": 270
          },
          {
           "type": "switch_pattern",
@@ -114306,7 +114338,7 @@
          {
           "type": "switch_entry",
           "start_byte": 271,
-          "end_byte": 299
+          "end_byte": 298
          },
          {
           "type": "attribute",
@@ -116266,7 +116298,7 @@
          {
           "type": "switch_entry",
           "start_byte": 95,
-          "end_byte": 112
+          "end_byte": 111
          },
          {
           "type": "function_declaration",

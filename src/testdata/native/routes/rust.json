@@ -204,7 +204,7 @@
           "anchors": [
             {
               "type": "shebang",
-              "text": "#!/usr/bin/env run-cargo-script\n"
+              "text": "#!/usr/bin/env run-cargo-script"
             },
             {
               "type": "inner_attribute_item",
@@ -212,7 +212,7 @@
             },
             {
               "type": "line_comment",
-              "text": "//! inner line doc\n"
+              "text": "//! inner line doc"
             },
             {
               "type": "block_comment",
@@ -220,7 +220,7 @@
             },
             {
               "type": "line_comment",
-              "text": "/// outer line doc\n"
+              "text": "/// outer line doc"
             },
             {
               "type": "block_comment",

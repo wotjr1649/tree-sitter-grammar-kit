@@ -343,3 +343,68 @@ func TestSampleNotices(t *testing.T) {
 		}
 	}
 }
+
+// uncoveredAlternatives lists, per COMPLETE row, every alternative that no requirement
+// case of the route both lists and covers with P. Rule r2 would only count such a row
+// NOT_COVERED at qualification; this keeps the registered data honest before any run.
+func uncoveredAlternatives(inv kit.QualificationInventory) []string {
+	var out []string
+	for _, r := range inv.Routes {
+		listed := map[string]map[string]bool{} // row -> alternative -> listed by a P case
+		for _, c := range r.Workload.Cases {
+			if c.Role != "requirement" {
+				continue
+			}
+			for row, kinds := range c.Covers {
+				if !slices.Contains(kinds, "P") {
+					continue
+				}
+				if listed[row] == nil {
+					listed[row] = map[string]bool{}
+				}
+				for _, a := range c.Alternatives {
+					listed[row][a] = true
+				}
+			}
+		}
+		for _, q := range r.Requirements {
+			if q.AlternativesStatus != "COMPLETE" {
+				continue
+			}
+			for _, a := range q.Alternatives {
+				if !listed[q.Row][a] {
+					out = append(out, r.Route+"/"+q.Row+"/"+a)
+				}
+			}
+		}
+	}
+	return out
+}
+
+func TestAlternativesHaveCases(t *testing.T) {
+	data := mustRead(t, filepath.Join(repository(t), "src/contracts/qualification-c1.json"))
+	inv, err := kit.ParseQualificationInventory(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if miss := uncoveredAlternatives(inv); len(miss) > 0 {
+		t.Fatalf("%d alternatives of COMPLETE rows have no listing P case, e.g. %v", len(miss), miss[:min(5, len(miss))])
+	}
+	// negative control: drop one listing from the first route that has a COMPLETE row
+	for i, r := range inv.Routes {
+		for _, q := range r.Requirements {
+			if q.AlternativesStatus != "COMPLETE" || len(q.Alternatives) == 0 {
+				continue
+			}
+			want := q.Alternatives[0]
+			for k, c := range r.Workload.Cases {
+				inv.Routes[i].Workload.Cases[k].Alternatives = slices.DeleteFunc(slices.Clone(c.Alternatives), func(a string) bool { return a == want })
+			}
+			if miss := uncoveredAlternatives(inv); !slices.Contains(miss, r.Route+"/"+q.Row+"/"+want) {
+				t.Fatalf("an unlisted alternative was not reported: %v", miss)
+			}
+			return
+		}
+	}
+	t.Fatal("no COMPLETE row to check")
+}

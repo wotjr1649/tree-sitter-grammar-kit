@@ -293,7 +293,7 @@
         "javascript-B01.a128",
         "javascript-B01.a129"
       ],
-      "source_utf8": "var $ = 1, _x = 2, a1 = 3, \\u0061bc = 4, ab\\u0063 = 5, ünï = 6, é = 7, 𝑥 = 8;\nvar yield = 1, let = 2, async = 3, of = 4, get = 5, set = 6, from = 7, as = 8, target = 9, meta = 10;\nvar await = 11;\nawait: for (;;) { break await; }\nyield: for (;;) { continue yield; }\nvar o = { enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 };\no.enum = o.class + o.new;\n",
+      "source_utf8": "var $ = 1, _x = 2, a1 = 3, \\u0061bc = 4, ab\\u0063 = 5, ünï = 6, é = 7, 𝑥 = 8;\nvar yield = 1, let = 2, async = 3, of = 4, get = 5, set = 6, from = 7, as = 8, target = 9, meta = 10;\nvar await = 11;\nawait: for (;;) { break await; }\nyield: for (;;) { continue yield; }\nvar o = { enum: 1, class: 2, new: 3, delete: 4, in: 5, typeof: 6, instanceof: 7, void: 8, with: 9, finally: 10,\n  catch: 11, try: 12, throw: 13, switch: 14, case: 15, default: 16, do: 17, while: 18, for: 19, if: 20, else: 21,\n  break: 22, continue: 23, return: 24, function: 25, var: 26, const: 27, export: 28, import: 29, extends: 30,\n  super: 31, this: 32, null: 33, true: 34, false: 35, debugger: 36, await: 37, yield: 38 };\no.enum = o.class + o.new;\nvar sum = yield + await;\n",
       "edits": [],
       "expect": [
         {
@@ -307,7 +307,8 @@
             "object",
             "pair",
             "property_identifier",
-            "member_expression"
+            "member_expression",
+            "binary_expression"
           ],
           "anchors": [
             {
@@ -438,6 +439,20 @@
             {
               "type": "member_expression",
               "text": "o.new"
+            },
+            {
+              "type": "binary_expression",
+              "text": "yield + await"
+            },
+            {
+              "type": "identifier",
+              "text": "yield",
+              "occurrence": 5
+            },
+            {
+              "type": "identifier",
+              "text": "await",
+              "occurrence": 5
             }
           ]
         }
