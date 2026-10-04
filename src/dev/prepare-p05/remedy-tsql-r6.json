@@ -38,7 +38,8 @@
           "claim": "The first character must be a letter as defined by the Unicode Standard 3.2 (Latin a-z/A-Z and letter characters from other languages), _, @ or #; subsequent characters can include letters, decimal numbers from either Basic Latin or other national scripts, @, $, # or _."
         }
       ],
-      "change": "IDENTIFIER_START \\p{L}_, IDENTIFIER_CONTINUE \\p{L}\\p{Nd}_#$ (helpers.js); @ stays excluded as before"
+      "change": "IDENTIFIER_START \\p{L}_, IDENTIFIER_CONTINUE \\p{L}\\p{Nd}_#$ (helpers.js); @ stays excluded as before",
+      "over_acceptance": "the regex classes follow the current Unicode letter/digit categories, so letters added after Unicode 3.2 and supplementary-plane letters (which the identifier page says not to use) are also accepted; recorded, not narrowed"
     },
     {
       "id": "r6-scalar-subquery-operand",
@@ -79,13 +80,13 @@
         },
         {
           "url": "https://sqlblog.org/2022/04/06/why-ctes-start-with-terminator",
-          "kind": "INDEPENDENT_ENGINE_OBSERVATION",
-          "claim": "Aaron Bertrand, 2022-04-06: two statements can be separated by one, zero (sometimes), or a hundred statement terminators; a script beginning \";;;; ;; ;;;;;\" with \";;;;; /* I'm a comment */ ;;;;;;;\" lines is given as \"terrible but valid code\"."
+          "kind": "INDEPENDENT_PUBLISHED_ENGINE_CLAIM",
+          "claim": "Aaron Bertrand, 2022-04-06 (no execution output shown): two statements can be separated by one, zero (sometimes), or a hundred statement terminators; a script beginning \";;;; ;; ;;;;;\" with \";;;;; /* I'm a comment */ ;;;;;;;\" lines is given as \"terrible but valid code\"."
         },
         {
           "url": "https://wp.larnu.uk/fundamentals-the-semicolon-is-a-statement-terminator/",
           "kind": "INDEPENDENT_ENGINE_OBSERVATION",
-          "claim": "Thom A, 2020/2022: a leading ; inside a VIEW (single-statement body) fails with Msg 102 Incorrect syntax near ';' - so the extra ; is accepted at batch level only."
+          "claim": "Thom A, 2020/2022: a leading ; inside a VIEW (single-statement body) fails with Msg 102 Incorrect syntax near ';' (engine output shown). Limiting the patch to batch level is this subject's reading of the two sources, not a stated rule."
         }
       ],
       "change": "batch: repeat(;) before the first item, after each item and before a lone GO; module bodies unchanged"
@@ -144,9 +145,9 @@
     {
       "id": "r6-create-table-trailing-comma",
       "feature": "tsql-B03",
-      "private_error_files": 2,
+      "private_error_files": 1,
       "state": "PATCHED",
-      "shape": "CREATE TABLE t (a int, CONSTRAINT pk PRIMARY KEY (a),);",
+      "shape": "CREATE TABLE t (a int, b int,);  (comma after the last column definition)",
       "r5": "ERROR at the ) after the comma",
       "expected": "column_definitions ending in an anonymous comma",
       "basis": [
@@ -161,7 +162,7 @@
           "claim": "CREATE TABLE ... ( { <column_definition> | <computed_column_definition> | <column_set_definition> | [ <table_constraint> ] [ ,... n ] | [ <table_index> ] } [ ,... n ] ... )"
         }
       ],
-      "change": "CREATE TABLE uses _create_table_columns (aliased column_definitions) with an optional final comma; the shared column_definitions (table variables, table types, ALTER TABLE ADD) stays strict"
+      "change": "CREATE TABLE (not CREATE EXTERNAL TABLE) uses _create_table_columns (aliased column_definitions), whose list may end in a comma after a column definition; the shared column_definitions (table variables, table types, ALTER TABLE ADD, external tables) stays strict"
     },
     {
       "id": "r6-compound-assignment",
@@ -178,7 +179,7 @@
           "claim": "SELECT { @local_variable { = | += | -= | *= | /= | %= | &= | ^= | |= } expression } [ ,...n ] [ ; ]"
         }
       ],
-      "change": "select term alternative _select_compound_assignment aliased assignment; plain = unchanged"
+      "change": "select term alternative _select_compound_assignment aliased assignment, whose left side is a @local_variable only; plain = unchanged"
     },
     {
       "id": "r6-where-without-from",
@@ -212,7 +213,20 @@
           "claim": "You don't have to specify the EXECUTE keyword when executing modules if the statement is the first one in a batch."
         }
       ],
-      "change": "batch may begin with _implicit_execute aliased execute_statement (only when no ; precedes it)",
+      "change": "batch may begin with implicit_execute aliased execute_statement (only when no ; precedes it); the rule is visible so its procedure field is not inherited by batch. CHECKPOINT [checkpoint_duration] and SHUTDOWN [WITH NOWAIT] become statements so that those reserved-word statements are not read as module calls",
+      "statement_basis": [
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/checkpoint-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "CHECKPOINT [ checkpoint_duration ]"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/shutdown-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "SHUTDOWN [ WITH NOWAIT ]"
+        }
+      ],
+      "over_acceptance": "Module names follow the identifier rules, which exclude reserved keywords (reserved-keywords-transact-sql). A bare reserved keyword that is not a statement (e.g. PERCENT;) at a batch start is still read as a module call. A reserved word set on the module name was tried and rejected: since a batch may follow a statement without GO, the set applied to every statement-end state and broke valid inputs such as CREATE STATISTICS ... WITH SAMPLE 50 PERCENT",
       "expectation_change": "C1-TSQL-PATCH-R6-ADDENDUM-R1 dynamic_sql_expected_change (separate commit)"
     },
     {
@@ -245,7 +259,7 @@
           "claim": "BACKUP MASTER KEY TO { FILE = 'path_to_file' | URL = 'Azure Blob storage URL' } ENCRYPTION BY PASSWORD = 'password'"
         }
       ],
-      "change": "restore_statement, restore_move (literals only), BACKUP [SERVICE] MASTER KEY; FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY not modeled"
+      "change": "restore_statement, restore_move (logical name as a literal or, as in the official example L3, a bare identifier; physical name a literal), BACKUP [SERVICE] MASTER KEY; FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY not modeled"
     },
     {
       "id": "r6-drop-index-options",
@@ -301,7 +315,7 @@
           "claim": "Will Assaf, 2015-06-08: SELECT * FROM ( SELECT TOP 1 * FROM @tbl t ORDER BY t.id DESC UNION ALL SELECT TOP 1 * FROM @tbl t ORDER BY t.id DESC ) x works; without the wrapper it fails with Msg 156 Incorrect syntax near the keyword UNION."
         }
       ],
-      "structure_basis": "An ORDER BY after a branch with TOP inside a subquery belongs to that branch: attached to the union it would leave a derived table with ORDER BY and no TOP, which the ORDER BY page makes invalid. After a last branch without TOP it stays the union's (with OFFSET/FETCH, as at top level). Top-level set_operation unchanged. Subject to the separate-context structural review.",
+      "structure_basis": "An ORDER BY after a branch with TOP inside a subquery belongs to that branch: attached to the union it would leave a derived table with ORDER BY and no TOP, which the ORDER BY page makes invalid. After a last branch without TOP it stays the union's (with OFFSET/FETCH, as at top level). Top-level set_operation unchanged. OFFSET/FETCH is part of the ORDER BY clause and TOP cannot share a query scope with it, so an ORDER BY followed by OFFSET/FETCH after a last TOP branch is the union's. Review r1 (separate context) agreed for the two-TOP-branch shape, which the SQLServerCentral result confirms; for a TOP branch only last (earlier branch without TOP) the branch attachment is the only reading consistent with the ORDER BY and TOP pages but has no engine observation, and r5 parsed that shape with the union attachment.",
       "change": "subquery uses _subquery_query_expression/_subquery_set_operation; _ordered_top_branch (dynamic precedence 1) keeps TOP ... ORDER BY inside the branch query_specification"
     }
   ],
@@ -347,6 +361,26 @@
       "reason": "the plain column list is patched (r6-column-constraint-column-list); ASC/DESC at column level is not established"
     },
     {
+      "id": "gap-create-table-comma-after-constraint",
+      "feature": "tsql-B03",
+      "private_error_files": 1,
+      "state": "GRAMMAR_GAP",
+      "shape": "CREATE TABLE t (a int, CONSTRAINT pk PRIMARY KEY (a),);  (comma after a final table constraint; also CREATE EXTERNAL TABLE with a final comma)",
+      "searched": [
+        {
+          "url": "https://blog.sqlauthority.com/2018/01/30/sql-server-puzzle-strange-behavior-extra-comma-create-table-statement/",
+          "kind": "INDEPENDENT_ENGINE_OBSERVATION",
+          "claim": "Pinal Dave, 2018-01-30: only a comma after the last column definition is observed"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/create-table-transact-sql?view=sql-server-ver17",
+          "kind": "OFFICIAL_MICROSOFT",
+          "claim": "CREATE TABLE ... ( { <column_definition> | ... | [ <table_constraint> ] [ ,... n ] | [ <table_index> ] } [ ,... n ] ...) - reading an empty final element from the optional table constraint would be inference"
+        }
+      ],
+      "reason": "no source shows the engine accepting a comma after a final table constraint"
+    },
+    {
       "id": "gap-xml-method-on-cast",
       "feature": "tsql-B01",
       "private_error_files": 2,
@@ -369,6 +403,11 @@
           "claim": "methods called on variables and nodes() columns only"
         },
         {
+          "url": "https://learn.microsoft.com/en-us/sql/relational-databases/xml/type-directive-in-for-xml-queries?view=sql-server-ver17",
+          "kind": "SEARCHED",
+          "claim": "official example calls query()/value() on a parenthesized SELECT ... FOR XML ..., TYPE subquery with its result; not a CAST expression"
+        },
+        {
           "url": "https://learn.microsoft.com/en-us/answers/questions/401851/process-cdata-string",
           "kind": "SEARCHED_NOT_ACCEPTED",
           "claim": "community answer shows cast(... as xml).value(...) without an engine result"
@@ -386,7 +425,7 @@
         {
           "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-arguments-transact-sql?view=sql-server-ver17",
           "kind": "OFFICIAL_MICROSOFT",
-          "claim": "MOVE 'logical_file_name_in_backup' TO 'operating_system_file_name' [ ,...n ] - quoted names only, while other arguments list @..._var forms"
+          "claim": "MOVE 'logical_file_name_in_backup' TO 'operating_system_file_name' [ ,...n ] - no @..._var form for MOVE, while other arguments list one; the RESTORE page example L3 also writes MOVE Sales_Data TO '...' with a bare logical name (patched)"
         },
         {
           "url": "https://learn.microsoft.com/en-us/archive/blogs/andrea_benedetti_blog/auto-generate-database-copy-with-backup-and-restore",
@@ -413,7 +452,7 @@
     },
     "new_failures": [
       {
-        "test": "errors.txt ^selections",
+        "test": "errors.txt ^select",
         "input": "selections",
         "r6": "NO_ERROR: batch > execute_statement (procedure only)",
         "disposition": "INTENDED",
@@ -500,8 +539,8 @@
         "sha256": "9ca804493f21363a5507ce10d49947b8d7d0f408a05798d7affe8780112d8e92"
       },
       "result": {
-        "bytes": 7629,
-        "sha256": "f380211a79653b53f1369b6f9e3ba05e7ab7f13b3ab45a96506622cc40012362"
+        "bytes": 7768,
+        "sha256": "5d8f928a310050f83ce6b4dfa86fe4512f6571ab24b657d5daecb5a1d7cd63bb"
       },
       "replacements": [
         {
@@ -510,11 +549,11 @@
         },
         {
           "old": "    // opens with one) is the second alternative, since `repeat1` cannot\n    // itself be empty.\n    batch: ($) =>\n      choice(\n        prec.right(\n          seq(\n            repeat1(\n              choice(\n                seq(choice($.statement, $.block), optional(';')),\n                $.sqlcmd_setvar,\n                $.sqlcmd_include,\n              ),\n            ),\n",
-          "new": "    // opens with one) is the second alternative, since `repeat1` cannot\n    // itself be empty.\n    //\n    // tsgk r6: the batch's first statement may also be a module call with\n    // EXEC[UTE] omitted (`sp_who`, `dbo.p 1, 'a'`), which SQL Server\n    // accepts only there; it stays an `execute_statement`. Between and\n    // before a batch's statements any number of extra `;` may stand\n    // (`;WITH c AS ...`, `;/* c */`, `SELECT 1;;`): SQL Server ignores an\n    // empty statement at batch level, though not inside a view or inline\n    // function body.\n    batch: ($) =>\n      choice(\n        prec.right(\n          seq(\n            choice(\n              seq(repeat(';'), repeat1($._batch_item)),\n              seq(\n                alias($._implicit_execute, $.execute_statement),\n                repeat(';'),\n                repeat($._batch_item),\n              ),\n            ),\n"
+          "new": "    // opens with one) is the second alternative, since `repeat1` cannot\n    // itself be empty.\n    //\n    // tsgk r6: the batch's first statement may also be a module call with\n    // EXEC[UTE] omitted (`sp_who`, `dbo.p 1, 'a'`), which SQL Server\n    // accepts only there; it stays an `execute_statement`. Between and\n    // before a batch's statements any number of extra `;` may stand\n    // (`;WITH c AS ...`, `;/* c */`, `SELECT 1;;`): SQL Server ignores an\n    // empty statement at batch level, though not inside a view or inline\n    // function body.\n    batch: ($) =>\n      choice(\n        prec.right(\n          seq(\n            choice(\n              seq(repeat(';'), repeat1($._batch_item)),\n              seq(\n                alias($.implicit_execute, $.execute_statement),\n                repeat(';'),\n                repeat($._batch_item),\n              ),\n            ),\n"
         },
         {
           "old": "          ),\n        ),\n        $.go_statement,\n      ),\n\n",
-          "new": "          ),\n        ),\n        seq(repeat(';'), $.go_statement),\n      ),\n\n    _batch_item: ($) =>\n      choice(\n        prec.right(seq(choice($.statement, $.block), repeat(';'))),\n        $.sqlcmd_setvar,\n        $.sqlcmd_include,\n      ),\n\n    _implicit_execute: ($) =>\n      prec.right(\n        seq(\n          field('procedure', $.object_reference),\n          optional($._exec_arguments),\n          optional(seq($.keyword_with, $.keyword_recompile)),\n        ),\n      ),\n\n"
+          "new": "          ),\n        ),\n        seq(repeat(';'), $.go_statement),\n      ),\n\n    _batch_item: ($) =>\n      choice(\n        prec.right(seq(choice($.statement, $.block), repeat(';'))),\n        $.sqlcmd_setvar,\n        $.sqlcmd_include,\n      ),\n\n    // Visible (not `_`-hidden) so that its `procedure` field stays on the\n    // aliased execute_statement and is not inherited by `batch`.\n    implicit_execute: ($) =>\n      prec.right(\n        seq(\n          field('procedure', $.object_reference),\n          optional($._exec_arguments),\n          optional(seq($.keyword_with, $.keyword_recompile)),\n        ),\n      ),\n\n"
         }
       ]
     },
@@ -584,13 +623,13 @@
         "sha256": "1b5061c67c089720fd55b240d67560145c0f73e65805652db4c4ff212ffe0782"
       },
       "result": {
-        "bytes": 25284,
-        "sha256": "1295a9121f7f22f002c5a675ff8689516ecdc111f547b7a49ba7bc223ea05156"
+        "bytes": 25394,
+        "sha256": "ff5ccc9437f392b3b10a7fe985c5a8d725bff4341c9c0beaa2cdd1a00e95e974"
       },
       "replacements": [
         {
-          "old": "  keyword_kill: (_) => make_keyword('kill'),\n  keyword_backup: (_) => make_keyword('backup'),\n  keyword_log: (_) => make_keyword('log'),\n\n",
-          "new": "  keyword_kill: (_) => make_keyword('kill'),\n  keyword_backup: (_) => make_keyword('backup'),\n  keyword_restore: (_) => make_keyword('restore'),\n  keyword_log: (_) => make_keyword('log'),\n\n"
+          "old": "  keyword_override: (_) => make_keyword('override'),\n  keyword_kill: (_) => make_keyword('kill'),\n  keyword_backup: (_) => make_keyword('backup'),\n  keyword_log: (_) => make_keyword('log'),\n\n",
+          "new": "  keyword_override: (_) => make_keyword('override'),\n  keyword_kill: (_) => make_keyword('kill'),\n  keyword_checkpoint: (_) => make_keyword('checkpoint'),\n  keyword_shutdown: (_) => make_keyword('shutdown'),\n  keyword_backup: (_) => make_keyword('backup'),\n  keyword_restore: (_) => make_keyword('restore'),\n  keyword_log: (_) => make_keyword('log'),\n\n"
         }
       ]
     },
@@ -601,17 +640,17 @@
         "sha256": "e6c30bc69959f51e853a41361f8ef44b62ae290dc8e9574044b035f143b8f99e"
       },
       "result": {
-        "bytes": 23742,
-        "sha256": "6e1225e4e562a1988a4fcb0e9cf38e4ae33a085215808058dfec8bc77727ea04"
+        "bytes": 24037,
+        "sha256": "d0112d74cab9a13a0ce9c3abca6ecb2f87b4290ac4ec850b66185ae2988651ac"
       },
       "replacements": [
         {
-          "old": "        $.keyword_table,\n        field('name', $.object_reference),\n        $.column_definitions,\n        optional($.graph_table_type),\n        optional($.on_filegroup),\n",
-          "new": "        $.keyword_table,\n        field('name', $.object_reference),\n        alias($._create_table_columns, $.column_definitions),\n        optional($.graph_table_type),\n        optional($.on_filegroup),\n"
+          "old": "      seq(\n        $.keyword_create,\n        optional($.keyword_external),\n        $.keyword_table,\n        field('name', $.object_reference),\n        $.column_definitions,\n        optional($.graph_table_type),\n        optional($.on_filegroup),\n",
+          "new": "      seq(\n        $.keyword_create,\n        choice(\n          seq($.keyword_table, field('name', $.object_reference), alias($._create_table_columns, $.column_definitions)),\n          seq($.keyword_external, $.keyword_table, field('name', $.object_reference), $.column_definitions),\n        ),\n        optional($.graph_table_type),\n        optional($.on_filegroup),\n"
         },
         {
           "old": "        optional($.table_data_placement),\n        optional($.with_options),\n      ),\n    ),\n",
-          "new": "        optional($.table_data_placement),\n        optional($.with_options),\n      ),\n    ),\n\n  // tsgk r6: CREATE TABLE's list may end in a comma (`(a int, b int,)`),\n  // which SQL Server accepts for a permanent or temporary table but not for\n  // a table variable, so the shared `column_definitions` stays strict.\n  _create_table_columns: ($) =>\n    wrapped_in_parenthesis(\n      seq(\n        comma_list(choice($.column_definition, $.constraint, $.period_for_system_time), true),\n        optional(','),\n      ),\n    ),\n"
+          "new": "        optional($.table_data_placement),\n        optional($.with_options),\n      ),\n    ),\n\n  // tsgk r6: a CREATE TABLE list may end in a comma after its last column\n  // definition (`(a int, b int,)`), which SQL Server accepts for a permanent\n  // or temporary table but not for a table variable, so the shared\n  // `column_definitions` stays strict. A comma after a final table\n  // constraint is not established and stays an error.\n  _create_table_columns: ($) =>\n    wrapped_in_parenthesis(\n      seq(\n        repeat(seq(choice($.column_definition, $.constraint, $.period_for_system_time), ',')),\n        choice($.column_definition, $.constraint, $.period_for_system_time, seq($.column_definition, ',')),\n      ),\n    ),\n"
         },
         {
           "old": "    ),\n\n  // CREATE DATABASE name [COLLATE name]. File and option specifications are\n  // not modeled.\n  create_database: ($) =>\n    prec.right(\n",
@@ -630,13 +669,13 @@
         "sha256": "099eb1998c5ab0c6a89c693ad09faf06586bf85ed661de0d450e62741872b880"
       },
       "result": {
-        "bytes": 4738,
-        "sha256": "ef01480cb610d9eef174253f0c54dae508a835e474f373ced5ae756823210d59"
+        "bytes": 4770,
+        "sha256": "03b03cb1a25b58757fe461036769582320348ec25982674754265233c9ecb43b"
       },
       "replacements": [
         {
           "old": "  // DROP INDEX [IF EXISTS] name ON table [, ...]\n  // DROP INDEX table.name                        (legacy spelling)\n  drop_index: ($) =>\n    seq(\n      $.keyword_drop,\n      $.keyword_index,\n      optional($._if_exists),\n      comma_list(\n        seq(field('name', $.object_reference), optional(seq($.keyword_on, $.object_reference))),\n        true,\n      ),\n    ),\n",
-          "new": "  // DROP INDEX [IF EXISTS] name ON table [, ...]\n  // DROP INDEX table.name                        (legacy spelling)\n  // tsgk r6: `name ON object [WITH (option [, ...])]` — the drop options\n  // (ONLINE, MAXDOP, MOVE TO, ...) of an index dropped by its table.\n  // prec.right: a following WITH belongs to this statement, not to a CTE\n  // starting the next one.\n  drop_index: ($) =>\n    prec.right(\n      seq(\n        $.keyword_drop,\n        $.keyword_index,\n        optional($._if_exists),\n        comma_list(\n          seq(\n            field('name', $.object_reference),\n            optional(seq($.keyword_on, $.object_reference, optional($.with_options))),\n          ),\n          true,\n        ),\n      ),\n    ),\n"
+          "new": "  // DROP INDEX [IF EXISTS] name ON table [, ...]\n  // DROP INDEX table.name                        (legacy spelling)\n  // tsgk r6: `name ON object [WITH (option [, ...])]` — the drop options\n  // (ONLINE = ..., MAXDOP = ..., ...) of an index dropped by its table;\n  // MOVE TO is not modeled.\n  // prec.right: a following WITH belongs to this statement, not to a CTE\n  // starting the next one.\n  drop_index: ($) =>\n    prec.right(\n      seq(\n        $.keyword_drop,\n        $.keyword_index,\n        optional($._if_exists),\n        comma_list(\n          seq(\n            field('name', $.object_reference),\n            optional(seq($.keyword_on, $.object_reference, optional($.with_options))),\n          ),\n          true,\n        ),\n      ),\n    ),\n"
         }
       ]
     },
@@ -647,17 +686,21 @@
         "sha256": "bd91ac7e5fd1ebcc7bfdde1a08946a18b90cb56971892244e5aefcf1717507ff"
       },
       "result": {
-        "bytes": 24813,
-        "sha256": "9129876e85ba2843d71edf652de3f1fd78c2b2ef61cfb66b2c408ce22ce08fe7"
+        "bytes": 25368,
+        "sha256": "4250e1eb3068e73354b4b2d35bf45c9f733388eaa118b4a4759d12f69fc122dc"
       },
       "replacements": [
         {
-          "old": "      $.kill_statement,\n      $.backup_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n",
-          "new": "      $.kill_statement,\n      $.backup_statement,\n      $.restore_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n"
+          "old": "      $.update_statistics_statement,\n      $.kill_statement,\n      $.backup_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n",
+          "new": "      $.update_statistics_statement,\n      $.kill_statement,\n      $.checkpoint_statement,\n      $.shutdown_statement,\n      $.backup_statement,\n      $.restore_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n"
+        },
+        {
+          "old": "    prec.right(seq($.keyword_kill, $.literal, optional(seq($.keyword_with, $.identifier)))),\n\n  // BULK INSERT target FROM 'data_file' [WITH (options)]\n  // Option names (BATCHSIZE, CODEPAGE, FIELDTERMINATOR, FIRE_TRIGGERS,\n",
+          "new": "    prec.right(seq($.keyword_kill, $.literal, optional(seq($.keyword_with, $.identifier)))),\n\n  // tsgk r6: CHECKPOINT [checkpoint_duration] and SHUTDOWN [WITH NOWAIT] —\n  // statements, so that a batch-start CHECKPOINT is not read as a module\n  // called without EXECUTE.\n  checkpoint_statement: ($) => prec.right(seq($.keyword_checkpoint, optional(field('duration', $.literal)))),\n\n  shutdown_statement: ($) => prec.right(seq($.keyword_shutdown, optional(seq($.keyword_with, $.keyword_nowait)))),\n\n  // BULK INSERT target FROM 'data_file' [WITH (options)]\n  // Option names (BATCHSIZE, CODEPAGE, FIELDTERMINATOR, FIRE_TRIGGERS,\n"
         },
         {
           "old": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice($.keyword_database, $.keyword_log),\n        $.identifier,\n        $.keyword_to,\n        comma_list($.option, true),\n        optional($.with_clause),\n      ),\n    ),\n\n",
-          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE 'logical_file' TO 'os_file' is its own node.\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice($.keyword_database, $.keyword_log),\n        field('name', $.identifier),\n        optional(seq($.keyword_from, comma_list($.option, true))),\n        optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n      ),\n    ),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', $.literal),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
+          "new": "  // option, so that is what it is. The file/filegroup list and MIRROR TO\n  // are not modeled.\n  //\n  // tsgk r6: BACKUP [SERVICE] MASTER KEY TO { FILE | URL } = 'path'\n  // ENCRYPTION BY PASSWORD = 'password' exports a master key.\n  backup_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_backup,\n        choice(\n          seq(\n            choice($.keyword_database, $.keyword_log),\n            $.identifier,\n            $.keyword_to,\n            comma_list($.option, true),\n            optional($.with_clause),\n          ),\n          seq(\n            optional($.keyword_service),\n            $.keyword_master,\n            $.keyword_key,\n            $.keyword_to,\n            $.option,\n            $.encryption_mechanism,\n          ),\n        ),\n      ),\n    ),\n\n  // tsgk r6: RESTORE { DATABASE | LOG } name [FROM device [, ...]]\n  // [WITH option [, ...]]. Devices and options share BACKUP's `name [=\n  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n  // The FILELISTONLY/HEADERONLY/LABELONLY/VERIFYONLY forms are not modeled.\n  restore_statement: ($) =>\n    prec.right(\n      seq(\n        $.keyword_restore,\n        choice($.keyword_database, $.keyword_log),\n        field('name', $.identifier),\n        optional(seq($.keyword_from, comma_list($.option, true))),\n        optional(seq($.keyword_with, comma_list(choice($.option, $.restore_move), true))),\n      ),\n    ),\n\n  restore_move: ($) =>\n    seq(\n      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n"
         }
       ]
     },
@@ -668,8 +711,8 @@
         "sha256": "75ea8ee0a680bd2ea0b6edc07f4f22a57dab1d4058d043a088dec327d07f6525"
       },
       "result": {
-        "bytes": 26584,
-        "sha256": "5d7a3b92d2f9e57b383a8174d6fdcc99386ac4ec65f344e3157e62613eb5897a"
+        "bytes": 27110,
+        "sha256": "1619ce3fd0b8833f08dfbc2da6193ce309247b148d75fb5eaf6e2586ba6537a7"
       },
       "replacements": [
         {
@@ -678,7 +721,7 @@
         },
         {
           "old": "    ),\n\n  // The body without its own parenthesis wrapper. `_select_statement`\n  // aliases this so a lone SELECT still has one `query_specification`\n",
-          "new": "    ),\n\n  // tsgk r6: the query inside a subquery or derived table. Same as\n  // `_query_expression` except that its set operation is\n  // `_subquery_set_operation`.\n  _subquery_query_expression: ($) =>\n    choice(\n      $._select_statement,\n      alias($._subquery_set_operation, $.set_operation),\n      wrapped_in_parenthesis(\n        choice($._select_statement, alias($._subquery_set_operation, $.set_operation)),\n      ),\n    ),\n\n  // tsgk r6: inside a subquery or derived table, SQL Server's \"ORDER BY only\n  // at the end\" rule for UNION/EXCEPT/INTERSECT does not apply, and an ORDER\n  // BY there is valid only with TOP (or OFFSET/FETCH), where it decides the\n  // rows TOP returns. So a branch with TOP may carry its own ORDER BY, which\n  // stays inside that branch's `query_specification`:\n  //   FROM (SELECT TOP 5 a FROM t ORDER BY a DESC\n  //         UNION ALL SELECT TOP 5 a FROM u ORDER BY a DESC) AS d\n  // An ORDER BY after a last branch with TOP is that branch's (dynamic\n  // precedence); after a last branch without TOP it is the union's, as at\n  // top level, where `set_operation` is unchanged.\n  _subquery_set_operation: ($) =>\n    prec.right(\n      seq(\n        choice($.query_specification, alias($._ordered_top_branch, $.query_specification)),\n        repeat1(\n          seq(\n            field(\n              'operation',\n              choice(\n                seq($.keyword_union, optional($.keyword_all)),\n                $.keyword_except,\n                $.keyword_intersect,\n              ),\n            ),\n            choice(\n              alias($._query_specification_later, $.query_specification),\n              alias($._ordered_top_branch, $.query_specification),\n            ),\n          ),\n        ),\n        trailing_sort_and_hint_clauses($),\n      ),\n    ),\n\n  _ordered_top_branch: ($) =>\n    prec.dynamic(\n      1,\n      seq(alias($._select_with_top, $.select), query_specification_rest($), $.order_by),\n    ),\n\n  _select_with_top: ($) =>\n    seq($.keyword_select, optional($.keyword_distinct), $.top_clause, $.select_expression),\n\n  // The body without its own parenthesis wrapper. `_select_statement`\n  // aliases this so a lone SELECT still has one `query_specification`\n"
+          "new": "    ),\n\n  // tsgk r6: the query inside a subquery or derived table. Same as\n  // `_query_expression` except that its set operation is\n  // `_subquery_set_operation`.\n  _subquery_query_expression: ($) =>\n    choice(\n      $._select_statement,\n      alias($._subquery_set_operation, $.set_operation),\n      wrapped_in_parenthesis(\n        choice($._select_statement, alias($._subquery_set_operation, $.set_operation)),\n      ),\n    ),\n\n  // tsgk r6: inside a subquery or derived table, SQL Server's \"ORDER BY only\n  // at the end\" rule for UNION/EXCEPT/INTERSECT does not apply, and an ORDER\n  // BY there is valid only with TOP (or OFFSET/FETCH), where it decides the\n  // rows TOP returns. So a branch with TOP may carry its own ORDER BY, which\n  // stays inside that branch's `query_specification`:\n  //   FROM (SELECT TOP 5 a FROM t ORDER BY a DESC\n  //         UNION ALL SELECT TOP 5 a FROM u ORDER BY a DESC) AS d\n  // An ORDER BY after a last branch with TOP is that branch's (dynamic\n  // precedence); after a last branch without TOP, or when OFFSET/FETCH\n  // follows it, it is the union's, as at top level, where `set_operation`\n  // is unchanged. OFFSET/FETCH is part of the ORDER BY clause and TOP and\n  // OFFSET/FETCH cannot share a query scope, so the union's trailing\n  // clauses here take OFFSET only after their own ORDER BY.\n  _subquery_set_operation: ($) =>\n    prec.right(\n      seq(\n        choice($.query_specification, alias($._ordered_top_branch, $.query_specification)),\n        repeat1(\n          seq(\n            field(\n              'operation',\n              choice(\n                seq($.keyword_union, optional($.keyword_all)),\n                $.keyword_except,\n                $.keyword_intersect,\n              ),\n            ),\n            choice(\n              alias($._query_specification_later, $.query_specification),\n              alias($._ordered_top_branch, $.query_specification),\n            ),\n          ),\n        ),\n        optional(seq($.order_by, optional($.offset_fetch))),\n        optional($.option_clause),\n        optional($.for_clause),\n      ),\n    ),\n\n  _ordered_top_branch: ($) =>\n    prec.dynamic(\n      1,\n      seq(alias($._select_with_top, $.select), query_specification_rest($), $.order_by),\n    ),\n\n  _select_with_top: ($) =>\n    seq($.keyword_select, optional($.keyword_distinct), $.top_clause, $.select_expression),\n\n  // The body without its own parenthesis wrapper. `_select_statement`\n  // aliases this so a lone SELECT still has one `query_specification`\n"
         },
         {
           "old": "  // `query_specification`: they scope to the outermost query, never to one\n  // branch of a union.\n  _select_statement: ($) =>\n    optional_parenthesis(\n      seq(\n        alias($._query_specification_core, $.query_specification),\n        trailing_sort_and_hint_clauses($),\n      ),\n    ),\n",
@@ -686,7 +729,7 @@
         },
         {
           "old": "  select_expression: ($) => comma_list($.term, true),\n\n  term: ($) => seq(field('value', choice($.all_fields, $._expression)), optional($._column_alias)),\n\n  all_fields: ($) => seq(optional(seq($.object_reference, '.')), '*'),\n",
-          "new": "  select_expression: ($) => comma_list($.term, true),\n\n  term: ($) =>\n    seq(\n      field(\n        'value',\n        choice(\n          $.all_fields,\n          $._expression,\n          alias($._select_compound_assignment, $.assignment),\n        ),\n      ),\n      optional($._column_alias),\n    ),\n\n  // tsgk r6: SELECT @local_variable { += | -= | *= | /= | %= | &= | ^= | |= }\n  // expression. The plain `=` form stays a binary_expression, as before.\n  _select_compound_assignment: ($) =>\n    seq(\n      field('left', alias($._qualified_field, $.field)),\n      alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|='), $.assignment_operator),\n      field('right', $._expression),\n    ),\n\n  all_fields: ($) => seq(optional(seq($.object_reference, '.')), '*'),\n"
+          "new": "  select_expression: ($) => comma_list($.term, true),\n\n  term: ($) =>\n    seq(\n      field(\n        'value',\n        choice(\n          $.all_fields,\n          $._expression,\n          alias($.select_compound_assignment, $.assignment),\n        ),\n      ),\n      optional($._column_alias),\n    ),\n\n  // tsgk r6: SELECT @local_variable { += | -= | *= | /= | %= | &= | ^= | |= }\n  // expression. The plain `=` form stays a binary_expression, as before.\n  local_variable: ($) => field('name', alias($._tsql_parameter, $.identifier)),\n\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by `term`.\n  select_compound_assignment: ($) =>\n    seq(\n      field('left', alias($.local_variable, $.field)),\n      alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|='), $.assignment_operator),\n      field('right', $._expression),\n    ),\n\n  all_fields: ($) => seq(optional(seq($.object_reference, '.')), '*'),\n"
         }
       ]
     }

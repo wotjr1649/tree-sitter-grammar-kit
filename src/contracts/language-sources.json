@@ -735,13 +735,13 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 7629,
-            "sha256": "f380211a79653b53f1369b6f9e3ba05e7ab7f13b3ab45a96506622cc40012362"
+            "bytes": 7768,
+            "sha256": "5d8f928a310050f83ce6b4dfa86fe4512f6571ab24b657d5daecb5a1d7cd63bb"
           },
           {
             "path": "grammar/keywords.js",
-            "bytes": 25284,
-            "sha256": "1295a9121f7f22f002c5a675ff8689516ecdc111f547b7a49ba7bc223ea05156"
+            "bytes": 25394,
+            "sha256": "ff5ccc9437f392b3b10a7fe985c5a8d725bff4341c9c0beaa2cdd1a00e95e974"
           },
           {
             "path": "grammar/column-lists.js",
@@ -750,8 +750,8 @@
           },
           {
             "path": "grammar/statements/create.js",
-            "bytes": 23742,
-            "sha256": "6e1225e4e562a1988a4fcb0e9cf38e4ae33a085215808058dfec8bc77727ea04"
+            "bytes": 24037,
+            "sha256": "d0112d74cab9a13a0ce9c3abca6ecb2f87b4290ac4ec850b66185ae2988651ac"
           },
           {
             "path": "grammar/expressions.js",
@@ -765,18 +765,18 @@
           },
           {
             "path": "grammar/statements/drop.js",
-            "bytes": 4738,
-            "sha256": "ef01480cb610d9eef174253f0c54dae508a835e474f373ced5ae756823210d59"
+            "bytes": 4770,
+            "sha256": "03b03cb1a25b58757fe461036769582320348ec25982674754265233c9ecb43b"
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 24813,
-            "sha256": "9129876e85ba2843d71edf652de3f1fd78c2b2ef61cfb66b2c408ce22ce08fe7"
+            "bytes": 25368,
+            "sha256": "4250e1eb3068e73354b4b2d35bf45c9f733388eaa118b4a4759d12f69fc122dc"
           },
           {
             "path": "grammar/statements/select.js",
-            "bytes": 26584,
-            "sha256": "5d7a3b92d2f9e57b383a8174d6fdcc99386ac4ec65f344e3157e62613eb5897a"
+            "bytes": 27110,
+            "sha256": "1619ce3fd0b8833f08dfbc2da6193ce309247b148d75fb5eaf6e2586ba6537a7"
           }
         ],
         "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (runtime 659cda7c7f86ebe31cc825dc5da59e9add172dc7, trixie-r1 image)",
