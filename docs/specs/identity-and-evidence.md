@@ -144,7 +144,7 @@ route마다 판정된 host가 둘 이상이면 사례별 의미 요약을 platfo
 
 ### 결과 `tsgk-qualification-result/r1`
 
-E0 `Report`에 `inventory_id`, `candidate`, `limits`, `run`(공통 cohort), `hosts`(platform → run identity sha256), `completeness`, `cells`(route·platform·`status`·`mechanism`·`requirement`·`comparison`·`counts`·`obligations`·`registered_checks`·`check_failures`·set 판정), `extra_roles`(id·role·platform·`status`·`reason`·`mechanism`·`registered_checks`·set 판정; 근거가 없거나 실행하지 않는 행은 `mechanism`·`registered_checks`가 빈 값), `comparisons`, `totals`, `mechanism_gate`, `support_claim`, `bytes_read`, 한국어 `explanation`을 더한다.
+E0 `Report`에 `inventory_id`, `candidate`, `limits`, `run`(공통 cohort), `hosts`(platform → run identity sha256), `completeness`, `cells`(route·platform·`status`·`mechanism`·`requirement`·`comparison`·`counts`·`obligations`·`registered_checks`·`check_failures`·set 판정), `extra_roles`(id·role·platform·`status`·`reason`·`mechanism`·`registered_checks`·set 판정; MISSING 행은 `mechanism=NOT_ASSESSED`이고 `registered_checks`가 빈 값이며, 실행하지 않는 `NOT_RUN`·`EXTERNAL`·`NOT_APPLICABLE` 행은 둘 다 빈 값이다. gate는 `mechanism`이 빈 값인 행만 건너뛴다), `comparisons`, `totals`, `mechanism_gate`, `support_claim`, `bytes_read`, 한국어 `explanation`을 더한다.
 
 * 칸 `status`: 근거가 없으면 `MISSING`, kit 축·요구 축·비교 중 FAIL이 있으면 `FAIL`, 남은 것이 사례 없음·BLOCKED(한도 초과로 읽지 못한 member로 kit 축이 BLOCKED인 경우 포함)·비교 미실시뿐이면 `INCOMPLETE`, 모두 PASS면 `PASS`다.
 * `completeness`는 inventory의 칸이 정확히 한 번씩 근거를 가지고, 실행하는 추가 역할 행도 자기 platform의 set을 가지며, 같은 platform host가 중복되지 않고, host 근거에 inventory 밖 파일이 없을 때만 PASS다(`CELL_DUPLICATE`, `HOST_UNREGISTERED`, `HOST_FILE_UNREGISTERED`, `COMPLETENESS_FAILED`). cohort 기준은 자기 검사를 통과한 첫 host이므로 거부된 host 하나가 다른 host를 `COHORT_MISMATCH`로 만들지 않는다.

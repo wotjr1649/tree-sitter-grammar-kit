@@ -74,6 +74,16 @@ S07 `private-corpus-r1`로 이 실행을 다시 검증했다(`ddf45bb` 이전 `6
 * n1: 사실이 0개인 동적 SQL fixture가 생겨도 inventory가 `[]`를 쓰게 했다. n4: `expect_status=RESOURCE_LIMIT` 사례가 요구 행을 덮으면 inventory가 거부한다. n6: CI 로그(`gate.ps1`)가 칸의 `check_failures`와 역할 행의 kit 축·검사를 출력한다.
 * n2(선언 항목 필터의 빈 node 값), n3(cohort 기준이 다수결이 아님, 결과는 fail-closed)는 기록만 한다. n5: `n461-svc`의 SVC 음성 사례 8개에 기대 결과를 등록하는 일은 후속 사례 작업이며 추적 Issue는 orchestrator가 정한다.
 
+**r3**(같은 reviewer, `0edaa0e..0eb2c36`, EXECUTED `go vet`·kit·CLI·foundation 시험 + STATIC): r2-1, r2-2, n1, n4, n6이 해소되었고 `gate.ps1` 변경에 StrictMode·Linux 위험이 없다. 새 MINOR 1건(r3-1: MISSING 역할 행의 `mechanism`은 빈 값이 아니라 `NOT_ASSESSED`이며 gate는 빈 값인 행만 건너뛴다)은 문서를 고쳐 처분했다. 남은 BLOCKER·MATERIAL은 0이다.
+
+## 후보 `0eb2c36`의 로컬 재실행과 중단
+
+`0eb2c36`에서 ci-sim을 다시 실행했으나 host 메모리 부족으로 Claude Code가 배경 작업을 중단했다. 중단 시점에 route step은 26 route와 SVC를 마치고 windows 대용량 query 기록을 실행 중이었다. 남은 자식 process(route step `pwsh`, `tsgk oracle record`, native driver)는 이 작업이 만든 것임을 부모 관계로 확인한 뒤 종료했고, 지시대로 다시 시작하지 않았다. 그래서 `0eb2c36`의 완전한 ci-sim 결과는 없다.
+
+* `9aa1500..0eb2c36` 사이에 route step 경로(`run-routes.ps1`, `run-identity.ps1`, workflow의 route step, driver, `src/internal`, incremental·oracle code, 등록 사례)는 바뀌지 않았다. 바뀐 것은 qualification 쪽(`kit.Qualify`, inventory, `gate.ps1`)과 시험·문서다.
+* qualification 쪽 변경은 `9aa1500` ci-sim의 host 근거를 리뷰 r2 수정 code로 다시 집계하고 바뀐 `gate.ps1`로 출력해 확인했다(세 host 경로 점검과 같은 relabel 복제본 포함, gate PASS).
+* 비공개 corpus 실행(`0cdf3fd`)과 그 뒤 후보 사이의 `src` 변경도 qualification 파일과 시험뿐이며 corpus 실행 경로(`tsgk corpus`·`incremental`, driver)는 같다.
+
 ## acceptance 연결
 
 | ID | 근거 |
