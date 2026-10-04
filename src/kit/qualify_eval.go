@@ -60,8 +60,9 @@ func (q *qualifier) openHost(p QualPlatform, dir string) (*qhost, *Error) {
 	}
 	// each host has its own byte budget; the wall and cancellation are shared
 	hr := &run{caller: q.r.caller, wall: q.r.wall, cancel: q.r.cancel}
+	// the records are new CI evidence: they are judged with the oracle-set-r2 S05 route rule
 	x := &replayEnv{r: hr, g: newGuard(root), lim: q.lim, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{}, verified: map[string]bool{},
-		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}, errorTreeRoute: true}
 	h := &qhost{platform: p, x: x, files: x.files, used: map[string]bool{}}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {

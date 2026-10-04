@@ -294,7 +294,7 @@ type reducer struct {
 }
 
 func reducerTable() map[string]reducer {
-	return map[string]reducer{
+	t := map[string]reducer{
 		"native-result-r1": {ReducerInfo{ID: "native-result-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-incremental-result/r1 result.json", "tsgk-incremental/r2 or r1 workload profile", "responses/ members"},
 			Roles:       []string{"workload-profile", "result", "response", "retained"},
@@ -326,6 +326,27 @@ func reducerTable() map[string]reducer {
 			Recorded:    []string{"raw-recompute (BrightScript gates.py is an archived Python verifier; the kit compares only)"},
 			Description: "BrightScript v0.1.2 historical policy S07-REPLAY-2ULP-r1, scoped to this workload adapter: exact types, keys, order, identities, verdicts and thresholds; <= 2 ULP only on the allowlisted log-derived exponents, zero and subnormal bit-exact, no threshold straddle, unchanged max winner"}, replayGateCompare},
 	}
+	for _, id := range []string{"native-result", "oracle-set", "private-corpus"} {
+		t[id+"-r2"] = errorTreeRevision(t[id+"-r1"], id+"-r2")
+	}
+	return t
+}
+
+// errorTreeRevision is the r2 revision of a reducer that judges S05 cases: the same inputs
+// and gates with the S05 route rule that an edit step reusing no node next to a full error
+// tree is BLOCKED (unobservable). The r1 revision keeps every unproven route a FAIL, so
+// evidence recorded before the rule replays as it did.
+func errorTreeRevision(r reducer, id string) reducer {
+	info := r.info
+	info.ID, info.Revision = id, "r2"
+	info.Inputs, info.Roles = slices.Clone(info.Inputs), slices.Clone(info.Roles)
+	info.Gates, info.Recorded = slices.Clone(info.Gates), slices.Clone(info.Recorded)
+	info.Description += "; r2: an edit step whose instrumented edit with changes reused no node, between full trees one of which has an error, is an unobservable route (BLOCKED, not FAIL)"
+	run := r.run
+	return reducer{info, func(x *replayEnv) *Error {
+		x.errorTreeRoute = true
+		return run(x)
+	}}
 }
 
 // Reducers returns the registered reducer inventory in id order.
@@ -341,27 +362,28 @@ func Reducers() []ReducerInfo {
 // replayEnv is the state of one replay: the bounded root, the walked file set and the
 // reducer's accounting.
 type replayEnv struct {
-	r        *run
-	g        *guard
-	lim      ReplayLimits
-	prof     ReplayProfile
-	files    map[string]fs.FileInfo
-	members  map[string]ReplayMember
-	verified map[string]bool
-	consumed map[string]bool            // members the reducer read or bound
-	seen     map[string]map[string]bool // producer and policy values named by trees
-	covered  map[string]bool            // files a reducer inventory lists besides the profile members
-	gates    []*ReplayGate
-	cons     Consumption
-	actual   map[string]string
-	recorded Verdict
-	recomp   Verdict
-	findings []Finding
-	redact   bool
-	over     bool   // a needed or registered member exceeds the operation limits: recorded, not recomputed
-	overAt   string // the member that did
-	needOver bool   // a member the reducer needed was beyond the limits: it stopped early
-	noRecomp bool   // the reducer recomputed no subject outcome (absent raw)
+	r              *run
+	g              *guard
+	lim            ReplayLimits
+	prof           ReplayProfile
+	files          map[string]fs.FileInfo
+	members        map[string]ReplayMember
+	verified       map[string]bool
+	consumed       map[string]bool            // members the reducer read or bound
+	seen           map[string]map[string]bool // producer and policy values named by trees
+	covered        map[string]bool            // files a reducer inventory lists besides the profile members
+	gates          []*ReplayGate
+	cons           Consumption
+	actual         map[string]string
+	recorded       Verdict
+	recomp         Verdict
+	findings       []Finding
+	redact         bool
+	over           bool   // a needed or registered member exceeds the operation limits: recorded, not recomputed
+	overAt         string // the member that did
+	needOver       bool   // a member the reducer needed was beyond the limits: it stopped early
+	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
+	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

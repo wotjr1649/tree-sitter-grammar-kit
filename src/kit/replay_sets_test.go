@@ -394,3 +394,32 @@ func TestReplayPrepareNative(t *testing.T) {
 		}
 	}
 }
+
+// The registration selects the reducer revision by id: the r2 S06 set and private corpus
+// reducers replay the same evidence (no error-tree route in it) to the same result as r1,
+// under their own reducer identity.
+func TestReplayRevisionSelected(t *testing.T) {
+	for name, fx := range map[string]func(*testing.T) (string, map[string]any){
+		"oracle-set":     func(t *testing.T) (string, map[string]any) { return fxOracleSet(t, nil) },
+		"private-corpus": func(t *testing.T) (string, map[string]any) { return fxPrivate(t, nil) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			root, reg := fx(t)
+			r1 := runReg(t, root, reg)
+			reg["reducer"] = name + "-r2"
+			r2 := runReg(t, root, reg)
+			id := func(r ReplayResult) string {
+				for _, i := range r.Identities {
+					if i.Role == "reducer" {
+						return i.Schema + " " + i.SHA256
+					}
+				}
+				return ""
+			}
+			if r1.Reducer.ID != name+"-r1" || r2.Reducer.ID != name+"-r2" || id(r1) == id(r2) ||
+				r2.EvidenceValid != r1.EvidenceValid || r2.Assessment != r1.Assessment || r2.Recomputed != r1.Recomputed || !r2.EvidenceValid {
+				t.Fatalf("r1 %s %s %v %+v, r2 %s %s %v %+v", r1.Reducer.ID, r1.Assessment, r1.EvidenceValid, r1.Recomputed, r2.Reducer.ID, r2.Assessment, r2.EvidenceValid, r2.Recomputed)
+			}
+		})
+	}
+}
