@@ -67,7 +67,7 @@ func referenceAnchors(src string, edits []struct{ Find, Replace string }, step i
 			occ = *a.Occurrence
 		}
 		found, seen := -1, 0
-		for i := 0; a.Text != "" && i+len(a.Text) <= len(s); i++ {
+		for i := 0; a.Type != "" && a.Text != "" && i+len(a.Text) <= len(s); i++ {
 			if strings.HasPrefix(s[i:], a.Text) {
 				if seen++; seen == occ {
 					found = i
@@ -179,18 +179,29 @@ func TestAnchorConversion(t *testing.T) {
 		"third":        `{"type": "call", "text": "call(", "occurrence": 3}`,
 		"empty-text":   `{"type": "call", "text": ""}`,
 		"occurrence-0": `{"type": "call", "text": "call", "occurrence": 0}`,
+		// #83: a member that is not exactly type, text or occurrence, or an occurrence that
+		// is not an integer, never falls back to the default occurrence 1
+		"occurrence-null": `{"type": "call", "text": "call", "occurrence": null}`,
+		"occurrence-real": `{"type": "call", "text": "call", "occurrence": 1.5}`,
+		"occurrence-text": `{"type": "call", "text": "call", "occurrence": "2"}`,
+		"misspelt-member": `{"type": "call", "text": "call", "occurence": 2}`,
+		"other-case-name": `{"type": "call", "Text": "call"}`,
+		"missing-type":    `{"text": "call"}`,
+		"empty-type":      `{"type": "", "text": "call"}`,
+		"text-number":     `{"type": "call", "text": 5}`,
+		"type-number":     `{"type": 5, "text": "call"}`,
 	} {
 		doc := strings.Replace(anchorFixture, `{"type": "first", "text": "call"}`, bad, 1)
+		// a decoding error is already the generator's refusal (buildInventory stops on it)
 		var bf caseFile
-		if err := json.Unmarshal([]byte(doc), &bf); err != nil {
-			t.Fatal(err)
-		}
-		b := loadCases(bf)[0]
-		if _, err := convertCase(b.id, b.src, b.edits, b.expect, b.anchors); err == nil {
-			t.Errorf("%s: generator accepted the anchor", name)
-		}
-		if _, err := referenceAnchors(b.src, b.edits, b.expect[0].Step, b.anchors[0]); err == nil {
-			t.Errorf("%s: reference accepted the anchor", name)
+		if err := json.Unmarshal([]byte(doc), &bf); err == nil {
+			b := loadCases(bf)[0]
+			if _, err := convertCase(b.id, b.src, b.edits, b.expect, b.anchors); err == nil {
+				t.Errorf("%s: generator accepted the anchor", name)
+			}
+			if _, err := referenceAnchors(b.src, b.edits, b.expect[0].Step, b.anchors[0]); err == nil {
+				t.Errorf("%s: reference accepted the anchor", name)
+			}
 		}
 		if ok {
 			p := filepath.Join(t.TempDir(), "bad.json")

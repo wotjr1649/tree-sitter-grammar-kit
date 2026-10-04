@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,6 +61,30 @@ type anchorSource struct {
 	Occurrence *int   `json:"occurrence"`
 }
 
+// UnmarshalJSON decodes an anchor strictly, as run-routes.ps1 (Resolve-Anchor) reads it: only
+// the members type, text and occurrence (exact names), type and text strings, and an absent
+// occurrence or an integer one; a misspelt member or an explicit null never falls back to
+// the default occurrence.
+func (a *anchorSource) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Type       string         `json:"type"`
+		Text       string         `json:"text"`
+		Occurrence jsontext.Value `json:"occurrence"`
+	}
+	if err := jsonv2.Unmarshal(b, &raw, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return fmt.Errorf("anchor %s: %w", b, err)
+	}
+	*a = anchorSource{Type: raw.Type, Text: raw.Text}
+	if raw.Occurrence != nil {
+		var n int
+		if string(raw.Occurrence) == "null" || jsonv2.Unmarshal(raw.Occurrence, &n) != nil {
+			return fmt.Errorf("anchor %s: occurrence %s is not an integer", raw.Type, raw.Occurrence)
+		}
+		a.Occurrence = &n
+	}
+	return nil
+}
+
 // resolveAnchor converts a case-file anchor to the byte range run-routes.ps1 (Convert-Cases)
 // writes into the profile expectation.
 func resolveAnchor(src []byte, a anchorSource) (kit.ExpectAnchor, error) {
@@ -67,8 +93,8 @@ func resolveAnchor(src []byte, a anchorSource) (kit.ExpectAnchor, error) {
 		n = *a.Occurrence
 	}
 	text := []byte(a.Text)
-	if n < 1 || len(text) == 0 {
-		return kit.ExpectAnchor{}, fmt.Errorf("anchor %s: empty text or occurrence %d", a.Type, n)
+	if n < 1 || len(text) == 0 || a.Type == "" {
+		return kit.ExpectAnchor{}, fmt.Errorf("anchor %q: empty type or text, or occurrence %d", a.Type, n)
 	}
 	at, from := -1, 0
 	for k := 0; k < n; k++ {

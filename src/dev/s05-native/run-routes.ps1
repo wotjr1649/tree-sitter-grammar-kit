@@ -48,16 +48,24 @@ function Find-Bytes([byte[]]$Hay, [byte[]]$Needle, [int]$From = 0) {
 
 # Converts a case-file anchor {type, text, occurrence} to the profile anchor: the byte range
 # of the occurrence-th (1-based, default 1) start offset of the text's UTF-8 bytes in the
-# step's source; every offset counts, so occurrences may overlap. The inventory generator
+# step's source; every offset counts, so occurrences may overlap. Only the members type and
+# text (strings) and occurrence (absent or an integer, never null) are accepted, by exact
+# name: a misspelt member would otherwise fall back to occurrence 1. The inventory generator
 # (src/internal/foundation) converts the same way and TestAnchorConversion compares both.
 function Resolve-Anchor([byte[]]$Source, $Anchor, [string]$Case) {
+  $names = @($Anchor.PSObject.Properties | ForEach-Object { $_.Name })
+  $unknown = @($names | Where-Object { $_ -cnotin @('type', 'text', 'occurrence') })
+  if ($unknown.Count) { throw "${Case}: anchor member $($unknown -join ',') is not type, text or occurrence" }
+  if ($names -cnotcontains 'type' -or $names -cnotcontains 'text' -or $Anchor.type -isnot [string] -or $Anchor.text -isnot [string]) {
+    throw "${Case}: anchor type and text must be strings"
+  }
   $n = 1
-  if ($Anchor.PSObject.Properties['occurrence']) {
+  if ($names -ccontains 'occurrence') {
     $n = $Anchor.occurrence
-    if ($n -isnot [int] -and $n -isnot [long]) { throw "${Case}: anchor $($Anchor.type) occurrence is not an integer" }
+    if ($null -eq $n -or ($n -isnot [int] -and $n -isnot [long])) { throw "${Case}: anchor $($Anchor.type) occurrence is not an integer" }
   }
   $text = $utf8.GetBytes([string]$Anchor.text)
-  if ($n -lt 1 -or $text.Length -eq 0) { throw "${Case}: anchor $($Anchor.type) has empty text or occurrence $n" }
+  if ($n -lt 1 -or $text.Length -eq 0 -or $Anchor.type -eq '') { throw "${Case}: anchor $($Anchor.type) has an empty type or text, or occurrence $n" }
   $at = -1
   $from = 0
   for ($k = 0; $k -lt $n; $k++) {
