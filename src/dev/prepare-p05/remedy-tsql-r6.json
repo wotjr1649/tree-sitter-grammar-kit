@@ -26,6 +26,7 @@
       "id": "r6-unicode-identifier",
       "feature": "tsql-B01",
       "private_error_files": 54,
+      "after_r6": "53 of the 54 parse without ERROR; one still fails on a column-level key list with ASC (gap-column-level-key-list-with-direction)",
       "also": "the other block-comment-position file, whose error was a Hangul identifier",
       "state": "PATCHED",
       "shape": "SELECT 이름, 금액2 FROM 환자;",
@@ -355,7 +356,8 @@
     {
       "id": "gap-column-level-key-list-with-direction",
       "feature": "tsql-B03",
-      "private_error_files": 9,
+      "private_error_files": 10,
+      "also": "one of the 10 was counted under the Unicode identifier class at 0cdf3fd; after r6 its remaining error is this shape",
       "state": "GRAMMAR_GAP",
       "shape": "last_col datetime NULL  CONSTRAINT pk PRIMARY KEY CLUSTERED ( id ASC ) WITH (...) ON [PRIMARY]  (no comma before CONSTRAINT, ASC in the list)",
       "searched": [
