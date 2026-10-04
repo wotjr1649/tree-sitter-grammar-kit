@@ -1,6 +1,7 @@
 package foundation
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,6 +58,7 @@ func checkCampaignDefinition(c campaignDefinition, workload string) error {
 	}
 	// INTEGRATED records a merged session with its PRs, merge commit and post-merge run. It
 	// says nothing about qualification or support, which only the qualify CI receipt owns.
+	lastPR, lastRun, merges := 0, int64(0), map[string]bool{}
 	for i, s := range c.Sessions {
 		switch s.ImplementationStatus {
 		case "NOT_IMPLEMENTED":
@@ -75,7 +77,15 @@ func checkCampaignDefinition(c campaignDefinition, workload string) error {
 				if pr <= 0 {
 					return fmt.Errorf("implementation status INTEGRATED with an invalid PR number: %02d", i+1)
 				}
+				if pr <= lastPR {
+					return fmt.Errorf("implementation status INTEGRATED with evidence not after its predecessor: %02d", i+1)
+				}
+				lastPR = pr
 			}
+			if in.PostMergeRun <= lastRun || merges[in.MergeCommit] {
+				return fmt.Errorf("implementation status INTEGRATED with evidence not after its predecessor: %02d", i+1)
+			}
+			lastRun, merges[in.MergeCommit] = in.PostMergeRun, true
 		default:
 			return fmt.Errorf("unknown implementation status %q: %02d", s.ImplementationStatus, i+1)
 		}
@@ -424,9 +434,17 @@ func TestCampaignDefinitions(t *testing.T) {
 	}
 	data := read("src/contracts/campaign-01.json")
 	workload := string(read("docs/validation/workload-matrix.md"))
+	strict := func(b []byte, c *campaignDefinition) error {
+		dec := json.NewDecoder(bytes.NewReader(b))
+		dec.DisallowUnknownFields()
+		return dec.Decode(c)
+	}
 	var c campaignDefinition
-	if err := json.Unmarshal(data, &c); err != nil {
+	if err := strict(data, &c); err != nil {
 		t.Fatal(err)
+	}
+	if err := strict(bytes.Replace(data, []byte(`"implementation_status"`), []byte(`"qualification": "PASS", "implementation_status"`), 1), new(campaignDefinition)); err == nil {
+		t.Fatal("unknown campaign field not rejected")
 	}
 	if err := checkCampaignDefinition(c, workload); err != nil {
 		t.Fatal(err)
@@ -470,6 +488,10 @@ func TestCampaignDefinitions(t *testing.T) {
 		{"integrated-bad-pr", "invalid PR", func(c *campaignDefinition, _ *string) { c.Sessions[5].Integration.PRs = []int{0} }},
 		{"integrated-out-of-order", "before its predecessor", func(c *campaignDefinition, _ *string) {
 			c.Sessions[5].ImplementationStatus, c.Sessions[5].Integration = "NOT_IMPLEMENTED", nil
+		}},
+		{"copied-evidence", "not after its predecessor", func(c *campaignDefinition, _ *string) { c.Sessions[3].Integration = c.Sessions[2].Integration }},
+		{"reused-merge-commit", "not after its predecessor", func(c *campaignDefinition, _ *string) {
+			c.Sessions[7].Integration.MergeCommit = c.Sessions[6].Integration.MergeCommit
 		}},
 		{"not-implemented-with-evidence", "carries integration", func(c *campaignDefinition, _ *string) { c.Sessions[7].ImplementationStatus = "NOT_IMPLEMENTED" }},
 	} {
