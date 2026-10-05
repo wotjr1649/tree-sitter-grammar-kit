@@ -189,8 +189,15 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "eae951bdb3670d28e6324ef32836761346e103456446037f6f4bd3f19f7ee5ba",
-     "bytes": 1616890
+     "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
+     "bytes": 1696398
+    },
+    {
+     "path": "src/scanner.c",
+     "role": "scanner",
+     "origin": "patched",
+     "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159",
+     "bytes": 4041
     },
     {
      "path": "src/tree_sitter/alloc.h",
@@ -218,8 +225,8 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "d7bbcd348aec903fd29442d8df128f48d2475c0ba05be1cbcc30cee9cfd77e7c",
-      "bytes": 199479
+      "sha256": "0a1facf5530b3df3a711c090086d93261de4eee7fdcc88ec1d2df9fa652f5572",
+      "bytes": 203285
      },
      {
       "path": "node-types.json",
@@ -228,8 +235,8 @@
      },
      {
       "path": "parser.c",
-      "sha256": "eae951bdb3670d28e6324ef32836761346e103456446037f6f4bd3f19f7ee5ba",
-      "bytes": 1616890
+      "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
+      "bytes": 1696398
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -255,8 +262,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "86b70e2f920ac8ccc915206fe74c331222c78dd3458d7306e2d5ed9880656979",
-      "bytes": 24271
+      "sha256": "400ffe497ece4b4ebbb958ede1a980e4abbb3a0197d84cb7d1fad665bce0d0bd",
+      "bytes": 24946
      },
      {
       "path": "package.json",
@@ -277,13 +284,24 @@
       "pointer": "/files/0",
       "field": "operations",
       "target": "grammar.js"
+     },
+     {
+      "subject": "src/dev/c2-patches/go.json",
+      "pointer": "/files/1",
+      "field": "operations",
+      "target": "src/scanner.c"
      }
     ],
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 24271,
-      "sha256": "86b70e2f920ac8ccc915206fe74c331222c78dd3458d7306e2d5ed9880656979"
+      "bytes": 24946,
+      "sha256": "400ffe497ece4b4ebbb958ede1a980e4abbb3a0197d84cb7d1fad665bce0d0bd"
+     },
+     {
+      "path": "src/scanner.c",
+      "bytes": 4041,
+      "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159"
      }
     ]
    }

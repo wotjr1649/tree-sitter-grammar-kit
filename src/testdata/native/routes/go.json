@@ -2480,6 +2480,141 @@
       ]
     },
     {
+      "id": "probe-go-B01-N-1",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package decl\n\nfunc before() {}\n\ntype T\nint\n\nfunc after() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func before() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B01-N-2",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package decl\n\nfunc before() {}\n\nvar x\nint\n\nfunc after() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func before() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B01-N-3",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package decl\n\nfunc before() {}\n\nfunc f\n() {}\n\nfunc after() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func before() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B01-N-4",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package decl\n\nfunc before() {}\n\ntype T int\n\nfunc (r T)\nM() {}\n\nfunc after() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func before() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B01-N-5",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package decl\n\nfunc before() {}\n\nfunc g() {\n\tx := []int\n\t{1, 2}\n\t_ = x\n}\n\nfunc after() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "func before() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "func after() {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "probe-go-B02-N-1",
       "features": [
         "go-B02"
@@ -2699,6 +2834,222 @@
             "select_statement",
             "go_statement",
             "defer_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-1",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc f() int { return 1 }\n\nfunc g() {\n\tif v := f()\n\tv > 0 {\n\t\t_ = v\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "short_var_declaration",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if v := f()\n\tv > 0 {\n\t\t_ = v\n\t}"
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "v := f()"
+            },
+            {
+              "type": "binary_expression",
+              "text": "v > 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-2",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc f() int { return 1 }\n\nfunc g() {\n\tswitch x := f()\n\t{\n\tcase x > 0:\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "expression_switch_statement",
+            "short_var_declaration",
+            "expression_case"
+          ],
+          "anchors": [
+            {
+              "type": "expression_switch_statement",
+              "text": "switch x := f()\n\t{\n\tcase x > 0:\n\t}"
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "x := f()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-3",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc f() int { return 1 }\n\nfunc g() {\n\tfor i := 0\n\ti < 3\n\ti++ {\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "for_statement",
+            "for_clause",
+            "inc_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_clause",
+              "text": "i := 0\n\ti < 3\n\ti++"
+            },
+            {
+              "type": "short_var_declaration",
+              "text": "i := 0"
+            },
+            {
+              "type": "binary_expression",
+              "text": "i < 3"
+            },
+            {
+              "type": "inc_statement",
+              "text": "i++"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-4",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc g(n int) {\n\tfor i := 0;\n\t\ti < n; i++ {\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "for_statement",
+            "for_clause",
+            "inc_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_clause",
+              "text": "i := 0;\n\t\ti < n; i++"
+            },
+            {
+              "type": "binary_expression",
+              "text": "i < n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-5",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc g(n int) {\n\tfor i := 0\n\n\ti < n\n\ti++ {\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "for_statement",
+            "for_clause",
+            "inc_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_clause",
+              "text": "i := 0\n\n\ti < n\n\ti++"
+            },
+            {
+              "type": "binary_expression",
+              "text": "i < n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-6",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc g(n int) {\n\tfor\n\t{\n\t\tbreak\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "for_statement",
+            "block",
+            "break_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_statement",
+              "text": "for\n\t{\n\t\tbreak\n\t}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-go-B04-P-7",
+      "features": [
+        "go-B04"
+      ],
+      "source_utf8": "package hdr\n\nfunc g(n int) {\n\tfor /*\n\t*/ i := 0; i < n; {\n\t\tbreak\n\t}\n\tfor /*\n\t*/ n > 0 {\n\t\tn--\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "for_statement",
+            "for_clause",
+            "comment",
+            "dec_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_clause",
+              "text": "i := 0; i < n;"
+            },
+            {
+              "type": "binary_expression",
+              "text": "n > 0"
+            },
+            {
+              "type": "for_statement",
+              "text": "for /*\n\t*/ n > 0 {\n\t\tn--\n\t}"
+            }
           ]
         }
       ]

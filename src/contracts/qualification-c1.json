@@ -18393,8 +18393,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "eae951bdb3670d28e6324ef32836761346e103456446037f6f4bd3f19f7ee5ba",
-      "bytes": 1616890
+      "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
+      "bytes": 1696398
+     },
+     {
+      "path": "src/scanner.c",
+      "role": "scanner",
+      "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159",
+      "bytes": 4041
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -21497,6 +21503,246 @@
       "source": null
      },
      {
+      "id": "probe-go-B01-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0b6e543799f85f8a20b84c45866e66e6e6e8e66797dd7ad29cfa095d96607d8f",
+       "bytes": 60
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "function_declaration",
+          "start_byte": 14,
+          "end_byte": 30
+         },
+         {
+          "type": "function_declaration",
+          "start_byte": 44,
+          "end_byte": 59
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B01-N-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "fa1455e566cac4508dbb0c7d45358e8960a64698e21a3f5d2f65b575bd9e8338",
+       "bytes": 59
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "function_declaration",
+          "start_byte": 14,
+          "end_byte": 30
+         },
+         {
+          "type": "function_declaration",
+          "start_byte": 43,
+          "end_byte": 58
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B01-N-3",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2a2ae41c8f75e49765202c51397203c5193a7b3f6f3cf29e133bc6d28ed53dd3",
+       "bytes": 62
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "function_declaration",
+          "start_byte": 14,
+          "end_byte": 30
+         },
+         {
+          "type": "function_declaration",
+          "start_byte": 46,
+          "end_byte": 61
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B01-N-4",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "cc97f5ba8337c52dd023925911feac94f4c7a845e587c80eb1a0368d78dc21dc",
+       "bytes": 79
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "function_declaration",
+          "start_byte": 14,
+          "end_byte": 30
+         },
+         {
+          "type": "function_declaration",
+          "start_byte": 63,
+          "end_byte": 78
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B01-N-5",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "71d5b324412db7e5b3e2716cf36d84d18fb6eb58b47203b1eb8e23cef2d82e9b",
+       "bytes": 89
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "function_declaration",
+          "start_byte": 14,
+          "end_byte": 30
+         },
+         {
+          "type": "function_declaration",
+          "start_byte": 73,
+          "end_byte": 88
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "probe-go-B02-N-1",
       "role": "requirement",
       "input": {
@@ -21809,6 +22055,365 @@
         "N",
         "R",
         "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4bdad14a0c2027dc7a0c3251db2e82494eab29cbcefdd2947bbaad8b43337eed",
+       "bytes": 86
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "if_statement",
+         "short_var_declaration",
+         "binary_expression"
+        ],
+        "anchors": [
+         {
+          "type": "if_statement",
+          "start_byte": 52,
+          "end_byte": 83
+         },
+         {
+          "type": "short_var_declaration",
+          "start_byte": 55,
+          "end_byte": 63
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 65,
+          "end_byte": 70
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "524cf9b87cc48c6feef75357661f238a964d83af603989e080e5ed649b926d68",
+       "bytes": 89
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "expression_switch_statement",
+         "short_var_declaration",
+         "expression_case"
+        ],
+        "anchors": [
+         {
+          "type": "expression_switch_statement",
+          "start_byte": 52,
+          "end_byte": 86
+         },
+         {
+          "type": "short_var_declaration",
+          "start_byte": 59,
+          "end_byte": 67
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-3",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "03fe04866bb3f4f249dc2ba2f8c12f7b87df2813ed1b0b50092e5cdc08f9cb51",
+       "bytes": 82
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "for_statement",
+         "for_clause",
+         "inc_statement"
+        ],
+        "anchors": [
+         {
+          "type": "for_clause",
+          "start_byte": 56,
+          "end_byte": 74
+         },
+         {
+          "type": "short_var_declaration",
+          "start_byte": 56,
+          "end_byte": 62
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 64,
+          "end_byte": 69
+         },
+         {
+          "type": "inc_statement",
+          "start_byte": 71,
+          "end_byte": 74
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-4",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c58b28704144ad329c46cd269bb336f2d54196f1f755201b4c4f41cef5749e36",
+       "bytes": 62
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "for_statement",
+         "for_clause",
+         "inc_statement"
+        ],
+        "anchors": [
+         {
+          "type": "for_clause",
+          "start_byte": 34,
+          "end_byte": 54
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 44,
+          "end_byte": 49
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-5",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "81388a6eae177e56d5ef17d560ccc43553df58a1d62efb9744b588964a4e613d",
+       "bytes": 61
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "for_statement",
+         "for_clause",
+         "inc_statement"
+        ],
+        "anchors": [
+         {
+          "type": "for_clause",
+          "start_byte": 34,
+          "end_byte": 53
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 43,
+          "end_byte": 48
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-6",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "573c5f1b973e36876d66898821c509db2a1faf67956e25157c64a7e5f300db0e",
+       "bytes": 50
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "for_statement",
+         "block",
+         "break_statement"
+        ],
+        "anchors": [
+         {
+          "type": "for_statement",
+          "start_byte": 30,
+          "end_byte": 47
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-go-B04-P-7",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "615742ea3a4a20a0fc045d739902f68e37481de8c9fcca09bc9f91d8d034f242",
+       "bytes": 100
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "for_statement",
+         "for_clause",
+         "comment",
+         "dec_statement"
+        ],
+        "anchors": [
+         {
+          "type": "for_clause",
+          "start_byte": 41,
+          "end_byte": 55
+         },
+         {
+          "type": "binary_expression",
+          "start_byte": 81,
+          "end_byte": 86
+         },
+         {
+          "type": "for_statement",
+          "start_byte": 70,
+          "end_byte": 97
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P"
        ]
       },
       "alternatives": [],

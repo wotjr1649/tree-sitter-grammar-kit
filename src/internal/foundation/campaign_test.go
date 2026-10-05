@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -297,6 +298,122 @@ func checkC2Patch(r sourceCandidate) error {
 		seen[f.Path] = true
 	}
 	return nil
+}
+
+// c2Created lists the files a route's C2 subjects create ("create": true): files absent at
+// the pinned commit, such as go's automatic-semicolon scanner (#98).
+type c2Created map[string][]c2CreatedFile
+
+type c2CreatedFile struct {
+	Target     string `json:"target"`
+	Create     *bool  `json:"create"`
+	Operations []struct {
+		Before      string `json:"before"`
+		After       string `json:"after"`
+		Occurrences *int   `json:"occurrences"`
+	} `json:"operations"`
+}
+
+// checkC2Created: "create" is true when present; a created file has exactly one operation, with an empty before, 0
+// occurrences and the whole content; its source record does not list it among the upstream
+// scanner and shared files; and its C2 record pins it.
+func checkC2Created(registry sourceRegistry, created c2Created) error {
+	for _, r := range registry.Routes {
+		for _, f := range created[r.RouteID] {
+			if f.Create == nil || !*f.Create {
+				return fmt.Errorf("source C2 create flag is not true: %s %s", r.RouteID, f.Target)
+			}
+			if len(f.Operations) != 1 || f.Operations[0].Before != "" || f.Operations[0].Occurrences == nil || *f.Operations[0].Occurrences != 0 || f.Operations[0].After == "" {
+				return fmt.Errorf("source C2 created file is not one whole-content operation: %s %s", r.RouteID, f.Target)
+			}
+			if slices.Contains(r.ScannerAndShared, f.Target) {
+				return fmt.Errorf("source C2 created file is an upstream file: %s %s", r.RouteID, f.Target)
+			}
+			if r.C2Patch == nil || !slices.ContainsFunc(r.C2Patch.PatchedFiles, func(p sourcePin) bool { return p.Path == f.Target }) {
+				return fmt.Errorf("source C2 created file is not pinned: %s %s", r.RouteID, f.Target)
+			}
+		}
+	}
+	return nil
+}
+
+func TestC2CreatedFiles(t *testing.T) {
+	root := repository(t)
+	load := func() sourceRegistry {
+		data, err := os.ReadFile(filepath.Join(root, "src/contracts/language-sources.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var s sourceRegistry
+		if err := json.Unmarshal(data, &s); err != nil {
+			t.Fatal(err)
+		}
+		return s
+	}
+	registry := load()
+	loadCreated := func() c2Created {
+		created := c2Created{}
+		for _, r := range registry.Routes {
+			if r.C2Patch == nil {
+				continue
+			}
+			for _, name := range r.C2Patch.Subjects {
+				data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
+				if err != nil {
+					t.Fatal(err)
+				}
+				var doc struct {
+					Files []c2CreatedFile `json:"files"`
+				}
+				if err := json.Unmarshal(data, &doc); err != nil {
+					t.Fatal(err)
+				}
+				for _, f := range doc.Files {
+					if f.Create != nil {
+						created[r.RouteID] = append(created[r.RouteID], f)
+					}
+				}
+			}
+		}
+		return created
+	}
+	created := loadCreated()
+	if len(created) != 1 || len(created["go"]) != 1 || created["go"][0].Target != "src/scanner.c" {
+		t.Fatalf("created files %v, want go's src/scanner.c only", created)
+	}
+	if err := checkC2Created(registry, created); err != nil {
+		t.Fatal(err)
+	}
+	one, no := 1, false
+	for _, tc := range []struct {
+		name, diagnostic string
+		mutate           func(*sourceRegistry, c2Created)
+	}{
+		{"created-file-listed-upstream", "created file is an upstream file", func(s *sourceRegistry, _ c2Created) {
+			sourceRoute(s, "go").ScannerAndShared = append(sourceRoute(s, "go").ScannerAndShared, "src/scanner.c")
+		}},
+		{"created-file-without-pin", "created file is not pinned", func(s *sourceRegistry, _ c2Created) {
+			p := sourceRoute(s, "go").C2Patch
+			p.PatchedFiles = slices.DeleteFunc(p.PatchedFiles, func(f sourcePin) bool { return f.Path == "src/scanner.c" })
+		}},
+		{"created-file-two-operations", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) {
+			c["go"][0].Operations = append(c["go"][0].Operations, c["go"][0].Operations[0])
+		}},
+		{"created-file-with-before", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].Before = "x" }},
+		{"created-file-with-occurrences", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].Occurrences = &one }},
+		{"created-file-without-occurrences", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].Occurrences = nil }},
+		{"created-file-without-content", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].After = "" }},
+		{"create-false", "create flag is not true", func(_ *sourceRegistry, c c2Created) { c["go"][0].Create = &no }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := load()
+			c := loadCreated()
+			tc.mutate(&s, c)
+			if err := checkC2Created(s, c); err == nil || !strings.Contains(err.Error(), tc.diagnostic) {
+				t.Fatalf("mutation not detected as %q: %v", tc.diagnostic, err)
+			}
+		})
+	}
 }
 
 // This checks registry data, not filesystem authorization or source closure.

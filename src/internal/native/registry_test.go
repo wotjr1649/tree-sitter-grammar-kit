@@ -52,7 +52,20 @@ type chainStep struct{ Subject, Pointer, Field, Target string }
 // c2Subject is a project-local patch subject (src/dev/c2-patches/<route>.json).
 type c2Subject struct {
 	Schema, Route string
-	Files         []struct{ Target string }
+	Files         []c2File
+}
+
+// c2File is one patched file of a C2 subject; Create marks a file absent at the pinned commit,
+// whose one operation has an empty before, 0 occurrences and the whole content as after.
+type c2File struct {
+	Target     string
+	Create     bool
+	Operations []c2Operation
+}
+
+type c2Operation struct {
+	Before, After string
+	Occurrences   int
 }
 
 type nativeRegistry struct {
@@ -61,8 +74,9 @@ type nativeRegistry struct {
 }
 
 type sourceRecord struct {
-	RouteID  string `json:"route_id"`
-	Adoption *struct {
+	RouteID          string   `json:"route_id"`
+	ScannerAndShared []string `json:"scanner_and_shared"`
+	Adoption         *struct {
 		PatchSubjects []string       `json:"patch_subjects"`
 		PatchedFiles  []registryFile `json:"patched_files"`
 	}
@@ -91,7 +105,10 @@ type reproRecords struct{ Routes []reproRecord }
 // one built from the upstream generated files, is rejected. Either class may carry a C2
 // record (C2-PATCH-r1): its chain is the adoption chain, if any, followed by exactly the
 // C2 subjects' files in order, its patched files are the C2 record's, and the reproduction
-// reference pins every output.
+// reference pins every output. A C2 subject may create a file absent at the pinned commit (a
+// new scanner): it is neither an upstream scanner or shared file nor a generator input, an
+// adoption file or an upstream route file, and it is a patched scanner route file pinned by
+// the C2 record (so by the native patched files too).
 func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRecords, subjects map[string]c2Subject) error {
 	if reg.Schema != "tsgk-native-routes/r1" || len(reg.Routes) != len(sources.Routes) || len(reg.Routes) != 26 {
 		return fmt.Errorf("registry %s with %d routes", reg.Schema, len(reg.Routes))
@@ -133,6 +150,43 @@ func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRec
 				}
 				for i, f := range doc.Files {
 					c2 = append(c2, chainStep{s, fmt.Sprintf("/files/%d", i), "operations", f.Target})
+					if !f.Create {
+						continue
+					}
+					is := func(x registryFile) bool { return x.Path == f.Target }
+					exists := func(as string) error {
+						return fmt.Errorf("%s C2 subject creates %s, which exists at the pinned commit as %s", r.Route, f.Target, as)
+					}
+					switch {
+					case slices.Contains(src.ScannerAndShared, f.Target):
+						return exists("an upstream scanner or shared file")
+					case slices.ContainsFunc(g.Inputs, is):
+						return exists("a generator input")
+					case src.Adoption != nil && slices.ContainsFunc(src.Adoption.PatchedFiles, is):
+						return exists("an adoption patched file")
+					case slices.ContainsFunc(r.Files, func(x registryFile) bool { return is(x) && x.Origin == "upstream" }):
+						return exists("an upstream route file")
+					}
+					if len(f.Operations) != 1 || f.Operations[0].Before != "" || f.Operations[0].Occurrences != 0 || f.Operations[0].After == "" {
+						return fmt.Errorf("%s created file %s is not one whole-content operation", r.Route, f.Target)
+					}
+					at := slices.IndexFunc(r.Files, is)
+					switch {
+					case at < 0:
+						return fmt.Errorf("%s created file %s is not a route file", r.Route, f.Target)
+					case r.Files[at].Origin != "patched":
+						return fmt.Errorf("%s created file %s is not of origin patched", r.Route, f.Target)
+					case r.Files[at].Role != "scanner":
+						return fmt.Errorf("%s created file %s is not a scanner", r.Route, f.Target)
+					}
+					pin := slices.IndexFunc(p.PatchedFiles, is)
+					if pin < 0 {
+						return fmt.Errorf("%s created file %s is not pinned by its C2 record", r.Route, f.Target)
+					}
+					sum := sha256.Sum256([]byte(f.Operations[0].After))
+					if hex.EncodeToString(sum[:]) != p.PatchedFiles[pin].SHA256 || int64(len(f.Operations[0].After)) != p.PatchedFiles[pin].Bytes {
+						return fmt.Errorf("%s created file %s content differs from its C2 record pin", r.Route, f.Target)
+					}
 				}
 			}
 		}
@@ -434,6 +488,35 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		{"C2 patched file built from upstream", "not used patched", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			file(route(reg, "yaml"), "src/scanner.c").Origin = "upstream"
 		}},
+		// a created file (go's src/scanner.c, #98)
+		{"C2 create of an upstream scanner", "as an upstream scanner or shared file", func(_ *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			source(s, "go").ScannerAndShared = append(source(s, "go").ScannerAndShared, "src/scanner.c")
+		}},
+		{"C2 create of an upstream route file", "as an upstream route file", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/scanner.c").Origin = "upstream"
+		}},
+		{"created file without its route file", "is not a route file", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			r := route(reg, "go")
+			r.Files = slices.DeleteFunc(r.Files, func(f registryFile) bool { return f.Path == "src/scanner.c" })
+		}},
+		{"created file of origin generated", "is not of origin patched", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/scanner.c").Origin = "generated"
+		}},
+		{"created file in another role", "is not a scanner", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/scanner.c").Role = "header"
+		}},
+		{"created file without its C2 record pin", "is not pinned by its C2 record", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			drop := func(f registryFile) bool { return f.Path == "src/scanner.c" }
+			source(s, "go").C2Patch.PatchedFiles = slices.DeleteFunc(source(s, "go").C2Patch.PatchedFiles, drop)
+			g := route(reg, "go").Regeneration
+			g.PatchedFiles = slices.DeleteFunc(g.PatchedFiles, drop)
+		}},
+		{"created file pinned to other content", "content differs from its C2 record pin", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			for _, pins := range [][]registryFile{source(s, "go").C2Patch.PatchedFiles, route(reg, "go").Regeneration.PatchedFiles} {
+				pins[slices.IndexFunc(pins, func(f registryFile) bool { return f.Path == "src/scanner.c" })].SHA256 = strings.Repeat("0", 64)
+			}
+			file(route(reg, "go"), "src/scanner.c").SHA256 = strings.Repeat("0", 64)
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reg, sources, repro, subjects := load()
@@ -443,6 +526,35 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			}
 		})
 	}
+	for name, mutate := range map[string]func(*c2Operation, *c2File){
+		"created file with two operations": func(_ *c2Operation, f *c2File) { f.Operations = append(f.Operations, f.Operations[0]) },
+		"created file with a before":       func(op *c2Operation, _ *c2File) { op.Before = "x" },
+		"created file with occurrences":    func(op *c2Operation, _ *c2File) { op.Occurrences = 1 },
+		"created file without content":     func(op *c2Operation, _ *c2File) { op.After = "" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			reg, sources, repro, subjects := load()
+			doc := subjects["src/dev/c2-patches/go.json"]
+			doc.Files = slices.Clone(doc.Files)
+			f := &doc.Files[1] // src/scanner.c
+			f.Operations = slices.Clone(f.Operations)
+			mutate(&f.Operations[0], f)
+			subjects["src/dev/c2-patches/go.json"] = doc
+			if err := checkNativeRoutes(reg, sources, repro, subjects); err == nil || !strings.Contains(err.Error(), "not one whole-content operation") {
+				t.Fatalf("mutation not detected: %v", err)
+			}
+		})
+	}
+	t.Run("C2 create of a generator input", func(t *testing.T) {
+		reg, sources, repro, subjects := load()
+		doc := subjects["src/dev/c2-patches/go.json"]
+		doc.Files = slices.Clone(doc.Files)
+		doc.Files[0].Create = true // grammar.js
+		subjects["src/dev/c2-patches/go.json"] = doc
+		if err := checkNativeRoutes(reg, sources, repro, subjects); err == nil || !strings.Contains(err.Error(), "as a generator input") {
+			t.Fatalf("mutation not detected: %v", err)
+		}
+	})
 	t.Run("C2 subject of another route", func(t *testing.T) {
 		reg, sources, repro, subjects := load()
 		doc := subjects["src/dev/c2-patches/yaml.json"]
@@ -470,7 +582,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		reg, sources, repro, subjects := load()
 		adoptionOnly(&reg, &sources, "csharp")
 		name := "src/dev/c2-patches/csharp.json"
-		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []struct{ Target string }{{"grammar.js"}}}
+		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []c2File{{Target: "grammar.js"}}}
 		src := source(&sources, "csharp")
 		src.C2Patch = &struct {
 			Subjects     []string
@@ -523,10 +635,20 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			addAdoptionStepOnPackageJSON(reg, s)
 			name := "src/dev/c2-patches/csharp.json"
 			doc := subjects[name]
-			doc.Files = append(doc.Files, struct{ Target string }{"package.json"})
+			doc.Files = append(doc.Files, c2File{Target: "package.json"})
 			subjects[name] = doc
 			g := route(reg, "csharp").Regeneration
 			g.PatchChain = append(g.PatchChain, chainStep{name, "/files/1", "operations", "package.json"})
+		}},
+		// a C2 subject that declares an adoption patched file created (grammar.js, here not
+		// also a generator input, so that only the adoption rule applies)
+		{"C2 create of an adoption patched file", "as an adoption patched file", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords, subjects map[string]c2Subject) {
+			name := "src/dev/c2-patches/csharp.json"
+			doc := subjects[name]
+			doc.Files = []c2File{{Target: "grammar.js", Create: true, Operations: []c2Operation{{After: "x"}}}}
+			subjects[name] = doc
+			g := route(reg, "csharp").Regeneration
+			g.Inputs = slices.DeleteFunc(g.Inputs, func(f registryFile) bool { return f.Path == "grammar.js" })
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
