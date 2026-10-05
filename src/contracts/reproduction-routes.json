@@ -98,25 +98,133 @@
       "route": "go",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 198042,
+          "sha256": "0dcc665aa521a1b73a200be13b4e376780cca037d764a165f12864babfe28000"
+        },
+        "node-types.json": {
+          "bytes": 53890,
+          "sha256": "24d2fd2597d4eab4afb35ddf3c542901b1a4feb26b90e9bb886874191ae82f27"
+        },
+        "parser.c": {
+          "bytes": 1572677,
+          "sha256": "4751ded447b92e64f49c647e5f413f1cb87921a0490b8b6b892932977621c618"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "python",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 145707,
+          "sha256": "d933cfea6197e57354c9ec86888adbb95971b4372efef514b82e601b5067580d"
+        },
+        "node-types.json": {
+          "bytes": 67804,
+          "sha256": "01ef9e39132daf7b77d3eda7db0897a2bc854a41d52a52c9f8f92a0b369e898d"
+        },
+        "parser.c": {
+          "bytes": 3448497,
+          "sha256": "db6ed97ad8bac630fecdd86ac37ea829eb1ef16439a8edf86f886e4174a895ba"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "javascript",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 174998,
+          "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+        },
+        "node-types.json": {
+          "bytes": 64022,
+          "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+        },
+        "parser.c": {
+          "bytes": 2855926,
+          "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "jsx",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 174998,
+          "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+        },
+        "node-types.json": {
+          "bytes": 64022,
+          "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+        },
+        "parser.c": {
+          "bytes": 2855926,
+          "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "typescript",
@@ -162,19 +270,100 @@
       "route": "java",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 186508,
+          "sha256": "0deefbbf97bdfbc6a801159761ec6935386f528c11b226d2a58be1c5c8977df4"
+        },
+        "node-types.json": {
+          "bytes": 82217,
+          "sha256": "eb6b0ace9dd94b23dca6fbcf17e53b28c48338afbec1b437d43857f0dee53c51"
+        },
+        "parser.c": {
+          "bytes": 2568334,
+          "sha256": "85977add5c0918e0991c2decf75ad7aa66539811786703653ee9c9f1ed4ef523"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "kotlin",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 147577,
+          "sha256": "f5de8a0591745cbdc2121ba9e6a8a4f1e96ec0d652f1f164692de71aca1d9231"
+        },
+        "node-types.json": {
+          "bytes": 51927,
+          "sha256": "a89f67d15508ecbb249c4c464fea3f9f7fd95c575e2a1e4024e6322bfd725683"
+        },
+        "parser.c": {
+          "bytes": 22485651,
+          "sha256": "25a6fada1fbd15bcd6753f8cd5173b8b3bebc21256db147887f8b30dde4e5e4a"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "c",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 237474,
+          "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368"
+        },
+        "node-types.json": {
+          "bytes": 83057,
+          "sha256": "23e819ef1eefd357bb6eba844f47f8492f6a88da3e5046b06ec4acd4da8a9fd6"
+        },
+        "parser.c": {
+          "bytes": 3872012,
+          "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "cpp",
@@ -183,13 +372,67 @@
       "npm_dependencies": [
         "tree-sitter-c"
       ],
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 458800,
+          "sha256": "3aa14b0b6ef87951ef9933d126f6d9774bc7d7dba11e7be1861820e381d36455"
+        },
+        "node-types.json": {
+          "bytes": 164416,
+          "sha256": "bc49c50d6b8af62df4cfda2675e5142bfba85bc1790ff2693aa0ca1286d5c7fe"
+        },
+        "parser.c": {
+          "bytes": 25857209,
+          "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "rust",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 224430,
+          "sha256": "b0f58f41f5461fa141bb98d81fe8abece3056cff979c4068a2e6cddee5aa0663"
+        },
+        "node-types.json": {
+          "bytes": 102144,
+          "sha256": "a5d2f343145e7d59cb1b257b4700c0888aef74544b862b0382f00cd8b899d045"
+        },
+        "parser.c": {
+          "bytes": 6505510,
+          "sha256": "c9baf72693238834d551f41713a773565e265eea387aa5a753948223eadde2a2"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "swift",
@@ -213,67 +456,364 @@
       "route": "dart",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 311142,
+          "sha256": "4014c0bc789f0481f4fcfbba991085dbdce7ff84fbcb17f150c0d204d2626707"
+        },
+        "node-types.json": {
+          "bytes": 314023,
+          "sha256": "ea858f11158d4b176b32e7fdbdff6b49c587b2e7ee70e5fbe90751865a1912fe"
+        },
+        "parser.c": {
+          "bytes": 7136472,
+          "sha256": "af2c6d473ddd54f56603db77fa35e0bdbc8e4fb92d41c4bac69dc7e510eb9ca4"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "php",
       "mode": "js",
       "entry": "php/grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 233342,
+          "sha256": "5bc72e3c3b075451d4649bbad55ab78c9f421135de41e37232a38ea6e0e57dc8"
+        },
+        "node-types.json": {
+          "bytes": 115690,
+          "sha256": "c487d95cf9ddce3b7fe2120a257e5e43f7e9e4842cb5988707a984887143b788"
+        },
+        "parser.c": {
+          "bytes": 7287175,
+          "sha256": "80a9bb8d671ff300717de63939fc9b82c6ca6c7b38805fcbb33705dcc322eec3"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "ruby",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 192951,
+          "sha256": "62105b6c1fbfb13929877de8af9f8dd0697379a9da1aaba0a0ed09477edacb12"
+        },
+        "node-types.json": {
+          "bytes": 69862,
+          "sha256": "a95d2f382017895771063837dbb959c4e5fde829fc185a2967695c770cc297bf"
+        },
+        "parser.c": {
+          "bytes": 15298004,
+          "sha256": "ef3bd34033f6da4d94081c4fd0dd2203b2a3c8c43c6e810eee4da8d3dffc6717"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "r",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 72462,
+          "sha256": "1bc020ea3daab427a5e49694ecfbc80c07bb50aca45ffa0e222c38e6e6e88633"
+        },
+        "node-types.json": {
+          "bytes": 69878,
+          "sha256": "e7f5bcda16b64c04f4f2024b0a11b59fa7ea3b0643c5e2500ce6877c803c235b"
+        },
+        "parser.c": {
+          "bytes": 4034360,
+          "sha256": "b1d9e3c3d2793edf5a3cdb8805a9ceb4244f8c336b1a226a37233093ef826f2c"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "bash",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 179629,
+          "sha256": "6c14f325170826cbc6c523ff5c2aeaa46f24bbff3a6e5eadb4533d9838fe3d81"
+        },
+        "node-types.json": {
+          "bytes": 82102,
+          "sha256": "c424f2a9e771860528c68286424a483c9afb2f9909afef5d7165be902848df4b"
+        },
+        "parser.c": {
+          "bytes": 9912509,
+          "sha256": "fde19299d9a229e3bd57ac1d2521bbf9565f99151793ba69b585d83db4a9ec2e"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "powershell",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 154702,
+          "sha256": "8d3b7b851a037064f08f350c0eed45324db644641424c71396a976e746549211"
+        },
+        "node-types.json": {
+          "bytes": 72248,
+          "sha256": "dc314fa2746de2c2048ad5c95e0c6488d1b2873e524a95473356c685f18a9707"
+        },
+        "parser.c": {
+          "bytes": 4697445,
+          "sha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "html",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 10225,
+          "sha256": "cd561d3ea2d9725fa1933d1daf5c4e83e1269a27a4ffe8bc4f1efc96d2d3af37"
+        },
+        "node-types.json": {
+          "bytes": 5214,
+          "sha256": "50956d14821e11b12cf43301deb0350239161f0e63111afa35c79eda581faefe"
+        },
+        "parser.c": {
+          "bytes": 66810,
+          "sha256": "4648a49ceb3c3febb804c189b86c199f92869cdd447c28ca8552c32c39f8976e"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "css",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 55833,
+          "sha256": "1a170e0c93009b5b592a611c663d4af4d625ddb97ebff1550c3e7f32fd045292"
+        },
+        "node-types.json": {
+          "bytes": 43620,
+          "sha256": "fbbf8d22d82608f6d2f61cfdb374e6758779754fb2f42643e9dc5af6ead0d5d2"
+        },
+        "parser.c": {
+          "bytes": 504253,
+          "sha256": "a6ae5fa6be3a430a13b70c24f2b80cb146637c9e7d62f09efae439c9fc8bc041"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "json",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 13700,
+          "sha256": "955f78a73bb42beb0684f7fc4d02a604c0a3b8271f1e58f4f97ba0bc197400c5"
+        },
+        "node-types.json": {
+          "bytes": 2717,
+          "sha256": "48689e9f2cb4d854b4f6068350800c15c89ab04db1f227830230d29ab88cb596"
+        },
+        "parser.c": {
+          "bytes": 28584,
+          "sha256": "c8df80b95371805ca7e565bb36d416df28c2caa46807c3c2fd6bf49b031bfe80"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "yaml",
       "mode": "js",
       "entry": "grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 157109,
+          "sha256": "a2c03fcc9bd9b7843780854f5e8264c9d465a34172b530d9511d6e89c5d2630e"
+        },
+        "node-types.json": {
+          "bytes": 9026,
+          "sha256": "1238b6c89fc6afb9723b6463a365843aa87e478025490660e5acfc9adaaf809b"
+        },
+        "parser.c": {
+          "bytes": 1289038,
+          "sha256": "02dc8c5f297936b198d1371874b8f5226f8dd35b75f6a82894d12a2cbc219eba"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "xml",
       "mode": "js",
       "entry": "xml/grammar.js",
-      "reference_basis": "UPSTREAM_CHECKED_IN"
+      "reference_basis": "PREPARE_GENERATED",
+      "decision": "C2-REGENERATE-r1",
+      "prepare_generated": {
+        "grammar.json": {
+          "bytes": 58426,
+          "sha256": "8154b75312606f2207e5a22eaefb69811836b22b53a9c4c96b5e417c409ec820"
+        },
+        "node-types.json": {
+          "bytes": 17444,
+          "sha256": "3b63e111187a0f9b2282e1748db2dd6b10e968f0cdb3676772def93bf89f2a7b"
+        },
+        "parser.c": {
+          "bytes": 241565,
+          "sha256": "eba39ee01336c5a6e353d1110fdbab9957a8f882cdd6b50ab496105e209642f2"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
+        },
+        "tree_sitter/parser.h": {
+          "bytes": 7624,
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+        }
+      }
     },
     {
       "route": "tsql",

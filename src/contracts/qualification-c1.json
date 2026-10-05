@@ -18088,8 +18088,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
-      "bytes": 1572685
+      "sha256": "4751ded447b92e64f49c647e5f413f1cb87921a0490b8b6b892932977621c618",
+      "bytes": 1572677
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -18100,8 +18100,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -22649,8 +22649,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "53a7bd87ba22c4fdbb8566a2caf848a1478f3ac9d47a1b32677a71de75d75db6",
-      "bytes": 3448505
+      "sha256": "db6ed97ad8bac630fecdd86ac37ea829eb1ef16439a8edf86f886e4174a895ba",
+      "bytes": 3448497
      },
      {
       "path": "src/scanner.c",
@@ -22667,8 +22667,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -31406,8 +31406,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-      "bytes": 2855934
+      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+      "bytes": 2855926
      },
      {
       "path": "src/scanner.c",
@@ -31424,8 +31424,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -40698,8 +40698,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-      "bytes": 2855934
+      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+      "bytes": 2855926
      },
      {
       "path": "src/scanner.c",
@@ -40716,8 +40716,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -64175,8 +64175,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
-      "bytes": 2561266
+      "sha256": "85977add5c0918e0991c2decf75ad7aa66539811786703653ee9c9f1ed4ef523",
+      "bytes": 2568334
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -64187,14 +64187,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -72847,8 +72847,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
-      "bytes": 22443237
+      "sha256": "25a6fada1fbd15bcd6753f8cd5173b8b3bebc21256db147887f8b30dde4e5e4a",
+      "bytes": 22485651
      },
      {
       "path": "src/scanner.c",
@@ -72865,14 +72865,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -81733,8 +81733,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-      "bytes": 13269
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -88751,8 +88751,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "4483dc3d37ab62fc8cabd5cfbd7de8267a2b1e3b12da3a90a5b8b324dacd5498",
-      "bytes": 13720
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -100491,7 +100491,7 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a",
+      "sha256": "c9baf72693238834d551f41713a773565e265eea387aa5a753948223eadde2a2",
       "bytes": 6505510
      },
      {
@@ -100509,8 +100509,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-      "bytes": 13269
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -122180,8 +122180,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-      "bytes": 13269
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -139962,8 +139962,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
-      "bytes": 15277808
+      "sha256": "ef3bd34033f6da4d94081c4fd0dd2203b2a3c8c43c6e810eee4da8d3dffc6717",
+      "bytes": 15298004
      },
      {
       "path": "src/scanner.c",
@@ -139980,14 +139980,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-      "bytes": 10420
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -145603,8 +145603,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
-      "bytes": 4030362
+      "sha256": "b1d9e3c3d2793edf5a3cdb8805a9ceb4244f8c336b1a226a37233093ef826f2c",
+      "bytes": 4034360
      },
      {
       "path": "src/scanner.c",
@@ -145621,14 +145621,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -148373,8 +148373,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
-      "bytes": 9912254
+      "sha256": "fde19299d9a229e3bd57ac1d2521bbf9565f99151793ba69b585d83db4a9ec2e",
+      "bytes": 9912509
      },
      {
       "path": "src/scanner.c",
@@ -148391,8 +148391,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -152925,8 +152925,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-      "bytes": 13269
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -159807,8 +159807,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
-      "bytes": 66466
+      "sha256": "4648a49ceb3c3febb804c189b86c199f92869cdd447c28ca8552c32c39f8976e",
+      "bytes": 66810
      },
      {
       "path": "src/scanner.c",
@@ -159831,14 +159831,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-      "bytes": 10420
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -163253,8 +163253,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
-      "bytes": 504262
+      "sha256": "a6ae5fa6be3a430a13b70c24f2b80cb146637c9e7d62f09efae439c9fc8bc041",
+      "bytes": 504253
      },
      {
       "path": "src/scanner.c",
@@ -163271,8 +163271,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -193825,8 +193825,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "9a266ae4a0305b8a2769bee90a14ac06914bdc83a509f16428311eac2845637e",
-      "bytes": 27700
+      "sha256": "c8df80b95371805ca7e565bb36d416df28c2caa46807c3c2fd6bf49b031bfe80",
+      "bytes": 28584
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -193837,14 +193837,14 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-      "bytes": 10420
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
       "role": "header",
-      "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-      "bytes": 7039
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
      }
     ],
     "declarations": null,
@@ -195974,8 +195974,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "02c5d32e95fa018a3c3ba7d7134d84bb7d5595c8874aa7ae6582745d9b40dede",
-      "bytes": 1289047
+      "sha256": "02dc8c5f297936b198d1371874b8f5226f8dd35b75f6a82894d12a2cbc219eba",
+      "bytes": 1289038
      },
      {
       "path": "src/scanner.c",
@@ -196010,8 +196010,8 @@
      {
       "path": "src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "src/tree_sitter/parser.h",
@@ -199070,8 +199070,8 @@
      {
       "path": "xml/src/parser.c",
       "role": "parser",
-      "sha256": "e00f74ae7edcfc5e0cf9dc551a41a02e88a86dad9d6d13820e292bde794cdd94",
-      "bytes": 240381
+      "sha256": "eba39ee01336c5a6e353d1110fdbab9957a8f882cdd6b50ab496105e209642f2",
+      "bytes": 241565
      },
      {
       "path": "xml/src/scanner.c",
@@ -199088,8 +199088,8 @@
      {
       "path": "xml/src/tree_sitter/array.h",
       "role": "header",
-      "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-      "bytes": 10431
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
      },
      {
       "path": "xml/src/tree_sitter/parser.h",
