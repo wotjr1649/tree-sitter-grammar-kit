@@ -395,7 +395,8 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			route(reg, "yaml").Regeneration.PatchedFiles = append(route(reg, "yaml").Regeneration.PatchedFiles, extra)
 			source(s, "yaml").C2Patch.PatchedFiles = append(source(s, "yaml").C2Patch.PatchedFiles, extra)
 		}},
-		{"adopted parser differs from the reference", "reproduction reference", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+		{"adopted parser differs from the reference", "reproduction reference", func(reg *nativeRegistry, s *sourceRecords, x *reproRecords) {
+			adoptionOnly(reg, s, "csharp")
 			pin := pins(x, "csharp")["parser.c"]
 			pin.Bytes++
 			pins(x, "csharp")["parser.c"] = pin
