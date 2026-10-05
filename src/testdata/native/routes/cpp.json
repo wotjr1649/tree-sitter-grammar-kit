@@ -7851,6 +7851,136 @@
       ]
     },
     {
+      "id": "probe-cpp-B01-P-1",
+      "features": [
+        "cpp-B01"
+      ],
+      "source_utf8": "FMT_BEGIN_NAMESPACE\nnamespace detail {\ntemplate <typename T> struct box : base {\n  T value;\n  template <typename A>\n  FMT_CONSTEXPR box(const A& a) : value(a) {}\n};\n}\nFMT_EXPORT template <typename T> class store {\n  void push(T v) {\n    if FMT_CONSTEXPR20 (sizeof(T) > 4)\n      use(v);\n  }\n};\nclass widget {\n  Q_OBJECT\n public:\n  int size;\n};\nFMT_END_NAMESPACE\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "macro_invocation",
+            "macro_specifier",
+            "namespace_definition",
+            "template_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "macro_invocation",
+              "text": "FMT_BEGIN_NAMESPACE"
+            },
+            {
+              "type": "macro_specifier",
+              "text": "FMT_CONSTEXPR"
+            },
+            {
+              "type": "function_definition",
+              "text": "FMT_CONSTEXPR box(const A& a) : value(a) {}"
+            },
+            {
+              "type": "macro_specifier",
+              "text": "FMT_EXPORT"
+            },
+            {
+              "type": "template_declaration",
+              "text": "FMT_EXPORT template <typename T> class store {\n  void push(T v) {\n    if FMT_CONSTEXPR20 (sizeof(T) > 4)\n      use(v);\n  }\n};"
+            },
+            {
+              "type": "macro_specifier",
+              "text": "FMT_CONSTEXPR20"
+            },
+            {
+              "type": "if_statement",
+              "text": "if FMT_CONSTEXPR20 (sizeof(T) > 4)\n      use(v);"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "Q_OBJECT"
+            },
+            {
+              "type": "macro_invocation",
+              "text": "FMT_END_NAMESPACE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-cpp-B01-P-2",
+      "features": [
+        "cpp-B01"
+      ],
+      "source_utf8": "namespace ns {\nT x;\nfoo::bar y;\nFMT_TYPE z;\nstruct S {\n  T f(int);\n  FMT_TYPE g(int);\n  FMT_TYPE h(int) { return 0; }\n  S(int a) : m(a) {}\n  int m;\n};\nint use(int a, int b) { return f(a, b) + (int)a; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "field_declaration",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "T x;"
+            },
+            {
+              "type": "declaration",
+              "text": "foo::bar y;"
+            },
+            {
+              "type": "declaration",
+              "text": "FMT_TYPE z;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "T f(int);"
+            },
+            {
+              "type": "field_declaration",
+              "text": "FMT_TYPE g(int);"
+            },
+            {
+              "type": "function_definition",
+              "text": "FMT_TYPE h(int) { return 0; }"
+            },
+            {
+              "type": "function_definition",
+              "text": "S(int a) : m(a) {}"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(a, b)"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int)a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-cpp-B01-N-1",
+      "features": [
+        "cpp-B01"
+      ],
+      "source_utf8": "void f() {\n  FMT_BEGIN_NAMESPACE\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
       "id": "w-cpp-B01-1",
       "features": [
         "cpp-B01"

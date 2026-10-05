@@ -83563,8 +83563,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "e1bf0e9f4ac3888f621d2fe891952726887da11f15070385a569c3c320d3d124",
-      "bytes": 5631576
+      "sha256": "649f5364bd3c3f0fd8249155c11fb900c48401bd979287696e5280451575dc86",
+      "bytes": 5611445
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -89334,6 +89334,177 @@
       "expect_code": "",
       "covers": {
        "c-L01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-c-B01-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4e59e6867d254009fd426cd6e33e14e30ea4be9db53af24380e1ff620f96692",
+       "bytes": 329
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "call_expression",
+         "type_descriptor",
+         "cast_expression"
+        ],
+        "anchors": [
+         {
+          "type": "type_descriptor",
+          "start_byte": 156,
+          "end_byte": 167
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 140,
+          "end_byte": 174
+         },
+         {
+          "type": "type_descriptor",
+          "start_byte": 233,
+          "end_byte": 246
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 222,
+          "end_byte": 247
+         },
+         {
+          "type": "declaration",
+          "start_byte": 95,
+          "end_byte": 99
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 309,
+          "end_byte": 316
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 289,
+          "end_byte": 296
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 319,
+          "end_byte": 325
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-c-B02-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "565adbf973cc38df7fe70891aa6768d4af5299bf9bbbb4ecacb54bf8bdb9944c",
+       "bytes": 135
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_ifdef",
+         "attribute_specifier",
+         "function_definition"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_ifdef",
+          "start_byte": 0,
+          "end_byte": 49
+         },
+         {
+          "type": "attribute_specifier",
+          "start_byte": 15,
+          "end_byte": 42
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 50,
+          "end_byte": 72
+         },
+         {
+          "type": "declaration",
+          "start_byte": 89,
+          "end_byte": 127
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B02": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-c-B01-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6fcc133b71b2603a1a9ae9db3bfc5ee721491f609a53f81ddc97717fa60ba5f0",
+       "bytes": 46
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
         "N"
        ]
       },
@@ -100615,6 +100786,208 @@
       "expect_code": "",
       "covers": {
        "cpp-L01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-cpp-B01-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "104715793a9837630ac0a6dae6e7a3b726f6c0bef3de03bbaf5b9ec86be323e1",
+       "bytes": 361
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "macro_invocation",
+         "macro_specifier",
+         "namespace_definition",
+         "template_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "macro_invocation",
+          "start_byte": 0,
+          "end_byte": 19
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 118,
+          "end_byte": 131
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 118,
+          "end_byte": 161
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 167,
+          "end_byte": 177
+         },
+         {
+          "type": "template_declaration",
+          "start_byte": 167,
+          "end_byte": 292
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 240,
+          "end_byte": 255
+         },
+         {
+          "type": "if_statement",
+          "start_byte": 237,
+          "end_byte": 285
+         },
+         {
+          "type": "macro_invocation",
+          "start_byte": 310,
+          "end_byte": 318
+         },
+         {
+          "type": "macro_invocation",
+          "start_byte": 343,
+          "end_byte": 360
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-cpp-B01-P-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "175b49aff95fea02f99ace45710223db8454bb3641ea205b4534067a408a2c73",
+       "bytes": 204
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "declaration",
+         "field_declaration",
+         "function_definition"
+        ],
+        "anchors": [
+         {
+          "type": "declaration",
+          "start_byte": 15,
+          "end_byte": 19
+         },
+         {
+          "type": "declaration",
+          "start_byte": 20,
+          "end_byte": 31
+         },
+         {
+          "type": "declaration",
+          "start_byte": 32,
+          "end_byte": 43
+         },
+         {
+          "type": "field_declaration",
+          "start_byte": 57,
+          "end_byte": 66
+         },
+         {
+          "type": "field_declaration",
+          "start_byte": 69,
+          "end_byte": 85
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 88,
+          "end_byte": 117
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 120,
+          "end_byte": 138
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 182,
+          "end_byte": 189
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 192,
+          "end_byte": 198
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-cpp-B01-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6bdea62a14180aa1d0866bf8d58a6a9f722de57c6fa003d890c57608b105d73a",
+       "bytes": 35
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
         "N"
        ]
       },

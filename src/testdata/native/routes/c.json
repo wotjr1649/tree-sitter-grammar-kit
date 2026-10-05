@@ -4369,6 +4369,113 @@
       ]
     },
     {
+      "id": "probe-c-B01-P-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "#define container_of(p, T, m) ((T *)((char *)(p) - offsetof(T, m)))\nstruct item { int link; };\nT x;\nstruct item *owner(int *q)\n{\n    return container_of(q, struct item, link);\n}\nunsigned long next(va_list ap)\n{\n    return va_arg(ap, unsigned long);\n}\nint keep(int a, int b)\n{\n    long l = (long)a;\n    return f(a, b) + (int)l;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call_expression",
+            "type_descriptor",
+            "cast_expression"
+          ],
+          "anchors": [
+            {
+              "type": "type_descriptor",
+              "text": "struct item",
+              "occurrence": 3
+            },
+            {
+              "type": "call_expression",
+              "text": "container_of(q, struct item, link)"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "unsigned long",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "va_arg(ap, unsigned long)"
+            },
+            {
+              "type": "declaration",
+              "text": "T x;"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(a, b)"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(long)a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int)l"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B02-P-1",
+      "features": [
+        "c-B02"
+      ],
+      "source_utf8": "#ifdef __MVS__\n__attribute__((destructor))\n#endif\nvoid cleanup(void) { }\n#ifdef USE_COLD\n__attribute__((cold)) void slow(void);\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_ifdef",
+            "attribute_specifier",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_ifdef",
+              "text": "#ifdef __MVS__\n__attribute__((destructor))\n#endif"
+            },
+            {
+              "type": "attribute_specifier",
+              "text": "__attribute__((destructor))"
+            },
+            {
+              "type": "function_definition",
+              "text": "void cleanup(void) { }"
+            },
+            {
+              "type": "declaration",
+              "text": "__attribute__((cold)) void slow(void);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B01-N-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "int g(void)\n{\n    return f(const struct X);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
       "id": "w-c-B01-1",
       "features": [
         "c-B01"

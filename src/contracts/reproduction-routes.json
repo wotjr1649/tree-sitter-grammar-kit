@@ -388,16 +388,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 295820,
-          "sha256": "bed6ff99d0f29a6a7472cad6a7b870dbab6ddbd4ed02766f25ad1cf74f2f105c"
+          "bytes": 295817,
+          "sha256": "6d7d4c6e4f09ea0da2f302a686db25f549492bf17e306acaa8ee315502770788"
         },
         "node-types.json": {
           "bytes": 90821,
           "sha256": "2029b47c596281f6a044f2791095085f29f45d0e84a1094cf355f1d5565ad479"
         },
         "parser.c": {
-          "bytes": 5631576,
-          "sha256": "e1bf0e9f4ac3888f621d2fe891952726887da11f15070385a569c3c320d3d124"
+          "bytes": 5611445,
+          "sha256": "649f5364bd3c3f0fd8249155c11fb900c48401bd979287696e5280451575dc86"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
