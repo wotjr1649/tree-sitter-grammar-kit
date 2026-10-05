@@ -203341,14 +203341,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04",
-      "bytes": 29214301
+      "sha256": "68151433386e2ee6c467956fde8945e104accd1955a9931538b941800882d5de",
+      "bytes": 58379787
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "392bf26c2295e8ee3dd584dbea619d39573495244b4bbd2b59dab387a8494aec",
-      "bytes": 2046
+      "sha256": "9b2cf23fe00d1227b9c1ad8324b08503b3b0dd1aa678ed93726e1be95513de8d",
+      "bytes": 7998
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -205555,17 +205555,17 @@
           "end_byte": 304
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 7,
           "end_byte": 23
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 30,
           "end_byte": 53
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 60,
           "end_byte": 72
          },
@@ -205575,7 +205575,7 @@
           "end_byte": 101
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 110,
           "end_byte": 129
          },
@@ -205590,12 +205590,12 @@
           "end_byte": 198
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 207,
           "end_byte": 235
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 242,
           "end_byte": 254
          },
@@ -207157,7 +207157,7 @@
          {
           "type": "generated_always_clause",
           "start_byte": 56,
-          "end_byte": 96
+          "end_byte": 103
          },
          {
           "type": "column_definition",
@@ -207167,7 +207167,7 @@
          {
           "type": "generated_always_clause",
           "start_byte": 133,
-          "end_byte": 174
+          "end_byte": 181
          },
          {
           "type": "statement",
@@ -208432,7 +208432,7 @@
          {
           "type": "set_operation",
           "start_byte": 139,
-          "end_byte": 253
+          "end_byte": 265
          },
          {
           "type": "order_by",
@@ -209648,7 +209648,7 @@
           "end_byte": 265
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 267,
           "end_byte": 290
          },
@@ -235989,12 +235989,12 @@
          {
           "type": "generated_always_clause",
           "start_byte": 1005,
-          "end_byte": 1034
+          "end_byte": 1041
          },
          {
           "type": "generated_always_clause",
           "start_byte": 1073,
-          "end_byte": 1100
+          "end_byte": 1107
          },
          {
           "type": "period_for_system_time",
@@ -256072,6 +256072,384 @@
       "source": null
      },
      {
+      "id": "probe-tsql-B05-PE-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "47eb0c5343ba91e56dae7cdb7de39ce61c72ef0ba277d460c3db4a22be41f5a0",
+       "bytes": 53
+      },
+      "edits": [
+       {
+        "start_byte": 19,
+        "old_end_byte": 39,
+        "new_end_byte": 40,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT04=",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT0ZG"
+       },
+       {
+        "start_byte": 19,
+        "old_end_byte": 40,
+        "new_end_byte": 39,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT0ZG",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT04="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 39
+         },
+         {
+          "type": "field",
+          "start_byte": 48,
+          "end_byte": 51
+         },
+         {
+          "type": "identifier",
+          "start_byte": 48,
+          "end_byte": 51
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 40
+         },
+         {
+          "type": "literal",
+          "start_byte": 49,
+          "end_byte": 52
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 39
+         },
+         {
+          "type": "field",
+          "start_byte": 48,
+          "end_byte": 51
+         },
+         {
+          "type": "identifier",
+          "start_byte": 48,
+          "end_byte": 51
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-tsql-B05-PE-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "177a3c7def56ac5f63a9ce4717a5dd61505325cc7ce44d0268e8a31b4db9a4bb",
+       "bytes": 77
+      },
+      "edits": [
+       {
+        "start_byte": 43,
+        "old_end_byte": 63,
+        "new_end_byte": 64,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT04=",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT0ZG"
+       },
+       {
+        "start_byte": 61,
+        "old_end_byte": 76,
+        "new_end_byte": 75,
+        "old": "T0ZGOwpTRUxFQ1QgInki",
+        "new": "T047ClNFTEVDVCAieSI="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 63
+         },
+         {
+          "type": "field",
+          "start_byte": 72,
+          "end_byte": 75
+         },
+         {
+          "type": "identifier",
+          "start_byte": 72,
+          "end_byte": 75
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 64
+         },
+         {
+          "type": "literal",
+          "start_byte": 73,
+          "end_byte": 76
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 63
+         },
+         {
+          "type": "field",
+          "start_byte": 72,
+          "end_byte": 75
+         },
+         {
+          "type": "identifier",
+          "start_byte": 72,
+          "end_byte": 75
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-tsql-B05-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a53acd1afde049aae97cd10988a5c0d46956258ea612c81e5d79097405e15cd3",
+       "bytes": 253
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 35
+         },
+         {
+          "type": "literal",
+          "start_byte": 44,
+          "end_byte": 47
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 49,
+          "end_byte": 85
+         },
+         {
+          "type": "field",
+          "start_byte": 94,
+          "end_byte": 97
+         },
+         {
+          "type": "identifier",
+          "start_byte": 94,
+          "end_byte": 97
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 99,
+          "end_byte": 136
+         },
+         {
+          "type": "literal",
+          "start_byte": 145,
+          "end_byte": 148
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 150,
+          "end_byte": 182
+         },
+         {
+          "type": "field",
+          "start_byte": 191,
+          "end_byte": 194
+         },
+         {
+          "type": "identifier",
+          "start_byte": 191,
+          "end_byte": 194
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 196,
+          "end_byte": 239
+         },
+         {
+          "type": "literal",
+          "start_byte": 248,
+          "end_byte": 251
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "probe-tsql-V16-NRQ-1",
       "role": "requirement",
       "input": {
@@ -257750,18 +258128,41 @@
          },
          "variable": null,
          "heuristic": false
-        }
-       ],
-       "known_misses": [
-        {
-         "start_byte": 1226,
-         "end_byte": 1274
         },
         {
-         "start_byte": 1311,
-         "end_byte": 1374
+         "construct": "EXEC_PAREN_AT",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1232,
+         "end_byte": 1248,
+         "start_point": {
+          "row": 31,
+          "column": 6
+         },
+         "end_point": {
+          "row": 31,
+          "column": 22
+         },
+         "variable": null,
+         "heuristic": false
+        },
+        {
+         "construct": "SP_EXECUTESQL",
+         "argument_kind": "literal_unicode",
+         "start_byte": 1330,
+         "end_byte": 1346,
+         "start_point": {
+          "row": 34,
+          "column": 19
+         },
+         "end_point": {
+          "row": 34,
+          "column": 35
+         },
+         "variable": null,
+         "heuristic": false
         }
-       ]
+       ],
+       "known_misses": []
       },
       "expect_status": "",
       "expect_assessment": "",

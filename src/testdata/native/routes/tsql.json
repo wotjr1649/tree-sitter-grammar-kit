@@ -1519,15 +1519,15 @@
               "text": "SELECT h.GetAncestor(1) AS a, h.GetDescendant(c1, c2) AS b, h.GetLevel() AS c, hierarchyid::GetRoot() AS d,\n  h.IsDescendantOf(p) AS e, hierarchyid::Parse(N'/1/2/') AS f, CAST(N'/1/' AS hierarchyid) AS g,\n  h.GetReparentedValue(r1, r2) AS i, h.ToString() AS j, CAST(h AS nvarchar(4000)) AS k\nFROM dbo.org"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetAncestor(1)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetDescendant(c1, c2)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetLevel()"
             },
             {
@@ -1535,7 +1535,7 @@
               "text": "hierarchyid::GetRoot()"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.IsDescendantOf(p)"
             },
             {
@@ -1547,11 +1547,11 @@
               "text": "CAST(N'/1/' AS hierarchyid)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetReparentedValue(r1, r2)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.ToString()"
             },
             {
@@ -2659,7 +2659,7 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS TRANSACTION_ID START"
+              "text": "GENERATED ALWAYS AS TRANSACTION_ID START HIDDEN"
             },
             {
               "type": "column_definition",
@@ -2667,7 +2667,7 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS SEQUENCE_NUMBER START"
+              "text": "GENERATED ALWAYS AS SEQUENCE_NUMBER START HIDDEN"
             },
             {
               "type": "statement",
@@ -3561,7 +3561,7 @@
             },
             {
               "type": "set_operation",
-              "text": "SELECT c1 FROM dbo.t1 UNION ALL (SELECT c1 FROM dbo.t2) UNION (SELECT c1 FROM dbo.t3) EXCEPT SELECT c1 FROM dbo.t4"
+              "text": "SELECT c1 FROM dbo.t1 UNION ALL (SELECT c1 FROM dbo.t2) UNION (SELECT c1 FROM dbo.t3) EXCEPT SELECT c1 FROM dbo.t4 ORDER BY c1"
             },
             {
               "type": "order_by",
@@ -4443,7 +4443,7 @@
               "text": "geography::Point(47.6, -122.3, 4326) AS pt"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "t.geo.STDistance(t.geo)"
             },
             {
@@ -23119,11 +23119,11 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS ROW START"
+              "text": "GENERATED ALWAYS AS ROW START HIDDEN"
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS ROW END"
+              "text": "GENERATED ALWAYS AS ROW END HIDDEN"
             },
             {
               "type": "period_for_system_time",
@@ -37446,6 +37446,279 @@
           "step": 2,
           "syntax": "NO_ERROR",
           "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-PE-1",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SELECT 1 AS a;\nSET QUOTED_IDENTIFIER ON;\nSELECT \"x\";\n",
+      "edits": [
+        {
+          "find": "QUOTED_IDENTIFIER ON",
+          "replace": "QUOTED_IDENTIFIER OFF"
+        },
+        {
+          "find": "QUOTED_IDENTIFIER OFF",
+          "replace": "QUOTED_IDENTIFIER ON"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"x\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"x\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-PE-2",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SET QUOTED_IDENTIFIER OFF;\nSELECT \"x\";\nSET QUOTED_IDENTIFIER ON;\nSELECT \"y\";\n",
+      "edits": [
+        {
+          "find": "QUOTED_IDENTIFIER ON",
+          "replace": "QUOTED_IDENTIFIER OFF"
+        },
+        {
+          "find": "OFF;\nSELECT \"y\"",
+          "replace": "ON;\nSELECT \"y\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"y\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"y\""
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF",
+              "occurrence": 2
+            },
+            {
+              "type": "literal",
+              "text": "\"y\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"y\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"y\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-P-1",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SET QUOTED_IDENTIFIER /* off */ OFF;\nSELECT \"a\";\nSET ANSI_NULLS, QUOTED_IDENTIFIER ON;\nSELECT \"b\";\nSET QUOTED_IDENTIFIER, ANSI_NULLS OFF;\nSELECT \"c\";\nSET QUOTED_IDENTIFIER -- on\n  ON;\nSELECT \"d\";\nSET QUOTED_IDENTIFIER /* a /* b */ c */ OFF;\nSELECT \"x\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER /* off */ OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"a\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET ANSI_NULLS, QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"b\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"b\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER, ANSI_NULLS OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"c\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER -- on\n  ON"
+            },
+            {
+              "type": "field",
+              "text": "\"d\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"d\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER /* a /* b */ c */ OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ]
         }
       ]
     },
