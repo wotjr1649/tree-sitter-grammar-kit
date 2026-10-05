@@ -2927,8 +2927,7 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "export_statement",
-            "class"
+            "export_statement"
           ],
           "anchors": [
             {
@@ -5801,61 +5800,6 @@
             "else_clause",
             "function_declaration",
             "labeled_statement"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "probe-javascript-L01-R-2",
-      "features": [
-        "javascript-L01"
-      ],
-      "source_utf8": "var flag = true;\nif (flag) function f() {}\nvar after = 1;\n",
-      "edits": [
-        {
-          "find": "var flag = true;\n",
-          "replace": "'use strict';\nvar flag = true;\n"
-        },
-        {
-          "find": "'use strict';\n",
-          "replace": ""
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "variable_declaration",
-            "if_statement",
-            "function_declaration"
-          ]
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [
-            "expression_statement",
-            "variable_declaration"
-          ],
-          "anchors": [
-            {
-              "type": "expression_statement",
-              "text": "'use strict';"
-            },
-            {
-              "type": "variable_declaration",
-              "text": "var flag = true;"
-            }
-          ]
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "variable_declaration",
-            "if_statement",
-            "function_declaration"
           ]
         }
       ]

@@ -84,9 +84,25 @@
       "reference_basis": "PREPARE_GENERATED",
       "candidate": "P05-CSHARP-REMEDY-r5",
       "prepare_generated": {
+        "grammar.json": {
+          "bytes": 301739,
+          "sha256": "78f309b70eeef0a0f38beb0a58a052720f0f2630f1803e3769bca2188d0928f1"
+        },
+        "node-types.json": {
+          "bytes": 132601,
+          "sha256": "cedf122489a974d9ce175256070ba9b9b8c022a5886f7c18923b6102d6ce46c8"
+        },
         "parser.c": {
-          "bytes": 32815459,
-          "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e"
+          "bytes": 32974222,
+          "sha256": "897e7444f3e6fbfa1a41bbc1bf06fd623d14da3a0fed7ce5e90206d69a9d8e58"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
         },
         "tree_sitter/parser.h": {
           "bytes": 7624,
@@ -168,16 +184,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 174998,
-          "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+          "bytes": 201599,
+          "sha256": "618ac1a783a4821f7531a678d7573b4a2caa2dd0c5c09cf64116fc4b28b3719a"
         },
         "node-types.json": {
-          "bytes": 64022,
-          "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+          "bytes": 78144,
+          "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
         },
         "parser.c": {
-          "bytes": 2855926,
-          "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+          "bytes": 3888200,
+          "sha256": "a8ab84d1badcf4dd4bffcc86dcc71e4c4780f5da9f089a3c92d5eeafeb1410cf"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
@@ -201,16 +217,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 174998,
-          "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+          "bytes": 201599,
+          "sha256": "618ac1a783a4821f7531a678d7573b4a2caa2dd0c5c09cf64116fc4b28b3719a"
         },
         "node-types.json": {
-          "bytes": 64022,
-          "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+          "bytes": 78144,
+          "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
         },
         "parser.c": {
-          "bytes": 2855926,
-          "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+          "bytes": 3888200,
+          "sha256": "a8ab84d1badcf4dd4bffcc86dcc71e4c4780f5da9f089a3c92d5eeafeb1410cf"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
@@ -236,9 +252,25 @@
       "reference_basis": "PREPARE_GENERATED",
       "candidate": "P05-TS-TSX-REMEDY-r2",
       "prepare_generated": {
+        "grammar.json": {
+          "bytes": 292536,
+          "sha256": "0e371f96a4e6d1dc4aee2ed94e601be9ff50d18f547609f4f043fd87bfd530c9"
+        },
+        "node-types.json": {
+          "bytes": 109458,
+          "sha256": "c23113a71b334a1ceddca33842c8b5701fe29758e3e170d1f15f690158d0d56c"
+        },
         "parser.c": {
-          "bytes": 8764241,
-          "sha256": "1ed7309680ac623523e1c9ae31d8b7286a56219d08b9a11660887e88d848d3c5"
+          "bytes": 8845184,
+          "sha256": "d5a8cbe3c229abddae6fcc360ac39704bc46f1d39d40c0a1798da8eef96c3bfa"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
         },
         "tree_sitter/parser.h": {
           "bytes": 7624,
@@ -256,9 +288,25 @@
       "reference_basis": "PREPARE_GENERATED",
       "candidate": "P05-TS-TSX-REMEDY-r2",
       "prepare_generated": {
+        "grammar.json": {
+          "bytes": 299089,
+          "sha256": "658b9c0ed596df9abb1e7a2d5a5927cd03c13849bf379dc83e45a3d2f1980ab0"
+        },
+        "node-types.json": {
+          "bytes": 114220,
+          "sha256": "66fe19f1173dd634712e7964d3fd11d6303d7b0a79723af06a2bd5835b69faab"
+        },
         "parser.c": {
-          "bytes": 8788036,
-          "sha256": "87e0d559545b43b6fd0f6146a5419dbc19a900b2e10f3ef9451aaf33275e5296"
+          "bytes": 9178103,
+          "sha256": "5024cdeddb5833348203acc0c3bcc60347034064f0fb86e8d8abc8e0b2a8ad62"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
         },
         "tree_sitter/parser.h": {
           "bytes": 7624,
@@ -340,16 +388,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 237474,
-          "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368"
+          "bytes": 292241,
+          "sha256": "db35e2197bdf045b5380c40625dd2c46cd070cfc25451271136b7005a0608f35"
         },
         "node-types.json": {
-          "bytes": 83057,
-          "sha256": "23e819ef1eefd357bb6eba844f47f8492f6a88da3e5046b06ec4acd4da8a9fd6"
+          "bytes": 90309,
+          "sha256": "bf986edaedb9cf1d458e1a78f7efefd6a51291498ab3c2b507ae203b1168e221"
         },
         "parser.c": {
-          "bytes": 3872012,
-          "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2"
+          "bytes": 5569756,
+          "sha256": "a0bc2a0ce90da9f72227445b74fd5d979f9a7d8fbeb0f73930bd7b66c919495c"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
@@ -376,16 +424,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 458800,
-          "sha256": "3aa14b0b6ef87951ef9933d126f6d9774bc7d7dba11e7be1861820e381d36455"
+          "bytes": 573678,
+          "sha256": "d752e1598375dc20f90f5c6dbe3fbe0740c84871bf2e11b4235a9cfa25643a4d"
         },
         "node-types.json": {
-          "bytes": 164416,
-          "sha256": "bc49c50d6b8af62df4cfda2675e5142bfba85bc1790ff2693aa0ca1286d5c7fe"
+          "bytes": 171345,
+          "sha256": "587e9c3c0487f280eccc6dd0a26f88e1889f146107d91302c740484dce04a1ca"
         },
         "parser.c": {
-          "bytes": 25857209,
-          "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999"
+          "bytes": 49243599,
+          "sha256": "8ae243cb3282e997535bf2fadba995fd82555fc55370d850c4a49d344155216b"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,

@@ -252,7 +252,7 @@
             {
               "name": "arm",
               "type": "switch_expression_arm",
-              "text": "(0, 0) => \"origin\""
+              "text": "Point(0, 0) => \"origin\""
             },
             {
               "name": "arm",

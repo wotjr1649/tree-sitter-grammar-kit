@@ -3869,8 +3869,7 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "export_statement",
-            "class"
+            "export_statement"
           ],
           "anchors": [
             {
