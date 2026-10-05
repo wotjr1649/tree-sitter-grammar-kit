@@ -2885,8 +2885,8 @@
      "path": "src/scanner.c",
      "role": "scanner",
      "origin": "patched",
-     "sha256": "cae54b40b179570fb834af9d62cc6a8102604057f6b3dfc8998fe51dac572f1c",
-     "bytes": 7607
+     "sha256": "9b2cf23fe00d1227b9c1ad8324b08503b3b0dd1aa678ed93726e1be95513de8d",
+     "bytes": 7998
     },
     {
      "path": "src/tree_sitter/alloc.h",
@@ -3364,8 +3364,8 @@
      },
      {
       "path": "src/scanner.c",
-      "bytes": 7607,
-      "sha256": "cae54b40b179570fb834af9d62cc6a8102604057f6b3dfc8998fe51dac572f1c"
+      "bytes": 7998,
+      "sha256": "9b2cf23fe00d1227b9c1ad8324b08503b3b0dd1aa678ed93726e1be95513de8d"
      },
      {
       "path": "grammar/statements/alter.js",

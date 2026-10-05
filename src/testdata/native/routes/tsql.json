@@ -37658,7 +37658,7 @@
       "features": [
         "tsql-B05"
       ],
-      "source_utf8": "SET QUOTED_IDENTIFIER /* off */ OFF;\nSELECT \"a\";\nSET ANSI_NULLS, QUOTED_IDENTIFIER ON;\nSELECT \"b\";\nSET QUOTED_IDENTIFIER, ANSI_NULLS OFF;\nSELECT \"c\";\nSET QUOTED_IDENTIFIER -- on\n  ON;\nSELECT \"d\";\n",
+      "source_utf8": "SET QUOTED_IDENTIFIER /* off */ OFF;\nSELECT \"a\";\nSET ANSI_NULLS, QUOTED_IDENTIFIER ON;\nSELECT \"b\";\nSET QUOTED_IDENTIFIER, ANSI_NULLS OFF;\nSELECT \"c\";\nSET QUOTED_IDENTIFIER -- on\n  ON;\nSELECT \"d\";\nSET QUOTED_IDENTIFIER /* a /* b */ c */ OFF;\nSELECT \"x\";\n",
       "edits": [],
       "expect": [
         {
@@ -37709,6 +37709,14 @@
             {
               "type": "identifier",
               "text": "\"d\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER /* a /* b */ c */ OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
             }
           ]
         }
