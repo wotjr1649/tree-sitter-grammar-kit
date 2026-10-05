@@ -1,0 +1,413 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "c",
+ "defects": [
+  "c-P2-01",
+  "c-P2-02",
+  "c-P2-03",
+  "c-P2-04",
+  "c-P2-05",
+  "c-P2-06",
+  "c-P2-07",
+  "c-P2-08",
+  "c-P2-09",
+  "c-P2-10",
+  "c-P2-11",
+  "c-P2-12",
+  "c-P2-13",
+  "c-P2-14",
+  "c-P2-15",
+  "c-P2-16",
+  "c-P2-17",
+  "c-P2-18",
+  "c-P2-19",
+  "c-P2-20",
+  "c-P2-21",
+  "c-P2-22",
+  "c-P2-23",
+  "c-P2-24",
+  "c-P2-25"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "      'bool',\n      'char',\n",
+     "after": "      'bool',\n      '_Bool',\n      '_Decimal32',\n      '_Decimal64',\n      '_Decimal128',\n      'char',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          'short',\n",
+     "after": "          'short',\n          '_Complex',\n          '_Imaginary',\n",
+     "occurrences": 4
+    },
+    {
+     "before": "    type_specifier: $ => choice(\n      $.struct_specifier,\n",
+     "after": "    type_specifier: $ => choice(\n      $.struct_specifier,\n      $.bit_int_specifier,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          prec.dynamic(-1, $._type_identifier),\n          $.primitive_type,\n",
+     "after": "          prec.dynamic(-1, $._type_identifier),\n          $.primitive_type,\n          $.bit_int_specifier,\n",
+     "occurrences": 2
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    bit_int_specifier: $ => seq('_BitInt', '(', $.expression, ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'thread_local',\n      '__thread',\n",
+     "after": "      'thread_local',\n      '__thread',\n      '_Thread_local',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'const',\n      'constexpr',\n",
+     "after": "      'const',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      '_Atomic',\n      '_Noreturn',\n      'noreturn',\n",
+     "after": "      '_Atomic',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'inline',\n      '__inline',\n",
+     "after": "      'inline',\n      '_Noreturn',\n      'noreturn',\n      'constexpr',\n      '__inline',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_specifier: $ => choice(\n      $.struct_specifier,\n",
+     "after": "    type_specifier: $ => choice(\n      $.struct_specifier,\n      $.atomic_type_specifier,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    atomic_type_specifier: $ => prec(1, seq('_Atomic', '(', field('type', $.type_descriptor), ')')),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_specifier: $ => choice(\n      $.struct_specifier,\n",
+     "after": "    type_specifier: $ => choice(\n      $.struct_specifier,\n      $.typeof_specifier,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    typeof_specifier: $ => seq(\n      choice('typeof', 'typeof_unqual', '__typeof__', '__typeof'),\n      '(',\n      choice(prec.dynamic(1, field('value', $.expression)), field('type', $.type_descriptor)),\n      ')',\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    declaration: $ => seq(\n      $._declaration_specifiers,\n      commaSep1(field('declarator', choice(\n        seq(\n          optional($.ms_call_modifier),\n          $._declaration_declarator,\n",
+     "after": "    declaration: $ => seq(\n      choice($._declaration_specifiers, prec.dynamic(-1, $._type_inference_specifiers)),\n      commaSep1(field('declarator', choice(\n        seq(\n          optional($.ms_call_modifier),\n          $._declaration_declarator,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    // N3096 6.7.10: 'auto' with no type specifier infers the type from the initializer\n    _type_inference_specifiers: $ => seq(\n      repeat($._declaration_modifiers),\n      alias('auto', $.storage_class_specifier),\n      repeat($._declaration_modifiers),\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.storage_class_specifier, $._type_inference_specifiers],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      '[[',\n      commaSep1($.attribute),\n      ']]',\n",
+     "after": "      '[[',\n      optional($.attribute),\n      repeat(seq(',', optional($.attribute))),\n      ']]',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    struct_specifier: $ => prec.right(seq(\n      'struct',\n",
+     "after": "    struct_specifier: $ => prec.right(seq(\n      'struct',\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'union',\n      optional($.ms_declspec_modifier),\n",
+     "after": "      'union',\n      repeat($.attribute_declaration),\n      optional($.ms_declspec_modifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    enum_specifier: $ => seq(\n      'enum',\n",
+     "after": "    enum_specifier: $ => seq(\n      'enum',\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    enumerator: $ => seq(\n      field('name', $.identifier),\n",
+     "after": "    enumerator: $ => seq(\n      field('name', $.identifier),\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      '*',\n      repeat($.ms_pointer_modifier),\n",
+     "after": "      '*',\n      repeat($.attribute_declaration),\n      repeat($.ms_pointer_modifier),\n",
+     "occurrences": 3
+    },
+    {
+     "before": "seq('*',\n      repeat($.ms_pointer_modifier),\n",
+     "after": "seq('*',\n      repeat($.attribute_declaration),\n      repeat($.ms_pointer_modifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('size', optional(choice($.expression, '*'))),\n      ']',\n    )),\n\n    init_declarator",
+     "after": "      field('size', optional(choice($.expression, '*'))),\n      ']',\n      repeat($.attribute_declaration),\n    )),\n\n    init_declarator",
+     "occurrences": 1
+    },
+    {
+     "before": "    abstract_function_declarator: $ => prec(1, seq(\n      field('declarator', optional($._abstract_declarator)),\n      field('parameters', $.parameter_list),\n",
+     "after": "    abstract_function_declarator: $ => prec(1, seq(\n      field('declarator', optional($._abstract_declarator)),\n      field('parameters', $.parameter_list),\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    compound_literal_expression: $ => seq(\n      '(',\n      field('type', $.type_descriptor),\n",
+     "after": "    compound_literal_expression: $ => seq(\n      '(',\n      repeat($.storage_class_specifier),\n      field('type', $.type_descriptor),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      commaSep1(seq($.type_descriptor, ':', $.expression)),\n",
+     "after": "      commaSep1(seq(choice($.type_descriptor, 'default'), ':', $.expression)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          optional(seq(':', field('underlying_type', $.primitive_type))),\n          field('body', optional($.enumerator_list)),\n        ),\n        field('body', $.enumerator_list),\n",
+     "after": "          optional($._enum_type_specifier),\n          field('body', optional($.enumerator_list)),\n        ),\n        seq(optional($._enum_type_specifier), field('body', $.enumerator_list)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _enum_type_specifier: $ => seq(':', field('underlying_type', choice($.primitive_type, $.sized_type_specifier, $._type_identifier))),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.sized_type_specifier, $._enum_type_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    labeled_statement: $ => seq(\n      field('label', $._statement_identifier),\n      ':',\n      choice($.declaration, $.statement),\n    ),\n",
+     "after": "    labeled_statement: $ => prec.right(seq(\n      field('label', $._statement_identifier),\n      ':',\n      optional(choice($.declaration, $.statement)),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _field_declaration_declarator: $ => commaSep1(seq(\n      field('declarator', $._field_declarator),\n      optional($.bitfield_clause),\n    )),\n",
+     "after": "    _field_declaration_declarator: $ => commaSep1(choice(\n      seq(\n        field('declarator', $._field_declarator),\n        optional($.bitfield_clause),\n      ),\n      $.bitfield_clause,\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "_item: $ => choice(\n      $.function_definition,\n",
+     "after": "_item: $ => choice(\n      $.static_assert_declaration,\n      $.function_definition,\n",
+     "occurrences": 2
+    },
+    {
+     "before": "      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "after": "      $.static_assert_declaration,\n      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    static_assert_declaration: $ => seq(\n      choice('_Static_assert', 'static_assert'),\n      '(',\n      field('condition', $.expression),\n      optional(seq(',', field('message', $._string))),\n      ')',\n      ';',\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.preproc_call,\n    ),\n",
+     "after": "      $.preproc_call,\n      $.pragma_operator,\n    ),\n",
+     "occurrences": 2
+    },
+    {
+     "before": "      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "after": "      $.pragma_operator,\n      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    pragma_operator: $ => seq('_Pragma', '(', $.string_literal, ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    preproc_call: $ => seq(\n      field('directive', $.preproc_directive),\n      field('argument', optional($.preproc_arg)),\n      token.immediate(/\\r?\\n/),\n    ),\n",
+     "after": "    preproc_call: $ => choice(\n      seq(\n        field('directive', $.preproc_directive),\n        field('argument', optional($.preproc_arg)),\n        token.immediate(/\\r?\\n/),\n      ),\n      // null directive (N3096 6.10.8)\n      seq(field('directive', alias(/#[ \\t]*/, $.preproc_directive)), token.immediate(/\\r?\\n/)),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    preproc_directive: _ => /#[ \\t]*[a-zA-Z0-9]\\w*/,\n",
+     "after": "    preproc_directive: _ => new RegExp('#[ \\t]*' + directiveName(['elif', 'elifdef', 'elifndef', 'else', 'endif'])),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports.PREC = PREC;\n",
+     "after": "/**\n * A directive name that is neither one of `words` nor a prefix of one, so that a\n * conditional directive outside an if-section is a syntax error instead of a preproc_call.\n *\n * @param {string[]} words\n *\n * @returns {string}\n */\nfunction directiveName(words) {\n  const prefixes = new Set(words.flatMap((w) => [...w].map((_, i) => w.slice(0, i + 1))));\n  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';\n  const node = (s) => {\n    const next = [...new Set([...prefixes].filter((p) => p.length === s.length + 1 && p.startsWith(s)).map((p) => p[s.length]))];\n    const other = [...(s ? chars : chars.slice(0, -1))].filter((c) => !next.includes(c)).join('');\n    return '(' + ['[' + other + ']\\\\w*', ...next.map((c) => c + node(s + c))].join('|') + ')';\n  };\n  return node('');\n}\n\nmodule.exports.PREC = PREC;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _balanced_token: $ => choice(\n      seq('(', repeat($._balanced_token), ')'),\n      seq('[', repeat($._balanced_token), ']'),\n      seq('{', repeat($._balanced_token), '}'),\n      $.identifier,\n      $.number_literal,\n      $.char_literal,\n      $.string_literal,\n      $.system_lib_string,\n      '::', ':', ',', ';', '.', '...', '->', '?', '!', '~', '=', '+', '-', '*', '/', '%', '&', '|', '^',\n      '<', '>', '<=', '>=', '==', '!=', '&&', '||', '<<', '>>', '++', '--',\n      '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=',\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('name', $.identifier),\n      optional($.argument_list),\n    ),\n",
+     "after": "      field('name', $.identifier),\n      optional(choice($.argument_list, prec.dynamic(-1, alias($._attribute_argument_clause, $.argument_list)))),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _attribute_argument_clause: $ => seq('(', repeat($._balanced_token), ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.argument_list, $._attribute_argument_clause],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.expression, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.type_specifier, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.labeled_statement, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.compound_statement, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.expression_statement, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.type_specifier, $.expression, $.macro_type_specifier, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.type_specifier, $.expression, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$._string, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.concatenated_string, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _preproc_expression: $ => choice(\n      $.identifier,\n",
+     "after": "    _preproc_expression: $ => choice(\n      alias($.preproc_has_expression, $.call_expression),\n      $.identifier,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    preproc_has_expression: $ => seq(\n      field('function', alias(choice('__has_include', '__has_include_next', '__has_embed', '__has_c_attribute'), $.identifier)),\n      field('arguments', alias($.preproc_has_argument_list, $.argument_list)),\n    ),\n    preproc_has_argument_list: $ => seq('(', repeat($._balanced_token), ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    initializer_list: $ => seq(\n      '{',\n      commaSep(choice(\n        $.initializer_pair,\n        $.expression,\n        $.initializer_list,\n      )),\n      optional(','),\n      '}',\n    ),\n",
+     "after": "    initializer_list: $ => seq(\n      '{',\n      repeat(choice(\n        seq(choice($.initializer_pair, $.expression, $.initializer_list), ','),\n        seq($.preproc_call, optional(',')),\n      )),\n      optional(choice($.initializer_pair, $.expression, $.initializer_list)),\n      '}',\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('if'),\n      field('condition', $._preproc_expression),\n      '\\n',\n      repeat(content($)),\n",
+     "after": "      preprocessor('if'),\n      choice(\n        seq(field('condition', $._preproc_expression), '\\n', repeat(content($))),\n        skippedGroup($),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('elif'),\n      field('condition', $._preproc_expression),\n      '\\n',\n      repeat(content($)),\n",
+     "after": "      preprocessor('elif'),\n      choice(\n        seq(field('condition', $._preproc_expression), '\\n', repeat(content($))),\n        skippedGroup($),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _preproc_expression: $ => choice(\n",
+     "after": "    _preproc_expression: $ => choice(\n      alias('0', $.number_literal),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "/**\n * Creates a preprocessor regex rule\n",
+     "after": "/**\n * The body of a group whose condition is the literal 0: the group is skipped\n * (N3096 6.10.2p6, [cpp.cond]), so only the conditional directives nested in it\n * are processed and its other lines stay text.\n *\n * @param {GrammarSymbols<string>} $\n *\n * @returns {Rule}\n */\nfunction skippedGroup($) {\n  return prec(1, seq(field('condition', alias('0', $.number_literal)), '\\n', optional($.preproc_skipped)));\n}\n\n/**\n * Creates a preprocessor regex rule\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    preproc_skipped: $ => repeat1(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n    _preproc_skipped_line: _ => token(prec(-1, /\\S[^\\n]*/)),\n    _preproc_skipped_group: $ => seq(\n      choice(preprocessor('if'), preprocessor('ifdef'), preprocessor('ifndef')),\n      repeat(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n      repeat(seq(\n        choice(preprocessor('elif'), preprocessor('elifdef'), preprocessor('elifndef'), preprocessor('else')),\n        repeat(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n      )),\n      preprocessor('endif'),\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  return alias(new RegExp('#[ \\t]*' + command), '#' + command);",
+     "after": "  return alias(new RegExp('(#|%:)[ \\t]*' + command), '#' + command);",
+     "occurrences": 1
+    },
+    {
+     "before": "new RegExp('#[ \\t]*' + directiveName(",
+     "after": "new RegExp('(#|%:)[ \\t]*' + directiveName(",
+     "occurrences": 1
+    },
+    {
+     "before": "alias(/#[ \\t]*/, $.preproc_directive)",
+     "after": "alias(/(#|%:)[ \\t]*/, $.preproc_directive)",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports = grammar({\n",
+     "after": "module.exports = digraphs(grammar({\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n});\n\n/**\n *\n * @param {string} suffix",
+     "after": "\n}));\n\n/**\n *\n * @param {string} suffix",
+     "occurrences": 1
+    },
+    {
+     "before": "/**\n * Creates a preprocessor regex rule\n",
+     "after": "/**\n * Lets alternative spellings (the digraphs <: :> <% %>, N3096 6.4.6p3, [lex.digraph])\n * stand for the punctuators of every rule. `spellings` maps a punctuator to its other\n * spellings: strings, or rules such as an external token for C++'s '<::' exception.\n *\n * @param {any} g\n *\n * @param {Object<string, any[]>} [spellings]\n *\n * @returns {any}\n */\nfunction digraphs(g, spellings) {\n  spellings = spellings || {'[': ['<:'], ']': [':>'], '{': ['<%'], '}': ['%>']};\n  const spelt = (v) => Object.prototype.hasOwnProperty.call(spellings, v);\n  const replace = (v) => {\n    const strings = [v, ...spellings[v].filter((s) => typeof s === 'string')];\n    const others = spellings[v].filter((s) => typeof s !== 'string');\n    const token = {type: 'TOKEN', content: {type: 'CHOICE', members: strings.map((value) => ({type: 'STRING', value}))}};\n    return {type: 'ALIAS', named: false, value: v, content: others.length ? {type: 'CHOICE', members: [token, ...others]} : token};\n  };\n  const walk = (r) => {\n    if (r.type === 'TOKEN' || r.type === 'IMMEDIATE_TOKEN') return r;\n    if ((r.type === 'STRING' || (r.type === 'ALIAS' && !r.named)) && spelt(r.value)) return replace(r.value);\n    if (r.content) {\n      const c = walk(r.content);\n      if (c !== r.content) r = {...r, content: c};\n    }\n    if (r.members) {\n      const m = r.members.map(walk);\n      if (m.some((x, i) => x !== r.members[i])) r = {...r, members: m};\n    }\n    return r;\n  };\n  for (const k of Object.keys(g.grammar.rules)) g.grammar.rules[k] = walk(g.grammar.rules[k]);\n  return g;\n}\n\n/**\n * Creates a preprocessor regex rule\n",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports.commaSep1 = commaSep1;\n",
+     "after": "module.exports.commaSep1 = commaSep1;\nmodule.exports.digraphs = digraphs;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    attributed_statement: $ => seq(\n      repeat1($.attribute_declaration),\n      $.statement,\n    ),\n",
+     "after": "    attributed_statement: $ => seq(\n      repeat1($.attribute_declaration),\n      $._non_case_statement,\n    ),\n    // wins over a label named 'default' inside the previous case body\n    _attributed_case_statement: $ => prec.dynamic(1, seq(\n      repeat1($.attribute_declaration),\n      $.case_statement,\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    statement: $ => choice(\n      $.case_statement,\n",
+     "after": "    statement: $ => choice(\n      $.case_statement,\n      alias($._attributed_case_statement, $.attributed_statement),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _top_level_statement: $ => choice(\n      $.case_statement,\n",
+     "after": "    _top_level_statement: $ => choice(\n      $.case_statement,\n      alias($._attributed_case_statement, $.attributed_statement),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    case_statement: $ => prec.right(seq(\n      choice(\n        seq('case', field('value', $.expression)),\n        'default',\n      ),\n      ':',\n      repeat(choice(\n        $._non_case_statement,\n        $.declaration,\n        $.type_definition,\n      )),\n    )),\n",
+     "after": "    case_statement: $ => seq(\n      choice(\n        seq('case', field('value', $.expression)),\n        'default',\n      ),\n      ':',\n      repeat($._case_body_item),\n    ),\n    _case_body_item: $ => prec.dynamic(1, choice(\n      $._non_case_statement,\n      $.declaration,\n      $.type_definition,\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$.case_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.type_qualifier, $.extension_expression],\n",
+     "after": "    [$.type_qualifier, $.extension_expression],\n    [$._declaration_modifiers, $.attributed_statement, $._attributed_case_statement],\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

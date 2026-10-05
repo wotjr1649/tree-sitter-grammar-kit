@@ -3057,7 +3057,7 @@
             {
               "type": "parameter_declaration",
               "text": "[[]] int",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "parameter_declaration",
