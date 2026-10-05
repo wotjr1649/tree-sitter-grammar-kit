@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-- 버전 충돌 legacy 대안을 구문 합집합에서 뺐다(#91, #76 사용자 결정). C++20·C++23 이전 해석 4개(`cpp-L01.a13`·`a14`·`a15`·`a18`), PHP 7.0에서 제거된 ASP·script tag(`php-L01.a006`·`a007`), 8.0 이전 `#[` 주석(`php-L01.a009`)이다. 같은 byte가 현행 version에서 다른 구문이라 grammar 하나로 함께 검증할 수 없다. 사양 인용은 [disposition 문서](docs/validation/language-feature-disposition.md#읽는-법과-완료-경계)에 있다.
-  - 이 대안만 담던 사례 `alt-cpp-L01-06`~`09`, `alt-php-L01-05`와, N3337 전용 attribute 위치를 담은 `alt-cpp-B01-31`을 뺐다. `alt-php-L01-04`는 여전히 유효한 `<?` short tag(`php-L01.a008`)만 남겼다.
+- 버전 충돌 legacy 대안을 구문 합집합에서 뺐다(#91, #76 사용자 결정). 같은 byte가 채택 범위의 두 version에서 각각 유효한 다른 구문이라 grammar 하나로 함께 검증할 수 없는 대안이다: C++17 이전 `module`/`import` 줄(`cpp-L01.a13`), C++23 이전 `arr[1, 2]`(`cpp-L01.a18`), PHP 7.0에서 제거된 ASP·script tag(`php-L01.a006`·`a007`), 8.0 이전 `#[` 주석(`php-L01.a009`). 사양 인용은 [disposition 문서](docs/validation/language-feature-disposition.md#읽는-법과-완료-경계)에 있다.
+  - 이 대안만 담던 사례 `alt-cpp-L01-06`·`09`, `alt-php-L01-05`를 뺐다. `alt-php-L01-04`는 여전히 유효한 `<?` short tag(`php-L01.a008`)만 남겼다.
+  - 이후 version에서 ill-formed가 될 뿐인 형식(`import<int> f();`, `Y<operator<=> y;`, N3337 attribute 위치)은 충돌이 아니라 REQ로 남는다.
 
 - 비채택 20 route도 고정 생성기 재생성 경로에 올렸다(#89, `C2-REGENERATE-r1`: #76에서 사용자가 승인한 26 route patch 경로의 첫 단계). grammar는 바꾸지 않았다.
   - 20 route의 native 입력 `parser.c`·`tree_sitter/*.h`는 이제 upstream에 들어 있는 이전 CLI 생성물이 아니다. 고정 commit의 patch 없는 grammar를 tree-sitter 0.27.0·Node 24.21.0·ABI 15로 재생성한 출력이다. `native-routes.json`의 `regeneration`은 patch chain과 patched file이 비어 있다. `language-sources.json`의 `regeneration` 기록과 `reproduction-routes.json`의 `PREPARE_GENERATED` 기준이 출력 6개를 모두 고정한다. Windows에서 20 route 모두 두 작업 공간 출력이 byte 단위로 같았고 S04 재생성 출력과도 같았다. php는 upstream 생성물과 같고, 나머지 19 route는 `array.h` 등이 다르다.

@@ -14985,6 +14985,22 @@
             "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
           },
           {
+            "id": "cpp-L01.a14",
+            "kind": "fact",
+            "variant_of": null,
+            "fact": "import<...> template-id",
+            "production": "N4950 C.2 [diff.cpp17.lex]: import<int> f(); was a declaration using a class template named import",
+            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
+          },
+          {
+            "id": "cpp-L01.a15",
+            "kind": "fact",
+            "variant_of": null,
+            "fact": "<= followed by >",
+            "production": "N4950 C.2 [diff.cpp17.lex]: Y<operator<=> y; was <= followed by > before the <=> token",
+            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
+          },
+          {
             "id": "cpp-L01.a16",
             "kind": "fact",
             "variant_of": null,

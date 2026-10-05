@@ -94581,6 +94581,77 @@
       "source": null
      },
      {
+      "id": "alt-cpp-B01-31",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "74649aefc7bcbbdbc6699c5402ac1a2007dda812a810ad20301bc0278f385988",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "declaration",
+         "function_declarator",
+         "attribute_declaration",
+         "noexcept"
+        ],
+        "anchors": [
+         {
+          "type": "function_declarator",
+          "start_byte": 4,
+          "end_byte": 25
+         },
+         {
+          "type": "attribute_declaration",
+          "start_byte": 12,
+          "end_byte": 16
+         },
+         {
+          "type": "noexcept",
+          "start_byte": 17,
+          "end_byte": 25
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ],
+       "cpp-V23": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "cpp-B01.a540",
+       "cpp-B01.a717",
+       "cpp-B01.a042",
+       "cpp-B01.a043",
+       "cpp-B01.a046",
+       "cpp-B01.a047",
+       "cpp-B01.a054",
+       "cpp-V23.a028",
+       "cpp-V23.a029",
+       "cpp-V23.a030",
+       "cpp-V23.a031",
+       "cpp-V23.a036"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "alt-cpp-B01-30",
       "role": "requirement",
       "input": {
@@ -97747,6 +97818,173 @@
       "source": null
      },
      {
+      "id": "alt-cpp-L01-07",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "cc099455ab8fbaef4a02a1a89ab9a53f03d44c6cbfd481c0d19d56fefe581fed",
+       "bytes": 53
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "template_declaration",
+         "declaration",
+         "template_type"
+        ],
+        "anchors": [
+         {
+          "type": "template_declaration",
+          "start_byte": 0,
+          "end_byte": 35
+         },
+         {
+          "type": "declaration",
+          "start_byte": 36,
+          "end_byte": 52
+         },
+         {
+          "type": "template_type",
+          "start_byte": 36,
+          "end_byte": 47
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ],
+       "cpp-L01": [
+        "P"
+       ],
+       "cpp-V23": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "cpp-L01.a14",
+       "cpp-B01.a040",
+       "cpp-B01.a041",
+       "cpp-B01.a046",
+       "cpp-B01.a047",
+       "cpp-B01.a054",
+       "cpp-B01.a074",
+       "cpp-B01.a075",
+       "cpp-V23.a026",
+       "cpp-V23.a027",
+       "cpp-V23.a030",
+       "cpp-V23.a031",
+       "cpp-V23.a036",
+       "cpp-V23.a066",
+       "cpp-V23.a067"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "alt-cpp-L01-08",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1c0df764800bf1128f632a2fa0370ab7bb94ffb21541f4bb00f75f23a108daab",
+       "bytes": 111
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "namespace_definition",
+         "template_declaration",
+         "declaration",
+         "template_type",
+         "operator_name"
+        ],
+        "anchors": [
+         {
+          "type": "declaration",
+          "start_byte": 31,
+          "end_byte": 53
+         },
+         {
+          "type": "declaration",
+          "start_byte": 92,
+          "end_byte": 108
+         },
+         {
+          "type": "template_type",
+          "start_byte": 92,
+          "end_byte": 105
+         },
+         {
+          "type": "operator_name",
+          "start_byte": 94,
+          "end_byte": 104
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ],
+       "cpp-L01": [
+        "P"
+       ],
+       "cpp-V20": [
+        "P"
+       ],
+       "cpp-V23": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "cpp-L01.a15",
+       "cpp-B01.a040",
+       "cpp-B01.a041",
+       "cpp-B01.a046",
+       "cpp-B01.a047",
+       "cpp-B01.a054",
+       "cpp-B01.a074",
+       "cpp-B01.a075",
+       "cpp-B01.a090",
+       "cpp-B01.a096",
+       "cpp-V23.a026",
+       "cpp-V23.a027",
+       "cpp-V23.a030",
+       "cpp-V23.a031",
+       "cpp-V23.a036",
+       "cpp-V23.a066",
+       "cpp-V23.a067",
+       "cpp-V23.a068",
+       "cpp-V20.a07",
+       "cpp-V23.a078"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "alt-cpp-L01-10",
       "role": "requirement",
       "input": {
@@ -100080,6 +100318,8 @@
       "cpp-L01.a10",
       "cpp-L01.a11",
       "cpp-L01.a12",
+      "cpp-L01.a14",
+      "cpp-L01.a15",
       "cpp-L01.a16",
       "cpp-L01.a17",
       "cpp-L01.a19"
