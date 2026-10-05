@@ -1,0 +1,139 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "php",
+  "defects": [
+    "php-P2-01",
+    "php-P2-03",
+    "php-P2-09",
+    "php-P2-04",
+    "php-P2-06",
+    "php-P2-07",
+    "php-P2-10",
+    "php-P2-11",
+    "php-P2-12",
+    "php-P2-13",
+    "php-P2-02"
+  ],
+  "files": [
+    {
+      "target": "common/define-grammar.js",
+      "operations": [
+        {
+          "before": "      _variable_subscript_expression: $ => seq(\n        $._new_variable,\n        seq('[', optional($.expression), ']'),\n      ),\n\n      _dereferencable_subscript_expression: $ => seq(\n        $._dereferencable_expression,\n        seq('[', optional($.expression), ']'),\n      ),\n",
+          "after": "      _variable_subscript_expression: $ => seq(\n        $._new_variable,\n        choice(\n          seq('[', optional($.expression), ']'),\n          seq(token.immediate('{'), $.expression, '}'),\n        ),\n      ),\n\n      _dereferencable_subscript_expression: $ => choice(\n        seq(\n          $._dereferencable_expression,\n          seq('[', optional($.expression), ']'),\n        ),\n        prec(PREC.DEREF, seq($._variable, token.immediate('{'), $.expression, '}')),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      clone_expression: $ => seq(keyword('clone'), $.primary_expression),",
+          "after": "      clone_expression: $ => choice(\n        prec.dynamic(1, seq(keyword('clone'), $.primary_expression)),\n        seq(keyword('clone'), $.arguments),\n      ),",
+          "occurrences": 1
+        },
+        {
+          "before": "      [$.namespace_name],\n      [$.heredoc_body],\n    ],",
+          "after": "      [$.namespace_name],\n      [$.heredoc_body],\n      [$.parenthesized_expression, $.argument],\n    ],",
+          "occurrences": 1
+        },
+        {
+          "before": "          token.immediate('('),\n          alias($.name, $.operation),\n          token.immediate(')'),",
+          "after": "          token.immediate('('),\n          alias(keyword('set', false), $.operation),\n          token.immediate(')'),",
+          "occurrences": 1
+        },
+        {
+          "before": "      heredoc: $ => seq(\n        token('<<<'),",
+          "after": "      heredoc: $ => seq(\n        token(seq(optional(/[bB]/), '<<<')),",
+          "occurrences": 1
+        },
+        {
+          "before": "      nowdoc: $ => seq(\n        token('<<<'),",
+          "after": "      nowdoc: $ => seq(\n        token(seq(optional(/[bB]/), '<<<')),",
+          "occurrences": 1
+        },
+        {
+          "before": "        const binary = /0[bB][01]+(_[01]+)*/;\n        return token(choice(\n          decimal,\n          octal,\n          hex,\n          binary,\n        ));",
+          "after": "        const binary = /0[bB][01]+(_[01]+)*/;\n        const legacyOctal = /0[0-7]*[89][0-9]*/;\n        return token(choice(\n          decimal,\n          octal,\n          hex,\n          binary,\n          legacyOctal,\n        ));",
+          "occurrences": 1
+        },
+        {
+          "before": "      exit_statement: $ => seq(\n        keyword('exit'),",
+          "after": "      exit_statement: $ => seq(\n        choice(keyword('exit'), keyword('die')),",
+          "occurrences": 1
+        },
+        {
+          "before": "      namespace_use_group: $ => seq('{', commaSep1($.namespace_use_clause), '}'),",
+          "after": "      namespace_use_group: $ => seq('{', commaSep1($.namespace_use_clause), optional(','), '}'),",
+          "occurrences": 1
+        },
+        {
+          "before": "        repeat1(field('visibility', $.visibility_modifier)),\n        optional(field('readonly', $.readonly_modifier)),\n        optional(field('type', $.type)), // Note",
+          "after": "        repeat1(choice(\n          field('visibility', $.visibility_modifier),\n          field('final', $.final_modifier),\n          field('readonly', $.readonly_modifier),\n        )),\n        optional(field('type', $.type)), // Note",
+          "occurrences": 1
+        },
+        {
+          "before": "          seq(\n            optional($.visibility_modifier),\n            $.name,\n          ),\n          seq(\n            $.visibility_modifier,\n            optional($.name),\n          ),",
+          "after": "          seq(\n            optional(choice($.visibility_modifier, $.final_modifier)),\n            $.name,\n          ),\n          seq(\n            choice($.visibility_modifier, $.final_modifier),\n            optional($.name),\n          ),",
+          "occurrences": 1
+        },
+        {
+          "before": "      expression_statement: $ => seq($.expression, $._semicolon),",
+          "after": "      expression_statement: $ => choice(\n        seq($.expression, $._semicolon),\n        seq(alias($.void_cast_expression, $.cast_expression), $._semicolon),\n      ),\n\n      void_cast_expression: $ => seq(\n        '(',\n        field('type', alias(keyword('void', false), $.cast_type)),\n        ')',\n        field('value', $.expression),\n      ),",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "common/scanner.h",
+      "operations": [
+        {
+          "before": "typedef struct {\n    bool end_word_indentation_allowed;\n    String word;\n} Heredoc;\n",
+          "after": "typedef struct {\n    bool end_word_indentation_allowed;\n    int32_t min_indent; // least indentation of a non-blank body line, INT32_MAX if none\n    String word;\n} Heredoc;\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        .end_word_indentation_allowed = false,                                                                         \\\n",
+          "after": "        .end_word_indentation_allowed = false,                                                                         \\\n        .min_indent = INT32_MAX,                                                                                       \\\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        if (size + 5 + word_size >= TREE_SITTER_SERIALIZATION_BUFFER_SIZE) {\n            return 0;\n        }\n        buffer[size++] = (char)heredoc->end_word_indentation_allowed;\n",
+          "after": "        if (size + 9 + word_size >= TREE_SITTER_SERIALIZATION_BUFFER_SIZE) {\n            return 0;\n        }\n        buffer[size++] = (char)heredoc->end_word_indentation_allowed;\n        memcpy(&buffer[size], &heredoc->min_indent, sizeof(int32_t));\n        size += sizeof(int32_t);\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        heredoc.end_word_indentation_allowed = buffer[size++];\n",
+          "after": "        heredoc.end_word_indentation_allowed = buffer[size++];\n        memcpy(&heredoc.min_indent, &buffer[size], sizeof(int32_t));\n        size += sizeof(int32_t);\n",
+          "occurrences": 1
+        },
+        {
+          "before": "static inline bool scan_nowdoc_string(Scanner *scanner, TSLexer *lexer) {",
+          "after": "// Records the indentation of the line starting at the lookahead (spaces and tabs) as a\n// body line of the innermost heredoc, unless the line is blank. Only looks ahead.\nstatic void record_line_indent(Scanner *scanner, TSLexer *lexer) {\n    int32_t indent = 0;\n    while (lexer->lookahead == ' ' || lexer->lookahead == '\\t') {\n        advance(lexer);\n        indent++;\n    }\n    if (scanner->heredocs.size == 0 || lexer->lookahead == '\\n' || lexer->lookahead == '\\r' || lexer->eof(lexer)) {\n        return;\n    }\n    Heredoc *heredoc = array_back(&scanner->heredocs);\n    if (indent < heredoc->min_indent) {\n        heredoc->min_indent = indent;\n    }\n}\n\nstatic inline bool scan_nowdoc_string(Scanner *scanner, TSLexer *lexer) {",
+          "occurrences": 1
+        },
+        {
+          "before": "    while (iswspace(lexer->lookahead)) {\n        advance(lexer);\n        has_consumed_content = true;\n    }\n",
+          "after": "    bool at_line_start = lexer->get_column(lexer) == 0;\n    int32_t indent = 0;\n    while (iswspace(lexer->lookahead)) {\n        if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {\n            at_line_start = true;\n            indent = 0;\n        } else {\n            indent++;\n        }\n        advance(lexer);\n        has_consumed_content = true;\n    }\n    if (at_line_start && !lexer->eof(lexer) && indent < array_back(&scanner->heredocs)->min_indent) {\n        array_back(&scanner->heredocs)->min_indent = indent;\n    }\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        while (iswspace(lexer->lookahead) && lexer->lookahead != '\\r' && lexer->lookahead != '\\n') {\n            advance(lexer);\n            has_consumed_content = true;\n        }\n",
+          "after": "        bool at_line_start = lexer->get_column(lexer) == 0;\n        int32_t indent = 0;\n        while (iswspace(lexer->lookahead) && lexer->lookahead != '\\r' && lexer->lookahead != '\\n') {\n            advance(lexer);\n            has_consumed_content = true;\n            indent++;\n        }\n        if (at_line_start && lexer->lookahead != '\\r' && lexer->lookahead != '\\n' && !lexer->eof(lexer) &&\n            indent < array_back(&scanner->heredocs)->min_indent) {\n            array_back(&scanner->heredocs)->min_indent = indent;\n        }\n",
+          "occurrences": 1
+        },
+        {
+          "before": "                if (is_heredoc) {\n                    return has_content;\n                }\n",
+          "after": "                if (is_heredoc) {\n                    if (has_content) {\n                        // look past the newline: the next line's indentation (token end is marked)\n                        if (lexer->lookahead == '\\r') {\n                            advance(lexer);\n                        }\n                        if (lexer->lookahead == '\\n') {\n                            advance(lexer);\n                        }\n                        record_line_indent(scanner, lexer);\n                    }\n                    return has_content;\n                }\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        Heredoc heredoc = *array_back(&scanner->heredocs);\n\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n",
+          "after": "        Heredoc heredoc = *array_back(&scanner->heredocs);\n\n        int32_t indent = 0;\n        bool spaces = false, tabs = false;\n        while (iswspace(lexer->lookahead)) {\n            if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {\n                indent = 0;\n                spaces = tabs = false;\n            } else {\n                indent++;\n                if (lexer->lookahead == '\\t') {\n                    tabs = true;\n                } else {\n                    spaces = true;\n                }\n            }\n            skip(lexer);\n        }\n        // PHP 7.3 flexible heredoc: the closing indentation may not exceed that of any\n        // non-blank body line, nor mix tabs and spaces\n        if (indent > heredoc.min_indent || (spaces && tabs)) {\n            return false;\n        }\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        lexer->mark_end(lexer);\n\n        array_push(&scanner->heredocs, heredoc);\n        return true;\n",
+          "after": "        lexer->mark_end(lexer);\n\n        array_push(&scanner->heredocs, heredoc);\n        // look past the opening line: the first body line's indentation (token end is marked)\n        if (lexer->lookahead == '\"' || lexer->lookahead == '\\'') {\n            advance(lexer);\n        }\n        bool newline = false;\n        if (lexer->lookahead == '\\r') {\n            advance(lexer);\n            newline = true;\n        }\n        if (lexer->lookahead == '\\n') {\n            advance(lexer);\n            newline = true;\n        }\n        if (newline) {\n            record_line_indent(scanner, lexer);\n        }\n        return true;\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

@@ -3582,7 +3582,7 @@
             },
             {
               "type": "class_statement",
-              "text": "class Derived : Base, System.IComparable {\n    hidden [int]$Secret\n    static [int]$Count = 0\n    [ValidateNotNull()][string]$Tag\n    Derived() : base('d') { }\n    static Derived() { }\n    [int] CompareTo([object]$o) { return 0 }\n    static [string] Make([int]$i = 1) { return \"$i\" }\n    hidden [void] Helper() { }\n}"
+              "text": "[NoRunspaceAffinity()]\nclass Derived : Base, System.IComparable {\n    hidden [int]$Secret\n    static [int]$Count = 0\n    [ValidateNotNull()][string]$Tag\n    Derived() : base('d') { }\n    static Derived() { }\n    [int] CompareTo([object]$o) { return 0 }\n    static [string] Make([int]$i = 1) { return \"$i\" }\n    hidden [void] Helper() { }\n}"
             },
             {
               "type": "class_property_definition",

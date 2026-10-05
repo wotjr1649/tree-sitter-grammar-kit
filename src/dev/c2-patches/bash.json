@@ -1,0 +1,158 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "bash",
+  "defects": [
+    "bash-P2-01",
+    "bash-P2-02",
+    "bash-P2-03",
+    "bash-P2-04",
+    "bash-P2-05",
+    "bash-P2-06",
+    "bash-P2-07",
+    "bash-P2-08",
+    "bash-P2-09",
+    "bash-P2-10",
+    "bash-P2-11",
+    "bash-P2-12",
+    "bash-P2-13",
+    "bash-P2-14",
+    "bash-P2-15"
+  ],
+  "files": [
+    {
+      "target": "grammar.js",
+      "operations": [
+        {
+          "before": "    [$.pipeline],\n  ],\n",
+          "after": "    [$.pipeline],\n    [$.coproc_statement, $.command_name],\n  ],\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    $.__error_recovery,\n  ],\n",
+          "after": "    $.__error_recovery,\n    $._redirect_target,\n    $._extglob_word,\n  ],\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.function_definition,\n    ),\n",
+          "after": "      $.function_definition,\n      $.coproc_statement,\n    ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.case_statement,\n      $.list,\n      $.compound_statement,\n",
+          "after": "      $.case_statement,\n      $.compound_statement,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.subshell,\n    )),\n",
+          "after": "      $.subshell,\n      $.coproc_statement,\n    )),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      optional(seq(\n        'in',\n        field('value', repeat1($._literal)),\n      )),\n      $._terminator,\n",
+          "after": "      choice(\n        seq(\n          repeat(/\\n/),\n          'in',\n          field('value', repeat($._literal)),\n          $._terminator,\n        ),\n        optional($._terminator),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        ),\n      ),\n      field('redirect', optional($._redirect)),\n",
+          "after": "          $.for_statement,\n          $.c_style_for_statement,\n          $.while_statement,\n          $.case_statement,\n        ),\n      ),\n      repeat(field('redirect', $._redirect)),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        '))'),\n    ),\n",
+          "after": "        '))'),\n    ),\n\n    coproc_statement: $ => prec.right(seq(\n      'coproc',\n      choice(\n        prec.dynamic(1, seq(field('name', $.word), field('body', $._coproc_compound))),\n        field('body', choice($._coproc_compound, $.command)),\n      ),\n    )),\n\n    _coproc_compound: $ => choice(\n      $.compound_statement,\n      $.subshell,\n      $.test_command,\n      $.if_statement,\n      $.for_statement,\n      $.c_style_for_statement,\n      $.while_statement,\n      $.case_statement,\n    ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        $.variable_assignment,\n      )),\n",
+          "after": "        $.variable_assignment,\n        $.subscript,\n      )),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        $._simple_variable_name,\n      )),\n",
+          "after": "        $._simple_variable_name,\n        $.subscript,\n      )),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          field('argument', alias($._bare_dollar, '$')),\n          field('argument', seq(\n",
+          "after": "          field('argument', alias($._bare_dollar, '$')),\n          field('argument', alias($._extglob_word, $.extglob_pattern)),\n          field('argument', seq(\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        '=',\n        '+=',\n",
+          "after": "        token(prec(1, '=')),\n        token(prec(1, '+=')),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          choice('<', '>', '>>', '&>', '&>>', '<&', '>&', '>|'),\n",
+          "after": "          choice('<', '>', '>>', '&>', '&>>', '<&', '>&', '>|', '<>'),\n          $._redirect_target,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        $.command_substitution,\n        $.heredoc_content,\n",
+          "after": "        $.command_substitution,\n        $.arithmetic_expansion,\n        $.heredoc_content,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      alias(token.immediate(/\\d+/), $.number),\n      token.immediate('..'),\n      alias(token.immediate(/\\d+/), $.number),\n",
+          "after": "      choice(\n        seq(\n          alias(token.immediate(/-?\\d+/), $.number),\n          token.immediate('..'),\n          alias(token.immediate(/-?\\d+/), $.number),\n        ),\n        seq(\n          alias(token.immediate(/[a-zA-Z]/), $.word),\n          token.immediate('..'),\n          alias(token.immediate(/[a-zA-Z]/), $.word),\n        ),\n      ),\n      optional(seq(\n        token.immediate('..'),\n        alias(token.immediate(/-?\\d+/), $.number),\n      )),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        $._arithmetic_expression,\n      )),\n      prec(PREC.UNARY, seq(\n        field('operator', tokenLiterals(1, '-', '+', '~')),\n        $._arithmetic_expression,\n",
+          "after": "        $._arithmetic_expression,\n      )),\n      prec(PREC.NEGATE, seq(\n        field('operator', tokenLiterals(1, '-', '+', '~')),\n        $._arithmetic_expression,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        $._arithmetic_expression,\n      )),\n      prec.right(PREC.UNARY, seq(\n        field('operator', '!'),\n        $._arithmetic_expression,\n",
+          "after": "        $._arithmetic_expression,\n      )),\n      prec.right(PREC.NEGATE, seq(\n        field('operator', '!'),\n        $._arithmetic_expression,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      seq('$`', $._statements, '`'),\n    ),\n",
+          "after": "      seq('$`', $._statements, '`'),\n      seq(\n        choice(\n          alias(token(seq('${', /[ \\t\\r\\n]/)), '${'),\n          '${|',\n        ),\n        $._terminated_statement,\n        token(prec(-1, '}')),\n      ),\n    ),\n",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "src/scanner.c",
+      "operations": [
+        {
+          "before": "    ERROR_RECOVERY,\n};\n",
+          "after": "    ERROR_RECOVERY,\n    REDIRECT_TARGET,\n    EXTGLOB_WORD,\n};\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        return iswspace(lexer->lookahead) || lexer->eof(lexer) || lexer->lookahead == '\\\"';\n",
+          "after": "        return iswspace(lexer->lookahead) || lexer->eof(lexer);\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    }\n\n    return false;\n}\n\nstatic bool scan_heredoc_start(Heredoc *heredoc, TSLexer *lexer) {\n",
+          "after": "    }\n\n    return false;\n}\n\nstatic inline bool is_ascii_alpha(int32_t c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }\n\nstatic inline bool is_ascii_digit(int32_t c) { return c >= '0' && c <= '9'; }\n\n// One endpoint of a brace sequence expression: a single letter, or an optionally signed integer.\nstatic bool scan_brace_endpoint(TSLexer *lexer, bool letter) {\n    if (letter) {\n        if (!is_ascii_alpha(lexer->lookahead)) {\n            return false;\n        }\n        advance(lexer);\n        return true;\n    }\n    if (lexer->lookahead == '-') {\n        advance(lexer);\n    }\n    if (!is_ascii_digit(lexer->lookahead)) {\n        return false;\n    }\n    while (is_ascii_digit(lexer->lookahead)) {\n        advance(lexer);\n    }\n    return true;\n}\n\n// The rest of a sequence expression after its first endpoint: '..' x [ '..' incr ] '}'.\nstatic bool scan_brace_rest(TSLexer *lexer, bool letter) {\n    for (int i = 0; i < 2; i++) {\n        if (lexer->lookahead != '.') {\n            return false;\n        }\n        advance(lexer);\n    }\n    if (!scan_brace_endpoint(lexer, letter)) {\n        return false;\n    }\n    if (lexer->lookahead == '.') {\n        advance(lexer);\n        if (lexer->lookahead != '.') {\n            return false;\n        }\n        advance(lexer);\n        if (!scan_brace_endpoint(lexer, false)) {\n            return false;\n        }\n    }\n    if (lexer->lookahead != '}') {\n        return false;\n    }\n    lexer->result_symbol = BRACE_START;\n    return true;\n}\n\nstatic inline bool is_extglob_operator(int32_t c) {\n    return c == '?' || c == '*' || c == '+' || c == '@' || c == '!';\n}\n\n// A parenthesised extglob pattern list starting at '(', with nesting, quotes and escapes.\nstatic bool scan_extglob_group(TSLexer *lexer) {\n    uint32_t depth = 0;\n    for (;;) {\n        int32_t c = lexer->lookahead;\n        if (lexer->eof(lexer) || c == '\\n') {\n            return false;\n        }\n        if (c == '\\\\') {\n            advance(lexer);\n            if (lexer->eof(lexer)) {\n                return false;\n            }\n            advance(lexer);\n            continue;\n        }\n        if (c == '\\'' || c == '\"') {\n            advance(lexer);\n            while (lexer->lookahead != c) {\n                if (lexer->eof(lexer)) {\n                    return false;\n                }\n                if (c == '\"' && lexer->lookahead == '\\\\') {\n                    advance(lexer);\n                }\n                advance(lexer);\n            }\n            advance(lexer);\n            continue;\n        }\n        advance(lexer);\n        if (c == '(') {\n            depth++;\n        } else if (c == ')') {\n            depth--;\n            if (depth == 0) {\n                return true;\n            }\n        }\n    }\n}\n\nstatic bool scan_heredoc_start(Heredoc *heredoc, TSLexer *lexer) {\n",
+          "occurrences": 1
+        },
+        {
+          "before": "static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {\n    if (valid_symbols[CONCAT] && !in_error_recovery(valid_symbols)) {\n",
+          "after": "static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {\n    if (valid_symbols[REDIRECT_TARGET] && !in_error_recovery(valid_symbols)) {\n        lexer->mark_end(lexer);\n        lexer->result_symbol = REDIRECT_TARGET;\n        for (;;) {\n            if (lexer->lookahead == ' ' || lexer->lookahead == '\\t' || lexer->lookahead == '\\r') {\n                advance(lexer);\n            } else if (lexer->lookahead == '\\\\') {\n                advance(lexer);\n                if (lexer->lookahead == '\\r') {\n                    advance(lexer);\n                }\n                if (lexer->lookahead != '\\n') {\n                    return !lexer->eof(lexer); // an escaped character starts the destination word\n                }\n                advance(lexer);\n            } else {\n                break;\n            }\n        }\n        return !(lexer->eof(lexer) || lexer->lookahead == '\\n' || lexer->lookahead == ';' || lexer->lookahead == '&' ||\n                 lexer->lookahead == '|' || lexer->lookahead == ')');\n    }\n\n    if (valid_symbols[CONCAT] && !in_error_recovery(valid_symbols)) {\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols) && scan_bare_dollar(lexer)) {\n            return true;\n",
+          "after": "        if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols) && scan_bare_dollar(lexer)) {\n            return true;\n        }\n    }\n\n    if (valid_symbols[EXTGLOB_WORD] && !valid_symbols[EXPANSION_WORD] && !in_error_recovery(valid_symbols)) {\n        while (lexer->lookahead == ' ' || lexer->lookahead == '\\t' || lexer->lookahead == '\\r') {\n            skip(lexer);\n        }\n        if (is_extglob_operator(lexer->lookahead)) {\n            // no other token of an argument position starts with ?*+@! here\n            advance(lexer);\n            if (lexer->lookahead != '(') {\n                return false;\n            }\n            for (;;) {\n                int32_t c = lexer->lookahead;\n                if (c == '(') {\n                    if (!scan_extglob_group(lexer)) {\n                        return false;\n                    }\n                } else if (lexer->eof(lexer) || iswspace(c) || c == ';' || c == '&' || c == '|' || c == '<' ||\n                           c == '>' || c == ')' || c == '`' || c == '\"' || c == '\\'' || c == '$') {\n                    break;\n                } else {\n                    advance(lexer);\n                }\n            }\n            lexer->mark_end(lexer);\n            lexer->result_symbol = EXTGLOB_WORD;\n            return true;\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    if (valid_symbols[BRACE_START] && !in_error_recovery(valid_symbols)) {\n",
+          "after": "    if ((valid_symbols[BRACE_START] || valid_symbols[FILE_DESCRIPTOR]) && !in_error_recovery(valid_symbols)) {\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        while (isdigit(lexer->lookahead)) {\n            advance(lexer);\n        }\n\n        if (lexer->lookahead != '.') {\n            return false;\n        }\n        advance(lexer);\n\n        if (lexer->lookahead != '.') {\n            return false;\n        }\n        advance(lexer);\n\n        while (isdigit(lexer->lookahead)) {\n            advance(lexer);\n        }\n\n        if (lexer->lookahead != '}') {\n            return false;\n        }\n\n        lexer->result_symbol = BRACE_START;\n        return true;\n",
+          "after": "        if (is_ascii_alpha(lexer->lookahead) || lexer->lookahead == '_') {\n            bool one_letter = lexer->lookahead != '_';\n            advance(lexer);\n            if (one_letter && valid_symbols[BRACE_START] && lexer->lookahead == '.') {\n                return scan_brace_rest(lexer, true);\n            }\n            // {varname} immediately followed by '<' or '>' names a file descriptor\n            if (!valid_symbols[FILE_DESCRIPTOR]) {\n                return false;\n            }\n            while (is_ascii_alpha(lexer->lookahead) || is_ascii_digit(lexer->lookahead) || lexer->lookahead == '_') {\n                advance(lexer);\n            }\n            if (lexer->lookahead != '}') {\n                return false;\n            }\n            advance(lexer);\n            if (lexer->lookahead != '<' && lexer->lookahead != '>') {\n                return false;\n            }\n            lexer->mark_end(lexer);\n            lexer->result_symbol = FILE_DESCRIPTOR;\n            return true;\n        }\n\n        if (!valid_symbols[BRACE_START] || !scan_brace_endpoint(lexer, false)) {\n            return false;\n        }\n        return scan_brace_rest(lexer, false);\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,305 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "kotlin",
+ "defects": [
+  "kotlin-P2-01",
+  "kotlin-P2-03",
+  "kotlin-P2-04",
+  "kotlin-P2-16",
+  "kotlin-P2-05",
+  "kotlin-P2-06",
+  "kotlin-P2-08",
+  "kotlin-P2-11",
+  "kotlin-P2-22",
+  "kotlin-P2-19",
+  "kotlin-P2-20",
+  "kotlin-P2-13",
+  "kotlin-P2-15",
+  "kotlin-P2-09",
+  "kotlin-P2-07",
+  "kotlin-P2-14",
+  "kotlin-P2-18",
+  "kotlin-P2-21",
+  "kotlin-P2-12",
+  "kotlin-P2-10",
+  "kotlin-P2-02",
+  "kotlin-P2-17"
+ ],
+ "files": [
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "        if (!saw_newline) {\n            switch (lexer->lookahead) {\n                case '!':",
+     "after": "        if (!saw_newline) {\n            switch (lexer->lookahead) {\n                case '}':\n                    if (valid_symbols[CLASS_MEMBER_SEMI]) {\n                        lexer->result_symbol = CLASS_MEMBER_SEMI;\n                        return true;\n                    }\n                    return false;\n                case '!':",
+     "occurrences": 1
+    },
+    {
+     "before": "                case '\"':\n                    lexer->mark_end(lexer);\n                    // 3 or 4 quotes means we're done\n                    advance(lexer);\n                    if (lexer->lookahead == '\"') {\n                        advance(lexer);\n                        if (lexer->lookahead == '\"') {\n                            advance(lexer);\n                            if (lexer->lookahead == '\"') {\n                                advance(lexer);\n                            }\n                            return did_advance;\n                        }\n                    }\n                    did_advance = true;\n                    break;",
+     "after": "                case '\"': {\n                    lexer->mark_end(lexer);\n                    unsigned quotes = 0;\n                    if (!did_advance) {\n                        // a leading quote of a run of four or more is content; a run of exactly three closes\n                        advance(lexer);\n                        lexer->mark_end(lexer);\n                        quotes = 1;\n                        while (lexer->lookahead == '\"') {\n                            advance(lexer);\n                            quotes++;\n                        }\n                        if (quotes >= 4) {\n                            return true;\n                        }\n                        if (quotes == 3) {\n                            return false;\n                        }\n                        lexer->mark_end(lexer);\n                        did_advance = true;\n                        break;\n                    }\n                    while (lexer->lookahead == '\"') {\n                        advance(lexer);\n                        quotes++;\n                    }\n                    if (quotes >= 3) {\n                        // the content ends before the run\n                        return true;\n                    }\n                    did_advance = true;\n                    break;\n                }",
+     "occurrences": 1
+    },
+    {
+     "before": "void *tree_sitter_kotlin_external_scanner_create() { return NULL; }",
+     "after": "static bool is_ident_char(int32_t c) { return iswalnum(c) || c == '_'; }\n\n// After a consumed ';': true when the next word continues the current construct, so the ';' belongs to\n// the grammar (';' before 'else' in an if expression, before 'get'/'set' of a property).\nstatic bool semi_continues(TSLexer *lexer, const bool *valid_symbols) {\n    while (iswspace(lexer->lookahead)) {\n        skip(lexer);\n    }\n    const char *words[3] = {\"else\", \"get\", \"set\"};\n    bool ok[3] = {true, valid_symbols[GET], valid_symbols[SET]};\n    char word[8] = {0};\n    uint8_t n = 0;\n    while (is_ident_char(lexer->lookahead) && n < 7) {\n        word[n++] = (char)lexer->lookahead;\n        skip(lexer);\n    }\n    if (is_ident_char(lexer->lookahead)) {\n        return false;\n    }\n    for (uint8_t i = 0; i < 3; i++) {\n        if (ok[i] && strcmp(word, words[i]) == 0) {\n            if (i == 0) {\n                // 'else ->' starts the next when entry\n                while (iswspace(lexer->lookahead)) {\n                    skip(lexer);\n                }\n                if (lexer->lookahead == '-') {\n                    skip(lexer);\n                    return lexer->lookahead != '>';\n                }\n            }\n            return true;\n        }\n    }\n    return false;\n}\n\n// Skip one balanced group starting at the current open bracket.\nstatic void skip_balanced(TSLexer *lexer, int32_t open, int32_t close) {\n    unsigned depth = 0;\n    while (!lexer->eof(lexer)) {\n        int32_t c = lexer->lookahead;\n        skip(lexer);\n        if (c == open) {\n            depth++;\n        } else if (c == close && --depth == 0) {\n            return;\n        }\n    }\n}\n\n// Skip an annotation at '@': '@' (useSiteTarget ws* ':' ws*)? ('[' ... ']' | type ('(' ... ')')?).\nstatic void skip_annotation(TSLexer *lexer) {\n    skip(lexer);\n    while (is_ident_char(lexer->lookahead)) {\n        skip(lexer);\n    }\n    while (lexer->lookahead == ' ' || lexer->lookahead == '\\t') {\n        skip(lexer);\n    }\n    if (lexer->lookahead == ':') {\n        skip(lexer);\n        if (lexer->lookahead == ':') {\n            // '@Name::class' is an annotated callable reference, not a use-site target\n            skip(lexer);\n            while (is_ident_char(lexer->lookahead)) {\n                skip(lexer);\n            }\n            return;\n        }\n        while (lexer->lookahead == ' ' || lexer->lookahead == '\\t') {\n            skip(lexer);\n        }\n        if (lexer->lookahead == '[') {\n            skip_balanced(lexer, '[', ']');\n            return;\n        }\n        while (is_ident_char(lexer->lookahead)) {\n            skip(lexer);\n        }\n    }\n    for (;;) {\n        if (lexer->lookahead == '<') {\n            skip_balanced(lexer, '<', '>');\n        } else if (lexer->lookahead == '.') {\n            skip(lexer);\n            while (is_ident_char(lexer->lookahead)) {\n                skip(lexer);\n            }\n        } else {\n            break;\n        }\n    }\n    if (lexer->lookahead == '(') {\n        skip_balanced(lexer, '(', ')');\n    }\n}\n\nvoid *tree_sitter_kotlin_external_scanner_create() { return NULL; }",
+     "occurrences": 1
+    },
+    {
+     "before": "            if (lexer->lookahead == ';') {\n                advance(lexer);\n                lexer->mark_end(lexer);\n                return true;\n            }",
+     "after": "            if (lexer->lookahead == ';') {\n                advance(lexer);\n                lexer->mark_end(lexer);\n                return !semi_continues(lexer, valid_symbols);\n            }",
+     "occurrences": 1
+    },
+    {
+     "before": "                case ';':\n                    advance(lexer);\n                    lexer->mark_end(lexer);\n                    return true;",
+     "after": "                case ';':\n                    advance(lexer);\n                    lexer->mark_end(lexer);\n                    return !semi_continues(lexer, valid_symbols);",
+     "occurrences": 1
+    },
+    {
+     "before": "            case ';':\n                advance(lexer);\n                lexer->mark_end(lexer);\n                return true;",
+     "after": "            case ';':\n                advance(lexer);\n                lexer->mark_end(lexer);\n                return !semi_continues(lexer, valid_symbols);",
+     "occurrences": 1
+    },
+    {
+     "before": "                if (valid_symbols[GET] || valid_symbols[SET]) {\n                    bool saw_paren = false;\n                    while ((saw_paren ? lexer->lookahead != '\\n' : !iswspace(lexer->lookahead))) {\n                        skip(lexer);\n                        if (lexer->lookahead == '(') {\n                            saw_paren = true;\n                        }\n                        if (lexer->lookahead == ')') {\n                            saw_paren = false;\n                        }\n                    }\n                    while (iswspace(lexer->lookahead)) {\n                        skip(lexer);\n                    }",
+     "after": "                if (valid_symbols[GET] || valid_symbols[SET]) {\n                    while (lexer->lookahead == '@') {\n                        skip_annotation(lexer);\n                        while (iswspace(lexer->lookahead)) {\n                            skip(lexer);\n                        }\n                    }",
+     "occurrences": 1
+    },
+    {
+     "before": "    DOLLAR,\n};",
+     "after": "    DOLLAR,\n    LOOP_BODY_HINT,\n    WHILE_BODY_HINT,\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "        lexer->result_symbol = valid_symbols[SEMI] ? SEMI : CLASS_MEMBER_SEMI;\n        lexer->mark_end(lexer);",
+     "after": "        lexer->result_symbol = valid_symbols[SEMI] ? SEMI : CLASS_MEMBER_SEMI;\n        lexer->mark_end(lexer);\n        if ((valid_symbols[LOOP_BODY_HINT] || valid_symbols[WHILE_BODY_HINT]) && valid_symbols[SEMI] &&\n            !valid_symbols[MULTILINE_STRING_CONTENT]) {\n            while (iswspace(lexer->lookahead)) {\n                skip(lexer);\n            }\n            if (lexer->lookahead == ';' && !valid_symbols[WHILE_BODY_HINT]) {\n                // 'for (...) ;' has no body: the ';' separates statements\n                advance(lexer);\n                lexer->mark_end(lexer);\n                return true;\n            }\n            return lexer->eof(lexer) || lexer->lookahead == '}';\n        }",
+     "occurrences": 1
+    },
+    {
+     "before": "    WHILE_BODY_HINT,\n};",
+     "after": "    WHILE_BODY_HINT,\n    FIELD,\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "(const char[16][16]){\"else\", \"in\", \"instanceof\", \"get\", \"set\", \"constructor\", \"by\", \"as\", \"where\"},",
+     "after": "(const char[16][16]){\"else\", \"in\", \"instanceof\", \"get\", \"set\", \"constructor\", \"by\", \"as\", \"where\", \"field\"},",
+     "occurrences": 1
+    },
+    {
+     "before": "                // If `in` was found and this specific external keyword is valid,",
+     "after": "                // An explicit backing field 'field =' / 'field:' continues the property\n                else if (index == 9 && valid_symbols[FIELD]) {\n                    while (iswspace(lexer->lookahead)) {\n                        skip(lexer);\n                    }\n                    return lexer->lookahead != '=' && lexer->lookahead != ':';\n                }\n                // If `in` was found and this specific external keyword is valid,",
+     "occurrences": 1
+    },
+    {
+     "before": "    WHILE_BODY_HINT,\n    FIELD,\n};",
+     "after": "    WHILE_BODY_HINT,\n    FIELD,\n    MD_STRING_START,\n    MD_MULTILINE_STRING_START,\n    MD_STRING_CONTENT,\n    MD_INTERPOLATION_DOLLARS,\n    MD_STRING_END,\n};\n\n#define MD_MAX_DEPTH 64\n\ntypedef struct {\n    uint8_t depth;\n    uint8_t dollars[MD_MAX_DEPTH];\n    uint8_t multiline[MD_MAX_DEPTH];\n} Scanner;",
+     "occurrences": 1
+    },
+    {
+     "before": "void *tree_sitter_kotlin_external_scanner_create() { return NULL; }\n\nvoid tree_sitter_kotlin_external_scanner_destroy(void *payload) {}\n\nunsigned tree_sitter_kotlin_external_scanner_serialize(void *payload, char *buffer) { return 0; }\n\nvoid tree_sitter_kotlin_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {}\n",
+     "after": "void *tree_sitter_kotlin_external_scanner_create() { return calloc(1, sizeof(Scanner)); }\n\nvoid tree_sitter_kotlin_external_scanner_destroy(void *payload) { free(payload); }\n\nunsigned tree_sitter_kotlin_external_scanner_serialize(void *payload, char *buffer) {\n    Scanner *s = (Scanner *)payload;\n    buffer[0] = (char)s->depth;\n    for (uint8_t i = 0; i < s->depth; i++) {\n        buffer[1 + 2 * i] = (char)s->dollars[i];\n        buffer[2 + 2 * i] = (char)s->multiline[i];\n    }\n    return 1 + 2 * (unsigned)s->depth;\n}\n\nvoid tree_sitter_kotlin_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {\n    Scanner *s = (Scanner *)payload;\n    s->depth = 0;\n    if (length == 0) {\n        return;\n    }\n    uint8_t depth = (uint8_t)buffer[0];\n    for (uint8_t i = 0; i < depth && 2 + 2 * (unsigned)i < length; i++) {\n        s->dollars[i] = (uint8_t)buffer[1 + 2 * i];\n        s->multiline[i] = (uint8_t)buffer[2 + 2 * i];\n        s->depth = i + 1;\n    }\n}\n\nstatic bool md_name_or_brace_start(int32_t c) { return iswalpha(c) || c == '_' || c == '`' || c == '{'; }\n\n// Inside a multi-dollar string: content, the N-dollar interpolation run, or the closing quote(s).\nstatic bool scan_md_string_part(Scanner *s, TSLexer *lexer) {\n    uint8_t n = s->dollars[s->depth - 1];\n    bool multiline = s->multiline[s->depth - 1];\n    bool did_advance = false;\n    for (;;) {\n        lexer->mark_end(lexer);\n        if (lexer->eof(lexer)) {\n            lexer->result_symbol = MD_STRING_CONTENT;\n            return did_advance;\n        }\n        int32_t c = lexer->lookahead;\n        if (c == '\"') {\n            unsigned quotes = 0;\n            if (!multiline || !did_advance) {\n                advance(lexer);\n                quotes = 1;\n                if (multiline) {\n                    lexer->mark_end(lexer);\n                    while (lexer->lookahead == '\"') {\n                        advance(lexer);\n                        quotes++;\n                    }\n                    if (quotes >= 4) {\n                        // a leading quote of a longer run is content\n                        lexer->result_symbol = MD_STRING_CONTENT;\n                        return true;\n                    }\n                }\n                if (!multiline || quotes == 3) {\n                    if (did_advance) {\n                        lexer->result_symbol = MD_STRING_CONTENT;\n                        return true;\n                    }\n                    lexer->mark_end(lexer);\n                    lexer->result_symbol = MD_STRING_END;\n                    s->depth--;\n                    return true;\n                }\n                lexer->mark_end(lexer);\n                did_advance = true;\n                continue;\n            }\n            while (lexer->lookahead == '\"') {\n                advance(lexer);\n                quotes++;\n            }\n            if (quotes >= 3) {\n                lexer->result_symbol = MD_STRING_CONTENT;\n                return true;\n            }\n            did_advance = true;\n            continue;\n        }\n        if (c == '$') {\n            if (did_advance) {\n                // the content so far ends here unless this run is plain content\n                unsigned run = 0;\n                while (lexer->lookahead == '$') {\n                    advance(lexer);\n                    run++;\n                }\n                if (run >= n && md_name_or_brace_start(lexer->lookahead)) {\n                    lexer->result_symbol = MD_STRING_CONTENT;\n                    return true;\n                }\n                continue;\n            }\n            advance(lexer);\n            lexer->mark_end(lexer);\n            unsigned run = 1;\n            while (lexer->lookahead == '$') {\n                advance(lexer);\n                run++;\n            }\n            if (run >= n && md_name_or_brace_start(lexer->lookahead)) {\n                if (run == n) {\n                    lexer->mark_end(lexer);\n                    lexer->result_symbol = MD_INTERPOLATION_DOLLARS;\n                    return true;\n                }\n                // a leading extra '$' is content; the last N dollars interpolate\n                lexer->result_symbol = MD_STRING_CONTENT;\n                return true;\n            }\n            did_advance = true;\n            continue;\n        }\n        if (c == '\\\\' && !multiline) {\n            advance(lexer);\n        }\n        advance(lexer);\n        did_advance = true;\n    }\n}\n\n// At '$': N >= 2 dollars immediately followed by a quote (one or three) open a multi-dollar string.\nstatic bool scan_md_string_start(Scanner *s, TSLexer *lexer) {\n    unsigned run = 0;\n    while (lexer->lookahead == '$') {\n        advance(lexer);\n        run++;\n    }\n    if (run < 2 || run > 255 || lexer->lookahead != '\"' || s->depth >= MD_MAX_DEPTH) {\n        return false;\n    }\n    advance(lexer);\n    lexer->mark_end(lexer);\n    bool multiline = false;\n    if (lexer->lookahead == '\"') {\n        advance(lexer);\n        if (lexer->lookahead == '\"') {\n            advance(lexer);\n            lexer->mark_end(lexer);\n            multiline = true;\n        }\n    }\n    s->dollars[s->depth] = (uint8_t)run;\n    s->multiline[s->depth] = multiline;\n    s->depth++;\n    lexer->result_symbol = multiline ? MD_MULTILINE_STRING_START : MD_STRING_START;\n    return true;\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "bool tree_sitter_kotlin_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    if (valid_symbols[MULTILINE_STRING_CONTENT]) {",
+     "after": "bool tree_sitter_kotlin_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *md = (Scanner *)payload;\n    if ((valid_symbols[MD_STRING_CONTENT] || valid_symbols[MD_STRING_END]) && !valid_symbols[MULTILINE_STRING_CONTENT] &&\n        md->depth > 0) {\n        return scan_md_string_part(md, lexer);\n    }\n    if (valid_symbols[MD_STRING_START] && !valid_symbols[SEMI] && !valid_symbols[CLASS_MEMBER_SEMI] &&\n        !valid_symbols[MULTILINE_STRING_CONTENT]) {\n        while (lexer->lookahead == ' ' || lexer->lookahead == '\\t') {\n            skip(lexer);\n        }\n        if (lexer->lookahead == '$') {\n            return scan_md_string_start(md, lexer);\n        }\n    }\n    if (valid_symbols[MULTILINE_STRING_CONTENT]) {",
+     "occurrences": 1
+    },
+    {
+     "before": "        if (!saw_newline) {\n            switch (lexer->lookahead) {\n                case '}':",
+     "after": "        if (!saw_newline) {\n            switch (lexer->lookahead) {\n                case '$':\n                    if (valid_symbols[MD_STRING_START]) {\n                        return scan_md_string_start(md, lexer);\n                    }\n                    return false;\n                case '}':",
+     "occurrences": 1
+    },
+    {
+     "before": "#include <string.h>\n#include <wctype.h>",
+     "after": "#include <stdlib.h>\n#include <string.h>\n#include <wctype.h>",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    number_literal: _ => {\n      const separator = '_';",
+     "after": "    number_literal: _ => {\n      const separator = /_+/;",
+     "occurrences": 1
+    },
+    {
+     "before": "    float_literal: _ => {\n      const separator = '_';\n      const decimal = /[0-9]+/;\n      const exponent = /[eE][+-]?[0-9]+/;\n      const decimalDigits = seq(repeat1(decimal), repeat(seq(separator, repeat1(decimal))));",
+     "after": "    float_literal: _ => {\n      const separator = /_+/;\n      const decimal = /[0-9]+/;\n      const decimalDigits = seq(repeat1(decimal), repeat(seq(separator, repeat1(decimal))));\n      const exponent = seq(/[eE][+-]?/, decimalDigits);",
+     "occurrences": 1
+    },
+    {
+     "before": "    shebang: _ => /#!.*/,\n\n    line_comment: _ => token(seq('//', /.*/)),",
+     "after": "    shebang: _ => /#![^\\r\\n]*/,\n\n    line_comment: _ => token(seq('//', /[^\\r\\n]*/)),",
+     "occurrences": 1
+    },
+    {
+     "before": "          token.immediate(prec(2, seq('\\\\', /[^bnrt'\\\"\\\\\\$]/))),",
+     "after": "          token.immediate(prec(2, seq('\\\\', /[^bnrtu'\\\"\\\\\\$]/))),",
+     "occurrences": 1
+    },
+    {
+     "before": "    annotated_expression: $ => seq($.annotation, $.expression),",
+     "after": "    annotated_expression: $ => prec.dynamic(-10, seq($.annotation, $.expression)),",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_projection: $ => choice(\n      seq(repeat($.variance_modifier), $.type),",
+     "after": "    type_projection: $ => choice(\n      seq(optional(seq(repeat($.annotation), repeat1($.variance_modifier))), $.type),",
+     "occurrences": 1
+    },
+    {
+     "before": "    anonymous_function: $ => prec.right(seq(\n      'fun',",
+     "after": "    anonymous_function: $ => prec.right(seq(\n      // at a statement start 'suspend fun' stays a function declaration's modifier\n      choice('fun', prec(-1, seq('suspend', 'fun'))),",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice('field', 'property', 'get', 'set', 'receiver', 'param', 'setparam', 'delegate'),",
+     "after": "      choice('all', 'field', 'property', 'get', 'set', 'receiver', 'param', 'setparam', 'delegate'),",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_parameters: $ => seq('<', commaSep1($.type_parameter), '>'),",
+     "after": "    type_parameters: $ => seq('<', commaSep1($.type_parameter), optional(','), '>'),",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_arguments: $ => seq('<', commaSep1($.type_projection), '>'),",
+     "after": "    type_arguments: $ => seq('<', commaSep1($.type_projection), optional(','), '>'),",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.identifier,\n        optional(seq(':', $.type)),\n        optional(seq('=', $.expression)),\n        ')',",
+     "after": "        $.identifier,\n        optional(seq(':', $.type)),\n        optional(seq('=', $.expression)),\n        optional(','),\n        ')',",
+     "occurrences": 1
+    },
+    {
+     "before": "      '[',\n      commaSep($.expression),\n      ']',",
+     "after": "      '[',\n      optional(seq(commaSep1($.expression), optional(','))),\n      ']',",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.identifier,\n      ':',\n      $.type,\n      ')',\n      $.block,",
+     "after": "      $.identifier,\n      ':',\n      $.type,\n      optional(','),\n      ')',\n      $.block,",
+     "occurrences": 1
+    },
+    {
+     "before": "    _lambda_parameter: $ => choice(\n      $.variable_declaration,\n      $.multi_variable_declaration,\n    ),",
+     "after": "    _lambda_parameter: $ => choice(\n      $.variable_declaration,\n      seq($.multi_variable_declaration, optional(seq(':', $.type))),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional(seq($.type, '.')),\n      $.function_value_parameters,\n      optional(seq(':', $.type)),\n      optional($.type_constraints),\n      optional($.function_body),\n    )),",
+     "after": "      optional(seq($.type, '.')),\n      alias($._parameters_with_optional_type, $.function_value_parameters),\n      optional(seq(':', $.type)),\n      optional($.type_constraints),\n      optional($.function_body),\n    )),\n\n    _parameters_with_optional_type: $ => seq(\n      '(',\n      optionalCommaSep1(seq(\n        optional($.parameter_modifiers),\n        alias(seq($._identifier, optional(seq(':', $.type))), $.parameter),\n        optional(seq('=', $.expression)),\n      )),\n      ')',\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    interpolation: $ => choice(\n      seq('$', $._identifier),",
+     "after": "    interpolation: $ => choice(\n      seq('$', alias(token.immediate(prec(3, choice(/[\\p{L}_][\\p{L}_\\p{Nd}]*/u, /`[^\\r\\n`]+`/))), $.identifier)),",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice('\"\"\"', '\"\"\"\"'),",
+     "after": "      '\"\"\"',",
+     "occurrences": 1
+    },
+    {
+     "before": "    when_entry: $ => seq(\n      choice(\n        seq(\n          commaSep1(field('condition', $._when_condition)),\n          optional(','),\n        ),\n        'else',\n      ),",
+     "after": "    when_entry: $ => seq(\n      choice(\n        seq(\n          commaSep1(field('condition', $._when_condition)),\n          optional(','),\n        ),\n        seq(field('condition', $._when_condition), 'if', field('guard', $.expression)),\n        'else',\n        seq('else', 'if', field('guard', $.expression)),\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    // used to check if we can parse a comment\n    '$',\n  ],",
+     "after": "    // used to check if we can parse a comment\n    '$',\n    // valid only where a for (resp. while) body may start; never emitted\n    $._loop_body_hint,\n    $._while_body_hint,\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.expression,\n      ')',\n      optional(choice($.block, $.statement)),\n    )),",
+     "after": "      $.expression,\n      ')',\n      optional(choice($.block, $.statement, $._loop_body_hint)),\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('condition', $.expression),\n      ')',\n      optional(choice($.block, $.statement, ';')),\n    )),\n\n    do_while_statement",
+     "after": "      field('condition', $.expression),\n      ')',\n      optional(choice($.block, $.statement, ';', $._while_body_hint)),\n    )),\n\n    do_while_statement",
+     "occurrences": 1
+    },
+    {
+     "before": "    assignment: $ => seq(\n      field('left', $.expression),",
+     "after": "    assignment: $ => seq(\n      field('left', choice($.expression, seq($.expression, $.type_arguments))),",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional(choice(\n        seq('=', $.expression),\n        $.property_delegate,\n      )),\n      optional(';'),",
+     "after": "      optional(choice(\n        seq('=', $.expression),\n        $.property_delegate,\n      )),\n      optional(seq('field', optional(seq(':', $.type)), '=', $.expression)),\n      optional(';'),",
+     "occurrences": 1
+    },
+    {
+     "before": "    $._while_body_hint,\n  ],",
+     "after": "    $._while_body_hint,\n    // used to check if an explicit backing field may follow\n    'field',\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "    modifiers: $ => prec.right(repeat1(choice(\n      $.annotation,",
+     "after": "    modifiers: $ => prec.right(repeat1(choice(\n      $.context_parameters,\n      $.annotation,",
+     "occurrences": 1
+    },
+    {
+     "before": "    function_type: $ => seq(\n      optional($.type_modifiers),",
+     "after": "    context_parameters: $ => seq(\n      'context',\n      '(',\n      commaSep1(choice($.parameter, $.type)),\n      optional(','),\n      ')',\n    ),\n\n    function_type: $ => seq(\n      optional($.context_parameters),\n      optional($.type_modifiers),",
+     "occurrences": 1
+    },
+    {
+     "before": "        'constructor',\n        'const',\n        'data',",
+     "after": "        'constructor',\n        'const',\n        'context',\n        'data',",
+     "occurrences": 1
+    },
+    {
+     "before": "    // used to check if an explicit backing field may follow\n    'field',\n  ],",
+     "after": "    // used to check if an explicit backing field may follow\n    'field',\n    $._md_string_start,\n    $._md_multiline_string_start,\n    $._md_string_content,\n    $._md_interpolation_dollars,\n    $._md_string_end,\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "    string_literal: $ => seq(\n      '\"',",
+     "after": "    string_literal: $ => choice(seq(\n      $._md_string_start,\n      repeat(choice(alias($._md_string_content, $.string_content), alias($._md_interpolation, $.interpolation))),\n      $._md_string_end,\n    ), seq(\n      '\"',",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.escape_sequence,\n        $.interpolation,\n      )),\n      '\"',\n    ),",
+     "after": "        $.escape_sequence,\n        $.interpolation,\n      )),\n      '\"',\n    )),\n\n    _md_interpolation: $ => seq(\n      $._md_interpolation_dollars,\n      choice(\n        alias(token.immediate(prec(3, choice(/[\\p{L}_][\\p{L}_\\p{Nd}]*/u, /`[^\\r\\n`]+`/))), $.identifier),\n        seq(token.immediate('{'), $.expression, '}'),\n      ),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    multiline_string_literal: $ => seq(\n      '\"\"\"',",
+     "after": "    multiline_string_literal: $ => choice(seq(\n      $._md_multiline_string_start,\n      repeat(choice(alias($._md_string_content, $.string_content), alias($._md_interpolation, $.interpolation))),\n      $._md_string_end,\n    ), seq(\n      '\"\"\"',",
+     "occurrences": 1
+    },
+    {
+     "before": "      '\"\"\"',\n    ),",
+     "after": "      '\"\"\"',\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "        'context',\n        'data',",
+     "after": "        'context',\n        'data',\n        'dynamic',",
+     "occurrences": 1
+    },
+    {
+     "before": "        'set',\n        'operator',",
+     "after": "        'set',\n        'suspend',\n        'operator',",
+     "occurrences": 1
+    },
+    {
+     "before": "    do_while_statement: $ => prec.right(seq(\n      optional($.label),\n      'do',\n      optional(choice($.block, $.statement, ';')),",
+     "after": "    do_while_statement: $ => prec.right(seq(\n      optional($.label),\n      'do',\n      optional(choice(\n        $.block,\n        $.declaration,\n        $.assignment,\n        $.for_statement,\n        $.do_while_statement,\n        $.expression,\n        ';',\n      )),",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._receiver_type],\n  ],",
+     "after": "    [$._receiver_type],\n    // c2 conflicts\n        [$.type_modifiers, $._reserved_identifier],\n        [$.function_modifier, $.type_modifiers, $._reserved_identifier],\n        [$.function_type_parameters, $._parameters_with_optional_type],\n        [$.parameter, $._parameters_with_optional_type],\n        [$.type_modifiers, $.type_projection, $.annotated_expression],\n        [$.type_modifiers, $.type_projection],\n        [$.modifiers, $.function_type],\n        [$.context_parameters, $._reserved_identifier],\n        [$.type, $._receiver_type, $._reserved_identifier],\n        [$.type, $._reserved_identifier],\n        [$._receiver_type, $._reserved_identifier],\n  ],",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

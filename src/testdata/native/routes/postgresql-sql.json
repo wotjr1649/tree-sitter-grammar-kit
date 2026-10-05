@@ -26988,10 +26988,6 @@
               "text": "COPY orders FROM 'filename' OIDS"
             },
             {
-              "type": "CopyStmt",
-              "text": "COPY orders FROM 'filename'"
-            },
-            {
               "type": "copy_opt_item",
               "text": "OIDS"
             }
