@@ -1,0 +1,200 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "css",
+  "defects": [
+    "css-P2-01",
+    "css-P2-02",
+    "css-P2-03",
+    "css-P2-04",
+    "css-P2-05",
+    "css-P2-06",
+    "css-P2-07",
+    "css-P2-08",
+    "css-P2-09",
+    "css-P2-10",
+    "css-P2-12",
+    "css-P2-13",
+    "css-P2-14",
+    "css-P2-15",
+    "css-P2-16",
+    "css-P2-17",
+    "css-P2-18",
+    "css-P2-19",
+    "css-P2-20",
+    "css-P2-21",
+    "css-P2-22",
+    "css-P2-23",
+    "css-P2-24",
+    "css-P2-25",
+    "css-P2-26",
+    "css-P2-27",
+    "css-P2-28"
+  ],
+  "files": [
+    {
+      "target": "grammar.js",
+      "operations": [
+        {
+          "before": "    $.__error_recovery,\n  ],",
+          "after": "    $.__error_recovery,\n    $._custom_property_colon,\n    $._double_quoted_content,\n    $._single_quoted_content,\n    $._math_function_name,\n    $._url_function_name,\n  ],",
+          "occurrences": 1
+        },
+        {
+          "before": "    stylesheet: $ => repeat($._top_level_item),\n",
+          "after": "    stylesheet: $ => seq(\n      repeat(choice($._top_level_item, ';', '<!--', '-->')),\n      optional(alias($.last_declaration, $.declaration)),\n    ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.scope_statement,\n      $.at_rule,\n    ),\n\n    // Statements\n",
+          "after": "      $.scope_statement,\n      alias($._layer_statement, $.at_rule),\n      $.at_rule,\n    ),\n\n    // Statements\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    import_statement: $ => seq(\n      '@import',\n      $._value,\n      sep(',', $._query),\n      ';',\n    ),\n\n    media_statement: $ => seq(\n      '@media',\n      sep1(',', $._query),\n      $.block,\n    ),",
+          "after": "    import_statement: $ => seq(\n      kw('@import'),\n      $._value,\n      optional(choice(\n        alias('layer', $.keyword_query),\n        alias($._import_layer, $.call_expression),\n      )),\n      optional(alias($._import_supports, $.call_expression)),\n      sep(',', $._query),\n      ';',\n    ),\n\n    _import_layer: $ => seq(alias('layer', $.function_name), $.arguments),\n\n    _import_supports: $ => seq(alias('supports', $.function_name), alias($._supports_arguments, $.arguments)),\n\n    _supports_arguments: $ => seq(\n      token.immediate('('),\n      choice(\n        alias($._supports_declaration, $.feature_query),\n        $._query,\n      ),\n      ')',\n    ),\n\n    _supports_declaration: $ => seq(alias($.identifier, $.feature_name), ':', repeat1($._value)),\n\n    media_statement: $ => seq(\n      kw('@media'),\n      sep(',', $._query),\n      $.block,\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "    namespace_statement: $ => seq(\n      '@namespace',",
+          "after": "    namespace_statement: $ => seq(\n      kw('@namespace'),",
+          "occurrences": 1
+        },
+        {
+          "before": "      choice(\n        '@keyframes',",
+          "after": "      choice(\n        kw('@keyframes'),",
+          "occurrences": 1
+        },
+        {
+          "before": "    supports_statement: $ => seq(\n      '@supports',",
+          "after": "    supports_statement: $ => seq(\n      kw('@supports'),",
+          "occurrences": 1
+        },
+        {
+          "before": "    scope_statement: $ => seq(\n      '@scope',",
+          "after": "    scope_statement: $ => seq(\n      kw('@scope'),",
+          "occurrences": 1
+        },
+        {
+          "before": "    at_rule: $ => seq(\n      $.at_keyword,\n      sep(',', $._query),\n      choice(';', $.block),\n    ),",
+          "after": "    at_rule: $ => seq(\n      $.at_keyword,\n      repeat($._prelude_item),\n      choice(';', $.block),\n    ),\n\n    // css-syntax-3 at-rule prelude: any component values; queries keep their structure\n    _prelude_item: $ => choice(\n      $._query,\n      ',',\n      $.integer_value,\n      $.float_value,\n      $.string_value,\n      $.grid_value,\n      '!', '~=', '|=', '^=', '$=', '*=', ':', '=', '*', '+', '>', '<', '~', '/', '.', '&', '|', '#',\n    ),\n\n    _last_at_rule: $ => seq(\n      $.at_keyword,\n      repeat($._prelude_item),\n    ),\n\n    _layer_statement: $ => seq(\n      alias(/@[lL][aA][yY][eE][rR]/, $.at_keyword),\n      optional($._layer_names),\n      choice(';', $.block),\n    ),\n\n    // a hidden non-terminal around the names (like _query), so an incremental parse that rebuilds\n    // the at-rule still reuses the name nodes\n    _layer_names: $ => sep1(',', alias($._layer_name, $.keyword_query)),\n\n    // <layer-name> = <ident> ['.' <ident>]* without whitespace\n    _layer_name: $ => seq($._layer_ident, repeat(seq(token.immediate('.'), $._layer_ident_part))),\n\n    _layer_ident: _ => /-?[a-zA-Z_\\xA0-\\xFF][a-zA-Z0-9-_\\xA0-\\xFF]*/,\n\n    _layer_ident_part: _ => token.immediate(/-?[a-zA-Z_\\xA0-\\xFF][a-zA-Z0-9-_\\xA0-\\xFF]*/),",
+          "occurrences": 1
+        },
+        {
+          "before": "    block: $ => seq(\n      '{',\n      repeat($._block_item),\n      optional(alias($.last_declaration, $.declaration)),\n      '}',\n    ),",
+          "after": "    block: $ => seq(\n      '{',\n      repeat(choice($._block_item, ';')),\n      optional(choice(\n        alias($.last_declaration, $.declaration),\n        alias($._last_at_rule, $.at_rule),\n      )),\n      '}',\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.postcss_statement,\n      $.at_rule,\n    ),",
+          "after": "      $.postcss_statement,\n      alias($._layer_statement, $.at_rule),\n      $.at_rule,\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.universal_selector,\n      alias($.identifier, $.tag_name),",
+          "after": "      $.universal_selector,\n      alias(choice($.identifier, $._escaped_name, $._custom_ident), $.tag_name),",
+          "occurrences": 1
+        },
+        {
+          "before": "      '#',\n      alias($.identifier, $.id_name),",
+          "after": "      '#',\n      alias(choice($.identifier, $._escaped_name), $.id_name),",
+          "occurrences": 1
+        },
+        {
+          "before": "        $._nth_child_pseudo_class_selector,\n",
+          "after": "        $._nth_child_pseudo_class_selector,\n\n        seq(\n          alias(choice('nth-of-type', 'nth-last-of-type'), $.class_name),\n          alias($.pseudo_class_nth_of_type_arguments, $.arguments),\n        ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    // An+B notation for `nth-child`/`nth-last-child`.\n    _nth_functional_notation: _ => /-?(\\d)*n\\s*(\\+\\s*\\d+)?/,",
+          "after": "    pseudo_class_nth_of_type_arguments: $ => prec(-1, seq(\n      token.immediate('('),\n      choice(\n        alias('even', $.plain_value),\n        alias('odd', $.plain_value),\n        $.integer_value,\n        alias($._nth_functional_notation, $.plain_value),\n      ),\n      ')',\n    )),\n\n    // An+B notation (css-syntax-3 6.2): the sign is glued to n, whitespace only around the B sign.\n    _nth_functional_notation: _ => /[+-]?\\d*n(\\s*[+-]\\s*\\d+)?/,",
+          "occurrences": 1
+        },
+        {
+          "before": "    declaration: $ => seq(\n      alias($.identifier, $.property_name),\n      ':',\n      $._value,\n      repeat(seq(\n        optional(','),\n        $._value,\n      )),\n      optional($.important),\n      ';',\n    ),\n\n    last_declaration: $ => prec(1, seq(\n      alias($.identifier, $.property_name),\n      ':',\n      $._value,\n      repeat(seq(\n        optional(','),\n        $._value,\n      )),\n      optional($.important),\n    )),\n\n    important: _ => '!important',",
+          "after": "    declaration: $ => seq(\n      $._declaration_body,\n      ';',\n    ),\n\n    last_declaration: $ => prec(1, $._declaration_body),\n\n    _declaration_body: $ => choice(\n      seq(\n        alias(choice($.identifier, $._escaped_name), $.property_name),\n        ':',\n        $._value,\n        repeat(seq(\n          optional(','),\n          $._value,\n        )),\n        optional($.important),\n      ),\n      // css-syntax-3: a custom property's value is any component values, {}-blocks included, possibly none\n      seq(\n        alias($._custom_property_name, $.property_name),\n        alias($._custom_property_colon, ':'),\n        repeat(choice($._value, $.block, ',')),\n        optional($.important),\n      ),\n    ),\n\n    _custom_property_name: $ => seq($._custom_ident, repeat($._name_tail)),\n\n    // P2-21: '!' and 'important' are separate tokens (comments and whitespace may sit between), ASCII case-insensitive\n    important: _ => seq('!', /[iI][mM][pP][oO][rR][tT][aA][nN][tT]/),",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.selector_query,\n      $.parenthesized_query,\n    ),\n\n    feature_query: $ => seq(",
+          "after": "      $.selector_query,\n      $.parenthesized_query,\n      $.range_query,\n      $.call_expression,\n      $.general_enclosed,\n    ),\n\n    // MQ4 <mf-range>\n    range_query: $ => seq(\n      '(',\n      choice(\n        seq(alias($.identifier, $.feature_name), choice('<', '<=', '>', '>=', '='), $._value),\n        seq($._range_value, choice('<', '<=', '>', '>=', '='), alias($.identifier, $.feature_name)),\n        seq($._range_value, choice('<', '<='), alias($.identifier, $.feature_name), choice('<', '<='), $._value),\n        seq($._range_value, choice('>', '>='), alias($.identifier, $.feature_name), choice('>', '>='), $._value),\n      ),\n      ')',\n    ),\n\n    // <mf-value> before the name: <number>, <dimension> or <ratio>\n    _range_value: $ => choice($.integer_value, $.float_value, alias($._ratio, $.binary_expression)),\n\n    _ratio: $ => seq(choice($.integer_value, $.float_value), '/', choice($.integer_value, $.float_value)),\n\n    // MQ4 / css-conditional <general-enclosed> '(' <any-value> ')'\n    general_enclosed: $ => seq('(', $._enclosed_value, repeat1($._enclosed_value), ')'),\n\n    _enclosed_value: $ => prec(-1, choice(\n      alias($.identifier, $.plain_value),\n      $.integer_value,\n      $.float_value,\n      $.string_value,\n      $.call_expression,\n    )),\n\n    feature_query: $ => seq(",
+          "occurrences": 1
+        },
+        {
+          "before": "    unary_query: $ => prec(1, seq(\n      choice('not', 'only'),\n      $._query,\n    )),",
+          "after": "    unary_query: $ => choice(\n      // not <media-in-parens>\n      prec(1, seq(\n        choice('not', 'only'),\n        choice($.feature_query, $.range_query, $.parenthesized_query, $.selector_query, $.call_expression, $.general_enclosed),\n      )),\n      // [not | only] <media-type> [and <media-condition-without-or>]: binds the whole and-chain\n      prec(-1, seq(\n        choice('not', 'only'),\n        $._query,\n      )),\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "        repeat(choice(\n          alias(/[^\\\\'\\n]+/, $.string_content),\n          $.escape_sequence,\n        )),",
+          "after": "        repeat(choice(\n          alias($._single_quoted_content, $.string_content),\n          $.escape_sequence,\n          alias($._escaped_newline, $.escape_sequence),\n        )),",
+          "occurrences": 1
+        },
+        {
+          "before": "        repeat(choice(\n          alias(/[^\\\\\"\\n]+/, $.string_content),\n          $.escape_sequence,\n        )),",
+          "after": "        repeat(choice(\n          alias($._double_quoted_content, $.string_content),\n          $.escape_sequence,\n          alias($._escaped_newline, $.escape_sequence),\n        )),",
+          "occurrences": 1
+        },
+        {
+          "before": "    integer_value: $ => seq(",
+          "after": "    _escaped_newline: _ => token(seq('\\\\', /\\r\\n|[\\n\\r\\f]/)),\n\n    integer_value: $ => seq(",
+          "occurrences": 1
+        },
+        {
+          "before": "          seq(/[eE]/, optional('-'), /\\d+/),\n          seq('.', /\\d+/, /[eE]/, optional('-'), /\\d+/),",
+          "after": "          seq(/[eE]/, optional(choice('+', '-')), /\\d+/),\n          seq('.', /\\d+/, /[eE]/, optional(choice('+', '-')), /\\d+/),",
+          "occurrences": 1
+        },
+        {
+          "before": "    call_expression: $ => seq(\n      alias($.identifier, $.function_name),\n      $.arguments,\n    ),\n\n    binary_expression: $ => prec.left(seq(\n      $._value,\n      choice('+', '-', '*', '/'),\n      $._value,\n    )),\n\n    arguments: $ => seq(\n      token.immediate('('),\n      sep(choice(',', ';'), repeat1($._value)),\n      ')',\n    ),",
+          "after": "    call_expression: $ => choice(\n      seq(alias($.identifier, $.function_name), $.arguments),\n      seq(alias($._math_function_name, $.function_name), alias($._math_arguments, $.arguments)),\n      seq(alias($._url_function_name, $.function_name), alias($._url_arguments, $.arguments)),\n    ),\n\n    binary_expression: $ => choice(\n      prec.left(1, seq($._value, choice('+', '-'), $._value)),\n      prec.left(2, seq($._value, choice('*', '/'), $._value)),\n    ),\n\n    // P2-16: a segment after a separator may be empty (var(--m,))\n    arguments: $ => seq(\n      token.immediate('('),\n      optional(seq(\n        repeat1($._argument),\n        repeat(seq(choice(',', ';'), repeat($._argument))),\n      )),\n      ')',\n    ),\n\n    // Outside math functions '/' is a separator, not division (css-values-4 <color> syntax, ratios)\n    _argument: $ => prec(-1, choice(\n      alias($.identifier, $.plain_value),\n      $.plain_value,\n      $.color_value,\n      $.integer_value,\n      $.float_value,\n      $.string_value,\n      $.grid_value,\n      $.parenthesized_value,\n      $.call_expression,\n      $.important,\n      '/',\n    )),\n\n    _math_arguments: $ => seq(\n      token.immediate('('),\n      sep(',', $._value),\n      ')',\n    ),\n\n    // css-syntax-3 url-token, or url( <string> )\n    _url_arguments: $ => seq(\n      token.immediate('('),\n      optional(choice(\n        $.string_value,\n        // whitespace inside is kept (a bad-url in css-syntax-3) so line-broken data: URLs stay one value\n        alias(/([^\\s\"'()\\\\]|\\\\[^\\n\\r\\f])(([^\"'()\\\\]|\\\\[^\\n\\r\\f])*([^\\s\"'()\\\\]|\\\\[^\\n\\r\\f]))?/, $.plain_value),\n      )),\n      ')',\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "    identifier: _ => /(--|-?[a-zA-Z_\\xA0-\\xFF])[a-zA-Z0-9-_\\xA0-\\xFF]*/,",
+          "after": "    // Before identifier: an equal-length match prefers the earlier rule\n    _custom_ident: _ => /--[a-zA-Z0-9-_\\xA0-\\xFF]*/,\n\n    identifier: _ => /(--|-?[a-zA-Z_\\xA0-\\xFF])[a-zA-Z0-9-_\\xA0-\\xFF]*/,\n\n    // An identifier with escapes (css-syntax-3 4.3.11), e.g. \\31 x, x\\.y\n    _escaped_name: $ => choice(\n      seq($.escape_sequence, repeat($._name_tail)),\n      seq($.identifier, repeat1($._name_tail)),\n    ),\n\n    _name_tail: $ => choice(\n      alias(token.immediate(/[a-zA-Z0-9-_\\xA0-\\xFF]+/), $.identifier),\n      alias(token.immediate(seq('\\\\', choice(/[0-9a-fA-F]{1,6}\\s?/, /[^0-9a-fA-F\\n\\r]/))), $.escape_sequence),\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "    plain_value: _ => token(seq(\n      repeat(choice(\n        /[-_]/,\n        /\\/[^\\*\\s,;!{}()\\[\\]]/, // Slash not followed by a '*' (which would be a comment)\n      )),\n      /[a-zA-Z]/,\n      repeat(choice(\n        /[^/\\s,;!{}()\\[\\]]/, // Not a slash, not a delimiter character\n        /\\/[^\\*\\s,;!{}()\\[\\]]/, // Slash not followed by a '*' (which would be a comment)\n      )),\n    )),",
+          "after": "    plain_value: _ => token(seq(\n      repeat(/[-_]/),\n      /[a-zA-Z]/,\n      repeat(/[^/\\s,;!{}()\\[\\]]/), // Not a slash, not a delimiter character\n      optional(seq('//', repeat(/[^\\s,;!{}()\\[\\]]/))), // scheme://rest, e.g. http://host/path\n    )),",
+          "occurrences": 1
+        },
+        {
+          "before": "function sep1(separator, rule) {\n  return seq(rule, repeat(seq(separator, rule)));\n}",
+          "after": "function sep1(separator, rule) {\n  return seq(rule, repeat(seq(separator, rule)));\n}\n\n/**\n * An at-keyword token matched ASCII case-insensitively, shown as the lower-case literal\n *\n * @param {string} literal\n *\n * @returns {AliasRule}\n */\nfunction kw(literal) {\n  const pattern = [...literal].map(c => /[a-z]/.test(c) ? `[${c}${c.toUpperCase()}]` : c).join('');\n  return alias(new RegExp(pattern), literal);\n}",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "src/scanner.c",
+      "operations": [
+        {
+          "before": "enum TokenType {\n    DESCENDANT_OP,\n    PSEUDO_CLASS_SELECTOR_COLON,\n    ERROR_RECOVERY,\n};",
+          "after": "enum TokenType {\n    DESCENDANT_OP,\n    PSEUDO_CLASS_SELECTOR_COLON,\n    ERROR_RECOVERY,\n    CUSTOM_PROPERTY_COLON,\n    DOUBLE_QUOTED_CONTENT,\n    SINGLE_QUOTED_CONTENT,\n    MATH_FUNCTION_NAME,\n    URL_FUNCTION_NAME,\n};\n\nstatic const char *const MATH_FUNCTIONS[] = {\n    \"calc\", \"-webkit-calc\", \"-moz-calc\", \"min\", \"max\", \"clamp\", \"round\", \"mod\", \"rem\", \"sin\", \"cos\", \"tan\",\n    \"asin\", \"acos\", \"atan\", \"atan2\", \"pow\", \"sqrt\", \"hypot\", \"log\", \"exp\", \"abs\", \"sign\",\n};\n\nstatic bool is_newline(int32_t c) { return c == '\\n' || c == '\\r' || c == '\\f'; }\n\n// True when a '{' comes before the end of the current statement (';', '}' or EOF).\nstatic bool block_follows(TSLexer *lexer) {\n    for (;;) {\n        if (lexer->eof(lexer) || lexer->lookahead == ';' || lexer->lookahead == '}') {\n            return false;\n        }\n        if (lexer->lookahead == '{') {\n            return true;\n        }\n        lexer->advance(lexer, false);\n    }\n}",
+          "occurrences": 1
+        },
+        {
+          "before": "    if (valid_symbols[ERROR_RECOVERY]) {\n        return false;\n    }\n",
+          "after": "    if (valid_symbols[ERROR_RECOVERY]) {\n        return false;\n    }\n\n    // P2-18: string content stops at a newline (bad string), so recovery resynchronises after it\n    if (valid_symbols[DOUBLE_QUOTED_CONTENT] || valid_symbols[SINGLE_QUOTED_CONTENT]) {\n        int32_t quote = valid_symbols[DOUBLE_QUOTED_CONTENT] ? '\"' : '\\'';\n        bool has_content = false;\n        while (!lexer->eof(lexer) && lexer->lookahead != quote && lexer->lookahead != '\\\\' &&\n               !is_newline(lexer->lookahead)) {\n            advance(lexer);\n            has_content = true;\n        }\n        lexer->result_symbol = quote == '\"' ? DOUBLE_QUOTED_CONTENT : SINGLE_QUOTED_CONTENT;\n        return has_content;\n    }\n\n    // P2-10: after a custom property name (--*) a colon starts the declaration (css-syntax-3 consume a\n    // block's contents tries a declaration first, and a qualified rule never starts with \"--name:\")\n    if (valid_symbols[CUSTOM_PROPERTY_COLON]) {\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (lexer->lookahead == ':') {\n            advance(lexer);\n            if (lexer->lookahead != ':') {\n                lexer->mark_end(lexer);\n                lexer->result_symbol = CUSTOM_PROPERTY_COLON;\n                return true;\n            }\n        }\n        return false;\n    }\n\n    // P2-19/P2-20/P2-23: math function and url( names are told apart from other function names\n    if ((valid_symbols[MATH_FUNCTION_NAME] || valid_symbols[URL_FUNCTION_NAME]) &&\n        !(valid_symbols[DESCENDANT_OP] && iswspace(lexer->lookahead))) {\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (iswalpha(lexer->lookahead) || lexer->lookahead == '-') {\n            char name[16];\n            unsigned length = 0;\n            while ((iswalnum(lexer->lookahead) || lexer->lookahead == '-') && lexer->lookahead < 128) {\n                if (length < sizeof(name) - 1) {\n                    name[length] = (char)towlower(lexer->lookahead);\n                }\n                length++;\n                advance(lexer);\n            }\n            if (lexer->lookahead != '(' || length >= sizeof(name)) {\n                return false;\n            }\n            name[length] = 0;\n            lexer->mark_end(lexer);\n            if (valid_symbols[URL_FUNCTION_NAME] && strcmp(name, \"url\") == 0) {\n                lexer->result_symbol = URL_FUNCTION_NAME;\n                return true;\n            }\n            if (valid_symbols[MATH_FUNCTION_NAME]) {\n                for (unsigned i = 0; i < sizeof(MATH_FUNCTIONS) / sizeof(MATH_FUNCTIONS[0]); i++) {\n                    if (strcmp(name, MATH_FUNCTIONS[i]) == 0) {\n                        lexer->result_symbol = MATH_FUNCTION_NAME;\n                        return true;\n                    }\n                }\n            }\n            return false;\n        }\n    }\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        if (lexer->lookahead == '#' || lexer->lookahead == '.' || lexer->lookahead == '[' || lexer->lookahead == '-' ||\n            lexer->lookahead == '*' || iswalnum(lexer->lookahead)) {\n            return true;\n        }",
+          "after": "        if (lexer->lookahead == '#' || lexer->lookahead == '.' || lexer->lookahead == '[' || lexer->lookahead == '-' ||\n            lexer->lookahead == '*' || iswalnum(lexer->lookahead)) {\n            return block_follows(lexer);\n        }",
+          "occurrences": 1
+        },
+        {
+          "before": "            return lexer->eof(lexer);\n        }",
+          "after": "            return false;\n        }",
+          "occurrences": 1
+        },
+        {
+          "before": "#include <wctype.h>\n",
+          "after": "#include <string.h>\n#include <wctype.h>\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}
