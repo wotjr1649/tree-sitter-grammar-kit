@@ -12718,8 +12718,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "27fd85c297d2552734e17519af4d4cd2f1d759916945d615413036940bc1c57f",
-       "bytes": 931
+       "sha256": "e57d138d8c68e615d9e5469c8a2563b5aef64db9ad6f335765bb6c4d33121b57",
+       "bytes": 935
       },
       "edits": [],
       "expect": [
@@ -15359,8 +15359,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "27fd85c297d2552734e17519af4d4cd2f1d759916945d615413036940bc1c57f",
-       "bytes": 931
+       "sha256": "e57d138d8c68e615d9e5469c8a2563b5aef64db9ad6f335765bb6c4d33121b57",
+       "bytes": 935
       },
       "edits": [],
       "expect": [
@@ -15390,7 +15390,7 @@
          {
           "name": "arm",
           "type": "switch_expression_arm",
-          "text": "Point(0, 0) =\u003e \"origin\""
+          "text": "Point(0, 0) { } =\u003e \"origin\""
          },
          {
           "name": "arm",
@@ -15423,7 +15423,7 @@
       },
       "alternatives": [],
       "sample": null,
-      "source": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name =\u003e \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) =\u003e p switch\n    {\n        Point(0, 0) =\u003e \"origin\",\n        { X: 0 } =\u003e \"on-axis\",\n        _ =\u003e \"other\",\n    };\n\n    static async IAsyncEnumerable\u003cint\u003e Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) =\u003e v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n"
+      "source": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name =\u003e \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) =\u003e p switch\n    {\n        Point(0, 0) { } =\u003e \"origin\",\n        { X: 0 } =\u003e \"on-axis\",\n        _ =\u003e \"other\",\n    };\n\n    static async IAsyncEnumerable\u003cint\u003e Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) =\u003e v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n"
      },
      {
       "id": "probe-csharp-V10-Q-1",
