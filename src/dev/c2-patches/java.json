@@ -1,0 +1,65 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "java",
+ "defects": [
+  "java-P2-01",
+  "java-P2-02",
+  "java-P2-03",
+  "java-P2-04",
+  "java-P2-05",
+  "java-P2-06",
+  "java-P2-07"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "const DIGITS = token(choice('0', seq(/[1-9]/, optional(seq(optional('_'), sep1(/[0-9]+/, /_+/))))));\nconst DECIMAL_DIGITS = token(sep1(/[0-9]+/, '_'));\nconst HEX_DIGITS = token(sep1(/[A-Fa-f0-9]+/, '_'));",
+     "after": "const DIGITS = token(choice('0', seq(/[1-9]/, optional(seq(optional(/_+/), sep1(/[0-9]+/, /_+/))))));\nconst DECIMAL_DIGITS = token(sep1(/[0-9]+/, /_+/));\nconst HEX_DIGITS = token(sep1(/[A-Fa-f0-9]+/, /_+/));",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice('0o', '0O', '0'),\n      sep1(/[0-7]+/, '_'),",
+     "after": "      choice('0o', '0O', seq('0', optional(/_+/))),\n      sep1(/[0-7]+/, /_+/),",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice('0b', '0B'),\n      sep1(/[01]+/, '_'),",
+     "after": "      choice('0b', '0B'),\n      sep1(/[01]+/, /_+/),",
+     "occurrences": 1
+    },
+    {
+     "before": "    program: $ => repeat($._toplevel_statement),",
+     "after": "    program: $ => seq(repeat($._toplevel_statement), optional('\\u001a')),",
+     "occurrences": 1
+    },
+    {
+     "before": "        choice(\n          $.pattern,\n          commaSep1($.expression),\n        ),\n        optional($.guard),",
+     "after": "        choice(\n          commaSep1($.pattern),\n          commaSep1($.expression),\n        ),\n        optional($.guard),",
+     "occurrences": 1
+    },
+    {
+     "before": "    import_declaration: $ => seq(\n      'import',\n      optional('static'),\n      $._name,\n      optional(seq('.', $.asterisk)),\n      ';',\n    ),",
+     "after": "    import_declaration: $ => choice(\n      seq('import', 'module', $._name, ';'),\n      seq(\n        'import',\n        optional('static'),\n        $._name,\n        optional(seq('.', $.asterisk)),\n        ';',\n      ),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    constructor_body: $ => seq(\n      '{',\n      optional($.explicit_constructor_invocation),\n      repeat($.statement),\n      '}',\n    ),",
+     "after": "    constructor_body: $ => seq(\n      '{',\n      repeat($.statement),\n      optional(seq($.explicit_constructor_invocation, repeat($.statement))),\n      '}',\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "      $._unannotated_type,\n      '...',\n      repeat($._annotation),\n      $.variable_declarator,",
+     "after": "      $._unannotated_type,\n      repeat($._annotation),\n      '...',\n      repeat($._annotation),\n      $.variable_declarator,",
+     "occurrences": 1
+    },
+    {
+     "before": "    identifier: _ => /[\\p{XID_Start}_$][\\p{XID_Continue}\\u00A2_$]*/,",
+     "after": "    identifier: _ => /([\\p{XID_Start}_$]|\\\\u+[0-9A-Fa-f]{4})([\\p{XID_Continue}\\u00A2_$]|\\\\u+[0-9A-Fa-f]{4})*/,",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

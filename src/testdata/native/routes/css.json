@@ -7169,6 +7169,156 @@
       ]
     },
     {
+      "id": "alt-css-M05-07",
+      "features": [
+        "css-M05",
+        "css-M01"
+      ],
+      "alternatives": [
+        "css-M05.a001",
+        "css-M05.a002",
+        "css-M05.a006",
+        "css-M05.a008",
+        "css-M05.a012",
+        "css-M05.a017",
+        "css-M05.a027",
+        "css-M05.a031",
+        "css-M01.a001"
+      ],
+      "source_utf8": ".a .b, /* legacy; drop */ .c { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "selectors",
+            "descendant_selector",
+            "class_selector",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "rule_set",
+              "text": ".a .b, /* legacy; drop */ .c { }"
+            },
+            {
+              "type": "descendant_selector",
+              "text": ".a .b"
+            },
+            {
+              "type": "comment",
+              "text": "/* legacy; drop */"
+            },
+            {
+              "type": "class_selector",
+              "text": ".c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-css-M05-08",
+      "features": [
+        "css-M05",
+        "css-M01"
+      ],
+      "alternatives": [
+        "css-M05.a002",
+        "css-M05.a006",
+        "css-M05.a007",
+        "css-M05.a008",
+        "css-M05.a009",
+        "css-M05.a010",
+        "css-M05.a012",
+        "css-M05.a018",
+        "css-M05.a022",
+        "css-M05.a026",
+        "css-M05.a029",
+        "css-M01.a021"
+      ],
+      "source_utf8": "a [title=\"x;y\"] { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "descendant_selector",
+            "tag_name",
+            "attribute_selector",
+            "string_value"
+          ],
+          "anchors": [
+            {
+              "type": "rule_set",
+              "text": "a [title=\"x;y\"] { }"
+            },
+            {
+              "type": "descendant_selector",
+              "text": "a [title=\"x;y\"]"
+            },
+            {
+              "type": "tag_name",
+              "text": "a"
+            },
+            {
+              "type": "attribute_selector",
+              "text": "[title=\"x;y\"]"
+            },
+            {
+              "type": "string_value",
+              "text": "\"x;y\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-css-M05-09",
+      "features": [
+        "css-M05",
+        "css-M01"
+      ],
+      "alternatives": [
+        "css-M05.a002",
+        "css-M05.a006",
+        "css-M05.a008",
+        "css-M05.a012",
+        "css-M05.a027",
+        "css-M05.a031",
+        "css-M01.a001"
+      ],
+      "source_utf8": ".a .b /* } */ { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "descendant_selector",
+            "class_selector",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "rule_set",
+              "text": ".a .b /* } */ { }"
+            },
+            {
+              "type": "descendant_selector",
+              "text": ".a .b"
+            },
+            {
+              "type": "comment",
+              "text": "/* } */"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "alt-css-M06-01",
       "features": [
         "css-M06"

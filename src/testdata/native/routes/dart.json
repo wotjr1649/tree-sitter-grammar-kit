@@ -3740,7 +3740,7 @@
             {
               "type": "record_type",
               "text": "()",
-              "occurrence": 8
+              "occurrence": 5
             },
             {
               "type": "function_signature",

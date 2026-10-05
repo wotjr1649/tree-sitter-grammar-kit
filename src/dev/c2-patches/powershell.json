@@ -1,0 +1,271 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "powershell",
+  "defects": [
+    "powershell-P2-01",
+    "powershell-P2-02",
+    "powershell-P2-03",
+    "powershell-P2-04",
+    "powershell-P2-05",
+    "powershell-P2-06",
+    "powershell-P2-07",
+    "powershell-P2-08",
+    "powershell-P2-09",
+    "powershell-P2-10",
+    "powershell-P2-11",
+    "powershell-P2-12",
+    "powershell-P2-13",
+    "powershell-P2-14",
+    "powershell-P2-15",
+    "powershell-P2-16",
+    "powershell-P2-17",
+    "powershell-P2-18",
+    "powershell-P2-19",
+    "powershell-P2-20",
+    "powershell-P2-21",
+    "powershell-P2-22",
+    "powershell-P2-23"
+  ],
+  "files": [
+    {
+      "target": "grammar.js",
+      "operations": [
+        {
+          "before": "  externals: ($) => [$._statement_terminator],\n",
+          "after": "  externals: ($) => [\n    $._statement_terminator,\n    $._end_of_parameters,\n    $._end_of_parameters_argument,\n  ],\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    program: ($) => seq(optional($.param_block), $.statement_list),\n",
+          "after": "    program: ($) =>\n      seq(\n        optional($.param_block),\n        choice($.statement_list, $.named_block_list),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            /[0-9]+\\.[0-9]+/,\n            optional(token(seq('e', optional(choice('+', '-')), /[0-9]+/))),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n          ),\n",
+          "after": "            /[0-9]+\\.[0-9]+/,\n            optional(token(seq('e', optional(choice('+', '-')), /[0-9]+/))),\n            optional('d'),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n          ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            optional(token(seq('e', optional(choice('+', '-')), /[0-9]+/))),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n",
+          "after": "            optional(token(seq('e', optional(choice('+', '-')), /[0-9]+/))),\n            optional('d'),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            token(seq('e', optional(choice('+', '-')), /[0-9]+/)),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n",
+          "after": "            token(seq('e', optional(choice('+', '-')), /[0-9]+/)),\n            optional('d'),\n            optional(choice('kb', 'mb', 'gb', 'tb', 'pb')),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        /\\\"(\\s*\\#*)*/, // this is a trick to avoid tree-sitter allowing comment between tokens, as string should be tokenize but powershell allow subexpression inside it...\n        repeat(\n          choice(\n            token.immediate(/[^\\$\\\"`]+/),\n",
+          "after": "        /[\\\"“”„](\\s*\\#*)*/, // this is a trick to avoid tree-sitter allowing comment between tokens, as string should be tokenize but powershell allow subexpression inside it...\n        repeat(\n          choice(\n            token.immediate(/[^\\$\\\"“”„`]+/),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            token.immediate(/`.{1}|`\\r?\\n/),\n            token.immediate('\"\"'),\n            token.immediate('$'),\n",
+          "after": "            token.immediate(/`.{1}|`\\r?\\n/),\n            token.immediate(/[\\\"“”„][\\\"“”„]/),\n            token.immediate('$'),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        token.immediate(/(\\s*\\#*)*\\\"/),\n",
+          "after": "        token.immediate(/(\\s*\\#*)*[\\\"“”„]/),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      token(seq('\\'', repeat(choice(/[^']+/, '\\'\\'')), '\\'')),\n",
+          "after": "      token(\n        seq(\n          /['‘’‚‛]/,\n          repeat(\n            choice(\n              /[^'‘’‚‛]+/,\n              /['‘’‚‛]['‘’‚‛]/,\n            ),\n          ),\n          /['‘’‚‛]/,\n        ),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      choice('=', '!=', '+=', '*=', '/=', '%=', '-='),\n",
+          "after": "      choice('=', '!=', '+=', '*=', '/=', '%=', '-=', '??='),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "                ':',\n              ),\n            ),\n            /[a-zA-Z0-9_]+|\\?/,\n          ),\n        ),\n        token(\n",
+          "after": "                ':',\n              ),\n            ),\n            /[a-zA-Z0-9_?]+/,\n          ),\n        ),\n        token(\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            /[a-zA-Z0-9_]+|\\?/,\n",
+          "after": "            /[a-zA-Z0-9_?]+/,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    braced_variable: ($) => /\\$\\{[^}]+\\}/,\n",
+          "after": "    braced_variable: ($) => token(seq('${', repeat1(choice(/[^}`]/, /`./)), '}')),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      token(/[^\\(\\)\\$\\\"\\'\\-\\{\\}@\\|\\[`\\&\\s][^\\&\\s\\(\\)\\}\\|;,]*/),\n",
+          "after": "      token(/[^\\(\\)\\$\\\"\\'\\-–—―“”„‘’‚‛\\{\\}@\\|\\[`\\&\\s][^\\&\\s\\(\\)\\}\\|;,]*/),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    command_parameter: ($) => token(choice(/-+[a-zA-Z_?\\-`]+/, '--')),\n",
+          "after": "    command_parameter: ($) =>\n      token(choice(/[\\-–—―]+[a-zA-Z_?\\-–—―`]+/, '--')),\n\n    _colon_parameter: ($) =>\n      token(/[\\-–—―]+[a-zA-Z_?\\-–—―`]+:/),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    named_block_list: ($) => repeat1($.named_block),\n",
+          "after": "    named_block_list: ($) => repeat1(seq($.named_block, repeat(';'))),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        reservedWord('end'),\n      ),\n",
+          "after": "        reservedWord('end'),\n        reservedWord('clean'),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          $.parallel_statement,\n          $.sequence_statement,\n",
+          "after": "          $.parallel_statement,\n          $.using_statement,\n          $.sequence_statement,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    label_expression: ($) => choice($.label, $.unary_expression),\n",
+          "after": "    label_expression: ($) => choice($.label, $.simple_name, $.unary_expression),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "\n    pipeline: ($) =>\n",
+          "after": "\n    using_statement: ($) =>\n      seq(\n        reservedWord('using'),\n        choice(\n          reservedWord('namespace'),\n          reservedWord('module'),\n          reservedWord('assembly'),\n        ),\n        choice($.generic_token, $.string_literal, $.hash_literal_expression),\n      ),\n\n    pipeline: ($) =>\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          repeat(seq($.pipeline_chain_tail, $.pipeline_chain)),\n        ),\n",
+          "after": "          repeat(seq($.pipeline_chain_tail, $.pipeline_chain)),\n          optional('&'),\n        ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          /[^\\{\\}\\(\\);,\\|\\&`\"'\\s\\r\\n\\[\\]\\+\\-\\*\\/\\$@<\\!]+/,\n",
+          "after": "          /[^0-9\\{\\}\\(\\);,\\|\\&`\"'\\s\\r\\n\\[\\]\\+\\-\\*\\/\\$@<\\!–—―“”„‘’‚‛][^\\{\\}\\(\\);,\\|\\&`\"'\\s\\r\\n\\[\\]\\+\\-\\*\\/\\$@<\\!–—―“”„‘’‚‛]*/,\n          // a digit-led name cannot stop at '..', so a number before '..' stays a literal\n          /[0-9]([^\\{\\}\\(\\);,\\|\\&`\"'\\s\\r\\n\\[\\]\\+\\-\\*\\/\\$@<\\!–—―“”„‘’‚‛.]|\\.[^\\{\\}\\(\\);,\\|\\&`\"'\\s\\r\\n\\[\\]\\+\\-\\*\\/\\$@<\\!–—―“”„‘’‚‛.])*/,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          new RegExp(caseInsensitive('parallel-')),\n        ),\n",
+          "after": "          new RegExp(caseInsensitive('parallel-')),\n          new RegExp(caseInsensitive('using-')),\n        ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            token.immediate(/[^\\{\\}\\(\\);,\\|\\&\"'\\s\\r\\n]+/),\n",
+          "after": "            token.immediate(/[^\\{\\}\\(\\);,\\|\\&\"'\\s\\r\\n\\$]+/),\n            token.immediate('$'),\n            seq(token.immediate('$('), optional($.statement_list), ')'),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    command_elements: ($) => prec.right(repeat1($._command_element)),\n",
+          "after": "    command_elements: ($) =>\n      prec.right(\n        choice(\n          repeat1($._command_element),\n          seq(\n            repeat($._command_element),\n            alias($._end_of_parameters, $.command_parameter),\n            repeat(\n              choice(\n                $._command_element,\n                seq(\n                  $.command_argument_sep,\n                  alias($._end_of_parameters_argument, $.generic_token),\n                ),\n              ),\n            ),\n          ),\n        ),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          $.command_parameter,\n          seq($._command_argument, optional($.argument_list)),\n",
+          "after": "          $.command_parameter,\n          seq(\n            alias($._colon_parameter, $.command_parameter),\n            optional(choice($.generic_token, $.array_literal_expression)),\n          ),\n          seq($._command_argument, optional($.argument_list)),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    class_method_parameter: ($) => seq(optional($.type_literal), $.variable),\n",
+          "after": "    class_method_parameter: ($) =>\n      seq(optional($.type_literal), $.variable, optional($.script_parameter_default)),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        ')',\n        '{',\n",
+          "after": "        ')',\n        optional(seq(':', reservedWord('base'), $.argument_list)),\n        '{',\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        token(reservedWord('class')),\n        $.simple_name,\n        optional(seq(':', $.simple_name, repeat(seq(',', $.simple_name)))),\n",
+          "after": "        optional($.attribute_list),\n        token(reservedWord('class')),\n        $.simple_name,\n        optional(seq(':', $.type_name, repeat(seq(',', $.type_name)))),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        token(reservedWord('enum')),\n        $.simple_name,\n",
+          "after": "        optional($.attribute_list),\n        token(reservedWord('enum')),\n        $.simple_name,\n        optional(seq(':', $.type_name)),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    _expression: ($) => $.logical_expression,\n",
+          "after": "    _expression: ($) => choice($.logical_expression, $.ternary_expression),\n\n    ternary_expression: ($) =>\n      prec.right(\n        seq(\n          field('condition', $.logical_expression),\n          '?',\n          field('consequence', $._expression),\n          ':',\n          field('alternative', $._expression),\n        ),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        choice(\n          $.additive_expression,\n          seq(\n",
+          "after": "        choice(\n          $._coalesce_operand,\n          seq(\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            $.comparison_operator,\n            $.additive_expression,\n          ),\n",
+          "after": "            $.comparison_operator,\n            $._coalesce_operand,\n          ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        ),\n      ),\n\n    additive_expression: ($) =>\n",
+          "after": "        ),\n      ),\n\n    _coalesce_operand: ($) =>\n      choice($.additive_expression, $.null_coalescing_expression),\n\n    null_coalescing_expression: ($) =>\n      prec.left(seq($._coalesce_operand, '??', $.additive_expression)),\n\n    additive_expression: ($) =>\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      seq('{', optional($.param_block), $.script_block, '}'),\n",
+          "after": "      seq('{', optional($.param_block), optional($.script_block), '}'),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          seq($._primary_expression, token.immediate('.'), $.member_name),\n          seq($._primary_expression, '::', $.member_name),\n",
+          "after": "          seq($._primary_expression, token.immediate('.'), $.member_name),\n          seq($._primary_expression, token.immediate('?.'), $.member_name),\n          seq($._primary_expression, '::', $.member_name),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        seq($._primary_expression, '[', $._expression, ']'),\n",
+          "after": "        seq(\n          $._primary_expression,\n          choice('[', token.immediate('?[')),\n          $._expression,\n          ']',\n        ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "          token.immediate('.'),\n",
+          "after": "          choice(token.immediate('.'), token.immediate('?.')),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    argument_expression: ($) => $.logical_argument_expression,\n",
+          "after": "    argument_expression: ($) =>\n      choice(\n        $.logical_argument_expression,\n        alias($.ternary_argument_expression, $.ternary_expression),\n      ),\n\n    ternary_argument_expression: ($) =>\n      prec.right(\n        seq(\n          field('condition', $.logical_argument_expression),\n          '?',\n          field('consequence', $.argument_expression),\n          ':',\n          field('alternative', $.argument_expression),\n        ),\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            $.bitwise_argument_expression,\n            choice(\n              reservedWord('-and'),\n              reservedWord('-or'),\n              reservedWord('-xor'),\n            ),\n            $.comparison_argument_expression,\n",
+          "after": "            $.bitwise_argument_expression,\n            choice(\n              reservedWord('-band'),\n              reservedWord('-bor'),\n              reservedWord('-bxor'),\n            ),\n            $.comparison_argument_expression,\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        choice(\n          $.additive_argument_expression,\n          seq(\n",
+          "after": "        choice(\n          $._coalesce_argument_operand,\n          seq(\n",
+          "occurrences": 1
+        },
+        {
+          "before": "            $.additive_argument_expression,\n          ),\n        ),\n",
+          "after": "            $._coalesce_argument_operand,\n          ),\n        ),\n      ),\n\n    _coalesce_argument_operand: ($) =>\n      choice(\n        $.additive_argument_expression,\n        alias($.null_coalescing_argument_expression, $.null_coalescing_expression),\n      ),\n\n    null_coalescing_argument_expression: ($) =>\n      prec.left(\n        seq($._coalesce_argument_operand, '??', $.additive_argument_expression),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    .map((letter) => `[${letter}${letter.toUpperCase()}]`)\n",
+          "after": "    .map((letter) =>\n      letter === '-'\n        ? '[\\\\-–—―]'\n        : `[${letter}${letter.toUpperCase()}]`,\n    )\n",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "src/scanner.c",
+      "operations": [
+        {
+          "before": "    STATEMENT_TERMINATOR\n",
+          "after": "    STATEMENT_TERMINATOR,\n    END_OF_PARAMETERS,\n    END_OF_PARAMETERS_ARGUMENT\n",
+          "occurrences": 1
+        },
+        {
+          "before": "\n/* --- API Implementation --- */\n",
+          "after": "\nstatic bool is_dash(int32_t c) { return c == '-' || (c >= 0x2013 && c <= 0x2015); }\n\nstatic bool is_argument_delimiter(int32_t c)\n{\n    return c == 0 || iswspace(c) || c == '&' || c == '(' || c == ')' || c == '}' || c == '|' || c == ';' || c == ',';\n}\n\n// In command element position: END_OF_PARAMETERS is the dashdash '--' followed by\n// whitespace or the end of input ('--$x', '--%' and '--name' stay grammar tokens), and\n// after it END_OF_PARAMETERS_ARGUMENT is a dash-led argument word, which is then never a\n// parameter or an operator.\nstatic bool scan_end_of_parameters(TSLexer *lexer, const bool *valid_symbols)\n{\n    unsigned n = 0;\n    bool dashes = true;\n    while (!is_argument_delimiter(lexer->lookahead)) {\n        if (n < 2 && !is_dash(lexer->lookahead)) dashes = false;\n        lexer->advance(lexer, false);\n        n++;\n    }\n    lexer->mark_end(lexer);\n    if (valid_symbols[END_OF_PARAMETERS] && n == 2 && dashes && (lexer->lookahead == 0 || iswspace(lexer->lookahead))) {\n        lexer->result_symbol = END_OF_PARAMETERS;\n        return true;\n    }\n    if (valid_symbols[END_OF_PARAMETERS_ARGUMENT]) {\n        lexer->result_symbol = END_OF_PARAMETERS_ARGUMENT;\n        return true;\n    }\n    return false;\n}\n\n/* --- API Implementation --- */\n",
+          "occurrences": 1
+        },
+        {
+          "before": "{\n    return scan_statement_terminator(payload, lexer, valid_symbols);\n",
+          "after": "{\n    if ((valid_symbols[END_OF_PARAMETERS] || valid_symbols[END_OF_PARAMETERS_ARGUMENT]) && is_dash(lexer->lookahead)) {\n        return scan_end_of_parameters(lexer, valid_symbols);\n    }\n    return scan_statement_terminator(payload, lexer, valid_symbols);\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

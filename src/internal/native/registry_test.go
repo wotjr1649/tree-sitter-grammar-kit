@@ -358,14 +358,19 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		{"adoption on a regenerated-only route", "adoption/regeneration", func(_ *nativeRegistry, s *sourceRecords, _ *reproRecords) {
 			source(s, "go").Adoption = source(s, "csharp").Adoption
 		}},
-		{"patched files without a chain", "carries patches", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
-			route(reg, "go").Regeneration.PatchedFiles = route(reg, "csharp").Regeneration.PatchedFiles
+		// go without its C2 patch (chain, patched files and record) is a regenerated-only route
+		{"patched files without a chain", "carries patches", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			g := route(reg, "go").Regeneration
+			g.PatchChain, source(s, "go").C2Patch = nil, nil
+			g.PatchedFiles = route(reg, "csharp").Regeneration.PatchedFiles
 		}},
-		{"chain on a regenerated-only route", "carries patches", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
-			route(reg, "go").Regeneration.PatchChain = route(reg, "csharp").Regeneration.PatchChain
+		{"chain on a regenerated-only route", "carries patches", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			g := route(reg, "go").Regeneration
+			g.PatchedFiles, source(s, "go").C2Patch = nil, nil
+			g.PatchChain = route(reg, "csharp").Regeneration.PatchChain
 		}},
 		{"patched origin without a chain", "without its patch chain", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
-			file(route(reg, "python"), "src/scanner.c").Origin = "patched"
+			file(route(reg, "dart"), "src/scanner.c").Origin = "patched" // dart's C2 patch leaves its scanner unpatched
 		}},
 		{"output differs from the source record", "source regeneration record", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			route(reg, "go").Regeneration.Outputs[3].Bytes++

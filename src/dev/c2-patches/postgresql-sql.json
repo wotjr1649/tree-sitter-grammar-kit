@@ -1,0 +1,127 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "postgresql-sql",
+ "defects": [
+  "postgresql-sql-P2-01",
+  "postgresql-sql-P2-02",
+  "postgresql-sql-P2-03",
+  "postgresql-sql-P2-04",
+  "postgresql-sql-P2-05",
+  "postgresql-sql-P2-06",
+  "postgresql-sql-P2-07",
+  "postgresql-sql-P2-08",
+  "postgresql-sql-P2-09"
+ ],
+ "files": [
+  {
+   "target": "postgres/grammar.js",
+   "operations": [
+    {
+     "before": "  externals: $ => [\n    $.dollar_quoted_string,\n  ],",
+     "after": "  externals: $ => [\n    $.dollar_quoted_string,\n    $.comment,\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "    comment: _ => token(choice(\n      /--[^\\r\\n]*/,\n      /\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\//\n    )),\n",
+     "after": "    // comment (-- line and nested /* block */) is an external token: scan.l\n    // block comments nest, which a regular token cannot match.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _ident: $ => choice($.identifier, $.quoted_identifier),",
+     "after": "    _ident: $ => choice($.identifier, $.quoted_identifier,\n      prec.right(1, seq($.unicode_quoted_identifier, optional(seq($.kw_uescape, $.string_literal))))),\n\n    // Unicode-escape identifier U&\"d\\0061t\" (scan.l xuistart).\n    unicode_quoted_identifier: _ => token(/[uU]&\"([^\"]|\"\")*\"/),",
+     "occurrences": 1
+    },
+    {
+     "before": "    Sconst: $ => choice($.string_literal, $.escape_string_literal, $.dollar_quoted_string),",
+     "after": "    Sconst: $ => choice($.string_literal, $.escape_string_literal, $.dollar_quoted_string,\n        prec.right(1, seq($.unicode_string_literal, optional(seq($.kw_uescape, $.string_literal))))),",
+     "occurrences": 1
+    },
+    {
+     "before": "    // NOTE: N'...' and U&'...' prefix strings are still parsed as\n    // function-call-like forms (identifier + string_literal).\n",
+     "after": "    // NOTE: N'...' prefix strings are still parsed as function-call-like\n    // forms (identifier + string_literal).\n\n    // Unicode-escape string U&'d\\0061t' (scan.l xusstart), with the same\n    // continuation tail as string_literal.\n    unicode_string_literal: _ => token(/[uU]&'([^']|'')*'(([ \\t\\f\\v]|--[^\\n\\r]*)*[\\n\\r]([ \\t\\n\\r\\f\\v]+|--[^\\n\\r]*[\\n\\r])*'([^']|'')*')*/),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    integer_literal: _ => token(/[0-9](_?[0-9])*/),",
+     "after": "    integer_literal: _ => token(choice(\n      /[0-9](_?[0-9])*/,\n      /0[xX](_?[0-9a-fA-F])+/,\n      /0[oO](_?[0-7])+/,\n      /0[bB](_?[01])+/\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "      /[0-9](_?[0-9])*\\.[0-9](_?[0-9])*([eE][+-]?[0-9](_?[0-9])*)?/,",
+     "after": "      /[0-9](_?[0-9])*\\.([0-9](_?[0-9])*)?([eE][+-]?[0-9](_?[0-9])*)?/,",
+     "occurrences": 1
+    },
+    {
+     "before": "        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<>', $.a_expr_prec)))\n      ),\n    a_expr: $ => choice(",
+     "after": "        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<>', $.a_expr_prec))),\n        prec.left(13, prec.dynamic(13, seq($.a_expr_prec, '+', $.sub_type, $.select_with_parens))),\n        prec.left(13, prec.dynamic(13, seq($.a_expr_prec, '+', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(13, prec.dynamic(13, seq($.a_expr_prec, '-', $.sub_type, $.select_with_parens))),\n        prec.left(13, prec.dynamic(13, seq($.a_expr_prec, '-', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '*', $.sub_type, $.select_with_parens))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '*', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '/', $.sub_type, $.select_with_parens))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '/', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '%', $.sub_type, $.select_with_parens))),\n        prec.left(14, prec.dynamic(14, seq($.a_expr_prec, '%', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(15, prec.dynamic(15, seq($.a_expr_prec, '^', $.sub_type, $.select_with_parens))),\n        prec.left(15, prec.dynamic(15, seq($.a_expr_prec, '^', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '>', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '>', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '=', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '=', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<=', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<=', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '>=', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '>=', $.sub_type, '(', $.a_expr, ')'))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<>', $.sub_type, $.select_with_parens))),\n        prec.left(7, prec.dynamic(7, seq($.a_expr_prec, '<>', $.sub_type, '(', $.a_expr, ')')))\n      ),\n    a_expr: $ => choice(",
+     "occurrences": 1
+    },
+    {
+     "before": "    target_el: $ => choice(\n        seq($.a_expr, $.kw_as, $.ColLabel),",
+     "after": "    target_el: $ => choice(\n        seq(alias($._postfix_a_expr, $.a_expr), optional(seq($.kw_as, $.ColLabel))),\n        seq($.a_expr, $.kw_as, $.ColLabel),",
+     "occurrences": 1
+    },
+    {
+     "before": "    qualified_name_list: $ => choice(",
+     "after": "    _postfix_a_expr: $ => prec.left(11, prec.dynamic(11, seq($.a_expr, $.qual_Op))),\n    qualified_name_list: $ => choice(",
+     "occurrences": 1
+    },
+    {
+     "before": "        prec.left(11, prec.dynamic(11, seq($.kw_set, $.kw_without, $.kw_oids))),",
+     "after": "        prec.left(11, prec.dynamic(11, seq($.kw_set, $.kw_with, $.kw_oids))),\n        prec.left(11, prec.dynamic(11, seq($.kw_set, $.kw_without, $.kw_oids))),",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq($.kw_copy, optional($.opt_binary), $.qualified_name, optional($.opt_column_list), $.copy_from,",
+     "after": "        seq($.kw_copy, optional($.opt_binary), $.qualified_name, optional($.opt_column_list), optional($.opt_oids), $.copy_from,",
+     "occurrences": 1
+    },
+    {
+     "before": "    copy_from: $ => choice(",
+     "after": "    opt_oids: $ => seq($.kw_with, $.kw_oids),\n    copy_from: $ => choice(",
+     "occurrences": 1
+    },
+    {
+     "before": "    copy_opt_item: $ => choice(\n        $.kw_binary,",
+     "after": "    copy_opt_item: $ => choice(\n        $.kw_binary,\n        $.kw_oids,",
+     "occurrences": 1
+    },
+    {
+     "before": "$.kw_returns, $.func_return, optional($.opt_createfunc_opt_list), optional($.opt_routine_body)),",
+     "after": "$.kw_returns, $.func_return, optional($.opt_createfunc_opt_list), optional($.opt_definition), optional($.opt_routine_body)),",
+     "occurrences": 1
+    },
+    {
+     "before": "$.kw_table, '(', $.table_func_column_list, ')', optional($.opt_createfunc_opt_list), optional($.opt_routine_body)))),",
+     "after": "$.kw_table, '(', $.table_func_column_list, ')', optional($.opt_createfunc_opt_list), optional($.opt_definition), optional($.opt_routine_body)))),",
+     "occurrences": 1
+    },
+    {
+     "before": "$.kw_function, $.func_name, $.func_args_with_defaults, optional($.opt_createfunc_opt_list), optional($.opt_routine_body)),",
+     "after": "$.kw_function, $.func_name, $.func_args_with_defaults, optional($.opt_createfunc_opt_list), optional($.opt_definition), optional($.opt_routine_body)),",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "postgres/src/scanner.c",
+   "operations": [
+    {
+     "before": "         lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {",
+     "after": "         lexer->lookahead == '\\n' || lexer->lookahead == '\\r' ||\n         lexer->lookahead == '\\f' || lexer->lookahead == '\\v') {",
+     "occurrences": 1
+    },
+    {
+     "before": "enum TokenType {\n  DOLLAR_QUOTED_STRING,\n};",
+     "after": "enum TokenType {\n  DOLLAR_QUOTED_STRING,\n  COMMENT,\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "  (void)payload;\n  if (!valid_symbols[DOLLAR_QUOTED_STRING]) return false;\n\n  skip_whitespace(lexer);\n\n  if (lexer->lookahead != '$') return false;\n",
+     "after": "  (void)payload;\n  if (!valid_symbols[DOLLAR_QUOTED_STRING] && !valid_symbols[COMMENT]) return false;\n\n  skip_whitespace(lexer);\n\n  /* Comments (scan.l comment / xc): -- to end of line, and block comments\n   * that nest, so the first close of an inner comment does not end it. */\n  if (valid_symbols[COMMENT] && (lexer->lookahead == '-' || lexer->lookahead == '/')) {\n    if (lexer->lookahead == '-') {\n      lexer->advance(lexer, false);\n      if (lexer->lookahead != '-') return false;\n      while (lexer->lookahead != 0 && lexer->lookahead != '\\n' && lexer->lookahead != '\\r') {\n        lexer->advance(lexer, false);\n      }\n      lexer->result_symbol = COMMENT;\n      return true;\n    }\n    lexer->advance(lexer, false);\n    if (lexer->lookahead != '*') return false;\n    lexer->advance(lexer, false);\n    unsigned depth = 1;\n    while (lexer->lookahead != 0) {\n      if (lexer->lookahead == '*') {\n        lexer->advance(lexer, false);\n        if (lexer->lookahead == '/') {\n          lexer->advance(lexer, false);\n          if (--depth == 0) {\n            lexer->result_symbol = COMMENT;\n            return true;\n          }\n        }\n      } else if (lexer->lookahead == '/') {\n        lexer->advance(lexer, false);\n        if (lexer->lookahead == '*') {\n          lexer->advance(lexer, false);\n          depth++;\n        }\n      } else {\n        lexer->advance(lexer, false);\n      }\n    }\n    return false;\n  }\n\n  if (!valid_symbols[DOLLAR_QUOTED_STRING]) return false;\n  if (lexer->lookahead != '$') return false;\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

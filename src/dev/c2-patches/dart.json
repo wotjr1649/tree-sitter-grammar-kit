@@ -1,0 +1,177 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "dart",
+ "defects": [
+  "dart-P2-01",
+  "dart-P2-03",
+  "dart-P2-02",
+  "dart-P2-13",
+  "dart-P2-04",
+  "dart-P2-05",
+  "dart-P2-06",
+  "dart-P2-11",
+  "dart-P2-12",
+  "dart-P2-14",
+  "dart-P2-07",
+  "dart-P2-08",
+  "dart-P2-09",
+  "dart-P2-10"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    word: $ => $.identifier,\n",
+     "after": "    word: $ => $.identifier,\n\n    reserved: {\n        global: $ => ['new'],\n    },\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq($._type_name, '.', $._new_builtin, $.arguments),\n",
+     "after": "            seq($._type_name, optional($.type_arguments), '.', $._new_builtin, $.arguments),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq(\n                '.',\n                $.identifier\n            )\n        ),\n        const_object_expression",
+     "after": "            seq(\n                '.',\n                $._identifier_or_new\n            )\n        ),\n        const_object_expression",
+     "occurrences": 1
+    },
+    {
+     "before": "        dot_shorthand: $ => prec.right(seq(",
+     "after": "        dot_shorthand: $ => prec.dynamic(-1, prec.right(seq(",
+     "occurrences": 1
+    },
+    {
+     "before": "            choice($.identifier, $._new_builtin),\n        )),\n\n\n        parenthesized_expression",
+     "after": "            choice($.identifier, $._new_builtin),\n        ))),\n\n\n        parenthesized_expression",
+     "occurrences": 1
+    },
+    {
+     "before": "        constructor_invocation: $ => prec.right(choice(",
+     "after": "        constructor_invocation: $ => prec.right(prec.dynamic(2, choice(",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq($._type_name, optional($.type_arguments), '.', $._new_builtin, $.arguments),\n        )),",
+     "after": "            seq($._type_name, optional($.type_arguments), '.', $._new_builtin, $.arguments),\n        ))),",
+     "occurrences": 1
+    },
+    {
+     "before": "                alias($._operator, $.identifier),\n            ))\n        ),\n\n        // Types",
+     "after": "                alias($._operator, $.identifier),\n                alias($._function_builtin_identifier, $.identifier),\n            ))\n        ),\n\n        // Types",
+     "occurrences": 1
+    },
+    {
+     "before": "        object_pattern: $ => seq($._type_name, optional($.type_arguments), '(',",
+     "after": "        object_pattern: $ => seq(choice(seq($._type_name, optional($.type_arguments)), seq(optional(seq(alias($.identifier, $.type_identifier), '.')), alias($._function_builtin_identifier, $.type_identifier))), '(',",
+     "occurrences": 1
+    },
+    {
+     "before": "        [$.super_formal_parameter, $.unconditional_assignable_selector],\n    ],",
+     "after": "        [$.super_formal_parameter, $.unconditional_assignable_selector],\n        [$._type, $.function_type],\n        [$.function_type],\n        [$._primary, $.object_pattern, $._type_name],\n        [$.object_pattern, $.parameter_type_list],\n        [$._final_const_var_or_type, $._final_var_or_type, $._function_formal_parameter],\n        [$._final_const_var_or_type, $._function_formal_parameter],\n        [$.typed_identifier, $._final_var_or_type],\n        [$.object_pattern, $._type_name],\n        [$._primary, $.object_pattern],\n        [$._primary, $.object_pattern, $._function_type_tail],\n    ],",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq($.const_builtin, optional($.type_arguments), '[', commaSep1TrailingComma($._element), ']'),\n            seq($.const_builtin, optional($.type_arguments), '{', commaSep1TrailingComma($._element), '}'),",
+     "after": "            seq($.const_builtin, optional($.type_arguments), '[', commaSepTrailingComma($._element), ']'),\n            seq($.const_builtin, optional($.type_arguments), '{', commaSepTrailingComma($._element), '}'),",
+     "occurrences": 1
+    },
+    {
+     "before": "            $.super,\n            '.',\n            $.identifier,\n            optional($._formal_parameter_part)\n        ),",
+     "after": "            $.super,\n            '.',\n            $.identifier,\n            optional(seq($._formal_parameter_part, optional($.nullable_type)))\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "            $.this,\n            '.',\n            $.identifier,\n            optional($._formal_parameter_part)\n        ),",
+     "after": "            $.this,\n            '.',\n            $.identifier,\n            optional(seq($._formal_parameter_part, optional($.nullable_type)))\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq(\n                choice($.final_builtin, $.inferred_type),\n                $._outer_pattern,\n                'in',",
+     "after": "            seq(\n                optional($._metadata),\n                choice($.final_builtin, $.inferred_type),\n                $._outer_pattern,\n                'in',",
+     "occurrences": 1
+    },
+    {
+     "before": "                $._class_modifiers,\n                $.mixin_application_class",
+     "after": "                choice($._class_modifiers, $._mixin_class_modifiers),\n                $.mixin_application_class",
+     "occurrences": 1
+    },
+    {
+     "before": "            seq(\n                $.super,\n                $.unconditional_assignable_selector\n            ),\n            $.constructor_tearoff,",
+     "after": "            seq(\n                $.super,\n                $.unconditional_assignable_selector\n            ),\n            seq(\n                $.super,\n                alias($._super_argument_selector, $.selector)\n            ),\n            $.constructor_tearoff,",
+     "occurrences": 1
+    },
+    {
+     "before": "        parenthesized_expression: $ => seq('(', $._expression, ')'),",
+     "after": "        _super_argument_selector: $ => seq($.argument_part),\n\n        parenthesized_expression: $ => seq('(', $._expression, ')'),",
+     "occurrences": 1
+    },
+    {
+     "before": "            sep2($._real_expression, $.logical_or_operator)\n        ),",
+     "after": "            sep2($._logical_or_operand, $.logical_or_operator)\n        ),\n\n        _logical_or_operand: $ => prec(-1, choice($.logical_or_expression, $._logical_and_operand)),\n\n        _logical_and_operand: $ => prec(-1, choice(\n            $.logical_and_expression,\n            $.additive_expression,\n            $.multiplicative_expression,\n            $.relational_expression,\n            $.equality_expression,\n            $.bitwise_and_expression,\n            $.bitwise_or_expression,\n            $.bitwise_xor_expression,\n            $.shift_expression,\n            $.type_cast_expression,\n            $.type_test_expression,\n            $._unary_expression\n        )),",
+     "occurrences": 1
+    },
+    {
+     "before": "            sep2($._real_expression, $.logical_and_operator)",
+     "after": "            sep2($._logical_and_operand, $.logical_and_operator)",
+     "occurrences": 1
+    },
+    {
+     "before": "            choice(\n                optional(seq($.type_arguments, $.arguments)),\n                optional($.arguments)\n            )\n        )),",
+     "after": "            choice(\n                optional(seq($.type_arguments, alias($._no_space_arguments, $.arguments))),\n                optional(alias($._no_space_arguments, $.arguments))\n            )\n        )),\n\n        _no_space_arguments: $ => seq(token.immediate('('), optional($._argument_list), ')'),",
+     "occurrences": 1
+    },
+    {
+     "before": "                choice($._class_modifiers, $._mixin_class_modifiers),\n                field('name', $.identifier),\n                optional(field('type_parameters', $.type_parameters)),\n                optional(field('superclass', $.superclass)),\n                optional(field('interfaces', $.interfaces)),\n                field('body', $.class_body)\n            ),",
+     "after": "                choice($._class_modifiers, $._mixin_class_modifiers),\n                $._class_name_maybe_primary,\n                optional(field('superclass', $.superclass)),\n                optional(field('interfaces', $.interfaces)),\n                choice(field('body', $.class_body), $._semicolon)\n            ),",
+     "occurrences": 1
+    },
+    {
+     "before": "            'enum',\n            field('name', $.identifier),\n            optional($.type_parameters),\n            optional($.mixins),\n            optional($.interfaces),\n            field('body', $.enum_body),\n        ),",
+     "after": "            'enum',\n            $._class_name_maybe_primary,\n            optional($.mixins),\n            optional($.interfaces),\n            choice(field('body', $.enum_body), $._semicolon),\n        ),\n\n        _class_name_maybe_primary: $ => choice(\n            seq(\n                field('name', $.identifier),\n                optional(field('type_parameters', $.type_parameters)),\n                optional(seq(\n                    optional(seq('.', $._identifier_or_new)),\n                    field('parameters', $.formal_parameter_list),\n                )),\n            ),\n            seq(\n                $.const_builtin,\n                field('name', $.identifier),\n                optional(field('type_parameters', $.type_parameters)),\n                optional(seq('.', $._identifier_or_new)),\n                field('parameters', $.formal_parameter_list),\n            ),\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "                field('body', $.extension_body)",
+     "after": "                choice(field('body', $.extension_body), $._semicolon)",
+     "occurrences": 1
+    },
+    {
+     "before": "            optional(field('interfaces', $.interfaces)),\n            field('body', $.class_body)\n        ),\n\n        representation_declaration",
+     "after": "            optional(field('interfaces', $.interfaces)),\n            choice(field('body', $.class_body), $._semicolon)\n        ),\n\n        representation_declaration",
+     "occurrences": 1
+    },
+    {
+     "before": "            optional($.interfaces),\n            $.class_body\n        ),",
+     "after": "            optional($.interfaces),\n            choice($.class_body, $._semicolon)\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        _function_formal_parameter: $ => seq(\n            optional(\n                $._covariant\n            ),",
+     "after": "        _function_formal_parameter: $ => seq(\n            optional(\n                $._covariant\n            ),\n            optional(choice($.final_builtin, $.inferred_type)),",
+     "occurrences": 1
+    },
+    {
+     "before": "        method_signature: $ => choice(\n            seq($.constructor_signature, optional($.initializers)),",
+     "after": "        method_signature: $ => choice(\n            seq($.constructor_signature, optional($.initializers)),\n            seq($.this, optional($.initializers)),",
+     "occurrences": 1
+    },
+    {
+     "before": "        declaration: $ => choice(\n            seq($.constant_constructor_signature, optional(choice($.redirection, $.initializers))),",
+     "after": "        declaration: $ => choice(\n            seq($.this, optional($.initializers)),\n            seq($.constant_constructor_signature, optional(choice($.redirection, $.initializers))),",
+     "occurrences": 1
+    },
+    {
+     "before": "        constructor_signature: $ => seq(\n            field('name', seq($.identifier, optional(\n                seq(\n                    '.',\n                    $._identifier_or_new\n                )\n            ))),\n            field('parameters', $.formal_parameter_list)\n        ),\n        constant_constructor_signature: $ => seq(\n            $.const_builtin,\n            seq($.identifier, optional(seq('.', $._identifier_or_new))),\n            $.formal_parameter_list\n        ),",
+     "after": "        constructor_signature: $ => choice(\n            seq(\n                field('name', seq($.identifier, optional(\n                    seq(\n                        '.',\n                        $._identifier_or_new\n                    )\n                ))),\n                field('parameters', $.formal_parameter_list)\n            ),\n            seq(\n                $._new_builtin,\n                optional(field('name', $.identifier)),\n                field('parameters', $.formal_parameter_list)\n            ),\n        ),\n        constant_constructor_signature: $ => seq(\n            $.const_builtin,\n            choice(\n                seq($.identifier, optional(seq('.', $._identifier_or_new))),\n                seq($._new_builtin, optional($.identifier)),\n            ),\n            $.formal_parameter_list\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        factory_constructor_signature: $ => seq(\n            $._factory,\n            sep1($.identifier, '.'),\n            $.formal_parameter_list,\n        ),\n\n        redirecting_factory_constructor_signature: $ => seq(\n            optional($.const_builtin),\n            $._factory,\n            sep1($.identifier, '.'),",
+     "after": "        factory_constructor_signature: $ => seq(\n            $._factory,\n            optional(sep1($.identifier, '.')),\n            $.formal_parameter_list,\n        ),\n\n        redirecting_factory_constructor_signature: $ => seq(\n            optional($.const_builtin),\n            $._factory,\n            optional(sep1($.identifier, '.')),",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

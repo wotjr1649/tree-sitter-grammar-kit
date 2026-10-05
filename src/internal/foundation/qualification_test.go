@@ -635,7 +635,7 @@ func TestQualificationInventory(t *testing.T) {
 	for _, r := range inv.Routes {
 		want := []string{}
 		if r.Route == "html" {
-			want = []string{"erroneous_end_tag"}
+			want = []string{"erroneous_end_tag", "erroneous_comment"}
 		}
 		if !slices.Equal(r.ErrorNodes, want) {
 			t.Fatalf("%s error nodes %v", r.Route, r.ErrorNodes)

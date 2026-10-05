@@ -470,7 +470,7 @@
         "ruby-B01.a138",
         "ruby-B01.a215"
       ],
-      "source_utf8": "name = \"x\"\ns = [\"a #{name} b\", 'raw #{name}', \"con\" \"cat\", %q{a} 'b' \"c\"]\nt = \"one \" \\\n  \"two\"\nch = [?a, ?\\n, ?\\s, ?\\\\, ?\\u{41}, ?\\C-a, ?\\M-a, ?\\M-\\C-a, ?\\C-\\M-a, ?あ]\ne = \"\\a \\b \\t \\n \\v \\f \\r \\e \\s \\\\ \\101 \\x41 \\u0041 \\u{41 42} \\cx \\C-x \\M-x \\M-\\C-x \\M-\\cx \\c\\M-x \\c? \\C-? cont\\\ninued\"\n",
+      "source_utf8": "name = \"x\"\ns = [\"a #{name} b\", 'raw #{name}', \"con\" \"cat\", %q{a} 'b' \"c\"]\nt = \"one \" \\\n  \"two\"\nch = [?a, ?\\n, ?\\s, ?\\\\, ?\\u{41}, ?\\C-a, ?\\M-a, ?\\M-\\C-a, ?\\C-\\M-a, ?\u3042]\ne = \"\\a \\b \\t \\n \\v \\f \\r \\e \\s \\\\ \\101 \\x41 \\u0041 \\u{41 42} \\cx \\C-x \\M-x \\M-\\C-x \\M-\\cx \\c\\M-x \\c? \\C-? cont\\\ninued\"\n",
       "edits": [],
       "expect": [
         {
@@ -551,7 +551,7 @@
             },
             {
               "type": "character",
-              "text": "?あ"
+              "text": "?\u3042"
             },
             {
               "type": "escape_sequence",
@@ -1111,7 +1111,7 @@
         "ruby-B01.a168",
         "ruby-B01.a215"
       ],
-      "source_utf8": "v = 5\n@ivar = 1\n@@cvar = 2\n$global = 3\nZ = 1\np ::Z, Object::Z\nc.value = 42\nself.value = 1\nobj[2, 3] = 4\na += 1; a -= 1; a *= 1; a /= 1; a %= 1; a **= 1\na &= 1; a |= 1; a ^= 1; a <<= 1; a >>= 1\na ||= 0; a &&= 1\na = 1, 2, 3\na = *[1, 2, 3]\na = 1, *[2, 3]\na, b = 1, 2\nself.value, $global = 1, 2\na, *b = 1, 2, 3\n*a, b = 1, 2, 3\n(a, b) = [1, 2]\na, (b, *c), *d = 1, [2, 3, 4], 5, 6\nこんにちは = 1\np $~, $&, $1\n",
+      "source_utf8": "v = 5\n@ivar = 1\n@@cvar = 2\n$global = 3\nZ = 1\np ::Z, Object::Z\nc.value = 42\nself.value = 1\nobj[2, 3] = 4\na += 1; a -= 1; a *= 1; a /= 1; a %= 1; a **= 1\na &= 1; a |= 1; a ^= 1; a <<= 1; a >>= 1\na ||= 0; a &&= 1\na = 1, 2, 3\na = *[1, 2, 3]\na = 1, *[2, 3]\na, b = 1, 2\nself.value, $global = 1, 2\na, *b = 1, 2, 3\n*a, b = 1, 2, 3\n(a, b) = [1, 2]\na, (b, *c), *d = 1, [2, 3, 4], 5, 6\n\u3053\u3093\u306b\u3061\u306f = 1\np $~, $&, $1\n",
       "edits": [],
       "expect": [
         {
@@ -1308,7 +1308,7 @@
             },
             {
               "type": "identifier",
-              "text": "こんにちは"
+              "text": "\u3053\u3093\u306b\u3061\u306f"
             },
             {
               "type": "global_variable",
@@ -1791,7 +1791,7 @@
         "ruby-B02.a011",
         "ruby-B02.a026"
       ],
-      "source_utf8": "class C\n  def +(o) end\n  def -(o) end\n  def *(o) end\n  def **(o) end\n  def /(o) end\n  def %(o) end\n  def &(o) end\n  def |(o) end\n  def ^(o) end\n  def >>(o) end\n  def <<(o) end\n  def ==(o) end\n  def !=(o) end\n  def ===(o) end\n  def =~(o) end\n  def !~(o) end\n  def <=>(o) end\n  def <(o) end\n  def <=(o) end\n  def >(o) end\n  def >=(o) end\n  def -@; end\n  def +@; end\n  def ~; end\n  def !; end\n  def [](a, b) end\n  def []=(a, b, c) end\n  def attr=(val) @attr = val end\n  def ok?; end\n  def save!; end\n  def self.cls_method; end\n  def こんにちは; end\n  def one_plus_one\n    return 1 + 1\n  end\nend\ngreeting = \"Hello\"\ndef greeting.broaden\n  self + \", world!\"\nend\ndef String.hello; end\n",
+      "source_utf8": "class C\n  def +(o) end\n  def -(o) end\n  def *(o) end\n  def **(o) end\n  def /(o) end\n  def %(o) end\n  def &(o) end\n  def |(o) end\n  def ^(o) end\n  def >>(o) end\n  def <<(o) end\n  def ==(o) end\n  def !=(o) end\n  def ===(o) end\n  def =~(o) end\n  def !~(o) end\n  def <=>(o) end\n  def <(o) end\n  def <=(o) end\n  def >(o) end\n  def >=(o) end\n  def -@; end\n  def +@; end\n  def ~; end\n  def !; end\n  def [](a, b) end\n  def []=(a, b, c) end\n  def attr=(val) @attr = val end\n  def ok?; end\n  def save!; end\n  def self.cls_method; end\n  def \u3053\u3093\u306b\u3061\u306f; end\n  def one_plus_one\n    return 1 + 1\n  end\nend\ngreeting = \"Hello\"\ndef greeting.broaden\n  self + \", world!\"\nend\ndef String.hello; end\n",
       "edits": [],
       "expect": [
         {
@@ -1898,7 +1898,7 @@
             },
             {
               "type": "method",
-              "text": "def こんにちは; end"
+              "text": "def \u3053\u3093\u306b\u3061\u306f; end"
             },
             {
               "type": "method",
@@ -3527,6 +3527,12 @@
           "contains": [
             "method",
             "binary"
+          ],
+          "anchors": [
+            {
+              "type": "binary",
+              "text": "user.admin?\n    or user.owner?"
+            }
           ]
         },
         {
@@ -3537,7 +3543,13 @@
         {
           "step": 2,
           "syntax": "NO_ERROR",
-          "contains": []
+          "contains": [],
+          "anchors": [
+            {
+              "type": "binary",
+              "text": "user.admin?\n    or user.owner?"
+            }
+          ]
         },
         {
           "step": 3,
@@ -3561,7 +3573,13 @@
         {
           "step": 4,
           "syntax": "NO_ERROR",
-          "contains": []
+          "contains": [],
+          "anchors": [
+            {
+              "type": "binary",
+              "text": "user.admin?\n    or user.owner?"
+            }
+          ]
         }
       ]
     }
