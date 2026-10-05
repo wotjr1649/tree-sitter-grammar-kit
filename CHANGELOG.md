@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- 비채택 20 route도 고정 생성기 재생성 경로에 올렸다(#89, #76의 사용자 결정 `C2-REGENERATE-r1`). grammar는 바꾸지 않았다.
+  - 20 route의 native 입력 `parser.c`·`tree_sitter/*.h`는 이제 upstream에 들어 있는 이전 CLI 생성물이 아니다. 고정 commit의 patch 없는 grammar를 tree-sitter 0.27.0·Node 24.21.0·ABI 15로 재생성한 출력이다. `native-routes.json`의 `regeneration`은 patch chain과 patched file이 비어 있다. `language-sources.json`의 `regeneration` 기록과 `reproduction-routes.json`의 `PREPARE_GENERATED` 기준이 출력 6개를 모두 고정한다. Windows에서 20 route 모두 두 작업 공간 출력이 byte 단위로 같았고 S04 재생성 출력과도 같았다. php는 upstream 생성물과 같고, 나머지 19 route는 `array.h` 등이 다르다.
+  - foundation 시험은 두 종류의 route만 받는다. 하나는 기존 규칙 그대로인 채택 route이고, 다른 하나는 adoption·patch 없이 출력이 고정된 재생성 전용 route다. 다음은 거부한다: 둘 다 아니거나 둘 다인 route, upstream parser, chain 없는 patched file, 빠지거나 다른 출력 고정, 재생성 기록이 있는 upstream 기준. 이 거부 사례마다 음성 대조 시험이 있다.
+  - qualification inventory(`qualification-c1.json`)의 grammar 파일 hash를 등록부에서 다시 생성했다.
+  - Windows amd64에서 등록 사례를 baseline(main 6d151e0)과 비교했다. 같은 사례와 같은 compiler를 썼고, 19 route는 새 parser로 build했다. 판정·code·claim·기대값 실패가 바뀐 사례는 없다(s05 2394, s06 2532). s05 step tree digest 3007개도 모두 같다. Linux·macOS의 native 결과는 이 변경 뒤 CI가 근거다.
+
 - native CI의 요구 축과 kit 축을 분리했다(#76). 오늘의 grammar에서 정직하게 실패하는 등록 사례가 kit 결함처럼 job과 mechanism gate를 실패시켰다.
   - 오류 tree 위의 incremental route를 BLOCKED로 둔다. route 계측이 있고 바뀐 것이 있는데 incremental·fresh 어느 parse도 node를 재사용하지 않은 edit step에서, 이전 tree와 새 incremental tree가 모두 full tree이고 그중 하나가 `has_error`인 경우다. summary·record 형식 tree는 replay가 `has_error`를 다시 계산하지 못하므로 FAIL로 남는다. tree-sitter는 오류 tree에서도 node를 재사용할 수 있지만, grammar의 오류 tree에서는 재사용할 node가 남지 않을 수 있으므로 이 무재사용을 kit 결함이 아니라 관측 불가로 취급한다. code는 `INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_<n>`이고, 다른 실패 code가 없을 때만 사례 code가 된다. 깨끗한 tree, 계측 없음, 변경 없음, fresh 재사용은 그대로 FAIL이다. S05 판정, r2 replay reducer와 qualify의 `incremental-route` gate가 같은 규칙으로 다시 계산한다.
   - replay reducer `native-result-r2`·`oracle-set-r2`·`private-corpus-r2`를 더했다(#87). 각 r1과 같고 이 route 규칙만 더한다. r1은 그대로 남아 규칙 이전의 근거를 전과 같은 결과로 replay한다. reducer는 registration의 `reducer` id로 고른다. `tsgk qualify`는 새 CI 근거를 r2 규칙으로 판정한다.

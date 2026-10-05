@@ -2,10 +2,11 @@
 # S05 development helper: prepares the native build inputs of the registered routes
 # (src/contracts/native-routes.json) and the pinned runtime under -Destination.
 # Upstream files come from the pinned commit archive (codeload) or, locally, from an
-# S01-bound source tree; adopted routes apply the registered literal patch chain, check
-# every patched file against its adoption hash and regenerate parser.c with `tsgk
-# reproduce` (tree-sitter 0.27.0 + Node 24.21.0, registered digests) unless
-# -ReuseGenerated points at already verified outputs. Every file is hash-checked.
+# S01-bound source tree; every route with a regeneration record regenerates parser.c with
+# `tsgk reproduce` (tree-sitter 0.27.0 + Node 24.21.0, registered digests) unless
+# -ReuseGenerated points at already verified outputs. Adopted routes first apply the
+# registered literal patch chain and check every patched file against its adoption hash;
+# the other routes have an empty chain (C2-REGENERATE-r1). Every file is hash-checked.
 param(
   [Parameter(Mandatory)][string]$Destination,
   [Parameter(Mandatory)][string]$Platform,        # windows/amd64 | linux/amd64 | darwin/arm64

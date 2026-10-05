@@ -227,9 +227,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'race diagnostic failed' }
 
   native-prepare:
-    # S05: one Linux job fetches the 26 pinned route sources, applies the adopted patch
-    # chains and regenerates the 6 adopted parsers with tsgk reproduce; every file is
-    # hash-checked against src/contracts/native-routes.json before it is handed on.
+    # S05: one Linux job fetches the 26 pinned route sources, applies the patch chains of
+    # the 6 adopted routes and regenerates all 26 parsers with tsgk reproduce (the other 20
+    # without patches, C2-REGENERATE-r1); every file is hash-checked against
+    # src/contracts/native-routes.json before it is handed on.
     name: native prepare (ubuntu-24.04)
     needs: foundation
     runs-on: ubuntu-24.04
@@ -264,7 +265,7 @@ jobs:
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
-      - name: 26 route source 준비와 채택 6 route 재생성
+      - name: 26 route source 준비와 26 route 재생성
         run: |
           $cgroup = ''
           if ($IsLinux) {
