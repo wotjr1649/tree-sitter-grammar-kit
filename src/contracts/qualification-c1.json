@@ -83563,8 +83563,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "a0bc2a0ce90da9f72227445b74fd5d979f9a7d8fbeb0f73930bd7b66c919495c",
-      "bytes": 5569756
+      "sha256": "e1bf0e9f4ac3888f621d2fe891952726887da11f15070385a569c3c320d3d124",
+      "bytes": 5631576
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -89342,6 +89342,53 @@
       "source": null
      },
      {
+      "id": "w-c-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "7699c72b9ad442a1e4ef96ce3affabffdf4cf5d66876542fab59637d1461fa4a",
+       "bytes": 11507
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "struct_specifier",
+         "field_expression",
+         "pointer_declarator",
+         "switch_statement",
+         "preproc_ifdef"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "libuv/libuv",
+       "commit": "32f8ea9f92cf21a83c3e7073bc013e32b6df81b9",
+       "path": "src/threadpool.c",
+       "license": "MIT",
+       "sha256": "7699c72b9ad442a1e4ef96ce3affabffdf4cf5d66876542fab59637d1461fa4a",
+       "bytes": 11507
+      },
+      "source": null
+     },
+     {
       "id": "c-query-r1",
       "role": "requirement",
       "input": {
@@ -90575,8 +90622,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "8ae243cb3282e997535bf2fadba995fd82555fc55370d850c4a49d344155216b",
-      "bytes": 49243599
+      "sha256": "fd09c060b2ade89681da117fff01fd1970b9fe999c3517fd470f0f28e8e40e18",
+      "bytes": 49598494
      },
      {
       "path": "src/scanner.c",
@@ -100573,6 +100620,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-cpp-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b105f72e62d7eb403c12c4c0ba22a94d42344b20206664814bf9568c6785fc83",
+       "bytes": 7224
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "namespace_definition",
+         "template_declaration",
+         "alias_declaration",
+         "reference_declarator",
+         "noexcept"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "fmtlib/fmt",
+       "commit": "4afd0e498e9e1dd68775cc52087df774a19c761f",
+       "path": "include/fmt/args.h",
+       "license": "MIT",
+       "sha256": "b105f72e62d7eb403c12c4c0ba22a94d42344b20206664814bf9568c6785fc83",
+       "bytes": 7224
+      },
       "source": null
      },
      {

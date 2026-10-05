@@ -26,7 +26,9 @@
   "c-P2-22",
   "c-P2-23",
   "c-P2-24",
-  "c-P2-25"
+  "c-P2-25",
+  "c-P3-01",
+  "c-P3-02"
  ],
  "files": [
   {
@@ -405,6 +407,21 @@
     {
      "before": "    [$.type_qualifier, $.extension_expression],\n",
      "after": "    [$.type_qualifier, $.extension_expression],\n    [$._declaration_modifiers, $.attributed_statement, $._attributed_case_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    argument_list: $ => seq('(', commaSep(choice($.expression, $.compound_statement)), ')'),\n",
+     "after": "    argument_list: $ => seq('(', commaSep(choice($.expression, $.compound_statement, alias($._macro_type_argument, $.type_descriptor))), ')'),\n    _macro_type_argument: $ => seq(\n      field('type', choice($.struct_specifier, $.union_specifier, $.enum_specifier, $.primitive_type, $.sized_type_specifier)),\n      repeat($.type_qualifier),\n      field('declarator', optional($._abstract_declarator)),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ...preprocIf('', $ => $._block_item),\n",
+     "after": "    ...preprocIf('', $ => choice($._block_item, $._preproc_attribute_prefix)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _preproc_attribute_prefix: $ => prec(-1, $.attribute_specifier),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
      "occurrences": 1
     }
    ]
