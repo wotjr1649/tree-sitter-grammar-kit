@@ -3754,7 +3754,7 @@
         "kotlin-B01.a379",
         "kotlin-B01.a387"
       ],
-      "source_utf8": "data class P(val a: Int, val b: String)\nfun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun <T> (t: T) where T : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}\n",
+      "source_utf8": "data class P(val a: Int, val b: String)\nfun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun(t: Int): Int where Int : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}\n",
       "edits": [],
       "expect": [
         {
@@ -3778,7 +3778,7 @@
             },
             {
               "type": "function_declaration",
-              "text": "fun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun <T> (t: T) where T : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}"
+              "text": "fun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun(t: Int): Int where Int : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}"
             },
             {
               "type": "lambda_literal",
@@ -3884,11 +3884,11 @@
             },
             {
               "type": "anonymous_function",
-              "text": "fun <T> (t: T) where T : Any = t"
+              "text": "fun(t: Int): Int where Int : Any = t"
             },
             {
               "type": "type_constraints",
-              "text": "where T : Any"
+              "text": "where Int : Any"
             },
             {
               "type": "anonymous_function",
@@ -4793,7 +4793,7 @@
             {
               "type": "lambda_parameters",
               "text": "k, v,",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "when_expression",
@@ -4907,8 +4907,7 @@
             "when_subject",
             "when_entry",
             "type_test",
-            "range_test",
-            "if_expression"
+            "range_test"
           ],
           "anchors": [
             {

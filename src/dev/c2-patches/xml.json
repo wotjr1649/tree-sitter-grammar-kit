@@ -1,0 +1,100 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "xml",
+  "defects": [
+    "xml-P2-01",
+    "xml-P2-02",
+    "xml-P2-03",
+    "xml-P2-04",
+    "xml-P2-05",
+    "xml-P2-06",
+    "xml-P2-07"
+  ],
+  "files": [
+    {
+      "target": "common/common.mjs",
+      "operations": [
+        {
+          "before": "    Name: _ => /[a-zA-Z_][a-zA-Z0-9_:.·-]*/,\n\n    Nmtoken: _ => /[a-zA-Z0-9_:.·-]+/,",
+          "after": "    Name: _ => /[:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\u{10000}-\\u{EFFFF}][:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\u{10000}-\\u{EFFFF}\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*/u,\n\n    Nmtoken: _ => /[:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\u{10000}-\\u{EFFFF}\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040]+/u,",
+          "occurrences": 1
+        },
+        {
+          "before": "      $._AttType,\n      O(seq($._S, $.DefaultDecl))\n",
+          "after": "      $._AttType,\n      $._S,\n      $.DefaultDecl\n",
+          "occurrences": 1
+        },
+        {
+          "before": "      ref($, $.Name),\n      rseq(\n        O($._S),\n        '|',\n        O($._S)\n      ),\n      ref($, $.Name),\n",
+          "after": "      ref($, $.Name),\n      rseq(\n        O($._S),\n        '|',\n        O($._S),\n        ref($, $.Name)\n      ),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        new RegExp(`[^<%&${q}]`),",
+          "after": "        new RegExp(`[^%&${q}]`),",
+          "occurrences": 1
+        },
+        {
+          "before": "        new RegExp(`[^<&${q}]`),",
+          "after": "        new RegExp(`[^<&${q}\\\\x00-\\\\x08\\\\x0B\\\\x0C\\\\x0E-\\\\x1F\\\\uFFFE\\\\uFFFF]`),",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "xml/grammar.js",
+      "operations": [
+        {
+          "before": "        O(choice(\n          $._intSubset,\n          $._S\n        )),\n",
+          "after": "        O($._intSubset),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "    _intSubset: $ => c.rseq1(\n      O($._S),\n      $._markupdecl,\n      $._DeclSep\n    ),",
+          "after": "    _intSubset: $ => repeat1(choice(\n      $._markupdecl,\n      $._DeclSep\n    )),",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "common/scanner.h",
+      "operations": [
+        {
+          "before": "/// Check if the character is valid in a name\n/// TODO: explicitly follow https://www.w3.org/TR/xml11/#NT-Name\nstatic inline bool is_valid_name_char(wchar_t chr) {\n    return iswalnum(chr) || chr == '_' || chr == ':' || chr == '.' || chr == '-' || chr == 0xB7;\n}\n\n/// Check if the character is valid to start a name\n/// TODO: explicitly follow https://www.w3.org/TR/xml11/#NT-NameStartChar\nstatic inline bool is_valid_name_start_char(wchar_t chr) {\n    return iswalpha(chr) || chr == '_' || chr == ':';\n}",
+          "after": "/// Check if the character is valid to start a name (XML 1.0 [4] NameStartChar)\nstatic inline bool is_valid_name_start_char(int32_t chr) {\n    return chr == ':' || (chr >= 'A' && chr <= 'Z') || chr == '_' || (chr >= 'a' && chr <= 'z') ||\n           (chr >= 0xC0 && chr <= 0xD6) || (chr >= 0xD8 && chr <= 0xF6) || (chr >= 0xF8 && chr <= 0x2FF) ||\n           (chr >= 0x370 && chr <= 0x37D) || (chr >= 0x37F && chr <= 0x1FFF) || (chr >= 0x200C && chr <= 0x200D) ||\n           (chr >= 0x2070 && chr <= 0x218F) || (chr >= 0x2C00 && chr <= 0x2FEF) || (chr >= 0x3001 && chr <= 0xD7FF) ||\n           (chr >= 0xF900 && chr <= 0xFDCF) || (chr >= 0xFDF0 && chr <= 0xFFFD) || (chr >= 0x10000 && chr <= 0xEFFFF);\n}\n\n/// Check if the character is valid in a name (XML 1.0 [4a] NameChar)\nstatic inline bool is_valid_name_char(int32_t chr) {\n    return is_valid_name_start_char(chr) || chr == '-' || chr == '.' || (chr >= '0' && chr <= '9') || chr == 0xB7 ||\n           (chr >= 0x300 && chr <= 0x36F) || (chr >= 0x203F && chr <= 0x2040);\n}\n\n/// Check if the character matches XML 1.0 [2] Char\nstatic inline bool is_xml_char(int32_t chr) {\n    return chr == 0x9 || chr == 0xA || chr == 0xD || (chr >= 0x20 && chr <= 0xD7FF) ||\n           (chr >= 0xE000 && chr <= 0xFFFD) || (chr >= 0x10000 && chr <= 0x10FFFF);\n}",
+          "occurrences": 1
+        },
+        {
+          "before": "static bool scan_pi_content(TSLexer *lexer) {\n    while (!lexer->eof(lexer) && lexer->lookahead != '\\n' && lexer->lookahead != '?')\n        advance(lexer);\n\n    if (lexer->lookahead != '?')\n        return false;\n\n    lexer->mark_end(lexer);\n    advance(lexer);\n\n    if (lexer->lookahead == '>') {\n        advance(lexer);\n        while (lexer->lookahead == ' ')\n            advance(lexer);\n        advance_if_eq(lexer, '\\n');\n        lexer->result_symbol = PI_CONTENT;\n        return true;\n    }\n\n    return false;\n}",
+          "after": "static bool scan_pi_content(TSLexer *lexer) {\n    while (!lexer->eof(lexer) && is_xml_char(lexer->lookahead)) {\n        if (lexer->lookahead == '?') {\n            lexer->mark_end(lexer);\n            advance(lexer);\n            if (lexer->lookahead == '>') {\n                lexer->result_symbol = PI_CONTENT;\n                return true;\n            }\n        } else {\n            advance(lexer);\n        }\n    }\n\n    return false;\n}",
+          "occurrences": 1
+        },
+        {
+          "before": "    while (!lexer->eof(lexer)) {\n        if (lexer->lookahead == '-') {\n            advance(lexer);\n            if (lexer->lookahead == '-') {",
+          "after": "    while (!lexer->eof(lexer) && is_xml_char(lexer->lookahead)) {\n        if (lexer->lookahead == '-') {\n            advance(lexer);\n            if (lexer->lookahead == '-') {",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "xml/src/scanner.c",
+      "operations": [
+        {
+          "before": "static String scan_tag_name(TSLexer *lexer) {\n    String tag_name = array_new();\n    if (is_valid_name_start_char(lexer->lookahead)) {\n        array_push(&tag_name, (char)lexer->lookahead);\n        advance(lexer);\n    }\n    while (is_valid_name_char(lexer->lookahead)) {\n        array_push(&tag_name, (char)lexer->lookahead);\n        advance(lexer);\n    }\n    return tag_name;\n}",
+          "after": "static void push_utf8(String *s, int32_t c) {\n    if (c < 0x80) {\n        array_push(s, (char)c);\n    } else if (c < 0x800) {\n        array_push(s, (char)(0xC0 | (c >> 6)));\n        array_push(s, (char)(0x80 | (c & 0x3F)));\n    } else if (c < 0x10000) {\n        array_push(s, (char)(0xE0 | (c >> 12)));\n        array_push(s, (char)(0x80 | ((c >> 6) & 0x3F)));\n        array_push(s, (char)(0x80 | (c & 0x3F)));\n    } else {\n        array_push(s, (char)(0xF0 | (c >> 18)));\n        array_push(s, (char)(0x80 | ((c >> 12) & 0x3F)));\n        array_push(s, (char)(0x80 | ((c >> 6) & 0x3F)));\n        array_push(s, (char)(0x80 | (c & 0x3F)));\n    }\n}\n\nstatic String scan_tag_name(TSLexer *lexer) {\n    String tag_name = array_new();\n    if (is_valid_name_start_char(lexer->lookahead)) {\n        push_utf8(&tag_name, lexer->lookahead);\n        advance(lexer);\n    }\n    while (is_valid_name_char(lexer->lookahead)) {\n        push_utf8(&tag_name, lexer->lookahead);\n        advance(lexer);\n    }\n    return tag_name;\n}",
+          "occurrences": 1
+        },
+        {
+          "before": "    return !lexer->eof(lexer) && lexer->lookahead != '<' && lexer->lookahead != '&';",
+          "after": "    return !lexer->eof(lexer) && lexer->lookahead != '<' && lexer->lookahead != '&' && is_xml_char(lexer->lookahead);",
+          "occurrences": 1
+        },
+        {
+          "before": "static bool scan_cdata(TSLexer *lexer) {\n    bool advanced_once = false;\n\n    while (!lexer->eof(lexer)) {",
+          "after": "static bool scan_cdata(TSLexer *lexer) {\n    bool advanced_once = false;\n\n    while (!lexer->eof(lexer) && is_xml_char(lexer->lookahead)) {",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

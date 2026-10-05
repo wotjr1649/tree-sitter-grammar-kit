@@ -1,0 +1,42 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "json",
+  "defects": [
+    "json-P2-01",
+    "json-P2-02",
+    "json-P2-03",
+    "json-P2-04"
+  ],
+  "files": [
+    {
+      "target": "grammar.js",
+      "operations": [
+        {
+          "before": "    /\\s/,\n    $.comment,\n  ],",
+          "after": "    /[ \\t\\n\\r]/,\n  ],",
+          "occurrences": 1
+        },
+        {
+          "before": "document: $ => repeat($._value),",
+          "after": "document: $ => $._value,",
+          "occurrences": 1
+        },
+        {
+          "before": "token.immediate(prec(1, /[^\\\\\"\\n]+/))",
+          "after": "token.immediate(prec(1, /[^\\\\\"\\x00-\\x1F]+/))",
+          "occurrences": 1
+        },
+        {
+          "before": "      /(\\\"|\\\\|\\/|b|f|n|r|t|u)/,\n",
+          "after": "      choice(/[\"\\\\\\/bfnrt]/, /u[0-9a-fA-F]{4}/),\n",
+          "occurrences": 1
+        },
+        {
+          "before": "seq(decimalIntegerLiteral, '.', optional(decimalDigits), optional(exponentPart))",
+          "after": "seq(decimalIntegerLiteral, '.', decimalDigits, optional(exponentPart))",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

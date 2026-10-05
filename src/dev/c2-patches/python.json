@@ -1,0 +1,128 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "python",
+ "defects": [
+  "python-P2-01",
+  "python-P2-02",
+  "python-P2-03",
+  "python-P2-04",
+  "python-P2-05",
+  "python-P2-06",
+  "python-P2-07",
+  "python-P2-08",
+  "python-P2-09",
+  "python-P2-10"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "  bitwise_and: 15,\n  xor: 16,\n",
+     "after": "  xor: 15,\n  bitwise_and: 16,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    await: $ => prec(PREC.unary, seq(\n",
+     "after": "    await: $ => prec.left(PREC.power, seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _parameters: $ => seq(\n      commaSep1($.parameter),\n      optional(','),\n    ),\n",
+     "after": "    _parameters: $ => {\n      // 3.14 parameter_list: [plain {, plain} , '/'] {, plain} [, star-part] [, '**' param] [,]\n      const more = repeat(seq(',', $.parameter));\n      const kw = seq(\n        choice($.dictionary_splat_pattern, alias($._typed_dictionary_splat_parameter, $.typed_parameter)),\n        optional(','),\n      );\n      const star = choice(\n        seq(\n          choice($.list_splat_pattern, alias($._typed_list_splat_parameter, $.typed_parameter)),\n          more,\n          optional(seq(',', optional(kw))),\n        ),\n        seq($.keyword_separator, repeat1(seq(',', $.parameter)), optional(seq(',', optional(kw)))),\n      );\n      return choice(\n        seq(\n          $.parameter,\n          more,\n          optional(seq(',', $.positional_separator, more)),\n          optional(seq(',', optional(choice(star, kw)))),\n        ),\n        star,\n        kw,\n      );\n    },\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    parameter: $ => choice(\n      $.identifier,\n      $.typed_parameter,\n      $.default_parameter,\n      $.typed_default_parameter,\n      $.list_splat_pattern,\n      $.tuple_pattern,\n      $.keyword_separator,\n      $.positional_separator,\n      $.dictionary_splat_pattern,\n    ),\n",
+     "after": "    parameter: $ => choice(\n      $.identifier,\n      $.typed_parameter,\n      $.default_parameter,\n      $.typed_default_parameter,\n      $.tuple_pattern,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    typed_parameter: $ => prec(PREC.typed_parameter, seq(\n      choice(\n        $.identifier,\n        $.list_splat_pattern,\n        $.dictionary_splat_pattern,\n      ),\n      ':',\n      field('type', $.type),\n    )),\n",
+     "after": "    typed_parameter: $ => prec(PREC.typed_parameter, seq(\n      $.identifier,\n      ':',\n      field('type', $.type),\n    )),\n\n    _typed_list_splat_parameter: $ => prec(PREC.typed_parameter, seq(\n      $.list_splat_pattern,\n      ':',\n      field('type', $.type),\n    )),\n\n    _typed_dictionary_splat_parameter: $ => prec(PREC.typed_parameter, seq(\n      $.dictionary_splat_pattern,\n      ':',\n      field('type', $.type),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('body', $._suite),\n      repeat($.except_clause),\n      optional($.else_clause),\n",
+     "after": "      field('body', $._suite),\n      choice(\n        repeat($.except_clause),\n        repeat1(alias($._except_group_clause, $.except_clause)),\n      ),\n      optional($.else_clause),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    except_clause: $ => seq(\n      'except',\n      optional(token(prec(1, '*'))),\n      optional(choice(\n        seq(\n          field('value', $.expression),\n          optional(seq('as', field('alias', $.expression))),\n        ),\n        commaSep1(field('value', $.expression)),\n      )),\n      ':',\n      $._suite,\n    ),\n",
+     "after": "    except_clause: $ => seq(\n      'except',\n      optional(exceptValue($)),\n      ':',\n      $._suite,\n    ),\n\n    _except_group_clause: $ => seq(\n      'except',\n      token(prec(1, '*')),\n      exceptValue($),\n      ':',\n      $._suite,\n    ),\n\n    // expression without the as_pattern alternative (unparenthesized except target list)\n    _except_target: $ => choice(\n      $.comparison_operator,\n      $.not_operator,\n      $.boolean_operator,\n      $.lambda,\n      $.primary_expression,\n      $.conditional_expression,\n      $.named_expression,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    $.keyword_identifier,\n  ],\n\n  reserved: {",
+     "after": "    $.keyword_identifier,\n    $._except_target,\n  ],\n\n  reserved: {",
+     "occurrences": 1
+    },
+    {
+     "before": "function commaSep1(rule) {\n  return sep1(rule, ',');\n}\n",
+     "after": "function commaSep1(rule) {\n  return sep1(rule, ',');\n}\n\n/**\n * 3.14 except_block: 'except' expression ['as' NAME] | 'except' expressions (no 'as')\n *\n * @param {GrammarSymbols<string>} $\n *\n * @returns {ChoiceRule}\n */\nfunction exceptValue($) {\n  const target = field('value', $._except_target);\n  return choice(\n    seq(\n      field('value', $.expression),\n      optional(seq('as', field('alias', $.expression))),\n    ),\n    seq(target, repeat1(seq(',', target)), optional(',')),\n    seq(target, ','),\n  );\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('type_parameters', optional($.type_parameter)),\n",
+     "after": "      field('type_parameters', optional(alias($._type_parameter_declaration, $.type_parameter))),\n",
+     "occurrences": 2
+    },
+    {
+     "before": "    type_alias_statement: $ => prec.dynamic(1, seq(\n      'type',\n      field('left', $.type),\n",
+     "after": "    type_alias_statement: $ => prec.dynamic(1, seq(\n      'type',\n      field('left', alias($._type_alias_name, $.type)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_parameter: $ => seq(\n      '[',\n      commaSep1($.type),\n      optional(','),\n      ']',\n    ),\n",
+     "after": "    type_parameter: $ => seq(\n      '[',\n      commaSep1($.type),\n      optional(','),\n      ']',\n    ),\n\n    // 3.14 type_params: type_param [type_param_default] (PEP 696), declarations only\n    _type_parameter_declaration: $ => seq(\n      '[',\n      commaSep1(choice($.type, $.default_type_parameter)),\n      optional(','),\n      ']',\n    ),\n\n    default_type_parameter: $ => seq(\n      field('name', $.type),\n      '=',\n      field('value', choice($.type, $.list_splat)),\n    ),\n\n    _type_alias_name: $ => choice(\n      $.identifier,\n      $.keyword_identifier,\n      alias($._generic_type_declaration, $.generic_type),\n    ),\n\n    _generic_type_declaration: $ => seq(\n      choice($.identifier, $.keyword_identifier),\n      alias($._type_parameter_declaration, $.type_parameter),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ')',\n    '}',\n    'except',\n  ],\n",
+     "after": "    ')',\n    '}',\n    'except',\n    $._format_spec_text,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        token(prec(1, /[^{}\\n]+/)),\n        alias($.interpolation, $.format_expression),",
+     "after": "        $._format_spec_text,\n        alias($.interpolation, $.format_expression),",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "        } else if (lexer->lookahead == '\\r' || lexer->lookahead == '\\f') {\n            indent_length = 0;\n            skip(lexer);\n        } else if",
+     "after": "        } else if (lexer->lookahead == '\\r') {\n            // CR LF is one terminator (handled by the LF branch); a lone CR ends the line.\n            indent_length = 0;\n            skip(lexer);\n            if (lexer->lookahead != '\\n') {\n                found_end_of_line = true;\n            }\n        } else if (lexer->lookahead == '\\f') {\n            indent_length = 0;\n            skip(lexer);\n        } else if",
+     "occurrences": 1
+    },
+    {
+     "before": "    if (found_end_of_line) {\n        if (scanner->indents.size > 0) {\n            uint16_t current_indent_length = *array_back(&scanner->indents);\n",
+     "after": "    // Inconsistent dedent (3.14 lexical 2.1.8): a smaller column must occur on the stack.\n    // Such a line gets neither DEDENT nor NEWLINE, so the parser reports the error.\n    bool inconsistent_dedent = false;\n    if (found_end_of_line && scanner->indents.size > 0 && !error_recovery_mode &&\n        indent_length < *array_back(&scanner->indents)) {\n        inconsistent_dedent = true;\n        for (uint32_t i = 0; i < scanner->indents.size; i++) {\n            if (*array_get(&scanner->indents, i) == indent_length) {\n                inconsistent_dedent = false;\n                break;\n            }\n        }\n    }\n\n    if (found_end_of_line) {\n        if (scanner->indents.size > 0) {\n            uint16_t current_indent_length = *array_back(&scanner->indents);\n",
+     "occurrences": 1
+    },
+    {
+     "before": "                first_comment_indent_length < (int32_t)current_indent_length) {",
+     "after": "                first_comment_indent_length < (int32_t)current_indent_length && !inconsistent_dedent) {",
+     "occurrences": 1
+    },
+    {
+     "before": "        if (valid_symbols[NEWLINE] && !error_recovery_mode) {",
+     "after": "        if (valid_symbols[NEWLINE] && !error_recovery_mode && !inconsistent_dedent) {",
+     "occurrences": 1
+    },
+    {
+     "before": "    EXCEPT,\n};",
+     "after": "    EXCEPT,\n    FORMAT_SPEC_TEXT,\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "    bool advanced_once = false;\n    if (valid_symbols[ESCAPE_INTERPOLATION]",
+     "after": "    if (valid_symbols[FORMAT_SPEC_TEXT] && scanner->delimiters.size > 0 && !error_recovery_mode) {\n        // Format-spec text runs to '{' or '}'; it never crosses the closing quote of the\n        // enclosing f/t-string, nor a line end unless the string is triple-quoted.\n        Delimiter *delimiter = array_back(&scanner->delimiters);\n        int32_t end_char = end_character(delimiter);\n        bool has_content = false;\n        while (lexer->lookahead && lexer->lookahead != '{' && lexer->lookahead != '}') {\n            if ((lexer->lookahead == '\\n' || lexer->lookahead == '\\r') && !is_triple(delimiter)) {\n                break;\n            }\n            if (lexer->lookahead == end_char) {\n                if (!is_triple(delimiter)) {\n                    break;\n                }\n                lexer->mark_end(lexer);\n                advance(lexer);\n                if (lexer->lookahead == end_char) {\n                    advance(lexer);\n                    if (lexer->lookahead == end_char) {\n                        lexer->result_symbol = FORMAT_SPEC_TEXT;\n                        return has_content;\n                    }\n                }\n                has_content = true;\n                continue;\n            }\n            advance(lexer);\n            has_content = true;\n        }\n        if (has_content) {\n            lexer->mark_end(lexer);\n            lexer->result_symbol = FORMAT_SPEC_TEXT;\n            return true;\n        }\n    }\n\n    bool advanced_once = false;\n    if (valid_symbols[ESCAPE_INTERPOLATION]",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

@@ -5263,12 +5263,12 @@
       "source_utf8": "import os\n\n\ndef f(a, b, /, c, *, d):\n    return a\n\n\nif (n := len(\"abc\")) > 2:\n    print(f\"{n=}\")\n\n\nlimit = 3\n\n\ndef tail(x):\n    return x + limit\n\n\nprint(os.sep, tail(limit))\n",
       "edits": [
         {
-          "find": "def f(a, b, /, c, *, d):",
-          "replace": "def f(a, b, *, c, /, d):"
+          "find": "/, c, *",
+          "replace": "*, c, /"
         },
         {
-          "find": "def f(a, b, *, c, /, d):",
-          "replace": "def f(a, b, /, c, *, d):"
+          "find": "*, c, /",
+          "replace": "/, c, *"
         }
       ],
       "expect": [
@@ -5538,12 +5538,12 @@
       "source_utf8": "import typing\n\n\nclass Box[T = int]:\n    pass\n\n\ndef make[T: (int, str) = int, *Ts = *tuple[int, str], **P = [int, str]]() -> None:\n    pass\n\n\ntype Alias[T = str] = list[T]\n\n\nsize = 1\n\n\ndef tail(x):\n    return x + size\n\n\nprint(typing.Any, tail(size))\n",
       "edits": [
         {
-          "find": "class Box[T = int]:",
-          "replace": "class Box[T = ]:"
+          "find": "T = int]",
+          "replace": "T = ]"
         },
         {
-          "find": "class Box[T = ]:",
-          "replace": "class Box[T = int]:"
+          "find": "T = ]",
+          "replace": "T = int]"
         }
       ],
       "expect": [

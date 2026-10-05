@@ -1,0 +1,165 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "rust",
+ "defects": [
+  "rust-P2-01",
+  "rust-P2-02",
+  "rust-P2-03",
+  "rust-P2-04",
+  "rust-P2-05",
+  "rust-P2-06",
+  "rust-P2-07",
+  "rust-P2-08",
+  "rust-P2-09",
+  "rust-P2-10",
+  "rust-P2-11",
+  "rust-P2-12",
+  "rust-P2-13",
+  "rust-P2-14",
+  "rust-P2-15",
+  "rust-P2-16",
+  "rust-P2-17"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    [$.foreign_mod_item, $.function_modifiers],\n  ],",
+     "after": "    [$.foreign_mod_item, $.function_modifiers],\n    [$._pattern, $._pattern_no_top_alt],\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "  '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?',\n];",
+     "after": "  '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?', '~',\n];",
+     "occurrences": 1
+    },
+    {
+     "before": "  extras: $ => [\n    /\\s/,",
+     "after": "  extras: $ => [\n    /[\\t\\n\\v\\f\\r \\u0085\\u200e\\u200f\\u2028\\u2029]/,",
+     "occurrences": 1
+    },
+    {
+     "before": "    attribute: $ => seq(\n      $._path,\n      optional(choice(\n        seq('=', field('value', $._expression)),\n        field('arguments', alias($.delim_token_tree, $.token_tree)),\n      )),\n    ),",
+     "after": "    attribute: $ => {\n      const inner = seq(\n        $._path,\n        optional(choice(\n          seq('=', field('value', $._expression)),\n          field('arguments', alias($.delim_token_tree, $.token_tree)),\n        )),\n      );\n      return choice(inner, seq('unsafe', '(', inner, ')'));\n    },",
+     "occurrences": 1
+    },
+    {
+     "before": "    static_item: $ => seq(\n      optional($.visibility_modifier),\n      'static',",
+     "after": "    static_item: $ => seq(\n      optional($.visibility_modifier),\n      optional(choice('safe', 'unsafe')),\n      'static',",
+     "occurrences": 1
+    },
+    {
+     "before": "    function_modifiers: $ => repeat1(choice(\n      'async',\n      'default',\n      'const',\n      'unsafe',",
+     "after": "    function_modifiers: $ => repeat1(choice(\n      'async',\n      'default',\n      'const',\n      'unsafe',\n      'safe',",
+     "occurrences": 1
+    },
+    {
+     "before": "    _reserved_identifier: $ => alias(choice(\n      'default',",
+     "after": "    _reserved_identifier: $ => alias(choice(\n      'default',\n      'safe',",
+     "occurrences": 1
+    },
+    {
+     "before": "    trait_bounds: $ => seq(\n      ':',\n      sepBy1('+', choice(\n        $._type,\n        $.lifetime,\n        $.higher_ranked_trait_bound,\n      )),\n    ),",
+     "after": "    trait_bounds: $ => prec.right(seq(\n      ':',\n      optional(sepBy1('+', choice(\n        $._type,\n        $.lifetime,\n        $.higher_ranked_trait_bound,\n      ))),\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "    let_declaration: $ => seq(\n      'let',\n      optional($.mutable_specifier),\n      field('pattern', $._pattern),",
+     "after": "    let_declaration: $ => seq(\n      'let',\n      optional($.mutable_specifier),\n      field('pattern', $._pattern_no_top_alt),",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('pattern', choice(\n        $._pattern,\n        $.self,\n      )),",
+     "after": "      field('pattern', choice(\n        $._pattern_no_top_alt,\n        $.self,\n      )),",
+     "occurrences": 1
+    },
+    {
+     "before": "    extern_modifier: $ => seq(\n      'extern',\n      optional($.string_literal),\n    ),",
+     "after": "    extern_modifier: $ => seq(\n      'extern',\n      optional(choice($.string_literal, $.raw_string_literal)),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    generic_type: $ => prec(1, seq(\n      field('type', choice(\n        $._type_identifier,\n        $._reserved_identifier,\n        $.scoped_type_identifier,\n      )),\n      field('type_arguments', $.type_arguments),",
+     "after": "    generic_type: $ => prec(1, seq(\n      field('type', choice(\n        $._type_identifier,\n        $._reserved_identifier,\n        $.scoped_type_identifier,\n      )),\n      optional('::'),\n      field('type_arguments', $.type_arguments),",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.lifetime,\n          $._literal,\n          $.block,\n        ),\n        optional($.trait_bounds),",
+     "after": "          $.lifetime,\n          $._literal,\n          $.negative_literal,\n          $.block,\n        ),\n        optional($.trait_bounds),",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq('..', $._expression),\n      '..',\n    )),",
+     "after": "      seq('..', $._expression),\n      seq('..=', $._expression),\n      '..',\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "    base_field_initializer: $ => seq(\n      '..',\n      $._expression,\n    ),",
+     "after": "    base_field_initializer: $ => seq(\n      '..',\n      optional($._expression),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    let_condition: $ => seq(\n      'let',",
+     "after": "    let_condition: $ => seq(\n      repeat($.attribute_item),\n      'let',",
+     "occurrences": 1
+    },
+    {
+     "before": "    closure_parameters: $ => seq(\n      '|',\n      sepBy(',', choice(\n        $._pattern,\n        $.parameter,\n      )),\n      '|',\n    ),",
+     "after": "    closure_parameters: $ => seq(\n      '|',\n      optional(seq(\n        sepBy1(',', seq(\n          repeat($.attribute_item),\n          choice(\n            $._pattern_no_top_alt,\n            $.parameter,\n          ),\n        )),\n        optional(','),\n      )),\n      '|',\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    generic_pattern: $ => seq(",
+     "after": "    _pattern_no_top_alt: $ => choice(\n      $._literal_pattern,\n      alias(choice(...primitiveTypes), $.identifier),\n      $.identifier,\n      $.scoped_identifier,\n      $.generic_pattern,\n      $.tuple_pattern,\n      $.tuple_struct_pattern,\n      $.struct_pattern,\n      $._reserved_identifier,\n      $.ref_pattern,\n      $.slice_pattern,\n      $.captured_pattern,\n      $.reference_pattern,\n      $.remaining_field_pattern,\n      $.mut_pattern,\n      $.range_pattern,\n      $.const_block,\n      $.macro_invocation,\n      '_',\n    ),\n\n    generic_pattern: $ => seq(",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq(\n          field('name', $._field_identifier),\n          ':',\n          field('pattern', $._pattern),\n        ),",
+     "after": "        seq(\n          field('name', choice($._field_identifier, $.integer_literal)),\n          ':',\n          field('pattern', $._pattern),\n        ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    integer_literal: _ => token(seq(\n      choice(\n        /[0-9][0-9_]*/,\n        /0x[0-9a-fA-F_]+/,\n        /0b[01_]+/,\n        /0o[0-7_]+/,\n      ),\n      optional(choice(...numericTypes)),\n    )),",
+     "after": "    integer_literal: _ => token(choice(\n      seq(/[0-9][0-9_]*/, optional(/[a-df-zA-DF-Z_][_\\p{XID_Continue}]*/)),\n      seq(\n        choice(\n          /0x[0-9a-fA-F_]+/,\n          /0b[01_]+/,\n          /0o[0-7_]+/,\n        ),\n        optional(/[_\\p{XID_Start}][_\\p{XID_Continue}]*/),\n      ),\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "      alias($.string_close, '\"'),\n    ),",
+     "after": "      alias($.string_close, '\"'),\n      optional(token.immediate(/[_\\p{XID_Start}][_\\p{XID_Continue}]*/)),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "      $._raw_string_literal_end,\n    ),",
+     "after": "      $._raw_string_literal_end,\n      optional(token.immediate(/[_\\p{XID_Start}][_\\p{XID_Continue}]*/)),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "          /u[0-9a-fA-F]{4}/,\n          /u\\{[0-9a-fA-F]+\\}/,\n          /x[0-9a-fA-F]{2}/,\n        )),\n        /[^\\\\']/,\n      )),\n      '\\'',\n    )),",
+     "after": "          /u[0-9a-fA-F]{4}/,\n          /u\\{[0-9a-fA-F][0-9a-fA-F_]*\\}/,\n          /x[0-9a-fA-F]{2}/,\n        )),\n        /[^\\\\']/,\n      )),\n      '\\'',\n      optional(/[_\\p{XID_Start}][_\\p{XID_Continue}]*/),\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "          /u[0-9a-fA-F]{4}/,\n          /u\\{[0-9a-fA-F]+\\}/,\n          /x[0-9a-fA-F]{2}/,\n        ),\n      )),",
+     "after": "          /u[0-9a-fA-F]{4}/,\n          /u\\{[0-9a-fA-F][0-9a-fA-F_]*\\}/,\n          /x[0-9a-fA-F]{2}/,\n        ),\n      )),",
+     "occurrences": 1
+    },
+    {
+     "before": "    metavariable: _ => /\\$[a-zA-Z_]\\w*/,",
+     "after": "    metavariable: _ => /\\$(r#)?[a-zA-Z_]\\w*/,",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "    if (lexer->lookahead != 'u' && lexer->lookahead != 'i' && lexer->lookahead != 'f') {\n        return true;\n    }\n    advance(lexer);\n    if (!iswdigit(lexer->lookahead)) {\n        return true;\n    }\n\n    while (iswdigit(lexer->lookahead)) {\n        advance(lexer);\n    }\n\n    lexer->mark_end(lexer);\n    return true;",
+     "after": "    if (!iswalpha(lexer->lookahead) || lexer->lookahead == 'e' || lexer->lookahead == 'E') {\n        return true;\n    }\n    while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {\n        advance(lexer);\n    }\n\n    lexer->mark_end(lexer);\n    return true;",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

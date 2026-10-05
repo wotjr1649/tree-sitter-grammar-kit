@@ -1,0 +1,120 @@
+{
+  "schema": "tsgk-c2-patch/r1",
+  "route": "html",
+  "defects": [
+    "html-P2-01",
+    "html-P2-02",
+    "html-P2-03",
+    "html-P2-04",
+    "html-P2-05",
+    "html-P2-06",
+    "html-P2-07",
+    "html-P2-08",
+    "html-P2-09",
+    "html-P2-10",
+    "html-P2-11",
+    "html-P2-12"
+  ],
+  "files": [
+    {
+      "target": "grammar.js",
+      "operations": [
+        {
+          "before": "  extras: $ => [\n    $.comment,\n    /\\s+/,\n  ],",
+          "after": "  extras: $ => [\n    $.comment,\n    $.erroneous_comment,\n    $.processing_instruction,\n    $._content_whitespace,\n    /\\s+/,\n  ],",
+          "occurrences": 1
+        },
+        {
+          "before": "    $.raw_text,\n    $.comment,\n  ],",
+          "after": "    $.raw_text,\n    $.comment,\n    $.text,\n    $.entity,\n    $.cdata_section,\n    $.erroneous_comment,\n    $._attribute_separator,\n    $._raw_text_end_missing,\n    $._content_whitespace,\n    $._error_sentinel,\n  ],",
+          "occurrences": 1
+        },
+        {
+          "before": "      $.erroneous_end_tag,\n    ),",
+          "after": "      $.erroneous_end_tag,\n      $.cdata_section,\n    ),",
+          "occurrences": 1
+        },
+        {
+          "before": "      optional($.raw_text),\n      $.end_tag,",
+          "after": "      optional($.raw_text),\n      choice($.end_tag, $._raw_text_end_missing),",
+          "occurrences": 2
+        },
+        {
+          "before": "      repeat($.attribute),",
+          "after": "      optional(seq($.attribute, repeat(seq($._attribute_separator, $.attribute)))),",
+          "occurrences": 4
+        },
+        {
+          "before": "    // An entity can be named, numeric (decimal), or numeric (hexacecimal). The\n    // longest entity name is 29 characters long, and the HTML spec says that\n    // no more will ever be added.\n    entity: _ => /&(#([xX][0-9a-fA-F]{1,6}|[0-9]{1,5})|[A-Za-z]{1,30});?/,\n\n",
+          "after": "",
+          "occurrences": 1
+        },
+        {
+          "before": "    text: _ => /[^<>&\\s]([^<>&]*[^<>&\\s])?/,\n",
+          "after": "    processing_instruction: _ => token(seq('<?', /[^>]*/, '>')),\n",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "src/scanner.c",
+      "operations": [
+        {
+          "before": "    RAW_TEXT,\n    COMMENT,\n};",
+          "after": "    RAW_TEXT,\n    COMMENT,\n    TEXT,\n    ENTITY,\n    CDATA_SECTION,\n    ERRONEOUS_COMMENT,\n    ATTRIBUTE_SEPARATOR,\n    RAW_TEXT_END_MISSING, // never emitted; error recovery inserts it as MISSING at EOF\n    CONTENT_WHITESPACE,\n    ERROR_SENTINEL,\n};\n\ntypedef enum { NS_HTML, NS_SVG, NS_MATHML } Namespace;\n\ntypedef enum { TEXT_DATA, TEXT_RCDATA, TEXT_PLAINTEXT } TextMode;",
+          "occurrences": 1
+        },
+        {
+          "before": "static bool scan_comment(TSLexer *lexer) {",
+          "after": "static bool custom_is(const Tag *tag, const char *name) {\n    size_t length = strlen(name);\n    return tag->type == CUSTOM && tag->custom_tag_name.size == length &&\n           memcmp(tag->custom_tag_name.contents, name, length) == 0;\n}\n\n// Namespace of an element created by a start tag whose parent gives its children `context`.\nstatic Namespace element_namespace(Namespace context, const Tag *tag) {\n    if (tag->type == SVG) return NS_SVG;\n    if (context == NS_HTML && tag->type == MATH) return NS_MATHML;\n    return context;\n}\n\n// Children of SVG/MathML integration points get HTML start-tag processing. annotation-xml is an\n// HTML integration point only with an encoding attribute the scanner does not see, so it stays foreign.\nstatic Namespace children_namespace(Namespace ns, const Tag *tag) {\n    if (ns == NS_SVG && (tag->type == TITLE || custom_is(tag, \"FOREIGNOBJECT\") || custom_is(tag, \"DESC\"))) {\n        return NS_HTML;\n    }\n    if (ns == NS_MATHML && (custom_is(tag, \"MI\") || custom_is(tag, \"MO\") || custom_is(tag, \"MN\") ||\n                            custom_is(tag, \"MS\") || custom_is(tag, \"MTEXT\"))) {\n        return NS_HTML;\n    }\n    return ns;\n}\n\n// Namespace of the current node and the namespace its child start tags get.\nstatic void current_namespaces(Scanner *scanner, Namespace *node, Namespace *children) {\n    Namespace n = NS_HTML, c = NS_HTML;\n    for (unsigned i = 0; i < scanner->tags.size; i++) {\n        n = element_namespace(c, &scanner->tags.contents[i]);\n        c = children_namespace(n, &scanner->tags.contents[i]);\n    }\n    *node = n;\n    *children = c;\n}\n\nstatic TextMode text_mode(Scanner *scanner, const char **end_name) {\n    if (scanner->tags.size == 0) return TEXT_DATA;\n    Namespace node, children;\n    current_namespaces(scanner, &node, &children);\n    if (node != NS_HTML) return TEXT_DATA;\n    Tag *top = array_back(&scanner->tags);\n    if (top->type == TITLE) {\n        *end_name = \"TITLE\";\n        return TEXT_RCDATA;\n    }\n    if (top->type == TEXTAREA) {\n        *end_name = \"TEXTAREA\";\n        return TEXT_RCDATA;\n    }\n    return custom_is(top, \"PLAINTEXT\") ? TEXT_PLAINTEXT : TEXT_DATA;\n}\n\nstatic bool is_tag_end_char(int32_t c) {\n    return c == ' ' || c == '\\t' || c == '\\n' || c == '\\f' || c == '\\r' || c == '/' || c == '>';\n}\n\nstatic bool is_ascii_alpha(int32_t c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }\n\nstatic bool is_ascii_digit(int32_t c) { return c >= '0' && c <= '9'; }\n\nstatic bool is_ascii_hex(int32_t c) { return is_ascii_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }\n\n// Consumes ASCII letters; true when they spell `name` (upper case) and a tag-name terminator follows.\nstatic bool scan_name_eq(TSLexer *lexer, const char *name) {\n    unsigned i = 0;\n    bool eq = true;\n    while (is_ascii_alpha(lexer->lookahead)) {\n        if (eq && name[i] != 0 && towupper(lexer->lookahead) == (wint_t)name[i]) {\n            i++;\n        } else {\n            eq = false;\n        }\n        advance(lexer);\n    }\n    return eq && name[i] == 0 && is_tag_end_char(lexer->lookahead);\n}\n\n// Named character references that may omit the semicolon (WHATWG named character references table).\nstatic const char *const LEGACY_REFERENCES[] = {\n    \"AElig\", \"AMP\", \"Aacute\", \"Acirc\", \"Agrave\", \"Aring\", \"Atilde\", \"Auml\", \"COPY\", \"Ccedil\", \"ETH\", \"Eacute\",\n    \"Ecirc\", \"Egrave\", \"Euml\", \"GT\", \"Iacute\", \"Icirc\", \"Igrave\", \"Iuml\", \"LT\", \"Ntilde\", \"Oacute\", \"Ocirc\",\n    \"Ograve\", \"Oslash\", \"Otilde\", \"Ouml\", \"QUOT\", \"REG\", \"THORN\", \"Uacute\", \"Ucirc\", \"Ugrave\", \"Uuml\", \"Yacute\",\n    \"aacute\", \"acirc\", \"acute\", \"aelig\", \"agrave\", \"amp\", \"aring\", \"atilde\", \"auml\", \"brvbar\", \"ccedil\", \"cedil\",\n    \"cent\", \"copy\", \"curren\", \"deg\", \"divide\", \"eacute\", \"ecirc\", \"egrave\", \"eth\", \"euml\", \"frac12\", \"frac14\",\n    \"frac34\", \"gt\", \"iacute\", \"icirc\", \"iexcl\", \"igrave\", \"iquest\", \"iuml\", \"laquo\", \"lt\", \"macr\", \"micro\",\n    \"middot\", \"nbsp\", \"not\", \"ntilde\", \"oacute\", \"ocirc\", \"ograve\", \"ordf\", \"ordm\", \"oslash\", \"otilde\", \"ouml\",\n    \"para\", \"plusmn\", \"pound\", \"quot\", \"raquo\", \"reg\", \"sect\", \"shy\", \"sup1\", \"sup2\", \"sup3\", \"szlig\", \"thorn\",\n    \"times\", \"uacute\", \"ucirc\", \"ugrave\", \"uml\", \"uuml\", \"yacute\", \"yen\", \"yuml\",\n};\n\nstatic bool is_legacy_reference(const char *name, unsigned length) {\n    for (unsigned i = 0; i < sizeof(LEGACY_REFERENCES) / sizeof(LEGACY_REFERENCES[0]); i++) {\n        if (strlen(LEGACY_REFERENCES[i]) == length && memcmp(LEGACY_REFERENCES[i], name, length) == 0) return true;\n    }\n    return false;\n}\n\n// Lookahead is '&'. True when a character reference starts here: numeric (&#digits / &#x hex, ';'\n// optional), a name followed by ';', or the longest legacy name without ';'. With `mark`, the token\n// end is marked after the reference. ponytail: any alphanumeric name with ';' counts as a reference;\n// the full WHATWG table would make unknown names like \"&foo;\" text.\nstatic bool scan_char_ref(TSLexer *lexer, bool mark) {\n    advance(lexer);\n    if (lexer->lookahead == '#') {\n        advance(lexer);\n        bool hex = lexer->lookahead == 'x' || lexer->lookahead == 'X';\n        if (hex) advance(lexer);\n        bool digits = false;\n        while (hex ? is_ascii_hex(lexer->lookahead) : is_ascii_digit(lexer->lookahead)) {\n            digits = true;\n            advance(lexer);\n        }\n        if (!digits) return false;\n        if (lexer->lookahead == ';') advance(lexer);\n        if (mark) lexer->mark_end(lexer);\n        return true;\n    }\n    if (!is_ascii_alpha(lexer->lookahead)) return false;\n    char name[8];\n    unsigned length = 0;\n    bool found = false;\n    while (is_ascii_alpha(lexer->lookahead) || is_ascii_digit(lexer->lookahead)) {\n        if (length < sizeof(name)) name[length] = (char)lexer->lookahead;\n        length++;\n        advance(lexer);\n        if (length <= sizeof(name) && is_legacy_reference(name, length)) {\n            found = true;\n            if (mark) lexer->mark_end(lexer);\n        }\n    }\n    if (lexer->lookahead == ';') {\n        advance(lexer);\n        if (mark) lexer->mark_end(lexer);\n        return true;\n    }\n    return found;\n}\n\n// Text up to the next tag (data), the element's own end tag (RCDATA) or EOF (plaintext); character\n// references end it except in plaintext. Leading and trailing whitespace stay extras.\nstatic bool scan_text(TSLexer *lexer, TextMode mode, const char *end_name, const bool *valid_symbols) {\n    bool has_text = false;\n    if (mode != TEXT_PLAINTEXT && lexer->lookahead == '&') {\n        if (valid_symbols[ENTITY] && scan_char_ref(lexer, true)) {\n            lexer->result_symbol = ENTITY;\n            return true;\n        }\n        has_text = true;\n        lexer->mark_end(lexer);\n    }\n    while (!lexer->eof(lexer)) {\n        int32_t c = lexer->lookahead;\n        if (c == '<' && mode == TEXT_DATA) break;\n        if (c == '<' && mode == TEXT_RCDATA) {\n            advance(lexer);\n            if (lexer->lookahead == '/') {\n                advance(lexer);\n                if (scan_name_eq(lexer, end_name)) break;\n            }\n            has_text = true;\n            lexer->mark_end(lexer);\n            continue;\n        }\n        if (c == '&' && mode != TEXT_PLAINTEXT) {\n            if (scan_char_ref(lexer, false)) break;\n            has_text = true;\n            lexer->mark_end(lexer);\n            continue;\n        }\n        advance(lexer);\n        if (!iswspace(c)) {\n            has_text = true;\n            lexer->mark_end(lexer);\n        }\n    }\n    if (!has_text) return false;\n    lexer->result_symbol = TEXT;\n    return true;\n}\n\n// Lookahead is the first '[' after \"<!\": a CDATA section up to \"]]>\" (foreign content only).\nstatic bool scan_cdata_section(TSLexer *lexer) {\n    for (const char *c = \"[CDATA[\"; *c; c++) {\n        if (lexer->lookahead != *c) return false;\n        advance(lexer);\n    }\n    unsigned brackets = 0;\n    while (!lexer->eof(lexer)) {\n        if (lexer->lookahead == ']') {\n            brackets++;\n        } else if (lexer->lookahead == '>' && brackets >= 2) {\n            advance(lexer);\n            lexer->mark_end(lexer);\n            lexer->result_symbol = CDATA_SECTION;\n            return true;\n        } else {\n            brackets = 0;\n        }\n        advance(lexer);\n    }\n    return false;\n}\n\nstatic bool scan_comment(TSLexer *lexer) {",
+          "occurrences": 1
+        },
+        {
+          "before": "            case '>':\n                if (dashes >= 2) {\n                    lexer->result_symbol = COMMENT;\n                    advance(lexer);\n                    lexer->mark_end(lexer);\n                    return true;\n                }\n            default:\n                dashes = 0;\n        }\n        advance(lexer);",
+          "after": "            case '>':\n                if (dashes >= 2) {\n                    lexer->result_symbol = COMMENT;\n                    advance(lexer);\n                    lexer->mark_end(lexer);\n                    return true;\n                }\n                dashes = 0;\n                break;\n            case '!':\n                if (dashes >= 2) {\n                    advance(lexer);\n                    if (lexer->lookahead == '>') {\n                        lexer->result_symbol = ERRONEOUS_COMMENT;\n                        advance(lexer);\n                        lexer->mark_end(lexer);\n                        return true;\n                    }\n                    dashes = 0;\n                    continue;\n                }\n            default:\n                dashes = 0;\n        }\n        advance(lexer);",
+          "occurrences": 1
+        },
+        {
+          "before": "    lexer->mark_end(lexer);\n\n    const char *end_delimiter = array_back(&scanner->tags)->type == SCRIPT ? \"</SCRIPT\" : \"</STYLE\";\n\n    unsigned delimiter_index = 0;\n    while (lexer->lookahead) {\n        if (towupper(lexer->lookahead) == end_delimiter[delimiter_index]) {\n            delimiter_index++;\n            if (delimiter_index == strlen(end_delimiter)) {\n                break;\n            }\n            advance(lexer);\n        } else {\n            delimiter_index = 0;\n            advance(lexer);\n            lexer->mark_end(lexer);\n        }\n    }\n\n    lexer->result_symbol = RAW_TEXT;\n    return true;",
+          "after": "    lexer->mark_end(lexer);\n\n    bool script = array_back(&scanner->tags)->type == SCRIPT;\n    const char *name = script ? \"SCRIPT\" : \"STYLE\";\n    enum { DATA, ESCAPED, DOUBLE_ESCAPED } state = DATA;\n    unsigned dashes = 0;\n\n    while (!lexer->eof(lexer)) {\n        if (lexer->lookahead == '<') {\n            lexer->mark_end(lexer);\n            advance(lexer);\n            dashes = 0;\n            if (lexer->lookahead == '/') {\n                advance(lexer);\n                if (scan_name_eq(lexer, name)) {\n                    if (state != DOUBLE_ESCAPED) {\n                        lexer->result_symbol = RAW_TEXT;\n                        return true;\n                    }\n                    state = ESCAPED;\n                }\n            } else if (script && state == DATA && lexer->lookahead == '!') {\n                advance(lexer);\n                if (lexer->lookahead == '-') {\n                    advance(lexer);\n                    if (lexer->lookahead == '-') {\n                        advance(lexer);\n                        state = ESCAPED;\n                        dashes = 2;\n                    }\n                }\n            } else if (script && state == ESCAPED && scan_name_eq(lexer, \"SCRIPT\")) {\n                state = DOUBLE_ESCAPED;\n            }\n            continue;\n        }\n        if (lexer->lookahead == '-') {\n            dashes++;\n        } else {\n            if (lexer->lookahead == '>' && dashes >= 2) state = DATA;\n            dashes = 0;\n        }\n        advance(lexer);\n    }\n\n    lexer->mark_end(lexer);\n    lexer->result_symbol = RAW_TEXT;\n    return true;",
+          "occurrences": 1
+        },
+        {
+          "before": "static bool scan_implicit_end_tag(Scanner *scanner, TSLexer *lexer) {",
+          "after": "static bool tag_ends_at_eof(const Tag *tag) {\n    switch (tag->type) {\n        case HTML:\n        case HEAD:\n        case BODY:\n        case LI:\n        case DT:\n        case DD:\n        case P:\n        case RB:\n        case RT:\n        case RTC:\n        case RP:\n        case OPTGROUP:\n        case OPTION:\n        case THEAD:\n        case TBODY:\n        case TFOOT:\n        case TR:\n        case TD:\n        case TH:\n            return true;\n        default:\n            return custom_is(tag, \"PLAINTEXT\");\n    }\n}\n\nstatic bool scan_implicit_end_tag(Scanner *scanner, TSLexer *lexer) {",
+          "occurrences": 1
+        },
+        {
+          "before": "            ((parent->type == HTML || parent->type == HEAD || parent->type == BODY) && lexer->eof(lexer))",
+          "after": "            (lexer->eof(lexer) && tag_ends_at_eof(parent))",
+          "occurrences": 1
+        },
+        {
+          "before": "    Tag tag = tag_for_name(tag_name);\n    array_push(&scanner->tags, tag);\n    switch (tag.type) {",
+          "after": "    Namespace node, children;\n    current_namespaces(scanner, &node, &children);\n    Tag tag = tag_for_name(tag_name);\n    array_push(&scanner->tags, tag);\n    switch (children == NS_HTML ? tag.type : CUSTOM) {",
+          "occurrences": 1
+        },
+        {
+          "before": "    if (valid_symbols[RAW_TEXT] && !valid_symbols[START_TAG_NAME] && !valid_symbols[END_TAG_NAME]) {\n        return scan_raw_text(scanner, lexer);\n    }\n\n    while (iswspace(lexer->lookahead)) {\n        skip(lexer);\n    }\n\n    switch (lexer->lookahead) {\n        case '<':\n            lexer->mark_end(lexer);\n            advance(lexer);\n\n            if (lexer->lookahead == '!') {\n                advance(lexer);\n                return scan_comment(lexer);\n            }\n\n            if (valid_symbols[IMPLICIT_END_TAG]) {\n                return scan_implicit_end_tag(scanner, lexer);\n            }\n            break;\n",
+          "after": "    if (valid_symbols[RAW_TEXT] && !valid_symbols[START_TAG_NAME] && !valid_symbols[END_TAG_NAME]) {\n        return scan_raw_text(scanner, lexer);\n    }\n\n    // An element closed at EOF ends before trailing whitespace: in content, whitespace is read as its own\n    // extra unless only EOF follows it, then the implicit end tag is emitted in front of it.\n    if (valid_symbols[IMPLICIT_END_TAG] && !valid_symbols[ERROR_SENTINEL] && iswspace(lexer->lookahead)) {\n        lexer->mark_end(lexer);\n        while (iswspace(lexer->lookahead)) {\n            advance(lexer);\n        }\n        if (lexer->eof(lexer) && scanner->tags.size > 0 && tag_ends_at_eof(array_back(&scanner->tags))) {\n            pop_tag(scanner);\n            lexer->result_symbol = IMPLICIT_END_TAG;\n            return true;\n        }\n        lexer->mark_end(lexer);\n        lexer->result_symbol = CONTENT_WHITESPACE;\n        return true;\n    }\n\n    bool had_space = iswspace(lexer->lookahead);\n    while (iswspace(lexer->lookahead)) {\n        skip(lexer);\n    }\n\n    // P2-07: a following attribute needs preceding whitespace\n    if (valid_symbols[ATTRIBUTE_SEPARATOR] && !valid_symbols[ERROR_SENTINEL] && had_space && !lexer->eof(lexer)) {\n        int32_t c = lexer->lookahead;\n        if (c != '>' && c != '/' && c != '<' && c != '=' && c != '\"' && c != '\\'') {\n            lexer->mark_end(lexer);\n            lexer->result_symbol = ATTRIBUTE_SEPARATOR;\n            return true;\n        }\n    }\n\n    // P2-02/P2-10: RCDATA (title, textarea) and plaintext content\n    if (valid_symbols[TEXT] && !valid_symbols[START_TAG_NAME] && !lexer->eof(lexer)) {\n        const char *end_name = NULL;\n        TextMode mode = text_mode(scanner, &end_name);\n        if (mode != TEXT_DATA) {\n            return scan_text(lexer, mode, end_name, valid_symbols);\n        }\n    }\n\n    switch (lexer->lookahead) {\n        case '<':\n            lexer->mark_end(lexer);\n            advance(lexer);\n\n            if (lexer->lookahead == '!') {\n                advance(lexer);\n                if (lexer->lookahead == '[') {\n                    Namespace node, children;\n                    current_namespaces(scanner, &node, &children);\n                    return valid_symbols[CDATA_SECTION] && node != NS_HTML && scan_cdata_section(lexer);\n                }\n                return scan_comment(lexer);\n            }\n\n            if (valid_symbols[IMPLICIT_END_TAG]) {\n                return scan_implicit_end_tag(scanner, lexer);\n            }\n            return false;\n",
+          "occurrences": 1
+        },
+        {
+          "before": "        default:\n            if ((valid_symbols[START_TAG_NAME] || valid_symbols[END_TAG_NAME]) && !valid_symbols[RAW_TEXT]) {\n                return valid_symbols[START_TAG_NAME] ? scan_start_tag_name(scanner, lexer)\n                                                     : scan_end_tag_name(scanner, lexer);\n            }\n    }\n\n    return false;",
+          "after": "        default:\n            if ((valid_symbols[START_TAG_NAME] || valid_symbols[END_TAG_NAME]) && !valid_symbols[RAW_TEXT]) {\n                return valid_symbols[START_TAG_NAME] ? scan_start_tag_name(scanner, lexer)\n                                                     : scan_end_tag_name(scanner, lexer);\n            }\n    }\n\n    // P2-06: text and character references in data; a void element has no content\n    if (valid_symbols[TEXT] && !lexer->eof(lexer)) {\n        if (valid_symbols[IMPLICIT_END_TAG] && scanner->tags.size > 0 && tag_is_void(array_back(&scanner->tags))) {\n            pop_tag(scanner);\n            lexer->result_symbol = IMPLICIT_END_TAG;\n            return true;\n        }\n        return scan_text(lexer, TEXT_DATA, NULL, valid_symbols);\n    }\n\n    return false;",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "target": "src/tag.h",
+      "operations": [
+        {
+          "before": "        case OPTGROUP:\n            return child != OPTGROUP;\n\n        case TR:\n            return child != TR;\n\n        case TD:\n        case TH:\n            return child != TD && child != TH && child != TR;\n",
+          "after": "        case OPTION:\n            return child != OPTION && child != OPTGROUP && child != HR;\n\n        case OPTGROUP:\n            return child != OPTGROUP && child != HR;\n\n        case CAPTION:\n            return child != CAPTION && child != COL && child != COLGROUP && child != THEAD && child != TBODY &&\n                   child != TFOOT && child != TR && child != TH && child != TD;\n\n        case THEAD:\n        case TBODY:\n        case TFOOT:\n            return child != THEAD && child != TBODY && child != TFOOT && child != CAPTION && child != COL &&\n                   child != COLGROUP;\n\n        case TR:\n            return child != TR && child != THEAD && child != TBODY && child != TFOOT && child != CAPTION &&\n                   child != COL && child != COLGROUP;\n\n        case TD:\n        case TH:\n            return child != TD && child != TH && child != TR && child != THEAD && child != TBODY && child != TFOOT &&\n                   child != CAPTION && child != COL && child != COLGROUP;\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

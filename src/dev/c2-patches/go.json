@@ -1,0 +1,32 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "go",
+ "defects": [
+  "go-P2-01",
+  "go-P2-02",
+  "go-P2-03",
+  "go-P2-04"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "      field('receiver', $.parameter_list),\n      field('name', $._field_identifier),\n      field('parameters', $.parameter_list),",
+     "after": "      field('receiver', $.parameter_list),\n      field('name', $._field_identifier),\n      field('type_parameters', optional($.type_parameter_list)),\n      field('parameters', $.parameter_list),",
+     "occurrences": 1
+    },
+    {
+     "before": "    index_expression: $ => prec(PREC.primary, prec.dynamic(1, seq(\n      field('operand', $._expression),\n      '[',\n      field('index', $._expression),\n      ']',",
+     "after": "    index_expression: $ => prec(PREC.primary, prec.dynamic(1, seq(\n      field('operand', $._expression),\n      '[',\n      commaSep1(field('index', $._expression)),\n      optional(','),\n      ']',",
+     "occurrences": 1
+    },
+    {
+     "before": "        // Unlike a Go compiler, we accept statements at top-level to enable\n        // parsing of partial code snippets in documentation (see #63).\n        seq($._statement, terminator),",
+     "after": "        seq($._declaration, terminator),",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
