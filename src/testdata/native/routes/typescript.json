@@ -4020,6 +4020,66 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-typescript-B01-1",
+      "features": [
+        "typescript-B01"
+      ],
+      "source_utf8": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\nimport { Emitter, Event } from './event.js';\nimport { DisposableStore, IDisposable } from './lifecycle.js';\n\nexport interface CancellationToken {\n\n\t/**\n\t * A flag signalling is cancellation has been requested.\n\t */\n\treadonly isCancellationRequested: boolean;\n\n\t/**\n\t * An event which fires when cancellation is requested. This event\n\t * only ever fires `once` as cancellation can only happen once. Listeners\n\t * that are registered after cancellation will be called (next event loop run),\n\t * but also only once.\n\t *\n\t * @event\n\t */\n\treadonly onCancellationRequested: (listener: (e: void) => unknown, thisArgs?: unknown, disposables?: IDisposable[]) => IDisposable;\n}\n\nconst shortcutEvent: Event<void> = Object.freeze(function (callback, context?): IDisposable {\n\tconst handle = setTimeout(callback.bind(context), 0);\n\treturn { dispose() { clearTimeout(handle); } };\n});\n\nexport namespace CancellationToken {\n\n\texport function isCancellationToken(thing: unknown): thing is CancellationToken {\n\t\tif (thing === CancellationToken.None || thing === CancellationToken.Cancelled) {\n\t\t\treturn true;\n\t\t}\n\t\tif (thing instanceof MutableToken) {\n\t\t\treturn true;\n\t\t}\n\t\tif (!thing || typeof thing !== 'object') {\n\t\t\treturn false;\n\t\t}\n\t\treturn typeof (thing as CancellationToken).isCancellationRequested === 'boolean'\n\t\t\t&& typeof (thing as CancellationToken).onCancellationRequested === 'function';\n\t}\n\n\n\texport const None = Object.freeze<CancellationToken>({\n\t\tisCancellationRequested: false,\n\t\tonCancellationRequested: Event.None\n\t});\n\n\texport const Cancelled = Object.freeze<CancellationToken>({\n\t\tisCancellationRequested: true,\n\t\tonCancellationRequested: shortcutEvent\n\t});\n}\n\nclass MutableToken implements CancellationToken {\n\n\tprivate _isCancelled: boolean = false;\n\tprivate _emitter: Emitter<void> | null = null;\n\n\tpublic cancel() {\n\t\tif (!this._isCancelled) {\n\t\t\tthis._isCancelled = true;\n\t\t\tif (this._emitter) {\n\t\t\t\tthis._emitter.fire(undefined);\n\t\t\t\tthis.dispose();\n\t\t\t}\n\t\t}\n\t}\n\n\tget isCancellationRequested(): boolean {\n\t\treturn this._isCancelled;\n\t}\n\n\tget onCancellationRequested(): Event<void> {\n\t\tif (this._isCancelled) {\n\t\t\treturn shortcutEvent;\n\t\t}\n\t\tif (!this._emitter) {\n\t\t\tthis._emitter = new Emitter<void>();\n\t\t}\n\t\treturn this._emitter.event;\n\t}\n\n\tpublic dispose(): void {\n\t\tif (this._emitter) {\n\t\t\tthis._emitter.dispose();\n\t\t\tthis._emitter = null;\n\t\t}\n\t}\n}\n\nexport class CancellationTokenSource {\n\n\tprivate _token?: CancellationToken = undefined;\n\tprivate _parentListener?: IDisposable = undefined;\n\n\tconstructor(parent?: CancellationToken) {\n\t\tthis._parentListener = parent && parent.onCancellationRequested(this.cancel, this);\n\t}\n\n\tget token(): CancellationToken {\n\t\tif (!this._token) {\n\t\t\t// be lazy and create the token only when\n\t\t\t// actually needed\n\t\t\tthis._token = new MutableToken();\n\t\t}\n\t\treturn this._token;\n\t}\n\n\tcancel(): void {\n\t\tif (!this._token) {\n\t\t\t// save an object by returning the default\n\t\t\t// cancelled token when cancellation happens\n\t\t\t// before someone asks for the token\n\t\t\tthis._token = CancellationToken.Cancelled;\n\n\t\t} else if (this._token instanceof MutableToken) {\n\t\t\t// actually cancel\n\t\t\tthis._token.cancel();\n\t\t}\n\t}\n\n\tdispose(cancel: boolean = false): void {\n\t\tif (cancel) {\n\t\t\tthis.cancel();\n\t\t}\n\t\tthis._parentListener?.dispose();\n\t\tif (!this._token) {\n\t\t\t// ensure to initialize with an empty token if we had none\n\t\t\tthis._token = CancellationToken.None;\n\n\t\t} else if (this._token instanceof MutableToken) {\n\t\t\t// actually dispose\n\t\t\tthis._token.dispose();\n\t\t}\n\t}\n}\n\nexport function cancelOnDispose(store: DisposableStore): CancellationToken {\n\tconst source = new CancellationTokenSource();\n\tstore.add({ dispose() { source.cancel(); } });\n\treturn source.token;\n}\n\n/**\n * A pool that aggregates multiple cancellation tokens. The pool's own token\n * (accessible via `pool.token`) is cancelled only after every token added\n * to the pool has been cancelled. Adding tokens after the pool token has\n * been cancelled has no effect.\n */\nexport class CancellationTokenPool {\n\n\tprivate readonly _source = new CancellationTokenSource();\n\tprivate readonly _listeners = new DisposableStore();\n\n\tprivate _total: number = 0;\n\tprivate _cancelled: number = 0;\n\tprivate _isDone: boolean = false;\n\n\tget token(): CancellationToken {\n\t\treturn this._source.token;\n\t}\n\n\t/**\n\t * Add a token to the pool. If the token is already cancelled it is counted\n\t * immediately. Tokens added after the pool token has been cancelled are ignored.\n\t */\n\tadd(token: CancellationToken): void {\n\t\tif (this._isDone) {\n\t\t\treturn;\n\t\t}\n\n\t\tthis._total++;\n\n\t\tif (token.isCancellationRequested) {\n\t\t\tthis._cancelled++;\n\t\t\tthis._check();\n\t\t\treturn;\n\t\t}\n\n\t\tconst d = token.onCancellationRequested(() => {\n\t\t\td.dispose();\n\t\t\tthis._cancelled++;\n\t\t\tthis._check();\n\t\t});\n\t\tthis._listeners.add(d);\n\t}\n\n\tprivate _check(): void {\n\t\tif (!this._isDone && this._total > 0 && this._total === this._cancelled) {\n\t\t\tthis._isDone = true;\n\t\t\tthis._listeners.dispose();\n\t\t\tthis._source.cancel();\n\t\t}\n\t}\n\n\tdispose(): void {\n\t\tthis._listeners.dispose();\n\t\tthis._source.dispose();\n\t}\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_declaration",
+            "internal_module",
+            "class_declaration",
+            "accessibility_modifier",
+            "type_predicate"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "microsoft/vscode",
+        "commit": "32a12c70b96e27af29bc76196a93e664c7fabb22",
+        "path": "src/vs/base/common/cancellation.ts",
+        "license": "MIT",
+        "sha256": "0ed0f0be5f9ac280fe1e45c0e81568825283d2c8dd17d2c2b03c21c1912a8c3b",
+        "bytes": 5417
+      }
+    },
+    {
+      "id": "w-typescript-B02-1",
+      "features": [
+        "typescript-B02"
+      ],
+      "source_utf8": "/* =================== USAGE ===================\n\n    import express = require(\"express\");\n    var app = express();\n\n =============================================== */\n\n/// <reference types=\"express-serve-static-core\" />\n/// <reference types=\"serve-static\" />\n\nimport bodyParser = require(\"body-parser\");\nimport * as core from \"express-serve-static-core\";\nimport serveStatic = require(\"serve-static\");\n\n/**\n * Creates an Express application. The express() function is a top-level function exported by the express module.\n */\ndeclare function e(): core.Express;\n\ndeclare namespace e {\n    /**\n     * This is a built-in middleware function in Express. It parses incoming requests with JSON payloads and is based on body-parser.\n     * @since 4.16.0\n     */\n    var json: typeof bodyParser.json;\n\n    /**\n     * This is a built-in middleware function in Express. It parses incoming requests with Buffer payloads and is based on body-parser.\n     * @since 4.17.0\n     */\n    var raw: typeof bodyParser.raw;\n\n    /**\n     * This is a built-in middleware function in Express. It parses incoming requests with text payloads and is based on body-parser.\n     * @since 4.17.0\n     */\n    var text: typeof bodyParser.text;\n\n    /**\n     * These are the exposed prototypes.\n     */\n    var application: Application;\n    var request: Request;\n    var response: Response;\n\n    /**\n     * This is a built-in middleware function in Express. It serves static files and is based on serve-static.\n     */\n    var static: serveStatic.RequestHandlerConstructor<Response>;\n\n    /**\n     * This is a built-in middleware function in Express. It parses incoming requests with urlencoded payloads and is based on body-parser.\n     * @since 4.16.0\n     */\n    var urlencoded: typeof bodyParser.urlencoded;\n\n    export function Router(options?: RouterOptions): core.Router;\n\n    interface RouterOptions {\n        /**\n         * Enable case sensitivity.\n         */\n        caseSensitive?: boolean | undefined;\n\n        /**\n         * Preserve the req.params values from the parent router.\n         * If the parent and the child have conflicting param names, the child’s value take precedence.\n         *\n         * @default false\n         * @since 4.5.0\n         */\n        mergeParams?: boolean | undefined;\n\n        /**\n         * Enable strict routing.\n         */\n        strict?: boolean | undefined;\n    }\n\n    interface Application extends core.Application {}\n    interface CookieOptions extends core.CookieOptions {}\n    interface Errback extends core.Errback {}\n    interface ErrorRequestHandler<\n        P = core.ParamsDictionary,\n        ResBody = any,\n        ReqBody = any,\n        ReqQuery = core.Query,\n        Locals extends Record<string, any> = Record<string, any>,\n    > extends core.ErrorRequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> {}\n    interface Express extends core.Express {}\n    interface Handler extends core.Handler {}\n    interface IRoute extends core.IRoute {}\n    interface IRouter extends core.IRouter {}\n    interface IRouterHandler<T> extends core.IRouterHandler<T> {}\n    interface IRouterMatcher<T> extends core.IRouterMatcher<T> {}\n    interface MediaType extends core.MediaType {}\n    interface NextFunction extends core.NextFunction {}\n    interface Locals extends core.Locals {}\n    interface Request<\n        P = core.ParamsDictionary,\n        ResBody = any,\n        ReqBody = any,\n        ReqQuery = core.Query,\n        Locals extends Record<string, any> = Record<string, any>,\n    > extends core.Request<P, ResBody, ReqBody, ReqQuery, Locals> {}\n    interface RequestHandler<\n        P = core.ParamsDictionary,\n        ResBody = any,\n        ReqBody = any,\n        ReqQuery = core.Query,\n        Locals extends Record<string, any> = Record<string, any>,\n    > extends core.RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> {}\n    interface RequestParamHandler extends core.RequestParamHandler {}\n    interface Response<\n        ResBody = any,\n        Locals extends Record<string, any> = Record<string, any>,\n    > extends core.Response<ResBody, Locals> {}\n    interface Router extends core.Router {}\n    interface Send extends core.Send {}\n}\n\nexport = e;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_require_clause",
+            "ambient_declaration",
+            "internal_module",
+            "interface_declaration",
+            "function_signature"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "DefinitelyTyped/DefinitelyTyped",
+        "commit": "fbd2f56091aa44dc99625d83a63f7b8b4fc7171e",
+        "path": "types/express/index.d.ts",
+        "license": "MIT",
+        "sha256": "8e04cf0688e0d921111659c2b55851957017148fa7b977b02727477d155b3c47",
+        "bytes": 4189
+      }
     }
   ]
 }

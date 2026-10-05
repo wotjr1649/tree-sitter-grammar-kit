@@ -46,7 +46,12 @@
   "cpp-P2-42",
   "cpp-P2-43",
   "cpp-P2-44",
-  "cpp-P2-45"
+  "cpp-P2-45",
+  "cpp-P3-01",
+  "cpp-P3-02",
+  "cpp-P3-03",
+  "cpp-P3-04",
+  "cpp-P3-05"
  ],
  "files": [
   {
@@ -498,8 +503,98 @@
      "occurrences": 1
     },
     {
+     "before": "      alias($.deduction_guide, $.declaration),\n    ),\n\n    _block_item: ",
+     "after": "      alias($.deduction_guide, $.declaration),\n      $.macro_invocation,\n    ),\n\n    _block_item: ",
+     "occurrences": 1
+    },
+    {
+     "before": "repeat(choice($._block_item, alias($.deduction_guide, $.declaration)))",
+     "after": "repeat(choice($._block_item, alias($.deduction_guide, $.declaration), $.macro_invocation))",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq($.access_specifier, ':'),\n",
+     "after": "      seq($.access_specifier, ':'),\n      $.macro_invocation,\n      alias($.macro_constructor_definition, $.function_definition),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    macro_invocation: $ => prec(-1, $.identifier),\n\n    macro_specifier: $ => $.identifier,\n\n    macro_constructor_definition: $ => prec.dynamic(-1, seq(\n      $.macro_specifier,\n      repeat($._constructor_specifiers),\n      field('declarator', $.function_declarator),\n      $.field_initializer_list,\n      field('body', $.compound_statement),\n    )),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    template_declaration: $ => seq(\n      'template',\n",
+     "after": "    template_declaration: $ => seq(\n      optional($.macro_specifier),\n      'template',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        alias($.constructor_or_destructor_definition, $.function_definition),\n        alias($.operator_cast_declaration, $.declaration),\n",
+     "after": "        alias($.constructor_or_destructor_definition, $.function_definition),\n        alias($.macro_constructor_definition, $.function_definition),\n        alias($.operator_cast_declaration, $.declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq(optional('constexpr'), field('condition', $.condition_clause), field('consequence', $.statement)),\n",
+     "after": "        seq(optional(choice('constexpr', $.macro_specifier)), field('condition', $.condition_clause), field('consequence', $.statement)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        prec.dynamic(3, $.type_descriptor),\n",
+     "after": "        prec.dynamic(3, $.type_descriptor),\n        prec.dynamic(3, alias($.identifier_type_argument, $.type_descriptor)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    identifier_type_argument: $ => prec(1, field('type', alias($.identifier, $.type_identifier))),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
      "before": "        commaSep($.type_descriptor),\n",
      "after": "        commaSep(choice($.type_descriptor, alias($.type_parameter_pack_expansion, $.parameter_pack_expansion))),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.macro_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.macro_invocation, $.macro_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.macro_invocation, $.macro_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $.macro_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $.macro_invocation, $.macro_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $.macro_invocation],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.macro_invocation],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $.expression, $.macro_invocation],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $.deduction_guide_declarator, $.macro_invocation],\n",
      "occurrences": 1
     },
     {
@@ -705,11 +800,6 @@
     {
      "before": "    [$.splice_type_specifier, $.splice_expression],\n",
      "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.explicit_function_specifier],\n",
-     "occurrences": 1
-    },
-    {
-     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
-     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $.deduction_guide_declarator],\n",
      "occurrences": 1
     }
    ]

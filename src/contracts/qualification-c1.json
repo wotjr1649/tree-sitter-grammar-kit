@@ -14038,6 +14038,100 @@
       "source": null
      },
      {
+      "id": "w-csharp-B04-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5f2dcc794223f7c147593630bd4f5491c1b28cf9114b407020131cab72784869",
+       "bytes": 13633
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "if_statement",
+         "while_statement",
+         "try_statement",
+         "catch_clause",
+         "throw_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B04": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "dotnet/runtime",
+       "commit": "d148189cee16fbb7775ac46dc375bb9db97fbb38",
+       "path": "src/libraries/System.Collections/src/System/Collections/Generic/Stack.cs",
+       "license": "MIT",
+       "sha256": "5f2dcc794223f7c147593630bd4f5491c1b28cf9114b407020131cab72784869",
+       "bytes": 13633
+      },
+      "source": null
+     },
+     {
+      "id": "w-csharp-B05-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "90e467c62b863bbc99f92cdbd4cba1b397b849b92623c9ae176fe1035c6c6f2d",
+       "bytes": 13227
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration",
+         "event_declaration",
+         "constructor_declaration",
+         "method_declaration",
+         "attribute_list"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B05": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "dotnet/runtime",
+       "commit": "d148189cee16fbb7775ac46dc375bb9db97fbb38",
+       "path": "src/libraries/System.ObjectModel/src/System/Collections/ObjectModel/ObservableCollection.cs",
+       "license": "MIT",
+       "sha256": "90e467c62b863bbc99f92cdbd4cba1b397b849b92623c9ae176fe1035c6c6f2d",
+       "bytes": 13227
+      },
+      "source": null
+     },
+     {
       "id": "csharp-gap-generic-arg-r1",
       "role": "requirement",
       "input": {
@@ -22649,6 +22743,100 @@
       "source": null
      },
      {
+      "id": "w-go-B02-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "59d476f3ce1523bc7f5888216de0b976478c66d10148bc03101f815d47a548af",
+       "bytes": 9333
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_declaration",
+         "struct_type",
+         "interface_type",
+         "function_type",
+         "method_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B02": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "golang/go",
+       "commit": "2589b1c420c765a3d767772783acd19d45646a6d",
+       "path": "src/expvar/expvar.go",
+       "license": "BSD-3-Clause",
+       "sha256": "59d476f3ce1523bc7f5888216de0b976478c66d10148bc03101f815d47a548af",
+       "bytes": 9333
+      },
+      "source": null
+     },
+     {
+      "id": "w-go-B04-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d8a1b2c5b5b437825d46b0bac6e7b30b17cca36616cc3f8d6230b2d262aca484",
+       "bytes": 9095
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "select_statement",
+         "go_statement",
+         "defer_statement",
+         "for_statement",
+         "short_var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B04": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "golang/go",
+       "commit": "2589b1c420c765a3d767772783acd19d45646a6d",
+       "path": "src/os/signal/signal.go",
+       "license": "BSD-3-Clause",
+       "sha256": "d8a1b2c5b5b437825d46b0bac6e7b30b17cca36616cc3f8d6230b2d262aca484",
+       "bytes": 9095
+      },
+      "source": null
+     },
+     {
       "id": "go-query-r1",
       "role": "requirement",
       "input": {
@@ -30608,6 +30796,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-python-B03-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "3e2a85d033da9ba1d6d051f8087d61a574c17b7d0d4b38cf10ec2bcf56fa92dd",
+       "bytes": 13219
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "import_from_statement",
+         "class_definition",
+         "decorated_definition",
+         "with_statement",
+         "try_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "python-B03": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "pallets/flask",
+       "commit": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+       "path": "src/flask/config.py",
+       "license": "BSD-3-Clause",
+       "sha256": "3e2a85d033da9ba1d6d051f8087d61a574c17b7d0d4b38cf10ec2bcf56fa92dd",
+       "bytes": 13219
+      },
       "source": null
      },
      {
@@ -40065,6 +40300,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-javascript-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4bd3bf9c911e086d1911954708de7a6c384ed924360e3fd1d4a43c98bd68b112",
+       "bytes": 5293
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "lexical_declaration",
+         "function_expression",
+         "arrow_function",
+         "switch_statement",
+         "ternary_expression"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "javascript-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "expressjs/express",
+       "commit": "7ef98448f8b38099ab1ded55e458538ad47a51e7",
+       "path": "lib/utils.js",
+       "license": "MIT",
+       "sha256": "4bd3bf9c911e086d1911954708de7a6c384ed924360e3fd1d4a43c98bd68b112",
+       "bytes": 5293
+      },
       "source": null
      },
      {
@@ -49584,6 +49866,100 @@
       "source": null
      },
      {
+      "id": "w-jsx-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f7bdebbe10cba6009edb22a16bf5e0156d3294df244e96bb6e343b66d1edd747",
+       "bytes": 5894
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "jsx_element",
+         "jsx_self_closing_element",
+         "jsx_opening_element",
+         "jsx_closing_element",
+         "member_expression"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "jsx-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "facebook/react",
+       "commit": "278794d7dee9cd2a3a2aaf9f0b2a4b8b747d74ee",
+       "path": "fixtures/dom/src/components/fixtures/text-inputs/index.js",
+       "license": "MIT",
+       "sha256": "f7bdebbe10cba6009edb22a16bf5e0156d3294df244e96bb6e343b66d1edd747",
+       "bytes": 5894
+      },
+      "source": null
+     },
+     {
+      "id": "w-jsx-B04-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6b44921e29b0b0b80372c5b27fcad1d491a1917f2dbfa93892687e9802f01d7d",
+       "bytes": 3748
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "jsx_element",
+         "jsx_expression",
+         "binary_expression",
+         "parenthesized_expression",
+         "field_definition"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "jsx-B04": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "facebook/react",
+       "commit": "278794d7dee9cd2a3a2aaf9f0b2a4b8b747d74ee",
+       "path": "fixtures/dom/src/components/TestCase.js",
+       "license": "MIT",
+       "sha256": "6b44921e29b0b0b80372c5b27fcad1d491a1917f2dbfa93892687e9802f01d7d",
+       "bytes": 3748
+      },
+      "source": null
+     },
+     {
       "id": "jsx-query-r1",
       "role": "requirement",
       "input": {
@@ -56868,6 +57244,100 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-typescript-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0ed0f0be5f9ac280fe1e45c0e81568825283d2c8dd17d2c2b03c21c1912a8c3b",
+       "bytes": 5417
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "interface_declaration",
+         "internal_module",
+         "class_declaration",
+         "accessibility_modifier",
+         "type_predicate"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "typescript-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "microsoft/vscode",
+       "commit": "32a12c70b96e27af29bc76196a93e664c7fabb22",
+       "path": "src/vs/base/common/cancellation.ts",
+       "license": "MIT",
+       "sha256": "0ed0f0be5f9ac280fe1e45c0e81568825283d2c8dd17d2c2b03c21c1912a8c3b",
+       "bytes": 5417
+      },
+      "source": null
+     },
+     {
+      "id": "w-typescript-B02-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8e04cf0688e0d921111659c2b55851957017148fa7b977b02727477d155b3c47",
+       "bytes": 4189
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "import_require_clause",
+         "ambient_declaration",
+         "internal_module",
+         "interface_declaration",
+         "function_signature"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "typescript-B02": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "DefinitelyTyped/DefinitelyTyped",
+       "commit": "fbd2f56091aa44dc99625d83a63f7b8b4fc7171e",
+       "path": "types/express/index.d.ts",
+       "license": "MIT",
+       "sha256": "8e04cf0688e0d921111659c2b55851957017148fa7b977b02727477d155b3c47",
+       "bytes": 4189
+      },
       "source": null
      },
      {
@@ -64473,6 +64943,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-tsx-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ef4b3eea3d298e701d019e462cc52bb399faf37dd986bf556654a898300de3d4",
+       "bytes": 3879
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_alias_declaration",
+         "interface_declaration",
+         "arrow_function",
+         "jsx_element",
+         "jsx_attribute"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsx-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "excalidraw/excalidraw",
+       "commit": "ed10ac7dca7e40f3f4a31269b4bfba980d0db41e",
+       "path": "packages/excalidraw/components/Dialog.tsx",
+       "license": "MIT",
+       "sha256": "ef4b3eea3d298e701d019e462cc52bb399faf37dd986bf556654a898300de3d4",
+       "bytes": 3879
+      },
       "source": null
      },
      {
@@ -72292,6 +72809,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-java-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "488201b0556703b5051a77bfd91bbd1b50ca6e80fa3d20e2a27314e3d935c9a6",
+       "bytes": 15329
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "package_declaration",
+         "class_declaration",
+         "enum_declaration",
+         "type_parameters",
+         "try_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "java-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "spring-projects/spring-framework",
+       "commit": "82ad8b4e4c738d2b46593883de963539ebafc520",
+       "path": "spring-core/src/main/java/org/springframework/util/ConcurrentLruCache.java",
+       "license": "Apache-2.0",
+       "sha256": "488201b0556703b5051a77bfd91bbd1b50ca6e80fa3d20e2a27314e3d935c9a6",
+       "bytes": 15329
+      },
       "source": null
      },
      {
@@ -81339,6 +81903,53 @@
       "source": null
      },
      {
+      "id": "w-kotlin-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "34b6c8c17a528c782d0f7454a165dce092cb8906e2bb689ed23c578a1af6b4fc",
+       "bytes": 12466
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "package_header",
+         "import",
+         "function_declaration",
+         "class_declaration",
+         "lambda_literal"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "kotlin-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "Kotlin/kotlinx.coroutines",
+       "commit": "bd2e9a1b90400fb7b2fa4f8731e7d8148799ab73",
+       "path": "kotlinx-coroutines-core/common/src/flow/Builders.kt",
+       "license": "Apache-2.0",
+       "sha256": "34b6c8c17a528c782d0f7454a165dce092cb8906e2bb689ed23c578a1af6b4fc",
+       "bytes": 12466
+      },
+      "source": null
+     },
+     {
       "id": "kotlin-query-r1",
       "role": "requirement",
       "input": {
@@ -82952,8 +83563,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "a0bc2a0ce90da9f72227445b74fd5d979f9a7d8fbeb0f73930bd7b66c919495c",
-      "bytes": 5569756
+      "sha256": "649f5364bd3c3f0fd8249155c11fb900c48401bd979287696e5280451575dc86",
+      "bytes": 5611445
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -88731,6 +89342,224 @@
       "source": null
      },
      {
+      "id": "probe-c-B01-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4e59e6867d254009fd426cd6e33e14e30ea4be9db53af24380e1ff620f96692",
+       "bytes": 329
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "call_expression",
+         "type_descriptor",
+         "cast_expression"
+        ],
+        "anchors": [
+         {
+          "type": "type_descriptor",
+          "start_byte": 156,
+          "end_byte": 167
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 140,
+          "end_byte": 174
+         },
+         {
+          "type": "type_descriptor",
+          "start_byte": 233,
+          "end_byte": 246
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 222,
+          "end_byte": 247
+         },
+         {
+          "type": "declaration",
+          "start_byte": 95,
+          "end_byte": 99
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 309,
+          "end_byte": 316
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 289,
+          "end_byte": 296
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 319,
+          "end_byte": 325
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-c-B02-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "565adbf973cc38df7fe70891aa6768d4af5299bf9bbbb4ecacb54bf8bdb9944c",
+       "bytes": 135
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_ifdef",
+         "attribute_specifier",
+         "function_definition"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_ifdef",
+          "start_byte": 0,
+          "end_byte": 49
+         },
+         {
+          "type": "attribute_specifier",
+          "start_byte": 15,
+          "end_byte": 42
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 50,
+          "end_byte": 72
+         },
+         {
+          "type": "declaration",
+          "start_byte": 89,
+          "end_byte": 127
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B02": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-c-B01-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6fcc133b71b2603a1a9ae9db3bfc5ee721491f609a53f81ddc97717fa60ba5f0",
+       "bytes": 46
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-c-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "7699c72b9ad442a1e4ef96ce3affabffdf4cf5d66876542fab59637d1461fa4a",
+       "bytes": 11507
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "struct_specifier",
+         "field_expression",
+         "pointer_declarator",
+         "switch_statement",
+         "preproc_ifdef"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "c-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "libuv/libuv",
+       "commit": "32f8ea9f92cf21a83c3e7073bc013e32b6df81b9",
+       "path": "src/threadpool.c",
+       "license": "MIT",
+       "sha256": "7699c72b9ad442a1e4ef96ce3affabffdf4cf5d66876542fab59637d1461fa4a",
+       "bytes": 11507
+      },
+      "source": null
+     },
+     {
       "id": "c-query-r1",
       "role": "requirement",
       "input": {
@@ -89964,8 +90793,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "8ae243cb3282e997535bf2fadba995fd82555fc55370d850c4a49d344155216b",
-      "bytes": 49243599
+      "sha256": "fd09c060b2ade89681da117fff01fd1970b9fe999c3517fd470f0f28e8e40e18",
+      "bytes": 49598494
      },
      {
       "path": "src/scanner.c",
@@ -99965,6 +100794,255 @@
       "source": null
      },
      {
+      "id": "probe-cpp-B01-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "104715793a9837630ac0a6dae6e7a3b726f6c0bef3de03bbaf5b9ec86be323e1",
+       "bytes": 361
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "macro_invocation",
+         "macro_specifier",
+         "namespace_definition",
+         "template_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "macro_invocation",
+          "start_byte": 0,
+          "end_byte": 19
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 118,
+          "end_byte": 131
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 118,
+          "end_byte": 161
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 167,
+          "end_byte": 177
+         },
+         {
+          "type": "template_declaration",
+          "start_byte": 167,
+          "end_byte": 292
+         },
+         {
+          "type": "macro_specifier",
+          "start_byte": 240,
+          "end_byte": 255
+         },
+         {
+          "type": "if_statement",
+          "start_byte": 237,
+          "end_byte": 285
+         },
+         {
+          "type": "macro_invocation",
+          "start_byte": 310,
+          "end_byte": 318
+         },
+         {
+          "type": "macro_invocation",
+          "start_byte": 343,
+          "end_byte": 360
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-cpp-B01-P-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "175b49aff95fea02f99ace45710223db8454bb3641ea205b4534067a408a2c73",
+       "bytes": 204
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "declaration",
+         "field_declaration",
+         "function_definition"
+        ],
+        "anchors": [
+         {
+          "type": "declaration",
+          "start_byte": 15,
+          "end_byte": 19
+         },
+         {
+          "type": "declaration",
+          "start_byte": 20,
+          "end_byte": 31
+         },
+         {
+          "type": "declaration",
+          "start_byte": 32,
+          "end_byte": 43
+         },
+         {
+          "type": "field_declaration",
+          "start_byte": 57,
+          "end_byte": 66
+         },
+         {
+          "type": "field_declaration",
+          "start_byte": 69,
+          "end_byte": 85
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 88,
+          "end_byte": 117
+         },
+         {
+          "type": "function_definition",
+          "start_byte": 120,
+          "end_byte": 138
+         },
+         {
+          "type": "call_expression",
+          "start_byte": 182,
+          "end_byte": 189
+         },
+         {
+          "type": "cast_expression",
+          "start_byte": 192,
+          "end_byte": 198
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-cpp-B01-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6bdea62a14180aa1d0866bf8d58a6a9f722de57c6fa003d890c57608b105d73a",
+       "bytes": 35
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-cpp-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b105f72e62d7eb403c12c4c0ba22a94d42344b20206664814bf9568c6785fc83",
+       "bytes": 7224
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "namespace_definition",
+         "template_declaration",
+         "alias_declaration",
+         "reference_declarator",
+         "noexcept"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "cpp-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "fmtlib/fmt",
+       "commit": "4afd0e498e9e1dd68775cc52087df774a19c761f",
+       "path": "include/fmt/args.h",
+       "license": "MIT",
+       "sha256": "b105f72e62d7eb403c12c4c0ba22a94d42344b20206664814bf9568c6785fc83",
+       "bytes": 7224
+      },
+      "source": null
+     },
+     {
       "id": "cpp-query-r1",
       "role": "requirement",
       "input": {
@@ -107895,6 +108973,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-rust-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a355e871afa6143c12d3f93fc38323cf00942936d7fe0ddad3a24faa830c1d0e",
+       "bytes": 7267
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "use_declaration",
+         "struct_item",
+         "impl_item",
+         "function_item",
+         "attribute_item"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "rust-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "tokio-rs/tokio",
+       "commit": "b2636752450484955e7ad334bac678424d51bc4a",
+       "path": "tokio/src/sync/barrier.rs",
+       "license": "MIT",
+       "sha256": "a355e871afa6143c12d3f93fc38323cf00942936d7fe0ddad3a24faa830c1d0e",
+       "bytes": 7267
+      },
       "source": null
      },
      {
@@ -120510,6 +121635,53 @@
       "source": null
      },
      {
+      "id": "w-swift-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f8000097346df25c6b70856ad2b55a7c846f2cd829e9a3e9dd56161b4e20de8a",
+       "bytes": 4976
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "protocol_declaration",
+         "class_declaration",
+         "function_declaration",
+         "type_constraints",
+         "import_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "swift-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "Alamofire/Alamofire",
+       "commit": "bda9ed57d72988a3a2ada33d824583541f86eac6",
+       "path": "Source/Features/RedirectHandler.swift",
+       "license": "MIT",
+       "sha256": "f8000097346df25c6b70856ad2b55a7c846f2cd829e9a3e9dd56161b4e20de8a",
+       "bytes": 4976
+      },
+      "source": null
+     },
+     {
       "id": "swift-gap-macro-use-r1",
       "role": "requirement",
       "input": {
@@ -129574,6 +130746,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-dart-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "cacb3d4e87ddc6cb90d5bbf7597df4600d8f89e99a2587f64aab2670c0fbc2dc",
+       "bytes": 6286
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "library_name",
+         "library_import",
+         "annotation",
+         "class_definition",
+         "redirecting_factory_constructor_signature"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "dart-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "flutter/flutter",
+       "commit": "da17f4d02043940fc75ffc29204ffe2cf8fd79d1",
+       "path": "packages/flutter/lib/src/foundation/key.dart",
+       "license": "BSD-3-Clause",
+       "sha256": "cacb3d4e87ddc6cb90d5bbf7597df4600d8f89e99a2587f64aab2670c0fbc2dc",
+       "bytes": 6286
+      },
       "source": null
      },
      {
@@ -139207,6 +140426,53 @@
       "source": null
      },
      {
+      "id": "w-php-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c9a4835e189aba69d39ca93f8616db96905aeb0d19d4f263974f0082c77ed974",
+       "bytes": 8308
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "php_tag",
+         "namespace_definition",
+         "namespace_use_declaration",
+         "class_declaration",
+         "try_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "php-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "laravel/framework",
+       "commit": "2c3294632cd68cbe35eaaa6f34fdd97087934098",
+       "path": "src/Illuminate/Pipeline/Pipeline.php",
+       "license": "MIT",
+       "sha256": "c9a4835e189aba69d39ca93f8616db96905aeb0d19d4f263974f0082c77ed974",
+       "bytes": 8308
+      },
+      "source": null
+     },
+     {
       "id": "php-query-r1",
       "role": "requirement",
       "input": {
@@ -145546,6 +146812,53 @@
       "source": null
      },
      {
+      "id": "w-ruby-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "951ee4bc716e55223c7085fd9ca17bc30b034b6cc335577d463726eb2a8be226",
+       "bytes": 7210
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "module",
+         "class",
+         "string_array",
+         "heredoc_beginning",
+         "simple_symbol"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "ruby-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "rails/rails",
+       "commit": "d8a33ebf0e7d3a513b1edead85fe4999fd180862",
+       "path": "activesupport/lib/active_support/core_ext/string/output_safety.rb",
+       "license": "MIT",
+       "sha256": "951ee4bc716e55223c7085fd9ca17bc30b034b6cc335577d463726eb2a8be226",
+       "bytes": 7210
+      },
+      "source": null
+     },
+     {
       "id": "ruby-query-r1",
       "role": "requirement",
       "input": {
@@ -148599,6 +149912,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-r-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "af46c4de5723acd3bf86f08a1e9008a7a28c0eaff059ae532eca7c6f1c1b8225",
+       "bytes": 6531
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "function_definition",
+         "call",
+         "binary_operator",
+         "namespace_operator",
+         "extract_operator"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "r-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "tidyverse/ggplot2",
+       "commit": "737be17f43bebac02ccb119753c1fee267572443",
+       "path": "R/geom-point.R",
+       "license": "MIT",
+       "sha256": "af46c4de5723acd3bf86f08a1e9008a7a28c0eaff059ae532eca7c6f1c1b8225",
+       "bytes": 6531
+      },
       "source": null
      },
      {
@@ -153148,6 +154508,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-bash-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "56a584c625e226cbdf5d444885a9b2cf036a77d072c4cb601fc58507936b316c",
+       "bytes": 5572
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "function_definition",
+         "case_statement",
+         "heredoc_redirect",
+         "herestring_redirect",
+         "expansion"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "bash-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "rbenv/rbenv",
+       "commit": "07e9b1e297a5977298c6aadc9971ae0e9eb7f0dc",
+       "path": "libexec/rbenv-init",
+       "license": "MIT",
+       "sha256": "56a584c625e226cbdf5d444885a9b2cf036a77d072c4cb601fc58507936b316c",
+       "bytes": 5572
+      },
       "source": null
      },
      {
@@ -159654,6 +161061,53 @@
       "source": null
      },
      {
+      "id": "w-powershell-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0a0d476a28d1ae87a634289444036f49dea7d569bf2cdb7dff79d124872d8b4e",
+       "bytes": 4421
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "param_block",
+         "function_statement",
+         "attribute",
+         "expandable_string_literal",
+         "pipeline"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "powershell-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "PowerShell/PowerShell",
+       "commit": "caeff5e8a57953a414a50fe014a6670797b6770b",
+       "path": "tools/Sign-Package.ps1",
+       "license": "MIT",
+       "sha256": "0a0d476a28d1ae87a634289444036f49dea7d569bf2cdb7dff79d124872d8b4e",
+       "bytes": 4421
+      },
+      "source": null
+     },
+     {
       "id": "powershell-query-r1",
       "role": "requirement",
       "input": {
@@ -163664,6 +165118,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-html-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1dacff6e4b61aa96a8b6b94ba2280eb9a767f0d688775a088b430994c1f9ebb0",
+       "bytes": 851
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "doctype",
+         "element",
+         "start_tag",
+         "attribute",
+         "script_element"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "html-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "h5bp/html5-boilerplate",
+       "commit": "b6597338e695dc4a8165c5abcb2bfffa586c3ee5",
+       "path": "src/index.html",
+       "license": "MIT",
+       "sha256": "1dacff6e4b61aa96a8b6b94ba2280eb9a767f0d688775a088b430994c1f9ebb0",
+       "bytes": 851
+      },
       "source": null
      },
      {
@@ -190274,6 +191775,146 @@
       "source": null
      },
      {
+      "id": "w-css-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "580818700724d42d7fcc4979b0197971fca1c6d2e0286769237a0ac897df5512",
+       "bytes": 6138
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "rule_set",
+         "selectors",
+         "declaration",
+         "attribute_selector",
+         "pseudo_class_selector"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "necolas/normalize.css",
+       "commit": "fc091cce1534909334c1911709a39c22d406977b",
+       "path": "normalize.css",
+       "license": "MIT",
+       "sha256": "580818700724d42d7fcc4979b0197971fca1c6d2e0286769237a0ac897df5512",
+       "bytes": 6138
+      },
+      "source": null
+     },
+     {
+      "id": "w-css-M14-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "32895c55aaee20ded92166c80462807313e73b9401a685ca70793b5deb592f4d",
+       "bytes": 1690
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "at_rule",
+         "declaration",
+         "call_expression",
+         "string_value"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M14": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "FortAwesome/Font-Awesome",
+       "commit": "14c65a3747d0f3b751f15831fc719236aea8729d",
+       "path": "css/v4-font-face.css",
+       "license": "MIT",
+       "sha256": "32895c55aaee20ded92166c80462807313e73b9401a685ca70793b5deb592f4d",
+       "bytes": 1690
+      },
+      "source": null
+     },
+     {
+      "id": "w-css-M27-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "10dd35ccd4d0bd9219da7f47359695d370c3fe27ba4541db10e4baefbdad472a",
+       "bytes": 14086
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "rule_set",
+         "declaration",
+         "media_statement",
+         "call_expression",
+         "binary_expression"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M27": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "kevquirk/simple.css",
+       "commit": "b6eab64c47692afd18c50bab0d5e656fd51d1695",
+       "path": "simple.css",
+       "license": "MIT",
+       "sha256": "10dd35ccd4d0bd9219da7f47359695d370c3fe27ba4541db10e4baefbdad472a",
+       "bytes": 14086
+      },
+      "source": null
+     },
+     {
       "id": "css-query-r1",
       "role": "requirement",
       "input": {
@@ -196874,6 +198515,53 @@
       "source": null
      },
      {
+      "id": "w-json-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a5f9c7ed250e12c1b5fb7f0a2ae1b03e064513b40be96688cd2517925f42a6f0",
+       "bytes": 13404
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "object",
+         "array",
+         "pair",
+         "number",
+         "null"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "json-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "SchemaStore/schemastore",
+       "commit": "de76181a2ab215431d3e9314bc14f83cc3b01ad2",
+       "path": "src/schemas/json/prettierrc.json",
+       "license": "Apache-2.0",
+       "sha256": "a5f9c7ed250e12c1b5fb7f0a2ae1b03e064513b40be96688cd2517925f42a6f0",
+       "bytes": 13404
+      },
+      "source": null
+     },
+     {
       "id": "json-query-r1",
       "role": "requirement",
       "input": {
@@ -199999,6 +201687,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-yaml-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "fe751e47f95f3bc48dd63401ce30688fbe148c7df413aea3c2dab2bbcf58b0a5",
+       "bytes": 3366
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "stream",
+         "document",
+         "block_mapping",
+         "block_sequence",
+         "plain_scalar"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "yaml-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "kubernetes/examples",
+       "commit": "d6b8cd27eacb51e651a1aa6f7c190a28713eff6e",
+       "path": "web/guestbook/all-in-one/guestbook-all-in-one.yaml",
+       "license": "Apache-2.0",
+       "sha256": "fe751e47f95f3bc48dd63401ce30688fbe148c7df413aea3c2dab2bbcf58b0a5",
+       "bytes": 3366
+      },
       "source": null
      },
      {
@@ -203229,6 +204964,53 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-xml-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5ab92759764cf7f87982de4b38e01ab5fbcfa101ef64a14671b60d2e3f9cb343",
+       "bytes": 9776
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "XMLDecl",
+         "element",
+         "STag",
+         "Attribute",
+         "Comment"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "xml-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "google/guava",
+       "commit": "51246d06bb85ccc182a0aeb6a7adcbd55f759ae5",
+       "path": "guava/pom.xml",
+       "license": "Apache-2.0",
+       "sha256": "5ab92759764cf7f87982de4b38e01ab5fbcfa101ef64a14671b60d2e3f9cb343",
+       "bytes": 9776
+      },
       "source": null
      },
      {
@@ -257385,6 +259167,100 @@
       "source": null
      },
      {
+      "id": "w-tsql-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8b0db1f03306138ec6aed09b4e295ab9b90d7f16a1785bb5a4f1a8e85673d88b",
+       "bytes": 4175
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration",
+         "set_statement",
+         "case",
+         "invocation",
+         "try_catch_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "microsoft/tigertoolbox",
+       "commit": "fe47c31ec2f7979a994520d546c7abf0b246c832",
+       "path": "Index-Information/view_HypObjects.sql",
+       "license": "MIT",
+       "sha256": "8b0db1f03306138ec6aed09b4e295ab9b90d7f16a1785bb5a4f1a8e85673d88b",
+       "bytes": 4175
+      },
+      "source": null
+     },
+     {
+      "id": "w-tsql-B02-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2bf63b974c680d54515d7ffe866cf732b1affc033de8454233eee099367960c1",
+       "bytes": 24678
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "cte",
+         "join",
+         "window_function",
+         "insert",
+         "select"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B02": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "microsoft/tigertoolbox",
+       "commit": "fe47c31ec2f7979a994520d546c7abf0b246c832",
+       "path": "Waits-and-Latches/view_Waits.sql",
+       "license": "MIT",
+       "sha256": "2bf63b974c680d54515d7ffe866cf732b1affc033de8454233eee099367960c1",
+       "bytes": 24678
+      },
+      "source": null
+     },
+     {
       "id": "tsql-gap-merge-output-r1",
       "role": "requirement",
       "input": {
@@ -304226,6 +306102,100 @@
       },
       "alternatives": [],
       "sample": null,
+      "source": null
+     },
+     {
+      "id": "w-postgresql-sql-B01-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "65a4a55ba3248716eb4946a8677be41c94bc90eafaa22c0eb95b09908f96fa4f",
+       "bytes": 4547
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "CreateStmt",
+         "CreateFunctionStmt",
+         "dollar_quoted_string",
+         "quoted_identifier",
+         "Typename"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "postgresql-sql-B01": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "supabase/postgres",
+       "commit": "893b3d3c8fc608c233ec9c640173a5c8f8c7d700",
+       "path": "migrations/db/init-scripts/00000000000001-auth-schema.sql",
+       "license": "PostgreSQL",
+       "sha256": "65a4a55ba3248716eb4946a8677be41c94bc90eafaa22c0eb95b09908f96fa4f",
+       "bytes": 4547
+      },
+      "source": null
+     },
+     {
+      "id": "w-postgresql-sql-B02-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "7c182ddc8012069aee83ee08715169dad431ef509afba5d71d53e7f2f40fc5b8",
+       "bytes": 989
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "SelectStmt",
+         "InsertStmt",
+         "UpdateStmt",
+         "DeleteStmt",
+         "returning_clause"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "postgresql-sql-B02": [
+        "P",
+        "W"
+       ]
+      },
+      "alternatives": [],
+      "sample": {
+       "repository": "sqlc-dev/sqlc",
+       "commit": "bdbe55db3ee08745827090d4aad1781bea2ee4ee",
+       "path": "examples/booktest/postgresql/query.sql",
+       "license": "MIT",
+       "sha256": "7c182ddc8012069aee83ee08715169dad431ef509afba5d71d53e7f2f40fc5b8",
+       "bytes": 989
+      },
       "source": null
      },
      {

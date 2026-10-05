@@ -4496,6 +4496,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-tsx-B01-1",
+      "features": [
+        "tsx-B01"
+      ],
+      "source_utf8": "import clsx from \"clsx\";\nimport React, { useEffect, useState } from \"react\";\n\nimport { KEYS, queryFocusableElements } from \"@excalidraw/common\";\n\nimport { useSetAtom } from \"../editor-jotai\";\nimport { useCallbackRefState } from \"../hooks/useCallbackRefState\";\nimport { t } from \"../i18n\";\n\nimport {\n  useExcalidrawContainer,\n  useEditorInterface,\n  useExcalidrawSetAppState,\n} from \"./App\";\nimport { Island } from \"./Island\";\nimport { isLibraryMenuOpenAtom } from \"./LibraryMenu\";\nimport { Modal } from \"./Modal\";\nimport { CloseIcon } from \"./icons\";\n\nimport \"./Dialog.scss\";\n\nexport type DialogSize = number | \"small\" | \"regular\" | \"wide\" | undefined;\n\nexport interface DialogProps {\n  children: React.ReactNode;\n  className?: string;\n  size?: DialogSize;\n  onCloseRequest(): void;\n  title: React.ReactNode | false;\n  autofocus?: boolean;\n  closeOnClickOutside?: boolean;\n}\n\nfunction getDialogSize(size: DialogSize): number {\n  if (size && typeof size === \"number\") {\n    return size;\n  }\n\n  switch (size) {\n    case \"small\":\n      return 550;\n    case \"wide\":\n      return 1024;\n    case \"regular\":\n    default:\n      return 800;\n  }\n}\n\nexport const Dialog = (props: DialogProps) => {\n  const [islandNode, setIslandNode] = useCallbackRefState<HTMLDivElement>();\n  const [lastActiveElement] = useState(document.activeElement);\n  const { id } = useExcalidrawContainer();\n  const isFullscreen = useEditorInterface().formFactor === \"phone\";\n\n  useEffect(() => {\n    if (!islandNode) {\n      return;\n    }\n\n    const focusableElements = queryFocusableElements(islandNode);\n\n    setTimeout(() => {\n      if (focusableElements.length > 0 && props.autofocus !== false) {\n        // If there's an element other than close, focus it.\n        (focusableElements[1] || focusableElements[0]).focus();\n      }\n    });\n\n    const handleKeyDown = (event: KeyboardEvent) => {\n      if (event.key === KEYS.TAB) {\n        const focusableElements = queryFocusableElements(islandNode);\n        const { activeElement } = document;\n        const currentIndex = focusableElements.findIndex(\n          (element) => element === activeElement,\n        );\n\n        if (currentIndex === 0 && event.shiftKey) {\n          focusableElements[focusableElements.length - 1].focus();\n          event.preventDefault();\n        } else if (\n          currentIndex === focusableElements.length - 1 &&\n          !event.shiftKey\n        ) {\n          focusableElements[0].focus();\n          event.preventDefault();\n        }\n      }\n    };\n\n    islandNode.addEventListener(\"keydown\", handleKeyDown);\n\n    return () => islandNode.removeEventListener(\"keydown\", handleKeyDown);\n  }, [islandNode, props.autofocus]);\n\n  const setAppState = useExcalidrawSetAppState();\n  const setIsLibraryMenuOpen = useSetAtom(isLibraryMenuOpenAtom);\n\n  const onClose = () => {\n    setAppState({ openMenu: null });\n    setIsLibraryMenuOpen(false);\n    (lastActiveElement as HTMLElement).focus();\n    props.onCloseRequest();\n  };\n\n  return (\n    <Modal\n      className={clsx(\"Dialog\", props.className, {\n        \"Dialog--fullscreen\": isFullscreen,\n      })}\n      labelledBy=\"dialog-title\"\n      maxWidth={getDialogSize(props.size)}\n      onCloseRequest={onClose}\n      closeOnClickOutside={props.closeOnClickOutside}\n    >\n      <Island ref={setIslandNode}>\n        {props.title && (\n          <h2 id={`${id}-dialog-title`} className=\"Dialog__title\">\n            <span className=\"Dialog__titleContent\">{props.title}</span>\n          </h2>\n        )}\n        {isFullscreen && (\n          <button\n            className=\"Dialog__close\"\n            onClick={onClose}\n            title={t(\"buttons.close\")}\n            aria-label={t(\"buttons.close\")}\n            type=\"button\"\n          >\n            {CloseIcon}\n          </button>\n        )}\n        <div className=\"Dialog__content\">{props.children}</div>\n      </Island>\n    </Modal>\n  );\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_alias_declaration",
+            "interface_declaration",
+            "arrow_function",
+            "jsx_element",
+            "jsx_attribute"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "excalidraw/excalidraw",
+        "commit": "ed10ac7dca7e40f3f4a31269b4bfba980d0db41e",
+        "path": "packages/excalidraw/components/Dialog.tsx",
+        "license": "MIT",
+        "sha256": "ef4b3eea3d298e701d019e462cc52bb399faf37dd986bf556654a898300de3d4",
+        "bytes": 3879
+      }
     }
   ]
 }

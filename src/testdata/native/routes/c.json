@@ -4367,6 +4367,143 @@
           "contains": []
         }
       ]
+    },
+    {
+      "id": "probe-c-B01-P-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "#define container_of(p, T, m) ((T *)((char *)(p) - offsetof(T, m)))\nstruct item { int link; };\nT x;\nstruct item *owner(int *q)\n{\n    return container_of(q, struct item, link);\n}\nunsigned long next(va_list ap)\n{\n    return va_arg(ap, unsigned long);\n}\nint keep(int a, int b)\n{\n    long l = (long)a;\n    return f(a, b) + (int)l;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call_expression",
+            "type_descriptor",
+            "cast_expression"
+          ],
+          "anchors": [
+            {
+              "type": "type_descriptor",
+              "text": "struct item",
+              "occurrence": 3
+            },
+            {
+              "type": "call_expression",
+              "text": "container_of(q, struct item, link)"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "unsigned long",
+              "occurrence": 2
+            },
+            {
+              "type": "call_expression",
+              "text": "va_arg(ap, unsigned long)"
+            },
+            {
+              "type": "declaration",
+              "text": "T x;"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(a, b)"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(long)a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int)l"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B02-P-1",
+      "features": [
+        "c-B02"
+      ],
+      "source_utf8": "#ifdef __MVS__\n__attribute__((destructor))\n#endif\nvoid cleanup(void) { }\n#ifdef USE_COLD\n__attribute__((cold)) void slow(void);\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_ifdef",
+            "attribute_specifier",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_ifdef",
+              "text": "#ifdef __MVS__\n__attribute__((destructor))\n#endif"
+            },
+            {
+              "type": "attribute_specifier",
+              "text": "__attribute__((destructor))"
+            },
+            {
+              "type": "function_definition",
+              "text": "void cleanup(void) { }"
+            },
+            {
+              "type": "declaration",
+              "text": "__attribute__((cold)) void slow(void);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B01-N-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "int g(void)\n{\n    return f(const struct X);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "w-c-B01-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "/* Copyright Joyent, Inc. and other Node contributors. All rights reserved.\n *\n * Permission is hereby granted, free of charge, to any person obtaining a copy\n * of this software and associated documentation files (the \"Software\"), to\n * deal in the Software without restriction, including without limitation the\n * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or\n * sell copies of the Software, and to permit persons to whom the Software is\n * furnished to do so, subject to the following conditions:\n *\n * The above copyright notice and this permission notice shall be included in\n * all copies or substantial portions of the Software.\n *\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS\n * IN THE SOFTWARE.\n */\n\n#include \"uv-common.h\"\n\n#if !defined(_WIN32)\n# include \"unix/internal.h\"\n#endif\n\n#include <stdlib.h>\n\n#define MAX_THREADPOOL_SIZE 1024\n\nstatic uv_once_t once = UV_ONCE_INIT;\nstatic uv_cond_t cond;\nstatic uv_mutex_t mutex;\nstatic unsigned int idle_threads;\nstatic unsigned int slow_io_work_running;\nstatic unsigned int nthreads;\nstatic uv_thread_t* threads;\nstatic uv_thread_t default_threads[4];\nstatic struct uv__queue exit_message;\nstatic struct uv__queue wq;\nstatic struct uv__queue run_slow_work_message;\nstatic struct uv__queue slow_io_pending_wq;\n\nstatic unsigned int slow_work_thread_threshold(void) {\n  return (nthreads + 1) / 2;\n}\n\nstatic void uv__cancelled(struct uv__work* w) {\n  abort();\n}\n\n\n/* To avoid deadlock with uv_cancel() it's crucial that the worker\n * never holds the global mutex and the loop-local mutex at the same time.\n */\nstatic void worker(void* arg) {\n  struct uv__work* w;\n  struct uv__queue* q;\n  int is_slow_work;\n\n  uv_thread_setname(\"libuv-worker\");\n  uv_sem_post((uv_sem_t*) arg);\n  arg = NULL;\n\n  uv_mutex_lock(&mutex);\n  for (;;) {\n    /* `mutex` should always be locked at this point. */\n\n    /* Keep waiting while either no work is present or only slow I/O\n       and we're at the threshold for that. */\n    while (uv__queue_empty(&wq) ||\n           (uv__queue_head(&wq) == &run_slow_work_message &&\n            uv__queue_next(&run_slow_work_message) == &wq &&\n            slow_io_work_running >= slow_work_thread_threshold())) {\n      idle_threads += 1;\n      uv_cond_wait(&cond, &mutex);\n      idle_threads -= 1;\n    }\n\n    q = uv__queue_head(&wq);\n    if (q == &exit_message) {\n      uv_cond_signal(&cond);\n      uv_mutex_unlock(&mutex);\n      break;\n    }\n\n    uv__queue_remove(q);\n    uv__queue_init(q);  /* Signal uv_cancel() that the work req is executing. */\n\n    is_slow_work = 0;\n    if (q == &run_slow_work_message) {\n      /* If we're at the slow I/O threshold, re-schedule until after all\n         other work in the queue is done. */\n      if (slow_io_work_running >= slow_work_thread_threshold()) {\n        uv__queue_insert_tail(&wq, q);\n        continue;\n      }\n\n      /* If we encountered a request to run slow I/O work but there is none\n         to run, that means it's cancelled => Start over. */\n      if (uv__queue_empty(&slow_io_pending_wq))\n        continue;\n\n      is_slow_work = 1;\n      slow_io_work_running++;\n\n      q = uv__queue_head(&slow_io_pending_wq);\n      uv__queue_remove(q);\n      uv__queue_init(q);\n\n      /* If there is more slow I/O work, schedule it to be run as well. */\n      if (!uv__queue_empty(&slow_io_pending_wq)) {\n        uv__queue_insert_tail(&wq, &run_slow_work_message);\n        if (idle_threads > 0)\n          uv_cond_signal(&cond);\n      }\n    }\n\n    uv_mutex_unlock(&mutex);\n\n    w = uv__queue_data(q, struct uv__work, wq);\n    w->work(w);\n\n    uv_mutex_lock(&w->loop->wq_mutex);\n    w->work = NULL;  /* Signal uv_cancel() that the work req is done\n                        executing. */\n    uv__queue_insert_tail(&w->loop->wq, &w->wq);\n    uv_async_send(&w->loop->wq_async);\n    uv_mutex_unlock(&w->loop->wq_mutex);\n\n    /* Lock `mutex` since that is expected at the start of the next\n     * iteration. */\n    uv_mutex_lock(&mutex);\n    if (is_slow_work) {\n      /* `slow_io_work_running` is protected by `mutex`. */\n      slow_io_work_running--;\n    }\n  }\n}\n\n\nstatic void post(struct uv__queue* q, enum uv__work_kind kind) {\n  uv_mutex_lock(&mutex);\n  if (kind == UV__WORK_SLOW_IO) {\n    /* Insert into a separate queue. */\n    uv__queue_insert_tail(&slow_io_pending_wq, q);\n    if (!uv__queue_empty(&run_slow_work_message)) {\n      /* Running slow I/O tasks is already scheduled => Nothing to do here.\n         The worker that runs said other task will schedule this one as well. */\n      uv_mutex_unlock(&mutex);\n      return;\n    }\n    q = &run_slow_work_message;\n  }\n\n  uv__queue_insert_tail(&wq, q);\n  if (idle_threads > 0)\n    uv_cond_signal(&cond);\n  uv_mutex_unlock(&mutex);\n}\n\n\n#ifdef __MVS__\n/* TODO(itodorov) - zos: revisit when Woz compiler is available. */\n__attribute__((destructor))\n#endif\nvoid uv__threadpool_cleanup(void) {\n  unsigned int i;\n\n  if (nthreads == 0)\n    return;\n\n#ifndef __MVS__\n  /* TODO(gabylb) - zos: revisit when Woz compiler is available. */\n  post(&exit_message, UV__WORK_CPU);\n#endif\n\n  for (i = 0; i < nthreads; i++)\n    if (uv_thread_join(threads + i))\n      abort();\n\n  if (threads != default_threads)\n    uv__free(threads);\n\n  uv_mutex_destroy(&mutex);\n  uv_cond_destroy(&cond);\n\n  threads = NULL;\n  nthreads = 0;\n}\n\n\nstatic void init_threads(void) {\n  uv_thread_options_t config;\n  unsigned int i;\n  size_t buflen;\n  char buf[16];\n  const char* val;\n  int err;\n\n  uv_sem_t sem;\n\n  nthreads = ARRAY_SIZE(default_threads);\n\n  buflen = ARRAY_SIZE(buf);\n  err = uv_os_getenv(\"UV_THREADPOOL_SIZE\", buf, &buflen);\n  val = NULL;\n  if (err == 0)\n    val = buf;\n  \n  if (val != NULL)\n    nthreads = atoi(val);\n  if (nthreads == 0)\n    nthreads = 1;\n  if (nthreads > MAX_THREADPOOL_SIZE)\n    nthreads = MAX_THREADPOOL_SIZE;\n\n  threads = default_threads;\n  if (nthreads > ARRAY_SIZE(default_threads)) {\n    threads = uv__malloc(nthreads * sizeof(threads[0]));\n    if (threads == NULL) {\n      nthreads = ARRAY_SIZE(default_threads);\n      threads = default_threads;\n    }\n  }\n\n  if (uv_cond_init(&cond))\n    abort();\n\n  if (uv_mutex_init(&mutex))\n    abort();\n\n  uv__queue_init(&wq);\n  uv__queue_init(&slow_io_pending_wq);\n  uv__queue_init(&run_slow_work_message);\n\n  if (uv_sem_init(&sem, 0))\n    abort();\n\n  config.flags = UV_THREAD_HAS_STACK_SIZE;\n  config.stack_size = 8u << 20;  /* 8 MB */\n\n  for (i = 0; i < nthreads; i++)\n    if (uv_thread_create_ex(threads + i, &config, worker, &sem))\n      abort();\n\n  for (i = 0; i < nthreads; i++)\n    uv_sem_wait(&sem);\n\n  uv_sem_destroy(&sem);\n}\n\n\n#ifndef _WIN32\nstatic void reset_once(void) {\n  uv_once_t child_once = UV_ONCE_INIT;\n  memcpy(&once, &child_once, sizeof(child_once));\n}\n#endif\n\n\nstatic void init_once(void) {\n#ifndef _WIN32\n  /* Re-initialize the threadpool after fork.\n   * Note that this discards the global mutex and condition as well\n   * as the work queue.\n   */\n  if (pthread_atfork(NULL, NULL, &reset_once))\n    abort();\n#endif\n  init_threads();\n}\n\n\nvoid uv__work_submit(uv_loop_t* loop,\n                     struct uv__work* w,\n                     enum uv__work_kind kind,\n                     void (*work)(struct uv__work* w),\n                     void (*done)(struct uv__work* w, int status)) {\n  uv_once(&once, init_once);\n  w->loop = loop;\n  w->work = work;\n  w->done = done;\n  post(&w->wq, kind);\n}\n\n\n/* TODO(bnoordhuis) teach libuv how to cancel file operations\n * that go through io_uring instead of the thread pool.\n */\nstatic int uv__work_cancel(uv_loop_t* loop, uv_req_t* req, struct uv__work* w) {\n  int cancelled;\n\n  uv_once(&once, init_once);  /* Ensure |mutex| is initialized. */\n  uv_mutex_lock(&mutex);\n  uv_mutex_lock(&w->loop->wq_mutex);\n\n  cancelled = !uv__queue_empty(&w->wq) && w->work != NULL;\n  if (cancelled)\n    uv__queue_remove(&w->wq);\n\n  uv_mutex_unlock(&w->loop->wq_mutex);\n  uv_mutex_unlock(&mutex);\n\n  if (!cancelled)\n    return UV_EBUSY;\n\n  w->work = uv__cancelled;\n  uv_mutex_lock(&loop->wq_mutex);\n  uv__queue_insert_tail(&loop->wq, &w->wq);\n  uv_async_send(&loop->wq_async);\n  uv_mutex_unlock(&loop->wq_mutex);\n\n  return 0;\n}\n\n\nvoid uv__work_done(uv_async_t* handle) {\n  struct uv__work* w;\n  uv_loop_t* loop;\n  struct uv__queue* q;\n  struct uv__queue wq;\n  int err;\n  int nevents;\n\n  loop = container_of(handle, uv_loop_t, wq_async);\n  uv_mutex_lock(&loop->wq_mutex);\n  uv__queue_move(&loop->wq, &wq);\n  uv_mutex_unlock(&loop->wq_mutex);\n\n  nevents = 0;\n\n  while (!uv__queue_empty(&wq)) {\n    q = uv__queue_head(&wq);\n    uv__queue_remove(q);\n\n    w = container_of(q, struct uv__work, wq);\n    err = (w->work == uv__cancelled) ? UV_ECANCELED : 0;\n    w->done(w, err);\n    nevents++;\n  }\n\n  /* This check accomplishes 2 things:\n   * 1. Even if the queue was empty, the call to uv__work_done() should count\n   *    as an event. Which will have been added by the event loop when\n   *    calling this callback.\n   * 2. Prevents accidental wrap around in case nevents == 0 events == 0.\n   */\n  if (nevents > 1) {\n    /* Subtract 1 to counter the call to uv__work_done(). */\n    uv__metrics_inc_events(loop, nevents - 1);\n    if (uv__get_internal_fields(loop)->current_timeout == 0)\n      uv__metrics_inc_events_waiting(loop, nevents - 1);\n  }\n}\n\n\nstatic void uv__queue_work(struct uv__work* w) {\n  uv_work_t* req = container_of(w, uv_work_t, work_req);\n\n  req->work_cb(req);\n}\n\n\nstatic void uv__queue_done(struct uv__work* w, int err) {\n  uv_work_t* req;\n\n  req = container_of(w, uv_work_t, work_req);\n  uv__req_unregister(req->loop);\n\n  if (req->after_work_cb == NULL)\n    return;\n\n  req->after_work_cb(req, err);\n}\n\n\nint uv_queue_work(uv_loop_t* loop,\n                  uv_work_t* req,\n                  uv_work_cb work_cb,\n                  uv_after_work_cb after_work_cb) {\n  if (work_cb == NULL)\n    return UV_EINVAL;\n\n  uv__req_init(loop, req, UV_WORK);\n  req->loop = loop;\n  req->work_cb = work_cb;\n  req->after_work_cb = after_work_cb;\n  uv__work_submit(loop,\n                  &req->work_req,\n                  UV__WORK_CPU,\n                  uv__queue_work,\n                  uv__queue_done);\n  return 0;\n}\n\n\nint uv_cancel(uv_req_t* req) {\n  struct uv__work* wreq;\n  uv_loop_t* loop;\n\n  switch (req->type) {\n  case UV_WRITE:\n    if (uv__is_closing(((uv_write_t*) req)->handle))\n      return UV_EBUSY;\n    return uv__write_cancel((uv_write_t*) req);\n  case UV_FS:\n    loop =  ((uv_fs_t*) req)->loop;\n    wreq = &((uv_fs_t*) req)->work_req;\n#ifdef __linux__\n    if (wreq->done == NULL)\n      return uv__iou_cancel(loop, (uv_fs_t*) req);\n#endif\n    break;\n  case UV_GETADDRINFO:\n    loop =  ((uv_getaddrinfo_t*) req)->loop;\n    wreq = &((uv_getaddrinfo_t*) req)->work_req;\n    break;\n  case UV_GETNAMEINFO:\n    loop = ((uv_getnameinfo_t*) req)->loop;\n    wreq = &((uv_getnameinfo_t*) req)->work_req;\n    break;\n  case UV_RANDOM:\n    loop = ((uv_random_t*) req)->loop;\n    wreq = &((uv_random_t*) req)->work_req;\n    break;\n  case UV_WORK:\n    loop =  ((uv_work_t*) req)->loop;\n    wreq = &((uv_work_t*) req)->work_req;\n    break;\n  default:\n    return UV_EINVAL;\n  }\n\n  return uv__work_cancel(loop, req, wreq);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "struct_specifier",
+            "field_expression",
+            "pointer_declarator",
+            "switch_statement",
+            "preproc_ifdef"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "libuv/libuv",
+        "commit": "32f8ea9f92cf21a83c3e7073bc013e32b6df81b9",
+        "path": "src/threadpool.c",
+        "license": "MIT",
+        "sha256": "7699c72b9ad442a1e4ef96ce3affabffdf4cf5d66876542fab59637d1461fa4a",
+        "bytes": 11507
+      }
     }
   ]
 }

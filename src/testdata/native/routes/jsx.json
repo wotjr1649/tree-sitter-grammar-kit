@@ -6111,6 +6111,66 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-jsx-B01-1",
+      "features": [
+        "jsx-B01"
+      ],
+      "source_utf8": "import Fixture from '../../Fixture';\nimport FixtureSet from '../../FixtureSet';\nimport TestCase from '../../TestCase';\nimport InputTestCase from './InputTestCase';\nimport ReplaceEmailInput from './ReplaceEmailInput';\n\nconst React = window.React;\n\nclass TextInputFixtures extends React.Component {\n  render() {\n    return (\n      <FixtureSet\n        title=\"Inputs\"\n        description=\"Common behavior across controlled and uncontrolled inputs\">\n        <TestCase title=\"Numbers in a controlled text field with no handler\">\n          <TestCase.Steps>\n            <li>Move the cursor to after \"2\" in the text field</li>\n            <li>Type \".2\" into the text input</li>\n          </TestCase.Steps>\n\n          <TestCase.ExpectedResult>\n            The text field's value should not update.\n          </TestCase.ExpectedResult>\n\n          <Fixture>\n            <div className=\"control-box\">\n              <fieldset>\n                <legend>Value as number</legend>\n                <input value={2} onChange={() => {}} />\n              </fieldset>\n\n              <fieldset>\n                <legend>Value as string</legend>\n                <input value={'2'} onChange={() => {}} />\n              </fieldset>\n            </div>\n          </Fixture>\n\n          <p className=\"footnote\">\n            This issue was first introduced when we added extra logic to number\n            inputs to prevent unexpected behavior in Chrome and Safari (see the\n            number input test case).\n          </p>\n        </TestCase>\n\n        <TestCase\n          title=\"Required Inputs\"\n          affectedBrowsers=\"Firefox\"\n          relatedIssues=\"8395\">\n          <TestCase.Steps>\n            <li>View this test in Firefox</li>\n          </TestCase.Steps>\n\n          <TestCase.ExpectedResult>\n            You should{' '}\n            <b>\n              <i>not</i>\n            </b>{' '}\n            see a red aura, indicating the input is invalid.\n            <br />\n            This aura looks roughly like:\n            <input style={{boxShadow: '0 0 1px 1px red', marginLeft: 8}} />\n          </TestCase.ExpectedResult>\n\n          <Fixture>\n            <form className=\"control-box\">\n              <fieldset>\n                <legend>Empty value prop string</legend>\n                <input value=\"\" required={true} />\n              </fieldset>\n              <fieldset>\n                <legend>No value prop</legend>\n                <input required={true} />\n              </fieldset>\n              <fieldset>\n                <legend>Empty defaultValue prop string</legend>\n                <input required={true} defaultValue=\"\" />\n              </fieldset>\n              <fieldset>\n                <legend>No value prop date input</legend>\n                <input type=\"date\" required={true} />\n              </fieldset>\n              <fieldset>\n                <legend>Empty value prop date input</legend>\n                <input type=\"date\" value=\"\" required={true} />\n              </fieldset>\n            </form>\n          </Fixture>\n\n          <p className=\"footnote\">\n            Checking the date type is also important because of a prior fix for\n            iOS Safari that involved assigning over value/defaultValue\n            properties of the input to prevent a display bug. This also triggers\n            input validation.\n          </p>\n          <p className=\"footnote\">\n            The date inputs should be blank in iOS. This is not a bug.\n          </p>\n        </TestCase>\n\n        <TestCase title=\"Cursor when editing email inputs\">\n          <TestCase.Steps>\n            <li>Type \"user@example.com\"</li>\n            <li>Select \"@\"</li>\n            <li>Type \".\", to replace \"@\" with a period</li>\n          </TestCase.Steps>\n\n          <TestCase.ExpectedResult>\n            The text field's cursor should not jump to the end.\n          </TestCase.ExpectedResult>\n\n          <InputTestCase type=\"email\" defaultValue=\"\" />\n        </TestCase>\n\n        <TestCase title=\"Cursor when editing url inputs\">\n          <TestCase.Steps>\n            <li>Type \"http://www.example.com\"</li>\n            <li>Select \"www.\"</li>\n            <li>Press backspace/delete</li>\n          </TestCase.Steps>\n\n          <TestCase.ExpectedResult>\n            The text field's cursor should not jump to the end.\n          </TestCase.ExpectedResult>\n\n          <InputTestCase type=\"url\" defaultValue=\"\" />\n        </TestCase>\n\n        <TestCase\n          title=\"Replacing email input with text disabled input\"\n          relatedIssues=\"12062\">\n          <TestCase.Steps>\n            <li>Type \"test@test.com\"</li>\n            <li>Press enter</li>\n          </TestCase.Steps>\n\n          <TestCase.ExpectedResult>\n            There should be no selection-related error in the console.\n          </TestCase.ExpectedResult>\n\n          <ReplaceEmailInput />\n        </TestCase>\n\n        <TestCase title=\"All inputs\" description=\"General test of all inputs\">\n          <InputTestCase type=\"text\" defaultValue=\"Text\" />\n          <InputTestCase type=\"email\" defaultValue=\"user@example.com\" />\n          <InputTestCase type=\"number\" defaultValue={0} />\n          <InputTestCase type=\"url\" defaultValue=\"http://example.com\" />\n          <InputTestCase type=\"tel\" defaultValue=\"555-555-5555\" />\n          <InputTestCase type=\"color\" defaultValue=\"#ff0000\" />\n          <InputTestCase type=\"date\" defaultValue=\"2017-01-01\" />\n          <InputTestCase\n            type=\"datetime-local\"\n            defaultValue=\"2017-01-01T01:00\"\n          />\n          <InputTestCase type=\"time\" defaultValue=\"01:00\" />\n          <InputTestCase type=\"month\" defaultValue=\"2017-01\" />\n          <InputTestCase type=\"week\" defaultValue=\"2017-W01\" />\n          <InputTestCase type=\"range\" defaultValue={0.5} />\n          <InputTestCase type=\"password\" defaultValue=\"\" />\n        </TestCase>\n      </FixtureSet>\n    );\n  }\n}\n\nexport default TextInputFixtures;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_self_closing_element",
+            "jsx_opening_element",
+            "jsx_closing_element",
+            "member_expression"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "facebook/react",
+        "commit": "278794d7dee9cd2a3a2aaf9f0b2a4b8b747d74ee",
+        "path": "fixtures/dom/src/components/fixtures/text-inputs/index.js",
+        "license": "MIT",
+        "sha256": "f7bdebbe10cba6009edb22a16bf5e0156d3294df244e96bb6e343b66d1edd747",
+        "bytes": 5894
+      }
+    },
+    {
+      "id": "w-jsx-B04-1",
+      "features": [
+        "jsx-B04"
+      ],
+      "source_utf8": "import cn from 'classnames';\nimport semver from 'semver';\nimport PropTypes from 'prop-types';\nimport IssueList from './IssueList';\nimport {parse} from 'query-string';\nimport {semverString} from './propTypes';\n\nconst React = window.React;\n\nconst propTypes = {\n  children: PropTypes.node.isRequired,\n  title: PropTypes.node.isRequired,\n  resolvedIn: semverString,\n  introducedIn: semverString,\n  resolvedBy: PropTypes.string,\n};\n\nclass TestCase extends React.Component {\n  constructor(props, context) {\n    super(props, context);\n\n    this.state = {\n      complete: false,\n    };\n  }\n\n  handleChange = e => {\n    this.setState({\n      complete: e.target.checked,\n    });\n  };\n\n  render() {\n    const {\n      title,\n      description,\n      introducedIn,\n      resolvedIn,\n      resolvedBy,\n      affectedBrowsers,\n      relatedIssues,\n      children,\n    } = this.props;\n\n    let {complete} = this.state;\n\n    const {version} = parse(window.location.search);\n    const isTestFixed =\n      !version || !resolvedIn || semver.gte(version, resolvedIn);\n\n    complete = !isTestFixed || complete;\n\n    return (\n      <section className={cn('test-case', complete && 'test-case--complete')}>\n        <h2 className=\"test-case__title type-subheading\">\n          <label>\n            <input\n              className=\"test-case__title__check\"\n              type=\"checkbox\"\n              checked={complete}\n              onChange={this.handleChange}\n            />{' '}\n            {title}\n          </label>\n        </h2>\n\n        <dl className=\"test-case__details\">\n          {introducedIn && <dt>First broken in: </dt>}\n          {introducedIn && (\n            <dd>\n              <a\n                href={'https://github.com/facebook/react/tag/v' + introducedIn}>\n                <code>{introducedIn}</code>\n              </a>\n            </dd>\n          )}\n\n          {resolvedIn && <dt>First supported in: </dt>}\n          {resolvedIn && (\n            <dd>\n              <a href={'https://github.com/facebook/react/tag/v' + resolvedIn}>\n                <code>{resolvedIn}</code>\n              </a>\n            </dd>\n          )}\n\n          {resolvedBy && <dt>Fixed by: </dt>}\n          {resolvedBy && (\n            <dd>\n              <a\n                href={\n                  'https://github.com/facebook/react/pull/' +\n                  resolvedBy.slice(1)\n                }>\n                <code>{resolvedBy}</code>\n              </a>\n            </dd>\n          )}\n\n          {affectedBrowsers && <dt>Affected browsers: </dt>}\n          {affectedBrowsers && <dd>{affectedBrowsers}</dd>}\n\n          {relatedIssues && <dt>Related Issues: </dt>}\n          {relatedIssues && (\n            <dd>\n              <IssueList issues={relatedIssues} />\n            </dd>\n          )}\n        </dl>\n\n        <p className=\"test-case__desc\">{description}</p>\n\n        <div className=\"test-case__body\">\n          {!isTestFixed && (\n            <p className=\"test-case__invalid-version\">\n              <strong>Note:</strong> This test case was fixed in a later version\n              of React. This test is not expected to pass for the selected\n              version, and that's ok!\n            </p>\n          )}\n\n          {children}\n        </div>\n      </section>\n    );\n  }\n}\n\nTestCase.propTypes = propTypes;\n\nTestCase.Steps = class extends React.Component {\n  render() {\n    const {children} = this.props;\n    return (\n      <div>\n        <h3>Steps to reproduce:</h3>\n        <ol>{children}</ol>\n      </div>\n    );\n  }\n};\n\nTestCase.ExpectedResult = class extends React.Component {\n  render() {\n    const {children} = this.props;\n    return (\n      <div>\n        <h3>Expected Result:</h3>\n        <p>{children}</p>\n      </div>\n    );\n  }\n};\nexport default TestCase;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "jsx_element",
+            "jsx_expression",
+            "binary_expression",
+            "parenthesized_expression",
+            "field_definition"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "facebook/react",
+        "commit": "278794d7dee9cd2a3a2aaf9f0b2a4b8b747d74ee",
+        "path": "fixtures/dom/src/components/TestCase.js",
+        "license": "MIT",
+        "sha256": "6b44921e29b0b0b80372c5b27fcad1d491a1917f2dbfa93892687e9802f01d7d",
+        "bytes": 3748
+      }
     }
   ]
 }

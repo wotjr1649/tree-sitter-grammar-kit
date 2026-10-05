@@ -2899,6 +2899,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-bash-B01-1",
+      "features": [
+        "bash-B01"
+      ],
+      "source_utf8": "#!/usr/bin/env bash\n# Summary: Configure the shell environment for rbenv\n# Usage: rbenv init [<shells>...]\n#        rbenv init - [--no-rehash] [<shell>]\n#\n# Modifies shell initialization files to bootstrap rbenv functionality.\n# Typically, this will add a line that eval's the output of `rbenv init -`.\n# If no shells are named by arguments, the current shell will be detected\n# by inspecting the parent process. If a shell is already configured for\n# rbenv, the init command does nothing and exits with zero status.\n#\n# In the `rbenv init -` mode, this outputs a script to be eval'd in the\n# current shell. Most importantly, that script prepends the rbenv shims\n# directory to the PATH environment variable. To aid interactive shells,\n# the script also installs the magic `rbenv()` shell function and loads\n# shell completions for rbenv commands.\n\nset -e\n[ -n \"$RBENV_DEBUG\" ] && set -x\n\n# Provide rbenv completions\nif [ \"$1\" = \"--complete\" ]; then\n  echo -\n  echo --no-rehash\n  echo bash\n  echo fish\n  echo ksh\n  echo zsh\n  exit\nfi\n\nprint=\"\"\nno_rehash=\"\"\nshells=()\nwhile [ $# -gt 0 ]; do\n  case \"$1\" in\n  \"-\" )\n    print=1\n    ;;\n  \"--no-rehash\" )\n    no_rehash=1\n    ;;\n  * )\n    shells+=(\"$1\")\n    ;;\n  esac\n  shift\ndone\n\nif [ \"${#shells[@]}\" -eq 0 ]; then\n  shell=\"$(ps -p \"$PPID\" -o 'args=' 2>/dev/null || true)\"\n  shell=\"${shell%% *}\"\n  shell=\"${shell##-}\"\n  shell=\"${shell:-$SHELL}\"\n  shell=\"${shell##*/}\"\n  shells=(\"${shell%%-*}\")\nfi\n\nroot=\"${BASH_SOURCE:-$0}\"\nroot=\"${root%/*}\"\nroot=\"${root%/*}\"\n\nrbenv_in_path=true\nif [ -n \"$RBENV_ORIG_PATH\" ]; then\n  PATH=\"$RBENV_ORIG_PATH\" type -P rbenv >/dev/null || rbenv_in_path=\"\"\nfi\n\nif [ -z \"$print\" ]; then\n  display_path() {\n    if [ \"${1/#$HOME\\/}\" != \"$1\" ]; then\n      # shellcheck disable=SC2088\n      printf '~/%s' \"${1/#$HOME\\/}\"\n    else\n      printf '%s' \"$1\"\n    fi\n  }\n\n  rbenv_command=rbenv\n  if [ -z \"$rbenv_in_path\" ]; then\n    rbenv_command=\"$(display_path \"$root/bin/rbenv\")\"\n  fi\n\n  color_start=\"\"\n  color_end=\"\"\n  if [ -t 1 ]; then\n    color_start=$'\\e[33;1m'\n    color_end=$'\\e[m'\n  fi\n\n  write_config() {\n    if grep -q \"rbenv init\" \"$1\" 2>/dev/null; then\n      printf 'skipping %s%s%s: already configured for rbenv.\\n' \"$color_start\" \"$(display_path \"$1\")\" \"$color_end\"\n      return 0\n    fi\n    mkdir -p \"${1%/*}\"\n    # shellcheck disable=SC2016\n    printf '\\n# Added by `rbenv init` on %s\\n%s\\n' \"$(date)\" \"$2\" >> \"$1\"\n    printf 'writing %s%s%s: now configured for rbenv.\\n' \"$color_start\" \"$(display_path \"$1\")\" \"$color_end\"\n  }\n\n  status=0\n  for shell in \"${shells[@]}\"; do\n    case \"$shell\" in\n    bash )\n      if [ -f ~/.bashrc ] && [ ! -f ~/.bash_profile ]; then\n        profile=\"$HOME/.bashrc\"\n      else\n        # shellcheck disable=SC2012\n        profile=\"$(ls ~/.bash_profile ~/.bash_login ~/.profile 2>/dev/null | head -n1)\"\n        [ -n \"$profile\" ] || profile=\"$HOME/.bash_profile\"\n      fi\n      write_config \"$profile\" \\\n        \"eval \\\"\\$($rbenv_command init - --no-rehash bash)\\\"\"\n      ;;\n    zsh )\n      # check zshrc for backward compatibility with older rbenv init\n      if grep -q rbenv \"${ZDOTDIR:-$HOME}/.zshrc\" 2>/dev/null; then\n        profile=\"${ZDOTDIR:-$HOME}/.zshrc\"\n      else\n        profile=\"${ZDOTDIR:-$HOME}/.zprofile\"\n      fi\n      write_config \"$profile\" \\\n        \"eval \\\"\\$($rbenv_command init - --no-rehash zsh)\\\"\"\n      ;;\n    ksh | ksh93 | mksh )\n      # There are two implementations of Korn shell: AT&T (ksh93) and Mir (mksh).\n      # Systems may have them installed under those names, or as ksh, so those\n      # are recognized here. The obsolete ksh88 (subsumed by ksh93) and pdksh\n      # (subsumed by mksh) are not included, since they are unlikely to still\n      # be in use as interactive shells anywhere.\n      write_config \"$HOME/.profile\" \\\n        \"eval \\\"\\$($rbenv_command init - ksh)\\\"\"\n      ;;\n    fish )\n      write_config \"${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish\" \\\n        \"status --is-interactive; and $rbenv_command init - --no-rehash fish | source\"\n      ;;\n    * )\n      printf 'unsupported shell: \"%s\"\\n' \"$shell\" >&2\n      status=1\n      ;;\n    esac\n  done\n  exit $status\nfi\n\nmkdir -p \"${RBENV_ROOT}/\"{shims,versions}\n\nshell=\"${shells[0]}\"\ncase \"$shell\" in\nfish )\n  [ -n \"$rbenv_in_path\" ] || printf \"set -gx PATH '%s/bin' \\$PATH\\n\" \"$root\"\n  printf \"set -gx PATH '%s/shims' \\$PATH\\n\" \"$RBENV_ROOT\"\n  printf 'set -gx RBENV_SHELL %s\\n' \"$shell\"\n;;\n* )\n  # shellcheck disable=SC2016\n  [ -n \"$rbenv_in_path\" ] || printf 'export PATH=\"%s/bin:${PATH}\"\\n' \"$root\"\n  # shellcheck disable=SC2016\n  printf 'export PATH=\"%s/shims:${PATH}\"\\n' \"$RBENV_ROOT\"\n  printf 'export RBENV_SHELL=%s\\n' \"$shell\"\n\n  completion=\"${root}/completions/rbenv.${shell}\"\n  if [ -r \"$completion\" ]; then\n    printf \"source '%s'\\n\" \"$completion\"\n  fi\n;;\nesac\n\nif [ -z \"$no_rehash\" ]; then\n  echo 'command rbenv rehash 2>/dev/null || true'\nfi\n\nIFS=$'\\n' read -d '' -r -a commands <<<\"$(rbenv-commands --sh)\" || true\n\ncase \"$shell\" in\nfish )\n  cat <<EOS\nfunction rbenv\n  set command \\$argv[1]\n  set -e argv[1]\n\n  switch \"\\$command\"\n  case ${commands[*]}\n    rbenv \"sh-\\$command\" \\$argv|source\n  case '*'\n    command rbenv \"\\$command\" \\$argv\n  end\nend\nEOS\n  ;;\nksh | ksh93 | mksh )\n  cat <<EOS\nfunction rbenv {\n  typeset command\nEOS\n  ;;\n* )\n  cat <<EOS\nrbenv() {\n  local command\nEOS\n  ;;\nesac\n\nif [ \"$shell\" != \"fish\" ]; then\nIFS=\"|\"\ncat <<EOS\n  command=\"\\${1:-}\"\n  if [ \"\\$#\" -gt 0 ]; then\n    shift\n  fi\n\n  case \"\\$command\" in\n  ${commands[*]})\n    eval \"\\$(rbenv \"sh-\\$command\" \"\\$@\")\";;\n  *)\n    command rbenv \"\\$command\" \"\\$@\";;\n  esac\n}\nEOS\nfi\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "case_statement",
+            "heredoc_redirect",
+            "herestring_redirect",
+            "expansion"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "rbenv/rbenv",
+        "commit": "07e9b1e297a5977298c6aadc9971ae0e9eb7f0dc",
+        "path": "libexec/rbenv-init",
+        "license": "MIT",
+        "sha256": "56a584c625e226cbdf5d444885a9b2cf036a77d072c4cb601fc58507936b316c",
+        "bytes": 5572
+      }
     }
   ]
 }

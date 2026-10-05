@@ -4865,6 +4865,36 @@
           "contains": []
         }
       ]
+    },
+    {
+      "id": "w-dart-B01-1",
+      "features": [
+        "dart-B01"
+      ],
+      "source_utf8": "// Copyright 2014 The Flutter Authors. All rights reserved.\n// Use of this source code is governed by a BSD-style license that can be\n// found in the LICENSE file.\n\n/// @docImport 'package:flutter/semantics.dart';\n/// @docImport 'package:flutter/widgets.dart';\nlibrary;\n\nimport 'package:meta/meta.dart';\n\nimport 'diagnostics.dart';\n\n/// A [Key] is an identifier for [Widget]s, [Element]s and [SemanticsNode]s.\n///\n/// A new widget will only be used to update an existing element if its key is\n/// the same as the key of the current widget associated with the element.\n///\n/// Typically, if no key is provided, the default value is null, meaning the\n/// widget is considered unkeyed. In this case, Flutter matches widgets based\n/// on their [Widget.runtimeType] and position in the tree during rebuilds.\n///\n/// {@youtube 560 315 https://www.youtube.com/watch?v=kn0EOS-ZiIc}\n///\n/// Keys must be unique amongst the [Element]s with the same parent.\n///\n/// Subclasses of [Key] should either subclass [LocalKey] or [GlobalKey].\n///\n/// A common mistake is to rebuild the widget tree in such a way that Flutter\n/// attaches the incorrect State object to an unkeyed StatefulWidget. This can\n/// often be solved by using an appropriate [Key] on the [StatefulWidget].\n///\n/// See [ValueKey], which explains how that class can be used as a solution to a\n/// common case of this problem.\n///\n/// See also:\n///\n///  * [Widget.key], which discusses how widgets use keys.\n@immutable\n@pragma('flutter:keep-to-string-in-subtypes')\nabstract class Key {\n  /// Construct a [ValueKey<String>] with the given [String].\n  ///\n  /// This is the simplest way to create keys.\n  const factory Key(String value) = ValueKey<String>;\n\n  /// Default constructor, used by subclasses.\n  ///\n  /// Useful so that subclasses can call us, because the [Key.new] factory\n  /// constructor shadows the implicit constructor.\n  @protected\n  const Key.empty();\n}\n\n/// A key that is not a [GlobalKey].\n///\n/// Keys must be unique amongst the [Element]s with the same parent. By\n/// contrast, [GlobalKey]s must be unique across the entire app.\n///\n/// See also:\n///\n///  * [Widget.key], which discusses how widgets use keys.\nabstract class LocalKey extends Key {\n  /// This constructor enables subclasses to provide const constructors so that\n  /// they can be used in const expressions.\n  const LocalKey() : super.empty();\n}\n\n/// A key that is only equal to itself.\n///\n/// This cannot be created with a const constructor because that implies that\n/// all instantiated keys would be the same instance and therefore not be unique.\nclass UniqueKey extends LocalKey {\n  /// Creates a key that is equal only to itself.\n  ///\n  /// The key cannot be created with a const constructor because that implies\n  /// that all instantiated keys would be the same instance and therefore not\n  /// be unique.\n  // ignore: prefer_const_constructors_in_immutables , never use const for this class\n  UniqueKey();\n\n  @override\n  String toString() => '[#${shortHash(this)}]';\n}\n\n/// A key that uses a value of a particular type to identify itself.\n///\n/// A [ValueKey] is equal to another [ValueKey] if, and only if, their values\n/// are equal (using [operator==]).\n///\n/// This class can be subclassed to create value keys that will not be equal to\n/// other value keys that happen to use the same value. If the subclass is\n/// private, this results in a value key type that cannot collide with keys from\n/// other sources. This is useful when keys are used as fallbacks in the same\n/// scope as keys supplied from another widget.\n///\n/// When building widgets from a collection of data, especially when that\n/// collection can change over time (e.g., items being inserted, removed, or\n/// reordered), keys are used to preserve the association between a widget and\n/// the underlying data.\n///\n/// Without keys, the framework may have no way to distinguish between a change\n/// in the data of an existing widget and a structural change in the list. As a\n/// result, widgets may be incorrectly updated, and state held by\n/// [StatefulWidget]s can be reused for a different piece of data.\n///\n/// Assigning a key ties the widget subtree to a specific piece of data,\n/// allowing the framework to correctly match old and new widgets and preserve\n/// state as expected.\n///\n/// In such cases, a [ValueKey] is typically appropriate, using a value that is\n/// stable and unique for each item, such as an identifier from the data model.\n///\n/// {@tool dartpad}\n/// The following example demonstrates the importance of using [ValueKey]s when reordering\n/// a list of [StatefulWidget]s.\n///\n/// ### The Key Difference\n/// * **Without Keys**: When the list is reversed, Flutter matches widgets by\n/// position. The [State] (the counter) stays in its original spot while the\n/// widget's configuration (the color) is swapped. This results in the counter\n/// appearing to stay \"stationary\" while the colors move behind it.\n/// * **With Keys**: By providing a [ValueKey], Flutter matches the [State]\n/// to the [Widget] via the key rather than the index. When the list is\n/// reversed, the [State] moves with the color.\n///\n/// To see the difference, find the `ColoredWidgetsList` widget inside the `map`\n/// function and comment/uncomment the `key: ValueKey(color)` line.\n///\n/// ** See code in examples/api/lib/foundation/key/value_key.0.dart **\n/// {@end-tool}\n///\n/// See also:\n///\n///  * [Widget.key], which discusses how widgets use keys.\n///  * [ObjectKey], which uses the identity of an object as the key.\n///  * [UniqueKey], which is a key that is only equal to itself.\nclass ValueKey<T> extends LocalKey {\n  /// Creates a key that delegates its [operator==] to the given value.\n  const ValueKey(this.value);\n\n  /// The value to which this key delegates its [operator==].\n  final T value;\n\n  @override\n  bool operator ==(Object other) {\n    if (other.runtimeType != runtimeType) {\n      return false;\n    }\n    return other is ValueKey<T> && other.value == value;\n  }\n\n  @override\n  int get hashCode => Object.hash(runtimeType, value);\n\n  @override\n  String toString() {\n    final valueString = T == String ? \"<'$value'>\" : '<$value>';\n    if (runtimeType == ValueKey<T>) {\n      return '[$valueString]';\n    }\n    return '[$T $valueString]';\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "library_name",
+            "library_import",
+            "annotation",
+            "class_definition",
+            "redirecting_factory_constructor_signature"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "flutter/flutter",
+        "commit": "da17f4d02043940fc75ffc29204ffe2cf8fd79d1",
+        "path": "packages/flutter/lib/src/foundation/key.dart",
+        "license": "BSD-3-Clause",
+        "sha256": "cacb3d4e87ddc6cb90d5bbf7597df4600d8f89e99a2587f64aab2670c0fbc2dc",
+        "bytes": 6286
+      }
     }
   ]
 }

@@ -4605,6 +4605,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-powershell-B01-1",
+      "features": [
+        "powershell-B01"
+      ],
+      "source_utf8": "# Copyright (c) Microsoft Corporation.\n# Licensed under the MIT License.\n\n# Utility to generate a self-signed certificate and sign a given package such as PowerShell.zip/appx/msi\n\n[CmdletBinding()]\nparam (\n        #Path to package - Ex: PowerShell.msi, PowerShell.appx\n        [Parameter(Mandatory = $true)]\n        [ValidateNotNullOrEmpty()]\n        [string] $PackageFilePath\n\n)\n\n# function to generate a self-signed certificate\n# customize parameters to makecert.exe to control certificate life time and other options\nfunction New-SelfSignedCertificate\n{\n    [CmdletBinding()]\n    param (\n\n        #Path to save generated Certificate\n        [ValidateNotNullOrEmpty()]\n        [string] $CertificateFilePath = \"$PWD\\PowerShell.cer\",\n\n        #Path to save generated pvk file\n        [ValidateNotNullOrEmpty()]\n        [string] $PvkFilePath = \"$env:Temp\\PowerShell.pvk\"\n\n    )\n\n    $makecertBinPath = \"${env:ProgramFiles(x86)}\\Windows Kits\\10\\bin\\x64\\MakeCert.exe\"\n\n    Write-Verbose \"Windows 10 SDK needed - https://go.microsoft.com/fwlink/p/?LinkID=822845 - Ensure MakeCert.exe is present @ $makecertBinPath\"\n    if (-not (Test-Path $makecertBinPath))\n    {\n        throw \"$makecertBinPath is required to generate a self-signed certificate\"\n    }\n\n    Remove-Item $CertificateFilePath -Force -ErrorAction Ignore\n    Remove-Item $PvkFilePath -Force -ErrorAction Ignore\n\n    & $makecertBinPath -r -h 0 -n \"CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US\" -eku 1.3.6.1.5.5.7.3.3 -pe -sv $PvkFilePath $CertificateFilePath | Write-Verbose\n\n    Write-Verbose \"Self-Signed Cert generated @ $CertificateFilePath\"\n\n    return $CertificateFilePath\n}\n\n# Convert private pvk file format to pfx format to be consumed by signtool.exe\nfunction ConvertTo-Pfx\n{\n    [CmdletBinding()]\n    param (\n\n        #Path to Certificate file\n        [ValidateNotNullOrEmpty()]\n        [string] $CertificateFilePath = \"$PWD\\PowerShell.cer\",\n\n        #Path to pvk file\n        [ValidateNotNullOrEmpty()]\n        [string] $PvkFilePath = \"$env:Temp\\PowerShell.pvk\",\n\n        #Path to generated pfx file\n        [ValidateNotNullOrEmpty()]\n        [string] $PfxFilePath = \"$env:Temp\\PowerShell.pfx\"\n    )\n\n    $pvk2pfxBinPath = \"${env:ProgramFiles(x86)}\\Windows Kits\\10\\bin\\x64\\pvk2pfx.exe\"\n\n    Write-Verbose \"Windows 10 SDK needed - https://go.microsoft.com/fwlink/p/?LinkID=822845 - Ensure pvk2pfx.exe is present @ $pvk2pfxBinPath\"\n    if (-not (Test-Path $pvk2pfxBinPath))\n    {\n        throw \"$pvk2pfxBinPath is required to convert pvk file to pfx file - one of the prerequisites to sign a package!\"\n    }\n\n    Remove-Item $PfxFilePath -Force -ErrorAction Ignore\n\n    & $pvk2pfxBinPath /pvk $PvkFilePath /spc $CertificateFilePath /pfx $PfxFilePath /f | Write-Verbose\n\n    Write-Verbose \"Pfx file generated @ $PfxFilePath\"\n\n    return $PfxFilePath\n}\n\n# Sign a given package\n# this function needs the proprietary pfx file\nfunction Sign-Package\n{\n    [CmdletBinding()]\n    param (\n\n        #Path to package - Ex: PowerShell.msi, PowerShell.appx\n        [Parameter(Mandatory = $true)]\n        [ValidateNotNullOrEmpty()]\n        [string] $PackageFilePath,\n\n        #Path to generated pfx file to sign the package\n        [ValidateNotNullOrEmpty()]\n        [string] $PfxFilePath = \"$env:Temp\\PowerShell.pfx\"\n\n    )\n\n    $signtoolBinPath = \"${env:ProgramFiles(x86)}\\Windows Kits\\10\\bin\\x64\\SignTool.exe\"\n\n    Write-Verbose \"Windows 10 SDK needed - https://go.microsoft.com/fwlink/p/?LinkID=822845 - Ensure SignTool.exe is present @ $signtoolBinPath\"\n    if (-not (Test-Path $signtoolBinPath))\n    {\n        throw \"$signtoolBinPath is required to sign the package!\"\n    }\n\n    & $signtoolBinPath sign -f $PfxFilePath -fd SHA256 -v $PackageFilePath | Write-Verbose\n\n    Write-Verbose \"Authenticode signing successful for $PackageFilePath\"\n\n    return $PackageFilePath\n}\n\n$certificate = New-SelfSignedCertificate -Verbose\nConvertTo-Pfx -Verbose\n$signedPackage = Sign-Package -PackageFilePath $PackageFilePath -Verbose\n\nWrite-Output \"Signed Package is available @ `'$signedPackage`'\"\n\nWrite-Output \"On Windows Full SKU - Import the self-signed certificate `'$certificate`' to TrustedStore (Import-Certificate) prior to installing the package\"\n\nWrite-Output \"On Windows Nano - Use `'$env:Windir\\System32\\Certoc.exe -AddStore TrustedPeople <Certificate>`' to import the self-signed certificate `'$certificate`' to TrustedStore\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "param_block",
+            "function_statement",
+            "attribute",
+            "expandable_string_literal",
+            "pipeline"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "PowerShell/PowerShell",
+        "commit": "caeff5e8a57953a414a50fe014a6670797b6770b",
+        "path": "tools/Sign-Package.ps1",
+        "license": "MIT",
+        "sha256": "0a0d476a28d1ae87a634289444036f49dea7d569bf2cdb7dff79d124872d8b4e",
+        "bytes": 4421
+      }
     }
   ]
 }

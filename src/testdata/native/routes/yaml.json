@@ -2054,6 +2054,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-yaml-B01-1",
+      "features": [
+        "yaml-B01"
+      ],
+      "source_utf8": "apiVersion: v1\nkind: Service\nmetadata:\n  name: redis-master\n  labels:\n    app: redis\n    tier: backend\n    role: master\nspec:\n  ports:\n  - port: 6379\n    targetPort: 6379\n  selector:\n    app: redis\n    tier: backend\n    role: master\n---\napiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: redis-master\nspec:\n  selector:\n    matchLabels:\n      app: redis\n      role: master\n      tier: backend\n  replicas: 1\n  template:\n    metadata:\n      labels:\n        app: redis\n        role: master\n        tier: backend\n    spec:\n      containers:\n      - name: master\n        image: registry.k8s.io/redis:e2e  # or just image: redis\n        resources:\n          requests:\n            cpu: 100m\n            memory: 100Mi\n        ports:\n        - containerPort: 6379\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: redis-replica\n  labels:\n    app: redis\n    tier: backend\n    role: replica\nspec:\n  ports:\n  - port: 6379\n  selector:\n    app: redis\n    tier: backend\n    role: replica\n---\napiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: redis-replica\nspec:\n  selector:\n    matchLabels:\n      app: redis\n      role: replica\n      tier: backend\n  replicas: 2\n  template:\n    metadata:\n      labels:\n        app: redis\n        role: replica\n        tier: backend\n    spec:\n      containers:\n      - name: replica\n        image: gcr.io/google_samples/gb-redisslave:v1\n        resources:\n          requests:\n            cpu: 100m\n            memory: 100Mi\n        env:\n        - name: GET_HOSTS_FROM\n          value: dns\n          # If your cluster config does not include a dns service, then to\n          # instead access an environment variable to find the master\n          # service's host, comment out the 'value: dns' line above, and\n          # uncomment the line below:\n          # value: env\n        ports:\n        - containerPort: 6379\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: frontend\n  labels:\n    app: guestbook\n    tier: frontend\nspec:\n  # comment or delete the following line if you want to use a LoadBalancer\n  type: NodePort\n  # if your cluster supports it, uncomment the following to automatically create\n  # an external load-balanced IP for the frontend service.\n  # type: LoadBalancer\n  ports:\n  - port: 80\n  selector:\n    app: guestbook\n    tier: frontend\n---\napiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1\nkind: Deployment\nmetadata:\n  name: frontend\nspec:\n  selector:\n    matchLabels:\n      app: guestbook\n      tier: frontend\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: guestbook\n        tier: frontend\n    spec:\n      containers:\n      - name: php-redis\n        image: gcr.io/google-samples/gb-frontend:v5\n        resources:\n          requests:\n            cpu: 100m\n            memory: 100Mi\n        env:\n        - name: GET_HOSTS_FROM\n          value: dns\n          # If your cluster config does not include a dns service, then to\n          # instead access environment variables to find service host\n          # info, comment out the 'value: dns' line above, and uncomment the\n          # line below:\n          # value: env\n        ports:\n        - containerPort: 80\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "block_mapping",
+            "block_sequence",
+            "plain_scalar"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "kubernetes/examples",
+        "commit": "d6b8cd27eacb51e651a1aa6f7c190a28713eff6e",
+        "path": "web/guestbook/all-in-one/guestbook-all-in-one.yaml",
+        "license": "Apache-2.0",
+        "sha256": "fe751e47f95f3bc48dd63401ce30688fbe148c7df413aea3c2dab2bbcf58b0a5",
+        "bytes": 3366
+      }
     }
   ]
 }

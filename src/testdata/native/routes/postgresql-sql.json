@@ -27819,6 +27819,66 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-postgresql-sql-B01-1",
+      "features": [
+        "postgresql-sql-B01"
+      ],
+      "source_utf8": "-- migrate:up\n\nCREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_admin;\n\n-- auth.users definition\n\nCREATE TABLE auth.users (\n    instance_id uuid NULL,\n    id uuid NOT NULL UNIQUE,\n    aud varchar(255) NULL,\n    \"role\" varchar(255) NULL,\n    email varchar(255) NULL UNIQUE,\n    encrypted_password varchar(255) NULL,\n    confirmed_at timestamptz NULL,\n    invited_at timestamptz NULL,\n    confirmation_token varchar(255) NULL,\n    confirmation_sent_at timestamptz NULL,\n    recovery_token varchar(255) NULL,\n    recovery_sent_at timestamptz NULL,\n    email_change_token varchar(255) NULL,\n    email_change varchar(255) NULL,\n    email_change_sent_at timestamptz NULL,\n    last_sign_in_at timestamptz NULL,\n    raw_app_meta_data jsonb NULL,\n    raw_user_meta_data jsonb NULL,\n    is_super_admin bool NULL,\n    created_at timestamptz NULL,\n    updated_at timestamptz NULL,\n    CONSTRAINT users_pkey PRIMARY KEY (id)\n);\nCREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, email);\nCREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);\ncomment on table auth.users is 'Auth: Stores user login data within a secure schema.';\n\n-- auth.refresh_tokens definition\n\nCREATE TABLE auth.refresh_tokens (\n    instance_id uuid NULL,\n    id bigserial NOT NULL,\n    \"token\" varchar(255) NULL,\n    user_id varchar(255) NULL,\n    revoked bool NULL,\n    created_at timestamptz NULL,\n    updated_at timestamptz NULL,\n    CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id)\n);\nCREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);\nCREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);\nCREATE INDEX refresh_tokens_token_idx ON auth.refresh_tokens USING btree (token);\ncomment on table auth.refresh_tokens is 'Auth: Store of tokens used to refresh JWT tokens once they expire.';\n\n-- auth.instances definition\n\nCREATE TABLE auth.instances (\n    id uuid NOT NULL,\n    uuid uuid NULL,\n    raw_base_config text NULL,\n    created_at timestamptz NULL,\n    updated_at timestamptz NULL,\n    CONSTRAINT instances_pkey PRIMARY KEY (id)\n);\ncomment on table auth.instances is 'Auth: Manages users across multiple sites.';\n\n-- auth.audit_log_entries definition\n\nCREATE TABLE auth.audit_log_entries (\n    instance_id uuid NULL,\n    id uuid NOT NULL,\n    payload json NULL,\n    created_at timestamptz NULL,\n    CONSTRAINT audit_log_entries_pkey PRIMARY KEY (id)\n);\nCREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);\ncomment on table auth.audit_log_entries is 'Auth: Audit trail for user actions.';\n\n-- auth.schema_migrations definition\n\nCREATE TABLE auth.schema_migrations (\n    \"version\" varchar(255) NOT NULL,\n    CONSTRAINT schema_migrations_pkey PRIMARY KEY (\"version\")\n);\ncomment on table auth.schema_migrations is 'Auth: Manages updates to the auth system.';\n\nINSERT INTO auth.schema_migrations (version)\nVALUES  ('20171026211738'),\n        ('20171026211808'),\n        ('20171026211834'),\n        ('20180103212743'),\n        ('20180108183307'),\n        ('20180119214651'),\n        ('20180125194653');\n\n-- Gets the User ID from the request cookie\ncreate or replace function auth.uid() returns uuid as $$\n  select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;\n$$ language sql stable;\n\n-- Gets the User ID from the request cookie\ncreate or replace function auth.role() returns text as $$\n  select nullif(current_setting('request.jwt.claim.role', true), '')::text;\n$$ language sql stable;\n\n-- Gets the User email\ncreate or replace function auth.email() returns text as $$\n  select nullif(current_setting('request.jwt.claim.email', true), '')::text;\n$$ language sql stable;\n\n-- usage on auth functions to API roles\nGRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;\n\n-- Supabase super admin\nCREATE USER supabase_auth_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION;\nGRANT ALL PRIVILEGES ON SCHEMA auth TO supabase_auth_admin;\nGRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA auth TO supabase_auth_admin;\nGRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA auth TO supabase_auth_admin;\nALTER USER supabase_auth_admin SET search_path = \"auth\";\nALTER table \"auth\".users OWNER TO supabase_auth_admin;\nALTER table \"auth\".refresh_tokens OWNER TO supabase_auth_admin;\nALTER table \"auth\".audit_log_entries OWNER TO supabase_auth_admin;\nALTER table \"auth\".instances OWNER TO supabase_auth_admin;\nALTER table \"auth\".schema_migrations OWNER TO supabase_auth_admin;\n\n-- migrate:down\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "CreateStmt",
+            "CreateFunctionStmt",
+            "dollar_quoted_string",
+            "quoted_identifier",
+            "Typename"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "supabase/postgres",
+        "commit": "893b3d3c8fc608c233ec9c640173a5c8f8c7d700",
+        "path": "migrations/db/init-scripts/00000000000001-auth-schema.sql",
+        "license": "PostgreSQL",
+        "sha256": "65a4a55ba3248716eb4946a8677be41c94bc90eafaa22c0eb95b09908f96fa4f",
+        "bytes": 4547
+      }
+    },
+    {
+      "id": "w-postgresql-sql-B02-1",
+      "features": [
+        "postgresql-sql-B02"
+      ],
+      "source_utf8": "-- name: GetAuthor :one\nSELECT * FROM authors\nWHERE author_id = $1;\n\n-- name: GetBook :one\nSELECT * FROM books\nWHERE book_id = $1;\n\n-- name: DeleteBook :exec\nDELETE FROM books\nWHERE book_id = $1;\n\n-- name: BooksByTitleYear :many\nSELECT * FROM books\nWHERE title = $1 AND year = $2;\n\n-- name: BooksByTags :many\nSELECT \n  book_id,\n  title,\n  name,\n  isbn,\n  tags\nFROM books\nLEFT JOIN authors ON books.author_id = authors.author_id\nWHERE tags && $1::varchar[];\n\n-- name: CreateAuthor :one\nINSERT INTO authors (name) VALUES ($1)\nRETURNING *;\n\n-- name: CreateBook :one\nINSERT INTO books (\n    author_id,\n    isbn,\n    book_type,\n    title,\n    year,\n    available,\n    tags\n) VALUES (\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7\n)\nRETURNING *;\n\n-- name: UpdateBook :exec\nUPDATE books\nSET title = $1, tags = $2\nWHERE book_id = $3;\n\n-- name: UpdateBookISBN :exec\nUPDATE books\nSET title = $1, tags = $2, isbn = $4\nWHERE book_id = $3;\n\n-- name: SayHello :one\nselect * from say_hello($1);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "SelectStmt",
+            "InsertStmt",
+            "UpdateStmt",
+            "DeleteStmt",
+            "returning_clause"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "sqlc-dev/sqlc",
+        "commit": "bdbe55db3ee08745827090d4aad1781bea2ee4ee",
+        "path": "examples/booktest/postgresql/query.sql",
+        "license": "MIT",
+        "sha256": "7c182ddc8012069aee83ee08715169dad431ef509afba5d71d53e7f2f40fc5b8",
+        "bytes": 989
+      }
     }
   ]
 }
