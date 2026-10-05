@@ -2927,8 +2927,7 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "export_statement",
-            "class"
+            "export_statement"
           ],
           "anchors": [
             {
@@ -5806,19 +5805,85 @@
       ]
     },
     {
-      "id": "probe-javascript-L01-R-2",
+      "id": "probe-javascript-V15-N-1",
       "features": [
-        "javascript-L01"
+        "javascript-V15"
       ],
-      "source_utf8": "var flag = true;\nif (flag) function f() {}\nvar after = 1;\n",
+      "source_utf8": "function* gen() {\n  const f = () => yield 1;\n  yield f;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "generator_function_declaration",
+            "arrow_function",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "arrow_function",
+              "text": "() => yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-P-1",
+      "features": [
+        "javascript-V22"
+      ],
+      "source_utf8": "function* gen() {\n  class C {\n    x = yield 1;\n    y = 2;\n  }\n  yield new C();\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "field_definition",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "field_definition",
+              "text": "x = yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
+            {
+              "type": "field_definition",
+              "text": "y = 2"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield new C()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V15-PNE-1",
+      "features": [
+        "javascript-V15"
+      ],
+      "source_utf8": "const base = [1, 2, 3];\nfunction helper(a, b) {\n  return a + b;\n}\nfunction* gen(list) {\n  for (const x of list) {\n    yield x * 2;\n  }\n}\nhelper(base[0], base[1]);\n",
       "edits": [
         {
-          "find": "var flag = true;\n",
-          "replace": "'use strict';\nvar flag = true;\n"
+          "find": "function* gen(list)",
+          "replace": "function gen(list)"
         },
         {
-          "find": "'use strict';\n",
-          "replace": ""
+          "find": "function gen(list)",
+          "replace": "function* gen(list)"
         }
       ],
       "expect": [
@@ -5826,26 +5891,29 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "variable_declaration",
-            "if_statement",
-            "function_declaration"
+            "generator_function_declaration",
+            "for_in_statement",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "yield_expression",
+              "text": "yield x * 2"
+            }
           ]
         },
         {
           "step": 1,
           "syntax": "ERROR",
           "contains": [
-            "expression_statement",
-            "variable_declaration"
+            "function_declaration",
+            "for_in_statement",
+            "binary_expression"
           ],
           "anchors": [
             {
-              "type": "expression_statement",
-              "text": "'use strict';"
-            },
-            {
-              "type": "variable_declaration",
-              "text": "var flag = true;"
+              "type": "binary_expression",
+              "text": "yield x * 2"
             }
           ]
         },
@@ -5853,9 +5921,15 @@
           "step": 2,
           "syntax": "NO_ERROR",
           "contains": [
-            "variable_declaration",
-            "if_statement",
-            "function_declaration"
+            "generator_function_declaration",
+            "for_in_statement",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "yield_expression",
+              "text": "yield x * 2"
+            }
           ]
         }
       ]

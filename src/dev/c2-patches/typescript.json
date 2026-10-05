@@ -1,0 +1,102 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "typescript",
+ "defects": [
+  "typescript-P2-01",
+  "typescript-P2-02",
+  "typescript-P2-03",
+  "typescript-P2-04",
+  "typescript-P2-05",
+  "typescript-P2-06",
+  "typescript-P2-07",
+  "typescript-P2-08",
+  "typescript-P2-09"
+ ],
+ "files": [
+  {
+   "target": "common/define-grammar.js",
+   "operations": [
+    {
+     "before": "        [$.jsx_namespace_name, $.primary_type],\n      ],\n",
+     "after": "        [$.jsx_namespace_name, $.primary_type],\n        [$.tsx_arrow_type_parameter, $.type_parameter],\n        [$.tsx_arrow_type_parameters, $.type_parameters],\n        [$._tsx_arrow_call_signature, $.function_type],\n        [$._tsx_arrow_call_signature, $.constructor_type],\n      ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    rules: {\n      public_field_definition: $ => seq(\n",
+     "after": "    rules: {\n      arrow_function: ($, previous) => dialect === 'tsx' ? seq(\n        optional('async'),\n        choice(\n          field('parameter', choice(\n            alias($._reserved_identifier, $.identifier),\n            $.identifier,\n          )),\n          $._tsx_arrow_call_signature,\n        ),\n        '=>',\n        field('body', choice(\n          $.expression,\n          $.statement_block,\n        )),\n      ) : previous,\n\n      ...(dialect === 'tsx' ? {\n        _tsx_arrow_call_signature: $ => seq(\n          field('type_parameters', optional(alias($.tsx_arrow_type_parameters, $.type_parameters))),\n          field('parameters', $.formal_parameters),\n          field('return_type', optional(\n            choice($.type_annotation, $.asserts_annotation, $.type_predicate_annotation),\n          )),\n        ),\n\n        tsx_arrow_type_parameters: $ => seq(\n          '<',\n          choice(\n            seq($.type_parameter, choice(',', seq(repeat1(seq(',', $.type_parameter)), optional(',')))),\n            alias($.tsx_arrow_type_parameter, $.type_parameter),\n          ),\n          '>',\n        ),\n\n        tsx_arrow_type_parameter: $ => seq(\n          optional('const'),\n          optional('in'),\n          optional('out'),\n          field('name', choice($._type_identifier, alias('out', $.type_identifier))),\n          choice(\n            seq(field('constraint', $.constraint), field('value', optional($.default_type))),\n            field('value', $.default_type),\n          ),\n        ),\n      } : {}),\n\n      public_field_definition: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          seq(optional('static'), optional($.override_modifier), optional('readonly')),\n          seq(optional('abstract'), optional('readonly')),\n          seq(optional('readonly'), optional('abstract')),\n          optional('accessor'),\n",
+     "after": "          seq(optional('static'), optional($.override_modifier), optional(choice('readonly', 'accessor'))),\n          seq('abstract', optional($.override_modifier), optional(choice('readonly', 'accessor'))),\n          seq('readonly', 'abstract'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        )),\n        prec('member', seq(\n",
+     "after": "        )),\n        // tag<T>`...`: shifted like a generic call, so '<' stays ambiguous with a comparison\n        prec('call', seq(\n          field('function', $.expression),\n          field('type_arguments', $.type_arguments),\n          field('arguments', $.template_string),\n        )),\n        prec('member', seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional('using'),\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "          optional($._from_clause),\n",
+     "after": "          optional(seq($._from_clause, optional($.import_attribute))),\n          $._semicolon,\n        ),\n        seq(\n          'export',\n          'type',\n          choice('*', $.namespace_export),\n          $._from_clause,\n          optional($.import_attribute),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        choice(\n          $.identifier,\n          alias($.decorator_member_expression, $.member_expression),\n          alias($.decorator_call_expression, $.call_expression),\n        ),\n",
+     "after": "        $.expression,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "              $.abstract_method_signature,\n              $.index_signature,\n              $.method_signature,\n              $.public_field_definition,\n",
+     "after": "              $.abstract_method_signature,\n              $.index_signature,\n              alias($.static_index_signature, $.index_signature),\n              $.method_signature,\n              $.public_field_definition,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        'unknown',\n        'string',\n        'never',\n",
+     "after": "        'unknown',\n        'bigint',\n        'never',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional('const'),\n        field('name', $._type_identifier),\n        field('constraint', optional($.constraint)),\n",
+     "after": "        optional('const'),\n        optional('in'),\n        optional('out'),\n        field('name', choice($._type_identifier, alias('out', $.type_identifier))),\n        field('constraint', optional($.constraint)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        field('parameters', $.formal_parameters),\n        field('type', optional($.type_annotation)),\n      ),\n\n",
+     "after": "        field('parameters', $.formal_parameters),\n        field('type', optional($.type_annotation)),\n      ),\n\n      static_index_signature: $ => seq(\n        'static',\n        optional(\n          seq(\n            field('sign', optional(choice('-', '+'))),\n            'readonly',\n          ),\n        ),\n        '[',\n        field('name', choice(\n          $.identifier,\n          alias($._reserved_identifier, $.identifier),\n        )),\n        ':',\n        field('index_type', $.type),\n        ']',\n        field('type', $.type_annotation),\n      ),\n\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "node_modules/tree-sitter-javascript/grammar.js",
+   "operations": [
+    {
+     "before": "          seq('*', $._from_clause),\n          seq($.namespace_export, $._from_clause),\n          seq($.export_clause, $._from_clause),\n",
+     "after": "          seq('*', $._from_clause, optional($.import_attribute)),\n          seq($.namespace_export, $._from_clause, optional($.import_attribute)),\n          seq($.export_clause, $._from_clause, optional($.import_attribute)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.variable_declaration,\n    ),\n",
+     "after": "      $.variable_declaration,\n      $.using_declaration,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n    variable_declarator: $ => seq(\n",
+     "after": "\n    using_declaration: $ => seq(\n      field('kind', choice(\n        'using',\n        seq('await', 'using'),\n      )),\n      commaSep1($.variable_declarator),\n      $._semicolon,\n    ),\n\n    variable_declarator: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          field('kind', choice('let', 'const')),\n          field('left', choice(\n",
+     "after": "          field('kind', choice('let', 'const')),\n          field('left', choice(\n            $.identifier,\n            $._destructuring_pattern,\n          )),\n          optional($._automatic_semicolon),\n        ),\n        seq(\n          field('kind', choice(\n            'using',\n            seq('await', 'using'),\n          )),\n          field('left', choice(\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
