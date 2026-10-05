@@ -1659,12 +1659,12 @@
             {
               "type": "unary_expression",
               "text": "+x",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "unary_expression",
               "text": "-x",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "unary_expression",
@@ -1920,7 +1920,6 @@
             "assignment_expression",
             "comma_expression",
             "throw_statement",
-            "field_expression",
             "call_expression"
           ],
           "anchors": [
@@ -3295,7 +3294,7 @@
             {
               "type": "variadic_parameter_declaration",
               "text": "Ts *...",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "function_declarator",
@@ -7040,7 +7039,7 @@
             {
               "type": "throw_specifier",
               "text": "throw()",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "template_declaration",
@@ -7431,7 +7430,6 @@
           "syntax": "NO_ERROR",
           "contains": [
             "struct_specifier",
-            "field_declaration",
             "explicit_function_specifier"
           ],
           "anchors": [
@@ -7495,8 +7493,7 @@
           "syntax": "NO_ERROR",
           "contains": [
             "template_declaration",
-            "struct_specifier",
-            "field_declaration"
+            "struct_specifier"
           ],
           "anchors": [
             {

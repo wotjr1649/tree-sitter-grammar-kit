@@ -1,0 +1,155 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "csharp",
+ "defects": [
+  "csharp-P2-04",
+  "csharp-P2-02",
+  "csharp-P2-06",
+  "csharp-P2-07",
+  "csharp-P2-08",
+  "csharp-P2-09",
+  "csharp-P2-10",
+  "csharp-P2-05",
+  "csharp-P2-PP",
+  "csharp-P2-01",
+  "csharp-P2-03",
+  "csharp-P2-11"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    /[\\s\\u00A0\\uFEFF\\u3000]+/,",
+     "after": "    /[\\s\\u00A0\\uFEFF\\u3000\\u0085\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F]+/,",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq('//', /[^\\n\\r]*/),",
+     "after": "      seq('//', /[^\\n\\r\\u0085\\u2028\\u2029]*/),",
+     "occurrences": 1
+    },
+    {
+     "before": "/\\S([^/\\n]|\\/[^*]|\\\\\\r?\\n)*/",
+     "after": "/\\S([^/\\n\\u0085\\u2028\\u2029]|\\/[^*]|\\\\\\r?\\n)*/",
+     "occurrences": 1
+    },
+    {
+     "before": "      /\\n/,\n",
+     "after": "      /\\n|\\u0085|\\u2028|\\u2029/,\n",
+     "occurrences": 11
+    },
+    {
+     "before": "      'unmanaged',\n      $.constructor_constraint,\n      field('type', $.type),\n",
+     "after": "      'unmanaged',\n      seq('allows', 'ref', 'struct'),\n      $.constructor_constraint,\n      field('type', $.type),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _reserved_identifier: _ => choice(\n      'alias',\n",
+     "after": "    _reserved_identifier: _ => choice(\n      'alias',\n      'allows',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional('extern'),\n      '~',\n      field('name', $.identifier),\n      field('parameters', $.parameter_list),\n      $._function_body,\n    ),\n",
+     "after": "      optional(choice(\n        seq($._finalizer_extern, optional($._finalizer_unsafe)),\n        seq($._finalizer_unsafe, optional($._finalizer_extern)),\n      )),\n      '~',\n      field('name', $.identifier),\n      field('parameters', $.parameter_list),\n      $._function_body,\n    ),\n\n    // Separate reductions so GLR keeps the finalizer and the modifier readings\n    // of 'extern'/'unsafe' until '~' (or the next member token) decides.\n    _finalizer_extern: _ => 'extern',\n    _finalizer_unsafe: _ => 'unsafe',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.receiver_parameter, $.scoped_type, $._reserved_identifier],\n  ],\n",
+     "after": "    [$.receiver_parameter, $.scoped_type, $._reserved_identifier],\n\n    // csharp-P2-06: 'extern unsafe ~F()' vs modifiers of another member\n    [$.modifier, $._finalizer_extern],\n    [$.modifier, $._finalizer_unsafe],\n\n    // csharp-P2-09: 'extern alias X;' in a namespace body vs an extern member whose type is 'alias'\n    [$.modifier, $._extern_alias_extern],\n\n    // csharp-P2-01 / csharp-P2-11: contextual 'async' / 'await' stay identifiers until a later token decides\n    [$._reserved_identifier, $._lambda_expression_init],\n    [$._reserved_identifier, $._lambda_expression_init, $.anonymous_method_expression],\n    [$.modifier, $._lambda_expression_init, $.anonymous_method_expression, $._reserved_identifier],\n    [$.modifier, $._lambda_expression_init, $.anonymous_method_expression],\n    [$._reserved_identifier],\n    [$._reserved_identifier, $.await_expression],\n    [$.local_declaration_statement, $.await_expression, $._reserved_identifier],\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('error'),\n      $.preproc_arg,\n",
+     "after": "      preprocessor('error'),\n      optional($.preproc_arg),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('warning'),\n      $.preproc_arg,\n",
+     "after": "      preprocessor('warning'),\n      optional($.preproc_arg),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    switch_section: $ => prec.left(seq(\n      choice(\n        seq(\n          'case',\n          choice(\n            $.expression,\n            seq($.pattern, optional($.when_clause)),\n          ),\n        ),\n        'default',\n      ),\n      ':',\n      repeat($.statement),\n    )),\n",
+     "after": "    switch_section: $ => prec.left(seq(\n      repeat1(seq(\n        choice(\n          seq(\n            'case',\n            choice(\n              $.expression,\n              seq($.pattern, optional($.when_clause)),\n            ),\n          ),\n          'default',\n        ),\n        ':',\n      )),\n      repeat1($.statement),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.using_directive,\n      $.preproc_if,\n      $.extension_declaration,\n    ),\n",
+     "after": "      $.extern_alias_directive,\n      $.using_directive,\n      $.preproc_if,\n      $.extension_declaration,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    extern_alias_directive: $ => seq('extern', 'alias', field('name', $.identifier), ';'),",
+     "after": "    extern_alias_directive: $ => prec.dynamic(1, seq($._extern_alias_extern, 'alias', field('name', $.identifier), ';')),\n\n    // Separate reduction so GLR keeps 'extern' as a modifier too (an extern member whose type is 'alias').\n    _extern_alias_extern: _ => 'extern',",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('body', $.block),\n      repeat($.catch_clause),\n      optional($.finally_clause),\n",
+     "after": "      field('body', $.block),\n      choice(\n        seq(repeat1($.catch_clause), optional($.finally_clause)),\n        $.finally_clause,\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    $._file_based_app_start,\n  ],\n",
+     "after": "    $._file_based_app_start,\n    $.preproc_skipped_section,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('else'),\n      rep ? repeat(content($)) : optional(content($)),\n",
+     "after": "      preprocessor('else'),\n      optional($.preproc_skipped_section),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('elif'),\n      field('condition', $._preproc_expression),\n      /\\n|\\u0085|\\u2028|\\u2029/,\n      rep ? repeat(content($)) : optional(content($)),\n",
+     "after": "      preprocessor('elif'),\n      field('condition', $._preproc_expression),\n      /\\n|\\u0085|\\u2028|\\u2029/,\n      optional($.preproc_skipped_section),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      repeat(prec(1, alias(choice('static', 'async'), $.modifier))),\n",
+     "after": "      repeat(choice(prec(-1, alias('static', $.modifier)), prec(0, prec.dynamic(1, alias('async', $.modifier))))),\n",
+     "occurrences": 2
+    },
+    {
+     "before": "    var_pattern: $ => seq('var', $._variable_designation),",
+     "after": "    var_pattern: $ => prec.dynamic(2, seq('var', $._variable_designation)),",
+     "occurrences": 1
+    },
+    {
+     "before": "    await_expression: $ => prec.right(PREC.UNARY, seq(\n      'await',\n      $.expression,\n    )),",
+     "after": "    await_expression: $ => prec.dynamic(1, seq(\n      'await',\n      prec.right(PREC.UNARY, $.expression),\n    )),",
+     "occurrences": 1
+    },
+    {
+     "before": "  function alternativeBlock($) {\n    return choice(\n      suffix ? alias($['preproc_else' + suffix], $.preproc_else) : $.preproc_else,\n      suffix ? alias($['preproc_elif' + suffix], $.preproc_elif) : $.preproc_elif,\n    );\n  }\n\n  return {\n    ['preproc_if' + suffix]: $ => prec(precedence, seq(\n      preprocessor('if'),\n      field('condition', $._preproc_expression),\n      /\\n|\\u0085|\\u2028|\\u2029/,\n      rep ? repeat(content($)) : optional(content($)),\n      field('alternative', optional(alternativeBlock($))),\n      preprocessor('endif'),\n    )),\n",
+     "after": "  // ECMA-334 6.5.5 without symbols: a condition that is the literal false (or !true) is\n  // false, and any other condition counts as true. The first section whose condition is\n  // not a literal false (an #else when no earlier section was taken) is parsed as code;\n  // every other section is one opaque preproc_skipped_section.\n\n  // the sections after a taken one: all skipped\n  function alternativeBlock($) {\n    return choice(\n      suffix ? alias($['preproc_else' + suffix], $.preproc_else) : $.preproc_else,\n      suffix ? alias($['preproc_elif' + suffix], $.preproc_elif) : $.preproc_elif,\n    );\n  }\n\n  // the sections after literal-false ones only: the first non-false one is taken\n  function liveAlternativeBlock($) {\n    return choice(\n      alias($['preproc_else_taken' + suffix], $.preproc_else),\n      alias($['preproc_elif_taken' + suffix], $.preproc_elif),\n      alias($['preproc_elif_false' + suffix], $.preproc_elif),\n    );\n  }\n\n  return {\n    ['preproc_if' + suffix]: $ => prec(precedence, choice(\n      seq(\n        preprocessor('if'),\n        field('condition', $._preproc_expression),\n        /\\n|\\u0085|\\u2028|\\u2029/,\n        rep ? repeat(content($)) : optional(content($)),\n        field('alternative', optional(alternativeBlock($))),\n        preprocessor('endif'),\n      ),\n      seq(\n        preprocessor('if'),\n        field('condition', $._preproc_false),\n        /\\n|\\u0085|\\u2028|\\u2029/,\n        optional($.preproc_skipped_section),\n        field('alternative', optional(liveAlternativeBlock($))),\n        preprocessor('endif'),\n      ),\n    )),\n\n    ['preproc_else_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor('else'),\n      rep ? repeat(content($)) : optional(content($)),\n    )),\n\n    ['preproc_elif_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor('elif'),\n      field('condition', $._preproc_expression),\n      /\\n|\\u0085|\\u2028|\\u2029/,\n      rep ? repeat(content($)) : optional(content($)),\n      field('alternative', optional(alternativeBlock($))),\n    )),\n\n    ['preproc_elif_false' + suffix]: $ => prec(precedence, seq(\n      preprocessor('elif'),\n      field('condition', $._preproc_false),\n      /\\n|\\u0085|\\u2028|\\u2029/,\n      optional($.preproc_skipped_section),\n      field('alternative', optional(liveAlternativeBlock($))),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _preproc_expression: $ => choice(\n",
+     "after": "    // a condition that is the literal false or !true (no symbol needed to evaluate it)\n    _preproc_false: $ => choice(\n      prec(1, alias('false', $.boolean_literal)),\n      alias($.preproc_not_true, $.unary_expression),\n    ),\n\n    preproc_not_true: $ => prec(1, seq(\n      field('operator', '!'),\n      field('argument', alias('true', $.boolean_literal)),\n    )),\n\n    _preproc_expression: $ => choice(\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "                // If we find 1 or 3 quotes, we push an interpolation.\n                // If there's only two quotes, that's just an empty string\n            } else {",
+     "after": "                else {\n                    // $\"\" is an empty interpolated regular string: push it like the one-quote case.\n                    interpolation.string_type |= REGULAR;\n                    array_push(&scanner->interpolation_stack, interpolation);\n                }\n            } else {",
+     "occurrences": 1
+    },
+    {
+     "before": "    FILE_BASED_APP_START,\n};\n",
+     "after": "    FILE_BASED_APP_START,\n    PREPROC_SKIPPED_SECTION,\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "bool tree_sitter_c_sharp_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *scanner = (Scanner *)payload;\n",
+     "after": "static inline bool is_pp_new_line(int32_t c) {\n    return c == '\\n' || c == '\\r' || c == 0x85 || c == 0x2028 || c == 0x2029;\n}\n\nstatic inline bool is_pp_space(int32_t c) {\n    return c == ' ' || c == '\\t' || c == '\\v' || c == '\\f' || c == 0xA0 || c == 0xFEFF || c == 0x1680 ||\n           (c >= 0x2000 && c <= 0x200A) || c == 0x202F || c == 0x205F || c == 0x3000;\n}\n\n// ECMA-334 6.5.5: the grammar selects the first section whose condition is not\n// the literal false (or !true); every other section is skipped. A skipped section is not\n// lexically processed except for directives, which only matter for finding\n// the #elif / #else / #endif that ends the section (nested #if..#endif groups\n// are skipped whole). The token covers the section from its first to its last\n// non-white-space character; white space around it stays extras.\nstatic bool scan_preproc_skipped_section(TSLexer *lexer) {\n    if (lexer->get_column(lexer) != 0) {\n        // Rest of the #else line: white space and an optional single-line\n        // comment, which the grammar lexes before calling here again.\n        while (is_pp_space(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (!lexer->eof(lexer) && !is_pp_new_line(lexer->lookahead)) {\n            return false;\n        }\n    }\n    bool has_content = false;\n    unsigned depth = 0;\n    for (;;) {\n        while (!lexer->eof(lexer) && (is_pp_new_line(lexer->lookahead) || is_pp_space(lexer->lookahead))) {\n            lexer->advance(lexer, !has_content);\n        }\n        if (lexer->eof(lexer)) {\n            break;\n        }\n        if (lexer->lookahead == '#') {\n            advance(lexer);\n            while (is_pp_space(lexer->lookahead)) {\n                advance(lexer);\n            }\n            char name[6];\n            size_t n = consume_identifier_into(lexer, name, sizeof(name));\n            if (buf_equals(name, n, \"if\")) {\n                depth++;\n            } else if (buf_equals(name, n, \"endif\") || buf_equals(name, n, \"elif\") || buf_equals(name, n, \"else\")) {\n                if (depth == 0) {\n                    break;\n                }\n                if (name[1] == 'n') {\n                    depth--;\n                }\n            }\n            lexer->mark_end(lexer);\n            has_content = true;\n        }\n        while (!lexer->eof(lexer) && !is_pp_new_line(lexer->lookahead)) {\n            bool space = is_pp_space(lexer->lookahead);\n            advance(lexer);\n            if (!space) {\n                lexer->mark_end(lexer);\n                has_content = true;\n            }\n        }\n    }\n    lexer->result_symbol = PREPROC_SKIPPED_SECTION;\n    return has_content;\n}\n\nbool tree_sitter_c_sharp_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *scanner = (Scanner *)payload;\n\n    // Valid only right after an #else line or the condition line of a skipped\n    // section; never together with the\n    // string tokens except during error recovery.\n    if (valid_symbols[PREPROC_SKIPPED_SECTION] && !valid_symbols[INTERPOLATION_REGULAR_START]) {\n        return scan_preproc_skipped_section(lexer);\n    }\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
