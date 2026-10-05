@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- 버전 충돌 legacy 대안을 구문 합집합에서 뺐다(#91, #76 사용자 결정). C++20·C++23 이전 해석 4개(`cpp-L01.a13`·`a14`·`a15`·`a18`), PHP 7.0에서 제거된 ASP·script tag(`php-L01.a006`·`a007`), 8.0 이전 `#[` 주석(`php-L01.a009`)이다. 같은 byte가 현행 version에서 다른 구문이라 grammar 하나로 함께 검증할 수 없다. 사양 인용은 [disposition 문서](docs/validation/language-feature-disposition.md#읽는-법과-완료-경계)에 있다.
+  - 이 대안만 담던 사례 `alt-cpp-L01-06`~`09`, `alt-php-L01-05`와, N3337 전용 attribute 위치를 담은 `alt-cpp-B01-31`을 뺐다. `alt-php-L01-04`는 여전히 유효한 `<?` short tag(`php-L01.a008`)만 남겼다.
+
 - 비채택 20 route도 고정 생성기 재생성 경로에 올렸다(#89, `C2-REGENERATE-r1`: #76에서 사용자가 승인한 26 route patch 경로의 첫 단계). grammar는 바꾸지 않았다.
   - 20 route의 native 입력 `parser.c`·`tree_sitter/*.h`는 이제 upstream에 들어 있는 이전 CLI 생성물이 아니다. 고정 commit의 patch 없는 grammar를 tree-sitter 0.27.0·Node 24.21.0·ABI 15로 재생성한 출력이다. `native-routes.json`의 `regeneration`은 patch chain과 patched file이 비어 있다. `language-sources.json`의 `regeneration` 기록과 `reproduction-routes.json`의 `PREPARE_GENERATED` 기준이 출력 6개를 모두 고정한다. Windows에서 20 route 모두 두 작업 공간 출력이 byte 단위로 같았고 S04 재생성 출력과도 같았다. php는 upstream 생성물과 같고, 나머지 19 route는 `array.h` 등이 다르다.
   - foundation 시험은 두 종류의 route만 받는다. 하나는 기존 규칙 그대로인 채택 route이고, 다른 하나는 adoption·patch 없이 출력이 고정된 재생성 전용 route다. 다음은 거부한다: 둘 다 아니거나 둘 다인 route, upstream parser, chain 없는 patched file, 빠지거나 다른 출력 고정, 재생성 기록이 있는 upstream 기준. 이 거부 사례마다 음성 대조 시험이 있다.

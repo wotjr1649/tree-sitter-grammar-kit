@@ -94581,77 +94581,6 @@
       "source": null
      },
      {
-      "id": "alt-cpp-B01-31",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "74649aefc7bcbbdbc6699c5402ac1a2007dda812a810ad20301bc0278f385988",
-       "bytes": 27
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "declaration",
-         "function_declarator",
-         "attribute_declaration",
-         "noexcept"
-        ],
-        "anchors": [
-         {
-          "type": "function_declarator",
-          "start_byte": 4,
-          "end_byte": 25
-         },
-         {
-          "type": "attribute_declaration",
-          "start_byte": 12,
-          "end_byte": 16
-         },
-         {
-          "type": "noexcept",
-          "start_byte": 17,
-          "end_byte": 25
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "cpp-B01": [
-        "P"
-       ],
-       "cpp-V23": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "cpp-B01.a540",
-       "cpp-B01.a717",
-       "cpp-B01.a042",
-       "cpp-B01.a043",
-       "cpp-B01.a046",
-       "cpp-B01.a047",
-       "cpp-B01.a054",
-       "cpp-V23.a028",
-       "cpp-V23.a029",
-       "cpp-V23.a030",
-       "cpp-V23.a031",
-       "cpp-V23.a036"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
       "id": "alt-cpp-B01-30",
       "role": "requirement",
       "input": {
@@ -97818,320 +97747,6 @@
       "source": null
      },
      {
-      "id": "alt-cpp-L01-06",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "f3b90c0db559c3635d0c82a4d11701514a000bd04bb4fa2b29ecad144750c265",
-       "bytes": 56
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "class_specifier",
-         "declaration"
-        ],
-        "anchors": [
-         {
-          "type": "class_specifier",
-          "start_byte": 0,
-          "end_byte": 15
-         },
-         {
-          "type": "declaration",
-          "start_byte": 17,
-          "end_byte": 27
-         },
-         {
-          "type": "class_specifier",
-          "start_byte": 28,
-          "end_byte": 43
-         },
-         {
-          "type": "declaration",
-          "start_byte": 45,
-          "end_byte": 55
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "cpp-B01": [
-        "P"
-       ],
-       "cpp-L01": [
-        "P"
-       ],
-       "cpp-V23": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "cpp-L01.a13",
-       "cpp-B01.a040",
-       "cpp-B01.a041",
-       "cpp-B01.a054",
-       "cpp-V23.a026",
-       "cpp-V23.a027",
-       "cpp-V23.a036"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "alt-cpp-L01-07",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "cc099455ab8fbaef4a02a1a89ab9a53f03d44c6cbfd481c0d19d56fefe581fed",
-       "bytes": 53
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "template_declaration",
-         "declaration",
-         "template_type"
-        ],
-        "anchors": [
-         {
-          "type": "template_declaration",
-          "start_byte": 0,
-          "end_byte": 35
-         },
-         {
-          "type": "declaration",
-          "start_byte": 36,
-          "end_byte": 52
-         },
-         {
-          "type": "template_type",
-          "start_byte": 36,
-          "end_byte": 47
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "cpp-B01": [
-        "P"
-       ],
-       "cpp-L01": [
-        "P"
-       ],
-       "cpp-V23": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "cpp-L01.a14",
-       "cpp-B01.a040",
-       "cpp-B01.a041",
-       "cpp-B01.a046",
-       "cpp-B01.a047",
-       "cpp-B01.a054",
-       "cpp-B01.a074",
-       "cpp-B01.a075",
-       "cpp-V23.a026",
-       "cpp-V23.a027",
-       "cpp-V23.a030",
-       "cpp-V23.a031",
-       "cpp-V23.a036",
-       "cpp-V23.a066",
-       "cpp-V23.a067"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "alt-cpp-L01-08",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "1c0df764800bf1128f632a2fa0370ab7bb94ffb21541f4bb00f75f23a108daab",
-       "bytes": 111
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "namespace_definition",
-         "template_declaration",
-         "declaration",
-         "template_type",
-         "operator_name"
-        ],
-        "anchors": [
-         {
-          "type": "declaration",
-          "start_byte": 31,
-          "end_byte": 53
-         },
-         {
-          "type": "declaration",
-          "start_byte": 92,
-          "end_byte": 108
-         },
-         {
-          "type": "template_type",
-          "start_byte": 92,
-          "end_byte": 105
-         },
-         {
-          "type": "operator_name",
-          "start_byte": 94,
-          "end_byte": 104
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "cpp-B01": [
-        "P"
-       ],
-       "cpp-L01": [
-        "P"
-       ],
-       "cpp-V20": [
-        "P"
-       ],
-       "cpp-V23": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "cpp-L01.a15",
-       "cpp-B01.a040",
-       "cpp-B01.a041",
-       "cpp-B01.a046",
-       "cpp-B01.a047",
-       "cpp-B01.a054",
-       "cpp-B01.a074",
-       "cpp-B01.a075",
-       "cpp-B01.a090",
-       "cpp-B01.a096",
-       "cpp-V23.a026",
-       "cpp-V23.a027",
-       "cpp-V23.a030",
-       "cpp-V23.a031",
-       "cpp-V23.a036",
-       "cpp-V23.a066",
-       "cpp-V23.a067",
-       "cpp-V23.a068",
-       "cpp-V20.a07",
-       "cpp-V23.a078"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "alt-cpp-L01-09",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "c64ed33e4cda8a112a6750398379ba0c8f4b61aa0aaa710acd4411eac0f8d591",
-       "bytes": 48
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "function_definition",
-         "subscript_expression",
-         "comma_expression"
-        ],
-        "anchors": [
-         {
-          "type": "subscript_expression",
-          "start_byte": 35,
-          "end_byte": 44
-         },
-         {
-          "type": "comma_expression",
-          "start_byte": 39,
-          "end_byte": 43
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "cpp-B01": [
-        "P"
-       ],
-       "cpp-L01": [
-        "P"
-       ],
-       "cpp-V23": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "cpp-L01.a18",
-       "cpp-B01.a040",
-       "cpp-B01.a041",
-       "cpp-B01.a042",
-       "cpp-B01.a043",
-       "cpp-B01.a046",
-       "cpp-B01.a047",
-       "cpp-B01.a054",
-       "cpp-B01.a065",
-       "cpp-B01.a096",
-       "cpp-V23.a026",
-       "cpp-V23.a027",
-       "cpp-V23.a028",
-       "cpp-V23.a029",
-       "cpp-V23.a030",
-       "cpp-V23.a031",
-       "cpp-V23.a036",
-       "cpp-V23.a049",
-       "cpp-V23.a078"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
       "id": "alt-cpp-L01-10",
       "role": "requirement",
       "input": {
@@ -100465,12 +100080,8 @@
       "cpp-L01.a10",
       "cpp-L01.a11",
       "cpp-L01.a12",
-      "cpp-L01.a13",
-      "cpp-L01.a14",
-      "cpp-L01.a15",
       "cpp-L01.a16",
       "cpp-L01.a17",
-      "cpp-L01.a18",
       "cpp-L01.a19"
      ]
     }
@@ -136985,8 +136596,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "a613d7380ddeaa8f507fe32a7b15f4507cb5edbf50ec212a9694114103b7b181",
-       "bytes": 99
+       "sha256": "55a75e6dbe031e07e89809296c26da27a0eb636c44235415e3d0acdb1d710632",
+       "bytes": 33
       },
       "edits": [],
       "expect": [
@@ -137005,29 +136616,14 @@
           "end_byte": 19
          },
          {
+          "type": "php_tag",
+          "start_byte": 19,
+          "end_byte": 21
+         },
+         {
           "type": "echo_statement",
           "start_byte": 22,
           "end_byte": 29
-         },
-         {
-          "type": "variable_name",
-          "start_byte": 37,
-          "end_byte": 39
-         },
-         {
-          "type": "echo_statement",
-          "start_byte": 67,
-          "end_byte": 74
-         },
-         {
-          "type": "php_tag",
-          "start_byte": 85,
-          "end_byte": 87
-         },
-         {
-          "type": "echo_statement",
-          "start_byte": 88,
-          "end_byte": 95
          }
         ],
         "declarations": ""
@@ -137048,138 +136644,7 @@
        ]
       },
       "alternatives": [
-       "php-B01.a001",
-       "php-B01.a002",
-       "php-B01.a004",
-       "php-B01.a005",
-       "php-B01.a014",
-       "php-B01.a017",
-       "php-B01.a020",
-       "php-B01.a024",
-       "php-B01.a025",
-       "php-B01.a028",
-       "php-B01.a037",
-       "php-B01.a038",
-       "php-B01.a040",
-       "php-B01.a045",
-       "php-B01.a047",
-       "php-B01.a050",
-       "php-B01.a057",
-       "php-B01.a111",
-       "php-B01.a162",
-       "php-B01.a166",
-       "php-B01.a190",
-       "php-B01.a344",
-       "php-B01.a359",
-       "php-B01.a361",
-       "php-B01.a364",
-       "php-B01.a365",
-       "php-L01.a006",
-       "php-L01.a007",
        "php-L01.a008"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "alt-php-L01-05",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "2f0639d7a3be4a8155cf7e5570f6aa74ede7cd35e10f5516fa6a60b679cf1b1c",
-       "bytes": 70
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "comment"
-        ],
-        "anchors": [
-         {
-          "type": "comment",
-          "start_byte": 6,
-          "end_byte": 61
-         },
-         {
-          "type": "assignment_expression",
-          "start_byte": 62,
-          "end_byte": 68
-         }
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "php-B01": [
-        "P"
-       ],
-       "php-L01": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "php-B01.a001",
-       "php-B01.a002",
-       "php-B01.a004",
-       "php-B01.a005",
-       "php-B01.a014",
-       "php-B01.a017",
-       "php-B01.a019",
-       "php-B01.a020",
-       "php-B01.a022",
-       "php-B01.a023",
-       "php-B01.a025",
-       "php-B01.a026",
-       "php-B01.a028",
-       "php-B01.a029",
-       "php-B01.a037",
-       "php-B01.a038",
-       "php-B01.a040",
-       "php-B01.a043",
-       "php-B01.a044",
-       "php-B01.a045",
-       "php-B01.a047",
-       "php-B01.a048",
-       "php-B01.a049",
-       "php-B01.a050",
-       "php-B01.a051",
-       "php-B01.a054",
-       "php-B01.a055",
-       "php-B01.a056",
-       "php-B01.a057",
-       "php-B01.a060",
-       "php-B01.a061",
-       "php-B01.a062",
-       "php-B01.a063",
-       "php-B01.a066",
-       "php-B01.a067",
-       "php-B01.a076",
-       "php-B01.a084",
-       "php-B01.a162",
-       "php-B01.a166",
-       "php-B01.a178",
-       "php-B01.a186",
-       "php-B01.a188",
-       "php-B01.a229",
-       "php-B01.a231",
-       "php-B01.a237",
-       "php-B01.a344",
-       "php-B01.a345",
-       "php-B01.a357",
-       "php-B01.a359",
-       "php-B01.a361",
-       "php-B01.a362",
-       "php-L01.a009"
       ],
       "sample": null,
       "source": null
@@ -139935,10 +139400,7 @@
       "php-L01.a003",
       "php-L01.a004",
       "php-L01.a005",
-      "php-L01.a006",
-      "php-L01.a007",
       "php-L01.a008",
-      "php-L01.a009",
       "php-L01.a010",
       "php-L01.a011",
       "php-L01.a012",

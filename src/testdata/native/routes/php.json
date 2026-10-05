@@ -5849,37 +5849,9 @@
         "php-L01"
       ],
       "alternatives": [
-        "php-B01.a001",
-        "php-B01.a002",
-        "php-B01.a004",
-        "php-B01.a005",
-        "php-B01.a014",
-        "php-B01.a017",
-        "php-B01.a020",
-        "php-B01.a024",
-        "php-B01.a025",
-        "php-B01.a028",
-        "php-B01.a037",
-        "php-B01.a038",
-        "php-B01.a040",
-        "php-B01.a045",
-        "php-B01.a047",
-        "php-B01.a050",
-        "php-B01.a057",
-        "php-B01.a111",
-        "php-B01.a162",
-        "php-B01.a166",
-        "php-B01.a190",
-        "php-B01.a344",
-        "php-B01.a359",
-        "php-B01.a361",
-        "php-B01.a364",
-        "php-B01.a365",
-        "php-L01.a006",
-        "php-L01.a007",
         "php-L01.a008"
       ],
-      "source_utf8": "<p>legacy tags</p>\n<% echo 1; %>\n<%= $x %>\n<script language=\"php\"> echo 2; </script>\n<? echo 3; ?>\n",
+      "source_utf8": "<p>legacy tags</p>\n<? echo 3; ?>\n",
       "edits": [],
       "expect": [
         {
@@ -5896,106 +5868,12 @@
               "text": "<p>legacy tags</p>\n"
             },
             {
-              "type": "echo_statement",
-              "text": "echo 1;"
-            },
-            {
-              "type": "variable_name",
-              "text": "$x"
-            },
-            {
-              "type": "echo_statement",
-              "text": "echo 2;"
-            },
-            {
               "type": "php_tag",
               "text": "<?"
             },
             {
               "type": "echo_statement",
               "text": "echo 3;"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "alt-php-L01-05",
-      "features": [
-        "php-B01",
-        "php-L01"
-      ],
-      "alternatives": [
-        "php-B01.a001",
-        "php-B01.a002",
-        "php-B01.a004",
-        "php-B01.a005",
-        "php-B01.a014",
-        "php-B01.a017",
-        "php-B01.a019",
-        "php-B01.a020",
-        "php-B01.a022",
-        "php-B01.a023",
-        "php-B01.a025",
-        "php-B01.a026",
-        "php-B01.a028",
-        "php-B01.a029",
-        "php-B01.a037",
-        "php-B01.a038",
-        "php-B01.a040",
-        "php-B01.a043",
-        "php-B01.a044",
-        "php-B01.a045",
-        "php-B01.a047",
-        "php-B01.a048",
-        "php-B01.a049",
-        "php-B01.a050",
-        "php-B01.a051",
-        "php-B01.a054",
-        "php-B01.a055",
-        "php-B01.a056",
-        "php-B01.a057",
-        "php-B01.a060",
-        "php-B01.a061",
-        "php-B01.a062",
-        "php-B01.a063",
-        "php-B01.a066",
-        "php-B01.a067",
-        "php-B01.a076",
-        "php-B01.a084",
-        "php-B01.a162",
-        "php-B01.a166",
-        "php-B01.a178",
-        "php-B01.a186",
-        "php-B01.a188",
-        "php-B01.a229",
-        "php-B01.a231",
-        "php-B01.a237",
-        "php-B01.a344",
-        "php-B01.a345",
-        "php-B01.a357",
-        "php-B01.a359",
-        "php-B01.a361",
-        "php-B01.a362",
-        "php-L01.a009"
-      ],
-      "source_utf8": "<?php\n#[ legacy hash comment, not an attribute before PHP 8.0\n$x = 1;\n",
-      "edits": [],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "comment"
-          ],
-          "anchors": [
-            {
-              "type": "comment",
-              "text": "#[ legacy hash comment, not an attribute before PHP 8.0"
-            },
-            {
-              "type": "assignment_expression",
-              "text": "$x = 1"
             }
           ]
         }

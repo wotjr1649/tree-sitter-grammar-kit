@@ -14985,30 +14985,6 @@
             "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
           },
           {
-            "id": "cpp-L01.a13",
-            "kind": "fact",
-            "variant_of": null,
-            "fact": "module/import identifiers",
-            "production": "N4950 C.2 [diff.cpp17.lex]: a logical line starting with module or import was an ordinary declaration before C++20 (module m1; import j1;)",
-            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
-          },
-          {
-            "id": "cpp-L01.a14",
-            "kind": "fact",
-            "variant_of": null,
-            "fact": "import<...> template-id",
-            "production": "N4950 C.2 [diff.cpp17.lex]: import<int> f(); was a declaration using a class template named import",
-            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
-          },
-          {
-            "id": "cpp-L01.a15",
-            "kind": "fact",
-            "variant_of": null,
-            "fact": "<= followed by >",
-            "production": "N4950 C.2 [diff.cpp17.lex]: Y<operator<=> y; was <= followed by > before the <=> token",
-            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L369 [diff.cpp17.lex]"
-          },
-          {
             "id": "cpp-L01.a16",
             "kind": "fact",
             "variant_of": null,
@@ -15023,14 +14999,6 @@
             "fact": "simple-template-id constructor name",
             "production": "N4950 C.2 [diff.cpp17.class]: A<T>(); and ~A<T>(); as constructor/destructor declarator-id",
             "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L642 [diff.cpp17.class]"
-          },
-          {
-            "id": "cpp-L01.a18",
-            "kind": "fact",
-            "variant_of": "cpp-B01.a254",
-            "fact": "comma in subscript",
-            "production": "N4950 C.1 [diff.cpp20.expr]: arr[1, 2] was arr[(1, 2)] (postfix-expression [ expression ] with a comma expression)",
-            "ref": "https://github.com/cplusplus/draft/blob/n4950/source/compatibility.tex#L42 [diff.cpp20.expr]"
           },
           {
             "id": "cpp-L01.a19",
@@ -95102,36 +95070,12 @@
             "ref": "https://github.com/php/php-langspec/blob/ca697b43031efd70b5306d29b74e1190e7eacac8/spec/19-grammar.md#grammar-cast-type"
           },
           {
-            "id": "php-L01.a006",
-            "kind": "fact",
-            "variant_of": "php-B01.a362",
-            "fact": "legacy tag form",
-            "production": "<% %> and <%= %> (removed 7.0; asp_tags)",
-            "ref": "https://www.php.net/manual/en/migration70.incompatible.php#migration70.incompatible.other.php-tags"
-          },
-          {
-            "id": "php-L01.a007",
-            "kind": "fact",
-            "variant_of": "php-B01.a362",
-            "fact": "legacy tag form",
-            "production": "<script language=\"php\"> ... </script> (removed 7.0)",
-            "ref": "https://www.php.net/manual/en/migration70.incompatible.php#migration70.incompatible.other.php-tags"
-          },
-          {
             "id": "php-L01.a008",
             "kind": "fact",
             "variant_of": "php-B01.a362",
             "fact": "legacy tag form",
             "production": "<? short open tag (short_open_tag=On)",
             "ref": "https://www.php.net/manual/en/language.basic-syntax.phptags.php#language.basic-syntax.phptags"
-          },
-          {
-            "id": "php-L01.a009",
-            "kind": "fact",
-            "variant_of": "php-B01.a009",
-            "fact": "legacy comment context",
-            "production": "#[ starting a # comment (before 8.0 attributes)",
-            "ref": "https://www.php.net/manual/en/migration80.incompatible.php#migration80.incompatible.core.other"
           },
           {
             "id": "php-L01.a010",
