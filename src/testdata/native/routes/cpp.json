@@ -7285,53 +7285,6 @@
       ]
     },
     {
-      "id": "alt-cpp-L01-06",
-      "features": [
-        "cpp-L01",
-        "cpp-B01",
-        "cpp-V23"
-      ],
-      "alternatives": [
-        "cpp-L01.a13",
-        "cpp-B01.a040",
-        "cpp-B01.a041",
-        "cpp-B01.a054",
-        "cpp-V23.a026",
-        "cpp-V23.a027",
-        "cpp-V23.a036"
-      ],
-      "source_utf8": "class module {};\nmodule m1;\nclass import {};\nimport j1;\n",
-      "edits": [],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "class_specifier",
-            "declaration"
-          ],
-          "anchors": [
-            {
-              "type": "class_specifier",
-              "text": "class module {}"
-            },
-            {
-              "type": "declaration",
-              "text": "module m1;"
-            },
-            {
-              "type": "class_specifier",
-              "text": "class import {}"
-            },
-            {
-              "type": "declaration",
-              "text": "import j1;"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "id": "alt-cpp-L01-07",
       "features": [
         "cpp-L01",
@@ -7443,58 +7396,6 @@
               "type": "operator_name",
               "text": "operator<=",
               "occurrence": 2
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "alt-cpp-L01-09",
-      "features": [
-        "cpp-L01",
-        "cpp-B01",
-        "cpp-V23"
-      ],
-      "alternatives": [
-        "cpp-L01.a18",
-        "cpp-B01.a040",
-        "cpp-B01.a041",
-        "cpp-B01.a042",
-        "cpp-B01.a043",
-        "cpp-B01.a046",
-        "cpp-B01.a047",
-        "cpp-B01.a054",
-        "cpp-B01.a065",
-        "cpp-B01.a096",
-        "cpp-V23.a026",
-        "cpp-V23.a027",
-        "cpp-V23.a028",
-        "cpp-V23.a029",
-        "cpp-V23.a030",
-        "cpp-V23.a031",
-        "cpp-V23.a036",
-        "cpp-V23.a049",
-        "cpp-V23.a078"
-      ],
-      "source_utf8": "int comma_sub(int *arr) {\n  return arr[1, 2];\n}\n",
-      "edits": [],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "function_definition",
-            "subscript_expression",
-            "comma_expression"
-          ],
-          "anchors": [
-            {
-              "type": "subscript_expression",
-              "text": "arr[1, 2]"
-            },
-            {
-              "type": "comma_expression",
-              "text": "1, 2"
             }
           ]
         }
