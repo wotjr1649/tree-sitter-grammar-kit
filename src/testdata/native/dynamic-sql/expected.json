@@ -231,6 +231,38 @@
           },
           "variable": null,
           "heuristic": false
+        },
+        {
+          "construct": "EXEC_PAREN_AT",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1232,
+          "end_byte": 1248,
+          "start_point": {
+            "row": 31,
+            "column": 6
+          },
+          "end_point": {
+            "row": 31,
+            "column": 22
+          },
+          "variable": null,
+          "heuristic": false
+        },
+        {
+          "construct": "SP_EXECUTESQL",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1330,
+          "end_byte": 1346,
+          "start_point": {
+            "row": 34,
+            "column": 19
+          },
+          "end_point": {
+            "row": 34,
+            "column": 35
+          },
+          "variable": null,
+          "heuristic": false
         }
       ],
       "non_facts": [
@@ -275,18 +307,6 @@
           "start_byte": 1072,
           "end_byte": 1077,
           "note": "EXEC @module_var is not dynamic SQL; range is the module variable"
-        },
-        {
-          "what": "KNOWN_MISS",
-          "start_byte": 1226,
-          "end_byte": 1274,
-          "note": "EXEC (...) AT DATA_SOURCE name; range is the statement through ;"
-        },
-        {
-          "what": "KNOWN_MISS",
-          "start_byte": 1311,
-          "end_byte": 1374,
-          "note": "EXEC ... WITH RESULT SETS (...); range is the statement through ;"
         }
       ]
     },

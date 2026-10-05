@@ -78,7 +78,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * 구문 종류는 닫힌 목록이다: `EXEC(...)`, `EXEC(...) AT` linked server, 이름을 정규화한 `sp_executesql`, C# command 생성자·initializer·`CommandText` 대입. `EXEC @module_var`는 동적 SQL이 아니다.
 * 인자 종류도 닫힌 목록이다: `literal_unicode`, `literal_char`, `variable`, `bare_word`, `concatenation`, `other`.
 * 사실은 구문 종류, 인자 종류, 원본 byte/point 범위, 변수 이름이다. 인자는 위치로 추출하며 `AS USER`와 pass-through 매개변수는 제외한다.
-* `AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출은 알려진 누락이다.
+* `AT DATA_SOURCE`, `WITH RESULT SETS`, `EXEC` 없는 batch 첫 호출은 알려진 누락이다. tsql C2 patch 뒤의 grammar는 `AT DATA_SOURCE`와 `WITH RESULT SETS`를 parse해 사실로 내므로, 이 둘은 tree가 아직 누락 모양일 때만 누락으로 보고된다.
 * C# 위치는 버전을 붙인 API 이름 목록으로 찾는 heuristic이며 결과에 heuristic으로 표시한다. `CommandType.StoredProcedure`는 알려진 false positive다.
 * 이스케이프 없는 완성 리터럴을 단일 included range로 2차 파싱하는 것은 범위 밖의 후속 선택지다.
 
