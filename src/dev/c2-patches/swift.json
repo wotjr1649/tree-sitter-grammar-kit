@@ -1,0 +1,441 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "swift",
+ "defects": [
+  "swift-P2-01",
+  "swift-P2-14",
+  "swift-P2-15",
+  "swift-P2-27",
+  "swift-P2-36",
+  "swift-P2-22",
+  "swift-P2-37",
+  "swift-P2-13",
+  "swift-P2-16",
+  "swift-P2-17",
+  "swift-P2-31",
+  "swift-P2-30",
+  "swift-P2-29",
+  "swift-P2-21",
+  "swift-P2-03",
+  "swift-P2-19",
+  "swift-P2-20",
+  "swift-P2-05",
+  "swift-P2-28",
+  "swift-P2-32",
+  "swift-P2-33",
+  "swift-P2-02",
+  "swift-P2-07",
+  "swift-P2-12",
+  "swift-P2-26",
+  "swift-P2-35",
+  "swift-P2-18",
+  "swift-P2-25",
+  "swift-P2-11",
+  "swift-P2-04",
+  "swift-P2-24",
+  "swift-P2-34",
+  "swift-P2-10",
+  "swift-P2-06",
+  "swift-P2-09",
+  "swift-P2-08",
+  "swift-P2-23",
+  "swift-P2-39"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    _parameter_ownership_modifier: ($) => choice(\"borrowing\", \"consuming\"),",
+     "after": "    _parameter_ownership_modifier: ($) =>\n      choice(\"borrowing\", \"consuming\", \"sending\", \"isolated\"),",
+     "occurrences": 1
+    },
+    {
+     "before": "              $._arrow_operator,\n              field(\"return_type\", $._possibly_implicitly_unwrapped_type)",
+     "after": "              $._arrow_operator,\n              optional($.parameter_modifiers),\n              field(\"return_type\", $._possibly_implicitly_unwrapped_type)",
+     "occurrences": 3
+    },
+    {
+     "before": "    _consume_operator: ($) => alias(\"consume\", \"consume\"),",
+     "after": "    _consume_operator: ($) =>\n      choice(alias(\"consume\", \"consume\"), alias(\"copy\", \"copy\")),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"consume\",\n        \"discard\",",
+     "after": "        \"consume\",\n        \"copy\",\n        \"discard\",",
+     "occurrences": 1
+    },
+    {
+     "before": "    macro_invocation: ($) =>\n      prec(\n        PRECS.call,\n        prec.dynamic(\n          DYNAMIC_PRECS.call,\n          seq(\n            $._hash_symbol,\n            $.simple_identifier,\n            optional($.type_parameters),\n            $.call_suffix\n          )\n        )\n      ),",
+     "after": "    macro_invocation: ($) =>\n      prec.right(\n        PRECS.call,\n        prec.dynamic(\n          DYNAMIC_PRECS.call,\n          seq(\n            $._hash_symbol,\n            $.simple_identifier,\n            optional($.type_arguments),\n            optional($.call_suffix)\n          )\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_parameter: ($) =>\n      seq(\n        optional($.type_parameter_modifiers),\n        $._type_parameter_possibly_packed,",
+     "after": "    type_parameter: ($) =>\n      seq(\n        optional($.type_parameter_modifiers),\n        optional(\"let\"),\n        $._type_parameter_possibly_packed,",
+     "occurrences": 1
+    },
+    {
+     "before": "        choice($._equal_sign, $._eq_eq),\n        field(\"must_equal\", $._type)",
+     "after": "        choice($._equal_sign, $._eq_eq),\n        field(\"must_equal\", choice($._type, seq(optional(\"-\"), $.integer_literal)))",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.simple_identifier,\n        \":\",\n        choice($.simple_identifier, $.boolean_literal)\n      ),",
+     "after": "        $.simple_identifier,\n        \":\",\n        choice(sep1($.simple_identifier, \",\"), $.boolean_literal)\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional(seq(\":\", field(\"must_inherit\", $._type))),\n        optional($.type_constraints),\n        optional(seq($._equal_sign, field(\"default_value\", $._type)))\n      ),",
+     "after": "        optional(seq(\":\", field(\"must_inherit\", $._type))),\n        optional(seq($._equal_sign, field(\"default_value\", $._type))),\n        optional($.type_constraints)\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.catch_keyword,\n        field(\"error\", optional(alias($._binding_pattern_no_expr, $.pattern))),\n        optional($.where_clause),\n        $._block",
+     "after": "        $.catch_keyword,\n        optional(\n          sep1(\n            seq(\n              field(\"error\", alias($._binding_pattern_no_expr, $.pattern)),\n              optional($.where_clause)\n            ),\n            \",\"\n          )\n        ),\n        $._block",
+     "occurrences": 1
+    },
+    {
+     "before": "              $._type,\n              optional(seq($._equal_sign, $._expression))\n            ),\n            \",\"\n          )\n        ),\n        \")\"\n      ),",
+     "after": "              $._type,\n              optional(seq($._equal_sign, $._expression))\n            ),\n            \",\"\n          )\n        ),\n        optional(\",\"),\n        \")\"\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "              \":\",\n              optional($.parameter_modifiers),\n              field(\"type\", $._possibly_implicitly_unwrapped_type)\n            )\n          )\n        )\n      ),\n    self_expression",
+     "after": "              \":\",\n              optional($.parameter_modifiers),\n              field(\"type\", $._possibly_implicitly_unwrapped_type),\n              optional($._three_dot_operator)\n            )\n          )\n        )\n      ),\n    self_expression",
+     "occurrences": 1
+    },
+    {
+     "before": "    _tuple_pattern: ($) => seq(\"(\", sep1Opt($._tuple_pattern_item, \",\"), \")\"),",
+     "after": "    _tuple_pattern: ($) =>\n      seq(\"(\", optional(sep1Opt($._tuple_pattern_item, \",\")), \")\"),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"lazy\",\n        \"repeat\",\n        \"package\",",
+     "after": "        \"lazy\",\n        \"package\",",
+     "occurrences": 1
+    },
+    {
+     "before": "          repeat(seq(\".\", $._key_path_component))\n        )\n      ),",
+     "after": "          optional($._key_path_components)\n        )\n      ),\n    _key_path_components: ($) =>\n      prec.right(\n        PRECS.keypath,\n        seq($._dot, $._key_path_component, optional($._key_path_components))\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "  prefix_operations: 7,",
+     "after": "  prefix_operations: 12,",
+     "occurrences": 1
+    },
+    {
+     "before": "  navigation: 12,",
+     "after": "  navigation: 13,",
+     "occurrences": 1
+    },
+    {
+     "before": "        \":\",\n        $.statements,\n        optional(\"fallthrough\")\n      ),",
+     "after": "        \":\",\n        $.statements\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    control_transfer_statement: ($) =>\n      choice(\n        prec.right(PRECS.control_transfer, $._throw_statement),",
+     "after": "    control_transfer_statement: ($) =>\n      choice(\n        prec.right(PRECS.control_transfer, $._throw_statement),\n        \"fallthrough\",",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq(\n          \"(\",\n          sep1Opt(\n            seq(\n              optional(seq(field(\"name\", $.simple_identifier), \":\")),\n              field(\"value\", $._expression)\n            ),\n            \",\"\n          ),\n          \")\"\n        )",
+     "after": "        seq(\n          \"(\",\n          optional(\n            sep1Opt(\n              seq(\n                optional(seq(field(\"name\", $.simple_identifier), \":\")),\n                field(\"value\", $._expression)\n              ),\n              \",\"\n            )\n          ),\n          \")\"\n        )",
+     "occurrences": 1
+    },
+    {
+     "before": "          optional($._tuple_type_item_identifier),\n          optional($.parameter_modifiers),\n          field(\"type\", $._type)\n        )",
+     "after": "          optional($._tuple_type_item_identifier),\n          optional($.parameter_modifiers),\n          field(\"type\", $._type),\n          optional($._three_dot_operator)\n        )",
+     "occurrences": 1
+    },
+    {
+     "before": "    metatype: ($) => seq($._unannotated_type, \".\", choice(\"Type\", \"Protocol\")),",
+     "after": "    metatype: ($) => seq($._unannotated_type, $._dot, choice(\"Type\", \"Protocol\")),",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional(seq(\"(\", optional(sep1Opt($._attribute_argument, \",\")), \")\"))\n      ),",
+     "after": "        optional(\n          seq(\n            token.immediate(\"(\"),\n            optional(sep1Opt($._attribute_argument, \",\")),\n            \")\"\n          )\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    line_str_text: ($) => /[^\\\\\"]+/,",
+     "after": "    line_str_text: ($) => token.immediate(/[^\\\\\"\\r\\n]+/),",
+     "occurrences": 1
+    },
+    {
+     "before": "        repeat(choice(field(\"text\", $._line_string_content), $._interpolation)),\n        '\"'\n      ),",
+     "after": "        repeat(choice(field(\"text\", $._line_string_content), $._interpolation)),\n        alias(token.immediate('\"'), '\"')\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._contextual_simple_identifier, $._unsafe_operator],\n  ],\n  extras:",
+     "after": "    [$._contextual_simple_identifier, $._unsafe_operator],\n    // c2 conflicts\n        [$._switch_entry_statements],\n        [$._opaque_operand, $._opaque_metatype],\n        [$._simple_user_type, $._specialized_user_type],\n        [$._simple_user_type, $._expression, $._specialized_user_type],\n        [$._semi, $._switch_entry_statements],\n        [$._local_property_declaration, $._local_typealias_declaration, $._local_function_declaration, $._local_class_declaration, $.computed_getter, $.computed_modify, $.computed_borrow, $.computed_mutate, $.computed_setter],\n        [$._contextual_simple_identifier, $.computed_mutate],\n        [$._contextual_simple_identifier, $.computed_borrow],\n        [$.value_argument, $._reference_specifier_argument],\n        [$._unary_expression, $.switch_statement],\n        [$.user_type, $._specialized_user_type],\n  ],\n  extras:",
+     "occurrences": 1
+    },
+    {
+     "before": "    opaque_type: ($) => prec.right(seq(\"some\", $._unannotated_type)),\n    existential_type: ($) => prec.right(seq(\"any\", $._unannotated_type)),",
+     "after": "    opaque_type: ($) => prec.right(-2, seq(\"some\", $._opaque_operand)),\n    existential_type: ($) => prec.right(-2, seq(\"any\", $._opaque_operand)),\n    _opaque_operand: ($) =>\n      choice(\n        $.user_type,\n        $.tuple_type,\n        $.array_type,\n        $.inline_array_type,\n        $.dictionary_type,\n        alias($._opaque_metatype, $.metatype),\n        $.bracket_qualified_type,\n        $.protocol_composition_type,\n        $.suppressed_constraint\n      ),\n    _opaque_metatype: ($) =>\n      prec.dynamic(\n        1,\n        seq(\n          choice($.user_type, $.tuple_type, $.array_type, $.dictionary_type),\n          $._dot,\n          choice(\"Type\", \"Protocol\")\n        )\n      ),\n    _opaque_optional_type: ($) =>\n      prec.left(\n        seq(\n          field(\n            \"wrapped\",\n            choice(\n              $.opaque_type,\n              $.existential_type,\n              alias($._opaque_optional_type, $.optional_type)\n            )\n          ),\n          alias($._immediate_quest, \"?\")\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.optional_type,\n          $.metatype,\n          $.bracket_qualified_type,\n          $.opaque_type,",
+     "after": "          $.optional_type,\n          alias($._opaque_optional_type, $.optional_type),\n          $.metatype,\n          $.bracket_qualified_type,\n          $.opaque_type,",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_modifiers: ($) => repeat1($.attribute),",
+     "after": "    type_modifiers: ($) =>\n      repeat1(choice($.attribute, seq(\"nonisolated\", \"(\", \"nonsending\", \")\"))),",
+     "occurrences": 1
+    },
+    {
+     "before": "          \"{\",\n          repeat($.switch_entry),\n          \"}\"\n        )\n      ),",
+     "after": "          \"{\",\n          repeat(choice($.switch_entry, $.directive)),\n          \"}\"\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    value_arguments: ($) =>\n      seq(\n        choice(\n          seq(\"(\", optional(sep1Opt($.value_argument, \",\")), \")\"),",
+     "after": "    value_arguments: ($) =>\n      seq(\n        choice(\n          seq(\n            \"(\",\n            optional(\n              choice(\n                alias($._reference_specifier_argument, $.value_argument),\n                sep1Opt($.value_argument, \",\")\n              )\n            ),\n            \")\"\n          ),",
+     "occurrences": 1
+    },
+    {
+     "before": "          optional($.type_modifiers),\n          choice(\n            repeat1(\n              seq(field(\"reference_specifier\", $.value_argument_label), \":\")\n            ),\n            seq(\n              optional(seq(field(\"name\", $.value_argument_label), \":\")),\n              field(\"value\", $._expression)\n            )\n          )\n        )\n      ),",
+     "after": "          optional($.type_modifiers),\n          seq(\n            optional(seq(field(\"name\", $.value_argument_label), \":\")),\n            field(\"value\", $._expression)\n          )\n        )\n      ),\n    _reference_specifier_argument: ($) =>\n      prec.left(\n        seq(\n          optional($.type_modifiers),\n          repeat1(\n            seq(field(\"reference_specifier\", $.value_argument_label), \":\")\n          )\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        /`[^\\r\\n`]+`/,\n        /\\$[0-9]+/,",
+     "after": "        /`[^\\r\\n`]*[^\\r\\n`\\/=\\-+!*%<>&|^~?.][^\\r\\n`]*`/,\n        /\\$[0-9]+/,",
+     "occurrences": 1
+    },
+    {
+     "before": "          repeat(\n            choice($.computed_getter, $.computed_setter, $.computed_modify)\n          )",
+     "after": "          repeat(\n            choice(\n              $.computed_getter,\n              $.computed_setter,\n              $.computed_modify,\n              $.computed_borrow,\n              $.computed_mutate\n            )\n          )",
+     "occurrences": 1
+    },
+    {
+     "before": "    computed_modify: ($) =>\n      seq(repeat($.attribute), $.modify_specifier, optional($._block)),",
+     "after": "    computed_modify: ($) =>\n      seq(repeat($.attribute), $.modify_specifier, optional($._block)),\n    computed_borrow: ($) =>\n      prec.dynamic(\n        10,\n        seq(\n          repeat($.attribute),\n          optional($.mutation_modifier),\n          \"borrow\",\n          optional($._block)\n        )\n      ),\n    computed_mutate: ($) =>\n      prec.dynamic(\n        10,\n        seq(\n          repeat($.attribute),\n          optional($.mutation_modifier),\n          \"mutate\",\n          optional($._block)\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"lazy\",\n        \"package\",",
+     "after": "        \"lazy\",\n        \"borrow\",\n        \"mutate\",\n        \"package\",",
+     "occurrences": 1
+    },
+    {
+     "before": "if (tree_sitter_version_supports_emoji()) {\n  LEXICAL_IDENTIFIER =\n    /[_\\p{XID_Start}\\p{Emoji}&&[^0-9#*]](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?([_\\p{XID_Continue}\\p{Emoji}\\x{200D}](\\p{EMod}|\\x{FE0F}\\x{20E3}?)?)*/;\n} else {\n  LEXICAL_IDENTIFIER = /[_\\p{XID_Start}][_\\p{XID_Continue}]*/;\n}",
+     "after": "// identifier-head and identifier-character code points listed by the TSPL lexical grammar\nLEXICAL_IDENTIFIER =\n  /[A-Za-z_\\u{00A8}\\u{00AA}\\u{00AD}\\u{00AF}\\u{00B2}-\\u{00B5}\\u{00B7}-\\u{00BA}\\u{00BC}-\\u{00BE}\\u{00C0}-\\u{00D6}\\u{00D8}-\\u{00F6}\\u{00F8}-\\u{00FF}\\u{0100}-\\u{02FF}\\u{0370}-\\u{167F}\\u{1681}-\\u{180D}\\u{180F}-\\u{1DBF}\\u{1E00}-\\u{1FFF}\\u{200B}-\\u{200D}\\u{202A}-\\u{202E}\\u{203F}-\\u{2040}\\u{2054}\\u{2060}-\\u{206F}\\u{2070}-\\u{20CF}\\u{2100}-\\u{218F}\\u{2460}-\\u{24FF}\\u{2776}-\\u{2793}\\u{2C00}-\\u{2DFF}\\u{2E80}-\\u{2FFF}\\u{3004}-\\u{3007}\\u{3021}-\\u{302F}\\u{3031}-\\u{303F}\\u{3040}-\\u{D7FF}\\u{F900}-\\u{FD3D}\\u{FD40}-\\u{FDCF}\\u{FDF0}-\\u{FE1F}\\u{FE30}-\\u{FE44}\\u{FE47}-\\u{FFFD}\\u{10000}-\\u{1FFFD}\\u{20000}-\\u{2FFFD}\\u{30000}-\\u{3FFFD}\\u{40000}-\\u{4FFFD}\\u{50000}-\\u{5FFFD}\\u{60000}-\\u{6FFFD}\\u{70000}-\\u{7FFFD}\\u{80000}-\\u{8FFFD}\\u{90000}-\\u{9FFFD}\\u{A0000}-\\u{AFFFD}\\u{B0000}-\\u{BFFFD}\\u{C0000}-\\u{CFFFD}\\u{D0000}-\\u{DFFFD}\\u{E0000}-\\u{EFFFD}][A-Za-z_\\u{00A8}\\u{00AA}\\u{00AD}\\u{00AF}\\u{00B2}-\\u{00B5}\\u{00B7}-\\u{00BA}\\u{00BC}-\\u{00BE}\\u{00C0}-\\u{00D6}\\u{00D8}-\\u{00F6}\\u{00F8}-\\u{00FF}\\u{0100}-\\u{02FF}\\u{0370}-\\u{167F}\\u{1681}-\\u{180D}\\u{180F}-\\u{1DBF}\\u{1E00}-\\u{1FFF}\\u{200B}-\\u{200D}\\u{202A}-\\u{202E}\\u{203F}-\\u{2040}\\u{2054}\\u{2060}-\\u{206F}\\u{2070}-\\u{20CF}\\u{2100}-\\u{218F}\\u{2460}-\\u{24FF}\\u{2776}-\\u{2793}\\u{2C00}-\\u{2DFF}\\u{2E80}-\\u{2FFF}\\u{3004}-\\u{3007}\\u{3021}-\\u{302F}\\u{3031}-\\u{303F}\\u{3040}-\\u{D7FF}\\u{F900}-\\u{FD3D}\\u{FD40}-\\u{FDCF}\\u{FDF0}-\\u{FE1F}\\u{FE30}-\\u{FE44}\\u{FE47}-\\u{FFFD}\\u{10000}-\\u{1FFFD}\\u{20000}-\\u{2FFFD}\\u{30000}-\\u{3FFFD}\\u{40000}-\\u{4FFFD}\\u{50000}-\\u{5FFFD}\\u{60000}-\\u{6FFFD}\\u{70000}-\\u{7FFFD}\\u{80000}-\\u{8FFFD}\\u{90000}-\\u{9FFFD}\\u{A0000}-\\u{AFFFD}\\u{B0000}-\\u{BFFFD}\\u{C0000}-\\u{CFFFD}\\u{D0000}-\\u{DFFFD}\\u{E0000}-\\u{EFFFD}0-9\\u{0300}-\\u{036F}\\u{1DC0}-\\u{1DFF}\\u{20D0}-\\u{20FF}\\u{FE20}-\\u{FE2F}]*/u;",
+     "occurrences": 1
+    },
+    {
+     "before": "    $._fake_try_bang,\n  ],",
+     "after": "    $._fake_try_bang,\n    // regex literal delimited by two or more '#' (SE-0354 extended delimiters)\n    $._extended_regex_custom,\n    // module selector '::' not followed by a line break (SE-0491)\n    $._module_selector_separator,\n    // custom operator bound to its left operand only (postfix)\n    $._postfix_custom_operator,\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "    _postfix_unary_operator: ($) => choice(\"++\", \"--\", $.bang),",
+     "after": "    _postfix_unary_operator: ($) =>\n      choice(\n        \"++\",\n        \"--\",\n        $.bang,\n        alias($._postfix_custom_operator, $.custom_operator)\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    _navigable_type_expression: ($) =>\n      choice($.user_type, $.array_type, $.dictionary_type),",
+     "after": "    _navigable_type_expression: ($) =>\n      choice(\n        $.user_type,\n        $.array_type,\n        $.dictionary_type,\n        prec.dynamic(2, alias($._specialized_user_type, $.user_type))\n      ),\n    _specialized_user_type: ($) =>\n      prec.right(\n        PRECS.ty,\n        seq(\n          optional($.module_selector),\n          repeat(seq($._simple_user_type, $._dot)),\n          alias($.simple_identifier, $.type_identifier),\n          $.type_arguments\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq($._hash_symbol, /\\/\\n/, /(\\/[^#]|[^/])*?\\n\\/#/),",
+     "after": "      seq($._hash_symbol, /\\/\\n/, /(\\/[^#]|[^/])*?\\n[ \\t]*\\/#/),",
+     "occurrences": 1
+    },
+    {
+     "before": "    regex_literal: ($) =>\n      choice(\n        $._extended_regex_literal,",
+     "after": "    regex_literal: ($) =>\n      choice(\n        $._extended_regex_custom,\n        $._extended_regex_literal,",
+     "occurrences": 1
+    },
+    {
+     "before": "    module_selector: ($) => seq(field(\"module\", $.simple_identifier), \"::\"),",
+     "after": "    module_selector: ($) =>\n      seq(\n        field(\"module\", $.simple_identifier),\n        alias($._module_selector_separator, \"::\")\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"import\",\n        optional($._import_kind),\n        $.identifier\n      ),",
+     "after": "        \"import\",\n        optional($._import_kind),\n        optional($.module_selector),\n        $.identifier\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        $._dot,\n        field(\"suffix\", choice($.simple_identifier, $.integer_literal))",
+     "after": "        $._dot,\n        optional($.module_selector),\n        field(\"suffix\", choice($.simple_identifier, $.integer_literal))",
+     "occurrences": 1
+    },
+    {
+     "before": "            $._hash_symbol,\n            $.simple_identifier,\n            optional($.type_arguments),",
+     "after": "            $._hash_symbol,\n            optional($.module_selector),\n            $.simple_identifier,\n            optional($.type_arguments),",
+     "occurrences": 1
+    },
+    {
+     "before": "          seq($.simple_identifier, repeat($._key_path_postfixes)),",
+     "after": "          seq(\n            optional($.module_selector),\n            $.simple_identifier,\n            repeat($._key_path_postfixes)\n          ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.discard_statement,\n        $._referenceable_operator,",
+     "after": "        $.discard_statement,\n        $._referenceable_operator,\n        seq($.module_selector, $._referenceable_operator),",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional($.user_type), // XXX this should just be _type but that creates ambiguity\n        $._dot,\n        $.simple_identifier,",
+     "after": "        optional($.user_type), // XXX this should just be _type but that creates ambiguity\n        $._dot,\n        optional($.module_selector),\n        $.simple_identifier,",
+     "occurrences": 1
+    },
+    {
+     "before": "          repeat(choice($.switch_entry, $.directive)),",
+     "after": "          repeat(choice($.switch_entry, prec.dynamic(1, $.directive), $._implicit_semi)),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \":\",\n        $.statements\n      ),",
+     "after": "        \":\",\n        alias($._switch_entry_statements, $.statements)\n      ),\n    _switch_entry_statements: ($) =>\n      seq(\n        $._local_statement,\n        repeat(seq($._semi, $._local_statement)),\n        optional($._explicit_semi)\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "    _key_path_component: ($) =>\n      prec.left(",
+     "after": "    _key_path_component: ($) =>\n      prec.right(",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"self\",\n        seq(\"[\", optional(sep1($.value_argument, \",\")), \"]\")",
+     "after": "        \"self\",\n        seq(\"[\", optional(sep1Opt($.value_argument, \",\")), \"]\")",
+     "occurrences": 1
+    },
+    {
+     "before": "    metatype: ($) => seq($._unannotated_type, $._dot, choice(\"Type\", \"Protocol\")),",
+     "after": "    metatype: ($) =>\n      prec.dynamic(1, seq($._unannotated_type, $._dot, choice(\"Type\", \"Protocol\"))),",
+     "occurrences": 1
+    },
+    {
+     "before": "        \"?\",\n        $.bang,\n        \"self\",\n        seq(\"[\", optional(sep1Opt($.value_argument, \",\")), \"]\")",
+     "after": "        \"?\",\n        alias($._immediate_quest, \"?\"),\n        $.bang,\n        \"self\",\n        alias($._key_path_subscript, $.value_arguments)",
+     "occurrences": 1
+    },
+    {
+     "before": "    try_operator: ($) =>",
+     "after": "    _key_path_subscript: ($) =>\n      seq(\"[\", optional(sep1Opt($.value_argument, \",\")), \"]\"),\n    try_operator: ($) =>",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.bracket_qualified_type,\n        $.protocol_composition_type,\n        $.suppressed_constraint\n      ),",
+     "after": "        $.bracket_qualified_type,\n        alias($._opaque_composition, $.protocol_composition_type),\n        $.suppressed_constraint\n      ),\n    _opaque_composition: ($) =>\n      prec.left(seq($._opaque_element, repeat1(seq(\"&\", $._opaque_element)))),\n    _opaque_element: ($) =>\n      prec(\n        1,\n        choice(\n          $.user_type,\n          $.tuple_type,\n          $.array_type,\n          $.inline_array_type,\n          $.dictionary_type,\n          alias($._opaque_metatype, $.metatype),\n          $.bracket_qualified_type,\n          $.suppressed_constraint\n        )\n      ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        prec.right(\n          PRECS.control_transfer,\n          seq(\n            $._optionally_valueful_control_keyword,\n            field(\"result\", optional($._expression))\n          )\n        )",
+     "after": "        prec.right(\n          PRECS.control_transfer,\n          seq(\n            choice(\"return\", \"yield\"),\n            field(\"result\", optional($._expression))\n          )\n        ),\n        prec.right(\n          PRECS.control_transfer,\n          seq(\n            choice(\"continue\", \"break\"),\n            field(\"result\", optional($.simple_identifier))\n          )\n        )",
+     "occurrences": 1
+    },
+    {
+     "before": "        $._dot,\n        optional($.module_selector),\n        $.simple_identifier,\n        optional($._tuple_pattern)",
+     "after": "        $._dot,\n        optional($.module_selector),\n        choice($.simple_identifier, alias(\"repeat\", $.simple_identifier)),\n        optional($._tuple_pattern)",
+     "occurrences": 1
+    },
+    {
+     "before": "              alias(choice(\"async\", \"if\", \"switch\"), $._expression)",
+     "after": "              alias(choice(\"async\", \"if\", \"switch\", \"repeat\"), $._expression)",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional($.module_selector),\n        field(\"suffix\", choice($.simple_identifier, $.integer_literal))",
+     "after": "        optional($.module_selector),\n        field(\n          \"suffix\",\n          choice(\n            $.simple_identifier,\n            alias(\"repeat\", $.simple_identifier),\n            $.integer_literal\n          )\n        )",
+     "occurrences": 1
+    },
+    {
+     "before": "          repeat1(seq(\".\", alias($.simple_identifier, $.type_identifier)))",
+     "after": "          repeat1(seq($._dot, alias($.simple_identifier, $.type_identifier)))",
+     "occurrences": 1
+    },
+    {
+     "before": "          optional(seq(\".\", sep1($.simple_identifier, \".\")))",
+     "after": "          optional(seq($._dot, sep1($.simple_identifier, $._dot)))",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "    uint32_t hash_count = state->ongoing_raw_str_hash_count;\n    if (!valid_symbols[RAW_STR_PART]) {\n        return false;\n    } else if (hash_count == 0) {",
+     "after": "    uint32_t hash_count = state->ongoing_raw_str_hash_count & 0x7fffffffu;\n    bool multiline = (state->ongoing_raw_str_hash_count & 0x80000000u) != 0;\n    uint8_t pending_char = '\\0';\n    if (!valid_symbols[RAW_STR_PART]) {\n        return false;\n    } else if (hash_count == 0) {",
+     "occurrences": 1
+    },
+    {
+     "before": "        if (lexer->lookahead == '\"') {\n            advance(lexer);\n        } else if (hash_count == 1) {",
+     "after": "        if (lexer->lookahead == '\"') {\n            advance(lexer);\n            if (lexer->lookahead == '\"') {\n                advance(lexer);\n                if (lexer->lookahead == '\"') {\n                    advance(lexer);\n                    multiline = true;\n                } else {\n                    // `#\"\"#`: the quote just consumed may close the string\n                    pending_char = '\"';\n                }\n            }\n        } else if (hash_count == 1) {",
+     "occurrences": 1
+    },
+    {
+     "before": "    while (lexer->lookahead != '\\0') {\n        uint8_t last_char = '\\0';\n        lexer->mark_end(lexer); // We always want to parse thru the start of the string so far\n        // Advance through anything that isn't a hash symbol, because we want to count those.\n        while (lexer->lookahead != '#' && lexer->lookahead != '\\0') {",
+     "after": "    while (lexer->lookahead != '\\0') {\n        uint8_t last_char = pending_char;\n        pending_char = '\\0';\n        lexer->mark_end(lexer); // We always want to parse thru the start of the string so far\n        // Advance through anything that isn't a hash symbol, because we want to count those.\n        while (lexer->lookahead != '#' && lexer->lookahead != '\\0') {\n            if (!multiline && (lexer->lookahead == '\\n' || lexer->lookahead == '\\r')) {\n                // A single-line extended string literal cannot span lines: it is unterminated.\n                return false;\n            }",
+     "occurrences": 1
+    },
+    {
+     "before": "                *symbol_result = RAW_STR_PART;\n                state->ongoing_raw_str_hash_count = hash_count;",
+     "after": "                *symbol_result = RAW_STR_PART;\n                state->ongoing_raw_str_hash_count = hash_count | (multiline ? 0x80000000u : 0);",
+     "occurrences": 1
+    },
+    {
+     "before": "#define RESERVED_OP_COUNT 31",
+     "after": "#define RESERVED_OP_COUNT 39",
+     "occurrences": 1
+    },
+    {
+     "before": "    \"...\",\n    \"..<\"\n};",
+     "after": "    \"...\",\n    \"..<\",\n    \"!=\",\n    \"!==\",\n    \"&&\",\n    \"||\",\n    \"<=\",\n    \">=\",\n    \"??\",\n    \"==\"\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "    FAKE_TRY_BANG\n};",
+     "after": "    FAKE_TRY_BANG,\n    EXTENDED_REGEX,\n    MODULE_SELECTOR_SEPARATOR,\n    POSTFIX_CUSTOM_OPERATOR\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "#define TOKEN_COUNT 34",
+     "after": "#define TOKEN_COUNT 37",
+     "occurrences": 1
+    },
+    {
+     "before": "    bool possible_custom_operator = valid_symbols[CUSTOM_OPERATOR] &&\n                                    is_legal_custom_operator(0, first_char, first_char);",
+     "after": "    bool possible_custom_operator = (valid_symbols[CUSTOM_OPERATOR] || valid_symbols[POSTFIX_CUSTOM_OPERATOR]) &&\n                                    is_legal_custom_operator(0, first_char, first_char);",
+     "occurrences": 1
+    },
+    {
+     "before": "        *symbol_result = CUSTOM_OPERATOR;\n        return true;\n    }\n\n    return false;\n}",
+     "after": "        int32_t next = lexer->lookahead;\n        bool right_bound = !(iswspace(next) || next == '\\0' || next == ')' || next == ']' || next == '}' ||\n                             next == ',' || next == ';');\n        if (token_is_immediate && !right_bound && valid_symbols[POSTFIX_CUSTOM_OPERATOR]) {\n            *symbol_result = POSTFIX_CUSTOM_OPERATOR;\n            return true;\n        }\n        if (!valid_symbols[CUSTOM_OPERATOR]) {\n            return false;\n        }\n        *symbol_result = CUSTOM_OPERATOR;\n        return true;\n    }\n\n    return false;\n}",
+     "occurrences": 1
+    },
+    {
+     "before": "static bool eat_raw_str_part(",
+     "after": "// After N >= 2 '#' at a '/': an extended regex literal ends at '/' followed by exactly N '#'. It may span\n// lines only when the opening delimiter ends its line.\nstatic bool eat_extended_regex(TSLexer *lexer, uint32_t hash_count) {\n    advance(lexer);\n    bool multiline = lexer->lookahead == '\\n' || lexer->lookahead == '\\r';\n    while (lexer->lookahead != '\\0' || !lexer->eof(lexer)) {\n        int32_t c = lexer->lookahead;\n        if (!multiline && (c == '\\n' || c == '\\r')) {\n            return false;\n        }\n        advance(lexer);\n        if (c == '\\\\') {\n            advance(lexer);\n            continue;\n        }\n        if (c == '/') {\n            uint32_t closing = 0;\n            while (lexer->lookahead == '#' && closing < hash_count) {\n                closing++;\n                advance(lexer);\n            }\n            if (closing == hash_count) {\n                lexer->mark_end(lexer);\n                return true;\n            }\n        }\n    }\n    return false;\n}\n\nstatic bool eat_raw_str_part(",
+     "occurrences": 1
+    },
+    {
+     "before": "        } else if (hash_count == 1) {\n            lexer->mark_end(lexer);\n            *symbol_result = find_possible_compiler_directive(lexer);\n            return true;\n        } else {\n            return false;\n        }",
+     "after": "        } else if (hash_count == 1) {\n            lexer->mark_end(lexer);\n            *symbol_result = find_possible_compiler_directive(lexer);\n            return true;\n        } else if (lexer->lookahead == '/' && valid_symbols[EXTENDED_REGEX]) {\n            *symbol_result = EXTENDED_REGEX;\n            return eat_extended_regex(lexer, hash_count);\n        } else {\n            return false;\n        }",
+     "occurrences": 1
+    },
+    {
+     "before": "    // NOTE: this will consume any `#` characters it sees, even if it does not find a result. Keep",
+     "after": "    if (valid_symbols[MODULE_SELECTOR_SEPARATOR] && lexer->lookahead == ':') {\n        advance(lexer);\n        if (lexer->lookahead != ':') {\n            return false;\n        }\n        advance(lexer);\n        lexer->mark_end(lexer);\n        while (lexer->lookahead == ' ' || lexer->lookahead == '\\t') {\n            advance(lexer);\n        }\n        if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {\n            return false;\n        }\n        lexer->result_symbol = MODULE_SELECTOR_SEPARATOR;\n        return true;\n    }\n\n    // NOTE: this will consume any `#` characters it sees, even if it does not find a result. Keep",
+     "occurrences": 1
+    },
+    {
+     "before": "            if (semi_is_valid) {\n                ws_directive = STOP_PARSING_TOKEN_FOUND;\n                lexer->advance(lexer, false);\n            }",
+     "after": "            if (semi_is_valid) {\n                ws_directive = STOP_PARSING_TOKEN_FOUND;\n                lexer->advance(lexer, false);\n                lexer->mark_end(lexer);\n            }",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
