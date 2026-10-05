@@ -12,6 +12,7 @@
     "css-P2-08",
     "css-P2-09",
     "css-P2-10",
+    "css-P2-11",
     "css-P2-12",
     "css-P2-13",
     "css-P2-14",
@@ -34,6 +35,11 @@
     {
       "target": "grammar.js",
       "operations": [
+        {
+          "before": "  inline: $ => [",
+          "after": "  // P2-11: \"name:\" before a '{' is a nested rule or a declaration whose value holds a {}-block\n  conflicts: $ => [\n    [$._selector, $._declaration_body],\n  ],\n\n  inline: $ => [",
+          "occurrences": 1
+        },
         {
           "before": "    $.__error_recovery,\n  ],",
           "after": "    $.__error_recovery,\n    $._custom_property_colon,\n    $._double_quoted_content,\n    $._single_quoted_content,\n    $._math_function_name,\n    $._url_function_name,\n  ],",
@@ -111,7 +117,7 @@
         },
         {
           "before": "    declaration: $ => seq(\n      alias($.identifier, $.property_name),\n      ':',\n      $._value,\n      repeat(seq(\n        optional(','),\n        $._value,\n      )),\n      optional($.important),\n      ';',\n    ),\n\n    last_declaration: $ => prec(1, seq(\n      alias($.identifier, $.property_name),\n      ':',\n      $._value,\n      repeat(seq(\n        optional(','),\n        $._value,\n      )),\n      optional($.important),\n    )),\n\n    important: _ => '!important',",
-          "after": "    declaration: $ => seq(\n      $._declaration_body,\n      ';',\n    ),\n\n    last_declaration: $ => prec(1, $._declaration_body),\n\n    _declaration_body: $ => choice(\n      seq(\n        alias(choice($.identifier, $._escaped_name), $.property_name),\n        ':',\n        $._value,\n        repeat(seq(\n          optional(','),\n          $._value,\n        )),\n        optional($.important),\n      ),\n      // css-syntax-3: a custom property's value is any component values, {}-blocks included, possibly none\n      seq(\n        alias($._custom_property_name, $.property_name),\n        alias($._custom_property_colon, ':'),\n        repeat(choice($._value, $.block, ',')),\n        optional($.important),\n      ),\n    ),\n\n    _custom_property_name: $ => seq($._custom_ident, repeat($._name_tail)),\n\n    // P2-21: '!' and 'important' are separate tokens (comments and whitespace may sit between), ASCII case-insensitive\n    important: _ => seq('!', /[iI][mM][pP][oO][rR][tT][aA][nN][tT]/),",
+          "after": "    declaration: $ => seq(\n      $._declaration_body,\n      ';',\n    ),\n\n    last_declaration: $ => prec(1, $._declaration_body),\n\n    _declaration_body: $ => choice(\n      seq(\n        alias(choice($.identifier, $._escaped_name), $.property_name),\n        ':',\n        $._declaration_values,\n      ),\n      // P2-11: the scanner reads \"name:\" before a '{' as a pseudo-class colon (nesting); the declaration\n      // reading stays possible and loses to an error-free nested rule (dynamic precedence)\n      prec.dynamic(-1, seq(\n        alias(choice($.identifier, $._escaped_name), $.property_name),\n        alias($._pseudo_class_selector_colon, ':'),\n        $._declaration_values,\n      )),\n      // css-syntax-3: a custom property's value is any component values, {}-blocks included, possibly none\n      seq(\n        alias($._custom_property_name, $.property_name),\n        alias($._custom_property_colon, ':'),\n        repeat(choice($._value, $.block, ',')),\n        optional($.important),\n      ),\n    ),\n\n    // CSS Syntax 3 (CRD 2021-12-24) 5.4.6 / CSS 2.1 core: value = [ any | block | ATKEYWORD S* ]+\n    _declaration_values: $ => seq(\n      $._declaration_value,\n      repeat(seq(optional(','), $._declaration_value)),\n      optional($.important),\n    ),\n\n    _declaration_value: $ => choice($._value, alias($._component_block, $.block), $.at_keyword),\n\n    // a {}-block of component values\n    _component_block: $ => seq(\n      '{',\n      repeat(choice($._value, $.at_keyword, alias($._component_block, $.block), ':', ',', ';')),\n      '}',\n    ),\n\n    _custom_property_name: $ => seq($._custom_ident, repeat($._name_tail)),\n\n    // P2-21: '!' and 'important' are separate tokens (comments and whitespace may sit between), ASCII case-insensitive\n    important: _ => seq('!', /[iI][mM][pP][oO][rR][tT][aA][nN][tT]/),",
           "occurrences": 1
         },
         {
