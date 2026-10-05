@@ -1659,12 +1659,12 @@
             {
               "type": "unary_expression",
               "text": "+x",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "unary_expression",
               "text": "-x",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "unary_expression",
@@ -7040,7 +7040,7 @@
             {
               "type": "throw_specifier",
               "text": "throw()",
-              "occurrence": 1
+              "occurrence": 2
             },
             {
               "type": "template_declaration",
