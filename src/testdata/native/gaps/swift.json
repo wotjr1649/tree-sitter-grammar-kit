@@ -68,8 +68,8 @@
       "features": ["swift-V59", "S05: 등록 B01/V62/V64 밖의 Swift 구문은 미등록"],
       "source_utf8": "let before = 1\nstruct Token: ~Copyable { var id: Int }\nfunc use(_ t: consuming Token) { let u = consume t; _ = u }\n",
       "edits": [
-        {"find": "consume t;", "replace": "consume ;"},
-        {"find": "consume ;", "replace": "consume t;"}
+        {"find": "consume t;", "replace": "consume t.;"},
+        {"find": "consume t.;", "replace": "consume t;"}
       ],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["class_declaration", "function_declaration", "consume_expression"], "declarations": ""},
@@ -84,7 +84,7 @@
       "source_utf8": "let before = 1\nfunc all<each T>(_ v: repeat each T) -> (repeat each T) { (repeat each v) }\n",
       "edits": [
         {"find": "(_ v: repeat each T)", "replace": "(_ v: repeat each T, _ w: Int)"},
-        {"find": "{ (repeat each v) }", "replace": "{ (repeat each ) }"}
+        {"find": "{ (repeat each v) }", "replace": "{ (repeat ) }"}
       ],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["function_declaration", "type_parameters"], "declarations": ""},

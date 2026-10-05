@@ -99,6 +99,6640 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-php-B01-01",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a003",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a006",
+        "php-B01.a007",
+        "php-B01.a008",
+        "php-B01.a009",
+        "php-B01.a010",
+        "php-B01.a011",
+        "php-B01.a012",
+        "php-B01.a013",
+        "php-B01.a014",
+        "php-B01.a015",
+        "php-B01.a016",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a021",
+        "php-B01.a022",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a057",
+        "php-B01.a062",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a068",
+        "php-B01.a111",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a360",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a363",
+        "php-B01.a364",
+        "php-B01.a365",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a595",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a677",
+        "php-B01.a678"
+      ],
+      "source_utf8": "<html><?php echo 1; ?>\n<p><?= $title ?></p>\n<?php\n// line comment\n# hash comment\n/* delimited\n   comment */\n$x = 1;\r\n$y = 2;\r$z\t= 3;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "text",
+            "php_tag",
+            "php_end_tag",
+            "comment",
+            "echo_statement",
+            "assignment_expression",
+            "variable_name",
+            "integer"
+          ],
+          "anchors": [
+            {
+              "type": "text",
+              "text": "<html>"
+            },
+            {
+              "type": "php_tag",
+              "text": "<?php",
+              "occurrence": 1
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo 1;"
+            },
+            {
+              "type": "php_end_tag",
+              "text": "?>",
+              "occurrence": 1
+            },
+            {
+              "type": "php_tag",
+              "text": "<?="
+            },
+            {
+              "type": "variable_name",
+              "text": "$title"
+            },
+            {
+              "type": "comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "comment",
+              "text": "# hash comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* delimited\n   comment */"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$x = 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$y = 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$z\t= 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-02",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a025",
+        "php-B01.a026",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a039",
+        "php-B01.a040",
+        "php-B01.a041",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a059",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a068",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a071",
+        "php-B01.a072",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a075",
+        "php-B01.a076",
+        "php-B01.a077",
+        "php-B01.a078",
+        "php-B01.a079",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a082",
+        "php-B01.a083",
+        "php-B01.a084",
+        "php-B01.a085",
+        "php-B01.a086",
+        "php-B01.a087",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a090",
+        "php-B01.a091",
+        "php-B01.a092",
+        "php-B01.a093",
+        "php-B01.a094",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a164",
+        "php-B01.a165",
+        "php-B01.a166",
+        "php-B01.a167",
+        "php-B01.a168",
+        "php-B01.a169",
+        "php-B01.a170",
+        "php-B01.a171",
+        "php-B01.a172",
+        "php-B01.a173",
+        "php-B01.a174",
+        "php-B01.a175",
+        "php-B01.a176",
+        "php-B01.a177",
+        "php-B01.a178",
+        "php-B01.a179",
+        "php-B01.a180",
+        "php-B01.a181",
+        "php-B01.a182",
+        "php-B01.a183",
+        "php-B01.a184",
+        "php-B01.a185",
+        "php-B01.a186",
+        "php-B01.a187",
+        "php-B01.a188",
+        "php-B01.a192",
+        "php-B01.a193",
+        "php-B01.a194",
+        "php-B01.a195",
+        "php-B01.a196",
+        "php-B01.a198",
+        "php-B01.a199",
+        "php-B01.a200",
+        "php-B01.a201",
+        "php-B01.a202",
+        "php-B01.a203",
+        "php-B01.a204",
+        "php-B01.a205",
+        "php-B01.a206",
+        "php-B01.a207",
+        "php-B01.a208",
+        "php-B01.a209",
+        "php-B01.a210",
+        "php-B01.a211",
+        "php-B01.a212",
+        "php-B01.a213",
+        "php-B01.a214",
+        "php-B01.a215",
+        "php-B01.a216",
+        "php-B01.a217",
+        "php-B01.a218",
+        "php-B01.a219",
+        "php-B01.a220",
+        "php-B01.a221",
+        "php-B01.a222",
+        "php-B01.a223",
+        "php-B01.a224",
+        "php-B01.a225",
+        "php-B01.a226",
+        "php-B01.a227",
+        "php-B01.a228",
+        "php-B01.a229",
+        "php-B01.a230",
+        "php-B01.a231",
+        "php-B01.a232",
+        "php-B01.a233",
+        "php-B01.a234",
+        "php-B01.a235",
+        "php-B01.a236",
+        "php-B01.a237",
+        "php-B01.a238",
+        "php-B01.a320",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a410",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a506",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610"
+      ],
+      "source_utf8": "<?php\n$abcdefghijklm_nopqrstuvwxyz = 0;\n$ABCDEFGHIJKLMNOPQRSTUVWXYZ9 = 123456789;\n$café = 0x0123456789abcdefABCDEF + 0X1 + 0b101 + 0B1 + 01234567 + 0;\n$f = 1.5 + .5 + 5. + 1e3 + 1E-3 + 2.5e+10;\n$d = 5 + 6 + 7 + 8 + 9;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "binary_expression",
+            "integer",
+            "float",
+            "variable_name"
+          ],
+          "anchors": [
+            {
+              "type": "variable_name",
+              "text": "$abcdefghijklm_nopqrstuvwxyz"
+            },
+            {
+              "type": "variable_name",
+              "text": "$ABCDEFGHIJKLMNOPQRSTUVWXYZ9"
+            },
+            {
+              "type": "variable_name",
+              "text": "$café"
+            },
+            {
+              "type": "integer",
+              "text": "123456789",
+              "occurrence": 1
+            },
+            {
+              "type": "integer",
+              "text": "0x0123456789abcdefABCDEF"
+            },
+            {
+              "type": "integer",
+              "text": "0X1"
+            },
+            {
+              "type": "integer",
+              "text": "0b101"
+            },
+            {
+              "type": "integer",
+              "text": "0B1"
+            },
+            {
+              "type": "integer",
+              "text": "01234567",
+              "occurrence": 2
+            },
+            {
+              "type": "float",
+              "text": "1.5"
+            },
+            {
+              "type": "float",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "float",
+              "text": "5."
+            },
+            {
+              "type": "float",
+              "text": "1e3"
+            },
+            {
+              "type": "float",
+              "text": "1E-3"
+            },
+            {
+              "type": "float",
+              "text": "2.5e+10"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-03",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a197",
+        "php-B01.a198",
+        "php-B01.a204",
+        "php-B01.a205",
+        "php-B01.a206",
+        "php-B01.a209",
+        "php-B01.a211",
+        "php-B01.a226",
+        "php-B01.a239",
+        "php-B01.a240",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a246",
+        "php-B01.a247",
+        "php-B01.a248",
+        "php-B01.a249",
+        "php-B01.a250",
+        "php-B01.a251",
+        "php-B01.a252",
+        "php-B01.a253",
+        "php-B01.a254",
+        "php-B01.a255",
+        "php-B01.a256",
+        "php-B01.a257",
+        "php-B01.a258",
+        "php-B01.a259",
+        "php-B01.a260",
+        "php-B01.a261",
+        "php-B01.a262",
+        "php-B01.a263",
+        "php-B01.a264",
+        "php-B01.a265",
+        "php-B01.a266",
+        "php-B01.a267",
+        "php-B01.a268",
+        "php-B01.a269",
+        "php-B01.a270",
+        "php-B01.a271",
+        "php-B01.a272",
+        "php-B01.a273",
+        "php-B01.a274",
+        "php-B01.a275",
+        "php-B01.a276",
+        "php-B01.a277",
+        "php-B01.a278",
+        "php-B01.a279",
+        "php-B01.a280",
+        "php-B01.a281",
+        "php-B01.a282",
+        "php-B01.a283",
+        "php-B01.a284",
+        "php-B01.a285",
+        "php-B01.a315",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a387",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a411",
+        "php-B01.a463",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a508",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a772",
+        "php-B01.a775"
+      ],
+      "source_utf8": "<?php\n$a = 'it\\'s \\\\ \\q' . b'raw' . B'';\n$b = \"q\\\" \\\\ \\$ \\e \\f \\n \\r \\t \\v \\0 \\07 \\101 \\x4 \\x41 \\X41 \\u{1F600} \\q\";\n$c = \"$v $v[0] $v[k] $v[$i] $v[-1] $v->p {$v->p['x']} {$v->m()}\";\n$d = b\"bin\" . B\"BIN\" . \"\";\n$e = `ls -l $dir`;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "encapsed_string",
+            "escape_sequence",
+            "shell_command_expression",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "'it\\'s \\\\ \\q'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'"
+            },
+            {
+              "type": "string",
+              "text": "b'raw'"
+            },
+            {
+              "type": "string",
+              "text": "B''"
+            },
+            {
+              "type": "encapsed_string",
+              "text": "\"q\\\" \\\\ \\$ \\e \\f \\n \\r \\t \\v \\0 \\07 \\101 \\x4 \\x41 \\X41 \\u{1F600} \\q\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{1F600}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\101"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\$"
+            },
+            {
+              "type": "encapsed_string",
+              "text": "\"$v $v[0] $v[k] $v[$i] $v[-1] $v->p {$v->p['x']} {$v->m()}\""
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$v[0]"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$v[k]"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$v[$i]"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$v[-1]"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "$v->p",
+              "occurrence": 1
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$v->p['x']"
+            },
+            {
+              "type": "member_call_expression",
+              "text": "$v->m()"
+            },
+            {
+              "type": "encapsed_string",
+              "text": "b\"bin\""
+            },
+            {
+              "type": "encapsed_string",
+              "text": "B\"BIN\""
+            },
+            {
+              "type": "encapsed_string",
+              "text": "\"\""
+            },
+            {
+              "type": "shell_command_expression",
+              "text": "`ls -l $dir`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-04",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a047",
+        "php-B01.a050",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a059",
+        "php-B01.a197",
+        "php-B01.a198",
+        "php-B01.a206",
+        "php-B01.a209",
+        "php-B01.a241",
+        "php-B01.a242",
+        "php-B01.a250",
+        "php-B01.a251",
+        "php-B01.a273",
+        "php-B01.a274",
+        "php-B01.a276",
+        "php-B01.a277",
+        "php-B01.a278",
+        "php-B01.a279",
+        "php-B01.a286",
+        "php-B01.a287",
+        "php-B01.a288",
+        "php-B01.a289",
+        "php-B01.a290",
+        "php-B01.a291",
+        "php-B01.a292",
+        "php-B01.a293",
+        "php-B01.a294",
+        "php-B01.a295",
+        "php-B01.a296",
+        "php-B01.a297",
+        "php-B01.a298",
+        "php-B01.a299",
+        "php-B01.a300",
+        "php-B01.a301",
+        "php-B01.a302",
+        "php-B01.a303",
+        "php-B01.a304",
+        "php-B01.a305",
+        "php-B01.a306",
+        "php-B01.a307",
+        "php-B01.a308",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a377",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a411",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a772"
+      ],
+      "source_utf8": "<?php\n$h = <<<EOT\nName: $name\\t{$obj->x} \\\\ \\$ \\e \\f \\n \\r \\v \\101 \\x41 \\u{41} \\q\nEOT;\n$q = b<<<\"QT\"\nquoted \\$x\nQT;\n$n = <<<'NOW'\nraw $x \\t\nNOW;\n$m = B<<<'NB'\nNB;\n$e = <<<EMPTY\nEMPTY;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "heredoc",
+            "heredoc_start",
+            "heredoc_body",
+            "heredoc_end",
+            "nowdoc",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "heredoc",
+              "text": "<<<EOT\nName: $name\\t{$obj->x} \\\\ \\$ \\e \\f \\n \\r \\v \\101 \\x41 \\u{41} \\q\nEOT"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "$obj->x"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{41}"
+            },
+            {
+              "type": "heredoc",
+              "text": "b<<<\"QT\"\nquoted \\$x\nQT"
+            },
+            {
+              "type": "nowdoc",
+              "text": "<<<'NOW'\nraw $x \\t\nNOW"
+            },
+            {
+              "type": "nowdoc",
+              "text": "B<<<'NB'\nNB"
+            },
+            {
+              "type": "heredoc",
+              "text": "<<<EMPTY\nEMPTY"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-05",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a030",
+        "php-B01.a033",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a071",
+        "php-B01.a074",
+        "php-B01.a079",
+        "php-B01.a082",
+        "php-B01.a083",
+        "php-B01.a086",
+        "php-B01.a087",
+        "php-B01.a097",
+        "php-B01.a150",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a191",
+        "php-B01.a239",
+        "php-B01.a240",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a252",
+        "php-B01.a253",
+        "php-B01.a254",
+        "php-B01.a256",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a315",
+        "php-B01.a316",
+        "php-B01.a317",
+        "php-B01.a318",
+        "php-B01.a319",
+        "php-B01.a320",
+        "php-B01.a324",
+        "php-B01.a339",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a358",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a375",
+        "php-B01.a376",
+        "php-B01.a377",
+        "php-B01.a378",
+        "php-B01.a382",
+        "php-B01.a383",
+        "php-B01.a384",
+        "php-B01.a385",
+        "php-B01.a386",
+        "php-B01.a388",
+        "php-B01.a389",
+        "php-B01.a390",
+        "php-B01.a391",
+        "php-B01.a392",
+        "php-B01.a393",
+        "php-B01.a394",
+        "php-B01.a395",
+        "php-B01.a396",
+        "php-B01.a397",
+        "php-B01.a398",
+        "php-B01.a399",
+        "php-B01.a400",
+        "php-B01.a401",
+        "php-B01.a402",
+        "php-B01.a403",
+        "php-B01.a404",
+        "php-B01.a405",
+        "php-B01.a406",
+        "php-B01.a407",
+        "php-B01.a408",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a439",
+        "php-B01.a440",
+        "php-B01.a441",
+        "php-B01.a442",
+        "php-B01.a443",
+        "php-B01.a444",
+        "php-B01.a445",
+        "php-B01.a446",
+        "php-B01.a447",
+        "php-B01.a448",
+        "php-B01.a449",
+        "php-B01.a450",
+        "php-B01.a451",
+        "php-B01.a452",
+        "php-B01.a453",
+        "php-B01.a454",
+        "php-B01.a455",
+        "php-B01.a456",
+        "php-B01.a457",
+        "php-B01.a458",
+        "php-B01.a459",
+        "php-B01.a460",
+        "php-B01.a461",
+        "php-B01.a462",
+        "php-B01.a464",
+        "php-B01.a465",
+        "php-B01.a466",
+        "php-B01.a467",
+        "php-B01.a468",
+        "php-B01.a469",
+        "php-B01.a470",
+        "php-B01.a471",
+        "php-B01.a472",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a502",
+        "php-B01.a505",
+        "php-B01.a506",
+        "php-B01.a508",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a551",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610"
+      ],
+      "source_utf8": "<?php\n$$name = 1; ${'dyn' . 'x'} = 2; $$$deep = 3;\n$a = [1, 'k' => 2, &$r, 'r' => &$r,]; $b = array(); $c = array(1, 2);\n$a[] = 4; $p = ($a + 1) * 2; $d = $a[0] . ($a)[0] . [1, 2][0] . \"abc\"[0] . FOO . \\NS\\BAR;\nf(); f(1, 2); $f(); $f($x); ($f)(); [$o, 'm'](); 'strlen'('x');\n$a[0](); $o->m()(); C::m()(); f()();\n$o->p; $o->$p; $o->{'p'}; $o->m(1); C::$sp; C::m(); C::K; $o::K; static::K; self::K; parent::K;\n$i++; $i--; ++$i; --$i; $x = &$y;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "dynamic_variable_name",
+            "array_creation_expression",
+            "array_element_initializer",
+            "subscript_expression",
+            "function_call_expression",
+            "member_access_expression",
+            "member_call_expression",
+            "scoped_property_access_expression",
+            "scoped_call_expression",
+            "class_constant_access_expression",
+            "update_expression",
+            "reference_assignment_expression",
+            "qualified_name",
+            "relative_scope",
+            "parenthesized_expression",
+            "by_ref"
+          ],
+          "anchors": [
+            {
+              "type": "dynamic_variable_name",
+              "text": "$$name"
+            },
+            {
+              "type": "dynamic_variable_name",
+              "text": "${'dyn' . 'x'}"
+            },
+            {
+              "type": "dynamic_variable_name",
+              "text": "$$$deep"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "[1, 'k' => 2, &$r, 'r' => &$r,]"
+            },
+            {
+              "type": "by_ref",
+              "text": "&$r",
+              "occurrence": 1
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "array()"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "array(1, 2)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$a[]"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "($a + 1)"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "($a)[0]"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "[1, 2][0]"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "\"abc\"[0]"
+            },
+            {
+              "type": "qualified_name",
+              "text": "\\NS\\BAR"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "f(1, 2)"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "$f($x)"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "($f)()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "[$o, 'm']()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "'strlen'('x')"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "$a[0]()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "$o->m()()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "C::m()()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "f()()"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "$o->$p"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "$o->{'p'}"
+            },
+            {
+              "type": "member_call_expression",
+              "text": "$o->m(1)"
+            },
+            {
+              "type": "scoped_property_access_expression",
+              "text": "C::$sp"
+            },
+            {
+              "type": "scoped_call_expression",
+              "text": "C::m()",
+              "occurrence": 2
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "C::K"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "$o::K"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "static::K"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "self::K"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "parent::K"
+            },
+            {
+              "type": "relative_scope",
+              "text": "static"
+            },
+            {
+              "type": "update_expression",
+              "text": "$i++"
+            },
+            {
+              "type": "update_expression",
+              "text": "$i--"
+            },
+            {
+              "type": "update_expression",
+              "text": "++$i"
+            },
+            {
+              "type": "update_expression",
+              "text": "--$i"
+            },
+            {
+              "type": "reference_assignment_expression",
+              "text": "$x = &$y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-06",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a039",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a051",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a059",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a068",
+        "php-B01.a096",
+        "php-B01.a133",
+        "php-B01.a134",
+        "php-B01.a142",
+        "php-B01.a143",
+        "php-B01.a147",
+        "php-B01.a148",
+        "php-B01.a159",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a179",
+        "php-B01.a180",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a315",
+        "php-B01.a319",
+        "php-B01.a320",
+        "php-B01.a321",
+        "php-B01.a322",
+        "php-B01.a323",
+        "php-B01.a325",
+        "php-B01.a326",
+        "php-B01.a327",
+        "php-B01.a328",
+        "php-B01.a329",
+        "php-B01.a330",
+        "php-B01.a331",
+        "php-B01.a332",
+        "php-B01.a333",
+        "php-B01.a334",
+        "php-B01.a335",
+        "php-B01.a336",
+        "php-B01.a337",
+        "php-B01.a338",
+        "php-B01.a339",
+        "php-B01.a340",
+        "php-B01.a341",
+        "php-B01.a342",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a346",
+        "php-B01.a347",
+        "php-B01.a348",
+        "php-B01.a349",
+        "php-B01.a350",
+        "php-B01.a351",
+        "php-B01.a352",
+        "php-B01.a353",
+        "php-B01.a354",
+        "php-B01.a355",
+        "php-B01.a356",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a449",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a477",
+        "php-B01.a478",
+        "php-B01.a480",
+        "php-B01.a481",
+        "php-B01.a482",
+        "php-B01.a483",
+        "php-B01.a484",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a500",
+        "php-B01.a501",
+        "php-B01.a502",
+        "php-B01.a503",
+        "php-B01.a504",
+        "php-B01.a505",
+        "php-B01.a506",
+        "php-B01.a507",
+        "php-B01.a508",
+        "php-B01.a509",
+        "php-B01.a510",
+        "php-B01.a511",
+        "php-B01.a512",
+        "php-B01.a513",
+        "php-B01.a514",
+        "php-B01.a515",
+        "php-B01.a516",
+        "php-B01.a517",
+        "php-B01.a518",
+        "php-B01.a519",
+        "php-B01.a520",
+        "php-B01.a521",
+        "php-B01.a522",
+        "php-B01.a523",
+        "php-B01.a524",
+        "php-B01.a525",
+        "php-B01.a526",
+        "php-B01.a527",
+        "php-B01.a528",
+        "php-B01.a529",
+        "php-B01.a530",
+        "php-B01.a531",
+        "php-B01.a532",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a535",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a538",
+        "php-B01.a539",
+        "php-B01.a552",
+        "php-B01.a553",
+        "php-B01.a554",
+        "php-B01.a555",
+        "php-B01.a556",
+        "php-B01.a557",
+        "php-B01.a558",
+        "php-B01.a559",
+        "php-B01.a560",
+        "php-B01.a561",
+        "php-B01.a562",
+        "php-B01.a563",
+        "php-B01.a569",
+        "php-B01.a570",
+        "php-B01.a571",
+        "php-B01.a572",
+        "php-B01.a573",
+        "php-B01.a574",
+        "php-B01.a575",
+        "php-B01.a576",
+        "php-B01.a577",
+        "php-B01.a578",
+        "php-B01.a579",
+        "php-B01.a580",
+        "php-B01.a581",
+        "php-B01.a582",
+        "php-B01.a583",
+        "php-B01.a584",
+        "php-B01.a585",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610"
+      ],
+      "source_utf8": "<?php\n$r = !$a * $b / $c % $d + $e - $f . $g << 1 >> 2;\n$s = $a < $b; $t = $a > $b; $u = $a <= $b; $v = $a >= $b;\n$w = $a == $b; $x = $a != $b; $y = $a <> $b; $z = $a === $b; $q = $a !== $b;\n$m = $a & $b ^ $c | $d && $e || $f;\n$c1 = $a ? $b : $c; $c2 = $a ?: $c;\n$n = -$a + +$b + ~$c; $e2 = @f();\n$k = $a and $b; $k = $a xor $b; $k = $a or $b;\n$x *= 1; $x /= 1; $x %= 1; $x += 1; $x -= 1; $x .= 1;\n$x <<= 1; $x >>= 1; $x &= 1; $x ^= 1; $x |= 1;\nprint print $x;\ninclude 'a.php'; include_once 'b.php'; require 'c.php'; require_once 'd.php';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_expression",
+            "unary_op_expression",
+            "conditional_expression",
+            "error_suppression_expression",
+            "augmented_assignment_expression",
+            "print_intrinsic",
+            "include_expression",
+            "include_once_expression",
+            "require_expression",
+            "require_once_expression"
+          ],
+          "anchors": [
+            {
+              "type": "unary_op_expression",
+              "text": "!$a"
+            },
+            {
+              "type": "binary_expression",
+              "text": "!$a * $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a < $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a > $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a <= $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a >= $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a == $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a != $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a <> $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a === $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a !== $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a & $b ^ $c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a & $b ^ $c | $d && $e"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "$a ? $b : $c"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "$a ?: $c"
+            },
+            {
+              "type": "unary_op_expression",
+              "text": "-$a"
+            },
+            {
+              "type": "unary_op_expression",
+              "text": "+$b"
+            },
+            {
+              "type": "unary_op_expression",
+              "text": "~$c"
+            },
+            {
+              "type": "error_suppression_expression",
+              "text": "@f()"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$k = $a and $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$k = $a xor $b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$k = $a or $b"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x *= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x /= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x %= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x += 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x -= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x .= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x <<= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x >>= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x &= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x ^= 1"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$x |= 1"
+            },
+            {
+              "type": "print_intrinsic",
+              "text": "print print $x"
+            },
+            {
+              "type": "print_intrinsic",
+              "text": "print $x"
+            },
+            {
+              "type": "include_expression",
+              "text": "include 'a.php'"
+            },
+            {
+              "type": "include_once_expression",
+              "text": "include_once 'b.php'"
+            },
+            {
+              "type": "require_expression",
+              "text": "require 'c.php'"
+            },
+            {
+              "type": "require_once_expression",
+              "text": "require_once 'd.php'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-07",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a059",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a071",
+        "php-B01.a104",
+        "php-B01.a109",
+        "php-B01.a114",
+        "php-B01.a121",
+        "php-B01.a122",
+        "php-B01.a128",
+        "php-B01.a135",
+        "php-B01.a138",
+        "php-B01.a139",
+        "php-B01.a141",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a156",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a316",
+        "php-B01.a339",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a379",
+        "php-B01.a380",
+        "php-B01.a381",
+        "php-B01.a389",
+        "php-B01.a392",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a412",
+        "php-B01.a413",
+        "php-B01.a414",
+        "php-B01.a415",
+        "php-B01.a416",
+        "php-B01.a417",
+        "php-B01.a418",
+        "php-B01.a419",
+        "php-B01.a420",
+        "php-B01.a421",
+        "php-B01.a422",
+        "php-B01.a423",
+        "php-B01.a424",
+        "php-B01.a425",
+        "php-B01.a426",
+        "php-B01.a427",
+        "php-B01.a428",
+        "php-B01.a429",
+        "php-B01.a430",
+        "php-B01.a431",
+        "php-B01.a432",
+        "php-B01.a433",
+        "php-B01.a434",
+        "php-B01.a435",
+        "php-B01.a436",
+        "php-B01.a437",
+        "php-B01.a438",
+        "php-B01.a448",
+        "php-B01.a451",
+        "php-B01.a453",
+        "php-B01.a454",
+        "php-B01.a455",
+        "php-B01.a464",
+        "php-B01.a467",
+        "php-B01.a468",
+        "php-B01.a469",
+        "php-B01.a472",
+        "php-B01.a473",
+        "php-B01.a474",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a479",
+        "php-B01.a485",
+        "php-B01.a486",
+        "php-B01.a487",
+        "php-B01.a488",
+        "php-B01.a489",
+        "php-B01.a490",
+        "php-B01.a491",
+        "php-B01.a492",
+        "php-B01.a493",
+        "php-B01.a494",
+        "php-B01.a495",
+        "php-B01.a496",
+        "php-B01.a497",
+        "php-B01.a498",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a540",
+        "php-B01.a541",
+        "php-B01.a542",
+        "php-B01.a543",
+        "php-B01.a544",
+        "php-B01.a545",
+        "php-B01.a546",
+        "php-B01.a547",
+        "php-B01.a548",
+        "php-B01.a549",
+        "php-B01.a550",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a592",
+        "php-B01.a606",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a654",
+        "php-B01.a661",
+        "php-B01.a683",
+        "php-B01.a684",
+        "php-B01.a686"
+      ],
+      "source_utf8": "<?php\n$o = new C($a); $p = new C; $q = new $cls; $q = new $a['k']; $q = new $o->cls;\n$q = new C::$cls; $q = new static::$cls; $q = new $a::$b;\n$c = clone $o; $i = $o instanceof C; $j = $o instanceof $cls;\n$v = (array) $a; $v = (binary) $a; $v = (bool) $a; $v = (boolean) $a; $v = (double) $a;\n$v = (int) $a; $v = (integer) $a; $v = (float) $a; $v = (object) $a; $v = (string) $a;\n$e = empty($a); $v = eval('return 1;'); $s = isset($a); $s = isset($a, $b);\n$fn = function () {}; $g = static function &($a) use ($b, &$c) { return $a; };\nlist($a, $b) = $arr; list(, $b) = $arr; list($a, , $c) = $arr;\nlist('x' => $a, 'y' => list($b, &$c)) = $arr; list('x' => $a,) = $arr;\nexit; exit(); exit(1); die; die(); die('x');\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "object_creation_expression",
+            "clone_expression",
+            "binary_expression",
+            "cast_expression",
+            "cast_type",
+            "anonymous_function",
+            "anonymous_function_use_clause",
+            "list_literal",
+            "exit_statement"
+          ],
+          "anchors": [
+            {
+              "type": "object_creation_expression",
+              "text": "new C($a)"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new C",
+              "occurrence": 2
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new $cls"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new $a['k']"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new $o->cls"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new C::$cls"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new static::$cls"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new $a::$b"
+            },
+            {
+              "type": "clone_expression",
+              "text": "clone $o"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$o instanceof C"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$o instanceof $cls"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(array) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(binary) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(bool) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(boolean) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(double) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(integer) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(float) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(object) $a"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(string) $a"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "empty($a)"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "eval('return 1;')"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "isset($a)"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "isset($a, $b)"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "function () {}"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "static function &($a) use ($b, &$c) { return $a; }"
+            },
+            {
+              "type": "anonymous_function_use_clause",
+              "text": "use ($b, &$c)"
+            },
+            {
+              "type": "list_literal",
+              "text": "list($a, $b)"
+            },
+            {
+              "type": "list_literal",
+              "text": "list(, $b)"
+            },
+            {
+              "type": "list_literal",
+              "text": "list($a, , $c)"
+            },
+            {
+              "type": "list_literal",
+              "text": "list('x' => $a, 'y' => list($b, &$c))"
+            },
+            {
+              "type": "list_literal",
+              "text": "list($b, &$c)"
+            },
+            {
+              "type": "list_literal",
+              "text": "list('x' => $a,)"
+            },
+            {
+              "type": "exit_statement",
+              "text": "exit;"
+            },
+            {
+              "type": "exit_statement",
+              "text": "exit();"
+            },
+            {
+              "type": "exit_statement",
+              "text": "exit(1);"
+            },
+            {
+              "type": "exit_statement",
+              "text": "die;"
+            },
+            {
+              "type": "exit_statement",
+              "text": "die();"
+            },
+            {
+              "type": "exit_statement",
+              "text": "die('x');"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-08",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a098",
+        "php-B01.a099",
+        "php-B01.a101",
+        "php-B01.a108",
+        "php-B01.a110",
+        "php-B01.a111",
+        "php-B01.a112",
+        "php-B01.a113",
+        "php-B01.a116",
+        "php-B01.a117",
+        "php-B01.a118",
+        "php-B01.a119",
+        "php-B01.a120",
+        "php-B01.a126",
+        "php-B01.a127",
+        "php-B01.a131",
+        "php-B01.a139",
+        "php-B01.a151",
+        "php-B01.a158",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a191",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a317",
+        "php-B01.a318",
+        "php-B01.a329",
+        "php-B01.a339",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a382",
+        "php-B01.a383",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a459",
+        "php-B01.a460",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a513",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a541",
+        "php-B01.a542",
+        "php-B01.a544",
+        "php-B01.a546",
+        "php-B01.a550",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a587",
+        "php-B01.a589",
+        "php-B01.a590",
+        "php-B01.a591",
+        "php-B01.a592",
+        "php-B01.a595",
+        "php-B01.a606",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a611",
+        "php-B01.a612",
+        "php-B01.a613",
+        "php-B01.a614",
+        "php-B01.a615",
+        "php-B01.a616",
+        "php-B01.a617",
+        "php-B01.a618",
+        "php-B01.a619",
+        "php-B01.a620",
+        "php-B01.a621",
+        "php-B01.a622",
+        "php-B01.a623",
+        "php-B01.a624",
+        "php-B01.a625",
+        "php-B01.a626",
+        "php-B01.a627",
+        "php-B01.a628",
+        "php-B01.a629",
+        "php-B01.a630",
+        "php-B01.a631",
+        "php-B01.a632",
+        "php-B01.a633",
+        "php-B01.a634",
+        "php-B01.a635",
+        "php-B01.a636",
+        "php-B01.a637",
+        "php-B01.a638",
+        "php-B01.a639",
+        "php-B01.a640",
+        "php-B01.a641",
+        "php-B01.a642",
+        "php-B01.a643",
+        "php-B01.a644",
+        "php-B01.a645",
+        "php-B01.a646",
+        "php-B01.a647",
+        "php-B01.a648",
+        "php-B01.a649",
+        "php-B01.a650",
+        "php-B01.a653",
+        "php-B01.a660",
+        "php-B01.a677",
+        "php-B01.a678"
+      ],
+      "source_utf8": "<?php\nif ($a) echo 1; elseif ($b) echo 2; elseif ($c) echo 3; else echo 4;\nif ($a) { echo 1; }\nif ($a): echo 1; elseif ($b): echo 2; elseif ($c): echo 3; else: echo 4; endif;\nif ($a): echo 1; endif;\nswitch ($a) { case 1: echo 1; case 2; default: echo 0; }\nswitch ($a): case 1: break; endswitch;\nswitch ($a) {}\nwhile ($a) { $a--; }\nwhile ($a): $a--; endwhile;\ndo { $a++; } while ($a < 3);\nfor ($i = 0, $j = 1; $i < 3; $i++, $j++) { }\nfor (;;) break;\nfor ($i = 0; $i < 3; $i++): endfor;\nforeach ($arr as $v) { }\nforeach ($arr as $k => &$v) { }\nforeach ($arr as list($x, $y)) { }\nforeach ($arr as $k => $v): endforeach;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "else_if_clause",
+            "else_clause",
+            "colon_block",
+            "switch_statement",
+            "switch_block",
+            "case_statement",
+            "default_statement",
+            "while_statement",
+            "do_statement",
+            "for_statement",
+            "foreach_statement",
+            "compound_statement",
+            "break_statement"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if ($a) echo 1; elseif ($b) echo 2; elseif ($c) echo 3; else echo 4;"
+            },
+            {
+              "type": "else_if_clause",
+              "text": "elseif ($b) echo 2;"
+            },
+            {
+              "type": "else_clause",
+              "text": "else echo 4;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if ($a) { echo 1; }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if ($a): echo 1; elseif ($b): echo 2; elseif ($c): echo 3; else: echo 4; endif;"
+            },
+            {
+              "type": "colon_block",
+              "text": ": echo 1;",
+              "occurrence": 1
+            },
+            {
+              "type": "else_if_clause",
+              "text": "elseif ($b): echo 2;"
+            },
+            {
+              "type": "else_clause",
+              "text": "else: echo 4;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if ($a): echo 1; endif;"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch ($a) { case 1: echo 1; case 2; default: echo 0; }"
+            },
+            {
+              "type": "case_statement",
+              "text": "case 1: echo 1;"
+            },
+            {
+              "type": "case_statement",
+              "text": "case 2;"
+            },
+            {
+              "type": "default_statement",
+              "text": "default: echo 0;"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch ($a): case 1: break; endswitch;"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch ($a) {}"
+            },
+            {
+              "type": "while_statement",
+              "text": "while ($a) { $a--; }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while ($a): $a--; endwhile;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do { $a++; } while ($a < 3);"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ($i = 0, $j = 1; $i < 3; $i++, $j++) { }"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "$i = 0, $j = 1"
+            },
+            {
+              "type": "sequence_expression",
+              "text": "$i++, $j++"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) break;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ($i = 0; $i < 3; $i++): endfor;"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach ($arr as $v) { }"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach ($arr as $k => &$v) { }"
+            },
+            {
+              "type": "pair",
+              "text": "$k => &$v"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach ($arr as list($x, $y)) { }"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach ($arr as $k => $v): endforeach;"
+            },
+            {
+              "type": "break_statement",
+              "text": "break;",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-09",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a073",
+        "php-B01.a098",
+        "php-B01.a099",
+        "php-B01.a102",
+        "php-B01.a106",
+        "php-B01.a107",
+        "php-B01.a111",
+        "php-B01.a115",
+        "php-B01.a125",
+        "php-B01.a127",
+        "php-B01.a128",
+        "php-B01.a129",
+        "php-B01.a130",
+        "php-B01.a141",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a152",
+        "php-B01.a154",
+        "php-B01.a155",
+        "php-B01.a158",
+        "php-B01.a160",
+        "php-B01.a161",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a366",
+        "php-B01.a367",
+        "php-B01.a368",
+        "php-B01.a369",
+        "php-B01.a370",
+        "php-B01.a371",
+        "php-B01.a372",
+        "php-B01.a373",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a381",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a423",
+        "php-B01.a424",
+        "php-B01.a429",
+        "php-B01.a431",
+        "php-B01.a449",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a564",
+        "php-B01.a565",
+        "php-B01.a566",
+        "php-B01.a567",
+        "php-B01.a568",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a586",
+        "php-B01.a587",
+        "php-B01.a588",
+        "php-B01.a589",
+        "php-B01.a592",
+        "php-B01.a593",
+        "php-B01.a594",
+        "php-B01.a595",
+        "php-B01.a596",
+        "php-B01.a598",
+        "php-B01.a604",
+        "php-B01.a605",
+        "php-B01.a606",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a609",
+        "php-B01.a610",
+        "php-B01.a631",
+        "php-B01.a634",
+        "php-B01.a635",
+        "php-B01.a645",
+        "php-B01.a647",
+        "php-B01.a649",
+        "php-B01.a651",
+        "php-B01.a652",
+        "php-B01.a653",
+        "php-B01.a654",
+        "php-B01.a655",
+        "php-B01.a656",
+        "php-B01.a657",
+        "php-B01.a658",
+        "php-B01.a659",
+        "php-B01.a660",
+        "php-B01.a661",
+        "php-B01.a662",
+        "php-B01.a663",
+        "php-B01.a664",
+        "php-B01.a665",
+        "php-B01.a666",
+        "php-B01.a667",
+        "php-B01.a668",
+        "php-B01.a669",
+        "php-B01.a670",
+        "php-B01.a671",
+        "php-B01.a672",
+        "php-B01.a673",
+        "php-B01.a674",
+        "php-B01.a677",
+        "php-B01.a678",
+        "php-B01.a679",
+        "php-B01.a680",
+        "php-B01.a681",
+        "php-B01.a682"
+      ],
+      "source_utf8": "<?php\nfunction g() {\n    global $a, $b;\n    static $s, $t = 1;\n    start:\n    foreach ($x as $y) { while (1) { continue 2; } }\n    while (1) { break (1); }\n    while (1) { continue; }\n    goto start;\n    yield;\n    yield $v;\n    yield $k => $v;\n    yield from gen();\n    return;\n}\ntry { throw new E(); } catch (E $e) { }\ntry { } finally { }\ntry { } catch (A $e) { } catch (B $e) { } finally { }\ndeclare(ticks=1) { echo 1, 2; }\ndeclare(ticks=1): enddeclare;\ndeclare(ticks=1);\nunset($a, $b);\n{ ; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "global_declaration",
+            "function_static_declaration",
+            "static_variable_declaration",
+            "named_label_statement",
+            "goto_statement",
+            "continue_statement",
+            "break_statement",
+            "yield_expression",
+            "return_statement",
+            "try_statement",
+            "catch_clause",
+            "finally_clause",
+            "throw_expression",
+            "declare_statement",
+            "declare_directive",
+            "echo_statement",
+            "unset_statement",
+            "empty_statement"
+          ],
+          "anchors": [
+            {
+              "type": "global_declaration",
+              "text": "global $a, $b;"
+            },
+            {
+              "type": "function_static_declaration",
+              "text": "static $s, $t = 1;"
+            },
+            {
+              "type": "static_variable_declaration",
+              "text": "$t = 1"
+            },
+            {
+              "type": "named_label_statement",
+              "text": "start:"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue 2;"
+            },
+            {
+              "type": "break_statement",
+              "text": "break (1);"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue;"
+            },
+            {
+              "type": "goto_statement",
+              "text": "goto start;"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield",
+              "occurrence": 1
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield $v"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield $k => $v"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield from gen()"
+            },
+            {
+              "type": "return_statement",
+              "text": "return;"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { throw new E(); } catch (E $e) { }"
+            },
+            {
+              "type": "throw_expression",
+              "text": "throw new E()"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (E $e) { }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { } finally { }"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }",
+              "occurrence": 1
+            },
+            {
+              "type": "try_statement",
+              "text": "try { } catch (A $e) { } catch (B $e) { } finally { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (A $e) { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (B $e) { }"
+            },
+            {
+              "type": "declare_statement",
+              "text": "declare(ticks=1) { echo 1, 2; }"
+            },
+            {
+              "type": "declare_statement",
+              "text": "declare(ticks=1): enddeclare;"
+            },
+            {
+              "type": "declare_statement",
+              "text": "declare(ticks=1);"
+            },
+            {
+              "type": "declare_directive",
+              "text": "ticks=1",
+              "occurrence": 1
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo 1, 2;"
+            },
+            {
+              "type": "unset_statement",
+              "text": "unset($a, $b);"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ ; }"
+            },
+            {
+              "type": "empty_statement",
+              "text": ";",
+              "occurrence": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-10",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a030",
+        "php-B01.a033",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a039",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a059",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a071",
+        "php-B01.a072",
+        "php-B01.a074",
+        "php-B01.a077",
+        "php-B01.a078",
+        "php-B01.a079",
+        "php-B01.a080",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a090",
+        "php-B01.a092",
+        "php-B01.a093",
+        "php-B01.a094",
+        "php-B01.a095",
+        "php-B01.a097",
+        "php-B01.a098",
+        "php-B01.a100",
+        "php-B01.a103",
+        "php-B01.a105",
+        "php-B01.a123",
+        "php-B01.a124",
+        "php-B01.a128",
+        "php-B01.a132",
+        "php-B01.a136",
+        "php-B01.a137",
+        "php-B01.a144",
+        "php-B01.a145",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a153",
+        "php-B01.a156",
+        "php-B01.a157",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a179",
+        "php-B01.a180",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a316",
+        "php-B01.a339",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a358",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a378",
+        "php-B01.a389",
+        "php-B01.a392",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a407",
+        "php-B01.a408",
+        "php-B01.a409",
+        "php-B01.a440",
+        "php-B01.a454",
+        "php-B01.a455",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a586",
+        "php-B01.a589",
+        "php-B01.a592",
+        "php-B01.a597",
+        "php-B01.a598",
+        "php-B01.a599",
+        "php-B01.a600",
+        "php-B01.a601",
+        "php-B01.a606",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a654",
+        "php-B01.a661",
+        "php-B01.a681",
+        "php-B01.a682",
+        "php-B01.a683",
+        "php-B01.a684",
+        "php-B01.a685",
+        "php-B01.a686",
+        "php-B01.a687",
+        "php-B01.a688",
+        "php-B01.a689",
+        "php-B01.a690",
+        "php-B01.a691",
+        "php-B01.a692",
+        "php-B01.a693",
+        "php-B01.a695",
+        "php-B01.a696",
+        "php-B01.a697",
+        "php-B01.a698",
+        "php-B01.a699",
+        "php-B01.a700",
+        "php-B01.a701",
+        "php-B01.a702",
+        "php-B01.a703",
+        "php-B01.a704",
+        "php-B01.a705",
+        "php-B01.a706",
+        "php-B01.a707",
+        "php-B01.a708",
+        "php-B01.a709",
+        "php-B01.a710",
+        "php-B01.a711",
+        "php-B01.a712",
+        "php-B01.a713",
+        "php-B01.a714",
+        "php-B01.a715",
+        "php-B01.a716",
+        "php-B01.a717",
+        "php-B01.a718",
+        "php-B01.a719",
+        "php-B01.a720",
+        "php-B01.a721",
+        "php-B01.a722",
+        "php-B01.a723",
+        "php-B01.a724",
+        "php-B01.a725",
+        "php-B01.a726",
+        "php-B01.a727",
+        "php-B01.a728",
+        "php-B01.a729",
+        "php-B01.a730",
+        "php-B01.a731",
+        "php-B01.a732",
+        "php-B01.a733",
+        "php-B01.a734",
+        "php-B01.a735",
+        "php-B01.a736",
+        "php-B01.a737",
+        "php-B01.a738",
+        "php-B01.a739",
+        "php-B01.a740",
+        "php-B01.a741",
+        "php-B01.a742",
+        "php-B01.a743",
+        "php-B01.a744",
+        "php-B01.a745",
+        "php-B01.a746",
+        "php-B01.a747",
+        "php-B01.a748",
+        "php-B01.a749",
+        "php-B01.a750",
+        "php-B01.a751",
+        "php-B01.a752",
+        "php-B01.a753",
+        "php-B01.a754",
+        "php-B01.a755",
+        "php-B01.a756",
+        "php-B01.a757",
+        "php-B01.a758",
+        "php-B01.a759",
+        "php-B01.a760",
+        "php-B01.a761",
+        "php-B01.a762"
+      ],
+      "source_utf8": "<?php\nfunction f($a, &$b, array $c = [], callable $d = null, Foo\\Bar $e = null) { }\nfunction &r() { return $x; }\nconst A = 1, B = 2;\nabstract class Base { abstract protected function m($x); }\nfinal class C extends Base implements I, J {\n    const X = 1, Y = 2;\n    public const Z = 3;\n    var $v;\n    public $a = 1, $b;\n    public static $s;\n    static public $t;\n    static $u;\n    protected $p;\n    private $q;\n    public function __construct($x) { }\n    public function __destruct() { }\n    public function im() { }\n    public function &ref() { return $this->v; }\n    final public static function sm() { }\n    protected function m($x) { }\n    use T;\n    use T1, T2 { T1::hello insteadof T2; T2::hello as protected hi; world as private; t as w; }\n}\nabstract class D { }\ninterface I extends K, L { const C = 1; public function im(); }\ninterface J { }\ntrait T {\n    public $tp;\n    public function tm() { }\n    public function __construct() { }\n    public function __destruct() { }\n    use U;\n    use V;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "formal_parameters",
+            "simple_parameter",
+            "const_declaration",
+            "class_declaration",
+            "abstract_modifier",
+            "final_modifier",
+            "base_clause",
+            "class_interface_clause",
+            "declaration_list",
+            "property_declaration",
+            "property_element",
+            "method_declaration",
+            "visibility_modifier",
+            "static_modifier",
+            "var_modifier",
+            "use_declaration",
+            "use_list",
+            "use_instead_of_clause",
+            "use_as_clause",
+            "interface_declaration",
+            "trait_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "simple_parameter",
+              "text": "&$b"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "array $c = []"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "callable $d = null"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "Foo\\Bar $e = null"
+            },
+            {
+              "type": "named_type",
+              "text": "Foo\\Bar"
+            },
+            {
+              "type": "function_definition",
+              "text": "function &r() { return $x; }"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const A = 1, B = 2;"
+            },
+            {
+              "type": "class_declaration",
+              "text": "abstract class Base { abstract protected function m($x); }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "abstract protected function m($x);"
+            },
+            {
+              "type": "final_modifier",
+              "text": "final",
+              "occurrence": 1
+            },
+            {
+              "type": "base_clause",
+              "text": "extends Base"
+            },
+            {
+              "type": "class_interface_clause",
+              "text": "implements I, J"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const X = 1, Y = 2;"
+            },
+            {
+              "type": "const_declaration",
+              "text": "public const Z = 3;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var $v;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public $a = 1, $b;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public static $s;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "static public $t;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "static $u;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "protected $p;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "private $q;"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function __construct($x) { }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function __destruct() { }",
+              "occurrence": 1
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function im() { }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function &ref() { return $this->v; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "final public static function sm() { }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "protected function m($x) { }"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use T;"
+            },
+            {
+              "type": "use_instead_of_clause",
+              "text": "T1::hello insteadof T2"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "T2::hello as protected hi"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "world as private"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "t as w"
+            },
+            {
+              "type": "class_declaration",
+              "text": "abstract class D { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface I extends K, L { const C = 1; public function im(); }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface J { }"
+            },
+            {
+              "type": "trait_declaration",
+              "text": "trait T {\n    public $tp;\n    public function tm() { }\n    public function __construct() { }\n    public function __destruct() { }\n    use U;\n    use V;\n}"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public $tp;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use U;"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use V;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-11",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a030",
+        "php-B01.a031",
+        "php-B01.a032",
+        "php-B01.a033",
+        "php-B01.a034",
+        "php-B01.a035",
+        "php-B01.a036",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a066",
+        "php-B01.a068",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a074",
+        "php-B01.a077",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a085",
+        "php-B01.a087",
+        "php-B01.a088",
+        "php-B01.a098",
+        "php-B01.a105",
+        "php-B01.a128",
+        "php-B01.a140",
+        "php-B01.a156",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a247",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a320",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a358",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a411",
+        "php-B01.a449",
+        "php-B01.a451",
+        "php-B01.a453",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a506",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a539",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a602",
+        "php-B01.a603",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a763",
+        "php-B01.a765",
+        "php-B01.a766",
+        "php-B01.a767",
+        "php-B01.a768",
+        "php-B01.a769",
+        "php-B01.a770",
+        "php-B01.a771"
+      ],
+      "source_utf8": "<?php\nnamespace App\\Models;\nuse Foo\\Bar, Baz as Q;\nuse function Foo\\helper;\nuse const Foo\\LIMIT as L;\nuse \\Foo\\Qux;\n$a = \\strlen('x') + namespace\\local() + Sub\\f() + namespace\\Sub\\g() + \\App\\h();\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_definition",
+            "namespace_name",
+            "namespace_use_declaration",
+            "namespace_use_clause",
+            "qualified_name",
+            "function_call_expression",
+            "relative_name"
+          ],
+          "anchors": [
+            {
+              "type": "namespace_definition",
+              "text": "namespace App\\Models;"
+            },
+            {
+              "type": "namespace_name",
+              "text": "App\\Models"
+            },
+            {
+              "type": "namespace_use_declaration",
+              "text": "use Foo\\Bar, Baz as Q;"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "Baz as Q"
+            },
+            {
+              "type": "namespace_use_declaration",
+              "text": "use function Foo\\helper;"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "function Foo\\helper"
+            },
+            {
+              "type": "namespace_use_declaration",
+              "text": "use const Foo\\LIMIT as L;"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "const Foo\\LIMIT as L"
+            },
+            {
+              "type": "namespace_use_declaration",
+              "text": "use \\Foo\\Qux;"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "\\Foo\\Qux"
+            },
+            {
+              "type": "qualified_name",
+              "text": "\\strlen"
+            },
+            {
+              "type": "relative_name",
+              "text": "namespace\\local"
+            },
+            {
+              "type": "qualified_name",
+              "text": "Sub\\f"
+            },
+            {
+              "type": "relative_name",
+              "text": "namespace\\Sub\\g"
+            },
+            {
+              "type": "qualified_name",
+              "text": "\\App\\h"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-12",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a030",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a050",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a061",
+        "php-B01.a069",
+        "php-B01.a111",
+        "php-B01.a140",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a344",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a377",
+        "php-B01.a409",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a595",
+        "php-B01.a602",
+        "php-B01.a606",
+        "php-B01.a607",
+        "php-B01.a677",
+        "php-B01.a678",
+        "php-B01.a764"
+      ],
+      "source_utf8": "<?php\nnamespace App {\n    echo 1;\n}\nnamespace {\n    echo 2;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_definition",
+            "compound_statement",
+            "echo_statement"
+          ],
+          "anchors": [
+            {
+              "type": "namespace_definition",
+              "text": "namespace App {\n    echo 1;\n}"
+            },
+            {
+              "type": "namespace_definition",
+              "text": "namespace {\n    echo 2;\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-13",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a067",
+        "php-B01.a107",
+        "php-B01.a111",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a377",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a594",
+        "php-B01.a595",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a673",
+        "php-B01.a676",
+        "php-B01.a677",
+        "php-B01.a678"
+      ],
+      "source_utf8": "<?php\ndeclare(strict_types=1);\necho 'strict';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declare_statement",
+            "declare_directive",
+            "echo_statement"
+          ],
+          "anchors": [
+            {
+              "type": "declare_statement",
+              "text": "declare(strict_types=1);"
+            },
+            {
+              "type": "declare_directive",
+              "text": "strict_types=1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-14",
+      "features": [
+        "php-B01",
+        "php-V56",
+        "php-V80"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a068",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a071",
+        "php-B01.a072",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a076",
+        "php-B01.a077",
+        "php-B01.a079",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a086",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a098",
+        "php-B01.a102",
+        "php-B01.a103",
+        "php-B01.a105",
+        "php-B01.a124",
+        "php-B01.a128",
+        "php-B01.a135",
+        "php-B01.a141",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a152",
+        "php-B01.a153",
+        "php-B01.a154",
+        "php-B01.a156",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a167",
+        "php-B01.a168",
+        "php-B01.a178",
+        "php-B01.a188",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a315",
+        "php-B01.a320",
+        "php-B01.a339",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a358",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a663",
+        "php-B01.a692",
+        "php-B01.a708",
+        "php-B01.a741",
+        "php-V56.a028",
+        "php-V56.a032",
+        "php-V56.a033",
+        "php-V56.a034",
+        "php-B01.a773",
+        "php-B01.a774",
+        "php-B01.a776",
+        "php-B01.a777",
+        "php-B01.a778",
+        "php-B01.a779",
+        "php-B01.a780",
+        "php-B01.a781",
+        "php-B01.a782",
+        "php-B01.a783",
+        "php-B01.a784",
+        "php-B01.a785",
+        "php-B01.a786",
+        "php-B01.a787",
+        "php-B01.a788",
+        "php-B01.a789",
+        "php-B01.a790",
+        "php-B01.a791",
+        "php-B01.a792",
+        "php-B01.a793",
+        "php-B01.a794",
+        "php-B01.a795",
+        "php-V80.a003"
+      ],
+      "source_utf8": "<?php\nuse Foo\\{Bar, Baz,};\n[$a, [$b, $c]] = $arr; ['x' => $x, 'y' => $y] = $arr; [&$r, $s] = $arr;\n$n = 1_000_000 + 0o17 + 0O7;\n$lit = 'a' instanceof stdClass;\n$cls = $obj::class; $o = new ($name . 'Factory')(); $i = $o instanceof ($name);\n$z = Foo::BAR::$baz;\ntrait HasConst { public const LIMIT = 10; }\nclass K {\n    final public const F = 1;\n    public function make(): static { return new static(); }\n    public function any(mixed $v): never { throw new Exception(); }\n    public function __construct(final public int $id = 0, $opt = new D(),) { }\n    use T { run as final; }\n}\n$ro = new readonly class { };\ntry { } catch (Exception) { }\n$f = function ($a, $b,) use ($c, $d,) { };\n(void) f();\n#[Attr]\nconst ATTRIBUTED = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_use_declaration",
+            "namespace_use_group",
+            "list_literal",
+            "integer",
+            "class_declaration",
+            "trait_declaration",
+            "anonymous_class",
+            "catch_clause",
+            "cast_expression",
+            "attribute_list",
+            "const_declaration",
+            "property_promotion_parameter"
+          ],
+          "anchors": [
+            {
+              "type": "namespace_use_group",
+              "text": "{Bar, Baz,}"
+            },
+            {
+              "type": "list_literal",
+              "text": "[$a, [$b, $c]]"
+            },
+            {
+              "type": "list_literal",
+              "text": "[$b, $c]"
+            },
+            {
+              "type": "list_literal",
+              "text": "['x' => $x, 'y' => $y]"
+            },
+            {
+              "type": "list_literal",
+              "text": "[&$r, $s]"
+            },
+            {
+              "type": "integer",
+              "text": "1_000_000"
+            },
+            {
+              "type": "integer",
+              "text": "0o17"
+            },
+            {
+              "type": "integer",
+              "text": "0O7"
+            },
+            {
+              "type": "binary_expression",
+              "text": "'a' instanceof stdClass"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "$obj::class"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new ($name . 'Factory')()"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$o instanceof ($name)"
+            },
+            {
+              "type": "scoped_property_access_expression",
+              "text": "Foo::BAR::$baz"
+            },
+            {
+              "type": "trait_declaration",
+              "text": "trait HasConst { public const LIMIT = 10; }"
+            },
+            {
+              "type": "const_declaration",
+              "text": "public const LIMIT = 10;"
+            },
+            {
+              "type": "const_declaration",
+              "text": "final public const F = 1;"
+            },
+            {
+              "type": "named_type",
+              "text": "static",
+              "occurrence": 1
+            },
+            {
+              "type": "primitive_type",
+              "text": "mixed"
+            },
+            {
+              "type": "bottom_type",
+              "text": "never"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "final public int $id = 0"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "$opt = new D()"
+            },
+            {
+              "type": "use_as_clause",
+              "text": "run as final"
+            },
+            {
+              "type": "anonymous_class",
+              "text": "readonly class { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (Exception) { }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "($a, $b,)"
+            },
+            {
+              "type": "anonymous_function_use_clause",
+              "text": "use ($c, $d,)"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(void) f()"
+            },
+            {
+              "type": "attribute_list",
+              "text": "#[Attr]"
+            },
+            {
+              "type": "const_declaration",
+              "text": "#[Attr]\nconst ATTRIBUTED = 1;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-B01-15",
+      "features": [
+        "php-B01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a060",
+        "php-B01.a107",
+        "php-B01.a111",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a377",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a594",
+        "php-B01.a595",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a673",
+        "php-B01.a675",
+        "php-B01.a677",
+        "php-B01.a678"
+      ],
+      "source_utf8": "<?php\ndeclare(encoding='UTF-8');\necho 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declare_statement",
+            "declare_directive"
+          ],
+          "anchors": [
+            {
+              "type": "declare_statement",
+              "text": "declare(encoding='UTF-8');"
+            },
+            {
+              "type": "declare_directive",
+              "text": "encoding='UTF-8'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V56-01",
+      "features": [
+        "php-B01",
+        "php-V56"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a097",
+        "php-B01.a111",
+        "php-B01.a128",
+        "php-B01.a149",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-V56.a001",
+        "php-B01.a339",
+        "php-B01.a342",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-V56.a002",
+        "php-B01.a357",
+        "php-V56.a003",
+        "php-V56.a004",
+        "php-V56.a005",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a374",
+        "php-B01.a377",
+        "php-B01.a378",
+        "php-B01.a380",
+        "php-B01.a389",
+        "php-B01.a400",
+        "php-B01.a405",
+        "php-B01.a409",
+        "php-B01.a411",
+        "php-B01.a425",
+        "php-B01.a451",
+        "php-B01.a452",
+        "php-V56.a008",
+        "php-V56.a009",
+        "php-B01.a473",
+        "php-B01.a475",
+        "php-V56.a010",
+        "php-B01.a476",
+        "php-B01.a496",
+        "php-B01.a499",
+        "php-B01.a501",
+        "php-B01.a505",
+        "php-B01.a509",
+        "php-B01.a512",
+        "php-V56.a011",
+        "php-B01.a517",
+        "php-B01.a523",
+        "php-B01.a525",
+        "php-B01.a527",
+        "php-B01.a529",
+        "php-B01.a531",
+        "php-B01.a533",
+        "php-V56.a012",
+        "php-B01.a534",
+        "php-B01.a536",
+        "php-B01.a537",
+        "php-B01.a538",
+        "php-B01.a539",
+        "php-B01.a552",
+        "php-V56.a013",
+        "php-B01.a569",
+        "php-B01.a571",
+        "php-B01.a573",
+        "php-B01.a575",
+        "php-B01.a577",
+        "php-B01.a589",
+        "php-B01.a607",
+        "php-B01.a608",
+        "php-B01.a610",
+        "php-B01.a681",
+        "php-B01.a682",
+        "php-B01.a683",
+        "php-V56.a015",
+        "php-B01.a684",
+        "php-B01.a685",
+        "php-V56.a016",
+        "php-V56.a017",
+        "php-B01.a686",
+        "php-V56.a018",
+        "php-V56.a019",
+        "php-V56.a020",
+        "php-B01.a687",
+        "php-B01.a688",
+        "php-V56.a021",
+        "php-V56.a022",
+        "php-V56.a023",
+        "php-V56.a024",
+        "php-V56.a025",
+        "php-V56.a026",
+        "php-V56.a035",
+        "php-V56.a036",
+        "php-V56.a037"
+      ],
+      "source_utf8": "<?php\nfunction sum(...$values) { return array_sum($values); }\nfunction typed(int $a, float $b, string $c, bool $d, iterable $e, ?array $f, int &...$rest): ?int { return null; }\nfunction nothing(): void { }\nfunction arr(): array { return []; }\n$p = 2 ** 3 ** 2; $p **= 2;\necho sum(...$list, ...[1, 2]);\n$v = $a ?? $b ?? 'default';\n$cmp = $a <=> $b;\n$fn = function (int $x): string { return ''; };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "variadic_parameter",
+            "primitive_type",
+            "optional_type",
+            "binary_expression",
+            "variadic_unpacking",
+            "augmented_assignment_expression",
+            "anonymous_function"
+          ],
+          "anchors": [
+            {
+              "type": "variadic_parameter",
+              "text": "...$values"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "int $a"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "float $b"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "string $c"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "bool $d"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "iterable $e"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "?array $f"
+            },
+            {
+              "type": "optional_type",
+              "text": "?array"
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "int &...$rest"
+            },
+            {
+              "type": "optional_type",
+              "text": "?int"
+            },
+            {
+              "type": "function_definition",
+              "text": "function nothing(): void { }"
+            },
+            {
+              "type": "primitive_type",
+              "text": "void"
+            },
+            {
+              "type": "function_definition",
+              "text": "function arr(): array { return []; }"
+            },
+            {
+              "type": "binary_expression",
+              "text": "2 ** 3 ** 2"
+            },
+            {
+              "type": "binary_expression",
+              "text": "3 ** 2"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$p **= 2"
+            },
+            {
+              "type": "variadic_unpacking",
+              "text": "...$list"
+            },
+            {
+              "type": "variadic_unpacking",
+              "text": "...[1, 2]"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a ?? $b ?? 'default'"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$b ?? 'default'"
+            },
+            {
+              "type": "binary_expression",
+              "text": "$a <=> $b"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "function (int $x): string { return ''; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V56-02",
+      "features": [
+        "php-B01",
+        "php-V56"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a073",
+        "php-B01.a077",
+        "php-B01.a079",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a083",
+        "php-B01.a084",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a090",
+        "php-B01.a092",
+        "php-B01.a098",
+        "php-B01.a102",
+        "php-B01.a103",
+        "php-B01.a105",
+        "php-B01.a123",
+        "php-B01.a128",
+        "php-B01.a132",
+        "php-B01.a140",
+        "php-B01.a141",
+        "php-B01.a146",
+        "php-B01.a154",
+        "php-B01.a156",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a338",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a358",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V56.a006",
+        "php-V56.a007",
+        "php-B01.a663",
+        "php-B01.a666",
+        "php-B01.a668",
+        "php-B01.a669",
+        "php-V56.a014",
+        "php-B01.a697",
+        "php-B01.a698",
+        "php-B01.a763",
+        "php-V56.a027",
+        "php-V56.a028",
+        "php-B01.a769",
+        "php-B01.a770",
+        "php-B01.a771",
+        "php-V56.a029",
+        "php-V56.a030",
+        "php-V56.a031",
+        "php-V56.a032",
+        "php-V56.a033",
+        "php-V56.a034"
+      ],
+      "source_utf8": "<?php\nnamespace App;\nuse App\\Models\\{User, Post as Article};\nuse function App\\Util\\{first, last as final_};\nuse App\\Lib\\{function helper, const LIMIT as MAX, Klass};\n$logger = new class($dep) extends Base implements Log { public $x; };\n$plain = new class { };\ntry {\n    run();\n} catch (\\TypeError | \\ValueError | Other $e) {\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "namespace_use_declaration",
+            "namespace_use_group",
+            "anonymous_class",
+            "catch_clause",
+            "type_list"
+          ],
+          "anchors": [
+            {
+              "type": "namespace_use_declaration",
+              "text": "use App\\Models\\{User, Post as Article};"
+            },
+            {
+              "type": "namespace_use_group",
+              "text": "{User, Post as Article}"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "Post as Article"
+            },
+            {
+              "type": "namespace_use_declaration",
+              "text": "use function App\\Util\\{first, last as final_};"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "last as final_"
+            },
+            {
+              "type": "namespace_use_group",
+              "text": "{function helper, const LIMIT as MAX, Klass}"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "function helper"
+            },
+            {
+              "type": "namespace_use_clause",
+              "text": "const LIMIT as MAX"
+            },
+            {
+              "type": "anonymous_class",
+              "text": "class($dep) extends Base implements Log { public $x; }"
+            },
+            {
+              "type": "anonymous_class",
+              "text": "class { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (\\TypeError | \\ValueError | Other $e) {\n}"
+            },
+            {
+              "type": "type_list",
+              "text": "\\TypeError | \\ValueError | Other"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V72-01",
+      "features": [
+        "php-B01",
+        "php-V56",
+        "php-V72"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a071",
+        "php-B01.a097",
+        "php-B01.a103",
+        "php-B01.a128",
+        "php-B01.a141",
+        "php-B01.a144",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a157",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a239",
+        "php-B01.a241",
+        "php-B01.a242",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a247",
+        "php-B01.a286",
+        "php-B01.a287",
+        "php-B01.a289",
+        "php-B01.a290",
+        "php-B01.a291",
+        "php-B01.a292",
+        "php-B01.a294",
+        "php-B01.a308",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a315",
+        "php-B01.a316",
+        "php-B01.a319",
+        "php-B01.a339",
+        "php-B01.a342",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-V56.a005",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V72.a001",
+        "php-V72.a002",
+        "php-V72.a003",
+        "php-V72.a004",
+        "php-V72.a005",
+        "php-V72.a006",
+        "php-V72.a007",
+        "php-V72.a008",
+        "php-V72.a009",
+        "php-V72.a010",
+        "php-V72.a011"
+      ],
+      "source_utf8": "<?php\nclass Config\n{\n    public ?object $owner = null;\n    private array $items = [];\n    public static int $count = 0;\n    var string $legacy = '';\n    public function owner(object $o): object { return $o; }\n    public function render(): string\n    {\n        return <<<EOT\n            Items:\n              list\n            EOT . <<<'RAW'\n              raw\n              RAW;\n    }\n}\n$cfg['a'] ??= 1;\n$double = fn(int $x): int => $x * 2;\n$s = static fn($x) => $x;\n$r = fn&(array &$a) => $a;\n$merged = [...$cfg, ...[1, 2]];\nf(1, 2,); $f(1,); $o->m(1,); C::m(1,); $n = new C(1,);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "property_declaration",
+            "optional_type",
+            "heredoc",
+            "nowdoc",
+            "arrow_function",
+            "augmented_assignment_expression",
+            "variadic_unpacking",
+            "arguments"
+          ],
+          "anchors": [
+            {
+              "type": "property_declaration",
+              "text": "public ?object $owner = null;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "private array $items = [];"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public static int $count = 0;"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var string $legacy = '';"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "object $o",
+              "occurrence": 2
+            },
+            {
+              "type": "heredoc",
+              "text": "<<<EOT\n            Items:\n              list\n            EOT"
+            },
+            {
+              "type": "nowdoc",
+              "text": "<<<'RAW'\n              raw\n              RAW"
+            },
+            {
+              "type": "augmented_assignment_expression",
+              "text": "$cfg['a'] ??= 1"
+            },
+            {
+              "type": "arrow_function",
+              "text": "fn(int $x): int => $x * 2"
+            },
+            {
+              "type": "arrow_function",
+              "text": "static fn($x) => $x"
+            },
+            {
+              "type": "arrow_function",
+              "text": "fn&(array &$a) => $a"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "[...$cfg, ...[1, 2]]"
+            },
+            {
+              "type": "variadic_unpacking",
+              "text": "...$cfg"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "f(1, 2,)"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "$f(1,)"
+            },
+            {
+              "type": "member_call_expression",
+              "text": "$o->m(1,)"
+            },
+            {
+              "type": "scoped_call_expression",
+              "text": "C::m(1,)"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new C(1,)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V80-01",
+      "features": [
+        "php-B01",
+        "php-V80"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a071",
+        "php-B01.a073",
+        "php-B01.a075",
+        "php-B01.a077",
+        "php-B01.a080",
+        "php-B01.a084",
+        "php-B01.a086",
+        "php-B01.a087",
+        "php-B01.a088",
+        "php-B01.a103",
+        "php-B01.a124",
+        "php-B01.a128",
+        "php-B01.a141",
+        "php-B01.a144",
+        "php-B01.a145",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a163",
+        "php-B01.a168",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a247",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a338",
+        "php-B01.a339",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a788",
+        "php-V80.a003",
+        "php-V80.a004",
+        "php-V80.a005",
+        "php-V80.a006",
+        "php-V80.a013",
+        "php-V80.a014"
+      ],
+      "source_utf8": "<?php\n#[Attribute(Attribute::TARGET_CLASS)]\n#[Pure, Tagged('x')]\nfinal class Route\n{\n    public function __construct(\n        public readonly string $path,\n        private int|string|null $id = 0,\n        protected Countable&Traversable $items = new ArrayIterator(),\n        #[SensitiveParameter] public $secret = '',\n    ) {}\n    #[Logged] public function run(#[In] int $x): int|false { return $x; }\n    public readonly int $ro;\n}\n$f = #[Cached] fn($x) => $x;\n$g = #[Cached] static function () {};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute_list",
+            "attribute_group",
+            "attribute",
+            "property_promotion_parameter",
+            "union_type",
+            "intersection_type",
+            "readonly_modifier",
+            "arrow_function",
+            "anonymous_function"
+          ],
+          "anchors": [
+            {
+              "type": "attribute_list",
+              "text": "#[Attribute(Attribute::TARGET_CLASS)]\n#[Pure, Tagged('x')]"
+            },
+            {
+              "type": "attribute_group",
+              "text": "#[Pure, Tagged('x')]"
+            },
+            {
+              "type": "attribute",
+              "text": "Attribute(Attribute::TARGET_CLASS)"
+            },
+            {
+              "type": "attribute",
+              "text": "Tagged('x')"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "public readonly string $path"
+            },
+            {
+              "type": "readonly_modifier",
+              "text": "readonly",
+              "occurrence": 1
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "private int|string|null $id = 0"
+            },
+            {
+              "type": "union_type",
+              "text": "int|string|null"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "protected Countable&Traversable $items = new ArrayIterator()"
+            },
+            {
+              "type": "intersection_type",
+              "text": "Countable&Traversable"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "#[SensitiveParameter] public $secret = ''"
+            },
+            {
+              "type": "method_declaration",
+              "text": "#[Logged] public function run(#[In] int $x): int|false { return $x; }"
+            },
+            {
+              "type": "simple_parameter",
+              "text": "#[In] int $x"
+            },
+            {
+              "type": "union_type",
+              "text": "int|false"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public readonly int $ro;"
+            },
+            {
+              "type": "arrow_function",
+              "text": "#[Cached] fn($x) => $x"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "#[Cached] static function () {}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V80-02",
+      "features": [
+        "php-B01",
+        "php-V80"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a069",
+        "php-B01.a072",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a076",
+        "php-B01.a077",
+        "php-B01.a080",
+        "php-B01.a087",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a101",
+        "php-B01.a105",
+        "php-B01.a128",
+        "php-B01.a132",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a156",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a188",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a316",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V80.a011",
+        "php-V80.a012"
+      ],
+      "source_utf8": "<?php\nenum Suit\n{\n    case Hearts;\n    case Spades;\n}\nenum Status: int implements HasLabel\n{\n    use LabelTrait;\n    const DEFAULT = self::Active;\n    case Active = 1;\n    case Inactive = 0;\n    public function label(): string { return $this->name; }\n    public static function make(): self { return self::Active; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "enum_declaration",
+            "enum_declaration_list",
+            "enum_case"
+          ],
+          "anchors": [
+            {
+              "type": "enum_declaration",
+              "text": "enum Suit\n{\n    case Hearts;\n    case Spades;\n}"
+            },
+            {
+              "type": "enum_case",
+              "text": "case Hearts;"
+            },
+            {
+              "type": "enum_case",
+              "text": "case Spades;"
+            },
+            {
+              "type": "class_interface_clause",
+              "text": "implements HasLabel"
+            },
+            {
+              "type": "use_declaration",
+              "text": "use LabelTrait;"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const DEFAULT = self::Active;"
+            },
+            {
+              "type": "enum_case",
+              "text": "case Active = 1;"
+            },
+            {
+              "type": "enum_case",
+              "text": "case Inactive = 0;"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function label(): string { return $this->name; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public static function make(): self { return self::Active; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V80-03",
+      "features": [
+        "php-B01",
+        "php-V56",
+        "php-V80"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a069",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a080",
+        "php-B01.a087",
+        "php-B01.a108",
+        "php-B01.a111",
+        "php-B01.a141",
+        "php-B01.a152",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a316",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-V56.a003",
+        "php-V56.a005",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V80.a001",
+        "php-V80.a002",
+        "php-V80.a007",
+        "php-V80.a008",
+        "php-V80.a009",
+        "php-V80.a010",
+        "php-V80.a015",
+        "php-V80.a016"
+      ],
+      "source_utf8": "<?php\necho label(s: Status::Active, items: []);\necho f(...$args, named: 1);\n$r = match ($s) {\n    1, 2 => 'low',\n    3 => 'mid',\n    default => throw new LogicException('off'),\n};\n$e = match (true) { default => 0, };\n$name = $route?->path ?? 'none';\n$up = $route?->name()?->upper();\n$v = $x ?? throw new Exception();\n$len = strlen(...);\n$m = $obj->method(...);\n$s = Foo::bar(...);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "argument",
+            "match_expression",
+            "match_block",
+            "match_conditional_expression",
+            "match_default_expression",
+            "match_condition_list",
+            "nullsafe_member_access_expression",
+            "nullsafe_member_call_expression",
+            "throw_expression",
+            "variadic_placeholder"
+          ],
+          "anchors": [
+            {
+              "type": "argument",
+              "text": "s: Status::Active"
+            },
+            {
+              "type": "argument",
+              "text": "items: []"
+            },
+            {
+              "type": "argument",
+              "text": "named: 1"
+            },
+            {
+              "type": "variadic_unpacking",
+              "text": "...$args"
+            },
+            {
+              "type": "match_expression",
+              "text": "match ($s) {\n    1, 2 => 'low',\n    3 => 'mid',\n    default => throw new LogicException('off'),\n}"
+            },
+            {
+              "type": "match_conditional_expression",
+              "text": "1, 2 => 'low'"
+            },
+            {
+              "type": "match_condition_list",
+              "text": "1, 2"
+            },
+            {
+              "type": "match_default_expression",
+              "text": "default => throw new LogicException('off')"
+            },
+            {
+              "type": "match_expression",
+              "text": "match (true) { default => 0, }"
+            },
+            {
+              "type": "nullsafe_member_access_expression",
+              "text": "$route?->path"
+            },
+            {
+              "type": "nullsafe_member_call_expression",
+              "text": "$route?->name()?->upper()"
+            },
+            {
+              "type": "nullsafe_member_call_expression",
+              "text": "$route?->name()"
+            },
+            {
+              "type": "throw_expression",
+              "text": "throw new Exception()"
+            },
+            {
+              "type": "function_call_expression",
+              "text": "strlen(...)"
+            },
+            {
+              "type": "member_call_expression",
+              "text": "$obj->method(...)"
+            },
+            {
+              "type": "scoped_call_expression",
+              "text": "Foo::bar(...)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V82-01",
+      "features": [
+        "php-B01",
+        "php-V82"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a070",
+        "php-B01.a071",
+        "php-B01.a072",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a077",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a084",
+        "php-B01.a086",
+        "php-B01.a087",
+        "php-B01.a088",
+        "php-B01.a095",
+        "php-B01.a103",
+        "php-B01.a105",
+        "php-B01.a111",
+        "php-B01.a124",
+        "php-B01.a128",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a338",
+        "php-B01.a339",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a692",
+        "php-B01.a693",
+        "php-B01.a694",
+        "php-V82.a001",
+        "php-V82.a002",
+        "php-V82.a003",
+        "php-V82.a004",
+        "php-V82.a005",
+        "php-V82.a006",
+        "php-V82.a007",
+        "php-V82.a008"
+      ],
+      "source_utf8": "<?php\nreadonly class Point\n{\n    public function __construct(public int $x, public int $y) {}\n}\nfinal readonly class Final_ { }\nabstract readonly class Shape { }\nclass Repo\n{\n    const string TABLE = 'items';\n    public const int|null LIMIT = null;\n    public function find((Countable&ArrayAccess)|null $ids): true|null { return true; }\n    public function none(): false { return false; }\n    public function nil(): null { return null; }\n    public function t(): true { return true; }\n    public function dnf((A&B)|(C&D)|E $x): void { }\n}\n$const = 'TABLE';\necho Repo::{$const};\necho $repo::{'LIMIT'};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "readonly_modifier",
+            "disjunctive_normal_form_type",
+            "union_type",
+            "intersection_type",
+            "class_constant_access_expression"
+          ],
+          "anchors": [
+            {
+              "type": "readonly_modifier",
+              "text": "readonly",
+              "occurrence": 1
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "public int $x"
+            },
+            {
+              "type": "class_declaration",
+              "text": "final readonly class Final_ { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "abstract readonly class Shape { }"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const string TABLE = 'items';"
+            },
+            {
+              "type": "const_declaration",
+              "text": "public const int|null LIMIT = null;"
+            },
+            {
+              "type": "disjunctive_normal_form_type",
+              "text": "(Countable&ArrayAccess)|null"
+            },
+            {
+              "type": "union_type",
+              "text": "true|null"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function none(): false { return false; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function nil(): null { return null; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public function t(): true { return true; }"
+            },
+            {
+              "type": "disjunctive_normal_form_type",
+              "text": "(A&B)|(C&D)|E"
+            },
+            {
+              "type": "intersection_type",
+              "text": "C&D"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "Repo::{$const}"
+            },
+            {
+              "type": "class_constant_access_expression",
+              "text": "$repo::{'LIMIT'}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V84-01",
+      "features": [
+        "php-B01",
+        "php-V84"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a018",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a066",
+        "php-B01.a076",
+        "php-B01.a082",
+        "php-B01.a089",
+        "php-B01.a095",
+        "php-B01.a103",
+        "php-B01.a128",
+        "php-B01.a137",
+        "php-B01.a144",
+        "php-B01.a145",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a162",
+        "php-B01.a163",
+        "php-B01.a166",
+        "php-B01.a168",
+        "php-B01.a189",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a315",
+        "php-B01.a316",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V84.a001",
+        "php-V84.a002",
+        "php-V84.a003",
+        "php-V84.a004",
+        "php-V84.a005",
+        "php-V84.a006",
+        "php-V84.a007"
+      ],
+      "source_utf8": "<?php\nclass User\n{\n    public private(set) string $id = '';\n    protected(set) int $age = 0;\n    public static private(set) int $count = 0;\n    public string $fullName {\n        get => $this->first . ' ' . $this->last;\n        set (string $value) {\n            [$this->first, $this->last] = explode(' ', $value, 2);\n        }\n    }\n    public string $lower {\n        get { return strtolower($this->first); }\n        set => strtolower($value);\n    }\n    public function __construct(public string $first = '', public string $last = '') {}\n}\ninterface HasName { public string $name { get; } }\nabstract class Named { abstract public string $name { get; set; } }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "property_hook_list",
+            "property_hook",
+            "visibility_modifier",
+            "property_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "property_declaration",
+              "text": "public private(set) string $id = '';"
+            },
+            {
+              "type": "visibility_modifier",
+              "text": "private(set)",
+              "occurrence": 1
+            },
+            {
+              "type": "property_declaration",
+              "text": "protected(set) int $age = 0;"
+            },
+            {
+              "type": "visibility_modifier",
+              "text": "protected(set)"
+            },
+            {
+              "type": "property_declaration",
+              "text": "public static private(set) int $count = 0;"
+            },
+            {
+              "type": "property_hook",
+              "text": "get => $this->first . ' ' . $this->last;"
+            },
+            {
+              "type": "property_hook",
+              "text": "set (string $value) {\n            [$this->first, $this->last] = explode(' ', $value, 2);\n        }"
+            },
+            {
+              "type": "property_hook",
+              "text": "get { return strtolower($this->first); }"
+            },
+            {
+              "type": "property_hook",
+              "text": "set => strtolower($value);"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface HasName { public string $name { get; } }"
+            },
+            {
+              "type": "property_hook_list",
+              "text": "{ get; }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "abstract public string $name { get; set; }"
+            },
+            {
+              "type": "property_hook_list",
+              "text": "{ get; set; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-V84-02",
+      "features": [
+        "php-B01",
+        "php-V56",
+        "php-V80",
+        "php-V84"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a042",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a046",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a053",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a058",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a064",
+        "php-B01.a065",
+        "php-B01.a067",
+        "php-B01.a069",
+        "php-B01.a073",
+        "php-B01.a074",
+        "php-B01.a080",
+        "php-B01.a081",
+        "php-B01.a082",
+        "php-B01.a083",
+        "php-B01.a086",
+        "php-B01.a088",
+        "php-B01.a089",
+        "php-B01.a090",
+        "php-B01.a103",
+        "php-B01.a104",
+        "php-B01.a105",
+        "php-B01.a128",
+        "php-B01.a141",
+        "php-B01.a146",
+        "php-B01.a149",
+        "php-B01.a150",
+        "php-B01.a163",
+        "php-B01.a168",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a309",
+        "php-B01.a310",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a316",
+        "php-B01.a330",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-V56.a005",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-V80.a015",
+        "php-V84.a008",
+        "php-V84.a009",
+        "php-V84.a010",
+        "php-V84.a011"
+      ],
+      "source_utf8": "<?php\nconst FORMAT = static function (string $s): string { return trim($s); };\nconst LEN = strlen(...);\nclass Opts { public function __construct(public $cb = static function () {}, public $fn = strtoupper(...)) {} }\n#[Validator(static function ($v) { return $v > 0; })]\nfunction check() {}\n$name = new User()->fullName;\n$call = new User()->greet();\n$len = '  Hello  ' |> trim(...) |> strlen(...);\n$copy = clone($user, ['first' => 'Ann']);\n$plain = clone($user);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "const_declaration",
+            "anonymous_function",
+            "object_creation_expression",
+            "member_call_expression",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "const_declaration",
+              "text": "const FORMAT = static function (string $s): string { return trim($s); };"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "static function (string $s): string { return trim($s); }"
+            },
+            {
+              "type": "const_declaration",
+              "text": "const LEN = strlen(...);"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "public $cb = static function () {}"
+            },
+            {
+              "type": "property_promotion_parameter",
+              "text": "public $fn = strtoupper(...)"
+            },
+            {
+              "type": "attribute",
+              "text": "Validator(static function ($v) { return $v > 0; })"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "new User()->fullName"
+            },
+            {
+              "type": "member_call_expression",
+              "text": "new User()->greet()"
+            },
+            {
+              "type": "binary_expression",
+              "text": "'  Hello  ' |> trim(...) |> strlen(...)"
+            },
+            {
+              "type": "binary_expression",
+              "text": "'  Hello  ' |> trim(...)"
+            },
+            {
+              "type": "clone_expression",
+              "text": "clone($user, ['first' => 'Ann'])"
+            },
+            {
+              "type": "arguments",
+              "text": "($user, ['first' => 'Ann'])"
+            },
+            {
+              "type": "clone_expression",
+              "text": "clone($user)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-01",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a051",
+        "php-B01.a052",
+        "php-B01.a054",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a065",
+        "php-B01.a141",
+        "php-B01.a163",
+        "php-B01.a168",
+        "php-B01.a239",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a430",
+        "php-B01.a432",
+        "php-L01.a002",
+        "php-L01.a003"
+      ],
+      "source_utf8": "<?php\n$str = 'hello';\n$first = $str{0};\n$obj = new $classes{'k'};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "subscript_expression"
+          ],
+          "anchors": [
+            {
+              "type": "subscript_expression",
+              "text": "$str{0}"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new $classes{'k'}"
+            },
+            {
+              "type": "subscript_expression",
+              "text": "$classes{'k'}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-02",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a027",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a239",
+        "php-B01.a240",
+        "php-B01.a243",
+        "php-B01.a244",
+        "php-B01.a245",
+        "php-B01.a247",
+        "php-B01.a252",
+        "php-B01.a253",
+        "php-B01.a254",
+        "php-B01.a256",
+        "php-L01.a001",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362"
+      ],
+      "source_utf8": "<?php\n$name = 'world';\n$a = \"Hello ${name}\";\n$b = \"Item ${'na' . 'me'}\";\n$c = \"Arr ${arr['k']}\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "encapsed_string",
+            "dynamic_variable_name"
+          ],
+          "anchors": [
+            {
+              "type": "encapsed_string",
+              "text": "\"Hello ${name}\""
+            },
+            {
+              "type": "dynamic_variable_name",
+              "text": "${name}"
+            },
+            {
+              "type": "dynamic_variable_name",
+              "text": "${'na' . 'me'}"
+            },
+            {
+              "type": "dynamic_variable_name",
+              "text": "${arr['k']}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-03",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a060",
+        "php-B01.a066",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-L01.a004"
+      ],
+      "source_utf8": "<?php\n$r = (real) $x;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "cast_expression"
+          ],
+          "anchors": [
+            {
+              "type": "cast_expression",
+              "text": "(real) $x"
+            },
+            {
+              "type": "cast_type",
+              "text": "real"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-04",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a020",
+        "php-B01.a024",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a050",
+        "php-B01.a057",
+        "php-B01.a111",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a190",
+        "php-B01.a344",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a364",
+        "php-B01.a365",
+        "php-L01.a006",
+        "php-L01.a007",
+        "php-L01.a008"
+      ],
+      "source_utf8": "<p>legacy tags</p>\n<% echo 1; %>\n<%= $x %>\n<script language=\"php\"> echo 2; </script>\n<? echo 3; ?>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "text",
+            "php_tag",
+            "echo_statement"
+          ],
+          "anchors": [
+            {
+              "type": "text",
+              "text": "<p>legacy tags</p>\n"
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo 1;"
+            },
+            {
+              "type": "variable_name",
+              "text": "$x"
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo 2;"
+            },
+            {
+              "type": "php_tag",
+              "text": "<?"
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo 3;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-05",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a025",
+        "php-B01.a026",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a048",
+        "php-B01.a049",
+        "php-B01.a050",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a055",
+        "php-B01.a056",
+        "php-B01.a057",
+        "php-B01.a060",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a063",
+        "php-B01.a066",
+        "php-B01.a067",
+        "php-B01.a076",
+        "php-B01.a084",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a178",
+        "php-B01.a186",
+        "php-B01.a188",
+        "php-B01.a229",
+        "php-B01.a231",
+        "php-B01.a237",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-L01.a009"
+      ],
+      "source_utf8": "<?php\n#[ legacy hash comment, not an attribute before PHP 8.0\n$x = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "#[ legacy hash comment, not an attribute before PHP 8.0"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$x = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-06",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a063",
+        "php-B01.a066",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-L01.a005"
+      ],
+      "source_utf8": "<?php\n$u = (unset) $x;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "cast_expression"
+          ],
+          "anchors": [
+            {
+              "type": "cast_expression",
+              "text": "(unset) $x"
+            },
+            {
+              "type": "cast_type",
+              "text": "unset"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-07",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a044",
+        "php-B01.a062",
+        "php-B01.a162",
+        "php-B01.a166",
+        "php-B01.a188",
+        "php-B01.a189",
+        "php-B01.a190",
+        "php-B01.a342",
+        "php-B01.a343",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a535",
+        "php-L01.a013"
+      ],
+      "source_utf8": "<?php\n$t = $a ? 1 : $b ? 2 : 3;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "conditional_expression"
+          ],
+          "anchors": [
+            {
+              "type": "conditional_expression",
+              "text": "$a ? 1 : $b ? 2 : 3"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "$a ? 1 : $b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-08",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a023",
+        "php-B01.a024",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a045",
+        "php-B01.a047",
+        "php-B01.a054",
+        "php-B01.a056",
+        "php-B01.a061",
+        "php-B01.a065",
+        "php-B01.a071",
+        "php-B01.a103",
+        "php-B01.a141",
+        "php-B01.a313",
+        "php-B01.a314",
+        "php-B01.a339",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-L01.a010"
+      ],
+      "source_utf8": "<?php\nclass C {}\n$c =& new C;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "reference_assignment_expression",
+              "text": "$c =& new C"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-09",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a024",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a038",
+        "php-B01.a040",
+        "php-B01.a043",
+        "php-B01.a051",
+        "php-B01.a054",
+        "php-B01.a061",
+        "php-B01.a062",
+        "php-B01.a139",
+        "php-B01.a311",
+        "php-B01.a312",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a357",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-B01.a541",
+        "php-L01.a011"
+      ],
+      "source_utf8": "<?php\nlist() = $a;\nlist(, ,) = $a;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "list_literal"
+          ],
+          "anchors": [
+            {
+              "type": "list_literal",
+              "text": "list()"
+            },
+            {
+              "type": "list_literal",
+              "text": "list(, ,)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-php-L01-10",
+      "features": [
+        "php-B01",
+        "php-L01"
+      ],
+      "alternatives": [
+        "php-B01.a001",
+        "php-B01.a002",
+        "php-B01.a004",
+        "php-B01.a005",
+        "php-B01.a014",
+        "php-B01.a017",
+        "php-B01.a019",
+        "php-B01.a020",
+        "php-B01.a022",
+        "php-B01.a025",
+        "php-B01.a028",
+        "php-B01.a029",
+        "php-B01.a037",
+        "php-B01.a040",
+        "php-B01.a057",
+        "php-B01.a163",
+        "php-B01.a168",
+        "php-B01.a169",
+        "php-B01.a198",
+        "php-B01.a199",
+        "php-B01.a344",
+        "php-B01.a345",
+        "php-B01.a359",
+        "php-B01.a361",
+        "php-B01.a362",
+        "php-L01.a012"
+      ],
+      "source_utf8": "<?php\n$o = 0128;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "integer"
+          ],
+          "anchors": [
+            {
+              "type": "integer",
+              "text": "0128"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-php-B01-R-1",
+      "features": [
+        "php-B01"
+      ],
+      "source_utf8": "<html>\n<body>\n<?php if ($user): ?>\n  <p>Hello, <?= htmlspecialchars($user) ?></p>\n<?php else: ?>\n  <p>Guest</p>\n<?php endif; ?>\n<?php\nfunction greet($n) { return \"Hi $n\"; }\n?>\n</body>\n</html>\n",
+      "edits": [
+        {
+          "find": "htmlspecialchars($user) ?>",
+          "replace": "htmlspecialchars($user ?>"
+        },
+        {
+          "find": "htmlspecialchars($user ?>",
+          "replace": "htmlspecialchars($user) ?>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "text",
+            "php_tag",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "function greet($n) { return \"Hi $n\"; }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V56-NR-1",
+      "features": [
+        "php-V56"
+      ],
+      "source_utf8": "<?php\nnamespace App;\n\nuse App\\Models\\{User, Post as Article};\n\nfunction sum(int ...$values): int\n{\n    return array_sum($values);\n}\n\nfunction first(?array $items): ?string\n{\n    return $items[0] ?? null;\n}\n\n$logger = new class {\n    public function log(string $msg): void {}\n};\n\ntry {\n    echo sum(...[1, 2, 3]) <=> 2 ** 3;\n} catch (\\TypeError | \\ValueError $e) {\n    echo $e->getMessage();\n}\n",
+      "edits": [
+        {
+          "find": "catch (\\TypeError | \\ValueError $e)",
+          "replace": "catch (\\TypeError | $e)"
+        },
+        {
+          "find": "catch (\\TypeError | $e)",
+          "replace": "catch (\\TypeError | \\ValueError $e)"
+        },
+        {
+          "find": "return $items[0] ?? null;",
+          "replace": "return $items[0] ?? ;"
+        },
+        {
+          "find": "return $items[0] ?? ;",
+          "replace": "return $items[0] ?? null;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "namespace_use_declaration",
+            "variadic_parameter",
+            "anonymous_class",
+            "catch_clause"
+          ],
+          "anchors": [
+            {
+              "type": "namespace_use_declaration",
+              "text": "use App\\Models\\{User, Post as Article};"
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "int ...$values"
+            },
+            {
+              "type": "anonymous_class",
+              "text": "class {\n    public function log(string $msg): void {}\n}"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (\\TypeError | \\ValueError $e) {\n    echo $e->getMessage();\n}"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V72-NR-1",
+      "features": [
+        "php-V72"
+      ],
+      "source_utf8": "<?php\nclass Config\n{\n    public ?object $owner = null;\n    private array $items = [];\n\n    public function render(): string\n    {\n        return <<<EOT\n            Items:\n              list\n            EOT;\n    }\n}\n\n$cfg = ['a' => null];\n$cfg['a'] ??= 1;\n$double = fn(int $x): int => $x * 2;\n$merged = [...$cfg, ...['b' => 2]];\nprintf('%s %s', 'x', 'y',);\n",
+      "edits": [
+        {
+          "find": "            EOT;",
+          "replace": "                EOT;"
+        },
+        {
+          "find": "                EOT;",
+          "replace": "            EOT;"
+        },
+        {
+          "find": "$cfg['a'] ??= 1;",
+          "replace": "$cfg['a'] ??= ;"
+        },
+        {
+          "find": "$cfg['a'] ??= ;",
+          "replace": "$cfg['a'] ??= 1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "property_declaration",
+            "heredoc",
+            "arrow_function"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Config\n{\n    public ?object $owner = null;\n    private array $items = [];\n\n    public function render(): string\n    {\n        return <<<EOT\n            Items:\n              list\n            EOT;\n    }\n}"
+            },
+            {
+              "type": "heredoc",
+              "text": "<<<EOT\n            Items:\n              list\n            EOT"
+            },
+            {
+              "type": "expression_statement",
+              "text": "$merged = [...$cfg, ...['b' => 2]];"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V80-NR-1",
+      "features": [
+        "php-V80"
+      ],
+      "source_utf8": "<?php\n#[Attribute(Attribute::TARGET_CLASS)]\nfinal class Route\n{\n    public function __construct(\n        public readonly string $path,\n        private int|string $id = 0,\n    ) {}\n}\n\nenum Status: int\n{\n    case Active = 1;\n    case Inactive = 0;\n}\n\nfunction label(Status $s, Countable&Traversable $items): string\n{\n    return match ($s) {\n        Status::Active => 'on',\n        Status::Inactive => throw new LogicException('off'),\n    };\n}\n\n$len = strlen(...);\n$name = $route?->path ?? 'none';\necho label(s: Status::Active, items: new ArrayIterator([]));\n",
+      "edits": [
+        {
+          "find": "Status::Active => 'on',",
+          "replace": "Status::Active 'on',"
+        },
+        {
+          "find": "Status::Active 'on',",
+          "replace": "Status::Active => 'on',"
+        },
+        {
+          "find": "case Inactive = 0;",
+          "replace": "case Inactive = ;"
+        },
+        {
+          "find": "case Inactive = ;",
+          "replace": "case Inactive = 0;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "attribute_list",
+            "class_declaration",
+            "function_definition",
+            "match_expression"
+          ],
+          "anchors": [
+            {
+              "type": "attribute_list",
+              "text": "#[Attribute(Attribute::TARGET_CLASS)]"
+            },
+            {
+              "type": "match_expression",
+              "text": "match ($s) {\n        Status::Active => 'on',\n        Status::Inactive => throw new LogicException('off'),\n    }"
+            },
+            {
+              "type": "echo_statement",
+              "text": "echo label(s: Status::Active, items: new ArrayIterator([]));"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V82-PNE-1",
+      "features": [
+        "php-V82"
+      ],
+      "source_utf8": "<?php\nreadonly class Point\n{\n    public function __construct(public int $x, public int $y) {}\n}\n\nclass Repo\n{\n    const string TABLE = 'items';\n\n    public function find((Countable&ArrayAccess)|null $ids): true|null\n    {\n        return true;\n    }\n\n    public function none(): false\n    {\n        return false;\n    }\n}\n\n$const = 'TABLE';\necho Repo::{$const};\n",
+      "edits": [
+        {
+          "find": "(Countable&ArrayAccess)|null",
+          "replace": "(Countable|ArrayAccess)|null"
+        },
+        {
+          "find": "(Countable|ArrayAccess)|null",
+          "replace": "(Countable&ArrayAccess)|null"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "readonly_modifier",
+            "class_declaration",
+            "disjunctive_normal_form_type",
+            "const_declaration",
+            "class_constant_access_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V84-PNRE-1",
+      "features": [
+        "php-V84"
+      ],
+      "source_utf8": "<?php\nclass User\n{\n    public private(set) string $id = '';\n\n    public string $fullName {\n        get => $this->first . ' ' . $this->last;\n        set (string $value) {\n            [$this->first, $this->last] = explode(' ', $value, 2);\n        }\n    }\n\n    public function __construct(public string $first = '', public string $last = '') {}\n}\n\nconst FORMAT = static function (string $s): string { return trim($s); };\n\n$user = new User();\n$name = new User()->fullName;\n$len = '  Hello  ' |> trim(...) |> strlen(...);\n$copy = clone($user, ['first' => 'Ann']);\n",
+      "edits": [
+        {
+          "find": "public private(set) string $id",
+          "replace": "public private(get) string $id"
+        },
+        {
+          "find": "public private(get) string $id",
+          "replace": "public private(set) string $id"
+        },
+        {
+          "find": "get => $this->first . ' ' . $this->last;",
+          "replace": "get => ;"
+        },
+        {
+          "find": "get => ;",
+          "replace": "get => $this->first . ' ' . $this->last;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "property_hook_list",
+            "property_hook",
+            "const_declaration",
+            "anonymous_function",
+            "member_access_expression",
+            "object_creation_expression",
+            "binary_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "const_declaration",
+            "anonymous_function",
+            "object_creation_expression"
+          ],
+          "anchors": [
+            {
+              "type": "const_declaration",
+              "text": "const FORMAT = static function (string $s): string { return trim($s); };"
+            },
+            {
+              "type": "member_access_expression",
+              "text": "new User()->fullName"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-php-L01-PNRE-1",
+      "features": [
+        "php-L01"
+      ],
+      "source_utf8": "<?php\n$str = 'hello';\n$first = $str{0};\n$name = 'world';\necho \"Hello ${name} and ${str}!\";\necho \"Value: ${'na' . 'me'}\";\n\nfunction after()\n{\n    return 1;\n}\n",
+      "edits": [
+        {
+          "find": "$str{0}",
+          "replace": "$str{}"
+        },
+        {
+          "find": "$str{}",
+          "replace": "$str{0}"
+        },
+        {
+          "find": "$first = $str{0};",
+          "replace": "$first = $str{0;"
+        },
+        {
+          "find": "$first = $str{0;",
+          "replace": "$first = $str{0};"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "subscript_expression",
+            "encapsed_string",
+            "dynamic_variable_name"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "encapsed_string",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "function after()\n{\n    return 1;\n}"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

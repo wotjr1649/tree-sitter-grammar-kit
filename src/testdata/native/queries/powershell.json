@@ -5,6 +5,14 @@
     {
       "id": "q.structure",
       "source": "(enum_statement (simple_name) @enum)\n(class_statement (simple_name) @class)\n(function_statement (function_name) @function)\n(command command_name: (command_name) @command)\n"
+    },
+    {
+      "id": "q.probe-v7-chain",
+      "source": "(pipeline_chain_tail) @chain_op\n"
+    },
+    {
+      "id": "q.probe-v7-blocks",
+      "source": "(named_block (block_name) @block_name)\n"
     }
   ],
   "cases": [
@@ -66,6 +74,62 @@
               "name": "command",
               "type": "command_name",
               "text": "Write-Verbose"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-V7-Q-1",
+      "source_case": "probe-powershell-V7-PNREQ-2",
+      "features": [
+        "powershell-V7"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v7-chain",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "chain_op",
+              "type": "pipeline_chain_tail",
+              "text": "&&"
+            },
+            {
+              "name": "chain_op",
+              "type": "pipeline_chain_tail",
+              "text": "||"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-V7-Q-2",
+      "source_case": "probe-powershell-V7-PNREQ-3",
+      "features": [
+        "powershell-V7"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v7-blocks",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "block_name",
+              "type": "block_name",
+              "text": "process"
+            },
+            {
+              "name": "block_name",
+              "type": "block_name",
+              "text": "clean"
             }
           ],
           "error": null

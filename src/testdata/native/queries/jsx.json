@@ -5,6 +5,14 @@
     {
       "id": "q.structure",
       "source": "(jsx_opening_element name: (identifier) @open)\n(jsx_closing_element name: (identifier) @close)\n(jsx_self_closing_element name: (identifier) @self_closing)\n"
+    },
+    {
+      "id": "q.probe-b02",
+      "source": "(jsx_attribute (property_identifier) @attr_name)\n(jsx_self_closing_element attribute: (jsx_expression (spread_element) @spread_attr))\n"
+    },
+    {
+      "id": "q.probe-b03",
+      "source": "(jsx_element (jsx_expression (spread_element) @spread_child))\n(html_character_reference) @entity\n"
     }
   ],
   "cases": [
@@ -75,6 +83,87 @@
               "name": "close",
               "type": "identifier",
               "text": "section"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B02-Q-1",
+      "source_case": "probe-jsx-B02-R-1",
+      "features": [
+        "jsx-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "disabled"
+            },
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "value"
+            },
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "data-x"
+            },
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "onChange"
+            },
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "icon"
+            },
+            {
+              "name": "spread_attr",
+              "type": "spread_element",
+              "text": "...props"
+            },
+            {
+              "name": "attr_name",
+              "type": "property_identifier",
+              "text": "htmlFor"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-jsx-B03-Q-1",
+      "source_case": "probe-jsx-B03-R-1",
+      "features": [
+        "jsx-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b03",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "spread_child",
+              "type": "spread_element",
+              "text": "...items"
+            },
+            {
+              "name": "entity",
+              "type": "html_character_reference",
+              "text": "&amp;"
             }
           ],
           "error": null

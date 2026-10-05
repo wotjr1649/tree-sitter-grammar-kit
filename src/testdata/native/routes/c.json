@@ -97,6 +97,4276 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-c-B01-01",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a001",
+        "c-B01.a002",
+        "c-B01.a003",
+        "c-B01.a004",
+        "c-B01.a005",
+        "c-B01.a050",
+        "c-B01.a051",
+        "c-B01.a052",
+        "c-B01.a053",
+        "c-B01.a054",
+        "c-B01.a055",
+        "c-B01.a056",
+        "c-B01.a057",
+        "c-B01.a058",
+        "c-B01.a059",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a030",
+        "c-B01.a156",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int _under, x1, camelCase_9;\nint \\u00C0b, \\U000000C1c;\nconst char *str = \"t\";\nint k = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "translation_unit",
+            "declaration",
+            "identifier",
+            "string_literal",
+            "number_literal"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "_under"
+            },
+            {
+              "type": "identifier",
+              "text": "x1"
+            },
+            {
+              "type": "identifier",
+              "text": "camelCase_9"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u00C0b"
+            },
+            {
+              "type": "identifier",
+              "text": "\\U000000C1c"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"t\""
+            },
+            {
+              "type": "number_literal",
+              "text": "1",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-02",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a060",
+        "c-B01.a064",
+        "c-B01.a065",
+        "c-B01.a066",
+        "c-B01.a067",
+        "c-B01.a068",
+        "c-B01.a069",
+        "c-B01.a070",
+        "c-B01.a071",
+        "c-B01.a072",
+        "c-B01.a073",
+        "c-B01.a074",
+        "c-B01.a075",
+        "c-B01.a076",
+        "c-B01.a077",
+        "c-B01.a078",
+        "c-B01.a079",
+        "c-B01.a080",
+        "c-B01.a081",
+        "c-B01.a082",
+        "c-B01.a083",
+        "c-B01.a084",
+        "c-B01.a085",
+        "c-B01.a086",
+        "c-B01.a087",
+        "c-B01.a031",
+        "c-B01.a043",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "unsigned long long v[] = {\n    0, 7, 42, 017, 0x1F, 0XaB, 10u, 10U, 10l, 10L, 10ll, 10LL,\n    10ul, 10uL, 10ull, 10uLL, 10lu, 10LU, 10llu, 10LLU\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "init_declarator",
+            "initializer_list",
+            "number_literal"
+          ],
+          "anchors": [
+            {
+              "type": "number_literal",
+              "text": "42"
+            },
+            {
+              "type": "number_literal",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "017"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1F"
+            },
+            {
+              "type": "number_literal",
+              "text": "0XaB"
+            },
+            {
+              "type": "number_literal",
+              "text": "10u",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "10U"
+            },
+            {
+              "type": "number_literal",
+              "text": "10l",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "10LL",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "10ul",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "10uLL"
+            },
+            {
+              "type": "number_literal",
+              "text": "10lu"
+            },
+            {
+              "type": "number_literal",
+              "text": "10llu"
+            },
+            {
+              "type": "number_literal",
+              "text": "10LLU"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{\n    0, 7, 42, 017, 0x1F, 0XaB, 10u, 10U, 10l, 10L, 10ll, 10LL,\n    10ul, 10uL, 10ull, 10uLL, 10lu, 10LU, 10llu, 10LLU\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-03",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a061",
+        "c-B01.a088",
+        "c-B01.a089",
+        "c-B01.a090",
+        "c-B01.a091",
+        "c-B01.a092",
+        "c-B01.a093",
+        "c-B01.a094",
+        "c-B01.a095",
+        "c-B01.a096",
+        "c-B01.a097",
+        "c-B01.a098",
+        "c-B01.a099",
+        "c-B01.a100",
+        "c-B01.a101",
+        "c-B01.a102",
+        "c-B01.a103",
+        "c-B01.a104",
+        "c-B01.a105",
+        "c-B01.a106",
+        "c-B01.a107",
+        "c-B01.a108",
+        "c-B01.a109",
+        "c-B01.a110",
+        "c-B01.a111",
+        "c-B01.a419",
+        "c-B01.a021",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a157",
+        "c-B01.a158",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "double f[] = {\n    1.5, .5, 1., 1e10, 1.5e-3, 2E+2, 1.0f, 2.0F, 3.0l, 4.0L, 12.25,\n    0x1.8p1, 0x.8P-1, 0x1.p+2, 0xAp0f, 0X1P1L, 0x1F.8p0, 0x1p-1l\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "initializer_list",
+            "number_literal"
+          ],
+          "anchors": [
+            {
+              "type": "number_literal",
+              "text": "1.5",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "number_literal",
+              "text": "1.",
+              "occurrence": 2
+            },
+            {
+              "type": "number_literal",
+              "text": "1e10"
+            },
+            {
+              "type": "number_literal",
+              "text": "1.5e-3"
+            },
+            {
+              "type": "number_literal",
+              "text": "2E+2"
+            },
+            {
+              "type": "number_literal",
+              "text": "1.0f"
+            },
+            {
+              "type": "number_literal",
+              "text": "2.0F"
+            },
+            {
+              "type": "number_literal",
+              "text": "3.0l"
+            },
+            {
+              "type": "number_literal",
+              "text": "4.0L"
+            },
+            {
+              "type": "number_literal",
+              "text": "12.25"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1.8p1"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x.8P-1"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1.p+2"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xAp0f"
+            },
+            {
+              "type": "number_literal",
+              "text": "0X1P1L"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1F.8p0"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1p-1l"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-04",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a063",
+        "c-B01.a113",
+        "c-B01.a114",
+        "c-B01.a115",
+        "c-B01.a116",
+        "c-B01.a117",
+        "c-B01.a118",
+        "c-B01.a119",
+        "c-B01.a120",
+        "c-B01.a121",
+        "c-B01.a122",
+        "c-B01.a123",
+        "c-B01.a124",
+        "c-B01.a125",
+        "c-B01.a126",
+        "c-B01.a127",
+        "c-B01.a128",
+        "c-B01.a129",
+        "c-B01.a130",
+        "c-B01.a131",
+        "c-B01.a132",
+        "c-B01.a133",
+        "c-B01.a134",
+        "c-B01.a135",
+        "c-B01.a136",
+        "c-B01.a137",
+        "c-B01.a138",
+        "c-B01.a030",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int c[] = {\n    'a', 'ab', L'b', '\"', '\\'', '\\\"', '\\?', '\\\\', '\\a', '\\b', '\\f', '\\n', '\\r', '\\t', '\\v',\n    '\\0', '\\12', '\\123', '\\x4f', '\\u00e9'\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "initializer_list",
+            "char_literal",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "char_literal",
+              "text": "'a'"
+            },
+            {
+              "type": "char_literal",
+              "text": "'ab'"
+            },
+            {
+              "type": "char_literal",
+              "text": "L'b'"
+            },
+            {
+              "type": "char_literal",
+              "text": "'\"'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\?"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\0"
+            },
+            {
+              "type": "char_literal",
+              "text": "'\\12'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\123"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x4f"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u00e9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-05",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a139",
+        "c-B01.a140",
+        "c-B01.a141",
+        "c-B01.a142",
+        "c-B01.a143",
+        "c-B01.a144",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a044",
+        "c-B01.a156",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "const char *s1 = \"abc\", *s2 = \"\", *s3 = \"a\\tb\\\"c'\";\nconst char *s4 = \"con\" \"cat\";\nconst void *w = L\"wide\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "string_literal",
+            "concatenated_string",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "string_literal",
+              "text": "\"abc\""
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\""
+            },
+            {
+              "type": "string_literal",
+              "text": "\"a\\tb\\\"c'\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t"
+            },
+            {
+              "type": "concatenated_string",
+              "text": "\"con\" \"cat\""
+            },
+            {
+              "type": "string_literal",
+              "text": "L\"wide\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-06",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a193",
+        "c-B01.a194",
+        "c-B01.a195",
+        "c-B01.a196",
+        "c-B01.a197",
+        "c-B01.a198",
+        "c-B01.a030",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "%:define CAT(a, b) a %:%: b\nint CAT(ar, r)<:2:> = <% 1, 2 %>;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_function_def",
+            "declaration",
+            "array_declarator",
+            "initializer_list"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_function_def",
+              "text": "%:define CAT(a, b) a %:%: b\n"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "a %:%: b"
+            },
+            {
+              "type": "declaration",
+              "text": "int CAT(ar, r)<:2:> = <% 1, 2 %>;"
+            },
+            {
+              "type": "array_declarator",
+              "text": "CAT(ar, r)<:2:>"
+            },
+            {
+              "type": "initializer_list",
+              "text": "<% 1, 2 %>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-07",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a420",
+        "c-B01.a030",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a179"
+      ],
+      "source_utf8": "// line comment\n/* block comment */\n/* multi\n   line */\nint x; // trailing\nint y = 1 /* inner */ + 2;\n/**/\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "comment",
+              "text": "/* block comment */"
+            },
+            {
+              "type": "comment",
+              "text": "/* multi\n   line */"
+            },
+            {
+              "type": "comment",
+              "text": "// trailing"
+            },
+            {
+              "type": "comment",
+              "text": "/* inner */"
+            },
+            {
+              "type": "comment",
+              "text": "/**/"
+            },
+            {
+              "type": "binary_expression",
+              "text": "1 /* inner */ + 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-08",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a007",
+        "c-B01.a008",
+        "c-B01.a009",
+        "c-B01.a010",
+        "c-B01.a011",
+        "c-B01.a012",
+        "c-B01.a207",
+        "c-B01.a208",
+        "c-B01.a209",
+        "c-B01.a210",
+        "c-B01.a211",
+        "c-B01.a212",
+        "c-B01.a213",
+        "c-B01.a214",
+        "c-B01.a215",
+        "c-B01.a030",
+        "c-B01.a157",
+        "c-B01.a158",
+        "c-B01.a177",
+        "c-B01.a191"
+      ],
+      "source_utf8": "#define NUMS 1 .5 12 12abc 1.2e+3 1E-4 0x1p-2 1P-6 1.2.3\n#define OTHER @ `\n#define CH 'c'\n#define STR \"s\"\nint ok;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_def",
+            "preproc_arg",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_arg",
+              "text": "1 .5 12 12abc 1.2e+3 1E-4 0x1p-2 1P-6 1.2.3"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "@ `"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "'c'"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "\"s\""
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define OTHER @ `\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-09",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a216",
+        "c-B01.a217",
+        "c-B01.a218",
+        "c-B01.a219",
+        "c-B01.a220",
+        "c-B01.a221",
+        "c-B01.a222",
+        "c-B01.a223",
+        "c-B01.a224",
+        "c-B01.a225",
+        "c-B01.a226",
+        "c-B01.a227",
+        "c-B01.a228",
+        "c-B01.a229",
+        "c-B01.a230",
+        "c-B01.a231",
+        "c-B01.a232",
+        "c-B01.a233",
+        "c-B01.a234",
+        "c-B01.a235",
+        "c-B01.a236",
+        "c-B01.a237",
+        "c-B01.a238",
+        "c-B01.a239",
+        "c-B01.a240",
+        "c-B01.a241",
+        "c-B01.a242",
+        "c-B01.a243",
+        "c-B01.a244",
+        "c-B01.a288",
+        "c-B01.a395",
+        "c-B01.a414",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a037",
+        "c-B01.a039",
+        "c-B01.a044",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a152",
+        "c-B01.a153",
+        "c-B01.a154",
+        "c-B01.a155",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a158",
+        "c-B01.a159",
+        "c-B01.a160",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "struct P { int x; } p, *pp = &p;\nint a[3], n, *ip = &n;\nint f(int);\nint g(void);\nint k2(int, int);\nvoid h(void) {\n    a[0];\n    f(1);\n    g();\n    k2(1, 2);\n    \"s\"[0];\n    (n);\n    p.x;\n    pp->x;\n    a[1]++;\n    a[1]--;\n    (int){1};\n    (int[]){1, 2,};\n    ++n; --n; ip = &n; *ip; +n; -n; ~n; !n;\n    sizeof n; sizeof(int); (long)n;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "subscript_expression",
+            "call_expression",
+            "argument_list",
+            "field_expression",
+            "update_expression",
+            "compound_literal_expression",
+            "pointer_expression",
+            "unary_expression",
+            "sizeof_expression",
+            "cast_expression",
+            "parenthesized_expression"
+          ],
+          "anchors": [
+            {
+              "type": "subscript_expression",
+              "text": "a[0]"
+            },
+            {
+              "type": "call_expression",
+              "text": "f(1)"
+            },
+            {
+              "type": "call_expression",
+              "text": "g()"
+            },
+            {
+              "type": "call_expression",
+              "text": "k2(1, 2)"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"s\""
+            },
+            {
+              "type": "subscript_expression",
+              "text": "\"s\"[0]"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(n)"
+            },
+            {
+              "type": "field_expression",
+              "text": "p.x"
+            },
+            {
+              "type": "field_expression",
+              "text": "pp->x"
+            },
+            {
+              "type": "update_expression",
+              "text": "a[1]++"
+            },
+            {
+              "type": "update_expression",
+              "text": "a[1]--"
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(int){1}"
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(int[]){1, 2,}"
+            },
+            {
+              "type": "update_expression",
+              "text": "++n"
+            },
+            {
+              "type": "update_expression",
+              "text": "--n"
+            },
+            {
+              "type": "pointer_expression",
+              "text": "&n",
+              "occurrence": 2
+            },
+            {
+              "type": "pointer_expression",
+              "text": "*ip",
+              "occurrence": 2
+            },
+            {
+              "type": "unary_expression",
+              "text": "+n",
+              "occurrence": 2
+            },
+            {
+              "type": "unary_expression",
+              "text": "-n",
+              "occurrence": 2
+            },
+            {
+              "type": "unary_expression",
+              "text": "~n"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!n"
+            },
+            {
+              "type": "sizeof_expression",
+              "text": "sizeof n"
+            },
+            {
+              "type": "sizeof_expression",
+              "text": "sizeof(int)"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(long)n"
+            },
+            {
+              "type": "expression_statement",
+              "text": "a[0];"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-10",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a245",
+        "c-B01.a246",
+        "c-B01.a247",
+        "c-B01.a248",
+        "c-B01.a249",
+        "c-B01.a250",
+        "c-B01.a251",
+        "c-B01.a252",
+        "c-B01.a253",
+        "c-B01.a254",
+        "c-B01.a255",
+        "c-B01.a256",
+        "c-B01.a257",
+        "c-B01.a258",
+        "c-B01.a259",
+        "c-B01.a260",
+        "c-B01.a261",
+        "c-B01.a262",
+        "c-B01.a263",
+        "c-B01.a264",
+        "c-B01.a265",
+        "c-B01.a266",
+        "c-B01.a267",
+        "c-B01.a268",
+        "c-B01.a269",
+        "c-B01.a270",
+        "c-B01.a271",
+        "c-B01.a272",
+        "c-B01.a273",
+        "c-B01.a274",
+        "c-B01.a275",
+        "c-B01.a276",
+        "c-B01.a277",
+        "c-B01.a278",
+        "c-B01.a279",
+        "c-B01.a280",
+        "c-B01.a281",
+        "c-B01.a282",
+        "c-B01.a283",
+        "c-B01.a284",
+        "c-B01.a285",
+        "c-B01.a286",
+        "c-B01.a287",
+        "c-B01.a288",
+        "c-B01.a289",
+        "c-B01.a030",
+        "c-B01.a044",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a155",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a158",
+        "c-B01.a161",
+        "c-B01.a162",
+        "c-B01.a163",
+        "c-B01.a164",
+        "c-B01.a165",
+        "c-B01.a166",
+        "c-B01.a167",
+        "c-B01.a168",
+        "c-B01.a169",
+        "c-B01.a170",
+        "c-B01.a171",
+        "c-B01.a172",
+        "c-B01.a173",
+        "c-B01.a174",
+        "c-B01.a175",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a180",
+        "c-B01.a181",
+        "c-B01.a182",
+        "c-B01.a183",
+        "c-B01.a184",
+        "c-B01.a185",
+        "c-B01.a186",
+        "c-B01.a187",
+        "c-B01.a188",
+        "c-B01.a189",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int a, b, c;\nvoid ops(void) {\n    a = b * c; a = b / c; a = b % c;\n    a = b + c; a = b - c;\n    a = b << 1; a = b >> 1;\n    a = b < c; a = b > c; a = b <= c; a = b >= c;\n    a = b == c; a = b != c;\n    a = b & c; a = b ^ c; a = b | c;\n    a = b && c; a = b || c;\n    a = b ? c : a;\n    a *= 2; a /= 2; a %= 2; a += 2; a -= 2; a <<= 1; a >>= 1; a &= 1; a ^= 1; a |= 1;\n    a = 1, b = 2;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "binary_expression",
+            "conditional_expression",
+            "assignment_expression",
+            "comma_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "b * c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b / c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b % c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b + c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b - c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b << 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b >> 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b < c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b > c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b <= c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b >= c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b == c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b != c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b & c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b ^ c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b | c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b && c"
+            },
+            {
+              "type": "binary_expression",
+              "text": "b || c"
+            },
+            {
+              "type": "conditional_expression",
+              "text": "b ? c : a"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "a = b ? c : a"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "a *= 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "a |= 1"
+            },
+            {
+              "type": "comma_expression",
+              "text": "a = 1, b = 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-11",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a291",
+        "c-B01.a292",
+        "c-B01.a293",
+        "c-B01.a294",
+        "c-B01.a295",
+        "c-B01.a296",
+        "c-B01.a297",
+        "c-B01.a298",
+        "c-B01.a299",
+        "c-B01.a300",
+        "c-B01.a301",
+        "c-B01.a302",
+        "c-B01.a303",
+        "c-B01.a304",
+        "c-B01.a305",
+        "c-B01.a306",
+        "c-B01.a307",
+        "c-B01.a308",
+        "c-B01.a309",
+        "c-B01.a310",
+        "c-B01.a311",
+        "c-B01.a312",
+        "c-B01.a313",
+        "c-B01.a314",
+        "c-B01.a315",
+        "c-B01.a318",
+        "c-B01.a370",
+        "c-B01.a339",
+        "c-B01.a340",
+        "c-B01.a341",
+        "c-B01.a342",
+        "c-B01.a415",
+        "c-B01.a416",
+        "c-B01.a417",
+        "c-B01.a418",
+        "c-B01.a013",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a021",
+        "c-B01.a024",
+        "c-B01.a025",
+        "c-B01.a029",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a032",
+        "c-B01.a033",
+        "c-B01.a034",
+        "c-B01.a035",
+        "c-B01.a036",
+        "c-B01.a038",
+        "c-B01.a041",
+        "c-B01.a043",
+        "c-B01.a044",
+        "c-B01.a045",
+        "c-B01.a047",
+        "c-B01.a048",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a156",
+        "c-B01.a177",
+        "c-B01.a179"
+      ],
+      "source_utf8": "typedef unsigned int uint;\nextern int ext;\nstatic int st;\nvoid sc(void) { auto int au = 0; register int rg = 1; (void)au; (void)rg; }\nvoid *vp; char ch; short sh; int in; long lg; float fl; double db;\nsigned sg; unsigned us; _Bool bo; _Complex double cx; long double ld;\nuint tn;\nconst int ci = 0; volatile int vi; int *restrict rp;\ninline static int il(void) { return 0; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_definition",
+            "storage_class_specifier",
+            "primitive_type",
+            "sized_type_specifier",
+            "type_qualifier",
+            "type_identifier",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "type_definition",
+              "text": "typedef unsigned int uint;"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "extern"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "static",
+              "occurrence": 1
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "auto"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "register"
+            },
+            {
+              "type": "init_declarator",
+              "text": "au = 0"
+            },
+            {
+              "type": "primitive_type",
+              "text": "void",
+              "occurrence": 1
+            },
+            {
+              "type": "primitive_type",
+              "text": "char"
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "short"
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "long",
+              "occurrence": 1
+            },
+            {
+              "type": "primitive_type",
+              "text": "float"
+            },
+            {
+              "type": "primitive_type",
+              "text": "double",
+              "occurrence": 1
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "signed",
+              "occurrence": 2
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "unsigned",
+              "occurrence": 2
+            },
+            {
+              "type": "primitive_type",
+              "text": "_Bool"
+            },
+            {
+              "type": "declaration",
+              "text": "_Complex double cx;"
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "long double"
+            },
+            {
+              "type": "type_identifier",
+              "text": "uint",
+              "occurrence": 2
+            },
+            {
+              "type": "type_qualifier",
+              "text": "const"
+            },
+            {
+              "type": "type_qualifier",
+              "text": "volatile"
+            },
+            {
+              "type": "type_qualifier",
+              "text": "restrict"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "inline"
+            },
+            {
+              "type": "function_definition",
+              "text": "inline static int il(void) { return 0; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-12",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a316",
+        "c-B01.a317",
+        "c-B01.a319",
+        "c-B01.a320",
+        "c-B01.a321",
+        "c-B01.a322",
+        "c-B01.a323",
+        "c-B01.a324",
+        "c-B01.a325",
+        "c-B01.a326",
+        "c-B01.a327",
+        "c-B01.a328",
+        "c-B01.a329",
+        "c-B01.a330",
+        "c-B01.a331",
+        "c-B01.a332",
+        "c-B01.a333",
+        "c-B01.a334",
+        "c-B01.a335",
+        "c-B01.a336",
+        "c-B01.a337",
+        "c-B01.a338",
+        "c-B01.a112",
+        "c-B01.a062",
+        "c-B01.a290",
+        "c-B01.a017",
+        "c-B01.a023",
+        "c-B01.a025",
+        "c-B01.a030",
+        "c-B01.a039",
+        "c-B01.a042",
+        "c-B01.a043",
+        "c-B01.a045",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "struct S { int a, b; unsigned c : 3; unsigned : 0; const volatile int d; };\nunion U { int i; float f; };\nstruct S s1; union U u1;\nstruct Fwd;\nstruct { int x; } anon_obj;\nenum E { A, B = 2, };\nenum E2 { C };\nenum { Z } z;\nenum E e1 = B;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "struct_specifier",
+            "union_specifier",
+            "field_declaration_list",
+            "field_declaration",
+            "bitfield_clause",
+            "enum_specifier",
+            "enumerator_list",
+            "enumerator"
+          ],
+          "anchors": [
+            {
+              "type": "struct_specifier",
+              "text": "struct S { int a, b; unsigned c : 3; unsigned : 0; const volatile int d; }"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int a, b;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "unsigned c : 3;"
+            },
+            {
+              "type": "bitfield_clause",
+              "text": ": 3"
+            },
+            {
+              "type": "field_declaration",
+              "text": "unsigned : 0;"
+            },
+            {
+              "type": "bitfield_clause",
+              "text": ": 0"
+            },
+            {
+              "type": "field_declaration",
+              "text": "const volatile int d;"
+            },
+            {
+              "type": "union_specifier",
+              "text": "union U { int i; float f; }"
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct S",
+              "occurrence": 2
+            },
+            {
+              "type": "union_specifier",
+              "text": "union U",
+              "occurrence": 2
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct Fwd"
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct { int x; }"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum E { A, B = 2, }"
+            },
+            {
+              "type": "enumerator_list",
+              "text": "{ A, B = 2, }"
+            },
+            {
+              "type": "enumerator",
+              "text": "A"
+            },
+            {
+              "type": "enumerator",
+              "text": "B = 2"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum E2 { C }"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum { Z }"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum E",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-13",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a343",
+        "c-B01.a344",
+        "c-B01.a345",
+        "c-B01.a346",
+        "c-B01.a347",
+        "c-B01.a348",
+        "c-B01.a349",
+        "c-B01.a350",
+        "c-B01.a351",
+        "c-B01.a352",
+        "c-B01.a353",
+        "c-B01.a354",
+        "c-B01.a355",
+        "c-B01.a356",
+        "c-B01.a357",
+        "c-B01.a358",
+        "c-B01.a359",
+        "c-B01.a360",
+        "c-B01.a361",
+        "c-B01.a362",
+        "c-B01.a363",
+        "c-B01.a364",
+        "c-B01.a365",
+        "c-B01.a366",
+        "c-B01.a367",
+        "c-B01.a368",
+        "c-B01.a369",
+        "c-B01.a412",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a033",
+        "c-B01.a037",
+        "c-B01.a038",
+        "c-B01.a043",
+        "c-B01.a044",
+        "c-B01.a045",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a151",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a178",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int *p1;\nint * const * volatile pp2;\nint *restrict const p3;\nint (*fp)(int, char *);\nint (*ap)[4];\nint arr1[10], arr2[];\nint printf_like(const char *fmt, ...);\nvoid arrays(int n, int a[n], int b[static 10], int c[const 5], int d[static const 5], int e[const static 5],\n            int g[*]);\nvoid abs_decl(int *, int (*)(void), int [], int [static 3], int [const static 3], int [*], int (*)[*], int [3]);\nunsigned long sz = sizeof(int *) + sizeof(int (*)[3]) + sizeof(int (*)(int)) + sizeof(int (*)()) + sizeof(int [2]);\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "pointer_declarator",
+            "array_declarator",
+            "function_declarator",
+            "parenthesized_declarator",
+            "parameter_list",
+            "parameter_declaration",
+            "variadic_parameter",
+            "abstract_pointer_declarator",
+            "abstract_array_declarator",
+            "abstract_function_declarator",
+            "abstract_parenthesized_declarator",
+            "type_descriptor"
+          ],
+          "anchors": [
+            {
+              "type": "pointer_declarator",
+              "text": "*p1"
+            },
+            {
+              "type": "pointer_declarator",
+              "text": "* const * volatile pp2"
+            },
+            {
+              "type": "pointer_declarator",
+              "text": "* volatile pp2"
+            },
+            {
+              "type": "pointer_declarator",
+              "text": "*restrict const p3"
+            },
+            {
+              "type": "function_declarator",
+              "text": "(*fp)(int, char *)"
+            },
+            {
+              "type": "parenthesized_declarator",
+              "text": "(*fp)"
+            },
+            {
+              "type": "array_declarator",
+              "text": "(*ap)[4]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "arr1[10]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "arr2[]"
+            },
+            {
+              "type": "parameter_list",
+              "text": "(const char *fmt, ...)"
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "..."
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "char *",
+              "occurrence": 1
+            },
+            {
+              "type": "array_declarator",
+              "text": "a[n]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "b[static 10]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "c[const 5]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "d[static const 5]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "e[const static 5]"
+            },
+            {
+              "type": "array_declarator",
+              "text": "g[*]"
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "int *",
+              "occurrence": 4
+            },
+            {
+              "type": "abstract_function_declarator",
+              "text": "(*)(void)"
+            },
+            {
+              "type": "abstract_parenthesized_declarator",
+              "text": "(*)",
+              "occurrence": 1
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "[]",
+              "occurrence": 2
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "[static 3]"
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "[const static 3]"
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "[*]",
+              "occurrence": 2
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "(*)[*]"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int *",
+              "occurrence": 5
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int (*)[3]"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int (*)(int)"
+            },
+            {
+              "type": "abstract_function_declarator",
+              "text": "(*)()"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int [2]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-14",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a371",
+        "c-B01.a372",
+        "c-B01.a373",
+        "c-B01.a374",
+        "c-B01.a375",
+        "c-B01.a376",
+        "c-B01.a377",
+        "c-B01.a378",
+        "c-B01.a379",
+        "c-B01.a380",
+        "c-B01.a413",
+        "c-B01.a030",
+        "c-B01.a039",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a151",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "struct Pt { int x, y; int arr[3]; };\nstruct Pt p1 = { 1, 2, { 3, 4, 5 } };\nstruct Pt p2 = { .y = 2, .arr[1] = 7, };\nint a1[5] = { [0] = 1, [3] = 4, 5 };\nstruct Pt pa[2] = { [1].x = 3, [0] = { .x = 1 } };\nint scalar = 3;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "initializer_list",
+            "initializer_pair",
+            "field_designator",
+            "subscript_designator"
+          ],
+          "anchors": [
+            {
+              "type": "initializer_list",
+              "text": "{ 1, 2, { 3, 4, 5 } }"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{ 3, 4, 5 }"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{ .y = 2, .arr[1] = 7, }"
+            },
+            {
+              "type": "initializer_pair",
+              "text": ".y = 2"
+            },
+            {
+              "type": "field_designator",
+              "text": ".y"
+            },
+            {
+              "type": "initializer_pair",
+              "text": ".arr[1] = 7"
+            },
+            {
+              "type": "subscript_designator",
+              "text": "[1]",
+              "occurrence": 1
+            },
+            {
+              "type": "initializer_pair",
+              "text": "[0] = 1"
+            },
+            {
+              "type": "subscript_designator",
+              "text": "[0]",
+              "occurrence": 1
+            },
+            {
+              "type": "initializer_pair",
+              "text": "[1].x = 3"
+            },
+            {
+              "type": "initializer_pair",
+              "text": "[0] = { .x = 1 }"
+            },
+            {
+              "type": "init_declarator",
+              "text": "scalar = 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-15",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a381",
+        "c-B01.a382",
+        "c-B01.a383",
+        "c-B01.a384",
+        "c-B01.a385",
+        "c-B01.a386",
+        "c-B01.a387",
+        "c-B01.a388",
+        "c-B01.a389",
+        "c-B01.a390",
+        "c-B01.a391",
+        "c-B01.a392",
+        "c-B01.a393",
+        "c-B01.a394",
+        "c-B01.a395",
+        "c-B01.a396",
+        "c-B01.a397",
+        "c-B01.a398",
+        "c-B01.a399",
+        "c-B01.a400",
+        "c-B01.a401",
+        "c-B01.a402",
+        "c-B01.a403",
+        "c-B01.a404",
+        "c-B01.a405",
+        "c-B01.a406",
+        "c-B01.a014",
+        "c-B01.a015",
+        "c-B01.a018",
+        "c-B01.a019",
+        "c-B01.a020",
+        "c-B01.a022",
+        "c-B01.a026",
+        "c-B01.a027",
+        "c-B01.a028",
+        "c-B01.a030",
+        "c-B01.a034",
+        "c-B01.a040",
+        "c-B01.a044",
+        "c-B01.a046",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a153",
+        "c-B01.a154",
+        "c-B01.a165",
+        "c-B01.a166",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179"
+      ],
+      "source_utf8": "int sw(int v) {\n    int r = 0;\n    switch (v) {\n    case 1: r = 1; break;\n    case 2: { r = 2; } break;\n    default: r = 3;\n    }\n    if (v) r++;\n    if (v > 1) r++; else r--;\n    while (r > 10) r--;\n    do r++; while (r < 0);\n    for (;;) break;\n    for (r = 0; r < 3; r++) continue;\n    for (int i = 0; i < 2; i++) ;\n    for (int j = 0; ; ) break;\n    goto done;\ndone:\n    {}\n    return r;\n}\nvoid vret(void) { return; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "switch_statement",
+            "case_statement",
+            "break_statement",
+            "compound_statement",
+            "if_statement",
+            "else_clause",
+            "while_statement",
+            "do_statement",
+            "for_statement",
+            "continue_statement",
+            "goto_statement",
+            "labeled_statement",
+            "statement_identifier",
+            "return_statement",
+            "expression_statement"
+          ],
+          "anchors": [
+            {
+              "type": "switch_statement",
+              "text": "switch (v) {\n    case 1: r = 1; break;\n    case 2: { r = 2; } break;\n    default: r = 3;\n    }"
+            },
+            {
+              "type": "case_statement",
+              "text": "case 1: r = 1; break;"
+            },
+            {
+              "type": "case_statement",
+              "text": "case 2: { r = 2; } break;"
+            },
+            {
+              "type": "case_statement",
+              "text": "default: r = 3;"
+            },
+            {
+              "type": "compound_statement",
+              "text": "{ r = 2; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break;",
+              "occurrence": 1
+            },
+            {
+              "type": "if_statement",
+              "text": "if (v) r++;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (v > 1) r++; else r--;"
+            },
+            {
+              "type": "else_clause",
+              "text": "else r--;"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (r > 10) r--;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do r++; while (r < 0);"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) break;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (r = 0; r < 3; r++) continue;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (int i = 0; i < 2; i++) ;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (int j = 0; ; ) break;"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue;"
+            },
+            {
+              "type": "goto_statement",
+              "text": "goto done;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "done:\n    {}"
+            },
+            {
+              "type": "return_statement",
+              "text": "return r;"
+            },
+            {
+              "type": "return_statement",
+              "text": "return;"
+            },
+            {
+              "type": "declaration",
+              "text": "int r = 0;"
+            },
+            {
+              "type": "expression_statement",
+              "text": "r = 1;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-16",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a407",
+        "c-B01.a408",
+        "c-B01.a409",
+        "c-B01.a410",
+        "c-B01.a411",
+        "c-B01.a412",
+        "c-B01.a414",
+        "c-B01.a030",
+        "c-B01.a034",
+        "c-B01.a038",
+        "c-B01.a044",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int counter;\nstatic int helper(int n) {\n    int vla[n];\n    vla[0] = n;\n    int *cl = (int[]){ n, n + 1 };\n    return vla[0] + cl[1];\n}\nint main(void) { return helper(2); }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "translation_unit",
+            "declaration",
+            "function_definition",
+            "array_declarator",
+            "compound_literal_expression"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "int counter;"
+            },
+            {
+              "type": "function_definition",
+              "text": "static int helper(int n) {\n    int vla[n];\n    vla[0] = n;\n    int *cl = (int[]){ n, n + 1 };\n    return vla[0] + cl[1];\n}"
+            },
+            {
+              "type": "function_definition",
+              "text": "int main(void) { return helper(2); }"
+            },
+            {
+              "type": "array_declarator",
+              "text": "vla[n]"
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(int[]){ n, n + 1 }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B01-17",
+      "features": [
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B01.a049",
+        "c-B01.a021",
+        "c-B01.a177"
+      ],
+      "source_utf8": "double _Imaginary di;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "double _Imaginary di;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B02-01",
+      "features": [
+        "c-B02",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B02.a01",
+        "c-B02.a02",
+        "c-B02.a03",
+        "c-B02.a04",
+        "c-B02.a05",
+        "c-B02.a06",
+        "c-B02.a07",
+        "c-B02.a08",
+        "c-B02.a09",
+        "c-B02.a10",
+        "c-B02.a11",
+        "c-B02.a12",
+        "c-B02.a13",
+        "c-B02.a14",
+        "c-B02.a15",
+        "c-B02.a16",
+        "c-B02.a27",
+        "c-B02.a28",
+        "c-B02.a33",
+        "c-B02.a31",
+        "c-B02.a32",
+        "c-B02.a18",
+        "c-B02.a30",
+        "c-B02.a37",
+        "c-B02.a38",
+        "c-B02.a72",
+        "c-B02.a73",
+        "c-B02.a78",
+        "c-B02.a79",
+        "c-B02.a67",
+        "c-B01.a022",
+        "c-B01.a028",
+        "c-B01.a030",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a166",
+        "c-B01.a169",
+        "c-B01.a173",
+        "c-B01.a174",
+        "c-B01.a177",
+        "c-B01.a191"
+      ],
+      "source_utf8": "#define FEATURE 1\n#if FEATURE > 0 && defined(FEATURE) || defined FEATURE\nint a;\n#elif FEATURE == 0\nint b;\n#elif 1\nint b2;\n#else\nint c;\n#endif\n#ifdef FEATURE\nint d;\n#endif\n#ifndef MISSING\nint e;\n#else\n#endif\n#if 0\nthis is not C @ `\n# nondirective inside a skipped group\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_def",
+            "preproc_if",
+            "preproc_elif",
+            "preproc_else",
+            "preproc_ifdef",
+            "preproc_defined",
+            "binary_expression",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_def",
+              "text": "#define FEATURE 1\n"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if FEATURE > 0 && defined(FEATURE) || defined FEATURE\nint a;\n#elif FEATURE == 0\nint b;\n#elif 1\nint b2;\n#else\nint c;\n#endif"
+            },
+            {
+              "type": "binary_expression",
+              "text": "FEATURE > 0 && defined(FEATURE) || defined FEATURE"
+            },
+            {
+              "type": "preproc_defined",
+              "text": "defined(FEATURE)"
+            },
+            {
+              "type": "preproc_defined",
+              "text": "defined FEATURE"
+            },
+            {
+              "type": "preproc_elif",
+              "text": "#elif FEATURE == 0\nint b;\n#elif 1\nint b2;\n#else\nint c;"
+            },
+            {
+              "type": "preproc_elif",
+              "text": "#elif 1\nint b2;\n#else\nint c;"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else\nint c;"
+            },
+            {
+              "type": "preproc_ifdef",
+              "text": "#ifdef FEATURE\nint d;\n#endif"
+            },
+            {
+              "type": "preproc_ifdef",
+              "text": "#ifndef MISSING\nint e;\n#else\n#endif"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else",
+              "occurrence": 2
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if 0\nthis is not C @ `\n# nondirective inside a skipped group\n#endif"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B02-02",
+      "features": [
+        "c-B01",
+        "c-B02"
+      ],
+      "alternatives": [
+        "c-B01.a006",
+        "c-B01.a199",
+        "c-B01.a200",
+        "c-B01.a201",
+        "c-B01.a202",
+        "c-B01.a203",
+        "c-B01.a204",
+        "c-B01.a205",
+        "c-B01.a206",
+        "c-B02.a17",
+        "c-B02.a18",
+        "c-B02.a19",
+        "c-B02.a20",
+        "c-B02.a21",
+        "c-B02.a22",
+        "c-B02.a23",
+        "c-B02.a25",
+        "c-B02.a26",
+        "c-B02.a29",
+        "c-B02.a30",
+        "c-B02.a31",
+        "c-B02.a32",
+        "c-B02.a33",
+        "c-B02.a05",
+        "c-B02.a06",
+        "c-B02.a35",
+        "c-B02.a36",
+        "c-B02.a67",
+        "c-B02.a68",
+        "c-B02.a69",
+        "c-B02.a70",
+        "c-B02.a71",
+        "c-B02.a74",
+        "c-B02.a75",
+        "c-B02.a76",
+        "c-B02.a77",
+        "c-B02.a79",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a030",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a151",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a165",
+        "c-B01.a166",
+        "c-B01.a177",
+        "c-B01.a178",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-B01.a191",
+        "c-B01.a192"
+      ],
+      "source_utf8": "#include <stdio.h>\n#include \"local_header.h\"\n#define HDR <stddef.h>\n#include HDR\n#define EMPTY\n#define ONE 1\n#define NOARGS() 0\n#define ADD(a, b) ((a) + (b))\n#define VARIADIC(...) f(__VA_ARGS__)\n#define LOG(fmt, ...) printf(fmt, __VA_ARGS__)\n#define STR(x) #x\n#define CAT(a, b) a ## b\n#define PAREN (x)\n#undef ONE\n#line 100\n#line 200 \"renamed.c\"\n#pragma once\n#pragma\n#\nint CAT(va, lue) = ADD(1, 2) + NOARGS();\nconst char *s = STR(hello);\n_Pragma(\"GCC diagnostic push\")\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_include",
+            "system_lib_string",
+            "string_literal",
+            "preproc_def",
+            "preproc_function_def",
+            "preproc_params",
+            "preproc_arg",
+            "preproc_call",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_include",
+              "text": "#include <stdio.h>\n"
+            },
+            {
+              "type": "system_lib_string",
+              "text": "<stdio.h>"
+            },
+            {
+              "type": "preproc_include",
+              "text": "#include \"local_header.h\"\n"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"local_header.h\""
+            },
+            {
+              "type": "preproc_include",
+              "text": "#include HDR\n"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define HDR <stddef.h>\n"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define EMPTY\n"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define ONE 1\n"
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define NOARGS() 0\n"
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define ADD(a, b) ((a) + (b))\n"
+            },
+            {
+              "type": "preproc_params",
+              "text": "(a, b)",
+              "occurrence": 1
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define VARIADIC(...) f(__VA_ARGS__)\n"
+            },
+            {
+              "type": "preproc_params",
+              "text": "(...)"
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define LOG(fmt, ...) printf(fmt, __VA_ARGS__)\n"
+            },
+            {
+              "type": "preproc_params",
+              "text": "(fmt, ...)"
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define STR(x) #x\n"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "#x"
+            },
+            {
+              "type": "preproc_function_def",
+              "text": "#define CAT(a, b) a ## b\n"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "a ## b"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define PAREN (x)\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#undef ONE\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#line 100\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#line 200 \"renamed.c\"\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma once\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#\n"
+            },
+            {
+              "type": "declaration",
+              "text": "int CAT(va, lue) = ADD(1, 2) + NOARGS();"
+            },
+            {
+              "type": "call_expression",
+              "text": "STR(hello)"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"GCC diagnostic push\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B02-03",
+      "features": [
+        "c-B02",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-B02.a24",
+        "c-B02.a79",
+        "c-B01.a030",
+        "c-B01.a177",
+        "c-B01.a191"
+      ],
+      "source_utf8": "#error \"unsupported configuration\"\nint after_error;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_call",
+            "preproc_directive",
+            "preproc_arg",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_call",
+              "text": "#error \"unsupported configuration\"\n"
+            },
+            {
+              "type": "preproc_directive",
+              "text": "#error"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "\"unsupported configuration\""
+            },
+            {
+              "type": "declaration",
+              "text": "int after_error;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-B02-04",
+      "features": [
+        "c-B02",
+        "c-B01",
+        "c-V23"
+      ],
+      "alternatives": [
+        "c-B02.a34",
+        "c-B02.a39",
+        "c-B02.a40",
+        "c-B02.a41",
+        "c-B02.a42",
+        "c-B02.a43",
+        "c-B02.a44",
+        "c-B02.a45",
+        "c-B02.a46",
+        "c-B02.a47",
+        "c-B02.a48",
+        "c-B02.a49",
+        "c-B02.a50",
+        "c-B02.a51",
+        "c-B02.a52",
+        "c-B02.a53",
+        "c-B02.a54",
+        "c-B02.a55",
+        "c-B02.a56",
+        "c-B02.a57",
+        "c-B02.a58",
+        "c-B02.a59",
+        "c-B02.a60",
+        "c-B02.a61",
+        "c-B02.a62",
+        "c-B02.a63",
+        "c-B02.a64",
+        "c-B02.a65",
+        "c-B02.a66",
+        "c-B02.a76",
+        "c-B02.a72",
+        "c-B01.a028",
+        "c-B01.a030",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a165",
+        "c-B01.a166",
+        "c-B01.a173",
+        "c-B01.a177",
+        "c-B01.a191",
+        "c-V23.a048"
+      ],
+      "source_utf8": "#warning \"deprecated header\"\n#define HDRT <stddef.h>\n#define HSTR \"cfg.h\"\n#if __has_include(<stdio.h>) && __has_include(\"cfg.h\") && __has_include(HDRT) && __has_include(HSTR)\nint has_inc;\n#endif\n#if __has_c_attribute(nodiscard) && __has_c_attribute(gnu::unused)\nint has_attr;\n#endif\n#pragma STDC FP_CONTRACT ON\n#pragma STDC FENV_ACCESS OFF\n#pragma STDC CX_LIMITED_RANGE DEFAULT\n#pragma STDC FENV_ROUND FE_DOWNWARD\n#pragma STDC FENV_ROUND FE_TONEAREST\n#pragma STDC FENV_ROUND FE_TONEARESTFROMZERO\n#pragma STDC FENV_ROUND FE_TOWARDZERO\n#pragma STDC FENV_ROUND FE_UPWARD\n#pragma STDC FENV_ROUND FE_DYNAMIC\n#pragma STDC FENV_DEC_ROUND FE_DEC_DOWNWARD\n#pragma STDC FENV_DEC_ROUND FE_DEC_TONEAREST\n#pragma STDC FENV_DEC_ROUND FE_DEC_TONEARESTFROMZERO\n#pragma STDC FENV_DEC_ROUND FE_DEC_TOWARDZERO\n#pragma STDC FENV_DEC_ROUND FE_DEC_UPWARD\n#pragma STDC FENV_DEC_ROUND FE_DEC_DYNAMIC\nint ok;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_call",
+            "preproc_def",
+            "preproc_if",
+            "call_expression",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_call",
+              "text": "#warning \"deprecated header\"\n"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if __has_include(<stdio.h>) && __has_include(\"cfg.h\") && __has_include(HDRT) && __has_include(HSTR)\nint has_inc;\n#endif"
+            },
+            {
+              "type": "call_expression",
+              "text": "__has_include(HDRT)"
+            },
+            {
+              "type": "call_expression",
+              "text": "__has_include(HSTR)"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if __has_c_attribute(nodiscard) && __has_c_attribute(gnu::unused)\nint has_attr;\n#endif"
+            },
+            {
+              "type": "call_expression",
+              "text": "__has_c_attribute(nodiscard)"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma STDC FP_CONTRACT ON\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma STDC FENV_ACCESS OFF\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma STDC CX_LIMITED_RANGE DEFAULT\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma STDC FENV_ROUND FE_DOWNWARD\n"
+            },
+            {
+              "type": "preproc_call",
+              "text": "#pragma STDC FENV_DEC_ROUND FE_DEC_DYNAMIC\n"
+            },
+            {
+              "type": "declaration",
+              "text": "int ok;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V11-01",
+      "features": [
+        "c-V11",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V11.a21",
+        "c-V11.a32",
+        "c-V11.a23",
+        "c-V11.a22",
+        "c-V11.a30",
+        "c-V11.a31",
+        "c-V11.a28",
+        "c-V11.a24",
+        "c-V11.a27",
+        "c-V11.a29",
+        "c-V11.a20",
+        "c-V11.a14",
+        "c-V11.a15",
+        "c-V11.a16",
+        "c-V11.a17",
+        "c-V11.a18",
+        "c-V11.a19",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a019",
+        "c-B01.a021",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a037",
+        "c-B01.a043",
+        "c-B01.a044",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a156",
+        "c-B01.a168",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-V11.a01",
+        "c-V11.a02",
+        "c-V11.a03",
+        "c-V11.a04",
+        "c-V11.a05",
+        "c-V11.a06",
+        "c-V11.a07"
+      ],
+      "source_utf8": "_Static_assert(sizeof(int) >= 2, \"int too small\");\n_Thread_local int counter;\n_Alignas(16) unsigned char buf[16];\n_Alignas(double) char buf2[8];\n_Atomic int ai;\n_Atomic(long) al;\n_Noreturn void die(void);\nint align = _Alignof(double);\nconst char *tn = _Generic(1.0, int: \"int\", double: \"double\", default: \"other\");\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "translation_unit",
+            "storage_class_specifier",
+            "alignas_qualifier",
+            "type_qualifier",
+            "alignof_expression",
+            "generic_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "sizeof(int) >= 2"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"int too small\""
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "_Thread_local"
+            },
+            {
+              "type": "declaration",
+              "text": "_Thread_local int counter;"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "_Alignas(16)"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "_Alignas(double)"
+            },
+            {
+              "type": "type_qualifier",
+              "text": "_Atomic",
+              "occurrence": 1
+            },
+            {
+              "type": "declaration",
+              "text": "_Atomic(long) al;"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "_Noreturn"
+            },
+            {
+              "type": "alignof_expression",
+              "text": "_Alignof(double)"
+            },
+            {
+              "type": "generic_expression",
+              "text": "_Generic(1.0, int: \"int\", double: \"double\", default: \"other\")"
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int",
+              "occurrence": 6
+            },
+            {
+              "type": "type_descriptor",
+              "text": "double",
+              "occurrence": 3
+            },
+            {
+              "type": "string_literal",
+              "text": "\"other\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V11-02",
+      "features": [
+        "c-V11",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V11.a25",
+        "c-V11.a26",
+        "c-V11.a33",
+        "c-B01.a025",
+        "c-B01.a030",
+        "c-B01.a039",
+        "c-B01.a042",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a151",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-V11.a06"
+      ],
+      "source_utf8": "struct Outer {\n    int tag;\n    union { int i; float f; };\n    struct { int x, y; };\n    _Static_assert(1, \"inside struct\");\n};\nstruct Outer o = { .tag = 1, .i = 2, .x = 3 };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "struct_specifier",
+            "field_declaration_list",
+            "field_declaration",
+            "union_specifier",
+            "initializer_list"
+          ],
+          "anchors": [
+            {
+              "type": "field_declaration_list",
+              "text": "{\n    int tag;\n    union { int i; float f; };\n    struct { int x, y; };\n    _Static_assert(1, \"inside struct\");\n}"
+            },
+            {
+              "type": "field_declaration",
+              "text": "union { int i; float f; };"
+            },
+            {
+              "type": "union_specifier",
+              "text": "union { int i; float f; }"
+            },
+            {
+              "type": "field_declaration",
+              "text": "struct { int x, y; };"
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct { int x, y; }"
+            },
+            {
+              "type": "initializer_pair",
+              "text": ".i = 2"
+            },
+            {
+              "type": "initializer_pair",
+              "text": ".x = 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V11-03",
+      "features": [
+        "c-V11",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V11.a10",
+        "c-V11.a11",
+        "c-V11.a12",
+        "c-V11.a13",
+        "c-V11.a08",
+        "c-V11.a09",
+        "c-B01.a017",
+        "c-B01.a030",
+        "c-B01.a044",
+        "c-B01.a156",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "const void *p8 = u8\"utf8\", *p16 = u\"utf16\", *p32 = U\"utf32\", *pw = L\"wide\";\nint c16 = u'a', c32 = U'b';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "string_literal",
+            "char_literal"
+          ],
+          "anchors": [
+            {
+              "type": "string_literal",
+              "text": "u8\"utf8\""
+            },
+            {
+              "type": "string_literal",
+              "text": "u\"utf16\""
+            },
+            {
+              "type": "string_literal",
+              "text": "U\"utf32\""
+            },
+            {
+              "type": "string_literal",
+              "text": "L\"wide\""
+            },
+            {
+              "type": "char_literal",
+              "text": "u'a'"
+            },
+            {
+              "type": "char_literal",
+              "text": "U'b'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V11-04",
+      "features": [
+        "c-V11",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V11.a34",
+        "c-B01.a016",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a039",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a177",
+        "c-V11.a01"
+      ],
+      "source_utf8": "struct Aligned {\n    _Alignas(8) int x;\n    _Alignas(long) char c;\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "struct_specifier",
+            "field_declaration",
+            "alignas_qualifier"
+          ],
+          "anchors": [
+            {
+              "type": "field_declaration",
+              "text": "_Alignas(8) int x;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "_Alignas(long) char c;"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "_Alignas(8)"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "_Alignas(long)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-01",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a098",
+        "c-V23.a099",
+        "c-V23.a100",
+        "c-V23.a101",
+        "c-V23.a102",
+        "c-V23.a103",
+        "c-V23.a104",
+        "c-V23.a105",
+        "c-V23.a106",
+        "c-V23.a107",
+        "c-V23.a108",
+        "c-V23.a109",
+        "c-V23.a110",
+        "c-V23.a111",
+        "c-V23.a112",
+        "c-V23.a113",
+        "c-V23.a114",
+        "c-V23.a056",
+        "c-V23.a057",
+        "c-V23.a059",
+        "c-V23.a058",
+        "c-V23.a068",
+        "c-V23.a069",
+        "c-V23.a070",
+        "c-V23.a071",
+        "c-V23.a072",
+        "c-V23.a075",
+        "c-V23.a076",
+        "c-V23.a084",
+        "c-V23.a085",
+        "c-V23.a086",
+        "c-V23.a087",
+        "c-V23.a088",
+        "c-V23.a091",
+        "c-V23.a092",
+        "c-V23.a093",
+        "c-V23.a094",
+        "c-V23.a122",
+        "c-B01.a023",
+        "c-B01.a030",
+        "c-B01.a034",
+        "c-B01.a038",
+        "c-B01.a039",
+        "c-B01.a044",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-V23.a048"
+      ],
+      "source_utf8": "[[nodiscard]] int compute(int value);\n[[maybe_unused, deprecated(\"use other\")]] static int legacy;\n[[maybe_unused, , deprecated]] int sparse;\n[[]] int empty_attr;\n[[gnu::unused]] int prefixed;\n[[vendor::anything(x [1] {2} (3) + 4)]] int balanced;\nint declattr [[maybe_unused]];\nint arrattr[2] [[]];\nvoid fnattr(void) [[]];\nint * [[]] ptrattr;\nint [[]] specattr;\nstruct [[deprecated]] SA { [[maybe_unused]] int m; int [[]] n; };\nstruct [[deprecated]] Fwd;\nenum [[deprecated]] EA { EA1 [[deprecated]], EA2 [[maybe_unused]] = 2 };\nvoid params([[maybe_unused]] int x, [[]] int);\nvoid abstract_attrs(int [2] [[]], int (*)(void) [[]]);\n[[]];\n[[nodiscard]] int defined_fn(void) { return 0; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute",
+            "attribute_declaration",
+            "attributed_declarator",
+            "struct_specifier",
+            "enum_specifier",
+            "enumerator",
+            "parameter_declaration",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "[[nodiscard]] int compute(int value);"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[nodiscard]]",
+              "occurrence": 1
+            },
+            {
+              "type": "attribute",
+              "text": "nodiscard",
+              "occurrence": 1
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[maybe_unused, deprecated(\"use other\")]]"
+            },
+            {
+              "type": "attribute",
+              "text": "deprecated(\"use other\")"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[maybe_unused, , deprecated]]"
+            },
+            {
+              "type": "declaration",
+              "text": "[[]] int empty_attr;"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[]]",
+              "occurrence": 1
+            },
+            {
+              "type": "attribute",
+              "text": "gnu::unused"
+            },
+            {
+              "type": "attribute",
+              "text": "vendor::anything(x [1] {2} (3) + 4)"
+            },
+            {
+              "type": "declaration",
+              "text": "[[vendor::anything(x [1] {2} (3) + 4)]] int balanced;"
+            },
+            {
+              "type": "attributed_declarator",
+              "text": "declattr [[maybe_unused]]"
+            },
+            {
+              "type": "attributed_declarator",
+              "text": "arrattr[2] [[]]"
+            },
+            {
+              "type": "attributed_declarator",
+              "text": "fnattr(void) [[]]"
+            },
+            {
+              "type": "pointer_declarator",
+              "text": "* [[]] ptrattr"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[]]",
+              "occurrence": 4
+            },
+            {
+              "type": "declaration",
+              "text": "int [[]] specattr;"
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct [[deprecated]] SA { [[maybe_unused]] int m; int [[]] n; }"
+            },
+            {
+              "type": "field_declaration",
+              "text": "[[maybe_unused]] int m;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int [[]] n;"
+            },
+            {
+              "type": "struct_specifier",
+              "text": "struct [[deprecated]] Fwd"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum [[deprecated]] EA { EA1 [[deprecated]], EA2 [[maybe_unused]] = 2 }"
+            },
+            {
+              "type": "enumerator",
+              "text": "EA1 [[deprecated]]"
+            },
+            {
+              "type": "enumerator",
+              "text": "EA2 [[maybe_unused]] = 2"
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "[[maybe_unused]] int x"
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "[[]] int",
+              "occurrence": 1
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "int [2] [[]]"
+            },
+            {
+              "type": "parameter_declaration",
+              "text": "int (*)(void) [[]]"
+            },
+            {
+              "type": "function_definition",
+              "text": "[[nodiscard]] int defined_fn(void) { return 0; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-02",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a115",
+        "c-V23.a116",
+        "c-V23.a121",
+        "c-V23.a117",
+        "c-V23.a118",
+        "c-V23.a119",
+        "c-V23.a089",
+        "c-V23.a057",
+        "c-B01.a014",
+        "c-B01.a015",
+        "c-B01.a019",
+        "c-B01.a028",
+        "c-B01.a030",
+        "c-B01.a034",
+        "c-B01.a040",
+        "c-B01.a044",
+        "c-B01.a046",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a153",
+        "c-B01.a154",
+        "c-B01.a156",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a183"
+      ],
+      "source_utf8": "int stmt_attrs(int v) {\n    [[]] { v++; }\n    [[]] if (v) v--;\n    [[]] while (0) ;\n    [[]] v += 1;\n    int * [[]] * q = 0;\n    (void)q;\n    switch (v) {\n    [[]] case 1:\n        v++;\n        [[fallthrough]];\n    [[]] default:\n        break;\n    }\n    [[maybe_unused]] lbl:\n    [[]] return v;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "attributed_statement",
+            "attribute_declaration",
+            "compound_statement",
+            "if_statement",
+            "while_statement",
+            "case_statement",
+            "labeled_statement",
+            "return_statement"
+          ],
+          "anchors": [
+            {
+              "type": "attributed_statement",
+              "text": "[[]] { v++; }"
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[]] if (v) v--;"
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[]] while (0) ;"
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[]] v += 1;"
+            },
+            {
+              "type": "pointer_declarator",
+              "text": "* [[]] * q"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[]]",
+              "occurrence": 5
+            },
+            {
+              "type": "case_statement",
+              "text": "case 1:\n        v++;\n        [[fallthrough]];"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[]]",
+              "occurrence": 6
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[fallthrough]];"
+            },
+            {
+              "type": "case_statement",
+              "text": "default:\n        break;"
+            },
+            {
+              "type": "attribute_declaration",
+              "text": "[[]]",
+              "occurrence": 7
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[maybe_unused]] lbl:\n    [[]] return v;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "lbl:\n    [[]] return v;"
+            },
+            {
+              "type": "attributed_statement",
+              "text": "[[]] return v;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-03",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a024",
+        "c-V23.a028",
+        "c-V23.a029",
+        "c-V23.a030",
+        "c-V23.a031",
+        "c-V23.a033",
+        "c-V23.a025",
+        "c-V23.a026",
+        "c-V23.a027",
+        "c-V23.a032",
+        "c-V23.a038",
+        "c-V23.a034",
+        "c-V23.a035",
+        "c-V23.a036",
+        "c-V23.a037",
+        "c-V23.a062",
+        "c-V23.a049",
+        "c-V23.a050",
+        "c-V23.a051",
+        "c-B01.a021",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a043",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-B01.a191",
+        "c-V23.a013"
+      ],
+      "source_utf8": "int b1 = 0b1010, b2 = 0B1'0'1;\nlong big = 1'000'000;\nint oc = 07'7, hx = 0xFF'FF;\ndouble dsep = 1'0.0'1e1'0;\ndouble hsep = 0x1'0.8'0p1'0;\nunsigned _BitInt(7) ub = 1uwb;\n_BitInt(12) sb = 1wb + 2WB + 3wbu + 4WBU + 5Uwb + 6uWB;\n#define PPSEP 1'a 0x1'f 1'2 12abc\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "number_literal",
+            "binary_expression",
+            "preproc_def"
+          ],
+          "anchors": [
+            {
+              "type": "number_literal",
+              "text": "0b1010"
+            },
+            {
+              "type": "number_literal",
+              "text": "0B1'0'1"
+            },
+            {
+              "type": "number_literal",
+              "text": "1'000'000"
+            },
+            {
+              "type": "number_literal",
+              "text": "07'7"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xFF'FF"
+            },
+            {
+              "type": "number_literal",
+              "text": "1'0.0'1e1'0"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x1'0.8'0p1'0"
+            },
+            {
+              "type": "number_literal",
+              "text": "1uwb"
+            },
+            {
+              "type": "declaration",
+              "text": "unsigned _BitInt(7) ub = 1uwb;"
+            },
+            {
+              "type": "declaration",
+              "text": "_BitInt(12) sb = 1wb + 2WB + 3wbu + 4WBU + 5Uwb + 6uWB;"
+            },
+            {
+              "type": "number_literal",
+              "text": "1wb"
+            },
+            {
+              "type": "number_literal",
+              "text": "2WB"
+            },
+            {
+              "type": "number_literal",
+              "text": "3wbu"
+            },
+            {
+              "type": "number_literal",
+              "text": "5Uwb"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "1'a 0x1'f 1'2 12abc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-04",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a023",
+        "c-V23.a045",
+        "c-V23.a046",
+        "c-V23.a047",
+        "c-V23.a060",
+        "c-V23.a061",
+        "c-V23.a096",
+        "c-V23.a097",
+        "c-V23.a082",
+        "c-V23.a083",
+        "c-V23.a055",
+        "c-V23.a063",
+        "c-V23.a067",
+        "c-V23.a078",
+        "c-V23.a079",
+        "c-V23.a080",
+        "c-V23.a081",
+        "c-V23.a073",
+        "c-V23.a074",
+        "c-V23.a077",
+        "c-V23.a090",
+        "c-V23.a095",
+        "c-V23.a052",
+        "c-V23.a053",
+        "c-V23.a123",
+        "c-V23.a124",
+        "c-V23.a125",
+        "c-V23.a126",
+        "c-B01.a013",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a021",
+        "c-B01.a023",
+        "c-B01.a030",
+        "c-B01.a031",
+        "c-B01.a038",
+        "c-B01.a043",
+        "c-B01.a044",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a151",
+        "c-B01.a156",
+        "c-B01.a169",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a178",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-V23.a002",
+        "c-V23.a003",
+        "c-V23.a004",
+        "c-V23.a005",
+        "c-V23.a006",
+        "c-V23.a007",
+        "c-V23.a008",
+        "c-V23.a009",
+        "c-V23.a010",
+        "c-V23.a011",
+        "c-V23.a012"
+      ],
+      "source_utf8": "constexpr int k = 5;\nstatic_assert(k == 5);\nstatic_assert(k == 5, \"five\");\nthread_local int tl;\nalignas(16) int aligned_obj;\nalignas(int) char ac;\nint al = alignof(double);\nbool flag = true, nflag = false;\nint *np = nullptr;\ntypeof(k) t1 = 0;\ntypeof(int *) t2 = nullptr;\ntypeof_unqual(const int) t3 = 0;\nenum Small : unsigned char { S1, S2 };\nenum Small2 : long { T1, T2, };\nenum Fixed : int;\nenum Small sm = S1;\nvoid variadic_only(...);\nvoid inference(void) {\n    auto inferred = 1.5;\n    int z = {};\n    int zl = (int){};\n    int sc = (static int){ 3 };\n    (void)inferred; (void)z; (void)zl; (void)sc;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "storage_class_specifier",
+            "alignas_qualifier",
+            "alignof_expression",
+            "primitive_type",
+            "true",
+            "false",
+            "null",
+            "enum_specifier",
+            "variadic_parameter",
+            "initializer_list",
+            "compound_literal_expression"
+          ],
+          "anchors": [
+            {
+              "type": "storage_class_specifier",
+              "text": "constexpr"
+            },
+            {
+              "type": "binary_expression",
+              "text": "k == 5",
+              "occurrence": 1
+            },
+            {
+              "type": "string_literal",
+              "text": "\"five\""
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "thread_local"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "alignas(16)"
+            },
+            {
+              "type": "alignas_qualifier",
+              "text": "alignas(int)"
+            },
+            {
+              "type": "alignof_expression",
+              "text": "alignof(double)"
+            },
+            {
+              "type": "primitive_type",
+              "text": "bool"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "null",
+              "text": "nullptr",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "k",
+              "occurrence": 4
+            },
+            {
+              "type": "type_descriptor",
+              "text": "int *",
+              "occurrence": 2
+            },
+            {
+              "type": "type_descriptor",
+              "text": "const int"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum Small : unsigned char { S1, S2 }"
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "unsigned char"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum Small2 : long { T1, T2, }"
+            },
+            {
+              "type": "sized_type_specifier",
+              "text": "long"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum Fixed : int"
+            },
+            {
+              "type": "enum_specifier",
+              "text": "enum Small",
+              "occurrence": 3
+            },
+            {
+              "type": "parameter_list",
+              "text": "(...)"
+            },
+            {
+              "type": "variadic_parameter",
+              "text": "..."
+            },
+            {
+              "type": "declaration",
+              "text": "auto inferred = 1.5;"
+            },
+            {
+              "type": "init_declarator",
+              "text": "inferred = 1.5"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{}",
+              "occurrence": 1
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(int){}"
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(static int){ 3 }"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "static",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-05",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a064",
+        "c-V23.a065",
+        "c-V23.a066",
+        "c-V23.a039",
+        "c-V23.a040",
+        "c-V23.a041",
+        "c-V23.a042",
+        "c-V23.a043",
+        "c-V23.a044",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-V23.a014",
+        "c-V23.a015",
+        "c-V23.a016"
+      ],
+      "source_utf8": "_Decimal32 d32 = 1.5df + 2.5DF;\n_Decimal64 d64 = 2.0dd + 3.0DD;\n_Decimal128 d128 = 3.0dl + 4.0DL;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "number_literal",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "primitive_type",
+              "text": "_Decimal32"
+            },
+            {
+              "type": "primitive_type",
+              "text": "_Decimal64"
+            },
+            {
+              "type": "primitive_type",
+              "text": "_Decimal128"
+            },
+            {
+              "type": "number_literal",
+              "text": "1.5df"
+            },
+            {
+              "type": "number_literal",
+              "text": "2.5DF"
+            },
+            {
+              "type": "number_literal",
+              "text": "2.0dd"
+            },
+            {
+              "type": "number_literal",
+              "text": "3.0DD"
+            },
+            {
+              "type": "number_literal",
+              "text": "3.0dl"
+            },
+            {
+              "type": "number_literal",
+              "text": "4.0DL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-06",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a017",
+        "c-V23.a018",
+        "c-V23.a019",
+        "c-V23.a020",
+        "c-V23.a021",
+        "c-V23.a022",
+        "c-V23.a001",
+        "c-B01.a030",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a191"
+      ],
+      "source_utf8": "int café = 1;\nint ñandú = 2;\nint \\u00e9t\\u00e9 = 3;\nint áb = 4;\n#define LONE_UCN \\u0301\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "identifier",
+            "preproc_def"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "café"
+            },
+            {
+              "type": "identifier",
+              "text": "ñandú"
+            },
+            {
+              "type": "identifier",
+              "text": "\\u00e9t\\u00e9"
+            },
+            {
+              "type": "identifier",
+              "text": "áb"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "\\u0301"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23-07",
+      "features": [
+        "c-V23",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23.a120",
+        "c-V23.a052",
+        "c-V23.a053",
+        "c-V23.a054",
+        "c-B01.a027",
+        "c-B01.a030",
+        "c-B01.a038",
+        "c-B01.a044",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a155",
+        "c-B01.a156",
+        "c-B01.a176",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190"
+      ],
+      "source_utf8": "void labels(void) {\n    goto start;\nstart:\n    int after_label = 0;\n    (void)after_label;\n    goto end;\nend:\n}\nint (*sc_ptr)[3] = &(static int [3]){ 1, 2, 3 };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "labeled_statement",
+            "statement_identifier",
+            "declaration",
+            "goto_statement"
+          ],
+          "anchors": [
+            {
+              "type": "labeled_statement",
+              "text": "start:\n    int after_label = 0;"
+            },
+            {
+              "type": "declaration",
+              "text": "int after_label = 0;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "end:"
+            },
+            {
+              "type": "declaration",
+              "text": "int (*sc_ptr)[3] = &(static int [3]){ 1, 2, 3 };"
+            },
+            {
+              "type": "compound_literal_expression",
+              "text": "(static int [3]){ 1, 2, 3 }"
+            },
+            {
+              "type": "storage_class_specifier",
+              "text": "static"
+            },
+            {
+              "type": "abstract_array_declarator",
+              "text": "[3]",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23pp-01",
+      "features": [
+        "c-V23pp",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23pp.a02",
+        "c-V23pp.a03",
+        "c-V23pp.a21",
+        "c-V23pp.a23",
+        "c-V23pp.a24",
+        "c-B01.a030",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a151",
+        "c-B01.a177",
+        "c-B01.a178",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-B01.a191"
+      ],
+      "source_utf8": "#define LOG(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)\n#define EMPTY_OPT(...) f(0 __VA_OPT__())\n#ifdef USE_A\nint mode = 1;\n#elifdef USE_B\nint mode = 2;\n#elifndef USE_C\nint mode = 3;\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_function_def",
+            "preproc_ifdef",
+            "preproc_elifdef",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_function_def",
+              "text": "#define LOG(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)\n"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "printf(fmt __VA_OPT__(,) __VA_ARGS__)"
+            },
+            {
+              "type": "preproc_arg",
+              "text": "f(0 __VA_OPT__())"
+            },
+            {
+              "type": "preproc_ifdef",
+              "text": "#ifdef USE_A\nint mode = 1;\n#elifdef USE_B\nint mode = 2;\n#elifndef USE_C\nint mode = 3;\n#endif"
+            },
+            {
+              "type": "preproc_elifdef",
+              "text": "#elifdef USE_B\nint mode = 2;\n#elifndef USE_C\nint mode = 3;"
+            },
+            {
+              "type": "preproc_elifdef",
+              "text": "#elifndef USE_C\nint mode = 3;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23pp-02",
+      "features": [
+        "c-V23pp",
+        "c-B01",
+        "c-V23"
+      ],
+      "alternatives": [
+        "c-V23pp.a04",
+        "c-V23pp.a05",
+        "c-V23pp.a06",
+        "c-V23pp.a07",
+        "c-V23pp.a08",
+        "c-V23pp.a09",
+        "c-V23pp.a10",
+        "c-V23pp.a11",
+        "c-V23pp.a12",
+        "c-V23pp.a13",
+        "c-V23pp.a14",
+        "c-V23pp.a15",
+        "c-V23pp.a16",
+        "c-V23pp.a17",
+        "c-V23pp.a18",
+        "c-V23pp.a19",
+        "c-V23pp.a20",
+        "c-V23pp.a22",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a028",
+        "c-B01.a030",
+        "c-B01.a037",
+        "c-B01.a043",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a169",
+        "c-B01.a173",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a190",
+        "c-B01.a191",
+        "c-V23.a048"
+      ],
+      "source_utf8": "const unsigned char self[] = {\n#embed __FILE__ limit(4) prefix(0x00,) suffix(, 0x00) if_empty(0)\n};\nconst unsigned char none[] = {\n#embed __FILE__ limit(0) if_empty(sizeof((int[]){0}[0]),)\n    0\n};\n#define EMB_FILE __FILE__\n#if __has_embed(\"resource.bin\" limit(1)) == 0 && __has_embed(EMB_FILE vendor::opt([x]{y}(z)) vendor::flag)\nint has_embed;\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "initializer_list",
+            "preproc_call",
+            "preproc_def",
+            "preproc_if"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "const unsigned char self[] = {\n#embed __FILE__ limit(4) prefix(0x00,) suffix(, 0x00) if_empty(0)\n};"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{\n#embed __FILE__ limit(4) prefix(0x00,) suffix(, 0x00) if_empty(0)\n}"
+            },
+            {
+              "type": "declaration",
+              "text": "const unsigned char none[] = {\n#embed __FILE__ limit(0) if_empty(sizeof((int[]){0}[0]),)\n    0\n};"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define EMB_FILE __FILE__\n"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if __has_embed(\"resource.bin\" limit(1)) == 0 && __has_embed(EMB_FILE vendor::opt([x]{y}(z)) vendor::flag)\nint has_embed;\n#endif"
+            },
+            {
+              "type": "declaration",
+              "text": "int has_embed;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23pp-04",
+      "features": [
+        "c-V23pp",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23pp.a04",
+        "c-V23pp.a22",
+        "c-B01.a016",
+        "c-B01.a017",
+        "c-B01.a043",
+        "c-B01.a145",
+        "c-B01.a146",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a165",
+        "c-B01.a166",
+        "c-B01.a177",
+        "c-B01.a179",
+        "c-B01.a191"
+      ],
+      "source_utf8": "const unsigned char quoted[] = {\n#embed \"resource.bin\" if_empty(0)\n};\nconst unsigned char angled[] = {\n#embed <resource.bin> limit(2) if_empty(0)\n};\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "initializer_list",
+            "preproc_call"
+          ],
+          "anchors": [
+            {
+              "type": "declaration",
+              "text": "const unsigned char quoted[] = {\n#embed \"resource.bin\" if_empty(0)\n};"
+            },
+            {
+              "type": "initializer_list",
+              "text": "{\n#embed \"resource.bin\" if_empty(0)\n}"
+            },
+            {
+              "type": "declaration",
+              "text": "const unsigned char angled[] = {\n#embed <resource.bin> limit(2) if_empty(0)\n};"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-V23pp-03",
+      "features": [
+        "c-V23pp",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-V23pp.a01",
+        "c-V23pp.a25",
+        "c-B01.a016",
+        "c-B01.a030",
+        "c-B01.a043",
+        "c-B01.a177",
+        "c-B01.a179"
+      ],
+      "source_utf8": "int u8c = u8'a';\nunsigned char u8e = u8'\\x41';\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "declaration",
+            "char_literal"
+          ],
+          "anchors": [
+            {
+              "type": "char_literal",
+              "text": "u8'a'"
+            },
+            {
+              "type": "char_literal",
+              "text": "u8'\\x41'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-c-L01-01",
+      "features": [
+        "c-L01",
+        "c-B01"
+      ],
+      "alternatives": [
+        "c-L01.a01",
+        "c-L01.a02",
+        "c-L01.a03",
+        "c-L01.a04",
+        "c-L01.a05",
+        "c-B01.a411",
+        "c-L01.a06",
+        "c-L01.a07",
+        "c-L01.a08",
+        "c-B01.a021",
+        "c-B01.a030",
+        "c-B01.a034",
+        "c-B01.a147",
+        "c-B01.a148",
+        "c-B01.a149",
+        "c-B01.a150",
+        "c-B01.a156",
+        "c-B01.a157",
+        "c-B01.a177",
+        "c-B01.a190"
+      ],
+      "source_utf8": "int add(a, b)\n    int a;\n    int b;\n{\n    return a + b;\n}\ndouble scale(x, factor)\n    double x, factor;\n{\n    return x * factor;\n}\nint legacy();\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "function_declarator",
+            "parameter_list",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "int add(a, b)\n    int a;\n    int b;\n{\n    return a + b;\n}"
+            },
+            {
+              "type": "parameter_list",
+              "text": "(a, b)"
+            },
+            {
+              "type": "declaration",
+              "text": "int a;"
+            },
+            {
+              "type": "declaration",
+              "text": "int b;"
+            },
+            {
+              "type": "function_definition",
+              "text": "double scale(x, factor)\n    double x, factor;\n{\n    return x * factor;\n}"
+            },
+            {
+              "type": "parameter_list",
+              "text": "(x, factor)"
+            },
+            {
+              "type": "declaration",
+              "text": "double x, factor;"
+            },
+            {
+              "type": "function_declarator",
+              "text": "legacy()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B01-R-1",
+      "features": [
+        "c-B01"
+      ],
+      "source_utf8": "int broken(int x)\n{\n    return (x + ;\n}\n\nint square(int x)\n{\n    return x * x;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "function_definition",
+            "return_statement",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "function_definition",
+              "text": "int square(int x)\n{\n    return x * x;\n}"
+            },
+            {
+              "type": "return_statement",
+              "text": "return x * x;"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x * x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B02-NR-1",
+      "features": [
+        "c-B02"
+      ],
+      "source_utf8": "#include <stdio.h>\n#define PAIR(a,) a\n#define LIMIT 10\nint value = LIMIT;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_include",
+            "preproc_def",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_include",
+              "text": "#include <stdio.h>\n"
+            },
+            {
+              "type": "preproc_def",
+              "text": "#define LIMIT 10\n"
+            },
+            {
+              "type": "declaration",
+              "text": "int value = LIMIT;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-B02-N-2",
+      "features": [
+        "c-B02"
+      ],
+      "source_utf8": "#if defined(FEATURE)\nint enabled = 1;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V11-PE-1",
+      "features": [
+        "c-V11"
+      ],
+      "source_utf8": "_Static_assert(sizeof(int) >= 2, \"int too small\");\n_Thread_local int counter;\n_Alignas(16) unsigned char buffer[64];\n_Atomic int flag;\n_Atomic(long) total;\nstruct point {\n    int kind;\n    union {\n        int i;\n        float f;\n    };\n    struct {\n        int x, y;\n    };\n};\n_Noreturn void fail(void);\nunsigned long align = _Alignof(double);\nint classify(double d)\n{\n    return _Generic(d, int: 1, double: 2, default: 0);\n}\n",
+      "edits": [
+        {
+          "find": "_Alignas(16)",
+          "replace": "_Alignas(32)"
+        },
+        {
+          "find": "_Generic(d, int: 1, double: 2, default: 0)",
+          "replace": "_Generic(d, int: 1, long: 3, double: 2, default: 0)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "storage_class_specifier",
+            "alignas_qualifier",
+            "type_qualifier",
+            "union_specifier",
+            "field_declaration_list",
+            "alignof_expression",
+            "generic_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V11-N-1",
+      "features": [
+        "c-V11"
+      ],
+      "source_utf8": "int pick(int x)\n{\n    return _Generic(x);\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V23-PE-1",
+      "features": [
+        "c-V23"
+      ],
+      "source_utf8": "[[nodiscard]] int compute(int value);\n[[maybe_unused, deprecated(\"use other\")]] static int legacy = 0b1010'0101;\nconstexpr int limit = 1'000'000;\ntypeof(limit) copy = limit;\ntypeof_unqual(const int) plain = 0;\n_BitInt(12) small = 5;\nunsigned _BitInt(4) nibble = 0xFuwb;\nbool ready = true;\nbool done = false;\nvoid *nothing = nullptr;\nalignas(8) int aligned;\nthread_local int per_thread;\nstatic_assert(sizeof(int) >= 2);\nint zeros[3] = {};\nint compute(int value)\n{\n    auto doubled = value * 2;\n    switch (doubled) {\n    case 0:\n        doubled = 1;\n        [[fallthrough]];\n    default:\n        break;\n    }\n    return doubled;\n}\n",
+      "edits": [
+        {
+          "find": "bool ready = true;",
+          "replace": "bool ready = false;"
+        },
+        {
+          "find": "typeof(limit) copy",
+          "replace": "typeof_unqual(limit) copy"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "attribute_declaration",
+            "attribute",
+            "number_literal",
+            "true",
+            "false",
+            "null",
+            "alignas_qualifier",
+            "storage_class_specifier",
+            "initializer_list"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V23-NR-1",
+      "features": [
+        "c-V23"
+      ],
+      "source_utf8": "[[nodiscard]] int first(void);\ntypeof() broken;\n[[maybe_unused]] int second = 0b11;\nint third(void) { return 0; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "attribute_declaration",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "attribute_declaration",
+              "text": "[[nodiscard]]"
+            },
+            {
+              "type": "declaration",
+              "text": "[[maybe_unused]] int second = 0b11;"
+            },
+            {
+              "type": "function_definition",
+              "text": "int third(void) { return 0; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V23pp-PE-1",
+      "features": [
+        "c-V23pp"
+      ],
+      "source_utf8": "#define LOG(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)\n#ifdef USE_A\nint mode = 1;\n#elifdef USE_B\nint mode = 2;\n#elifndef USE_C\nint mode = 3;\n#else\nint mode = 4;\n#endif\nconst unsigned char blob[] = {\n#embed \"blob.bin\" limit(16) prefix(0x01,) suffix(,0x00) if_empty(0)\n};\nunsigned char c8 = u8'x';\n",
+      "edits": [
+        {
+          "find": "limit(16)",
+          "replace": "limit(32)"
+        },
+        {
+          "find": "#elifndef USE_C",
+          "replace": "#elifdef USE_C"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_function_def",
+            "preproc_ifdef",
+            "preproc_elifdef",
+            "preproc_else",
+            "initializer_list",
+            "char_literal"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V23pp-NR-1",
+      "features": [
+        "c-V23pp"
+      ],
+      "source_utf8": "#define READY 1\nint before = READY;\n#elifdef READY\nint middle;\n#endif\nint after = 2;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_def",
+            "declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_def",
+              "text": "#define READY 1\n"
+            },
+            {
+              "type": "declaration",
+              "text": "int after = 2;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-L01-P-1",
+      "features": [
+        "c-L01"
+      ],
+      "source_utf8": "int add(a, b)\n    int a;\n    int b;\n{\n    return a + b;\n}\n\ndouble scale(x, factor)\n    double x;\n    double factor;\n{\n    return x * factor;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_definition",
+            "function_declarator",
+            "parameter_list",
+            "declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-c-L01-N-1",
+      "features": [
+        "c-L01"
+      ],
+      "source_utf8": "int add(a, b)\n    int a\n    int b;\n{\n    return a + b;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

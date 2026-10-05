@@ -5,6 +5,18 @@
     {
       "id": "q.structure",
       "source": "(type_definition declarator: (type_identifier) @type)\n(function_definition declarator: (function_declarator declarator: (identifier) @function))\n(call_expression function: (identifier) @call)\n"
+    },
+    {
+      "id": "q.probe-c-V11",
+      "source": "(alignas_qualifier (number_literal) @align)\n(alignof_expression type: (type_descriptor type: (primitive_type) @alignof))\n(generic_expression (type_descriptor type: (primitive_type) @assoc))\n"
+    },
+    {
+      "id": "q.probe-c-V23",
+      "source": "(attribute_declaration (attribute name: (identifier) @attr))\n(true) @true\n(false) @false\n(null) @null\n"
+    },
+    {
+      "id": "q.probe-c-L01",
+      "source": "(function_definition declarator: (function_declarator parameters: (parameter_list (identifier) @param)))\n(function_definition (declaration declarator: (identifier) @decl))\n"
     }
   ],
   "cases": [
@@ -75,6 +87,155 @@
               "name": "call",
               "type": "identifier",
               "text": "printf"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V11-Q-1",
+      "source_case": "probe-c-V11-PE-1",
+      "features": [
+        "c-V11"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-c-V11",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "align",
+              "type": "number_literal",
+              "text": "16"
+            },
+            {
+              "name": "alignof",
+              "type": "primitive_type",
+              "text": "double"
+            },
+            {
+              "name": "assoc",
+              "type": "primitive_type",
+              "text": "int"
+            },
+            {
+              "name": "assoc",
+              "type": "primitive_type",
+              "text": "double"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-c-V23-Q-1",
+      "source_case": "probe-c-V23-PE-1",
+      "features": [
+        "c-V23"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-c-V23",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attr",
+              "type": "identifier",
+              "text": "nodiscard"
+            },
+            {
+              "name": "attr",
+              "type": "identifier",
+              "text": "maybe_unused"
+            },
+            {
+              "name": "attr",
+              "type": "identifier",
+              "text": "deprecated"
+            },
+            {
+              "name": "true",
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "name": "false",
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "name": "null",
+              "type": "null",
+              "text": "nullptr"
+            },
+            {
+              "name": "attr",
+              "type": "identifier",
+              "text": "fallthrough"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-c-L01-Q-1",
+      "source_case": "probe-c-L01-P-1",
+      "features": [
+        "c-L01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-c-L01",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "param",
+              "type": "identifier",
+              "text": "a"
+            },
+            {
+              "name": "param",
+              "type": "identifier",
+              "text": "b"
+            },
+            {
+              "name": "decl",
+              "type": "identifier",
+              "text": "a"
+            },
+            {
+              "name": "decl",
+              "type": "identifier",
+              "text": "b"
+            },
+            {
+              "name": "param",
+              "type": "identifier",
+              "text": "x"
+            },
+            {
+              "name": "param",
+              "type": "identifier",
+              "text": "factor"
+            },
+            {
+              "name": "decl",
+              "type": "identifier",
+              "text": "x"
+            },
+            {
+              "name": "decl",
+              "type": "identifier",
+              "text": "factor"
             }
           ],
           "error": null

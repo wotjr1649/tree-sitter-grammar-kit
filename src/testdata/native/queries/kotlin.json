@@ -5,6 +5,22 @@
     {
       "id": "q.structure",
       "source": "(class_declaration name: (identifier) @class)\n(function_declaration name: (identifier) @function)\n"
+    },
+    {
+      "id": "q.probe-b02",
+      "source": "(when_entry condition: (_) @condition)\n(catch_block (identifier) @catch_var)\n"
+    },
+    {
+      "id": "q.probe-v14",
+      "source": "(class_declaration name: (identifier) @class)\n(object_declaration name: (identifier) @object)\n(non_nullable_type) @dnn\n(range_expression) @range\n"
+    },
+    {
+      "id": "q.probe-v22",
+      "source": "(class_declaration name: (identifier) @class)\n(object_declaration name: (identifier) @object)\n(type_alias type: (identifier) @alias)\n"
+    },
+    {
+      "id": "q.probe-v24",
+      "source": "(class_declaration name: (identifier) @class)\n(function_declaration name: (identifier) @function)\n(property_declaration (variable_declaration (identifier) @property))\n"
     }
   ],
   "cases": [
@@ -70,6 +86,193 @@
               "name": "function",
               "type": "identifier",
               "text": "main"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-B02-Q-1",
+      "source_case": "probe-kotlin-B02-RQ-1",
+      "features": [
+        "kotlin-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "condition",
+              "type": "type_test",
+              "text": "is Int"
+            },
+            {
+              "name": "condition",
+              "type": "range_test",
+              "text": "in listOf(\"a\", \"b\")"
+            },
+            {
+              "name": "catch_var",
+              "type": "identifier",
+              "text": "e"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V14-Q-1",
+      "source_case": "probe-kotlin-V14-PNE-1",
+      "features": [
+        "kotlin-V14"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v14",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Mapper"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Meters"
+            },
+            {
+              "name": "object",
+              "type": "identifier",
+              "text": "Empty"
+            },
+            {
+              "name": "dnn",
+              "type": "non_nullable_type",
+              "text": "T & Any"
+            },
+            {
+              "name": "dnn",
+              "type": "non_nullable_type",
+              "text": "T & Any"
+            },
+            {
+              "name": "range",
+              "type": "range_expression",
+              "text": "0..<3"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V22-Q-1",
+      "source_case": "probe-kotlin-V22-PNRE-1",
+      "features": [
+        "kotlin-V22"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v22",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Status"
+            },
+            {
+              "name": "object",
+              "type": "identifier",
+              "text": "Loading"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Ok"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Screen"
+            },
+            {
+              "name": "alias",
+              "type": "identifier",
+              "text": "Lines"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V24-Q-1",
+      "source_case": "probe-kotlin-V24-PNRE-1",
+      "features": [
+        "kotlin-V24"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v24",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "UserService"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "log"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "outputMessage"
+            },
+            {
+              "name": "property",
+              "type": "identifier",
+              "text": "greeting"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "ShoppingCart"
+            },
+            {
+              "name": "property",
+              "type": "identifier",
+              "text": "items"
+            },
+            {
+              "name": "function",
+              "type": "identifier",
+              "text": "addItem"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "User"
+            },
+            {
+              "name": "class",
+              "type": "identifier",
+              "text": "Email"
             }
           ],
           "error": null

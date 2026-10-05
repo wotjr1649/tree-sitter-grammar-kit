@@ -97,6 +97,1937 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-xml-B01-01",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a045",
+        "xml-B01.a046",
+        "xml-B01.a047",
+        "xml-B01.a048",
+        "xml-B01.a066",
+        "xml-B01.a067",
+        "xml-B01.a053",
+        "xml-B01.a049",
+        "xml-B01.a050",
+        "xml-B01.a052",
+        "xml-B02.a060",
+        "xml-B01.a036",
+        "xml-B01.a056",
+        "xml-B01.a058",
+        "xml-B01.a060",
+        "xml-B01.a057",
+        "xml-B01.a035",
+        "xml-B01.a059",
+        "xml-B02.a003",
+        "xml-B01.a063",
+        "xml-B01.a064",
+        "xml-B01.a065",
+        "xml-B01.a061",
+        "xml-B01.a062",
+        "xml-B02.a004",
+        "xml-B02.a005",
+        "xml-B02.a006",
+        "xml-B01.a025",
+        "xml-B01.a074",
+        "xml-B01.a076",
+        "xml-B01.a078",
+        "xml-B01.a072",
+        "xml-B01.a079",
+        "xml-B01.a080",
+        "xml-B01.a081",
+        "xml-B01.a083"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n<!-- prolog comment -->\n<?pi-target data?>\n<!DOCTYPE root SYSTEM \"root.dtd\">\n<root a=\"1\" b='2' c = \"x&amp;y&#65;&#x42;&lt;\">\n  <child/>\n  <child x=\"v\" />\n  <empty></empty>\n  text &gt; more &quot;&apos;\n</root>\n<!-- trailing misc -->\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "prolog",
+            "XMLDecl",
+            "doctypedecl",
+            "element",
+            "STag",
+            "ETag",
+            "EmptyElemTag",
+            "Attribute",
+            "CharRef",
+            "EntityRef",
+            "Comment",
+            "PI"
+          ],
+          "anchors": [
+            {
+              "type": "prolog",
+              "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n<!-- prolog comment -->\n<?pi-target data?>\n<!DOCTYPE root SYSTEM \"root.dtd\">\n"
+            },
+            {
+              "type": "XMLDecl",
+              "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>"
+            },
+            {
+              "type": "Comment",
+              "text": "<!-- prolog comment -->"
+            },
+            {
+              "type": "PI",
+              "text": "<?pi-target data?>"
+            },
+            {
+              "type": "doctypedecl",
+              "text": "<!DOCTYPE root SYSTEM \"root.dtd\">"
+            },
+            {
+              "type": "ExternalID",
+              "text": "SYSTEM \"root.dtd\""
+            },
+            {
+              "type": "element",
+              "text": "<root a=\"1\" b='2' c = \"x&amp;y&#65;&#x42;&lt;\">\n  <child/>\n  <child x=\"v\" />\n  <empty></empty>\n  text &gt; more &quot;&apos;\n</root>"
+            },
+            {
+              "type": "STag",
+              "text": "<root a=\"1\" b='2' c = \"x&amp;y&#65;&#x42;&lt;\">"
+            },
+            {
+              "type": "Attribute",
+              "text": "a=\"1\""
+            },
+            {
+              "type": "Attribute",
+              "text": "b='2'"
+            },
+            {
+              "type": "Attribute",
+              "text": "c = \"x&amp;y&#65;&#x42;&lt;\""
+            },
+            {
+              "type": "EntityRef",
+              "text": "&amp;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#65;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x42;"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&lt;"
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<child/>"
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<child x=\"v\" />"
+            },
+            {
+              "type": "Attribute",
+              "text": "x=\"v\""
+            },
+            {
+              "type": "element",
+              "text": "<empty></empty>"
+            },
+            {
+              "type": "STag",
+              "text": "<empty>"
+            },
+            {
+              "type": "ETag",
+              "text": "</empty>"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&gt;"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&quot;"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&apos;"
+            },
+            {
+              "type": "ETag",
+              "text": "</root>"
+            },
+            {
+              "type": "Comment",
+              "text": "<!-- trailing misc -->"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-02",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a045",
+        "xml-B01.a046",
+        "xml-B01.a047",
+        "xml-B01.a048",
+        "xml-B01.a066",
+        "xml-B01.a067",
+        "xml-B01.a053",
+        "xml-B01.a052",
+        "xml-B02.a061",
+        "xml-B01.a037",
+        "xml-B01.a039",
+        "xml-B01.a040",
+        "xml-B01.a041",
+        "xml-B01.a042",
+        "xml-B01.a043",
+        "xml-B01.a036",
+        "xml-B01.a060",
+        "xml-B01.a025"
+      ],
+      "source_utf8": "<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\n x'()+,./:=?;!*#@$_%\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html/>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "XMLDecl",
+            "doctypedecl",
+            "ExternalID",
+            "PubidLiteral",
+            "SystemLiteral",
+            "EmptyElemTag"
+          ],
+          "anchors": [
+            {
+              "type": "XMLDecl",
+              "text": "<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>"
+            },
+            {
+              "type": "VersionNum",
+              "text": "1.0"
+            },
+            {
+              "type": "EncName",
+              "text": "ISO-8859-1"
+            },
+            {
+              "type": "doctypedecl",
+              "text": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\n x'()+,./:=?;!*#@$_%\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
+            },
+            {
+              "type": "ExternalID",
+              "text": "PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\n x'()+,./:=?;!*#@$_%\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\""
+            },
+            {
+              "type": "PubidLiteral",
+              "text": "\"-//W3C//DTD XHTML 1.0 Strict//EN\n x'()+,./:=?;!*#@$_%\""
+            },
+            {
+              "type": "SystemLiteral",
+              "text": "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\""
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<html/>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-03",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a009",
+        "xml-B01.a010",
+        "xml-B01.a012",
+        "xml-B01.a013",
+        "xml-B01.a014",
+        "xml-B01.a016",
+        "xml-B01.a020",
+        "xml-B01.a025",
+        "xml-B01.a026",
+        "xml-B01.a027",
+        "xml-B01.a028",
+        "xml-B01.a029",
+        "xml-B01.a057",
+        "xml-B01.a035",
+        "xml-B01.a060",
+        "xml-B01.a074",
+        "xml-B01.a076",
+        "xml-B01.a078",
+        "xml-B01.a072",
+        "xml-B01.a085",
+        "xml-B01.a086",
+        "xml-B01.a083",
+        "xml-B01.a081"
+      ],
+      "source_utf8": "<r A=\"1\" _u=\"2\" a=\"3\" Àb=\"4\" Øc=\"5\" øe=\"6\" Αg=\"8\" 가k=\"12\" x-.9·̀=\"16\"/>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "EmptyElemTag",
+            "Attribute",
+            "Name"
+          ],
+          "anchors": [
+            {
+              "type": "EmptyElemTag",
+              "text": "<r A=\"1\" _u=\"2\" a=\"3\" Àb=\"4\" Øc=\"5\" øe=\"6\" Αg=\"8\" 가k=\"12\" x-.9·̀=\"16\"/>"
+            },
+            {
+              "type": "Attribute",
+              "text": "A=\"1\""
+            },
+            {
+              "type": "Attribute",
+              "text": "_u=\"2\""
+            },
+            {
+              "type": "Attribute",
+              "text": "a=\"3\""
+            },
+            {
+              "type": "Attribute",
+              "text": "Àb=\"4\""
+            },
+            {
+              "type": "Attribute",
+              "text": "Øc=\"5\""
+            },
+            {
+              "type": "Attribute",
+              "text": "øe=\"6\""
+            },
+            {
+              "type": "Attribute",
+              "text": "Αg=\"8\""
+            },
+            {
+              "type": "Attribute",
+              "text": "가k=\"12\""
+            },
+            {
+              "type": "Attribute",
+              "text": "x-.9·̀=\"16\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-07",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a006",
+        "xml-B01.a007",
+        "xml-B01.a015",
+        "xml-B01.a017",
+        "xml-B01.a018",
+        "xml-B01.a019",
+        "xml-B01.a021",
+        "xml-B01.a022",
+        "xml-B01.a023",
+        "xml-B01.a030",
+        "xml-B01.a057",
+        "xml-B01.a035",
+        "xml-B01.a060",
+        "xml-B01.a074",
+        "xml-B01.a076",
+        "xml-B01.a078",
+        "xml-B01.a072",
+        "xml-B01.a085",
+        "xml-B01.a086",
+        "xml-B01.a083",
+        "xml-B01.a081"
+      ],
+      "source_utf8": "<r Ͱf=\"7\" ‌h=\"9\" ⁰i=\"10\" Ⰰj=\"11\" 豈l=\"13\" ﷰm=\"14\" 𐀀n=\"15\" x‿⁀=\"17\"/>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "EmptyElemTag",
+            "Attribute",
+            "Name"
+          ],
+          "anchors": [
+            {
+              "type": "EmptyElemTag",
+              "text": "<r Ͱf=\"7\" ‌h=\"9\" ⁰i=\"10\" Ⰰj=\"11\" 豈l=\"13\" ﷰm=\"14\" 𐀀n=\"15\" x‿⁀=\"17\"/>"
+            },
+            {
+              "type": "Attribute",
+              "text": "Ͱf=\"7\""
+            },
+            {
+              "type": "Attribute",
+              "text": "‌h=\"9\""
+            },
+            {
+              "type": "Attribute",
+              "text": "⁰i=\"10\""
+            },
+            {
+              "type": "Attribute",
+              "text": "Ⰰj=\"11\""
+            },
+            {
+              "type": "Attribute",
+              "text": "豈l=\"13\""
+            },
+            {
+              "type": "Attribute",
+              "text": "ﷰm=\"14\""
+            },
+            {
+              "type": "Attribute",
+              "text": "𐀀n=\"15\""
+            },
+            {
+              "type": "Attribute",
+              "text": "x‿⁀=\"17\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-04",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a008",
+        "xml-B01.a057",
+        "xml-B01.a035",
+        "xml-B01.a060"
+      ],
+      "source_utf8": "<:root :attr=\"1\" a:b:c=\"2\"/>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "EmptyElemTag",
+            "Attribute"
+          ],
+          "anchors": [
+            {
+              "type": "EmptyElemTag",
+              "text": "<:root :attr=\"1\" a:b:c=\"2\"/>"
+            },
+            {
+              "type": "Name",
+              "text": ":root"
+            },
+            {
+              "type": "Attribute",
+              "text": ":attr=\"1\""
+            },
+            {
+              "type": "Attribute",
+              "text": "a:b:c=\"2\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-05",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a056",
+        "xml-B01.a058",
+        "xml-B01.a060",
+        "xml-B01.a057",
+        "xml-B01.a035",
+        "xml-B01.a059",
+        "xml-B02.a003",
+        "xml-B01.a068",
+        "xml-B01.a069",
+        "xml-B01.a070",
+        "xml-B01.a071",
+        "xml-B01.a072",
+        "xml-B01.a085",
+        "xml-B01.a086",
+        "xml-B01.a073",
+        "xml-B01.a074",
+        "xml-B01.a075",
+        "xml-B01.a076",
+        "xml-B01.a077",
+        "xml-B01.a078",
+        "xml-B01.a079",
+        "xml-B01.a080",
+        "xml-B01.a081",
+        "xml-B01.a082",
+        "xml-B01.a083"
+      ],
+      "source_utf8": "<root xmlns=\"urn:default\" xmlns:p=\"urn:p\">\n  <p:child p:attr=\"1\" plain=\"2\"/>\n  <p:empty></p:empty>\n  <q:x xmlns:q=\"urn:q\">t</q:x>\n</root>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "STag",
+            "ETag",
+            "EmptyElemTag",
+            "Attribute"
+          ],
+          "anchors": [
+            {
+              "type": "STag",
+              "text": "<root xmlns=\"urn:default\" xmlns:p=\"urn:p\">"
+            },
+            {
+              "type": "Attribute",
+              "text": "xmlns=\"urn:default\""
+            },
+            {
+              "type": "Attribute",
+              "text": "xmlns:p=\"urn:p\""
+            },
+            {
+              "type": "Attribute",
+              "text": "p:attr=\"1\""
+            },
+            {
+              "type": "Attribute",
+              "text": "plain=\"2\""
+            },
+            {
+              "type": "Attribute",
+              "text": "xmlns:q=\"urn:q\""
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<p:child p:attr=\"1\" plain=\"2\"/>"
+            },
+            {
+              "type": "element",
+              "text": "<p:empty></p:empty>"
+            },
+            {
+              "type": "STag",
+              "text": "<p:empty>"
+            },
+            {
+              "type": "ETag",
+              "text": "</p:empty>"
+            },
+            {
+              "type": "element",
+              "text": "<q:x xmlns:q=\"urn:q\">t</q:x>"
+            },
+            {
+              "type": "STag",
+              "text": "<q:x xmlns:q=\"urn:q\">"
+            },
+            {
+              "type": "ETag",
+              "text": "</q:x>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B01-06",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a052",
+        "xml-B02.a013",
+        "xml-B02.a014",
+        "xml-B02.a015",
+        "xml-B02.a012",
+        "xml-B02.a020",
+        "xml-B02.a021",
+        "xml-B02.a023",
+        "xml-B02.a024",
+        "xml-B02.a025",
+        "xml-B02.a026",
+        "xml-B02.a027",
+        "xml-B02.a028",
+        "xml-B02.a029",
+        "xml-B02.a030",
+        "xml-B02.a031",
+        "xml-B02.a032",
+        "xml-B02.a033",
+        "xml-B02.a036",
+        "xml-B02.a049",
+        "xml-B02.a050",
+        "xml-B01.a084",
+        "xml-B02.a065",
+        "xml-B02.a066",
+        "xml-B02.a067",
+        "xml-B02.a068",
+        "xml-B02.a069",
+        "xml-B02.a070",
+        "xml-B01.a073",
+        "xml-B01.a074",
+        "xml-B01.a075",
+        "xml-B01.a068",
+        "xml-B01.a069",
+        "xml-B01.a070",
+        "xml-B01.a079",
+        "xml-B01.a080",
+        "xml-B01.a081"
+      ],
+      "source_utf8": "<!DOCTYPE p:root [\n  <!ELEMENT p:root (p:a, (p:b | c)*)>\n  <!ATTLIST p:root xmlns:p CDATA #FIXED \"urn:p\" p:x CDATA #IMPLIED>\n  <!ELEMENT p:a (#PCDATA | p:b)*>\n  <!ELEMENT p:b EMPTY>\n  <!ELEMENT c (#PCDATA)>\n]>\n<p:root><p:a>t<p:b/></p:a></p:root>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "doctypedecl",
+              "text": "<!DOCTYPE p:root [\n  <!ELEMENT p:root (p:a, (p:b | c)*)>\n  <!ATTLIST p:root xmlns:p CDATA #FIXED \"urn:p\" p:x CDATA #IMPLIED>\n  <!ELEMENT p:a (#PCDATA | p:b)*>\n  <!ELEMENT p:b EMPTY>\n  <!ELEMENT c (#PCDATA)>\n]>"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT p:root (p:a, (p:b | c)*)>"
+            },
+            {
+              "type": "children",
+              "text": "(p:a, (p:b | c)*)"
+            },
+            {
+              "type": "AttlistDecl",
+              "text": "<!ATTLIST p:root xmlns:p CDATA #FIXED \"urn:p\" p:x CDATA #IMPLIED>"
+            },
+            {
+              "type": "AttDef",
+              "text": " xmlns:p CDATA #FIXED \"urn:p\""
+            },
+            {
+              "type": "AttDef",
+              "text": " p:x CDATA #IMPLIED"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT p:a (#PCDATA | p:b)*>"
+            },
+            {
+              "type": "Mixed",
+              "text": "(#PCDATA | p:b)*"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT p:b EMPTY>"
+            },
+            {
+              "type": "contentspec",
+              "text": "EMPTY"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT c (#PCDATA)>"
+            },
+            {
+              "type": "Mixed",
+              "text": "(#PCDATA)"
+            },
+            {
+              "type": "element",
+              "text": "<p:root><p:a>t<p:b/></p:a></p:root>"
+            },
+            {
+              "type": "element",
+              "text": "<p:a>t<p:b/></p:a>"
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<p:b/>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B02-01",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a056",
+        "xml-B01.a058",
+        "xml-B01.a059",
+        "xml-B02.a003",
+        "xml-B02.a004",
+        "xml-B02.a005",
+        "xml-B02.a006",
+        "xml-B02.a007",
+        "xml-B02.a008",
+        "xml-B02.a009",
+        "xml-B02.a010",
+        "xml-B01.a063",
+        "xml-B01.a064",
+        "xml-B01.a062",
+        "xml-B01.a065"
+      ],
+      "source_utf8": "<doc>text <!-- comment - with dash --> <?target some data?> <?empty?> <![CDATA[ <raw> & ]] text ]]> tail\n<a>nested</a>&#x20;&amp;<!---->\n</doc>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "content",
+            "CharData",
+            "Comment",
+            "PI",
+            "CDSect"
+          ],
+          "anchors": [
+            {
+              "type": "CharData",
+              "text": "text "
+            },
+            {
+              "type": "Comment",
+              "text": "<!-- comment - with dash -->"
+            },
+            {
+              "type": "PI",
+              "text": "<?target some data?>"
+            },
+            {
+              "type": "PI",
+              "text": "<?empty?>"
+            },
+            {
+              "type": "CDSect",
+              "text": "<![CDATA[ <raw> & ]] text ]]>"
+            },
+            {
+              "type": "CData",
+              "text": " <raw> & ]] text "
+            },
+            {
+              "type": "element",
+              "text": "<a>nested</a>"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x20;"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&amp;"
+            },
+            {
+              "type": "Comment",
+              "text": "<!---->"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B02-02",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a045",
+        "xml-B01.a046",
+        "xml-B01.a047",
+        "xml-B01.a048",
+        "xml-B01.a052",
+        "xml-B02.a060",
+        "xml-B02.a061",
+        "xml-B01.a036",
+        "xml-B01.a037",
+        "xml-B01.a038",
+        "xml-B01.a039",
+        "xml-B01.a040",
+        "xml-B01.a041",
+        "xml-B01.a042",
+        "xml-B01.a043",
+        "xml-B02.a013",
+        "xml-B02.a014",
+        "xml-B02.a015",
+        "xml-B02.a016",
+        "xml-B02.a017",
+        "xml-B02.a018",
+        "xml-B02.a019",
+        "xml-B02.a011",
+        "xml-B02.a012",
+        "xml-B02.a020",
+        "xml-B02.a021",
+        "xml-B02.a022",
+        "xml-B02.a023",
+        "xml-B02.a024",
+        "xml-B02.a025",
+        "xml-B02.a026",
+        "xml-B02.a027",
+        "xml-B02.a028",
+        "xml-B02.a029",
+        "xml-B02.a030",
+        "xml-B02.a031",
+        "xml-B02.a032",
+        "xml-B02.a033",
+        "xml-B02.a034",
+        "xml-B02.a035",
+        "xml-B02.a036",
+        "xml-B02.a037",
+        "xml-B02.a038",
+        "xml-B02.a039",
+        "xml-B02.a040",
+        "xml-B02.a041",
+        "xml-B02.a042",
+        "xml-B02.a043",
+        "xml-B02.a044",
+        "xml-B02.a045",
+        "xml-B02.a046",
+        "xml-B02.a047",
+        "xml-B02.a048",
+        "xml-B02.a049",
+        "xml-B02.a050",
+        "xml-B01.a035",
+        "xml-B01.a033",
+        "xml-B01.a034",
+        "xml-B01.a032",
+        "xml-B02.a052",
+        "xml-B02.a053",
+        "xml-B02.a054",
+        "xml-B02.a055",
+        "xml-B02.a056",
+        "xml-B02.a057",
+        "xml-B02.a058",
+        "xml-B02.a059",
+        "xml-B02.a002",
+        "xml-B02.a062",
+        "xml-B02.a063",
+        "xml-B02.a064",
+        "xml-B02.a051",
+        "xml-B01.a063",
+        "xml-B01.a064",
+        "xml-B01.a065",
+        "xml-B01.a061",
+        "xml-B02.a004",
+        "xml-B02.a005",
+        "xml-B02.a006"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<!DOCTYPE doc SYSTEM \"doc.dtd\" [\n  <!ELEMENT doc (head?, (body | alt)+, foot*)>\n  <!ELEMENT head EMPTY>\n  <!ELEMENT body ANY>\n  <!ELEMENT alt (#PCDATA)>\n  <!ELEMENT foot (#PCDATA | em | strong)*>\n  <!ELEMENT em ( #PCDATA ) >\n  <!ELEMENT strong (em)>\n  <!ATTLIST doc\n      id ID #REQUIRED\n      ref IDREF #IMPLIED\n      refs IDREFS #IMPLIED\n      ent ENTITY #IMPLIED\n      ents ENTITIES #IMPLIED\n      tok NMTOKEN \"a\"\n      toks NMTOKENS 'a b'\n      kind (x | y | z) \"x\"\n      not NOTATION (gif | png) #IMPLIED\n      ver CDATA #FIXED \"1\">\n  <!ATTLIST head>\n  <!ENTITY gen \"general &#38;#38; text &gen2;\">\n  <!ENTITY gen2 'single'>\n  <!ENTITY ext SYSTEM \"ext.xml\">\n  <!ENTITY pic SYSTEM \"pic.gif\" NDATA gif>\n  <!ENTITY pub PUBLIC \"-//X//Y//EN\" \"pub.xml\">\n  <!ENTITY % pe \"<!ELEMENT peel (#PCDATA)>\">\n  <!ENTITY % pe2 SYSTEM \"pe2.ent\">\n  <!ENTITY % pe3 'x'>\n  <!NOTATION gif SYSTEM \"image/gif\">\n  <!NOTATION png PUBLIC \"-//PNG//EN\">\n  <!NOTATION jpg PUBLIC \"-//JPG//EN\" \"jpg.exe\">\n  <?dtd-pi x?>\n  <!-- dtd comment -->\n  %pe;\n]>\n<doc id=\"d1\" ent=\"pic\" ents=\"pic\" kind=\"y\" toks=\"a b\">&gen;</doc>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "doctypedecl",
+            "elementdecl",
+            "contentspec",
+            "children",
+            "Mixed",
+            "AttlistDecl",
+            "AttDef",
+            "Enumeration",
+            "NotationType",
+            "DefaultDecl",
+            "GEDecl",
+            "PEDecl",
+            "EntityValue",
+            "NDataDecl",
+            "NotationDecl",
+            "PublicID",
+            "PEReference"
+          ],
+          "anchors": [
+            {
+              "type": "XMLDecl",
+              "text": "<?xml version=\"1.0\"?>"
+            },
+            {
+              "type": "doctypedecl",
+              "text": "<!DOCTYPE doc SYSTEM \"doc.dtd\" [\n  <!ELEMENT doc (head?, (body | alt)+, foot*)>\n  <!ELEMENT head EMPTY>\n  <!ELEMENT body ANY>\n  <!ELEMENT alt (#PCDATA)>\n  <!ELEMENT foot (#PCDATA | em | strong)*>\n  <!ELEMENT em ( #PCDATA ) >\n  <!ELEMENT strong (em)>\n  <!ATTLIST doc\n      id ID #REQUIRED\n      ref IDREF #IMPLIED\n      refs IDREFS #IMPLIED\n      ent ENTITY #IMPLIED\n      ents ENTITIES #IMPLIED\n      tok NMTOKEN \"a\"\n      toks NMTOKENS 'a b'\n      kind (x | y | z) \"x\"\n      not NOTATION (gif | png) #IMPLIED\n      ver CDATA #FIXED \"1\">\n  <!ATTLIST head>\n  <!ENTITY gen \"general &#38;#38; text &gen2;\">\n  <!ENTITY gen2 'single'>\n  <!ENTITY ext SYSTEM \"ext.xml\">\n  <!ENTITY pic SYSTEM \"pic.gif\" NDATA gif>\n  <!ENTITY pub PUBLIC \"-//X//Y//EN\" \"pub.xml\">\n  <!ENTITY % pe \"<!ELEMENT peel (#PCDATA)>\">\n  <!ENTITY % pe2 SYSTEM \"pe2.ent\">\n  <!ENTITY % pe3 'x'>\n  <!NOTATION gif SYSTEM \"image/gif\">\n  <!NOTATION png PUBLIC \"-//PNG//EN\">\n  <!NOTATION jpg PUBLIC \"-//JPG//EN\" \"jpg.exe\">\n  <?dtd-pi x?>\n  <!-- dtd comment -->\n  %pe;\n]>"
+            },
+            {
+              "type": "ExternalID",
+              "text": "SYSTEM \"doc.dtd\""
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT doc (head?, (body | alt)+, foot*)>"
+            },
+            {
+              "type": "children",
+              "text": "(head?, (body | alt)+, foot*)"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT head EMPTY>"
+            },
+            {
+              "type": "contentspec",
+              "text": "EMPTY"
+            },
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT body ANY>"
+            },
+            {
+              "type": "contentspec",
+              "text": "ANY"
+            },
+            {
+              "type": "Mixed",
+              "text": "(#PCDATA)"
+            },
+            {
+              "type": "Mixed",
+              "text": "(#PCDATA | em | strong)*"
+            },
+            {
+              "type": "Mixed",
+              "text": "( #PCDATA )"
+            },
+            {
+              "type": "children",
+              "text": "(em)"
+            },
+            {
+              "type": "AttlistDecl",
+              "text": "<!ATTLIST doc\n      id ID #REQUIRED\n      ref IDREF #IMPLIED\n      refs IDREFS #IMPLIED\n      ent ENTITY #IMPLIED\n      ents ENTITIES #IMPLIED\n      tok NMTOKEN \"a\"\n      toks NMTOKENS 'a b'\n      kind (x | y | z) \"x\"\n      not NOTATION (gif | png) #IMPLIED\n      ver CDATA #FIXED \"1\">"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      id ID #REQUIRED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      ref IDREF #IMPLIED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      refs IDREFS #IMPLIED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      ent ENTITY #IMPLIED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      ents ENTITIES #IMPLIED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      tok NMTOKEN \"a\""
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      toks NMTOKENS 'a b'"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      kind (x | y | z) \"x\""
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      not NOTATION (gif | png) #IMPLIED"
+            },
+            {
+              "type": "AttDef",
+              "text": "\n      ver CDATA #FIXED \"1\""
+            },
+            {
+              "type": "TokenizedType",
+              "text": "ID"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "IDREF"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "IDREFS"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "ENTITY"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "ENTITIES"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "NMTOKEN"
+            },
+            {
+              "type": "TokenizedType",
+              "text": "NMTOKENS"
+            },
+            {
+              "type": "Enumeration",
+              "text": "(x | y | z)"
+            },
+            {
+              "type": "NotationType",
+              "text": "NOTATION (gif | png)"
+            },
+            {
+              "type": "DefaultDecl",
+              "text": "#REQUIRED"
+            },
+            {
+              "type": "DefaultDecl",
+              "text": "#FIXED \"1\""
+            },
+            {
+              "type": "AttlistDecl",
+              "text": "<!ATTLIST head>"
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY gen \"general &#38;#38; text &gen2;\">"
+            },
+            {
+              "type": "EntityValue",
+              "text": "\"general &#38;#38; text &gen2;\""
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY gen2 'single'>"
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY ext SYSTEM \"ext.xml\">"
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY pic SYSTEM \"pic.gif\" NDATA gif>"
+            },
+            {
+              "type": "NDataDecl",
+              "text": " NDATA gif"
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY pub PUBLIC \"-//X//Y//EN\" \"pub.xml\">"
+            },
+            {
+              "type": "PEDecl",
+              "text": "<!ENTITY % pe \"<!ELEMENT peel (#PCDATA)>\">"
+            },
+            {
+              "type": "EntityValue",
+              "text": "\"<!ELEMENT peel (#PCDATA)>\""
+            },
+            {
+              "type": "PEDecl",
+              "text": "<!ENTITY % pe2 SYSTEM \"pe2.ent\">"
+            },
+            {
+              "type": "PEDecl",
+              "text": "<!ENTITY % pe3 'x'>"
+            },
+            {
+              "type": "NotationDecl",
+              "text": "<!NOTATION gif SYSTEM \"image/gif\">"
+            },
+            {
+              "type": "NotationDecl",
+              "text": "<!NOTATION png PUBLIC \"-//PNG//EN\">"
+            },
+            {
+              "type": "PublicID",
+              "text": "PUBLIC \"-//PNG//EN\""
+            },
+            {
+              "type": "NotationDecl",
+              "text": "<!NOTATION jpg PUBLIC \"-//JPG//EN\" \"jpg.exe\">"
+            },
+            {
+              "type": "PI",
+              "text": "<?dtd-pi x?>"
+            },
+            {
+              "type": "Comment",
+              "text": "<!-- dtd comment -->"
+            },
+            {
+              "type": "PEReference",
+              "text": "%pe;"
+            },
+            {
+              "type": "STag",
+              "text": "<doc id=\"d1\" ent=\"pic\" ents=\"pic\" kind=\"y\" toks=\"a b\">"
+            },
+            {
+              "type": "EntityRef",
+              "text": "&gen;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-B02-03",
+      "features": [
+        "xml-B01",
+        "xml-B02"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a002",
+        "xml-B01.a004",
+        "xml-B01.a059",
+        "xml-B02.a003",
+        "xml-B01.a060"
+      ],
+      "source_utf8": "<doc>\r\n\t<a/>\r\n</doc>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "element",
+            "CharData"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<doc>\r\n\t<a/>\r\n</doc>"
+            },
+            {
+              "type": "content",
+              "text": "\r\n\t<a/>\r\n"
+            },
+            {
+              "type": "CharData",
+              "text": "\r\n\t"
+            },
+            {
+              "type": "EmptyElemTag",
+              "text": "<a/>"
+            },
+            {
+              "type": "CharData",
+              "text": "\r\n",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-V11-01",
+      "features": [
+        "xml-B01",
+        "xml-B02",
+        "xml-V11"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a045",
+        "xml-B01.a046",
+        "xml-B01.a047",
+        "xml-V11.a006",
+        "xml-V11.a007",
+        "xml-V11.a008",
+        "xml-V11.a009",
+        "xml-V11.a010",
+        "xml-V11.a011",
+        "xml-V11.a012",
+        "xml-V11.a014",
+        "xml-B01.a004",
+        "xml-B01.a006",
+        "xml-B01.a007"
+      ],
+      "source_utf8": "<?xml version=\"1.1\"?>\n<doc>line oneline two line three\r 𐀀</doc>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "XMLDecl",
+            "VersionNum",
+            "element"
+          ],
+          "anchors": [
+            {
+              "type": "XMLDecl",
+              "text": "<?xml version=\"1.1\"?>"
+            },
+            {
+              "type": "VersionNum",
+              "text": "1.1"
+            },
+            {
+              "type": "element",
+              "text": "<doc>line oneline two line three\r 𐀀</doc>"
+            },
+            {
+              "type": "CharData",
+              "text": "line oneline two line three\r 𐀀"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-xml-V11-02",
+      "features": [
+        "xml-B01",
+        "xml-B02",
+        "xml-V11"
+      ],
+      "alternatives": [
+        "xml-B01.a001",
+        "xml-B01.a054",
+        "xml-B01.a055",
+        "xml-B01.a003",
+        "xml-B01.a005",
+        "xml-B02.a001",
+        "xml-B01.a031",
+        "xml-B01.a011",
+        "xml-B01.a024",
+        "xml-B01.a044",
+        "xml-B01.a051",
+        "xml-B01.a045",
+        "xml-B01.a046",
+        "xml-B01.a047",
+        "xml-B01.a062",
+        "xml-B01.a064",
+        "xml-V11.a013",
+        "xml-V11.a011",
+        "xml-V11.a010",
+        "xml-V11.a001",
+        "xml-V11.a002",
+        "xml-V11.a003",
+        "xml-V11.a004",
+        "xml-V11.a005"
+      ],
+      "source_utf8": "<?xml version=\"1.1\"?>\n<doc>&#x1;&#x8;&#xB;&#xE;&#x1F;&#x7F;&#x84;&#x86;&#x9F;</doc>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "XMLDecl",
+            "element",
+            "CharRef"
+          ],
+          "anchors": [
+            {
+              "type": "XMLDecl",
+              "text": "<?xml version=\"1.1\"?>"
+            },
+            {
+              "type": "VersionNum",
+              "text": "1.1"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x1;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x8;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#xB;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#xE;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x1F;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x7F;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x84;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x86;"
+            },
+            {
+              "type": "CharRef",
+              "text": "&#x9F;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B01-R-1",
+      "features": [
+        "xml-B01"
+      ],
+      "source_utf8": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<catalog xmlns:p=\"urn:p\">\n  <item id=\"1\" p:kind=\"bolt\">Bolt &amp; nut</item>\n  <item id=\"2\"/>\n  <note>after</note>\n</catalog>\n",
+      "edits": [
+        {
+          "find": "<item id=\"2\"/>",
+          "replace": "<item id=2/>"
+        },
+        {
+          "find": "<item id=2/>",
+          "replace": "<item id=\"2\"/>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "STag",
+            "ETag",
+            "EmptyElemTag",
+            "Attribute",
+            "AttValue",
+            "EntityRef"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "XMLDecl",
+            "STag",
+            "ETag",
+            "Attribute",
+            "EntityRef"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<item id=\"1\" p:kind=\"bolt\">Bolt &amp; nut</item>"
+            },
+            {
+              "type": "element",
+              "text": "<note>after</note>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "STag",
+            "ETag",
+            "EmptyElemTag",
+            "Attribute",
+            "AttValue",
+            "EntityRef"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B01-R-2",
+      "features": [
+        "xml-B01"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<catalog>\n  <item kind=\"bolt\">Bolt</item>\n  <note>after</note>\n</catalog>\n",
+      "edits": [
+        {
+          "find": "kind=\"bolt\"",
+          "replace": "kind=\"a<b\""
+        },
+        {
+          "find": "kind=\"a<b\"",
+          "replace": "kind=\"bolt\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "STag",
+            "ETag",
+            "Attribute",
+            "AttValue"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "XMLDecl",
+            "STag",
+            "ETag"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<note>after</note>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "STag",
+            "ETag",
+            "Attribute",
+            "AttValue"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B02-R-1",
+      "features": [
+        "xml-B02"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA | b)*>\n  <!ATTLIST doc id CDATA #IMPLIED>\n  <!ENTITY co \"Company\">\n  <!NOTATION gif SYSTEM \"image/gif\">\n  <!ENTITY % pe \"x\">\n]>\n<doc id=\"d\"><!-- note --><?app run?>text &co; <![CDATA[<raw>]]></doc>\n",
+      "edits": [
+        {
+          "find": "<!-- note -->",
+          "replace": "<!-- a -- b -->"
+        },
+        {
+          "find": "<!-- a -- b -->",
+          "replace": "<!-- note -->"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "GEDecl",
+            "NotationDecl",
+            "PEDecl",
+            "Comment",
+            "PI",
+            "EntityRef",
+            "CDSect"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "GEDecl",
+            "NotationDecl",
+            "PEDecl",
+            "CDSect"
+          ],
+          "anchors": [
+            {
+              "type": "AttlistDecl",
+              "text": "<!ATTLIST doc id CDATA #IMPLIED>"
+            },
+            {
+              "type": "NotationDecl",
+              "text": "<!NOTATION gif SYSTEM \"image/gif\">"
+            },
+            {
+              "type": "PEDecl",
+              "text": "<!ENTITY % pe \"x\">"
+            },
+            {
+              "type": "CDSect",
+              "text": "<![CDATA[<raw>]]>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "GEDecl",
+            "NotationDecl",
+            "PEDecl",
+            "Comment",
+            "PI",
+            "EntityRef",
+            "CDSect"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B02-R-2",
+      "features": [
+        "xml-B02"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY co \"Company\">\n]>\n<doc>text &co; more<?app run?></doc>\n",
+      "edits": [
+        {
+          "find": "text &co; more",
+          "replace": "text & co; more"
+        },
+        {
+          "find": "text & co; more",
+          "replace": "text &co; more"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "GEDecl",
+            "element",
+            "EntityRef",
+            "PI"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "GEDecl"
+          ],
+          "anchors": [
+            {
+              "type": "elementdecl",
+              "text": "<!ELEMENT doc (#PCDATA)>"
+            },
+            {
+              "type": "GEDecl",
+              "text": "<!ENTITY co \"Company\">"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "GEDecl",
+            "element",
+            "EntityRef",
+            "PI"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B02-R-3",
+      "features": [
+        "xml-B02"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ATTLIST doc id CDATA #IMPLIED>\n  <!ENTITY co \"Company\">\n]>\n<doc id=\"d\">text</doc>\n",
+      "edits": [
+        {
+          "find": "<!ATTLIST doc id CDATA #IMPLIED>",
+          "replace": "<!ATTLIST doc id CDATA>"
+        },
+        {
+          "find": "<!ATTLIST doc id CDATA>",
+          "replace": "<!ATTLIST doc id CDATA #IMPLIED>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "AttDef",
+            "DefaultDecl",
+            "GEDecl",
+            "element"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "GEDecl",
+            "element"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctypedecl",
+            "elementdecl",
+            "AttlistDecl",
+            "AttDef",
+            "DefaultDecl",
+            "GEDecl",
+            "element"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-B02-R-4",
+      "features": [
+        "xml-B02"
+      ],
+      "source_utf8": "<?xml version=\"1.0\"?>\n<doc><a>text</a><!-- c --><b>after</b></doc>\n",
+      "edits": [
+        {
+          "find": "<a>text</a>",
+          "replace": "<a>te]]>xt</a>"
+        },
+        {
+          "find": "<a>te]]>xt</a>",
+          "replace": "<a>text</a>"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "CharData",
+            "Comment"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "Comment"
+          ],
+          "anchors": [
+            {
+              "type": "Comment",
+              "text": "<!-- c -->"
+            },
+            {
+              "type": "element",
+              "text": "<b>after</b>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "element",
+            "CharData",
+            "Comment"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-V11-R-1",
+      "features": [
+        "xml-V11"
+      ],
+      "source_utf8": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<data><ctl>&#x1;</ctl><del>&#x7F;</del><nel>ab c</nel></data>\n",
+      "edits": [
+        {
+          "find": "&#x1;",
+          "replace": "\u0001"
+        },
+        {
+          "find": "\u0001",
+          "replace": "&#x1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "VersionNum",
+            "element",
+            "CharRef",
+            "CharData"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "XMLDecl",
+            "VersionNum",
+            "CharRef"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "VersionNum",
+            "element",
+            "CharRef",
+            "CharData"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-xml-V11-R-2",
+      "features": [
+        "xml-V11"
+      ],
+      "source_utf8": "<?xml version=\"1.1\"?>\n<data><del>&#x7F;</del><ok>yes</ok></data>\n",
+      "edits": [
+        {
+          "find": "version=\"1.1\"",
+          "replace": "version=\"2.0\""
+        },
+        {
+          "find": "version=\"2.0\"",
+          "replace": "version=\"1.1\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "VersionNum",
+            "element",
+            "CharRef"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "element",
+            "CharRef"
+          ],
+          "anchors": [
+            {
+              "type": "element",
+              "text": "<del>&#x7F;</del>"
+            },
+            {
+              "type": "element",
+              "text": "<ok>yes</ok>"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "XMLDecl",
+            "VersionNum",
+            "element",
+            "CharRef"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -5,6 +5,18 @@
     {
       "id": "q.structure",
       "source": "(import_statement source: (string) @source)\n(function_declaration name: (identifier) @function)\n(class_declaration name: (identifier) @class)\n(method_definition name: (property_identifier) @method)\n"
+    },
+    {
+      "id": "q.probe-v16",
+      "source": "(object_pattern (rest_pattern) @rest)\n(await_expression) @await\n(binary_expression left: (_) @base operator: \"**\" right: (_) @exponent)\n(catch_clause !parameter body: (statement_block) @catch_body)\n(spread_element) @spread\n"
+    },
+    {
+      "id": "q.probe-v20",
+      "source": "(binary_expression operator: \"??\" right: (_) @fallback)\n(variable_declarator name: (identifier) @big_name value: (number) @big)\n(augmented_assignment_expression left: (identifier) @target right: (number) @value)\n(meta_property) @meta\n"
+    },
+    {
+      "id": "q.probe-v22",
+      "source": "(import_attribute) @attributes\n(field_definition property: (private_property_identifier) @private_field)\n(field_definition property: (property_identifier) @public_field)\n(class_static_block) @static_block\n"
     }
   ],
   "cases": [
@@ -56,6 +68,155 @@
               "name": "method",
               "type": "property_identifier",
               "text": "set"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V16-Q-1",
+      "source_case": "probe-javascript-V16-R-1",
+      "features": [
+        "javascript-V16"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v16",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "rest",
+              "type": "rest_pattern",
+              "text": "...opts"
+            },
+            {
+              "name": "await",
+              "type": "await_expression",
+              "text": "await item"
+            },
+            {
+              "name": "base",
+              "type": "parenthesized_expression",
+              "text": "(-retry)"
+            },
+            {
+              "name": "exponent",
+              "type": "number",
+              "text": "2"
+            },
+            {
+              "name": "catch_body",
+              "type": "statement_block",
+              "text": "{\n    return { ...opts };\n  }"
+            },
+            {
+              "name": "spread",
+              "type": "spread_element",
+              "text": "...opts"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V20-Q-1",
+      "source_case": "probe-javascript-V20-R-1",
+      "features": [
+        "javascript-V20"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v20",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "fallback",
+              "type": "object",
+              "text": "{}"
+            },
+            {
+              "name": "big_name",
+              "type": "identifier",
+              "text": "big"
+            },
+            {
+              "name": "big",
+              "type": "number",
+              "text": "9_007_199_254_740_993n"
+            },
+            {
+              "name": "target",
+              "type": "identifier",
+              "text": "retries"
+            },
+            {
+              "name": "value",
+              "type": "number",
+              "text": "3"
+            },
+            {
+              "name": "target",
+              "type": "identifier",
+              "text": "retries"
+            },
+            {
+              "name": "value",
+              "type": "number",
+              "text": "1"
+            },
+            {
+              "name": "fallback",
+              "type": "number",
+              "text": "80"
+            },
+            {
+              "name": "meta",
+              "type": "meta_property",
+              "text": "import.meta"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-Q-1",
+      "source_case": "probe-javascript-V22-R-1",
+      "features": [
+        "javascript-V22"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v22",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attributes",
+              "type": "import_attribute",
+              "text": "with { type: \"json\" }"
+            },
+            {
+              "name": "private_field",
+              "type": "private_property_identifier",
+              "text": "#count"
+            },
+            {
+              "name": "public_field",
+              "type": "property_identifier",
+              "text": "total"
+            },
+            {
+              "name": "static_block",
+              "type": "class_static_block",
+              "text": "static {\n    Counter.total = 1;\n  }"
             }
           ],
           "error": null

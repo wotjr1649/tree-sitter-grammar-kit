@@ -5,6 +5,10 @@
     {
       "id": "q.structure",
       "source": "(attribute (attribute_name) @attribute)\n(style_element (start_tag (tag_name) @raw_text_tag))\n(script_element (start_tag (tag_name) @raw_text_tag))\n(self_closing_tag (tag_name) @self_closing)\n"
+    },
+    {
+      "id": "q.source",
+      "source": "(start_tag (tag_name) @tag)\n(attribute (attribute_name) @attribute)\n(attribute (attribute_value) @unquoted)\n(quoted_attribute_value (attribute_value) @quoted)\n"
     }
   ],
   "cases": [
@@ -91,6 +95,94 @@
               "name": "raw_text_tag",
               "type": "tag_name",
               "text": "script"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-html-B03-Q-1",
+      "source_case": "probe-html-B03-Qsrc-1",
+      "features": [
+        "html-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.source",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "tag",
+              "type": "tag_name",
+              "text": "template"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "id"
+            },
+            {
+              "name": "quoted",
+              "type": "attribute_value",
+              "text": "row"
+            },
+            {
+              "name": "tag",
+              "type": "tag_name",
+              "text": "span"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "class"
+            },
+            {
+              "name": "quoted",
+              "type": "attribute_value",
+              "text": "cell"
+            },
+            {
+              "name": "tag",
+              "type": "tag_name",
+              "text": "my-widget"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "data-a"
+            },
+            {
+              "name": "unquoted",
+              "type": "attribute_value",
+              "text": "1"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "data-b"
+            },
+            {
+              "name": "quoted",
+              "type": "attribute_value",
+              "text": "two"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "data-c"
+            },
+            {
+              "name": "quoted",
+              "type": "attribute_value",
+              "text": "three"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "hidden"
             }
           ],
           "error": null

@@ -5,6 +5,22 @@
     {
       "id": "q.structure",
       "source": "(enum_declaration name: (name) @enum)\n(class_declaration name: (name) @class)\n(method_declaration name: (name) @method)\n(function_definition name: (name) @function)\n"
+    },
+    {
+      "id": "q.probe-v56",
+      "source": "(namespace_use_group (namespace_use_clause) @group_item)\n(variadic_parameter name: (variable_name) @variadic)\n(optional_type) @nullable\n(binary_expression operator: \"<=>\") @spaceship\n(variadic_unpacking) @unpack\n(catch_clause type: (type_list) @catch_types)\n"
+    },
+    {
+      "id": "q.probe-v72",
+      "source": "(property_declaration type: (_) @property_type)\n(heredoc) @heredoc\n(augmented_assignment_expression operator: \"??=\") @coalesce_assign\n(arrow_function body: (_) @arrow_body)\n"
+    },
+    {
+      "id": "q.probe-v82",
+      "source": "(class_declaration (readonly_modifier) @readonly name: (name) @class)\n(const_declaration type: (_) @const_type)\n(disjunctive_normal_form_type) @dnf\n(class_constant_access_expression) @dynamic_fetch\n"
+    },
+    {
+      "id": "q.probe-v84",
+      "source": "(property_declaration (visibility_modifier) @visibility)\n(property_hook (name) @hook)\n(member_access_expression object: (object_creation_expression) @new_object)\n(binary_expression operator: \"|>\" right: (_) @pipe_target)\n"
     }
   ],
   "cases": [
@@ -46,6 +62,208 @@
               "name": "function",
               "type": "name",
               "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V56-Q-1",
+      "source_case": "probe-php-V56-NR-1",
+      "features": [
+        "php-V56"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v56",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "group_item",
+              "type": "namespace_use_clause",
+              "text": "User"
+            },
+            {
+              "name": "group_item",
+              "type": "namespace_use_clause",
+              "text": "Post as Article"
+            },
+            {
+              "name": "variadic",
+              "type": "variable_name",
+              "text": "$values"
+            },
+            {
+              "name": "nullable",
+              "type": "optional_type",
+              "text": "?array"
+            },
+            {
+              "name": "nullable",
+              "type": "optional_type",
+              "text": "?string"
+            },
+            {
+              "name": "spaceship",
+              "type": "binary_expression",
+              "text": "sum(...[1, 2, 3]) <=> 2 ** 3"
+            },
+            {
+              "name": "unpack",
+              "type": "variadic_unpacking",
+              "text": "...[1, 2, 3]"
+            },
+            {
+              "name": "catch_types",
+              "type": "type_list",
+              "text": "\\TypeError | \\ValueError"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V72-Q-1",
+      "source_case": "probe-php-V72-NR-1",
+      "features": [
+        "php-V72"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v72",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "property_type",
+              "type": "optional_type",
+              "text": "?object"
+            },
+            {
+              "name": "property_type",
+              "type": "primitive_type",
+              "text": "array"
+            },
+            {
+              "name": "heredoc",
+              "type": "heredoc",
+              "text": "<<<EOT\n            Items:\n              list\n            EOT"
+            },
+            {
+              "name": "coalesce_assign",
+              "type": "augmented_assignment_expression",
+              "text": "$cfg['a'] ??= 1"
+            },
+            {
+              "name": "arrow_body",
+              "type": "binary_expression",
+              "text": "$x * 2"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V82-Q-1",
+      "source_case": "probe-php-V82-PNE-1",
+      "features": [
+        "php-V82"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v82",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "readonly",
+              "type": "readonly_modifier",
+              "text": "readonly"
+            },
+            {
+              "name": "class",
+              "type": "name",
+              "text": "Point"
+            },
+            {
+              "name": "const_type",
+              "type": "primitive_type",
+              "text": "string"
+            },
+            {
+              "name": "dnf",
+              "type": "disjunctive_normal_form_type",
+              "text": "(Countable&ArrayAccess)|null"
+            },
+            {
+              "name": "dynamic_fetch",
+              "type": "class_constant_access_expression",
+              "text": "Repo::{$const}"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-php-V84-Q-1",
+      "source_case": "probe-php-V84-PNRE-1",
+      "features": [
+        "php-V84"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v84",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "visibility",
+              "type": "visibility_modifier",
+              "text": "public"
+            },
+            {
+              "name": "visibility",
+              "type": "visibility_modifier",
+              "text": "private(set)"
+            },
+            {
+              "name": "visibility",
+              "type": "visibility_modifier",
+              "text": "public"
+            },
+            {
+              "name": "hook",
+              "type": "name",
+              "text": "get"
+            },
+            {
+              "name": "hook",
+              "type": "name",
+              "text": "set"
+            },
+            {
+              "name": "new_object",
+              "type": "object_creation_expression",
+              "text": "new User()"
+            },
+            {
+              "name": "pipe_target",
+              "type": "function_call_expression",
+              "text": "trim(...)"
+            },
+            {
+              "name": "pipe_target",
+              "type": "function_call_expression",
+              "text": "strlen(...)"
             }
           ],
           "error": null

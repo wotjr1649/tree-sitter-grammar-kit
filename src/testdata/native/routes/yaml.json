@@ -99,6 +99,1834 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-yaml-B01-01",
+      "features": [
+        "yaml-B01"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a019",
+        "yaml-B01.a059",
+        "yaml-B01.a060",
+        "yaml-B01.a061",
+        "yaml-B01.a062",
+        "yaml-B01.a063",
+        "yaml-B01.a064",
+        "yaml-B01.a065",
+        "yaml-B01.a066",
+        "yaml-B01.a067",
+        "yaml-B01.a068",
+        "yaml-B01.a069",
+        "yaml-B01.a070",
+        "yaml-B01.a071",
+        "yaml-B01.a072",
+        "yaml-B01.a034",
+        "yaml-B01.a036",
+        "yaml-B01.a037",
+        "yaml-B01.a038",
+        "yaml-B01.a083",
+        "yaml-B01.a084",
+        "yaml-B01.a085",
+        "yaml-B01.a086",
+        "yaml-B01.a087",
+        "yaml-B01.a088",
+        "yaml-B01.a089",
+        "yaml-B01.a011",
+        "yaml-B01.a052",
+        "yaml-B01.a053",
+        "yaml-B01.a054",
+        "yaml-B01.a055",
+        "yaml-B01.a056",
+        "yaml-B01.a005"
+      ],
+      "source_utf8": "%YAML 1.2\n%TAG ! tag:example.com,2000:\n%TAG !! tag:yaml.org,2002:\n%TAG !e! tag:example.com,2000:app/\n%TAG !l! !local-\n%FOO bar baz\n---\na: 1\n...\n# comment between documents\n---\nsecond\n...\nbare document\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "yaml_directive",
+            "yaml_version",
+            "tag_directive",
+            "tag_handle",
+            "tag_prefix",
+            "reserved_directive",
+            "comment"
+          ],
+          "anchors": [
+            {
+              "type": "yaml_directive",
+              "text": "%YAML 1.2"
+            },
+            {
+              "type": "tag_directive",
+              "text": "%TAG ! tag:example.com,2000:"
+            },
+            {
+              "type": "tag_directive",
+              "text": "%TAG !! tag:yaml.org,2002:"
+            },
+            {
+              "type": "tag_directive",
+              "text": "%TAG !e! tag:example.com,2000:app/"
+            },
+            {
+              "type": "tag_directive",
+              "text": "%TAG !l! !local-"
+            },
+            {
+              "type": "reserved_directive",
+              "text": "%FOO bar baz"
+            },
+            {
+              "type": "document",
+              "text": "%YAML 1.2\n%TAG ! tag:example.com,2000:\n%TAG !! tag:yaml.org,2002:\n%TAG !e! tag:example.com,2000:app/\n%TAG !l! !local-\n%FOO bar baz\n---\na: 1\n..."
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            },
+            {
+              "type": "comment",
+              "text": "# comment between documents"
+            },
+            {
+              "type": "document",
+              "text": "---\nsecond\n..."
+            },
+            {
+              "type": "document",
+              "text": "bare document"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B01-02",
+      "features": [
+        "yaml-B01"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a002",
+        "yaml-B01.a011",
+        "yaml-B01.a052",
+        "yaml-B01.a053",
+        "yaml-B01.a054",
+        "yaml-B01.a055",
+        "yaml-B01.a056",
+        "yaml-B01.a031",
+        "yaml-B01.a040",
+        "yaml-B01.a041",
+        "yaml-B01.a042",
+        "yaml-B01.a043",
+        "yaml-B01.a044",
+        "yaml-B01.a045",
+        "yaml-B01.a047",
+        "yaml-B01.a057",
+        "yaml-B01.a058",
+        "yaml-B01.a087",
+        "yaml-B01.a003",
+        "yaml-B01.a005"
+      ],
+      "source_utf8": "﻿# leading comment\nkey:   value   # trailing comment\n  # indented comment line\n\ntabbed:\tvalue\t# tab separated\nlist:\n  - one\n\n  - two\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "comment",
+            "block_mapping",
+            "block_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# leading comment"
+            },
+            {
+              "type": "block_mapping",
+              "text": "key:   value   # trailing comment\n  # indented comment line\n\ntabbed:\tvalue\t# tab separated\nlist:\n  - one\n\n  - two\n"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "key:   value"
+            },
+            {
+              "type": "comment",
+              "text": "# trailing comment"
+            },
+            {
+              "type": "comment",
+              "text": "# indented comment line"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "tabbed:\tvalue"
+            },
+            {
+              "type": "comment",
+              "text": "# tab separated"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- one\n\n  - two\n"
+            },
+            {
+              "type": "block_sequence_item",
+              "text": "- one"
+            },
+            {
+              "type": "block_sequence_item",
+              "text": "- two"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B01-03",
+      "features": [
+        "yaml-B01",
+        "yaml-B02"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a012",
+        "yaml-B01.a013",
+        "yaml-B01.a014",
+        "yaml-B01.a073",
+        "yaml-B01.a074",
+        "yaml-B01.a075",
+        "yaml-B01.a076",
+        "yaml-B01.a077",
+        "yaml-B01.a078",
+        "yaml-B01.a079",
+        "yaml-B01.a080",
+        "yaml-B01.a081",
+        "yaml-B01.a038",
+        "yaml-B01.a039",
+        "yaml-B01.a035",
+        "yaml-B01.a066",
+        "yaml-B01.a067",
+        "yaml-B01.a068",
+        "yaml-B01.a069",
+        "yaml-B02.a022",
+        "yaml-B02.a023",
+        "yaml-B01.a089",
+        "yaml-B01.a083",
+        "yaml-B01.a065"
+      ],
+      "source_utf8": "%TAG !e! tag:example.com,2000:app/\n---\nverbatim: !<tag:yaml.org,2002:str> foo\nprimary: !local bar\nsecondary: !!str baz\nnamed: !e!type%21 qux\nnonspecific: ! quux\nanchored: &anc value\nref: *anc\nboth: !!str &a2 text\nboth2: &a3 !!str text\nempty_props: !!null\nseq: &s [*anc, *a2]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "tag",
+            "anchor",
+            "anchor_name",
+            "alias",
+            "alias_name",
+            "tag_directive"
+          ],
+          "anchors": [
+            {
+              "type": "tag_directive",
+              "text": "%TAG !e! tag:example.com,2000:app/"
+            },
+            {
+              "type": "tag",
+              "text": "!<tag:yaml.org,2002:str>"
+            },
+            {
+              "type": "tag",
+              "text": "!local"
+            },
+            {
+              "type": "tag",
+              "text": "!!str"
+            },
+            {
+              "type": "tag",
+              "text": "!e!type%21"
+            },
+            {
+              "type": "tag",
+              "text": "!",
+              "occurrence": 9
+            },
+            {
+              "type": "anchor",
+              "text": "&anc"
+            },
+            {
+              "type": "alias",
+              "text": "*anc"
+            },
+            {
+              "type": "tag",
+              "text": "!!str",
+              "occurrence": 2
+            },
+            {
+              "type": "anchor",
+              "text": "&a2"
+            },
+            {
+              "type": "anchor",
+              "text": "&a3"
+            },
+            {
+              "type": "tag",
+              "text": "!!str",
+              "occurrence": 3
+            },
+            {
+              "type": "flow_node",
+              "text": "!!null"
+            },
+            {
+              "type": "tag",
+              "text": "!!null"
+            },
+            {
+              "type": "anchor",
+              "text": "&s"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[*anc, *a2]"
+            },
+            {
+              "type": "alias",
+              "text": "*anc",
+              "occurrence": 2
+            },
+            {
+              "type": "alias",
+              "text": "*a2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B02-01",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a018",
+        "yaml-B01.a017",
+        "yaml-B02.a001",
+        "yaml-B02.a002",
+        "yaml-B02.a003",
+        "yaml-B02.a004",
+        "yaml-B02.a005",
+        "yaml-B02.a006",
+        "yaml-B02.a007",
+        "yaml-B02.a008",
+        "yaml-B02.a009",
+        "yaml-B02.a010",
+        "yaml-B02.a011",
+        "yaml-B02.a012",
+        "yaml-B02.a013",
+        "yaml-B02.a014",
+        "yaml-B02.a015",
+        "yaml-B02.a016",
+        "yaml-B02.a017",
+        "yaml-B02.a018",
+        "yaml-B02.a019",
+        "yaml-B02.a020",
+        "yaml-B02.a021",
+        "yaml-B02.a024",
+        "yaml-B02.a025",
+        "yaml-B02.a026",
+        "yaml-B02.a027",
+        "yaml-B02.a028",
+        "yaml-B02.a029",
+        "yaml-B02.a030",
+        "yaml-B02.a031",
+        "yaml-B02.a032",
+        "yaml-B02.a033",
+        "yaml-B02.a034",
+        "yaml-B02.a035",
+        "yaml-B02.a036",
+        "yaml-B02.a037",
+        "yaml-B02.a038",
+        "yaml-B02.a039",
+        "yaml-B02.a040",
+        "yaml-B02.a041",
+        "yaml-B02.a042",
+        "yaml-B01.a046",
+        "yaml-B01.a047",
+        "yaml-B01.a048",
+        "yaml-B01.a049",
+        "yaml-B01.a050",
+        "yaml-B01.a051",
+        "yaml-B01.a035",
+        "yaml-B01.a003",
+        "yaml-B03.a022",
+        "yaml-B03.a023"
+      ],
+      "source_utf8": "- \"\\0 \\a \\b \\t \\\t \\n \\v \\f \\r \\e \\  \\\" \\\\ \\N \\_ \\L \\P \\x41 \\u0041 \\U00000041\"\n- \"multi\n  line \\\n  escaped break\n\n  after empty line\"\n- \"\"\n- 'single ''quoted'' text'\n- 'multi\n  line single\n\n  para'\n- ''\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_sequence",
+            "double_quote_scalar",
+            "escape_sequence",
+            "single_quote_scalar"
+          ],
+          "anchors": [
+            {
+              "type": "double_quote_scalar",
+              "text": "\"\\0 \\a \\b \\t \\\t \\n \\v \\f \\r \\e \\  \\\" \\\\ \\N \\_ \\L \\P \\x41 \\u0041 \\U00000041\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\0"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\a"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\b"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\t"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\v"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\f"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\r"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\e"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\ "
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\N"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\_"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\L"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\P"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\U00000041"
+            },
+            {
+              "type": "double_quote_scalar",
+              "text": "\"multi\n  line \\\n  escaped break\n\n  after empty line\""
+            },
+            {
+              "type": "double_quote_scalar",
+              "text": "\"\""
+            },
+            {
+              "type": "single_quote_scalar",
+              "text": "'single ''quoted'' text'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "''"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "''",
+              "occurrence": 2
+            },
+            {
+              "type": "single_quote_scalar",
+              "text": "'multi\n  line single\n\n  para'"
+            },
+            {
+              "type": "single_quote_scalar",
+              "text": "''",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B02-02",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B02.a043",
+        "yaml-B02.a044",
+        "yaml-B02.a045",
+        "yaml-B02.a046",
+        "yaml-B02.a047",
+        "yaml-B02.a048",
+        "yaml-B02.a049",
+        "yaml-B02.a050",
+        "yaml-B02.a051",
+        "yaml-B02.a052",
+        "yaml-B01.a021",
+        "yaml-B01.a022",
+        "yaml-B01.a004",
+        "yaml-B01.a005",
+        "yaml-B01.a006",
+        "yaml-B01.a007",
+        "yaml-B01.a008",
+        "yaml-B01.a009",
+        "yaml-B01.a010",
+        "yaml-B01.a020",
+        "yaml-B01.a046",
+        "yaml-B01.a048",
+        "yaml-B01.a050",
+        "yaml-B01.a051",
+        "yaml-B02.a054",
+        "yaml-B02.a055",
+        "yaml-B02.a056",
+        "yaml-B02.a057",
+        "yaml-B02.a058",
+        "yaml-B02.a059",
+        "yaml-B02.a060",
+        "yaml-B02.a061",
+        "yaml-B02.a062",
+        "yaml-B02.a066",
+        "yaml-B02.a067",
+        "yaml-B02.a068",
+        "yaml-B02.a070",
+        "yaml-B02.a072",
+        "yaml-B02.a074",
+        "yaml-B02.a075",
+        "yaml-B02.a077",
+        "yaml-B02.a022",
+        "yaml-B02.a023",
+        "yaml-B01.a003",
+        "yaml-B03.a022",
+        "yaml-B03.a023"
+      ],
+      "source_utf8": "- plain text\n- -123\n- ::std::vector\n- a:b\n- a#b\n- multi line\n  plain scalar\n\n  with empty line\n- [a, b c, -d, :e, f:g]\n- {a: b, c, ? d : e}\n- ? key\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_sequence",
+            "plain_scalar",
+            "flow_sequence",
+            "flow_mapping"
+          ],
+          "anchors": [
+            {
+              "type": "plain_scalar",
+              "text": "plain text"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "-123"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "::std::vector"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "a:b"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "a#b"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "multi line\n  plain scalar\n\n  with empty line"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[a, b c, -d, :e, f:g]"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "b c"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "-d"
+            },
+            {
+              "type": "plain_scalar",
+              "text": ":e"
+            },
+            {
+              "type": "plain_scalar",
+              "text": "f:g"
+            },
+            {
+              "type": "flow_mapping",
+              "text": "{a: b, c, ? d : e}"
+            },
+            {
+              "type": "flow_pair",
+              "text": "a: b"
+            },
+            {
+              "type": "flow_node",
+              "text": "c",
+              "occurrence": 4
+            },
+            {
+              "type": "flow_pair",
+              "text": "? d : e"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "? key"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B02-03",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B02.a053",
+        "yaml-B02.a054",
+        "yaml-B02.a055",
+        "yaml-B02.a056",
+        "yaml-B02.a057",
+        "yaml-B02.a058",
+        "yaml-B02.a059",
+        "yaml-B02.a060",
+        "yaml-B02.a061",
+        "yaml-B02.a062",
+        "yaml-B02.a063",
+        "yaml-B02.a064",
+        "yaml-B02.a065",
+        "yaml-B02.a066",
+        "yaml-B02.a067",
+        "yaml-B02.a068",
+        "yaml-B02.a069",
+        "yaml-B02.a070",
+        "yaml-B02.a071",
+        "yaml-B02.a072",
+        "yaml-B02.a073",
+        "yaml-B02.a074",
+        "yaml-B02.a075",
+        "yaml-B02.a076",
+        "yaml-B02.a077",
+        "yaml-B02.a022",
+        "yaml-B02.a023",
+        "yaml-B01.a006",
+        "yaml-B01.a007",
+        "yaml-B01.a008",
+        "yaml-B01.a009",
+        "yaml-B01.a010",
+        "yaml-B01.a046",
+        "yaml-B02.a026",
+        "yaml-B02.a037",
+        "yaml-B03.a031",
+        "yaml-B03.a032",
+        "yaml-B03.a033"
+      ],
+      "source_utf8": "seq: [a, \"b\", 'c', [nested], {k: v}, ]\nmap: {a: 1, \"b\": 2, 'c': 3, ? d : 4, : empty-key, e, f:, }\npairs: [a: 1, ? b : 2, \"c\": 3, : d, \"e\" : 5]\nempty: []\nemptym: {}\nmulti: [\n  a,\n  b\n]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "flow_sequence",
+            "flow_mapping",
+            "flow_pair",
+            "flow_node"
+          ],
+          "anchors": [
+            {
+              "type": "flow_sequence",
+              "text": "[a, \"b\", 'c', [nested], {k: v}, ]"
+            },
+            {
+              "type": "double_quote_scalar",
+              "text": "\"b\""
+            },
+            {
+              "type": "single_quote_scalar",
+              "text": "'c'"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[nested]"
+            },
+            {
+              "type": "flow_mapping",
+              "text": "{k: v}"
+            },
+            {
+              "type": "flow_mapping",
+              "text": "{a: 1, \"b\": 2, 'c': 3, ? d : 4, : empty-key, e, f:, }"
+            },
+            {
+              "type": "flow_pair",
+              "text": "a: 1"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"b\": 2"
+            },
+            {
+              "type": "flow_pair",
+              "text": "'c': 3"
+            },
+            {
+              "type": "flow_pair",
+              "text": "? d : 4"
+            },
+            {
+              "type": "flow_pair",
+              "text": ": empty-key"
+            },
+            {
+              "type": "flow_node",
+              "text": "e",
+              "occurrence": 6
+            },
+            {
+              "type": "flow_pair",
+              "text": "f:"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[a: 1, ? b : 2, \"c\": 3, : d, \"e\" : 5]"
+            },
+            {
+              "type": "flow_pair",
+              "text": "a: 1",
+              "occurrence": 2
+            },
+            {
+              "type": "flow_pair",
+              "text": "? b : 2"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"c\": 3"
+            },
+            {
+              "type": "flow_pair",
+              "text": ": d"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"e\" : 5"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[]"
+            },
+            {
+              "type": "flow_mapping",
+              "text": "{}"
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[\n  a,\n  b\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B03-01",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B03.a022",
+        "yaml-B03.a023",
+        "yaml-B03.a024",
+        "yaml-B03.a025",
+        "yaml-B03.a026",
+        "yaml-B03.a027",
+        "yaml-B03.a028",
+        "yaml-B03.a029",
+        "yaml-B03.a030",
+        "yaml-B03.a031",
+        "yaml-B03.a032",
+        "yaml-B03.a033",
+        "yaml-B03.a034",
+        "yaml-B03.a035",
+        "yaml-B03.a036",
+        "yaml-B03.a037",
+        "yaml-B03.a039",
+        "yaml-B03.a040",
+        "yaml-B01.a003",
+        "yaml-B01.a004",
+        "yaml-B01.a005",
+        "yaml-B02.a022",
+        "yaml-B02.a023",
+        "yaml-B01.a040",
+        "yaml-B01.a041",
+        "yaml-B01.a042",
+        "yaml-B01.a073",
+        "yaml-B01.a083",
+        "yaml-B01.a087",
+        "yaml-B01.a088"
+      ],
+      "source_utf8": "- a\n- - nested\n  - seq\n- k: v\n  k2: v2\n- ? complex key\n  : complex value\n-\n- !!str tagged\n---\n? explicit\n: value\n? - seq key\n: - seq value\nimplicit: x\n\"quoted key\": y\nempty value:\nkey:\n- same indent seq\n- b\nother:\n  - c\nmap:\n  nested:\n    deep: 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_sequence",
+            "block_sequence_item",
+            "block_mapping",
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "document",
+              "text": "- a\n- - nested\n  - seq\n- k: v\n  k2: v2\n- ? complex key\n  : complex value\n-\n- !!str tagged"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- a\n- - nested\n  - seq\n- k: v\n  k2: v2\n- ? complex key\n  : complex value\n-\n- !!str tagged"
+            },
+            {
+              "type": "block_sequence_item",
+              "text": "- a"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- nested\n  - seq"
+            },
+            {
+              "type": "block_mapping",
+              "text": "k: v\n  k2: v2"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "? complex key\n  : complex value"
+            },
+            {
+              "type": "block_sequence_item",
+              "text": "-",
+              "occurrence": 7
+            },
+            {
+              "type": "block_sequence_item",
+              "text": "- !!str tagged"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "? explicit\n: value"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "? - seq key\n: - seq value"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- seq key"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- seq value"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "implicit: x"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "\"quoted key\": y"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "empty value:"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "key:\n- same indent seq\n- b"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- same indent seq\n- b"
+            },
+            {
+              "type": "block_sequence",
+              "text": "- c"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "nested:\n    deep: 1\n"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "deep: 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B03-02",
+      "features": [
+        "yaml-B01",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a015",
+        "yaml-B01.a016",
+        "yaml-B03.a001",
+        "yaml-B03.a002",
+        "yaml-B03.a003",
+        "yaml-B03.a004",
+        "yaml-B03.a005",
+        "yaml-B03.a006",
+        "yaml-B03.a007",
+        "yaml-B03.a008",
+        "yaml-B03.a009",
+        "yaml-B03.a010",
+        "yaml-B03.a011",
+        "yaml-B03.a012",
+        "yaml-B03.a013",
+        "yaml-B03.a014",
+        "yaml-B03.a015",
+        "yaml-B03.a016",
+        "yaml-B03.a017",
+        "yaml-B03.a018",
+        "yaml-B03.a019",
+        "yaml-B03.a020",
+        "yaml-B03.a021",
+        "yaml-B03.a038",
+        "yaml-B03.a035",
+        "yaml-B03.a037",
+        "yaml-B01.a047",
+        "yaml-B01.a048",
+        "yaml-B01.a050",
+        "yaml-B01.a049",
+        "yaml-B03.a026",
+        "yaml-B03.a027",
+        "yaml-B03.a031",
+        "yaml-B03.a032",
+        "yaml-B03.a033",
+        "yaml-B01.a034"
+      ],
+      "source_utf8": "literal: |\n  line1\n   line2\n\nliteral_strip: |-\n  text\nliteral_keep: |+\n  text\n\nfolded: >\n  folded\n  text\n\n  para\n    more indented\n  back\nfolded_ind: >2\n   leading space\nliteral_ind_chomp: |1-\n  x\nliteral_chomp_ind: |-1\n  x\ncomment_header: | # comment\n  text\nkeep_trailing: |+\n  a\n\n# trail comment\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping",
+            "block_scalar"
+          ],
+          "anchors": [
+            {
+              "type": "block_scalar",
+              "text": "|\n  line1\n   line2"
+            },
+            {
+              "type": "block_scalar",
+              "text": "|-\n  text"
+            },
+            {
+              "type": "block_scalar",
+              "text": "|+\n  text"
+            },
+            {
+              "type": "block_scalar",
+              "text": ">\n  folded\n  text\n\n  para\n    more indented\n  back"
+            },
+            {
+              "type": "block_scalar",
+              "text": ">2\n   leading space"
+            },
+            {
+              "type": "block_scalar",
+              "text": "|1-\n  x"
+            },
+            {
+              "type": "block_scalar",
+              "text": "|-1\n  x"
+            },
+            {
+              "type": "block_scalar",
+              "text": "| # comment\n  text"
+            },
+            {
+              "type": "block_scalar",
+              "text": "|+\n  a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-V12-01",
+      "features": [
+        "yaml-B01",
+        "yaml-B02",
+        "yaml-V12"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-V12.a001",
+        "yaml-V12.a002",
+        "yaml-V12.a003",
+        "yaml-B02.a065",
+        "yaml-B02.a069",
+        "yaml-B02.a071",
+        "yaml-B02.a073",
+        "yaml-B02.a076",
+        "yaml-B01.a002",
+        "yaml-B01.a063",
+        "yaml-B01.a064",
+        "yaml-B01.a089",
+        "yaml-B01.a088",
+        "yaml-V12.a006",
+        "yaml-V12.a007",
+        "yaml-V12.a008",
+        "yaml-V12.a009"
+      ],
+      "source_utf8": "%YAML 1.2\n---\njson: {\"a\":1, \"b\":[2], \"c\":\"d\"}\npair: [\"k\":v, \"m\":[1]]\nslash: \"a\\/b\"\ntabbed: hello\tworld\nnel: xy and    \nquoted: \"tab\there del c1\"\n...\n﻿---\nsecond: doc\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "flow_mapping",
+            "flow_pair",
+            "double_quote_scalar"
+          ],
+          "anchors": [
+            {
+              "type": "yaml_directive",
+              "text": "%YAML 1.2"
+            },
+            {
+              "type": "flow_mapping",
+              "text": "{\"a\":1, \"b\":[2], \"c\":\"d\"}"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"a\":1"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"b\":[2]"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"c\":\"d\""
+            },
+            {
+              "type": "flow_sequence",
+              "text": "[\"k\":v, \"m\":[1]]"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"k\":v"
+            },
+            {
+              "type": "flow_pair",
+              "text": "\"m\":[1]"
+            },
+            {
+              "type": "double_quote_scalar",
+              "text": "\"a\\/b\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\/"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "tabbed: hello\tworld"
+            },
+            {
+              "type": "flow_node",
+              "text": "hello\tworld"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "nel: xy and    "
+            },
+            {
+              "type": "flow_node",
+              "text": "xy and    "
+            },
+            {
+              "type": "double_quote_scalar",
+              "text": "\"tab\there del c1\""
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "second: doc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-V12-02",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a063",
+        "yaml-B01.a064",
+        "yaml-B01.a089",
+        "yaml-V12.a004"
+      ],
+      "source_utf8": "%YAML 1.1\n---\nkey: value\nlist: [a, b]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "yaml_directive",
+            "yaml_version"
+          ],
+          "anchors": [
+            {
+              "type": "document",
+              "text": "%YAML 1.1\n---\nkey: value\nlist: [a, b]\n"
+            },
+            {
+              "type": "yaml_directive",
+              "text": "%YAML 1.1"
+            },
+            {
+              "type": "yaml_version",
+              "text": "1.1"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "key: value"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "list: [a, b]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-V12-03",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a063",
+        "yaml-B01.a064",
+        "yaml-B01.a089",
+        "yaml-V12.a005",
+        "yaml-V12.a004"
+      ],
+      "source_utf8": "%YAML 1.1\n---\nkey: firstsecond third fourth\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "yaml_directive",
+            "block_mapping"
+          ],
+          "anchors": [
+            {
+              "type": "yaml_directive",
+              "text": "%YAML 1.1"
+            },
+            {
+              "type": "yaml_version",
+              "text": "1.1"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "key: firstsecond third fourth"
+            },
+            {
+              "type": "flow_node",
+              "text": "firstsecond third fourth"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-yaml-B01-04",
+      "features": [
+        "yaml-B01",
+        "yaml-B03"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a023",
+        "yaml-B01.a028",
+        "yaml-B01.a029",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-B01.a082",
+        "yaml-B01.a024",
+        "yaml-B01.a087",
+        "yaml-B03.a026",
+        "yaml-B03.a027",
+        "yaml-B03.a031",
+        "yaml-B03.a032",
+        "yaml-B03.a033"
+      ],
+      "source_utf8": "a: 1\r\nb: 2\r\nc: 3\r",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "document",
+            "block_mapping",
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping",
+              "text": "a: 1\r\nb: 2\r\nc: 3\r"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "b: 2"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "c: 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B01-R-1",
+      "features": [
+        "yaml-B01"
+      ],
+      "source_utf8": "a: 1\n...\n%YAML 1.2\n---\nkey: value\nlist:\n  - &a one\n  - *a\n",
+      "edits": [
+        {
+          "find": "%YAML 1.2\n---\n",
+          "replace": "%YAML 1.2\n"
+        },
+        {
+          "find": "%YAML 1.2\n",
+          "replace": "%YAML 1.2\n---\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "yaml_directive",
+            "document",
+            "block_mapping_pair",
+            "block_sequence",
+            "anchor",
+            "alias"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair",
+            "block_sequence",
+            "anchor",
+            "alias"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "yaml_directive",
+            "document",
+            "block_mapping_pair",
+            "block_sequence",
+            "anchor",
+            "alias"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B01-R-2",
+      "features": [
+        "yaml-B01"
+      ],
+      "source_utf8": "# leading comment\nkey: \"v\" # trailing\nother: !!str text\n",
+      "edits": [
+        {
+          "find": "\"v\" # trailing",
+          "replace": "\"v\"# trailing"
+        },
+        {
+          "find": "\"v\"# trailing",
+          "replace": "\"v\" # trailing"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "block_mapping_pair",
+            "double_quote_scalar",
+            "tag"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "comment",
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# leading comment"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "key: \"v\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "block_mapping_pair",
+            "double_quote_scalar",
+            "tag"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B01-R-3",
+      "features": [
+        "yaml-B01"
+      ],
+      "source_utf8": "base: &anchor1 one\ncopy: *anchor1\nlast: done\n",
+      "edits": [
+        {
+          "find": "&anchor1 one",
+          "replace": "& one"
+        },
+        {
+          "find": "& one",
+          "replace": "&anchor1 one"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping_pair",
+            "anchor",
+            "anchor_name",
+            "alias",
+            "alias_name"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping_pair",
+            "anchor",
+            "anchor_name",
+            "alias",
+            "alias_name"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B02-R-1",
+      "features": [
+        "yaml-B02"
+      ],
+      "source_utf8": "flow: {name: \"a\\tb\", list: [x, 'y', \"z\"], ? complex : v}\nnext: ok\n",
+      "edits": [
+        {
+          "find": "\"a\\tb\"",
+          "replace": "\"a\\qb\""
+        },
+        {
+          "find": "\"a\\qb\"",
+          "replace": "\"a\\tb\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "flow_mapping",
+            "flow_pair",
+            "flow_sequence",
+            "double_quote_scalar",
+            "single_quote_scalar",
+            "escape_sequence",
+            "block_mapping_pair"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "flow_node",
+            "plain_scalar"
+          ],
+          "anchors": [
+            {
+              "type": "flow_node",
+              "text": "flow"
+            },
+            {
+              "type": "flow_node",
+              "text": "name"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "flow_mapping",
+            "flow_pair",
+            "flow_sequence",
+            "double_quote_scalar",
+            "single_quote_scalar",
+            "escape_sequence",
+            "block_mapping_pair"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B03-R-1",
+      "features": [
+        "yaml-B03"
+      ],
+      "source_utf8": "outer:\n  inner: value\n  text: |\n    line one\n    line two\n  folded: >-\n    folded\n    text\nafter: done\n",
+      "edits": [
+        {
+          "find": "inner: value\n",
+          "replace": "inner: value: x\n"
+        },
+        {
+          "find": "inner: value: x\n",
+          "replace": "inner: value\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping",
+            "block_mapping_pair",
+            "block_scalar"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "inner: value"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping",
+            "block_mapping_pair",
+            "block_scalar"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-B03-R-2",
+      "features": [
+        "yaml-B03"
+      ],
+      "source_utf8": "lead: 1\ntext: |2\n  line one\nfolded: >+\n  kept\n\nlist:\n  - a\n  - b\n",
+      "edits": [
+        {
+          "find": "text: |2\n",
+          "replace": "text: |0\n"
+        },
+        {
+          "find": "text: |0\n",
+          "replace": "text: |2\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping_pair",
+            "block_scalar",
+            "block_sequence",
+            "block_sequence_item"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "lead: 1"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block_mapping_pair",
+            "block_scalar",
+            "block_sequence",
+            "block_sequence_item"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-V12-R-1",
+      "features": [
+        "yaml-V12"
+      ],
+      "source_utf8": "%YAML 1.1\n---\nlegacy: \"\\x41\\u0042\"\n...\n%YAML 1.2\n---\nmodern: \"a\\/b\\x43\"\n",
+      "edits": [
+        {
+          "find": "\"\\x41\\u0042\"",
+          "replace": "\"\\x4\\u0042\""
+        },
+        {
+          "find": "\"\\x4\\u0042\"",
+          "replace": "\"\\x41\\u0042\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "yaml_directive",
+            "yaml_version",
+            "block_mapping_pair",
+            "double_quote_scalar",
+            "escape_sequence"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "yaml_directive",
+            "yaml_version"
+          ],
+          "anchors": [
+            {
+              "type": "yaml_directive",
+              "text": "%YAML 1.1"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "yaml_directive",
+            "yaml_version",
+            "block_mapping_pair",
+            "double_quote_scalar",
+            "escape_sequence"
+          ]
+        }
+      ]
     }
   ]
 }

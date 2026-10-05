@@ -97,6 +97,4514 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-powershell-B01-01",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a004",
+        "powershell-B01.a005",
+        "powershell-B01.a007",
+        "powershell-B01.a008",
+        "powershell-B01.a009",
+        "powershell-B01.a010",
+        "powershell-B01.a011",
+        "powershell-B01.a013",
+        "powershell-B01.a016",
+        "powershell-B01.a017",
+        "powershell-B01.a018",
+        "powershell-B01.a019",
+        "powershell-B01.a020",
+        "powershell-B01.a021",
+        "powershell-B01.a022",
+        "powershell-B01.a023",
+        "powershell-B01.a024",
+        "powershell-B01.a025",
+        "powershell-B01.a026",
+        "powershell-B01.a027",
+        "powershell-B01.a028",
+        "powershell-B01.a029",
+        "powershell-B01.a030",
+        "powershell-B01.a031",
+        "powershell-B01.a032",
+        "powershell-B01.a033",
+        "powershell-B01.a034",
+        "powershell-B01.a035",
+        "powershell-B01.a036",
+        "powershell-B01.a037",
+        "powershell-B01.a038",
+        "powershell-B01.a039",
+        "powershell-B01.a040",
+        "powershell-B01.a041",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a416",
+        "powershell-B01.a413",
+        "powershell-B01.a339",
+        "powershell-B01.a084",
+        "powershell-B01.a095",
+        "powershell-B01.a096",
+        "powershell-B01.a097",
+        "powershell-B01.a530",
+        "powershell-B01.a526",
+        "powershell-B01.a525",
+        "powershell-B01.a133",
+        "powershell-B01.a136",
+        "powershell-B01.a138",
+        "powershell-B01.a139",
+        "powershell-B01.a140",
+        "powershell-B01.a141",
+        "powershell-B01.a142",
+        "powershell-B01.a143",
+        "powershell-B01.a144",
+        "powershell-B01.a145"
+      ],
+      "source_utf8": "#Requires -Version 5.1\r\n# single line comment\r\n<# delimited\n   comment ## with > and # #>\r<##>\n$a = 1\t+\u000b2\f+ 3 `\n  + 4\n$b = $a –eq 10\nGet-ChildItem —Recurse ―Force\nWrite-Output done\n# SIG # Begin signature block\n# MIIEMwYJKoZIhvcNAQcCoIIEJDCCBCACAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB\n# SIG # End signature block\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "assignment_expression",
+            "command",
+            "command_parameter"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "#Requires -Version 5.1"
+            },
+            {
+              "type": "comment",
+              "text": "# single line comment"
+            },
+            {
+              "type": "comment",
+              "text": "<# delimited\n   comment ## with > and # #>"
+            },
+            {
+              "type": "comment",
+              "text": "<##>"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$a = 1\t+\u000b2\f+ 3 `\n  + 4"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$b = $a –eq 10"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a –eq 10"
+            },
+            {
+              "type": "command",
+              "text": "Get-ChildItem —Recurse ―Force"
+            },
+            {
+              "type": "command_parameter",
+              "text": "—Recurse"
+            },
+            {
+              "type": "command_parameter",
+              "text": "―Force"
+            },
+            {
+              "type": "command",
+              "text": "Write-Output done"
+            },
+            {
+              "type": "comment",
+              "text": "# SIG # Begin signature block"
+            },
+            {
+              "type": "comment",
+              "text": "# SIG # End signature block"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-02",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a081",
+        "powershell-B01.a082",
+        "powershell-B01.a083",
+        "powershell-B01.a084",
+        "powershell-B01.a085",
+        "powershell-B01.a086",
+        "powershell-B01.a087",
+        "powershell-B01.a088",
+        "powershell-B01.a089",
+        "powershell-B01.a090",
+        "powershell-B01.a091",
+        "powershell-B01.a092",
+        "powershell-B01.a093",
+        "powershell-B01.a094",
+        "powershell-B01.a095",
+        "powershell-B01.a096",
+        "powershell-B01.a097",
+        "powershell-B01.a098",
+        "powershell-B01.a099",
+        "powershell-B01.a100",
+        "powershell-B01.a101",
+        "powershell-B01.a102",
+        "powershell-B01.a103",
+        "powershell-B01.a104",
+        "powershell-B02.a031",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a462",
+        "powershell-B01.a463",
+        "powershell-B01.a465",
+        "powershell-B01.a466",
+        "powershell-B02.a020",
+        "powershell-B02.a100",
+        "powershell-B01.a110",
+        "powershell-B01.a135",
+        "powershell-B01.a188",
+        "powershell-B01.a219",
+        "powershell-B01.a220",
+        "powershell-B01.a225",
+        "powershell-B01.a226",
+        "powershell-B01.a227"
+      ],
+      "source_utf8": "$$; $?; $^\n$x = 1\n$global:g = 1; $local:l = 2; $private:p = 3; $script:s = 4\nInvoke-Command -ScriptBlock { $using:x }\n$env:PATH; $function:prompt\n$is_ok? = $true\n$params = @{ Name = 'a' }\nGet-Thing @params\n${weird name} = 1\n${env:ProgramFiles(x86)}\n${a`}b} = 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "variable",
+            "braced_variable",
+            "assignment_expression",
+            "hash_literal_expression"
+          ],
+          "anchors": [
+            {
+              "type": "variable",
+              "text": "$$"
+            },
+            {
+              "type": "variable",
+              "text": "$?"
+            },
+            {
+              "type": "variable",
+              "text": "$^"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$x = 1"
+            },
+            {
+              "type": "variable",
+              "text": "$global:g"
+            },
+            {
+              "type": "variable",
+              "text": "$local:l"
+            },
+            {
+              "type": "variable",
+              "text": "$private:p"
+            },
+            {
+              "type": "variable",
+              "text": "$script:s"
+            },
+            {
+              "type": "variable",
+              "text": "$using:x"
+            },
+            {
+              "type": "variable",
+              "text": "$env:PATH"
+            },
+            {
+              "type": "variable",
+              "text": "$function:prompt"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$is_ok? = $true"
+            },
+            {
+              "type": "variable",
+              "text": "$is_ok?"
+            },
+            {
+              "type": "hash_literal_expression",
+              "text": "@{ Name = 'a' }"
+            },
+            {
+              "type": "variable",
+              "text": "@params"
+            },
+            {
+              "type": "braced_variable",
+              "text": "${weird name}"
+            },
+            {
+              "type": "braced_variable",
+              "text": "${env:ProgramFiles(x86)}"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "${a`}b} = 2"
+            },
+            {
+              "type": "braced_variable",
+              "text": "${a`}b}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-03",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a427",
+        "powershell-B01.a133",
+        "powershell-B01.a134",
+        "powershell-B01.a136",
+        "powershell-B01.a137",
+        "powershell-B01.a138",
+        "powershell-B01.a139",
+        "powershell-B01.a140",
+        "powershell-B01.a141",
+        "powershell-B01.a142",
+        "powershell-B01.a143",
+        "powershell-B01.a144",
+        "powershell-B01.a145",
+        "powershell-B01.a146",
+        "powershell-B01.a147",
+        "powershell-B01.a148",
+        "powershell-B01.a149",
+        "powershell-B01.a150",
+        "powershell-B01.a151",
+        "powershell-B01.a152",
+        "powershell-B01.a153",
+        "powershell-B01.a154",
+        "powershell-B01.a155",
+        "powershell-B01.a156",
+        "powershell-B01.a157",
+        "powershell-B01.a158",
+        "powershell-B01.a159",
+        "powershell-B01.a160",
+        "powershell-B01.a161",
+        "powershell-B01.a162",
+        "powershell-B01.a163",
+        "powershell-B01.a164",
+        "powershell-B01.a165",
+        "powershell-B01.a166",
+        "powershell-B01.a167",
+        "powershell-B01.a168",
+        "powershell-B01.a169",
+        "powershell-B01.a170",
+        "powershell-B01.a171",
+        "powershell-B01.a172",
+        "powershell-B01.a173",
+        "powershell-B01.a174",
+        "powershell-B01.a175",
+        "powershell-B01.a176",
+        "powershell-B01.a177",
+        "powershell-B01.a178",
+        "powershell-B01.a179",
+        "powershell-B01.a180",
+        "powershell-B01.a181",
+        "powershell-B01.a182",
+        "powershell-B01.a183",
+        "powershell-B01.a184",
+        "powershell-B01.a185",
+        "powershell-B01.a084"
+      ],
+      "source_utf8": "$d = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10l, 10d, 1kb, 2mb, 3gb, 4tb, 5pb, 1lkb, 2dmb\n$h = 0x0123456789, 0xabcdef, 0xFFl, 0x10kb, 0x1lmb\n$r = 1.5, .5, 1e3, 1.5e+3, 2.5e-3, 1.5d, .5d, 1e3d, 1.5kb, 2e2mb, 3.0dgb\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "decimal_integer_literal",
+            "hexadecimal_integer_literal",
+            "real_literal"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$d = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10l, 10d, 1kb, 2mb, 3gb, 4tb, 5pb, 1lkb, 2dmb"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$h = 0x0123456789, 0xabcdef, 0xFFl, 0x10kb, 0x1lmb"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = 1.5, .5, 1e3, 1.5e+3, 2.5e-3, 1.5d, .5d, 1e3d, 1.5kb, 2e2mb, 3.0dgb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "10l"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "10d"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "1kb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "2mb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "3gb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "4tb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "5pb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "1lkb"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "2dmb"
+            },
+            {
+              "type": "hexadecimal_integer_literal",
+              "text": "0x0123456789"
+            },
+            {
+              "type": "hexadecimal_integer_literal",
+              "text": "0xabcdef"
+            },
+            {
+              "type": "hexadecimal_integer_literal",
+              "text": "0xFFl"
+            },
+            {
+              "type": "hexadecimal_integer_literal",
+              "text": "0x10kb"
+            },
+            {
+              "type": "hexadecimal_integer_literal",
+              "text": "0x1lmb"
+            },
+            {
+              "type": "real_literal",
+              "text": "1.5"
+            },
+            {
+              "type": "real_literal",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "real_literal",
+              "text": "1e3"
+            },
+            {
+              "type": "real_literal",
+              "text": "1.5e+3"
+            },
+            {
+              "type": "real_literal",
+              "text": "2.5e-3"
+            },
+            {
+              "type": "real_literal",
+              "text": "1.5d"
+            },
+            {
+              "type": "real_literal",
+              "text": ".5d",
+              "occurrence": 2
+            },
+            {
+              "type": "real_literal",
+              "text": "1e3d"
+            },
+            {
+              "type": "real_literal",
+              "text": "1.5kb"
+            },
+            {
+              "type": "real_literal",
+              "text": "2e2mb"
+            },
+            {
+              "type": "real_literal",
+              "text": "3.0dgb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-04",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a135",
+        "powershell-B01.a186",
+        "powershell-B01.a187",
+        "powershell-B01.a188",
+        "powershell-B01.a189",
+        "powershell-B01.a190",
+        "powershell-B01.a191",
+        "powershell-B01.a192",
+        "powershell-B01.a193",
+        "powershell-B01.a194",
+        "powershell-B01.a195",
+        "powershell-B01.a196",
+        "powershell-B01.a197",
+        "powershell-B01.a198",
+        "powershell-B01.a199",
+        "powershell-B01.a200",
+        "powershell-B01.a201",
+        "powershell-B01.a202",
+        "powershell-B01.a203",
+        "powershell-B01.a204",
+        "powershell-B01.a205",
+        "powershell-B01.a206",
+        "powershell-B01.a207",
+        "powershell-B01.a208",
+        "powershell-B01.a209",
+        "powershell-B01.a210",
+        "powershell-B01.a211",
+        "powershell-B01.a212",
+        "powershell-B01.a213",
+        "powershell-B01.a214",
+        "powershell-B01.a219",
+        "powershell-B01.a220",
+        "powershell-B01.a221",
+        "powershell-B01.a222",
+        "powershell-B01.a223",
+        "powershell-B01.a224",
+        "powershell-B01.a225",
+        "powershell-B01.a226",
+        "powershell-B01.a227",
+        "powershell-B01.a228",
+        "powershell-B01.a229",
+        "powershell-B01.a230",
+        "powershell-B01.a231",
+        "powershell-B01.a232",
+        "powershell-B01.a233",
+        "powershell-B01.a234",
+        "powershell-B01.a104",
+        "powershell-B01.a087",
+        "powershell-B01.a084",
+        "powershell-B01.a460",
+        "powershell-B01.a505",
+        "powershell-B01.a506",
+        "powershell-B01.a507",
+        "powershell-B01.a508",
+        "powershell-B01.a215",
+        "powershell-B01.a216",
+        "powershell-B01.a509",
+        "powershell-B01.a510",
+        "powershell-B01.a511",
+        "powershell-B01.a512",
+        "powershell-B01.a217",
+        "powershell-B01.a218",
+        "powershell-B01.a513",
+        "powershell-B01.a514",
+        "powershell-B01.a515",
+        "powershell-B01.a516",
+        "powershell-B02.a031",
+        "powershell-B01.a535",
+        "powershell-B01.a537"
+      ],
+      "source_utf8": "$v = 'x'\n\"plain $v ${v} $v.Length $(1 + 2) `$literal `n `t \"\"doubled\"\" cost $\"\n\"tail dollars $$\"\n“smart $v”; „open low”\n'verbatim ''doubled'' $v'; ‘smart’; ‚single low‛\n@\"\nexpandable $v ${v}\n\"quote at line start\n$(Get-Date)\nends with $\nnext line\nends again $\n\"q after dollar\n\"@\n@'\nverbatim $v\n'quote at line start\n'@\n\"$(Get-Date) and $($v.Length) after\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "expandable_string_literal",
+            "expandable_here_string_literal",
+            "verbatim_string_characters",
+            "verbatim_here_string_characters",
+            "sub_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$v = 'x'"
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "\"plain $v ${v} $v.Length $(1 + 2) `$literal `n `t \"\"doubled\"\" cost $\""
+            },
+            {
+              "type": "braced_variable",
+              "text": "${v}"
+            },
+            {
+              "type": "sub_expression",
+              "text": "$(1 + 2)"
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "\"tail dollars $$\""
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "“smart $v”"
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "„open low”"
+            },
+            {
+              "type": "verbatim_string_characters",
+              "text": "'verbatim ''doubled'' $v'"
+            },
+            {
+              "type": "verbatim_string_characters",
+              "text": "‘smart’"
+            },
+            {
+              "type": "verbatim_string_characters",
+              "text": "‚single low‛"
+            },
+            {
+              "type": "expandable_here_string_literal",
+              "text": "@\"\nexpandable $v ${v}\n\"quote at line start\n$(Get-Date)\nends with $\nnext line\nends again $\n\"q after dollar\n\"@"
+            },
+            {
+              "type": "verbatim_here_string_characters",
+              "text": "@'\nverbatim $v\n'quote at line start\n'@"
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "\"$(Get-Date) and $($v.Length) after\""
+            },
+            {
+              "type": "sub_expression",
+              "text": "$($v.Length)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-05",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a378",
+        "powershell-B01.a379",
+        "powershell-B01.a381",
+        "powershell-B01.a382",
+        "powershell-B01.a383",
+        "powershell-B01.a384",
+        "powershell-B01.a386",
+        "powershell-B01.a387",
+        "powershell-B01.a113",
+        "powershell-B01.a109",
+        "powershell-B01.a264",
+        "powershell-B01.a396",
+        "powershell-B01.a122",
+        "powershell-B01.a123",
+        "powershell-B01.a124",
+        "powershell-B01.a125",
+        "powershell-B01.a126",
+        "powershell-B01.a127",
+        "powershell-B01.a128",
+        "powershell-B01.a129",
+        "powershell-B01.a130",
+        "powershell-B01.a131",
+        "powershell-B01.a132",
+        "powershell-B01.a121",
+        "powershell-B01.a116",
+        "powershell-B01.a117",
+        "powershell-B01.a108",
+        "powershell-B01.a526",
+        "powershell-B01.a527",
+        "powershell-B01.a528",
+        "powershell-B01.a529",
+        "powershell-B01.a530",
+        "powershell-B01.a539",
+        "powershell-B01.a459",
+        "powershell-B01.a460",
+        "powershell-B01.a461",
+        "powershell-B01.a470",
+        "powershell-B01.a500"
+      ],
+      "source_utf8": "Get-ChildItem -Path:C:\\temp -Recurse -? -_x arg1 42 $v.Name \"s\" 'v'\n& $cmd -a 1\n& 'C:\\tools\\app.exe' arg\n. ./helper.ps1\n& $mod Get-Thing\necho$(1)x arg\nicacls --% /grant Users:(F) \"a\"&b\nWrite-Output -- -NotAParameter\nGet-Process |\n  Where-Object Handles -gt 10 | Sort-Object\nWrite-Output (1 + 2) $(3) @(4)\nWrite-Output @'\nhere arg\n'@\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "pipeline",
+            "command",
+            "command_name",
+            "command_parameter",
+            "command_invokation_operator",
+            "stop_parsing"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "Get-ChildItem -Path:C:\\temp -Recurse -? -_x arg1 42 $v.Name \"s\" 'v'"
+            },
+            {
+              "type": "command_parameter",
+              "text": "-Path:"
+            },
+            {
+              "type": "command_parameter",
+              "text": "-Recurse"
+            },
+            {
+              "type": "command_parameter",
+              "text": "-?"
+            },
+            {
+              "type": "command_parameter",
+              "text": "-_x"
+            },
+            {
+              "type": "command",
+              "text": "& $cmd -a 1"
+            },
+            {
+              "type": "command_invokation_operator",
+              "text": "&"
+            },
+            {
+              "type": "command",
+              "text": "& 'C:\\tools\\app.exe' arg"
+            },
+            {
+              "type": "command",
+              "text": ". ./helper.ps1"
+            },
+            {
+              "type": "command",
+              "text": "& $mod Get-Thing"
+            },
+            {
+              "type": "command",
+              "text": "echo$(1)x arg"
+            },
+            {
+              "type": "command",
+              "text": "icacls --% /grant Users:(F) \"a\"&b"
+            },
+            {
+              "type": "stop_parsing",
+              "text": "--% /grant Users:(F) \"a\"&b"
+            },
+            {
+              "type": "command",
+              "text": "Write-Output -- -NotAParameter"
+            },
+            {
+              "type": "pipeline",
+              "text": "Get-Process |\n  Where-Object Handles -gt 10 | Sort-Object"
+            },
+            {
+              "type": "command",
+              "text": "Write-Output (1 + 2) $(3) @(4)"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(1 + 2)"
+            },
+            {
+              "type": "sub_expression",
+              "text": "$(3)"
+            },
+            {
+              "type": "array_expression",
+              "text": "@(4)"
+            },
+            {
+              "type": "command",
+              "text": "Write-Output @'\nhere arg\n'@"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-06",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a394",
+        "powershell-B01.a397",
+        "powershell-B01.a398",
+        "powershell-B01.a399",
+        "powershell-B01.a400",
+        "powershell-B01.a401",
+        "powershell-B01.a402",
+        "powershell-B01.a296",
+        "powershell-B01.a297",
+        "powershell-B01.a298",
+        "powershell-B01.a299",
+        "powershell-B01.a300",
+        "powershell-B01.a301",
+        "powershell-B01.a302",
+        "powershell-B01.a303",
+        "powershell-B01.a304",
+        "powershell-B01.a305",
+        "powershell-B01.a306",
+        "powershell-B01.a307",
+        "powershell-B01.a308",
+        "powershell-B01.a309",
+        "powershell-B01.a311",
+        "powershell-B01.a312",
+        "powershell-B01.a313",
+        "powershell-B01.a314",
+        "powershell-B01.a315",
+        "powershell-B01.a316",
+        "powershell-B01.a460",
+        "powershell-B01.a286",
+        "powershell-B01.a287"
+      ],
+      "source_utf8": "Get-Thing > o.txt 2> e.txt 3> w.txt 4> v.txt 5> d.txt 6> i.txt\nGet-Thing >> o.txt 2>> e.txt 3>> w.txt 4>> v.txt 5>> d.txt 6>> i.txt\nGet-Thing *> all.txt\nGet-Thing *>> all.txt\nGet-Thing 2>&1 3>&1 4>&1 5>&1 6>&1\nGet-Thing *>&1\n$(1) > $path\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "redirection",
+            "file_redirection_operator",
+            "merging_redirection_operator"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "Get-Thing > o.txt 2> e.txt 3> w.txt 4> v.txt 5> d.txt 6> i.txt"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing >> o.txt 2>> e.txt 3>> w.txt 4>> v.txt 5>> d.txt 6>> i.txt"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing *> all.txt"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing *>> all.txt"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing 2>&1 3>&1 4>&1 5>&1 6>&1"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing *>&1"
+            },
+            {
+              "type": "redirection",
+              "text": "> o.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "2> e.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "6> i.txt"
+            },
+            {
+              "type": "redirection",
+              "text": ">> o.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "2>> e.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "6>> i.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "*> all.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "*>> all.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "2>&1"
+            },
+            {
+              "type": "redirection",
+              "text": "6>&1"
+            },
+            {
+              "type": "redirection",
+              "text": "*>&1"
+            },
+            {
+              "type": "redirection",
+              "text": "> $path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-14",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a394",
+        "powershell-B01.a399",
+        "powershell-B01.a317",
+        "powershell-B01.a318",
+        "powershell-B01.a319",
+        "powershell-B01.a320",
+        "powershell-B01.a321",
+        "powershell-B01.a322",
+        "powershell-B01.a286"
+      ],
+      "source_utf8": "Get-Thing 1>&2\nGet-Thing 3>&2 4>&2 5>&2 6>&2\nGet-Thing *>&2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command",
+            "redirection"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "Get-Thing 1>&2"
+            },
+            {
+              "type": "redirection",
+              "text": "1>&2"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing 3>&2 4>&2 5>&2 6>&2"
+            },
+            {
+              "type": "redirection",
+              "text": "3>&2"
+            },
+            {
+              "type": "redirection",
+              "text": "6>&2"
+            },
+            {
+              "type": "command",
+              "text": "Get-Thing *>&2"
+            },
+            {
+              "type": "redirection",
+              "text": "*>&2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-07",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a380",
+        "powershell-B01.a385",
+        "powershell-B01.a105",
+        "powershell-B01.a106",
+        "powershell-B01.a107",
+        "powershell-B01.a111",
+        "powershell-B01.a112",
+        "powershell-B01.a390",
+        "powershell-B01.a391",
+        "powershell-B01.a392",
+        "powershell-B01.a393",
+        "powershell-B01.a395",
+        "powershell-B01.a388",
+        "powershell-B01.a389",
+        "powershell-B01.a114",
+        "powershell-B01.a115",
+        "powershell-B01.a118",
+        "powershell-B01.a119",
+        "powershell-B01.a120",
+        "powershell-B01.a235",
+        "powershell-B01.a236",
+        "powershell-B01.a238",
+        "powershell-B01.a239",
+        "powershell-B01.a240",
+        "powershell-B01.a394",
+        "powershell-B01.a400",
+        "powershell-B01.a401",
+        "powershell-B01.a310"
+      ],
+      "source_utf8": "Get-Content < in.txt\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command",
+            "redirection"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "Get-Content < in.txt"
+            },
+            {
+              "type": "redirection",
+              "text": "< in.txt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-08",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B02.a031",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a291",
+        "powershell-B01.a292",
+        "powershell-B01.a293",
+        "powershell-B01.a294",
+        "powershell-B01.a295",
+        "powershell-B01.a405",
+        "powershell-B01.a406",
+        "powershell-B01.a407",
+        "powershell-B01.a409",
+        "powershell-B01.a410",
+        "powershell-B01.a411",
+        "powershell-B01.a413",
+        "powershell-B01.a414",
+        "powershell-B01.a339",
+        "powershell-B01.a416",
+        "powershell-B01.a417",
+        "powershell-B01.a419",
+        "powershell-B01.a420",
+        "powershell-B01.a421",
+        "powershell-B01.a423",
+        "powershell-B01.a373",
+        "powershell-B01.a425",
+        "powershell-B01.a427",
+        "powershell-B01.a429",
+        "powershell-B01.a430",
+        "powershell-B01.a431",
+        "powershell-B01.a432",
+        "powershell-B01.a433",
+        "powershell-B01.a434",
+        "powershell-B01.a435",
+        "powershell-B01.a436",
+        "powershell-B01.a437",
+        "powershell-B01.a438",
+        "powershell-B01.a439",
+        "powershell-B01.a440",
+        "powershell-B01.a441",
+        "powershell-B01.a442",
+        "powershell-B01.a443",
+        "powershell-B01.a444",
+        "powershell-B01.a446",
+        "powershell-B01.a447",
+        "powershell-B01.a448",
+        "powershell-B01.a449",
+        "powershell-B01.a450",
+        "powershell-B01.a459",
+        "powershell-B01.a460",
+        "powershell-B01.a461",
+        "powershell-B02.a100",
+        "powershell-B01.a462",
+        "powershell-B01.a463",
+        "powershell-B01.a464",
+        "powershell-B01.a465",
+        "powershell-B01.a466",
+        "powershell-B01.a467",
+        "powershell-B01.a236",
+        "powershell-B01.a237",
+        "powershell-B01.a240",
+        "powershell-B01.a241",
+        "powershell-B01.a247",
+        "powershell-B01.a248",
+        "powershell-B01.a468",
+        "powershell-B01.a469",
+        "powershell-B01.a470",
+        "powershell-B01.a471",
+        "powershell-B01.a472",
+        "powershell-B01.a473",
+        "powershell-B01.a474",
+        "powershell-B01.a475",
+        "powershell-B01.a476",
+        "powershell-B01.a477",
+        "powershell-B01.a478",
+        "powershell-B01.a479",
+        "powershell-B01.a480",
+        "powershell-B01.a481",
+        "powershell-B01.a482",
+        "powershell-B01.a483",
+        "powershell-B01.a484",
+        "powershell-B01.a485",
+        "powershell-B01.a486",
+        "powershell-B01.a487",
+        "powershell-B01.a488",
+        "powershell-B01.a489",
+        "powershell-B01.a490",
+        "powershell-B01.a491",
+        "powershell-B01.a492",
+        "powershell-B01.a493",
+        "powershell-B01.a494",
+        "powershell-B01.a495",
+        "powershell-B01.a496",
+        "powershell-B01.a497",
+        "powershell-B01.a498",
+        "powershell-B01.a499",
+        "powershell-B01.a500",
+        "powershell-B01.a501",
+        "powershell-B01.a502",
+        "powershell-B01.a504",
+        "powershell-B01.a505",
+        "powershell-B01.a507",
+        "powershell-B01.a517",
+        "powershell-B01.a518",
+        "powershell-B01.a519",
+        "powershell-B01.a520",
+        "powershell-B01.a521",
+        "powershell-B01.a522",
+        "powershell-B01.a523",
+        "powershell-B01.a524",
+        "powershell-B01.a249",
+        "powershell-B01.a250",
+        "powershell-B01.a242",
+        "powershell-B01.a243",
+        "powershell-B01.a244",
+        "powershell-B01.a245",
+        "powershell-B01.a246",
+        "powershell-B01.a540",
+        "powershell-B01.a028",
+        "powershell-B01.a251",
+        "powershell-B01.a252",
+        "powershell-B01.a253",
+        "powershell-B01.a254",
+        "powershell-B01.a255",
+        "powershell-B01.a256",
+        "powershell-B01.a257",
+        "powershell-B01.a258",
+        "powershell-B01.a259",
+        "powershell-B01.a260",
+        "powershell-B01.a265",
+        "powershell-B01.a266",
+        "powershell-B01.a267",
+        "powershell-B01.a268",
+        "powershell-B01.a269",
+        "powershell-B01.a270",
+        "powershell-B01.a271",
+        "powershell-B01.a272",
+        "powershell-B01.a273",
+        "powershell-B01.a274",
+        "powershell-B01.a275",
+        "powershell-B01.a276",
+        "powershell-B01.a277",
+        "powershell-B01.a278",
+        "powershell-B01.a279",
+        "powershell-B01.a280",
+        "powershell-B01.a281",
+        "powershell-B01.a282",
+        "powershell-B01.a283",
+        "powershell-B01.a284",
+        "powershell-B01.a285",
+        "powershell-B01.a288",
+        "powershell-B01.a289"
+      ],
+      "source_utf8": "$o = Get-Item .\n$a = 1; $b = 2\n$r = $a -and $b -or $a -xor $b\n$r = $a -band $b -bor $a -bxor $b\n$r = $a + $b - 1 * 2 / 3 % 4\n$r = '{0}' -f $a\n$r = 1..5\n$r = , 1\n$r = -not $a; $r = !$a; $r = -bnot $a; $r = +$a; $r = -$a\n++$a; --$a; $a++; $a--\n$r = [int]'5'\n$r = -split 'a b'; $r = -join ('a', 'b')\n$r = (1); $r = $(1); $r = @(1); $r = { 1 }; $r = @{ a = 1; b = 2 }; $r = [int]\n$r = $o._x_y; $r = [my_type]; $r = @{ 1 = 'x'; (2) = 'y' }\n$r = $o.Name; $r = [math]::PI; $r = $o.\"Name\"; $r = $o.\"$('Na')me\"; $r = $o.($p)\n$r = $o.GetType(); $r = [math]::Max(1, 2); $r = $o.ToString()\n$r = $a[0]; $r = $h['k']\n$a = 1; $a -= 1; $a += 1; $a *= 2; $a /= 2; $a %= 2\n[int[]]$arr = 1, 2\n$t = [int], [int[]], [int[,]], [System.Collections.Generic.List[string]], [System.Collections.Generic.Dictionary[string, int]]\n$o.M($a -and $b -or $a -xor $b, $a -band $b -bor $a -bxor $b, $a -eq 1, 1 + 2 - 3, 4 * 5 / 6 % 7, '{0}' -f 1, 1..3)\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "logical_expression",
+            "bitwise_expression",
+            "additive_expression",
+            "multiplicative_expression",
+            "format_expression",
+            "range_expression",
+            "array_literal_expression",
+            "expression_with_unary_operator",
+            "cast_expression",
+            "type_literal",
+            "member_access",
+            "element_access",
+            "invokation_expression",
+            "hash_literal_expression",
+            "script_block_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -and $b -or $a -xor $b"
+            },
+            {
+              "type": "logical_expression",
+              "text": "$a -and $b -or $a -xor $b"
+            },
+            {
+              "type": "logical_expression",
+              "text": "$a -and $b"
+            },
+            {
+              "type": "bitwise_expression",
+              "text": "$a -band $b -bor $a -bxor $b"
+            },
+            {
+              "type": "bitwise_expression",
+              "text": "$a -band $b"
+            },
+            {
+              "type": "additive_expression",
+              "text": "$a + $b - 1 * 2 / 3 % 4"
+            },
+            {
+              "type": "multiplicative_expression",
+              "text": "1 * 2 / 3 % 4"
+            },
+            {
+              "type": "format_expression",
+              "text": "'{0}' -f $a"
+            },
+            {
+              "type": "range_expression",
+              "text": "1..5"
+            },
+            {
+              "type": "array_literal_expression",
+              "text": ", 1"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-not $a"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "!$a"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-bnot $a"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "+$a"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-$a"
+            },
+            {
+              "type": "pre_increment_expression",
+              "text": "++$a"
+            },
+            {
+              "type": "pre_decrement_expression",
+              "text": "--$a"
+            },
+            {
+              "type": "post_increment_expression",
+              "text": "$a++"
+            },
+            {
+              "type": "post_decrement_expression",
+              "text": "$a--"
+            },
+            {
+              "type": "cast_expression",
+              "text": "[int]'5'"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-split 'a b'"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-join ('a', 'b')"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(1)"
+            },
+            {
+              "type": "sub_expression",
+              "text": "$(1)"
+            },
+            {
+              "type": "array_expression",
+              "text": "@(1)"
+            },
+            {
+              "type": "script_block_expression",
+              "text": "{ 1 }"
+            },
+            {
+              "type": "hash_literal_expression",
+              "text": "@{ a = 1; b = 2 }"
+            },
+            {
+              "type": "member_access",
+              "text": "$o._x_y"
+            },
+            {
+              "type": "type_literal",
+              "text": "[my_type]"
+            },
+            {
+              "type": "hash_literal_expression",
+              "text": "@{ 1 = 'x'; (2) = 'y' }"
+            },
+            {
+              "type": "member_access",
+              "text": "$o.Name"
+            },
+            {
+              "type": "member_access",
+              "text": "[math]::PI"
+            },
+            {
+              "type": "member_access",
+              "text": "$o.\"Name\""
+            },
+            {
+              "type": "member_access",
+              "text": "$o.\"$('Na')me\""
+            },
+            {
+              "type": "member_access",
+              "text": "$o.($p)"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "$o.GetType()"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "[math]::Max(1, 2)"
+            },
+            {
+              "type": "element_access",
+              "text": "$a[0]"
+            },
+            {
+              "type": "element_access",
+              "text": "$h['k']"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$a -= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$a %= 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "[int[]]$arr = 1, 2"
+            },
+            {
+              "type": "type_literal",
+              "text": "[int[,]]"
+            },
+            {
+              "type": "type_literal",
+              "text": "[System.Collections.Generic.List[string]]"
+            },
+            {
+              "type": "type_literal",
+              "text": "[System.Collections.Generic.Dictionary[string, int]]"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "$o.M($a -and $b -or $a -xor $b, $a -band $b -bor $a -bxor $b, $a -eq 1, 1 + 2 - 3, 4 * 5 / 6 % 7, '{0}' -f 1, 1..3)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-09",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a413",
+        "powershell-B01.a323",
+        "powershell-B01.a324",
+        "powershell-B01.a325",
+        "powershell-B01.a326",
+        "powershell-B01.a327",
+        "powershell-B01.a328",
+        "powershell-B01.a329",
+        "powershell-B01.a330",
+        "powershell-B01.a331",
+        "powershell-B01.a332",
+        "powershell-B01.a333",
+        "powershell-B01.a334",
+        "powershell-B01.a335",
+        "powershell-B01.a336",
+        "powershell-B01.a337",
+        "powershell-B01.a338",
+        "powershell-B01.a339",
+        "powershell-B01.a340",
+        "powershell-B01.a341",
+        "powershell-B01.a342",
+        "powershell-B01.a343",
+        "powershell-B01.a344",
+        "powershell-B01.a345",
+        "powershell-B01.a346",
+        "powershell-B01.a347",
+        "powershell-B01.a348",
+        "powershell-B01.a349",
+        "powershell-B01.a350",
+        "powershell-B01.a351",
+        "powershell-B01.a352",
+        "powershell-B01.a353",
+        "powershell-B01.a354",
+        "powershell-B01.a355",
+        "powershell-B01.a356",
+        "powershell-B01.a357",
+        "powershell-B01.a358",
+        "powershell-B01.a359",
+        "powershell-B01.a360",
+        "powershell-B01.a361",
+        "powershell-B01.a362",
+        "powershell-B01.a363",
+        "powershell-B01.a364",
+        "powershell-B01.a365",
+        "powershell-B01.a366",
+        "powershell-B01.a367",
+        "powershell-B01.a368",
+        "powershell-B01.a369",
+        "powershell-B01.a370",
+        "powershell-B01.a371",
+        "powershell-B01.a372",
+        "powershell-B01.a288"
+      ],
+      "source_utf8": "$a = 1\n$r = $a -as [string]\n$r = $a -ccontains 'x'\n$r = $a -ceq 'x'\n$r = $a -cge 'x'\n$r = $a -cgt 'x'\n$r = $a -cle 'x'\n$r = $a -clike 'x'\n$r = $a -clt 'x'\n$r = $a -cmatch 'x'\n$r = $a -cne 'x'\n$r = $a -cnotcontains 'x'\n$r = $a -cnotlike 'x'\n$r = $a -cnotmatch 'x'\n$r = $a -contains 'x'\n$r = $a -creplace 'a', 'b'\n$r = $a -csplit 'x'\n$r = $a -eq 'x'\n$r = $a -ge 'x'\n$r = $a -gt 'x'\n$r = $a -icontains 'x'\n$r = $a -ieq 'x'\n$r = $a -ige 'x'\n$r = $a -igt 'x'\n$r = $a -ile 'x'\n$r = $a -ilike 'x'\n$r = $a -ilt 'x'\n$r = $a -imatch 'x'\n$r = $a -in 'x'\n$r = $a -ine 'x'\n$r = $a -inotcontains 'x'\n$r = $a -inotlike 'x'\n$r = $a -inotmatch 'x'\n$r = $a -ireplace 'a', 'b'\n$r = $a -is [int]\n$r = $a -isnot [string]\n$r = $a -isplit 'x'\n$r = $a -join 'x'\n$r = $a -le 'x'\n$r = $a -like 'x'\n$r = $a -lt 'x'\n$r = $a -match 'x'\n$r = $a -ne 'x'\n$r = $a -notcontains 'x'\n$r = $a -notin 'x'\n$r = $a -notlike 'x'\n$r = $a -notmatch 'x'\n$r = $a -replace 'a', 'b'\n$r = $a -shl 'x'\n$r = $a -shr 'x'\n$r = $a -split 'x'\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -as [string]"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ccontains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ceq 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cge 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cgt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cle 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -clike 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -clt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cmatch 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cne 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cnotcontains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cnotlike 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -cnotmatch 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -contains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -creplace 'a', 'b'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -csplit 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -eq 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ge 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -gt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -icontains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ieq 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ige 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -igt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ile 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ilike 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ilt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -imatch 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -in 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ine 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -inotcontains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -inotlike 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -inotmatch 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ireplace 'a', 'b'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -is [int]"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -isnot [string]"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -isplit 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -join 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -le 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -like 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -lt 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -match 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -ne 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -notcontains 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -notin 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -notlike 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -notmatch 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -replace 'a', 'b'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -shl 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -shr 'x'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$r = $a -split 'x'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-09b",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a413",
+        "powershell-B01.a323",
+        "powershell-B01.a324",
+        "powershell-B01.a325",
+        "powershell-B01.a326",
+        "powershell-B01.a327",
+        "powershell-B01.a328",
+        "powershell-B01.a329",
+        "powershell-B01.a330",
+        "powershell-B01.a331",
+        "powershell-B01.a332",
+        "powershell-B01.a333",
+        "powershell-B01.a334",
+        "powershell-B01.a335",
+        "powershell-B01.a336",
+        "powershell-B01.a337",
+        "powershell-B01.a338",
+        "powershell-B01.a339",
+        "powershell-B01.a340",
+        "powershell-B01.a341",
+        "powershell-B01.a342",
+        "powershell-B01.a343",
+        "powershell-B01.a344",
+        "powershell-B01.a345",
+        "powershell-B01.a346",
+        "powershell-B01.a347",
+        "powershell-B01.a348",
+        "powershell-B01.a349",
+        "powershell-B01.a350",
+        "powershell-B01.a351",
+        "powershell-B01.a352",
+        "powershell-B01.a353",
+        "powershell-B01.a354",
+        "powershell-B01.a355",
+        "powershell-B01.a356",
+        "powershell-B01.a357",
+        "powershell-B01.a358",
+        "powershell-B01.a359",
+        "powershell-B01.a360",
+        "powershell-B01.a361",
+        "powershell-B01.a362",
+        "powershell-B01.a363",
+        "powershell-B01.a364",
+        "powershell-B01.a365",
+        "powershell-B01.a366",
+        "powershell-B01.a367",
+        "powershell-B01.a368",
+        "powershell-B01.a369",
+        "powershell-B01.a370",
+        "powershell-B01.a371",
+        "powershell-B01.a372",
+        "powershell-B01.a288"
+      ],
+      "source_utf8": "$a = 1\n$r = $a -as [string]\n$r = $a -ccontains 'x'\n$r = $a -ceq 'x'\n$r = $a -cge 'x'\n$r = $a -cgt 'x'\n$r = $a -cle 'x'\n$r = $a -clike 'x'\n$r = $a -clt 'x'\n$r = $a -cmatch 'x'\n$r = $a -cne 'x'\n$r = $a -cnotcontains 'x'\n$r = $a -cnotlike 'x'\n$r = $a -cnotmatch 'x'\n$r = $a -contains 'x'\n$r = $a -creplace 'a', 'b'\n$r = $a -csplit 'x'\n$r = $a -eq 'x'\n$r = $a -ge 'x'\n$r = $a -gt 'x'\n$r = $a -icontains 'x'\n$r = $a -ieq 'x'\n$r = $a -ige 'x'\n$r = $a -igt 'x'\n$r = $a -ile 'x'\n$r = $a -ilike 'x'\n$r = $a -ilt 'x'\n$r = $a -imatch 'x'\n$r = $a -in 'x'\n$r = $a -ine 'x'\n$r = $a -inotcontains 'x'\n$r = $a -inotlike 'x'\n$r = $a -inotmatch 'x'\n$r = $a -ireplace 'a', 'b'\n$r = $a -is [int]\n$r = $a -isnot [string]\n$r = $a -isplit 'x'\n$r = $a -join 'x'\n$r = $a -le 'x'\n$r = $a -like 'x'\n$r = $a -lt 'x'\n$r = $a -match 'x'\n$r = $a -ne 'x'\n$r = $a -notcontains 'x'\n$r = $a -notin 'x'\n$r = $a -notlike 'x'\n$r = $a -notmatch 'x'\n$r = $a -replace 'a', 'b'\n$r = $a -shl 'x'\n$r = $a -shr 'x'\n$r = $a -split 'x'\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comparison_expression"
+          ],
+          "anchors": [
+            {
+              "type": "comparison_expression",
+              "text": "$a -as [string]"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ccontains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ceq 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cge 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cgt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cle 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -clike 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -clt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cmatch 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cne 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cnotcontains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cnotlike 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -cnotmatch 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -contains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -creplace 'a', 'b'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -csplit 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -eq 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ge 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -gt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -icontains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ieq 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ige 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -igt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ile 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ilike 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ilt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -imatch 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -in 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ine 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -inotcontains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -inotlike 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -inotmatch 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ireplace 'a', 'b'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -is [int]"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -isnot [string]"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -isplit 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -join 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -le 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -like 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -lt 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -match 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -ne 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -notcontains 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -notin 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -notlike 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -notmatch 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -replace 'a', 'b'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -shl 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -shr 'x'"
+            },
+            {
+              "type": "comparison_expression",
+              "text": "$a -split 'x'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-11",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a135",
+        "powershell-B01.a186",
+        "powershell-B01.a190",
+        "powershell-B01.a201",
+        "powershell-B01.a104",
+        "powershell-B02.a031",
+        "powershell-B01.a531",
+        "powershell-B01.a532",
+        "powershell-B01.a533",
+        "powershell-B01.a534",
+        "powershell-B01.a535",
+        "powershell-B01.a536",
+        "powershell-B01.a537",
+        "powershell-B01.a538"
+      ],
+      "source_utf8": "$a = \"`0 `a `b `f `n `r `t `v\"\n$b = 1; $c = $b\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "expandable_string_literal"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$a = \"`0 `a `b `f `n `r `t `v\""
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "\"`0 `a `b `f `n `r `t `v\""
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$b = 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$c = $b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-12",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a472",
+        "powershell-B02.a031",
+        "powershell-B01.a443",
+        "powershell-B01.a462",
+        "powershell-B01.a474",
+        "powershell-B01.a541",
+        "powershell-B01.a542",
+        "powershell-B01.a540"
+      ],
+      "source_utf8": "$a = 1, 2, 3, 4\n$a[-1]; $a[0..1]; $a[0, 2]\n$h = [ordered]@{ z = 1; a = 2 }\n$m = [System.Text.StringBuilder]::new()\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "element_access",
+            "hash_literal_expression",
+            "invokation_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$a = 1, 2, 3, 4"
+            },
+            {
+              "type": "element_access",
+              "text": "$a[-1]"
+            },
+            {
+              "type": "element_access",
+              "text": "$a[0..1]"
+            },
+            {
+              "type": "element_access",
+              "text": "$a[0, 2]"
+            },
+            {
+              "type": "cast_expression",
+              "text": "[ordered]@{ z = 1; a = 2 }"
+            },
+            {
+              "type": "hash_literal_expression",
+              "text": "@{ z = 1; a = 2 }"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "[System.Text.StringBuilder]::new()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-01",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a011",
+        "powershell-B02.a006",
+        "powershell-B02.a007",
+        "powershell-B02.a008",
+        "powershell-B02.a009",
+        "powershell-B02.a010",
+        "powershell-B02.a013",
+        "powershell-B02.a014",
+        "powershell-B02.a015",
+        "powershell-B02.a016",
+        "powershell-B02.a017",
+        "powershell-B02.a018",
+        "powershell-B02.a019",
+        "powershell-B02.a020",
+        "powershell-B02.a033",
+        "powershell-B02.a034",
+        "powershell-B02.a031",
+        "powershell-B02.a032",
+        "powershell-B02.a101",
+        "powershell-B02.a102",
+        "powershell-B02.a103",
+        "powershell-B02.a104",
+        "powershell-B02.a105",
+        "powershell-B02.a106",
+        "powershell-B02.a107",
+        "powershell-B02.a108",
+        "powershell-B02.a109",
+        "powershell-B02.a110",
+        "powershell-B01.a444",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B01.a052",
+        "powershell-B01.a059",
+        "powershell-B01.a062",
+        "powershell-B01.a071",
+        "powershell-B01.a072",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012"
+      ],
+      "source_utf8": "[CmdletBinding(SupportsShouldProcess)]\nparam(\n    [Parameter(Mandatory = $true, Position = 0)]\n    [ValidateNotNullOrEmpty()]\n    [string]$Name = 'x',\n    [switch]$Force,\n    $Untyped\n)\ndynamicparam { }\nbegin { $n = 0 }\nprocess { $n++ }\nend { $n };\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "param_block",
+            "attribute",
+            "script_parameter",
+            "named_block",
+            "block_name"
+          ],
+          "anchors": [
+            {
+              "type": "attribute",
+              "text": "[CmdletBinding(SupportsShouldProcess)]"
+            },
+            {
+              "type": "param_block",
+              "text": "[CmdletBinding(SupportsShouldProcess)]\nparam(\n    [Parameter(Mandatory = $true, Position = 0)]\n    [ValidateNotNullOrEmpty()]\n    [string]$Name = 'x',\n    [switch]$Force,\n    $Untyped\n)"
+            },
+            {
+              "type": "attribute",
+              "text": "[Parameter(Mandatory = $true, Position = 0)]"
+            },
+            {
+              "type": "attribute",
+              "text": "[ValidateNotNullOrEmpty()]"
+            },
+            {
+              "type": "script_parameter",
+              "text": "[Parameter(Mandatory = $true, Position = 0)]\n    [ValidateNotNullOrEmpty()]\n    [string]$Name = 'x'"
+            },
+            {
+              "type": "script_parameter",
+              "text": "[switch]$Force"
+            },
+            {
+              "type": "script_parameter",
+              "text": "$Untyped"
+            },
+            {
+              "type": "named_block",
+              "text": "dynamicparam { }"
+            },
+            {
+              "type": "named_block",
+              "text": "begin { $n = 0 }"
+            },
+            {
+              "type": "named_block",
+              "text": "process { $n++ }"
+            },
+            {
+              "type": "named_block",
+              "text": "end { $n }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-02",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a025",
+        "powershell-B02.a073",
+        "powershell-B02.a074",
+        "powershell-B02.a075",
+        "powershell-B02.a076",
+        "powershell-B02.a007",
+        "powershell-B02.a008",
+        "powershell-B02.a009",
+        "powershell-B02.a010",
+        "powershell-B02.a006",
+        "powershell-B02.a015",
+        "powershell-B01.a064",
+        "powershell-B01.a068"
+      ],
+      "source_utf8": "function f { 'f' }\nfunction g($a, $b = 2) { $a + $b }\nfunction Get-Thing {\n    param($x)\n    process { $x }\n}\nfunction global:h { }\nfilter only-even { if ($_ % 2 -eq 0) { $_ } }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "function_name",
+            "param_block"
+          ],
+          "anchors": [
+            {
+              "type": "function_statement",
+              "text": "function f { 'f' }"
+            },
+            {
+              "type": "function_statement",
+              "text": "function g($a, $b = 2) { $a + $b }"
+            },
+            {
+              "type": "function_parameter_declaration",
+              "text": "($a, $b = 2)"
+            },
+            {
+              "type": "function_statement",
+              "text": "function Get-Thing {\n    param($x)\n    process { $x }\n}"
+            },
+            {
+              "type": "param_block",
+              "text": "param($x)"
+            },
+            {
+              "type": "named_block",
+              "text": "process { $x }"
+            },
+            {
+              "type": "function_statement",
+              "text": "function global:h { }"
+            },
+            {
+              "type": "function_name",
+              "text": "global:h"
+            },
+            {
+              "type": "function_statement",
+              "text": "filter only-even { if ($_ % 2 -eq 0) { $_ } }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if ($_ % 2 -eq 0) { $_ }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-03",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a023",
+        "powershell-B02.a024",
+        "powershell-B02.a025",
+        "powershell-B02.a026",
+        "powershell-B02.a035",
+        "powershell-B02.a036",
+        "powershell-B02.a037",
+        "powershell-B02.a038",
+        "powershell-B02.a039",
+        "powershell-B02.a040",
+        "powershell-B02.a041",
+        "powershell-B02.a042",
+        "powershell-B02.a043",
+        "powershell-B02.a044",
+        "powershell-B02.a045",
+        "powershell-B02.a046",
+        "powershell-B02.a047",
+        "powershell-B02.a048",
+        "powershell-B02.a049",
+        "powershell-B02.a050",
+        "powershell-B02.a051",
+        "powershell-B02.a052",
+        "powershell-B02.a053",
+        "powershell-B02.a054",
+        "powershell-B02.a055",
+        "powershell-B02.a056",
+        "powershell-B02.a057",
+        "powershell-B02.a058",
+        "powershell-B02.a059",
+        "powershell-B02.a060",
+        "powershell-B02.a061",
+        "powershell-B02.a062",
+        "powershell-B02.a063",
+        "powershell-B02.a064",
+        "powershell-B02.a065",
+        "powershell-B02.a066",
+        "powershell-B02.a067",
+        "powershell-B02.a068",
+        "powershell-B02.a069",
+        "powershell-B02.a070",
+        "powershell-B02.a071",
+        "powershell-B02.a072",
+        "powershell-B02.a077",
+        "powershell-B02.a078",
+        "powershell-B02.a079",
+        "powershell-B02.a080",
+        "powershell-B02.a081",
+        "powershell-B02.a082",
+        "powershell-B02.a020",
+        "powershell-B01.a053",
+        "powershell-B01.a056",
+        "powershell-B01.a058",
+        "powershell-B01.a060",
+        "powershell-B01.a061",
+        "powershell-B01.a063",
+        "powershell-B01.a066",
+        "powershell-B01.a067",
+        "powershell-B01.a069",
+        "powershell-B01.a070",
+        "powershell-B01.a073",
+        "powershell-B01.a074",
+        "powershell-B01.a075",
+        "powershell-B01.a078",
+        "powershell-B01.a080"
+      ],
+      "source_utf8": "$v = 3\nif ($v -eq 1) { 'one' } elseif ($v -eq 2) { 'two' } elseif ($v -eq 3) { 'three' } else { 'other' }\nif (\n    $v\n) { }\nswitch -Regex -Wildcard -Exact -CaseSensitive ($v) {\n    1 { 'one'; break }\n    { $_ -gt 1 } { 'big' }\n    'a' { }\n    default { }\n}\nswitch -file data.txt { 'x' { } }\nswitch -file $path { 'y' { } }\n:outer foreach ($i in 1..3) {\n    foreach ($j in 1..3) { if ($j -eq 2) { continue outer }; break }\n}\nfor ($i = 0; $i -lt 3; $i++) { }\nfor ($i = 0; $i -lt 3) { $i++ }\nfor ($i = 0) { break }\nwhile ($v -gt 0) { $v-- }\ndo { $v++ } while ($v -lt 3)\ndo { $v++ } until ($v -ge 6)\n:lbl while ($true) { break lbl }\nfunction r { return 1 }\nthrow 'bad'\nexit 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_statement",
+            "elseif_clause",
+            "else_clause",
+            "switch_statement",
+            "foreach_statement",
+            "for_statement",
+            "while_statement",
+            "do_statement",
+            "flow_control_statement",
+            "label"
+          ],
+          "anchors": [
+            {
+              "type": "if_statement",
+              "text": "if ($v -eq 1) { 'one' } elseif ($v -eq 2) { 'two' } elseif ($v -eq 3) { 'three' } else { 'other' }"
+            },
+            {
+              "type": "elseif_clause",
+              "text": "elseif ($v -eq 2) { 'two' }"
+            },
+            {
+              "type": "elseif_clause",
+              "text": "elseif ($v -eq 3) { 'three' }"
+            },
+            {
+              "type": "else_clause",
+              "text": "else { 'other' }"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (\n    $v\n) { }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch -Regex -Wildcard -Exact -CaseSensitive ($v) {\n    1 { 'one'; break }\n    { $_ -gt 1 } { 'big' }\n    'a' { }\n    default { }\n}"
+            },
+            {
+              "type": "switch_clause",
+              "text": "1 { 'one'; break }"
+            },
+            {
+              "type": "switch_clause",
+              "text": "{ $_ -gt 1 } { 'big' }"
+            },
+            {
+              "type": "switch_clause",
+              "text": "'a' { }"
+            },
+            {
+              "type": "switch_clause",
+              "text": "default { }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch -file data.txt { 'x' { } }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch -file $path { 'y' { } }"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach ($j in 1..3) { if ($j -eq 2) { continue outer }; break }"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "continue outer"
+            },
+            {
+              "type": "label",
+              "text": ":outer"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ($i = 0; $i -lt 3; $i++) { }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ($i = 0; $i -lt 3) { $i++ }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ($i = 0) { break }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while ($v -gt 0) { $v-- }"
+            },
+            {
+              "type": "do_statement",
+              "text": "do { $v++ } while ($v -lt 3)"
+            },
+            {
+              "type": "do_statement",
+              "text": "do { $v++ } until ($v -ge 6)"
+            },
+            {
+              "type": "label",
+              "text": ":lbl"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "break lbl"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "return 1"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "throw 'bad'"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "exit 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-04",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a026",
+        "powershell-B02.a027",
+        "powershell-B02.a028",
+        "powershell-B02.a085",
+        "powershell-B02.a086",
+        "powershell-B02.a087",
+        "powershell-B02.a088",
+        "powershell-B02.a089",
+        "powershell-B02.a090",
+        "powershell-B02.a091",
+        "powershell-B02.a092",
+        "powershell-B02.a093",
+        "powershell-B02.a084",
+        "powershell-B01.a517",
+        "powershell-B02.a077",
+        "powershell-B02.a078",
+        "powershell-B02.a083",
+        "powershell-B01.a054",
+        "powershell-B01.a065",
+        "powershell-B01.a076",
+        "powershell-B01.a077"
+      ],
+      "source_utf8": "try { 1 } catch [System.IO.IOException], [System.Net.WebException] { 'io' } catch { 'any' } finally { 'done' }\ntry { 1 } finally { }\ntry { 1 } catch { }\ntrap [System.DivideByZeroException] { continue }\ntrap { 'all' }\n$l = 'outer'\nbreak $l\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "catch_clause",
+            "catch_type_list",
+            "finally_clause",
+            "trap_statement"
+          ],
+          "anchors": [
+            {
+              "type": "try_statement",
+              "text": "try { 1 } catch [System.IO.IOException], [System.Net.WebException] { 'io' } catch { 'any' } finally { 'done' }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch [System.IO.IOException], [System.Net.WebException] { 'io' }"
+            },
+            {
+              "type": "catch_type_list",
+              "text": "[System.IO.IOException], [System.Net.WebException]"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch { 'any' }"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { 'done' }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { 1 } finally { }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { 1 } catch { }"
+            },
+            {
+              "type": "trap_statement",
+              "text": "trap [System.DivideByZeroException] { continue }"
+            },
+            {
+              "type": "trap_statement",
+              "text": "trap { 'all' }"
+            },
+            {
+              "type": "flow_control_statement",
+              "text": "break $l"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-05",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a029",
+        "powershell-B02.a094",
+        "powershell-B02.a095",
+        "powershell-B02.a096",
+        "powershell-B02.a097",
+        "powershell-B02.a098",
+        "powershell-B02.a099",
+        "powershell-B01.a057"
+      ],
+      "source_utf8": "data msgs { ConvertFrom-StringData 'a = b' }\ndata -SupportedCommand ConvertFrom-StringData, Get-Date {\n    'text'\n}\ndata { 'anonymous' }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "data_statement",
+            "data_name",
+            "data_commands_allowed"
+          ],
+          "anchors": [
+            {
+              "type": "data_statement",
+              "text": "data msgs { ConvertFrom-StringData 'a = b' }"
+            },
+            {
+              "type": "data_name",
+              "text": "msgs"
+            },
+            {
+              "type": "data_statement",
+              "text": "data -SupportedCommand ConvertFrom-StringData, Get-Date {\n    'text'\n}"
+            },
+            {
+              "type": "data_commands_allowed",
+              "text": "-SupportedCommand ConvertFrom-StringData, Get-Date"
+            },
+            {
+              "type": "data_statement",
+              "text": "data { 'anonymous' }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-06",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a055",
+        "powershell-B01.a079",
+        "powershell-B02.a111",
+        "powershell-B02.a112",
+        "powershell-B02.a113",
+        "powershell-B02.a114",
+        "powershell-B02.a115",
+        "powershell-B02.a116",
+        "powershell-B02.a117",
+        "powershell-B02.a118",
+        "powershell-B02.a119",
+        "powershell-B02.a120",
+        "powershell-B02.a121",
+        "powershell-B02.a122",
+        "powershell-B02.a123",
+        "powershell-B02.a124",
+        "powershell-B02.a125"
+      ],
+      "source_utf8": "using namespace System.Text\nusing module PSReadLine\nclass Base { [string]$Name = 'b'; Base() { } Base([string]$n) { $this.Name = $n } }\n[NoRunspaceAffinity()]\nclass Derived : Base, System.IComparable {\n    hidden [int]$Secret\n    static [int]$Count = 0\n    [ValidateNotNull()][string]$Tag\n    Derived() : base('d') { }\n    static Derived() { }\n    [int] CompareTo([object]$o) { return 0 }\n    static [string] Make([int]$i = 1) { return \"$i\" }\n    hidden [void] Helper() { }\n}\nenum Color { Red; Green = 5; Blue }\n[Flags()] enum Perm { Read = 1; Write = 2 }\nenum Small : byte { One = 1 }\n$d = [Derived]::new()\n$e = New-Object Derived\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_statement",
+            "class_property_definition",
+            "class_method_definition",
+            "enum_statement",
+            "enum_member"
+          ],
+          "anchors": [
+            {
+              "type": "class_statement",
+              "text": "class Base { [string]$Name = 'b'; Base() { } Base([string]$n) { $this.Name = $n } }"
+            },
+            {
+              "type": "class_property_definition",
+              "text": "[string]$Name = 'b'"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "Base() { }"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "Base([string]$n) { $this.Name = $n }"
+            },
+            {
+              "type": "class_statement",
+              "text": "class Derived : Base, System.IComparable {\n    hidden [int]$Secret\n    static [int]$Count = 0\n    [ValidateNotNull()][string]$Tag\n    Derived() : base('d') { }\n    static Derived() { }\n    [int] CompareTo([object]$o) { return 0 }\n    static [string] Make([int]$i = 1) { return \"$i\" }\n    hidden [void] Helper() { }\n}"
+            },
+            {
+              "type": "class_property_definition",
+              "text": "hidden [int]$Secret"
+            },
+            {
+              "type": "class_property_definition",
+              "text": "static [int]$Count = 0"
+            },
+            {
+              "type": "class_property_definition",
+              "text": "[ValidateNotNull()][string]$Tag"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "Derived() : base('d') { }"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "static Derived() { }"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "[int] CompareTo([object]$o) { return 0 }"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "static [string] Make([int]$i = 1) { return \"$i\" }"
+            },
+            {
+              "type": "class_method_definition",
+              "text": "hidden [void] Helper() { }"
+            },
+            {
+              "type": "enum_statement",
+              "text": "enum Color { Red; Green = 5; Blue }"
+            },
+            {
+              "type": "enum_member",
+              "text": "Green = 5"
+            },
+            {
+              "type": "enum_statement",
+              "text": "[Flags()] enum Perm { Read = 1; Write = 2 }"
+            },
+            {
+              "type": "enum_statement",
+              "text": "enum Small : byte { One = 1 }"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "[Derived]::new()"
+            },
+            {
+              "type": "command",
+              "text": "New-Object Derived"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-07",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a025",
+        "powershell-B02.a073",
+        "powershell-B02.a006",
+        "powershell-B02.a101",
+        "powershell-B02.a102",
+        "powershell-B02.a103",
+        "powershell-B02.a104",
+        "powershell-B02.a105",
+        "powershell-B02.a106",
+        "powershell-B02.a107",
+        "powershell-B02.a108",
+        "powershell-B02.a109",
+        "powershell-B02.a110",
+        "powershell-B02.a100",
+        "powershell-B01.a517",
+        "powershell-B01.a520",
+        "powershell-B02.a002",
+        "powershell-B02.a003"
+      ],
+      "source_utf8": "function t {\n    [OutputType([string])]\n    param(\n        [Parameter(Mandatory, ValueFromPipeline = $true)]\n        [Alias('n')]\n        [int]\n        $Num\n    )\n    $Num\n}\n$sb = { param($p) $p }\n& $sb 1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "attribute",
+            "attribute_arguments",
+            "script_block_expression"
+          ],
+          "anchors": [
+            {
+              "type": "function_statement",
+              "text": "function t {\n    [OutputType([string])]\n    param(\n        [Parameter(Mandatory, ValueFromPipeline = $true)]\n        [Alias('n')]\n        [int]\n        $Num\n    )\n    $Num\n}"
+            },
+            {
+              "type": "attribute",
+              "text": "[OutputType([string])]"
+            },
+            {
+              "type": "attribute",
+              "text": "[Parameter(Mandatory, ValueFromPipeline = $true)]"
+            },
+            {
+              "type": "attribute_arguments",
+              "text": "Mandatory, ValueFromPipeline = $true"
+            },
+            {
+              "type": "attribute",
+              "text": "[Alias('n')]"
+            },
+            {
+              "type": "script_block_expression",
+              "text": "{ param($p) $p }"
+            },
+            {
+              "type": "param_block",
+              "text": "param($p)"
+            },
+            {
+              "type": "command",
+              "text": "& $sb 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-08",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a004"
+      ],
+      "source_utf8": "ConvertFrom-StringData 'a = b'\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "command"
+          ],
+          "anchors": [
+            {
+              "type": "command",
+              "text": "ConvertFrom-StringData 'a = b'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-L01-01",
+      "features": [
+        "powershell-B01",
+        "powershell-B02",
+        "powershell-L01"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B02.a025",
+        "powershell-L01.a005",
+        "powershell-L01.a006",
+        "powershell-L01.a007",
+        "powershell-L01.a010",
+        "powershell-L01.a011",
+        "powershell-L01.a012",
+        "powershell-L01.a013",
+        "powershell-L01.a009",
+        "powershell-L01.a008",
+        "powershell-L01.a004",
+        "powershell-L01.a001",
+        "powershell-L01.a002",
+        "powershell-L01.a003",
+        "powershell-L01.a014",
+        "powershell-L01.a015",
+        "powershell-L01.a016"
+      ],
+      "source_utf8": "workflow Test-Wf {\n    param([string[]]$Names)\n    $workflow:count = 0\n    parallel {\n        Get-Process\n        Get-Service\n    }\n    sequence {\n        'first'\n        'second'\n    }\n    foreach -parallel ($n in $Names) { $n }\n    inlinescript { $env:COMPUTERNAME }\n    switch -Parallel ($Names) { 'a' { 1 } }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "parallel_statement",
+            "sequence_statement",
+            "inlinescript_statement"
+          ],
+          "anchors": [
+            {
+              "type": "function_statement",
+              "text": "workflow Test-Wf {\n    param([string[]]$Names)\n    $workflow:count = 0\n    parallel {\n        Get-Process\n        Get-Service\n    }\n    sequence {\n        'first'\n        'second'\n    }\n    foreach -parallel ($n in $Names) { $n }\n    inlinescript { $env:COMPUTERNAME }\n    switch -Parallel ($Names) { 'a' { 1 } }\n}"
+            },
+            {
+              "type": "parallel_statement",
+              "text": "parallel {\n        Get-Process\n        Get-Service\n    }"
+            },
+            {
+              "type": "sequence_statement",
+              "text": "sequence {\n        'first'\n        'second'\n    }"
+            },
+            {
+              "type": "foreach_statement",
+              "text": "foreach -parallel ($n in $Names) { $n }"
+            },
+            {
+              "type": "inlinescript_statement",
+              "text": "inlinescript { $env:COMPUTERNAME }"
+            },
+            {
+              "type": "switch_statement",
+              "text": "switch -Parallel ($Names) { 'a' { 1 } }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-L01-02",
+      "features": [
+        "powershell-B01",
+        "powershell-B02",
+        "powershell-L01"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-L01.a017",
+        "powershell-L01.a018",
+        "powershell-L01.a019"
+      ],
+      "source_utf8": "Configuration MyConfig {\n    param([string[]]$ComputerName = 'localhost')\n    Node $ComputerName {\n        File Example {\n            DestinationPath = 'C:\\Temp\\x.txt'\n            Contents = 'hi'\n            Ensure = 'Present'\n        }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program"
+          ],
+          "anchors": [
+            {
+              "type": "program",
+              "text": "Configuration MyConfig {\n    param([string[]]$ComputerName = 'localhost')\n    Node $ComputerName {\n        File Example {\n            DestinationPath = 'C:\\Temp\\x.txt'\n            Contents = 'hi'\n            Ensure = 'Present'\n        }\n    }\n}\n"
+            },
+            {
+              "type": "param_block",
+              "text": "param([string[]]$ComputerName = 'localhost')"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-L01-03",
+      "features": [
+        "powershell-B01",
+        "powershell-B02",
+        "powershell-L01"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-L01.a017",
+        "powershell-L01.a018",
+        "powershell-L01.a020"
+      ],
+      "source_utf8": "Configuration WithImport {\n    Import-DscResource -ModuleName PSDesiredStateConfiguration\n    Node localhost { }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program"
+          ],
+          "anchors": [
+            {
+              "type": "program",
+              "text": "Configuration WithImport {\n    Import-DscResource -ModuleName PSDesiredStateConfiguration\n    Node localhost { }\n}\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B01-13",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-B01.a377",
+        "powershell-B01.a290",
+        "powershell-B01.a470",
+        "powershell-B01.a503",
+        "powershell-B01.a435"
+      ],
+      "source_utf8": "$o = Get-Item .\n$r = $o.-$x\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "member_access"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "$r = $o.-$x"
+            },
+            {
+              "type": "member_access",
+              "text": "$o.-$x"
+            },
+            {
+              "type": "expression_with_unary_operator",
+              "text": "-$x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-B02-09",
+      "features": [
+        "powershell-B01",
+        "powershell-B02"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a079",
+        "powershell-B02.a126"
+      ],
+      "source_utf8": "using assembly System.Xml\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program"
+          ],
+          "anchors": [
+            {
+              "type": "program",
+              "text": "using assembly System.Xml\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-powershell-V7-01",
+      "features": [
+        "powershell-B01",
+        "powershell-B02",
+        "powershell-V7"
+      ],
+      "alternatives": [
+        "powershell-B01.a001",
+        "powershell-B01.a002",
+        "powershell-B01.a003",
+        "powershell-B01.a006",
+        "powershell-B01.a042",
+        "powershell-B01.a043",
+        "powershell-B01.a044",
+        "powershell-B01.a045",
+        "powershell-B01.a046",
+        "powershell-B01.a047",
+        "powershell-B01.a048",
+        "powershell-B01.a049",
+        "powershell-B01.a050",
+        "powershell-B01.a051",
+        "powershell-B02.a001",
+        "powershell-B02.a005",
+        "powershell-B02.a012",
+        "powershell-B02.a021",
+        "powershell-B02.a022",
+        "powershell-B02.a030",
+        "powershell-B02.a032",
+        "powershell-B02.a033",
+        "powershell-B01.a374",
+        "powershell-B01.a375",
+        "powershell-B01.a376",
+        "powershell-B01.a014",
+        "powershell-B01.a015",
+        "powershell-B01.a012",
+        "powershell-B01.a403",
+        "powershell-B01.a404",
+        "powershell-B01.a408",
+        "powershell-B01.a412",
+        "powershell-B01.a415",
+        "powershell-B01.a418",
+        "powershell-B01.a422",
+        "powershell-B01.a424",
+        "powershell-B01.a426",
+        "powershell-B01.a428",
+        "powershell-B01.a445",
+        "powershell-B01.a451",
+        "powershell-B01.a452",
+        "powershell-B01.a453",
+        "powershell-B01.a454",
+        "powershell-B01.a455",
+        "powershell-B01.a456",
+        "powershell-B01.a457",
+        "powershell-B01.a458",
+        "powershell-V7.a001",
+        "powershell-V7.a002",
+        "powershell-V7.a003",
+        "powershell-V7.a004",
+        "powershell-V7.a005",
+        "powershell-V7.a006",
+        "powershell-V7.a007",
+        "powershell-V7.a008",
+        "powershell-V7.a009",
+        "powershell-V7.a010",
+        "powershell-V7.a011",
+        "powershell-B01.a261",
+        "powershell-B01.a262",
+        "powershell-B01.a263",
+        "powershell-B02.a015",
+        "powershell-B02.a016",
+        "powershell-B02.a017",
+        "powershell-B02.a018",
+        "powershell-B02.a019"
+      ],
+      "source_utf8": "Start-Sleep 1 &\n$a = $null\n$x = $a ? 'yes' : 'no'\n$y = $a ?? 'default'\n$a ??= 5\nGet-Item . && Write-Output ok || Write-Output fail\n$o = Get-Item .\n${o}?.Name\n${o}?.ToString()\n$arr = 1, 2\n${arr}?[0]\nfunction f { begin { } process { } end { } clean { 'cleanup' } }\n\"`e[0m `u{1F600}\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "pipeline",
+            "assignment_expression",
+            "function_statement",
+            "named_block"
+          ],
+          "anchors": [
+            {
+              "type": "pipeline",
+              "text": "Start-Sleep 1 &"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$x = $a ? 'yes' : 'no'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$y = $a ?? 'default'"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "$a ??= 5"
+            },
+            {
+              "type": "pipeline",
+              "text": "Get-Item . && Write-Output ok || Write-Output fail"
+            },
+            {
+              "type": "member_access",
+              "text": "${o}?.Name"
+            },
+            {
+              "type": "invokation_expression",
+              "text": "${o}?.ToString()"
+            },
+            {
+              "type": "element_access",
+              "text": "${arr}?[0]"
+            },
+            {
+              "type": "function_statement",
+              "text": "function f { begin { } process { } end { } clean { 'cleanup' } }"
+            },
+            {
+              "type": "named_block",
+              "text": "begin { }"
+            },
+            {
+              "type": "named_block",
+              "text": "clean { 'cleanup' }"
+            },
+            {
+              "type": "expandable_string_literal",
+              "text": "\"`e[0m `u{1F600}\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-B01-NR-1",
+      "features": [
+        "powershell-B01"
+      ],
+      "source_utf8": "$name = 'world'\n$msg = \"Hello $name, sum is $($h.a + $h['b'])\"\nGet-ChildItem -Path . -Filter *.ps1 | Where-Object { $_.Length -gt 0 } > files.txt\n$h = @{ a = 1; b = 2 }\n",
+      "edits": [
+        {
+          "find": "b = 2 }",
+          "replace": "b = }"
+        },
+        {
+          "find": "b = }",
+          "replace": "b = 2 }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "expandable_string_literal",
+            "sub_expression",
+            "element_access",
+            "redirection"
+          ],
+          "anchors": [
+            {
+              "type": "redirection",
+              "text": "> files.txt"
+            },
+            {
+              "type": "sub_expression",
+              "text": "$($h.a + $h['b'])"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-B02-R-1",
+      "features": [
+        "powershell-B02"
+      ],
+      "source_utf8": "foreach ($x in $list) { $x }\nfunction Get-Thing {\n  [CmdletBinding()]\n  param([Parameter(Mandatory)][string]$Name)\n  begin { $acc = @() }\n  process { $acc += $Name }\n  end { $acc }\n}\nclass Box { [int]$Size }\ntry { Get-Thing -Name a } catch { Write-Error $_ } finally { 'done' }\n",
+      "edits": [
+        {
+          "find": "in $list)",
+          "replace": "in )"
+        },
+        {
+          "find": "in )",
+          "replace": "in $list)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_statement",
+            "named_block",
+            "class_statement",
+            "try_statement"
+          ],
+          "anchors": [
+            {
+              "type": "class_statement",
+              "text": "class Box { [int]$Size }"
+            },
+            {
+              "type": "named_block",
+              "text": "begin { $acc = @() }"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { Get-Thing -Name a } catch { Write-Error $_ } finally { 'done' }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-L01-PNRE-1",
+      "features": [
+        "powershell-L01"
+      ],
+      "source_utf8": "$before = 1\n$alsoBefore = 'x'\nGet-Date\nworkflow Invoke-Legacy {\n  param([string[]]$Names)\n  parallel {\n    Get-Process\n    Get-Service\n  }\n  foreach -parallel ($n in $Names) {\n    sequence {\n      InlineScript { $using:n }\n    }\n  }\n}\nConfiguration WebConfig {\n  Node 'localhost' {\n    WindowsFeature IIS {\n      Ensure = 'Present'\n      Name = 'Web-Server'\n    }\n  }\n}\nclass LegacyAfter { [int]$n }\n",
+      "edits": [
+        {
+          "find": "workflow Invoke-Legacy {",
+          "replace": "workflow {"
+        },
+        {
+          "find": "workflow {",
+          "replace": "workflow Invoke-Legacy {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "parallel_statement",
+            "foreach_statement",
+            "sequence_statement",
+            "inlinescript_statement",
+            "class_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_statement"
+          ],
+          "anchors": [
+            {
+              "type": "class_statement",
+              "text": "class LegacyAfter { [int]$n }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "parallel_statement",
+            "foreach_statement",
+            "sequence_statement",
+            "inlinescript_statement",
+            "class_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-V7-PNRE-1",
+      "features": [
+        "powershell-V7"
+      ],
+      "source_utf8": "$v = $null\n$x = $v ?? 'default'\n$v ??= 5\n$size = $x.Length -gt 3 ? 'big' : 'small'\n$len = ${x}?.Length\n$first = ${x}?[0]\nenum After { One }\n",
+      "edits": [
+        {
+          "find": "? 'big' :",
+          "replace": "? :"
+        },
+        {
+          "find": "? :",
+          "replace": "? 'big' :"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "braced_variable",
+            "enum_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "enum_statement"
+          ],
+          "anchors": [
+            {
+              "type": "enum_statement",
+              "text": "enum After { One }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "braced_variable",
+            "enum_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-V7-PNREQ-2",
+      "features": [
+        "powershell-V7"
+      ],
+      "source_utf8": "$pre = 1\nGet-Date\nGet-Item . && Write-Output ok || Write-Output fail\nStart-Sleep 1 &\nclass ChainAfter { [int]$n }\n",
+      "edits": [
+        {
+          "find": "&& Write-Output ok ||",
+          "replace": "&& ||"
+        },
+        {
+          "find": "&& ||",
+          "replace": "&& Write-Output ok ||"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "pipeline_chain_tail",
+            "class_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_statement"
+          ],
+          "anchors": [
+            {
+              "type": "class_statement",
+              "text": "class ChainAfter { [int]$n }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "pipeline_chain_tail",
+            "class_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-powershell-V7-PNREQ-3",
+      "features": [
+        "powershell-V7"
+      ],
+      "source_utf8": "function Use-Clean {\n  [CmdletBinding()]\n  param()\n  process { $_ }\n  clean { 'cleanup' }\n}\nclass CleanAfter { [int]$n }\n",
+      "edits": [
+        {
+          "find": "clean { 'cleanup' }",
+          "replace": "clean"
+        },
+        {
+          "find": "clean\n",
+          "replace": "clean { 'cleanup' }\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "named_block",
+            "class_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_statement"
+          ],
+          "anchors": [
+            {
+              "type": "class_statement",
+              "text": "class CleanAfter { [int]$n }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_statement",
+            "named_block",
+            "class_statement"
+          ]
+        }
+      ]
     }
   ]
 }

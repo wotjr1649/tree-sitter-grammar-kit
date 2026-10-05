@@ -97,6 +97,5804 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-kotlin-B01-01",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a421",
+        "kotlin-B01.a423",
+        "kotlin-B01.a424",
+        "kotlin-B01.a425",
+        "kotlin-B01.a426",
+        "kotlin-B01.a427",
+        "kotlin-B01.a428",
+        "kotlin-B01.a429",
+        "kotlin-B01.a434",
+        "kotlin-B01.a601",
+        "kotlin-B01.a554",
+        "kotlin-B01.a487",
+        "kotlin-B01.a488",
+        "kotlin-B01.a489",
+        "kotlin-B01.a001",
+        "kotlin-B01.a002",
+        "kotlin-B01.a003",
+        "kotlin-B01.a004",
+        "kotlin-B01.a005",
+        "kotlin-B01.a006",
+        "kotlin-B01.a007",
+        "kotlin-B01.a008",
+        "kotlin-B01.a009",
+        "kotlin-B01.a010",
+        "kotlin-B01.a011",
+        "kotlin-B01.a205",
+        "kotlin-B01.a206",
+        "kotlin-B01.a207",
+        "kotlin-B01.a208",
+        "kotlin-B01.a209",
+        "kotlin-B01.a044",
+        "kotlin-B01.a061",
+        "kotlin-B01.a552",
+        "kotlin-B01.a553",
+        "kotlin-B01.a447",
+        "kotlin-B02.a064",
+        "kotlin-B02.a065",
+        "kotlin-B01.a480",
+        "kotlin-B01.a481",
+        "kotlin-B01.a467",
+        "kotlin-B01.a466",
+        "kotlin-B01.a420",
+        "kotlin-B01.a500",
+        "kotlin-B01.a502",
+        "kotlin-B01.a504",
+        "kotlin-B01.a262",
+        "kotlin-B01.a257",
+        "kotlin-B01.a260",
+        "kotlin-B01.a492",
+        "kotlin-B01.a164",
+        "kotlin-B01.a143",
+        "kotlin-B01.a144",
+        "kotlin-B01.a145",
+        "kotlin-B01.a146",
+        "kotlin-B01.a147",
+        "kotlin-B01.a133",
+        "kotlin-B01.a134",
+        "kotlin-B01.a135",
+        "kotlin-B01.a136",
+        "kotlin-B01.a137",
+        "kotlin-B01.a012",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a020",
+        "kotlin-B01.a022",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a042",
+        "kotlin-B01.a070",
+        "kotlin-B01.a071",
+        "kotlin-B01.a076",
+        "kotlin-B01.a099",
+        "kotlin-B01.a273",
+        "kotlin-B01.a274",
+        "kotlin-B01.a275",
+        "kotlin-B01.a276",
+        "kotlin-B01.a277",
+        "kotlin-B01.a278",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a286",
+        "kotlin-B01.a288",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a308",
+        "kotlin-B01.a310",
+        "kotlin-B01.a327",
+        "kotlin-B01.a336",
+        "kotlin-B01.a337",
+        "kotlin-B01.a342",
+        "kotlin-B01.a365",
+        "kotlin-B01.a399",
+        "kotlin-B01.a401",
+        "kotlin-B01.a408",
+        "kotlin-B01.a409",
+        "kotlin-B01.a413"
+      ],
+      "source_utf8": "#!/usr/bin/env kotlin\n\n@file:JvmName(\"Lex\")\n@file:[Suppress(\"UNUSED\") JvmMultifileClass]\npackage demo.lex;\n\nimport kotlin.math.*\nimport kotlin.collections.List as KList;\nimport java.util.Date\n\n/* outer /* nested */ still comment */\n/** doc */\n// line comment\r\nval äöü = 1\f;\tval x١٢ = 2\rval `with space` = 3\r\nval _under = 4; val a1_b = 5\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "shebang",
+            "file_annotation",
+            "package_header",
+            "import",
+            "block_comment",
+            "line_comment",
+            "property_declaration",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "shebang",
+              "text": "#!/usr/bin/env kotlin"
+            },
+            {
+              "type": "file_annotation",
+              "text": "@file:JvmName(\"Lex\")"
+            },
+            {
+              "type": "constructor_invocation",
+              "text": "JvmName(\"Lex\")"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"Lex\""
+            },
+            {
+              "type": "file_annotation",
+              "text": "@file:[Suppress(\"UNUSED\") JvmMultifileClass]"
+            },
+            {
+              "type": "constructor_invocation",
+              "text": "Suppress(\"UNUSED\")"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"UNUSED\""
+            },
+            {
+              "type": "package_header",
+              "text": "package demo.lex;"
+            },
+            {
+              "type": "qualified_identifier",
+              "text": "demo.lex"
+            },
+            {
+              "type": "import",
+              "text": "import kotlin.math.*"
+            },
+            {
+              "type": "qualified_identifier",
+              "text": "kotlin.math"
+            },
+            {
+              "type": "import",
+              "text": "import kotlin.collections.List as KList;"
+            },
+            {
+              "type": "qualified_identifier",
+              "text": "kotlin.collections.List"
+            },
+            {
+              "type": "import",
+              "text": "import java.util.Date"
+            },
+            {
+              "type": "qualified_identifier",
+              "text": "java.util.Date"
+            },
+            {
+              "type": "block_comment",
+              "text": "/* outer /* nested */ still comment */"
+            },
+            {
+              "type": "block_comment",
+              "text": "/** doc */"
+            },
+            {
+              "type": "line_comment",
+              "text": "// line comment"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val äöü = 1"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "äöü"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val x١٢ = 2"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "x١٢"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val `with space` = 3"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "`with space`"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val _under = 4"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "_under"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val a1_b = 5"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "a1_b"
+            },
+            {
+              "type": "user_type",
+              "text": "JvmMultifileClass"
+            },
+            {
+              "type": "number_literal",
+              "text": "1",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-02",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a491",
+        "kotlin-B01.a492",
+        "kotlin-B01.a493",
+        "kotlin-B01.a494",
+        "kotlin-B01.a496",
+        "kotlin-B01.a497",
+        "kotlin-B01.a498",
+        "kotlin-B01.a499",
+        "kotlin-B01.a133",
+        "kotlin-B01.a134",
+        "kotlin-B01.a135",
+        "kotlin-B01.a136",
+        "kotlin-B01.a137",
+        "kotlin-B01.a138",
+        "kotlin-B01.a139",
+        "kotlin-B01.a140",
+        "kotlin-B01.a141",
+        "kotlin-B01.a142",
+        "kotlin-B01.a143",
+        "kotlin-B01.a144",
+        "kotlin-B01.a145",
+        "kotlin-B01.a146",
+        "kotlin-B01.a147",
+        "kotlin-B01.a148",
+        "kotlin-B01.a149",
+        "kotlin-B01.a150",
+        "kotlin-B01.a151",
+        "kotlin-B01.a152",
+        "kotlin-B01.a153",
+        "kotlin-B01.a154",
+        "kotlin-B01.a155",
+        "kotlin-B01.a156",
+        "kotlin-B01.a157",
+        "kotlin-B01.a158",
+        "kotlin-B01.a159",
+        "kotlin-B01.a160",
+        "kotlin-B01.a161",
+        "kotlin-B01.a162",
+        "kotlin-B01.a163",
+        "kotlin-B01.a164",
+        "kotlin-B01.a165",
+        "kotlin-B01.a166",
+        "kotlin-B01.a167",
+        "kotlin-B01.a168",
+        "kotlin-B01.a169",
+        "kotlin-B01.a170",
+        "kotlin-B01.a171",
+        "kotlin-B01.a172",
+        "kotlin-B01.a173",
+        "kotlin-B01.a174",
+        "kotlin-B01.a175",
+        "kotlin-B01.a176",
+        "kotlin-B01.a177",
+        "kotlin-B01.a178",
+        "kotlin-B01.a179",
+        "kotlin-B01.a180",
+        "kotlin-B01.a181",
+        "kotlin-B01.a182",
+        "kotlin-B01.a183",
+        "kotlin-B01.a184",
+        "kotlin-B01.a185",
+        "kotlin-B01.a186",
+        "kotlin-B01.a187",
+        "kotlin-B01.a188",
+        "kotlin-B01.a189",
+        "kotlin-B01.a190",
+        "kotlin-B01.a191",
+        "kotlin-B01.a192",
+        "kotlin-B02.a008",
+        "kotlin-B01.a045",
+        "kotlin-B02.a004",
+        "kotlin-B02.a006",
+        "kotlin-B02.a003",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a023",
+        "kotlin-B01.a024",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a046",
+        "kotlin-B01.a076",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a289",
+        "kotlin-B01.a290",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a311",
+        "kotlin-B01.a312",
+        "kotlin-B01.a342",
+        "kotlin-B01.a400",
+        "kotlin-B01.a401",
+        "kotlin-B01.a402",
+        "kotlin-B01.a403",
+        "kotlin-B01.a404",
+        "kotlin-B01.a405",
+        "kotlin-B01.a406"
+      ],
+      "source_utf8": "val ints = listOf(0, 7, 12, 1_000, 1__0, 9_8_7_6_5_4_3_2_1_0, 0x0, 0xFF, 0X1_a_B, 0xAbCdEf09, 0xabcdef, 0XABCDEF, 0b0, 0b1010, 0B1_01)\nval longs = listOf(0L, 123L, 0xFFL, 0b1L)\nval uns = listOf(1u, 2U, 0xFFu, 0b1U, 3uL, 4UL)\nval doubles = listOf(1.5, .5, 1.0e10, 1E-3, 2e+2, 1_0.2_5, 3.14e1_0)\nval floats = listOf(1.5f, .5F, 2f, 3F, 1e3f)\nval bools = listOf(true, false); val n: Any? = null\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "number_literal",
+            "float_literal",
+            "call_expression",
+            "value_arguments"
+          ],
+          "anchors": [
+            {
+              "type": "number_literal",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "12",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "1_000"
+            },
+            {
+              "type": "number_literal",
+              "text": "1__0"
+            },
+            {
+              "type": "number_literal",
+              "text": "9_8_7_6_5_4_3_2_1_0"
+            },
+            {
+              "type": "number_literal",
+              "text": "0x0"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xFF",
+              "occurrence": 1
+            },
+            {
+              "type": "number_literal",
+              "text": "0X1_a_B"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xAbCdEf09"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xabcdef"
+            },
+            {
+              "type": "number_literal",
+              "text": "0XABCDEF"
+            },
+            {
+              "type": "number_literal",
+              "text": "0b0"
+            },
+            {
+              "type": "number_literal",
+              "text": "0b1010"
+            },
+            {
+              "type": "number_literal",
+              "text": "0B1_01"
+            },
+            {
+              "type": "number_literal",
+              "text": "0L"
+            },
+            {
+              "type": "number_literal",
+              "text": "123L"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xFFL"
+            },
+            {
+              "type": "number_literal",
+              "text": "0b1L"
+            },
+            {
+              "type": "number_literal",
+              "text": "1u"
+            },
+            {
+              "type": "number_literal",
+              "text": "2U"
+            },
+            {
+              "type": "number_literal",
+              "text": "0xFFu"
+            },
+            {
+              "type": "number_literal",
+              "text": "0b1U"
+            },
+            {
+              "type": "number_literal",
+              "text": "3uL"
+            },
+            {
+              "type": "number_literal",
+              "text": "4UL"
+            },
+            {
+              "type": "float_literal",
+              "text": "1.5",
+              "occurrence": 1
+            },
+            {
+              "type": "float_literal",
+              "text": ".5",
+              "occurrence": 2
+            },
+            {
+              "type": "float_literal",
+              "text": "1.0e10"
+            },
+            {
+              "type": "float_literal",
+              "text": "1E-3"
+            },
+            {
+              "type": "float_literal",
+              "text": "2e+2"
+            },
+            {
+              "type": "float_literal",
+              "text": "1_0.2_5"
+            },
+            {
+              "type": "float_literal",
+              "text": "3.14e1_0"
+            },
+            {
+              "type": "float_literal",
+              "text": "1.5f"
+            },
+            {
+              "type": "float_literal",
+              "text": ".5F"
+            },
+            {
+              "type": "float_literal",
+              "text": "2f"
+            },
+            {
+              "type": "float_literal",
+              "text": "3F"
+            },
+            {
+              "type": "float_literal",
+              "text": "1e3f"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val ints = listOf(0, 7, 12, 1_000, 1__0, 9_8_7_6_5_4_3_2_1_0, 0x0, 0xFF, 0X1_a_B, 0xAbCdEf09, 0xabcdef, 0XABCDEF, 0b0, 0b1010, 0B1_01)"
+            },
+            {
+              "type": "nullable_type",
+              "text": "Any?"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val n: Any? = null"
+            },
+            {
+              "type": "call_expression",
+              "text": "listOf(true, false)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-03",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a495",
+        "kotlin-B01.a500",
+        "kotlin-B01.a501",
+        "kotlin-B01.a502",
+        "kotlin-B01.a503",
+        "kotlin-B01.a504",
+        "kotlin-B01.a505",
+        "kotlin-B01.a506",
+        "kotlin-B01.a507",
+        "kotlin-B01.a508",
+        "kotlin-B01.a509",
+        "kotlin-B01.a510",
+        "kotlin-B01.a511",
+        "kotlin-B01.a193",
+        "kotlin-B01.a194",
+        "kotlin-B01.a195",
+        "kotlin-B01.a196",
+        "kotlin-B01.a197",
+        "kotlin-B01.a198",
+        "kotlin-B01.a199",
+        "kotlin-B01.a200",
+        "kotlin-B01.a201",
+        "kotlin-B01.a202",
+        "kotlin-B01.a203",
+        "kotlin-B01.a204",
+        "kotlin-B01.a257",
+        "kotlin-B01.a260",
+        "kotlin-B01.a258",
+        "kotlin-B01.a267",
+        "kotlin-B01.a259",
+        "kotlin-B01.a261",
+        "kotlin-B01.a262",
+        "kotlin-B01.a263",
+        "kotlin-B01.a264",
+        "kotlin-B01.a265",
+        "kotlin-B01.a266",
+        "kotlin-B01.a268",
+        "kotlin-B01.a269",
+        "kotlin-B01.a270",
+        "kotlin-B01.a271",
+        "kotlin-B01.a272",
+        "kotlin-B01.a210",
+        "kotlin-B02.a069",
+        "kotlin-B02.a061",
+        "kotlin-B02.a148",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a033",
+        "kotlin-B01.a076",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a299",
+        "kotlin-B01.a342",
+        "kotlin-B01.a407",
+        "kotlin-B01.a408",
+        "kotlin-B01.a409",
+        "kotlin-B01.a410",
+        "kotlin-B01.a411",
+        "kotlin-B01.a412",
+        "kotlin-B01.a413",
+        "kotlin-B01.a414",
+        "kotlin-B01.a415",
+        "kotlin-B01.a416",
+        "kotlin-B01.a417",
+        "kotlin-B01.a418",
+        "kotlin-B01.a419"
+      ],
+      "source_utf8": "val name = \"K\"\nval chars = listOf('a', '\"', '\\t', '\\b', '\\r', '\\n', '\\'', '\\\"', '\\\\', '\\$', '\\u0041')\nval line = \"plain $name ${name.length} \\$ \\\" \\\\ \\t \\u00e9 ${'$'} a$ $\"\nval multi = \"\"\"\n    raw \"quoted\" \"\"two\"\" $name ${name + \"x\"} \\n kept\n    dollar $ end\"\"\"\"\nval empty = \"\"\nval tripleEmpty = \"\"\"\"\"\"\nval q6 = \"\"\"abc\"\"\"\"\"\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string_literal",
+            "multiline_string_literal",
+            "string_content",
+            "interpolation",
+            "character_literal",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "property_declaration",
+              "text": "val name = \"K\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val chars = listOf('a', '\"', '\\t', '\\b', '\\r', '\\n', '\\'', '\\\"', '\\\\', '\\$', '\\u0041')"
+            },
+            {
+              "type": "character_literal",
+              "text": "'a'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\"'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\t'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\b'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\b"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\r'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\r"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\n'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\''"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\\"'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\"",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\\\'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\$'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\$",
+              "occurrence": 1
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\u0041'"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val line = \"plain $name ${name.length} \\$ \\\" \\\\ \\t \\u00e9 ${'$'} a$ $\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\$",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\"",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t",
+              "occurrence": 2
+            },
+            {
+              "type": "character_literal",
+              "text": "'$'"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val multi = \"\"\"\n    raw \"quoted\" \"\"two\"\" $name ${name + \"x\"} \\n kept\n    dollar $ end\"\"\"\""
+            },
+            {
+              "type": "multiline_string_literal",
+              "text": "\"\"\"\n    raw \"quoted\" \"\"two\"\" $name ${name + \"x\"} \\n kept\n    dollar $ end\"\"\"\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val empty = \"\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val tripleEmpty = \"\"\"\"\"\""
+            },
+            {
+              "type": "multiline_string_literal",
+              "text": "\"\"\"\"\"\"",
+              "occurrence": 1
+            },
+            {
+              "type": "string_literal",
+              "text": "\"K\""
+            },
+            {
+              "type": "string_literal",
+              "text": "\"plain $name ${name.length} \\$ \\\" \\\\ \\t \\u00e9 ${'$'} a$ $\""
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\"",
+              "occurrence": 8
+            },
+            {
+              "type": "interpolation",
+              "text": "$name",
+              "occurrence": 1
+            },
+            {
+              "type": "interpolation",
+              "text": "${name.length}"
+            },
+            {
+              "type": "interpolation",
+              "text": "${'$'}"
+            },
+            {
+              "type": "interpolation",
+              "text": "$name",
+              "occurrence": 2
+            },
+            {
+              "type": "interpolation",
+              "text": "${name + \"x\"}"
+            },
+            {
+              "type": "multiline_string_literal",
+              "text": "\"\"\"abc\"\"\"\"\"\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val q6 = \"\"\"abc\"\"\"\"\"\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u00e9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-04",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V14"
+      ],
+      "alternatives": [
+        "kotlin-B01.a554",
+        "kotlin-B01.a555",
+        "kotlin-B01.a556",
+        "kotlin-B01.a557",
+        "kotlin-B01.a558",
+        "kotlin-B01.a559",
+        "kotlin-B01.a560",
+        "kotlin-B01.a561",
+        "kotlin-B01.a562",
+        "kotlin-B01.a563",
+        "kotlin-B01.a564",
+        "kotlin-B01.a565",
+        "kotlin-B01.a566",
+        "kotlin-B01.a567",
+        "kotlin-B01.a568",
+        "kotlin-B01.a569",
+        "kotlin-B01.a570",
+        "kotlin-B01.a571",
+        "kotlin-B01.a572",
+        "kotlin-B01.a573",
+        "kotlin-B01.a574",
+        "kotlin-B01.a575",
+        "kotlin-B01.a576",
+        "kotlin-B01.a577",
+        "kotlin-B01.a578",
+        "kotlin-B01.a579",
+        "kotlin-B01.a580",
+        "kotlin-B01.a581",
+        "kotlin-B01.a582",
+        "kotlin-B01.a583",
+        "kotlin-B01.a584",
+        "kotlin-B01.a585",
+        "kotlin-B01.a586",
+        "kotlin-B01.a587",
+        "kotlin-B01.a588",
+        "kotlin-B01.a589",
+        "kotlin-B01.a590",
+        "kotlin-B01.a591",
+        "kotlin-B01.a592",
+        "kotlin-B01.a593",
+        "kotlin-B01.a594",
+        "kotlin-B01.a595",
+        "kotlin-B01.a596",
+        "kotlin-B01.a597",
+        "kotlin-B01.a598",
+        "kotlin-B01.a599",
+        "kotlin-B01.a600",
+        "kotlin-V14.a004",
+        "kotlin-B01.a210",
+        "kotlin-B01.a211",
+        "kotlin-B01.a212",
+        "kotlin-B01.a213",
+        "kotlin-B01.a214",
+        "kotlin-B01.a215",
+        "kotlin-B01.a216",
+        "kotlin-B01.a217",
+        "kotlin-B01.a218",
+        "kotlin-B01.a219",
+        "kotlin-B01.a220",
+        "kotlin-B01.a221",
+        "kotlin-B01.a222",
+        "kotlin-B01.a223",
+        "kotlin-B01.a224",
+        "kotlin-B01.a225",
+        "kotlin-B01.a226",
+        "kotlin-B01.a227",
+        "kotlin-B01.a228",
+        "kotlin-B01.a229",
+        "kotlin-B01.a230",
+        "kotlin-B01.a231",
+        "kotlin-B01.a232",
+        "kotlin-B01.a233",
+        "kotlin-B01.a234",
+        "kotlin-B01.a235",
+        "kotlin-B01.a236",
+        "kotlin-B01.a237",
+        "kotlin-B01.a238",
+        "kotlin-B01.a239",
+        "kotlin-B01.a240",
+        "kotlin-B01.a241",
+        "kotlin-B01.a242",
+        "kotlin-B01.a243",
+        "kotlin-B01.a244",
+        "kotlin-B01.a245",
+        "kotlin-B01.a246",
+        "kotlin-B01.a247",
+        "kotlin-B01.a248",
+        "kotlin-B01.a249",
+        "kotlin-B01.a250",
+        "kotlin-B01.a251",
+        "kotlin-B01.a252",
+        "kotlin-B01.a253",
+        "kotlin-B01.a254",
+        "kotlin-B01.a255",
+        "kotlin-B01.a256",
+        "kotlin-B01.a259",
+        "kotlin-B01.a261",
+        "kotlin-B01.a122",
+        "kotlin-B01.a112",
+        "kotlin-B01.a080",
+        "kotlin-B01.a090",
+        "kotlin-B01.a081",
+        "kotlin-B01.a079",
+        "kotlin-B01.a129",
+        "kotlin-B01.a113",
+        "kotlin-B01.a105",
+        "kotlin-B01.a110",
+        "kotlin-B01.a119",
+        "kotlin-B01.a123",
+        "kotlin-B01.a091",
+        "kotlin-B01.a064",
+        "kotlin-B01.a071",
+        "kotlin-B01.a118",
+        "kotlin-B01.a082",
+        "kotlin-B01.a117",
+        "kotlin-B01.a114",
+        "kotlin-B01.a109",
+        "kotlin-B01.a126",
+        "kotlin-B01.a128",
+        "kotlin-B01.a124",
+        "kotlin-B01.a116",
+        "kotlin-B01.a104",
+        "kotlin-B01.a121",
+        "kotlin-B01.a107",
+        "kotlin-B01.a108",
+        "kotlin-B01.a106",
+        "kotlin-B01.a130",
+        "kotlin-B01.a111",
+        "kotlin-B01.a115",
+        "kotlin-B01.a065",
+        "kotlin-B01.a127",
+        "kotlin-B01.a085",
+        "kotlin-B01.a062",
+        "kotlin-B01.a063",
+        "kotlin-B01.a066",
+        "kotlin-B01.a067",
+        "kotlin-B01.a068",
+        "kotlin-B01.a069",
+        "kotlin-B01.a061",
+        "kotlin-B01.a131",
+        "kotlin-B01.a132",
+        "kotlin-B01.a125",
+        "kotlin-B01.a120",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a033",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a299",
+        "kotlin-B01.a327",
+        "kotlin-B01.a328",
+        "kotlin-B01.a329",
+        "kotlin-B01.a330",
+        "kotlin-B01.a331",
+        "kotlin-B01.a332",
+        "kotlin-B01.a333",
+        "kotlin-B01.a334",
+        "kotlin-B01.a335",
+        "kotlin-B01.a337",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a345",
+        "kotlin-B01.a346",
+        "kotlin-B01.a347",
+        "kotlin-B01.a348",
+        "kotlin-B01.a351",
+        "kotlin-B01.a356",
+        "kotlin-B01.a357",
+        "kotlin-B01.a370",
+        "kotlin-B01.a371",
+        "kotlin-B01.a372",
+        "kotlin-B01.a373",
+        "kotlin-B01.a374",
+        "kotlin-B01.a375",
+        "kotlin-B01.a376",
+        "kotlin-B01.a377",
+        "kotlin-B01.a378",
+        "kotlin-B01.a379",
+        "kotlin-B01.a380",
+        "kotlin-B01.a381",
+        "kotlin-B01.a382",
+        "kotlin-B01.a383",
+        "kotlin-B01.a384",
+        "kotlin-B01.a385",
+        "kotlin-B01.a386",
+        "kotlin-B01.a387",
+        "kotlin-B01.a388",
+        "kotlin-B01.a389",
+        "kotlin-B01.a390",
+        "kotlin-B01.a391",
+        "kotlin-B01.a392",
+        "kotlin-B01.a393",
+        "kotlin-B01.a394",
+        "kotlin-B01.a395",
+        "kotlin-B01.a396",
+        "kotlin-B01.a397",
+        "kotlin-B01.a398",
+        "kotlin-B01.a412"
+      ],
+      "source_utf8": "fun soft() {\n    val abstract = 0\n    val annotation = 0\n    val by = 0\n    val catch = 0\n    val companion = 0\n    val constructor = 0\n    val crossinline = 0\n    val data = 0\n    val dynamic = 0\n    val enum = 0\n    val external = 0\n    val final = 0\n    val finally = 0\n    val get = 0\n    val import = 0\n    val infix = 0\n    val init = 0\n    val inline = 0\n    val inner = 0\n    val internal = 0\n    val lateinit = 0\n    val noinline = 0\n    val open = 0\n    val operator = 0\n    val out = 0\n    val override = 0\n    val private = 0\n    val protected = 0\n    val public = 0\n    val reified = 0\n    val sealed = 0\n    val tailrec = 0\n    val set = 0\n    val vararg = 0\n    val where = 0\n    val field = 0\n    val property = 0\n    val receiver = 0\n    val param = 0\n    val setparam = 0\n    val delegate = 0\n    val file = 0\n    val expect = 0\n    val actual = 0\n    val const = 0\n    val suspend = 0\n    val value = 0\n    println(\"$abstract $annotation $by $catch $companion $constructor $crossinline $data $dynamic $enum $external $final $finally $get $import $infix $init $inline $inner $internal $lateinit $noinline $open $operator $out $override $private $protected $public $reified $sealed $tailrec $set $vararg $where $field $property $receiver $param $setparam $delegate $file $expect $actual $const $suspend\")\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "property_declaration",
+            "variable_declaration",
+            "identifier",
+            "string_literal",
+            "interpolation"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "fun soft() {\n    val abstract = 0\n    val annotation = 0\n    val by = 0\n    val catch = 0\n    val companion = 0\n    val constructor = 0\n    val crossinline = 0\n    val data = 0\n    val dynamic = 0\n    val enum = 0\n    val external = 0\n    val final = 0\n    val finally = 0\n    val get = 0\n    val import = 0\n    val infix = 0\n    val init = 0\n    val inline = 0\n    val inner = 0\n    val internal = 0\n    val lateinit = 0\n    val noinline = 0\n    val open = 0\n    val operator = 0\n    val out = 0\n    val override = 0\n    val private = 0\n    val protected = 0\n    val public = 0\n    val reified = 0\n    val sealed = 0\n    val tailrec = 0\n    val set = 0\n    val vararg = 0\n    val where = 0\n    val field = 0\n    val property = 0\n    val receiver = 0\n    val param = 0\n    val setparam = 0\n    val delegate = 0\n    val file = 0\n    val expect = 0\n    val actual = 0\n    val const = 0\n    val suspend = 0\n    val value = 0\n    println(\"$abstract $annotation $by $catch $companion $constructor $crossinline $data $dynamic $enum $external $final $finally $get $import $infix $init $inline $inner $internal $lateinit $noinline $open $operator $out $override $private $protected $public $reified $sealed $tailrec $set $vararg $where $field $property $receiver $param $setparam $delegate $file $expect $actual $const $suspend\")\n}"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val abstract = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val annotation = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val by = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val catch = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val companion = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val constructor = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val crossinline = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val data = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val dynamic = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val enum = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val external = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val final = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val finally = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val get = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val import = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val infix = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val init = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val inline = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val inner = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val internal = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val lateinit = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val noinline = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val open = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val operator = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val out = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val override = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val private = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val protected = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val public = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val reified = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val sealed = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val tailrec = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val set = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val vararg = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val where = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val field = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val property = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val receiver = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val param = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val setparam = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val delegate = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val file = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val expect = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val actual = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val const = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val suspend = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val value = 0"
+            },
+            {
+              "type": "call_expression",
+              "text": "println(\"$abstract $annotation $by $catch $companion $constructor $crossinline $data $dynamic $enum $external $final $finally $get $import $infix $init $inline $inner $internal $lateinit $noinline $open $operator $out $override $private $protected $public $reified $sealed $tailrec $set $vararg $where $field $property $receiver $param $setparam $delegate $file $expect $actual $const $suspend\")"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"$abstract $annotation $by $catch $companion $constructor $crossinline $data $dynamic $enum $external $final $finally $get $import $infix $init $inline $inner $internal $lateinit $noinline $open $operator $out $override $private $protected $public $reified $sealed $tailrec $set $vararg $where $field $property $receiver $param $setparam $delegate $file $expect $actual $const $suspend\""
+            },
+            {
+              "type": "interpolation",
+              "text": "$abstract"
+            },
+            {
+              "type": "interpolation",
+              "text": "$dynamic"
+            },
+            {
+              "type": "interpolation",
+              "text": "$suspend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-05",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a431",
+        "kotlin-B01.a432",
+        "kotlin-B01.a433",
+        "kotlin-B01.a435",
+        "kotlin-B01.a436",
+        "kotlin-B01.a437",
+        "kotlin-B01.a438",
+        "kotlin-B01.a439",
+        "kotlin-B01.a440",
+        "kotlin-B01.a441",
+        "kotlin-B01.a442",
+        "kotlin-B01.a443",
+        "kotlin-B01.a444",
+        "kotlin-B01.a445",
+        "kotlin-B01.a446",
+        "kotlin-B01.a447",
+        "kotlin-B01.a448",
+        "kotlin-B01.a449",
+        "kotlin-B01.a450",
+        "kotlin-B01.a451",
+        "kotlin-B01.a452",
+        "kotlin-B01.a453",
+        "kotlin-B01.a454",
+        "kotlin-B01.a455",
+        "kotlin-B01.a456",
+        "kotlin-B01.a457",
+        "kotlin-B01.a458",
+        "kotlin-B01.a459",
+        "kotlin-B01.a460",
+        "kotlin-B01.a474",
+        "kotlin-B01.a475",
+        "kotlin-B01.a476",
+        "kotlin-B01.a477",
+        "kotlin-B01.a478",
+        "kotlin-B01.a479",
+        "kotlin-B01.a430",
+        "kotlin-B01.a512",
+        "kotlin-B01.a513",
+        "kotlin-B01.a516",
+        "kotlin-B01.a517",
+        "kotlin-B01.a518",
+        "kotlin-B01.a519",
+        "kotlin-B01.a520",
+        "kotlin-B01.a521",
+        "kotlin-B01.a524",
+        "kotlin-B01.a525",
+        "kotlin-B01.a526",
+        "kotlin-B01.a527",
+        "kotlin-B01.a528",
+        "kotlin-B01.a529",
+        "kotlin-B01.a530",
+        "kotlin-B01.a532",
+        "kotlin-B01.a540",
+        "kotlin-B01.a541",
+        "kotlin-B01.a542",
+        "kotlin-B01.a547",
+        "kotlin-B01.a548",
+        "kotlin-B01.a543",
+        "kotlin-B01.a522",
+        "kotlin-B02.a155",
+        "kotlin-B01.a549",
+        "kotlin-B01.a550",
+        "kotlin-B01.a552",
+        "kotlin-B01.a553",
+        "kotlin-B01.a490",
+        "kotlin-B01.a482",
+        "kotlin-B02.a009",
+        "kotlin-B02.a010",
+        "kotlin-B02.a091",
+        "kotlin-B01.a059",
+        "kotlin-B01.a463",
+        "kotlin-B01.a464",
+        "kotlin-B01.a465",
+        "kotlin-B01.a461",
+        "kotlin-B01.a462",
+        "kotlin-B01.a473",
+        "kotlin-B01.a425",
+        "kotlin-B01.a601",
+        "kotlin-B01.a044",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a042",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a070",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a075",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a078",
+        "kotlin-B01.a079",
+        "kotlin-B01.a080",
+        "kotlin-B01.a081",
+        "kotlin-B01.a082",
+        "kotlin-B01.a083",
+        "kotlin-B01.a084",
+        "kotlin-B01.a085",
+        "kotlin-B01.a101",
+        "kotlin-B01.a104",
+        "kotlin-B01.a106",
+        "kotlin-B01.a107",
+        "kotlin-B01.a108",
+        "kotlin-B01.a109",
+        "kotlin-B01.a110",
+        "kotlin-B01.a111",
+        "kotlin-B01.a112",
+        "kotlin-B01.a113",
+        "kotlin-B01.a114",
+        "kotlin-B01.a120",
+        "kotlin-B01.a121",
+        "kotlin-B01.a122",
+        "kotlin-B01.a123",
+        "kotlin-B01.a124",
+        "kotlin-B01.a127",
+        "kotlin-B01.a131",
+        "kotlin-B01.a132",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a308",
+        "kotlin-B01.a310",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a325",
+        "kotlin-B01.a336",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a341",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a344",
+        "kotlin-B01.a345",
+        "kotlin-B01.a346",
+        "kotlin-B01.a347",
+        "kotlin-B01.a348",
+        "kotlin-B01.a349",
+        "kotlin-B01.a350",
+        "kotlin-B01.a351",
+        "kotlin-B01.a367",
+        "kotlin-B01.a370",
+        "kotlin-B01.a372",
+        "kotlin-B01.a373",
+        "kotlin-B01.a374",
+        "kotlin-B01.a375",
+        "kotlin-B01.a376",
+        "kotlin-B01.a377",
+        "kotlin-B01.a378",
+        "kotlin-B01.a379",
+        "kotlin-B01.a380",
+        "kotlin-B01.a386",
+        "kotlin-B01.a387",
+        "kotlin-B01.a388",
+        "kotlin-B01.a389",
+        "kotlin-B01.a390",
+        "kotlin-B01.a393",
+        "kotlin-B01.a397",
+        "kotlin-B01.a398"
+      ],
+      "source_utf8": "package demo.decl\n\nannotation class Ann(val v: String = \"\")\npublic open class Base<in I, out O, T : Comparable<T>>(val id: Int) where T : Any { open fun f() {} }\nabstract class Shape protected constructor(open val name: String) { abstract fun area(): Double }\ninternal sealed class Expr { data class Num(val v: Int) : Expr(); class Neg(val e: Expr) : Expr() }\nprivate final class Fin\nenum class Color(val rgb: Int) : Runnable {\n    @Ann RED(0xFF0000) { override fun run() {} },\n    GREEN(0x00FF00),\n    BLUE(0x0000FF) {\n        override fun run() {}\n    }, ;\n    override fun run() {}\n}\nenum class Empty\nenum class OnlyEntries { A, B, }\ninterface Named { val name: String; fun greet(): String = \"hi\" }\ninterface Both : Named, Runnable\nclass Impl(n: Named) : Named by n, Runnable { override fun run() {} }\nclass Fn : () -> Unit { override fun invoke() {} }\nclass SFn : suspend () -> Unit { override suspend fun invoke() {} }\nclass Annotated : @Ann Base<Int, Int, String>(1)\nclass Outer(private var x: Int, vararg val rest: Int) {\n    inner class In { fun outer() = this@Outer.x }\n    class Nested\n    init { x = 2 }\n    constructor() : this(0)\n    constructor(s: String) : this(s.length) { println(s) }\n    @Ann private constructor(a: Int, b: Int)\n    companion object Factory : Runnable { override fun run() {} }\n    ;\n}\nclass Child : Base<Int, Int, String> { constructor() : super(1) }\nclass Cmp { companion object }\nobject Single : Runnable { override fun run() {} }\nobject Bare\ntypealias Pred<T> = (T) -> Boolean\ntypealias Str = String\nexpect class Platform\nactual typealias PlatformAlias = String\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "primary_constructor",
+            "class_parameters",
+            "class_parameter",
+            "delegation_specifiers",
+            "delegation_specifier",
+            "constructor_invocation",
+            "explicit_delegation",
+            "type_parameters",
+            "type_parameter",
+            "variance_modifier",
+            "type_constraints",
+            "type_constraint",
+            "class_body",
+            "enum_class_body",
+            "enum_entry",
+            "anonymous_initializer",
+            "secondary_constructor",
+            "constructor_delegation_call",
+            "companion_object",
+            "object_declaration",
+            "type_alias",
+            "modifiers",
+            "class_modifier",
+            "visibility_modifier",
+            "inheritance_modifier",
+            "platform_modifier",
+            "function_type"
+          ],
+          "anchors": [
+            {
+              "type": "package_header",
+              "text": "package demo.decl"
+            },
+            {
+              "type": "class_declaration",
+              "text": "annotation class Ann(val v: String = \"\")"
+            },
+            {
+              "type": "class_parameter",
+              "text": "val v: String = \"\""
+            },
+            {
+              "type": "modifiers",
+              "text": "public open"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<in I, out O, T : Comparable<T>>"
+            },
+            {
+              "type": "type_parameter",
+              "text": "in I"
+            },
+            {
+              "type": "variance_modifier",
+              "text": "in",
+              "occurrence": 2
+            },
+            {
+              "type": "type_parameter",
+              "text": "out O"
+            },
+            {
+              "type": "variance_modifier",
+              "text": "out",
+              "occurrence": 1
+            },
+            {
+              "type": "type_parameter",
+              "text": "T : Comparable<T>"
+            },
+            {
+              "type": "type_constraints",
+              "text": "where T : Any"
+            },
+            {
+              "type": "type_constraint",
+              "text": "T : Any"
+            },
+            {
+              "type": "class_body",
+              "text": "{ open fun f() {} }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "public open class Base<in I, out O, T : Comparable<T>>(val id: Int) where T : Any { open fun f() {} }"
+            },
+            {
+              "type": "primary_constructor",
+              "text": "protected constructor(open val name: String)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "abstract class Shape protected constructor(open val name: String) { abstract fun area(): Double }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "data class Num(val v: Int) : Expr()"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Neg(val e: Expr) : Expr()"
+            },
+            {
+              "type": "constructor_invocation",
+              "text": "Expr()",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "internal sealed class Expr { data class Num(val v: Int) : Expr(); class Neg(val e: Expr) : Expr() }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "private final class Fin"
+            },
+            {
+              "type": "class_declaration",
+              "text": "enum class Color(val rgb: Int) : Runnable {\n    @Ann RED(0xFF0000) { override fun run() {} },\n    GREEN(0x00FF00),\n    BLUE(0x0000FF) {\n        override fun run() {}\n    }, ;\n    override fun run() {}\n}"
+            },
+            {
+              "type": "enum_class_body",
+              "text": "{\n    @Ann RED(0xFF0000) { override fun run() {} },\n    GREEN(0x00FF00),\n    BLUE(0x0000FF) {\n        override fun run() {}\n    }, ;\n    override fun run() {}\n}"
+            },
+            {
+              "type": "enum_entry",
+              "text": "@Ann RED(0xFF0000) { override fun run() {} }"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann",
+              "occurrence": 1
+            },
+            {
+              "type": "enum_entry",
+              "text": "GREEN(0x00FF00)"
+            },
+            {
+              "type": "enum_entry",
+              "text": "BLUE(0x0000FF) {\n        override fun run() {}\n    }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "enum class Empty"
+            },
+            {
+              "type": "enum_class_body",
+              "text": "{ A, B, }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "interface Named { val name: String; fun greet(): String = \"hi\" }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val name: String",
+              "occurrence": 2
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun greet(): String = \"hi\""
+            },
+            {
+              "type": "class_declaration",
+              "text": "interface Both : Named, Runnable"
+            },
+            {
+              "type": "explicit_delegation",
+              "text": "Named by n"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Impl(n: Named) : Named by n, Runnable { override fun run() {} }"
+            },
+            {
+              "type": "function_type",
+              "text": "() -> Unit",
+              "occurrence": 1
+            },
+            {
+              "type": "function_type",
+              "text": "suspend () -> Unit"
+            },
+            {
+              "type": "delegation_specifier",
+              "text": "@Ann Base<Int, Int, String>(1)"
+            },
+            {
+              "type": "class_parameter",
+              "text": "vararg val rest: Int"
+            },
+            {
+              "type": "parameter_modifier",
+              "text": "vararg"
+            },
+            {
+              "type": "class_declaration",
+              "text": "inner class In { fun outer() = this@Outer.x }"
+            },
+            {
+              "type": "this_expression",
+              "text": "this@Outer"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Nested"
+            },
+            {
+              "type": "anonymous_initializer",
+              "text": "init { x = 2 }"
+            },
+            {
+              "type": "secondary_constructor",
+              "text": "constructor() : this(0)"
+            },
+            {
+              "type": "constructor_delegation_call",
+              "text": "this(0)"
+            },
+            {
+              "type": "secondary_constructor",
+              "text": "constructor(s: String) : this(s.length) { println(s) }"
+            },
+            {
+              "type": "secondary_constructor",
+              "text": "@Ann private constructor(a: Int, b: Int)"
+            },
+            {
+              "type": "companion_object",
+              "text": "companion object Factory : Runnable { override fun run() {} }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Outer(private var x: Int, vararg val rest: Int) {\n    inner class In { fun outer() = this@Outer.x }\n    class Nested\n    init { x = 2 }\n    constructor() : this(0)\n    constructor(s: String) : this(s.length) { println(s) }\n    @Ann private constructor(a: Int, b: Int)\n    companion object Factory : Runnable { override fun run() {} }\n    ;\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Child : Base<Int, Int, String> { constructor() : super(1) }"
+            },
+            {
+              "type": "secondary_constructor",
+              "text": "constructor() : super(1)"
+            },
+            {
+              "type": "constructor_delegation_call",
+              "text": "super(1)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Cmp { companion object }"
+            },
+            {
+              "type": "companion_object",
+              "text": "companion object",
+              "occurrence": 2
+            },
+            {
+              "type": "object_declaration",
+              "text": "object Single : Runnable { override fun run() {} }"
+            },
+            {
+              "type": "object_declaration",
+              "text": "object Bare"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Pred<T> = (T) -> Boolean"
+            },
+            {
+              "type": "function_type",
+              "text": "(T) -> Boolean"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Str = String"
+            },
+            {
+              "type": "class_declaration",
+              "text": "expect class Platform"
+            },
+            {
+              "type": "platform_modifier",
+              "text": "expect"
+            },
+            {
+              "type": "type_alias",
+              "text": "actual typealias PlatformAlias = String"
+            },
+            {
+              "type": "platform_modifier",
+              "text": "actual"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-06",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a463",
+        "kotlin-B01.a464",
+        "kotlin-B01.a465",
+        "kotlin-B01.a461",
+        "kotlin-B01.a462",
+        "kotlin-B01.a473",
+        "kotlin-B01.a515",
+        "kotlin-B01.a543",
+        "kotlin-B01.a544",
+        "kotlin-B01.a545",
+        "kotlin-B01.a467",
+        "kotlin-B01.a468",
+        "kotlin-B01.a469",
+        "kotlin-B01.a470",
+        "kotlin-B01.a471",
+        "kotlin-B01.a472",
+        "kotlin-B01.a466",
+        "kotlin-B01.a450",
+        "kotlin-B01.a451",
+        "kotlin-B01.a530",
+        "kotlin-B01.a531",
+        "kotlin-B01.a546",
+        "kotlin-B01.a452",
+        "kotlin-B01.a453",
+        "kotlin-B01.a534",
+        "kotlin-B01.a535",
+        "kotlin-B01.a536",
+        "kotlin-B01.a537",
+        "kotlin-B01.a538",
+        "kotlin-B02.a155",
+        "kotlin-B01.a539",
+        "kotlin-B01.a522",
+        "kotlin-B01.a523",
+        "kotlin-B01.a540",
+        "kotlin-B01.a541",
+        "kotlin-B01.a542",
+        "kotlin-B01.a525",
+        "kotlin-B01.a490",
+        "kotlin-B01.a482",
+        "kotlin-B01.a483",
+        "kotlin-B01.a484",
+        "kotlin-B01.a485",
+        "kotlin-B02.a012",
+        "kotlin-B01.a480",
+        "kotlin-B01.a481",
+        "kotlin-B01.a512",
+        "kotlin-B01.a513",
+        "kotlin-B01.a516",
+        "kotlin-B01.a549",
+        "kotlin-B01.a550",
+        "kotlin-B01.a488",
+        "kotlin-B01.a032",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a020",
+        "kotlin-B01.a023",
+        "kotlin-B01.a024",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a042",
+        "kotlin-B01.a046",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a054",
+        "kotlin-B01.a062",
+        "kotlin-B01.a064",
+        "kotlin-B01.a065",
+        "kotlin-B01.a071",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a080",
+        "kotlin-B01.a082",
+        "kotlin-B01.a083",
+        "kotlin-B01.a085",
+        "kotlin-B01.a086",
+        "kotlin-B01.a087",
+        "kotlin-B01.a096",
+        "kotlin-B01.a100",
+        "kotlin-B01.a101",
+        "kotlin-B01.a104",
+        "kotlin-B01.a107",
+        "kotlin-B01.a115",
+        "kotlin-B01.a116",
+        "kotlin-B01.a117",
+        "kotlin-B01.a118",
+        "kotlin-B01.a119",
+        "kotlin-B01.a120",
+        "kotlin-B01.a121",
+        "kotlin-B01.a122",
+        "kotlin-B01.a123",
+        "kotlin-B01.a124",
+        "kotlin-B01.a125",
+        "kotlin-B01.a126",
+        "kotlin-B01.a127",
+        "kotlin-B01.a128",
+        "kotlin-B01.a129",
+        "kotlin-B01.a130",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a286",
+        "kotlin-B01.a289",
+        "kotlin-B01.a290",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a308",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a320",
+        "kotlin-B01.a328",
+        "kotlin-B01.a330",
+        "kotlin-B01.a331",
+        "kotlin-B01.a337",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a346",
+        "kotlin-B01.a348",
+        "kotlin-B01.a349",
+        "kotlin-B01.a351",
+        "kotlin-B01.a352",
+        "kotlin-B01.a353",
+        "kotlin-B01.a362",
+        "kotlin-B01.a366",
+        "kotlin-B01.a367",
+        "kotlin-B01.a370",
+        "kotlin-B01.a373",
+        "kotlin-B01.a381",
+        "kotlin-B01.a382",
+        "kotlin-B01.a383",
+        "kotlin-B01.a384",
+        "kotlin-B01.a385",
+        "kotlin-B01.a386",
+        "kotlin-B01.a387",
+        "kotlin-B01.a388",
+        "kotlin-B01.a389",
+        "kotlin-B01.a390",
+        "kotlin-B01.a391",
+        "kotlin-B01.a392",
+        "kotlin-B01.a393",
+        "kotlin-B01.a394",
+        "kotlin-B01.a395",
+        "kotlin-B01.a396"
+      ],
+      "source_utf8": "import kotlin.reflect.KProperty\nclass Box<T>(var item: T)\nfun plain() {}\nfun expr(a: Int, b: Int = 2): Int = a + b\nfun <T> Box<T>.swap(other: T): T { val old = item; item = other; return old }\nfun <T> pick(vararg xs: T): T where T : Comparable<T>, T : Any = xs.first()\ninline fun run2(noinline a: () -> Unit, crossinline b: () -> Unit) { a(); b() }\ninline fun <reified R> isA(x: Any) = x is R\ntailrec fun loop(n: Int): Int = if (n == 0) 0 else loop(n - 1)\ninfix fun Int.plusOne(o: Int) = this + o + 1\nexternal fun nat(): Int\nsuspend fun waitIt() {}\nclass Vec(val x: Int) { operator fun plus(o: Vec) = Vec(x + o.x) }\nconst val MAX = 10\nval <T> List<T>.second: T get() = this[1]\nvar counter = 0\n    private set\nvar named: String = \"\"\n    get() = field\n    set(value) { field = value }\nvar typed: Int = 0\n    get(): Int { return field }\n    set(v: Int) { field = v }\nvar ordered: Int = 0\n    set\n    @Deprecated(\"x\") get\nval lazyV by lazy { 42 }\nclass Holder { lateinit var s: String; val v: Int; init { v = 1 }; var d: Int by Delegate() }\nclass Delegate { operator fun getValue(t: Any?, p: KProperty<*>): Int = 1\n    operator fun setValue(t: Any?, p: KProperty<*>, v: Int) {} }\nval withSemi: Int = 1; get\nabstract class Abs { abstract val a: Int; open fun o() {}; final override fun toString() = \"\" }\nfun <T : Any?> generic(t: T): List<out T> = listOf(t)\nfun star(l: List<*>) = l\nfun proj(l: MutableList<in Number>, a: Array<out @Deprecated(\"\") Any>) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "function_value_parameters",
+            "parameter",
+            "function_body",
+            "type_parameters",
+            "type_constraints",
+            "property_declaration",
+            "getter",
+            "setter",
+            "property_delegate",
+            "function_modifier",
+            "parameter_modifiers",
+            "parameter_modifier",
+            "reification_modifier",
+            "property_modifier",
+            "member_modifier",
+            "type_projection",
+            "variance_modifier",
+            "user_type",
+            "type_arguments"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Box<T>(var item: T)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun plain() {}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun expr(a: Int, b: Int = 2): Int = a + b"
+            },
+            {
+              "type": "function_value_parameters",
+              "text": "(a: Int, b: Int = 2)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T> Box<T>.swap(other: T): T { val old = item; item = other; return old }"
+            },
+            {
+              "type": "user_type",
+              "text": "Box<T>",
+              "occurrence": 2
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T> pick(vararg xs: T): T where T : Comparable<T>, T : Any = xs.first()"
+            },
+            {
+              "type": "parameter_modifiers",
+              "text": "vararg"
+            },
+            {
+              "type": "type_constraints",
+              "text": "where T : Comparable<T>, T : Any"
+            },
+            {
+              "type": "type_constraint",
+              "text": "T : Comparable<T>"
+            },
+            {
+              "type": "type_constraint",
+              "text": "T : Any",
+              "occurrence": 1
+            },
+            {
+              "type": "function_declaration",
+              "text": "inline fun run2(noinline a: () -> Unit, crossinline b: () -> Unit) { a(); b() }"
+            },
+            {
+              "type": "parameter_modifier",
+              "text": "noinline"
+            },
+            {
+              "type": "parameter_modifier",
+              "text": "crossinline"
+            },
+            {
+              "type": "function_declaration",
+              "text": "inline fun <reified R> isA(x: Any) = x is R"
+            },
+            {
+              "type": "type_parameter",
+              "text": "reified R"
+            },
+            {
+              "type": "reification_modifier",
+              "text": "reified"
+            },
+            {
+              "type": "function_declaration",
+              "text": "tailrec fun loop(n: Int): Int = if (n == 0) 0 else loop(n - 1)"
+            },
+            {
+              "type": "function_modifier",
+              "text": "tailrec"
+            },
+            {
+              "type": "function_declaration",
+              "text": "infix fun Int.plusOne(o: Int) = this + o + 1"
+            },
+            {
+              "type": "function_modifier",
+              "text": "infix"
+            },
+            {
+              "type": "function_declaration",
+              "text": "external fun nat(): Int"
+            },
+            {
+              "type": "function_modifier",
+              "text": "external"
+            },
+            {
+              "type": "function_declaration",
+              "text": "suspend fun waitIt() {}"
+            },
+            {
+              "type": "function_modifier",
+              "text": "suspend"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Vec(val x: Int) { operator fun plus(o: Vec) = Vec(x + o.x) }"
+            },
+            {
+              "type": "function_modifier",
+              "text": "operator",
+              "occurrence": 1
+            },
+            {
+              "type": "property_declaration",
+              "text": "const val MAX = 10"
+            },
+            {
+              "type": "property_modifier",
+              "text": "const"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val <T> List<T>.second: T get() = this[1]"
+            },
+            {
+              "type": "getter",
+              "text": "get() = this[1]"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var counter = 0\n    private set"
+            },
+            {
+              "type": "setter",
+              "text": "private set"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var named: String = \"\"\n    get() = field\n    set(value) { field = value }"
+            },
+            {
+              "type": "getter",
+              "text": "get() = field"
+            },
+            {
+              "type": "setter",
+              "text": "set(value) { field = value }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var typed: Int = 0\n    get(): Int { return field }\n    set(v: Int) { field = v }"
+            },
+            {
+              "type": "getter",
+              "text": "get(): Int { return field }"
+            },
+            {
+              "type": "setter",
+              "text": "set(v: Int) { field = v }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var ordered: Int = 0\n    set\n    @Deprecated(\"x\") get"
+            },
+            {
+              "type": "setter",
+              "text": "set",
+              "occurrence": 4
+            },
+            {
+              "type": "getter",
+              "text": "@Deprecated(\"x\") get"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val lazyV by lazy { 42 }"
+            },
+            {
+              "type": "property_delegate",
+              "text": "by lazy { 42 }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Holder { lateinit var s: String; val v: Int; init { v = 1 }; var d: Int by Delegate() }"
+            },
+            {
+              "type": "member_modifier",
+              "text": "lateinit"
+            },
+            {
+              "type": "property_delegate",
+              "text": "by Delegate()"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Delegate { operator fun getValue(t: Any?, p: KProperty<*>): Int = 1\n    operator fun setValue(t: Any?, p: KProperty<*>, v: Int) {} }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "operator fun getValue(t: Any?, p: KProperty<*>): Int = 1"
+            },
+            {
+              "type": "function_declaration",
+              "text": "operator fun setValue(t: Any?, p: KProperty<*>, v: Int) {}"
+            },
+            {
+              "type": "type_projection",
+              "text": "*",
+              "occurrence": 1
+            },
+            {
+              "type": "property_declaration",
+              "text": "val withSemi: Int = 1; get"
+            },
+            {
+              "type": "getter",
+              "text": "get",
+              "occurrence": 6
+            },
+            {
+              "type": "class_declaration",
+              "text": "abstract class Abs { abstract val a: Int; open fun o() {}; final override fun toString() = \"\" }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "abstract val a: Int"
+            },
+            {
+              "type": "function_declaration",
+              "text": "final override fun toString() = \"\""
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T : Any?> generic(t: T): List<out T> = listOf(t)"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T : Any?"
+            },
+            {
+              "type": "type_projection",
+              "text": "out T"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun star(l: List<*>) = l"
+            },
+            {
+              "type": "user_type",
+              "text": "List<*>"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun proj(l: MutableList<in Number>, a: Array<out @Deprecated(\"\") Any>) {}"
+            },
+            {
+              "type": "type_projection",
+              "text": "in Number"
+            },
+            {
+              "type": "type_projection",
+              "text": "out @Deprecated(\"\") Any"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-07",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a549",
+        "kotlin-B01.a550",
+        "kotlin-B01.a551",
+        "kotlin-B01.a552",
+        "kotlin-B01.a553",
+        "kotlin-B01.a519",
+        "kotlin-B02.a081",
+        "kotlin-B02.a073",
+        "kotlin-B01.a533",
+        "kotlin-B01.a530",
+        "kotlin-B02.a014",
+        "kotlin-B02.a041",
+        "kotlin-B02.a153",
+        "kotlin-B02.a152",
+        "kotlin-B01.a512",
+        "kotlin-B01.a514",
+        "kotlin-B01.a042",
+        "kotlin-B01.a044",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a079",
+        "kotlin-B01.a104",
+        "kotlin-B01.a112",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a308",
+        "kotlin-B01.a310",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a345",
+        "kotlin-B01.a370",
+        "kotlin-B01.a378"
+      ],
+      "source_utf8": "annotation class A\nannotation class B(val s: String)\nannotation class Arr(val a: Array<String>)\n@A @B(\"x\") class One\n@[A B(\"y\")] class Two\n@Arr([\"p\", \"q\"]) class Three\nclass Four @A constructor(@A val p: Int) {\n    @A fun f(@A x: Int) = @A x\n    fun g() { @A val local = 1; @[A] val l2 = 2 }\n}\nfun h(list: List<@A Int>) {}\nclass Gen<@A T, @A out R>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "annotation",
+            "class_declaration",
+            "collection_literal",
+            "primary_constructor",
+            "annotated_expression"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "annotation class A",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "annotation class B(val s: String)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "annotation class Arr(val a: Array<String>)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@A @B(\"x\") class One"
+            },
+            {
+              "type": "modifiers",
+              "text": "@A @B(\"x\")"
+            },
+            {
+              "type": "annotation",
+              "text": "@B(\"x\")"
+            },
+            {
+              "type": "constructor_invocation",
+              "text": "B(\"x\")"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@[A B(\"y\")] class Two"
+            },
+            {
+              "type": "annotation",
+              "text": "@[A B(\"y\")]"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@Arr([\"p\", \"q\"]) class Three"
+            },
+            {
+              "type": "collection_literal",
+              "text": "[\"p\", \"q\"]"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Four @A constructor(@A val p: Int) {\n    @A fun f(@A x: Int) = @A x\n    fun g() { @A val local = 1; @[A] val l2 = 2 }\n}"
+            },
+            {
+              "type": "primary_constructor",
+              "text": "@A constructor(@A val p: Int)"
+            },
+            {
+              "type": "class_parameter",
+              "text": "@A val p: Int"
+            },
+            {
+              "type": "function_declaration",
+              "text": "@A fun f(@A x: Int) = @A x"
+            },
+            {
+              "type": "parameter_modifiers",
+              "text": "@A",
+              "occurrence": 6
+            },
+            {
+              "type": "annotated_expression",
+              "text": "@A x",
+              "occurrence": 2
+            },
+            {
+              "type": "property_declaration",
+              "text": "@A val local = 1"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@[A] val l2 = 2"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun h(list: List<@A Int>) {}"
+            },
+            {
+              "type": "user_type",
+              "text": "@A Int"
+            },
+            {
+              "type": "type_modifiers",
+              "text": "@A",
+              "occurrence": 9
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Gen<@A T, @A out R>"
+            },
+            {
+              "type": "type_parameter",
+              "text": "@A T"
+            },
+            {
+              "type": "type_parameter",
+              "text": "@A out R"
+            },
+            {
+              "type": "type_parameter_modifiers",
+              "text": "@A out"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-08",
+      "features": [
+        "kotlin-B01"
+      ],
+      "alternatives": [
+        "kotlin-B01.a482",
+        "kotlin-B01.a484",
+        "kotlin-B01.a485",
+        "kotlin-B01.a486",
+        "kotlin-B01.a490",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a042",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a101",
+        "kotlin-B01.a104",
+        "kotlin-B01.a112",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a308",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a367",
+        "kotlin-B01.a370",
+        "kotlin-B01.a378"
+      ],
+      "source_utf8": "annotation class Ann\nfun proj(a: Array<@Ann out Any>, b: MutableList<@Ann in Number>) {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "type_arguments",
+            "type_projection",
+            "annotation",
+            "variance_modifier"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "annotation class Ann"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun proj(a: Array<@Ann out Any>, b: MutableList<@Ann in Number>) {}"
+            },
+            {
+              "type": "type_projection",
+              "text": "@Ann out Any"
+            },
+            {
+              "type": "type_projection",
+              "text": "@Ann in Number"
+            },
+            {
+              "type": "variance_modifier",
+              "text": "out"
+            },
+            {
+              "type": "variance_modifier",
+              "text": "in"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann",
+              "occurrence": 1
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann",
+              "occurrence": 2
+            },
+            {
+              "type": "user_type",
+              "text": "Array<@Ann out Any>"
+            },
+            {
+              "type": "user_type",
+              "text": "MutableList<@Ann in Number>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-09",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a487",
+        "kotlin-B01.a488",
+        "kotlin-B01.a489",
+        "kotlin-B01.a007",
+        "kotlin-B02.a013",
+        "kotlin-B01.a429",
+        "kotlin-B01.a012",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a070",
+        "kotlin-B01.a071",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a277",
+        "kotlin-B01.a278",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a336",
+        "kotlin-B01.a337",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342"
+      ],
+      "source_utf8": "package p\nimport q.R\n\nclass A\n\n\n;\n\nfun f() {\n    val a = 1\n    ;\n    val b = 2 ; val c = 3\n\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "package_header",
+            "import",
+            "class_declaration",
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "package_header",
+              "text": "package p"
+            },
+            {
+              "type": "import",
+              "text": "import q.R"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class A"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun f() {\n    val a = 1\n    ;\n    val b = 2 ; val c = 3\n\n}"
+            },
+            {
+              "type": "block",
+              "text": "{\n    val a = 1\n    ;\n    val b = 2 ; val c = 3\n\n}"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val a = 1"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val b = 2"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val c = 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B01-10",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B01.a422",
+        "kotlin-B01.a423",
+        "kotlin-B01.a424",
+        "kotlin-B02.a014",
+        "kotlin-B01.a487",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a042",
+        "kotlin-B01.a048",
+        "kotlin-B01.a061",
+        "kotlin-B01.a070",
+        "kotlin-B01.a071",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a086",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a308",
+        "kotlin-B01.a314",
+        "kotlin-B01.a327",
+        "kotlin-B01.a336",
+        "kotlin-B01.a337",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a352"
+      ],
+      "source_utf8": "#!/usr/bin/env kotlin\n@file:Suppress(\"UNUSED\")\npackage scripted\n\nimport kotlin.math.max\n\nval x = max(1, 2)\nprintln(x)\nfun f() = x\nif (x > 1) println(\"big\")\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "source_file",
+            "shebang",
+            "file_annotation",
+            "package_header",
+            "import",
+            "property_declaration",
+            "call_expression",
+            "function_declaration",
+            "if_expression"
+          ],
+          "anchors": [
+            {
+              "type": "shebang",
+              "text": "#!/usr/bin/env kotlin"
+            },
+            {
+              "type": "file_annotation",
+              "text": "@file:Suppress(\"UNUSED\")"
+            },
+            {
+              "type": "package_header",
+              "text": "package scripted"
+            },
+            {
+              "type": "import",
+              "text": "import kotlin.math.max"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val x = max(1, 2)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun f() = x"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 1) println(\"big\")"
+            },
+            {
+              "type": "call_expression",
+              "text": "println(x)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-01",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a026",
+        "kotlin-B02.a027",
+        "kotlin-B02.a028",
+        "kotlin-B02.a029",
+        "kotlin-B02.a030",
+        "kotlin-B02.a031",
+        "kotlin-B02.a032",
+        "kotlin-B02.a033",
+        "kotlin-B02.a034",
+        "kotlin-B02.a035",
+        "kotlin-B02.a036",
+        "kotlin-B02.a037",
+        "kotlin-B02.a038",
+        "kotlin-B02.a039",
+        "kotlin-B02.a040",
+        "kotlin-B02.a041",
+        "kotlin-B02.a042",
+        "kotlin-B02.a043",
+        "kotlin-B02.a044",
+        "kotlin-B02.a045",
+        "kotlin-B02.a046",
+        "kotlin-B02.a047",
+        "kotlin-B02.a048",
+        "kotlin-B02.a049",
+        "kotlin-B02.a050",
+        "kotlin-B02.a051",
+        "kotlin-B02.a052",
+        "kotlin-B02.a053",
+        "kotlin-B02.a054",
+        "kotlin-B02.a055",
+        "kotlin-B02.a056",
+        "kotlin-B02.a058",
+        "kotlin-B02.a059",
+        "kotlin-B02.a060",
+        "kotlin-B02.a061",
+        "kotlin-B02.a062",
+        "kotlin-B01.a490",
+        "kotlin-B02.a064",
+        "kotlin-B02.a065",
+        "kotlin-B02.a066",
+        "kotlin-B02.a067",
+        "kotlin-B02.a068",
+        "kotlin-B02.a070",
+        "kotlin-B02.a074",
+        "kotlin-B02.a075",
+        "kotlin-B02.a080",
+        "kotlin-B02.a090",
+        "kotlin-B02.a091",
+        "kotlin-B02.a092",
+        "kotlin-B02.a093",
+        "kotlin-B02.a113",
+        "kotlin-B02.a025",
+        "kotlin-B02.a114",
+        "kotlin-B02.a115",
+        "kotlin-B02.a116",
+        "kotlin-B02.a117",
+        "kotlin-B02.a118",
+        "kotlin-B02.a119",
+        "kotlin-B02.a120",
+        "kotlin-B02.a121",
+        "kotlin-B02.a122",
+        "kotlin-B02.a123",
+        "kotlin-B02.a124",
+        "kotlin-B02.a125",
+        "kotlin-B02.a126",
+        "kotlin-B02.a127",
+        "kotlin-B02.a128",
+        "kotlin-B02.a129",
+        "kotlin-B02.a130",
+        "kotlin-B02.a131",
+        "kotlin-B02.a132",
+        "kotlin-B02.a133",
+        "kotlin-B02.a134",
+        "kotlin-B02.a135",
+        "kotlin-B02.a136",
+        "kotlin-B02.a137",
+        "kotlin-B02.a138",
+        "kotlin-B02.a139",
+        "kotlin-B02.a140",
+        "kotlin-B02.a141",
+        "kotlin-B02.a142",
+        "kotlin-B02.a143",
+        "kotlin-B02.a144",
+        "kotlin-B02.a145",
+        "kotlin-B02.a146",
+        "kotlin-B02.a147",
+        "kotlin-B02.a148",
+        "kotlin-B02.a149",
+        "kotlin-B02.a150",
+        "kotlin-B02.a151",
+        "kotlin-B02.a015",
+        "kotlin-B01.a102",
+        "kotlin-B01.a103",
+        "kotlin-B01.a029",
+        "kotlin-B01.a030",
+        "kotlin-B01.a046",
+        "kotlin-B01.a060",
+        "kotlin-B01.a059",
+        "kotlin-B01.a043",
+        "kotlin-B02.a006",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a020",
+        "kotlin-B01.a021",
+        "kotlin-B01.a022",
+        "kotlin-B01.a023",
+        "kotlin-B01.a024",
+        "kotlin-B01.a025",
+        "kotlin-B01.a026",
+        "kotlin-B01.a027",
+        "kotlin-B01.a028",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a034",
+        "kotlin-B01.a035",
+        "kotlin-B01.a036",
+        "kotlin-B01.a037",
+        "kotlin-B01.a038",
+        "kotlin-B01.a040",
+        "kotlin-B01.a041",
+        "kotlin-B01.a042",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a049",
+        "kotlin-B01.a050",
+        "kotlin-B01.a051",
+        "kotlin-B01.a052",
+        "kotlin-B01.a053",
+        "kotlin-B01.a054",
+        "kotlin-B01.a055",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a083",
+        "kotlin-B01.a084",
+        "kotlin-B01.a099",
+        "kotlin-B01.a100",
+        "kotlin-B01.a101",
+        "kotlin-B01.a114",
+        "kotlin-B01.a121",
+        "kotlin-B01.a124",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a286",
+        "kotlin-B01.a287",
+        "kotlin-B01.a288",
+        "kotlin-B01.a289",
+        "kotlin-B01.a290",
+        "kotlin-B01.a291",
+        "kotlin-B01.a292",
+        "kotlin-B01.a293",
+        "kotlin-B01.a294",
+        "kotlin-B01.a295",
+        "kotlin-B01.a296",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a300",
+        "kotlin-B01.a301",
+        "kotlin-B01.a302",
+        "kotlin-B01.a303",
+        "kotlin-B01.a304",
+        "kotlin-B01.a306",
+        "kotlin-B01.a307",
+        "kotlin-B01.a308",
+        "kotlin-B01.a309",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a315",
+        "kotlin-B01.a316",
+        "kotlin-B01.a317",
+        "kotlin-B01.a318",
+        "kotlin-B01.a319",
+        "kotlin-B01.a320",
+        "kotlin-B01.a321",
+        "kotlin-B01.a325",
+        "kotlin-B01.a326",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a349",
+        "kotlin-B01.a350",
+        "kotlin-B01.a365",
+        "kotlin-B01.a366",
+        "kotlin-B01.a367",
+        "kotlin-B01.a368",
+        "kotlin-B01.a369",
+        "kotlin-B01.a380",
+        "kotlin-B01.a387",
+        "kotlin-B01.a390"
+      ],
+      "source_utf8": "open class Base { open fun f() = 1 }\ninterface I { fun f() = 2 }\nclass Ops : Base(), I {\n    var arr = intArrayOf(1, 2); var n: Int? = 1; var s: String? = \"s\"\n    override fun f(): Int = super<Base>.f() + super<I>.f()\n    inner class In { fun g() = super@Ops.toString() + this@Ops.toString() }\n    fun ops(a: Int, b: Int, p: Boolean, q: Boolean, o: Any) {\n        var x = a; x = b; x += 1; x -= 1; x *= 2; x /= 2; x %= 3\n        arr[0] = 1; arr[0] += 2; (x) = 3; this.n = 4; (this.n) = 5; this.n = null\n        val r = p || q && p; val e = a == b || a != b || o === this || o !== this\n        val c = a < b && a > b && a <= b && a >= b\n        val t = o is String || o !is Int; val inn = a in 1..10 || a !in listOf(1)\n        val cast = o as Any; val safe = o as? String\n        val elvis = s ?: \"d\"; val len = s?.length; val forced = n!!\n        val arith = a + b - a * b / 2 % 3; val un = -a + +b; val neg = !p; val neg2 = ! p\n        x++; x--; ++x; --x; (x) += 1; ((x)) -= 1\n        val inf = a shl 1 and 0xFF; val rng = a..b\n        val ref = ::ops; val cref = String::length; val kref = Ops::class; val oref = o::toString\n        val gen = listOf<Int>(); val idx = arr[0]; val nav = s?.length?.plus(1)\n        val call = maxOf(a, b, c = 1); val sp = listOf(*arrayOf(1)); val named = Pair(first = 1, second = 2)\n        val lbl = lab@ a; val ann = @Suppress(\"x\") a\n        val paren = (a + b) * 2; val nl = a\n            .plus(1)\n        val cmpCall = arr.size < 3\n    }\n    fun maxOf(a: Int, b: Int, c: Int) = a\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "binary_expression",
+            "in_expression",
+            "is_expression",
+            "as_expression",
+            "unary_expression",
+            "navigation_expression",
+            "index_expression",
+            "callable_reference",
+            "call_expression",
+            "infix_expression",
+            "range_expression",
+            "parenthesized_expression",
+            "super_expression",
+            "this_expression",
+            "spread_expression",
+            "value_argument",
+            "labeled_expression",
+            "annotated_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "x = b"
+            },
+            {
+              "type": "assignment",
+              "text": "x += 1"
+            },
+            {
+              "type": "assignment",
+              "text": "x -= 1"
+            },
+            {
+              "type": "assignment",
+              "text": "x *= 2"
+            },
+            {
+              "type": "assignment",
+              "text": "x /= 2"
+            },
+            {
+              "type": "assignment",
+              "text": "x %= 3"
+            },
+            {
+              "type": "assignment",
+              "text": "arr[0] = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "(x) = 3"
+            },
+            {
+              "type": "assignment",
+              "text": "this.n = 4"
+            },
+            {
+              "type": "assignment",
+              "text": "(this.n) = 5"
+            },
+            {
+              "type": "binary_expression",
+              "text": "p || q && p"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a == b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a != b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "o === this"
+            },
+            {
+              "type": "binary_expression",
+              "text": "o !== this"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a < b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a > b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a <= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "a >= b"
+            },
+            {
+              "type": "binary_expression",
+              "text": "s ?: \"d\""
+            },
+            {
+              "type": "binary_expression",
+              "text": "a + b - a * b / 2 % 3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "arr.size < 3"
+            },
+            {
+              "type": "is_expression",
+              "text": "o is String"
+            },
+            {
+              "type": "is_expression",
+              "text": "o !is Int"
+            },
+            {
+              "type": "in_expression",
+              "text": "a in 1..10"
+            },
+            {
+              "type": "in_expression",
+              "text": "a !in listOf(1)"
+            },
+            {
+              "type": "range_expression",
+              "text": "1..10"
+            },
+            {
+              "type": "as_expression",
+              "text": "o as Any"
+            },
+            {
+              "type": "as_expression",
+              "text": "o as? String"
+            },
+            {
+              "type": "navigation_expression",
+              "text": "s?.length",
+              "occurrence": 1
+            },
+            {
+              "type": "unary_expression",
+              "text": "n!!"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-a"
+            },
+            {
+              "type": "unary_expression",
+              "text": "+b"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!p"
+            },
+            {
+              "type": "unary_expression",
+              "text": "! p"
+            },
+            {
+              "type": "unary_expression",
+              "text": "x++"
+            },
+            {
+              "type": "unary_expression",
+              "text": "x--"
+            },
+            {
+              "type": "unary_expression",
+              "text": "++x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "--x"
+            },
+            {
+              "type": "assignment",
+              "text": "(x) += 1"
+            },
+            {
+              "type": "assignment",
+              "text": "((x)) -= 1"
+            },
+            {
+              "type": "infix_expression",
+              "text": "a shl 1 and 0xFF"
+            },
+            {
+              "type": "range_expression",
+              "text": "a..b"
+            },
+            {
+              "type": "callable_reference",
+              "text": "::ops"
+            },
+            {
+              "type": "navigation_expression",
+              "text": "o::toString"
+            },
+            {
+              "type": "call_expression",
+              "text": "listOf<Int>()"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<Int>"
+            },
+            {
+              "type": "index_expression",
+              "text": "arr[0]",
+              "occurrence": 3
+            },
+            {
+              "type": "call_expression",
+              "text": "s?.length?.plus(1)"
+            },
+            {
+              "type": "value_arguments",
+              "text": "(a, b, c = 1)"
+            },
+            {
+              "type": "spread_expression",
+              "text": "*arrayOf(1)"
+            },
+            {
+              "type": "value_arguments",
+              "text": "(first = 1, second = 2)"
+            },
+            {
+              "type": "labeled_expression",
+              "text": "lab@ a"
+            },
+            {
+              "type": "label",
+              "text": "lab@"
+            },
+            {
+              "type": "annotated_expression",
+              "text": "@Suppress(\"x\") a"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(a + b)"
+            },
+            {
+              "type": "call_expression",
+              "text": "a\n            .plus(1)"
+            },
+            {
+              "type": "super_expression",
+              "text": "super<Base>"
+            },
+            {
+              "type": "super_expression",
+              "text": "super@Ops"
+            },
+            {
+              "type": "this_expression",
+              "text": "this@Ops"
+            },
+            {
+              "type": "nullable_type",
+              "text": "Int?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-02",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a094",
+        "kotlin-B02.a095",
+        "kotlin-B02.a096",
+        "kotlin-B02.a097",
+        "kotlin-B02.a098",
+        "kotlin-B02.a099",
+        "kotlin-B02.a100",
+        "kotlin-B02.a101",
+        "kotlin-B02.a102",
+        "kotlin-B02.a103",
+        "kotlin-B02.a104",
+        "kotlin-B02.a105",
+        "kotlin-B02.a106",
+        "kotlin-B02.a107",
+        "kotlin-B02.a108",
+        "kotlin-B02.a109",
+        "kotlin-B02.a110",
+        "kotlin-B02.a111",
+        "kotlin-B02.a112",
+        "kotlin-B02.a019",
+        "kotlin-B02.a020",
+        "kotlin-B02.a021",
+        "kotlin-B02.a022",
+        "kotlin-B02.a023",
+        "kotlin-B02.a024",
+        "kotlin-B02.a016",
+        "kotlin-B02.a017",
+        "kotlin-B02.a018",
+        "kotlin-B02.a013",
+        "kotlin-B02.a014",
+        "kotlin-B02.a015",
+        "kotlin-B02.a001",
+        "kotlin-B01.a466",
+        "kotlin-B02.a076",
+        "kotlin-B02.a077",
+        "kotlin-B02.a078",
+        "kotlin-B02.a079",
+        "kotlin-B01.a056",
+        "kotlin-B01.a058",
+        "kotlin-B01.a057",
+        "kotlin-B01.a042",
+        "kotlin-B01.a043",
+        "kotlin-B02.a063",
+        "kotlin-B02.a082",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a020",
+        "kotlin-B01.a022",
+        "kotlin-B01.a025",
+        "kotlin-B01.a026",
+        "kotlin-B01.a030",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a040",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a054",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a086",
+        "kotlin-B01.a087",
+        "kotlin-B01.a088",
+        "kotlin-B01.a089",
+        "kotlin-B01.a090",
+        "kotlin-B01.a091",
+        "kotlin-B01.a092",
+        "kotlin-B01.a093",
+        "kotlin-B01.a094",
+        "kotlin-B01.a095",
+        "kotlin-B01.a096",
+        "kotlin-B01.a097",
+        "kotlin-B01.a098",
+        "kotlin-B01.a100",
+        "kotlin-B01.a101",
+        "kotlin-B01.a114",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a286",
+        "kotlin-B01.a288",
+        "kotlin-B01.a291",
+        "kotlin-B01.a292",
+        "kotlin-B01.a296",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a306",
+        "kotlin-B01.a308",
+        "kotlin-B01.a309",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a320",
+        "kotlin-B01.a322",
+        "kotlin-B01.a323",
+        "kotlin-B01.a324",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a352",
+        "kotlin-B01.a353",
+        "kotlin-B01.a354",
+        "kotlin-B01.a355",
+        "kotlin-B01.a356",
+        "kotlin-B01.a357",
+        "kotlin-B01.a358",
+        "kotlin-B01.a359",
+        "kotlin-B01.a360",
+        "kotlin-B01.a361",
+        "kotlin-B01.a362",
+        "kotlin-B01.a363",
+        "kotlin-B01.a364",
+        "kotlin-B01.a366",
+        "kotlin-B01.a367",
+        "kotlin-B01.a380"
+      ],
+      "source_utf8": "fun ctl(x: Int, xs: List<Int>, o: Any): Int {\n    val a = if (x > 0) 1 else 2\n    if (x > 0) println(x)\n    if (x > 1) { } else { }\n    if (x > 2) ; else println()\n    if (x > 3) println() ; else println()\n    if (x > 4) else println()\n    val w = when (val y = x * 2) {\n        0, 1 -> \"small\"\n        in 2..9 -> \"mid\"\n        !in 10..20 -> \"out\"\n        is Int -> \"int\"\n        else -> \"big\"\n    }\n    when (o) { is String -> println(o); !is Number -> { } }\n    when { x > 0 -> println(); else -> { } }\n    when (x) { }\n    val t = try { x / 0 } catch (e: ArithmeticException) { 0 } catch (e: Exception) { 1 } finally { }\n    try { } finally { }\n    for (i in xs) println(i)\n    for ((i, v) in xs.withIndex()) { }\n    for (@Suppress(\"x\") i: Int in xs) { }\n    for (i in xs) ;\n    for (i in 0..1)\n        println(i)\n    var k = 0\n    while (k < 3) k++\n    while (k < 5) ;\n    while (k > 9) { }\n    do k-- while (k > 0)\n    do { k++ } while (k < 2)\n    do while (k > 10)\n    outer@ for (i in xs) { inner@ while (true) { if (i > 0) break@outer else continue@outer } }\n    for (i in xs) { if (i > 1) break; if (i < 0) continue }\n    xs.forEach lit@{ if (it == 0) return@lit; println(it) }\n    xs.forEach { return@forEach }\n    if (x < 0) throw IllegalStateException()\n    return x\n}\nfun unit() { return }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if_expression",
+            "when_expression",
+            "when_subject",
+            "when_entry",
+            "range_test",
+            "type_test",
+            "try_expression",
+            "catch_block",
+            "finally_block",
+            "for_statement",
+            "while_statement",
+            "do_while_statement",
+            "label",
+            "return_expression",
+            "throw_expression",
+            "multi_variable_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "fun ctl(x: Int, xs: List<Int>, o: Any): Int {\n    val a = if (x > 0) 1 else 2\n    if (x > 0) println(x)\n    if (x > 1) { } else { }\n    if (x > 2) ; else println()\n    if (x > 3) println() ; else println()\n    if (x > 4) else println()\n    val w = when (val y = x * 2) {\n        0, 1 -> \"small\"\n        in 2..9 -> \"mid\"\n        !in 10..20 -> \"out\"\n        is Int -> \"int\"\n        else -> \"big\"\n    }\n    when (o) { is String -> println(o); !is Number -> { } }\n    when { x > 0 -> println(); else -> { } }\n    when (x) { }\n    val t = try { x / 0 } catch (e: ArithmeticException) { 0 } catch (e: Exception) { 1 } finally { }\n    try { } finally { }\n    for (i in xs) println(i)\n    for ((i, v) in xs.withIndex()) { }\n    for (@Suppress(\"x\") i: Int in xs) { }\n    for (i in xs) ;\n    for (i in 0..1)\n        println(i)\n    var k = 0\n    while (k < 3) k++\n    while (k < 5) ;\n    while (k > 9) { }\n    do k-- while (k > 0)\n    do { k++ } while (k < 2)\n    do while (k > 10)\n    outer@ for (i in xs) { inner@ while (true) { if (i > 0) break@outer else continue@outer } }\n    for (i in xs) { if (i > 1) break; if (i < 0) continue }\n    xs.forEach lit@{ if (it == 0) return@lit; println(it) }\n    xs.forEach { return@forEach }\n    if (x < 0) throw IllegalStateException()\n    return x\n}"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 0) 1 else 2"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 0) println(x)"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 1) { } else { }"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 2) ; else println()"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 3) println() ; else println()"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (x > 4) else println()"
+            },
+            {
+              "type": "when_expression",
+              "text": "when (val y = x * 2) {\n        0, 1 -> \"small\"\n        in 2..9 -> \"mid\"\n        !in 10..20 -> \"out\"\n        is Int -> \"int\"\n        else -> \"big\"\n    }"
+            },
+            {
+              "type": "when_subject",
+              "text": "(val y = x * 2)"
+            },
+            {
+              "type": "when_entry",
+              "text": "0, 1 -> \"small\""
+            },
+            {
+              "type": "range_test",
+              "text": "in 2..9"
+            },
+            {
+              "type": "range_test",
+              "text": "!in 10..20"
+            },
+            {
+              "type": "type_test",
+              "text": "is Int"
+            },
+            {
+              "type": "when_entry",
+              "text": "else -> \"big\""
+            },
+            {
+              "type": "when_expression",
+              "text": "when (o) { is String -> println(o); !is Number -> { } }"
+            },
+            {
+              "type": "type_test",
+              "text": "!is Number"
+            },
+            {
+              "type": "when_expression",
+              "text": "when { x > 0 -> println(); else -> { } }"
+            },
+            {
+              "type": "when_entry",
+              "text": "x > 0 -> println();"
+            },
+            {
+              "type": "when_expression",
+              "text": "when (x) { }"
+            },
+            {
+              "type": "try_expression",
+              "text": "try { x / 0 } catch (e: ArithmeticException) { 0 } catch (e: Exception) { 1 } finally { }"
+            },
+            {
+              "type": "catch_block",
+              "text": "catch (e: ArithmeticException) { 0 }"
+            },
+            {
+              "type": "catch_block",
+              "text": "catch (e: Exception) { 1 }"
+            },
+            {
+              "type": "finally_block",
+              "text": "finally { }",
+              "occurrence": 1
+            },
+            {
+              "type": "try_expression",
+              "text": "try { } finally { }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (i in xs) println(i)"
+            },
+            {
+              "type": "for_statement",
+              "text": "for ((i, v) in xs.withIndex()) { }"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(i, v)"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (@Suppress(\"x\") i: Int in xs) { }"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "@Suppress(\"x\") i: Int"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (i in xs)",
+              "occurrence": 2
+            },
+            {
+              "type": "for_statement",
+              "text": "for (i in 0..1)\n        println(i)"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (k < 3) k++"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (k < 5) ;"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (k > 9) { }"
+            },
+            {
+              "type": "do_while_statement",
+              "text": "do k-- while (k > 0)"
+            },
+            {
+              "type": "do_while_statement",
+              "text": "do { k++ } while (k < 2)"
+            },
+            {
+              "type": "do_while_statement",
+              "text": "do while (k > 10)"
+            },
+            {
+              "type": "for_statement",
+              "text": "outer@ for (i in xs) { inner@ while (true) { if (i > 0) break@outer else continue@outer } }"
+            },
+            {
+              "type": "label",
+              "text": "outer@"
+            },
+            {
+              "type": "label",
+              "text": "inner@"
+            },
+            {
+              "type": "while_statement",
+              "text": "inner@ while (true) { if (i > 0) break@outer else continue@outer }"
+            },
+            {
+              "type": "if_expression",
+              "text": "if (i > 0) break@outer else continue@outer"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (i in xs) { if (i > 1) break; if (i < 0) continue }"
+            },
+            {
+              "type": "call_expression",
+              "text": "xs.forEach lit@{ if (it == 0) return@lit; println(it) }"
+            },
+            {
+              "type": "annotated_lambda",
+              "text": "lit@{ if (it == 0) return@lit; println(it) }"
+            },
+            {
+              "type": "label",
+              "text": "lit@"
+            },
+            {
+              "type": "return_expression",
+              "text": "return@lit"
+            },
+            {
+              "type": "return_expression",
+              "text": "return@forEach"
+            },
+            {
+              "type": "throw_expression",
+              "text": "throw IllegalStateException()"
+            },
+            {
+              "type": "return_expression",
+              "text": "return x"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun unit() { return }"
+            },
+            {
+              "type": "return_expression",
+              "text": "return",
+              "occurrence": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-03",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a082",
+        "kotlin-B02.a083",
+        "kotlin-B02.a084",
+        "kotlin-B02.a085",
+        "kotlin-B02.a086",
+        "kotlin-B02.a087",
+        "kotlin-B02.a088",
+        "kotlin-B02.a002",
+        "kotlin-B01.a471",
+        "kotlin-B01.a472",
+        "kotlin-B02.a089",
+        "kotlin-B02.a071",
+        "kotlin-B02.a072",
+        "kotlin-B02.a063",
+        "kotlin-B02.a062",
+        "kotlin-B02.a001",
+        "kotlin-B01.a466",
+        "kotlin-B01.a467",
+        "kotlin-B02.a015",
+        "kotlin-B01.a056",
+        "kotlin-B01.a042",
+        "kotlin-B01.a464",
+        "kotlin-B01.a465",
+        "kotlin-B01.a452",
+        "kotlin-B01.a441",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a020",
+        "kotlin-B01.a023",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a075",
+        "kotlin-B01.a076",
+        "kotlin-B01.a083",
+        "kotlin-B01.a085",
+        "kotlin-B01.a096",
+        "kotlin-B01.a113",
+        "kotlin-B01.a121",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a286",
+        "kotlin-B01.a289",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a308",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a322",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a341",
+        "kotlin-B01.a342",
+        "kotlin-B01.a349",
+        "kotlin-B01.a351",
+        "kotlin-B01.a362",
+        "kotlin-B01.a379",
+        "kotlin-B01.a387"
+      ],
+      "source_utf8": "data class P(val a: Int, val b: String)\nfun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun <T> (t: T) where T : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lambda_literal",
+            "lambda_parameters",
+            "variable_declaration",
+            "multi_variable_declaration",
+            "annotated_lambda",
+            "anonymous_function",
+            "object_literal",
+            "call_expression",
+            "label"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "data class P(val a: Int, val b: String)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun lambdas(ps: List<P>, m: Map<String, Int>) {\n    val l0 = { println() }\n    val l1 = { x: Int -> x + 1 }\n    val l2: (Int, Int) -> Int = { a, b -> a + b }\n    val l3 = { (a, b): P -> a }\n    ps.forEach { (a, _) -> println(a) }\n    m.forEach { (k, v) -> println(k + v) }\n    ps.map { it.a }\n    ps.fold(0) { acc, p -> acc + p.a }\n    run lbl@{ return@lbl }\n    ps.filter @Suppress(\"x\") { true }\n    val f1 = fun(x: Int): Int { return x }\n    val f2 = fun(x: Int) = x * 2\n    val f3 = fun Int.(other) : Int = this + other\n    val f4 = fun(x, y: Int) = 0\n    val f6 = fun <T> (t: T) where T : Any = t\n    val f7 = fun() {}\n    val obj = object : Runnable { override fun run() {} }\n    val anon = object { val v = 1 }\n    val both = object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }\n    val (x, y) = P(1, \"y\")\n    val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)\n}"
+            },
+            {
+              "type": "lambda_literal",
+              "text": "{ println() }"
+            },
+            {
+              "type": "lambda_literal",
+              "text": "{ x: Int -> x + 1 }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "x: Int",
+              "occurrence": 1
+            },
+            {
+              "type": "lambda_literal",
+              "text": "{ a, b -> a + b }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "a, b",
+              "occurrence": 1
+            },
+            {
+              "type": "property_declaration",
+              "text": "val l3 = { (a, b): P -> a }"
+            },
+            {
+              "type": "lambda_literal",
+              "text": "{ (a, b): P -> a }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "(a, b): P"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(a, b)"
+            },
+            {
+              "type": "call_expression",
+              "text": "ps.forEach { (a, _) -> println(a) }"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(a, _)"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(k, v)"
+            },
+            {
+              "type": "call_expression",
+              "text": "ps.map { it.a }"
+            },
+            {
+              "type": "annotated_lambda",
+              "text": "{ it.a }"
+            },
+            {
+              "type": "call_expression",
+              "text": "ps.fold(0) { acc, p -> acc + p.a }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "acc, p"
+            },
+            {
+              "type": "call_expression",
+              "text": "run lbl@{ return@lbl }"
+            },
+            {
+              "type": "annotated_lambda",
+              "text": "lbl@{ return@lbl }"
+            },
+            {
+              "type": "label",
+              "text": "lbl@"
+            },
+            {
+              "type": "return_expression",
+              "text": "return@lbl"
+            },
+            {
+              "type": "annotated_lambda",
+              "text": "@Suppress(\"x\") { true }"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun(x: Int): Int { return x }"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun(x: Int) = x * 2"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun Int.(other) : Int = this + other"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun(x, y: Int) = 0"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun <T> (t: T) where T : Any = t"
+            },
+            {
+              "type": "type_constraints",
+              "text": "where T : Any"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun() {}"
+            },
+            {
+              "type": "object_literal",
+              "text": "object : Runnable { override fun run() {} }"
+            },
+            {
+              "type": "object_literal",
+              "text": "object { val v = 1 }"
+            },
+            {
+              "type": "object_literal",
+              "text": "object : Comparable<Int>, Runnable { override fun compareTo(other: Int) = 0; override fun run() {} }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val (x, y) = P(1, \"y\")"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(x, y)"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val (q: Int, @Suppress(\"x\") r) = Pair(1, 2)"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "@Suppress(\"x\") r"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-04",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a003",
+        "kotlin-B02.a004",
+        "kotlin-B02.a006",
+        "kotlin-B02.a007",
+        "kotlin-B02.a008",
+        "kotlin-B02.a009",
+        "kotlin-B02.a010",
+        "kotlin-B02.a011",
+        "kotlin-B02.a012",
+        "kotlin-B01.a480",
+        "kotlin-B01.a481",
+        "kotlin-B02.a152",
+        "kotlin-B02.a153",
+        "kotlin-B02.a154",
+        "kotlin-B01.a045",
+        "kotlin-B01.a046",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a042",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a120",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a308",
+        "kotlin-B01.a311",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a386"
+      ],
+      "source_utf8": "class Recv\nfun types(\n    a: String?, b: String ?, c: List<String?>?, d: ((Int) -> Unit)?, e: Recv.(Int) -> String,\n    f: suspend () -> Unit, g: suspend Recv.() -> Unit, h: (Int, s: String) -> Unit, i: (String),\n    j: (String)?, k: () -> () -> Unit, l: Map.Entry<String, Int>, m: kotlin.collections.List<Int>,\n    n: @Suppress(\"x\") Int, o: (Recv?).() -> Unit, p: ((Int) -> Int).() -> Unit, q: String??,\n    r: Int? = null\n) { }\nfun <T : (Int) -> Unit> bound(t: T) {}\nfun Recv?.nullableReceiver() {}\nfun (() -> Unit).fnReceiver() {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "nullable_type",
+            "function_type",
+            "function_type_parameters",
+            "parenthesized_type",
+            "user_type",
+            "type_modifiers",
+            "type_arguments"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Recv"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun types(\n    a: String?, b: String ?, c: List<String?>?, d: ((Int) -> Unit)?, e: Recv.(Int) -> String,\n    f: suspend () -> Unit, g: suspend Recv.() -> Unit, h: (Int, s: String) -> Unit, i: (String),\n    j: (String)?, k: () -> () -> Unit, l: Map.Entry<String, Int>, m: kotlin.collections.List<Int>,\n    n: @Suppress(\"x\") Int, o: (Recv?).() -> Unit, p: ((Int) -> Int).() -> Unit, q: String??,\n    r: Int? = null\n) { }"
+            },
+            {
+              "type": "nullable_type",
+              "text": "String?",
+              "occurrence": 1
+            },
+            {
+              "type": "nullable_type",
+              "text": "String ?"
+            },
+            {
+              "type": "nullable_type",
+              "text": "List<String?>?"
+            },
+            {
+              "type": "nullable_type",
+              "text": "String?",
+              "occurrence": 2
+            },
+            {
+              "type": "nullable_type",
+              "text": "((Int) -> Unit)?"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "((Int) -> Unit)"
+            },
+            {
+              "type": "function_type",
+              "text": "(Int) -> Unit",
+              "occurrence": 1
+            },
+            {
+              "type": "function_type",
+              "text": "Recv.(Int) -> String"
+            },
+            {
+              "type": "function_type",
+              "text": "suspend () -> Unit"
+            },
+            {
+              "type": "function_type",
+              "text": "suspend Recv.() -> Unit"
+            },
+            {
+              "type": "function_type",
+              "text": "(Int, s: String) -> Unit"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(String)",
+              "occurrence": 1
+            },
+            {
+              "type": "nullable_type",
+              "text": "(String)?"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(String)",
+              "occurrence": 2
+            },
+            {
+              "type": "function_type",
+              "text": "() -> () -> Unit"
+            },
+            {
+              "type": "function_type",
+              "text": "() -> Unit",
+              "occurrence": 3
+            },
+            {
+              "type": "function_type",
+              "text": "(Recv?).() -> Unit"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(Recv?)"
+            },
+            {
+              "type": "nullable_type",
+              "text": "Recv?",
+              "occurrence": 1
+            },
+            {
+              "type": "function_type",
+              "text": "((Int) -> Int).() -> Unit"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "((Int) -> Int)"
+            },
+            {
+              "type": "function_type",
+              "text": "(Int) -> Int"
+            },
+            {
+              "type": "nullable_type",
+              "text": "Int?"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T : (Int) -> Unit> bound(t: T) {}"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T : (Int) -> Unit"
+            },
+            {
+              "type": "function_type",
+              "text": "(Int) -> Unit",
+              "occurrence": 2
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun Recv?.nullableReceiver() {}"
+            },
+            {
+              "type": "nullable_type",
+              "text": "Recv?",
+              "occurrence": 2
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun (() -> Unit).fnReceiver() {}"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(() -> Unit)"
+            },
+            {
+              "type": "function_type",
+              "text": "() -> Unit",
+              "occurrence": 6
+            },
+            {
+              "type": "user_type",
+              "text": "Map.Entry<String, Int>"
+            },
+            {
+              "type": "user_type",
+              "text": "kotlin.collections.List<Int>"
+            },
+            {
+              "type": "user_type",
+              "text": "@Suppress(\"x\") Int"
+            },
+            {
+              "type": "type_modifiers",
+              "text": "suspend",
+              "occurrence": 1
+            },
+            {
+              "type": "function_type_parameters",
+              "text": "(Int, s: String)"
+            },
+            {
+              "type": "parameter",
+              "text": "s: String"
+            },
+            {
+              "type": "parameter",
+              "text": "b: String ?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-05",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a005",
+        "kotlin-B02.a003",
+        "kotlin-B01.a105",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a031",
+        "kotlin-B01.a074",
+        "kotlin-B01.a119",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a297",
+        "kotlin-B01.a340",
+        "kotlin-B01.a371",
+        "kotlin-B01.a385"
+      ],
+      "source_utf8": "external fun js(): dynamic\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "external fun js(): dynamic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-06",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a156",
+        "kotlin-B01.a550",
+        "kotlin-B01.a551",
+        "kotlin-B01.a062",
+        "kotlin-B01.a063",
+        "kotlin-B01.a064",
+        "kotlin-B01.a065",
+        "kotlin-B01.a066",
+        "kotlin-B01.a067",
+        "kotlin-B01.a068",
+        "kotlin-B01.a069",
+        "kotlin-B01.a042",
+        "kotlin-B01.a044",
+        "kotlin-B02.a153",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a080",
+        "kotlin-B01.a112",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a308",
+        "kotlin-B01.a310",
+        "kotlin-B01.a328",
+        "kotlin-B01.a329",
+        "kotlin-B01.a330",
+        "kotlin-B01.a331",
+        "kotlin-B01.a332",
+        "kotlin-B01.a333",
+        "kotlin-B01.a334",
+        "kotlin-B01.a335",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a346",
+        "kotlin-B01.a378"
+      ],
+      "source_utf8": "annotation class A\nannotation class B\nclass C(@param:A @property:A @field:A val x: Int, @setparam:A var y: Int) {\n    @get:A @set:A var z: Int = 0\n    @delegate:A val lazyV by lazy { 1 }\n    @get:[A B] val w: Int = 0\n    @field :A val spaced: Int = 0\n}\nfun @receiver:A String.ext() = length\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "annotation",
+            "use_site_target",
+            "class_parameter",
+            "property_declaration",
+            "function_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "annotation class A"
+            },
+            {
+              "type": "class_declaration",
+              "text": "annotation class B"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C(@param:A @property:A @field:A val x: Int, @setparam:A var y: Int) {\n    @get:A @set:A var z: Int = 0\n    @delegate:A val lazyV by lazy { 1 }\n    @get:[A B] val w: Int = 0\n    @field :A val spaced: Int = 0\n}"
+            },
+            {
+              "type": "class_parameter",
+              "text": "@param:A @property:A @field:A val x: Int"
+            },
+            {
+              "type": "class_parameter",
+              "text": "@setparam:A var y: Int"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@get:A @set:A var z: Int = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@delegate:A val lazyV by lazy { 1 }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@get:[A B] val w: Int = 0"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@field :A val spaced: Int = 0"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun @receiver:A String.ext() = length"
+            },
+            {
+              "type": "annotation",
+              "text": "@param:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@property:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@setparam:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@get:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@set:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@delegate:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@get:[A B]"
+            },
+            {
+              "type": "annotation",
+              "text": "@field :A"
+            },
+            {
+              "type": "annotation",
+              "text": "@receiver:A"
+            },
+            {
+              "type": "annotation",
+              "text": "@field:A"
+            },
+            {
+              "type": "use_site_target",
+              "text": "param:",
+              "occurrence": 1
+            },
+            {
+              "type": "use_site_target",
+              "text": "property:"
+            },
+            {
+              "type": "use_site_target",
+              "text": "field:"
+            },
+            {
+              "type": "use_site_target",
+              "text": "setparam:"
+            },
+            {
+              "type": "use_site_target",
+              "text": "get:",
+              "occurrence": 1
+            },
+            {
+              "type": "use_site_target",
+              "text": "set:"
+            },
+            {
+              "type": "use_site_target",
+              "text": "delegate:"
+            },
+            {
+              "type": "use_site_target",
+              "text": "get:",
+              "occurrence": 2
+            },
+            {
+              "type": "use_site_target",
+              "text": "field :"
+            },
+            {
+              "type": "use_site_target",
+              "text": "receiver:"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V14-01",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02",
+        "kotlin-V14"
+      ],
+      "alternatives": [
+        "kotlin-V14.a003",
+        "kotlin-V14.a004",
+        "kotlin-V14.a002",
+        "kotlin-V14.a001",
+        "kotlin-V14.a005",
+        "kotlin-V14.a020",
+        "kotlin-V14.a021",
+        "kotlin-V14.a022",
+        "kotlin-V14.a023",
+        "kotlin-V14.a024",
+        "kotlin-V14.a025",
+        "kotlin-B01.a436",
+        "kotlin-B01.a474",
+        "kotlin-B02.a003",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a021",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a040",
+        "kotlin-B01.a042",
+        "kotlin-B01.a046",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a054",
+        "kotlin-B01.a064",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a075",
+        "kotlin-B01.a076",
+        "kotlin-B01.a092",
+        "kotlin-B01.a101",
+        "kotlin-B01.a107",
+        "kotlin-B01.a111",
+        "kotlin-B01.a113",
+        "kotlin-B01.a125",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a287",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a306",
+        "kotlin-B01.a308",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a320",
+        "kotlin-B01.a330",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a341",
+        "kotlin-B01.a342",
+        "kotlin-B01.a358",
+        "kotlin-B01.a367",
+        "kotlin-B01.a373",
+        "kotlin-B01.a377",
+        "kotlin-B01.a379",
+        "kotlin-B01.a391"
+      ],
+      "source_utf8": "fun interface IntPredicate { fun accept(i: Int): Boolean }\nval isEven = IntPredicate { it % 2 == 0 }\n@JvmInline\nvalue class Password(private val s: String)\nfun <T> elvisLike(x: T, y: T & Any): T & Any = x ?: y\ninterface Wrap<T> { fun get(t: T & Any): (T & Any)? = null; fun paren(t: (T) & Any) = t }\nsealed interface Cmd\ndata object Stop : Cmd\ndata object Go : Cmd { const val CODE = 1 }\nfun until(n: Int) { for (i in 0..<n) println(i); val r = 0 ..< n }\nfun value() { val value = 1 }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "non_nullable_type",
+            "range_expression",
+            "for_statement"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "fun interface IntPredicate { fun accept(i: Int): Boolean }"
+            },
+            {
+              "type": "call_expression",
+              "text": "IntPredicate { it % 2 == 0 }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@JvmInline\nvalue class Password(private val s: String)"
+            },
+            {
+              "type": "class_modifier",
+              "text": "value",
+              "occurrence": 1
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T> elvisLike(x: T, y: T & Any): T & Any = x ?: y"
+            },
+            {
+              "type": "non_nullable_type",
+              "text": "T & Any",
+              "occurrence": 1
+            },
+            {
+              "type": "non_nullable_type",
+              "text": "T & Any",
+              "occurrence": 2
+            },
+            {
+              "type": "class_declaration",
+              "text": "interface Wrap<T> { fun get(t: T & Any): (T & Any)? = null; fun paren(t: (T) & Any) = t }"
+            },
+            {
+              "type": "non_nullable_type",
+              "text": "T & Any",
+              "occurrence": 3
+            },
+            {
+              "type": "nullable_type",
+              "text": "(T & Any)?"
+            },
+            {
+              "type": "non_nullable_type",
+              "text": "(T) & Any"
+            },
+            {
+              "type": "parenthesized_type",
+              "text": "(T)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "sealed interface Cmd"
+            },
+            {
+              "type": "object_declaration",
+              "text": "data object Stop : Cmd"
+            },
+            {
+              "type": "object_declaration",
+              "text": "data object Go : Cmd { const val CODE = 1 }"
+            },
+            {
+              "type": "class_modifier",
+              "text": "data",
+              "occurrence": 1
+            },
+            {
+              "type": "class_modifier",
+              "text": "data",
+              "occurrence": 2
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun until(n: Int) { for (i in 0..<n) println(i); val r = 0 ..< n }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (i in 0..<n) println(i)"
+            },
+            {
+              "type": "range_expression",
+              "text": "0..<n"
+            },
+            {
+              "type": "range_expression",
+              "text": "0 ..< n"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun value() { val value = 1 }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val value = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V14-02",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V14"
+      ],
+      "alternatives": [
+        "kotlin-V14.a006",
+        "kotlin-V14.a007",
+        "kotlin-V14.a008",
+        "kotlin-V14.a009",
+        "kotlin-V14.a010",
+        "kotlin-V14.a011",
+        "kotlin-V14.a012",
+        "kotlin-V14.a013",
+        "kotlin-V14.a014",
+        "kotlin-V14.a015",
+        "kotlin-V14.a016",
+        "kotlin-V14.a017",
+        "kotlin-V14.a018",
+        "kotlin-V14.a019",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a016",
+        "kotlin-B01.a017",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a023",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a042",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a062",
+        "kotlin-B01.a064",
+        "kotlin-B01.a065",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a087",
+        "kotlin-B01.a088",
+        "kotlin-B01.a089",
+        "kotlin-B01.a090",
+        "kotlin-B01.a112",
+        "kotlin-B01.a116",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a282",
+        "kotlin-B01.a283",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a289",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a308",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a328",
+        "kotlin-B01.a330",
+        "kotlin-B01.a331",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a353",
+        "kotlin-B01.a354",
+        "kotlin-B01.a355",
+        "kotlin-B01.a356",
+        "kotlin-B01.a378",
+        "kotlin-B01.a382"
+      ],
+      "source_utf8": "class Tc<T, U,>(\n    val a: Int,\n    val b: Int,\n) {\n    var p: Int = 0\n        set(value,) { field = value }\n    fun f(\n        x: Int,\n        y: Int,\n    ): Int = x\n}\nannotation class Ann(val v: Array<String>)\n@Ann([\"a\", \"b\",]) class UseAnn\nfun use(t: Tc<Int, String,>, m: Map<String, Int>, ft: (Int, String,) -> Unit, arr: IntArray, grid: Array<IntArray>) {\n    t.f(1, 2,)\n    val g = grid[0][1]\n    val (k, v,) = Pair(1, 2)\n    m.forEach { k, v, -> println(k) }\n    when (k) { 1, 2, -> println() else -> { } }\n    val an = fun(a: Int, b: Int,) = a + b\n    try { } catch (e: Exception,) { }\n}\nclass Idx { operator fun get(i: Int, j: Int) = i }\nfun idx(x: Idx) = x[1, 2,]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_parameters",
+            "type_parameters",
+            "type_arguments",
+            "value_arguments",
+            "setter",
+            "function_value_parameters",
+            "function_type_parameters",
+            "multi_variable_declaration",
+            "lambda_parameters",
+            "when_entry",
+            "anonymous_function",
+            "catch_block",
+            "index_expression",
+            "collection_literal"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Tc<T, U,>(\n    val a: Int,\n    val b: Int,\n) {\n    var p: Int = 0\n        set(value,) { field = value }\n    fun f(\n        x: Int,\n        y: Int,\n    ): Int = x\n}"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T, U,>"
+            },
+            {
+              "type": "class_parameters",
+              "text": "(\n    val a: Int,\n    val b: Int,\n)"
+            },
+            {
+              "type": "property_declaration",
+              "text": "var p: Int = 0\n        set(value,) { field = value }"
+            },
+            {
+              "type": "setter",
+              "text": "set(value,) { field = value }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun f(\n        x: Int,\n        y: Int,\n    ): Int = x"
+            },
+            {
+              "type": "function_value_parameters",
+              "text": "(\n        x: Int,\n        y: Int,\n    )"
+            },
+            {
+              "type": "class_declaration",
+              "text": "annotation class Ann(val v: Array<String>)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@Ann([\"a\", \"b\",]) class UseAnn"
+            },
+            {
+              "type": "collection_literal",
+              "text": "[\"a\", \"b\",]"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun use(t: Tc<Int, String,>, m: Map<String, Int>, ft: (Int, String,) -> Unit, arr: IntArray, grid: Array<IntArray>) {\n    t.f(1, 2,)\n    val g = grid[0][1]\n    val (k, v,) = Pair(1, 2)\n    m.forEach { k, v, -> println(k) }\n    when (k) { 1, 2, -> println() else -> { } }\n    val an = fun(a: Int, b: Int,) = a + b\n    try { } catch (e: Exception,) { }\n}"
+            },
+            {
+              "type": "type_arguments",
+              "text": "<Int, String,>"
+            },
+            {
+              "type": "function_type",
+              "text": "(Int, String,) -> Unit"
+            },
+            {
+              "type": "function_type_parameters",
+              "text": "(Int, String,)"
+            },
+            {
+              "type": "call_expression",
+              "text": "t.f(1, 2,)"
+            },
+            {
+              "type": "value_arguments",
+              "text": "(1, 2,)"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val (k, v,) = Pair(1, 2)"
+            },
+            {
+              "type": "multi_variable_declaration",
+              "text": "(k, v,)"
+            },
+            {
+              "type": "lambda_literal",
+              "text": "{ k, v, -> println(k) }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "k, v,",
+              "occurrence": 1
+            },
+            {
+              "type": "when_expression",
+              "text": "when (k) { 1, 2, -> println() else -> { } }"
+            },
+            {
+              "type": "when_entry",
+              "text": "1, 2, -> println()"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "fun(a: Int, b: Int,) = a + b"
+            },
+            {
+              "type": "function_value_parameters",
+              "text": "(a: Int, b: Int,)"
+            },
+            {
+              "type": "catch_block",
+              "text": "catch (e: Exception,) { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Idx { operator fun get(i: Int, j: Int) = i }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun idx(x: Idx) = x[1, 2,]"
+            },
+            {
+              "type": "index_expression",
+              "text": "x[1, 2,]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V22-01",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V22"
+      ],
+      "alternatives": [
+        "kotlin-V22.a001",
+        "kotlin-V22.a002",
+        "kotlin-V22.a003",
+        "kotlin-V22.a004",
+        "kotlin-V22.a005",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a021",
+        "kotlin-B01.a027",
+        "kotlin-B01.a030",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a039",
+        "kotlin-B01.a040",
+        "kotlin-B01.a048",
+        "kotlin-B01.a054",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a086",
+        "kotlin-B01.a087",
+        "kotlin-B01.a088",
+        "kotlin-B01.a100",
+        "kotlin-B01.a101",
+        "kotlin-B01.a111",
+        "kotlin-B01.a113",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a287",
+        "kotlin-B01.a293",
+        "kotlin-B01.a296",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a305",
+        "kotlin-B01.a306",
+        "kotlin-B01.a314",
+        "kotlin-B01.a320",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a352",
+        "kotlin-B01.a353",
+        "kotlin-B01.a354",
+        "kotlin-B01.a366",
+        "kotlin-B01.a367",
+        "kotlin-B01.a377",
+        "kotlin-B01.a379"
+      ],
+      "source_utf8": "sealed interface Animal { data class Cat(val hunter: Boolean) : Animal; data class Dog(val plants: Boolean) : Animal }\nfun feed(a: Animal, n: Int) {\n    when (a) {\n        is Animal.Dog -> println(\"dog\")\n        is Animal.Cat if !a.hunter -> println(\"cat\")\n        is Animal.Cat if (a.hunter && n > 0) -> println(\"hunter\")\n        else if n > 5 -> println(\"many\")\n        else -> println(\"other\")\n    }\n    when (n) {\n        0 if a is Animal.Cat -> { }\n        in 1..3 if n % 2 == 1 -> { }\n        else -> { }\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "when_expression",
+            "when_subject",
+            "when_entry",
+            "type_test",
+            "range_test",
+            "if_expression"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "sealed interface Animal { data class Cat(val hunter: Boolean) : Animal; data class Dog(val plants: Boolean) : Animal }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun feed(a: Animal, n: Int) {\n    when (a) {\n        is Animal.Dog -> println(\"dog\")\n        is Animal.Cat if !a.hunter -> println(\"cat\")\n        is Animal.Cat if (a.hunter && n > 0) -> println(\"hunter\")\n        else if n > 5 -> println(\"many\")\n        else -> println(\"other\")\n    }\n    when (n) {\n        0 if a is Animal.Cat -> { }\n        in 1..3 if n % 2 == 1 -> { }\n        else -> { }\n    }\n}"
+            },
+            {
+              "type": "when_expression",
+              "text": "when (a) {\n        is Animal.Dog -> println(\"dog\")\n        is Animal.Cat if !a.hunter -> println(\"cat\")\n        is Animal.Cat if (a.hunter && n > 0) -> println(\"hunter\")\n        else if n > 5 -> println(\"many\")\n        else -> println(\"other\")\n    }"
+            },
+            {
+              "type": "when_entry",
+              "text": "is Animal.Dog -> println(\"dog\")"
+            },
+            {
+              "type": "when_entry",
+              "text": "is Animal.Cat if !a.hunter -> println(\"cat\")"
+            },
+            {
+              "type": "type_test",
+              "text": "is Animal.Cat",
+              "occurrence": 1
+            },
+            {
+              "type": "when_entry",
+              "text": "is Animal.Cat if (a.hunter && n > 0) -> println(\"hunter\")"
+            },
+            {
+              "type": "when_entry",
+              "text": "else if n > 5 -> println(\"many\")"
+            },
+            {
+              "type": "when_entry",
+              "text": "else -> println(\"other\")"
+            },
+            {
+              "type": "when_expression",
+              "text": "when (n) {\n        0 if a is Animal.Cat -> { }\n        in 1..3 if n % 2 == 1 -> { }\n        else -> { }\n    }"
+            },
+            {
+              "type": "when_entry",
+              "text": "0 if a is Animal.Cat -> { }"
+            },
+            {
+              "type": "when_entry",
+              "text": "in 1..3 if n % 2 == 1 -> { }"
+            },
+            {
+              "type": "range_test",
+              "text": "in 1..3"
+            },
+            {
+              "type": "when_entry",
+              "text": "else -> { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V22-02",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V22"
+      ],
+      "alternatives": [
+        "kotlin-V22.a006",
+        "kotlin-V22.a007",
+        "kotlin-V22.a008",
+        "kotlin-V22.a009",
+        "kotlin-V22.a010",
+        "kotlin-B01.a033",
+        "kotlin-B01.a076",
+        "kotlin-B01.a299",
+        "kotlin-B01.a342"
+      ],
+      "source_utf8": "val simpleName = \"Product\"\nval schema = $$\"\"\"\n    {\n      \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n      \"title\": \"$${simpleName.lowercase()}\",\n      \"id\": \"$$simpleName\"\n    }\n    \"\"\"\nval line = $$\"cost: $5 for $$simpleName and $${simpleName.length}\"\nval triple = $$$\"literal $$ and $$$simpleName\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "property_declaration",
+            "string_literal",
+            "multiline_string_literal",
+            "interpolation"
+          ],
+          "anchors": [
+            {
+              "type": "property_declaration",
+              "text": "val simpleName = \"Product\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val schema = $$\"\"\"\n    {\n      \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n      \"title\": \"$${simpleName.lowercase()}\",\n      \"id\": \"$$simpleName\"\n    }\n    \"\"\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val line = $$\"cost: $5 for $$simpleName and $${simpleName.length}\""
+            },
+            {
+              "type": "property_declaration",
+              "text": "val triple = $$$\"literal $$ and $$$simpleName\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V22-03",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V22"
+      ],
+      "alternatives": [
+        "kotlin-V22.a011",
+        "kotlin-V22.a012",
+        "kotlin-V22.a013",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a075",
+        "kotlin-B01.a078",
+        "kotlin-B01.a081",
+        "kotlin-B01.a107",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a341",
+        "kotlin-B01.a344",
+        "kotlin-B01.a347",
+        "kotlin-B01.a373"
+      ],
+      "source_utf8": "class Node\nclass Graph {\n    typealias Visited = Set<Node>\n    private typealias Edge = Pair<Node, Node>\n    typealias Mapper<T> = (T) -> Node\n    fun step(v: Visited, e: Edge) = v\n    companion object { typealias Id = Int }\n}\nobject Registry { typealias Key = String }\ninterface Api { typealias Handler = () -> Unit }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_body",
+            "type_alias",
+            "companion_object",
+            "object_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Node"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Graph {\n    typealias Visited = Set<Node>\n    private typealias Edge = Pair<Node, Node>\n    typealias Mapper<T> = (T) -> Node\n    fun step(v: Visited, e: Edge) = v\n    companion object { typealias Id = Int }\n}"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Visited = Set<Node>"
+            },
+            {
+              "type": "type_alias",
+              "text": "private typealias Edge = Pair<Node, Node>"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Mapper<T> = (T) -> Node"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T>"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun step(v: Visited, e: Edge) = v"
+            },
+            {
+              "type": "companion_object",
+              "text": "companion object { typealias Id = Int }"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Id = Int"
+            },
+            {
+              "type": "object_declaration",
+              "text": "object Registry { typealias Key = String }"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Key = String"
+            },
+            {
+              "type": "class_declaration",
+              "text": "interface Api { typealias Handler = () -> Unit }"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Handler = () -> Unit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V24-01",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V24"
+      ],
+      "alternatives": [
+        "kotlin-V24.a001",
+        "kotlin-V24.a002",
+        "kotlin-V24.a003",
+        "kotlin-V24.a004",
+        "kotlin-V24.a005",
+        "kotlin-V24.a006",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a039",
+        "kotlin-B01.a064",
+        "kotlin-B01.a072",
+        "kotlin-B01.a073",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a109",
+        "kotlin-B01.a117",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a305",
+        "kotlin-B01.a330",
+        "kotlin-B01.a338",
+        "kotlin-B01.a339",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a375",
+        "kotlin-B01.a383"
+      ],
+      "source_utf8": "interface UserService { fun log(m: String); fun find(id: Int): String }\ninterface Logger { fun info(m: String) }\ncontext(users: UserService)\nfun outputMessage(message: String) { users.log(message) }\ncontext(users: UserService)\nval firstUser: String\n    get() = users.find(1)\ncontext(_: UserService)\nfun logWelcome() { outputMessage(\"Welcome\") }\ncontext(users: UserService, logger: Logger)\ninternal inline fun both() { logger.info(users.find(2)) }\nclass Repo {\n    context(users: UserService)\n    fun String.describe() = users.find(length)\n}\nfun take(block: context(UserService) () -> Unit) {}\nval handler: context(UserService, Logger) (Int) -> String = { \"x\" }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "property_declaration",
+            "getter",
+            "class_declaration",
+            "function_type"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "interface UserService { fun log(m: String); fun find(id: Int): String }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "interface Logger { fun info(m: String) }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "context(users: UserService)\nfun outputMessage(message: String) { users.log(message) }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "context(users: UserService)\nval firstUser: String\n    get() = users.find(1)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "context(_: UserService)\nfun logWelcome() { outputMessage(\"Welcome\") }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "context(users: UserService, logger: Logger)\ninternal inline fun both() { logger.info(users.find(2)) }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Repo {\n    context(users: UserService)\n    fun String.describe() = users.find(length)\n}"
+            },
+            {
+              "type": "function_declaration",
+              "text": "context(users: UserService)\n    fun String.describe() = users.find(length)"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun take(block: context(UserService) () -> Unit) {}"
+            },
+            {
+              "type": "parameter",
+              "text": "block: context(UserService) () -> Unit"
+            },
+            {
+              "type": "function_type",
+              "text": "context(UserService) () -> Unit"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val handler: context(UserService, Logger) (Int) -> String = { \"x\" }"
+            },
+            {
+              "type": "function_type",
+              "text": "context(UserService, Logger) (Int) -> String"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-V24-02",
+      "features": [
+        "kotlin-B01",
+        "kotlin-V24"
+      ],
+      "alternatives": [
+        "kotlin-V24.a007",
+        "kotlin-V24.a008",
+        "kotlin-V24.a009",
+        "kotlin-V24.a010",
+        "kotlin-B01.a012",
+        "kotlin-B01.a013",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a032",
+        "kotlin-B01.a033",
+        "kotlin-B01.a042",
+        "kotlin-B01.a046",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a062",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a077",
+        "kotlin-B01.a112",
+        "kotlin-B01.a113",
+        "kotlin-B01.a278",
+        "kotlin-B01.a279",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a298",
+        "kotlin-B01.a299",
+        "kotlin-B01.a308",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a328",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a343",
+        "kotlin-B01.a378",
+        "kotlin-B01.a379"
+      ],
+      "source_utf8": "annotation class Email\ndata class User(val username: String, @all:Email val email: String) {\n    @all:Email val secondary: String? = null\n    @all:Email var mutableMail: String = \"\"\n}\nclass ShoppingCart {\n    val items: List<String>\n        field = mutableListOf()\n    val typed: List<String>\n        field: MutableList<String> = mutableListOf()\n    fun add(i: String) { items.add(i); typed.add(i) }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "class_parameter",
+            "annotation",
+            "use_site_target",
+            "property_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "annotation class Email"
+            },
+            {
+              "type": "class_declaration",
+              "text": "data class User(val username: String, @all:Email val email: String) {\n    @all:Email val secondary: String? = null\n    @all:Email var mutableMail: String = \"\"\n}"
+            },
+            {
+              "type": "class_parameter",
+              "text": "@all:Email val email: String"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@all:Email val secondary: String? = null"
+            },
+            {
+              "type": "property_declaration",
+              "text": "@all:Email var mutableMail: String = \"\""
+            },
+            {
+              "type": "annotation",
+              "text": "@all:Email",
+              "occurrence": 1
+            },
+            {
+              "type": "annotation",
+              "text": "@all:Email",
+              "occurrence": 2
+            },
+            {
+              "type": "annotation",
+              "text": "@all:Email",
+              "occurrence": 3
+            },
+            {
+              "type": "use_site_target",
+              "text": "all:",
+              "occurrence": 1
+            },
+            {
+              "type": "use_site_target",
+              "text": "all:",
+              "occurrence": 2
+            },
+            {
+              "type": "use_site_target",
+              "text": "all:",
+              "occurrence": 3
+            },
+            {
+              "type": "class_declaration",
+              "text": "class ShoppingCart {\n    val items: List<String>\n        field = mutableListOf()\n    val typed: List<String>\n        field: MutableList<String> = mutableListOf()\n    fun add(i: String) { items.add(i); typed.add(i) }\n}"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val items: List<String>\n        field = mutableListOf()"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val typed: List<String>\n        field: MutableList<String> = mutableListOf()"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun add(i: String) { items.add(i); typed.add(i) }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-07",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a057",
+        "kotlin-B02.a050",
+        "kotlin-B02.a025",
+        "kotlin-B01.a012",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a046",
+        "kotlin-B01.a047",
+        "kotlin-B01.a048",
+        "kotlin-B01.a072",
+        "kotlin-B01.a074",
+        "kotlin-B01.a077",
+        "kotlin-B01.a278",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a312",
+        "kotlin-B01.a313",
+        "kotlin-B01.a314",
+        "kotlin-B01.a338",
+        "kotlin-B01.a340",
+        "kotlin-B01.a343"
+      ],
+      "source_utf8": "class Holder { var item: Any? = null }\nfun typeArgAssign(h: Holder) {\n    h.item<Int> = 1\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "assignment"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Holder { var item: Any? = null }"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun typeArgAssign(h: Holder) {\n    h.item<Int> = 1\n}"
+            },
+            {
+              "type": "assignment",
+              "text": "h.item<Int> = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-kotlin-B02-08",
+      "features": [
+        "kotlin-B01",
+        "kotlin-B02"
+      ],
+      "alternatives": [
+        "kotlin-B02.a086",
+        "kotlin-B02.a088",
+        "kotlin-B02.a002",
+        "kotlin-B01.a014",
+        "kotlin-B01.a015",
+        "kotlin-B01.a018",
+        "kotlin-B01.a019",
+        "kotlin-B01.a031",
+        "kotlin-B01.a033",
+        "kotlin-B01.a074",
+        "kotlin-B01.a076",
+        "kotlin-B01.a096",
+        "kotlin-B01.a120",
+        "kotlin-B01.a280",
+        "kotlin-B01.a281",
+        "kotlin-B01.a284",
+        "kotlin-B01.a285",
+        "kotlin-B01.a297",
+        "kotlin-B01.a299",
+        "kotlin-B01.a340",
+        "kotlin-B01.a342",
+        "kotlin-B01.a362",
+        "kotlin-B01.a386"
+      ],
+      "source_utf8": "fun anon() {\n    val f = suspend fun() { }\n    val g = suspend fun(x: Int): Int { return x }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "anonymous_function"
+          ],
+          "anchors": [
+            {
+              "type": "function_declaration",
+              "text": "fun anon() {\n    val f = suspend fun() { }\n    val g = suspend fun(x: Int): Int { return x }\n}"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val f = suspend fun() { }"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "suspend fun() { }"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val g = suspend fun(x: Int): Int { return x }"
+            },
+            {
+              "type": "anonymous_function",
+              "text": "suspend fun(x: Int): Int { return x }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-B01-NR-1",
+      "features": [
+        "kotlin-B01"
+      ],
+      "source_utf8": "package com.example.shop\n\nimport kotlin.math.max as maximum\n\nannotation class Audit(val level: Int)\n\ninterface Priced { val price: Int }\n\n@Audit(1)\nclass Item(val name: String, override val price: Int) : Priced {\n    var count: Int = 0\n        get() = field\n        set(value) { field = maximum(value, 0) }\n    val label by lazy { \"item:$name\" }\n    constructor(name: String) : this(name, 0)\n}\n\nobject Registry {\n    fun <T : Priced> total(items: List<T>): Int = items.sumOf { it.price }\n}\n\ntypealias Items = List<Item>\nenum class Size { SMALL, LARGE }\n",
+      "edits": [
+        {
+          "find": "import kotlin.math.max as maximum",
+          "replace": "import kotlin..math.max as maximum"
+        },
+        {
+          "find": "import kotlin..math.max as maximum",
+          "replace": "import kotlin.math.max as maximum"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_header",
+            "import",
+            "class_declaration",
+            "property_delegate",
+            "getter",
+            "setter",
+            "secondary_constructor",
+            "object_declaration",
+            "type_alias"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "type_alias"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "annotation class Audit(val level: Int)"
+            },
+            {
+              "type": "object_declaration",
+              "text": "object Registry {\n    fun <T : Priced> total(items: List<T>): Int = items.sumOf { it.price }\n}"
+            },
+            {
+              "type": "type_alias",
+              "text": "typealias Items = List<Item>"
+            },
+            {
+              "type": "class_declaration",
+              "text": "enum class Size { SMALL, LARGE }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_header",
+            "import",
+            "class_declaration",
+            "property_delegate",
+            "getter",
+            "setter",
+            "secondary_constructor",
+            "object_declaration",
+            "type_alias"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-B02-RQ-1",
+      "features": [
+        "kotlin-B02"
+      ],
+      "source_utf8": "fun classify(input: Any?): String {\n    val text = input?.toString() ?: return \"none\"\n    val (first, second) = text.split(\",\").let { it[0] to it.getOrElse(1) { \"\" } }\n    loop@ for (i in 0 until 3) {\n        if (i == 1) continue@loop\n    }\n    val f: suspend (Int) -> Int = { it * 2 }\n    return try {\n        when (input) {\n            is Int -> \"int\"\n            in listOf(\"a\", \"b\") -> \"letter\"\n            else -> first + second\n        }\n    } catch (e: IllegalStateException) {\n        \"error\"\n    } finally {\n        println(\"done\")\n    }\n}\nclass Holder(@field:Transient val value: Int)\n",
+      "edits": [
+        {
+          "find": "if (i == 1) continue@loop",
+          "replace": "if (i == ) continue@loop"
+        },
+        {
+          "find": "if (i == ) continue@loop",
+          "replace": "if (i == 1) continue@loop"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "for_statement",
+            "try_expression",
+            "when_expression",
+            "catch_block",
+            "class_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "try_expression",
+            "when_expression",
+            "catch_block",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Holder(@field:Transient val value: Int)"
+            },
+            {
+              "type": "property_declaration",
+              "text": "val f: suspend (Int) -> Int = { it * 2 }"
+            },
+            {
+              "type": "catch_block",
+              "text": "catch (e: IllegalStateException) {\n        \"error\"\n    }"
+            },
+            {
+              "type": "when_entry",
+              "text": "is Int -> \"int\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration",
+            "for_statement",
+            "try_expression",
+            "when_expression",
+            "catch_block",
+            "class_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V14-PNE-1",
+      "features": [
+        "kotlin-V14"
+      ],
+      "source_utf8": "fun interface Mapper {\n    fun map(x: Int): Int\n}\n@JvmInline\nvalue class Meters(val value: Int)\ndata object Empty\nfun <T> orDefault(x: T, y: T & Any,): T & Any = x ?: y\nfun main() {\n    val double = Mapper { it * 2 }\n    for (i in 0..<3) {\n        println(double.map(i))\n    }\n    val items = listOf(\n        1,\n        2,\n    )\n}\n",
+      "edits": [
+        {
+          "find": "0..<3",
+          "replace": "0..<5"
+        },
+        {
+          "find": "0..<5",
+          "replace": "0..<"
+        },
+        {
+          "find": "0..<",
+          "replace": "0..<3"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "function_declaration",
+            "non_nullable_type",
+            "range_expression"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "function_declaration",
+            "non_nullable_type",
+            "range_expression"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "non_nullable_type"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "fun interface Mapper {\n    fun map(x: Int): Int\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@JvmInline\nvalue class Meters(val value: Int)"
+            },
+            {
+              "type": "object_declaration",
+              "text": "data object Empty"
+            },
+            {
+              "type": "function_declaration",
+              "text": "fun <T> orDefault(x: T, y: T & Any,): T & Any = x ?: y"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "function_declaration",
+            "non_nullable_type",
+            "range_expression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V22-PNRE-1",
+      "features": [
+        "kotlin-V22"
+      ],
+      "source_utf8": "sealed interface Status {\n    data object Loading : Status\n    data class Ok(val info: List<String>) : Status\n}\nclass Screen {\n    typealias Lines = List<String>\n    fun render(status: Status): String = when (status) {\n        Status.Loading -> \"loading\"\n        is Status.Ok if status.info.isEmpty() -> \"no data\"\n        is Status.Ok -> status.info.joinToString()\n    }\n    val schema = $$\"\"\"{\"$id\": \"$${render(Status.Loading)}\"}\"\"\"\n}\n",
+      "edits": [
+        {
+          "find": "\"loading\"",
+          "replace": "\"wait\""
+        },
+        {
+          "find": "is Status.Ok if status.info.isEmpty() ->",
+          "replace": "is Status.Ok if ->"
+        },
+        {
+          "find": "is Status.Ok if ->",
+          "replace": "is Status.Ok if status.info.isEmpty() ->"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "type_alias",
+            "when_expression",
+            "property_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "type_alias",
+            "when_expression",
+            "property_declaration"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "property_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "sealed interface Status {\n    data object Loading : Status\n    data class Ok(val info: List<String>) : Status\n}"
+            },
+            {
+              "type": "object_declaration",
+              "text": "data object Loading : Status"
+            },
+            {
+              "type": "class_declaration",
+              "text": "data class Ok(val info: List<String>) : Status"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "object_declaration",
+            "type_alias",
+            "when_expression",
+            "property_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-kotlin-V24-PNRE-1",
+      "features": [
+        "kotlin-V24"
+      ],
+      "source_utf8": "class UserService {\n    fun log(message: String) = println(message)\n}\ncontext(users: UserService)\nfun outputMessage(message: String) {\n    users.log(\"Log: $message\")\n}\ncontext(_: UserService)\nval greeting: String\n    get() = \"hi\"\nclass ShoppingCart {\n    val items: List<String>\n        field = mutableListOf()\n    fun addItem(item: String) {\n        items.add(item)\n    }\n}\ndata class User(val username: String, @all:Email val email: String)\nannotation class Email\n",
+      "edits": [
+        {
+          "find": "\"Log: $message\"",
+          "replace": "\"Info: $message\""
+        },
+        {
+          "find": "context(users: UserService)",
+          "replace": "context(users: )"
+        },
+        {
+          "find": "context(users: )",
+          "replace": "context(users: UserService)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "function_declaration",
+            "property_declaration",
+            "getter"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "function_declaration",
+            "property_declaration",
+            "getter"
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "property_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class UserService {\n    fun log(message: String) = println(message)\n}"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "function_declaration",
+            "property_declaration",
+            "getter"
+          ]
+        }
+      ]
     }
   ]
 }

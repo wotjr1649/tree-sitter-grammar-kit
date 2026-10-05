@@ -5,6 +5,22 @@
     {
       "id": "q.structure",
       "source": "(class_declaration name: (identifier) @class)\n(interface_declaration name: (identifier) @interface)\n(record_declaration name: (identifier) @record)\n(method_declaration name: (identifier) @method)\n"
+    },
+    {
+      "id": "q.probe-v9",
+      "source": "(module_declaration name: (_) @module)\n(requires_module_directive module: (_) @requires)\n"
+    },
+    {
+      "id": "q.probe-v21",
+      "source": "(record_pattern (identifier) @record)\n(guard) @guard\n"
+    },
+    {
+      "id": "q.probe-v25-compact",
+      "source": "(program (method_declaration name: (identifier) @method))\n"
+    },
+    {
+      "id": "q.probe-v25-ctor",
+      "source": "(constructor_body (explicit_constructor_invocation constructor: (_) @invocation))\n"
     }
   ],
   "cases": [
@@ -66,6 +82,143 @@
               "name": "method",
               "type": "identifier",
               "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V9-Q-1",
+      "source_case": "probe-java-V9-N-1",
+      "features": [
+        "java-V9"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v9",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "module",
+              "type": "scoped_identifier",
+              "text": "com.example.app"
+            },
+            {
+              "name": "requires",
+              "type": "scoped_identifier",
+              "text": "java.sql"
+            },
+            {
+              "name": "requires",
+              "type": "scoped_identifier",
+              "text": "java.compiler"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V21-Q-1",
+      "source_case": "probe-java-V21-NR-1",
+      "features": [
+        "java-V21"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v21",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Box"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Point"
+            },
+            {
+              "name": "guard",
+              "type": "guard",
+              "text": "when x1 == y1"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Box"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Point"
+            },
+            {
+              "name": "record",
+              "type": "identifier",
+              "text": "Dot"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V25-Q-1",
+      "source_case": "probe-java-V25-PNRE-1",
+      "features": [
+        "java-V25"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v25-compact",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "main"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "shout"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V25-Q-2",
+      "source_case": "probe-java-V25-PNRE-2",
+      "features": [
+        "java-V25"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v25-ctor",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "invocation",
+              "type": "super",
+              "text": "super"
+            },
+            {
+              "name": "invocation",
+              "type": "super",
+              "text": "super"
             }
           ],
           "error": null

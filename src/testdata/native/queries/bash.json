@@ -5,6 +5,10 @@
     {
       "id": "q.structure",
       "source": "(function_definition name: (word) @function)\n(for_statement variable: (variable_name) @loop)\n(variable_assignment name: (variable_name) @variable)\n"
+    },
+    {
+      "id": "q.probe-v4",
+      "source": "(subscript name: (variable_name) @assoc_name index: (word) @assoc_key)\n(case_item fallthrough: _) @fallthrough_item\n"
     }
   ],
   "cases": [
@@ -66,6 +70,54 @@
               "name": "variable",
               "type": "variable_name",
               "text": "total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-bash-V4-Q-1",
+      "source_case": "probe-bash-V4-NRQ-1",
+      "features": [
+        "bash-V4"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v4",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "assoc_name",
+              "type": "variable_name",
+              "text": "color"
+            },
+            {
+              "name": "assoc_key",
+              "type": "word",
+              "text": "apple"
+            },
+            {
+              "name": "fallthrough_item",
+              "type": "case_item",
+              "text": "a) echo one ;&"
+            },
+            {
+              "name": "fallthrough_item",
+              "type": "case_item",
+              "text": "b) echo two ;;&"
+            },
+            {
+              "name": "assoc_name",
+              "type": "variable_name",
+              "text": "color"
+            },
+            {
+              "name": "assoc_key",
+              "type": "word",
+              "text": "apple"
             }
           ],
           "error": null

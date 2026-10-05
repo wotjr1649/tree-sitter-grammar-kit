@@ -99,6 +99,1412 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-r-B01-01",
+      "features": [
+        "r-B01"
+      ],
+      "alternatives": [
+        "r-B01.a001",
+        "r-B01.a002",
+        "r-B01.a003",
+        "r-B01.a004",
+        "r-B01.a005",
+        "r-B01.a006",
+        "r-B01.a007",
+        "r-B01.a008",
+        "r-B01.a009",
+        "r-B01.a010",
+        "r-B01.a011",
+        "r-B01.a012",
+        "r-B01.a013",
+        "r-B01.a014",
+        "r-B01.a015",
+        "r-B01.a016",
+        "r-B01.a017",
+        "r-B01.a018",
+        "r-B01.a019",
+        "r-B01.a020",
+        "r-B01.a021",
+        "r-B01.a022",
+        "r-B01.a023",
+        "r-B01.a024",
+        "r-B01.a025",
+        "r-B01.a026",
+        "r-B01.a027",
+        "r-B01.a028",
+        "r-B01.a029",
+        "r-B01.a030",
+        "r-B01.a031",
+        "r-B01.a032",
+        "r-B01.a033",
+        "r-B01.a034",
+        "r-B01.a035",
+        "r-B01.a036",
+        "r-B01.a037",
+        "r-B01.a038",
+        "r-B01.a048",
+        "r-B01.a049",
+        "r-B01.a050",
+        "r-B01.a051",
+        "r-B01.a052",
+        "r-B01.a053",
+        "r-B01.a054",
+        "r-B01.a055",
+        "r-B01.a056",
+        "r-B01.a057",
+        "r-B01.a067",
+        "r-B01.a068",
+        "r-B01.a069",
+        "r-B01.a070",
+        "r-B01.a089",
+        "r-B01.a105",
+        "r-B01.a110"
+      ],
+      "source_utf8": "# comment line\nx <- 1  # trailing comment\ny <- \"  #... but this is not.\"\nn <- c(1, 10, 0.1, .2, 1e-7, 1.2e+7, 5., 0x10, 0XAbC, 0x1.1p1, 0x1P-2)\ni <- c(1L, 0x10L, 1000000L, 1e6L)\nz <- c(2i, 4.1i, 1e-2i)\nl <- c(TRUE, FALSE, NA, NULL, Inf, NaN, NA_integer_, NA_real_, NA_complex_, NA_character_)\ns <- c('single', \"double\", \"it's\", 'say \"hi\"')\ne1 <- \"\\' \\\" \\n \\r \\t \\b \\a \\f \\v \\\\ \\` \\101 \\x41\"\ne2 <- '\\u00e9 \\u{e9} \\U0001F600 \\U{1F600}'\n.hidden <- 1; a.b_c2 <- 2; `odd name` <- 3; \"str\" <- 4\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "float",
+            "integer",
+            "complex",
+            "true",
+            "false",
+            "na",
+            "null",
+            "inf",
+            "nan",
+            "string",
+            "escape_sequence",
+            "identifier",
+            "binary_operator",
+            "call"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# comment line"
+            },
+            {
+              "type": "comment",
+              "text": "# trailing comment"
+            },
+            {
+              "type": "string",
+              "text": "\"  #... but this is not.\""
+            },
+            {
+              "type": "float",
+              "text": "0.1"
+            },
+            {
+              "type": "float",
+              "text": "10",
+              "occurrence": 1
+            },
+            {
+              "type": "float",
+              "text": ".2",
+              "occurrence": 1
+            },
+            {
+              "type": "float",
+              "text": "5."
+            },
+            {
+              "type": "float",
+              "text": "1e-7"
+            },
+            {
+              "type": "float",
+              "text": "1.2e+7"
+            },
+            {
+              "type": "float",
+              "text": "0x10",
+              "occurrence": 1
+            },
+            {
+              "type": "float",
+              "text": "0XAbC"
+            },
+            {
+              "type": "float",
+              "text": "0x1.1p1"
+            },
+            {
+              "type": "float",
+              "text": "0x1P-2"
+            },
+            {
+              "type": "integer",
+              "text": "1L"
+            },
+            {
+              "type": "integer",
+              "text": "0x10L"
+            },
+            {
+              "type": "integer",
+              "text": "1e6L"
+            },
+            {
+              "type": "complex",
+              "text": "2i",
+              "occurrence": 1
+            },
+            {
+              "type": "complex",
+              "text": "4.1i"
+            },
+            {
+              "type": "complex",
+              "text": "1e-2i"
+            },
+            {
+              "type": "true",
+              "text": "TRUE"
+            },
+            {
+              "type": "false",
+              "text": "FALSE"
+            },
+            {
+              "type": "na",
+              "text": "NA",
+              "occurrence": 1
+            },
+            {
+              "type": "null",
+              "text": "NULL"
+            },
+            {
+              "type": "inf",
+              "text": "Inf"
+            },
+            {
+              "type": "nan",
+              "text": "NaN"
+            },
+            {
+              "type": "na",
+              "text": "NA_integer_"
+            },
+            {
+              "type": "na",
+              "text": "NA_real_"
+            },
+            {
+              "type": "na",
+              "text": "NA_complex_"
+            },
+            {
+              "type": "na",
+              "text": "NA_character_"
+            },
+            {
+              "type": "string",
+              "text": "'single'"
+            },
+            {
+              "type": "string",
+              "text": "\"double\""
+            },
+            {
+              "type": "string",
+              "text": "\"it's\""
+            },
+            {
+              "type": "string",
+              "text": "'say \"hi\"'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\'"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\r"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\b"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\a"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\f"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\v"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\`"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\101"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u00e9"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{e9}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\U0001F600"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\U{1F600}"
+            },
+            {
+              "type": "identifier",
+              "text": "a.b_c2"
+            },
+            {
+              "type": "identifier",
+              "text": ".hidden"
+            },
+            {
+              "type": "identifier",
+              "text": "`odd name`"
+            },
+            {
+              "type": "string",
+              "text": "\"str\""
+            },
+            {
+              "type": "binary_operator",
+              "text": "x <- 1"
+            },
+            {
+              "type": "binary_operator",
+              "text": ".hidden <- 1"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a.b_c2 <- 2"
+            },
+            {
+              "type": "call",
+              "text": "c(2i, 4.1i, 1e-2i)"
+            },
+            {
+              "type": "arguments",
+              "text": "(1L, 0x10L, 1000000L, 1e6L)"
+            },
+            {
+              "type": "argument",
+              "text": "0.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-B01-02",
+      "features": [
+        "r-B01"
+      ],
+      "alternatives": [
+        "r-B01.a060",
+        "r-B01.a061",
+        "r-B01.a062",
+        "r-B01.a063",
+        "r-B01.a064",
+        "r-B01.a065",
+        "r-B01.a066",
+        "r-B01.a068",
+        "r-B01.a069",
+        "r-B01.a070",
+        "r-B01.a071",
+        "r-B01.a072",
+        "r-B01.a073",
+        "r-B01.a074",
+        "r-B01.a075",
+        "r-B01.a076",
+        "r-B01.a077",
+        "r-B01.a078",
+        "r-B01.a079",
+        "r-B01.a080",
+        "r-B01.a081",
+        "r-B01.a082",
+        "r-B01.a083",
+        "r-B01.a084",
+        "r-B01.a085",
+        "r-B01.a086",
+        "r-B01.a087",
+        "r-B01.a088",
+        "r-B01.a089",
+        "r-B01.a091",
+        "r-B01.a092",
+        "r-B01.a093",
+        "r-B01.a094",
+        "r-B01.a095",
+        "r-B01.a096",
+        "r-B01.a097",
+        "r-B01.a098",
+        "r-B01.a099",
+        "r-B01.a100",
+        "r-B01.a101",
+        "r-B01.a102",
+        "r-B01.a103",
+        "r-B01.a104",
+        "r-B01.a105",
+        "r-B01.a110"
+      ],
+      "source_utf8": "r <- -a + +b - c * d / e ^ f %% g %/% h\nq <- a > b & a >= b | a < b & a <= b | a == b & a != b\np <- !a && b || c\nm <- a %in% b; m2 <- a %*% b; m3 <- a %o% b; m4 <- a %x% b; m5 <- a %my op% b\ns <- 1:10\nf <- y ~ x + z; g <- ~ x\nx -> w; x ->> w2; w3 <<- x; w4 = x\nv <- base::sum(x); sl <- obj@name\nk <- 2 ^ 2 ^ 3; k2 <- 1 - 1 - 1\nk3 <- (a + b) * c\n2 + 2 <- 5\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_operator",
+            "unary_operator",
+            "namespace_operator",
+            "extract_operator",
+            "parenthesized_expression",
+            "call"
+          ],
+          "anchors": [
+            {
+              "type": "binary_operator",
+              "text": "a %my op% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "e ^ f %% g"
+            },
+            {
+              "type": "binary_operator",
+              "text": "e ^ f %% g %/% h"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a %*% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a %in% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a %o% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a %x% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "m <- a %in% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "m2 <- a %*% b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "-a + +b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "-a + +b - c * d / e ^ f %% g %/% h"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c * d"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c * d / e ^ f %% g %/% h"
+            },
+            {
+              "type": "binary_operator",
+              "text": "e ^ f"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a > b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a >= b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a < b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a <= b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a == b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a != b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a > b & a >= b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "a > b & a >= b | a < b & a <= b"
+            },
+            {
+              "type": "unary_operator",
+              "text": "!a"
+            },
+            {
+              "type": "binary_operator",
+              "text": "!a && b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "!a && b || c"
+            },
+            {
+              "type": "binary_operator",
+              "text": "y ~ x + z"
+            },
+            {
+              "type": "unary_operator",
+              "text": "~ x",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_operator",
+              "text": "x -> w"
+            },
+            {
+              "type": "binary_operator",
+              "text": "x ->> w2"
+            },
+            {
+              "type": "binary_operator",
+              "text": "w3 <<- x"
+            },
+            {
+              "type": "binary_operator",
+              "text": "w4 = x"
+            },
+            {
+              "type": "binary_operator",
+              "text": "1:10"
+            },
+            {
+              "type": "namespace_operator",
+              "text": "base::sum"
+            },
+            {
+              "type": "extract_operator",
+              "text": "obj@name"
+            },
+            {
+              "type": "unary_operator",
+              "text": "-a"
+            },
+            {
+              "type": "unary_operator",
+              "text": "+b"
+            },
+            {
+              "type": "binary_operator",
+              "text": "2 ^ 2 ^ 3"
+            },
+            {
+              "type": "binary_operator",
+              "text": "2 ^ 3"
+            },
+            {
+              "type": "binary_operator",
+              "text": "1 - 1 - 1"
+            },
+            {
+              "type": "binary_operator",
+              "text": "1 - 1",
+              "occurrence": 1
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(a + b)"
+            },
+            {
+              "type": "binary_operator",
+              "text": "2 + 2 <- 5"
+            },
+            {
+              "type": "binary_operator",
+              "text": "2 + 2"
+            },
+            {
+              "type": "call",
+              "text": "base::sum(x)"
+            },
+            {
+              "type": "argument",
+              "text": "x",
+              "occurrence": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-B01-03",
+      "features": [
+        "r-B01",
+        "r-B02"
+      ],
+      "alternatives": [
+        "r-B01.a043",
+        "r-B01.a048",
+        "r-B01.a050",
+        "r-B01.a058",
+        "r-B01.a059",
+        "r-B01.a069",
+        "r-B01.a070",
+        "r-B01.a071",
+        "r-B01.a077",
+        "r-B01.a089",
+        "r-B01.a090",
+        "r-B01.a103",
+        "r-B01.a105",
+        "r-B01.a106",
+        "r-B01.a107",
+        "r-B01.a108",
+        "r-B01.a109",
+        "r-B01.a110",
+        "r-B01.a111",
+        "r-B01.a112",
+        "r-B01.a113",
+        "r-B01.a114",
+        "r-B01.a115",
+        "r-B01.a116",
+        "r-B01.a117",
+        "r-B01.a118",
+        "r-B01.a119",
+        "r-B01.a120",
+        "r-B01.a121",
+        "r-B01.a122",
+        "r-B01.a123",
+        "r-B01.a124",
+        "r-B02.a011"
+      ],
+      "source_utf8": "f(x)\ng(tag = value, , 5)\n\"odd name\"(\"strange tag\" = 5, y)\n(function(x) x^2)(5)\nh <- function(...) list(...); h2 <- function(...) ..2\nx[1, 2]; x[[1]]; x[, 1]; x[[i, exact = TRUE]]\nlst$tag; lst$\"tag\"\nfn <- function(a, b = 2, ...) a + b\nfn0 <- function() NULL\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call",
+            "arguments",
+            "argument",
+            "dots",
+            "dot_dot_i",
+            "subset",
+            "subset2",
+            "extract_operator",
+            "function_definition",
+            "parameters",
+            "parameter",
+            "parenthesized_expression",
+            "string"
+          ],
+          "anchors": [
+            {
+              "type": "call",
+              "text": "f(x)"
+            },
+            {
+              "type": "call",
+              "text": "g(tag = value, , 5)"
+            },
+            {
+              "type": "argument",
+              "text": "tag = value"
+            },
+            {
+              "type": "arguments",
+              "text": "(tag = value, , 5)"
+            },
+            {
+              "type": "argument",
+              "text": "5",
+              "occurrence": 1
+            },
+            {
+              "type": "call",
+              "text": "\"odd name\"(\"strange tag\" = 5, y)"
+            },
+            {
+              "type": "argument",
+              "text": "\"strange tag\" = 5"
+            },
+            {
+              "type": "argument",
+              "text": "y"
+            },
+            {
+              "type": "call",
+              "text": "(function(x) x^2)(5)"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(function(x) x^2)"
+            },
+            {
+              "type": "binary_operator",
+              "text": "h <- function(...) list(...)"
+            },
+            {
+              "type": "argument",
+              "text": "...",
+              "occurrence": 2
+            },
+            {
+              "type": "dot_dot_i",
+              "text": "..2"
+            },
+            {
+              "type": "subset",
+              "text": "x[1, 2]"
+            },
+            {
+              "type": "arguments",
+              "text": "[1, 2]"
+            },
+            {
+              "type": "subset2",
+              "text": "x[[1]]"
+            },
+            {
+              "type": "subset",
+              "text": "x[, 1]"
+            },
+            {
+              "type": "subset2",
+              "text": "x[[i, exact = TRUE]]"
+            },
+            {
+              "type": "argument",
+              "text": "exact = TRUE"
+            },
+            {
+              "type": "extract_operator",
+              "text": "lst$tag"
+            },
+            {
+              "type": "extract_operator",
+              "text": "lst$\"tag\""
+            },
+            {
+              "type": "function_definition",
+              "text": "function(a, b = 2, ...) a + b"
+            },
+            {
+              "type": "parameter",
+              "text": "a",
+              "occurrence": 9
+            },
+            {
+              "type": "parameter",
+              "text": "b = 2"
+            },
+            {
+              "type": "parameter",
+              "text": "...",
+              "occurrence": 4
+            },
+            {
+              "type": "binary_operator",
+              "text": "a + b"
+            },
+            {
+              "type": "function_definition",
+              "text": "function() NULL"
+            },
+            {
+              "type": "parameters",
+              "text": "()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-B01-04",
+      "features": [
+        "r-B01"
+      ],
+      "alternatives": [
+        "r-B01.a001",
+        "r-B01.a089",
+        "r-B01.a125",
+        "r-B01.a126"
+      ],
+      "source_utf8": "#line 10 \"file.R\"\nx <- 1\n#line 20\ny <- 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "binary_operator"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "#line 10 \"file.R\""
+            },
+            {
+              "type": "comment",
+              "text": "#line 20"
+            },
+            {
+              "type": "binary_operator",
+              "text": "x <- 1"
+            },
+            {
+              "type": "binary_operator",
+              "text": "y <- 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-B02-01",
+      "features": [
+        "r-B01",
+        "r-B02"
+      ],
+      "alternatives": [
+        "r-B01.a039",
+        "r-B01.a040",
+        "r-B01.a041",
+        "r-B01.a042",
+        "r-B01.a043",
+        "r-B01.a044",
+        "r-B01.a045",
+        "r-B01.a046",
+        "r-B01.a047",
+        "r-B01.a068",
+        "r-B01.a069",
+        "r-B01.a071",
+        "r-B01.a073",
+        "r-B01.a078",
+        "r-B01.a080",
+        "r-B01.a089",
+        "r-B01.a091",
+        "r-B01.a120",
+        "r-B01.a122",
+        "r-B02.a001",
+        "r-B02.a002",
+        "r-B02.a003",
+        "r-B02.a004",
+        "r-B02.a005",
+        "r-B02.a006",
+        "r-B02.a007",
+        "r-B02.a008",
+        "r-B02.a009",
+        "r-B02.a010",
+        "r-B02.a011"
+      ],
+      "source_utf8": "{\n  x <- 1; y <- 2\n  z <- 3\n}\nif (x > 1) y <- 2\nif (x > 1) y <- 2 else y <- 3\nf <- function(x) {\n  if (x) {\n    1\n  }\n  else {\n    2\n  }\n}\nwhile (i < 10) i <- i + 1\nrepeat {\n  i <- i + 1\n  if (i > 5) break\n  next\n}\nfor (v in 1:10) print(v)\ng <- function(n) n * 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "braced_expression",
+            "if_statement",
+            "while_statement",
+            "repeat_statement",
+            "for_statement",
+            "break",
+            "next",
+            "function_definition"
+          ],
+          "anchors": [
+            {
+              "type": "braced_expression",
+              "text": "{\n  x <- 1; y <- 2\n  z <- 3\n}"
+            },
+            {
+              "type": "binary_operator",
+              "text": "x <- 1"
+            },
+            {
+              "type": "binary_operator",
+              "text": "y <- 2",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_operator",
+              "text": "z <- 3"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 1) y <- 2",
+              "occurrence": 1
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 1) y <- 2 else y <- 3"
+            },
+            {
+              "type": "function_definition",
+              "text": "function(x) {\n  if (x) {\n    1\n  }\n  else {\n    2\n  }\n}"
+            },
+            {
+              "type": "parameter",
+              "text": "x",
+              "occurrence": 4
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x) {\n    1\n  }\n  else {\n    2\n  }"
+            },
+            {
+              "type": "braced_expression",
+              "text": "{\n    2\n  }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (i < 10) i <- i + 1"
+            },
+            {
+              "type": "repeat_statement",
+              "text": "repeat {\n  i <- i + 1\n  if (i > 5) break\n  next\n}"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (i > 5) break"
+            },
+            {
+              "type": "break",
+              "text": "break"
+            },
+            {
+              "type": "next",
+              "text": "next"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (v in 1:10) print(v)"
+            },
+            {
+              "type": "function_definition",
+              "text": "function(n) n * 2"
+            },
+            {
+              "type": "parameter",
+              "text": "n",
+              "occurrence": 8
+            },
+            {
+              "type": "binary_operator",
+              "text": "n * 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-V40-01",
+      "features": [
+        "r-B01",
+        "r-B02",
+        "r-V40"
+      ],
+      "alternatives": [
+        "r-B01.a071",
+        "r-B01.a073",
+        "r-B01.a089",
+        "r-B01.a120",
+        "r-B01.a123",
+        "r-B02.a010",
+        "r-V40.a001",
+        "r-V40.a002",
+        "r-V40.a003",
+        "r-V40.a004",
+        "r-V40.a005",
+        "r-V40.a006"
+      ],
+      "source_utf8": "s1 <- r\"(C:\\path\\to\\file)\"\ns2 <- R'[single [brackets] ok]'\ns3 <- r\"{braces}\"\ns4 <- r\"---(contains )\" inside)---\"\nsq <- \\(x) x + 1\nsq2 <- \\(x, y = 2) { x * y }\nres <- c(1, 4, 9) |> sqrt() |> sum()\nres2 <- x |> (\\(v) v + 1)()\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "function_definition",
+            "binary_operator",
+            "call"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "r\"(C:\\path\\to\\file)\""
+            },
+            {
+              "type": "string",
+              "text": "R'[single [brackets] ok]'"
+            },
+            {
+              "type": "string",
+              "text": "r\"{braces}\""
+            },
+            {
+              "type": "string",
+              "text": "r\"---(contains )\" inside)---\""
+            },
+            {
+              "type": "function_definition",
+              "text": "\\(x) x + 1"
+            },
+            {
+              "type": "function_definition",
+              "text": "\\(x, y = 2) { x * y }"
+            },
+            {
+              "type": "parameter",
+              "text": "y = 2"
+            },
+            {
+              "type": "braced_expression",
+              "text": "{ x * y }"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c(1, 4, 9) |> sqrt()"
+            },
+            {
+              "type": "binary_operator",
+              "text": "c(1, 4, 9) |> sqrt() |> sum()"
+            },
+            {
+              "type": "call",
+              "text": "sqrt()"
+            },
+            {
+              "type": "binary_operator",
+              "text": "x |> (\\(v) v + 1)()"
+            },
+            {
+              "type": "call",
+              "text": "(\\(v) v + 1)()"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(\\(v) v + 1)"
+            },
+            {
+              "type": "function_definition",
+              "text": "\\(v) v + 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-r-V42-01",
+      "features": [
+        "r-B01",
+        "r-V40",
+        "r-V42"
+      ],
+      "alternatives": [
+        "r-B01.a060",
+        "r-B01.a082",
+        "r-B01.a087",
+        "r-B01.a089",
+        "r-B01.a090",
+        "r-B01.a093",
+        "r-B01.a115",
+        "r-B01.a118",
+        "r-V40.a005",
+        "r-V42.a001",
+        "r-V42.a002",
+        "r-V42.a003",
+        "r-V42.a004",
+        "r-V42.a005"
+      ],
+      "source_utf8": "fit <- mtcars |> subset(cyl == 4) |> lm(mpg ~ disp, data = _)\nco <- fit |> _$coef\nco2 <- fit |> _$coef[[2]]\nel <- fit |> _[[\"coefficients\"]]\nsl <- obj |> _@name\nv <- NULL %||% 1\nh <- 0x1.8\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_operator",
+            "call",
+            "extract_operator",
+            "subset2",
+            "float"
+          ],
+          "anchors": [
+            {
+              "type": "binary_operator",
+              "text": "mtcars |> subset(cyl == 4)"
+            },
+            {
+              "type": "binary_operator",
+              "text": "mtcars |> subset(cyl == 4) |> lm(mpg ~ disp, data = _)"
+            },
+            {
+              "type": "argument",
+              "text": "data = _"
+            },
+            {
+              "type": "binary_operator",
+              "text": "fit |> _$coef",
+              "occurrence": 1
+            },
+            {
+              "type": "extract_operator",
+              "text": "_$coef",
+              "occurrence": 1
+            },
+            {
+              "type": "subset2",
+              "text": "_$coef[[2]]"
+            },
+            {
+              "type": "extract_operator",
+              "text": "_$coef",
+              "occurrence": 2
+            },
+            {
+              "type": "subset2",
+              "text": "_[[\"coefficients\"]]"
+            },
+            {
+              "type": "extract_operator",
+              "text": "_@name"
+            },
+            {
+              "type": "binary_operator",
+              "text": "NULL %||% 1"
+            },
+            {
+              "type": "float",
+              "text": "0x1.8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-r-B01-R-1",
+      "features": [
+        "r-B01"
+      ],
+      "source_utf8": "`my var` <- 1L\nf <- function(x, ..., na.rm = FALSE) x + 1\ny <- stats::median(c(1, 2, NA), na.rm = TRUE)\nz <- df$col[1, , drop = FALSE]\nmodel <- y ~ x + log(z)\ng <- function(a, b) a %in% b\n",
+      "edits": [
+        {
+          "find": "df$col[",
+          "replace": "df$["
+        },
+        {
+          "find": "df$[",
+          "replace": "df$col["
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "namespace_operator",
+            "function_definition",
+            "call"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "`my var`"
+            },
+            {
+              "type": "function_definition",
+              "text": "function(x, ..., na.rm = FALSE) x + 1"
+            },
+            {
+              "type": "namespace_operator",
+              "text": "stats::median"
+            },
+            {
+              "type": "call",
+              "text": "stats::median(c(1, 2, NA), na.rm = TRUE)"
+            },
+            {
+              "type": "function_definition",
+              "text": "function(a, b) a %in% b"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-r-B02-R-1",
+      "features": [
+        "r-B02"
+      ],
+      "source_utf8": "check <- function(x) {\n  if (x > 0) {\n    \"pos\"\n  } else if (x < 0) {\n    \"neg\"\n  } else {\n    \"zero\"\n  }\n}\nfor (i in 1:3) print(i)\nwhile (TRUE) break\nrepeat {\n  next\n}\n",
+      "edits": [
+        {
+          "find": "} else if (x < 0) {",
+          "replace": "} else if (x <) {"
+        },
+        {
+          "find": "} else if (x <) {",
+          "replace": "} else if (x < 0) {"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "for_statement",
+            "while_statement",
+            "repeat_statement"
+          ],
+          "anchors": [
+            {
+              "type": "for_statement",
+              "text": "for (i in 1:3) print(i)"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (TRUE) break"
+            },
+            {
+              "type": "repeat_statement",
+              "text": "repeat {\n  next\n}"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-r-V40-NR-1",
+      "features": [
+        "r-V40"
+      ],
+      "source_utf8": "path <- r\"(C:\\temp\\new)\"\nquoted <- R\"[\\d+\"quoted\"]\"\ndashed <- r\"-(a)\"b)-\"\nsq <- \\(x) x^2\nres <- c(1, 4, 9) |> sqrt() |> sum()\ntotal <- 1:3 |> (\\(v) v * 2)()\n",
+      "edits": [
+        {
+          "find": "|> sqrt() |>",
+          "replace": "|> sqrt |>"
+        },
+        {
+          "find": "|> sqrt |>",
+          "replace": "|> sqrt() |>"
+        },
+        {
+          "find": "sq <- \\(x) x^2",
+          "replace": "sq <- \\(x x^2"
+        },
+        {
+          "find": "sq <- \\(x x^2",
+          "replace": "sq <- \\(x) x^2"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "string",
+            "binary_operator",
+            "call"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "r\"(C:\\temp\\new)\""
+            },
+            {
+              "type": "string",
+              "text": "R\"[\\d+\"quoted\"]\""
+            },
+            {
+              "type": "string",
+              "text": "r\"-(a)\"b)-\""
+            },
+            {
+              "type": "binary_operator",
+              "text": "path <- r\"(C:\\temp\\new)\""
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-r-V42-PNRE-1",
+      "features": [
+        "r-V42"
+      ],
+      "source_utf8": "fit <- mtcars |> subset(cyl == 4) |> lm(mpg ~ disp, data = _)\nslope <- fit |> _$coefficients[[2]]\ntop <- mtcars |> _[[\"mpg\"]]\nfirst <- mtcars |> _$mpg[1]\n",
+      "edits": [
+        {
+          "find": "lm(mpg ~ disp, data = _)",
+          "replace": "lm(mpg ~ disp, _)"
+        },
+        {
+          "find": "lm(mpg ~ disp, _)",
+          "replace": "lm(mpg ~ disp, data = _)"
+        },
+        {
+          "find": "_$coefficients[[2]]",
+          "replace": "_$[[2]]"
+        },
+        {
+          "find": "_$[[2]]",
+          "replace": "_$coefficients[[2]]"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "binary_operator",
+            "call",
+            "argument",
+            "subset2",
+            "extract_operator",
+            "subset"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "call",
+            "subset2",
+            "subset"
+          ],
+          "anchors": [
+            {
+              "type": "call",
+              "text": "lm(mpg ~ disp, data = _)"
+            },
+            {
+              "type": "binary_operator",
+              "text": "mtcars |> subset(cyl == 4)"
+            },
+            {
+              "type": "subset2",
+              "text": "_[[\"mpg\"]]"
+            },
+            {
+              "type": "subset",
+              "text": "_$mpg[1]"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }

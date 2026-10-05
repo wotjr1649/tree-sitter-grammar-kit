@@ -5,6 +5,34 @@
     {
       "id": "q.structure",
       "source": "(class_declaration name: (type_identifier) @type)\n(protocol_declaration name: (type_identifier) @protocol)\n(protocol_function_declaration name: (simple_identifier) @requirement)\n(function_declaration name: (simple_identifier) @function)\n"
+    },
+    {
+      "id": "q.probe-b02",
+      "source": "(capture_list_item name: (simple_identifier) @capture)\n(key_path_expression) @keypath\n"
+    },
+    {
+      "id": "q.probe-v51",
+      "source": "(opaque_type) @opaque\n(raw_string_literal) @raw\n(call_suffix name: (simple_identifier) @trailing_label)\n"
+    },
+    {
+      "id": "q.probe-v55",
+      "source": "(class_declaration declaration_kind: \"actor\" name: (type_identifier) @actor)\n(existential_type) @existential\n"
+    },
+    {
+      "id": "q.probe-v59",
+      "source": "(macro_declaration (simple_identifier) @macro)\n(throws_clause type: (_) @thrown)\n(type_pack_expansion) @expansion\n"
+    },
+    {
+      "id": "q.probe-v61",
+      "source": "(class_declaration declaration_kind: \"extension\" name: (user_type) @extension)\n(type_parameter (type_identifier) @tparam)\n(capture_list_item name: (simple_identifier) @capture)\n"
+    },
+    {
+      "id": "q.probe-v62",
+      "source": "(attribute (user_type (type_identifier) @attr))\n(unsafe_expression) @unsafe\n"
+    },
+    {
+      "id": "q.probe-v64",
+      "source": "(optional_type) @optional\n(attribute (user_type (type_identifier) @attr))\n"
     }
   ],
   "cases": [
@@ -60,6 +88,272 @@
               "name": "function",
               "type": "simple_identifier",
               "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-B02-Q-1",
+      "source_case": "probe-swift-B02-RQ-1",
+      "features": [
+        "swift-B02"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b02",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "capture",
+              "type": "simple_identifier",
+              "text": "items"
+            },
+            {
+              "name": "keypath",
+              "type": "key_path_expression",
+              "text": "\\String.count"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V51-Q-1",
+      "source_case": "probe-swift-V51-PNRE-1",
+      "features": [
+        "swift-V51"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v51",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "opaque",
+              "type": "opaque_type",
+              "text": "some Equatable"
+            },
+            {
+              "name": "raw",
+              "type": "raw_string_literal",
+              "text": "#\"\\d+ \"quoted\"\"#"
+            },
+            {
+              "name": "trailing_label",
+              "type": "simple_identifier",
+              "text": "completion"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V55-Q-1",
+      "source_case": "probe-swift-V55-RQ-1",
+      "features": [
+        "swift-V55"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v55",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "actor",
+              "type": "type_identifier",
+              "text": "Cache"
+            },
+            {
+              "name": "existential",
+              "type": "existential_type",
+              "text": "any Equatable"
+            },
+            {
+              "name": "actor",
+              "type": "type_identifier",
+              "text": "Greeter"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V59-Q-1",
+      "source_case": "probe-swift-V59-RQ-1",
+      "features": [
+        "swift-V59"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v59",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "macro",
+              "type": "simple_identifier",
+              "text": "stringify"
+            },
+            {
+              "name": "thrown",
+              "type": "user_type",
+              "text": "LoadError"
+            },
+            {
+              "name": "expansion",
+              "type": "type_pack_expansion",
+              "text": "repeat each T"
+            },
+            {
+              "name": "expansion",
+              "type": "type_pack_expansion",
+              "text": "repeat each T"
+            },
+            {
+              "name": "expansion",
+              "type": "type_pack_expansion",
+              "text": "repeat each T"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V61-Q-1",
+      "source_case": "probe-swift-V61-PNRE-1",
+      "features": [
+        "swift-V61"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v61",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "extension",
+              "type": "user_type",
+              "text": "GloballyIsolated"
+            },
+            {
+              "name": "extension",
+              "type": "user_type",
+              "text": "MYFlipper"
+            },
+            {
+              "name": "tparam",
+              "type": "type_identifier",
+              "text": "T"
+            },
+            {
+              "name": "tparam",
+              "type": "type_identifier",
+              "text": "U"
+            },
+            {
+              "name": "capture",
+              "type": "simple_identifier",
+              "text": "pair"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V62-Q-1",
+      "source_case": "probe-swift-V62-PNRE-1",
+      "features": [
+        "swift-V62"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v62",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "concurrent"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "unsafe"
+            },
+            {
+              "name": "unsafe",
+              "type": "unsafe_expression",
+              "text": "unsafe p.pointee"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "safe"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-swift-V64-Q-1",
+      "source_case": "probe-swift-V64-PNRE-1",
+      "features": [
+        "swift-V64"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v64",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "optional",
+              "type": "optional_type",
+              "text": "some Shape?"
+            },
+            {
+              "name": "optional",
+              "type": "optional_type",
+              "text": "any Shape?"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "c"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "c"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "implementation"
+            },
+            {
+              "name": "attr",
+              "type": "type_identifier",
+              "text": "diagnose"
             }
           ],
           "error": null

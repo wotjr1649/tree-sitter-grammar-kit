@@ -5,6 +5,18 @@
     {
       "id": "q.structure",
       "source": "(namespace_definition name: (namespace_identifier) @namespace)\n(struct_specifier name: (type_identifier) @struct)\n(concept_definition name: (identifier) @concept)\n(class_specifier name: (type_identifier) @class)\n"
+    },
+    {
+      "id": "q.probe-cpp-V14",
+      "source": "(lambda_capture_initializer left: (identifier) @init)\n(template_declaration (declaration declarator: (init_declarator declarator: (identifier) @vartemplate)))\n(number_literal) @num\n"
+    },
+    {
+      "id": "q.probe-cpp-V17",
+      "source": "(nested_namespace_specifier (namespace_identifier) @ns)\n(structured_binding_declarator (identifier) @binding)\n"
+    },
+    {
+      "id": "q.probe-cpp-V23",
+      "source": "(explicit_object_parameter_declaration (this) @self)\n(subscript_argument_list (number_literal) @index)\n"
     }
   ],
   "cases": [
@@ -41,6 +53,130 @@
               "name": "class",
               "type": "type_identifier",
               "text": "Store"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-cpp-V14-Q-1",
+      "source_case": "probe-cpp-V14-P-1",
+      "features": [
+        "cpp-V14"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-cpp-V14",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "vartemplate",
+              "type": "identifier",
+              "text": "pi"
+            },
+            {
+              "name": "num",
+              "type": "number_literal",
+              "text": "3.5"
+            },
+            {
+              "name": "init",
+              "type": "identifier",
+              "text": "n"
+            },
+            {
+              "name": "num",
+              "type": "number_literal",
+              "text": "0"
+            },
+            {
+              "name": "num",
+              "type": "number_literal",
+              "text": "0b1010'1010"
+            },
+            {
+              "name": "num",
+              "type": "number_literal",
+              "text": "1'000'000"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-cpp-V17-Q-1",
+      "source_case": "probe-cpp-V17-P-1",
+      "features": [
+        "cpp-V17"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-cpp-V17",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "ns",
+              "type": "namespace_identifier",
+              "text": "app"
+            },
+            {
+              "name": "ns",
+              "type": "namespace_identifier",
+              "text": "core"
+            },
+            {
+              "name": "binding",
+              "type": "identifier",
+              "text": "left"
+            },
+            {
+              "name": "binding",
+              "type": "identifier",
+              "text": "right"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-cpp-V23-Q-1",
+      "source_case": "probe-cpp-V23-PE-1",
+      "features": [
+        "cpp-V23"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-cpp-V23",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "self",
+              "type": "this",
+              "text": "this"
+            },
+            {
+              "name": "index",
+              "type": "number_literal",
+              "text": "0"
+            },
+            {
+              "name": "index",
+              "type": "number_literal",
+              "text": "0"
+            },
+            {
+              "name": "index",
+              "type": "number_literal",
+              "text": "1"
             }
           ],
           "error": null

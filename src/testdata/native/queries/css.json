@@ -5,6 +5,46 @@
     {
       "id": "q.structure",
       "source": "(namespace_statement (namespace_name) @namespace)\n(declaration (property_name) @property)\n(feature_query (feature_name) @feature)\n(keyframes_statement (keyframes_name) @keyframes)\n"
+    },
+    {
+      "id": "q.property",
+      "source": "(declaration (property_name) @property)\n"
+    },
+    {
+      "id": "q.value",
+      "source": "(declaration [(plain_value) (integer_value) (float_value) (color_value) (string_value) (call_expression) (binary_expression) (grid_value) (parenthesized_value)] @value)\n"
+    },
+    {
+      "id": "q.call",
+      "source": "(call_expression (function_name) @function)\n(arguments [(plain_value) (integer_value) (float_value) (color_value) (string_value) (call_expression)] @arg)\n"
+    },
+    {
+      "id": "q.selectors",
+      "source": "(class_selector (class_name) @class)\n(attribute_selector (attribute_name) @attribute)\n(pseudo_class_selector (class_name) @pseudo_class)\n(pseudo_element_selector (tag_name) @pseudo_element .)\n"
+    },
+    {
+      "id": "q.import",
+      "source": "(import_statement (call_expression (function_name) @function))\n(import_statement (keyword_query) @media_type)\n"
+    },
+    {
+      "id": "q.calc",
+      "source": "(binary_expression (binary_expression) @operand)\n"
+    },
+    {
+      "id": "q.at",
+      "source": "(at_rule (at_keyword) @at_keyword)\n(at_rule (keyword_query) @prelude)\n"
+    },
+    {
+      "id": "q.media",
+      "source": "(binary_query) @condition\n(feature_name) @feature\n"
+    },
+    {
+      "id": "q.grid",
+      "source": "(grid_value) @line_names\n(call_expression (function_name) @function)\n"
+    },
+    {
+      "id": "q.supports",
+      "source": "(selector_query (child_selector) @selector)\n"
     }
   ],
   "cases": [
@@ -113,6 +153,1335 @@
               "name": "property",
               "type": "property_name",
               "text": "src"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M05-Q-1",
+      "source_case": "probe-css-M05-Qsrc-1",
+      "features": [
+        "css-M05"
+      ],
+      "query_expect": [
+        {
+          "query": "q.selectors",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "class",
+              "type": "class_name",
+              "text": "item"
+            },
+            {
+              "name": "pseudo_class",
+              "type": "class_name",
+              "text": "not"
+            },
+            {
+              "name": "class",
+              "type": "class_name",
+              "text": "done"
+            },
+            {
+              "name": "attribute",
+              "type": "attribute_name",
+              "text": "href"
+            },
+            {
+              "name": "pseudo_class",
+              "type": "class_name",
+              "text": "hover"
+            },
+            {
+              "name": "pseudo_element",
+              "type": "tag_name",
+              "text": "first-line"
+            },
+            {
+              "name": "pseudo_class",
+              "type": "class_name",
+              "text": "first-child"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M07-Q-1",
+      "source_case": "probe-css-M07-Qsrc-1",
+      "features": [
+        "css-M07"
+      ],
+      "query_expect": [
+        {
+          "query": "q.import",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "url"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "supports"
+            },
+            {
+              "name": "media_type",
+              "type": "keyword_query",
+              "text": "screen"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "inherit"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "unset"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "initial"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M08-Q-1",
+      "source_case": "probe-css-M08-Qsrc-1",
+      "features": [
+        "css-M08"
+      ],
+      "query_expect": [
+        {
+          "query": "q.calc",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "operand",
+              "type": "binary_expression",
+              "text": "2 * 10px"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "calc"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M09-Q-1",
+      "source_case": "probe-css-M09-Qsrc-1",
+      "features": [
+        "css-M09"
+      ],
+      "query_expect": [
+        {
+          "query": "q.property",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "--accent"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "--pad"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "color"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "padding"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "var"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "--accent"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "blue"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "var"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "--pad"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M10-Q-1",
+      "source_case": "probe-css-M10-P-1",
+      "features": [
+        "css-M10"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "2px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "3px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "4px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1em"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "auto"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "5%"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M11-Q-1",
+      "source_case": "probe-css-M11-Qsrc-1",
+      "features": [
+        "css-M11"
+      ],
+      "query_expect": [
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "rgb"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "255"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "arg",
+              "type": "float_value",
+              "text": "0.5"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "hsl"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "120deg"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "100%"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "50%"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "rgb(255 0 0 / 0.5)"
+            },
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "hsl(120deg 100% 50%)"
+            },
+            {
+              "name": "value",
+              "type": "color_value",
+              "text": "#0f08"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M12-Q-1",
+      "source_case": "probe-css-M12-Qsrc-1",
+      "features": [
+        "css-M12"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "url(a.png)"
+            },
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "url(b.png)"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "red"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "inset"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "2px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "blue"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M13-Q-1",
+      "source_case": "probe-css-M13-Qsrc-1",
+      "features": [
+        "css-M13"
+      ],
+      "query_expect": [
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "linear-gradient"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "45deg"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "red"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "10%"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "blue"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M14-Q-1",
+      "source_case": "probe-css-M14-Qsrc-1",
+      "features": [
+        "css-M14"
+      ],
+      "query_expect": [
+        {
+          "query": "q.at",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "at_keyword",
+              "type": "at_keyword",
+              "text": "@font-face"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.property",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font-family"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "src"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font-weight"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font-variant"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "font-feature-settings"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M15-Q-1",
+      "source_case": "probe-css-M15-P-1",
+      "features": [
+        "css-M15"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "rtl"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "vertical-rl"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "upright"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "all"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "isolate"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M16-Q-1",
+      "source_case": "probe-css-M16-P-1",
+      "features": [
+        "css-M16"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "12em"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "3"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1em"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "solid"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "gray"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "all"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "balance"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M17-Q-1",
+      "source_case": "probe-css-M17-P-1",
+      "features": [
+        "css-M17"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "flex"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "row-reverse"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "wrap"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "space-between"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "stretch"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "1"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0%"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "-1"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "flex-end"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "content"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M18-Q-1",
+      "source_case": "probe-css-M18-P-1",
+      "features": [
+        "css-M18"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "url(hand.cur)"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "2"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "3"
+            },
+            {
+              "name": "value",
+              "type": "call_expression",
+              "text": "url(hand.png)"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "pointer"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "2px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "dotted"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "invert"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "4px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "both"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "border-box"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "ellipsis"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "auto"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M19-Q-1",
+      "source_case": "probe-css-M19-P-1",
+      "features": [
+        "css-M19"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "none"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "strict"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "size"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "layout"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "paint"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "content"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M20-Q-1",
+      "source_case": "probe-css-M20-Qsrc-1",
+      "features": [
+        "css-M20"
+      ],
+      "query_expect": [
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "translate"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "10px"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "20px"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "rotate"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "45deg"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M21-Q-1",
+      "source_case": "probe-css-M21-P-1",
+      "features": [
+        "css-M21"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "multiply"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "isolate"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "screen"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "overlay"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M22-Q-1",
+      "source_case": "probe-css-M22-P-1",
+      "features": [
+        "css-M22"
+      ],
+      "query_expect": [
+        {
+          "query": "q.call",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "cubic-bezier"
+            },
+            {
+              "name": "arg",
+              "type": "float_value",
+              "text": "0.25"
+            },
+            {
+              "name": "arg",
+              "type": "float_value",
+              "text": "0.1"
+            },
+            {
+              "name": "arg",
+              "type": "float_value",
+              "text": "0.25"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "1"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "steps"
+            },
+            {
+              "name": "arg",
+              "type": "integer_value",
+              "text": "4"
+            },
+            {
+              "name": "arg",
+              "type": "plain_value",
+              "text": "jump-end"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M23-Q-1",
+      "source_case": "probe-css-M23-Qsrc-1",
+      "features": [
+        "css-M23"
+      ],
+      "query_expect": [
+        {
+          "query": "q.at",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "at_keyword",
+              "type": "at_keyword",
+              "text": "@counter-style"
+            },
+            {
+              "name": "prelude",
+              "type": "keyword_query",
+              "text": "thumbs"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.property",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "system"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "symbols"
+            },
+            {
+              "name": "property",
+              "type": "property_name",
+              "text": "suffix"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M24-Q-1",
+      "source_case": "probe-css-M24-Qsrc-1",
+      "features": [
+        "css-M24"
+      ],
+      "query_expect": [
+        {
+          "query": "q.media",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "condition",
+              "type": "binary_query",
+              "text": "(width >= 600px) and (hover)"
+            },
+            {
+              "name": "feature",
+              "type": "feature_name",
+              "text": "width"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M25-Q-1",
+      "source_case": "probe-css-M25-P-1",
+      "features": [
+        "css-M25"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "x"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "mandatory"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "10px"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "auto"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "start"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "center"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "always"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "5px"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "0"
+            },
+            {
+              "name": "value",
+              "type": "integer_value",
+              "text": "5px"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M26-Q-1",
+      "source_case": "probe-css-M26-P-1",
+      "features": [
+        "css-M26"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "color_value",
+              "text": "#444"
+            },
+            {
+              "name": "value",
+              "type": "color_value",
+              "text": "#eee"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "thin"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "auto"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "none"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M27-Q-1",
+      "source_case": "probe-css-M27-Qsrc-1",
+      "features": [
+        "css-M27"
+      ],
+      "query_expect": [
+        {
+          "query": "q.grid",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "line_names",
+              "type": "grid_value",
+              "text": "[full-start]"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "minmax"
+            },
+            {
+              "name": "line_names",
+              "type": "grid_value",
+              "text": "[main-start]"
+            },
+            {
+              "name": "function",
+              "type": "function_name",
+              "text": "repeat"
+            },
+            {
+              "name": "line_names",
+              "type": "grid_value",
+              "text": "[main-end]"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M28-Q-1",
+      "source_case": "probe-css-M28-Qsrc-1",
+      "features": [
+        "css-M28"
+      ],
+      "query_expect": [
+        {
+          "query": "q.at",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "at_keyword",
+              "type": "at_keyword",
+              "text": "@layer"
+            },
+            {
+              "name": "prelude",
+              "type": "keyword_query",
+              "text": "reset"
+            },
+            {
+              "name": "prelude",
+              "type": "keyword_query",
+              "text": "base"
+            },
+            {
+              "name": "at_keyword",
+              "type": "at_keyword",
+              "text": "@layer"
+            },
+            {
+              "name": "prelude",
+              "type": "keyword_query",
+              "text": "base"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M29-Q-1",
+      "source_case": "probe-css-M29-P-1",
+      "features": [
+        "css-M29"
+      ],
+      "query_expect": [
+        {
+          "query": "q.value",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "light"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "dark"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "only"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "light"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "none"
+            },
+            {
+              "name": "value",
+              "type": "plain_value",
+              "text": "exact"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-css-M30-Q-1",
+      "source_case": "probe-css-M30-Qsrc-1",
+      "features": [
+        "css-M30"
+      ],
+      "query_expect": [
+        {
+          "query": "q.supports",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "selector",
+              "type": "child_selector",
+              "text": "ul > li"
             }
           ],
           "error": null

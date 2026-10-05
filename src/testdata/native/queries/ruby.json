@@ -5,6 +5,18 @@
     {
       "id": "q.structure",
       "source": "(module name: (constant) @module)\n(class name: (constant) @class)\n(method name: (identifier) @method)\n(singleton_method name: (identifier) @singleton_method)\n"
+    },
+    {
+      "id": "q.probe-b01",
+      "source": "(string (interpolation) @interpolation)\n(regex) @regex\n(heredoc_body (interpolation) @heredoc_interpolation)\n(assignment left: (identifier) @lambda_name right: (lambda) @lambda)\n"
+    },
+    {
+      "id": "q.probe-v27",
+      "source": "(in_clause pattern: (_) @pattern)\n(if_guard) @guard\n(match_pattern pattern: (_) @rightward)\n(test_pattern pattern: (_) @test)\n"
+    },
+    {
+      "id": "q.probe-v31",
+      "source": "(pair) @pair\n(argument_list (splat_argument) @rest)\n(argument_list (hash_splat_argument) @keyrest)\n(argument_list (block_argument) @block)\n(call receiver: (identifier) @receiver method: (identifier) @method)\n"
     }
   ],
   "cases": [
@@ -60,6 +72,165 @@
               "name": "singleton_method",
               "type": "identifier",
               "text": "level"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-B01-Q-1",
+      "source_case": "probe-ruby-B01-NR-1",
+      "features": [
+        "ruby-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b01",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "interpolation",
+              "type": "interpolation",
+              "text": "#{name}"
+            },
+            {
+              "name": "regex",
+              "type": "regex",
+              "text": "/\\A[a-z]+\\z/i"
+            },
+            {
+              "name": "heredoc_interpolation",
+              "type": "interpolation",
+              "text": "#{name}"
+            },
+            {
+              "name": "lambda_name",
+              "type": "identifier",
+              "text": "square"
+            },
+            {
+              "name": "lambda",
+              "type": "lambda",
+              "text": "->(x) { x * x }"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-V27-Q-1",
+      "source_case": "probe-ruby-V27-PNRE-1",
+      "features": [
+        "ruby-V27"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v27",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "pattern",
+              "type": "hash_pattern",
+              "text": "{db: {user: String => user}, mode: \"dev\" | \"test\"}"
+            },
+            {
+              "name": "pattern",
+              "type": "array_pattern",
+              "text": "[Integer => first, *rest]"
+            },
+            {
+              "name": "guard",
+              "type": "if_guard",
+              "text": "if first > 0"
+            },
+            {
+              "name": "pattern",
+              "type": "find_pattern",
+              "text": "[*, 42, *post]"
+            },
+            {
+              "name": "pattern",
+              "type": "variable_reference_pattern",
+              "text": "^expected"
+            },
+            {
+              "name": "rightward",
+              "type": "identifier",
+              "text": "answer"
+            },
+            {
+              "name": "test",
+              "type": "hash_pattern",
+              "text": "{mode: String}"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-V31-Q-1",
+      "source_case": "probe-ruby-V31-PNE-1",
+      "features": [
+        "ruby-V31"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v31",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "pair",
+              "type": "pair",
+              "text": "x:"
+            },
+            {
+              "name": "pair",
+              "type": "pair",
+              "text": "y:"
+            },
+            {
+              "name": "rest",
+              "type": "splat_argument",
+              "text": "*"
+            },
+            {
+              "name": "keyrest",
+              "type": "hash_splat_argument",
+              "text": "**"
+            },
+            {
+              "name": "block",
+              "type": "block_argument",
+              "text": "&"
+            },
+            {
+              "name": "receiver",
+              "type": "identifier",
+              "text": "it"
+            },
+            {
+              "name": "method",
+              "type": "identifier",
+              "text": "upcase"
+            },
+            {
+              "name": "pair",
+              "type": "pair",
+              "text": "x:"
+            },
+            {
+              "name": "pair",
+              "type": "pair",
+              "text": "y:"
             }
           ],
           "error": null

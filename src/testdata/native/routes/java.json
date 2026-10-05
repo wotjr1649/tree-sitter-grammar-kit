@@ -99,6 +99,5436 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-java-B01-01",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a001",
+        "java-B01.a002",
+        "java-B01.a003",
+        "java-B01.a004",
+        "java-B01.a533",
+        "java-B01.a534",
+        "java-B01.a535",
+        "java-B01.a536",
+        "java-B01.a559",
+        "java-B01.a560",
+        "java-B01.a561",
+        "java-B01.a562",
+        "java-B01.a563",
+        "java-B01.a564",
+        "java-B01.a565",
+        "java-B01.a566",
+        "java-B01.a567",
+        "java-B01.a568",
+        "java-B01.a569",
+        "java-B01.a570",
+        "java-B01.a571",
+        "java-B01.a572",
+        "java-B01.a574",
+        "java-B01.a575",
+        "java-B01.a576",
+        "java-B01.a577",
+        "java-B01.a578",
+        "java-B01.a579",
+        "java-B01.a580",
+        "java-B01.a581",
+        "java-B01.a582",
+        "java-B01.a583",
+        "java-B01.a584",
+        "java-B01.a585",
+        "java-B01.a586",
+        "java-B01.a587",
+        "java-B01.a588",
+        "java-B01.a589",
+        "java-B01.a590",
+        "java-B01.a591",
+        "java-B01.a537",
+        "java-B01.a538",
+        "java-B01.a541",
+        "java-B01.a543",
+        "java-B01.a730",
+        "java-B01.a731",
+        "java-B01.a011",
+        "java-B01.a645",
+        "java-B01.a641",
+        "java-B01.a652",
+        "java-B01.a654",
+        "java-B01.a655",
+        "java-B01.a007",
+        "java-B01.a005",
+        "java-B01.a463",
+        "java-B01.a624",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a762"
+      ],
+      "source_utf8": "/* traditional */ /** doc **/ /* a * b / c */\n/*\n * multi\n *\n*/\n// end of line\nclass Lex {\r\n\tint a\\u0062c = 1;\f int \\uuu0064ef = 2;\r  int $x, _y1, x2$, ünï, 名前;\n  String s = \"\\u0041\";\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "block_comment",
+            "line_comment",
+            "class_declaration",
+            "field_declaration",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "block_comment",
+              "text": "/* traditional */"
+            },
+            {
+              "type": "block_comment",
+              "text": "/** doc **/"
+            },
+            {
+              "type": "block_comment",
+              "text": "/* a * b / c */"
+            },
+            {
+              "type": "block_comment",
+              "text": "/*\n * multi\n *\n*/"
+            },
+            {
+              "type": "line_comment",
+              "text": "// end of line"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Lex {\r\n\tint a\\u0062c = 1;\f int \\uuu0064ef = 2;\r  int $x, _y1, x2$, ünï, 名前;\n  String s = \"\\u0041\";\n}"
+            },
+            {
+              "type": "identifier",
+              "text": "a\\u0062c"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "a\\u0062c = 1"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int a\\u0062c = 1;"
+            },
+            {
+              "type": "identifier",
+              "text": "\\uuu0064ef"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "\\uuu0064ef = 2"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int \\uuu0064ef = 2;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int $x, _y1, x2$, ünï, 名前;"
+            },
+            {
+              "type": "identifier",
+              "text": "$x"
+            },
+            {
+              "type": "identifier",
+              "text": "_y1"
+            },
+            {
+              "type": "identifier",
+              "text": "x2$"
+            },
+            {
+              "type": "identifier",
+              "text": "ünï"
+            },
+            {
+              "type": "identifier",
+              "text": "名前"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\\u0041\""
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "1",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "2",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-02",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a007",
+        "java-B01.a641",
+        "java-B01.a642",
+        "java-B01.a643",
+        "java-B01.a644",
+        "java-B01.a645",
+        "java-B01.a646",
+        "java-B01.a647",
+        "java-B01.a648",
+        "java-B01.a649",
+        "java-B01.a650",
+        "java-B01.a651",
+        "java-B01.a652",
+        "java-B01.a653",
+        "java-B01.a663",
+        "java-B01.a664",
+        "java-B01.a665",
+        "java-B01.a666",
+        "java-B01.a667",
+        "java-B01.a668",
+        "java-B01.a669",
+        "java-B01.a670",
+        "java-B01.a671",
+        "java-B01.a672",
+        "java-B01.a673",
+        "java-B01.a674",
+        "java-B01.a537",
+        "java-B01.a538",
+        "java-B01.a539",
+        "java-B01.a540",
+        "java-B01.a541",
+        "java-B01.a542",
+        "java-B01.a543",
+        "java-B01.a544",
+        "java-B01.a545",
+        "java-B01.a546",
+        "java-B01.a547",
+        "java-B01.a548",
+        "java-B01.a549",
+        "java-B01.a550",
+        "java-B01.a551",
+        "java-B01.a552",
+        "java-B01.a553",
+        "java-B01.a554",
+        "java-B01.a555",
+        "java-B01.a556",
+        "java-B01.a557",
+        "java-B01.a558",
+        "java-B01.a675",
+        "java-B01.a676",
+        "java-B01.a677",
+        "java-B01.a678",
+        "java-B01.a679",
+        "java-B01.a680",
+        "java-B01.a681",
+        "java-B01.a682",
+        "java-B01.a683",
+        "java-B01.a684",
+        "java-B01.a685",
+        "java-B01.a686",
+        "java-B01.a687",
+        "java-B01.a688",
+        "java-B01.a689",
+        "java-B01.a690",
+        "java-B01.a691",
+        "java-B01.a692",
+        "java-B01.a693",
+        "java-B01.a694",
+        "java-B01.a695",
+        "java-B01.a696",
+        "java-B01.a697",
+        "java-B01.a698",
+        "java-B01.a699",
+        "java-B01.a700",
+        "java-B01.a701",
+        "java-B01.a654",
+        "java-B01.a655",
+        "java-B01.a656",
+        "java-B01.a657",
+        "java-B01.a658",
+        "java-B01.a659",
+        "java-B01.a660",
+        "java-B01.a661",
+        "java-B01.a662",
+        "java-B01.a239",
+        "java-B01.a240",
+        "java-B01.a116",
+        "java-B01.a117",
+        "java-B01.a132",
+        "java-B01.a022",
+        "java-B01.a632",
+        "java-B01.a634",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a762"
+      ],
+      "source_utf8": "class Ints {\n  long[] v = { 0, 7, 12, 123456789, 10_0, 1_000, 1__2, 123L, 0l,\n               0x0123_4567_89ab_cdefL, 0XABCDEF, 0x7fff_ffffL, 0xF,\n               01234567, 0_17, 0__7, 07l, 0b1010, 0B1_0__1, 0b1, 0b11L };\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decimal_integer_literal",
+            "hex_integer_literal",
+            "octal_integer_literal",
+            "binary_integer_literal",
+            "array_initializer"
+          ],
+          "anchors": [
+            {
+              "type": "decimal_integer_literal",
+              "text": "0",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "7",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "12",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "123456789"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "10_0"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "1_000"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "123L"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "0l"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0x0123_4567_89ab_cdefL"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0XABCDEF"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0x7fff_ffffL"
+            },
+            {
+              "type": "hex_integer_literal",
+              "text": "0xF"
+            },
+            {
+              "type": "octal_integer_literal",
+              "text": "01234567"
+            },
+            {
+              "type": "octal_integer_literal",
+              "text": "07l"
+            },
+            {
+              "type": "binary_integer_literal",
+              "text": "0b1010"
+            },
+            {
+              "type": "binary_integer_literal",
+              "text": "0b1",
+              "occurrence": 2
+            },
+            {
+              "type": "binary_integer_literal",
+              "text": "0b11L"
+            },
+            {
+              "type": "decimal_integer_literal",
+              "text": "1__2"
+            },
+            {
+              "type": "octal_integer_literal",
+              "text": "0_17"
+            },
+            {
+              "type": "octal_integer_literal",
+              "text": "0__7"
+            },
+            {
+              "type": "binary_integer_literal",
+              "text": "0B1_0__1"
+            },
+            {
+              "type": "array_initializer",
+              "text": "{ 0, 7, 12, 123456789, 10_0, 1_000, 1__2, 123L, 0l,\n               0x0123_4567_89ab_cdefL, 0XABCDEF, 0x7fff_ffffL, 0xF,\n               01234567, 0_17, 0__7, 07l, 0b1010, 0B1_0__1, 0b1, 0b11L }"
+            },
+            {
+              "type": "array_type",
+              "text": "long[]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-03",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a008",
+        "java-B01.a702",
+        "java-B01.a703",
+        "java-B01.a704",
+        "java-B01.a705",
+        "java-B01.a706",
+        "java-B01.a707",
+        "java-B01.a708",
+        "java-B01.a709",
+        "java-B01.a710",
+        "java-B01.a711",
+        "java-B01.a712",
+        "java-B01.a713",
+        "java-B01.a714",
+        "java-B01.a715",
+        "java-B01.a716",
+        "java-B01.a717",
+        "java-B01.a718",
+        "java-B01.a719",
+        "java-B01.a720",
+        "java-B01.a721",
+        "java-B01.a722",
+        "java-B01.a723",
+        "java-B01.a724",
+        "java-B01.a025",
+        "java-B01.a018",
+        "java-B01.a608",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a778",
+        "java-B01.a779"
+      ],
+      "source_utf8": "class Reals {\n  double[] d = { 1.5, 1., 1.5e10, 1.e-3, .5, .5e+2f, 1e10, 1E5D, 2f, 3F, 4d, 5D, 1.5e1_0,\n                 0x1p3, 0x1.p0d, 0X1.8P-2, 0x.8p1f, 0Xa.bp+1F, 0X.Cp2 };\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "decimal_floating_point_literal",
+            "hex_floating_point_literal"
+          ],
+          "anchors": [
+            {
+              "type": "array_type",
+              "text": "double[]"
+            },
+            {
+              "type": "array_initializer",
+              "text": "{ 1.5, 1., 1.5e10, 1.e-3, .5, .5e+2f, 1e10, 1E5D, 2f, 3F, 4d, 5D, 1.5e1_0,\n                 0x1p3, 0x1.p0d, 0X1.8P-2, 0x.8p1f, 0Xa.bp+1F, 0X.Cp2 }"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.5",
+              "occurrence": 1
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.",
+              "occurrence": 2
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.5e10"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.e-3"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": ".5",
+              "occurrence": 3
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": ".5e+2f"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1e10"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1E5D"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "2f",
+              "occurrence": 2
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "3F"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "4d"
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "5D",
+              "occurrence": 2
+            },
+            {
+              "type": "decimal_floating_point_literal",
+              "text": "1.5e1_0"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0x1p3"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0x1.p0d"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0X1.8P-2"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0x.8p1f"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0Xa.bp+1F"
+            },
+            {
+              "type": "hex_floating_point_literal",
+              "text": "0X.Cp2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-04",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a009",
+        "java-B01.a010",
+        "java-B01.a011",
+        "java-B01.a012",
+        "java-B01.a727",
+        "java-B01.a728",
+        "java-B01.a729",
+        "java-B01.a730",
+        "java-B01.a731",
+        "java-B01.a732",
+        "java-B01.a733",
+        "java-B01.a734",
+        "java-B01.a735",
+        "java-B01.a736",
+        "java-B01.a737",
+        "java-B01.a738",
+        "java-B01.a739",
+        "java-B01.a740",
+        "java-B01.a741",
+        "java-B01.a742",
+        "java-B01.a743",
+        "java-B01.a744",
+        "java-B01.a745",
+        "java-B01.a746",
+        "java-B01.a747",
+        "java-B01.a748",
+        "java-B01.a682",
+        "java-B01.a683",
+        "java-B01.a684",
+        "java-B01.a685",
+        "java-B01.a686",
+        "java-B01.a687",
+        "java-B01.a688",
+        "java-B01.a689",
+        "java-B01.a725",
+        "java-B01.a726",
+        "java-B01.a749",
+        "java-B01.a023",
+        "java-B01.a016",
+        "java-B01.a121",
+        "java-B01.a603",
+        "java-B01.a627",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a762"
+      ],
+      "source_utf8": "class Chars {\n  char[] c = { 'a', '\"', '\\b', '\\t', '\\n', '\\f', '\\r', '\\\"', '\\'', '\\\\', '\\0', '\\7', '\\12', '\\377' };\n  String s = \"x \\\" \\\\ \\t 'q' \\012\\123\\234\\377\\45\\6\";\n  boolean t = true, f = false;\n  Object n = null;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "character_literal",
+            "string_literal",
+            "escape_sequence",
+            "true",
+            "false",
+            "null_literal"
+          ],
+          "anchors": [
+            {
+              "type": "array_type",
+              "text": "char[]"
+            },
+            {
+              "type": "character_literal",
+              "text": "'a'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\"'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\b'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\t'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\n'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\f'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\r'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\\"'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\''"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\\\'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\0'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\7'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\12'"
+            },
+            {
+              "type": "character_literal",
+              "text": "'\\377'"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"x \\\" \\\\ \\t 'q' \\012\\123\\234\\377\\45\\6\""
+            },
+            {
+              "type": "boolean_type",
+              "text": "boolean"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "null_literal",
+              "text": "null"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\"",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\012"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\123"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\234"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\377",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\45"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-05",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a573",
+        "java-B01.a564",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753"
+      ],
+      "source_utf8": "class Sub {\n}\n\u001a",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "program",
+              "text": "class Sub {\n}\n\u001a"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Sub {\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-06",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a064",
+        "java-B01.a063",
+        "java-B01.a065",
+        "java-B01.a066",
+        "java-B01.a067",
+        "java-B01.a068",
+        "java-B01.a069",
+        "java-B01.a070",
+        "java-B01.a071",
+        "java-B01.a072",
+        "java-B01.a073",
+        "java-B01.a074",
+        "java-B01.a075",
+        "java-B01.a076",
+        "java-B01.a077",
+        "java-B01.a013",
+        "java-B01.a014",
+        "java-B01.a015",
+        "java-B01.a016",
+        "java-B01.a017",
+        "java-B01.a018",
+        "java-B01.a019",
+        "java-B01.a020",
+        "java-B01.a021",
+        "java-B01.a022",
+        "java-B01.a023",
+        "java-B01.a024",
+        "java-B01.a025",
+        "java-B01.a026",
+        "java-B01.a027",
+        "java-B01.a028",
+        "java-B01.a029",
+        "java-B01.a030",
+        "java-B01.a031",
+        "java-B01.a032",
+        "java-B01.a033",
+        "java-B01.a034",
+        "java-B01.a035",
+        "java-B01.a036",
+        "java-B01.a037",
+        "java-B01.a038",
+        "java-B01.a039",
+        "java-B01.a040",
+        "java-B01.a041",
+        "java-B01.a042",
+        "java-B01.a043",
+        "java-B01.a044",
+        "java-B01.a045",
+        "java-B01.a046",
+        "java-B01.a047",
+        "java-B01.a048",
+        "java-B01.a049",
+        "java-B01.a050",
+        "java-B01.a051",
+        "java-B01.a052",
+        "java-B01.a053",
+        "java-B01.a054",
+        "java-B01.a055",
+        "java-B01.a056",
+        "java-B01.a057",
+        "java-B01.a058",
+        "java-B01.a006",
+        "java-B01.a059",
+        "java-B01.a060",
+        "java-B01.a061",
+        "java-B01.a062",
+        "java-B01.a118",
+        "java-B01.a119",
+        "java-B01.a120",
+        "java-B01.a121",
+        "java-B01.a122",
+        "java-B01.a123",
+        "java-B01.a124",
+        "java-B01.a125",
+        "java-B01.a126",
+        "java-B01.a127",
+        "java-B01.a128",
+        "java-B01.a129",
+        "java-B01.a130",
+        "java-B01.a131",
+        "java-B01.a132",
+        "java-B01.a133",
+        "java-B01.a134",
+        "java-B01.a089",
+        "java-B01.a090",
+        "java-B01.a186",
+        "java-B01.a214",
+        "java-B01.a215",
+        "java-B01.a227",
+        "java-B01.a228",
+        "java-B01.a237",
+        "java-B01.a238",
+        "java-B01.a232",
+        "java-B01.a339",
+        "java-B01.a361",
+        "java-B01.a364",
+        "java-B01.a365",
+        "java-B01.a366",
+        "java-B01.a367",
+        "java-B01.a330",
+        "java-B01.a331",
+        "java-B01.a335",
+        "java-B01.a337",
+        "java-B01.a464",
+        "java-B01.a465",
+        "java-B01.a466",
+        "java-B01.a467",
+        "java-B01.a468",
+        "java-B01.a469",
+        "java-B01.a470",
+        "java-B01.a471",
+        "java-B01.a472",
+        "java-B01.a473",
+        "java-B01.a474",
+        "java-B01.a478",
+        "java-B01.a479",
+        "java-B01.a480",
+        "java-B01.a497",
+        "java-B01.a500",
+        "java-B01.a501",
+        "java-B01.a007",
+        "java-B01.a312",
+        "java-B01.a601",
+        "java-B01.a603",
+        "java-B01.a606",
+        "java-B01.a608",
+        "java-B01.a612",
+        "java-B01.a614",
+        "java-B01.a620",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a625",
+        "java-B01.a627",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a632",
+        "java-B01.a634",
+        "java-B01.a637",
+        "java-B01.a639",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a767",
+        "java-B01.a778",
+        "java-B01.a780",
+        "java-B01.a782",
+        "java-B01.a787"
+      ],
+      "source_utf8": "@Pkg\npackage p.q;\n\nimport java.util.*;\nimport java.util.List;\nimport static java.lang.Math.max;\nimport static java.lang.Math.*;\n;\n@interface Pkg {}\n@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface A {}\nclass Types<T extends Number & Comparable<T>, @A U, V extends java.util.List<? extends T>> {\n  byte b; short s; int i; long l; char c; float f; double d; boolean z;\n  @A int ai; int @A [] @A [] arr; String[][] sa; T[] ta; T tv;\n  java.util.@A List<? super Integer> w; Types<T, U, V>.Inner<String> in;\n  List<@A ? extends Number> wb; List<?> any;\n  List<java.util.@A List<String>> nested; List<Types<T, U, V>.Inner<String>> qual; List<@A T> annVar;\n  List<int @A []> pa; List<String[]> ca; List<T[]> va;\n  class Inner<X> {}\n  <S extends T> S id(S s) { return s; }\n  int names() { return p.q.Types.class.hashCode() + this.i + Math.max(i, 1) + java.lang.Math.abs(i) + hashCode(); }\n  java.util.Map.Entry<String, Integer> e;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_declaration",
+            "import_declaration",
+            "asterisk",
+            "annotation_type_declaration",
+            "class_declaration",
+            "type_parameters",
+            "type_parameter",
+            "type_bound",
+            "integral_type",
+            "floating_point_type",
+            "boolean_type",
+            "annotated_type",
+            "array_type",
+            "dimensions",
+            "scoped_type_identifier",
+            "generic_type",
+            "type_arguments",
+            "wildcard",
+            "marker_annotation",
+            "annotation",
+            "scoped_identifier",
+            "field_access"
+          ],
+          "anchors": [
+            {
+              "type": "package_declaration",
+              "text": "@Pkg\npackage p.q;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import java.util.*;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import java.util.List;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import static java.lang.Math.max;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import static java.lang.Math.*;"
+            },
+            {
+              "type": "annotation_type_declaration",
+              "text": "@interface Pkg {}"
+            },
+            {
+              "type": "annotation_type_declaration",
+              "text": "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface A {}"
+            },
+            {
+              "type": "annotation",
+              "text": "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE)"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Types<T extends Number & Comparable<T>, @A U, V extends java.util.List<? extends T>> {\n  byte b; short s; int i; long l; char c; float f; double d; boolean z;\n  @A int ai; int @A [] @A [] arr; String[][] sa; T[] ta; T tv;\n  java.util.@A List<? super Integer> w; Types<T, U, V>.Inner<String> in;\n  List<@A ? extends Number> wb; List<?> any;\n  List<java.util.@A List<String>> nested; List<Types<T, U, V>.Inner<String>> qual; List<@A T> annVar;\n  List<int @A []> pa; List<String[]> ca; List<T[]> va;\n  class Inner<X> {}\n  <S extends T> S id(S s) { return s; }\n  int names() { return p.q.Types.class.hashCode() + this.i + Math.max(i, 1) + java.lang.Math.abs(i) + hashCode(); }\n  java.util.Map.Entry<String, Integer> e;\n}"
+            },
+            {
+              "type": "type_parameters",
+              "text": "<T extends Number & Comparable<T>, @A U, V extends java.util.List<? extends T>>"
+            },
+            {
+              "type": "type_parameter",
+              "text": "T extends Number & Comparable<T>"
+            },
+            {
+              "type": "type_bound",
+              "text": "extends Number & Comparable<T>"
+            },
+            {
+              "type": "type_parameter",
+              "text": "@A U"
+            },
+            {
+              "type": "type_parameter",
+              "text": "V extends java.util.List<? extends T>"
+            },
+            {
+              "type": "wildcard",
+              "text": "? extends T"
+            },
+            {
+              "type": "integral_type",
+              "text": "byte"
+            },
+            {
+              "type": "integral_type",
+              "text": "short"
+            },
+            {
+              "type": "integral_type",
+              "text": "int",
+              "occurrence": 3
+            },
+            {
+              "type": "integral_type",
+              "text": "long"
+            },
+            {
+              "type": "integral_type",
+              "text": "char"
+            },
+            {
+              "type": "floating_point_type",
+              "text": "float"
+            },
+            {
+              "type": "floating_point_type",
+              "text": "double"
+            },
+            {
+              "type": "boolean_type",
+              "text": "boolean"
+            },
+            {
+              "type": "field_declaration",
+              "text": "@A int ai;"
+            },
+            {
+              "type": "array_type",
+              "text": "int @A [] @A []"
+            },
+            {
+              "type": "dimensions",
+              "text": "@A [] @A []"
+            },
+            {
+              "type": "array_type",
+              "text": "String[][]"
+            },
+            {
+              "type": "array_type",
+              "text": "T[]",
+              "occurrence": 1
+            },
+            {
+              "type": "field_declaration",
+              "text": "T tv;"
+            },
+            {
+              "type": "generic_type",
+              "text": "java.util.@A List<? super Integer>"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "java.util.@A List",
+              "occurrence": 1
+            },
+            {
+              "type": "wildcard",
+              "text": "? super Integer"
+            },
+            {
+              "type": "generic_type",
+              "text": "Types<T, U, V>.Inner<String>",
+              "occurrence": 1
+            },
+            {
+              "type": "wildcard",
+              "text": "@A ? extends Number"
+            },
+            {
+              "type": "wildcard",
+              "text": "?",
+              "occurrence": 4
+            },
+            {
+              "type": "generic_type",
+              "text": "java.util.@A List<String>"
+            },
+            {
+              "type": "generic_type",
+              "text": "Types<T, U, V>.Inner<String>",
+              "occurrence": 2
+            },
+            {
+              "type": "annotated_type",
+              "text": "@A T"
+            },
+            {
+              "type": "array_type",
+              "text": "int @A []",
+              "occurrence": 2
+            },
+            {
+              "type": "array_type",
+              "text": "String[]",
+              "occurrence": 2
+            },
+            {
+              "type": "array_type",
+              "text": "T[]",
+              "occurrence": 2
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Inner<X> {}"
+            },
+            {
+              "type": "method_declaration",
+              "text": "<S extends T> S id(S s) { return s; }"
+            },
+            {
+              "type": "method_invocation",
+              "text": "p.q.Types.class.hashCode()"
+            },
+            {
+              "type": "class_literal",
+              "text": "p.q.Types.class"
+            },
+            {
+              "type": "field_access",
+              "text": "this.i"
+            },
+            {
+              "type": "method_invocation",
+              "text": "Math.max(i, 1)"
+            },
+            {
+              "type": "method_invocation",
+              "text": "java.lang.Math.abs(i)"
+            },
+            {
+              "type": "method_invocation",
+              "text": "hashCode()",
+              "occurrence": 2
+            },
+            {
+              "type": "return_statement",
+              "text": "return s;"
+            },
+            {
+              "type": "generic_type",
+              "text": "java.util.Map.Entry<String, Integer>"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "java.util.Map.Entry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-07",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a078",
+        "java-B01.a079",
+        "java-B01.a080",
+        "java-B01.a081",
+        "java-B01.a082",
+        "java-B01.a083",
+        "java-B01.a084",
+        "java-B01.a085",
+        "java-B01.a086",
+        "java-B01.a087",
+        "java-B01.a088",
+        "java-B01.a091",
+        "java-B01.a092",
+        "java-B01.a093",
+        "java-B01.a094",
+        "java-B01.a095",
+        "java-B01.a096",
+        "java-B01.a097",
+        "java-B01.a098",
+        "java-B01.a099",
+        "java-B01.a100",
+        "java-B01.a101",
+        "java-B01.a102",
+        "java-B01.a103",
+        "java-B01.a104",
+        "java-B01.a105",
+        "java-B01.a106",
+        "java-B01.a107",
+        "java-B01.a108",
+        "java-B01.a109",
+        "java-B01.a110",
+        "java-B01.a111",
+        "java-B01.a112",
+        "java-B01.a113",
+        "java-B01.a114",
+        "java-B01.a115",
+        "java-B01.a116",
+        "java-B01.a117",
+        "java-B01.a135",
+        "java-B01.a136",
+        "java-B01.a137",
+        "java-B01.a138",
+        "java-B01.a139",
+        "java-B01.a140",
+        "java-B01.a141",
+        "java-B01.a142",
+        "java-B01.a143",
+        "java-B01.a144",
+        "java-B01.a145",
+        "java-B01.a146",
+        "java-B01.a147",
+        "java-B01.a148",
+        "java-B01.a149",
+        "java-B01.a150",
+        "java-B01.a151",
+        "java-B01.a152",
+        "java-B01.a153",
+        "java-B01.a154",
+        "java-B01.a155",
+        "java-B01.a156",
+        "java-B01.a157",
+        "java-B01.a158",
+        "java-B01.a159",
+        "java-B01.a160",
+        "java-B01.a161",
+        "java-B01.a162",
+        "java-B01.a163",
+        "java-B01.a164",
+        "java-B01.a165",
+        "java-B01.a166",
+        "java-B01.a168",
+        "java-B01.a169",
+        "java-B01.a170",
+        "java-B01.a171",
+        "java-B01.a172",
+        "java-B01.a173",
+        "java-B01.a174",
+        "java-B01.a175",
+        "java-B01.a176",
+        "java-B01.a177",
+        "java-B01.a178",
+        "java-B01.a185",
+        "java-B01.a186",
+        "java-B01.a227",
+        "java-B01.a475",
+        "java-B01.a476",
+        "java-B01.a477",
+        "java-B01.a481",
+        "java-B01.a482",
+        "java-B01.a483",
+        "java-B01.a484",
+        "java-B01.a485",
+        "java-B01.a486",
+        "java-B01.a487",
+        "java-B01.a488",
+        "java-B01.a489",
+        "java-B01.a490",
+        "java-B01.a491",
+        "java-B01.a492",
+        "java-B01.a493",
+        "java-B01.a494",
+        "java-B01.a495",
+        "java-B01.a239",
+        "java-B01.a039",
+        "java-B01.a167",
+        "java-B01.a593",
+        "java-B01.a596",
+        "java-B01.a602",
+        "java-B01.a605",
+        "java-B01.a606",
+        "java-B01.a608",
+        "java-B01.a609",
+        "java-B01.a610",
+        "java-B01.a615",
+        "java-B01.a616",
+        "java-B01.a618",
+        "java-B01.a620",
+        "java-B01.a621",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a635",
+        "java-B01.a636",
+        "java-B01.a638",
+        "java-B01.a639",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a759",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764"
+      ],
+      "source_utf8": "public abstract strictfp class Base<T> extends Object implements Runnable, java.io.Serializable {\n  @Deprecated public static final int K = 1;\n  protected transient volatile int t;\n  private int a[] = {}, b = 2, c[][];\n  ;\n  static { K2 = 3; }\n  static int K2;\n  { t = 1; }\n  public Base() { super(); }\n  protected <X> Base(X x) throws Exception, RuntimeException { this(); }\n  @Deprecated private Base(int i) { }\n  public abstract void run();\n  protected final synchronized int m(final int p, @Deprecated String q) throws Exception { return p; }\n  private static native void nat();\n  strictfp double sf() { return 1.0; }\n  int old()[] { return null; }\n  void recv(Base<T> this, String... rest) { }\n  <E extends Exception> void thr() throws E { }\n  public <Y> @Deprecated Y gen() { return null; }\n  void va(int @A ... nums) { }\n  protected class Inner { Inner(Base<T> Base.this) { } }\n  interface Nested { }\n  private static class SN { }\n  enum E { X }\n  @interface NA { }\n}\n@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface A {}\nfinal class Sub extends Base<String> {\n  Sub() { super(); }\n  Sub(int i) { <String>this(); }\n  Sub(String s) { <Object>super(s); }\n  @Override public void run() { }\n}\n@Deprecated class Outer { class In { } }\nclass Q extends Outer.In {\n  Q(Outer o) { o.super(); }\n  Q() { new Outer().super(); }\n}\nclass R extends Outer.In {\n  R(Outer o) { o.<String>super(); }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "modifiers",
+            "superclass",
+            "super_interfaces",
+            "type_list",
+            "field_declaration",
+            "static_initializer",
+            "block",
+            "constructor_declaration",
+            "constructor_body",
+            "explicit_constructor_invocation",
+            "method_declaration",
+            "formal_parameters",
+            "formal_parameter",
+            "spread_parameter",
+            "receiver_parameter",
+            "throws",
+            "dimensions",
+            "interface_declaration",
+            "enum_declaration",
+            "annotation_type_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "public abstract strictfp class Base<T> extends Object implements Runnable, java.io.Serializable {\n  @Deprecated public static final int K = 1;\n  protected transient volatile int t;\n  private int a[] = {}, b = 2, c[][];\n  ;\n  static { K2 = 3; }\n  static int K2;\n  { t = 1; }\n  public Base() { super(); }\n  protected <X> Base(X x) throws Exception, RuntimeException { this(); }\n  @Deprecated private Base(int i) { }\n  public abstract void run();\n  protected final synchronized int m(final int p, @Deprecated String q) throws Exception { return p; }\n  private static native void nat();\n  strictfp double sf() { return 1.0; }\n  int old()[] { return null; }\n  void recv(Base<T> this, String... rest) { }\n  <E extends Exception> void thr() throws E { }\n  public <Y> @Deprecated Y gen() { return null; }\n  void va(int @A ... nums) { }\n  protected class Inner { Inner(Base<T> Base.this) { } }\n  interface Nested { }\n  private static class SN { }\n  enum E { X }\n  @interface NA { }\n}"
+            },
+            {
+              "type": "modifiers",
+              "text": "public abstract strictfp"
+            },
+            {
+              "type": "superclass",
+              "text": "extends Object"
+            },
+            {
+              "type": "super_interfaces",
+              "text": "implements Runnable, java.io.Serializable"
+            },
+            {
+              "type": "field_declaration",
+              "text": "@Deprecated public static final int K = 1;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "protected transient volatile int t;"
+            },
+            {
+              "type": "field_declaration",
+              "text": "private int a[] = {}, b = 2, c[][];"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "a[] = {}"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "c[][]"
+            },
+            {
+              "type": "static_initializer",
+              "text": "static { K2 = 3; }"
+            },
+            {
+              "type": "block",
+              "text": "{ t = 1; }"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "public Base() { super(); }"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();",
+              "occurrence": 1
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "protected <X> Base(X x) throws Exception, RuntimeException { this(); }"
+            },
+            {
+              "type": "throws",
+              "text": "throws Exception, RuntimeException"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "this();",
+              "occurrence": 1
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "@Deprecated private Base(int i) { }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public abstract void run();"
+            },
+            {
+              "type": "method_declaration",
+              "text": "protected final synchronized int m(final int p, @Deprecated String q) throws Exception { return p; }"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "final int p"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@Deprecated String q"
+            },
+            {
+              "type": "method_declaration",
+              "text": "private static native void nat();"
+            },
+            {
+              "type": "method_declaration",
+              "text": "strictfp double sf() { return 1.0; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "int old()[] { return null; }"
+            },
+            {
+              "type": "dimensions",
+              "text": "[]",
+              "occurrence": 4
+            },
+            {
+              "type": "method_declaration",
+              "text": "void recv(Base<T> this, String... rest) { }"
+            },
+            {
+              "type": "receiver_parameter",
+              "text": "Base<T> this"
+            },
+            {
+              "type": "spread_parameter",
+              "text": "String... rest"
+            },
+            {
+              "type": "method_declaration",
+              "text": "<E extends Exception> void thr() throws E { }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public <Y> @Deprecated Y gen() { return null; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "void va(int @A ... nums) { }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(int @A ... nums)"
+            },
+            {
+              "type": "spread_parameter",
+              "text": "int @A ... nums"
+            },
+            {
+              "type": "class_declaration",
+              "text": "protected class Inner { Inner(Base<T> Base.this) { } }"
+            },
+            {
+              "type": "receiver_parameter",
+              "text": "Base<T> Base.this"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Nested { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "private static class SN { }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum E { X }"
+            },
+            {
+              "type": "annotation_type_declaration",
+              "text": "@interface NA { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "final class Sub extends Base<String> {\n  Sub() { super(); }\n  Sub(int i) { <String>this(); }\n  Sub(String s) { <Object>super(s); }\n  @Override public void run() { }\n}"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();",
+              "occurrence": 2
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "<String>this();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "<Object>super(s);"
+            },
+            {
+              "type": "method_declaration",
+              "text": "@Override public void run() { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "@Deprecated class Outer { class In { } }"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "o.super();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "new Outer().super();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "o.<String>super();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-08",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a079",
+        "java-B01.a179",
+        "java-B01.a180",
+        "java-B01.a181",
+        "java-B01.a182",
+        "java-B01.a183",
+        "java-B01.a184",
+        "java-B01.a496",
+        "java-B01.a092",
+        "java-B01.a370",
+        "java-B01.a082",
+        "java-B01.a088",
+        "java-B01.a609",
+        "java-B01.a615",
+        "java-B01.a618",
+        "java-B01.a624",
+        "java-B01.a631",
+        "java-B01.a635",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a760"
+      ],
+      "source_utf8": "public enum Color implements Runnable {\n  @Deprecated RED, GREEN(1), BLUE(2, \"b\") { public void run() { } }, WHITE() { },\n  ;\n  Color() { }\n  Color(int i) { }\n  Color(int i, String s) { }\n  public void run() { }\n}\nenum Empty { }\nenum Trailing { A, B, }\nenum OnlySemi { ; }\nstrictfp enum S { X; int f; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "enum_declaration",
+            "enum_body",
+            "enum_constant",
+            "enum_body_declarations",
+            "argument_list",
+            "class_body"
+          ],
+          "anchors": [
+            {
+              "type": "enum_declaration",
+              "text": "public enum Color implements Runnable {\n  @Deprecated RED, GREEN(1), BLUE(2, \"b\") { public void run() { } }, WHITE() { },\n  ;\n  Color() { }\n  Color(int i) { }\n  Color(int i, String s) { }\n  public void run() { }\n}"
+            },
+            {
+              "type": "super_interfaces",
+              "text": "implements Runnable"
+            },
+            {
+              "type": "enum_body",
+              "text": "{\n  @Deprecated RED, GREEN(1), BLUE(2, \"b\") { public void run() { } }, WHITE() { },\n  ;\n  Color() { }\n  Color(int i) { }\n  Color(int i, String s) { }\n  public void run() { }\n}"
+            },
+            {
+              "type": "enum_constant",
+              "text": "@Deprecated RED"
+            },
+            {
+              "type": "enum_constant",
+              "text": "GREEN(1)"
+            },
+            {
+              "type": "enum_constant",
+              "text": "BLUE(2, \"b\") { public void run() { } }"
+            },
+            {
+              "type": "enum_constant",
+              "text": "WHITE() { }"
+            },
+            {
+              "type": "enum_body_declarations",
+              "text": ";\n  Color() { }\n  Color(int i) { }\n  Color(int i, String s) { }\n  public void run() { }"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "Color() { }"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "Color(int i) { }"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "Color(int i, String s) { }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Empty { }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Trailing { A, B, }"
+            },
+            {
+              "type": "enum_body",
+              "text": "{ A, B, }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum OnlySemi { ; }"
+            },
+            {
+              "type": "enum_body_declarations",
+              "text": ";",
+              "occurrence": 2
+            },
+            {
+              "type": "enum_declaration",
+              "text": "strictfp enum S { X; int f; }"
+            },
+            {
+              "type": "enum_body_declarations",
+              "text": "; int f;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-09",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a185",
+        "java-B01.a186",
+        "java-B01.a187",
+        "java-B01.a188",
+        "java-B01.a189",
+        "java-B01.a190",
+        "java-B01.a191",
+        "java-B01.a192",
+        "java-B01.a193",
+        "java-B01.a194",
+        "java-B01.a195",
+        "java-B01.a196",
+        "java-B01.a197",
+        "java-B01.a198",
+        "java-B01.a199",
+        "java-B01.a200",
+        "java-B01.a201",
+        "java-B01.a202",
+        "java-B01.a203",
+        "java-B01.a204",
+        "java-B01.a205",
+        "java-B01.a206",
+        "java-B01.a207",
+        "java-B01.a208",
+        "java-B01.a209",
+        "java-B01.a210",
+        "java-B01.a211",
+        "java-B01.a212",
+        "java-B01.a213",
+        "java-B01.a214",
+        "java-B01.a215",
+        "java-B01.a216",
+        "java-B01.a217",
+        "java-B01.a218",
+        "java-B01.a219",
+        "java-B01.a220",
+        "java-B01.a221",
+        "java-B01.a222",
+        "java-B01.a223",
+        "java-B01.a224",
+        "java-B01.a225",
+        "java-B01.a226",
+        "java-B01.a227",
+        "java-B01.a228",
+        "java-B01.a229",
+        "java-B01.a230",
+        "java-B01.a231",
+        "java-B01.a232",
+        "java-B01.a233",
+        "java-B01.a234",
+        "java-B01.a235",
+        "java-B01.a236",
+        "java-B01.a237",
+        "java-B01.a238",
+        "java-B01.a339",
+        "java-B01.a498",
+        "java-B01.a499",
+        "java-B01.a502",
+        "java-B01.a503",
+        "java-B01.a504",
+        "java-B01.a505",
+        "java-B01.a506",
+        "java-B01.a507",
+        "java-B01.a508",
+        "java-B01.a509",
+        "java-B01.a510",
+        "java-B01.a500",
+        "java-B01.a501",
+        "java-B01.a497",
+        "java-B01.a039",
+        "java-B01.a593",
+        "java-B01.a599",
+        "java-B01.a605",
+        "java-B01.a608",
+        "java-B01.a610",
+        "java-B01.a615",
+        "java-B01.a620",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a635",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a767",
+        "java-B01.a778"
+      ],
+      "source_utf8": "public interface Shape<T> extends Comparable<T>, Runnable {\n  int A = 1;\n  public static final int B = 2;\n  @Deprecated int C = 3;\n  ;\n  double area();\n  public abstract void run();\n  default int twice() { return 2; }\n  static int one() { return 1; }\n  strictfp default double sf() { return 0; }\n  @Deprecated void ann();\n  class Impl { }\n  interface Sub { }\n}\n@Deprecated abstract static interface Mods { }\nprotected private strictfp interface Mods2 { }\n@interface Ann {\n  int value() default 1;\n  public abstract String name();\n  @Deprecated int[] arr() default {1, 2,};\n  int legacy()[] default {};\n  Class<?> k() default Object.class;\n  Ann2 nested() default @Ann2;\n  int K = 3;\n  class C { }\n  interface I { }\n  ;\n}\n@interface Ann2 { String[] v() default { }; }\n@Ann(value = 1 + 2, name = \"n\", arr = {1, 2}, nested = @Ann2(v = {\"a\", \"b\",}))\nclass Use { }\n@Ann(name = \"x\") @Ann2({\"x\"}) class Use2 { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_declaration",
+            "extends_interfaces",
+            "interface_body",
+            "constant_declaration",
+            "method_declaration",
+            "annotation_type_declaration",
+            "annotation_type_body",
+            "annotation_type_element_declaration",
+            "element_value_pair",
+            "element_value_array_initializer",
+            "annotation",
+            "annotation_argument_list",
+            "marker_annotation",
+            "class_literal"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "public interface Shape<T> extends Comparable<T>, Runnable {\n  int A = 1;\n  public static final int B = 2;\n  @Deprecated int C = 3;\n  ;\n  double area();\n  public abstract void run();\n  default int twice() { return 2; }\n  static int one() { return 1; }\n  strictfp default double sf() { return 0; }\n  @Deprecated void ann();\n  class Impl { }\n  interface Sub { }\n}"
+            },
+            {
+              "type": "extends_interfaces",
+              "text": "extends Comparable<T>, Runnable"
+            },
+            {
+              "type": "constant_declaration",
+              "text": "int A = 1;"
+            },
+            {
+              "type": "constant_declaration",
+              "text": "public static final int B = 2;"
+            },
+            {
+              "type": "constant_declaration",
+              "text": "@Deprecated int C = 3;"
+            },
+            {
+              "type": "method_declaration",
+              "text": "double area();"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public abstract void run();"
+            },
+            {
+              "type": "method_declaration",
+              "text": "default int twice() { return 2; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "static int one() { return 1; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "strictfp default double sf() { return 0; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "@Deprecated void ann();"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Impl { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Sub { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "@Deprecated abstract static interface Mods { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "protected private strictfp interface Mods2 { }"
+            },
+            {
+              "type": "annotation_type_declaration",
+              "text": "@interface Ann {\n  int value() default 1;\n  public abstract String name();\n  @Deprecated int[] arr() default {1, 2,};\n  int legacy()[] default {};\n  Class<?> k() default Object.class;\n  Ann2 nested() default @Ann2;\n  int K = 3;\n  class C { }\n  interface I { }\n  ;\n}"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "int value() default 1;"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "public abstract String name();"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "@Deprecated int[] arr() default {1, 2,};"
+            },
+            {
+              "type": "element_value_array_initializer",
+              "text": "{1, 2,}"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "int legacy()[] default {};"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "Class<?> k() default Object.class;"
+            },
+            {
+              "type": "class_literal",
+              "text": "Object.class"
+            },
+            {
+              "type": "annotation_type_element_declaration",
+              "text": "Ann2 nested() default @Ann2;"
+            },
+            {
+              "type": "marker_annotation",
+              "text": "@Ann2",
+              "occurrence": 1
+            },
+            {
+              "type": "constant_declaration",
+              "text": "int K = 3;"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface I { }"
+            },
+            {
+              "type": "annotation_type_declaration",
+              "text": "@interface Ann2 { String[] v() default { }; }"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann(value = 1 + 2, name = \"n\", arr = {1, 2}, nested = @Ann2(v = {\"a\", \"b\",}))"
+            },
+            {
+              "type": "element_value_pair",
+              "text": "value = 1 + 2"
+            },
+            {
+              "type": "element_value_pair",
+              "text": "name = \"n\""
+            },
+            {
+              "type": "element_value_pair",
+              "text": "arr = {1, 2}"
+            },
+            {
+              "type": "element_value_pair",
+              "text": "nested = @Ann2(v = {\"a\", \"b\",})"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann2(v = {\"a\", \"b\",})"
+            },
+            {
+              "type": "element_value_array_initializer",
+              "text": "{\"a\", \"b\",}"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann(name = \"x\")"
+            },
+            {
+              "type": "annotation",
+              "text": "@Ann2({\"x\"})"
+            },
+            {
+              "type": "element_value_array_initializer",
+              "text": "{\"x\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-10",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a241",
+        "java-B01.a242",
+        "java-B01.a243",
+        "java-B01.a244",
+        "java-B01.a245",
+        "java-B01.a246",
+        "java-B01.a247",
+        "java-B01.a248",
+        "java-B01.a249",
+        "java-B01.a250",
+        "java-B01.a251",
+        "java-B01.a252",
+        "java-B01.a253",
+        "java-B01.a254",
+        "java-B01.a255",
+        "java-B01.a256",
+        "java-B01.a257",
+        "java-B01.a258",
+        "java-B01.a259",
+        "java-B01.a260",
+        "java-B01.a261",
+        "java-B01.a262",
+        "java-B01.a263",
+        "java-B01.a264",
+        "java-B01.a265",
+        "java-B01.a266",
+        "java-B01.a267",
+        "java-B01.a268",
+        "java-B01.a269",
+        "java-B01.a270",
+        "java-B01.a271",
+        "java-B01.a273",
+        "java-B01.a274",
+        "java-B01.a275",
+        "java-B01.a276",
+        "java-B01.a277",
+        "java-B01.a278",
+        "java-B01.a279",
+        "java-B01.a280",
+        "java-B01.a281",
+        "java-B01.a282",
+        "java-B01.a283",
+        "java-B01.a284",
+        "java-B01.a285",
+        "java-B01.a286",
+        "java-B01.a287",
+        "java-B01.a288",
+        "java-B01.a289",
+        "java-B01.a290",
+        "java-B01.a291",
+        "java-B01.a292",
+        "java-B01.a293",
+        "java-B01.a294",
+        "java-B01.a295",
+        "java-B01.a296",
+        "java-B01.a297",
+        "java-B01.a298",
+        "java-B01.a299",
+        "java-B01.a300",
+        "java-B01.a301",
+        "java-B01.a302",
+        "java-B01.a303",
+        "java-B01.a304",
+        "java-B01.a305",
+        "java-B01.a306",
+        "java-B01.a307",
+        "java-B01.a308",
+        "java-B01.a309",
+        "java-B01.a310",
+        "java-B01.a311",
+        "java-B01.a312",
+        "java-B01.a313",
+        "java-B01.a314",
+        "java-B01.a394",
+        "java-B01.a395",
+        "java-B01.a396",
+        "java-B01.a393",
+        "java-B01.a392",
+        "java-B01.a397",
+        "java-B01.a448",
+        "java-B01.a449",
+        "java-B01.a458",
+        "java-B01.a459",
+        "java-B01.a343",
+        "java-B01.a361",
+        "java-B01.a358",
+        "java-B01.a156",
+        "java-B01.a157",
+        "java-B01.a511",
+        "java-B01.a512",
+        "java-B01.a513",
+        "java-B01.a514",
+        "java-B01.a515",
+        "java-B01.a516",
+        "java-B01.a517",
+        "java-B01.a518",
+        "java-B01.a519",
+        "java-B01.a532",
+        "java-B01.a520",
+        "java-B01.a521",
+        "java-B01.a350",
+        "java-B01.a352",
+        "java-B01.a356",
+        "java-B01.a357",
+        "java-B01.a594",
+        "java-B01.a595",
+        "java-B01.a596",
+        "java-B01.a597",
+        "java-B01.a598",
+        "java-B01.a599",
+        "java-B01.a600",
+        "java-B01.a602",
+        "java-B01.a604",
+        "java-B01.a606",
+        "java-B01.a607",
+        "java-B01.a611",
+        "java-B01.a613",
+        "java-B01.a616",
+        "java-B01.a617",
+        "java-B01.a618",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a640",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a768",
+        "java-B01.a770",
+        "java-B01.a776",
+        "java-B01.a777",
+        "java-B01.a778"
+      ],
+      "source_utf8": "class Stmts {\n  int f; int[] arr = new int[3]; Stmts self;\n  void m(int x, Object lock, java.util.List<String> list) throws Exception {\n    ;\n    { }\n    class Local { }\n    final @Deprecated int a = 1, b;\n    int c[] = {1};\n    lbl: for (;;) { break lbl; }\n    outer: while (x > 0) { x--; continue outer; }\n    if (x > 0) x = 1;\n    if (x > 0) x = 2; else x = 3;\n    if (x > 0) if (x > 1) x = 4; else x = 5; else x = 6;\n    if (x > 0) l2: while (x > 9) x--; else ;\n    if (x > 0) for (int i = 0; i < 1; i++) x++; else ;\n    if (x > 0) for (String s : list) x++; else ;\n    if (x > 0) while (x > 9) x--; else ;\n    if (x > 0) l3: x++; else { }\n    assert x > 0;\n    assert x > 0 : \"msg\";\n    switch (x) { case 1: case 2: x++; break; case 3 + 1: { } default: x--; }\n    switch (x) { case 1: x++; default: }\n    switch (x) { }\n    while (x < 10) x++;\n    do x++; while (x < 20);\n    do { } while (false);\n    for (int i = 0, j = 1; i < j; i++, j--) { }\n    for (x = 0, f = 1; ; ) break;\n    for (;;) break;\n    for (String s : list) { }\n    for (final @Deprecated String s : list) continue;\n    return;\n  }\n  int r(int x) { if (x == 0) return 0; throw new IllegalStateException(); }\n  void sync(Object lock) { synchronized (lock) { f = 1; } }\n  void exprs() { f = 1; ++f; --f; f++; f--; exprs(); new Object(); this.f = 2; arr[0] = 3; self.f = 4; }\n  enum E { RED, GREEN }\n  void en(E e) { switch (e) { case RED: break; case GREEN: } }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "local_variable_declaration",
+            "labeled_statement",
+            "for_statement",
+            "enhanced_for_statement",
+            "while_statement",
+            "do_statement",
+            "if_statement",
+            "assert_statement",
+            "switch_expression",
+            "switch_block",
+            "switch_block_statement_group",
+            "switch_label",
+            "break_statement",
+            "continue_statement",
+            "return_statement",
+            "throw_statement",
+            "synchronized_statement",
+            "expression_statement",
+            "update_expression",
+            "assignment_expression",
+            "class_declaration",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "array_creation_expression",
+              "text": "new int[3]"
+            },
+            {
+              "type": "dimensions_expr",
+              "text": "[3]"
+            },
+            {
+              "type": "block",
+              "text": "{ }",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Local { }"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "final @Deprecated int a = 1, b;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "int c[] = {1};"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "lbl: for (;;) { break lbl; }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) { break lbl; }"
+            },
+            {
+              "type": "break_statement",
+              "text": "break lbl;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "outer: while (x > 0) { x--; continue outer; }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (x > 0) { x--; continue outer; }"
+            },
+            {
+              "type": "continue_statement",
+              "text": "continue outer;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) x = 1;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) x = 2; else x = 3;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) if (x > 1) x = 4; else x = 5; else x = 6;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 1) x = 4; else x = 5;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) l2: while (x > 9) x--; else ;"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "l2: while (x > 9) x--;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) for (int i = 0; i < 1; i++) x++; else ;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (int i = 0; i < 1; i++) x++;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) for (String s : list) x++; else ;"
+            },
+            {
+              "type": "enhanced_for_statement",
+              "text": "for (String s : list) x++;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) while (x > 9) x--; else ;"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (x > 9) x--;",
+              "occurrence": 2
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x > 0) l3: x++; else { }"
+            },
+            {
+              "type": "labeled_statement",
+              "text": "l3: x++;"
+            },
+            {
+              "type": "assert_statement",
+              "text": "assert x > 0;"
+            },
+            {
+              "type": "assert_statement",
+              "text": "assert x > 0 : \"msg\";"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (x) { case 1: case 2: x++; break; case 3 + 1: { } default: x--; }"
+            },
+            {
+              "type": "switch_block_statement_group",
+              "text": "case 1:",
+              "occurrence": 1
+            },
+            {
+              "type": "switch_block_statement_group",
+              "text": "case 2: x++; break;"
+            },
+            {
+              "type": "switch_label",
+              "text": "case 3 + 1"
+            },
+            {
+              "type": "switch_label",
+              "text": "default",
+              "occurrence": 1
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (x) { case 1: x++; default: }"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (x) { }"
+            },
+            {
+              "type": "while_statement",
+              "text": "while (x < 10) x++;"
+            },
+            {
+              "type": "do_statement",
+              "text": "do x++; while (x < 20);"
+            },
+            {
+              "type": "do_statement",
+              "text": "do { } while (false);"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (int i = 0, j = 1; i < j; i++, j--) { }"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (x = 0, f = 1; ; ) break;"
+            },
+            {
+              "type": "for_statement",
+              "text": "for (;;) break;"
+            },
+            {
+              "type": "enhanced_for_statement",
+              "text": "for (String s : list) { }"
+            },
+            {
+              "type": "enhanced_for_statement",
+              "text": "for (final @Deprecated String s : list) continue;"
+            },
+            {
+              "type": "return_statement",
+              "text": "return;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (x == 0) return 0;"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new IllegalStateException();"
+            },
+            {
+              "type": "synchronized_statement",
+              "text": "synchronized (lock) { f = 1; }"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "f = 1",
+              "occurrence": 3
+            },
+            {
+              "type": "update_expression",
+              "text": "++f"
+            },
+            {
+              "type": "update_expression",
+              "text": "--f"
+            },
+            {
+              "type": "update_expression",
+              "text": "f++"
+            },
+            {
+              "type": "update_expression",
+              "text": "f--"
+            },
+            {
+              "type": "expression_statement",
+              "text": "exprs();"
+            },
+            {
+              "type": "expression_statement",
+              "text": "new Object();"
+            },
+            {
+              "type": "field_access",
+              "text": "this.f"
+            },
+            {
+              "type": "array_access",
+              "text": "arr[0]"
+            },
+            {
+              "type": "field_access",
+              "text": "self.f"
+            },
+            {
+              "type": "switch_label",
+              "text": "case RED"
+            },
+            {
+              "type": "switch_label",
+              "text": "case GREEN"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-11",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a315",
+        "java-B01.a316",
+        "java-B01.a317",
+        "java-B01.a318",
+        "java-B01.a319",
+        "java-B01.a320",
+        "java-B01.a321",
+        "java-B01.a322",
+        "java-B01.a323",
+        "java-B01.a324",
+        "java-B01.a325",
+        "java-B01.a326",
+        "java-B01.a522",
+        "java-B01.a272",
+        "java-B01.a156",
+        "java-B01.a157",
+        "java-B01.a031",
+        "java-B01.a596",
+        "java-B01.a614",
+        "java-B01.a616",
+        "java-B01.a622",
+        "java-B01.a626",
+        "java-B01.a628",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a633",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a780",
+        "java-B01.a783"
+      ],
+      "source_utf8": "import java.io.*;\nclass Tries {\n  void t() throws Exception {\n    try { } catch (RuntimeException e) { }\n    try { } catch (final IllegalStateException | IllegalArgumentException e) { } catch (Exception e) { }\n    try { } finally { }\n    try { } catch (@Deprecated Exception e) { } finally { }\n    try (Reader r = new StringReader(\"\")) { }\n    try (final Reader r = new StringReader(\"\"); BufferedReader b = new BufferedReader(r);) { } catch (IOException e) { } finally { }\n    try (java.io.Reader r = null) { } finally { }\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "try_statement",
+            "catch_clause",
+            "catch_formal_parameter",
+            "catch_type",
+            "finally_clause",
+            "try_with_resources_statement",
+            "resource_specification",
+            "resource"
+          ],
+          "anchors": [
+            {
+              "type": "try_statement",
+              "text": "try { } catch (RuntimeException e) { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (RuntimeException e) { }"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "RuntimeException e"
+            },
+            {
+              "type": "catch_type",
+              "text": "RuntimeException"
+            },
+            {
+              "type": "try_statement",
+              "text": "try { } catch (final IllegalStateException | IllegalArgumentException e) { } catch (Exception e) { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (final IllegalStateException | IllegalArgumentException e) { }"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "final IllegalStateException | IllegalArgumentException e"
+            },
+            {
+              "type": "catch_type",
+              "text": "IllegalStateException | IllegalArgumentException"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (Exception e) { }"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "Exception e",
+              "occurrence": 3
+            },
+            {
+              "type": "catch_type",
+              "text": "Exception",
+              "occurrence": 5
+            },
+            {
+              "type": "try_statement",
+              "text": "try { } finally { }"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }",
+              "occurrence": 1
+            },
+            {
+              "type": "try_statement",
+              "text": "try { } catch (@Deprecated Exception e) { } finally { }"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (@Deprecated Exception e) { }"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "@Deprecated Exception e"
+            },
+            {
+              "type": "catch_type",
+              "text": "Exception",
+              "occurrence": 6
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }",
+              "occurrence": 2
+            },
+            {
+              "type": "try_with_resources_statement",
+              "text": "try (Reader r = new StringReader(\"\")) { }"
+            },
+            {
+              "type": "resource_specification",
+              "text": "(Reader r = new StringReader(\"\"))"
+            },
+            {
+              "type": "resource",
+              "text": "Reader r = new StringReader(\"\")",
+              "occurrence": 1
+            },
+            {
+              "type": "try_with_resources_statement",
+              "text": "try (final Reader r = new StringReader(\"\"); BufferedReader b = new BufferedReader(r);) { } catch (IOException e) { } finally { }"
+            },
+            {
+              "type": "resource_specification",
+              "text": "(final Reader r = new StringReader(\"\"); BufferedReader b = new BufferedReader(r);)"
+            },
+            {
+              "type": "resource",
+              "text": "final Reader r = new StringReader(\"\")"
+            },
+            {
+              "type": "resource",
+              "text": "BufferedReader b = new BufferedReader(r)"
+            },
+            {
+              "type": "catch_clause",
+              "text": "catch (IOException e) { }"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "IOException e"
+            },
+            {
+              "type": "catch_type",
+              "text": "IOException"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }",
+              "occurrence": 3
+            },
+            {
+              "type": "try_with_resources_statement",
+              "text": "try (java.io.Reader r = null) { } finally { }"
+            },
+            {
+              "type": "resource_specification",
+              "text": "(java.io.Reader r = null)"
+            },
+            {
+              "type": "resource",
+              "text": "java.io.Reader r = null"
+            },
+            {
+              "type": "finally_clause",
+              "text": "finally { }",
+              "occurrence": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-12",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a327",
+        "java-B01.a328",
+        "java-B01.a329",
+        "java-B01.a330",
+        "java-B01.a331",
+        "java-B01.a332",
+        "java-B01.a333",
+        "java-B01.a334",
+        "java-B01.a335",
+        "java-B01.a336",
+        "java-B01.a337",
+        "java-B01.a338",
+        "java-B01.a339",
+        "java-B01.a340",
+        "java-B01.a341",
+        "java-B01.a342",
+        "java-B01.a343",
+        "java-B01.a344",
+        "java-B01.a345",
+        "java-B01.a346",
+        "java-B01.a347",
+        "java-B01.a348",
+        "java-B01.a349",
+        "java-B01.a350",
+        "java-B01.a351",
+        "java-B01.a352",
+        "java-B01.a353",
+        "java-B01.a354",
+        "java-B01.a355",
+        "java-B01.a356",
+        "java-B01.a357",
+        "java-B01.a358",
+        "java-B01.a359",
+        "java-B01.a360",
+        "java-B01.a361",
+        "java-B01.a362",
+        "java-B01.a363",
+        "java-B01.a364",
+        "java-B01.a365",
+        "java-B01.a366",
+        "java-B01.a367",
+        "java-B01.a368",
+        "java-B01.a369",
+        "java-B01.a370",
+        "java-B01.a371",
+        "java-B01.a372",
+        "java-B01.a373",
+        "java-B01.a374",
+        "java-B01.a375",
+        "java-B01.a376",
+        "java-B01.a377",
+        "java-B01.a523",
+        "java-B01.a524",
+        "java-B01.a525",
+        "java-B01.a526",
+        "java-B01.a007",
+        "java-B01.a036",
+        "java-B01.a454",
+        "java-B01.a455",
+        "java-B01.a054",
+        "java-B01.a055",
+        "java-B01.a056",
+        "java-B01.a057",
+        "java-B01.a039",
+        "java-B01.a596",
+        "java-B01.a603",
+        "java-B01.a606",
+        "java-B01.a614",
+        "java-B01.a620",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a639",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a761",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a780",
+        "java-B01.a787"
+      ],
+      "source_utf8": "import java.util.*;\nimport java.util.function.*;\nclass Prim<T> {\n  int f; int[] a = {1}; static int sf; Prim<T> p;\n  class In { In() { } <X> In(X x) { } }\n  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface A {}\n  Object prim(Prim<T> o) {\n    Object[] r = {\n      1, String.class, String[][].class, int.class, int[].class, boolean.class, boolean[].class, void.class,\n      java.util.List.class, this, Prim.this, (f), new Prim<String>(), new <String>Prim<String>(),\n      new ArrayList<>(), new @A ArrayList<String>(), new java.util.@A ArrayList<String>(),\n      new Object() { int g; }, o.new In(), p.new <String>In(\"x\"), this.new In(), new Prim<T>().new In(),\n      this.f, super.hashCode(), Prim.super.hashCode(), o.f, a[0], o.a[0], (a)[0], new int[]{1, 2}[0],\n      String.valueOf(1), o.prim(o), this.<String>id(\"s\"), Collections.<String>emptyList(),\n      super.toString(), super.<String>equals(o), Prim.super.<String>equals(o), prim(o),\n      new int[2], new int[2][], new String[1][2], new int @A [3], new int[]{1}, new String[][]{{\"a\"}},\n      new int[3][4][]\n    };\n    Function<Object, String> m1 = String::valueOf; Supplier<Integer> m2 = o::hashCode;\n    Function<List<String>, Integer> m3 = List<String>::size; Supplier<String> m4 = super::toString;\n    Supplier<String> m5 = Prim.super::toString; Supplier<ArrayList<String>> m6 = ArrayList<String>::new;\n    IntFunction<int[]> m7 = int[]::new; Function<String, Integer> m8 = Integer::<String>valueOf;\n    Supplier<Prim<T>> m9 = Prim::new; Function<Object, Integer> m10 = this::<Object>id2; Supplier<String> m11 = (o)::toString;\n    return r;\n  }\n  <S> S id(S s) { return s; }\n  <S> int id2(S s) { return 0; }\n  static class D extends Prim<String> { Object q = D.super.f; Object q2 = super.f; }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_literal",
+            "this",
+            "parenthesized_expression",
+            "object_creation_expression",
+            "class_body",
+            "field_access",
+            "super",
+            "array_access",
+            "method_invocation",
+            "array_creation_expression",
+            "dimensions_expr",
+            "method_reference",
+            "type_arguments",
+            "marker_annotation"
+          ],
+          "anchors": [
+            {
+              "type": "class_literal",
+              "text": "String.class"
+            },
+            {
+              "type": "class_literal",
+              "text": "String[][].class"
+            },
+            {
+              "type": "class_literal",
+              "text": "int.class"
+            },
+            {
+              "type": "class_literal",
+              "text": "int[].class"
+            },
+            {
+              "type": "class_literal",
+              "text": "boolean.class"
+            },
+            {
+              "type": "class_literal",
+              "text": "boolean[].class"
+            },
+            {
+              "type": "class_literal",
+              "text": "void.class"
+            },
+            {
+              "type": "class_literal",
+              "text": "java.util.List.class"
+            },
+            {
+              "type": "field_access",
+              "text": "Prim.this"
+            },
+            {
+              "type": "parenthesized_expression",
+              "text": "(f)"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new Prim<String>()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new <String>Prim<String>()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new ArrayList<>()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new @A ArrayList<String>()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new java.util.@A ArrayList<String>()"
+            },
+            {
+              "type": "scoped_type_identifier",
+              "text": "java.util.@A ArrayList"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new Object() { int g; }"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "o.new In()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "p.new <String>In(\"x\")"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "this.new In()"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new Prim<T>().new In()"
+            },
+            {
+              "type": "field_access",
+              "text": "this.f"
+            },
+            {
+              "type": "method_invocation",
+              "text": "super.hashCode()",
+              "occurrence": 1
+            },
+            {
+              "type": "method_invocation",
+              "text": "Prim.super.hashCode()"
+            },
+            {
+              "type": "field_access",
+              "text": "o.f"
+            },
+            {
+              "type": "array_access",
+              "text": "a[0]",
+              "occurrence": 1
+            },
+            {
+              "type": "array_access",
+              "text": "o.a[0]"
+            },
+            {
+              "type": "array_access",
+              "text": "(a)[0]"
+            },
+            {
+              "type": "array_access",
+              "text": "new int[]{1, 2}[0]"
+            },
+            {
+              "type": "method_invocation",
+              "text": "String.valueOf(1)"
+            },
+            {
+              "type": "method_invocation",
+              "text": "o.prim(o)"
+            },
+            {
+              "type": "method_invocation",
+              "text": "this.<String>id(\"s\")"
+            },
+            {
+              "type": "method_invocation",
+              "text": "Collections.<String>emptyList()"
+            },
+            {
+              "type": "method_invocation",
+              "text": "super.toString()"
+            },
+            {
+              "type": "method_invocation",
+              "text": "super.<String>equals(o)",
+              "occurrence": 1
+            },
+            {
+              "type": "method_invocation",
+              "text": "Prim.super.<String>equals(o)"
+            },
+            {
+              "type": "method_invocation",
+              "text": "prim(o)",
+              "occurrence": 2
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new int[2]",
+              "occurrence": 1
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new int[2][]"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new String[1][2]"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new int @A [3]"
+            },
+            {
+              "type": "dimensions_expr",
+              "text": "@A [3]"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new int[]{1}"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new String[][]{{\"a\"}}"
+            },
+            {
+              "type": "array_creation_expression",
+              "text": "new int[3][4][]"
+            },
+            {
+              "type": "method_reference",
+              "text": "String::valueOf"
+            },
+            {
+              "type": "method_reference",
+              "text": "o::hashCode"
+            },
+            {
+              "type": "method_reference",
+              "text": "List<String>::size"
+            },
+            {
+              "type": "method_reference",
+              "text": "super::toString",
+              "occurrence": 1
+            },
+            {
+              "type": "method_reference",
+              "text": "Prim.super::toString"
+            },
+            {
+              "type": "method_reference",
+              "text": "ArrayList<String>::new"
+            },
+            {
+              "type": "method_reference",
+              "text": "int[]::new"
+            },
+            {
+              "type": "method_reference",
+              "text": "Integer::<String>valueOf"
+            },
+            {
+              "type": "method_reference",
+              "text": "Prim::new"
+            },
+            {
+              "type": "method_reference",
+              "text": "this::<Object>id2"
+            },
+            {
+              "type": "method_reference",
+              "text": "(o)::toString"
+            },
+            {
+              "type": "field_access",
+              "text": "D.super.f"
+            },
+            {
+              "type": "field_access",
+              "text": "super.f",
+              "occurrence": 2
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "<X> In(X x) { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-13",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a378",
+        "java-B01.a379",
+        "java-B01.a391",
+        "java-B01.a392",
+        "java-B01.a393",
+        "java-B01.a394",
+        "java-B01.a395",
+        "java-B01.a396",
+        "java-B01.a397",
+        "java-B01.a398",
+        "java-B01.a399",
+        "java-B01.a400",
+        "java-B01.a401",
+        "java-B01.a402",
+        "java-B01.a403",
+        "java-B01.a404",
+        "java-B01.a405",
+        "java-B01.a406",
+        "java-B01.a407",
+        "java-B01.a408",
+        "java-B01.a409",
+        "java-B01.a410",
+        "java-B01.a411",
+        "java-B01.a412",
+        "java-B01.a413",
+        "java-B01.a414",
+        "java-B01.a415",
+        "java-B01.a416",
+        "java-B01.a417",
+        "java-B01.a418",
+        "java-B01.a419",
+        "java-B01.a420",
+        "java-B01.a421",
+        "java-B01.a422",
+        "java-B01.a423",
+        "java-B01.a424",
+        "java-B01.a425",
+        "java-B01.a426",
+        "java-B01.a427",
+        "java-B01.a428",
+        "java-B01.a429",
+        "java-B01.a430",
+        "java-B01.a431",
+        "java-B01.a432",
+        "java-B01.a433",
+        "java-B01.a434",
+        "java-B01.a435",
+        "java-B01.a436",
+        "java-B01.a437",
+        "java-B01.a438",
+        "java-B01.a439",
+        "java-B01.a440",
+        "java-B01.a441",
+        "java-B01.a442",
+        "java-B01.a443",
+        "java-B01.a444",
+        "java-B01.a445",
+        "java-B01.a446",
+        "java-B01.a447",
+        "java-B01.a448",
+        "java-B01.a449",
+        "java-B01.a450",
+        "java-B01.a451",
+        "java-B01.a452",
+        "java-B01.a453",
+        "java-B01.a454",
+        "java-B01.a455",
+        "java-B01.a456",
+        "java-B01.a457",
+        "java-B01.a458",
+        "java-B01.a459",
+        "java-B01.a460",
+        "java-B01.a461",
+        "java-B01.a462",
+        "java-B01.a531",
+        "java-B01.a044",
+        "java-B01.a380",
+        "java-B01.a381",
+        "java-B01.a390",
+        "java-B01.a603",
+        "java-B01.a606",
+        "java-B01.a614",
+        "java-B01.a619",
+        "java-B01.a624",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a634",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a765",
+        "java-B01.a766",
+        "java-B01.a767",
+        "java-B01.a768",
+        "java-B01.a769",
+        "java-B01.a770",
+        "java-B01.a771",
+        "java-B01.a772",
+        "java-B01.a773",
+        "java-B01.a774",
+        "java-B01.a775",
+        "java-B01.a776",
+        "java-B01.a777",
+        "java-B01.a778",
+        "java-B01.a779",
+        "java-B01.a780",
+        "java-B01.a781",
+        "java-B01.a782",
+        "java-B01.a783",
+        "java-B01.a784",
+        "java-B01.a785",
+        "java-B01.a786",
+        "java-B01.a787",
+        "java-B01.a788",
+        "java-B01.a789",
+        "java-B01.a790",
+        "java-B01.a791",
+        "java-B01.a792",
+        "java-B01.a793",
+        "java-B01.a794",
+        "java-B01.a795",
+        "java-B01.a796",
+        "java-B01.a797",
+        "java-B01.a798",
+        "java-B01.a799"
+      ],
+      "source_utf8": "import java.util.function.*;\nclass Ops {\n  int f; int[] a = {0};\n  void ops(int x, int y, boolean p, boolean q, Object o, long l) {\n    x = y; x *= 2; x /= 2; x %= 3; x += 1; x -= 1; x <<= 1; x >>= 1; x >>>= 1; x &= 7; x ^= 1; x |= 8;\n    this.f = 1; a[0] += 2;\n    int t = p ? x : y; Runnable r = p ? () -> { } : () -> { };\n    boolean b = p || q && p | q ^ p & q;\n    b = x == y || x != y || x < y || x > y || x <= y || x >= y || o instanceof String || o instanceof java.util.List<?>;\n    x = x << 1 >> 2 >>> 3; x = x + y - 1; x = x * y / 2 % 3;\n    x = +x; x = -x; x = ++x; x = --x; x = ~x; b = !b; x = x++ + x--; x = - -x;\n    x = (int) l; long m = (long) +x; Object c = (Object) o; Object c2 = (Comparable<String> & java.io.Serializable) \"s\";\n    Runnable r2 = (Runnable & java.io.Serializable) () -> { }; Runnable r3 = (Runnable) () -> { };\n    Object c3 = (String) (Object) \"s\"; Object c4 = (int[]) null; x = (int) -x; b = (boolean) !b;\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment_expression",
+            "ternary_expression",
+            "binary_expression",
+            "instanceof_expression",
+            "unary_expression",
+            "update_expression",
+            "cast_expression",
+            "lambda_expression"
+          ],
+          "anchors": [
+            {
+              "type": "assignment_expression",
+              "text": "x = y"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x *= 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x /= 2"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x %= 3"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x += 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x -= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x <<= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x >>= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x >>>= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x &= 7"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x ^= 1"
+            },
+            {
+              "type": "assignment_expression",
+              "text": "x |= 8"
+            },
+            {
+              "type": "field_access",
+              "text": "this.f"
+            },
+            {
+              "type": "array_access",
+              "text": "a[0]"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "p ? x : y"
+            },
+            {
+              "type": "ternary_expression",
+              "text": "p ? () -> { } : () -> { }"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "() -> { }",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_expression",
+              "text": "p || q && p | q ^ p & q"
+            },
+            {
+              "type": "binary_expression",
+              "text": "q && p | q ^ p & q"
+            },
+            {
+              "type": "binary_expression",
+              "text": "p | q ^ p & q"
+            },
+            {
+              "type": "binary_expression",
+              "text": "q ^ p & q"
+            },
+            {
+              "type": "binary_expression",
+              "text": "p & q"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x == y || x != y || x < y || x > y || x <= y || x >= y || o instanceof String || o instanceof java.util.List<?>"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x != y"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x < y"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x > y"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x <= y"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x >= y"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof String"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof java.util.List<?>"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x << 1 >> 2 >>> 3"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x + y - 1"
+            },
+            {
+              "type": "binary_expression",
+              "text": "x * y / 2 % 3"
+            },
+            {
+              "type": "unary_expression",
+              "text": "+x",
+              "occurrence": 1
+            },
+            {
+              "type": "unary_expression",
+              "text": "-x",
+              "occurrence": 1
+            },
+            {
+              "type": "update_expression",
+              "text": "++x"
+            },
+            {
+              "type": "update_expression",
+              "text": "--x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "~x"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!b",
+              "occurrence": 1
+            },
+            {
+              "type": "binary_expression",
+              "text": "x++ + x--"
+            },
+            {
+              "type": "unary_expression",
+              "text": "- -x"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int) l"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(long) +x"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(Object) o"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(Comparable<String> & java.io.Serializable) \"s\""
+            },
+            {
+              "type": "cast_expression",
+              "text": "(Runnable & java.io.Serializable) () -> { }"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(Runnable) () -> { }"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(String) (Object) \"s\""
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int[]) null"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(int) -x"
+            },
+            {
+              "type": "cast_expression",
+              "text": "(boolean) !b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-B01-14",
+      "features": [
+        "java-B01"
+      ],
+      "alternatives": [
+        "java-B01.a378",
+        "java-B01.a380",
+        "java-B01.a381",
+        "java-B01.a382",
+        "java-B01.a383",
+        "java-B01.a384",
+        "java-B01.a385",
+        "java-B01.a386",
+        "java-B01.a387",
+        "java-B01.a388",
+        "java-B01.a389",
+        "java-B01.a390",
+        "java-B01.a155",
+        "java-B01.a156",
+        "java-B01.a157",
+        "java-B01.a527",
+        "java-B01.a528",
+        "java-B01.a529",
+        "java-B01.a530",
+        "java-B01.a485",
+        "java-B01.a487",
+        "java-B01.a488",
+        "java-B01.a115",
+        "java-B01.a614",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a759",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a769",
+        "java-B01.a778",
+        "java-B01.a779",
+        "java-B01.a780"
+      ],
+      "source_utf8": "import java.util.function.*;\nclass Lambdas {\n  Runnable r0 = () -> { };\n  Function<Integer, Integer> f1 = x -> x + 1;\n  Function<Integer, Integer> f2 = (x) -> { return x; };\n  BinaryOperator<Integer> f3 = (x, y) -> x * y;\n  BinaryOperator<Integer> f4 = (Integer x, final Integer y) -> x - y;\n  BiFunction<int[], String, Object> f5 = (@Deprecated int[] a, String s) -> s;\n  Consumer<String[]> f6 = (String... rest) -> { };\n  IntBinaryOperator f7 = (int a, int b[]) -> a;\n  Supplier<Runnable> f8 = () -> () -> { };\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "lambda_expression",
+            "formal_parameters",
+            "formal_parameter",
+            "inferred_parameters",
+            "spread_parameter",
+            "identifier",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "lambda_expression",
+              "text": "() -> { }",
+              "occurrence": 1
+            },
+            {
+              "type": "lambda_expression",
+              "text": "x -> x + 1"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(x) -> { return x; }"
+            },
+            {
+              "type": "inferred_parameters",
+              "text": "(x)"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(x, y) -> x * y"
+            },
+            {
+              "type": "inferred_parameters",
+              "text": "(x, y)"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(Integer x, final Integer y) -> x - y"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "Integer x"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "final Integer y"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(@Deprecated int[] a, String s) -> s"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@Deprecated int[] a"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(String... rest) -> { }"
+            },
+            {
+              "type": "spread_parameter",
+              "text": "String... rest"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(int a, int b[]) -> a"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "int b[]"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "() -> () -> { }"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "() -> { }",
+              "occurrence": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V9-01",
+      "features": [
+        "java-B01",
+        "java-V9"
+      ],
+      "alternatives": [
+        "java-V9.a003",
+        "java-V9.a004",
+        "java-V9.a005",
+        "java-V9.a006",
+        "java-V9.a007",
+        "java-V9.a008",
+        "java-V9.a009",
+        "java-V9.a010",
+        "java-V9.a011",
+        "java-V9.a012",
+        "java-V9.a001",
+        "java-V9.a002",
+        "java-V9.a034",
+        "java-V9.a019",
+        "java-V9.a020",
+        "java-V9.a021",
+        "java-V9.a022",
+        "java-V9.a023",
+        "java-V9.a025",
+        "java-V9.a026",
+        "java-V9.a027",
+        "java-V9.a028",
+        "java-V9.a029",
+        "java-B01.a068",
+        "java-B01.a072",
+        "java-B01.a227",
+        "java-B01.a237",
+        "java-B01.a592",
+        "java-B01.a614",
+        "java-B01.a630",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a780"
+      ],
+      "source_utf8": "import java.lang.annotation.*;\n@Deprecated\nopen module com.example.app {\n  requires java.base;\n  requires transitive java.logging;\n  requires static java.sql;\n  requires transitive static java.xml;\n  exports com.example.api;\n  exports com.example.spi to java.base, jdk.compiler;\n  opens com.example.impl;\n  opens com.example.res to java.logging;\n  uses com.example.spi.Service;\n  provides com.example.spi.Service with com.example.impl.A, com.example.impl.B;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "module_declaration",
+            "module_body",
+            "requires_module_directive",
+            "requires_modifier",
+            "exports_module_directive",
+            "opens_module_directive",
+            "uses_module_directive",
+            "provides_module_directive",
+            "import_declaration",
+            "marker_annotation",
+            "scoped_identifier"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import java.lang.annotation.*;"
+            },
+            {
+              "type": "module_declaration",
+              "text": "@Deprecated\nopen module com.example.app {\n  requires java.base;\n  requires transitive java.logging;\n  requires static java.sql;\n  requires transitive static java.xml;\n  exports com.example.api;\n  exports com.example.spi to java.base, jdk.compiler;\n  opens com.example.impl;\n  opens com.example.res to java.logging;\n  uses com.example.spi.Service;\n  provides com.example.spi.Service with com.example.impl.A, com.example.impl.B;\n}"
+            },
+            {
+              "type": "marker_annotation",
+              "text": "@Deprecated"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "com.example.app"
+            },
+            {
+              "type": "module_body",
+              "text": "{\n  requires java.base;\n  requires transitive java.logging;\n  requires static java.sql;\n  requires transitive static java.xml;\n  exports com.example.api;\n  exports com.example.spi to java.base, jdk.compiler;\n  opens com.example.impl;\n  opens com.example.res to java.logging;\n  uses com.example.spi.Service;\n  provides com.example.spi.Service with com.example.impl.A, com.example.impl.B;\n}"
+            },
+            {
+              "type": "requires_module_directive",
+              "text": "requires java.base;"
+            },
+            {
+              "type": "requires_module_directive",
+              "text": "requires transitive java.logging;"
+            },
+            {
+              "type": "requires_modifier",
+              "text": "transitive",
+              "occurrence": 1
+            },
+            {
+              "type": "requires_module_directive",
+              "text": "requires static java.sql;"
+            },
+            {
+              "type": "requires_modifier",
+              "text": "static",
+              "occurrence": 1
+            },
+            {
+              "type": "requires_module_directive",
+              "text": "requires transitive static java.xml;"
+            },
+            {
+              "type": "requires_modifier",
+              "text": "transitive",
+              "occurrence": 2
+            },
+            {
+              "type": "requires_modifier",
+              "text": "static",
+              "occurrence": 2
+            },
+            {
+              "type": "exports_module_directive",
+              "text": "exports com.example.api;"
+            },
+            {
+              "type": "exports_module_directive",
+              "text": "exports com.example.spi to java.base, jdk.compiler;"
+            },
+            {
+              "type": "opens_module_directive",
+              "text": "opens com.example.impl;"
+            },
+            {
+              "type": "opens_module_directive",
+              "text": "opens com.example.res to java.logging;"
+            },
+            {
+              "type": "uses_module_directive",
+              "text": "uses com.example.spi.Service;"
+            },
+            {
+              "type": "provides_module_directive",
+              "text": "provides com.example.spi.Service with com.example.impl.A, com.example.impl.B;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V9-02",
+      "features": [
+        "java-B01",
+        "java-V9"
+      ],
+      "alternatives": [
+        "java-V9.a013",
+        "java-V9.a031",
+        "java-V9.a030",
+        "java-V9.a015",
+        "java-V9.a016",
+        "java-V9.a017",
+        "java-V9.a014",
+        "java-V9.a032",
+        "java-V9.a033",
+        "java-V9.a018",
+        "java-V9.a024",
+        "java-B01.a349",
+        "java-B01.a346",
+        "java-B01.a595",
+        "java-B01.a596",
+        "java-B01.a599",
+        "java-B01.a605",
+        "java-B01.a606",
+        "java-B01.a614",
+        "java-B01.a615",
+        "java-B01.a616",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a626",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a768",
+        "java-B01.a769",
+        "java-B01.a776",
+        "java-B01.a778",
+        "java-B01.a780",
+        "java-B01.a787"
+      ],
+      "source_utf8": "import java.io.*;\nimport java.util.*;\nimport java.util.function.*;\ninterface Helper {\n  private int secret() { return 1; }\n  private static int hidden() { return 2; }\n  default int use() { return secret() + hidden(); }\n}\nclass Nine {\n  final Reader field = new StringReader(\"\");\n  void m(Reader r, List<String> list) throws IOException {\n    Comparator<String> c = new Comparator<>() { public int compare(String a, String b) { return 0; } };\n    try (r) { }\n    try (this.field; r) { }\n    var x = 1;\n    var map = new HashMap<String, List<Integer>>();\n    for (var s : list) { }\n    for (var i = 0; i < 3; i++) { }\n    try (var in = new StringReader(\"\")) { }\n    BiFunction<Integer, Integer, Integer> add = (var a, var b) -> a + b;\n    BiFunction<Integer, Integer, Integer> add2 = (final var a, @Deprecated var b) -> a + b;\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_declaration",
+            "method_declaration",
+            "modifiers",
+            "object_creation_expression",
+            "class_body",
+            "try_with_resources_statement",
+            "resource",
+            "field_access",
+            "local_variable_declaration",
+            "type_identifier",
+            "enhanced_for_statement",
+            "for_statement",
+            "lambda_expression",
+            "formal_parameters",
+            "formal_parameter"
+          ],
+          "anchors": [
+            {
+              "type": "method_declaration",
+              "text": "private int secret() { return 1; }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "private static int hidden() { return 2; }"
+            },
+            {
+              "type": "object_creation_expression",
+              "text": "new Comparator<>() { public int compare(String a, String b) { return 0; } }"
+            },
+            {
+              "type": "generic_type",
+              "text": "Comparator<>"
+            },
+            {
+              "type": "class_body",
+              "text": "{ public int compare(String a, String b) { return 0; } }"
+            },
+            {
+              "type": "resource",
+              "text": "r",
+              "occurrence": 34
+            },
+            {
+              "type": "resource",
+              "text": "this.field"
+            },
+            {
+              "type": "resource",
+              "text": "r",
+              "occurrence": 36
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var x = 1;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var map = new HashMap<String, List<Integer>>();"
+            },
+            {
+              "type": "enhanced_for_statement",
+              "text": "for (var s : list) { }"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "var i = 0;"
+            },
+            {
+              "type": "resource",
+              "text": "var in = new StringReader(\"\")"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "var a",
+              "occurrence": 1
+            },
+            {
+              "type": "formal_parameter",
+              "text": "var b",
+              "occurrence": 1
+            },
+            {
+              "type": "formal_parameter",
+              "text": "final var a"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@Deprecated var b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V14-01",
+      "features": [
+        "java-B01",
+        "java-V14"
+      ],
+      "alternatives": [
+        "java-V14.a031",
+        "java-V14.a030",
+        "java-V14.a026",
+        "java-V14.a021",
+        "java-V14.a023",
+        "java-V14.a024",
+        "java-V14.a025",
+        "java-V14.a022",
+        "java-V14.a044",
+        "java-V14.a045",
+        "java-V14.a046",
+        "java-V14.a032",
+        "java-B01.a292",
+        "java-B01.a293",
+        "java-B01.a290",
+        "java-B01.a596",
+        "java-B01.a597",
+        "java-B01.a599",
+        "java-B01.a611",
+        "java-B01.a617",
+        "java-B01.a618",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a768",
+        "java-B01.a769",
+        "java-B01.a778",
+        "java-B01.a779"
+      ],
+      "source_utf8": "class Sw {\n  enum Day { MON, TUE, WED }\n  int m(Day d, int k) {\n    int a = switch (d) { case MON, TUE -> 1; case WED -> { int t = 2; yield t; } };\n    int b = switch (k) { case 1 -> 10; default -> throw new IllegalStateException(); };\n    int c = switch (k) { case 1: case 2: yield 3; default: { yield 4; } };\n    switch (k) { case 1, 2 -> System.out.println(); case 3 -> { } default -> throw new RuntimeException(); }\n    int yield = 5;\n    return a + b + c + -switch (k) { default -> 0; };\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "switch_expression",
+            "switch_block",
+            "switch_rule",
+            "switch_label",
+            "yield_statement",
+            "switch_block_statement_group",
+            "throw_statement"
+          ],
+          "anchors": [
+            {
+              "type": "switch_expression",
+              "text": "switch (d) { case MON, TUE -> 1; case WED -> { int t = 2; yield t; } }"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case MON, TUE -> 1;"
+            },
+            {
+              "type": "switch_label",
+              "text": "case MON, TUE"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case WED -> { int t = 2; yield t; }"
+            },
+            {
+              "type": "yield_statement",
+              "text": "yield t;"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (k) { case 1 -> 10; default -> throw new IllegalStateException(); }"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case 1 -> 10;"
+            },
+            {
+              "type": "switch_rule",
+              "text": "default -> throw new IllegalStateException();"
+            },
+            {
+              "type": "throw_statement",
+              "text": "throw new IllegalStateException();"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (k) { case 1: case 2: yield 3; default: { yield 4; } }"
+            },
+            {
+              "type": "switch_block_statement_group",
+              "text": "case 2: yield 3;"
+            },
+            {
+              "type": "yield_statement",
+              "text": "yield 3;"
+            },
+            {
+              "type": "yield_statement",
+              "text": "yield 4;"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (k) { case 1, 2 -> System.out.println(); case 3 -> { } default -> throw new RuntimeException(); }"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case 1, 2 -> System.out.println();"
+            },
+            {
+              "type": "switch_label",
+              "text": "case 1, 2"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case 3 -> { }"
+            },
+            {
+              "type": "switch_rule",
+              "text": "default -> throw new RuntimeException();"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "yield = 5"
+            },
+            {
+              "type": "unary_expression",
+              "text": "-switch (k) { default -> 0; }"
+            },
+            {
+              "type": "switch_expression",
+              "text": "switch (k) { default -> 0; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V14-02",
+      "features": [
+        "java-B01",
+        "java-V14"
+      ],
+      "alternatives": [
+        "java-V14.a001",
+        "java-V14.a037",
+        "java-V14.a038",
+        "java-V14.a039",
+        "java-V14.a040",
+        "java-V14.a041",
+        "java-V14.a042",
+        "java-V14.a043",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a762"
+      ],
+      "source_utf8": "class Text {\n  String a = \"\"\"\n      Hello,\n        \"World\" \\\"\"\" \\\"\\\"\\\" \"\"\n      end\\s\n      joined \\\n      line \\t \\n \\\\ \\0\n      \"\"\";\n  String b = \"\"\"   \t\n      x\"\"\";\n  String c = \"\"\"\n\"\"\";\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string_literal",
+            "multiline_string_fragment",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "string_literal",
+              "text": "\"\"\"\n      Hello,\n        \"World\" \\\"\"\" \\\"\\\"\\\" \"\"\n      end\\s\n      joined \\\n      line \\t \\n \\\\ \\0\n      \"\"\""
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\s"
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\"\"   \t\n      x\"\"\""
+            },
+            {
+              "type": "string_literal",
+              "text": "\"\"\"\n\"\"\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V14-03",
+      "features": [
+        "java-B01",
+        "java-V14"
+      ],
+      "alternatives": [
+        "java-V14.a002",
+        "java-V14.a006",
+        "java-V14.a007",
+        "java-V14.a008",
+        "java-V14.a009",
+        "java-V14.a010",
+        "java-V14.a011",
+        "java-V14.a012",
+        "java-V14.a013",
+        "java-V14.a014",
+        "java-V14.a015",
+        "java-V14.a016",
+        "java-V14.a020",
+        "java-V14.a047",
+        "java-V14.a048",
+        "java-V14.a036",
+        "java-B01.a173",
+        "java-B01.a175",
+        "java-B01.a095",
+        "java-B01.a098",
+        "java-B01.a099",
+        "java-B01.a100",
+        "java-B01.a103",
+        "java-B01.a596",
+        "java-B01.a605",
+        "java-B01.a606",
+        "java-B01.a609",
+        "java-B01.a614",
+        "java-B01.a615",
+        "java-B01.a618",
+        "java-B01.a620",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a759",
+        "java-B01.a760",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a780",
+        "java-B01.a787"
+      ],
+      "source_utf8": "import java.lang.annotation.*;\nimport java.util.*;\n@Target(ElementType.RECORD_COMPONENT) @interface C {}\npublic record Point<T extends Number>(@C T x, T y) implements Comparable<Point<T>> {\n  static int count;\n  public Point { Objects.requireNonNull(x); }\n  Point(T v) { this(v, v); }\n  public int compareTo(Point<T> o) { return 0; }\n  record Nested() { }\n}\nrecord Vararg(int first, @C String @C ... rest) { }\nrecord Empty() { ; }\nfinal record Fin(int a) { private Fin { } }\nclass Locals {\n  void m() {\n    record Pair(int a, int b) { }\n    enum Lvl { LOW, HIGH }\n    interface Cb { void call(); }\n    var p = new Pair(1, 2);\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_declaration",
+            "formal_parameters",
+            "formal_parameter",
+            "compact_constructor_declaration",
+            "constructor_declaration",
+            "class_body",
+            "spread_parameter",
+            "enum_declaration",
+            "interface_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "record_declaration",
+              "text": "public record Point<T extends Number>(@C T x, T y) implements Comparable<Point<T>> {\n  static int count;\n  public Point { Objects.requireNonNull(x); }\n  Point(T v) { this(v, v); }\n  public int compareTo(Point<T> o) { return 0; }\n  record Nested() { }\n}"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(@C T x, T y)"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "@C T x"
+            },
+            {
+              "type": "compact_constructor_declaration",
+              "text": "public Point { Objects.requireNonNull(x); }"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "Point(T v) { this(v, v); }"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "this(v, v);"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Nested() { }"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Vararg(int first, @C String @C ... rest) { }"
+            },
+            {
+              "type": "formal_parameters",
+              "text": "(int first, @C String @C ... rest)"
+            },
+            {
+              "type": "spread_parameter",
+              "text": "@C String @C ... rest"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Empty() { ; }"
+            },
+            {
+              "type": "record_declaration",
+              "text": "final record Fin(int a) { private Fin { } }"
+            },
+            {
+              "type": "compact_constructor_declaration",
+              "text": "private Fin { }"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Pair(int a, int b) { }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Lvl { LOW, HIGH }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Cb { void call(); }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V14-04",
+      "features": [
+        "java-B01",
+        "java-V14"
+      ],
+      "alternatives": [
+        "java-V14.a003",
+        "java-V14.a004",
+        "java-V14.a017",
+        "java-V14.a018",
+        "java-V14.a005",
+        "java-V14.a019",
+        "java-V14.a049",
+        "java-V14.a050",
+        "java-V14.a029",
+        "java-V14.a027",
+        "java-V14.a028",
+        "java-V14.a033",
+        "java-V14.a034",
+        "java-V14.a035",
+        "java-B01.a593",
+        "java-B01.a600",
+        "java-B01.a609",
+        "java-B01.a619",
+        "java-B01.a620",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a760",
+        "java-B01.a765",
+        "java-B01.a767",
+        "java-B01.a768",
+        "java-B01.a774",
+        "java-B01.a779"
+      ],
+      "source_utf8": "sealed interface Shape permits Circle, Square, Rect { }\nfinal class Circle implements Shape { }\nnon-sealed class Square implements Shape { }\nsealed class Rect implements Shape permits Rect.Tall, Wide { static final class Tall extends Rect { } }\nfinal class Wide extends Rect { }\nnon-sealed interface Open extends Shape2 { }\nsealed interface Shape2 permits Open { }\nabstract sealed class Auto { static final class One extends Auto { } }\nclass Inst {\n  int m(Object o) {\n    if (o instanceof String s && !s.isEmpty()) return s.length();\n    if (!(o instanceof final Integer i)) return 0;\n    return o instanceof @Deprecated Number n ? n.intValue() : -1;\n  }\n}\nclass Ctx { int sealed, permits; void record() { } }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interface_declaration",
+            "permits",
+            "type_list",
+            "modifiers",
+            "class_declaration",
+            "super_interfaces",
+            "superclass",
+            "instanceof_expression",
+            "identifier"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "sealed interface Shape permits Circle, Square, Rect { }"
+            },
+            {
+              "type": "permits",
+              "text": "permits Circle, Square, Rect"
+            },
+            {
+              "type": "class_declaration",
+              "text": "final class Circle implements Shape { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "non-sealed class Square implements Shape { }"
+            },
+            {
+              "type": "modifiers",
+              "text": "non-sealed",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "sealed class Rect implements Shape permits Rect.Tall, Wide { static final class Tall extends Rect { } }"
+            },
+            {
+              "type": "permits",
+              "text": "permits Rect.Tall, Wide"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "non-sealed interface Open extends Shape2 { }"
+            },
+            {
+              "type": "modifiers",
+              "text": "non-sealed",
+              "occurrence": 2
+            },
+            {
+              "type": "permits",
+              "text": "permits Open"
+            },
+            {
+              "type": "modifiers",
+              "text": "abstract sealed"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof String s"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof final Integer i"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof @Deprecated Number n"
+            },
+            {
+              "type": "field_declaration",
+              "text": "int sealed, permits;"
+            },
+            {
+              "type": "method_declaration",
+              "text": "void record() { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V21-01",
+      "features": [
+        "java-B01",
+        "java-V14",
+        "java-V21"
+      ],
+      "alternatives": [
+        "java-V21.a002",
+        "java-V21.a003",
+        "java-V21.a004",
+        "java-V21.a005",
+        "java-V21.a006",
+        "java-V21.a007",
+        "java-V21.a008",
+        "java-V21.a009",
+        "java-V21.a010",
+        "java-V21.a011",
+        "java-V21.a015",
+        "java-V21.a016",
+        "java-V21.a017",
+        "java-V21.a018",
+        "java-V21.a019",
+        "java-V21.a025",
+        "java-V21.a014",
+        "java-V21.a013",
+        "java-V14.a027",
+        "java-V14.a028",
+        "java-V14.a029",
+        "java-B01.a597",
+        "java-B01.a599",
+        "java-B01.a603",
+        "java-B01.a607",
+        "java-B01.a609",
+        "java-B01.a617",
+        "java-B01.a619",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a629",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a767",
+        "java-B01.a768",
+        "java-B01.a769",
+        "java-B01.a770",
+        "java-B01.a774"
+      ],
+      "source_utf8": "class Pat {\n  record Point(int x, int y) { }\n  record Box<T>(T t) { }\n  record Line(Point a, Point b) { }\n  sealed interface S permits A, B { }\n  record A(int v) implements S { }\n  record B(String s) implements S { }\n  String m(Object o) {\n    return switch (o) {\n      case null -> \"null\";\n      case Integer i when i > 10 -> \"big\";\n      case Integer i -> \"int\";\n      case Point(int x, int y) when x == y -> \"diag\";\n      case Line(Point(var x1, var y1), Point p2) -> \"line\";\n      case Box<String>(String s) -> s;\n      case Box(var t) -> \"box\";\n      case A _, B _ -> \"ab\";\n      default -> \"other\";\n    };\n  }\n  String n(Object o) {\n    switch (o) {\n      case null, default -> { return \"nd\"; }\n    }\n  }\n  String q(S s) { switch (s) { case A(int _) -> { } case B(_) -> { } } return s instanceof A(var v) ? \"a\" : \"b\"; }\n  boolean r(Object o) { return o instanceof Line(Point(var x, _), var b) && o instanceof Point p; }\n  void old(Object o) { switch (o) { case String s: break; case null: break; default: } }\n  int when = 1;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "switch_expression",
+            "switch_rule",
+            "switch_label",
+            "guard",
+            "pattern",
+            "type_pattern",
+            "record_pattern",
+            "record_pattern_body",
+            "record_pattern_component",
+            "underscore_pattern",
+            "null_literal",
+            "instanceof_expression"
+          ],
+          "anchors": [
+            {
+              "type": "switch_label",
+              "text": "case null",
+              "occurrence": 1
+            },
+            {
+              "type": "switch_label",
+              "text": "case Integer i when i > 10"
+            },
+            {
+              "type": "guard",
+              "text": "when i > 10"
+            },
+            {
+              "type": "type_pattern",
+              "text": "Integer i",
+              "occurrence": 1
+            },
+            {
+              "type": "record_pattern",
+              "text": "Point(int x, int y)",
+              "occurrence": 2
+            },
+            {
+              "type": "guard",
+              "text": "when x == y"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Line(Point(var x1, var y1), Point p2)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Point(var x1, var y1)"
+            },
+            {
+              "type": "record_pattern_component",
+              "text": "Point p2"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Box<String>(String s)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Box(var t)"
+            },
+            {
+              "type": "switch_label",
+              "text": "case A _, B _"
+            },
+            {
+              "type": "type_pattern",
+              "text": "A _"
+            },
+            {
+              "type": "type_pattern",
+              "text": "B _"
+            },
+            {
+              "type": "switch_rule",
+              "text": "case A _, B _ -> \"ab\";"
+            },
+            {
+              "type": "switch_label",
+              "text": "case null, default"
+            },
+            {
+              "type": "record_pattern",
+              "text": "A(int _)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "B(_)"
+            },
+            {
+              "type": "underscore_pattern",
+              "text": "_",
+              "occurrence": 4
+            },
+            {
+              "type": "record_pattern",
+              "text": "A(var v)"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "s instanceof A(var v)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Line(Point(var x, _), var b)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Point(var x, _)"
+            },
+            {
+              "type": "underscore_pattern",
+              "text": "_",
+              "occurrence": 5
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "o instanceof Point p"
+            },
+            {
+              "type": "switch_label",
+              "text": "case String s"
+            },
+            {
+              "type": "switch_label",
+              "text": "case null",
+              "occurrence": 3
+            },
+            {
+              "type": "variable_declarator",
+              "text": "when = 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V21-02",
+      "features": [
+        "java-B01",
+        "java-V21"
+      ],
+      "alternatives": [
+        "java-V21.a001",
+        "java-V21.a012",
+        "java-V21.a020",
+        "java-V21.a021",
+        "java-V21.a022",
+        "java-V21.a023",
+        "java-V21.a024",
+        "java-V21.a013",
+        "java-B01.a388",
+        "java-B01.a384",
+        "java-B01.a595",
+        "java-B01.a596",
+        "java-B01.a614",
+        "java-B01.a622",
+        "java-B01.a624",
+        "java-B01.a626",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a768",
+        "java-B01.a769",
+        "java-B01.a776",
+        "java-B01.a780"
+      ],
+      "source_utf8": "import java.io.*;\nimport java.util.*;\nimport java.util.function.*;\nclass Unnamed {\n  void m(List<String> list, Queue<Integer> q) {\n    int _ = q.remove();\n    var _ = q.remove();\n    try { } catch (RuntimeException _) { }\n    for (String _ : list) { }\n    for (int i = 0, _ = 0; i < 1; i++) { }\n    try (Reader _ = new StringReader(\"\")) { } catch (IOException _) { }\n    BiFunction<Integer, Integer, Integer> f = (_, b) -> b;\n    BiFunction<Integer, Integer, Integer> g = (Integer _, Integer _) -> 0;\n    Function<Integer, Integer> h = _ -> 1;\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "local_variable_declaration",
+            "variable_declarator",
+            "underscore_pattern",
+            "catch_formal_parameter",
+            "enhanced_for_statement",
+            "resource",
+            "lambda_expression",
+            "inferred_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "underscore_pattern",
+              "text": "_",
+              "occurrence": 1
+            },
+            {
+              "type": "underscore_pattern",
+              "text": "_",
+              "occurrence": 2
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "RuntimeException _"
+            },
+            {
+              "type": "enhanced_for_statement",
+              "text": "for (String _ : list) { }"
+            },
+            {
+              "type": "underscore_pattern",
+              "text": "_",
+              "occurrence": 4
+            },
+            {
+              "type": "variable_declarator",
+              "text": "_ = 0"
+            },
+            {
+              "type": "resource",
+              "text": "Reader _ = new StringReader(\"\")"
+            },
+            {
+              "type": "catch_formal_parameter",
+              "text": "IOException _"
+            },
+            {
+              "type": "inferred_parameters",
+              "text": "(_, b)"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "Integer _",
+              "occurrence": 1
+            },
+            {
+              "type": "formal_parameter",
+              "text": "Integer _",
+              "occurrence": 2
+            },
+            {
+              "type": "lambda_expression",
+              "text": "_ -> 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V25-01",
+      "features": [
+        "java-B01",
+        "java-V9",
+        "java-V25"
+      ],
+      "alternatives": [
+        "java-V25.a001",
+        "java-V25.a002",
+        "java-V25.a003",
+        "java-V25.a004",
+        "java-V25.a005",
+        "java-V25.a006",
+        "java-V25.a007",
+        "java-V25.a008",
+        "java-V25.a011",
+        "java-B01.a068",
+        "java-V9.a023",
+        "java-B01.a614",
+        "java-B01.a620",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a629",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a632",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a757",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a778",
+        "java-B01.a780"
+      ],
+      "source_utf8": "import module java.base;\nimport java.util.function.*;\n\nfinal String greeting = \"Hello\";\nstatic int counter;\n;\nrecord Pair(int a, int b) { }\ninterface Greeter { String greet(); }\n\nvoid main() {\n  System.out.println(greeting + helper());\n}\n\nString helper() { return List.of(\"x\").get(0); }\nclass Later { }\nint after;\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "import_declaration",
+            "record_declaration",
+            "interface_declaration",
+            "method_declaration",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import module java.base;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.base"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import java.util.function.*;"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "greeting = \"Hello\""
+            },
+            {
+              "type": "variable_declarator",
+              "text": "counter"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Pair(int a, int b) { }"
+            },
+            {
+              "type": "interface_declaration",
+              "text": "interface Greeter { String greet(); }"
+            },
+            {
+              "type": "method_declaration",
+              "text": "void main() {\n  System.out.println(greeting + helper());\n}"
+            },
+            {
+              "type": "method_declaration",
+              "text": "String helper() { return List.of(\"x\").get(0); }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Later { }"
+            },
+            {
+              "type": "variable_declarator",
+              "text": "after"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V25-02",
+      "features": [
+        "java-B01",
+        "java-V25"
+      ],
+      "alternatives": [
+        "java-V25.a001",
+        "java-V25.a002",
+        "java-V25.a003",
+        "java-V25.a012",
+        "java-B01.a615",
+        "java-B01.a624",
+        "java-B01.a630",
+        "java-B01.a631",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a754",
+        "java-B01.a755",
+        "java-B01.a756",
+        "java-B01.a762",
+        "java-B01.a776"
+      ],
+      "source_utf8": "static int total = 0;\npublic static void main(String[] args) {\n  total++;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "program",
+            "method_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "variable_declarator",
+              "text": "total = 0"
+            },
+            {
+              "type": "method_declaration",
+              "text": "public static void main(String[] args) {\n  total++;\n}"
+            },
+            {
+              "type": "formal_parameter",
+              "text": "String[] args"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V25-03",
+      "features": [
+        "java-B01",
+        "java-V9",
+        "java-V25"
+      ],
+      "alternatives": [
+        "java-V25.a007",
+        "java-V25.a008",
+        "java-V25.a013",
+        "java-V9.a001",
+        "java-V9.a002",
+        "java-V9.a023",
+        "java-B01.a601",
+        "java-B01.a614",
+        "java-B01.a630",
+        "java-B01.a632",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a758",
+        "java-B01.a763",
+        "java-B01.a764",
+        "java-B01.a780"
+      ],
+      "source_utf8": "package demo.mods;\n\nimport module java.base;\nimport module java.sql;\nimport java.util.List;\nimport static java.lang.Math.*;\n\nclass Uses { List<String> l; }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_declaration",
+            "import_declaration",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "package_declaration",
+              "text": "package demo.mods;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import module java.base;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.base"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import module java.sql;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.sql"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import java.util.List;"
+            },
+            {
+              "type": "import_declaration",
+              "text": "import static java.lang.Math.*;"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Uses { List<String> l; }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-java-V25-04",
+      "features": [
+        "java-B01",
+        "java-V25"
+      ],
+      "alternatives": [
+        "java-V25.a009",
+        "java-V25.a010",
+        "java-B01.a173",
+        "java-B01.a175",
+        "java-B01.a176",
+        "java-B01.a596",
+        "java-B01.a600",
+        "java-B01.a606",
+        "java-B01.a611",
+        "java-B01.a623",
+        "java-B01.a624",
+        "java-B01.a628",
+        "java-B01.a632",
+        "java-B01.a639",
+        "java-B01.a750",
+        "java-B01.a751",
+        "java-B01.a752",
+        "java-B01.a753",
+        "java-B01.a756",
+        "java-B01.a758",
+        "java-B01.a762",
+        "java-B01.a764"
+      ],
+      "source_utf8": "class Base { Base(int v) { } }\nclass Flex extends Base {\n  final int value;\n  Flex(int v) {\n    if (v < 0) throw new IllegalArgumentException();\n    int checked = Math.abs(v);\n    value = checked;\n    super(checked);\n    System.out.println(value);\n  }\n  Flex() {\n    int d = 1;\n    this(d);\n  }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "constructor_declaration",
+            "constructor_body",
+            "explicit_constructor_invocation",
+            "if_statement",
+            "local_variable_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super(checked);"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "this(d);"
+            },
+            {
+              "type": "expression_statement",
+              "text": "value = checked;"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "int checked = Math.abs(v);"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (v < 0) throw new IllegalArgumentException();"
+            },
+            {
+              "type": "expression_statement",
+              "text": "System.out.println(value);"
+            },
+            {
+              "type": "local_variable_declaration",
+              "text": "int d = 1;"
+            },
+            {
+              "type": "constructor_declaration",
+              "text": "Flex() {\n    int d = 1;\n    this(d);\n  }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-B01-R-1",
+      "features": [
+        "java-B01"
+      ],
+      "source_utf8": "package demo;\n\nimport java.util.List;\n\npublic class Shapes {\n    interface Shape { double area(); }\n\n    static final class Circle implements Shape {\n        private final double r;\n        Circle(double r) { this.r = r; }\n        public double area() { return Math.PI * r * r; }\n    }\n\n    enum Kind { ROUND, SQUARE }\n\n    @FunctionalInterface\n    interface Op { int apply(int a, int b); }\n\n    static <T extends Comparable<T>> T max(List<T> xs) {\n        T best = xs.get(0);\n        for (T x : xs) {\n            if (x.compareTo(best) > 0) best = x;\n        }\n        return best;\n    }\n\n    static int sum(int a, int b) {\n        Op add = (x, y) -> x + y;\n        try (java.io.StringReader r = new java.io.StringReader(\"x\")) {\n            return add.apply(a, b);\n        } catch (RuntimeException e) {\n            return 0;\n        }\n    }\n}\n",
+      "edits": [
+        {
+          "find": "Circle(double r) { this.r = r; }",
+          "replace": "Circle(double r) { this.r = r }"
+        },
+        {
+          "find": "Circle(double r) { this.r = r }",
+          "replace": "Circle(double r) { this.r = r; }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "interface_declaration",
+            "enum_declaration",
+            "method_declaration",
+            "lambda_expression",
+            "try_with_resources_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "enum_declaration",
+            "method_declaration",
+            "lambda_expression",
+            "try_with_resources_statement"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "interface Shape { double area(); }"
+            },
+            {
+              "type": "enum_declaration",
+              "text": "enum Kind { ROUND, SQUARE }"
+            },
+            {
+              "type": "lambda_expression",
+              "text": "(x, y) -> x + y"
+            },
+            {
+              "type": "try_with_resources_statement",
+              "text": "try (java.io.StringReader r = new java.io.StringReader(\"x\")) {\n            return add.apply(a, b);\n        } catch (RuntimeException e) {\n            return 0;\n        }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "interface_declaration",
+            "enum_declaration",
+            "method_declaration",
+            "lambda_expression",
+            "try_with_resources_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V9-N-1",
+      "features": [
+        "java-V9"
+      ],
+      "source_utf8": "import java.sql.Driver;\n\n@Deprecated\nopen module com.example.app {\n    requires transitive java.sql;\n    requires static java.compiler;\n    exports com.example.api to com.example.client, com.example.test;\n    opens com.example.model;\n    uses Driver;\n    provides Driver with com.example.db.FastDriver;\n}\n",
+      "edits": [
+        {
+          "find": "exports com.example.api to com.example.client, com.example.test;",
+          "replace": "exports com.example.api to ;"
+        },
+        {
+          "find": "exports com.example.api to ;",
+          "replace": "exports com.example.api to com.example.client, com.example.test;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "module_declaration",
+            "requires_module_directive",
+            "exports_module_directive",
+            "opens_module_directive",
+            "uses_module_directive",
+            "provides_module_directive"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "module_declaration",
+            "opens_module_directive",
+            "uses_module_directive",
+            "provides_module_directive"
+          ],
+          "anchors": [
+            {
+              "type": "requires_module_directive",
+              "text": "requires transitive java.sql;"
+            },
+            {
+              "type": "requires_module_directive",
+              "text": "requires static java.compiler;"
+            },
+            {
+              "type": "opens_module_directive",
+              "text": "opens com.example.model;"
+            },
+            {
+              "type": "uses_module_directive",
+              "text": "uses Driver;"
+            },
+            {
+              "type": "provides_module_directive",
+              "text": "provides Driver with com.example.db.FastDriver;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "module_declaration",
+            "requires_module_directive",
+            "exports_module_directive",
+            "opens_module_directive",
+            "uses_module_directive",
+            "provides_module_directive"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V14-NR-1",
+      "features": [
+        "java-V14"
+      ],
+      "source_utf8": "public class V14 {\n    sealed interface Shape permits Square, Circle {}\n    record Square(double side) implements Shape {}\n    record Circle(double r) implements Shape {}\n\n    static String text = \"\"\"\n        Hello\n        \"\"\";\n\n    static double area(Shape s) {\n        if (s instanceof Square sq) {\n            return sq.side() * sq.side();\n        }\n        return 0;\n    }\n\n    static int code(int day) {\n        return switch (day) {\n            case 1, 7 -> 0;\n            default -> {\n                yield day;\n            }\n        };\n    }\n}\n",
+      "edits": [
+        {
+          "find": "record Square(double side) implements Shape {}",
+          "replace": "record Square(double side) implements Shape;"
+        },
+        {
+          "find": "record Square(double side) implements Shape;",
+          "replace": "record Square(double side) implements Shape {}"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_declaration",
+            "instanceof_expression",
+            "switch_expression",
+            "yield_statement"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "record_declaration",
+            "method_declaration",
+            "instanceof_expression",
+            "switch_expression",
+            "yield_statement"
+          ],
+          "anchors": [
+            {
+              "type": "interface_declaration",
+              "text": "sealed interface Shape permits Square, Circle {}"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Circle(double r) implements Shape {}"
+            },
+            {
+              "type": "instanceof_expression",
+              "text": "s instanceof Square sq"
+            },
+            {
+              "type": "yield_statement",
+              "text": "yield day;"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_declaration",
+            "instanceof_expression",
+            "switch_expression",
+            "yield_statement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V21-NR-1",
+      "features": [
+        "java-V21"
+      ],
+      "source_utf8": "public class V21 {\n    sealed interface Shape permits Box, Dot {}\n    record Point(int x, int y) {}\n    record Box(Point min, Point max) implements Shape {}\n    record Dot(Point at) implements Shape {}\n\n    static String describe(Object o) {\n        return switch (o) {\n            case Box(Point(var x1, var y1), Point max) when x1 == y1 -> \"square-ish\";\n            case Box(Point(int x, _), _) -> \"box at \" + x;\n            case Dot(Point p) -> \"dot\";\n            case null -> \"null\";\n            default -> \"other\";\n        };\n    }\n\n    static int count(Iterable<String> items) {\n        int n = 0;\n        for (String _ : items) {\n            n++;\n        }\n        try {\n            n += 0;\n        } catch (RuntimeException _) {\n            n--;\n        }\n        return n;\n    }\n}\n",
+      "edits": [
+        {
+          "find": "when x1 == y1 ->",
+          "replace": "when ->"
+        },
+        {
+          "find": "when ->",
+          "replace": "when x1 == y1 ->"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_pattern",
+            "guard",
+            "switch_expression",
+            "method_declaration"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "record_pattern",
+            "method_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "record_declaration",
+              "text": "record Point(int x, int y) {}"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Box(Point min, Point max) implements Shape {}"
+            },
+            {
+              "type": "record_declaration",
+              "text": "record Dot(Point at) implements Shape {}"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Box(Point(int x, _), _)"
+            },
+            {
+              "type": "record_pattern",
+              "text": "Dot(Point p)"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "record_pattern",
+            "guard",
+            "switch_expression",
+            "method_declaration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V25-PNRE-1",
+      "features": [
+        "java-V25"
+      ],
+      "source_utf8": "import module java.base;\n\nfinal String greeting = \"hello\";\n\nvoid main() {\n    List<String> names = List.of(\"a\", \"b\");\n    for (String n : names) {\n        IO.println(greeting + \" \" + n);\n    }\n}\n\nString shout(String s) {\n    return s.toUpperCase();\n}\n\nclass Helper {\n    int twice(int x) { return x * 2; }\n    int thrice(int x) { return x * 3; }\n}\n",
+      "edits": [
+        {
+          "find": "\"hello\"",
+          "replace": "\"hi\""
+        },
+        {
+          "find": "import module java.base;",
+          "replace": "import module java.;"
+        },
+        {
+          "find": "import module java.;",
+          "replace": "import module java.base;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "method_declaration",
+            "enhanced_for_statement",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import module java.base;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.base"
+            },
+            {
+              "type": "method_declaration",
+              "text": "String shout(String s) {\n    return s.toUpperCase();\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Helper {\n    int twice(int x) { return x * 2; }\n    int thrice(int x) { return x * 3; }\n}"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "method_declaration",
+            "enhanced_for_statement",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import module java.base;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.base"
+            },
+            {
+              "type": "method_declaration",
+              "text": "String shout(String s) {\n    return s.toUpperCase();\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Helper {\n    int twice(int x) { return x * 2; }\n    int thrice(int x) { return x * 3; }\n}"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "method_declaration",
+            "enhanced_for_statement",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "method_declaration",
+              "text": "String shout(String s) {\n    return s.toUpperCase();\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Helper {\n    int twice(int x) { return x * 2; }\n    int thrice(int x) { return x * 3; }\n}"
+            },
+            {
+              "type": "method_declaration",
+              "text": "int twice(int x) { return x * 2; }"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "import_declaration",
+            "method_declaration",
+            "enhanced_for_statement",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "import_declaration",
+              "text": "import module java.base;"
+            },
+            {
+              "type": "scoped_identifier",
+              "text": "java.base"
+            },
+            {
+              "type": "method_declaration",
+              "text": "String shout(String s) {\n    return s.toUpperCase();\n}"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Helper {\n    int twice(int x) { return x * 2; }\n    int thrice(int x) { return x * 3; }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-java-V25-PNRE-2",
+      "features": [
+        "java-V25"
+      ],
+      "source_utf8": "public class Account {\n    private final long balance;\n\n    public Account(long balance) {\n        if (balance < 0) {\n            throw new IllegalArgumentException(\"negative\");\n        }\n        super();\n        this.balance = balance;\n    }\n}\n\nclass Savings extends Account {\n    Savings(long start) {\n        long checked = Math.max(start, 0);\n        super(checked);\n    }\n}\n",
+      "edits": [
+        {
+          "find": "\"negative\"",
+          "replace": "\"below zero\""
+        },
+        {
+          "find": "long checked = Math.max(start, 0);",
+          "replace": "long checked = Math.max(start, 0)"
+        },
+        {
+          "find": "long checked = Math.max(start, 0)",
+          "replace": "long checked = Math.max(start, 0);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "constructor_declaration",
+            "constructor_body",
+            "explicit_constructor_invocation",
+            "if_statement"
+          ],
+          "anchors": [
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super(checked);"
+            },
+            {
+              "type": "field_declaration",
+              "text": "private final long balance;"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "constructor_declaration",
+            "constructor_body",
+            "explicit_constructor_invocation",
+            "if_statement"
+          ],
+          "anchors": [
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super(checked);"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "constructor_declaration",
+            "explicit_constructor_invocation"
+          ],
+          "anchors": [
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();"
+            },
+            {
+              "type": "field_declaration",
+              "text": "private final long balance;"
+            },
+            {
+              "type": "if_statement",
+              "text": "if (balance < 0) {\n            throw new IllegalArgumentException(\"below zero\");\n        }"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "constructor_declaration",
+            "constructor_body",
+            "explicit_constructor_invocation",
+            "if_statement"
+          ],
+          "anchors": [
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super();"
+            },
+            {
+              "type": "explicit_constructor_invocation",
+              "text": "super(checked);"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

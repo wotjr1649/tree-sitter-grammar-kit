@@ -97,6 +97,3473 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "alt-ruby-B01-01",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a001",
+        "ruby-B01.a002",
+        "ruby-B01.a003",
+        "ruby-B01.a004",
+        "ruby-B01.a005",
+        "ruby-B01.a006",
+        "ruby-B01.a007",
+        "ruby-B01.a008",
+        "ruby-B01.a009",
+        "ruby-B01.a010",
+        "ruby-B01.a011",
+        "ruby-B01.a012",
+        "ruby-B01.a013",
+        "ruby-B01.a053",
+        "ruby-B01.a072",
+        "ruby-B01.a074",
+        "ruby-B01.a075",
+        "ruby-B01.a138",
+        "ruby-B01.a166",
+        "ruby-B01.a168",
+        "ruby-B01.a170",
+        "ruby-B01.a172",
+        "ruby-B01.a173",
+        "ruby-B01.a193",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "# frozen_string_literal: true\n# -*- coding: utf-8; mode: ruby -*-\n# warn_indent: true\n=begin some_tag\nblock comment\n=end\nx = 1\ny = 2; z = x + y\ntotal = x +\n  y\nFile.read('a.txt')\n  # comment between\n  .strip\n  .split(\",\")\nlong = \"one\" \\\n  \"two\"\nputs __FILE__, __LINE__, __ENCODING__\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "assignment",
+            "binary",
+            "call",
+            "chained_string",
+            "file",
+            "line",
+            "encoding"
+          ],
+          "anchors": [
+            {
+              "type": "comment",
+              "text": "# frozen_string_literal: true"
+            },
+            {
+              "type": "comment",
+              "text": "# -*- coding: utf-8; mode: ruby -*-"
+            },
+            {
+              "type": "comment",
+              "text": "# warn_indent: true"
+            },
+            {
+              "type": "comment",
+              "text": "=begin some_tag\nblock comment\n=end"
+            },
+            {
+              "type": "assignment",
+              "text": "x = 1"
+            },
+            {
+              "type": "integer",
+              "text": "1"
+            },
+            {
+              "type": "assignment",
+              "text": "y = 2"
+            },
+            {
+              "type": "assignment",
+              "text": "z = x + y"
+            },
+            {
+              "type": "binary",
+              "text": "x +\n  y"
+            },
+            {
+              "type": "call",
+              "text": "File.read('a.txt')"
+            },
+            {
+              "type": "argument_list",
+              "text": "('a.txt')"
+            },
+            {
+              "type": "string",
+              "text": "'a.txt'"
+            },
+            {
+              "type": "call",
+              "text": "File.read('a.txt')\n  # comment between\n  .strip"
+            },
+            {
+              "type": "comment",
+              "text": "# comment between"
+            },
+            {
+              "type": "call",
+              "text": "File.read('a.txt')\n  # comment between\n  .strip\n  .split(\",\")"
+            },
+            {
+              "type": "string",
+              "text": "\",\""
+            },
+            {
+              "type": "chained_string",
+              "text": "\"one\" \\\n  \"two\""
+            },
+            {
+              "type": "call",
+              "text": "puts __FILE__, __LINE__, __ENCODING__"
+            },
+            {
+              "type": "file",
+              "text": "__FILE__"
+            },
+            {
+              "type": "line",
+              "text": "__LINE__"
+            },
+            {
+              "type": "encoding",
+              "text": "__ENCODING__"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-02",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a029",
+        "ruby-B01.a035",
+        "ruby-B01.a045",
+        "ruby-B01.a052",
+        "ruby-B01.a053",
+        "ruby-B01.a054",
+        "ruby-B01.a055",
+        "ruby-B01.a056",
+        "ruby-B01.a057",
+        "ruby-B01.a058",
+        "ruby-B01.a059",
+        "ruby-B01.a060",
+        "ruby-B01.a061",
+        "ruby-B01.a062",
+        "ruby-B01.a063",
+        "ruby-B01.a064",
+        "ruby-B01.a065",
+        "ruby-B01.a066",
+        "ruby-B01.a067",
+        "ruby-B01.a068",
+        "ruby-B01.a069",
+        "ruby-B01.a070",
+        "ruby-B01.a071",
+        "ruby-B01.a115",
+        "ruby-B01.a138",
+        "ruby-B01.a187",
+        "ruby-B01.a189",
+        "ruby-B01.a191",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "a = [1234, 1_234, 0d170, 0D170, 0xaa, 0XAa, 0252, 0o252, 0O252, 0b10101010, 0B1010]\nf = [12.34, 1234e-2, 1.234E1]\nr = [1r, 2/3r, -1r, -2/3r, 2/-3r, +1/+3r, 1.2r, 1_1/2_1r]\nc = [1i, 12.3ri]\nb = [nil, true, false]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "array",
+            "integer",
+            "float",
+            "rational",
+            "complex",
+            "nil",
+            "true",
+            "false"
+          ],
+          "anchors": [
+            {
+              "type": "integer",
+              "text": "1234",
+              "occurrence": 1
+            },
+            {
+              "type": "integer",
+              "text": "1_234"
+            },
+            {
+              "type": "integer",
+              "text": "0d170"
+            },
+            {
+              "type": "integer",
+              "text": "0D170"
+            },
+            {
+              "type": "integer",
+              "text": "0xaa"
+            },
+            {
+              "type": "integer",
+              "text": "0XAa"
+            },
+            {
+              "type": "integer",
+              "text": "0252"
+            },
+            {
+              "type": "integer",
+              "text": "0o252"
+            },
+            {
+              "type": "integer",
+              "text": "0O252"
+            },
+            {
+              "type": "integer",
+              "text": "0b10101010"
+            },
+            {
+              "type": "integer",
+              "text": "0B1010"
+            },
+            {
+              "type": "float",
+              "text": "12.34"
+            },
+            {
+              "type": "float",
+              "text": "1234e-2"
+            },
+            {
+              "type": "float",
+              "text": "1.234E1"
+            },
+            {
+              "type": "rational",
+              "text": "1r",
+              "occurrence": 1
+            },
+            {
+              "type": "binary",
+              "text": "2/3r",
+              "occurrence": 1
+            },
+            {
+              "type": "rational",
+              "text": "3r",
+              "occurrence": 1
+            },
+            {
+              "type": "unary",
+              "text": "-1r"
+            },
+            {
+              "type": "binary",
+              "text": "-2/3r"
+            },
+            {
+              "type": "binary",
+              "text": "2/-3r"
+            },
+            {
+              "type": "unary",
+              "text": "-3r"
+            },
+            {
+              "type": "binary",
+              "text": "+1/+3r"
+            },
+            {
+              "type": "unary",
+              "text": "+1"
+            },
+            {
+              "type": "rational",
+              "text": "1.2r"
+            },
+            {
+              "type": "binary",
+              "text": "1_1/2_1r"
+            },
+            {
+              "type": "rational",
+              "text": "2_1r"
+            },
+            {
+              "type": "complex",
+              "text": "1i"
+            },
+            {
+              "type": "complex",
+              "text": "12.3ri"
+            },
+            {
+              "type": "nil",
+              "text": "nil"
+            },
+            {
+              "type": "true",
+              "text": "true"
+            },
+            {
+              "type": "false",
+              "text": "false"
+            },
+            {
+              "type": "array",
+              "text": "[nil, true, false]"
+            },
+            {
+              "type": "assignment",
+              "text": "b = [nil, true, false]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-03",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a072",
+        "ruby-B01.a073",
+        "ruby-B01.a074",
+        "ruby-B01.a075",
+        "ruby-B01.a076",
+        "ruby-B01.a077",
+        "ruby-B01.a078",
+        "ruby-B01.a079",
+        "ruby-B01.a080",
+        "ruby-B01.a081",
+        "ruby-B01.a082",
+        "ruby-B01.a083",
+        "ruby-B01.a084",
+        "ruby-B01.a085",
+        "ruby-B01.a086",
+        "ruby-B01.a087",
+        "ruby-B01.a088",
+        "ruby-B01.a089",
+        "ruby-B01.a090",
+        "ruby-B01.a091",
+        "ruby-B01.a092",
+        "ruby-B01.a093",
+        "ruby-B01.a094",
+        "ruby-B01.a095",
+        "ruby-B01.a096",
+        "ruby-B01.a097",
+        "ruby-B01.a098",
+        "ruby-B01.a099",
+        "ruby-B01.a100",
+        "ruby-B01.a101",
+        "ruby-B01.a102",
+        "ruby-B01.a115",
+        "ruby-B01.a127",
+        "ruby-B01.a138",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "name = \"x\"\ns = [\"a #{name} b\", 'raw #{name}', \"con\" \"cat\", %q{a} 'b' \"c\"]\nt = \"one \" \\\n  \"two\"\nch = [?a, ?\\n, ?\\s, ?\\\\, ?\\u{41}, ?\\C-a, ?\\M-a, ?\\M-\\C-a, ?\\C-\\M-a, ?あ]\ne = \"\\a \\b \\t \\n \\v \\f \\r \\e \\s \\\\ \\101 \\x41 \\u0041 \\u{41 42} \\cx \\C-x \\M-x \\M-\\C-x \\M-\\cx \\c\\M-x \\c? \\C-? cont\\\ninued\"\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "chained_string",
+            "character",
+            "escape_sequence"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"a #{name} b\""
+            },
+            {
+              "type": "interpolation",
+              "text": "#{name}",
+              "occurrence": 1
+            },
+            {
+              "type": "string",
+              "text": "'raw #{name}'"
+            },
+            {
+              "type": "chained_string",
+              "text": "\"con\" \"cat\""
+            },
+            {
+              "type": "chained_string",
+              "text": "%q{a} 'b' \"c\""
+            },
+            {
+              "type": "string",
+              "text": "%q{a}"
+            },
+            {
+              "type": "chained_string",
+              "text": "\"one \" \\\n  \"two\""
+            },
+            {
+              "type": "character",
+              "text": "?a"
+            },
+            {
+              "type": "character",
+              "text": "?\\n"
+            },
+            {
+              "type": "character",
+              "text": "?\\s"
+            },
+            {
+              "type": "character",
+              "text": "?\\\\"
+            },
+            {
+              "type": "character",
+              "text": "?\\u{41}"
+            },
+            {
+              "type": "character",
+              "text": "?\\C-a"
+            },
+            {
+              "type": "character",
+              "text": "?\\M-a"
+            },
+            {
+              "type": "character",
+              "text": "?\\M-\\C-a"
+            },
+            {
+              "type": "character",
+              "text": "?\\C-\\M-a"
+            },
+            {
+              "type": "character",
+              "text": "?あ"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\a"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\b"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\t"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\n",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\v"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\f"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\r"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\e"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\s",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\\",
+              "occurrence": 2
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\101"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\x41"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u0041"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\u{41 42}"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\cx",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\C-x",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\M-x",
+              "occurrence": 1
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\M-\\C-x"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\M-\\cx"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\c\\M-x"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\c?"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\C-?"
+            },
+            {
+              "type": "escape_sequence",
+              "text": "\\\n",
+              "occurrence": 2
+            },
+            {
+              "type": "array",
+              "text": "[\"a #{name} b\", 'raw #{name}', \"con\" \"cat\", %q{a} 'b' \"c\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-04",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a073",
+        "ruby-B01.a103",
+        "ruby-B01.a104",
+        "ruby-B01.a105",
+        "ruby-B01.a106",
+        "ruby-B01.a107",
+        "ruby-B01.a108",
+        "ruby-B01.a109",
+        "ruby-B01.a110",
+        "ruby-B01.a138",
+        "ruby-B01.a166",
+        "ruby-B01.a168",
+        "ruby-B01.a172",
+        "ruby-B01.a193",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "a = <<HEREDOC\ntext #{1 + 1}\nHEREDOC\nb = <<-INDENTED\n  text\n  INDENTED\nc = <<~SQUIGGLY\n  text\nSQUIGGLY\nd = <<-'RAW'\nraw #{1 + 1}\nRAW\ne = <<\"QUOTED\"\nquoted\nQUOTED\nf = <<-`CMD`\necho hi\nCMD\ng = <<-EXPECTED.chomp\ntext\nEXPECTED\nputs(<<-ONE, <<-TWO)\none\nONE\ntwo\nTWO\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "heredoc_beginning",
+            "heredoc_body",
+            "heredoc_end",
+            "interpolation"
+          ],
+          "anchors": [
+            {
+              "type": "heredoc_beginning",
+              "text": "<<HEREDOC"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\ntext #{1 + 1}\nHEREDOC"
+            },
+            {
+              "type": "interpolation",
+              "text": "#{1 + 1}",
+              "occurrence": 1
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<-INDENTED"
+            },
+            {
+              "type": "heredoc_end",
+              "text": "INDENTED",
+              "occurrence": 2
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<~SQUIGGLY"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\n  text\nSQUIGGLY"
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<-'RAW'"
+            },
+            {
+              "type": "heredoc_content",
+              "text": "\nraw #{1 + 1}\n"
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<\"QUOTED\""
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<-`CMD`"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\necho hi\nCMD"
+            },
+            {
+              "type": "call",
+              "text": "<<-EXPECTED.chomp"
+            },
+            {
+              "type": "heredoc_beginning",
+              "text": "<<-EXPECTED"
+            },
+            {
+              "type": "call",
+              "text": "puts(<<-ONE, <<-TWO)"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\none\nONE"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\ntwo\nTWO"
+            },
+            {
+              "type": "assignment",
+              "text": "a = <<HEREDOC"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-05",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a072",
+        "ruby-B01.a073",
+        "ruby-B01.a111",
+        "ruby-B01.a112",
+        "ruby-B01.a113",
+        "ruby-B01.a114",
+        "ruby-B01.a115",
+        "ruby-B01.a116",
+        "ruby-B01.a117",
+        "ruby-B01.a118",
+        "ruby-B01.a119",
+        "ruby-B01.a120",
+        "ruby-B01.a121",
+        "ruby-B01.a122",
+        "ruby-B01.a123",
+        "ruby-B01.a124",
+        "ruby-B01.a125",
+        "ruby-B01.a126",
+        "ruby-B01.a138",
+        "ruby-B01.a193",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "name = \"n\"\ns = [:my_symbol, :\"quoted\", :\"sym#{1 + 1}\", :'raw#{1}']\na = [1, [1 + 1, [1 + 2]]]\nh = { \"a\" => 1, b: 2, \"c d\": 3, \"e #{1}\": 4 }\nr = [(1..2), (1...2), (1..)]\nre = [/foo/, /hello/i, /#{name}x/m]\nl = [-> { 1 + 1 }, ->(v) { 1 + v }]\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "simple_symbol",
+            "delimited_symbol",
+            "array",
+            "hash",
+            "pair",
+            "hash_key_symbol",
+            "range",
+            "regex",
+            "lambda",
+            "lambda_parameters"
+          ],
+          "anchors": [
+            {
+              "type": "simple_symbol",
+              "text": ":my_symbol"
+            },
+            {
+              "type": "delimited_symbol",
+              "text": ":\"quoted\""
+            },
+            {
+              "type": "delimited_symbol",
+              "text": ":\"sym#{1 + 1}\""
+            },
+            {
+              "type": "interpolation",
+              "text": "#{1 + 1}"
+            },
+            {
+              "type": "delimited_symbol",
+              "text": ":'raw#{1}'"
+            },
+            {
+              "type": "array",
+              "text": "[1, [1 + 1, [1 + 2]]]"
+            },
+            {
+              "type": "array",
+              "text": "[1 + 1, [1 + 2]]"
+            },
+            {
+              "type": "hash",
+              "text": "{ \"a\" => 1, b: 2, \"c d\": 3, \"e #{1}\": 4 }"
+            },
+            {
+              "type": "pair",
+              "text": "\"a\" => 1"
+            },
+            {
+              "type": "pair",
+              "text": "b: 2"
+            },
+            {
+              "type": "hash_key_symbol",
+              "text": "b",
+              "occurrence": 2
+            },
+            {
+              "type": "pair",
+              "text": "\"c d\": 3"
+            },
+            {
+              "type": "pair",
+              "text": "\"e #{1}\": 4"
+            },
+            {
+              "type": "range",
+              "text": "1..2"
+            },
+            {
+              "type": "range",
+              "text": "1...2"
+            },
+            {
+              "type": "range",
+              "text": "1..",
+              "occurrence": 3
+            },
+            {
+              "type": "regex",
+              "text": "/foo/"
+            },
+            {
+              "type": "regex",
+              "text": "/hello/i"
+            },
+            {
+              "type": "regex",
+              "text": "/#{name}x/m"
+            },
+            {
+              "type": "interpolation",
+              "text": "#{name}"
+            },
+            {
+              "type": "lambda",
+              "text": "-> { 1 + 1 }"
+            },
+            {
+              "type": "lambda",
+              "text": "->(v) { 1 + v }"
+            },
+            {
+              "type": "lambda_parameters",
+              "text": "(v)"
+            },
+            {
+              "type": "string",
+              "text": "\"n\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-06",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a073",
+        "ruby-B01.a127",
+        "ruby-B01.a128",
+        "ruby-B01.a129",
+        "ruby-B01.a130",
+        "ruby-B01.a131",
+        "ruby-B01.a132",
+        "ruby-B01.a133",
+        "ruby-B01.a134",
+        "ruby-B01.a135",
+        "ruby-B01.a136",
+        "ruby-B01.a137",
+        "ruby-B01.a173"
+      ],
+      "source_utf8": "p %q[foo], %q(foo), %q{foo}, %q<foo>, %q|foo|, %q:foo:, %q[foo[bar]baz]\np %Q(1 + 1 is #{1 + 1}), %[foo bar]\np %w[foo bar\\ baz], %W[a#{1} b], %i[foo bar], %I[a#{1}]\np %s[foo], %r/foo/, %r[foo], %r{foo}, %r(foo), %r<foo>, %r:a/b:\np %x(echo 1), `echo 2`\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "string",
+            "string_array",
+            "symbol_array",
+            "delimited_symbol",
+            "regex",
+            "subshell"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "%q[foo]"
+            },
+            {
+              "type": "string",
+              "text": "%q(foo)"
+            },
+            {
+              "type": "string",
+              "text": "%q{foo}"
+            },
+            {
+              "type": "string",
+              "text": "%q<foo>"
+            },
+            {
+              "type": "string",
+              "text": "%q|foo|"
+            },
+            {
+              "type": "string",
+              "text": "%q:foo:"
+            },
+            {
+              "type": "string",
+              "text": "%q[foo[bar]baz]"
+            },
+            {
+              "type": "string",
+              "text": "%Q(1 + 1 is #{1 + 1})"
+            },
+            {
+              "type": "interpolation",
+              "text": "#{1 + 1}"
+            },
+            {
+              "type": "string",
+              "text": "%[foo bar]"
+            },
+            {
+              "type": "string_array",
+              "text": "%w[foo bar\\ baz]"
+            },
+            {
+              "type": "bare_string",
+              "text": "bar\\ baz"
+            },
+            {
+              "type": "string_array",
+              "text": "%W[a#{1} b]"
+            },
+            {
+              "type": "bare_string",
+              "text": "a#{1}",
+              "occurrence": 1
+            },
+            {
+              "type": "symbol_array",
+              "text": "%i[foo bar]"
+            },
+            {
+              "type": "symbol_array",
+              "text": "%I[a#{1}]"
+            },
+            {
+              "type": "bare_symbol",
+              "text": "a#{1}",
+              "occurrence": 2
+            },
+            {
+              "type": "delimited_symbol",
+              "text": "%s[foo]"
+            },
+            {
+              "type": "regex",
+              "text": "%r/foo/"
+            },
+            {
+              "type": "regex",
+              "text": "%r[foo]"
+            },
+            {
+              "type": "regex",
+              "text": "%r{foo}"
+            },
+            {
+              "type": "regex",
+              "text": "%r(foo)"
+            },
+            {
+              "type": "regex",
+              "text": "%r<foo>"
+            },
+            {
+              "type": "regex",
+              "text": "%r:a/b:"
+            },
+            {
+              "type": "subshell",
+              "text": "%x(echo 1)"
+            },
+            {
+              "type": "subshell",
+              "text": "`echo 2`"
+            },
+            {
+              "type": "call",
+              "text": "p %x(echo 1), `echo 2`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-07",
+      "features": [
+        "ruby-B01"
+      ],
+      "alternatives": [
+        "ruby-B01.a002",
+        "ruby-B01.a042",
+        "ruby-B01.a115",
+        "ruby-B01.a138",
+        "ruby-B01.a139",
+        "ruby-B01.a140",
+        "ruby-B01.a141",
+        "ruby-B01.a142",
+        "ruby-B01.a143",
+        "ruby-B01.a144",
+        "ruby-B01.a145",
+        "ruby-B01.a146",
+        "ruby-B01.a147",
+        "ruby-B01.a148",
+        "ruby-B01.a149",
+        "ruby-B01.a150",
+        "ruby-B01.a151",
+        "ruby-B01.a152",
+        "ruby-B01.a153",
+        "ruby-B01.a154",
+        "ruby-B01.a155",
+        "ruby-B01.a156",
+        "ruby-B01.a157",
+        "ruby-B01.a158",
+        "ruby-B01.a159",
+        "ruby-B01.a160",
+        "ruby-B01.a161",
+        "ruby-B01.a162",
+        "ruby-B01.a163",
+        "ruby-B01.a164",
+        "ruby-B01.a165",
+        "ruby-B01.a168",
+        "ruby-B01.a215"
+      ],
+      "source_utf8": "v = 5\n@ivar = 1\n@@cvar = 2\n$global = 3\nZ = 1\np ::Z, Object::Z\nc.value = 42\nself.value = 1\nobj[2, 3] = 4\na += 1; a -= 1; a *= 1; a /= 1; a %= 1; a **= 1\na &= 1; a |= 1; a ^= 1; a <<= 1; a >>= 1\na ||= 0; a &&= 1\na = 1, 2, 3\na = *[1, 2, 3]\na = 1, *[2, 3]\na, b = 1, 2\nself.value, $global = 1, 2\na, *b = 1, 2, 3\n*a, b = 1, 2, 3\n(a, b) = [1, 2]\na, (b, *c), *d = 1, [2, 3, 4], 5, 6\nこんにちは = 1\np $~, $&, $1\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "assignment",
+            "operator_assignment",
+            "instance_variable",
+            "class_variable",
+            "global_variable",
+            "constant",
+            "scope_resolution",
+            "element_reference",
+            "left_assignment_list",
+            "rest_assignment",
+            "destructured_left_assignment",
+            "right_assignment_list",
+            "splat_argument"
+          ],
+          "anchors": [
+            {
+              "type": "assignment",
+              "text": "v = 5"
+            },
+            {
+              "type": "instance_variable",
+              "text": "@ivar"
+            },
+            {
+              "type": "class_variable",
+              "text": "@@cvar"
+            },
+            {
+              "type": "global_variable",
+              "text": "$global",
+              "occurrence": 1
+            },
+            {
+              "type": "assignment",
+              "text": "Z = 1"
+            },
+            {
+              "type": "constant",
+              "text": "Z",
+              "occurrence": 1
+            },
+            {
+              "type": "scope_resolution",
+              "text": "::Z",
+              "occurrence": 1
+            },
+            {
+              "type": "scope_resolution",
+              "text": "Object::Z"
+            },
+            {
+              "type": "assignment",
+              "text": "c.value = 42"
+            },
+            {
+              "type": "call",
+              "text": "c.value"
+            },
+            {
+              "type": "assignment",
+              "text": "self.value = 1"
+            },
+            {
+              "type": "assignment",
+              "text": "obj[2, 3] = 4"
+            },
+            {
+              "type": "element_reference",
+              "text": "obj[2, 3]"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a += 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a -= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a *= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a /= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a %= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a **= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a &= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a |= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a ^= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a <<= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a >>= 1"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a ||= 0"
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a &&= 1"
+            },
+            {
+              "type": "assignment",
+              "text": "a = 1, 2, 3"
+            },
+            {
+              "type": "right_assignment_list",
+              "text": "1, 2, 3",
+              "occurrence": 1
+            },
+            {
+              "type": "splat_argument",
+              "text": "*[1, 2, 3]"
+            },
+            {
+              "type": "right_assignment_list",
+              "text": "1, *[2, 3]"
+            },
+            {
+              "type": "splat_argument",
+              "text": "*[2, 3]"
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "a, b",
+              "occurrence": 1
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "self.value, $global"
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "a, *b"
+            },
+            {
+              "type": "rest_assignment",
+              "text": "*b"
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "*a, b"
+            },
+            {
+              "type": "rest_assignment",
+              "text": "*a"
+            },
+            {
+              "type": "destructured_left_assignment",
+              "text": "(a, b)"
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "a, (b, *c), *d"
+            },
+            {
+              "type": "destructured_left_assignment",
+              "text": "(b, *c)"
+            },
+            {
+              "type": "rest_assignment",
+              "text": "*d"
+            },
+            {
+              "type": "assignment",
+              "text": "a, (b, *c), *d = 1, [2, 3, 4], 5, 6"
+            },
+            {
+              "type": "identifier",
+              "text": "こんにちは"
+            },
+            {
+              "type": "global_variable",
+              "text": "$~"
+            },
+            {
+              "type": "global_variable",
+              "text": "$&"
+            },
+            {
+              "type": "global_variable",
+              "text": "$1"
+            },
+            {
+              "type": "array",
+              "text": "[1, 2, 3]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-08",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a022",
+        "ruby-B01.a024",
+        "ruby-B01.a027",
+        "ruby-B01.a031",
+        "ruby-B01.a042",
+        "ruby-B01.a043",
+        "ruby-B01.a051",
+        "ruby-B01.a074",
+        "ruby-B01.a111",
+        "ruby-B01.a166",
+        "ruby-B01.a167",
+        "ruby-B01.a168",
+        "ruby-B01.a169",
+        "ruby-B01.a170",
+        "ruby-B01.a171",
+        "ruby-B01.a172",
+        "ruby-B01.a173",
+        "ruby-B01.a174",
+        "ruby-B01.a175",
+        "ruby-B01.a176",
+        "ruby-B01.a177",
+        "ruby-B01.a178",
+        "ruby-B01.a179",
+        "ruby-B01.a180",
+        "ruby-B01.a181",
+        "ruby-B01.a182",
+        "ruby-B01.a183",
+        "ruby-B01.a184",
+        "ruby-B02.a001",
+        "ruby-B02.a043"
+      ],
+      "source_utf8": "my_method()\nmy_method\nmy_object.my_method\nmy_object::my_method\na.append(*a1).compact\nm&.values_at(1, 2)&.join(' - ')\nmy_method(1, '2', :three)\nmy_method argument1, argument2\nmy_method('a' => 1, b: 2, 'c' => 3)\nmy_method(*arguments)\nmy_method(1, *arguments, **opts)\nmy_method(some: params, **(extra if cond))\nmy_method(*(args if cond))\nmy_method do |argument1, argument2|\nend\nmy_method { |a| a }\nmy_method do |obj; place|\nend\nmy_method(&argument)\ndef m\n  super\n  super()\n  super(1, 2)\n  yield self\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "call",
+            "argument_list",
+            "block",
+            "do_block",
+            "block_parameters",
+            "splat_argument",
+            "hash_splat_argument",
+            "block_argument",
+            "pair",
+            "super",
+            "yield"
+          ],
+          "anchors": [
+            {
+              "type": "call",
+              "text": "my_method()"
+            },
+            {
+              "type": "identifier",
+              "text": "my_method",
+              "occurrence": 2
+            },
+            {
+              "type": "call",
+              "text": "my_object.my_method"
+            },
+            {
+              "type": "call",
+              "text": "my_object::my_method"
+            },
+            {
+              "type": "call",
+              "text": "a.append(*a1)"
+            },
+            {
+              "type": "call",
+              "text": "a.append(*a1).compact"
+            },
+            {
+              "type": "call",
+              "text": "m&.values_at(1, 2)"
+            },
+            {
+              "type": "call",
+              "text": "m&.values_at(1, 2)&.join(' - ')"
+            },
+            {
+              "type": "string",
+              "text": "' - '"
+            },
+            {
+              "type": "call",
+              "text": "my_method(1, '2', :three)"
+            },
+            {
+              "type": "argument_list",
+              "text": "(1, '2', :three)"
+            },
+            {
+              "type": "simple_symbol",
+              "text": ":three"
+            },
+            {
+              "type": "call",
+              "text": "my_method argument1, argument2"
+            },
+            {
+              "type": "argument_list",
+              "text": "argument1, argument2",
+              "occurrence": 1
+            },
+            {
+              "type": "argument_list",
+              "text": "('a' => 1, b: 2, 'c' => 3)"
+            },
+            {
+              "type": "pair",
+              "text": "'a' => 1"
+            },
+            {
+              "type": "pair",
+              "text": "b: 2"
+            },
+            {
+              "type": "splat_argument",
+              "text": "*arguments",
+              "occurrence": 1
+            },
+            {
+              "type": "argument_list",
+              "text": "(1, *arguments, **opts)"
+            },
+            {
+              "type": "hash_splat_argument",
+              "text": "**opts"
+            },
+            {
+              "type": "pair",
+              "text": "some: params"
+            },
+            {
+              "type": "hash_splat_argument",
+              "text": "**(extra if cond)"
+            },
+            {
+              "type": "if_modifier",
+              "text": "extra if cond"
+            },
+            {
+              "type": "splat_argument",
+              "text": "*(args if cond)"
+            },
+            {
+              "type": "call",
+              "text": "my_method do |argument1, argument2|\nend"
+            },
+            {
+              "type": "do_block",
+              "text": "do |argument1, argument2|\nend"
+            },
+            {
+              "type": "block_parameters",
+              "text": "|argument1, argument2|"
+            },
+            {
+              "type": "call",
+              "text": "my_method { |a| a }"
+            },
+            {
+              "type": "block",
+              "text": "{ |a| a }"
+            },
+            {
+              "type": "block_parameters",
+              "text": "|obj; place|"
+            },
+            {
+              "type": "block_argument",
+              "text": "&argument"
+            },
+            {
+              "type": "method",
+              "text": "def m\n  super\n  super()\n  super(1, 2)\n  yield self\nend"
+            },
+            {
+              "type": "super",
+              "text": "super",
+              "occurrence": 1
+            },
+            {
+              "type": "call",
+              "text": "super()"
+            },
+            {
+              "type": "call",
+              "text": "super(1, 2)"
+            },
+            {
+              "type": "yield",
+              "text": "yield self"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B01-09",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a017",
+        "ruby-B01.a023",
+        "ruby-B01.a036",
+        "ruby-B01.a037",
+        "ruby-B01.a119",
+        "ruby-B01.a120",
+        "ruby-B01.a140",
+        "ruby-B01.a161",
+        "ruby-B01.a185",
+        "ruby-B01.a186",
+        "ruby-B01.a187",
+        "ruby-B01.a188",
+        "ruby-B01.a189",
+        "ruby-B01.a190",
+        "ruby-B01.a191",
+        "ruby-B01.a192",
+        "ruby-B01.a193",
+        "ruby-B01.a194",
+        "ruby-B01.a195",
+        "ruby-B01.a196",
+        "ruby-B01.a197",
+        "ruby-B01.a198",
+        "ruby-B01.a199",
+        "ruby-B01.a200",
+        "ruby-B01.a201",
+        "ruby-B01.a202",
+        "ruby-B01.a203",
+        "ruby-B01.a204",
+        "ruby-B01.a205",
+        "ruby-B01.a206",
+        "ruby-B01.a207",
+        "ruby-B01.a208",
+        "ruby-B01.a209",
+        "ruby-B01.a210",
+        "ruby-B01.a211",
+        "ruby-B01.a212",
+        "ruby-B01.a213",
+        "ruby-B01.a214",
+        "ruby-B01.a215",
+        "ruby-B01.a216",
+        "ruby-B01.a217",
+        "ruby-B01.a218",
+        "ruby-B01.a219",
+        "ruby-B01.a220",
+        "ruby-B02.a040"
+      ],
+      "source_utf8": "r = !a, ~b, +c, -d, a ** b, a * b / c % d, a + b - c, a << b >> c\ns = a & b | c ^ d\nt = a > b, a >= b, a < b, a <= b, a <=> b, a == b, a === b, a != b, a =~ b, a !~ b\nu = a && b || c\nv = defined?(a), defined? @x\nw = not(a)\nx = (a and b) or c\ny = cond ? 1 : 2\nz = (1..2), (1...3)\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "unary",
+            "binary",
+            "conditional",
+            "range",
+            "parenthesized_statements"
+          ],
+          "anchors": [
+            {
+              "type": "unary",
+              "text": "!a"
+            },
+            {
+              "type": "unary",
+              "text": "~b"
+            },
+            {
+              "type": "unary",
+              "text": "+c"
+            },
+            {
+              "type": "unary",
+              "text": "-d"
+            },
+            {
+              "type": "binary",
+              "text": "a ** b"
+            },
+            {
+              "type": "binary",
+              "text": "a * b"
+            },
+            {
+              "type": "binary",
+              "text": "a * b / c"
+            },
+            {
+              "type": "binary",
+              "text": "a * b / c % d"
+            },
+            {
+              "type": "binary",
+              "text": "a + b"
+            },
+            {
+              "type": "binary",
+              "text": "a + b - c"
+            },
+            {
+              "type": "binary",
+              "text": "a << b"
+            },
+            {
+              "type": "binary",
+              "text": "a << b >> c"
+            },
+            {
+              "type": "binary",
+              "text": "a & b"
+            },
+            {
+              "type": "binary",
+              "text": "a & b | c"
+            },
+            {
+              "type": "binary",
+              "text": "a & b | c ^ d"
+            },
+            {
+              "type": "binary",
+              "text": "a > b"
+            },
+            {
+              "type": "binary",
+              "text": "a >= b"
+            },
+            {
+              "type": "binary",
+              "text": "a < b"
+            },
+            {
+              "type": "binary",
+              "text": "a <= b"
+            },
+            {
+              "type": "binary",
+              "text": "a <=> b"
+            },
+            {
+              "type": "binary",
+              "text": "a == b"
+            },
+            {
+              "type": "binary",
+              "text": "a === b"
+            },
+            {
+              "type": "binary",
+              "text": "a != b"
+            },
+            {
+              "type": "binary",
+              "text": "a =~ b"
+            },
+            {
+              "type": "binary",
+              "text": "a !~ b"
+            },
+            {
+              "type": "binary",
+              "text": "a && b"
+            },
+            {
+              "type": "binary",
+              "text": "a && b || c"
+            },
+            {
+              "type": "unary",
+              "text": "defined?(a)"
+            },
+            {
+              "type": "unary",
+              "text": "defined? @x"
+            },
+            {
+              "type": "instance_variable",
+              "text": "@x"
+            },
+            {
+              "type": "unary",
+              "text": "not(a)"
+            },
+            {
+              "type": "binary",
+              "text": "a and b"
+            },
+            {
+              "type": "assignment",
+              "text": "x = (a and b)"
+            },
+            {
+              "type": "binary",
+              "text": "x = (a and b) or c"
+            },
+            {
+              "type": "conditional",
+              "text": "cond ? 1 : 2"
+            },
+            {
+              "type": "range",
+              "text": "1..2"
+            },
+            {
+              "type": "range",
+              "text": "1...3"
+            },
+            {
+              "type": "right_assignment_list",
+              "text": "(1..2), (1...3)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B02-01",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a021",
+        "ruby-B01.a022",
+        "ruby-B01.a027",
+        "ruby-B01.a041",
+        "ruby-B01.a042",
+        "ruby-B01.a072",
+        "ruby-B01.a138",
+        "ruby-B01.a140",
+        "ruby-B01.a193",
+        "ruby-B02.a001",
+        "ruby-B02.a002",
+        "ruby-B02.a003",
+        "ruby-B02.a004",
+        "ruby-B02.a005",
+        "ruby-B02.a006",
+        "ruby-B02.a007",
+        "ruby-B02.a008",
+        "ruby-B02.a009",
+        "ruby-B02.a011",
+        "ruby-B02.a026"
+      ],
+      "source_utf8": "class C\n  def +(o) end\n  def -(o) end\n  def *(o) end\n  def **(o) end\n  def /(o) end\n  def %(o) end\n  def &(o) end\n  def |(o) end\n  def ^(o) end\n  def >>(o) end\n  def <<(o) end\n  def ==(o) end\n  def !=(o) end\n  def ===(o) end\n  def =~(o) end\n  def !~(o) end\n  def <=>(o) end\n  def <(o) end\n  def <=(o) end\n  def >(o) end\n  def >=(o) end\n  def -@; end\n  def +@; end\n  def ~; end\n  def !; end\n  def [](a, b) end\n  def []=(a, b, c) end\n  def attr=(val) @attr = val end\n  def ok?; end\n  def save!; end\n  def self.cls_method; end\n  def こんにちは; end\n  def one_plus_one\n    return 1 + 1\n  end\nend\ngreeting = \"Hello\"\ndef greeting.broaden\n  self + \", world!\"\nend\ndef String.hello; end\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class",
+            "method",
+            "singleton_method",
+            "operator",
+            "setter",
+            "method_parameters",
+            "return"
+          ],
+          "anchors": [
+            {
+              "type": "method",
+              "text": "def +(o) end"
+            },
+            {
+              "type": "method",
+              "text": "def **(o) end"
+            },
+            {
+              "type": "method",
+              "text": "def ===(o) end"
+            },
+            {
+              "type": "operator",
+              "text": "==="
+            },
+            {
+              "type": "method",
+              "text": "def <=>(o) end"
+            },
+            {
+              "type": "operator",
+              "text": "<=>"
+            },
+            {
+              "type": "method",
+              "text": "def >=(o) end"
+            },
+            {
+              "type": "method_parameters",
+              "text": "(o)",
+              "occurrence": 1
+            },
+            {
+              "type": "method",
+              "text": "def -@; end"
+            },
+            {
+              "type": "method",
+              "text": "def +@; end"
+            },
+            {
+              "type": "method",
+              "text": "def ~; end"
+            },
+            {
+              "type": "method",
+              "text": "def !; end"
+            },
+            {
+              "type": "method",
+              "text": "def [](a, b) end"
+            },
+            {
+              "type": "method_parameters",
+              "text": "(a, b)"
+            },
+            {
+              "type": "method",
+              "text": "def []=(a, b, c) end"
+            },
+            {
+              "type": "operator",
+              "text": "[]="
+            },
+            {
+              "type": "method",
+              "text": "def attr=(val) @attr = val end"
+            },
+            {
+              "type": "setter",
+              "text": "attr="
+            },
+            {
+              "type": "assignment",
+              "text": "@attr = val"
+            },
+            {
+              "type": "method",
+              "text": "def ok?; end"
+            },
+            {
+              "type": "method",
+              "text": "def save!; end"
+            },
+            {
+              "type": "singleton_method",
+              "text": "def self.cls_method; end"
+            },
+            {
+              "type": "method",
+              "text": "def こんにちは; end"
+            },
+            {
+              "type": "method",
+              "text": "def one_plus_one\n    return 1 + 1\n  end"
+            },
+            {
+              "type": "return",
+              "text": "return 1 + 1"
+            },
+            {
+              "type": "assignment",
+              "text": "greeting = \"Hello\""
+            },
+            {
+              "type": "string",
+              "text": "\"Hello\""
+            },
+            {
+              "type": "singleton_method",
+              "text": "def greeting.broaden\n  self + \", world!\"\nend"
+            },
+            {
+              "type": "singleton_method",
+              "text": "def String.hello; end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B02-02",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a022",
+        "ruby-B01.a025",
+        "ruby-B01.a027",
+        "ruby-B01.a028",
+        "ruby-B01.a035",
+        "ruby-B01.a039",
+        "ruby-B01.a193",
+        "ruby-B02.a001",
+        "ruby-B02.a010",
+        "ruby-B02.a011",
+        "ruby-B02.a012",
+        "ruby-B02.a013",
+        "ruby-B02.a014",
+        "ruby-B02.a015",
+        "ruby-B02.a016",
+        "ruby-B02.a017",
+        "ruby-B02.a018",
+        "ruby-B02.a019",
+        "ruby-B02.a020",
+        "ruby-B02.a021",
+        "ruby-B02.a022",
+        "ruby-B02.a067",
+        "ruby-B02.a068"
+      ],
+      "source_utf8": "def add_one value\n  value + 1\nend\ndef a(a, b = 1) end\ndef b(a = 1, b = 2, c) end\ndef c((a, b)) end\ndef d(a, (b, *c), d) end\ndef e(((a, b), c)) end\ndef f(*arguments) end\ndef g(first, *middle, last) end\ndef h(*) end\ndef i(first: 1, second: 2) end\ndef j(first:, second:) end\ndef k(first: nil, **rest) end\ndef l(**) end\ndef n(**nil) end\ndef o(&my_block) end\ndef q(a, b = 1, *c, d, e:, f: 2, **g, &h) end\ndef r\n  1\nrescue ArgumentError\n  2\nelse\n  3\nensure\n  4\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method",
+            "method_parameters",
+            "optional_parameter",
+            "destructured_parameter",
+            "splat_parameter",
+            "keyword_parameter",
+            "hash_splat_parameter",
+            "hash_splat_nil",
+            "block_parameter",
+            "body_statement",
+            "rescue",
+            "else",
+            "ensure"
+          ],
+          "anchors": [
+            {
+              "type": "method",
+              "text": "def add_one value\n  value + 1\nend"
+            },
+            {
+              "type": "method_parameters",
+              "text": "value",
+              "occurrence": 1
+            },
+            {
+              "type": "method_parameters",
+              "text": "(a, b = 1)"
+            },
+            {
+              "type": "optional_parameter",
+              "text": "b = 1",
+              "occurrence": 1
+            },
+            {
+              "type": "method_parameters",
+              "text": "(a = 1, b = 2, c)"
+            },
+            {
+              "type": "optional_parameter",
+              "text": "a = 1"
+            },
+            {
+              "type": "destructured_parameter",
+              "text": "(a, b)",
+              "occurrence": 1
+            },
+            {
+              "type": "destructured_parameter",
+              "text": "(b, *c)"
+            },
+            {
+              "type": "destructured_parameter",
+              "text": "((a, b), c)"
+            },
+            {
+              "type": "splat_parameter",
+              "text": "*arguments"
+            },
+            {
+              "type": "splat_parameter",
+              "text": "*middle"
+            },
+            {
+              "type": "splat_parameter",
+              "text": "*",
+              "occurrence": 4
+            },
+            {
+              "type": "keyword_parameter",
+              "text": "first: 1"
+            },
+            {
+              "type": "keyword_parameter",
+              "text": "first:",
+              "occurrence": 2
+            },
+            {
+              "type": "keyword_parameter",
+              "text": "second:",
+              "occurrence": 2
+            },
+            {
+              "type": "hash_splat_parameter",
+              "text": "**rest"
+            },
+            {
+              "type": "hash_splat_parameter",
+              "text": "**",
+              "occurrence": 2
+            },
+            {
+              "type": "hash_splat_nil",
+              "text": "**nil"
+            },
+            {
+              "type": "block_parameter",
+              "text": "&my_block"
+            },
+            {
+              "type": "method_parameters",
+              "text": "(a, b = 1, *c, d, e:, f: 2, **g, &h)"
+            },
+            {
+              "type": "method",
+              "text": "def r\n  1\nrescue ArgumentError\n  2\nelse\n  3\nensure\n  4\nend"
+            },
+            {
+              "type": "body_statement",
+              "text": "1\nrescue ArgumentError\n  2\nelse\n  3\nensure\n  4"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue ArgumentError\n  2"
+            },
+            {
+              "type": "else",
+              "text": "else\n  3"
+            },
+            {
+              "type": "ensure",
+              "text": "ensure\n  4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B02-03",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a014",
+        "ruby-B01.a015",
+        "ruby-B01.a016",
+        "ruby-B01.a021",
+        "ruby-B01.a022",
+        "ruby-B01.a027",
+        "ruby-B01.a033",
+        "ruby-B01.a042",
+        "ruby-B01.a046",
+        "ruby-B01.a138",
+        "ruby-B01.a142",
+        "ruby-B01.a145",
+        "ruby-B01.a173",
+        "ruby-B02.a001",
+        "ruby-B02.a023",
+        "ruby-B02.a024",
+        "ruby-B02.a025",
+        "ruby-B02.a026",
+        "ruby-B02.a027",
+        "ruby-B02.a028",
+        "ruby-B02.a029",
+        "ruby-B02.a030",
+        "ruby-B02.a031",
+        "ruby-B02.a032",
+        "ruby-B02.a033",
+        "ruby-B02.a034",
+        "ruby-B02.a035",
+        "ruby-B02.a036"
+      ],
+      "source_utf8": "module MyModule\n  def my_method; end\nend\nmodule Outer\n  module Inner\n  end\nend\nmodule Outer::Inner::GrandChild\nend\nclass MyClass\nend\nclass MySubclass < MyClass\nend\nclass C\n  class << self\n    def m; end\n  end\nend\no = Object.new\nclass << o\n  def my_method; end\nend\nalias new_name old_name\nalias :new_name2 :old_name\nalias $new $old\nundef my_method\nundef :my_method\nundef method1, method2\nBEGIN { count = 0 }\nEND { puts count }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "module",
+            "class",
+            "superclass",
+            "singleton_class",
+            "scope_resolution",
+            "alias",
+            "undef",
+            "begin_block",
+            "end_block"
+          ],
+          "anchors": [
+            {
+              "type": "module",
+              "text": "module MyModule\n  def my_method; end\nend"
+            },
+            {
+              "type": "module",
+              "text": "module Outer\n  module Inner\n  end\nend"
+            },
+            {
+              "type": "module",
+              "text": "module Inner\n  end"
+            },
+            {
+              "type": "module",
+              "text": "module Outer::Inner::GrandChild\nend"
+            },
+            {
+              "type": "scope_resolution",
+              "text": "Outer::Inner::GrandChild"
+            },
+            {
+              "type": "class",
+              "text": "class MyClass\nend"
+            },
+            {
+              "type": "class",
+              "text": "class MySubclass < MyClass\nend"
+            },
+            {
+              "type": "superclass",
+              "text": "< MyClass"
+            },
+            {
+              "type": "singleton_class",
+              "text": "class << self\n    def m; end\n  end"
+            },
+            {
+              "type": "assignment",
+              "text": "o = Object.new"
+            },
+            {
+              "type": "singleton_class",
+              "text": "class << o\n  def my_method; end\nend"
+            },
+            {
+              "type": "alias",
+              "text": "alias new_name old_name"
+            },
+            {
+              "type": "alias",
+              "text": "alias :new_name2 :old_name"
+            },
+            {
+              "type": "alias",
+              "text": "alias $new $old"
+            },
+            {
+              "type": "global_variable",
+              "text": "$new"
+            },
+            {
+              "type": "undef",
+              "text": "undef my_method"
+            },
+            {
+              "type": "undef",
+              "text": "undef :my_method"
+            },
+            {
+              "type": "undef",
+              "text": "undef method1, method2"
+            },
+            {
+              "type": "begin_block",
+              "text": "BEGIN { count = 0 }"
+            },
+            {
+              "type": "end_block",
+              "text": "END { puts count }"
+            },
+            {
+              "type": "call",
+              "text": "puts count"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B02-04",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a018",
+        "ruby-B01.a019",
+        "ruby-B01.a020",
+        "ruby-B01.a024",
+        "ruby-B01.a025",
+        "ruby-B01.a026",
+        "ruby-B01.a027",
+        "ruby-B01.a029",
+        "ruby-B01.a030",
+        "ruby-B01.a031",
+        "ruby-B01.a032",
+        "ruby-B01.a034",
+        "ruby-B01.a038",
+        "ruby-B01.a044",
+        "ruby-B01.a045",
+        "ruby-B01.a047",
+        "ruby-B01.a048",
+        "ruby-B01.a049",
+        "ruby-B01.a050",
+        "ruby-B01.a122",
+        "ruby-B01.a148",
+        "ruby-B01.a179",
+        "ruby-B01.a200",
+        "ruby-B01.a202",
+        "ruby-B01.a205",
+        "ruby-B01.a212",
+        "ruby-B01.a213",
+        "ruby-B02.a037",
+        "ruby-B02.a038",
+        "ruby-B02.a039",
+        "ruby-B02.a040",
+        "ruby-B02.a041",
+        "ruby-B02.a042",
+        "ruby-B02.a043",
+        "ruby-B02.a044",
+        "ruby-B02.a045",
+        "ruby-B02.a046",
+        "ruby-B02.a047",
+        "ruby-B02.a048",
+        "ruby-B02.a049",
+        "ruby-B02.a050",
+        "ruby-B02.a051",
+        "ruby-B02.a052",
+        "ruby-B02.a053",
+        "ruby-B02.a054",
+        "ruby-B02.a055",
+        "ruby-B02.a056",
+        "ruby-B02.a057",
+        "ruby-B02.a058",
+        "ruby-B02.a059",
+        "ruby-B02.a060"
+      ],
+      "source_utf8": "if a then b end\nif a\n  b\nelsif c then d\nelsif e\n  f\nelse\n  g\nend\nunless a then b else c end\nunless a\n  b\nend\nx = 1 if a\nx = 1 unless a\ny = a ? b : c\ncase \"12345\"\nwhen /^1/, \"2\" then 1\nwhen 3\n  2\nelse 3\nend\ncase\nwhen a == 1 then 1\nend\nwhile a < 10 do a += 1 end\nwhile a < 10\n  a += 1\nend\nuntil a > 10 do a += 1 end\nfor value in [1, 2, 3] do puts value end\nfor v in [1]\n  puts v\nend\na += 1 while a < 10\na += 1 until a > 10\nbegin\n  a += 1\nend while a < 10\n[1].each do |v|\n  break if v\n  break v * 2\n  next\n  next v\n  redo if false\nend\nputs((1 if true))\nx = (1 if true)\n0.upto 10 do |value|\n  selected << value if value==2..value==8\n  selected << value if value==2...value==2\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if",
+            "elsif",
+            "else",
+            "then",
+            "unless",
+            "if_modifier",
+            "unless_modifier",
+            "conditional",
+            "case",
+            "when",
+            "while",
+            "until",
+            "for",
+            "in",
+            "while_modifier",
+            "until_modifier",
+            "begin",
+            "break",
+            "next",
+            "redo",
+            "parenthesized_statements",
+            "do"
+          ],
+          "anchors": [
+            {
+              "type": "if",
+              "text": "if a then b end"
+            },
+            {
+              "type": "then",
+              "text": "then b",
+              "occurrence": 1
+            },
+            {
+              "type": "if",
+              "text": "if a\n  b\nelsif c then d\nelsif e\n  f\nelse\n  g\nend"
+            },
+            {
+              "type": "elsif",
+              "text": "elsif c then d\nelsif e\n  f\nelse\n  g"
+            },
+            {
+              "type": "then",
+              "text": "then d"
+            },
+            {
+              "type": "elsif",
+              "text": "elsif e\n  f\nelse\n  g"
+            },
+            {
+              "type": "else",
+              "text": "else\n  g"
+            },
+            {
+              "type": "unless",
+              "text": "unless a then b else c end"
+            },
+            {
+              "type": "else",
+              "text": "else c"
+            },
+            {
+              "type": "unless",
+              "text": "unless a\n  b\nend"
+            },
+            {
+              "type": "if_modifier",
+              "text": "x = 1 if a"
+            },
+            {
+              "type": "unless_modifier",
+              "text": "x = 1 unless a"
+            },
+            {
+              "type": "conditional",
+              "text": "a ? b : c"
+            },
+            {
+              "type": "case",
+              "text": "case \"12345\"\nwhen /^1/, \"2\" then 1\nwhen 3\n  2\nelse 3\nend"
+            },
+            {
+              "type": "when",
+              "text": "when /^1/, \"2\" then 1"
+            },
+            {
+              "type": "regex",
+              "text": "/^1/"
+            },
+            {
+              "type": "when",
+              "text": "when 3\n  2"
+            },
+            {
+              "type": "else",
+              "text": "else 3"
+            },
+            {
+              "type": "case",
+              "text": "case\nwhen a == 1 then 1\nend"
+            },
+            {
+              "type": "when",
+              "text": "when a == 1 then 1"
+            },
+            {
+              "type": "while",
+              "text": "while a < 10 do a += 1 end"
+            },
+            {
+              "type": "do",
+              "text": "do a += 1 end",
+              "occurrence": 1
+            },
+            {
+              "type": "operator_assignment",
+              "text": "a += 1",
+              "occurrence": 1
+            },
+            {
+              "type": "while",
+              "text": "while a < 10\n  a += 1\nend"
+            },
+            {
+              "type": "until",
+              "text": "until a > 10 do a += 1 end"
+            },
+            {
+              "type": "for",
+              "text": "for value in [1, 2, 3] do puts value end"
+            },
+            {
+              "type": "in",
+              "text": "in [1, 2, 3]"
+            },
+            {
+              "type": "for",
+              "text": "for v in [1]\n  puts v\nend"
+            },
+            {
+              "type": "while_modifier",
+              "text": "a += 1 while a < 10"
+            },
+            {
+              "type": "until_modifier",
+              "text": "a += 1 until a > 10"
+            },
+            {
+              "type": "while_modifier",
+              "text": "begin\n  a += 1\nend while a < 10"
+            },
+            {
+              "type": "begin",
+              "text": "begin\n  a += 1\nend"
+            },
+            {
+              "type": "do_block",
+              "text": "do |v|\n  break if v\n  break v * 2\n  next\n  next v\n  redo if false\nend"
+            },
+            {
+              "type": "if_modifier",
+              "text": "break if v"
+            },
+            {
+              "type": "break",
+              "text": "break",
+              "occurrence": 1
+            },
+            {
+              "type": "break",
+              "text": "break v * 2"
+            },
+            {
+              "type": "next",
+              "text": "next",
+              "occurrence": 1
+            },
+            {
+              "type": "next",
+              "text": "next v"
+            },
+            {
+              "type": "redo",
+              "text": "redo"
+            },
+            {
+              "type": "parenthesized_statements",
+              "text": "(1 if true)",
+              "occurrence": 1
+            },
+            {
+              "type": "parenthesized_statements",
+              "text": "(1 if true)",
+              "occurrence": 2
+            },
+            {
+              "type": "range",
+              "text": "value==2..value==8"
+            },
+            {
+              "type": "range",
+              "text": "value==2...value==2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-B02-05",
+      "features": [
+        "ruby-B01",
+        "ruby-B02"
+      ],
+      "alternatives": [
+        "ruby-B01.a018",
+        "ruby-B01.a021",
+        "ruby-B01.a024",
+        "ruby-B01.a025",
+        "ruby-B01.a027",
+        "ruby-B01.a028",
+        "ruby-B01.a035",
+        "ruby-B01.a039",
+        "ruby-B01.a040",
+        "ruby-B01.a163",
+        "ruby-B01.a167",
+        "ruby-B01.a179",
+        "ruby-B02.a026",
+        "ruby-B02.a061",
+        "ruby-B02.a062",
+        "ruby-B02.a063",
+        "ruby-B02.a064",
+        "ruby-B02.a065",
+        "ruby-B02.a066",
+        "ruby-B02.a067",
+        "ruby-B02.a068",
+        "ruby-B02.a069"
+      ],
+      "source_utf8": "begin\n  work\nrescue\n  retry\nend\nbegin\n  work\nrescue => exception\n  warn exception.message\n  raise\nend\nbegin\n  work\nrescue ArgumentError, NameError\n  1\nrescue TypeError => e\n  2\nrescue\n  3\nelse\n  4\nensure\n  5\nend\n[0, 1].map do |i|\n  10 / i\nrescue ZeroDivisionError\n  nil\nend\nv = work rescue nil\na, b = raise rescue [1, 2]\nclass Foo\n  1\nrescue\n  2\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "begin",
+            "rescue",
+            "exceptions",
+            "exception_variable",
+            "retry",
+            "ensure",
+            "else",
+            "rescue_modifier",
+            "do_block",
+            "class"
+          ],
+          "anchors": [
+            {
+              "type": "begin",
+              "text": "begin\n  work\nrescue\n  retry\nend"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue\n  retry"
+            },
+            {
+              "type": "retry",
+              "text": "retry"
+            },
+            {
+              "type": "begin",
+              "text": "begin\n  work\nrescue => exception\n  warn exception.message\n  raise\nend"
+            },
+            {
+              "type": "exception_variable",
+              "text": "=> exception"
+            },
+            {
+              "type": "begin",
+              "text": "begin\n  work\nrescue ArgumentError, NameError\n  1\nrescue TypeError => e\n  2\nrescue\n  3\nelse\n  4\nensure\n  5\nend"
+            },
+            {
+              "type": "exceptions",
+              "text": "ArgumentError, NameError"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue TypeError => e\n  2"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue\n  3"
+            },
+            {
+              "type": "else",
+              "text": "else\n  4"
+            },
+            {
+              "type": "ensure",
+              "text": "ensure\n  5"
+            },
+            {
+              "type": "do_block",
+              "text": "do |i|\n  10 / i\nrescue ZeroDivisionError\n  nil\nend"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue ZeroDivisionError\n  nil"
+            },
+            {
+              "type": "rescue_modifier",
+              "text": "work rescue nil"
+            },
+            {
+              "type": "assignment",
+              "text": "a, b = raise rescue [1, 2]"
+            },
+            {
+              "type": "rescue_modifier",
+              "text": "raise rescue [1, 2]"
+            },
+            {
+              "type": "left_assignment_list",
+              "text": "a, b"
+            },
+            {
+              "type": "class",
+              "text": "class Foo\n  1\nrescue\n  2\nend"
+            },
+            {
+              "type": "rescue",
+              "text": "rescue\n  2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-V27-01",
+      "features": [
+        "ruby-B01",
+        "ruby-V27"
+      ],
+      "alternatives": [
+        "ruby-B01.a002",
+        "ruby-B01.a020",
+        "ruby-B01.a025",
+        "ruby-B01.a027",
+        "ruby-B01.a031",
+        "ruby-B01.a032",
+        "ruby-B01.a035",
+        "ruby-B01.a044",
+        "ruby-B01.a045",
+        "ruby-B01.a047",
+        "ruby-B01.a138",
+        "ruby-V27.a001",
+        "ruby-V27.a002",
+        "ruby-V27.a003",
+        "ruby-V27.a004",
+        "ruby-V27.a005",
+        "ruby-V27.a006",
+        "ruby-V27.a007",
+        "ruby-V27.a008",
+        "ruby-V27.a009",
+        "ruby-V27.a010",
+        "ruby-V27.a011",
+        "ruby-V27.a012",
+        "ruby-V27.a013",
+        "ruby-V27.a014",
+        "ruby-V27.a015",
+        "ruby-V27.a016",
+        "ruby-V27.a017",
+        "ruby-V27.a018",
+        "ruby-V27.a019",
+        "ruby-V27.a020",
+        "ruby-V27.a021",
+        "ruby-V27.a022",
+        "ruby-V27.a023",
+        "ruby-V27.a024",
+        "ruby-V27.a025",
+        "ruby-V27.a026",
+        "ruby-V27.a027",
+        "ruby-V27.a028",
+        "ruby-V27.a029",
+        "ruby-V27.a030",
+        "ruby-V27.a032",
+        "ruby-V27.a033",
+        "ruby-V27.a034",
+        "ruby-V27.a035",
+        "ruby-V27.a036",
+        "ruby-V27.a037",
+        "ruby-V27.a038"
+      ],
+      "source_utf8": "y0 = 1; expectation = 18; a = 1; b = 2\ncase [1, [2, 3]]\nin [Integer => n, [m, *c]]\n  1\nin {name: String => nm, age: Integer => ag} if ag > 18\n  2\nin {x: 0.., **rest} unless rest.empty?\n  3\nin [*, String, String, *]\n  4\nin Point(x: 0, y: ^y0) | Point[1, 2]\n  5\nin {a: Integer, **nil}\n  6\nin {}\n  7\nin Integer | Float => num then 8\nin ^expectation | ^@ivar | ^@@cvar | ^$gvar | ^(a + b)\n  9\nin nil | true | \"s\" | :sym | 1..5 | Const\n  10\nin Integer, Integer\n  11\nin k:, l: lv\n  12\nin {a: _, b: _foo} | Array\n  13\nin [x, *]\n  14\nin Point(*, 1, *post)\n  15\nin Point[*pre, 1, *]\n  16\nin Point(a: 1, **rest2)\n  17\nin Point(1, *rest3)\n  18\nin Point[x: 0.. => px]\n  19\nelse\n  20\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "case_match",
+            "in_clause",
+            "array_pattern",
+            "find_pattern",
+            "hash_pattern",
+            "alternative_pattern",
+            "as_pattern",
+            "variable_reference_pattern",
+            "expression_reference_pattern",
+            "if_guard",
+            "unless_guard",
+            "keyword_pattern",
+            "splat_parameter",
+            "hash_splat_parameter",
+            "hash_splat_nil"
+          ],
+          "anchors": [
+            {
+              "type": "in_clause",
+              "text": "in [Integer => n, [m, *c]]\n  1"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[Integer => n, [m, *c]]"
+            },
+            {
+              "type": "as_pattern",
+              "text": "Integer => n"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[m, *c]"
+            },
+            {
+              "type": "splat_parameter",
+              "text": "*c"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "{name: String => nm, age: Integer => ag}"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "name: String => nm"
+            },
+            {
+              "type": "if_guard",
+              "text": "if ag > 18"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "{x: 0.., **rest}"
+            },
+            {
+              "type": "range",
+              "text": "0..",
+              "occurrence": 1
+            },
+            {
+              "type": "hash_splat_parameter",
+              "text": "**rest",
+              "occurrence": 1
+            },
+            {
+              "type": "unless_guard",
+              "text": "unless rest.empty?"
+            },
+            {
+              "type": "find_pattern",
+              "text": "[*, String, String, *]"
+            },
+            {
+              "type": "alternative_pattern",
+              "text": "Point(x: 0, y: ^y0) | Point[1, 2]"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "Point(x: 0, y: ^y0)"
+            },
+            {
+              "type": "variable_reference_pattern",
+              "text": "^y0"
+            },
+            {
+              "type": "array_pattern",
+              "text": "Point[1, 2]"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "{a: Integer, **nil}"
+            },
+            {
+              "type": "hash_splat_nil",
+              "text": "**nil"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "{}"
+            },
+            {
+              "type": "in_clause",
+              "text": "in Integer | Float => num then 8"
+            },
+            {
+              "type": "as_pattern",
+              "text": "Integer | Float => num"
+            },
+            {
+              "type": "alternative_pattern",
+              "text": "Integer | Float"
+            },
+            {
+              "type": "variable_reference_pattern",
+              "text": "^expectation"
+            },
+            {
+              "type": "variable_reference_pattern",
+              "text": "^@ivar"
+            },
+            {
+              "type": "variable_reference_pattern",
+              "text": "^@@cvar"
+            },
+            {
+              "type": "variable_reference_pattern",
+              "text": "^$gvar"
+            },
+            {
+              "type": "expression_reference_pattern",
+              "text": "^(a + b)"
+            },
+            {
+              "type": "alternative_pattern",
+              "text": "nil | true | \"s\" | :sym | 1..5 | Const"
+            },
+            {
+              "type": "string",
+              "text": "\"s\""
+            },
+            {
+              "type": "range",
+              "text": "1..5"
+            },
+            {
+              "type": "array_pattern",
+              "text": "Integer, Integer"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "k:, l: lv"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "k:"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "l: lv"
+            },
+            {
+              "type": "alternative_pattern",
+              "text": "{a: _, b: _foo} | Array"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "a: _"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "b: _foo"
+            },
+            {
+              "type": "array_pattern",
+              "text": "[x, *]"
+            },
+            {
+              "type": "find_pattern",
+              "text": "Point(*, 1, *post)"
+            },
+            {
+              "type": "find_pattern",
+              "text": "Point[*pre, 1, *]"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "Point(a: 1, **rest2)"
+            },
+            {
+              "type": "array_pattern",
+              "text": "Point(1, *rest3)"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "Point[x: 0.. => px]"
+            },
+            {
+              "type": "as_pattern",
+              "text": "0.. => px"
+            },
+            {
+              "type": "else",
+              "text": "else\n  20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-V27-02",
+      "features": [
+        "ruby-B01",
+        "ruby-V27"
+      ],
+      "alternatives": [
+        "ruby-B01.a020",
+        "ruby-B01.a022",
+        "ruby-B01.a027",
+        "ruby-B01.a032",
+        "ruby-B01.a044",
+        "ruby-B01.a049",
+        "ruby-B01.a120",
+        "ruby-B01.a180",
+        "ruby-V27.a031",
+        "ruby-V27.a035",
+        "ruby-V27.a039",
+        "ruby-V27.a040",
+        "ruby-V27.a041",
+        "ruby-V27.a042",
+        "ruby-V27.a043",
+        "ruby-V27.a044",
+        "ruby-V27.a045",
+        "ruby-V27.a046"
+      ],
+      "source_utf8": "config => {db: {user:}}\n0 => a\nresult = (1 in Integer)\n[0, 1] => _, x\n{y: 2} => y:\n[1, 2, 3].map { _1 * 2 }\n[[1, 2]].map { _1 + _2 }\ndef foo(...)\n  bar(...)\nend\ndef logged(msg, ...)\n  bar(:x, ...)\nend\ndef square(x) = x * x\ndef one = 1\ndef hello = puts \"Hello\"\nary[..3]\nr = (...10)\ncase v\nwhen ...\"2.4\" then 1\nend\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "match_pattern",
+            "test_pattern",
+            "forward_parameter",
+            "forward_argument",
+            "method",
+            "range",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "match_pattern",
+              "text": "config => {db: {user:}}"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "{user:}"
+            },
+            {
+              "type": "keyword_pattern",
+              "text": "user:"
+            },
+            {
+              "type": "match_pattern",
+              "text": "0 => a"
+            },
+            {
+              "type": "test_pattern",
+              "text": "1 in Integer"
+            },
+            {
+              "type": "match_pattern",
+              "text": "[0, 1] => _, x"
+            },
+            {
+              "type": "array_pattern",
+              "text": "_, x"
+            },
+            {
+              "type": "match_pattern",
+              "text": "{y: 2} => y:"
+            },
+            {
+              "type": "hash_pattern",
+              "text": "y:",
+              "occurrence": 2
+            },
+            {
+              "type": "block",
+              "text": "{ _1 * 2 }"
+            },
+            {
+              "type": "binary",
+              "text": "_1 + _2"
+            },
+            {
+              "type": "method",
+              "text": "def foo(...)\n  bar(...)\nend"
+            },
+            {
+              "type": "forward_parameter",
+              "text": "...",
+              "occurrence": 1
+            },
+            {
+              "type": "forward_argument",
+              "text": "...",
+              "occurrence": 2
+            },
+            {
+              "type": "method_parameters",
+              "text": "(msg, ...)"
+            },
+            {
+              "type": "forward_parameter",
+              "text": "...",
+              "occurrence": 3
+            },
+            {
+              "type": "argument_list",
+              "text": "(:x, ...)"
+            },
+            {
+              "type": "forward_argument",
+              "text": "...",
+              "occurrence": 4
+            },
+            {
+              "type": "method",
+              "text": "def square(x) = x * x"
+            },
+            {
+              "type": "method",
+              "text": "def one = 1"
+            },
+            {
+              "type": "method",
+              "text": "def hello = puts \"Hello\""
+            },
+            {
+              "type": "call",
+              "text": "puts \"Hello\""
+            },
+            {
+              "type": "range",
+              "text": "..3"
+            },
+            {
+              "type": "range",
+              "text": "...10"
+            },
+            {
+              "type": "range",
+              "text": "...\"2.4\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-V31-01",
+      "features": [
+        "ruby-B01",
+        "ruby-V31"
+      ],
+      "alternatives": [
+        "ruby-B01.a022",
+        "ruby-B01.a027",
+        "ruby-B01.a180",
+        "ruby-V31.a001",
+        "ruby-V31.a002",
+        "ruby-V31.a003",
+        "ruby-V31.a004",
+        "ruby-V31.a005",
+        "ruby-V31.a006"
+      ],
+      "source_utf8": "x = 100\ny = 200\nh = { x:, y: }\nfoo(x:, y:)\ndef blk(&)\n  bar(&)\nend\ndef rest(*)\n  bar(*)\nend\ndef kw(**)\n  bar(**)\nend\n[1, 2].map { it * 2 }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash",
+            "pair",
+            "block_parameter",
+            "splat_parameter",
+            "hash_splat_parameter",
+            "block_argument",
+            "splat_argument",
+            "hash_splat_argument"
+          ],
+          "anchors": [
+            {
+              "type": "hash",
+              "text": "{ x:, y: }"
+            },
+            {
+              "type": "pair",
+              "text": "x:",
+              "occurrence": 1
+            },
+            {
+              "type": "pair",
+              "text": "y:",
+              "occurrence": 1
+            },
+            {
+              "type": "argument_list",
+              "text": "(x:, y:)"
+            },
+            {
+              "type": "pair",
+              "text": "x:",
+              "occurrence": 2
+            },
+            {
+              "type": "block_parameter",
+              "text": "&",
+              "occurrence": 1
+            },
+            {
+              "type": "block_argument",
+              "text": "&",
+              "occurrence": 2
+            },
+            {
+              "type": "splat_parameter",
+              "text": "*",
+              "occurrence": 1
+            },
+            {
+              "type": "splat_argument",
+              "text": "*",
+              "occurrence": 2
+            },
+            {
+              "type": "hash_splat_parameter",
+              "text": "**",
+              "occurrence": 1
+            },
+            {
+              "type": "hash_splat_argument",
+              "text": "**",
+              "occurrence": 2
+            },
+            {
+              "type": "block",
+              "text": "{ it * 2 }"
+            },
+            {
+              "type": "binary",
+              "text": "it * 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-ruby-V40-01",
+      "features": [
+        "ruby-B01",
+        "ruby-B02",
+        "ruby-V40"
+      ],
+      "alternatives": [
+        "ruby-B01.a006",
+        "ruby-B01.a017",
+        "ruby-B01.a027",
+        "ruby-B01.a031",
+        "ruby-B01.a037",
+        "ruby-B02.a037",
+        "ruby-V40.a001",
+        "ruby-V40.a002",
+        "ruby-V40.a003",
+        "ruby-V40.a004"
+      ],
+      "source_utf8": "if condition1\n   && condition2\n  1\nend\nok = File.empty?('test.txt')\n  # comment\n  || File.size('test.txt') < 10\n  || File.read('test.txt').strip.empty?\nv = a\n  and b\nw = a\n  or b\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "if",
+            "binary",
+            "comment",
+            "assignment"
+          ],
+          "anchors": [
+            {
+              "type": "if",
+              "text": "if condition1\n   && condition2\n  1\nend"
+            },
+            {
+              "type": "binary",
+              "text": "condition1\n   && condition2"
+            },
+            {
+              "type": "assignment",
+              "text": "ok = File.empty?('test.txt')\n  # comment\n  || File.size('test.txt') < 10\n  || File.read('test.txt').strip.empty?"
+            },
+            {
+              "type": "binary",
+              "text": "File.empty?('test.txt')\n  # comment\n  || File.size('test.txt') < 10"
+            },
+            {
+              "type": "binary",
+              "text": "File.empty?('test.txt')\n  # comment\n  || File.size('test.txt') < 10\n  || File.read('test.txt').strip.empty?"
+            },
+            {
+              "type": "comment",
+              "text": "# comment"
+            },
+            {
+              "type": "binary",
+              "text": "v = a\n  and b"
+            },
+            {
+              "type": "assignment",
+              "text": "v = a"
+            },
+            {
+              "type": "binary",
+              "text": "w = a\n  or b"
+            },
+            {
+              "type": "assignment",
+              "text": "w = a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-B01-NR-1",
+      "features": [
+        "ruby-B01"
+      ],
+      "source_utf8": "name = \"world\"\ngreeting = \"Hello, #{name}!\"\npattern = /\\A[a-z]+\\z/i\nsym = :\"dynamic_#{name}\"\ntext = <<~EOS\n  Dear #{name},\n  thanks\nEOS\nsquare = ->(x) { x * x }\ntotal = [1, 2, 3].map { |n| square.(n) }.sum\nrange = (1..10)\nputs greeting if pattern.match?(name)\n",
+      "edits": [
+        {
+          "find": "EOS\nsquare",
+          "replace": "square"
+        },
+        {
+          "find": "  thanks\nsquare",
+          "replace": "  thanks\nEOS\nsquare"
+        },
+        {
+          "find": "{ x * x }",
+          "replace": "{ x * }"
+        },
+        {
+          "find": "{ x * }",
+          "replace": "{ x * x }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "string",
+            "interpolation",
+            "regex",
+            "heredoc_body",
+            "block"
+          ],
+          "anchors": [
+            {
+              "type": "string",
+              "text": "\"Hello, #{name}!\""
+            },
+            {
+              "type": "interpolation",
+              "text": "#{name}",
+              "occurrence": 1
+            },
+            {
+              "type": "regex",
+              "text": "/\\A[a-z]+\\z/i"
+            },
+            {
+              "type": "heredoc_body",
+              "text": "\n  Dear #{name},\n  thanks\nEOS"
+            },
+            {
+              "type": "block",
+              "text": "{ |n| square.(n) }"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-B02-R-1",
+      "features": [
+        "ruby-B02"
+      ],
+      "source_utf8": "class Account\n  attr_reader :balance\n\n  def initialize(balance = 0, *rest, currency: \"USD\", **opts, &block)\n    @balance = balance\n  end\n\n  def withdraw(amount)\n    raise ArgumentError, \"negative\" if amount < 0\n    @balance -= amount\n  rescue ArgumentError => e\n    warn e.message\n  ensure\n    log\n  end\nend\n\nmodule Helpers\n  def self.round(x)\n    x.round(2)\n  end\nend\n",
+      "edits": [
+        {
+          "find": "def withdraw(amount)",
+          "replace": "def withdraw(amount"
+        },
+        {
+          "find": "def withdraw(amount\n",
+          "replace": "def withdraw(amount)\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class",
+            "method",
+            "module",
+            "singleton_method"
+          ],
+          "anchors": [
+            {
+              "type": "method",
+              "text": "def initialize(balance = 0, *rest, currency: \"USD\", **opts, &block)\n    @balance = balance\n  end"
+            },
+            {
+              "type": "module",
+              "text": "module Helpers\n  def self.round(x)\n    x.round(2)\n  end\nend"
+            },
+            {
+              "type": "singleton_method",
+              "text": "def self.round(x)\n    x.round(2)\n  end"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-V27-PNRE-1",
+      "features": [
+        "ruby-V27"
+      ],
+      "source_utf8": "def handle(config, expected)\n  case config\n  in {db: {user: String => user}, mode: \"dev\" | \"test\"}\n    user\n  in [Integer => first, *rest] if first > 0\n    first\n  in [*, 42, *post]\n    post\n  in ^expected\n    :same\n  else\n    nil\n  end\nend\n\ndef proxy(...)\n  target(...)\nend\n\ndef double(x) = x * 2\n\nsquares = [1, 2, 3].map { _1 * _1 }\nconfig = {mode: \"dev\"}\n42 => answer\nconfig in {mode: String}\nsmall = (..5)\n",
+      "edits": [
+        {
+          "find": "in [Integer => first, *rest]",
+          "replace": "in [Integer => , *rest]"
+        },
+        {
+          "find": "in [Integer => , *rest]",
+          "replace": "in [Integer => first, *rest]"
+        },
+        {
+          "find": "{ _1 * _1 }",
+          "replace": "{ _1 * }"
+        },
+        {
+          "find": "{ _1 * }",
+          "replace": "{ _1 * _1 }"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "case_match",
+            "in_clause",
+            "if_guard",
+            "hash_pattern",
+            "array_pattern",
+            "find_pattern",
+            "forward_parameter",
+            "forward_argument",
+            "match_pattern",
+            "test_pattern",
+            "range"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "case_match",
+            "method",
+            "match_pattern",
+            "test_pattern"
+          ],
+          "anchors": [
+            {
+              "type": "method",
+              "text": "def proxy(...)\n  target(...)\nend"
+            },
+            {
+              "type": "method",
+              "text": "def double(x) = x * 2"
+            },
+            {
+              "type": "match_pattern",
+              "text": "42 => answer"
+            },
+            {
+              "type": "test_pattern",
+              "text": "config in {mode: String}"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-V31-PNE-1",
+      "features": [
+        "ruby-V31"
+      ],
+      "source_utf8": "def build(x, y)\n  {x:, y:}\nend\n\ndef wrap(*, **, &)\n  inner(*, **, &)\nend\n\nnames = %w[a b].map { it.upcase }\nx = 1\ny = 2\ncall_with(x:, y:)\n",
+      "edits": [
+        {
+          "find": "{x:, y:}",
+          "replace": "{x:, :y}"
+        },
+        {
+          "find": "{x:, :y}",
+          "replace": "{x:, y:}"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "hash",
+            "pair",
+            "splat_parameter",
+            "hash_splat_parameter",
+            "block_parameter",
+            "splat_argument",
+            "hash_splat_argument",
+            "block_argument"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-ruby-V40-PNRE-1",
+      "features": [
+        "ruby-V40"
+      ],
+      "source_utf8": "def ready?(a, b, c)\n  a\n    && b\n    || c\nend\n\ndef allowed?(user)\n  user.admin?\n    or user.owner?\nend\n\nputs ready?(true, false, true)\n",
+      "edits": [
+        {
+          "find": "    && b\n",
+          "replace": "    && && b\n"
+        },
+        {
+          "find": "    && && b\n",
+          "replace": "    && b\n"
+        },
+        {
+          "find": "    || c\n",
+          "replace": "    ||\n"
+        },
+        {
+          "find": "    ||\n",
+          "replace": "    || c\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "method",
+            "binary"
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": []
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": []
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [
+            "method",
+            "call",
+            "argument_list"
+          ],
+          "anchors": [
+            {
+              "type": "call",
+              "text": "puts ready?(true, false, true)"
+            },
+            {
+              "type": "argument_list",
+              "text": "(true, false, true)"
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": []
+        }
+      ]
     }
   ]
 }
