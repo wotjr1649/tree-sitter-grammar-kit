@@ -8,7 +8,8 @@
 # registered literal patch chain and check every file it patches against its adoption hash
 # (language-sources adoption); the other routes have an empty chain (C2-REGENERATE-r1). A
 # route with C2 patches (C2-PATCH-r1, steps of src/dev/c2-patches/) applies them after that
-# and checks every patched file against its native registry pin (the C2 record's hash).
+# and checks every patched file against its native registry pin (the C2 record's hash). A C2
+# file entry declared "create" adds a file absent at the pinned commit (e.g. a new scanner).
 # Every file is hash-checked.
 param(
   [Parameter(Mandatory)][string]$Destination,
@@ -86,17 +87,36 @@ function Assert-Text([string]$Text, [string]$Sha, [long]$Bytes, [string]$What) {
   if ($sum -ne $Sha -or $b.Length -ne $Bytes) { throw "$What identity mismatch: $($b.Length) $sum" }
 }
 
+function Get-StepNode($Step) {
+  $node = Get-Content -LiteralPath (Join-Path $repo $Step.subject) -Raw | ConvertFrom-Json
+  foreach ($seg in ($Step.pointer.Trim('/') -split '/')) { $node = if ($seg -match '^\d+$') { $node[[int]$seg] } else { $node.$seg } }
+  return $node
+}
+# A C2 subject file entry with "create": true adds a file absent at the pinned commit: its one
+# operation has an empty "before", 0 occurrences and the whole content as "after".
+function Test-Created($Chain, [string]$Target) {
+  foreach ($step in $Chain) {
+    if ($step.target -ne $Target) { continue }
+    $node = Get-StepNode $step
+    if ($node.PSObject.Properties['create'] -and $node.create -eq $true) { return $true }
+  }
+  return $false
+}
 function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
   $text = $Text
   foreach ($step in $Chain) {
     if ($step.target -ne $Target) { continue }
-    $doc = Get-Content -LiteralPath (Join-Path $repo $step.subject) -Raw | ConvertFrom-Json
-    $node = $doc
-    foreach ($seg in ($step.pointer.Trim('/') -split '/')) { $node = if ($seg -match '^\d+$') { $node[[int]$seg] } else { $node.$seg } }
+    $node = Get-StepNode $step
+    $create = $node.PSObject.Properties['create'] -and $node.create -eq $true
     foreach ($op in $node.($step.field)) {
       $before = if ($step.field -eq 'replacements') { $op.old } else { $op.before }
       $after = if ($step.field -eq 'replacements') { $op.new } else { $op.after }
       $want = if ($step.field -eq 'replacements') { 1 } else { [int]$op.occurrences }
+      if ($before -eq '') {
+        if (-not $create -or $text -ne '' -or $want -ne 0) { throw "patch $($step.subject)$($step.pointer) on ${Target}: an empty before only creates a declared file" }
+        $text = $after
+        continue
+      }
       $count = 0; $at = 0
       while (($at = $text.IndexOf($before, $at, [StringComparison]::Ordinal)) -ge 0) { $count++; $at += [Math]::Max(1, $before.Length) }
       if ($count -ne $want) { throw "patch $($step.subject)$($step.pointer) on ${Target}: $count occurrences, want $want" }
@@ -195,7 +215,15 @@ foreach ($r in $registry.routes) {
     foreach ($pf in $r.regeneration.patched_files) {
       # an npm input (cpp's tree-sitter-c, typescript/tsx's tree-sitter-javascript) is patched from its registered tarball
       $base = if ($pf.path.StartsWith('node_modules/')) { Get-NpmFile $pf.path } else { Join-Path $src $pf.path }
-      $text = Get-PatchedText ([IO.File]::ReadAllText($base, [Text.UTF8Encoding]::new($false, $true))) $ownSteps $pf.path
+      if (Test-Created $c2Steps $pf.path) {
+        # a created file starts empty; it must not exist upstream, and no adoption step patches it
+        if ($pf.path.StartsWith('node_modules/') -or (Test-Path -LiteralPath $base) -or @($ownSteps | Where-Object { $_.target -eq $pf.path }).Count) {
+          throw "$($r.route) C2 patch creates $($pf.path), which exists at the pinned commit"
+        }
+        $text = ''
+      } else {
+        $text = Get-PatchedText ([IO.File]::ReadAllText($base, [Text.UTF8Encoding]::new($false, $true))) $ownSteps $pf.path
+      }
       if ($adoptPins.ContainsKey($pf.path)) { Assert-Text $text $adoptPins[$pf.path].sha256 $adoptPins[$pf.path].bytes "$($r.route) adoption-chain file $($pf.path)" }
       $text = Get-PatchedText $text $c2Steps $pf.path
       $tmp = Join-Path $Destination "patched/$($r.route)/$($pf.path)"
