@@ -202477,8 +202477,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "cdbb63e4b527288791f2e612f281313f433df01738284c907a655bba375cfb6b",
-      "bytes": 58655944
+      "sha256": "a3a60ea0e67e433f0da5edff1fddf9bad9156b3bee05670fb0766fa5c07fae0b",
+      "bytes": 58376954
      },
      {
       "path": "src/scanner.c",

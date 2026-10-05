@@ -1572,8 +1572,8 @@
           },
           {
             "path": "grammar/expressions.js",
-            "bytes": 22555,
-            "sha256": "121ad5d10c45018fdad3f9f5cdeaff69e05d34821328a1d1bb46778f41000848"
+            "bytes": 22835,
+            "sha256": "713613d6badbde29bc89cf78f93a73a29e7476381757514b1631c3be7495793f"
           },
           {
             "path": "grammar/helpers.js",
@@ -1597,8 +1597,8 @@
           },
           {
             "path": "grammar/statements/select.js",
-            "bytes": 31884,
-            "sha256": "9f9d39eae301af95c2b48c07ef2a3d240a4378a39e410980b7aa7fb5a8252930"
+            "bytes": 32304,
+            "sha256": "c32d529e352c914cf0c9732a1db7dfba169b5ef1a599369a461b0050d53a0bae"
           },
           {
             "path": "src/scanner.c",
@@ -1642,8 +1642,8 @@
           },
           {
             "path": "grammar/statements/set.js",
-            "bytes": 3007,
-            "sha256": "22c6f61f39392929f01cde5ce1a02476d2ae0377c21792b0e2001ab0cc3bd577"
+            "bytes": 3147,
+            "sha256": "6a3e3a56e706419460479d9e3e30bdaa3399d161f6c3fc018110e8cbb6b06ebb"
           },
           {
             "path": "grammar/transactions.js",
