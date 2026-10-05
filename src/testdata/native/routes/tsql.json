@@ -6498,8 +6498,8 @@
             "assignment",
             "cte",
             "current_of",
-            "invocation",
             "join",
+            "method_call",
             "option_clause",
             "output_clause",
             "statement",
@@ -6545,11 +6545,11 @@
               "text": "a.pt.X = 1.5"
             },
             {
-              "type": "invocation",
+              "type": "method_call",
               "text": "pt.SetXY(1, 2)"
             },
             {
-              "type": "invocation",
+              "type": "method_call",
               "text": "doc.WRITE(N'abc', @off, @len)"
             },
             {
@@ -37446,6 +37446,271 @@
           "step": 2,
           "syntax": "NO_ERROR",
           "contains": []
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-PE-1",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SELECT 1 AS a;\nSET QUOTED_IDENTIFIER ON;\nSELECT \"x\";\n",
+      "edits": [
+        {
+          "find": "QUOTED_IDENTIFIER ON",
+          "replace": "QUOTED_IDENTIFIER OFF"
+        },
+        {
+          "find": "QUOTED_IDENTIFIER OFF",
+          "replace": "QUOTED_IDENTIFIER ON"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"x\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "statement",
+              "text": "SELECT 1 AS a"
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"x\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-PE-2",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SET QUOTED_IDENTIFIER OFF;\nSELECT \"x\";\nSET QUOTED_IDENTIFIER ON;\nSELECT \"y\";\n",
+      "edits": [
+        {
+          "find": "QUOTED_IDENTIFIER ON",
+          "replace": "QUOTED_IDENTIFIER OFF"
+        },
+        {
+          "find": "OFF;\nSELECT \"y\"",
+          "replace": "ON;\nSELECT \"y\""
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"y\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"y\""
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF",
+              "occurrence": 2
+            },
+            {
+              "type": "literal",
+              "text": "\"y\""
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"x\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"y\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"y\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-B05-P-1",
+      "kind": "feature",
+      "features": [
+        "tsql-B05"
+      ],
+      "source_utf8": "SET QUOTED_IDENTIFIER /* off */ OFF;\nSELECT \"a\";\nSET ANSI_NULLS, QUOTED_IDENTIFIER ON;\nSELECT \"b\";\nSET QUOTED_IDENTIFIER, ANSI_NULLS OFF;\nSELECT \"c\";\nSET QUOTED_IDENTIFIER -- on\n  ON;\nSELECT \"d\";\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "field",
+            "literal",
+            "set_statement"
+          ],
+          "anchors": [
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER /* off */ OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"a\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET ANSI_NULLS, QUOTED_IDENTIFIER ON"
+            },
+            {
+              "type": "field",
+              "text": "\"b\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"b\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER, ANSI_NULLS OFF"
+            },
+            {
+              "type": "literal",
+              "text": "\"c\""
+            },
+            {
+              "type": "set_statement",
+              "text": "SET QUOTED_IDENTIFIER -- on\n  ON"
+            },
+            {
+              "type": "field",
+              "text": "\"d\""
+            },
+            {
+              "type": "identifier",
+              "text": "\"d\""
+            }
+          ]
         }
       ]
     },

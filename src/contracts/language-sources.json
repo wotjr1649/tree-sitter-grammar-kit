@@ -1602,8 +1602,8 @@
           },
           {
             "path": "src/scanner.c",
-            "bytes": 5398,
-            "sha256": "dc961f034c5c6523455c69722002b00bcc73b9a6f22d80faa13a83db02d4e173"
+            "bytes": 7607,
+            "sha256": "cae54b40b179570fb834af9d62cc6a8102604057f6b3dfc8998fe51dac572f1c"
           },
           {
             "path": "grammar/statements/alter.js",
@@ -1617,8 +1617,8 @@
           },
           {
             "path": "grammar/statements/dml-shared.js",
-            "bytes": 1573,
-            "sha256": "98a43b63176c34bb62257091cdd5fb9a2760d3b15c1372090b3590948896b07a"
+            "bytes": 1874,
+            "sha256": "df715140c95b8d00184ceb2b66290a33a9fa3618f9f04496cbee71ea5e803b85"
           },
           {
             "path": "grammar/statements/insert.js",
@@ -1642,8 +1642,8 @@
           },
           {
             "path": "grammar/statements/set.js",
-            "bytes": 3147,
-            "sha256": "6a3e3a56e706419460479d9e3e30bdaa3399d161f6c3fc018110e8cbb6b06ebb"
+            "bytes": 3394,
+            "sha256": "df451cd23ff6abd5db2e8df86919e8f2a088a7e47238b0d47ddbc79f4b362e6e"
           },
           {
             "path": "grammar/transactions.js",

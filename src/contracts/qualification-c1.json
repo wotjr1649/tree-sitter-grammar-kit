@@ -202477,14 +202477,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "a3a60ea0e67e433f0da5edff1fddf9bad9156b3bee05670fb0766fa5c07fae0b",
-      "bytes": 58376954
+      "sha256": "68151433386e2ee6c467956fde8945e104accd1955a9931538b941800882d5de",
+      "bytes": 58379787
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "dc961f034c5c6523455c69722002b00bcc73b9a6f22d80faa13a83db02d4e173",
-      "bytes": 5398
+      "sha256": "cae54b40b179570fb834af9d62cc6a8102604057f6b3dfc8998fe51dac572f1c",
+      "bytes": 7607
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -211554,8 +211554,8 @@
          "assignment",
          "cte",
          "current_of",
-         "invocation",
          "join",
+         "method_call",
          "option_clause",
          "output_clause",
          "statement",
@@ -211610,12 +211610,12 @@
           "end_byte": 186
          },
          {
-          "type": "invocation",
+          "type": "method_call",
           "start_byte": 202,
           "end_byte": 216
          },
          {
-          "type": "invocation",
+          "type": "method_call",
           "start_byte": 218,
           "end_byte": 247
          },
@@ -255201,6 +255201,374 @@
         "N",
         "R",
         "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-tsql-B05-PE-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "47eb0c5343ba91e56dae7cdb7de39ce61c72ef0ba277d460c3db4a22be41f5a0",
+       "bytes": 53
+      },
+      "edits": [
+       {
+        "start_byte": 19,
+        "old_end_byte": 39,
+        "new_end_byte": 40,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT04=",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT0ZG"
+       },
+       {
+        "start_byte": 19,
+        "old_end_byte": 40,
+        "new_end_byte": 39,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT0ZG",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT04="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 39
+         },
+         {
+          "type": "field",
+          "start_byte": 48,
+          "end_byte": 51
+         },
+         {
+          "type": "identifier",
+          "start_byte": 48,
+          "end_byte": 51
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 40
+         },
+         {
+          "type": "literal",
+          "start_byte": 49,
+          "end_byte": 52
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "statement",
+          "start_byte": 0,
+          "end_byte": 13
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 15,
+          "end_byte": 39
+         },
+         {
+          "type": "field",
+          "start_byte": 48,
+          "end_byte": 51
+         },
+         {
+          "type": "identifier",
+          "start_byte": 48,
+          "end_byte": 51
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-tsql-B05-PE-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "177a3c7def56ac5f63a9ce4717a5dd61505325cc7ce44d0268e8a31b4db9a4bb",
+       "bytes": 77
+      },
+      "edits": [
+       {
+        "start_byte": 43,
+        "old_end_byte": 63,
+        "new_end_byte": 64,
+        "old": "UVVPVEVEX0lERU5USUZJRVIgT04=",
+        "new": "UVVPVEVEX0lERU5USUZJRVIgT0ZG"
+       },
+       {
+        "start_byte": 61,
+        "old_end_byte": 76,
+        "new_end_byte": 75,
+        "old": "T0ZGOwpTRUxFQ1QgInki",
+        "new": "T047ClNFTEVDVCAieSI="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 63
+         },
+         {
+          "type": "field",
+          "start_byte": 72,
+          "end_byte": 75
+         },
+         {
+          "type": "identifier",
+          "start_byte": 72,
+          "end_byte": 75
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 64
+         },
+         {
+          "type": "literal",
+          "start_byte": 73,
+          "end_byte": 76
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 25
+         },
+         {
+          "type": "literal",
+          "start_byte": 34,
+          "end_byte": 37
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 39,
+          "end_byte": 63
+         },
+         {
+          "type": "field",
+          "start_byte": 72,
+          "end_byte": 75
+         },
+         {
+          "type": "identifier",
+          "start_byte": 72,
+          "end_byte": 75
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-tsql-B05-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b762705c467f85075bd7e910837c3a54d6e94f117037d94fc5bae2723be94166",
+       "bytes": 196
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "field",
+         "literal",
+         "set_statement"
+        ],
+        "anchors": [
+         {
+          "type": "set_statement",
+          "start_byte": 0,
+          "end_byte": 35
+         },
+         {
+          "type": "literal",
+          "start_byte": 44,
+          "end_byte": 47
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 49,
+          "end_byte": 85
+         },
+         {
+          "type": "field",
+          "start_byte": 94,
+          "end_byte": 97
+         },
+         {
+          "type": "identifier",
+          "start_byte": 94,
+          "end_byte": 97
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 99,
+          "end_byte": 136
+         },
+         {
+          "type": "literal",
+          "start_byte": 145,
+          "end_byte": 148
+         },
+         {
+          "type": "set_statement",
+          "start_byte": 150,
+          "end_byte": 182
+         },
+         {
+          "type": "field",
+          "start_byte": 191,
+          "end_byte": 194
+         },
+         {
+          "type": "identifier",
+          "start_byte": 191,
+          "end_byte": 194
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B05": [
+        "P"
        ]
       },
       "alternatives": [],
