@@ -108,6 +108,12 @@ function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
     if ($step.target -ne $Target) { continue }
     $node = Get-StepNode $step
     $create = $node.PSObject.Properties['create'] -and $node.create -eq $true
+    if ($create) {
+      $ops = @($node.($step.field))
+      if ($step.field -ne 'operations' -or $ops.Count -ne 1 -or $ops[0].before -ne '' -or [int]$ops[0].occurrences -ne 0 -or $ops[0].after -isnot [string] -or $ops[0].after -eq '') {
+        throw "patch $($step.subject)$($step.pointer) on ${Target}: a created file needs exactly one operation with an empty before, 0 occurrences and the whole content"
+      }
+    }
     foreach ($op in $node.($step.field)) {
       $before = if ($step.field -eq 'replacements') { $op.old } else { $op.before }
       $after = if ($step.field -eq 'replacements') { $op.new } else { $op.after }
