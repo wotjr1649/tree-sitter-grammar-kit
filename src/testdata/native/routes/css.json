@@ -5643,8 +5643,7 @@
         "css-M02"
       ],
       "alternatives": [
-        "css-M02.a001",
-        "css-M02.a005"
+        "css-M02.a001"
       ],
       "source_utf8": "color: red",
       "edits": [],
@@ -5661,6 +5660,26 @@
               "type": "declaration",
               "text": "color: red"
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alt-css-M02-05",
+      "features": [
+        "css-M02"
+      ],
+      "alternatives": [
+        "css-M02.a005"
+      ],
+      "source_utf8": "  \n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stylesheet"
           ]
         }
       ]

@@ -7564,19 +7564,19 @@
             },
             {
               "type": "statement",
-              "text": "CREATE OR ALTER PROC dbo.p2 @a int AS EXTERNAL NAME asm1.[NS.Class1].Proc1;"
+              "text": "CREATE OR ALTER PROC dbo.p2 @a int AS EXTERNAL NAME asm1.[NS.Class1].Proc1"
             },
             {
               "type": "create_procedure",
-              "text": "CREATE OR ALTER PROC dbo.p2 @a int AS EXTERNAL NAME asm1.[NS.Class1].Proc1;"
+              "text": "CREATE OR ALTER PROC dbo.p2 @a int AS EXTERNAL NAME asm1.[NS.Class1].Proc1"
             },
             {
               "type": "statement",
-              "text": "CREATE OR ALTER PROC dbo.p3 WITH NATIVE_COMPILATION, SCHEMABINDING AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT c1 FROM dbo.mt1; END;"
+              "text": "CREATE OR ALTER PROC dbo.p3 WITH NATIVE_COMPILATION, SCHEMABINDING AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT c1 FROM dbo.mt1; END"
             },
             {
               "type": "create_procedure",
-              "text": "CREATE OR ALTER PROC dbo.p3 WITH NATIVE_COMPILATION, SCHEMABINDING AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT c1 FROM dbo.mt1; END;"
+              "text": "CREATE OR ALTER PROC dbo.p3 WITH NATIVE_COMPILATION, SCHEMABINDING AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT c1 FROM dbo.mt1; END"
             }
           ]
         }
@@ -7614,11 +7614,11 @@
             },
             {
               "type": "statement",
-              "text": "CREATE OR ALTER TRIGGER dbo.tr2 ON dbo.mt1 WITH NATIVE_COMPILATION, SCHEMABINDING AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT 1 AS x; END;"
+              "text": "CREATE OR ALTER TRIGGER dbo.tr2 ON dbo.mt1 WITH NATIVE_COMPILATION, SCHEMABINDING AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT 1 AS x; END"
             },
             {
               "type": "create_trigger",
-              "text": "CREATE OR ALTER TRIGGER dbo.tr2 ON dbo.mt1 WITH NATIVE_COMPILATION, SCHEMABINDING AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT 1 AS x; END;"
+              "text": "CREATE OR ALTER TRIGGER dbo.tr2 ON dbo.mt1 WITH NATIVE_COMPILATION, SCHEMABINDING AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') SELECT 1 AS x; END"
             },
             {
               "type": "statement",
@@ -15443,11 +15443,11 @@
           ],
           "anchors": [
             {
-              "type": "alter_schema",
-              "text": "ALTER SCHEMA archive TRANSFER dbo.Orders;\nALTER SCHEMA archive TRANSFER OBJECT::dbo.OrderLines;\nALTER SCHEMA archive TRANSFER TYPE::dbo.Phone"
+              "type": "statement",
+              "text": "ALTER SCHEMA archive TRANSFER dbo.Orders"
             },
             {
-              "type": "statement",
+              "type": "alter_schema",
               "text": "ALTER SCHEMA archive TRANSFER dbo.Orders"
             },
             {
@@ -15455,7 +15455,15 @@
               "text": "ALTER SCHEMA archive TRANSFER OBJECT::dbo.OrderLines"
             },
             {
+              "type": "alter_schema",
+              "text": "ALTER SCHEMA archive TRANSFER OBJECT::dbo.OrderLines"
+            },
+            {
               "type": "statement",
+              "text": "ALTER SCHEMA archive TRANSFER TYPE::dbo.Phone"
+            },
+            {
+              "type": "alter_schema",
               "text": "ALTER SCHEMA archive TRANSFER TYPE::dbo.Phone"
             }
           ]
@@ -15486,11 +15494,15 @@
           "anchors": [
             {
               "type": "statement",
-              "text": "ALTER SCHEMA archive TRANSFER XML SCHEMA COLLECTION::dbo.OrderSchema;\nALTER SEARCH PROPERTY LIST spl_docs ADD 'Author' WITH (PROPERTY_SET_GUID = 'F29F85E0-4FF9-1068-AB91-08002B27B3D9', PROPERTY_INT_ID = 4, PROPERTY_DESCRIPTION = 'System.Author - author of a document');\nALTER SEARCH PROPERTY LIST spl_docs DROP 'Title'"
+              "text": "ALTER SCHEMA archive TRANSFER XML SCHEMA COLLECTION::dbo.OrderSchema"
             },
             {
               "type": "alter_schema",
-              "text": "ALTER SCHEMA archive TRANSFER XML SCHEMA COLLECTION::dbo.OrderSchema;\nALTER SEARCH PROPERTY LIST spl_docs ADD 'Author' WITH (PROPERTY_SET_GUID = 'F29F85E0-4FF9-1068-AB91-08002B27B3D9', PROPERTY_INT_ID = 4, PROPERTY_DESCRIPTION = 'System.Author - author of a document');\nALTER SEARCH PROPERTY LIST spl_docs DROP 'Title'"
+              "text": "ALTER SCHEMA archive TRANSFER XML SCHEMA COLLECTION::dbo.OrderSchema"
+            },
+            {
+              "type": "statement",
+              "text": "ALTER SEARCH PROPERTY LIST spl_docs ADD 'Author' WITH (PROPERTY_SET_GUID = 'F29F85E0-4FF9-1068-AB91-08002B27B3D9', PROPERTY_INT_ID = 4, PROPERTY_DESCRIPTION = 'System.Author - author of a document')"
             },
             {
               "type": "statement",
@@ -31205,7 +31217,7 @@
             },
             {
               "type": "function_body",
-              "text": "RETURN (SELECT order_id FROM dbo.orders WHERE region = @region)"
+              "text": "AS RETURN (SELECT order_id FROM dbo.orders WHERE region = @region)"
             },
             {
               "type": "statement",
@@ -31637,11 +31649,11 @@
           "anchors": [
             {
               "type": "statement",
-              "text": "ALTER PROC dbo.usp_clr @msg nvarchar(100), @len int OUT, @code int OUTPUT WITH EXECUTE AS CALLER AS EXTERNAL NAME Utils.[Utils.Procs].LogMessage;"
+              "text": "ALTER PROC dbo.usp_clr @msg nvarchar(100), @len int OUT, @code int OUTPUT WITH EXECUTE AS CALLER AS EXTERNAL NAME Utils.[Utils.Procs].LogMessage"
             },
             {
               "type": "alter_procedure",
-              "text": "ALTER PROC dbo.usp_clr @msg nvarchar(100), @len int OUT, @code int OUTPUT WITH EXECUTE AS CALLER AS EXTERNAL NAME Utils.[Utils.Procs].LogMessage;"
+              "text": "ALTER PROC dbo.usp_clr @msg nvarchar(100), @len int OUT, @code int OUTPUT WITH EXECUTE AS CALLER AS EXTERNAL NAME Utils.[Utils.Procs].LogMessage"
             },
             {
               "type": "function_argument",
@@ -31657,11 +31669,11 @@
             },
             {
               "type": "statement",
-              "text": "ALTER PROCEDURE dbo.usp_clr2 AS EXTERNAL NAME Utils.[Utils.Procs].Ping;"
+              "text": "ALTER PROCEDURE dbo.usp_clr2 AS EXTERNAL NAME Utils.[Utils.Procs].Ping"
             },
             {
               "type": "alter_procedure",
-              "text": "ALTER PROCEDURE dbo.usp_clr2 AS EXTERNAL NAME Utils.[Utils.Procs].Ping;"
+              "text": "ALTER PROCEDURE dbo.usp_clr2 AS EXTERNAL NAME Utils.[Utils.Procs].Ping"
             }
           ]
         }
@@ -31746,11 +31758,11 @@
             },
             {
               "type": "statement",
-              "text": "ALTER TRIGGER dbo.trg_clr ON dbo.orders AFTER UPDATE AS EXTERNAL NAME Utils.[Utils.Triggers].OnUpdate;"
+              "text": "ALTER TRIGGER dbo.trg_clr ON dbo.orders AFTER UPDATE AS EXTERNAL NAME Utils.[Utils.Triggers].OnUpdate"
             },
             {
               "type": "alter_trigger",
-              "text": "ALTER TRIGGER dbo.trg_clr ON dbo.orders AFTER UPDATE AS EXTERNAL NAME Utils.[Utils.Triggers].OnUpdate;"
+              "text": "ALTER TRIGGER dbo.trg_clr ON dbo.orders AFTER UPDATE AS EXTERNAL NAME Utils.[Utils.Triggers].OnUpdate"
             }
           ]
         }
@@ -31783,11 +31795,11 @@
           "anchors": [
             {
               "type": "statement",
-              "text": "ALTER TRIGGER dbo.trg_mo ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 0; END;"
+              "text": "ALTER TRIGGER dbo.trg_mo ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 0; END"
             },
             {
               "type": "alter_trigger",
-              "text": "ALTER TRIGGER dbo.trg_mo ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 0; END;"
+              "text": "ALTER TRIGGER dbo.trg_mo ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER AFTER INSERT AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 0; END"
             },
             {
               "type": "trigger_options",
@@ -31799,11 +31811,11 @@
             },
             {
               "type": "statement",
-              "text": "ALTER TRIGGER dbo.trg_mo2 ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING FOR DELETE AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 1; END;"
+              "text": "ALTER TRIGGER dbo.trg_mo2 ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING FOR DELETE AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 1; END"
             },
             {
               "type": "alter_trigger",
-              "text": "ALTER TRIGGER dbo.trg_mo2 ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING FOR DELETE AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 1; END;"
+              "text": "ALTER TRIGGER dbo.trg_mo2 ON dbo.orders_mo WITH NATIVE_COMPILATION, SCHEMABINDING FOR DELETE AS BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english') DELETE FROM dbo.audit_mo WHERE id = 1; END"
             },
             {
               "type": "trigger_options",
@@ -31890,11 +31902,11 @@
             },
             {
               "type": "statement",
-              "text": "ALTER TRIGGER trg_ddl_clr ON DATABASE FOR DROP_TABLE AS EXTERNAL NAME Utils.[Utils.Triggers].OnDrop;"
+              "text": "ALTER TRIGGER trg_ddl_clr ON DATABASE FOR DROP_TABLE AS EXTERNAL NAME Utils.[Utils.Triggers].OnDrop"
             },
             {
               "type": "alter_trigger",
-              "text": "ALTER TRIGGER trg_ddl_clr ON DATABASE FOR DROP_TABLE AS EXTERNAL NAME Utils.[Utils.Triggers].OnDrop;"
+              "text": "ALTER TRIGGER trg_ddl_clr ON DATABASE FOR DROP_TABLE AS EXTERNAL NAME Utils.[Utils.Triggers].OnDrop"
             },
             {
               "type": "trigger_event",
@@ -31960,11 +31972,11 @@
             },
             {
               "type": "statement",
-              "text": "ALTER TRIGGER trg_logon_clr ON ALL SERVER AFTER LOGON AS EXTERNAL NAME Utils.[Utils.Triggers].OnLogon;"
+              "text": "ALTER TRIGGER trg_logon_clr ON ALL SERVER AFTER LOGON AS EXTERNAL NAME Utils.[Utils.Triggers].OnLogon"
             },
             {
               "type": "alter_trigger",
-              "text": "ALTER TRIGGER trg_logon_clr ON ALL SERVER AFTER LOGON AS EXTERNAL NAME Utils.[Utils.Triggers].OnLogon;"
+              "text": "ALTER TRIGGER trg_logon_clr ON ALL SERVER AFTER LOGON AS EXTERNAL NAME Utils.[Utils.Triggers].OnLogon"
             },
             {
               "type": "trigger_event",
@@ -33860,7 +33872,7 @@
             },
             {
               "type": "function_body",
-              "text": "BEGIN\n    DECLARE @r int = @a + @b;\n    RETURN @r;\nEND"
+              "text": "AS\nBEGIN\n    DECLARE @r int = @a + @b;\n    RETURN @r;\nEND"
             },
             {
               "type": "statement",
@@ -33892,7 +33904,7 @@
             },
             {
               "type": "function_body",
-              "text": "BEGIN\n    RETURN (SELECT c2 FROM dbo.t1 WHERE c1 = @id);\nEND"
+              "text": "AS\nBEGIN\n    RETURN (SELECT c2 FROM dbo.t1 WHERE c1 = @id);\nEND"
             },
             {
               "type": "statement",
@@ -33908,7 +33920,7 @@
             },
             {
               "type": "function_body",
-              "text": "RETURN (SELECT c1, c2 FROM dbo.t1 WHERE c1 > @n)"
+              "text": "AS\nRETURN (SELECT c1, c2 FROM dbo.t1 WHERE c1 > @n)"
             }
           ]
         }
@@ -34036,7 +34048,7 @@
             },
             {
               "type": "function_body",
-              "text": "BEGIN\n    INSERT INTO @r (c1, c2, c3, c4) VALUES (@p, N'a', NEWID(), 1);\n    RETURN;\nEND"
+              "text": "AS\nBEGIN\n    INSERT INTO @r (c1, c2, c3, c4) VALUES (@p, N'a', NEWID(), 1);\n    RETURN;\nEND"
             },
             {
               "type": "statement",
@@ -34198,7 +34210,7 @@
             },
             {
               "type": "function_body",
-              "text": "BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english')\n    RETURN @a + ISNULL(@b, 0);\nEND"
+              "text": "AS\nBEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'us_english')\n    RETURN @a + ISNULL(@b, 0);\nEND"
             }
           ]
         }

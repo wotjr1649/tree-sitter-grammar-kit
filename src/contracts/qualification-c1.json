@@ -170676,7 +170676,43 @@
        ]
       },
       "alternatives": [
-       "css-M02.a001",
+       "css-M02.a001"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "alt-css-M02-05",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8855c6119660c614d285554e51769066e94fcb75ff215ccc2fa6b4838b18756b",
+       "bytes": 3
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "stylesheet"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M02": [
+        "P"
+       ]
+      },
+      "alternatives": [
        "css-M02.a005"
       ],
       "sample": null,
@@ -213109,22 +213145,22 @@
          {
           "type": "statement",
           "start_byte": 78,
-          "end_byte": 153
+          "end_byte": 152
          },
          {
           "type": "create_procedure",
           "start_byte": 78,
-          "end_byte": 153
+          "end_byte": 152
          },
          {
           "type": "statement",
           "start_byte": 157,
-          "end_byte": 340
+          "end_byte": 339
          },
          {
           "type": "create_procedure",
           "start_byte": 157,
-          "end_byte": 340
+          "end_byte": 339
          }
         ],
         "declarations": ""
@@ -213182,12 +213218,12 @@
          {
           "type": "statement",
           "start_byte": 77,
-          "end_byte": 279
+          "end_byte": 278
          },
          {
           "type": "create_trigger",
           "start_byte": 77,
-          "end_byte": 279
+          "end_byte": 278
          },
          {
           "type": "statement",
@@ -224429,12 +224465,12 @@
         ],
         "anchors": [
          {
-          "type": "alter_schema",
+          "type": "statement",
           "start_byte": 0,
-          "end_byte": 141
+          "end_byte": 40
          },
          {
-          "type": "statement",
+          "type": "alter_schema",
           "start_byte": 0,
           "end_byte": 40
          },
@@ -224444,7 +224480,17 @@
           "end_byte": 94
          },
          {
+          "type": "alter_schema",
+          "start_byte": 42,
+          "end_byte": 94
+         },
+         {
           "type": "statement",
+          "start_byte": 96,
+          "end_byte": 141
+         },
+         {
+          "type": "alter_schema",
           "start_byte": 96,
           "end_byte": 141
          }
@@ -224493,12 +224539,17 @@
          {
           "type": "statement",
           "start_byte": 0,
-          "end_byte": 318
+          "end_byte": 68
          },
          {
           "type": "alter_schema",
           "start_byte": 0,
-          "end_byte": 318
+          "end_byte": 68
+         },
+         {
+          "type": "statement",
+          "start_byte": 70,
+          "end_byte": 268
          },
          {
           "type": "statement",
@@ -246555,7 +246606,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 292,
+          "start_byte": 289,
           "end_byte": 355
          },
          {
@@ -247153,12 +247204,12 @@
          {
           "type": "statement",
           "start_byte": 0,
-          "end_byte": 145
+          "end_byte": 144
          },
          {
           "type": "alter_procedure",
           "start_byte": 0,
-          "end_byte": 145
+          "end_byte": 144
          },
          {
           "type": "function_argument",
@@ -247178,12 +247229,12 @@
          {
           "type": "statement",
           "start_byte": 149,
-          "end_byte": 220
+          "end_byte": 219
          },
          {
           "type": "alter_procedure",
           "start_byte": 149,
-          "end_byte": 220
+          "end_byte": 219
          }
         ],
         "declarations": ""
@@ -247292,12 +247343,12 @@
          {
           "type": "statement",
           "start_byte": 303,
-          "end_byte": 405
+          "end_byte": 404
          },
          {
           "type": "alter_trigger",
           "start_byte": 303,
-          "end_byte": 405
+          "end_byte": 404
          }
         ],
         "declarations": ""
@@ -247354,12 +247405,12 @@
          {
           "type": "statement",
           "start_byte": 0,
-          "end_byte": 243
+          "end_byte": 242
          },
          {
           "type": "alter_trigger",
           "start_byte": 0,
-          "end_byte": 243
+          "end_byte": 242
          },
          {
           "type": "trigger_options",
@@ -247374,12 +247425,12 @@
          {
           "type": "statement",
           "start_byte": 247,
-          "end_byte": 471
+          "end_byte": 470
          },
          {
           "type": "alter_trigger",
           "start_byte": 247,
-          "end_byte": 471
+          "end_byte": 470
          },
          {
           "type": "trigger_options",
@@ -247487,12 +247538,12 @@
          {
           "type": "statement",
           "start_byte": 201,
-          "end_byte": 301
+          "end_byte": 300
          },
          {
           "type": "alter_trigger",
           "start_byte": 201,
-          "end_byte": 301
+          "end_byte": 300
          },
          {
           "type": "trigger_event",
@@ -247587,12 +247638,12 @@
          {
           "type": "statement",
           "start_byte": 154,
-          "end_byte": 256
+          "end_byte": 255
          },
          {
           "type": "alter_trigger",
           "start_byte": 154,
-          "end_byte": 256
+          "end_byte": 255
          },
          {
           "type": "trigger_event",
@@ -250161,7 +250212,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 194,
+          "start_byte": 191,
           "end_byte": 248
          },
          {
@@ -250201,7 +250252,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 381,
+          "start_byte": 378,
           "end_byte": 441
          },
          {
@@ -250221,7 +250272,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 519,
+          "start_byte": 516,
           "end_byte": 567
          }
         ],
@@ -250350,7 +250401,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 532,
+          "start_byte": 529,
           "end_byte": 620
          },
          {
@@ -250590,7 +250641,7 @@
          },
          {
           "type": "function_body",
-          "start_byte": 542,
+          "start_byte": 539,
           "end_byte": 661
          }
         ],
