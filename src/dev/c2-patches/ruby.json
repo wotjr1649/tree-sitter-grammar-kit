@@ -1,0 +1,54 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "ruby",
+ "defects": [
+  "ruby-P2-01",
+  "ruby-P2-02",
+  "ruby-P2-03",
+  "ruby-P2-04",
+  "ruby-P2-05",
+  "ruby-P2-06"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "      alias($.parenthesized_unary, $.unary),\n      $.heredoc_beginning,\n    ),\n",
+     "after": "      alias($.parenthesized_unary, $.unary),\n      $.heredoc_beginning,\n      $.line,\n      $.file,\n      $.encoding,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice(\n        /[^ux0-7]/, // single character\n",
+     "after": "      choice(\n        /(c|C-|M-)(\\\\(c|C-|M-))*(\\\\[^cCM]|[^\\\\])/, // control/meta escapes\n        /[^ux0-7]/, // single character\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      alias($.command_call, $.call),\n      alias($.command_call_with_block, $.call),\n      prec.left(alias($._chained_command_call, $.call)),\n",
+     "after": "      alias($.command_call, $.call),\n      alias($.command_call_with_block, $.call),\n      prec.left(alias($._chained_command_call, $.call)),\n      alias($._command_method, $.method),\n      alias($._command_singleton_method, $.singleton_method),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    rescue_modifier_arg: $ => prec(PREC.RESCUE,\n",
+     "after": "    _command_method: $ => seq('def', $._command_method_rest),\n\n    _command_singleton_method: $ => seq(\n      'def',\n      seq(\n        choice(\n          field('object', $._variable),\n          seq('(', field('object', $._arg), ')'),\n        ),\n        choice('.', '::'),\n      ),\n      $._command_method_rest,\n    ),\n\n    _command_method_rest: $ => seq(\n      field('name', $._method_name),\n      optional(field('parameters', alias($.parameters, $.method_parameters))),\n      '=',\n      field('body', choice(\n        alias($.command_call, $.call),\n        alias($.command_call_with_block, $.call),\n      )),\n    ),\n\n    rescue_modifier_arg: $ => prec(PREC.RESCUE,\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "            if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r') {\n                if (has_content) {\n                    lexer->result_symbol = HEREDOC_CONTENT;\n                } else {\n                    array_delete(&heredoc->word);\n                    array_erase(&scanner->open_heredocs, 0);\n                    lexer->result_symbol = HEREDOC_BODY_END;\n                }\n                return true;\n            }\n            has_content = true;\n            position_in_word = 0;\n        }\n\n        if (lexer->eof(lexer)) {\n            lexer->mark_end(lexer);\n            if (has_content) {\n                lexer->result_symbol = HEREDOC_CONTENT;\n            } else {\n                array_delete(&heredoc->word);\n                array_erase(&scanner->open_heredocs, 0);\n                lexer->result_symbol = HEREDOC_BODY_END;\n            }\n            return true;\n        }\n",
+     "after": "            if (lexer->lookahead == '\\n' || lexer->lookahead == '\\r' || lexer->eof(lexer)) {\n                if (has_content) {\n                    lexer->result_symbol = HEREDOC_CONTENT;\n                } else {\n                    array_delete(&heredoc->word);\n                    array_erase(&scanner->open_heredocs, 0);\n                    lexer->result_symbol = HEREDOC_BODY_END;\n                }\n                return true;\n            }\n            has_content = true;\n            position_in_word = 0;\n        }\n\n        if (lexer->eof(lexer)) {\n            // An unterminated here document is a syntax error: emit the pending content,\n            // never HEREDOC_BODY_END.\n            lexer->mark_end(lexer);\n            if (has_content) {\n                lexer->result_symbol = HEREDOC_CONTENT;\n                return true;\n            }\n            return false;\n        }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "                if (crossed_newline) {\n                    if (lexer->lookahead != '.' && lexer->lookahead != '&' && lexer->lookahead != '#') {\n                        lexer->result_symbol = LINE_BREAK;\n                    } else if (lexer->lookahead == '.') {",
+     "after": "                if (crossed_newline) {\n                    if (lexer->lookahead == '|') {\n                        // Ruby 4.0: a line starting with '||' continues the previous expression.\n                        advance(lexer);\n                        if (lexer->lookahead == '|') {\n                            return false;\n                        }\n                        lexer->result_symbol = LINE_BREAK;\n                    } else if (lexer->lookahead == 'a' || lexer->lookahead == 'o') {\n                        // Ruby 4.0: a line starting with the word 'and' or 'or' continues the\n                        // previous expression.\n                        const char *word = lexer->lookahead == 'a' ? \"and\" : \"or\";\n                        size_t i = 0;\n                        while (word[i] && lexer->lookahead == word[i]) {\n                            advance(lexer);\n                            i++;\n                        }\n                        if (!word[i] && !iswalnum(lexer->lookahead) && lexer->lookahead != '_' &&\n                            lexer->lookahead != '?' && lexer->lookahead != '!' && lexer->lookahead != ':' &&\n                            lexer->lookahead < 0x80) {\n                            return false;\n                        }\n                        lexer->result_symbol = LINE_BREAK;\n                    } else if (lexer->lookahead != '.' && lexer->lookahead != '&' && lexer->lookahead != '#') {\n                        lexer->result_symbol = LINE_BREAK;\n                    } else if (lexer->lookahead == '.') {",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
