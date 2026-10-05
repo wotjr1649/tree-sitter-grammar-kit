@@ -152,6 +152,19 @@ func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRec
 		if src.C2Patch != nil && !slices.Equal(g.PatchedFiles, src.C2Patch.PatchedFiles) {
 			return fmt.Errorf("%s patched files differ from the C2 patch record", r.Route)
 		}
+		// on an adopted route the C2 record starts from the adoption hashes: every adopted file is
+		// in it, and one that no C2 step patches keeps its adoption hash
+		if adopted && src.C2Patch != nil {
+			for _, a := range src.Adoption.PatchedFiles {
+				at := slices.IndexFunc(src.C2Patch.PatchedFiles, func(p registryFile) bool { return p.Path == a.Path })
+				if at < 0 {
+					return fmt.Errorf("%s adoption patched file %s is missing from the C2 patch record", r.Route, a.Path)
+				}
+				if !slices.ContainsFunc(c2, func(s chainStep) bool { return s.Target == a.Path }) && src.C2Patch.PatchedFiles[at] != a {
+					return fmt.Errorf("%s patched file %s, which no C2 step targets, differs from its adoption hash", r.Route, a.Path)
+				}
+			}
+		}
 		// every chain target is a patched file, and a patched file is used patched
 		targets := map[string]bool{}
 		for _, s := range g.PatchChain {
@@ -361,9 +374,6 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		{"C2 patched file built from upstream", "not used patched", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			file(route(reg, "yaml"), "src/scanner.c").Origin = "upstream"
 		}},
-		{"C2-patched route missing an output pin", "pins 5 of 6", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
-			delete(pins(x, "yaml"), "parser.c")
-		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reg, sources, repro, subjects := load()
@@ -382,8 +392,10 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			t.Fatalf("mutation not detected: %v", err)
 		}
 	})
-	// an otherwise consistent C2 record on an adopted route still needs all output pins
-	t.Run("C2-patched adopted route with its parser.c pin only", func(t *testing.T) {
+	// A synthetic C2 record on the adopted csharp route: one C2 step on grammar.js, the C2
+	// record starting from the adoption hashes, every output pinned. It is accepted; each
+	// mutation below breaks exactly one rule.
+	adoptedC2 := func() (nativeRegistry, sourceRecords, reproRecords, map[string]c2Subject) {
 		reg, sources, repro, subjects := load()
 		name := "src/dev/c2-patches/csharp.json"
 		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []struct{ Target string }{{"grammar.js"}}}
@@ -391,13 +403,54 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		src.C2Patch = &struct {
 			Subjects     []string
 			PatchedFiles []registryFile `json:"patched_files"`
-		}{[]string{name}, src.Adoption.PatchedFiles}
+		}{[]string{name}, slices.Clone(src.Adoption.PatchedFiles)}
 		g := route(&reg, "csharp").Regeneration
 		g.PatchChain = append(g.PatchChain, chainStep{name, "/files/0", "operations", "grammar.js"})
-		if err := checkNativeRoutes(reg, sources, repro, subjects); err == nil || !strings.Contains(err.Error(), "pins 2 of 6") {
-			t.Fatalf("mutation not detected: %v", err)
+		g.PatchedFiles = slices.Clone(src.C2Patch.PatchedFiles)
+		ref := pins(&repro, "csharp")
+		for _, o := range g.Outputs {
+			ref[o.Path] = registryFile{SHA256: o.SHA256, Bytes: o.Bytes}
 		}
-	})
+		return reg, sources, repro, subjects
+	}
+	if err := checkNativeRoutes(adoptedC2()); err != nil {
+		t.Fatalf("synthetic C2 record on an adopted route: %v", err)
+	}
+	for _, tc := range []struct {
+		name, diagnostic string
+		mutate           func(*nativeRegistry, *sourceRecords, *reproRecords)
+	}{
+		{"C2-patched adopted route with its parser.c pin only", "pins 2 of 6", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+			for path := range pins(x, "csharp") {
+				if path != "parser.c" && path != "tree_sitter/parser.h" {
+					delete(pins(x, "csharp"), path)
+				}
+			}
+		}},
+		{"C2-patched adopted route with a wrong output pin", "differs from the reproduction reference", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+			pin := pins(x, "csharp")["node-types.json"]
+			pin.Bytes++
+			pins(x, "csharp")["node-types.json"] = pin
+		}},
+		{"adoption file missing from the C2 record", "missing from the C2 patch record", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			drop := func(f registryFile) bool { return f.Path == "src/scanner.c" }
+			source(s, "csharp").C2Patch.PatchedFiles = slices.DeleteFunc(source(s, "csharp").C2Patch.PatchedFiles, drop)
+			route(reg, "csharp").Regeneration.PatchedFiles = slices.DeleteFunc(route(reg, "csharp").Regeneration.PatchedFiles, drop)
+		}},
+		{"file no C2 step targets off its adoption hash", "differs from its adoption hash", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			for _, files := range [][]registryFile{source(s, "csharp").C2Patch.PatchedFiles, route(reg, "csharp").Regeneration.PatchedFiles} {
+				files[slices.IndexFunc(files, func(f registryFile) bool { return f.Path == "src/scanner.c" })].SHA256 = strings.Repeat("0", 64)
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reg, sources, repro, subjects := adoptedC2()
+			tc.mutate(&reg, &sources, &repro)
+			if err := checkNativeRoutes(reg, sources, repro, subjects); err == nil || !strings.Contains(err.Error(), tc.diagnostic) {
+				t.Fatalf("mutation not detected as %q: %v", tc.diagnostic, err)
+			}
+		})
+	}
 }
 
 // S05-A18: the large fixtures are reproduced here from their recipe, independently of the

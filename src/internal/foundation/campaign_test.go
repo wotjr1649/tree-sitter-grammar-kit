@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -852,7 +853,6 @@ func TestReproductionRoutes(t *testing.T) {
 		"output pin of another route": func(x *reproductionRoutes) {
 			x.Routes[at(x, "go")].PrepareGenerated["parser.c"] = x.Routes[at(x, "python")].PrepareGenerated["parser.c"]
 		},
-		"missing output pin of a C2-patched route": func(x *reproductionRoutes) { delete(x.Routes[at(x, "yaml")].PrepareGenerated, "parser.c") },
 		"output pin bytes": func(x *reproductionRoutes) {
 			pin := x.Routes[at(x, "go")].PrepareGenerated["parser.c"]
 			pin.Bytes++
@@ -872,16 +872,42 @@ func TestReproductionRoutes(t *testing.T) {
 		"adoption and regeneration":         func(s *sourceRegistry) { sourceRoute(s, "go").Adoption = sourceRoute(s, "csharp").Adoption },
 		"regeneration on an adopted route":  func(s *sourceRegistry) { sourceRoute(s, "csharp").Regeneration = sourceRoute(s, "go").Regeneration },
 		"source output pin changed":         func(s *sourceRegistry) { sourceRoute(s, "go").Regeneration.Outputs[2].SHA256 = strings.Repeat("0", 64) },
-		// an adopted reference pins parser.c only; a C2 record demands all six outputs
-		"C2 record on an adopted route without all output pins": func(s *sourceRegistry) {
-			sourceRoute(s, "csharp").C2Patch = &sourceC2Patch{Decision: c2PatchDecision, Subjects: []string{"src/dev/c2-patches/csharp.json"}}
-		},
 	} {
 		var s sourceRegistry
 		json.Unmarshal(sourceData, &s)
 		mutate(&s)
 		if checkReproductionRoutes(r, s) == nil {
 			t.Errorf("source mutation not detected: %s", name)
+		}
+	}
+	// A C2 record on the adopted csharp route demands all six output pins; csharp's reference
+	// pins parser.c and parser.h only. With six well-formed pins it is accepted.
+	adoptedC2 := func(pins func(*reproductionRoutes)) error {
+		var m reproductionRoutes
+		var s sourceRegistry
+		json.Unmarshal(data, &m)
+		json.Unmarshal(sourceData, &s)
+		sourceRoute(&s, "csharp").C2Patch = &sourceC2Patch{Decision: c2PatchDecision, Subjects: []string{"src/dev/c2-patches/csharp.json"}}
+		pins(&m)
+		return checkReproductionRoutes(m, s)
+	}
+	six := func(x *reproductionRoutes) {
+		x.Routes[at(x, "csharp")].PrepareGenerated = maps.Clone(x.Routes[at(x, "go")].PrepareGenerated)
+	}
+	if err := adoptedC2(six); err != nil {
+		t.Fatalf("C2-patched adopted route with six pins: %v", err)
+	}
+	for name, pins := range map[string]func(*reproductionRoutes){
+		"C2-patched adopted route with its parser.c pin only": func(*reproductionRoutes) {},
+		"C2-patched adopted route with a malformed pin": func(x *reproductionRoutes) {
+			six(x)
+			pin := x.Routes[at(x, "csharp")].PrepareGenerated["node-types.json"]
+			pin.SHA256 = "00"
+			x.Routes[at(x, "csharp")].PrepareGenerated["node-types.json"] = pin
+		},
+	} {
+		if err := adoptedC2(pins); err == nil || !strings.Contains(err.Error(), "C2-patched route needs all 6 output pins") {
+			t.Errorf("%s: mutation not detected: %v", name, err)
 		}
 	}
 }

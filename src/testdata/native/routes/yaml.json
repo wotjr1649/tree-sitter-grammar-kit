@@ -1539,6 +1539,61 @@
       ]
     },
     {
+      "id": "alt-yaml-V12-04",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "alternatives": [
+        "yaml-B01.a001",
+        "yaml-B01.a002",
+        "yaml-B01.a005",
+        "yaml-B01.a023",
+        "yaml-B01.a025",
+        "yaml-B01.a026",
+        "yaml-B01.a027",
+        "yaml-B01.a030",
+        "yaml-B01.a032",
+        "yaml-B01.a033",
+        "yaml-B01.a040",
+        "yaml-B01.a083",
+        "yaml-B01.a086",
+        "yaml-B01.a087",
+        "yaml-B01.a088",
+        "yaml-B01.a090",
+        "yaml-B01.a091",
+        "yaml-V12.a007"
+      ],
+      "source_utf8": "a:\n  b: 1\n﻿---\nc: 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "stream",
+            "document",
+            "block_mapping",
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "a:\n  b: 1"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "b: 1"
+            },
+            {
+              "type": "block_mapping_pair",
+              "text": "c: 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "probe-yaml-B01-R-1",
       "features": [
         "yaml-B01"
@@ -1924,6 +1979,78 @@
             "block_mapping_pair",
             "double_quote_scalar",
             "escape_sequence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-V12-NR-1",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "source_utf8": "a: 1\n﻿   ---\nb: 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-V12-NR-2",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "source_utf8": "a: 1\n﻿\n  ---\nb: 2\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-yaml-V12-NR-3",
+      "features": [
+        "yaml-B01",
+        "yaml-V12"
+      ],
+      "source_utf8": "a: 1\n﻿key: v\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "block_mapping_pair"
+          ],
+          "anchors": [
+            {
+              "type": "block_mapping_pair",
+              "text": "a: 1"
+            }
           ]
         }
       ]

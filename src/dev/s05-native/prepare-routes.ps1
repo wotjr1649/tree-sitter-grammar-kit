@@ -5,9 +5,10 @@
 # S01-bound source tree; every route with a regeneration record regenerates parser.c with
 # `tsgk reproduce` (tree-sitter 0.27.0 + Node 24.21.0, registered digests) unless
 # -ReuseGenerated points at already verified outputs. Adopted routes first apply the
-# registered literal patch chain and check every patched file against its adoption hash;
-# the other routes have an empty chain (C2-REGENERATE-r1). A route with C2 patches
-# (C2-PATCH-r1) applies their steps after that and checks the files against its C2 record.
+# registered literal patch chain and check every file it patches against its adoption hash
+# (language-sources adoption); the other routes have an empty chain (C2-REGENERATE-r1). A
+# route with C2 patches (C2-PATCH-r1, steps of src/dev/c2-patches/) applies them after that
+# and checks every patched file against its native registry pin (the C2 record's hash).
 # Every file is hash-checked.
 param(
   [Parameter(Mandatory)][string]$Destination,
@@ -29,6 +30,7 @@ New-Item -ItemType Directory -Path $Destination | Out-Null
 $Destination = (Resolve-Path $Destination).Path
 $registry = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/native-routes.json') -Raw | ConvertFrom-Json
 $repro = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/reproduction-routes.json') -Raw | ConvertFrom-Json
+$sources = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/language-sources.json') -Raw | ConvertFrom-Json
 $runtimeManifest = Get-Content -LiteralPath (Join-Path $repo 'src/drivers/native-c/runtime-manifest.json') -Raw | ConvertFrom-Json
 $stats = [ordered]@{ downloads = @(); downloaded_bytes = 0; regenerated = @(); reused = @(); routes = @() }
 
@@ -78,8 +80,14 @@ function Get-RepoDir($r) {
   return $hit
 }
 
-function Get-PatchedText([string]$Base, $Chain, [string]$Target) {
-  $text = [IO.File]::ReadAllText($Base, [Text.UTF8Encoding]::new($false, $true))
+function Assert-Text([string]$Text, [string]$Sha, [long]$Bytes, [string]$What) {
+  $b = [Text.UTF8Encoding]::new($false).GetBytes($Text)
+  $sum = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($b)).ToLowerInvariant()
+  if ($sum -ne $Sha -or $b.Length -ne $Bytes) { throw "$What identity mismatch: $($b.Length) $sum" }
+}
+
+function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
+  $text = $Text
   foreach ($step in $Chain) {
     if ($step.target -ne $Target) { continue }
     $doc = Get-Content -LiteralPath (Join-Path $repo $step.subject) -Raw | ConvertFrom-Json
@@ -138,6 +146,7 @@ function Get-NpmFile([string]$Rel) {
   # node_modules/<package>/<file> from the registered npm tarball (integrity sha512)
   $parts = $Rel -split '/'
   $pkg = $repro.npm_dependencies | Where-Object { $_.package -eq $parts[1] } | Select-Object -First 1
+  if ($parts.Count -lt 3 -or $parts[0] -ne 'node_modules' -or -not $pkg) { throw "npm file of an unregistered package: $Rel (reproduction-routes npm_dependencies)" }
   $dir = Join-Path $Destination "npm/$($pkg.package)"
   if (-not (Test-Path -LiteralPath $dir)) {
     $tgz = Join-Path $Destination "npm/$($pkg.package)-$($pkg.version).tgz"
@@ -177,10 +186,18 @@ foreach ($r in $registry.routes) {
   $prefix = if ($r.grammar_dir -eq '.') { '' } else { "$($r.grammar_dir)/" }
   $patched = @{}
   if ($r.PSObject.Properties['regeneration'] -and $r.regeneration) {
+    # the adoption steps come first and must end at the adoption hashes; the C2 steps follow
+    $srcRec = $sources.routes | Where-Object { $_.route_id -eq $r.route } | Select-Object -First 1
+    $adoptPins = @{}
+    if ($srcRec -and $srcRec.PSObject.Properties['adoption'] -and $srcRec.adoption) { foreach ($p in $srcRec.adoption.patched_files) { $adoptPins[$p.path] = $p } }
+    $c2Steps = @($r.regeneration.patch_chain | Where-Object { $_.subject.StartsWith('src/dev/c2-patches/') })
+    $ownSteps = @($r.regeneration.patch_chain | Where-Object { -not $_.subject.StartsWith('src/dev/c2-patches/') })
     foreach ($pf in $r.regeneration.patched_files) {
       # an npm input (cpp's tree-sitter-c, typescript/tsx's tree-sitter-javascript) is patched from its registered tarball
       $base = if ($pf.path.StartsWith('node_modules/')) { Get-NpmFile $pf.path } else { Join-Path $src $pf.path }
-      $text = Get-PatchedText $base $r.regeneration.patch_chain $pf.path
+      $text = Get-PatchedText ([IO.File]::ReadAllText($base, [Text.UTF8Encoding]::new($false, $true))) $ownSteps $pf.path
+      if ($adoptPins.ContainsKey($pf.path)) { Assert-Text $text $adoptPins[$pf.path].sha256 $adoptPins[$pf.path].bytes "$($r.route) adoption-chain file $($pf.path)" }
+      $text = Get-PatchedText $text $c2Steps $pf.path
       $tmp = Join-Path $Destination "patched/$($r.route)/$($pf.path)"
       New-Item -ItemType Directory -Force -Path (Split-Path -Parent $tmp) | Out-Null
       [IO.File]::WriteAllText($tmp, $text, [Text.UTF8Encoding]::new($false))

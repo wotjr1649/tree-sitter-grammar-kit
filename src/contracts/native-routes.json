@@ -2614,8 +2614,8 @@
      "path": "src/scanner.c",
      "role": "scanner",
      "origin": "patched",
-     "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb",
-     "bytes": 52932
+     "sha256": "548ec6777a474b9d9b6d61779e8da4977863535a264260499be056eb36a81402",
+     "bytes": 52836
     },
     {
      "path": "src/schema.core.c",
@@ -2728,8 +2728,8 @@
     "patched_files": [
      {
       "path": "src/scanner.c",
-      "bytes": 52932,
-      "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb"
+      "bytes": 52836,
+      "sha256": "548ec6777a474b9d9b6d61779e8da4977863535a264260499be056eb36a81402"
      }
     ]
    }
