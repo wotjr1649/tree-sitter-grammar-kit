@@ -1519,15 +1519,15 @@
               "text": "SELECT h.GetAncestor(1) AS a, h.GetDescendant(c1, c2) AS b, h.GetLevel() AS c, hierarchyid::GetRoot() AS d,\n  h.IsDescendantOf(p) AS e, hierarchyid::Parse(N'/1/2/') AS f, CAST(N'/1/' AS hierarchyid) AS g,\n  h.GetReparentedValue(r1, r2) AS i, h.ToString() AS j, CAST(h AS nvarchar(4000)) AS k\nFROM dbo.org"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetAncestor(1)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetDescendant(c1, c2)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetLevel()"
             },
             {
@@ -3561,7 +3561,7 @@
             },
             {
               "type": "set_operation",
-              "text": "SELECT c1 FROM dbo.t1 UNION ALL (SELECT c1 FROM dbo.t2) UNION (SELECT c1 FROM dbo.t3) EXCEPT SELECT c1 FROM dbo.t4"
+              "text": "SELECT c1 FROM dbo.t1 UNION ALL (SELECT c1 FROM dbo.t2) UNION (SELECT c1 FROM dbo.t3) EXCEPT SELECT c1 FROM dbo.t4 ORDER BY c1"
             },
             {
               "type": "order_by",
@@ -4443,7 +4443,7 @@
               "text": "geography::Point(47.6, -122.3, 4326) AS pt"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "t.geo.STDistance(t.geo)"
             },
             {
@@ -6545,11 +6545,11 @@
               "text": "a.pt.X = 1.5"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "pt.SetXY(1, 2)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "doc.WRITE(N'abc', @off, @len)"
             },
             {
