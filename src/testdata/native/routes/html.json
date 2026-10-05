@@ -2045,6 +2045,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-html-B01-1",
+      "features": [
+        "html-B01"
+      ],
+      "source_utf8": "<!doctype html>\n<html lang=\"\">\n\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width\">\n  <title></title>\n  <link rel=\"stylesheet\" href=\"css/style.css\">\n  <meta name=\"description\" content=\"\">\n\n  <meta property=\"og:title\" content=\"\">\n  <meta property=\"og:type\" content=\"\">\n  <meta property=\"og:url\" content=\"\">\n  <meta property=\"og:image\" content=\"\">\n  <meta property=\"og:image:alt\" content=\"\">\n\n  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"any\">\n  <link rel=\"icon\" href=\"/icon.svg\" type=\"image/svg+xml\">\n  <link rel=\"apple-touch-icon\" href=\"icon.png\">\n\n  <link rel=\"manifest\" href=\"site.webmanifest\">\n  <meta name=\"theme-color\" content=\"#fafafa\">\n</head>\n\n<body>\n\n  <!-- Add your site or application content here -->\n  <p>Hello world! This is HTML5 Boilerplate.</p>\n  <script src=\"js/app.js\"></script>\n\n</body>\n\n</html>\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "doctype",
+            "element",
+            "start_tag",
+            "attribute",
+            "script_element"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "h5bp/html5-boilerplate",
+        "commit": "b6597338e695dc4a8165c5abcb2bfffa586c3ee5",
+        "path": "src/index.html",
+        "license": "MIT",
+        "sha256": "1dacff6e4b61aa96a8b6b94ba2280eb9a767f0d688775a088b430994c1f9ebb0",
+        "bytes": 851
+      }
     }
   ]
 }

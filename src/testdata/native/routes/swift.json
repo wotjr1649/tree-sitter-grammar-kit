@@ -8702,6 +8702,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "w-swift-B01-1",
+      "features": [
+        "swift-B01"
+      ],
+      "source_utf8": "//\n//  RedirectHandler.swift\n//\n//  Copyright (c) 2014-2018 Alamofire Software Foundation (http://alamofire.org/)\n//\n//  Permission is hereby granted, free of charge, to any person obtaining a copy\n//  of this software and associated documentation files (the \"Software\"), to deal\n//  in the Software without restriction, including without limitation the rights\n//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n//  copies of the Software, and to permit persons to whom the Software is\n//  furnished to do so, subject to the following conditions:\n//\n//  The above copyright notice and this permission notice shall be included in\n//  all copies or substantial portions of the Software.\n//\n//  THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n//  THE SOFTWARE.\n//\n\nimport Foundation\n\n/// A type that handles how an HTTP redirect response from a remote server should be redirected to the new request.\npublic protocol RedirectHandler: Sendable {\n    /// Determines how the HTTP redirect response should be redirected to the new request.\n    ///\n    /// The `completion` closure should be passed one of three possible options:\n    ///\n    ///   1. The new request specified by the redirect (this is the most common use case).\n    ///   2. A modified version of the new request (you may want to route it somewhere else).\n    ///   3. A `nil` value to deny the redirect request and return the body of the redirect response.\n    ///\n    /// - Parameters:\n    ///   - task:       The `URLSessionTask` whose request resulted in a redirect.\n    ///   - request:    The `URLRequest` to the new location specified by the redirect response.\n    ///   - response:   The `HTTPURLResponse` containing the server's response to the original request.\n    ///   - completion: The closure to execute containing the new `URLRequest`, a modified `URLRequest`, or `nil`.\n    func task(_ task: URLSessionTask,\n              willBeRedirectedTo request: URLRequest,\n              for response: HTTPURLResponse,\n              completion: @escaping (URLRequest?) -> Void)\n}\n\n// MARK: -\n\n/// `Redirector` is a convenience `RedirectHandler` making it easy to follow, not follow, or modify a redirect.\npublic struct Redirector {\n    /// Defines the behavior of the `Redirector` type.\n    public enum Behavior: Sendable {\n        /// Follow the redirect as defined in the response.\n        case follow\n        /// Do not follow the redirect defined in the response.\n        case doNotFollow\n        /// Modify the redirect request defined in the response.\n        case modify(@Sendable (_ task: URLSessionTask, _ request: URLRequest, _ response: HTTPURLResponse) -> URLRequest?)\n    }\n\n    /// Returns a `Redirector` with a `.follow` `Behavior`.\n    public static let follow = Redirector(behavior: .follow)\n    /// Returns a `Redirector` with a `.doNotFollow` `Behavior`.\n    public static let doNotFollow = Redirector(behavior: .doNotFollow)\n\n    /// The `Behavior` of the `Redirector`.\n    public let behavior: Behavior\n\n    /// Creates a `Redirector` instance from the `Behavior`.\n    ///\n    /// - Parameter behavior: The `Behavior`.\n    public init(behavior: Behavior) {\n        self.behavior = behavior\n    }\n}\n\n// MARK: -\n\nextension Redirector: RedirectHandler {\n    public func task(_ task: URLSessionTask,\n                     willBeRedirectedTo request: URLRequest,\n                     for response: HTTPURLResponse,\n                     completion: @escaping (URLRequest?) -> Void) {\n        switch behavior {\n        case .follow:\n            completion(request)\n        case .doNotFollow:\n            completion(nil)\n        case let .modify(closure):\n            let request = closure(task, request, response)\n            completion(request)\n        }\n    }\n}\n\nextension RedirectHandler where Self == Redirector {\n    /// Provides a `Redirector` which follows redirects. Equivalent to `Redirector.follow`.\n    public static var follow: Redirector { .follow }\n\n    /// Provides a `Redirector` which does not follow redirects. Equivalent to `Redirector.doNotFollow`.\n    public static var doNotFollow: Redirector { .doNotFollow }\n\n    /// Creates a `Redirector` which modifies the redirected `URLRequest` using the provided closure.\n    ///\n    /// - Parameter closure: Closure used to modify the redirect.\n    /// - Returns:           The `Redirector`.\n    public static func modify(using closure: @escaping @Sendable (URLSessionTask, URLRequest, HTTPURLResponse) -> URLRequest?) -> Redirector {\n        Redirector(behavior: .modify(closure))\n    }\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "protocol_declaration",
+            "class_declaration",
+            "function_declaration",
+            "type_constraints",
+            "import_declaration"
+          ],
+          "declarations": ""
+        }
+      ],
+      "sample": {
+        "repository": "Alamofire/Alamofire",
+        "commit": "bda9ed57d72988a3a2ada33d824583541f86eac6",
+        "path": "Source/Features/RedirectHandler.swift",
+        "license": "MIT",
+        "sha256": "f8000097346df25c6b70856ad2b55a7c846f2cd829e9a3e9dd56161b4e20de8a",
+        "bytes": 4976
+      }
     }
   ]
 }
