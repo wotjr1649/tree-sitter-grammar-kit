@@ -258,9 +258,14 @@
      "occurrences": 1
     },
     {
-     "before": "      alias($.operator_cast_declaration, $.declaration),\n    ),\n",
-     "after": "      alias($.operator_cast_declaration, $.declaration),\n      alias($.deduction_guide, $.declaration),\n    ),\n",
-     "occurrences": 2
+     "before": "      alias($.operator_cast_declaration, $.declaration),\n    ),\n\n    _block_item: ",
+     "after": "      alias($.operator_cast_declaration, $.declaration),\n      alias($.deduction_guide, $.declaration),\n    ),\n\n    _block_item: ",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    declaration_list: $ => prec.dynamic(1, seq('{', repeat(choice($._block_item, alias($.deduction_guide, $.declaration))), '}')),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
     },
     {
      "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
@@ -499,6 +504,11 @@
     },
     {
      "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.declaration_list, $.compound_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
      "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $._balanced_token, $.structured_binding_declarator, $._lambda_capture_identifier],\n",
      "occurrences": 1
     },
@@ -540,11 +550,6 @@
     {
      "before": "    [$.splice_type_specifier, $.splice_expression],\n",
      "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $._balanced_token],\n",
-     "occurrences": 1
-    },
-    {
-     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
-     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $._balanced_token, $.deduction_guide_declarator],\n",
      "occurrences": 1
     },
     {
