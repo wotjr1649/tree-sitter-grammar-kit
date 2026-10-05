@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -38,76 +39,231 @@ type registryRoute struct {
 	Regeneration                              *struct {
 		Outputs      []registryFile
 		Inputs       []registryFile
+		Grammar      string
+		ABI          int
+		Optimize     bool
 		PatchChain   []struct{ Subject, Pointer, Field, Target string } `json:"patch_chain"`
 		PatchedFiles []registryFile                                     `json:"patched_files"`
 	}
 }
 
-// S05-A14/A22: the route build registry covers exactly the 26 registered routes with one
-// parser each, a restricted entry symbol, sorted unique hashed files, and for the 6
-// adopted routes the adoption hashes and the reproduction reference parser.
-func TestNativeRoutesRegistry(t *testing.T) {
-	var reg struct {
-		Schema string
-		Routes []registryRoute
+type nativeRegistry struct {
+	Schema string
+	Routes []registryRoute
+}
+
+type sourceRecord struct {
+	RouteID  string `json:"route_id"`
+	Adoption *struct {
+		PatchedFiles []registryFile `json:"patched_files"`
 	}
-	readJSON(t, "src/contracts/native-routes.json", &reg)
-	var sources struct {
-		Routes []struct {
-			RouteID  string `json:"route_id"`
-			Adoption *struct {
-				PatchedFiles []registryFile `json:"patched_files"`
-			}
-		}
+	Regeneration *struct {
+		Outputs []registryFile
 	}
-	readJSON(t, "src/contracts/language-sources.json", &sources)
-	var repro struct {
-		Routes []struct {
-			Route            string
-			PrepareGenerated map[string]registryFile `json:"prepare_generated"`
-		}
-	}
-	readJSON(t, "src/contracts/reproduction-routes.json", &repro)
+}
+
+type sourceRecords struct{ Routes []sourceRecord }
+
+type reproRecord struct {
+	Route            string
+	PrepareGenerated map[string]registryFile `json:"prepare_generated"`
+}
+
+type reproRecords struct{ Routes []reproRecord }
+
+// checkNativeRoutes accepts exactly two route classes: an adopted route (its literal patch
+// chain ends at the adoption hashes, the reproduction reference pins parser.c) and a
+// regenerated-only route (C2-REGENERATE-r1: no chain, no patched files, every output
+// pinned by the source record and the reproduction reference). Any other route, including
+// one built from the upstream generated files, is rejected.
+func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRecords) error {
 	if reg.Schema != "tsgk-native-routes/r1" || len(reg.Routes) != len(sources.Routes) || len(reg.Routes) != 26 {
-		t.Fatalf("registry %s with %d routes", reg.Schema, len(reg.Routes))
+		return fmt.Errorf("registry %s with %d routes", reg.Schema, len(reg.Routes))
 	}
 	for i, r := range reg.Routes {
 		src := sources.Routes[i]
 		if r.Route != src.RouteID || !kit.ValidLanguageSymbol(r.Symbol) {
-			t.Fatalf("route %d: %s %s", i, r.Route, r.Symbol)
+			return fmt.Errorf("route %d: %s %s", i, r.Route, r.Symbol)
 		}
 		parsers := 0
 		for k, f := range r.Files {
 			if len(f.SHA256) != 64 || f.Bytes <= 0 || (k > 0 && r.Files[k-1].Path >= f.Path) {
-				t.Fatalf("%s file %+v", r.Route, f)
+				return fmt.Errorf("%s file %+v", r.Route, f)
 			}
 			if f.Role == "parser" {
 				parsers++
-			}
-		}
-		if parsers != 1 {
-			t.Fatalf("%s has %d parsers", r.Route, parsers)
-		}
-		if (src.Adoption != nil) != (r.Regeneration != nil) || (r.Source == "regenerated") != (src.Adoption != nil) {
-			t.Fatalf("%s adoption/regeneration mismatch", r.Route)
-		}
-		if r.Regeneration == nil {
-			continue
-		}
-		if !slices.Equal(r.Regeneration.PatchedFiles, src.Adoption.PatchedFiles) || len(r.Regeneration.PatchChain) == 0 {
-			t.Fatalf("%s patched files differ from the adoption record", r.Route)
-		}
-		for _, rr := range repro.Routes {
-			if rr.Route != r.Route {
-				continue
-			}
-			ref := rr.PrepareGenerated["parser.c"]
-			for _, o := range r.Regeneration.Outputs {
-				if o.Path == "parser.c" && (o.SHA256 != ref.SHA256 || o.Bytes != ref.Bytes) {
-					t.Fatalf("%s regenerated parser differs from the reproduction reference", r.Route)
+				if f.Origin != "generated" {
+					return fmt.Errorf("%s parser is not a regenerated output", r.Route)
 				}
 			}
 		}
+		if parsers != 1 {
+			return fmt.Errorf("%s has %d parsers", r.Route, parsers)
+		}
+		adopted, regenerated := src.Adoption != nil, src.Regeneration != nil
+		if adopted == regenerated || r.Regeneration == nil || r.Source != "regenerated" {
+			return fmt.Errorf("%s adoption/regeneration mismatch", r.Route)
+		}
+		g := r.Regeneration
+		if g.ABI != 15 || !g.Optimize || g.Grammar == "" || len(g.Inputs) == 0 {
+			return fmt.Errorf("%s regeneration settings", r.Route)
+		}
+		if adopted && (!slices.Equal(g.PatchedFiles, src.Adoption.PatchedFiles) || len(g.PatchChain) == 0) {
+			return fmt.Errorf("%s patched files differ from the adoption record", r.Route)
+		}
+		if regenerated && (len(g.PatchChain) != 0 || len(g.PatchedFiles) != 0) {
+			return fmt.Errorf("%s regenerated-only route carries patches", r.Route)
+		}
+		if regenerated && !slices.Equal(g.Outputs, src.Regeneration.Outputs) {
+			return fmt.Errorf("%s outputs differ from the source regeneration record", r.Route)
+		}
+		prefix := "src/"
+		if r.GrammarDir != "." {
+			prefix = r.GrammarDir + "/src/"
+		}
+		for _, f := range r.Files {
+			switch f.Origin {
+			case "generated":
+				at := slices.IndexFunc(g.Outputs, func(o registryFile) bool { return prefix+o.Path == f.Path })
+				if at < 0 || g.Outputs[at].SHA256 != f.SHA256 || g.Outputs[at].Bytes != f.Bytes {
+					return fmt.Errorf("%s generated file %s is not a registered output", r.Route, f.Path)
+				}
+			case "patched":
+				at := slices.IndexFunc(g.PatchedFiles, func(p registryFile) bool { return p.Path == f.Path })
+				if at < 0 || g.PatchedFiles[at].SHA256 != f.SHA256 || g.PatchedFiles[at].Bytes != f.Bytes {
+					return fmt.Errorf("%s patched file %s without its patch chain", r.Route, f.Path)
+				}
+			case "upstream":
+			default:
+				return fmt.Errorf("%s file %s origin %q", r.Route, f.Path, f.Origin)
+			}
+		}
+		at := slices.IndexFunc(repro.Routes, func(e reproRecord) bool { return e.Route == r.Route })
+		if at < 0 {
+			return fmt.Errorf("%s has no reproduction reference", r.Route)
+		}
+		ref := repro.Routes[at].PrepareGenerated
+		if regenerated && len(ref) != len(g.Outputs) {
+			return fmt.Errorf("%s reproduction reference pins %d of %d outputs", r.Route, len(ref), len(g.Outputs))
+		}
+		for _, o := range g.Outputs {
+			pin, ok := ref[o.Path]
+			if (o.Path == "parser.c" || regenerated) && (!ok || o.SHA256 != pin.SHA256 || o.Bytes != pin.Bytes) {
+				return fmt.Errorf("%s regenerated %s differs from the reproduction reference", r.Route, o.Path)
+			}
+		}
+	}
+	return nil
+}
+
+// S05-A14/A22: the route build registry covers exactly the 26 registered routes with one
+// parser each, a restricted entry symbol, sorted unique hashed files, and the regeneration
+// of every route: the 6 adopted routes with their adoption hashes, the other 20 without
+// patches, each against its reproduction reference.
+func TestNativeRoutesRegistry(t *testing.T) {
+	load := func() (nativeRegistry, sourceRecords, reproRecords) {
+		var reg nativeRegistry
+		var sources sourceRecords
+		var repro reproRecords
+		readJSON(t, "src/contracts/native-routes.json", &reg)
+		readJSON(t, "src/contracts/language-sources.json", &sources)
+		readJSON(t, "src/contracts/reproduction-routes.json", &repro)
+		return reg, sources, repro
+	}
+	reg, sources, repro := load()
+	if err := checkNativeRoutes(reg, sources, repro); err != nil {
+		t.Fatal(err)
+	}
+	route := func(reg *nativeRegistry, name string) *registryRoute {
+		for i := range reg.Routes {
+			if reg.Routes[i].Route == name {
+				return &reg.Routes[i]
+			}
+		}
+		t.Fatalf("route %s missing", name)
+		return nil
+	}
+	file := func(r *registryRoute, path string) *registryFile {
+		for i := range r.Files {
+			if r.Files[i].Path == path {
+				return &r.Files[i]
+			}
+		}
+		t.Fatalf("%s file %s missing", r.Route, path)
+		return nil
+	}
+	source := func(s *sourceRecords, name string) *sourceRecord {
+		for i := range s.Routes {
+			if s.Routes[i].RouteID == name {
+				return &s.Routes[i]
+			}
+		}
+		t.Fatalf("source route %s missing", name)
+		return nil
+	}
+	pins := func(x *reproRecords, name string) map[string]registryFile {
+		for _, e := range x.Routes {
+			if e.Route == name {
+				return e.PrepareGenerated
+			}
+		}
+		t.Fatalf("reproduction route %s missing", name)
+		return nil
+	}
+	for _, tc := range []struct {
+		name, diagnostic string
+		mutate           func(*nativeRegistry, *sourceRecords, *reproRecords)
+	}{
+		{"upstream route", "adoption/regeneration", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			r := route(reg, "go")
+			r.Regeneration, r.Source = nil, "upstream"
+		}},
+		{"upstream parser", "not a regenerated output", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/parser.c").Origin = "upstream"
+		}},
+		{"neither source record", "adoption/regeneration", func(_ *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			source(s, "go").Regeneration = nil
+		}},
+		{"adoption on a regenerated-only route", "adoption/regeneration", func(_ *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			source(s, "go").Adoption = source(s, "csharp").Adoption
+		}},
+		{"patched files without a chain", "carries patches", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			route(reg, "go").Regeneration.PatchedFiles = route(reg, "csharp").Regeneration.PatchedFiles
+		}},
+		{"chain on a regenerated-only route", "carries patches", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			route(reg, "go").Regeneration.PatchChain = route(reg, "csharp").Regeneration.PatchChain
+		}},
+		{"patched origin without a chain", "without its patch chain", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "python"), "src/scanner.c").Origin = "patched"
+		}},
+		{"output differs from the source record", "source regeneration record", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			route(reg, "go").Regeneration.Outputs[3].Bytes++
+		}},
+		{"missing output pin", "pins 5 of 6", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+			delete(pins(x, "go"), "tree_sitter/array.h")
+		}},
+		{"generated file is not the output", "not a registered output", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/tree_sitter/array.h").SHA256 = strings.Repeat("0", 64)
+		}},
+		{"unoptimized regeneration", "settings", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			route(reg, "json").Regeneration.Optimize = false
+		}},
+		{"adopted route without a chain", "adoption record", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			route(reg, "csharp").Regeneration.PatchChain = nil
+		}},
+		{"adopted parser differs from the reference", "reproduction reference", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+			pin := pins(x, "csharp")["parser.c"]
+			pin.Bytes++
+			pins(x, "csharp")["parser.c"] = pin
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reg, sources, repro := load()
+			tc.mutate(&reg, &sources, &repro)
+			if err := checkNativeRoutes(reg, sources, repro); err == nil || !strings.Contains(err.Error(), tc.diagnostic) {
+				t.Fatalf("mutation not detected as %q: %v", tc.diagnostic, err)
+			}
+		})
 	}
 }
 

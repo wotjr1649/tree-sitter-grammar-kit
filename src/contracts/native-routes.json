@@ -1,7 +1,7 @@
 {
  "schema": "tsgk-native-routes/r1",
  "status": "REGISTRATION_NOT_RESULT",
- "note": "Native build inputs of the 26 routes for S05: upstream files at the pinned commit (archive identity where S01 acquired one), or for adopted routes the regenerated outputs of the S04 reproduction (tsgk reproduce, tree-sitter 0.27.0) from the patched grammar. The patch chain lists the literal operations in order; every patched file must end at its adoption hash.",
+ "note": "Native build inputs of the 26 routes for S05: upstream files at the pinned commit (archive identity where S01 acquired one) and the outputs regenerated from the pinned grammar by tsgk reproduce (tree-sitter 0.27.0, Node 24.21.0, ABI 15). The 6 adopted routes apply their literal patch chain in order first and every patched file must end at its adoption hash; the other 20 regenerate without patches (C2-REGENERATE-r1): an empty patch chain and no patched files.",
  "runtime": "src/drivers/native-c/runtime-manifest.json",
  "routes": [
   {
@@ -171,37 +171,97 @@
     "sha256": "94d08fc0f727a8dbe03203e2aaf1c5dc33a57e496b583049324eddc79769797b"
    },
    "symbol": "tree_sitter_go",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
-     "bytes": 1572685
+     "origin": "generated",
+     "sha256": "4751ded447b92e64f49c647e5f413f1cb87921a0490b8b6b892932977621c618",
+     "bytes": 1572677
     },
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "0dcc665aa521a1b73a200be13b4e376780cca037d764a165f12864babfe28000",
+      "bytes": 198042
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "24d2fd2597d4eab4afb35ddf3c542901b1a4feb26b90e9bb886874191ae82f27",
+      "bytes": 53890
+     },
+     {
+      "path": "parser.c",
+      "sha256": "4751ded447b92e64f49c647e5f413f1cb87921a0490b8b6b892932977621c618",
+      "bytes": 1572677
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "53e114833c6769d8a86b9e2dfab8bb68b0aaf185e7008a5c572bfa21b77aff1b",
+      "bytes": 24321
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "63e08578adc8af9f86e45dc3127bc61722b4abb9c2e78cf6e1cc0b121f132f82",
+      "bytes": 1284
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "80d8a24648d35abb30a3cb2dbcc3a1af3919f274bcabcc277c0d9535d60abf9e",
+      "bytes": 786
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "python",
@@ -214,14 +274,14 @@
     "sha256": "43e71c4d0cbbd2350e83e0b2da3558eab09b8dc78153a8990508b0c9eec754e6"
    },
    "symbol": "tree_sitter_python",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "53a7bd87ba22c4fdbb8566a2caf848a1478f3ac9d47a1b32677a71de75d75db6",
-     "bytes": 3448505
+     "origin": "generated",
+     "sha256": "db6ed97ad8bac630fecdd86ac37ea829eb1ef16439a8edf86f886e4174a895ba",
+     "bytes": 3448497
     },
     {
      "path": "src/scanner.c",
@@ -233,25 +293,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "d933cfea6197e57354c9ec86888adbb95971b4372efef514b82e601b5067580d",
+      "bytes": 145707
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "01ef9e39132daf7b77d3eda7db0897a2bc854a41d52a52c9f8f92a0b369e898d",
+      "bytes": 67804
+     },
+     {
+      "path": "parser.c",
+      "sha256": "db6ed97ad8bac630fecdd86ac37ea829eb1ef16439a8edf86f886e4174a895ba",
+      "bytes": 3448497
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "5071cb77def12a276ec71c2c584ef276b1266df720e16f642530bac35c5c2560",
+      "bytes": 26889
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "cc682da95140c947fa0d67f9307e2017def0b4584c15b60386344ac78853d1a8",
+      "bytes": 1301
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "0682bc3796601f623928259e244fa45c113f286cac7606719db792911cf051f9",
+      "bytes": 837
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "javascript",
@@ -264,14 +384,14 @@
     "sha256": "f3e51e9f7b129f62a817551ae22a878dac5c18d71c456d5ad73e9c82d687f33d"
    },
    "symbol": "tree_sitter_javascript",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-     "bytes": 2855934
+     "origin": "generated",
+     "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+     "bytes": 2855926
     },
     {
      "path": "src/scanner.c",
@@ -283,25 +403,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3",
+      "bytes": 174998
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70",
+      "bytes": 64022
+     },
+     {
+      "path": "parser.c",
+      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+      "bytes": 2855926
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "80b3c803ee463fa769dbaf71537b8b7d432e108c28d7ba16cc0511cce8b110ab",
+      "bytes": 32948
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "6a1b9e54d5b3a44b88d849e3799dc25682da7bcd26a70a425971277e0bc32462",
+      "bytes": 1316
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "43f1abe79d69601f9699d292ccbdcf04c8c836911984bd6e466c8368711a1d65",
+      "bytes": 1024
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "jsx",
@@ -314,14 +494,14 @@
     "sha256": "f3e51e9f7b129f62a817551ae22a878dac5c18d71c456d5ad73e9c82d687f33d"
    },
    "symbol": "tree_sitter_javascript",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-     "bytes": 2855934
+     "origin": "generated",
+     "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+     "bytes": 2855926
     },
     {
      "path": "src/scanner.c",
@@ -333,25 +513,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3",
+      "bytes": 174998
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70",
+      "bytes": 64022
+     },
+     {
+      "path": "parser.c",
+      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
+      "bytes": 2855926
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "80b3c803ee463fa769dbaf71537b8b7d432e108c28d7ba16cc0511cce8b110ab",
+      "bytes": 32948
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "6a1b9e54d5b3a44b88d849e3799dc25682da7bcd26a70a425971277e0bc32462",
+      "bytes": 1316
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "43f1abe79d69601f9699d292ccbdcf04c8c836911984bd6e466c8368711a1d65",
+      "bytes": 1024
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "typescript",
@@ -680,37 +920,97 @@
     "sha256": "95a46b6b7b545b48cd6c3a0d5b1014fed271a63a71164cdc4382d9d441e3609f"
    },
    "symbol": "tree_sitter_java",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
-     "bytes": 2561266
+     "origin": "generated",
+     "sha256": "85977add5c0918e0991c2decf75ad7aa66539811786703653ee9c9f1ed4ef523",
+     "bytes": 2568334
     },
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "0deefbbf97bdfbc6a801159761ec6935386f528c11b226d2a58be1c5c8977df4",
+      "bytes": 186508
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "eb6b0ace9dd94b23dca6fbcf17e53b28c48338afbec1b437d43857f0dee53c51",
+      "bytes": 82217
+     },
+     {
+      "path": "parser.c",
+      "sha256": "85977add5c0918e0991c2decf75ad7aa66539811786703653ee9c9f1ed4ef523",
+      "bytes": 2568334
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "b89ada7566bda16a8d7a710755c27824d6097e44b8d3b1dafbb749f3c34d13e0",
+      "bytes": 32038
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "c0c99e633aa28b2c1c58e61f91211391a9363d7d532aa5795bf4003f2dc14dba",
+      "bytes": 1479
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "5b8f0cb5514a4a04720beba0e5991c48837844fe0ce2ba2d02ec7e6a44a344d8",
+      "bytes": 889
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "kotlin",
@@ -723,14 +1023,14 @@
     "sha256": "a3f14d9574c788b09f8ed9057f48a6a153a016b642647318457fe2d3adced7a9"
    },
    "symbol": "tree_sitter_kotlin",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
-     "bytes": 22443237
+     "origin": "generated",
+     "sha256": "25a6fada1fbd15bcd6753f8cd5173b8b3bebc21256db147887f8b30dde4e5e4a",
+     "bytes": 22485651
     },
     {
      "path": "src/scanner.c",
@@ -742,25 +1042,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "f5de8a0591745cbdc2121ba9e6a8a4f1e96ec0d652f1f164692de71aca1d9231",
+      "bytes": 147577
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "a89f67d15508ecbb249c4c464fea3f9f7fd95c575e2a1e4024e6322bfd725683",
+      "bytes": 51927
+     },
+     {
+      "path": "parser.c",
+      "sha256": "25a6fada1fbd15bcd6753f8cd5173b8b3bebc21256db147887f8b30dde4e5e4a",
+      "bytes": 22485651
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "1f6260635f96071fe1a164a3acbdaaf9d670dc2b35766e438c91f58ed2d50a7f",
+      "bytes": 25319
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "ff2490d30dca448c049cf819ed99200fb61bce21cdb6dcba7382cab54002c531",
+      "bytes": 1260
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "d4f3dd0850836457ede7ee82e3f1b8803bd40343b9b17af7e02741ff4daf6fcb",
+      "bytes": 772
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "c",
@@ -773,37 +1133,97 @@
     "sha256": "dc3979e40fce678c27273ba8ab93b48b5acd6b91d1dfde6a4451222d366d689f"
    },
    "symbol": "tree_sitter_c",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
      "bytes": 3872012
     },
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-     "bytes": 13269
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368",
+      "bytes": 237474
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "23e819ef1eefd357bb6eba844f47f8492f6a88da3e5046b06ec4acd4da8a9fd6",
+      "bytes": 83057
+     },
+     {
+      "path": "parser.c",
+      "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
+      "bytes": 3872012
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "f362b9fe06db321464fc77f1e5ba2ce089baec9d18f4defddb0c9ca87885e546",
+      "bytes": 38242
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "d4e92f1f5e15a75b84e22aee41afea8cec6c59a1f700a6423adfbabacce0e751",
+      "bytes": 1280
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "9a823f24385fbb5fa06e52c258c726449c4e417a4476306589b6dcfaf9b831ee",
+      "bytes": 957
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "cpp",
@@ -816,12 +1236,12 @@
     "sha256": "6c6efaf024f5c02fee0403e4e2373346eeadc40828587bcfad9351df2f0a7986"
    },
    "symbol": "tree_sitter_cpp",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999",
      "bytes": 25857209
     },
@@ -835,25 +1255,97 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "4483dc3d37ab62fc8cabd5cfbd7de8267a2b1e3b12da3a90a5b8b324dacd5498",
-     "bytes": 13720
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "3aa14b0b6ef87951ef9933d126f6d9774bc7d7dba11e7be1861820e381d36455",
+      "bytes": 458800
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "bc49c50d6b8af62df4cfda2675e5142bfba85bc1790ff2693aa0ca1286d5c7fe",
+      "bytes": 164416
+     },
+     {
+      "path": "parser.c",
+      "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999",
+      "bytes": 25857209
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "4545b6bf72e8a38d3e9a6c9a3deb9dbce37dfce357133c1b9e3a172831234622",
+      "bytes": 43970
+     },
+     {
+      "path": "node_modules/tree-sitter-c/grammar.js",
+      "role": "dependency",
+      "sha256": "f362b9fe06db321464fc77f1e5ba2ce089baec9d18f4defddb0c9ca87885e546",
+      "bytes": 38242
+     },
+     {
+      "path": "node_modules/tree-sitter-c/package.json",
+      "role": "dependency",
+      "sha256": "2ce1a96088083cd4006539032ec4c4ca40ced6e0ae410c97e211f65db26de8fe",
+      "bytes": 1280
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "3d4b375ec5fb59d7e95dfdf66d6cfe2366d7559dc670e73185606745c91c1cf0",
+      "bytes": 1320
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "ce25741bbbe08ee97750bc3e34bd33260bc2e8a9d8d5339cec3e744db53e35a0",
+      "bytes": 1115
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "rust",
@@ -866,13 +1358,13 @@
     "sha256": "dee82ddfd01bfc3a8ed201cc03b56448107d3217a4b3a7a8fc7fa6bc32b2405b"
    },
    "symbol": "tree_sitter_rust",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a",
+     "origin": "generated",
+     "sha256": "c9baf72693238834d551f41713a773565e265eea387aa5a753948223eadde2a2",
      "bytes": 6505510
     },
     {
@@ -885,25 +1377,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-     "bytes": 13269
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "b0f58f41f5461fa141bb98d81fe8abece3056cff979c4068a2e6cddee5aa0663",
+      "bytes": 224430
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "a5d2f343145e7d59cb1b257b4700c0888aef74544b862b0382f00cd8b899d045",
+      "bytes": 102144
+     },
+     {
+      "path": "parser.c",
+      "sha256": "c9baf72693238834d551f41713a773565e265eea387aa5a753948223eadde2a2",
+      "bytes": 6505510
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "e2b851418e14e3bacec9ef5993e0f8f05196a76641a5e1d488ab86d6973b3dc4",
+      "bytes": 38804
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "5abd4612ee8197b6d42a7dc5929550ce1c534cacebf6b687ed4befd339fea6c9",
+      "bytes": 1374
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "1ff4c338e5f9a8ff725f2f37b2e125dceac46a139cd572064d8dcfbbef9c0aaf",
+      "bytes": 1018
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "swift",
@@ -1037,12 +1589,12 @@
     "sha256": "b126efb8dfeeba8b71f0c6ae1f0cd09cf8b205560786b31d44cc16b283e782f2"
    },
    "symbol": "tree_sitter_dart",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "af2c6d473ddd54f56603db77fa35e0bdbc8e4fb92d41c4bac69dc7e510eb9ca4",
      "bytes": 7136472
     },
@@ -1056,25 +1608,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-     "bytes": 13269
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "4014c0bc789f0481f4fcfbba991085dbdce7ff84fbcb17f150c0d204d2626707",
+      "bytes": 311142
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "ea858f11158d4b176b32e7fdbdff6b49c587b2e7ee70e5fbe90751865a1912fe",
+      "bytes": 314023
+     },
+     {
+      "path": "parser.c",
+      "sha256": "af2c6d473ddd54f56603db77fa35e0bdbc8e4fb92d41c4bac69dc7e510eb9ca4",
+      "bytes": 7136472
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "ce89468a9b9518494785a93db5d8096d59cc119580933d4085479e6fbc0eed2d",
+      "bytes": 106386
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "32d5214526ffc3d411ba937049222f05fe291a0ad802ff15a2753c33be326dde",
+      "bytes": 1977
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "0d668ff3ec8b35b836d54be51a75966ded9ad0d5f4f66811dd9165abb34cbce0",
+      "bytes": 453
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "php",
@@ -1087,7 +1699,7 @@
     "sha256": "2dfa7643857b94a273b6b413b4cb694aef9c9898e17403f97b66a9ba9c163891"
    },
    "symbol": "tree_sitter_php",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "common/scanner.h",
@@ -1099,7 +1711,7 @@
     {
      "path": "php/src/parser.c",
      "role": "parser",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "80a9bb8d671ff300717de63939fc9b82c6ca6c7b38805fcbb33705dcc322eec3",
      "bytes": 7287175
     },
@@ -1113,25 +1725,97 @@
     {
      "path": "php/src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "php/src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
      "bytes": 13453
     },
     {
      "path": "php/src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "5bc72e3c3b075451d4649bbad55ab78c9f421135de41e37232a38ea6e0e57dc8",
+      "bytes": 233342
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "c487d95cf9ddce3b7fe2120a257e5e43f7e9e4842cb5988707a984887143b788",
+      "bytes": 115690
+     },
+     {
+      "path": "parser.c",
+      "sha256": "80a9bb8d671ff300717de63939fc9b82c6ca6c7b38805fcbb33705dcc322eec3",
+      "bytes": 7287175
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "php/grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "common/define-grammar.js",
+      "role": "js_helper",
+      "sha256": "55ccd1624a438015d9c59dea01290ab762d1d1b4b1cd2de493509bb3ee980fc2",
+      "bytes": 46989
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "6ccacf4d416da31f51d79a8ec43e8e8b81c2013fcfc5756c2086461e1560b06e",
+      "bytes": 1663
+     },
+     {
+      "path": "php/grammar.js",
+      "role": "grammar_js",
+      "sha256": "a9f44740c7a11a673a997c42486954482084cdadecbbce89f5bcd066bfd853a5",
+      "bytes": 102
+     },
+     {
+      "path": "php/package.json",
+      "role": "metadata",
+      "sha256": "1bd0d42935d3a8c0e049294ee566ebed8a4f1efa882ae13a39e49cb0a649110b",
+      "bytes": 195
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "b6e3704182c3ccb493bb04b4830716c80979092a7ca06d24d0ffbd8cf5cb159d",
+      "bytes": 1583
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "ruby",
@@ -1144,14 +1828,14 @@
     "sha256": "f7aa2408f1b39922f85add38cacd60b59828a8222c609a240f08779d46d079d9"
    },
    "symbol": "tree_sitter_ruby",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
-     "bytes": 15277808
+     "origin": "generated",
+     "sha256": "ef3bd34033f6da4d94081c4fd0dd2203b2a3c8c43c6e810eee4da8d3dffc6717",
+     "bytes": 15298004
     },
     {
      "path": "src/scanner.c",
@@ -1163,25 +1847,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-     "bytes": 10420
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "62105b6c1fbfb13929877de8af9f8dd0697379a9da1aaba0a0ed09477edacb12",
+      "bytes": 192951
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "a95d2f382017895771063837dbb959c4e5fde829fc185a2967695c770cc297bf",
+      "bytes": 69862
+     },
+     {
+      "path": "parser.c",
+      "sha256": "ef3bd34033f6da4d94081c4fd0dd2203b2a3c8c43c6e810eee4da8d3dffc6717",
+      "bytes": 15298004
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "3b5a0afa4ad836b2579c6d836450a373c6736bb0da3d7e030a9d4e66b94fbc7a",
+      "bytes": 35373
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "07fb6a02a020df5fcedd8cc968b266de69eb6e5a1f1e43bd7c5817306339019c",
+      "bytes": 1599
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "7de08cd47b857dfa02845c25032bba7a6653ddd673502b19018a92d8404d2b24",
+      "bytes": 911
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "r",
@@ -1194,14 +1938,14 @@
     "sha256": "642b13978f724c78f067e6b17edd8ffff223c48e8ea09776324e1f4e8e75ca1c"
    },
    "symbol": "tree_sitter_r",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
-     "bytes": 4030362
+     "origin": "generated",
+     "sha256": "b1d9e3c3d2793edf5a3cdb8805a9ceb4244f8c336b1a226a37233093ef826f2c",
+     "bytes": 4034360
     },
     {
      "path": "src/scanner.c",
@@ -1213,25 +1957,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "1bc020ea3daab427a5e49694ecfbc80c07bb50aca45ffa0e222c38e6e6e88633",
+      "bytes": 72462
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "e7f5bcda16b64c04f4f2024b0a11b59fa7ea3b0643c5e2500ce6877c803c235b",
+      "bytes": 69878
+     },
+     {
+      "path": "parser.c",
+      "sha256": "b1d9e3c3d2793edf5a3cdb8805a9ceb4244f8c336b1a226a37233093ef826f2c",
+      "bytes": 4034360
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "a496876db297bd9ccbcdceebf9b466146538cb4f7287691bee07ab4c11046ff2",
+      "bytes": 27092
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "c489b1a4847c501844b76b3ce86ce610600c50e7a686c87ab82d1f08d82747ec",
+      "bytes": 1257
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "116c1b4a4874992563aa1ef680a01e62714c47954e7328d2a2a6c2fa5c3fc507",
+      "bytes": 943
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "bash",
@@ -1244,14 +2048,14 @@
     "sha256": "879e8951ea2cc82455407e3eda0293319657ec53e83191e0fb5a67430d10d804"
    },
    "symbol": "tree_sitter_bash",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
-     "bytes": 9912254
+     "origin": "generated",
+     "sha256": "fde19299d9a229e3bd57ac1d2521bbf9565f99151793ba69b585d83db4a9ec2e",
+     "bytes": 9912509
     },
     {
      "path": "src/scanner.c",
@@ -1263,25 +2067,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "6c14f325170826cbc6c523ff5c2aeaa46f24bbff3a6e5eadb4533d9838fe3d81",
+      "bytes": 179629
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "c424f2a9e771860528c68286424a483c9afb2f9909afef5d7165be902848df4b",
+      "bytes": 82102
+     },
+     {
+      "path": "parser.c",
+      "sha256": "fde19299d9a229e3bd57ac1d2521bbf9565f99151793ba69b585d83db4a9ec2e",
+      "bytes": 9912509
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "3c125330d995968a7e3a4fc71617aa73472449f5a6c254f39da2d8860a47bf65",
+      "bytes": 30142
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "757d74350c9a8cf2635010326ef3b28b59c392e705906af4d98e5a45fcaff32d",
+      "bytes": 1292
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "d58a0b1c3a697323c10303a4f7a81782d5bdcfc74c3ed78e2bab4575f531ea3b",
+      "bytes": 916
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "powershell",
@@ -1294,12 +2158,12 @@
     "sha256": "0c66318caf62f788b717e8dee74b75552917d1f22ecca0b01b621f79fc0d49f1"
    },
    "symbol": "tree_sitter_powershell",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
      "bytes": 4697445
     },
@@ -1313,25 +2177,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "31e60a1bff6f715afacce03b5b70efe42b58371b4f9595dd4af52a577ff9608c",
-     "bytes": 13269
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "8d3b7b851a037064f08f350c0eed45324db644641424c71396a976e746549211",
+      "bytes": 154702
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "dc314fa2746de2c2048ad5c95e0c6488d1b2873e524a95473356c685f18a9707",
+      "bytes": 72248
+     },
+     {
+      "path": "parser.c",
+      "sha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
+      "bytes": 4697445
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "6a4522a539c14586a0f9fedc6f6d7cb7c6baf372aabb5095b14c904383b8f2d8",
+      "bytes": 32582
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "07c3f6f516961ac6b4c899ca03c26dd93df634d93507c452f86dbea63eba96ea",
+      "bytes": 1248
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "d7fa810f46642830fb90c6dcdaeaa9678f7ff2979539e2c38cebc7f6a9ae7535",
+      "bytes": 893
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "html",
@@ -1347,14 +2271,14 @@
     "sha256": "892f6b732e08bcb90918a985fdee58d6a0fd7a90326af601a2536a5d477583fa"
    },
    "symbol": "tree_sitter_html",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
-     "bytes": 66466
+     "origin": "generated",
+     "sha256": "4648a49ceb3c3febb804c189b86c199f92869cdd447c28ca8552c32c39f8976e",
+     "bytes": 66810
     },
     {
      "path": "src/scanner.c",
@@ -1373,25 +2297,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-     "bytes": 10420
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "cd561d3ea2d9725fa1933d1daf5c4e83e1269a27a4ffe8bc4f1efc96d2d3af37",
+      "bytes": 10225
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "50956d14821e11b12cf43301deb0350239161f0e63111afa35c79eda581faefe",
+      "bytes": 5214
+     },
+     {
+      "path": "parser.c",
+      "sha256": "4648a49ceb3c3febb804c189b86c199f92869cdd447c28ca8552c32c39f8976e",
+      "bytes": 66810
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "c139ccf784d7f2c377cbf702e0fe1daaa8e9ac2d76a7a8c0f81bfdb387b45ee2",
+      "bytes": 2854
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "888318a5ddb9303c7dfa83ed130d47c93c9f579eb78dcc31f40e58b7cf4e3997",
+      "bytes": 1480
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "ca1f39442fecd2135b8bc8bf664615cc4b967d8e4780587b299cdf227010e1b5",
+      "bytes": 898
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "css",
@@ -1404,14 +2388,14 @@
     "sha256": "c47392e483feb9137d8f0acf9ca6e916b820122c260324454a9980c75c98c3c5"
    },
    "symbol": "tree_sitter_css",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
-     "bytes": 504262
+     "origin": "generated",
+     "sha256": "a6ae5fa6be3a430a13b70c24f2b80cb146637c9e7d62f09efae439c9fc8bc041",
+     "bytes": 504253
     },
     {
      "path": "src/scanner.c",
@@ -1423,25 +2407,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "1a170e0c93009b5b592a611c663d4af4d625ddb97ebff1550c3e7f32fd045292",
+      "bytes": 55833
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "fbbf8d22d82608f6d2f61cfdb374e6758779754fb2f42643e9dc5af6ead0d5d2",
+      "bytes": 43620
+     },
+     {
+      "path": "parser.c",
+      "sha256": "a6ae5fa6be3a430a13b70c24f2b80cb146637c9e7d62f09efae439c9fc8bc041",
+      "bytes": 504253
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "c6d9efdeaf3a4902f026849e08a103a6d1ec1f015c5f396d3fe92dc57ce034ae",
+      "bytes": 11392
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "074f92a25e9272478986165fd7673889676aaaeb9163bdcba068798c185a74ca",
+      "bytes": 1410
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "c425a4125bb8c1907db2f5c4837bfdd9e14e796960e68384c962a719c94bbd16",
+      "bytes": 947
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "json",
@@ -1454,37 +2498,97 @@
     "sha256": "5735ec109268bdc25eb67875b96bc891de1f405253a1d3f9528a504249b0f832"
    },
    "symbol": "tree_sitter_json",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "9a266ae4a0305b8a2769bee90a14ac06914bdc83a509f16428311eac2845637e",
-     "bytes": 27700
+     "origin": "generated",
+     "sha256": "c8df80b95371805ca7e565bb36d416df28c2caa46807c3c2fd6bf49b031bfe80",
+     "bytes": 28584
     },
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
-     "bytes": 10420
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
-     "bytes": 7039
+     "origin": "generated",
+     "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+     "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "955f78a73bb42beb0684f7fc4d02a604c0a3b8271f1e58f4f97ba0bc197400c5",
+      "bytes": 13700
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "48689e9f2cb4d854b4f6068350800c15c89ab04db1f227830230d29ab88cb596",
+      "bytes": 2717
+     },
+     {
+      "path": "parser.c",
+      "sha256": "c8df80b95371805ca7e565bb36d416df28c2caa46807c3c2fd6bf49b031bfe80",
+      "bytes": 28584
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "f4e9daaf08b48c505cc1cc016deed20643e2e57365868784f96d0f7d1cfb64fd",
+      "bytes": 2393
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "843df6f8d6a40ab7f12b91b5e688a1a603e65c27f797671240ecf87e1af14644",
+      "bytes": 1259
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "30d71de6bbd5c46237ff53746661b97ac31b426b263cf9baeb65e6d01f9f361d",
+      "bytes": 676
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "yaml",
@@ -1497,14 +2601,14 @@
     "sha256": "6548cd059983e8073dfa39f102641f71d045b37f3a05b7ebd799ad17df8471d1"
    },
    "symbol": "tree_sitter_yaml",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "02c5d32e95fa018a3c3ba7d7134d84bb7d5595c8874aa7ae6582745d9b40dede",
-     "bytes": 1289047
+     "origin": "generated",
+     "sha256": "02dc8c5f297936b198d1371874b8f5226f8dd35b75f6a82894d12a2cbc219eba",
+     "bytes": 1289038
     },
     {
      "path": "src/scanner.c",
@@ -1537,25 +2641,85 @@
     {
      "path": "src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "a2c03fcc9bd9b7843780854f5e8264c9d465a34172b530d9511d6e89c5d2630e",
+      "bytes": 157109
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "1238b6c89fc6afb9723b6463a365843aa87e478025490660e5acfc9adaaf809b",
+      "bytes": 9026
+     },
+     {
+      "path": "parser.c",
+      "sha256": "02dc8c5f297936b198d1371874b8f5226f8dd35b75f6a82894d12a2cbc219eba",
+      "bytes": 1289038
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "grammar.js",
+      "role": "grammar_js",
+      "sha256": "390488273d970a8c78c7b9ab0cdf3cbf1b12a8833c29fe7041bd181bd851c8d7",
+      "bytes": 33838
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "735a58a011f4255c6063ea39a713162312316175e6baf3ff1f85826fe87dbc4b",
+      "bytes": 1399
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "4b608f067cf0953508a8574d455cdc928b446f175f967a13d9fc5f8ab0183191",
+      "bytes": 862
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "xml",
@@ -1568,7 +2732,7 @@
     "sha256": "1b7611ba3f2af55768acfbfbaf2fd2eb404ba61b14a85056d4f8d8326fc55146"
    },
    "symbol": "tree_sitter_xml",
-   "source": "upstream",
+   "source": "regenerated",
    "files": [
     {
      "path": "common/scanner.h",
@@ -1580,9 +2744,9 @@
     {
      "path": "xml/src/parser.c",
      "role": "parser",
-     "origin": "upstream",
-     "sha256": "e00f74ae7edcfc5e0cf9dc551a41a02e88a86dad9d6d13820e292bde794cdd94",
-     "bytes": 240381
+     "origin": "generated",
+     "sha256": "eba39ee01336c5a6e353d1110fdbab9957a8f882cdd6b50ab496105e209642f2",
+     "bytes": 241565
     },
     {
      "path": "xml/src/scanner.c",
@@ -1594,25 +2758,97 @@
     {
      "path": "xml/src/tree_sitter/alloc.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
      "bytes": 985
     },
     {
      "path": "xml/src/tree_sitter/array.h",
      "role": "header",
-     "origin": "upstream",
-     "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
-     "bytes": 10431
+     "origin": "generated",
+     "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+     "bytes": 13453
     },
     {
      "path": "xml/src/tree_sitter/parser.h",
      "role": "header",
-     "origin": "upstream",
+     "origin": "generated",
      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
      "bytes": 7624
     }
-   ]
+   ],
+   "regeneration": {
+    "outputs": [
+     {
+      "path": "grammar.json",
+      "sha256": "8154b75312606f2207e5a22eaefb69811836b22b53a9c4c96b5e417c409ec820",
+      "bytes": 58426
+     },
+     {
+      "path": "node-types.json",
+      "sha256": "3b63e111187a0f9b2282e1748db2dd6b10e968f0cdb3676772def93bf89f2a7b",
+      "bytes": 17444
+     },
+     {
+      "path": "parser.c",
+      "sha256": "eba39ee01336c5a6e353d1110fdbab9957a8f882cdd6b50ab496105e209642f2",
+      "bytes": 241565
+     },
+     {
+      "path": "tree_sitter/alloc.h",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+     },
+     {
+      "path": "tree_sitter/array.h",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+     },
+     {
+      "path": "tree_sitter/parser.h",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+     }
+    ],
+    "grammar": "xml/grammar.js",
+    "abi": 15,
+    "optimize": true,
+    "memory_bytes": 4294967296,
+    "inputs": [
+     {
+      "path": "common/common.mjs",
+      "role": "js_helper",
+      "sha256": "208d0786c7a105b19d1ff4949725f733808348902ad25aaeffa21a2400913b56",
+      "bytes": 6420
+     },
+     {
+      "path": "package.json",
+      "role": "metadata",
+      "sha256": "2e1b3bf97c3894aa4166a15d7c934b8b488a385572f44f917eae1021be187bff",
+      "bytes": 1608
+     },
+     {
+      "path": "tree-sitter.json",
+      "role": "metadata",
+      "sha256": "17097cf18ce6401007af850ea0cdcb75ffcbae43fc02c2c3b2dfb18dee27ab48",
+      "bytes": 1239
+     },
+     {
+      "path": "xml/grammar.js",
+      "role": "grammar_js",
+      "sha256": "521d4071b40625b319f8c1ee20e76a81e01c3c89a4fb27ab20965df6dae53a29",
+      "bytes": 3209
+     },
+     {
+      "path": "xml/package.json",
+      "role": "metadata",
+      "sha256": "ec243a30725bce7c76cebce2b3080adbe9a7a9623c47a76b19a72f6d4cd9aee3",
+      "bytes": 215
+     }
+    ],
+    "patch_chain": [],
+    "patched_files": []
+   }
   },
   {
    "route": "tsql",
