@@ -202477,14 +202477,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04",
-      "bytes": 29214301
+      "sha256": "cdbb63e4b527288791f2e612f281313f433df01738284c907a655bba375cfb6b",
+      "bytes": 58655944
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "392bf26c2295e8ee3dd584dbea619d39573495244b4bbd2b59dab387a8494aec",
-      "bytes": 2046
+      "sha256": "dc961f034c5c6523455c69722002b00bcc73b9a6f22d80faa13a83db02d4e173",
+      "bytes": 5398
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -204691,17 +204691,17 @@
           "end_byte": 304
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 7,
           "end_byte": 23
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 30,
           "end_byte": 53
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 60,
           "end_byte": 72
          },
@@ -204711,7 +204711,7 @@
           "end_byte": 101
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 110,
           "end_byte": 129
          },
@@ -204726,12 +204726,12 @@
           "end_byte": 198
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 207,
           "end_byte": 235
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 242,
           "end_byte": 254
          },
@@ -206293,7 +206293,7 @@
          {
           "type": "generated_always_clause",
           "start_byte": 56,
-          "end_byte": 96
+          "end_byte": 103
          },
          {
           "type": "column_definition",
@@ -206303,7 +206303,7 @@
          {
           "type": "generated_always_clause",
           "start_byte": 133,
-          "end_byte": 174
+          "end_byte": 181
          },
          {
           "type": "statement",
@@ -207568,7 +207568,7 @@
          {
           "type": "set_operation",
           "start_byte": 139,
-          "end_byte": 253
+          "end_byte": 265
          },
          {
           "type": "order_by",
@@ -208784,7 +208784,7 @@
           "end_byte": 265
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 267,
           "end_byte": 290
          },
@@ -211554,8 +211554,8 @@
          "assignment",
          "cte",
          "current_of",
+         "invocation",
          "join",
-         "method_call",
          "option_clause",
          "output_clause",
          "statement",
@@ -211610,12 +211610,12 @@
           "end_byte": 186
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 202,
           "end_byte": 216
          },
          {
-          "type": "method_call",
+          "type": "invocation",
           "start_byte": 218,
           "end_byte": 247
          },
@@ -235125,12 +235125,12 @@
          {
           "type": "generated_always_clause",
           "start_byte": 1005,
-          "end_byte": 1034
+          "end_byte": 1041
          },
          {
           "type": "generated_always_clause",
           "start_byte": 1073,
-          "end_byte": 1100
+          "end_byte": 1107
          },
          {
           "type": "period_for_system_time",

@@ -822,9 +822,25 @@
       "reference_basis": "PREPARE_GENERATED",
       "candidate": "P05-MSSQL-REMEDY-r1",
       "prepare_generated": {
+        "grammar.json": {
+          "bytes": 1094754,
+          "sha256": "0bc9bf5fbcc076ea86920afe253ac5946a65c2e881b712abee38f6bb7e199a92"
+        },
+        "node-types.json": {
+          "bytes": 534919,
+          "sha256": "d91ba8e413398c21a9f575526ae8b15c967f3953599d5debf9ce8d9cc3a59479"
+        },
         "parser.c": {
-          "bytes": 29214301,
-          "sha256": "c0f542b63fdd7d28cdf11f9927e560444eaa84f5cc925848bb8e12f8dad55c04"
+          "bytes": 58655944,
+          "sha256": "cdbb63e4b527288791f2e612f281313f433df01738284c907a655bba375cfb6b"
+        },
+        "tree_sitter/alloc.h": {
+          "bytes": 985,
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"
+        },
+        "tree_sitter/array.h": {
+          "bytes": 13453,
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"
         },
         "tree_sitter/parser.h": {
           "bytes": 7624,

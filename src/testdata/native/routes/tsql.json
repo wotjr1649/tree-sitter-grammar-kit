@@ -1535,7 +1535,7 @@
               "text": "hierarchyid::GetRoot()"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.IsDescendantOf(p)"
             },
             {
@@ -1547,11 +1547,11 @@
               "text": "CAST(N'/1/' AS hierarchyid)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.GetReparentedValue(r1, r2)"
             },
             {
-              "type": "method_call",
+              "type": "invocation",
               "text": "h.ToString()"
             },
             {
@@ -2659,7 +2659,7 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS TRANSACTION_ID START"
+              "text": "GENERATED ALWAYS AS TRANSACTION_ID START HIDDEN"
             },
             {
               "type": "column_definition",
@@ -2667,7 +2667,7 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS SEQUENCE_NUMBER START"
+              "text": "GENERATED ALWAYS AS SEQUENCE_NUMBER START HIDDEN"
             },
             {
               "type": "statement",
@@ -6498,8 +6498,8 @@
             "assignment",
             "cte",
             "current_of",
+            "invocation",
             "join",
-            "method_call",
             "option_clause",
             "output_clause",
             "statement",
@@ -23119,11 +23119,11 @@
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS ROW START"
+              "text": "GENERATED ALWAYS AS ROW START HIDDEN"
             },
             {
               "type": "generated_always_clause",
-              "text": "GENERATED ALWAYS AS ROW END"
+              "text": "GENERATED ALWAYS AS ROW END HIDDEN"
             },
             {
               "type": "period_for_system_time",
