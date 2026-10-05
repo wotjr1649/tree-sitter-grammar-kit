@@ -25,6 +25,27 @@
      "before": "        // Unlike a Go compiler, we accept statements at top-level to enable\n        // parsing of partial code snippets in documentation (see #63).\n        seq($._statement, terminator),",
      "after": "        seq($._declaration, terminator),",
      "occurrences": 1
+    },
+    {
+     "before": "const newline = /\\n/;\nconst terminator = choice(newline, ';', '\\0');",
+     "after": "// Go spec \"Semicolons\": a newline ends a statement only after a token that can end a line.\n// src/scanner.c decides that and emits this external token (a symbol reference, since the\n// constant is built outside the rules).\nconst newline = {type: 'SYMBOL', name: '_automatic_semicolon'};\nconst terminator = choice(newline, ';', '\\0');",
+     "occurrences": 1
+    },
+    {
+     "before": "  extras: $ => [\n    $.comment,\n    /\\s/,\n  ],\n",
+     "after": "  extras: $ => [\n    $.comment,\n    /\\s/,\n  ],\n\n  externals: $ => [\n    $._automatic_semicolon,\n    '||',\n    $._error_sentinel,\n  ],\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "create": true,
+   "operations": [
+    {
+     "before": "",
+     "after": "// Automatic semicolons for tree-sitter-go (Go spec, \"Semicolons\").\n//\n// The Go lexer turns a newline (or EOF) into a semicolon when the line's final token is an\n// identifier, a basic literal, one of the keywords break, continue, fallthrough and return,\n// or one of ++ -- ) ] }. A general comment that contains a newline acts like a newline.\n//\n// The scanner cannot see the previous token, so it reads it from the parse state:\n// - the newline terminator token is valid exactly where a statement, declaration, spec or\n//   field has ended; all of these end with such a token;\n// - the '||' operator, lexed here, is valid exactly after a complete expression, and every\n//   expression ends with such a token.\n// In either state a newline is a semicolon. Where only '||' is valid (inside parentheses,\n// brackets or braces) the semicolon is a syntax error, as in Go: `f(a` NEWLINE `)`.\n// Anywhere else the previous token cannot end a line, and the newline is white space.\n#include \"tree_sitter/parser.h\"\n\nenum TokenType {\n  NEWLINE,\n  LOGICAL_OR,\n  ERROR_SENTINEL,\n};\n\nvoid *tree_sitter_go_external_scanner_create(void) { return NULL; }\nvoid tree_sitter_go_external_scanner_destroy(void *payload) { (void)payload; }\nunsigned tree_sitter_go_external_scanner_serialize(void *payload, char *buffer) {\n  (void)payload;\n  (void)buffer;\n  return 0;\n}\nvoid tree_sitter_go_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {\n  (void)payload;\n  (void)buffer;\n  (void)length;\n}\n\nstatic bool scan_logical_or(TSLexer *lexer) {\n  if (lexer->lookahead != '|') return false;\n  lexer->advance(lexer, false);\n  if (lexer->lookahead != '|') return false;\n  lexer->advance(lexer, false);\n  lexer->mark_end(lexer);\n  lexer->result_symbol = LOGICAL_OR;\n  return true;\n}\n\nbool tree_sitter_go_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n  (void)payload;\n  bool recovering = valid_symbols[ERROR_SENTINEL];\n  bool line_end = !recovering && (valid_symbols[NEWLINE] || valid_symbols[LOGICAL_OR]);\n\n  for (;;) {\n    int32_t c = lexer->lookahead;\n    if (c == ' ' || c == '\\t' || c == '\\r' || c == '\\f' || c == '\\v' || (c == '\\n' && !line_end)) {\n      lexer->advance(lexer, true);\n    } else {\n      break;\n    }\n  }\n\n  if (line_end) {\n    if (lexer->lookahead == '\\n') {\n      lexer->advance(lexer, false);\n      lexer->mark_end(lexer);\n      lexer->result_symbol = NEWLINE;\n      return true;\n    }\n    if (lexer->eof(lexer)) {\n      lexer->mark_end(lexer);\n      lexer->result_symbol = NEWLINE;\n      return true;\n    }\n    if (lexer->lookahead == '/') {\n      // a general comment with a newline: a zero-width semicolon before the comment\n      lexer->mark_end(lexer);\n      lexer->advance(lexer, false);\n      if (lexer->lookahead != '*') return false;\n      lexer->advance(lexer, false);\n      bool newline = false;\n      while (!lexer->eof(lexer)) {\n        int32_t c = lexer->lookahead;\n        lexer->advance(lexer, false);\n        if (c == '\\n') {\n          newline = true;\n        } else if (c == '*' && lexer->lookahead == '/') {\n          if (!newline) return false;\n          lexer->result_symbol = NEWLINE;\n          return true;\n        }\n      }\n      return false;\n    }\n  }\n\n  if (valid_symbols[LOGICAL_OR]) return scan_logical_or(lexer);\n  return false;\n}\n",
+     "occurrences": 0
     }
    ]
   }

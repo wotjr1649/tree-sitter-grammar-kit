@@ -52,7 +52,13 @@ type chainStep struct{ Subject, Pointer, Field, Target string }
 // c2Subject is a project-local patch subject (src/dev/c2-patches/<route>.json).
 type c2Subject struct {
 	Schema, Route string
-	Files         []struct{ Target string }
+	Files         []c2File
+}
+
+// c2File is one patched file of a C2 subject; Create marks a file absent at the pinned commit.
+type c2File struct {
+	Target string
+	Create bool
 }
 
 type nativeRegistry struct {
@@ -61,7 +67,8 @@ type nativeRegistry struct {
 }
 
 type sourceRecord struct {
-	RouteID  string `json:"route_id"`
+	RouteID          string   `json:"route_id"`
+	ScannerAndShared []string `json:"scanner_and_shared"`
 	Adoption *struct {
 		PatchSubjects []string       `json:"patch_subjects"`
 		PatchedFiles  []registryFile `json:"patched_files"`
@@ -91,7 +98,10 @@ type reproRecords struct{ Routes []reproRecord }
 // one built from the upstream generated files, is rejected. Either class may carry a C2
 // record (C2-PATCH-r1): its chain is the adoption chain, if any, followed by exactly the
 // C2 subjects' files in order, its patched files are the C2 record's, and the reproduction
-// reference pins every output.
+// reference pins every output. A C2 subject may create a file absent at the pinned commit (a
+// new scanner): it is neither an upstream scanner or shared file nor a generator input, an
+// adoption file or an upstream route file, and it is a patched scanner route file pinned by
+// the C2 record (so by the native patched files too).
 func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRecords, subjects map[string]c2Subject) error {
 	if reg.Schema != "tsgk-native-routes/r1" || len(reg.Routes) != len(sources.Routes) || len(reg.Routes) != 26 {
 		return fmt.Errorf("registry %s with %d routes", reg.Schema, len(reg.Routes))
@@ -133,6 +143,19 @@ func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRec
 				}
 				for i, f := range doc.Files {
 					c2 = append(c2, chainStep{s, fmt.Sprintf("/files/%d", i), "operations", f.Target})
+					if !f.Create {
+						continue
+					}
+					is := func(x registryFile) bool { return x.Path == f.Target }
+					if slices.Contains(src.ScannerAndShared, f.Target) || slices.ContainsFunc(g.Inputs, is) ||
+						(src.Adoption != nil && slices.ContainsFunc(src.Adoption.PatchedFiles, is)) ||
+						slices.ContainsFunc(r.Files, func(x registryFile) bool { return is(x) && x.Origin == "upstream" }) {
+						return fmt.Errorf("%s C2 subject creates %s, which exists at the pinned commit", r.Route, f.Target)
+					}
+					at := slices.IndexFunc(r.Files, is)
+					if at < 0 || r.Files[at].Origin != "patched" || r.Files[at].Role != "scanner" || !slices.ContainsFunc(p.PatchedFiles, is) {
+						return fmt.Errorf("%s created file %s is not a pinned patched scanner", r.Route, f.Target)
+					}
 				}
 			}
 		}
@@ -399,6 +422,26 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		{"C2 patched file built from upstream", "not used patched", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			file(route(reg, "yaml"), "src/scanner.c").Origin = "upstream"
 		}},
+		// a created file (go's src/scanner.c, #98)
+		{"C2 create of an upstream scanner", "which exists at the pinned commit", func(_ *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			source(s, "go").ScannerAndShared = append(source(s, "go").ScannerAndShared, "src/scanner.c")
+		}},
+		{"C2 create of an upstream route file", "which exists at the pinned commit", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/scanner.c").Origin = "upstream"
+		}},
+		{"created file without its route file", "not a pinned patched scanner", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			r := route(reg, "go")
+			r.Files = slices.DeleteFunc(r.Files, func(f registryFile) bool { return f.Path == "src/scanner.c" })
+		}},
+		{"created file in another role", "not a pinned patched scanner", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/scanner.c").Role = "header"
+		}},
+		{"created file without its C2 record pin", "not a pinned patched scanner", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			drop := func(f registryFile) bool { return f.Path == "src/scanner.c" }
+			source(s, "go").C2Patch.PatchedFiles = slices.DeleteFunc(source(s, "go").C2Patch.PatchedFiles, drop)
+			g := route(reg, "go").Regeneration
+			g.PatchedFiles = slices.DeleteFunc(g.PatchedFiles, drop)
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reg, sources, repro, subjects := load()
@@ -408,6 +451,16 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			}
 		})
 	}
+	t.Run("C2 create of a generator input", func(t *testing.T) {
+		reg, sources, repro, subjects := load()
+		doc := subjects["src/dev/c2-patches/go.json"]
+		doc.Files = slices.Clone(doc.Files)
+		doc.Files[0].Create = true // grammar.js
+		subjects["src/dev/c2-patches/go.json"] = doc
+		if err := checkNativeRoutes(reg, sources, repro, subjects); err == nil || !strings.Contains(err.Error(), "which exists at the pinned commit") {
+			t.Fatalf("mutation not detected: %v", err)
+		}
+	})
 	t.Run("C2 subject of another route", func(t *testing.T) {
 		reg, sources, repro, subjects := load()
 		doc := subjects["src/dev/c2-patches/yaml.json"]
@@ -434,7 +487,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 	adoptedC2 := func() (nativeRegistry, sourceRecords, reproRecords, map[string]c2Subject) {
 		reg, sources, repro, subjects := load()
 		name := "src/dev/c2-patches/csharp.json"
-		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []struct{ Target string }{{"grammar.js"}}}
+		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []c2File{{Target: "grammar.js"}}}
 		src := source(&sources, "csharp")
 		src.C2Patch = &struct {
 			Subjects     []string
@@ -487,7 +540,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			addAdoptionStepOnPackageJSON(reg, s)
 			name := "src/dev/c2-patches/csharp.json"
 			doc := subjects[name]
-			doc.Files = append(doc.Files, struct{ Target string }{"package.json"})
+			doc.Files = append(doc.Files, c2File{Target: "package.json"})
 			subjects[name] = doc
 			g := route(reg, "csharp").Regeneration
 			g.PatchChain = append(g.PatchChain, chainStep{name, "/files/1", "operations", "package.json"})

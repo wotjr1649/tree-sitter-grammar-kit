@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -297,6 +298,97 @@ func checkC2Patch(r sourceCandidate) error {
 		seen[f.Path] = true
 	}
 	return nil
+}
+
+// c2Created lists the files a route's C2 subjects create ("create": true): files absent at
+// the pinned commit, such as go's automatic-semicolon scanner (#98).
+type c2Created map[string][]string
+
+// checkC2Created: the source record of a created file must not list it among the upstream
+// scanner and shared files, and its C2 record must pin it.
+func checkC2Created(registry sourceRegistry, created c2Created) error {
+	for _, r := range registry.Routes {
+		for _, path := range created[r.RouteID] {
+			if slices.Contains(r.ScannerAndShared, path) {
+				return fmt.Errorf("source C2 created file is an upstream file: %s %s", r.RouteID, path)
+			}
+			if r.C2Patch == nil || !slices.ContainsFunc(r.C2Patch.PatchedFiles, func(p sourcePin) bool { return p.Path == path }) {
+				return fmt.Errorf("source C2 created file is not pinned: %s %s", r.RouteID, path)
+			}
+		}
+	}
+	return nil
+}
+
+func TestC2CreatedFiles(t *testing.T) {
+	root := repository(t)
+	load := func() sourceRegistry {
+		data, err := os.ReadFile(filepath.Join(root, "src/contracts/language-sources.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var s sourceRegistry
+		if err := json.Unmarshal(data, &s); err != nil {
+			t.Fatal(err)
+		}
+		return s
+	}
+	registry := load()
+	created := c2Created{}
+	for _, r := range registry.Routes {
+		if r.C2Patch == nil {
+			continue
+		}
+		for _, name := range r.C2Patch.Subjects {
+			data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var doc struct {
+				Files []struct {
+					Target string `json:"target"`
+					Create *bool  `json:"create"`
+				} `json:"files"`
+			}
+			if err := json.Unmarshal(data, &doc); err != nil {
+				t.Fatal(err)
+			}
+			for _, f := range doc.Files {
+				if f.Create != nil && !*f.Create {
+					t.Fatalf("%s: create must be true when present", name)
+				}
+				if f.Create != nil {
+					created[r.RouteID] = append(created[r.RouteID], f.Target)
+				}
+			}
+		}
+	}
+	if !slices.Equal(created["go"], []string{"src/scanner.c"}) || len(created) != 1 {
+		t.Fatalf("created files %v, want go's src/scanner.c only", created)
+	}
+	if err := checkC2Created(registry, created); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, diagnostic string
+		mutate           func(*sourceRegistry)
+	}{
+		{"created-file-listed-upstream", "created file is an upstream file", func(s *sourceRegistry) {
+			sourceRoute(s, "go").ScannerAndShared = append(sourceRoute(s, "go").ScannerAndShared, "src/scanner.c")
+		}},
+		{"created-file-without-pin", "created file is not pinned", func(s *sourceRegistry) {
+			p := sourceRoute(s, "go").C2Patch
+			p.PatchedFiles = slices.DeleteFunc(p.PatchedFiles, func(f sourcePin) bool { return f.Path == "src/scanner.c" })
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := load()
+			tc.mutate(&s)
+			if err := checkC2Created(s, created); err == nil || !strings.Contains(err.Error(), tc.diagnostic) {
+				t.Fatalf("mutation not detected as %q: %v", tc.diagnostic, err)
+			}
+		})
+	}
 }
 
 // This checks registry data, not filesystem authorization or source closure.
