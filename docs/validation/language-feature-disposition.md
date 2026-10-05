@@ -344,7 +344,7 @@
 
 ## css
 
-근거: [고정 Snapshot2026](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) §2.1/2.2 및 그 References에 기록된 module revision. 아래 모듈별 행은 해당 revision의 grammar/at-rule/selector/property/value syntax를 모두 포함한다. 값 문법의 숫자 범위·computed value·layout 의미는 S01로 분리한다. 상위 module이 대체한 기본 문법의 legacy forms도 남긴다. §2.3/2.4와 §4의 pre-CR exceptions는 기존 채택 범위 밖이다.
+근거: [고정 Snapshot2026](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) §2.1/2.2 및 그 References에 기록된 module revision. 아래 모듈별 행은 해당 revision의 grammar/at-rule/selector/property/value syntax의 production 대안을 양성(P) 범위로 모두 포함한다. CSS Syntax 3 §2.2가 parse 뒤에 각 구문을 해당 grammar와 대조해 맞지 않으면 parse error가 아니라 invalid로 무시한다고 정하므로, property 값·함수 인자·media query 논리·at-rule prelude가 그 grammar와 맞지 않는 입력은 문법 오류(N/R)가 아니라 S01의 의미 검사다(#76). 모듈별 행의 N/R은 그 모듈의 구문 안에 둔 css-syntax-3 수준의 parse error로 남긴다. 값 문법의 숫자 범위·computed value·layout 의미도 S01이다. 상위 module이 대체한 기본 문법의 legacy forms도 남긴다. §2.3/2.4와 §4의 pre-CR exceptions는 기존 채택 범위 밖이다.
 
 | ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case | Primary section/revision |
 |---|---|---|---|---|---|---|
@@ -379,7 +379,7 @@
 | css-M28 | Cascade5/2022-01-13 | REQ | @layer and layered @import | layer name/order/block | P,N,R,E,Q | [css-cascade-5 syntax/grammar (Snapshot revision)](https://www.w3.org/TR/css-cascade-5/) |
 | css-M29 | Color Adjustment1/2025-12-16 | REQ | color-scheme/forced/print-color-adjust grammar | declaration values | P,N,Q | [css-color-adjust-1 syntax/grammar (Snapshot revision)](https://www.w3.org/TR/css-color-adjust-1/) |
 | css-M30 | Conditional4/2025-09-04 | REQ | selector() in @supports | selector inside condition | P,N,R,E,Q | [css-conditional-4 syntax/grammar (Snapshot revision)](https://www.w3.org/TR/css-conditional-4/) |
-| css-S01 | 누적 | SEM | cascade/inheritance/specificity, computed value/range validity/layout/paint/animation 결과 | syntax tokens와 계산을 분리 | - | [semantic 근거](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) |
+| css-S01 | 누적 | SEM | cascade/inheritance/specificity, computed value/range validity/layout/paint/animation 결과, parse 뒤 grammar 대조(property 값·함수 인자·media query 논리·at-rule prelude, CSS Syntax 3 §2.2) | syntax tokens와 계산을 분리 | - | [semantic 근거](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) |
 | css-R01 | 누적 | RUN | CSSOM/browser/font/image/network resource 실행 제외 | URL은 읽지 않음 | - | [runtime/library 근거](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) |
 | css-X01 | 채택 밖 module | EXT | Snapshot §2.3/2.4·pre-CR만의 문법, Sass/Less/vendor extension 제외; 해당 source를 지원해도 필수 성공 대체 아님 | Selectors4/nesting/@container 등 자동 범위 확대 금지 | - | [mode/extension 경계](https://www.w3.org/TR/2026/NOTE-css-2026-20260622/) |
 

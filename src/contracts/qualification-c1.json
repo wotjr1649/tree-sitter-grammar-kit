@@ -170676,7 +170676,8 @@
        ]
       },
       "alternatives": [
-       "css-M02.a001"
+       "css-M02.a001",
+       "css-M02.a005"
       ],
       "sample": null,
       "source": null
@@ -170784,43 +170785,6 @@
       "alternatives": [
        "css-M02.a003",
        "css-M02.a004"
-      ],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "alt-css-M02-04",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-       "bytes": 0
-      },
-      "edits": [],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "stylesheet"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "css-M02": [
-        "P"
-       ]
-      },
-      "alternatives": [
-       "css-M02.a005"
       ],
       "sample": null,
       "source": null
