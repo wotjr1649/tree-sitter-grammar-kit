@@ -1,0 +1,19 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "yaml",
+ "defects": [
+  "yaml-P2-01"
+ ],
+ "files": [
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "            has_tab_ind = true;\n            skp(scanner, lexer);\n",
+     "after": "            has_tab_ind = true;\n            skp(scanner, lexer);\n        } else if (lexer->lookahead == 0xFEFF && scanner->cur_col == 0 && allow_comment && !valid_symbols[ERR_REC] &&\n                   (valid_symbols[S_DIR_YML_BGN] || valid_symbols[S_DRS_END] ||\n                    (valid_symbols[BL] && scanner->ind_len_stk.size > 1))) {\n            // YAML 1.2.2 [202] l-document-prefix, [211] l-yaml-stream: a c-byte-order-mark at the start of a\n            // line opens a document prefix (stream start or after a document suffix, where directives are\n            // valid). It is not indentation: cur_col stays 0.\n            scanner->cur_chr = lexer->lookahead;\n            lexer->advance(lexer, true);\n            if (!valid_symbols[S_DIR_YML_BGN]) {\n                // Outside a prefix it is accepted only directly before \"---\" at column 0 (an explicit\n                // document; open block collections close first). Anything else after it is an error.\n                if (!scn_drs_doc_end(scanner, lexer) || scanner->cur_chr != '-') {\n                    return false;\n                }\n                if (valid_symbols[BL] && scanner->ind_len_stk.size > 1) {\n                    pop_ind(scanner);\n                    RET_SYM(BL);\n                }\n                mrk_end(scanner, lexer);\n                RET_SYM(S_DRS_END);\n            }\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

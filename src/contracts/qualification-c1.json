@@ -195682,8 +195682,8 @@
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "a510c0ca699cf3853bd2192bf103e11132414bc002fe952a88a7106ffb5d44e9",
-      "bytes": 51548
+      "sha256": "548ec6777a474b9d9b6d61779e8da4977863535a264260499be056eb36a81402",
+      "bytes": 52836
      },
      {
       "path": "src/schema.core.c",
@@ -197714,6 +197714,83 @@
       "source": null
      },
      {
+      "id": "alt-yaml-V12-04",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2d655475cc0e5f3ab2f875e7c0cfc92621857788fd01c67b256f8bd5045ef067",
+       "bytes": 22
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "stream",
+         "document",
+         "block_mapping",
+         "block_mapping_pair"
+        ],
+        "anchors": [
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 0,
+          "end_byte": 9
+         },
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 5,
+          "end_byte": 9
+         },
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 17,
+          "end_byte": 21
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "yaml-B01": [
+        "P"
+       ],
+       "yaml-V12": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "yaml-B01.a001",
+       "yaml-B01.a002",
+       "yaml-B01.a005",
+       "yaml-B01.a023",
+       "yaml-B01.a025",
+       "yaml-B01.a026",
+       "yaml-B01.a027",
+       "yaml-B01.a030",
+       "yaml-B01.a032",
+       "yaml-B01.a033",
+       "yaml-B01.a040",
+       "yaml-B01.a083",
+       "yaml-B01.a086",
+       "yaml-B01.a087",
+       "yaml-B01.a088",
+       "yaml-B01.a090",
+       "yaml-B01.a091",
+       "yaml-V12.a007"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "probe-yaml-B01-R-1",
       "role": "requirement",
       "input": {
@@ -198308,6 +198385,147 @@
         "N",
         "R",
         "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-yaml-V12-NR-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8914805b2d3c086480d33ae9921ee5a3d410554bc228fcdc8b696bea99f4cb82",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "block_mapping_pair"
+        ],
+        "anchors": [
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 0,
+          "end_byte": 4
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "yaml-B01": [
+        "N",
+        "R"
+       ],
+       "yaml-V12": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-yaml-V12-NR-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "57afc63cb2f392a0091c74bfd5df52763e91e8a6f039b1e0d88c8c1899edd816",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "block_mapping_pair"
+        ],
+        "anchors": [
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 0,
+          "end_byte": 4
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "yaml-B01": [
+        "N",
+        "R"
+       ],
+       "yaml-V12": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-yaml-V12-NR-3",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f92fa2eb2746dfbb4a0af3d41abf782e9145680391a0883ba0e9f42b803ee1b9",
+       "bytes": 15
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "block_mapping_pair"
+        ],
+        "anchors": [
+         {
+          "type": "block_mapping_pair",
+          "start_byte": 0,
+          "end_byte": 4
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "yaml-B01": [
+        "N",
+        "R"
+       ],
+       "yaml-V12": [
+        "N",
+        "R"
        ]
       },
       "alternatives": [],
