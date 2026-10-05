@@ -1,0 +1,156 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "javascript",
+ "defects": [
+  "javascript-P2-01",
+  "javascript-P2-02",
+  "javascript-P2-03",
+  "javascript-P2-04",
+  "javascript-P2-05",
+  "javascript-P2-06",
+  "javascript-P2-07",
+  "javascript-P2-09"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "    $.jsx_text,\n  ],\n",
+     "after": "    $.jsx_text,\n    $._if_clause_forbidden,\n    $._body_forbidden,\n    $._never,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'bitwise_or',\n      'logical_and',\n",
+     "after": "      'bitwise_or',\n      'coalesce_right',\n      'logical_and',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'logical_or',\n      'ternary',\n",
+     "after": "      'logical_or',\n      'coalesce_left',\n      'ternary',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          seq('*', $._from_clause),\n          seq($.namespace_export, $._from_clause),\n          seq($.export_clause, $._from_clause),\n",
+     "after": "          seq('*', $._from_clause, optional($.import_attribute)),\n          seq($.namespace_export, $._from_clause, optional($.import_attribute)),\n          seq($.export_clause, $._from_clause, optional($.import_attribute)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "              field('declaration', $.declaration),\n              seq(\n",
+     "after": "              field('declaration', $.declaration),\n              field('declaration', choice(\n                alias($.default_function_declaration, $.function_declaration),\n                alias($.default_generator_function_declaration, $.generator_function_declaration),\n                alias($.default_class_declaration, $.class_declaration),\n              )),\n              seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    else_clause: $ => seq('else', $.statement),\n",
+     "after": "    else_clause: $ => seq('else', $._if_clause),\n\n    // IfStatement clauses: Statement, or (Annex B.3.3) a plain FunctionDeclaration\n    _if_clause: $ => choice(\n      $._substatement,\n      alias($.if_clause_function_declaration, $.function_declaration),\n      // ExpressionStatement lookahead restriction: the scanner marks a forbidden clause start\n      seq($._if_clause_forbidden, $._never),\n    ),\n\n    // Bodies of loops and with: Statement only\n    _clause_body: $ => choice(\n      $._substatement,\n      seq($._body_forbidden, $._never),\n    ),\n\n    if_clause_function_declaration: $ => prec.right('declaration', seq(\n      'function',\n      field('name', $.identifier),\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n\n    // Statement (no declarations): bodies of if, loops and with\n    _substatement: $ => choice(\n      $.export_statement,\n      $.import_statement,\n      $.debugger_statement,\n      $.expression_statement,\n      $.variable_declaration,\n      $.statement_block,\n\n      $.if_statement,\n      $.switch_statement,\n      $.for_statement,\n      $.for_in_statement,\n      $.while_statement,\n      $.do_statement,\n      $.try_statement,\n      $.with_statement,\n\n      $.break_statement,\n      $.continue_statement,\n      $.return_statement,\n      $.throw_statement,\n      $.empty_statement,\n      $.labeled_statement,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('consequence', $.statement),\n",
+     "after": "      field('consequence', $._if_clause),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      ')',\n      field('body', $.statement),\n    ),\n",
+     "after": "      ')',\n      field('body', $._clause_body),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $._for_header,\n      field('body', $.statement),\n    ),\n",
+     "after": "      $._for_header,\n      field('body', $._clause_body),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('condition', $.parenthesized_expression),\n      field('body', $.statement),\n    ),\n",
+     "after": "      field('condition', $.parenthesized_expression),\n      field('body', $._clause_body),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'do',\n      field('body', $.statement),\n      'while',\n",
+     "after": "      'do',\n      field('body', $._clause_body),\n      'while',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('object', $.parenthesized_expression),\n      field('body', $.statement),\n    ),\n",
+     "after": "      field('object', $.parenthesized_expression),\n      field('body', $._clause_body),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('label', alias(choice($.identifier, $._reserved_identifier), $.statement_identifier)),\n",
+     "after": "      field('label', alias(choice($.identifier, $._reserved_identifier, 'yield'), $.statement_identifier)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.binary_expression,\n      $.ternary_expression,\n",
+     "after": "      $.binary_expression,\n      alias($.logical_expression, $.binary_expression),\n      alias($.coalesce_expression, $.binary_expression),\n      $.ternary_expression,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _jsx_attribute: $ => choice($.jsx_attribute, $.jsx_expression),\n",
+     "after": "    _jsx_attribute: $ => choice($.jsx_attribute, alias($._jsx_spread_attribute, $.jsx_expression)),\n\n    _jsx_spread_attribute: $ => seq('{', $.spread_element, '}'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n    arrow_function: $ => seq(\n",
+     "after": "\n    // ExportDeclaration: export default HoistableDeclaration[+Default] / ClassDeclaration[+Default]\n    default_function_declaration: $ => prec.right('declaration', seq(\n      optional('async'),\n      'function',\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n\n    default_generator_function_declaration: $ => prec.right('declaration', seq(\n      optional('async'),\n      'function',\n      '*',\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n\n    default_class_declaration: $ => prec('declaration', seq(\n      repeat(field('decorator', $.decorator)),\n      'class',\n      optional($.class_heritage),\n      field('body', $.class_body),\n      optional($._automatic_semicolon),\n    )),\n\n    arrow_function: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    new_expression: $ => prec.right('new', seq(\n      'new',\n      field('constructor', choice($.primary_expression, $.new_expression)),\n      field('arguments', optional(prec.dynamic(1, $.arguments))),\n",
+     "after": "    new_expression: $ => choice(\n      prec.right('new', seq(\n        'new',\n        field('constructor', choice($._constructor, $.new_expression)),\n        field('arguments', optional(prec.dynamic(1, $.arguments))),\n      )),\n      // 'new a?.b()': an optional chain never continues a constructor: dead end\n      prec('member', seq(\n        'new',\n        field('constructor', choice($._constructor, $.new_expression)),\n        field('optional_chain', $.optional_chain),\n        $._never,\n      )),\n    ),\n\n    // MemberExpression without the call and optional chain forms of primary_expression\n    _constructor: $ => choice(\n      alias($.constructor_subscript_expression, $.subscript_expression),\n      alias($.constructor_member_expression, $.member_expression),\n      alias($.constructor_template_call, $.call_expression),\n      $.parenthesized_expression,\n      $._identifier,\n      alias($._reserved_identifier, $.identifier),\n      $.this,\n      $.super,\n      $.number,\n      $.string,\n      $.template_string,\n      $.regex,\n      $.true,\n      $.false,\n      $.null,\n      $.object,\n      $.array,\n      $.function_expression,\n      $.generator_function,\n      $.class,\n      $.meta_property,\n    ),\n\n    constructor_member_expression: $ => prec('member', seq(\n      field('object', choice($._constructor, $.new_expression)),\n      '.',\n      field('property', choice(\n        $.private_property_identifier,\n        reserved('properties', alias($.identifier, $.property_identifier)),\n      )),\n    )),\n\n    constructor_subscript_expression: $ => prec.right('member', seq(\n      field('object', choice($._constructor, $.new_expression)),\n      '[', field('index', $._expressions), ']',\n    )),\n\n    constructor_template_call: $ => prec('template_call', seq(\n      field('function', choice($._constructor, $.new_expression)),\n      field('arguments', $.template_string),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        ['&&', 'logical_and'],\n        ['||', 'logical_or'],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "        ['??', 'ternary'],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "          field('right', $.expression),\n        )),\n      ),\n    ),\n\n    unary_expression: $ => prec.left('unary_void', seq(\n",
+     "after": "          field('right', $.expression),\n        )),\n      ),\n      // UnaryExpression is no ExponentiationExpression base ('-x ** 2', 'await x ** 2'): dead end\n      prec('member', seq(\n        field('left', choice($.unary_expression, $.await_expression)),\n        field('operator', '**'),\n        $._never,\n      )),\n      // ShortCircuitExpression: no unparenthesized ?? next to && or ||: dead ends\n      prec('member', seq(\n        field('left', alias($.logical_expression, $.binary_expression)),\n        field('operator', '??'),\n        $._never,\n      )),\n      prec('member', seq(\n        field('left', alias($.coalesce_expression, $.binary_expression)),\n        field('operator', choice('&&', '||')),\n        $._never,\n      )),\n    ),\n\n    logical_expression: $ => choice(\n      ...[\n        ['&&', 'logical_and'],\n        ['||', 'logical_or'],\n      ].map(([operator, precedence]) =>\n        prec.left(precedence, seq(\n          field('left', $.expression),\n          field('operator', operator),\n          field('right', $.expression),\n        )),\n      ),\n    ),\n\n    // CoalesceExpression: CoalesceExpressionHead ?? BitwiseORExpression. '??' shifts below && and ||\n    // but reduces above them, so a mix always meets one of the dead ends in binary_expression.\n    coalesce_expression: $ => seq(\n      prec('coalesce_left', seq(field('left', $.expression), field('operator', '??'))),\n      prec('coalesce_right', field('right', $.expression)),\n    ),\n\n    unary_expression: $ => prec.left('unary_void', seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "\n    // NotEscapeSequence (ES2018 template literal revision): any other backslash pair in a template\n    _template_not_escape_sequence: _ => token.immediate(prec(-1, seq('\\\\', /(.|\\n)/))),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.escape_sequence,\n        $.template_substitution,\n",
+     "after": "        $.escape_sequence,\n        alias($._template_not_escape_sequence, $.escape_sequence),\n        $.template_substitution,\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "#include <stdio.h>\n#include <wctype.h>\n",
+     "after": "#include <stdio.h>\n#include <string.h>\n#include <wctype.h>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    JSX_TEXT,\n};\n",
+     "after": "    JSX_TEXT,\n    IF_CLAUSE_FORBIDDEN,\n    BODY_FORBIDDEN,\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\nbool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n",
+     "after": "\nstatic bool is_ident_char(int32_t c) { return c == '_' || c == '$' || c == '\\\\' || iswalnum(c) || c > 0x7f; }\n\nstatic bool is_line_terminator(int32_t c) { return c == '\\n' || c == '\\r' || c == 0x2028 || c == 0x2029; }\n\n// Skips whitespace and comments as lookahead (beyond the marked end); records line terminators.\nstatic void peek_whitespace_and_comments(TSLexer *lexer, bool *newline) {\n    for (;;) {\n        if (is_line_terminator(lexer->lookahead)) {\n            *newline = true;\n            advance(lexer);\n        } else if (iswspace(lexer->lookahead) || lexer->lookahead == 0xFEFF) {\n            advance(lexer);\n        } else if (lexer->lookahead == '/') {\n            advance(lexer);\n            if (lexer->lookahead == '/') {\n                while (lexer->lookahead != 0 && !is_line_terminator(lexer->lookahead)) {\n                    advance(lexer);\n                }\n            } else if (lexer->lookahead == '*') {\n                advance(lexer);\n                for (;;) {\n                    if (lexer->lookahead == 0) {\n                        return;\n                    }\n                    if (is_line_terminator(lexer->lookahead)) {\n                        *newline = true;\n                    }\n                    if (lexer->lookahead == '*') {\n                        advance(lexer);\n                        if (lexer->lookahead == '/') {\n                            advance(lexer);\n                            break;\n                        }\n                    } else {\n                        advance(lexer);\n                    }\n                }\n            } else {\n                return;\n            }\n        } else {\n            return;\n        }\n    }\n}\n\n// Reads an identifier-like word (at most 15 characters are kept).\nstatic void peek_word(TSLexer *lexer, char *word) {\n    unsigned n = 0;\n    while (is_ident_char(lexer->lookahead)) {\n        word[n < 15 ? n++ : 15] = lexer->lookahead < 0x80 ? (char)lexer->lookahead : '?';\n        advance(lexer);\n    }\n    word[n < 15 ? n : 15] = 0;\n}\n\n// Zero-width marker at the start of an if clause or of a loop or with body that starts with a form\n// no Statement can start with. ExpressionStatement: [lookahead not in { function, async [no\n// LineTerminator here] function, class, let [ }]; a declaration is not a Statement, except a plain\n// function declaration in an if clause (Annex B.3.3). The grammar lets the marker reach a dead end.\nstatic bool scan_forbidden_clause_start(TSLexer *lexer, bool if_clause) {\n    lexer->result_symbol = if_clause ? IF_CLAUSE_FORBIDDEN : BODY_FORBIDDEN;\n    lexer->mark_end(lexer);\n    bool newline = false;\n    char word[16];\n    peek_whitespace_and_comments(lexer, &newline);\n    peek_word(lexer, word);\n    if (strcmp(word, \"function\") == 0) {\n        if (!if_clause) {\n            return true;\n        }\n        peek_whitespace_and_comments(lexer, &newline);\n        return lexer->lookahead == '*';\n    }\n    if (strcmp(word, \"class\") == 0) {\n        return true;\n    }\n    if (strcmp(word, \"async\") == 0) {\n        newline = false;\n        peek_whitespace_and_comments(lexer, &newline);\n        if (newline) {\n            return false;\n        }\n        peek_word(lexer, word);\n        return strcmp(word, \"function\") == 0;\n    }\n    if (strcmp(word, \"let\") == 0) {\n        peek_whitespace_and_comments(lexer, &newline);\n        return lexer->lookahead == '[';\n    }\n    return false;\n}\n\nbool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    if (valid_symbols[TEMPLATE_CHARS]) {\n",
+     "after": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    // Both markers are never valid together outside error recovery. An HTML-like comment at the\n    // clause start is left to the scanners below.\n    if (valid_symbols[IF_CLAUSE_FORBIDDEN] != valid_symbols[BODY_FORBIDDEN]) {\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (lexer->lookahead != '<' && lexer->lookahead != '-') {\n            return scan_forbidden_clause_start(lexer, valid_symbols[IF_CLAUSE_FORBIDDEN]);\n        }\n    }\n\n    if (valid_symbols[TEMPLATE_CHARS]) {\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
