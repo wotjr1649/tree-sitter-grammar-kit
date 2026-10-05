@@ -1,0 +1,51 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "r",
+ "defects": [
+  "r-P2-01",
+  "r-P2-02",
+  "r-P2-03"
+ ],
+ "files": [
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "  word: $ => $.identifier,\n",
+     "after": "  word: $ => $.identifier,\n\n  // R reserved words (?Reserved) and the pipe placeholder `_` (R >= 4.2) are never\n  // identifiers: where the grammar does not expect them they are syntax errors (for\n  // example `x |> function(y) y` is not a call), and `_` is valid only where the\n  // grammar names it (`_placeholder`).\n  reserved: {\n    global: $ => [\n      'if', 'repeat', 'while', 'function', 'for', 'in', 'next', 'break',\n      'TRUE', 'FALSE', 'NULL', 'Inf', 'NaN', 'NA', 'NA_integer_', 'NA_real_',\n      'NA_complex_', 'NA_character_', '_'\n    ]\n  },\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field(\"function\", $._expression),\n",
+     "after": "      field(\"function\", $._primary),\n",
+     "occurrences": 3
+    },
+    {
+     "before": "      \"=\",\n      optional($._argument_value)\n    ),",
+     "after": "      \"=\",\n      optional(choice($._argument_value, field(\"value\", $._placeholder)))\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "        [\"|>\", PREC.SPECIAL_OR_PIPE],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "        field(\"rhs\", $._expression)\n      ))))\n    },\n\n    // NOTE: Expression on LHS, string/identifier on RHS\n",
+     "after": "        field(\"rhs\", $._expression)\n      ))),\n      withPrec(PREC.SPECIAL_OR_PIPE, seq(\n        field(\"lhs\", $._expression),\n        field(\"operator\", \"|>\"),\n        repeat($._newline),\n        field(\"rhs\", choice($.call, $._placeholder_chain))\n      ))\n    )\n    },\n\n    // NOTE: Expression on LHS, string/identifier on RHS\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        field(\"lhs\", $._expression),\n        field(\"operator\", operator),\n        repeat($._newline),\n        optional(field(\"rhs\", $._string_or_identifier))\n",
+     "after": "        field(\"lhs\", $._primary),\n        field(\"operator\", operator),\n        repeat($._newline),\n        field(\"rhs\", $._string_or_identifier)\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // Keywords.\n",
+     "after": "    // Pipe placeholder and the extraction chains it may head on the right-hand side of\n    // `|>` (R >= 4.3: `_$coef`, `_$coef[[2]]`, `_[[\"x\"]]`, `_@slot`).\n    _placeholder: $ => alias(\"_\", $.identifier),\n\n    _placeholder_chain: $ => choice(\n      alias($._placeholder_extract, $.extract_operator),\n      alias($._placeholder_subset, $.subset),\n      alias($._placeholder_subset2, $.subset2)\n    ),\n\n    _placeholder_head: $ => choice($._placeholder, $._placeholder_chain),\n\n    _placeholder_extract: $ => withPrec(PREC.EXTRACT, seq(\n      field(\"lhs\", $._placeholder_head),\n      field(\"operator\", choice(\"$\", \"@\")),\n      repeat($._newline),\n      field(\"rhs\", $._string_or_identifier)\n    )),\n\n    _placeholder_subset: $ => withPrec(PREC.CALL, seq(\n      field(\"function\", $._placeholder_head),\n      field(\"arguments\", alias($.subset_arguments, $.arguments))\n    )),\n\n    _placeholder_subset2: $ => withPrec(PREC.CALL, seq(\n      field(\"function\", $._placeholder_head),\n      field(\"arguments\", alias($.subset2_arguments, $.arguments))\n    )),\n\n    // Expressions that bind at least as tightly as a call: the only possible heads of\n    // `call`, `subset`, `subset2` and `$`/`@`. Lower-precedence forms (operators,\n    // function definitions, control flow) can never be a head, so listing them would\n    // only add LR conflicts; the rank lets a head win over ending an expression.\n    _primary: $ => prec(PREC.CALL.RANK, choice(\n      $.braced_expression,\n      $.parenthesized_expression,\n      $.call,\n      $.subset,\n      $.subset2,\n      $.extract_operator,\n      $.namespace_operator,\n      $.integer,\n      $.complex,\n      $.float,\n      $.string,\n      $.identifier,\n      $.dots,\n      $.dot_dot_i,\n      $.next,\n      $.break,\n      $.true,\n      $.false,\n      $.null,\n      $.inf,\n      $.nan,\n      $.na\n    )),\n\n    // Keywords.\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
