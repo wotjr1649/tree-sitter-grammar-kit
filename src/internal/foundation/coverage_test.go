@@ -141,8 +141,9 @@ func TestFeatureAlternatives(t *testing.T) {
 	for name, bad := range map[string][]byte{
 		"unknown-field": bytes.Replace(data, []byte(`"status"`), []byte(`"covered": true, "status"`), 1),
 		"duplicate-row": bytes.Replace(data, []byte(`"bash-B01": {`), []byte(`"bash-B01": {"status": "COMPLETE", "alternatives": []}, "bash-B01": {`), 1),
-		"duplicate-key": bytes.Replace(data, []byte(`"status": "PENDING"`), []byte(`"status": "COMPLETE", "status": "PENDING"`), 1),
-		"folded-key":    bytes.Replace(data, []byte(`"status": "PENDING"`), []byte(`"Status": "PENDING"`), 1),
+		// whatever the first row's status is, as rows move from PENDING to COMPLETE
+		"duplicate-key": bytes.Replace(data, []byte(`"status": "`), []byte(`"status": "PENDING", "status": "`), 1),
+		"folded-key":    bytes.Replace(data, []byte(`"status": "`), []byte(`"Status": "`), 1),
 		"trailing-data": append(slices.Clone(data), []byte("{}\n")...),
 	} {
 		if bytes.Equal(bad, data) {

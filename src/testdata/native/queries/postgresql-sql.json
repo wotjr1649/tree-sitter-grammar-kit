@@ -5,6 +5,34 @@
     {
       "id": "q.structure",
       "source": "(CreateStmt (qualified_name) @table)\n(columnDef (ColId) @column)\n(common_table_expr (name) @cte)\n(CreateFunctionStmt (func_name) @function)\n"
+    },
+    {
+      "id": "q.probe-b01-strings",
+      "source": "(dollar_quoted_string) @dollar\n(escape_string_literal) @escape\n(bit_string_literal) @bit\n(hex_string_literal) @hex\n"
+    },
+    {
+      "id": "q.probe-b04-utility",
+      "source": "(ListenStmt (ColId) @listen_channel)\n(NotifyStmt (ColId) @notify_channel)\n(PrepareStmt (name) @prepared_name)\n"
+    },
+    {
+      "id": "q.probe-v10-partition",
+      "source": "(PartitionSpec) @partition_spec\n(PartitionBoundSpec) @partition_bound\n"
+    },
+    {
+      "id": "q.probe-v13-merge",
+      "source": "(merge_when_clause) @merge_when\n"
+    },
+    {
+      "id": "q.probe-v16-json-table",
+      "source": "(json_table_column_definition) @jt_column\n"
+    },
+    {
+      "id": "q.probe-v18-returning",
+      "source": "(returning_option) @returning_alias\n"
+    },
+    {
+      "id": "q.probe-l01-oids",
+      "source": "(OptWith) @opt_with\n"
     }
   ],
   "cases": [
@@ -61,6 +89,222 @@
               "name": "function",
               "type": "func_name",
               "text": "item_total"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-B01-Q-1",
+      "source_case": "probe-postgresql-sql-B01-NRQ-1",
+      "features": [
+        "postgresql-sql-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b01-strings",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "dollar",
+              "type": "dollar_quoted_string",
+              "text": "$tag$it's$tag$"
+            },
+            {
+              "name": "escape",
+              "type": "escape_string_literal",
+              "text": "E'tab\\there'"
+            },
+            {
+              "name": "bit",
+              "type": "bit_string_literal",
+              "text": "B'1010'"
+            },
+            {
+              "name": "hex",
+              "type": "hex_string_literal",
+              "text": "X'1F'"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-B04-Q-1",
+      "source_case": "probe-postgresql-sql-B04-RQ-1",
+      "features": [
+        "postgresql-sql-B04"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-b04-utility",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "listen_channel",
+              "type": "ColId",
+              "text": "chan"
+            },
+            {
+              "name": "notify_channel",
+              "type": "ColId",
+              "text": "chan"
+            },
+            {
+              "name": "prepared_name",
+              "type": "name",
+              "text": "q"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-V10-Q-1",
+      "source_case": "probe-postgresql-sql-V10-RQ-1",
+      "features": [
+        "postgresql-sql-V10"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v10-partition",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "partition_spec",
+              "type": "PartitionSpec",
+              "text": "PARTITION BY RANGE (logdate)"
+            },
+            {
+              "name": "partition_bound",
+              "type": "PartitionBoundSpec",
+              "text": "FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-V13-Q-1",
+      "source_case": "probe-postgresql-sql-V13-RQ-1",
+      "features": [
+        "postgresql-sql-V13"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v13-merge",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "merge_when",
+              "type": "merge_when_clause",
+              "text": "WHEN MATCHED THEN DELETE"
+            },
+            {
+              "name": "merge_when",
+              "type": "merge_when_clause",
+              "text": "WHEN NOT MATCHED THEN INSERT VALUES (s.id)"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-V16-Q-1",
+      "source_case": "probe-postgresql-sql-V16-RQ-1",
+      "features": [
+        "postgresql-sql-V16"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v16-json-table",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "jt_column",
+              "type": "json_table_column_definition",
+              "text": "id int PATH '$.id'"
+            },
+            {
+              "name": "jt_column",
+              "type": "json_table_column_definition",
+              "text": "NESTED PATH '$.tags[*]' COLUMNS (tag text PATH '$')"
+            },
+            {
+              "name": "jt_column",
+              "type": "json_table_column_definition",
+              "text": "tag text PATH '$'"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-V18-Q-1",
+      "source_case": "probe-postgresql-sql-V18-RQ-1",
+      "features": [
+        "postgresql-sql-V18"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v18-returning",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "returning_alias",
+              "type": "returning_option",
+              "text": "OLD AS o"
+            },
+            {
+              "name": "returning_alias",
+              "type": "returning_option",
+              "text": "NEW AS n"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-postgresql-sql-L01-Q-1",
+      "source_case": "probe-postgresql-sql-L01-PNEQ-1",
+      "features": [
+        "postgresql-sql-L01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-l01-oids",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "opt_with",
+              "type": "OptWith",
+              "text": "WITH OIDS"
+            },
+            {
+              "name": "opt_with",
+              "type": "OptWith",
+              "text": "WITHOUT OIDS"
             }
           ],
           "error": null

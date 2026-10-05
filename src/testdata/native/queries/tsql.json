@@ -13,6 +13,14 @@
     {
       "id": "q.r6-begin",
       "source": "(block (statement (cte (identifier) @block_cte)))\n(block (block (statement (query_specification (select (select_expression (term alias: (identifier) @nested_alias)))))))\n"
+    },
+    {
+      "id": "q.probe-v16",
+      "source": "(period_for_system_time (identifier) @period_column)\n(graph_match_predicate) @graph_match\n"
+    },
+    {
+      "id": "q.probe-v22",
+      "source": "(named_window name: (identifier) @window_name)\n"
     }
   ],
   "cases": [
@@ -229,6 +237,67 @@
               "name": "nested_alias",
               "type": "identifier",
               "text": "c"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-V16-Q-1",
+      "source_case": "probe-tsql-V16-NRQ-1",
+      "features": [
+        "tsql-V16"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v16",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "period_column",
+              "type": "identifier",
+              "text": "ValidFrom"
+            },
+            {
+              "name": "period_column",
+              "type": "identifier",
+              "text": "ValidTo"
+            },
+            {
+              "name": "graph_match",
+              "type": "graph_match_predicate",
+              "text": "MATCH(p1-(l)->p2)"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "probe-tsql-V22-Q-1",
+      "source_case": "probe-tsql-V22-PNREQ-1",
+      "features": [
+        "tsql-V22"
+      ],
+      "query_expect": [
+        {
+          "query": "q.probe-v22",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "window_name",
+              "type": "identifier",
+              "text": "w"
+            },
+            {
+              "name": "window_name",
+              "type": "identifier",
+              "text": "w2"
             }
           ],
           "error": null
