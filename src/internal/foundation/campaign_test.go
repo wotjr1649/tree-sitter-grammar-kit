@@ -314,12 +314,15 @@ type c2CreatedFile struct {
 	} `json:"operations"`
 }
 
-// checkC2Created: a created file has exactly one operation, with an empty before, 0
+// checkC2Created: "create" is true when present; a created file has exactly one operation, with an empty before, 0
 // occurrences and the whole content; its source record does not list it among the upstream
 // scanner and shared files; and its C2 record pins it.
 func checkC2Created(registry sourceRegistry, created c2Created) error {
 	for _, r := range registry.Routes {
 		for _, f := range created[r.RouteID] {
+			if f.Create == nil || !*f.Create {
+				return fmt.Errorf("source C2 create flag is not true: %s %s", r.RouteID, f.Target)
+			}
 			if len(f.Operations) != 1 || f.Operations[0].Before != "" || f.Operations[0].Occurrences == nil || *f.Operations[0].Occurrences != 0 || f.Operations[0].After == "" {
 				return fmt.Errorf("source C2 created file is not one whole-content operation: %s %s", r.RouteID, f.Target)
 			}
@@ -366,9 +369,6 @@ func TestC2CreatedFiles(t *testing.T) {
 					t.Fatal(err)
 				}
 				for _, f := range doc.Files {
-					if f.Create != nil && !*f.Create {
-						t.Fatalf("%s: create must be true when present", name)
-					}
 					if f.Create != nil {
 						created[r.RouteID] = append(created[r.RouteID], f)
 					}
@@ -384,7 +384,7 @@ func TestC2CreatedFiles(t *testing.T) {
 	if err := checkC2Created(registry, created); err != nil {
 		t.Fatal(err)
 	}
-	one := 1
+	one, no := 1, false
 	for _, tc := range []struct {
 		name, diagnostic string
 		mutate           func(*sourceRegistry, c2Created)
@@ -403,6 +403,7 @@ func TestC2CreatedFiles(t *testing.T) {
 		{"created-file-with-occurrences", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].Occurrences = &one }},
 		{"created-file-without-occurrences", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].Occurrences = nil }},
 		{"created-file-without-content", "not one whole-content operation", func(_ *sourceRegistry, c c2Created) { c["go"][0].Operations[0].After = "" }},
+		{"create-false", "create flag is not true", func(_ *sourceRegistry, c c2Created) { c["go"][0].Create = &no }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := load()

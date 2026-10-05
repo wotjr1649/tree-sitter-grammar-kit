@@ -87,6 +87,13 @@ function Assert-Text([string]$Text, [string]$Sha, [long]$Bytes, [string]$What) {
   if ($sum -ne $Sha -or $b.Length -ne $Bytes) { throw "$What identity mismatch: $($b.Length) $sum" }
 }
 
+# a member of a parsed JSON object, or $null when it is absent (StrictMode-safe)
+function Get-JsonMember($Object, [string]$Name) {
+  if ($null -eq $Object) { return $null }
+  $p = $Object.PSObject.Properties[$Name]
+  if ($p) { return $p.Value }
+  return $null
+}
 function Get-StepNode($Step) {
   $node = Get-Content -LiteralPath (Join-Path $repo $Step.subject) -Raw | ConvertFrom-Json
   foreach ($seg in ($Step.pointer.Trim('/') -split '/')) { $node = if ($seg -match '^\d+$') { $node[[int]$seg] } else { $node.$seg } }
@@ -97,8 +104,8 @@ function Get-StepNode($Step) {
 function Test-Created($Chain, [string]$Target) {
   foreach ($step in $Chain) {
     if ($step.target -ne $Target) { continue }
-    $node = Get-StepNode $step
-    if ($node.PSObject.Properties['create'] -and $node.create -eq $true) { return $true }
+    $create = Get-JsonMember (Get-StepNode $step) 'create'
+    if ($create -is [bool] -and $create) { return $true }
   }
   return $false
 }
@@ -107,10 +114,13 @@ function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
   foreach ($step in $Chain) {
     if ($step.target -ne $Target) { continue }
     $node = Get-StepNode $step
-    $create = $node.PSObject.Properties['create'] -and $node.create -eq $true
+    $create = Get-JsonMember $node 'create'
+    $create = $create -is [bool] -and $create
     if ($create) {
-      $ops = @($node.($step.field))
-      if ($step.field -ne 'operations' -or $ops.Count -ne 1 -or $ops[0].before -ne '' -or [int]$ops[0].occurrences -ne 0 -or $ops[0].after -isnot [string] -or $ops[0].after -eq '') {
+      $ops = @(Get-JsonMember $node $step.field)
+      $op = if ($ops.Count -eq 1) { $ops[0] } else { $null }
+      $b = Get-JsonMember $op 'before'; $n = Get-JsonMember $op 'occurrences'; $a = Get-JsonMember $op 'after'
+      if ($step.field -ne 'operations' -or $null -eq $op -or $b -isnot [string] -or $b -ne '' -or ($n -isnot [long] -and $n -isnot [int]) -or $n -ne 0 -or $a -isnot [string] -or $a -eq '') {
         throw "patch $($step.subject)$($step.pointer) on ${Target}: a created file needs exactly one operation with an empty before, 0 occurrences and the whole content"
       }
     }
@@ -130,6 +140,14 @@ function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
     }
   }
   return $text
+}
+
+# A created C2 file starts from empty text: it must not be an npm input, exist at the pinned
+# commit, or be patched by an adoption step.
+function Assert-Creatable([string]$Route, [string]$Path, [bool]$Exists, $OwnSteps) {
+  if ($Path.StartsWith('node_modules/')) { throw "$Route C2 patch creates $Path, an npm input file" }
+  if ($Exists) { throw "$Route C2 patch creates $Path, which exists at the pinned commit" }
+  if (@($OwnSteps | Where-Object { $_.target -eq $Path }).Count) { throw "$Route C2 patch creates $Path, which an adoption step patches" }
 }
 
 # ---- tools for regeneration ----
@@ -219,15 +237,13 @@ foreach ($r in $registry.routes) {
     $c2Steps = @($r.regeneration.patch_chain | Where-Object { $_.subject.StartsWith('src/dev/c2-patches/') })
     $ownSteps = @($r.regeneration.patch_chain | Where-Object { -not $_.subject.StartsWith('src/dev/c2-patches/') })
     foreach ($pf in $r.regeneration.patched_files) {
-      # an npm input (cpp's tree-sitter-c, typescript/tsx's tree-sitter-javascript) is patched from its registered tarball
-      $base = if ($pf.path.StartsWith('node_modules/')) { Get-NpmFile $pf.path } else { Join-Path $src $pf.path }
       if (Test-Created $c2Steps $pf.path) {
-        # a created file starts empty; it must not exist upstream, and no adoption step patches it
-        if ($pf.path.StartsWith('node_modules/') -or (Test-Path -LiteralPath $base) -or @($ownSteps | Where-Object { $_.target -eq $pf.path }).Count) {
-          throw "$($r.route) C2 patch creates $($pf.path), which exists at the pinned commit"
-        }
+        $exists = -not $pf.path.StartsWith('node_modules/') -and (Test-Path -LiteralPath (Join-Path $src $pf.path))
+        Assert-Creatable $r.route $pf.path $exists $ownSteps
         $text = ''
       } else {
+        # an npm input (cpp's tree-sitter-c, typescript/tsx's tree-sitter-javascript) is patched from its registered tarball
+        $base = if ($pf.path.StartsWith('node_modules/')) { Get-NpmFile $pf.path } else { Join-Path $src $pf.path }
         $text = Get-PatchedText ([IO.File]::ReadAllText($base, [Text.UTF8Encoding]::new($false, $true))) $ownSteps $pf.path
       }
       if ($adoptPins.ContainsKey($pf.path)) { Assert-Text $text $adoptPins[$pf.path].sha256 $adoptPins[$pf.path].bytes "$($r.route) adoption-chain file $($pf.path)" }

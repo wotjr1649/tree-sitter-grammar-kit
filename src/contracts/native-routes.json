@@ -177,15 +177,15 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "e5258a145c377103386b228eaf692295141b2d78d215e1f27c03994e506d180b",
-     "bytes": 1696582
+     "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
+     "bytes": 1696398
     },
     {
      "path": "src/scanner.c",
      "role": "scanner",
      "origin": "patched",
-     "sha256": "b44ac5c17faf670fba7f8fd5a47150f1f37c72481928ec2e351419016822cdfa",
-     "bytes": 3927
+     "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159",
+     "bytes": 4041
     },
     {
      "path": "src/tree_sitter/alloc.h",
@@ -213,8 +213,8 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "ced569dcc9f3d18d3b58dee78578dbb1562304abc809d4617cacaba7db9557b4",
-      "bytes": 202755
+      "sha256": "0a1facf5530b3df3a711c090086d93261de4eee7fdcc88ec1d2df9fa652f5572",
+      "bytes": 203285
      },
      {
       "path": "node-types.json",
@@ -223,8 +223,8 @@
      },
      {
       "path": "parser.c",
-      "sha256": "e5258a145c377103386b228eaf692295141b2d78d215e1f27c03994e506d180b",
-      "bytes": 1696582
+      "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
+      "bytes": 1696398
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -250,8 +250,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "849ebdd060d70849bc85ed322c5a02b59ccb54a4f390f7f1ea5bb7e2a6012461",
-      "bytes": 24942
+      "sha256": "400ffe497ece4b4ebbb958ede1a980e4abbb3a0197d84cb7d1fad665bce0d0bd",
+      "bytes": 24946
      },
      {
       "path": "package.json",
@@ -283,13 +283,13 @@
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 24942,
-      "sha256": "849ebdd060d70849bc85ed322c5a02b59ccb54a4f390f7f1ea5bb7e2a6012461"
+      "bytes": 24946,
+      "sha256": "400ffe497ece4b4ebbb958ede1a980e4abbb3a0197d84cb7d1fad665bce0d0bd"
      },
      {
       "path": "src/scanner.c",
-      "bytes": 3927,
-      "sha256": "b44ac5c17faf670fba7f8fd5a47150f1f37c72481928ec2e351419016822cdfa"
+      "bytes": 4041,
+      "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159"
      }
     ]
    }
