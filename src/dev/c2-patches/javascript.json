@@ -9,7 +9,8 @@
   "javascript-P2-05",
   "javascript-P2-06",
   "javascript-P2-07",
-  "javascript-P2-09"
+  "javascript-P2-09",
+  "javascript-P2-10"
  ],
  "files": [
   {
@@ -124,6 +125,76 @@
      "before": "        $.escape_sequence,\n        $.template_substitution,\n",
      "after": "        $.escape_sequence,\n        alias($._template_not_escape_sequence, $.escape_sequence),\n        $.template_substitution,\n",
      "occurrences": 1
+    },
+    {
+     "before": "    $._never,\n  ],\n",
+     "after": "    $._never,\n    $._generator_body_start,\n    $._function_body_start,\n    $._body_end,\n    $._yield_keyword,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n    statement_block: $ => prec.right(seq(\n",
+     "after": "\n    // FunctionBody whose braces the scanner tracks\n    context_function_body: $ => seq(\n      alias($._function_body_start, '{'),\n      repeat($.statement),\n      alias($._body_end, '}'),\n    ),\n\n    generator_body: $ => seq(\n      alias($._generator_body_start, '{'),\n      repeat($.statement),\n      alias($._body_end, '}'),\n    ),\n\n    _function_body: $ => choice(\n      $.statement_block,\n      alias($.context_function_body, $.statement_block),\n    ),\n\n    statement_block: $ => prec.right(seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    if_clause_function_declaration: $ => prec.right('declaration', seq(\n      'function',\n      field('name', $.identifier),\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n\n    // Statement (no declarations): bodies of if, loops and with\n",
+     "after": "    if_clause_function_declaration: $ => prec.right('declaration', seq(\n      'function',\n      field('name', $.identifier),\n      $._call_signature,\n      field('body', $._function_body),\n      optional($._automatic_semicolon),\n    )),\n\n    // Statement (no declarations): bodies of if, loops and with\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('label', alias(choice($.identifier, $._reserved_identifier, 'yield'), $.statement_identifier)),\n",
+     "after": "      field('label', alias(choice($.identifier, $._reserved_identifier), $.statement_identifier)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'yield',\n",
+     "after": "      alias($._yield_keyword, 'yield'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'function',\n      field('name', optional($.identifier)),\n      $._call_signature,\n      field('body', $.statement_block),\n    )),\n\n    function_declaration: $ => prec.right('declaration', seq(\n",
+     "after": "      'function',\n      field('name', optional($.identifier)),\n      $._call_signature,\n      field('body', $._function_body),\n    )),\n\n    function_declaration: $ => prec.right('declaration', seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'function',\n      field('name', $.identifier),\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n\n",
+     "after": "      'function',\n      field('name', $.identifier),\n      $._call_signature,\n      field('body', $._function_body),\n      optional($._automatic_semicolon),\n    )),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $._call_signature,\n      field('body', $.statement_block),\n    )),\n",
+     "after": "      $._call_signature,\n      field('body', alias($.generator_body, $.statement_block)),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('name', $.identifier),\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n",
+     "after": "      field('name', $.identifier),\n      $._call_signature,\n      field('body', alias($.generator_body, $.statement_block)),\n      optional($._automatic_semicolon),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'function',\n      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n    )),\n",
+     "after": "      'function',\n      $._call_signature,\n      field('body', $._function_body),\n      optional($._automatic_semicolon),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $._call_signature,\n      field('body', $.statement_block),\n      optional($._automatic_semicolon),\n",
+     "after": "      $._call_signature,\n      field('body', alias($.generator_body, $.statement_block)),\n      optional($._automatic_semicolon),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.statement_block,\n",
+     "after": "        $._function_body,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional($._automatic_semicolon),\n      field('body', $.statement_block),\n    ),\n",
+     "after": "      optional($._automatic_semicolon),\n      field('body', $._function_body),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional(choice('get', 'set', '*')),\n      field('name', $._property_name),\n      field('parameters', $.formal_parameters),\n      field('body', $.statement_block),\n",
+     "after": "      choice(\n        seq(\n          optional(choice('get', 'set')),\n          field('name', $._property_name),\n          field('parameters', $.formal_parameters),\n          field('body', $._function_body),\n        ),\n        seq(\n          '*',\n          field('name', $._property_name),\n          field('parameters', $.formal_parameters),\n          field('body', alias($.generator_body, $.statement_block)),\n        ),\n      ),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -148,6 +219,56 @@
     {
      "before": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    if (valid_symbols[TEMPLATE_CHARS]) {\n",
      "after": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    // Both markers are never valid together outside error recovery. An HTML-like comment at the\n    // clause start is left to the scanners below.\n    if (valid_symbols[IF_CLAUSE_FORBIDDEN] != valid_symbols[BODY_FORBIDDEN]) {\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (lexer->lookahead != '<' && lexer->lookahead != '-') {\n            return scan_forbidden_clause_start(lexer, valid_symbols[IF_CLAUSE_FORBIDDEN]);\n        }\n    }\n\n    if (valid_symbols[TEMPLATE_CHARS]) {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "#include <stdio.h>\n#include <string.h>\n",
+     "after": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    BODY_FORBIDDEN,\n};\n",
+     "after": "    BODY_FORBIDDEN,\n    NEVER,\n    GENERATOR_BODY_START,\n    FUNCTION_BODY_START,\n    BODY_END,\n    YIELD_KEYWORD,\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "void *tree_sitter_javascript_external_scanner_create() { return NULL; }\n",
+     "after": "// Function context frames for [Yield] (ECMA-262 GeneratorBody versus FunctionBody). A frame opens\n// at a tracked body start and closes at its BODY_END.\n// ponytail: frames deeper than MAX_FRAMES reuse the deepest stored frame; nesting that deep is\n// not expected in source code.\n#define MAX_FRAMES 1000\n",
+     "occurrences": 1
+    },
+    {
+     "before": "void tree_sitter_javascript_external_scanner_destroy(void *p) {}\n",
+     "after": "typedef struct {\n    uint16_t depth;\n    uint8_t generator[MAX_FRAMES];\n} Scanner;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "unsigned tree_sitter_javascript_external_scanner_serialize(void *payload, char *buffer) { return 0; }\n",
+     "after": "void *tree_sitter_javascript_external_scanner_create() { return calloc(1, sizeof(Scanner)); }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "void tree_sitter_javascript_external_scanner_deserialize(void *p, const char *b, unsigned n) {}\n",
+     "after": "void tree_sitter_javascript_external_scanner_destroy(void *p) { free(p); }\n\nunsigned tree_sitter_javascript_external_scanner_serialize(void *payload, char *buffer) {\n    Scanner *scanner = (Scanner *)payload;\n    if (scanner->depth == 0) {\n        return 0;\n    }\n    unsigned stored = scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES;\n    buffer[0] = (char)(scanner->depth & 0xff);\n    buffer[1] = (char)(scanner->depth >> 8);\n    memcpy(buffer + 2, scanner->generator, stored);\n    return 2 + stored;\n}\n\nvoid tree_sitter_javascript_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {\n    Scanner *scanner = (Scanner *)payload;\n    scanner->depth = 0;\n    if (length >= 2) {\n        scanner->depth = (uint16_t)((uint8_t)buffer[0] | ((uint8_t)buffer[1] << 8));\n        unsigned stored = scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES;\n        if (length - 2 < stored) {\n            stored = length - 2;\n        }\n        memcpy(scanner->generator, buffer + 2, stored);\n    }\n}\n\nstatic bool current_generator(Scanner *scanner) {\n    return scanner->depth > 0 && scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1];\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "static inline void skip(TSLexer *lexer) { lexer->advance(lexer, true); }\n\n",
+     "after": "static inline void skip(TSLexer *lexer) { lexer->advance(lexer, true); }\n\n// The opening brace of a GeneratorBody or FunctionBody. A generator body always opens a frame;\n// another function body opens one only inside a generator; otherwise the grammar takes the plain '{'.\nstatic bool scan_body_start(Scanner *scanner, TSLexer *lexer, bool generator) {\n    if (!generator && !current_generator(scanner)) {\n        return false;\n    }\n    advance(lexer);\n    lexer->mark_end(lexer);\n    lexer->result_symbol = generator ? GENERATOR_BODY_START : FUNCTION_BODY_START;\n    if (scanner->depth < MAX_FRAMES) {\n        scanner->generator[scanner->depth] = generator;\n    }\n    if (scanner->depth < UINT16_MAX) {\n        scanner->depth++;\n    }\n    return true;\n}\n\nstatic bool is_ident_char(int32_t c);\n\nstatic bool scan_yield_keyword(TSLexer *lexer) {\n    for (unsigned i = 0; i < 5; i++) {\n        if (lexer->lookahead != \"yield\"[i]) {\n            return false;\n        }\n        advance(lexer);\n    }\n    if (is_ident_char(lexer->lookahead)) {\n        return false;\n    }\n    lexer->mark_end(lexer);\n    lexer->result_symbol = YIELD_KEYWORD;\n    return true;\n}\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    // Both markers are never valid together outside error recovery. An HTML-like comment at the\n",
+     "after": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *scanner = (Scanner *)payload;\n    // Both markers are never valid together outside error recovery. An HTML-like comment at the\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            return scan_forbidden_clause_start(lexer, valid_symbols[IF_CLAUSE_FORBIDDEN]);\n        }\n",
+     "after": "            return scan_forbidden_clause_start(lexer, valid_symbols[IF_CLAUSE_FORBIDDEN]);\n        }\n    }\n\n    // Context tokens are never produced during error recovery (every symbol valid).\n    if (!(valid_symbols[IF_CLAUSE_FORBIDDEN] && valid_symbols[BODY_FORBIDDEN])) {\n        if (valid_symbols[GENERATOR_BODY_START] || valid_symbols[FUNCTION_BODY_START] ||\n            (valid_symbols[BODY_END] && !valid_symbols[AUTOMATIC_SEMICOLON])) {\n            while (iswspace(lexer->lookahead)) {\n                skip(lexer);\n            }\n            if (lexer->lookahead == '{' && (valid_symbols[GENERATOR_BODY_START] || valid_symbols[FUNCTION_BODY_START])) {\n                return scan_body_start(scanner, lexer, valid_symbols[GENERATOR_BODY_START]);\n            }\n            if (lexer->lookahead == '}' && valid_symbols[BODY_END] && scanner->depth > 0) {\n                advance(lexer);\n                lexer->mark_end(lexer);\n                lexer->result_symbol = BODY_END;\n                scanner->depth--;\n                return true;\n            }\n        }\n        if (valid_symbols[YIELD_KEYWORD] && !valid_symbols[AUTOMATIC_SEMICOLON] && current_generator(scanner)) {\n            while (iswspace(lexer->lookahead)) {\n                skip(lexer);\n            }\n            if (lexer->lookahead == 'y') {\n                return scan_yield_keyword(lexer);\n            }\n        }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        }\n        return ret;\n",
+     "after": "        }\n        // 'return yield x' in a generator: no semicolon was inserted and the next token is on this line\n        if (!ret && valid_symbols[YIELD_KEYWORD] && !(valid_symbols[IF_CLAUSE_FORBIDDEN] && valid_symbols[BODY_FORBIDDEN]) &&\n            current_generator(scanner) && lexer->lookahead == 'y') {\n            return scan_yield_keyword(lexer);\n        }\n        return ret;\n",
      "occurrences": 1
     }
    ]
