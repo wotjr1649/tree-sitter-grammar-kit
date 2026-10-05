@@ -134,6 +134,11 @@ func checkNativeRoutes(reg nativeRegistry, sources sourceRecords, repro reproRec
 					return fmt.Errorf("%s patched file %s without its patch chain", r.Route, f.Path)
 				}
 			case "upstream":
+				// a registered output path is built from the regenerated file, never from an
+				// upstream generated copy (prepare-routes would overwrite the output with it)
+				if slices.ContainsFunc(g.Outputs, func(o registryFile) bool { return prefix+o.Path == f.Path }) {
+					return fmt.Errorf("%s output %s is taken from upstream", r.Route, f.Path)
+				}
 			default:
 				return fmt.Errorf("%s file %s origin %q", r.Route, f.Path, f.Origin)
 			}
@@ -244,6 +249,9 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		}},
 		{"generated file is not the output", "not a registered output", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			file(route(reg, "go"), "src/tree_sitter/array.h").SHA256 = strings.Repeat("0", 64)
+		}},
+		{"upstream header on an output path", "taken from upstream", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+			file(route(reg, "go"), "src/tree_sitter/array.h").Origin = "upstream"
 		}},
 		{"unoptimized regeneration", "settings", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			route(reg, "json").Regeneration.Optimize = false
