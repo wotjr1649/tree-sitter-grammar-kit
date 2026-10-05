@@ -9550,6 +9550,218 @@
       ]
     },
     {
+      "id": "probe-csharp-B01-P-1",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "class A { }\n#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif\nclass B { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "boolean_literal",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_if",
+              "text": "#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { int ; @@ }\nstruct"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else\nclass Y { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-P-2",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "#if true\nclass A { }\n#else\n#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {\n#endif\nclass B { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_else",
+            "preproc_skipped_section",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class A { }"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else\n#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-P-3",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "#if false\nclass A { }\n#elif !true\nclass B { }\n#elif DEBUG\nclass C { }\n#elif true\nclass D { }\n#else\nclass E { }\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_elif",
+            "preproc_else",
+            "preproc_skipped_section",
+            "unary_expression",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class A { }"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!true"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class B { }"
+            },
+            {
+              "type": "preproc_elif",
+              "text": "#elif DEBUG\nclass C { }\n#elif true\nclass D { }\n#else\nclass E { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class D { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class E { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-PE-1",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "class A\n{\n    int a;\n    void M() { a = 1; }\n}\n#if false\nclass X { }\n#else\nclass Y { }\n#endif\nclass B\n{\n    int b;\n}\n",
+      "edits": [
+        {
+          "find": "#if false\n",
+          "replace": "#if true\n"
+        },
+        {
+          "find": "#if true\n",
+          "replace": "#if false\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class X { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class Y { }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "probe-csharp-B02-P-1",
       "features": [
         "csharp-B02"

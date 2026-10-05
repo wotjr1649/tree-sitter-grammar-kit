@@ -192,6 +192,21 @@
      "before": "      optional(choice('get', 'set', '*')),\n      field('name', $._property_name),\n      field('parameters', $.formal_parameters),\n      field('body', $.statement_block),\n",
      "after": "      choice(\n        seq(\n          optional(choice('get', 'set')),\n          field('name', $._property_name),\n          field('parameters', $.formal_parameters),\n          field('body', $._function_body),\n        ),\n        seq(\n          '*',\n          field('name', $._property_name),\n          field('parameters', $.formal_parameters),\n          field('body', alias($.generator_body, $.statement_block)),\n        ),\n      ),\n",
      "occurrences": 1
+    },
+    {
+     "before": "    $._body_end,\n    $._yield_keyword,\n  ],\n",
+     "after": "    $._body_end,\n    $._yield_keyword,\n    $._concise_body_start,\n    $._concise_body_end,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      '=>',\n      field('body', choice(\n        $.expression,\n        $._function_body,\n      )),\n",
+     "after": "      '=>',\n      choice(\n        field('body', choice(\n          $.expression,\n          $._function_body,\n        )),\n        // ConciseBody is [~Yield]: inside a generator the scanner brackets it with a non-generator frame\n        seq($._concise_body_start, field('body', $.expression), $._concise_body_end),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('property', $._property_name),\n      optional($._initializer),\n    ),\n",
+     "after": "      field('property', $._property_name),\n      optional(choice(\n        $._initializer,\n        // a field initializer is evaluated as its own method: [~Yield] inside a generator\n        seq('=', $._concise_body_start, field('value', $.expression), $._concise_body_end),\n      )),\n    ),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -266,6 +281,31 @@
     {
      "before": "        }\n        return ret;\n",
      "after": "        }\n        // 'return yield x' in a generator: no semicolon was inserted and the next token is on this line\n        if (!ret && valid_symbols[YIELD_KEYWORD] && !(valid_symbols[IF_CLAUSE_FORBIDDEN] && valid_symbols[BODY_FORBIDDEN]) &&\n            current_generator(scanner) && lexer->lookahead == 'y') {\n            return scan_yield_keyword(lexer);\n        }\n        return ret;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    BODY_END,\n    YIELD_KEYWORD,\n};\n",
+     "after": "    BODY_END,\n    YIELD_KEYWORD,\n    CONCISE_BODY_START,\n    CONCISE_BODY_END,\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "static bool current_generator(Scanner *scanner) {\n    return scanner->depth > 0 && scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1];\n}\n",
+     "after": "// Frame kinds: a function body (0), a generator body (1), and an arrow ConciseBody or class field\n// Initializer (2), which is [~Yield] and has no closing brace.\n#define CONCISE_FRAME 2\n\nstatic uint8_t top_frame(Scanner *scanner) {\n    return scanner->depth > 0 ? scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1] : 0;\n}\n\nstatic bool current_generator(Scanner *scanner) { return scanner->depth > 0 && top_frame(scanner) == 1; }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "bool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n",
+     "after": "typedef enum { CONCISE_CONTINUES, CONCISE_ENDS, CONCISE_CONTINUES_CONSUMED } ConciseResult;\n\nstatic bool is_concise_terminator(TSLexer *lexer) {\n    int32_t c = lexer->lookahead;\n    return lexer->eof(lexer) || c == ')' || c == ']' || c == '}' || c == ',' || c == ';' || c == ':';\n}\n\n// Whether the AssignmentExpression of a concise frame ends before the next token: a closing\n// delimiter, ',', ';' or ':' follows, or a line break follows after which no token can continue the\n// expression (the automatic semicolon rule). Consumes past the line break only in that case.\nstatic ConciseResult scan_concise_end(TSLexer *lexer) {\n    while (lexer->lookahead != '\\n' && lexer->lookahead != 0x2028 && lexer->lookahead != 0x2029 && iswspace(lexer->lookahead)) {\n        skip(lexer);\n    }\n    lexer->mark_end(lexer);\n    if (is_concise_terminator(lexer)) {\n        return CONCISE_ENDS;\n    }\n    if (lexer->lookahead != '\\n' && lexer->lookahead != 0x2028 && lexer->lookahead != 0x2029) {\n        return CONCISE_CONTINUES;\n    }\n    skip(lexer);\n    bool scanned_comment = false;\n    if (scan_whitespace_and_comments(lexer, &scanned_comment, true) == REJECT) {\n        return CONCISE_CONTINUES_CONSUMED;\n    }\n    if (is_concise_terminator(lexer)) {\n        return CONCISE_ENDS;\n    }\n    switch (lexer->lookahead) {\n        case '`': case '*': case '%': case '>': case '<': case '=': case '[': case '(':\n        case '?': case '^': case '|': case '&': case '/':\n            return CONCISE_CONTINUES_CONSUMED;\n        case '.':\n            skip(lexer);\n            return iswdigit(lexer->lookahead) ? CONCISE_ENDS : CONCISE_CONTINUES_CONSUMED;\n        case '+':\n            skip(lexer);\n            return lexer->lookahead == '+' ? CONCISE_ENDS : CONCISE_CONTINUES_CONSUMED;\n        case '-':\n            skip(lexer);\n            return lexer->lookahead == '-' ? CONCISE_ENDS : CONCISE_CONTINUES_CONSUMED;\n        case '!':\n            skip(lexer);\n            return lexer->lookahead != '=' ? CONCISE_ENDS : CONCISE_CONTINUES_CONSUMED;\n        case 'i':\n            skip(lexer);\n            if (lexer->lookahead != 'n') {\n                return CONCISE_ENDS;\n            }\n            skip(lexer);\n            if (!is_ident_char(lexer->lookahead)) {\n                return CONCISE_CONTINUES_CONSUMED;\n            }\n            for (unsigned i = 0; i < 8; i++) {\n                if (lexer->lookahead != \"stanceof\"[i]) {\n                    return CONCISE_ENDS;\n                }\n                skip(lexer);\n            }\n            return is_ident_char(lexer->lookahead) ? CONCISE_ENDS : CONCISE_CONTINUES_CONSUMED;\n        default:\n            return CONCISE_ENDS;\n    }\n}\n\nbool tree_sitter_javascript_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // Context tokens are never produced during error recovery (every symbol valid).\n    if (!(valid_symbols[IF_CLAUSE_FORBIDDEN] && valid_symbols[BODY_FORBIDDEN])) {\n",
+     "after": "    // Context tokens are never produced during error recovery (every symbol valid).\n    if (!(valid_symbols[IF_CLAUSE_FORBIDDEN] && valid_symbols[BODY_FORBIDDEN])) {\n        if (valid_symbols[CONCISE_BODY_END] && top_frame(scanner) == CONCISE_FRAME) {\n            ConciseResult r = scan_concise_end(lexer);\n            if (r == CONCISE_ENDS) {\n                lexer->result_symbol = CONCISE_BODY_END;\n                scanner->depth--;\n                return true;\n            }\n            if (r == CONCISE_CONTINUES_CONSUMED) {\n                // a '?' on the next line continues the expression as a conditional\n                return valid_symbols[TERNARY_QMARK] && lexer->lookahead == '?' && scan_ternary_qmark(lexer);\n            }\n        }\n        if (valid_symbols[CONCISE_BODY_START] && current_generator(scanner)) {\n            while (iswspace(lexer->lookahead)) {\n                skip(lexer);\n            }\n            // '{' after '=>' is a FunctionBody, which the body start below tracks\n            if (lexer->lookahead != '{' || !valid_symbols[FUNCTION_BODY_START]) {\n                lexer->mark_end(lexer);\n                lexer->result_symbol = CONCISE_BODY_START;\n                if (scanner->depth < MAX_FRAMES) {\n                    scanner->generator[scanner->depth] = CONCISE_FRAME;\n                }\n                if (scanner->depth < UINT16_MAX) {\n                    scanner->depth++;\n                }\n                return true;\n            }\n        }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            if (lexer->lookahead == '}' && valid_symbols[BODY_END] && scanner->depth > 0) {\n",
+     "after": "            if (lexer->lookahead == '}' && valid_symbols[BODY_END] && scanner->depth > 0 && top_frame(scanner) != CONCISE_FRAME) {\n",
      "occurrences": 1
     }
    ]

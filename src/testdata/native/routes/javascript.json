@@ -5803,6 +5803,128 @@
           ]
         }
       ]
+    },
+    {
+      "id": "probe-javascript-V15-N-1",
+      "features": [
+        "javascript-V15"
+      ],
+      "source_utf8": "function* gen() {\n  const f = () => yield 1;\n  yield f;\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "generator_function_declaration",
+            "arrow_function",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "arrow_function",
+              "text": "() => yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V22-N-1",
+      "features": [
+        "javascript-V22"
+      ],
+      "source_utf8": "function* gen() {\n  class C {\n    x = yield 1;\n    y = 2;\n  }\n  yield new C();\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration",
+            "field_definition",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "field_definition",
+              "text": "y = 2"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield new C()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-javascript-V15-PNE-1",
+      "features": [
+        "javascript-V15"
+      ],
+      "source_utf8": "const base = [1, 2, 3];\nfunction helper(a, b) {\n  return a + b;\n}\nfunction* gen(list) {\n  for (const x of list) {\n    yield x * 2;\n  }\n}\nhelper(base[0], base[1]);\n",
+      "edits": [
+        {
+          "find": "function* gen(list)",
+          "replace": "function gen(list)"
+        },
+        {
+          "find": "function gen(list)",
+          "replace": "function* gen(list)"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "generator_function_declaration",
+            "for_in_statement",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "yield_expression",
+              "text": "yield x * 2"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "function_declaration",
+            "for_in_statement",
+            "binary_expression"
+          ],
+          "anchors": [
+            {
+              "type": "binary_expression",
+              "text": "yield x * 2"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "generator_function_declaration",
+            "for_in_statement",
+            "yield_expression"
+          ],
+          "anchors": [
+            {
+              "type": "yield_expression",
+              "text": "yield x * 2"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
