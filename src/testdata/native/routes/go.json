@@ -2563,10 +2563,10 @@
       "edits": [
         {
           "find": "(xs[1] * 2)",
-          "replace": "(xs[1] * )"
+          "replace": "(xs[1] * 2"
         },
         {
-          "find": "(xs[1] * )",
+          "find": "(xs[1] * 2",
           "replace": "(xs[1] * 2)"
         }
       ],

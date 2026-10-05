@@ -338,7 +338,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			g.PatchChain = route(reg, "csharp").Regeneration.PatchChain
 		}},
 		{"patched origin without a chain", "without its patch chain", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
-			file(route(reg, "r"), "src/scanner.c").Origin = "patched" // r's C2 patch leaves its scanner unpatched
+			file(route(reg, "dart"), "src/scanner.c").Origin = "patched" // dart's C2 patch leaves its scanner unpatched
 		}},
 		{"output differs from the source record", "source regeneration record", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			route(reg, "go").Regeneration.Outputs[3].Bytes++

@@ -1307,12 +1307,12 @@
       "source_utf8": "check <- function(x) {\n  if (x > 0) {\n    \"pos\"\n  } else if (x < 0) {\n    \"neg\"\n  } else {\n    \"zero\"\n  }\n}\nfor (i in 1:3) print(i)\nwhile (TRUE) break\nrepeat {\n  next\n}\n",
       "edits": [
         {
-          "find": "\"neg\"",
-          "replace": "\"neg\" *"
+          "find": "} else if (x < 0) {",
+          "replace": "} else if (x <) {"
         },
         {
-          "find": "\"neg\" *",
-          "replace": "\"neg\""
+          "find": "} else if (x <) {",
+          "replace": "} else if (x < 0) {"
         }
       ],
       "expect": [

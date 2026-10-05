@@ -1142,6 +1142,11 @@
             "path": "grammar.js",
             "bytes": 29652,
             "sha256": "5ee1c8af01a3164bb407ea118930cb02304195ece315d5a760c24e04c846228b"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 32040,
+            "sha256": "7452b0420d474808710749c21541cdc40200562025e432d2030428f25477c042"
           }
         ]
       }
@@ -1449,8 +1454,8 @@
           },
           {
             "path": "src/scanner.c",
-            "bytes": 7152,
-            "sha256": "dc3f9adc1c21de2437994c347a383b20b94a66744f0bbdbcd34beb4962e7bb2c"
+            "bytes": 8438,
+            "sha256": "e7f2c01186235209f16f83624a44b154ca62ce22e2f9de3276250b321b67cbdd"
           }
         ]
       }

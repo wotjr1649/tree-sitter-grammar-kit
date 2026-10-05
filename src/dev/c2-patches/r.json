@@ -46,6 +46,16 @@
      "occurrences": 1
     }
    ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "  if (valid_symbols[ERROR_SENTINEL]) {\n    // Decline to handle when in \"error recovery\" mode. When a syntax error occurs,\n    // tree-sitter calls the external scanner with all `valid_symbols` marked as valid.\n    return false;\n  }",
+     "after": "  if (valid_symbols[ERROR_SENTINEL]) {\n    // Decline to handle when in \"error recovery\" mode. When a syntax error occurs,\n    // tree-sitter calls the external scanner with all `valid_symbols` marked as valid.\n    // C2: except for a closing bracket that matches the innermost open scope. It stays a token, so\n    // recovery can insert a MISSING operand before it (`(x <)`), and the scope closes, so newlines\n    // after it separate statements again instead of being skipped as inside the bracket.\n    consume_whitespace_and_ignored_newlines(lexer, scopes);\n    Scope scope = scopes_peek(scopes);\n    if (lexer->lookahead == ')' && scope == SCOPE_PAREN) {\n      return scan_close_block(lexer, scopes, SCOPE_PAREN, CLOSE_PAREN);\n    }\n    if (lexer->lookahead == '}' && scope == SCOPE_BRACE) {\n      return scan_close_block(lexer, scopes, SCOPE_BRACE, CLOSE_BRACE);\n    }\n    if (lexer->lookahead == ']' && scope == SCOPE_BRACKET) {\n      return scan_close_block(lexer, scopes, SCOPE_BRACKET, CLOSE_BRACKET);\n    }\n    if (lexer->lookahead == ']' && scope == SCOPE_BRACKET2) {\n      return scan_close_bracket2(lexer, scopes);\n    }\n    return false;\n  }",
+     "occurrences": 1
+    }
+   ]
   }
  ]
 }

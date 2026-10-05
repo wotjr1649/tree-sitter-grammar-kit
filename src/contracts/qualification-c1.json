@@ -21312,13 +21312,13 @@
         "old_end_byte": 151,
         "new_end_byte": 150,
         "old": "KHhzWzFdICogMik=",
-        "new": "KHhzWzFdICogKQ=="
+        "new": "KHhzWzFdICogMg=="
        },
        {
         "start_byte": 140,
         "old_end_byte": 150,
         "new_end_byte": 151,
-        "old": "KHhzWzFdICogKQ==",
+        "old": "KHhzWzFdICogMg==",
         "new": "KHhzWzFdICogMik="
        }
       ],
@@ -77273,8 +77273,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "fe191f56b7825f84c5c11289f4c3c74a7a1828c21bbefc55b43a8749d67933d4",
-       "bytes": 904
+       "sha256": "d070dd1e578448fe5f071c096db7720bcaea9e84fddf85ce83504dd20d21d0fa",
+       "bytes": 954
       },
       "edits": [],
       "expect": [
@@ -77301,7 +77301,7 @@
          {
           "type": "function_declaration",
           "start_byte": 40,
-          "end_byte": 903
+          "end_byte": 953
          },
          {
           "type": "lambda_literal",
@@ -77431,42 +77431,52 @@
          {
           "type": "anonymous_function",
           "start_byte": 608,
-          "end_byte": 616
+          "end_byte": 644
+         },
+         {
+          "type": "type_constraints",
+          "start_byte": 625,
+          "end_byte": 640
+         },
+         {
+          "type": "anonymous_function",
+          "start_byte": 658,
+          "end_byte": 666
          },
          {
           "type": "object_literal",
-          "start_byte": 631,
-          "end_byte": 674
+          "start_byte": 681,
+          "end_byte": 724
          },
          {
           "type": "object_literal",
-          "start_byte": 690,
-          "end_byte": 710
+          "start_byte": 740,
+          "end_byte": 760
          },
          {
           "type": "object_literal",
-          "start_byte": 726,
-          "end_byte": 826
+          "start_byte": 776,
+          "end_byte": 876
          },
          {
           "type": "property_declaration",
-          "start_byte": 831,
-          "end_byte": 853
+          "start_byte": 881,
+          "end_byte": 903
          },
          {
           "type": "multi_variable_declaration",
-          "start_byte": 835,
-          "end_byte": 841
+          "start_byte": 885,
+          "end_byte": 891
          },
          {
           "type": "property_declaration",
-          "start_byte": 858,
-          "end_byte": 901
+          "start_byte": 908,
+          "end_byte": 951
          },
          {
           "type": "variable_declaration",
-          "start_byte": 871,
-          "end_byte": 887
+          "start_byte": 921,
+          "end_byte": 937
          }
         ],
         "declarations": ""
@@ -145321,8 +145331,8 @@
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "e99e003ab8b0463dee975432b6f9f7e39cd75eb0047989f064fdf57927fa8e9d",
-      "bytes": 31117
+      "sha256": "7452b0420d474808710749c21541cdc40200562025e432d2030428f25477c042",
+      "bytes": 32040
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -147054,18 +147064,18 @@
       },
       "edits": [
        {
-        "start_byte": 74,
-        "old_end_byte": 79,
-        "new_end_byte": 81,
-        "old": "Im5lZyI=",
-        "new": "Im5lZyIgKg=="
+        "start_byte": 50,
+        "old_end_byte": 69,
+        "new_end_byte": 67,
+        "old": "fSBlbHNlIGlmICh4IDwgMCkgew==",
+        "new": "fSBlbHNlIGlmICh4IDwpIHs="
        },
        {
-        "start_byte": 74,
-        "old_end_byte": 81,
-        "new_end_byte": 79,
-        "old": "Im5lZyIgKg==",
-        "new": "Im5lZyI="
+        "start_byte": 50,
+        "old_end_byte": 67,
+        "new_end_byte": 69,
+        "old": "fSBlbHNlIGlmICh4IDwpIHs=",
+        "new": "fSBlbHNlIGlmICh4IDwgMCkgew=="
        }
       ],
       "expect": [
@@ -147086,18 +147096,18 @@
         "anchors": [
          {
           "type": "for_statement",
-          "start_byte": 110,
-          "end_byte": 133
+          "start_byte": 106,
+          "end_byte": 129
          },
          {
           "type": "while_statement",
-          "start_byte": 134,
-          "end_byte": 152
+          "start_byte": 130,
+          "end_byte": 148
          },
          {
           "type": "repeat_statement",
-          "start_byte": 153,
-          "end_byte": 170
+          "start_byte": 149,
+          "end_byte": 166
          }
         ],
         "declarations": ""
@@ -162972,8 +162982,8 @@
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "dc3f9adc1c21de2437994c347a383b20b94a66744f0bbdbcd34beb4962e7bb2c",
-      "bytes": 7152
+      "sha256": "e7f2c01186235209f16f83624a44b154ca62ce22e2f9de3276250b321b67cbdd",
+      "bytes": 8438
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -172368,6 +172378,225 @@
       "alternatives": [
        "css-M05.a072",
        "css-M05.a073"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "alt-css-M05-07",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f81a0eed801bf7219be017a8f61056252af53b34c7b742d28aa69877acd6a1ac",
+       "bytes": 33
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "selectors",
+         "descendant_selector",
+         "class_selector",
+         "comment"
+        ],
+        "anchors": [
+         {
+          "type": "rule_set",
+          "start_byte": 0,
+          "end_byte": 32
+         },
+         {
+          "type": "descendant_selector",
+          "start_byte": 0,
+          "end_byte": 5
+         },
+         {
+          "type": "comment",
+          "start_byte": 7,
+          "end_byte": 25
+         },
+         {
+          "type": "class_selector",
+          "start_byte": 26,
+          "end_byte": 28
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M01": [
+        "P"
+       ],
+       "css-M05": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "css-M05.a001",
+       "css-M05.a002",
+       "css-M05.a006",
+       "css-M05.a008",
+       "css-M05.a012",
+       "css-M05.a017",
+       "css-M05.a027",
+       "css-M05.a031",
+       "css-M01.a001"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "alt-css-M05-08",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "13ed84474c300fc21085ce7c426674b1df1132ae879dd06f236fefde8b8cc7f3",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "descendant_selector",
+         "tag_name",
+         "attribute_selector",
+         "string_value"
+        ],
+        "anchors": [
+         {
+          "type": "rule_set",
+          "start_byte": 0,
+          "end_byte": 19
+         },
+         {
+          "type": "descendant_selector",
+          "start_byte": 0,
+          "end_byte": 15
+         },
+         {
+          "type": "tag_name",
+          "start_byte": 0,
+          "end_byte": 1
+         },
+         {
+          "type": "attribute_selector",
+          "start_byte": 2,
+          "end_byte": 15
+         },
+         {
+          "type": "string_value",
+          "start_byte": 9,
+          "end_byte": 14
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M01": [
+        "P"
+       ],
+       "css-M05": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "css-M05.a002",
+       "css-M05.a006",
+       "css-M05.a007",
+       "css-M05.a008",
+       "css-M05.a009",
+       "css-M05.a010",
+       "css-M05.a012",
+       "css-M05.a018",
+       "css-M05.a022",
+       "css-M05.a026",
+       "css-M05.a029",
+       "css-M01.a021"
+      ],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "alt-css-M05-09",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "3864cf787c388d01684ac19a63c7d330ccf354a524e7d45ebf114deb2c64121b",
+       "bytes": 18
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "descendant_selector",
+         "class_selector",
+         "comment"
+        ],
+        "anchors": [
+         {
+          "type": "rule_set",
+          "start_byte": 0,
+          "end_byte": 17
+         },
+         {
+          "type": "descendant_selector",
+          "start_byte": 0,
+          "end_byte": 5
+         },
+         {
+          "type": "comment",
+          "start_byte": 6,
+          "end_byte": 13
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "css-M01": [
+        "P"
+       ],
+       "css-M05": [
+        "P"
+       ]
+      },
+      "alternatives": [
+       "css-M05.a002",
+       "css-M05.a006",
+       "css-M05.a008",
+       "css-M05.a012",
+       "css-M05.a027",
+       "css-M05.a031",
+       "css-M01.a001"
       ],
       "sample": null,
       "source": null
