@@ -4899,8 +4899,7 @@
             "when_subject",
             "when_entry",
             "type_test",
-            "range_test",
-            "if_expression"
+            "range_test"
           ],
           "anchors": [
             {
