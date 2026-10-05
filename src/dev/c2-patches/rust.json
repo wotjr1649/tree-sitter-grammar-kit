@@ -40,16 +40,6 @@
      "occurrences": 1
     },
     {
-     "before": "    $._line_doc_content,\n    $._error_sentinel,",
-     "after": "    $._line_doc_content,\n    $.shebang,\n    $._error_sentinel,",
-     "occurrences": 1
-    },
-    {
-     "before": "    shebang: _ => /#![\\r\\f\\t\\v ]*([^\\[\\n].*)?\\n/,\n\n",
-     "after": "",
-     "occurrences": 1
-    },
-    {
      "before": "    attribute: $ => seq(\n      $._path,\n      optional(choice(\n        seq('=', field('value', $._expression)),\n        field('arguments', alias($.delim_token_tree, $.token_tree)),\n      )),\n    ),",
      "after": "    attribute: $ => {\n      const inner = seq(\n        $._path,\n        optional(choice(\n          seq('=', field('value', $._expression)),\n          field('arguments', alias($.delim_token_tree, $.token_tree)),\n        )),\n      );\n      return choice(inner, seq('unsafe', '(', inner, ')'));\n    },",
      "occurrences": 1
@@ -165,23 +155,8 @@
    "target": "src/scanner.c",
    "operations": [
     {
-     "before": "    LINE_DOC_CONTENT,\n    ERROR_SENTINEL",
-     "after": "    LINE_DOC_CONTENT,\n    SHEBANG,\n    ERROR_SENTINEL",
-     "occurrences": 1
-    },
-    {
      "before": "    if (lexer->lookahead != 'u' && lexer->lookahead != 'i' && lexer->lookahead != 'f') {\n        return true;\n    }\n    advance(lexer);\n    if (!iswdigit(lexer->lookahead)) {\n        return true;\n    }\n\n    while (iswdigit(lexer->lookahead)) {\n        advance(lexer);\n    }\n\n    lexer->mark_end(lexer);\n    return true;",
      "after": "    if (!iswalpha(lexer->lookahead) || lexer->lookahead == 'e' || lexer->lookahead == 'E') {\n        return true;\n    }\n    while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {\n        advance(lexer);\n    }\n\n    lexer->mark_end(lexer);\n    return true;",
-     "occurrences": 1
-    },
-    {
-     "before": "        if (lexer->lookahead == '\\n') {\n            // Include the newline in the doc content node.\n            // Line endings are useful for markdown injection.\n            advance(lexer);\n            return true;\n        }",
-     "after": "        if (lexer->lookahead == '\\n') {\n            return true;\n        }",
-     "occurrences": 1
-    },
-    {
-     "before": "    Scanner *scanner = (Scanner *)payload;\n\n    if (valid_symbols[BLOCK_COMMENT_CONTENT]",
-     "after": "    Scanner *scanner = (Scanner *)payload;\n\n    // Shebang: '#!' not followed (after horizontal whitespace) by '[', up to the line feed.\n    if (valid_symbols[SHEBANG]) {\n        while (iswspace(lexer->lookahead)) {\n            skip(lexer);\n        }\n    }\n    if (valid_symbols[SHEBANG] && lexer->lookahead == '#') {\n        advance(lexer);\n        if (lexer->lookahead != '!') {\n            return false;\n        }\n        advance(lexer);\n        while (lexer->lookahead == ' ' || lexer->lookahead == '\\t' || lexer->lookahead == '\\r' ||\n               lexer->lookahead == '\\f' || lexer->lookahead == '\\v') {\n            advance(lexer);\n        }\n        if (lexer->lookahead == '[') {\n            return false;\n        }\n        while (!lexer->eof(lexer) && lexer->lookahead != '\\n') {\n            advance(lexer);\n        }\n        lexer->mark_end(lexer);\n        lexer->result_symbol = SHEBANG;\n        return true;\n    }\n\n    if (valid_symbols[BLOCK_COMMENT_CONTENT]",
      "occurrences": 1
     }
    ]
