@@ -997,8 +997,8 @@ func TestReproductionRoutes(t *testing.T) {
 			t.Errorf("source mutation not detected: %s", name)
 		}
 	}
-	// A C2 record on the adopted csharp route demands all six output pins; csharp's reference
-	// pins parser.c and parser.h only. With six well-formed pins it is accepted.
+	// A C2 record on the adopted csharp route demands all six output pins, where an adoption
+	// reference pins parser.c and parser.h only. With six well-formed pins it is accepted.
 	adoptedC2 := func(pins func(*reproductionRoutes)) error {
 		var m reproductionRoutes
 		var s sourceRegistry
@@ -1015,7 +1015,14 @@ func TestReproductionRoutes(t *testing.T) {
 		t.Fatalf("C2-patched adopted route with six pins: %v", err)
 	}
 	for name, pins := range map[string]func(*reproductionRoutes){
-		"C2-patched adopted route with its parser.c pin only": func(*reproductionRoutes) {},
+		"C2-patched adopted route with its parser.c pin only": func(x *reproductionRoutes) {
+			ref := x.Routes[at(x, "csharp")].PrepareGenerated
+			for path := range ref {
+				if path != "parser.c" && path != "tree_sitter/parser.h" {
+					delete(ref, path)
+				}
+			}
+		},
 		"C2-patched adopted route with a malformed pin": func(x *reproductionRoutes) {
 			six(x)
 			pin := x.Routes[at(x, "csharp")].PrepareGenerated["node-types.json"]

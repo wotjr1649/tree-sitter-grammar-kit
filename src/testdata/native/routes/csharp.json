@@ -5724,15 +5724,7 @@
             },
             {
               "type": "constructor_declaration",
-              "text": "unsafe ~S3() => x();"
-            },
-            {
-              "type": "constructor_declaration",
               "text": "static unsafe S4() { }"
-            },
-            {
-              "type": "constructor_declaration",
-              "text": "unsafe extern ~S4();"
             },
             {
               "type": "constructor_declaration",
@@ -9558,6 +9550,218 @@
       ]
     },
     {
+      "id": "probe-csharp-B01-P-1",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "class A { }\n#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif\nclass B { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "boolean_literal",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_if",
+              "text": "#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { int ; @@ }\nstruct"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else\nclass Y { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-P-2",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "#if true\nclass A { }\n#else\n#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {\n#endif\nclass B { }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_else",
+            "preproc_skipped_section",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class A { }"
+            },
+            {
+              "type": "preproc_else",
+              "text": "#else\n#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class B { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-P-3",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "#if false\nclass A { }\n#elif !true\nclass B { }\n#elif DEBUG\nclass C { }\n#elif true\nclass D { }\n#else\nclass E { }\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_elif",
+            "preproc_else",
+            "preproc_skipped_section",
+            "unary_expression",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class A { }"
+            },
+            {
+              "type": "unary_expression",
+              "text": "!true"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class B { }"
+            },
+            {
+              "type": "preproc_elif",
+              "text": "#elif DEBUG\nclass C { }\n#elif true\nclass D { }\n#else\nclass E { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class D { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class E { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-csharp-B01-PE-1",
+      "features": [
+        "csharp-B01"
+      ],
+      "source_utf8": "class A\n{\n    int a;\n    void M() { a = 1; }\n}\n#if false\nclass X { }\n#else\nclass Y { }\n#endif\nclass B\n{\n    int b;\n}\n",
+      "edits": [
+        {
+          "find": "#if false\n",
+          "replace": "#if true\n"
+        },
+        {
+          "find": "#if true\n",
+          "replace": "#if false\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class X { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class Y { }"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "preproc_skipped_section",
+            "preproc_else",
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "preproc_skipped_section",
+              "text": "class X { }"
+            },
+            {
+              "type": "class_declaration",
+              "text": "class Y { }"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "probe-csharp-B02-P-1",
       "features": [
         "csharp-B02"
@@ -9760,7 +9964,7 @@
       "features": [
         "csharp-V08"
       ],
-      "source_utf8": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name => \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) => p switch\n    {\n        (0, 0) => \"origin\",\n        { X: 0 } => \"on-axis\",\n        _ => \"other\",\n    };\n\n    static async IAsyncEnumerable<int> Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) => v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n",
+      "source_utf8": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name => \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) => p switch\n    {\n        Point(0, 0) { } => \"origin\",\n        { X: 0 } => \"on-axis\",\n        _ => \"other\",\n    };\n\n    static async IAsyncEnumerable<int> Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) => v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n",
       "edits": [],
       "expect": [
         {

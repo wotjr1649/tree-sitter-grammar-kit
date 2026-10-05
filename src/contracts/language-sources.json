@@ -60,6 +60,24 @@
           "platform": "linux/amd64",
           "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
         }
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/csharp.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 67113,
+            "sha256": "a243cb78568516046b5d3e7e7e5136470646d6a7b6b8f2996d4243828e608085"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 27090,
+            "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b"
+          }
+        ]
       }
     },
     {
@@ -236,22 +254,22 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
-            "bytes": 174998,
-            "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+            "bytes": 202470,
+            "sha256": "16b1a64ebc8cab6935d9aa7938f535c75038738fd80d1af316be7de6d213cd3a"
           },
           {
             "path": "node-types.json",
-            "bytes": 64022,
-            "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+            "bytes": 78144,
+            "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
           },
           {
             "path": "parser.c",
-            "bytes": 2855926,
-            "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+            "bytes": 4395417,
+            "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -267,6 +285,24 @@
             "path": "tree_sitter/parser.h",
             "bytes": 7624,
             "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+          }
+        ]
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/javascript.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 40314,
+            "sha256": "f204065fbfb442022ec69560ed2a0d07fcf64a981e4752116b27838f53c53242"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 23108,
+            "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5"
           }
         ]
       }
@@ -294,22 +330,22 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
-            "bytes": 174998,
-            "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3"
+            "bytes": 202470,
+            "sha256": "16b1a64ebc8cab6935d9aa7938f535c75038738fd80d1af316be7de6d213cd3a"
           },
           {
             "path": "node-types.json",
-            "bytes": 64022,
-            "sha256": "188a8baa97018edaf63bf7ece372c07bc0d74d1301004bc8f211eb7dee5a6e70"
+            "bytes": 78144,
+            "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
           },
           {
             "path": "parser.c",
-            "bytes": 2855926,
-            "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04"
+            "bytes": 4395417,
+            "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -325,6 +361,24 @@
             "path": "tree_sitter/parser.h",
             "bytes": 7624,
             "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+          }
+        ]
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/jsx.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 40314,
+            "sha256": "f204065fbfb442022ec69560ed2a0d07fcf64a981e4752116b27838f53c53242"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 23108,
+            "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5"
           }
         ]
       }
@@ -384,6 +438,24 @@
           "platform": "linux/amd64",
           "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
         }
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/typescript.json"
+        ],
+        "patched_files": [
+          {
+            "path": "common/define-grammar.js",
+            "bytes": 36347,
+            "sha256": "6be436eeff7a5af8aaa1ff52ce965d3bf43f54013cbef344c2a3fe5fae4491d7"
+          },
+          {
+            "path": "node_modules/tree-sitter-javascript/grammar.js",
+            "bytes": 31957,
+            "sha256": "016c41a11289ce28f2b1592e7a018efa60427c1ee658a2fa0932b063c14dc183"
+          }
+        ]
       }
     },
     {
@@ -441,6 +513,24 @@
           "platform": "linux/amd64",
           "result": "ALL_REGISTERED_ROWS_AND_EDITS_PASS"
         }
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/tsx.json"
+        ],
+        "patched_files": [
+          {
+            "path": "common/define-grammar.js",
+            "bytes": 36347,
+            "sha256": "6be436eeff7a5af8aaa1ff52ce965d3bf43f54013cbef344c2a3fe5fae4491d7"
+          },
+          {
+            "path": "node_modules/tree-sitter-javascript/grammar.js",
+            "bytes": 31957,
+            "sha256": "016c41a11289ce28f2b1592e7a018efa60427c1ee658a2fa0932b063c14dc183"
+          }
+        ]
       }
     },
     {
@@ -611,22 +701,22 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
-            "bytes": 237474,
-            "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368"
+            "bytes": 292241,
+            "sha256": "db35e2197bdf045b5380c40625dd2c46cd070cfc25451271136b7005a0608f35"
           },
           {
             "path": "node-types.json",
-            "bytes": 83057,
-            "sha256": "23e819ef1eefd357bb6eba844f47f8492f6a88da3e5046b06ec4acd4da8a9fd6"
+            "bytes": 90309,
+            "sha256": "bf986edaedb9cf1d458e1a78f7efefd6a51291498ab3c2b507ae203b1168e221"
           },
           {
             "path": "parser.c",
-            "bytes": 3872012,
-            "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2"
+            "bytes": 5569756,
+            "sha256": "a0bc2a0ce90da9f72227445b74fd5d979f9a7d8fbeb0f73930bd7b66c919495c"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -642,6 +732,19 @@
             "path": "tree_sitter/parser.h",
             "bytes": 7624,
             "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+          }
+        ]
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/c.json"
+        ],
+        "patched_files": [
+          {
+            "path": "grammar.js",
+            "bytes": 46702,
+            "sha256": "43ca1fb76dea46c4a79d4bc748da657408bc3d84f5bb66197eb7eb3eadc214ed"
           }
         ]
       }
@@ -669,22 +772,22 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
+        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
-            "bytes": 458800,
-            "sha256": "3aa14b0b6ef87951ef9933d126f6d9774bc7d7dba11e7be1861820e381d36455"
+            "bytes": 573678,
+            "sha256": "d752e1598375dc20f90f5c6dbe3fbe0740c84871bf2e11b4235a9cfa25643a4d"
           },
           {
             "path": "node-types.json",
-            "bytes": 164416,
-            "sha256": "bc49c50d6b8af62df4cfda2675e5142bfba85bc1790ff2693aa0ca1286d5c7fe"
+            "bytes": 171345,
+            "sha256": "587e9c3c0487f280eccc6dd0a26f88e1889f146107d91302c740484dce04a1ca"
           },
           {
             "path": "parser.c",
-            "bytes": 25857209,
-            "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999"
+            "bytes": 49243599,
+            "sha256": "8ae243cb3282e997535bf2fadba995fd82555fc55370d850c4a49d344155216b"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -700,6 +803,29 @@
             "path": "tree_sitter/parser.h",
             "bytes": 7624,
             "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
+          }
+        ]
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/cpp.json"
+        ],
+        "patched_files": [
+          {
+            "path": "node_modules/tree-sitter-c/grammar.js",
+            "bytes": 42870,
+            "sha256": "2fc9b9437fea5a2f47fa205ae44588c5980edf0ae46a6c1a308170f1cbbd0654"
+          },
+          {
+            "path": "grammar.js",
+            "bytes": 51346,
+            "sha256": "5b42e8f3437c01aab9d181319708c1269dfa25eca510ac2a611504e79100fd02"
+          },
+          {
+            "path": "src/scanner.c",
+            "bytes": 6772,
+            "sha256": "55b66d60ce5551e354112bc0c050237e786402764d59893d0296ac5f88176546"
           }
         ]
       }

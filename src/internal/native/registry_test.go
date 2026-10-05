@@ -363,6 +363,38 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		t.Fatalf("reproduction route %s missing", name)
 		return nil
 	}
+	// adoptionOnly rewinds an adopted route's C2 record to the adoption-only state, so the
+	// adoption rules below run on csharp whether or not it carries C2 patches. Every C2 target
+	// must be an adoption patched file, whose adoption hash it goes back to.
+	adoptionOnly := func(reg *nativeRegistry, s *sourceRecords, name string) {
+		src, r := source(s, name), route(reg, name)
+		if src.C2Patch == nil {
+			return
+		}
+		g := r.Regeneration
+		g.PatchChain = slices.DeleteFunc(slices.Clone(g.PatchChain), func(c chainStep) bool { return strings.HasPrefix(c.Subject, "src/dev/c2-patches/") })
+		for _, f := range src.C2Patch.PatchedFiles {
+			at := slices.IndexFunc(src.Adoption.PatchedFiles, func(a registryFile) bool { return a.Path == f.Path })
+			if at < 0 {
+				t.Fatalf("%s C2 patched file %s has no adoption hash to rewind to", name, f.Path)
+			}
+			a := src.Adoption.PatchedFiles[at]
+			for _, files := range [][]registryFile{g.Inputs, r.Files} {
+				if i := slices.IndexFunc(files, func(x registryFile) bool { return x.Path == f.Path }); i >= 0 {
+					files[i].SHA256, files[i].Bytes = a.SHA256, a.Bytes
+				}
+			}
+		}
+		g.PatchedFiles = slices.Clone(src.Adoption.PatchedFiles)
+		src.C2Patch = nil
+	}
+	{
+		reg, sources, repro, subjects := load()
+		adoptionOnly(&reg, &sources, "csharp")
+		if err := checkNativeRoutes(reg, sources, repro, subjects); err != nil {
+			t.Fatalf("csharp rewound to its adoption record: %v", err)
+		}
+	}
 	for _, tc := range []struct {
 		name, diagnostic string
 		mutate           func(*nativeRegistry, *sourceRecords, *reproRecords)
@@ -409,10 +441,12 @@ func TestNativeRoutesRegistry(t *testing.T) {
 		{"unoptimized regeneration", "settings", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
 			route(reg, "json").Regeneration.Optimize = false
 		}},
-		{"adopted route without a chain", "adoption record's chain", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+		{"adopted route without a chain", "adoption record's chain", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			adoptionOnly(reg, s, "csharp")
 			route(reg, "csharp").Regeneration.PatchChain = nil
 		}},
-		{"adopted patched file off its adoption record", "patched files differ from the adoption record", func(reg *nativeRegistry, _ *sourceRecords, _ *reproRecords) {
+		{"adopted patched file off its adoption record", "patched files differ from the adoption record", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
+			adoptionOnly(reg, s, "csharp")
 			route(reg, "csharp").Regeneration.PatchedFiles[0].Bytes++
 		}},
 		{"patched file without a chain step", "is no chain target", func(reg *nativeRegistry, s *sourceRecords, _ *reproRecords) {
@@ -420,7 +454,8 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			route(reg, "yaml").Regeneration.PatchedFiles = append(route(reg, "yaml").Regeneration.PatchedFiles, extra)
 			source(s, "yaml").C2Patch.PatchedFiles = append(source(s, "yaml").C2Patch.PatchedFiles, extra)
 		}},
-		{"adopted parser differs from the reference", "reproduction reference", func(_ *nativeRegistry, _ *sourceRecords, x *reproRecords) {
+		{"adopted parser differs from the reference", "reproduction reference", func(reg *nativeRegistry, s *sourceRecords, x *reproRecords) {
+			adoptionOnly(reg, s, "csharp")
 			pin := pins(x, "csharp")["parser.c"]
 			pin.Bytes++
 			pins(x, "csharp")["parser.c"] = pin
@@ -529,7 +564,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 			t.Fatalf("mutation not detected: %v", err)
 		}
 	})
-	// A synthetic C2 record on the adopted csharp route: one C2 step on grammar.js, the C2
+	// A synthetic C2 record on the adopted csharp route, rewound to its adoption record: one C2 step on grammar.js, the C2
 	// record starting from the adoption hashes, every output pinned. It is accepted; each
 	// mutation below breaks exactly one rule.
 	addAdoptionStepOnPackageJSON := func(reg *nativeRegistry, s *sourceRecords) {
@@ -545,6 +580,7 @@ func TestNativeRoutesRegistry(t *testing.T) {
 	}
 	adoptedC2 := func() (nativeRegistry, sourceRecords, reproRecords, map[string]c2Subject) {
 		reg, sources, repro, subjects := load()
+		adoptionOnly(&reg, &sources, "csharp")
 		name := "src/dev/c2-patches/csharp.json"
 		subjects[name] = c2Subject{Schema: "tsgk-c2-patch/r1", Route: "csharp", Files: []c2File{{Target: "grammar.js"}}}
 		src := source(&sources, "csharp")

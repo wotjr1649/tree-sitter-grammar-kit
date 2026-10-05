@@ -45,14 +45,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
-      "bytes": 32815459
+      "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
+      "bytes": 33334001
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
-      "bytes": 23949
+      "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
+      "bytes": 27090
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -7422,18 +7422,8 @@
          },
          {
           "type": "constructor_declaration",
-          "start_byte": 356,
-          "end_byte": 376
-         },
-         {
-          "type": "constructor_declaration",
           "start_byte": 390,
           "end_byte": 412
-         },
-         {
-          "type": "constructor_declaration",
-          "start_byte": 413,
-          "end_byte": 433
          },
          {
           "type": "constructor_declaration",
@@ -12384,6 +12374,321 @@
       "source": null
      },
      {
+      "id": "probe-csharp-B01-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4bd375a1da8ee712b580236e7e946d9ce7ede26b5b9e045751e7f0758d2147e3",
+       "bytes": 87
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "boolean_literal",
+         "preproc_skipped_section",
+         "preproc_else",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_if",
+          "start_byte": 12,
+          "end_byte": 74
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 22,
+          "end_byte": 49
+         },
+         {
+          "type": "preproc_else",
+          "start_byte": 50,
+          "end_byte": 67
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 56,
+          "end_byte": 67
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 75,
+          "end_byte": 86
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-csharp-B01-P-2",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c2bb7591c31eac89eb8e1adaf773e91a63283fb62b3ab76a5f4686436882d0aa",
+       "bytes": 107
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_else",
+         "preproc_skipped_section",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "class_declaration",
+          "start_byte": 9,
+          "end_byte": 20
+         },
+         {
+          "type": "preproc_else",
+          "start_byte": 21,
+          "end_byte": 87
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 27,
+          "end_byte": 87
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 95,
+          "end_byte": 106
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-csharp-B01-P-3",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ef8215a54b658bed93e562be6c35191a0fdb637ed52d180f94cc1d931e43d6d1",
+       "bytes": 118
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_elif",
+         "preproc_else",
+         "preproc_skipped_section",
+         "unary_expression",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 10,
+          "end_byte": 21
+         },
+         {
+          "type": "unary_expression",
+          "start_byte": 28,
+          "end_byte": 33
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 34,
+          "end_byte": 45
+         },
+         {
+          "type": "preproc_elif",
+          "start_byte": 46,
+          "end_byte": 110
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 58,
+          "end_byte": 69
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 81,
+          "end_byte": 92
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 99,
+          "end_byte": 110
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-csharp-B01-PE-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "38e69ee7e9ee202771d5289a6303266fc2079ea018bdc60a270e7fd5ff8135d4",
+       "bytes": 117
+      },
+      "edits": [
+       {
+        "start_byte": 47,
+        "old_end_byte": 57,
+        "new_end_byte": 56,
+        "old": "I2lmIGZhbHNlCg==",
+        "new": "I2lmIHRydWUK"
+       },
+       {
+        "start_byte": 47,
+        "old_end_byte": 56,
+        "new_end_byte": 57,
+        "old": "I2lmIHRydWUK",
+        "new": "I2lmIGZhbHNlCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_skipped_section",
+         "preproc_else",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 57,
+          "end_byte": 68
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 75,
+          "end_byte": 86
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_skipped_section",
+         "preproc_else",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "class_declaration",
+          "start_byte": 56,
+          "end_byte": 67
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 74,
+          "end_byte": 85
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_skipped_section",
+         "preproc_else",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 57,
+          "end_byte": 68
+         },
+         {
+          "type": "class_declaration",
+          "start_byte": 75,
+          "end_byte": 86
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "probe-csharp-B02-P-1",
       "role": "requirement",
       "input": {
@@ -12728,8 +13033,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "b268db294854122a65899cd7a71912e909952942d6a9461effe51d76556ebf81",
-       "bytes": 926
+       "sha256": "e57d138d8c68e615d9e5469c8a2563b5aef64db9ad6f335765bb6c4d33121b57",
+       "bytes": 935
       },
       "edits": [],
       "expect": [
@@ -15369,8 +15674,8 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "b268db294854122a65899cd7a71912e909952942d6a9461effe51d76556ebf81",
-       "bytes": 926
+       "sha256": "e57d138d8c68e615d9e5469c8a2563b5aef64db9ad6f335765bb6c4d33121b57",
+       "bytes": 935
       },
       "edits": [],
       "expect": [
@@ -15400,7 +15705,7 @@
          {
           "name": "arm",
           "type": "switch_expression_arm",
-          "text": "(0, 0) =\u003e \"origin\""
+          "text": "Point(0, 0) { } =\u003e \"origin\""
          },
          {
           "name": "arm",
@@ -15433,7 +15738,7 @@
       },
       "alternatives": [],
       "sample": null,
-      "source": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name =\u003e \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) =\u003e p switch\n    {\n        (0, 0) =\u003e \"origin\",\n        { X: 0 } =\u003e \"on-axis\",\n        _ =\u003e \"other\",\n    };\n\n    static async IAsyncEnumerable\u003cint\u003e Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) =\u003e v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n"
+      "source": "using System.Collections.Generic;\nusing System.Threading.Tasks;\n\ninterface IShape\n{\n    double Area { get; }\n    string Name =\u003e \"shape\";\n}\n\nreadonly struct Point\n{\n    public Point(int x, int y) { X = x; Y = y; }\n    public int X { get; }\n    public int Y { get; }\n    public void Deconstruct(out int x, out int y) { x = X; y = Y; }\n}\n\nstatic class Eight\n{\n    static string Quadrant(Point p) =\u003e p switch\n    {\n        Point(0, 0) { } =\u003e \"origin\",\n        { X: 0 } =\u003e \"on-axis\",\n        _ =\u003e \"other\",\n    };\n\n    static async IAsyncEnumerable\u003cint\u003e Numbers()\n    {\n        await Task.Yield();\n        yield return 1;\n    }\n\n    static async Task Run(string? name, int[] xs)\n    {\n        using var scope = new System.IO.MemoryStream();\n        name ??= \"none\";\n        var middle = xs[1..^1];\n        await foreach (var n in Numbers())\n        {\n            static int Twice(int v) =\u003e v * 2;\n            _ = Twice(n);\n        }\n    }\n}\n"
      },
      {
       "id": "probe-csharp-V10-Q-1",
@@ -32011,14 +32316,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
-      "bytes": 2855926
+      "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+      "bytes": 4395417
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7",
-      "bytes": 10576
+      "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+      "bytes": 23108
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -35654,8 +35959,7 @@
         "step": 0,
         "syntax": "NO_ERROR",
         "contains": [
-         "export_statement",
-         "class"
+         "export_statement"
         ],
         "anchors": [
          {
@@ -39559,69 +39863,35 @@
       "source": null
      },
      {
-      "id": "probe-javascript-L01-R-2",
+      "id": "probe-javascript-V15-N-1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "24223cf19ff722411d413a95e561beceec048eee746c4920b4a4d8c929318c1a",
+       "sha256": "2f3de529ab4386eafe58ca80a729fde445c0745af5acb46061d7ec8690144f41",
        "bytes": 58
       },
-      "edits": [
-       {
-        "start_byte": 0,
-        "old_end_byte": 17,
-        "new_end_byte": 31,
-        "old": "dmFyIGZsYWcgPSB0cnVlOwo=",
-        "new": "J3VzZSBzdHJpY3QnOwp2YXIgZmxhZyA9IHRydWU7Cg=="
-       },
-       {
-        "start_byte": 0,
-        "old_end_byte": 14,
-        "new_end_byte": 0,
-        "old": "J3VzZSBzdHJpY3QnOwo=",
-        "new": ""
-       }
-      ],
+      "edits": [],
       "expect": [
        {
         "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "variable_declaration",
-         "if_statement",
-         "function_declaration"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
         "syntax": "ERROR",
         "contains": [
-         "expression_statement",
-         "variable_declaration"
+         "generator_function_declaration",
+         "arrow_function",
+         "yield_expression"
         ],
         "anchors": [
          {
-          "type": "expression_statement",
-          "start_byte": 0,
-          "end_byte": 13
+          "type": "arrow_function",
+          "start_byte": 30,
+          "end_byte": 43
          },
          {
-          "type": "variable_declaration",
-          "start_byte": 14,
-          "end_byte": 30
+          "type": "yield_expression",
+          "start_byte": 47,
+          "end_byte": 54
          }
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "variable_declaration",
-         "if_statement",
-         "function_declaration"
         ],
         "declarations": ""
        }
@@ -39633,7 +39903,160 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {
-       "javascript-L01": [
+       "javascript-V15": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-javascript-V22-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6d1141c9cc8eb8320b23b9fa20769ed5621c81b2219fc0e8a7426f09f943cae5",
+       "bytes": 81
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration",
+         "field_definition",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "field_definition",
+          "start_byte": 34,
+          "end_byte": 45
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 38,
+          "end_byte": 45
+         },
+         {
+          "type": "field_definition",
+          "start_byte": 51,
+          "end_byte": 56
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 64,
+          "end_byte": 77
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "javascript-V22": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-javascript-V15-PNE-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "14e396eef2773c83a26753ccfaae5c8be5d3b4fd5cb5ba8913c76651e03edacd",
+       "bytes": 163
+      },
+      "edits": [
+       {
+        "start_byte": 66,
+        "old_end_byte": 85,
+        "new_end_byte": 84,
+        "old": "ZnVuY3Rpb24qIGdlbihsaXN0KQ==",
+        "new": "ZnVuY3Rpb24gZ2VuKGxpc3Qp"
+       },
+       {
+        "start_byte": 66,
+        "old_end_byte": 84,
+        "new_end_byte": 85,
+        "old": "ZnVuY3Rpb24gZ2VuKGxpc3Qp",
+        "new": "ZnVuY3Rpb24qIGdlbihsaXN0KQ=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "generator_function_declaration",
+         "for_in_statement",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "yield_expression",
+          "start_byte": 118,
+          "end_byte": 129
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration",
+         "for_in_statement",
+         "binary_expression"
+        ],
+        "anchors": [
+         {
+          "type": "binary_expression",
+          "start_byte": 117,
+          "end_byte": 128
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "generator_function_declaration",
+         "for_in_statement",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "yield_expression",
+          "start_byte": 118,
+          "end_byte": 129
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "javascript-V15": [
         "P",
         "N",
         "R",
@@ -41303,14 +41726,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "dd77f92c8894a0ff67451ab3fbd9ef042f95ef2d274f2b85e28386e25975ee04",
-      "bytes": 2855926
+      "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+      "bytes": 4395417
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7",
-      "bytes": 10576
+      "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+      "bytes": 23108
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -46236,8 +46659,7 @@
         "step": 0,
         "syntax": "NO_ERROR",
         "contains": [
-         "export_statement",
-         "class"
+         "export_statement"
         ],
         "anchors": [
          {
@@ -48957,6 +49379,211 @@
       "source": null
      },
      {
+      "id": "probe-jsx-B04-js-V15-N-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2f3de529ab4386eafe58ca80a729fde445c0745af5acb46061d7ec8690144f41",
+       "bytes": 58
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "generator_function_declaration",
+         "arrow_function",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "arrow_function",
+          "start_byte": 30,
+          "end_byte": 43
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 47,
+          "end_byte": 54
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "jsx-B04": [
+        "N",
+        "R"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-jsx-B04-js-V22-P-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6d1141c9cc8eb8320b23b9fa20769ed5621c81b2219fc0e8a7426f09f943cae5",
+       "bytes": 81
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration",
+         "field_definition",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "field_definition",
+          "start_byte": 34,
+          "end_byte": 45
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 38,
+          "end_byte": 45
+         },
+         {
+          "type": "field_definition",
+          "start_byte": 51,
+          "end_byte": 56
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 64,
+          "end_byte": 77
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "jsx-B04": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "probe-jsx-B04-js-V15-PNE-1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "14e396eef2773c83a26753ccfaae5c8be5d3b4fd5cb5ba8913c76651e03edacd",
+       "bytes": 163
+      },
+      "edits": [
+       {
+        "start_byte": 66,
+        "old_end_byte": 85,
+        "new_end_byte": 84,
+        "old": "ZnVuY3Rpb24qIGdlbihsaXN0KQ==",
+        "new": "ZnVuY3Rpb24gZ2VuKGxpc3Qp"
+       },
+       {
+        "start_byte": 66,
+        "old_end_byte": 84,
+        "new_end_byte": 85,
+        "old": "ZnVuY3Rpb24gZ2VuKGxpc3Qp",
+        "new": "ZnVuY3Rpb24qIGdlbihsaXN0KQ=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "generator_function_declaration",
+         "for_in_statement",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "yield_expression",
+          "start_byte": 118,
+          "end_byte": 129
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [
+         "function_declaration",
+         "for_in_statement",
+         "binary_expression"
+        ],
+        "anchors": [
+         {
+          "type": "binary_expression",
+          "start_byte": 117,
+          "end_byte": 128
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "generator_function_declaration",
+         "for_in_statement",
+         "yield_expression"
+        ],
+        "anchors": [
+         {
+          "type": "yield_expression",
+          "start_byte": 118,
+          "end_byte": 129
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "jsx-B04": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "jsx-query-r1",
       "role": "requirement",
       "input": {
@@ -50483,8 +51110,8 @@
      {
       "path": "typescript/src/parser.c",
       "role": "parser",
-      "sha256": "1ed7309680ac623523e1c9ae31d8b7286a56219d08b9a11660887e88d848d3c5",
-      "bytes": 8764241
+      "sha256": "d5a8cbe3c229abddae6fcc360ac39704bc46f1d39d40c0a1798da8eef96c3bfa",
+      "bytes": 8845184
      },
      {
       "path": "typescript/src/scanner.c",
@@ -57609,8 +58236,8 @@
      {
       "path": "tsx/src/parser.c",
       "role": "parser",
-      "sha256": "87e0d559545b43b6fd0f6146a5419dbc19a900b2e10f3ef9451aaf33275e5296",
-      "bytes": 8788036
+      "sha256": "5024cdeddb5833348203acc0c3bcc60347034064f0fb86e8d8abc8e0b2a8ad62",
+      "bytes": 9178103
      },
      {
       "path": "tsx/src/scanner.c",
@@ -82325,8 +82952,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
-      "bytes": 3872012
+      "sha256": "a0bc2a0ce90da9f72227445b74fd5d979f9a7d8fbeb0f73930bd7b66c919495c",
+      "bytes": 5569756
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -86169,8 +86796,8 @@
          },
          {
           "type": "parameter_declaration",
-          "start_byte": 142,
-          "end_byte": 150
+          "start_byte": 564,
+          "end_byte": 572
          },
          {
           "type": "parameter_declaration",
@@ -89337,14 +89964,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "0007727b6e1fbc07657b6a4bf5dc39f524c6009fa347f9faaf180fa9ab17e999",
-      "bytes": 25857209
+      "sha256": "8ae243cb3282e997535bf2fadba995fd82555fc55370d850c4a49d344155216b",
+      "bytes": 49243599
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "cf60387d290271f4d2fb558d0569b2b9ef879cb72206a9df5cc73b0b1a4b20ff",
-      "bytes": 5169
+      "sha256": "55b66d60ce5551e354112bc0c050237e786402764d59893d0296ac5f88176546",
+      "bytes": 6772
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -91382,13 +92009,13 @@
          },
          {
           "type": "unary_expression",
-          "start_byte": 314,
-          "end_byte": 316
+          "start_byte": 341,
+          "end_byte": 343
          },
          {
           "type": "unary_expression",
-          "start_byte": 319,
-          "end_byte": 321
+          "start_byte": 350,
+          "end_byte": 352
          },
          {
           "type": "unary_expression",
@@ -91632,7 +92259,6 @@
          "assignment_expression",
          "comma_expression",
          "throw_statement",
-         "field_expression",
          "call_expression"
         ],
         "anchors": [
@@ -93347,8 +93973,8 @@
          },
          {
           "type": "variadic_parameter_declaration",
-          "start_byte": 351,
-          "end_byte": 358
+          "start_byte": 541,
+          "end_byte": 548
          },
          {
           "type": "function_declarator",
@@ -98033,8 +98659,8 @@
          },
          {
           "type": "throw_specifier",
-          "start_byte": 9,
-          "end_byte": 16
+          "start_byte": 53,
+          "end_byte": 60
          },
          {
           "type": "template_declaration",
@@ -98604,7 +99230,6 @@
         "syntax": "NO_ERROR",
         "contains": [
          "struct_specifier",
-         "field_declaration",
          "explicit_function_specifier"
         ],
         "anchors": [
@@ -98688,8 +99313,7 @@
         "syntax": "NO_ERROR",
         "contains": [
          "template_declaration",
-         "struct_specifier",
-         "field_declaration"
+         "struct_specifier"
         ],
         "anchors": [
          {
@@ -307707,14 +308331,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
-       "bytes": 32815459
+       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
+       "bytes": 33334001
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
-       "bytes": 23949
+       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
+       "bytes": 27090
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -308573,14 +309197,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
-       "bytes": 32815459
+       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
+       "bytes": 33334001
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
-       "bytes": 23949
+       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
+       "bytes": 27090
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -308855,14 +309479,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "15da08fe57a55f06b11e14bdefe25dfd02f8a3d2b11bdf40d05e3db6ad827d5e",
-       "bytes": 32815459
+       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
+       "bytes": 33334001
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "164f51f2c55c08244791cabe5621b57a51d33e3813462ab39ebf67cad4b79227",
-       "bytes": 23949
+       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
+       "bytes": 27090
       },
       {
        "path": "src/tree_sitter/alloc.h",

@@ -1,0 +1,733 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "cpp",
+ "defects": [
+  "cpp-P2-01",
+  "cpp-P2-02",
+  "cpp-P2-03",
+  "cpp-P2-04",
+  "cpp-P2-05",
+  "cpp-P2-06",
+  "cpp-P2-07",
+  "cpp-P2-08",
+  "cpp-P2-09",
+  "cpp-P2-10",
+  "cpp-P2-11",
+  "cpp-P2-12",
+  "cpp-P2-13",
+  "cpp-P2-14",
+  "cpp-P2-15",
+  "cpp-P2-16",
+  "cpp-P2-17",
+  "cpp-P2-18",
+  "cpp-P2-19",
+  "cpp-P2-20",
+  "cpp-P2-21",
+  "cpp-P2-22",
+  "cpp-P2-23",
+  "cpp-P2-24",
+  "cpp-P2-25",
+  "cpp-P2-26",
+  "cpp-P2-27",
+  "cpp-P2-28",
+  "cpp-P2-29",
+  "cpp-P2-30",
+  "cpp-P2-31",
+  "cpp-P2-32",
+  "cpp-P2-33",
+  "cpp-P2-34",
+  "cpp-P2-35",
+  "cpp-P2-36",
+  "cpp-P2-37",
+  "cpp-P2-38",
+  "cpp-P2-39",
+  "cpp-P2-40",
+  "cpp-P2-41",
+  "cpp-P2-42",
+  "cpp-P2-43",
+  "cpp-P2-44",
+  "cpp-P2-45"
+ ],
+ "files": [
+  {
+   "target": "node_modules/tree-sitter-c/grammar.js",
+   "operations": [
+    {
+     "before": "      '[[',\n      commaSep1($.attribute),\n      ']]',\n",
+     "after": "      '[[',\n      optional($.attribute),\n      repeat(seq(',', optional($.attribute))),\n      ']]',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    enumerator: $ => seq(\n      field('name', $.identifier),\n",
+     "after": "    enumerator: $ => seq(\n      field('name', $.identifier),\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      '*',\n      repeat($.ms_pointer_modifier),\n",
+     "after": "      '*',\n      repeat($.attribute_declaration),\n      repeat($.ms_pointer_modifier),\n",
+     "occurrences": 3
+    },
+    {
+     "before": "seq('*',\n      repeat($.ms_pointer_modifier),\n",
+     "after": "seq('*',\n      repeat($.attribute_declaration),\n      repeat($.ms_pointer_modifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.preproc_call,\n    ),\n",
+     "after": "      $.preproc_call,\n      $.pragma_operator,\n    ),\n",
+     "occurrences": 2
+    },
+    {
+     "before": "      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "after": "      $.pragma_operator,\n      $.preproc_call,\n      alias($.preproc_if_in_field_declaration_list, $.preproc_if),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    pragma_operator: $ => seq('_Pragma', '(', $.string_literal, ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    preproc_call: $ => seq(\n      field('directive', $.preproc_directive),\n      field('argument', optional($.preproc_arg)),\n      token.immediate(/\\r?\\n/),\n    ),\n",
+     "after": "    preproc_call: $ => choice(\n      seq(\n        field('directive', $.preproc_directive),\n        field('argument', optional($.preproc_arg)),\n        token.immediate(/\\r?\\n/),\n      ),\n      // null directive (N3096 6.10.8)\n      seq(field('directive', alias(/#[ \\t]*/, $.preproc_directive)), token.immediate(/\\r?\\n/)),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _balanced_token: $ => choice(\n      seq('(', repeat($._balanced_token), ')'),\n      seq('[', repeat($._balanced_token), ']'),\n      seq('{', repeat($._balanced_token), '}'),\n      $.identifier,\n      $.number_literal,\n      $.char_literal,\n      $.string_literal,\n      $.system_lib_string,\n      '::', ':', ',', ';', '.', '...', '->', '?', '!', '~', '=', '+', '-', '*', '/', '%', '&', '|', '^',\n      '<', '>', '<=', '>=', '==', '!=', '&&', '||', '<<', '>>', '++', '--',\n      '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=',\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('name', $.identifier),\n      optional($.argument_list),\n    ),\n",
+     "after": "      field('name', $.identifier),\n      optional(choice($.argument_list, prec.dynamic(-1, alias($._attribute_argument_clause, $.argument_list)))),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    _attribute_argument_clause: $ => seq('(', repeat($._balanced_token), ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _preproc_expression: $ => choice(\n      $.identifier,\n",
+     "after": "    _preproc_expression: $ => choice(\n      alias($.preproc_has_expression, $.call_expression),\n      $.identifier,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    preproc_has_expression: $ => seq(\n      field('function', alias(choice('__has_include', '__has_include_next', '__has_embed', '__has_c_attribute'), $.identifier)),\n      field('arguments', alias($.preproc_has_argument_list, $.argument_list)),\n    ),\n    preproc_has_argument_list: $ => seq('(', repeat($._balanced_token), ')'),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('if'),\n      field('condition', $._preproc_expression),\n      '\\n',\n      repeat(content($)),\n",
+     "after": "      preprocessor('if'),\n      choice(\n        seq(field('condition', $._preproc_expression), '\\n', repeat(content($))),\n        skippedGroup($),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      preprocessor('elif'),\n      field('condition', $._preproc_expression),\n      '\\n',\n      repeat(content($)),\n",
+     "after": "      preprocessor('elif'),\n      choice(\n        seq(field('condition', $._preproc_expression), '\\n', repeat(content($))),\n        skippedGroup($),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _preproc_expression: $ => choice(\n",
+     "after": "    _preproc_expression: $ => choice(\n      alias('0', $.number_literal),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "/**\n * Creates a preprocessor regex rule\n",
+     "after": "/**\n * The body of a group whose condition is the literal 0: the group is skipped\n * (N3096 6.10.2p6, [cpp.cond]), so only the conditional directives nested in it\n * are processed and its other lines stay text.\n *\n * @param {GrammarSymbols<string>} $\n *\n * @returns {Rule}\n */\nfunction skippedGroup($) {\n  return prec(1, seq(field('condition', alias('0', $.number_literal)), '\\n', optional($.preproc_skipped)));\n}\n\n/**\n * Creates a preprocessor regex rule\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "after": "    preproc_skipped: $ => repeat1(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n    _preproc_skipped_line: _ => token(prec(-1, /\\S[^\\n]*/)),\n    _preproc_skipped_group: $ => seq(\n      choice(preprocessor('if'), preprocessor('ifdef'), preprocessor('ifndef')),\n      repeat(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n      repeat(seq(\n        choice(preprocessor('elif'), preprocessor('elifdef'), preprocessor('elifndef'), preprocessor('else')),\n        repeat(choice($._preproc_skipped_line, $._preproc_skipped_group)),\n      )),\n      preprocessor('endif'),\n    ),\n\n    // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  return alias(new RegExp('#[ \\t]*' + command), '#' + command);",
+     "after": "  return alias(new RegExp('(#|%:)[ \\t]*' + command), '#' + command);",
+     "occurrences": 1
+    },
+    {
+     "before": "alias(/#[ \\t]*/, $.preproc_directive)",
+     "after": "alias(/(#|%:)[ \\t]*/, $.preproc_directive)",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports = grammar({\n",
+     "after": "module.exports = digraphs(grammar({\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n});\n\n/**\n *\n * @param {string} suffix",
+     "after": "\n}));\n\n/**\n *\n * @param {string} suffix",
+     "occurrences": 1
+    },
+    {
+     "before": "/**\n * Creates a preprocessor regex rule\n",
+     "after": "/**\n * Lets alternative spellings (the digraphs <: :> <% %>, N3096 6.4.6p3, [lex.digraph])\n * stand for the punctuators of every rule. `spellings` maps a punctuator to its other\n * spellings: strings, or rules such as an external token for C++'s '<::' exception.\n *\n * @param {any} g\n *\n * @param {Object<string, any[]>} [spellings]\n *\n * @returns {any}\n */\nfunction digraphs(g, spellings) {\n  spellings = spellings || {'[': ['<:'], ']': [':>'], '{': ['<%'], '}': ['%>']};\n  const spelt = (v) => Object.prototype.hasOwnProperty.call(spellings, v);\n  const replace = (v) => {\n    const strings = [v, ...spellings[v].filter((s) => typeof s === 'string')];\n    const others = spellings[v].filter((s) => typeof s !== 'string');\n    const token = {type: 'TOKEN', content: {type: 'CHOICE', members: strings.map((value) => ({type: 'STRING', value}))}};\n    return {type: 'ALIAS', named: false, value: v, content: others.length ? {type: 'CHOICE', members: [token, ...others]} : token};\n  };\n  const walk = (r) => {\n    if (r.type === 'TOKEN' || r.type === 'IMMEDIATE_TOKEN') return r;\n    if ((r.type === 'STRING' || (r.type === 'ALIAS' && !r.named)) && spelt(r.value)) return replace(r.value);\n    if (r.content) {\n      const c = walk(r.content);\n      if (c !== r.content) r = {...r, content: c};\n    }\n    if (r.members) {\n      const m = r.members.map(walk);\n      if (m.some((x, i) => x !== r.members[i])) r = {...r, members: m};\n    }\n    return r;\n  };\n  for (const k of Object.keys(g.grammar.rules)) g.grammar.rules[k] = walk(g.grammar.rules[k]);\n  return g;\n}\n\n/**\n * Creates a preprocessor regex rule\n",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports.commaSep1 = commaSep1;\n",
+     "after": "module.exports.commaSep1 = commaSep1;\nmodule.exports.digraphs = digraphs;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    preproc_directive: _ => /#[ \\t]*[a-zA-Z0-9]\\w*/,\n",
+     "after": "    preproc_directive: _ => /(#|%:|\\?\\?=)[ \\t]*[a-zA-Z0-9]\\w*/,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  return alias(new RegExp('(#|%:)[ \\t]*' + command), '#' + command);",
+     "after": "  return alias(new RegExp('(#|%:|\\\\?\\\\?=)[ \\t]*' + command), '#' + command);",
+     "occurrences": 1
+    },
+    {
+     "before": "alias(/(#|%:)[ \\t]*/, $.preproc_directive)",
+     "after": "alias(/(#|%:|\\?\\?=)[ \\t]*/, $.preproc_directive)",
+     "occurrences": 1
+    },
+    {
+     "before": "      alias(token.immediate(prec(1, /[^\\\\\"\\n]+/)), $.string_content),\n",
+     "after": "      alias(token.immediate(prec(1, /([^\\\\\"\\n?]|\\?[^\\\\\"\\n?]|\\?\\?+[^\\\\\"\\n?\\/])+|\\?+/)), $.string_content),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    escape_sequence: _ => token(prec(1, seq(\n      '\\\\',\n",
+     "after": "    escape_sequence: _ => token(prec(1, seq(\n      choice('\\\\', '??/'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        /U[0-9a-fA-F]{8}/,\n",
+     "after": "        /U[0-9a-fA-F]{8}/,\n        /N\\{[^}\\n]+\\}/,\n        /u\\{[0-9a-fA-F]+\\}/,\n        /o\\{[0-7]+\\}/,\n        /x\\{[0-9a-fA-F]+\\}/,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'bool',\n      'char',\n",
+     "after": "      'bool',\n      'char',\n      'wchar_t',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "'__has_c_attribute'), $.identifier)",
+     "after": "'__has_c_attribute', '__has_cpp_attribute'), $.identifier)",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "grammar.js",
+   "operations": [
+    {
+     "before": "  externals: $ => [\n    $.raw_string_delimiter,\n    $.raw_string_content,\n  ],\n",
+     "after": "  externals: $ => [\n    $.raw_string_delimiter,\n    $.raw_string_content,\n    $._digraph_open_bracket,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "module.exports = grammar(C, {\n",
+     "after": "module.exports = C.digraphs(grammar(C, {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n  },\n});\n",
+     "after": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n  },\n}), {\n  '[': [{type: 'SYMBOL', name: '_digraph_open_bracket'}, '??('],\n  ']': [':>', '??)'],\n  '{': ['<%', '??<'],\n  '}': ['%>', '??>'],\n  '|': ['??!'],\n  '||': ['??!??!'],\n  '|=': ['??!='],\n  '^': ['??\\''],\n  '^=': ['??\\'='],\n  '~': ['??-'],\n});\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    attributed_declarator: (_, original) => prec.dynamic(1, original),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional(seq('using', field('namespace', $.identifier), ':')),\n      ...original.members,\n    ),\n",
+     "after": "      optional(seq('using', field('namespace', $.identifier), ':')),\n      ...original.members,\n      optional('...'),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'enum',\n      optional(choice('class', 'struct')),\n",
+     "after": "      'enum',\n      optional(choice('class', 'struct')),\n      repeat($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "seq(choice('&', '&&'), $._",
+     "after": "seq(choice('&', '&&'), repeat($.attribute_declaration), $._",
+     "occurrences": 3
+    },
+    {
+     "before": "seq(choice('&', '&&'), optional($._abstract_declarator))",
+     "after": "seq(choice('&', '&&'), repeat($.attribute_declaration), optional($._abstract_declarator))",
+     "occurrences": 1
+    },
+    {
+     "before": "      alias($.operator_cast_declaration, $.declaration),\n    ),\n\n    _block_item: ",
+     "after": "      alias($.operator_cast_declaration, $.declaration),\n      alias($.deduction_guide, $.declaration),\n    ),\n\n    _block_item: ",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    declaration_list: $ => prec.dynamic(1, seq('{', repeat(choice($._block_item, alias($.deduction_guide, $.declaration))), '}')),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    deduction_guide: $ => seq(\n      optional($.explicit_function_specifier),\n      field('declarator', alias($.deduction_guide_declarator, $.function_declarator)),\n      ';',\n    ),\n    deduction_guide_declarator: $ => seq(\n      field('declarator', $.identifier),\n      field('parameters', $.parameter_list),\n      $.trailing_return_type,\n    ),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'if',\n      optional('constexpr'),\n      field('condition', $.condition_clause),\n      field('consequence', $.statement),\n",
+     "after": "      'if',\n      choice(\n        seq(optional('constexpr'), field('condition', $.condition_clause), field('consequence', $.statement)),\n        seq(optional('!'), 'consteval', field('consequence', $.compound_statement)),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    template_function: $ => seq(\n      field('name', $.identifier),\n",
+     "after": "    template_function: $ => seq(\n      field('name', choice($.identifier, $.operator_name)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.reflect_expression,\n      $.splice_expression,\n    ),\n",
+     "after": "      $.reflect_expression,\n      $.splice_expression,\n      $.operator_name,\n      alias($.typeid_expression, $.call_expression),\n      $.noexcept_expression,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    typeid_expression: $ => seq(\n      field('function', alias('typeid', $.identifier)),\n      field('arguments', alias($.typeid_argument, $.argument_list)),\n    ),\n    typeid_argument: $ => seq('(', choice(prec.dynamic(1, $.expression), $.type_descriptor), ')'),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    noexcept_expression: $ => seq('noexcept', '(', $.expression, ')'),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    destructor_name: $ => prec(1, seq('~', $.identifier)),\n",
+     "after": "    destructor_name: $ => prec(1, seq('~', choice(seq($.identifier, optional($.template_argument_list)), $.decltype))),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.template_method,\n        prec.dynamic(2, $._field_identifier),\n",
+     "after": "        $.template_method,\n        $.destructor_name,\n        prec.dynamic(2, $._field_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  THREE_WAY: C.PREC.RELATIONAL + 1,\n",
+     "after": "  THREE_WAY: C.PREC.RELATIONAL + 1,\n  PM: C.PREC.CAST,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        field('operator', choice('.', '.*', '->')),\n",
+     "after": "        field('operator', choice('.', '->')),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        ['<=>', PREC.THREE_WAY],\n",
+     "after": "        ['<=>', PREC.THREE_WAY],\n        ['.*', PREC.PM],\n        ['->*', PREC.PM],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'template',\n      optional($._declaration_specifiers),\n      field('declarator', $._declarator),\n      ';',\n",
+     "after": "      'template',\n      choice(seq(optional($._declaration_specifiers), field('declarator', $._declarator)), $._declaration_specifiers),\n      ';',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('left', $.identifier),\n      '=',\n      field('right', $.expression),\n",
+     "after": "      field('left', $.identifier),\n      choice(seq('=', field('right', $.expression)), field('right', $.initializer_list)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    initializer_pair: ($, original) => choice(\n      original,\n      seq(field('designator', $.field_designator), field('value', $.initializer_list)),\n    ),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'co_return',\n      optional($.expression),\n",
+     "after": "      'co_return',\n      optional(choice($.expression, $.initializer_list)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'co_yield',\n      $.expression,\n",
+     "after": "      'co_yield',\n      choice($.expression, $.initializer_list),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    explicit_function_specifier: $ => choice(\n      'explicit',\n      prec(PREC.CALL, seq(\n        'explicit',\n        '(',\n        $.expression,\n        ')',\n      )),\n    ),\n",
+     "after": "    explicit_function_specifier: $ => choice(\n      'explicit',\n      seq(\n        'explicit',\n        '(',\n        $.expression,\n        ')',\n      ),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    parenthesized_declarator: ($, original) => choice(\n      original,\n      seq('(', alias($.conversion_function_id, $.operator_cast), ')'),\n    ),\n\n    // conversion-function-id: operator conversion-type-id ([class.conv.fct])\n    conversion_function_id: $ => prec.right(seq(\n      'operator',\n      repeat($.type_qualifier),\n      field('type', $.type_specifier),\n      repeat($.type_qualifier),\n      repeat(choice('*', '&', '&&')),\n    )),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.operator_name,\n        $.splice_expression,\n      )),\n    ),\n\n    type_requirement",
+     "after": "        $.operator_name,\n        alias($.conversion_function_id, $.operator_cast),\n        $.splice_expression,\n      )),\n    ),\n\n    type_requirement",
+     "occurrences": 1
+    },
+    {
+     "before": "    call_expression: ($, original) => prec.dynamic(1, choice(original, seq(\n      field('function', choice($.primitive_type, seq(\n        optional('typename'),\n        $.splice_type_specifier,\n      ))),\n      field('arguments', $.argument_list),\n    ))),\n",
+     "after": "    call_expression: ($, original) => choice(\n      prec.dynamic(1, original),\n      prec.dynamic(1, seq(\n        field('function', choice($.dependent_type, seq(optional('typename'), $.splice_type_specifier))),\n        field('arguments', $.argument_list),\n      )),\n      prec.dynamic(-100, seq(\n        field('function', choice($.primitive_type, $.auto)),\n        field('arguments', $.argument_list),\n      )),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.primitive_type,\n          seq(optional('typename'), $.splice_type_specifier))),\n",
+     "after": "          $.primitive_type,\n          $.dependent_type,\n          $.auto,\n          seq(optional('typename'), $.splice_type_specifier))),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      original,\n      'mutable',\n      'constinit',\n",
+     "after": "      original,\n      'constinit',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      'thread_local',\n    ),\n",
+     "after": "      'thread_local',\n      'mutable',\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_requirement: $ => seq('typename', $._class_name),\n",
+     "after": "    type_requirement: $ => seq('typename', $._class_name, ';'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.type_requirement,\n      $.compound_requirement,\n    ),\n",
+     "after": "      $.type_requirement,\n      $.compound_requirement,\n      prec.dynamic(1, $.nested_requirement),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    nested_requirement: $ => seq('requires', field('constraint', $._requirement_clause_constraint), ';'),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('placement', optional($.argument_list)),\n      field('type', $.type_specifier),\n      field('declarator', optional($.new_declarator)),\n",
+     "after": "      field('placement', optional($.argument_list)),\n      choice(\n        seq(field('type', $.type_specifier), field('declarator', optional($.new_declarator))),\n        seq('(', field('type', $.type_descriptor), ')'),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    new_declarator: $ => prec.right(seq(\n      '[',\n      field('length', $.expression),\n      ']',\n      optional($.new_declarator),\n    )),\n",
+     "after": "    new_declarator: $ => prec.right(choice(\n      seq('[', field('length', $.expression), ']', repeat($.attribute_declaration), optional($.new_declarator)),\n      seq('*', repeat($.type_qualifier), optional($.new_declarator)),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional(choice('namespace', 'enum')),\n",
+     "after": "      optional(choice('namespace', 'enum', 'typename')),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('declarator', choice(\n        $.variadic_declarator,\n        alias($.variadic_reference_declarator, $.reference_declarator),\n      )),\n",
+     "after": "      field('declarator', $._pack_declarator),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice('&&', '&'),\n      $.variadic_declarator,\n",
+     "after": "      choice('&&', '&'),\n      $._pack_declarator,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    _pack_declarator: $ => choice(\n      $.variadic_declarator,\n      alias($.variadic_reference_declarator, $.reference_declarator),\n      alias($.variadic_pointer_declarator, $.pointer_declarator),\n      alias($.variadic_parenthesized_declarator, $.parenthesized_declarator),\n      alias($.variadic_array_declarator, $.array_declarator),\n      alias($.variadic_function_declarator, $.function_declarator),\n    ),\n    variadic_pointer_declarator: $ => prec.right(seq('*', repeat($.type_qualifier), field('declarator', $._pack_declarator))),\n    variadic_parenthesized_declarator: $ => seq('(', $._pack_declarator, ')'),\n    variadic_array_declarator: $ => prec(1, seq(field('declarator', $._pack_declarator), '[', field('size', optional($.expression)), ']')),\n    variadic_function_declarator: $ => prec(1, seq(field('declarator', $._pack_declarator), field('parameters', $.parameter_list))),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      commaSep(seq(\n        field('declarator', $._field_declarator),\n        optional(choice(\n          $.bitfield_clause,\n          field('default_value', $.initializer_list),\n          seq('=', field('default_value', choice($.expression, $.initializer_list))),\n        )),\n      )),\n",
+     "after": "      commaSep(choice(\n        seq(\n          field('declarator', $._field_declarator),\n          optional(choice(\n            $.bitfield_clause,\n            field('default_value', $.initializer_list),\n            seq('=', field('default_value', choice($.expression, $.initializer_list))),\n          )),\n        ),\n        $.bitfield_clause,\n        prec.dynamic(1, seq(field('declarator', alias($.function_field_declarator, $.function_declarator)), alias($._pure_specifier, $.pure_virtual_clause))),\n      )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    _pure_specifier: _ => seq('=', '0'),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $._class_name,\n        optional('...'),\n",
+     "after": "        choice($._class_name, $.decltype),\n        optional('...'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    type_parameter_declaration: $ => prec(1, seq(\n      choice('typename', 'class'),\n      optional($._type_identifier),\n    )),\n",
+     "after": "    type_parameter_declaration: $ => choice(\n      prec(1, seq(choice('typename', 'class'), optional($._type_identifier))),\n      prec.dynamic(1, seq($._type_constraint, optional($._type_identifier))),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    variadic_type_parameter_declaration: $ => prec(1, seq(\n      choice('typename', 'class'),\n      '...',\n",
+     "after": "    variadic_type_parameter_declaration: $ => prec(1, seq(\n      choice('typename', 'class', prec.dynamic(1, $._type_constraint)),\n      '...',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    optional_type_parameter_declaration: $ => seq(\n      choice('typename', 'class'),\n",
+     "after": "    optional_type_parameter_declaration: $ => seq(\n      choice('typename', 'class', prec.dynamic(1, $._type_constraint)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    _type_constraint: $ => field('constraint', choice($._type_identifier, $.template_type)),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional($.ref_qualifier),\n      optional($._function_exception_specification),\n",
+     "after": "      optional($.ref_qualifier),\n      optional(choice(\n        $._function_exception_specification,\n        seq(repeat1($.attribute_declaration), $._function_exception_specification),\n      )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    template_type: $ => seq(\n      field('name', $._type_identifier),\n",
+     "after": "    template_type: $ => seq(\n      field('name', choice($._type_identifier, $._legacy_import_name)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _class_name: $ => prec.right(choice(\n      $._type_identifier,\n",
+     "after": "    _class_name: $ => prec.right(choice(\n      $._type_identifier,\n      $._legacy_import_name,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.system_lib_string,\n        )),\n      ),\n      optional($.attribute_declaration),\n",
+     "after": "          alias($._import_header_name, $.system_lib_string),\n        )),\n      ),\n      optional($.attribute_declaration),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "after": "    _legacy_import_name: $ => prec.dynamic(-100, alias('import', $.type_identifier)),\n    // the header-name is split into tokens so that '<' after 'import' can also open a template argument list\n    _import_header_name: _ => seq('<', token.immediate(/[^>\\n]+/), token.immediate('>')),\n\n    _namespace_identifier: $ => alias($.identifier, $.namespace_identifier),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  externals: $ => [\n    $.raw_string_delimiter,\n    $.raw_string_content,\n    $._digraph_open_bracket,\n  ],\n",
+     "after": "  externals: $ => [\n    $.raw_string_delimiter,\n    $.raw_string_content,\n    $._digraph_open_bracket,\n    $._legacy_less_equal,\n  ],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        '==', '!=', '<=', '>=',\n        '<=>',\n",
+     "after": "        '==', '!=', '<=', '>=',\n        alias($._legacy_less_equal, '<='),\n        '<=>',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        commaSep($.type_descriptor),\n",
+     "after": "        commaSep(choice($.type_descriptor, alias($.type_parameter_pack_expansion, $.parameter_pack_expansion))),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.declaration_list, $.compound_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $._balanced_token, $.structured_binding_declarator, $._lambda_capture_identifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $._class_name, $.lambda_capture_initializer],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.structured_binding_declarator, $._lambda_capture_identifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $._balanced_token, $.identifier_parameter_pack_expansion],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.labeled_statement, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.parameter_list, $.variadic_declarator],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.labeled_statement, $.initializer_pair, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.field_designator, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.compound_statement, $.initializer_list, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression_statement, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.import_declaration, $._legacy_import_name],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.reference_declarator],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.pointer_declarator, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.initializer_list, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $.expression, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $._unary_left_fold],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.template_type],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.identifier_parameter_pack_expansion],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $._lambda_capture_identifier, $.lambda_capture_initializer],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $._lambda_capture_identifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.lambda_default_capture],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $.lambda_capture_initializer],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.requires_clause, $.nested_requirement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._field_declarator, $.field_declaration],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._string, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.concatenated_string, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._balanced_token, $._class_name],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $._balanced_token, $.template_type, $.template_function],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $._balanced_token],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.argument_list, $._attribute_argument_clause],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.binary_expression, $.cast_expression],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.destructor_name],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $._type_constraint],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.template_function, $.qualified_identifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.type_specifier, $.compound_literal_expression],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.expression, $.template_function],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._constructor_specifiers, $.deduction_guide],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$.explicit_function_specifier],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.splice_type_specifier, $.splice_expression],\n",
+     "after": "    [$.splice_type_specifier, $.splice_expression],\n    [$._declarator, $.type_specifier, $.expression, $.deduction_guide_declarator],\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "enum TokenType { RAW_STRING_DELIMITER, RAW_STRING_CONTENT };",
+     "after": "enum TokenType { RAW_STRING_DELIMITER, RAW_STRING_CONTENT, DIGRAPH_OPEN_BRACKET, LEGACY_LESS_EQUAL };",
+     "occurrences": 1
+    },
+    {
+     "before": "    if (valid_symbols[RAW_STRING_CONTENT]) {\n        lexer->result_symbol = RAW_STRING_CONTENT;\n        return scan_raw_string_content(scanner, lexer);\n    }\n",
+     "after": "    if (valid_symbols[RAW_STRING_CONTENT]) {\n        lexer->result_symbol = RAW_STRING_CONTENT;\n        return scan_raw_string_content(scanner, lexer);\n    }\n\n    // Lexical splits the internal lexer cannot make: '<:' spells '[' unless it starts '<::'\n    // followed by neither ':' nor '>' ([lex.pptoken]/3.2); 'operator<=>' followed by an\n    // identifier, which no C++20 reading can continue, is the pre-C++20 'operator<=' '>'.\n    if (valid_symbols[DIGRAPH_OPEN_BRACKET] || valid_symbols[LEGACY_LESS_EQUAL]) {\n        while (iswspace(lexer->lookahead)) {\n            lexer->advance(lexer, true);\n        }\n        if (lexer->lookahead != '<') {\n            return false;\n        }\n        advance(lexer);\n        if (valid_symbols[DIGRAPH_OPEN_BRACKET] && lexer->lookahead == ':') {\n            advance(lexer);\n            lexer->mark_end(lexer);\n            if (lexer->lookahead == ':') {\n                advance(lexer);\n                if (lexer->lookahead != ':' && lexer->lookahead != '>') {\n                    return false;\n                }\n            }\n            lexer->result_symbol = DIGRAPH_OPEN_BRACKET;\n            return true;\n        }\n        if (valid_symbols[LEGACY_LESS_EQUAL] && lexer->lookahead == '=') {\n            advance(lexer);\n            lexer->mark_end(lexer);\n            if (lexer->lookahead != '>') {\n                return false;\n            }\n            advance(lexer);\n            while (iswspace(lexer->lookahead)) {\n                advance(lexer);\n            }\n            if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {\n                lexer->result_symbol = LEGACY_LESS_EQUAL;\n                return true;\n            }\n        }\n        return false;\n    }\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}
