@@ -5834,7 +5834,7 @@
       ]
     },
     {
-      "id": "probe-javascript-V22-N-1",
+      "id": "probe-javascript-V22-P-1",
       "features": [
         "javascript-V22"
       ],
@@ -5843,13 +5843,21 @@
       "expect": [
         {
           "step": 0,
-          "syntax": "ERROR",
+          "syntax": "NO_ERROR",
           "contains": [
             "class_declaration",
             "field_definition",
             "yield_expression"
           ],
           "anchors": [
+            {
+              "type": "field_definition",
+              "text": "x = yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
             {
               "type": "field_definition",
               "text": "y = 2"

@@ -6012,7 +6012,7 @@
       ]
     },
     {
-      "id": "probe-jsx-B04-js-V22-N-1",
+      "id": "probe-jsx-B04-js-V22-P-1",
       "features": [
         "jsx-B04"
       ],
@@ -6021,13 +6021,21 @@
       "expect": [
         {
           "step": 0,
-          "syntax": "ERROR",
+          "syntax": "NO_ERROR",
           "contains": [
             "class_declaration",
             "field_definition",
             "yield_expression"
           ],
           "anchors": [
+            {
+              "type": "field_definition",
+              "text": "x = yield 1"
+            },
+            {
+              "type": "yield_expression",
+              "text": "yield 1"
+            },
             {
               "type": "field_definition",
               "text": "y = 2"

@@ -31711,14 +31711,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "75b5dd63f3c6ead5867e5e3f7dd30f18734df8d23532785290257c78d83a1a8d",
-      "bytes": 4427382
+      "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+      "bytes": 4395417
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "983fc44c6fcd2557c3dbc6a8b642982b76f45e2ac1a90326cb529559f2b85713",
-      "bytes": 23135
+      "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+      "bytes": 23108
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -39308,7 +39308,7 @@
       "source": null
      },
      {
-      "id": "probe-javascript-V22-N-1",
+      "id": "probe-javascript-V22-P-1",
       "role": "requirement",
       "input": {
        "path": "",
@@ -39320,13 +39320,23 @@
       "expect": [
        {
         "step": 0,
-        "syntax": "ERROR",
+        "syntax": "NO_ERROR",
         "contains": [
          "class_declaration",
          "field_definition",
          "yield_expression"
         ],
         "anchors": [
+         {
+          "type": "field_definition",
+          "start_byte": 34,
+          "end_byte": 45
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 38,
+          "end_byte": 45
+         },
          {
           "type": "field_definition",
           "start_byte": 51,
@@ -39349,8 +39359,7 @@
       "expect_code": "",
       "covers": {
        "javascript-V22": [
-        "N",
-        "R"
+        "P"
        ]
       },
       "alternatives": [],
@@ -41112,14 +41121,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "75b5dd63f3c6ead5867e5e3f7dd30f18734df8d23532785290257c78d83a1a8d",
-      "bytes": 4427382
+      "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+      "bytes": 4395417
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "983fc44c6fcd2557c3dbc6a8b642982b76f45e2ac1a90326cb529559f2b85713",
-      "bytes": 23135
+      "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+      "bytes": 23108
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -48815,7 +48824,7 @@
       "source": null
      },
      {
-      "id": "probe-jsx-B04-js-V22-N-1",
+      "id": "probe-jsx-B04-js-V22-P-1",
       "role": "requirement",
       "input": {
        "path": "",
@@ -48827,13 +48836,23 @@
       "expect": [
        {
         "step": 0,
-        "syntax": "ERROR",
+        "syntax": "NO_ERROR",
         "contains": [
          "class_declaration",
          "field_definition",
          "yield_expression"
         ],
         "anchors": [
+         {
+          "type": "field_definition",
+          "start_byte": 34,
+          "end_byte": 45
+         },
+         {
+          "type": "yield_expression",
+          "start_byte": 38,
+          "end_byte": 45
+         },
          {
           "type": "field_definition",
           "start_byte": 51,
@@ -48856,8 +48875,7 @@
       "expect_code": "",
       "covers": {
        "jsx-B04": [
-        "N",
-        "R"
+        "P"
        ]
       },
       "alternatives": [],

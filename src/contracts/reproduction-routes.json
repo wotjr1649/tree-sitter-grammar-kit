@@ -184,16 +184,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 203370,
-          "sha256": "f0fd8bbe25d6c0a53178f1c3a9c6531089318f34c726ef183b75c13cd51d594c"
+          "bytes": 202470,
+          "sha256": "16b1a64ebc8cab6935d9aa7938f535c75038738fd80d1af316be7de6d213cd3a"
         },
         "node-types.json": {
           "bytes": 78144,
           "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
         },
         "parser.c": {
-          "bytes": 4427382,
-          "sha256": "75b5dd63f3c6ead5867e5e3f7dd30f18734df8d23532785290257c78d83a1a8d"
+          "bytes": 4395417,
+          "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
@@ -217,16 +217,16 @@
       "decision": "C2-REGENERATE-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 203370,
-          "sha256": "f0fd8bbe25d6c0a53178f1c3a9c6531089318f34c726ef183b75c13cd51d594c"
+          "bytes": 202470,
+          "sha256": "16b1a64ebc8cab6935d9aa7938f535c75038738fd80d1af316be7de6d213cd3a"
         },
         "node-types.json": {
           "bytes": 78144,
           "sha256": "71127d3c8202ed2d975bbbc75066dc4a9c3521df8670a689e4fda173bd6bd9cd"
         },
         "parser.c": {
-          "bytes": 4427382,
-          "sha256": "75b5dd63f3c6ead5867e5e3f7dd30f18734df8d23532785290257c78d83a1a8d"
+          "bytes": 4395417,
+          "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,

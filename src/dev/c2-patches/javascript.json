@@ -205,11 +205,6 @@
      "before": "      '=>',\n      field('body', choice(\n        $.expression,\n        $._function_body,\n      )),\n",
      "after": "      '=>',\n      choice(\n        field('body', choice(\n          $.expression,\n          $._function_body,\n        )),\n        // ConciseBody is [~Yield]: inside a generator the scanner brackets it with a non-generator frame\n        seq($._concise_body_start, field('body', $.expression), $._concise_body_end),\n      ),\n",
      "occurrences": 1
-    },
-    {
-     "before": "      field('property', $._property_name),\n      optional($._initializer),\n    ),\n",
-     "after": "      field('property', $._property_name),\n      optional(choice(\n        $._initializer,\n        // a field initializer is evaluated as its own method: [~Yield] inside a generator\n        seq('=', $._concise_body_start, field('value', $.expression), $._concise_body_end),\n      )),\n    ),\n",
-     "occurrences": 1
     }
    ]
   },
@@ -293,7 +288,7 @@
     },
     {
      "before": "static bool current_generator(Scanner *scanner) {\n    return scanner->depth > 0 && scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1];\n}\n",
-     "after": "// Frame kinds: a function body (0), a generator body (1), and an arrow ConciseBody or class field\n// Initializer (2), which is [~Yield] and has no closing brace.\n#define CONCISE_FRAME 2\n\nstatic uint8_t top_frame(Scanner *scanner) {\n    return scanner->depth > 0 ? scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1] : 0;\n}\n\nstatic bool current_generator(Scanner *scanner) { return scanner->depth > 0 && top_frame(scanner) == 1; }\n",
+     "after": "// Frame kinds: a function body (0), a generator body (1), and an arrow ConciseBody (2), which is\n// [~Yield] and has no closing brace.\n#define CONCISE_FRAME 2\n\nstatic uint8_t top_frame(Scanner *scanner) {\n    return scanner->depth > 0 ? scanner->generator[(scanner->depth < MAX_FRAMES ? scanner->depth : MAX_FRAMES) - 1] : 0;\n}\n\nstatic bool current_generator(Scanner *scanner) { return scanner->depth > 0 && top_frame(scanner) == 1; }\n",
      "occurrences": 1
     },
     {
