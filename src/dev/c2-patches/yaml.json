@@ -1,0 +1,34 @@
+{
+ "schema": "tsgk-c2-patch/r1",
+ "route": "yaml",
+ "defects": [
+  "yaml-P2-01"
+ ],
+ "files": [
+  {
+   "target": "src/scanner.c",
+   "operations": [
+    {
+     "before": "    bool has_tab_ind = false;\n    int16_t leading_spaces = 0;\n",
+     "after": "    bool has_tab_ind = false;\n    bool has_bom = false;\n    int16_t leading_spaces = 0;\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            has_tab_ind = true;\n            skp(scanner, lexer);\n",
+     "after": "            has_tab_ind = true;\n            skp(scanner, lexer);\n        } else if (lexer->lookahead == 0xFEFF && scanner->cur_col == 0 && allow_comment && !valid_symbols[ERR_REC] &&\n                   (valid_symbols[S_DIR_YML_BGN] ||\n                    (!has_bom && (valid_symbols[S_DRS_END] || (valid_symbols[BL] && scanner->ind_len_stk.size > 1))))) {\n            // YAML 1.2.2 [211] l-yaml-stream: a c-byte-order-mark opens a document prefix (stream start or\n            // after a document suffix, where directives are valid) or precedes an explicit document, also\n            // one that closes block collections. It is not indentation: cur_col stays 0.\n            has_bom = true;\n            scanner->cur_chr = lexer->lookahead;\n            lexer->advance(lexer, true);\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        } else if (allow_comment && lexer->lookahead == '#') {\n",
+     "after": "        } else if (allow_comment && lexer->lookahead == '#') {\n            if (has_bom && !valid_symbols[S_DIR_YML_BGN]) {\n                return false; // outside a document prefix \"---\" must follow the byte order mark directly\n            }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    if (lexer->lookahead == 0) {\n        if (valid_symbols[BL]) {\n",
+     "after": "    if (has_bom && !valid_symbols[S_DIR_YML_BGN]) {\n        // [211] c-byte-order-mark l-comment* l-explicit-document outside a prefix: \"---\" must follow\n        if (!scn_drs_doc_end(scanner, lexer) || scanner->cur_chr != '-') {\n            return false;\n        }\n        if (valid_symbols[BL] && scanner->ind_len_stk.size > 1) {\n            pop_ind(scanner);\n            RET_SYM(BL);\n        }\n        mrk_end(scanner, lexer);\n        RET_SYM(S_DRS_END);\n    }\n\n    if (lexer->lookahead == 0) {\n        if (valid_symbols[BL]) {\n",
+     "occurrences": 1
+    }
+   ]
+  }
+ ]
+}

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- 26 route 어느 것이든 저장소 안 C2 patch를 실을 수 있게 했다(#76, `C2-PATCH-r1`: 모든 route를 FULL PASS까지 patch할 수 있다는 사용자 결정). 첫 patch는 yaml `yaml-P2-01`이다.
+  - patch subject는 `src/dev/c2-patches/<route>.json`(`tsgk-c2-patch/r1`)이다. `language-sources.json`의 route에 `c2_patch` 기록(`decision`, `subjects`, chain 전체 뒤의 `patched_files` hash)을 둔다. `native-routes.json`의 chain은 채택 chain(채택 route만) 뒤에 C2 subject의 `/files/<i>` 단계가 순서대로 온다. native `patched_files`는 C2 기록의 것이다. 채택 6 route의 adoption 기록은 P05 identity 그대로다. C2 patch가 있는 route는 채택 route라도 `reproduction-routes.json`이 출력 6개를 모두 고정한다.
+  - foundation 시험이 다음을 거부한다: 기록 없는 C2 chain, chain 없는 기록, 다른 route의 subject, C2 단계의 pointer·target 불일치, native와 기록의 patched file hash 불일치, chain target이 아닌 patched file과 patched file 없는 target, upstream 그대로 쓰는 patched file, 출력 고정 누락(채택 route 포함), adoption subject가 아닌 채택 chain 단계, C2 기록의 decision·subject 경로·patched file 형식 오류. 각 규칙에 음성 대조 시험이 있다.
+  - `prepare-routes.ps1`은 `node_modules/<package>/…` patch 대상의 원문을 등록 npm tarball에서 가져온다(cpp의 tree-sitter-c, typescript·tsx의 tree-sitter-javascript patch용).
+  - yaml scanner가 document 사이의 BOM(U+FEFF)을 처리한다(YAML 1.2.2 [211] `l-yaml-stream`). document prefix(stream 시작, `...` 뒤)에서는 BOM을 건너뛰고, 그 밖에서는 바로 뒤에 `---`가 올 때만 받는다. BOM은 들여쓰기로 세지 않는다. 다른 위치의 BOM은 여전히 오류다. 생성기 입력이 아니므로 출력 6개는 바뀌지 않았다. `alt-yaml-V12-01`이 PASS가 됐다. 알려진 한계: prefix 밖에서 BOM과 `---` 사이에 주석이 있으면(규격상 유효) 여전히 오류다.
+  - qualification inventory(`qualification-c1.json`)의 yaml `src/scanner.c` hash를 다시 생성했다.
+
 - 비채택 20 route도 고정 생성기 재생성 경로에 올렸다(#89, `C2-REGENERATE-r1`: #76에서 사용자가 승인한 26 route patch 경로의 첫 단계). grammar는 바꾸지 않았다.
   - 20 route의 native 입력 `parser.c`·`tree_sitter/*.h`는 이제 upstream에 들어 있는 이전 CLI 생성물이 아니다. 고정 commit의 patch 없는 grammar를 tree-sitter 0.27.0·Node 24.21.0·ABI 15로 재생성한 출력이다. `native-routes.json`의 `regeneration`은 patch chain과 patched file이 비어 있다. `language-sources.json`의 `regeneration` 기록과 `reproduction-routes.json`의 `PREPARE_GENERATED` 기준이 출력 6개를 모두 고정한다. Windows에서 20 route 모두 두 작업 공간 출력이 byte 단위로 같았고 S04 재생성 출력과도 같았다. php는 upstream 생성물과 같고, 나머지 19 route는 `array.h` 등이 다르다.
   - foundation 시험은 두 종류의 route만 받는다. 하나는 기존 규칙 그대로인 채택 route이고, 다른 하나는 adoption·patch 없이 출력이 고정된 재생성 전용 route다. 다음은 거부한다: 둘 다 아니거나 둘 다인 route, upstream parser, chain 없는 patched file, 빠지거나 다른 출력 고정, 재생성 기록이 있는 upstream 기준. 이 거부 사례마다 음성 대조 시험이 있다.

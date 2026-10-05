@@ -195980,8 +195980,8 @@
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "a510c0ca699cf3853bd2192bf103e11132414bc002fe952a88a7106ffb5d44e9",
-      "bytes": 51548
+      "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb",
+      "bytes": 52932
      },
      {
       "path": "src/schema.core.c",

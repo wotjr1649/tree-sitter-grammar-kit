@@ -1345,6 +1345,19 @@
             "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"
           }
         ]
+      },
+      "c2_patch": {
+        "decision": "C2-PATCH-r1",
+        "subjects": [
+          "src/dev/c2-patches/yaml.json"
+        ],
+        "patched_files": [
+          {
+            "path": "src/scanner.c",
+            "bytes": 52932,
+            "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb"
+          }
+        ]
       }
     },
     {

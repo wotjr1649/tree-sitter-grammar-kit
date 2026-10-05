@@ -6,7 +6,9 @@
 # `tsgk reproduce` (tree-sitter 0.27.0 + Node 24.21.0, registered digests) unless
 # -ReuseGenerated points at already verified outputs. Adopted routes first apply the
 # registered literal patch chain and check every patched file against its adoption hash;
-# the other routes have an empty chain (C2-REGENERATE-r1). Every file is hash-checked.
+# the other routes have an empty chain (C2-REGENERATE-r1). A route with C2 patches
+# (C2-PATCH-r1) applies their steps after that and checks the files against its C2 record.
+# Every file is hash-checked.
 param(
   [Parameter(Mandatory)][string]$Destination,
   [Parameter(Mandatory)][string]$Platform,        # windows/amd64 | linux/amd64 | darwin/arm64
@@ -176,7 +178,9 @@ foreach ($r in $registry.routes) {
   $patched = @{}
   if ($r.PSObject.Properties['regeneration'] -and $r.regeneration) {
     foreach ($pf in $r.regeneration.patched_files) {
-      $text = Get-PatchedText (Join-Path $src $pf.path) $r.regeneration.patch_chain $pf.path
+      # an npm input (cpp's tree-sitter-c, typescript/tsx's tree-sitter-javascript) is patched from its registered tarball
+      $base = if ($pf.path.StartsWith('node_modules/')) { Get-NpmFile $pf.path } else { Join-Path $src $pf.path }
+      $text = Get-PatchedText $base $r.regeneration.patch_chain $pf.path
       $tmp = Join-Path $Destination "patched/$($r.route)/$($pf.path)"
       New-Item -ItemType Directory -Force -Path (Split-Path -Parent $tmp) | Out-Null
       [IO.File]::WriteAllText($tmp, $text, [Text.UTF8Encoding]::new($false))

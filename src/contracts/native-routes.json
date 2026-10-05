@@ -1,7 +1,7 @@
 {
  "schema": "tsgk-native-routes/r1",
  "status": "REGISTRATION_NOT_RESULT",
- "note": "Native build inputs of the 26 routes for S05: upstream files at the pinned commit (archive identity where S01 acquired one) and the outputs regenerated from the pinned grammar by tsgk reproduce (tree-sitter 0.27.0, Node 24.21.0, ABI 15). The 6 adopted routes apply their literal patch chain in order first and every patched file must end at its adoption hash; the other 20 regenerate without patches (C2-REGENERATE-r1): an empty patch chain and no patched files.",
+ "note": "Native build inputs of the 26 routes for S05: upstream files at the pinned commit (archive identity where S01 acquired one) and the outputs regenerated from the pinned grammar by tsgk reproduce (tree-sitter 0.27.0, Node 24.21.0, ABI 15). The 6 adopted routes apply their literal patch chain in order first and every patched file must end at its adoption hash; the other 20 regenerate without patches (C2-REGENERATE-r1): an empty patch chain and no patched files. A route with a C2 record (C2-PATCH-r1, language-sources c2_patch) appends its subjects' file steps (src/dev/c2-patches/<route>.json /files/<i>, operations) to that chain, and its patched files are the C2 record's.",
  "runtime": "src/drivers/native-c/runtime-manifest.json",
  "routes": [
   {
@@ -2613,9 +2613,9 @@
     {
      "path": "src/scanner.c",
      "role": "scanner",
-     "origin": "upstream",
-     "sha256": "a510c0ca699cf3853bd2192bf103e11132414bc002fe952a88a7106ffb5d44e9",
-     "bytes": 51548
+     "origin": "patched",
+     "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb",
+     "bytes": 52932
     },
     {
      "path": "src/schema.core.c",
@@ -2717,8 +2717,21 @@
       "bytes": 862
      }
     ],
-    "patch_chain": [],
-    "patched_files": []
+    "patch_chain": [
+     {
+      "subject": "src/dev/c2-patches/yaml.json",
+      "pointer": "/files/0",
+      "field": "operations",
+      "target": "src/scanner.c"
+     }
+    ],
+    "patched_files": [
+     {
+      "path": "src/scanner.c",
+      "bytes": 52932,
+      "sha256": "f1e2f7a20ad34e2a526002ae662fb40c754facd9e6b4d4fa96ea6c6f6d481ccb"
+     }
+    ]
    }
   },
   {
