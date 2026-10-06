@@ -3405,8 +3405,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "68151433386e2ee6c467956fde8945e104accd1955a9931538b941800882d5de",
-     "bytes": 58379787
+     "sha256": "e1d4e8912cd9b860f1ad32cb53b4962c8a13b322582781eb48d61f186dcbf83f",
+     "bytes": 58380607
     },
     {
      "path": "src/scanner.c",
@@ -3441,8 +3441,8 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "2ed5d4266b4fc71dc572be120bae3d96c858b826d2f9bd9edfd72f3f6e1cb876",
-      "bytes": 1095483
+      "sha256": "274a755056c78cbfcad91177aeb6dd3c5e6ba38033eeda1dce136442c8b77cb5",
+      "bytes": 1126864
      },
      {
       "path": "node-types.json",
@@ -3451,8 +3451,8 @@
      },
      {
       "path": "parser.c",
-      "sha256": "68151433386e2ee6c467956fde8945e104accd1955a9931538b941800882d5de",
-      "bytes": 58379787
+      "sha256": "e1d4e8912cd9b860f1ad32cb53b4962c8a13b322582781eb48d61f186dcbf83f",
+      "bytes": 58380607
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -3478,14 +3478,14 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "ca5301088a999e6fd2a1b227cf067c3a9476ffd47f824779ee078645b73ee5c2",
-      "bytes": 9192
+      "sha256": "072b31ca1ef283cb85d9025a88eab03f3edbc8b832695e6e3b3c60e719c6664f",
+      "bytes": 9230
      },
      {
       "path": "grammar/column-lists.js",
       "role": "js_helper",
-      "sha256": "48788054f42d2f5f9cc59c68f62555e453c89f5eb0271bf156c77483fdcd539d",
-      "bytes": 17130
+      "sha256": "d9e4e42c3851d1616568ba424d10b7881b19a06cbf2965dac4afb9d2a33fed5d",
+      "bytes": 17170
      },
      {
       "path": "grammar/expressions.js",
@@ -3496,8 +3496,8 @@
      {
       "path": "grammar/helpers.js",
       "role": "js_helper",
-      "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc",
-      "bytes": 4218
+      "sha256": "2cc0d7dab84aaf548fdd07c8d12dcb582290210bfb436c2eeb6b1415616b6111",
+      "bytes": 7819
      },
      {
       "path": "grammar/keywords.js",
@@ -3550,8 +3550,8 @@
      {
       "path": "grammar/statements/index.js",
       "role": "js_helper",
-      "sha256": "02f1cd03017319f1c86156efc9d829853d11bd25e7842c96e7162a5cc6bc30c2",
-      "bytes": 35224
+      "sha256": "eb7a71fd7cdf34fafdff694f176c11a76cc924fd24a435918df19f305cc273ef",
+      "bytes": 35560
      },
      {
       "path": "grammar/statements/insert.js",
@@ -3836,13 +3836,19 @@
       "pointer": "/files/19",
       "field": "operations",
       "target": "grammar/types.js"
+     },
+     {
+      "subject": "src/dev/c2-patches/tsql.json",
+      "pointer": "/files/20",
+      "field": "operations",
+      "target": "grammar/helpers.js"
      }
     ],
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 9192,
-      "sha256": "ca5301088a999e6fd2a1b227cf067c3a9476ffd47f824779ee078645b73ee5c2"
+      "bytes": 9230,
+      "sha256": "072b31ca1ef283cb85d9025a88eab03f3edbc8b832695e6e3b3c60e719c6664f"
      },
      {
       "path": "grammar/keywords.js",
@@ -3851,8 +3857,8 @@
      },
      {
       "path": "grammar/column-lists.js",
-      "bytes": 17130,
-      "sha256": "48788054f42d2f5f9cc59c68f62555e453c89f5eb0271bf156c77483fdcd539d"
+      "bytes": 17170,
+      "sha256": "d9e4e42c3851d1616568ba424d10b7881b19a06cbf2965dac4afb9d2a33fed5d"
      },
      {
       "path": "grammar/statements/create.js",
@@ -3866,8 +3872,8 @@
      },
      {
       "path": "grammar/helpers.js",
-      "bytes": 4218,
-      "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc"
+      "bytes": 7819,
+      "sha256": "2cc0d7dab84aaf548fdd07c8d12dcb582290210bfb436c2eeb6b1415616b6111"
      },
      {
       "path": "grammar/statements/create-procedure.js",
@@ -3881,8 +3887,8 @@
      },
      {
       "path": "grammar/statements/index.js",
-      "bytes": 35224,
-      "sha256": "02f1cd03017319f1c86156efc9d829853d11bd25e7842c96e7162a5cc6bc30c2"
+      "bytes": 35560,
+      "sha256": "eb7a71fd7cdf34fafdff694f176c11a76cc924fd24a435918df19f305cc273ef"
      },
      {
       "path": "grammar/statements/select.js",

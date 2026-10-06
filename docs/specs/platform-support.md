@@ -27,9 +27,9 @@ native 준비와 build는 기반 runtime commit에 [검토된 6줄 patch](../pro
 
 ## 개발 main의 T-SQL 한계 (#109)
 
-현재 고정 parser의 Windows 합성 입력 23개로 [재분류한 결과](../reports/issue-109-tsql-reclassification.md), S08의 과잉 수용 다섯 종류(예약어 단독 호출, Unicode 3.2 밖 식별자, master-key PASSWORD 문맥의 CERTIFICATE, 빈 BEGIN END, 세미콜론 없는 BEGIN WITH)는 모두 남아 있다. grammar 수정은 [#113](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/113)이 추적한다.
+[#109의 Windows 합성 입력 23개 관측](../reports/issue-109-tsql-reclassification.md)은 당시 남아 있던 다섯 과잉 수용 종류의 역사적 기록이다. [#113의 경계 수정](../reports/issue-113-tsql-boundaries.md)은 PERCENT의 regular identifier 수용, Unicode 3.2 BMP 밖 regular identifier 문자, master/service-key PASSWORD 문맥의 CERTIFICATE, 빈 BEGIN END, BEGIN 직후 세미콜론 없는 CTE를 제한한다. 구분 식별자·Unicode 3.2 문자·PASSWORD·비어 있지 않은 block·BEGIN; WITH 및 CERTIFICATE가 유효한 다른 문맥의 대조군을 유지한다. 등록 대조군 20개와 기존 사례가 검증 범위이며, 모든 예약어·CTE 위치나 SQL Server 엔진의 완전 적합성을 뜻하지 않는다. 등록 source/생성물 identity와 실제 candidate의 CI/qualification 근거를 함께 확인한다.
 
-비첫 `SELECT 1;sp_executesql…`은 ERROR·사실 0·known miss 0으로 거부한다. 같은 batch에서 EXEC를 생략한 비첫 호출의 거부는 의도된 동작이며, 그 모양의 batch-first known-miss 오분류는 재현되지 않았다. `SELECT 1;;sp_executesql…`은 ERROR이지만 여전히 `BATCH_FIRST_CALL_WITHOUT_EXEC`로 오분류한다([#114](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/114)). 실제 첫 호출·명시적 EXEC·GO 뒤 첫 호출은 사실 1·known miss 0이다. 입력·관측 CST·공식 문법 근거·대조군은 위 보고서가 소유한다. 등록 fixture의 known miss 0을 모든 입력에 확대하지 않는다.
+비첫 `SELECT 1;sp_executesql…`과 `SELECT 1;;sp_executesql…`은 ERROR·사실 0·known miss 0으로 거부한다. 같은 batch에서 EXEC를 생략한 비첫 호출의 거부는 의도된 동작이다. [#114](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/114)는 program/batch의 선행 구문과 실제 GO 경계를 확인해 이중 세미콜론 ERROR의 `BATCH_FIRST_CALL_WITHOUT_EXEC` 오분류를 수정했다. 실제 첫 호출·명시적 EXEC·GO 뒤 첫 호출은 사실 1·known miss 0을 유지한다. [분류 계약](tree-and-adapter-protocol.md)의 위치 근거와 등록 대조군을 적용하며, #109의 당시 관측을 소급 변경하지 않는다. 등록 fixture의 known miss 0을 모든 입력에 확대하지 않는다.
 
 ## Release v0.2.0의 claim
 
