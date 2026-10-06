@@ -57,7 +57,7 @@ func TestRuntimePatch(t *testing.T) {
 	}
 	step := manifest.Patches[0]
 	removal, _ := step["remove_when"].(string)
-	if step["source_repository"] != "mgsloan/tree-sitter" || step["source_commit"] != "18302989e05fcc8da7ce7fca3f8aedadb7191fdd" || step["license"] != "MIT" || step["target"] != "lib/src/node.c" || step["pointer"] != "/files/0" || step["field"] != "operations" || strings.TrimSpace(removal) == "" {
+	if step["origin"] != "LOCAL" || step["tracking_issue"] != "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/118" || step["license"] != "MIT" || step["target"] != "lib/src/node.c" || step["pointer"] != "/files/0" || step["field"] != "operations" || strings.TrimSpace(removal) == "" {
 		t.Fatal("runtime patch provenance/target/removal policy changed without review")
 	}
 	if step["before_sha256"] != "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5" || step["before_bytes"] != float64(25151) {
@@ -66,7 +66,7 @@ func TestRuntimePatch(t *testing.T) {
 	var nodePin bool
 	for _, f := range manifest.Files {
 		if f.Path == "lib/src/node.c" {
-			nodePin = f.SHA256 == "0c2531b763ae83ae87e76d3af6ec69137628eb0d4231faedf3cd6ab23bfc8de0" && f.Bytes == 25390
+			nodePin = f.SHA256 == "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740" && f.Bytes == 23579
 		}
 	}
 	if !nodePin {
