@@ -4,13 +4,13 @@
 
 Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 route](../validation/language-feature-scope.md)의 등록 native workload를 필수로 검증한다. `26 × 3 = 78` 요약 칸은 각 route의 feature·fixture·query·edit·source/tool/policy/comparator 근거를 참조한다. compiler version이나 cross-build만으로 native 실행 칸을 채우지 않는다. 미지원 필수 capability는 전체 지원 완료를 막으며 OS 행을 삭제하는 사유가 아니다.
 
-아래 표는 main `03ea1f0`의 상태다. 근거는 post-merge CI run 37184449649(foundation 세 OS, native prepare, native routes 세 OS, qualification, attempt 1)와 각 Session 보고서다. `qualify` 행만 main `8038e8f`의 post-merge CI run 37357247559(attempt 1)를 근거로 한다.
+아래 표는 main `03ea1f0`의 상태다. 근거는 post-merge CI run 37184449649(foundation 세 OS, native prepare, native routes 세 OS, qualification, attempt 1)와 각 Session 보고서다. `qualify` 행과 `regenerate` 행의 Linux 26 route는 main `c325ed3`의 post-merge CI run 37397153335(attempt 1)를 근거로 한다.
 
 | capability | 현재 상태 | 근거와 범위 |
 |---|---|---|
 | foundation build/test | VERIFIED(세 OS) | 필수 CI. Go/OS/arch, runner image, checkout SHA를 확인한다. `CGO_ENABLED=0` active closure에 `CgoFiles`와 `runtime/cgo`가 없다 |
 | offline 제품 기능(`inspect`·`identity`·`verify`·`schema`와 공개 API) | VERIFIED(세 OS) | S01~S03 기능·경계·결정성 시험. CLI와 API 결과 bytes 동일. checkout 밖 consumer와 module proxy consumer |
-| regenerate(`reproduce`) | VERIFIED: owned fixture(세 OS), 채택 6 route(Linux CI), 26 route(Windows 로컬). NOT_RUN(#89 기준, 이 행만 #89 이후 입력을 말한다): 비채택 20 route의 Linux 재생성(`native prepare`가 등록 출력과 대조, 첫 CI 결과가 근거). NOT_RUN: 26 route의 macOS 재생성 | S04 tool closure, 독립 두 작업 공간, 기준 비교. 26 route 모두 native 입력은 tree-sitter 0.27.0 재생성물이다. 채택 6 route는 patch chain 뒤, 나머지 20 route는 patch 없이(`C2-REGENERATE-r1`) 재생성한다. C2 patch(`C2-PATCH-r1`)가 등록된 route는 그 단계까지 적용한 뒤 재생성한다. 20 route의 upstream 생성물(이전 CLI)과의 차이는 S04에 기록돼 있다 |
+| regenerate(`reproduce`) | VERIFIED: owned fixture(세 OS), 26 route(Linux CI의 `native prepare`가 등록 출력과 대조해 26 route 모두 `reference_match` PASS, Windows 로컬). NOT_RUN: 26 route의 macOS 재생성 | S04 tool closure, 독립 두 작업 공간, 기준 비교. 26 route 모두 native 입력은 tree-sitter 0.27.0 재생성물이다. 채택 6 route는 patch chain 뒤, 나머지 20 route는 patch 없이(`C2-REGENERATE-r1`) 재생성한다. C2 patch(`C2-PATCH-r1`)가 등록된 route는 그 단계까지 적용한 뒤 재생성한다. 20 route의 upstream 생성물(이전 CLI)과의 차이는 S04에 기록돼 있다 |
 | native parse·edit·query(`incremental`·`oracle record`) | VERIFIED(세 OS 등록 사례) | 27 route, failures 0. Linux ASan/UBSan suite. compiler identity는 host별이다 |
 | supervision(runner) | VERIFIED(backend별) | Windows Job Object hard, Linux 위임 cgroup v2 hard, macOS process group sampled. macOS에서는 그룹을 떠난 조용한 하위 process를 정리하지 못하며 `NOT_CONTAINED`로 기록한다 |
 | full qualification(`qualify`) | AVAILABLE. 현재 판정은 **지원 claim SUPPORTED**(`platform_claims` 세 OS 모두 SUPPORTED) | Campaign 02([#76](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/76)) 결과. 78칸 PASS(kit 축 78, 요구 축 78, 비교 FAIL 0). 필수 의무 2478건(826 × 3 OS) PASS, FAIL·BLOCKED·미충족 0. 실행된 추가 역할 행 `n461-svc`(세 OS)·`n461-large`(Windows) PASS. API claim 관측 423건은 판정에 들어가지 않는 기록이다 |
@@ -19,23 +19,25 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 
 각 행의 상태는 AVAILABLE(기능 존재), VERIFIED(정확한 시험 근거), UNSUPPORTED, NOT_RUN을 구분한다. foundation 성공은 제품/native 지원 근거가 아니다. 실제 관측값은 Session 보고서와 CI receipt가 소유한다.
 
-## Release 후보 v0.1.0의 claim
+## Release v0.2.0의 claim
 
-첫 release 후보의 범위는 [제품 범위](scope.md)가 정한다.
+release의 범위는 [제품 범위](scope.md)가 정한다.
 
 - **VERIFIED(세 OS):** offline `inspect`, `identity`, `verify`, `schema`와 그 공개 API(`src/kit`).
+- **26 route qualification 판정 SUPPORTED(세 OS):** 위 표의 `qualify` 행이다. 등록 사례와 [qualification inventory](../../src/contracts/qualification-c1.json)에 대한 판정이며, 그 밖의 입력을 parse할 수 있다고 인증하지 않는다. 사양이 문맥 자유 구문 밖에 둔 검사(early error 등)는 [disposition](../validation/language-feature-disposition.md)에서 SEM이며 판정 대상이 아니다.
 - **experimental:** `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API.
   - 위 표의 근거로 동작하지만 호환성은 약속하지 않는다.
   - native 실행에는 승인된 capability(`BUILD_NATIVE`, `EXEC_NATIVE`, `EXEC_GENERATOR`)와 host compiler가 필요하다.
-- **주장하지 않음:** 26개 route 지원. v0.1.0 시점의 지원 claim은 BLOCKED였으며 [#70](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/70)과 넘겨받은 grammar gap이 남아 있었다. 그 뒤의 판정은 위 표의 `qualify` 행이 말한다.
 - **알려진 한계**
-  - tree-sitter runtime의 field 조회와 cursor가 다른 API claim FAIL 23 사례(6 route)
-  - T-SQL 과잉 수용(r6에서 3종, r5부터 2종)
+  - tree-sitter runtime의 field 조회와 cursor가 다른 API claim 관측 423건. 판정에 들어가지 않는 기록이며, runtime 결함 수정 뒤 다시 잰다([#105](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/105)).
+  - Campaign 02 grammar patch의 heuristic과 미구현 부분. 주요 항목은 C/C++ macro heuristic(모호한 입력을 오류 없이 받을 수 있음), go 자동 세미콜론의 미구현 상태, C# 조건부 section의 제한된 선택이다. 전체 목록은 [변경 기록](../../CHANGELOG.md) v0.2.0 절의 Campaign 02 이력에 있다.
+  - T-SQL 과잉 수용(S08 기록: r6에서 3종, r5부터 2종)과, 첫 문장이 아닌 `;sp_executesql`을 known miss로 두는 동적 SQL 탐지. 둘 다 Campaign 02 뒤에 다시 분류하지 않았다.
   - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
-  - 동적 SQL 탐지는 첫 문장이 아닌 `;sp_executesql`을 known miss로 둠
-  - BrightScript·cooklang 역할 NOT_RUN, `n461-svc` 역할 INCOMPLETE(SVC negative 기대값 8개, #70)
+  - BrightScript·cooklang 역할 NOT_RUN
   - `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
+  - 26 route의 macOS 재생성과 macOS race 진단은 NOT_RUN
   - [#65](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/65)의 시험 시간 여유
+- v0.1.0(2026-10-04)의 claim은 offline core VERIFIED였고 26 route 지원은 주장하지 않았다(당시 판정 BLOCKED). 당시 claim과 한계는 [변경 기록](../../CHANGELOG.md)의 v0.1.0 절에 있다.
 - release는 binary를 배포하지 않고 소스 tag만 낸다. 임의 입력에 대한 지원을 인증하지 않는다.
 
 Windows backend의 Job Object와 POSIX process group/rlimit는 같은 강도의 격리가 아니다. timeout, output cap, memory metric별 cap, process-tree cleanup, 환경 정리를 각각 검증한다. Linux RSS/KiB, macOS ru_maxrss/bytes, sampled footprint, Windows working set/private bytes/commit, allocator-live를 합치지 않는다. 원 metric/단위/관측 API·sampling 간격·kernel hard cap 여부를 기록한다. sampled kill을 hard memory cap으로 표현하지 않는다.
