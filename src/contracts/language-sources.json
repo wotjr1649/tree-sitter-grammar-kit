@@ -1864,7 +1864,8 @@
         "S04: 24 ESM module closure로 parser.c 재생성의 재현성",
         "S07: SQL Server runtime 실행(tsql-R01)은 NOT_RUN",
         "S08: Windows amd64·macOS arm64 qualification",
-        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다. 기록된 과잉 수용: batch 첫 위치의 문장이 아닌 예약어 단독 입력을 EXEC 생략 모듈 호출로 읽음, 식별자 문자 범위가 Unicode 3.2보다 넓음, ENCRYPTION/DECRYPTION BY 뒤 공용 option 모양(BY CERTIFICATE c), r5부터의 빈 BEGIN END와 `;` 없는 BEGIN WITH(src/dev/prepare-p05/remedy-tsql-r6.json gaps와 over_acceptance)"
+        "S08 r6: 열 수준 FOREIGN KEY 자체 열 목록, ASC/DESC가 있는 열 수준 key 열 목록, 마지막 table constraint 뒤 쉼표(와 CREATE EXTERNAL TABLE의 끝 쉼표), CAST 식의 xml method 호출, RESTORE MOVE 변수는 공식·엔진 근거 미확립 grammar gap이다.",
+        "S08 #113: PERCENT의 regular identifier 수용, Unicode 3.2 BMP 밖 regular identifier 문자, master/service key의 CERTIFICATE 옵션, 빈 BEGIN END, BEGIN 직후 세미콜론 없는 CTE를 제한한다. 등록된 정상/음성 대조군 20개로 범위를 고정하며, 다른 모든 예약어·CTE 위치·SQL Server 엔진 동작의 완전한 적합성을 주장하지 않는다. 근거: docs/reports/issue-113-tsql-boundaries.md"
       ],
       "superseded_candidate": {
         "repository": "Crary-Systems/tree-sitter-tsql",
@@ -1966,8 +1967,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 9192,
-            "sha256": "ca5301088a999e6fd2a1b227cf067c3a9476ffd47f824779ee078645b73ee5c2"
+            "bytes": 9230,
+            "sha256": "072b31ca1ef283cb85d9025a88eab03f3edbc8b832695e6e3b3c60e719c6664f"
           },
           {
             "path": "grammar/keywords.js",
@@ -1976,8 +1977,8 @@
           },
           {
             "path": "grammar/column-lists.js",
-            "bytes": 17130,
-            "sha256": "48788054f42d2f5f9cc59c68f62555e453c89f5eb0271bf156c77483fdcd539d"
+            "bytes": 17170,
+            "sha256": "d9e4e42c3851d1616568ba424d10b7881b19a06cbf2965dac4afb9d2a33fed5d"
           },
           {
             "path": "grammar/statements/create.js",
@@ -1991,8 +1992,8 @@
           },
           {
             "path": "grammar/helpers.js",
-            "bytes": 4218,
-            "sha256": "a8a15252e4752d3d61000f7a859bc797c29c496f6075a000b5d66afa5fd1d2bc"
+            "bytes": 7819,
+            "sha256": "2cc0d7dab84aaf548fdd07c8d12dcb582290210bfb436c2eeb6b1415616b6111"
           },
           {
             "path": "grammar/statements/create-procedure.js",
@@ -2006,8 +2007,8 @@
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 35224,
-            "sha256": "02f1cd03017319f1c86156efc9d829853d11bd25e7842c96e7162a5cc6bc30c2"
+            "bytes": 35560,
+            "sha256": "eb7a71fd7cdf34fafdff694f176c11a76cc924fd24a435918df19f305cc273ef"
           },
           {
             "path": "grammar/statements/select.js",

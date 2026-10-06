@@ -91,6 +91,852 @@
         {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
         {"step": 2, "syntax": "NO_ERROR", "contains": ["output_clause"], "declarations": ""}
       ]
+    },
+    {
+      "id": "tsql-issue113-percent-call-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "[PERCENT];\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "[PERCENT];",
+          "replace": "PERCENT;"
+        },
+        {
+          "find": "PERCENT;",
+          "replace": "[PERCENT];"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "execute_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "execute_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-percent-alias-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS [PERCENT];\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "SELECT 1 AS [PERCENT];",
+          "replace": "SELECT 1 AS PERCENT;"
+        },
+        {
+          "find": "SELECT 1 AS PERCENT;",
+          "replace": "SELECT 1 AS [PERCENT];"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-percent-constraint-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));",
+          "replace": "CREATE TABLE t (a int DEFAULT (PERCENT()));"
+        },
+        {
+          "find": "CREATE TABLE t (a int DEFAULT (PERCENT()));",
+          "replace": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_table"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_table"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-letter-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS ა;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "SELECT 1 AS ა;",
+          "replace": "SELECT 1 AS Ა;"
+        },
+        {
+          "find": "SELECT 1 AS Ა;",
+          "replace": "SELECT 1 AS ა;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-digit-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS a١;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "SELECT 1 AS a١;",
+          "replace": "SELECT 1 AS a᮰;"
+        },
+        {
+          "find": "SELECT 1 AS a᮰;",
+          "replace": "SELECT 1 AS a١;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-variable-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nDECLARE @ა int;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "DECLARE @ა int;",
+          "replace": "DECLARE @Ა int;"
+        },
+        {
+          "find": "DECLARE @Ა int;",
+          "replace": "DECLARE @ა int;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declarations"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declarations"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-temp-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "CREATE TABLE #가 (id int);\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "CREATE TABLE #가 (id int);",
+          "replace": "CREATE TABLE #Ა (id int);"
+        },
+        {
+          "find": "CREATE TABLE #Ა (id int);",
+          "replace": "CREATE TABLE #가 (id int);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_table"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_table"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-supplementary-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS a;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "SELECT 1 AS a;",
+          "replace": "SELECT 1 AS 𐐀;"
+        },
+        {
+          "find": "SELECT 1 AS 𐐀;",
+          "replace": "SELECT 1 AS a;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-backup-database-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nBACKUP MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BACKUP MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';",
+          "replace": "BACKUP MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY CERTIFICATE c;"
+        },
+        {
+          "find": "BACKUP MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY CERTIFICATE c;",
+          "replace": "BACKUP MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "backup_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "backup_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-restore-decryption-database-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nRESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';",
+          "replace": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY CERTIFICATE c ENCRYPTION BY PASSWORD = 'fixture-pass';"
+        },
+        {
+          "find": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY CERTIFICATE c ENCRYPTION BY PASSWORD = 'fixture-pass';",
+          "replace": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-backup-service-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nBACKUP SERVICE MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BACKUP SERVICE MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';",
+          "replace": "BACKUP SERVICE MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY CERTIFICATE c;"
+        },
+        {
+          "find": "BACKUP SERVICE MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY CERTIFICATE c;",
+          "replace": "BACKUP SERVICE MASTER KEY TO FILE = 'fixture.bak' ENCRYPTION BY PASSWORD = N'fixture-pass';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "backup_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "backup_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-restore-decryption-service-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nRESTORE SERVICE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass';\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "RESTORE SERVICE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass';",
+          "replace": "RESTORE SERVICE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY CERTIFICATE c;"
+        },
+        {
+          "find": "RESTORE SERVICE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY CERTIFICATE c;",
+          "replace": "RESTORE SERVICE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-restore-encryption-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nRESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';",
+          "replace": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY CERTIFICATE c;"
+        },
+        {
+          "find": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY CERTIFICATE c;",
+          "replace": "RESTORE MASTER KEY FROM FILE = 'fixture.bak' DECRYPTION BY PASSWORD = 'fixture-pass' ENCRYPTION BY PASSWORD = 'fixture-pass';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "restore_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-empty-block-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 AS fixture_prefix;\nBEGIN SELECT 1; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BEGIN SELECT 1; END;",
+          "replace": "BEGIN /* fixture */ END;"
+        },
+        {
+          "find": "BEGIN /* fixture */ END;",
+          "replace": "BEGIN SELECT 1; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-first-cte-select-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
+          "replace": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
+        },
+        {
+          "find": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
+          "replace": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-first-cte-insert-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
+          "replace": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
+        },
+        {
+          "find": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
+          "replace": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-nested-cte-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
+          "replace": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
+        },
+        {
+          "find": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
+          "replace": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-unicode-delimited-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01"
+      ],
+      "source_utf8": "SELECT 1 AS [Ა];\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "SELECT 1 AS [Ა];",
+          "replace": "SELECT 1 AS \"Ა\";"
+        },
+        {
+          "find": "SELECT 1 AS \"Ა\";",
+          "replace": "SELECT 1 AS [Ა];"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "identifier"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-percent-option-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;",
+          "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;"
+        },
+        {
+          "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;",
+          "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_statistics"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_statistics"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_statistics"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue113-certificate-context-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [
+        {
+          "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;",
+          "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];"
+        },
+        {
+          "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];",
+          "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_symmetric_key"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_symmetric_key"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_symmetric_key"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }
