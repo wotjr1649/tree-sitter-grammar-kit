@@ -661,11 +661,22 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 		k, v := kind(*arg)
 		out.Items = append(out.Items, fact(construct, k, *arg, v, false))
 	}
-	// the first call of a batch without EXEC: an ERROR that starts with sp_executesql,
-	// optionally qualified by sys (brackets or quotes allowed)
+	// Recovery can split a batch without GO. Track its top-level children across
+	// those splits; only a parsed GO resets firstness, never GO text inside a node.
+	context := slices.Clone(x.byName["batch.child"])
+	slices.SortFunc(context, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+	at, first := 0, true
 	firstCall := regexp.MustCompile(`(?i)^(?:(?:\[sys\]|"sys"|sys)\s*\.\s*)?(?:\[sp_executesql\]|"sp_executesql"|sp_executesql)\b`)
 	for _, pc := range x.pairs("err", "err.first") {
-		if firstCall.MatchString(text(src, pc[0])) {
+		for at < len(context) && context[at].Node < pc[0].Node {
+			c := context[at]
+			at++
+			if c.Type == "batch" || (c.Extra && !c.IsError) || !c.Named {
+				continue
+			}
+			first = c.Type == "go_statement"
+		}
+		if len(x.byName["batch.program"]) > 0 && first && firstCall.MatchString(text(src, pc[0])) {
 			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissBatchFirstNoExe, pc[0].StartByte, pc[0].EndByte})
 		}
 	}

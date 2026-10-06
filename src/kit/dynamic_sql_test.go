@@ -2,6 +2,7 @@ package kit
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -146,16 +147,88 @@ func TestDeriveDynamicSQLKnownMisses(t *testing.T) {
 	t.Run("batch-first call without EXEC", func(t *testing.T) {
 		src := "EXEC sp_executesql N'a';\nGO\n;sp_executesql N'b';\nGO\n;other_proc N'c';\n"
 		d := &dynCaps{t: t, src: src}
-		d.spExecutesql("EXEC sp_executesql N'a'", "N'a'")
+		e := d.spExecutesql("EXEC sp_executesql N'a'", "N'a'")
+		d.one("batch.child", e)
+		d.one("batch.child", d.at("go_statement", "GO", 1, true))
 		miss := d.at("ERROR", "sp_executesql N'b'", 1, true)
 		d.pair("err", miss, "err.first", d.at("identifier", "sp_executesql", 2, true))
 		other := d.at("ERROR", "other_proc N'c'", 1, true)
 		d.pair("err", other, "err.first", d.at("identifier", "other_proc", 1, true))
+		d.one("batch.program", d.at("program", src, 1, true))
 		d.semis()
 		check(t, DeriveDynamicSQL("tsql", EncodingUTF8, d.caps, []byte(src)),
 			[]DynamicSQLFact{litFact("SP_EXECUTESQL", src, "N'a'")},
 			[]KnownMiss{{MissBatchFirstNoExe, miss.Start, miss.End}})
 	})
+}
+
+// Recovery may put the preceding statement in a separate batch without a GO.
+// Only a captured top-level GO, never GO text in a string/comment, resets firstness.
+func TestDynamicSQLBatchFirstContext(t *testing.T) {
+	for _, tc := range []struct {
+		name, prefix string
+		first        bool
+		goBoundary   bool
+	}{
+		{"first", "", true, false},
+		{"nonfirst-single", "SELECT 1;", false, false},
+		{"nonfirst-double", "SELECT 1;;", false, false},
+		{"nonfirst-comment", "SELECT 1; /* owned */ ", false, false},
+		{"go-in-string", "SELECT N'\nGO\n';;", false, false},
+		{"go-in-comment", "SELECT 1; /*\nGO\n*/;", false, false},
+		{"after-go", "SELECT 1;\nGO\n;", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			src := tc.prefix + "sp_executesql N'b';\n"
+			d := &dynCaps{t: t, src: src}
+			d.one("batch.program", d.at("program", src, 1, true))
+			if tc.prefix != "" {
+				d.one("batch.child", d.at("statement", "SELECT", 1, true))
+			}
+			if tc.goBoundary {
+				d.one("batch.child", d.at("go_statement", "GO", 1, true))
+			}
+			errNode := d.at("ERROR", "sp_executesql N'b'", 1, true)
+			d.pair("err", errNode, "err.first", d.at("identifier", "sp_executesql", 1, true))
+			misses := []KnownMiss{}
+			if tc.first {
+				misses = append(misses, KnownMiss{MissBatchFirstNoExe, errNode.Start, errNode.End})
+			}
+			check(t, DeriveDynamicSQL("tsql", EncodingUTF8, d.caps, []byte(src)), []DynamicSQLFact{}, misses)
+			// An old/incomplete query has no evidence of actual batch position.
+			d.caps = slices.DeleteFunc(d.caps, func(c Capture) bool { return c.Name == "batch.program" })
+			check(t, DeriveDynamicSQL("tsql", EncodingUTF8, d.caps, []byte(src)), []DynamicSQLFact{}, []KnownMiss{})
+		})
+	}
+}
+
+func TestDynamicSQLContextChildren(t *testing.T) {
+	for _, tc := range []struct {
+		prefix, typ         string
+		named, extra, first bool
+	}{
+		{";", "batch", true, false, true},
+		{";", ";", false, false, true},
+		{"/* owned */", "marginalia", true, true, true},
+		{"bad;", "ERROR", true, true, false},
+		{"BEGIN SELECT 1; END;", "block", true, false, false},
+	} {
+		t.Run(tc.typ, func(t *testing.T) {
+			src := tc.prefix + "sp_executesql N'b';"
+			d := &dynCaps{t: t, src: src}
+			d.one("batch.program", d.at("program", src, 1, true))
+			n := d.at(tc.typ, tc.prefix, 1, tc.named)
+			d.one("batch.child", n)
+			d.caps[len(d.caps)-1].Extra = tc.extra
+			errNode := d.at("ERROR", "sp_executesql N'b'", 1, true)
+			d.pair("err", errNode, "err.first", d.at("identifier", "sp_executesql", 1, true))
+			misses := []KnownMiss{}
+			if tc.first {
+				misses = append(misses, KnownMiss{MissBatchFirstNoExe, errNode.Start, errNode.End})
+			}
+			check(t, DeriveDynamicSQL("tsql", EncodingUTF8, d.caps, []byte(src)), []DynamicSQLFact{}, misses)
+		})
+	}
 }
 
 func check(t *testing.T, got DynamicSQLFacts, items []DynamicSQLFact, misses []KnownMiss) {
