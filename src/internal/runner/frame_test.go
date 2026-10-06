@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -55,6 +57,58 @@ func awaitStart(t *testing.T, pids string) {
 	t.Cleanup(func() { testHookBatchStarted = prev })
 }
 
+// controlFrameTimers expires only frame at, after the helper has read that request.
+// Other timers stop normally without competing with the limit under examination (#65).
+func controlFrameTimers(t *testing.T, pids string, at int, duration time.Duration) {
+	t.Helper()
+	prev := testHookFrameTimer
+	var pending sync.WaitGroup
+	frame := 0
+	testHookFrameTimer = func(d time.Duration, expire func()) func() {
+		if d != duration {
+			t.Errorf("frame watchdog duration %v, want %v", d, duration)
+		}
+		var active atomic.Bool
+		active.Store(true)
+		if frame == at {
+			pending.Add(1)
+			go func() {
+				defer pending.Done()
+				if !waitFor(func() bool { return exists(pids + ".at") }) {
+					t.Error("watchdog frame not reached")
+					return
+				}
+				if active.CompareAndSwap(true, false) {
+					expire()
+				}
+			}()
+		}
+		frame++
+		return func() { active.Store(false) }
+	}
+	t.Cleanup(func() {
+		pending.Wait()
+		testHookFrameTimer = prev
+		if frame == 0 {
+			t.Error("no frame watchdog was armed")
+		}
+	})
+}
+
+// The default timer still ends an unresponsive first frame. Readiness removes startup
+// from its budget and no completed frame has to win a scheduling race with this timer.
+func TestFrameWatchdogRealTimer(t *testing.T) {
+	s, pids := helperSpec(t, "frames:hang@0")
+	awaitStart(t, pids)
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 300 * time.Millisecond, FrameGrace: 200 * time.Millisecond,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}})
+	if err != nil || r.Process.Reason != ReasonFrameWatchdog || !r.Process.Cleanup.Verified ||
+		r.Frames[0].Status != FrameResourceLimit || r.Frames[1].Status != FrameRequeued {
+		t.Fatalf("real watchdog: %v %+v", err, r)
+	}
+}
+
 // R1-06: a frame hung while an escaped descendant holds stdout still ends within the
 // declared bounds on every backend.
 func TestFrameEscapedStdoutHolder(t *testing.T) {
@@ -63,6 +117,7 @@ func TestFrameEscapedStdoutHolder(t *testing.T) {
 	awaitStart(t, pids)
 	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 300 * time.Millisecond, FrameGrace: 200 * time.Millisecond,
 		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	controlFrameTimers(t, pids, 1, pol.FrameWall+pol.FrameGrace)
 	start := time.Now()
 	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}, {ID: "b", Request: []byte("y")}, {ID: "c", Request: []byte("z")}})
 	if err != nil {
@@ -82,6 +137,9 @@ func TestFrameEscapedStdoutHolder(t *testing.T) {
 	}
 	if r.Frames[0].Status != FrameCompleted || r.Frames[1].Status != FrameResourceLimit || r.Frames[2].Status != FrameRequeued {
 		t.Fatalf("%+v", r.Frames)
+	}
+	if r.Process.Reason != ReasonFrameWatchdog {
+		t.Fatalf("escaped stdout holder ended by %s, want %s", r.Process.Reason, ReasonFrameWatchdog)
 	}
 }
 
@@ -177,6 +235,11 @@ func TestFrameStatusMapping(t *testing.T) {
 			if c.pol != nil {
 				c.pol(&pol)
 			}
+			at := -1
+			if c.detail == ReasonFrameWatchdog {
+				at = 2
+			}
+			controlFrameTimers(t, pids, at, pol.FrameWall+pol.FrameGrace)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 			r, err := RunBatch(ctx, s, pol, frames(4))
@@ -205,6 +268,7 @@ func TestFrameStatusMapping(t *testing.T) {
 	// S05-A09: bytes after the last response are counted, never silently dropped.
 	s, pids := helperSpec(t, "frames:tail")
 	awaitStart(t, pids)
+	controlFrameTimers(t, pids, -1, small.FrameWall+small.FrameGrace)
 	r, err := RunBatch(context.Background(), s, small, frames(2))
 	if err != nil || r.TrailingBytes != 4 || r.Frames[1].Status != FrameCompleted {
 		t.Fatalf("trailing stdout: %v %d %+v", err, r.TrailingBytes, r.Frames)
@@ -212,6 +276,7 @@ func TestFrameStatusMapping(t *testing.T) {
 	t.Run("request-cap", func(t *testing.T) {
 		s, pids := helperSpec(t, "frames:echo")
 		awaitStart(t, pids)
+		controlFrameTimers(t, pids, -1, small.FrameWall+small.FrameGrace)
 		f := frames(3)
 		f[1].Request = make([]byte, small.RequestBytes+1)
 		r, err := RunBatch(context.Background(), s, small, f)
