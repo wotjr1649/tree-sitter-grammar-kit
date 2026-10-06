@@ -136,7 +136,7 @@
                "execute_statement child:keyword_as", "execute_statement child:keyword_user", "execute_statement child:keyword_login", "execute_statement child:exec_argument",
                "execute_statement child:literal", "execute_statement child:field", "execute_statement child:binary_expression",
                "exec_argument field:name", "exec_argument field:value", "object_reference field:name", "object_reference field:schema",
-               "field field:name", "binary_expression field:operator", "literal", "identifier"],
+               "field field:name", "binary_expression field:operator", "literal", "identifier", "program", "batch", "go_statement"],
       "csharp": ["assignment_expression field:left", "assignment_expression field:right", "member_access_expression field:name",
                  "object_creation_expression field:type", "object_creation_expression field:arguments", "argument_list child:argument",
                  "binary_expression field:operator", "interpolated_string_expression", "string_literal", "verbatim_string_literal", "raw_string_literal", "identifier"]
@@ -145,7 +145,7 @@
     "known_misses": [
       {"case": "EXEC (...) AT DATA_SOURCE name", "reason": "the C2-PATCH-r1 grammar parses AT DATA_SOURCE name (keyword_data_source, then the identifier), so the call is an EXEC_PAREN_AT fact; the miss is reported only where AT is followed by an identifier whose text is DATA_SOURCE (the grammar before C2-PATCH-r1 accepted only AT identifier)"},
       {"case": "EXEC ... WITH RESULT SETS (...)", "reason": "the C2-PATCH-r1 grammar parses WITH RESULT SETS (result_sets), so the call is a fact; the miss is reported only where an ERROR right after the EXEC begins WITH RESULT SETS (the grammar before C2-PATCH-r1 accepted only WITH RECOMPILE)"},
-      {"case": "procedure call as the first statement of a batch without EXEC", "reason": "the r6 grammar parses it as an execute_statement (an SP_EXECUTESQL fact for sp_executesql); it stays a miss after an extra leading ;, reported only when the ERROR node starts with sp_executesql; when the ERROR starts at the ; instead (e.g. at the start of a file, after a comment, after ;; or ; followed by whitespace, a comment or a bracketed name) nothing is reported"}
+      {"case": "procedure call as the first statement of a batch without EXEC", "reason": "the r6 grammar parses it as an execute_statement (an SP_EXECUTESQL fact for sp_executesql); it stays a miss after an extra leading ;, reported only when the ERROR node starts with sp_executesql and captured program/batch children prove that no substantive node precedes it since the last top-level go_statement; recovery-created batch nodes do not reset firstness, and missing context captures do not establish a miss; when the ERROR starts at the ; instead (e.g. at the start of a file, after a comment, after ;; or ; followed by whitespace, a comment or a bracketed name) nothing is reported"}
     ]
   }
 }

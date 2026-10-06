@@ -185,7 +185,7 @@
     {
      "id": "facts.dynamic_sql",
      "facts": "dynamic_sql",
-     "source": "(execute_statement) @exec\n(execute_statement _ @exec.child) @exec.parent\n(execute_statement procedure: (object_reference) @proc) @proc.exec\n(object_reference name: _ @ref.name) @ref\n(object_reference schema: _ @ref.schema) @ref.s\n(exec_argument name: _ @arg.name) @arg\n(exec_argument value: _ @arg.value) @arg.v\n(binary_expression operator: _ @bin.op) @bin\n(field name: _ @field.name) @field\n\";\" @semi\n(ERROR . (identifier) @err.first) @err\n(ERROR . (keyword_with) @errwith.first) @errwith\n"
+     "source": "(execute_statement) @exec\n(execute_statement _ @exec.child) @exec.parent\n(execute_statement procedure: (object_reference) @proc) @proc.exec\n(object_reference name: _ @ref.name) @ref\n(object_reference schema: _ @ref.schema) @ref.s\n(exec_argument name: _ @arg.name) @arg\n(exec_argument value: _ @arg.value) @arg.v\n(binary_expression operator: _ @bin.op) @bin\n(field name: _ @field.name) @field\n\";\" @semi\n(ERROR . (identifier) @err.first) @err\n(ERROR . (keyword_with) @errwith.first) @errwith\n(program _ @batch.child) @batch.program\n(batch _ @batch.child)\n"
     }
    ]
   },
