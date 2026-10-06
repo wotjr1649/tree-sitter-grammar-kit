@@ -117,6 +117,19 @@ jobs:
           }
           go test ./src/... -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: frame 상태와 native cancellation 반복 시험 (#65)
+        timeout-minutes: 4
+        run: |
+          if ($IsLinux) {
+            $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          }
+          go test ./src/internal/runner -count=20 -failfast -timeout 180s -run '^(TestFrameStatusMapping|TestFrameEscapedStdoutHolder|TestFrameWatchdogRealTimer)$'
+          if ($LASTEXITCODE -ne 0) { throw 'repeated frame tests failed' }
+          go test ./src/internal/native -count=20 -failfast -timeout 120s -run '^TestLimitsAndCancellation$/^cancellation$'
+          if ($LASTEXITCODE -ne 0) { throw 'repeated native cancellation test failed' }
       - name: S04 runner tree 정리 반복 시험 (Linux cgroup v2)
         if: runner.os == 'Linux'
         timeout-minutes: 4
@@ -127,7 +140,7 @@ jobs:
           sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
           if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
           $env:TSGK_CGROUP_PARENT = "$base/jobs"
-          go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameEscapedStdoutHolder|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
+          go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
           if ($LASTEXITCODE -ne 0) { throw 'repeated tree cleanup tests failed' }
       - name: P05 도구 경로 회귀 검사
         run: |

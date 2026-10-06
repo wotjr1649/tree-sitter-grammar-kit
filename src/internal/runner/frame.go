@@ -108,6 +108,9 @@ type BatchResult struct {
 // first frame, so a test can keep process start-up out of the first frame's watchdog.
 var testHookBatchStarted func()
 
+// testHookFrameTimer replaces only the test's frame timer; it returns its stop function.
+var testHookFrameTimer func(time.Duration, func()) func()
+
 // RunBatch sends frames one at a time to a single supervised process and reads one
 // response frame per request. spec's Wall, StdoutBytes and Interactive come from pol.
 func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (BatchResult, error) {
@@ -166,8 +169,15 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 
 // exchange writes one request frame and reads its response under the frame watchdog.
 func exchange(p *Process, pol BatchPolicy, req []byte) ([]byte, error) {
-	watchdog := time.AfterFunc(pol.FrameWall+pol.FrameGrace, func() { p.Terminate(ReasonFrameWatchdog) })
-	defer watchdog.Stop()
+	expire := func() { p.Terminate(ReasonFrameWatchdog) }
+	var stop func()
+	if testHookFrameTimer != nil {
+		stop = testHookFrameTimer(pol.FrameWall+pol.FrameGrace, expire)
+	} else {
+		watchdog := time.AfterFunc(pol.FrameWall+pol.FrameGrace, expire)
+		stop = func() { watchdog.Stop() }
+	}
+	defer stop()
 	var hdr [4]byte
 	binary.BigEndian.PutUint32(hdr[:], uint32(len(req)))
 	if _, err := p.Stdin().Write(hdr[:]); err != nil {
