@@ -182,10 +182,15 @@ jobs:
     # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
     # CGO-free foundation gate above stays the required core check and is not relaxed.
     # It waits for the three native route jobs so at most three heavy jobs run at once.
-    name: race diagnostic (ubuntu-24.04)
+    name: race diagnostic (${{ matrix.os }})
     needs: native-routes
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     env:
       CGO_ENABLED: '1'
@@ -194,15 +199,21 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: checkout
+        continue-on-error: ${{ matrix.os == 'macos-15' }}
         with:
           persist-credentials: false
           set-safe-directory: false
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        id: setup
+        continue-on-error: ${{ matrix.os == 'macos-15' }}
         with:
           go-version: '1.27.1'
           cache: false
       - name: 고정 Go module 취득
+        id: modules
+        continue-on-error: ${{ matrix.os == 'macos-15' }}
         env:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
@@ -213,6 +224,9 @@ jobs:
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: go test -race (진단, CGO)
+        id: diagnostic
+        if: ${{ steps.checkout.outcome == 'success' && steps.setup.outcome == 'success' && steps.modules.outcome == 'success' }}
+        continue-on-error: ${{ matrix.os == 'macos-15' }}
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
@@ -225,19 +239,136 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'go env failed' }
           if ($cgo -ne '1') { throw 'race diagnostic needs CGO_ENABLED=1' }
           Write-Output "$goIdentity cgo=$cgo checkout_sha=$checkoutSha run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
-          # Same delegated cgroup v2 as foundation: hosted Linux runner tests require the hard cap.
-          $base = "/sys/fs/cgroup/tsgk-race-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          sudo mkdir -p "$base/supervisor" "$base/jobs"
-          if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
-          sudo chown -R "$(id -u):$(id -g)" $base
-          if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
-          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
-          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
-          Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
-          Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
-          $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          if ($IsLinux) {
+            # Same delegated cgroup v2 as foundation; macOS uses its process group backend.
+            $base = "/sys/fs/cgroup/tsgk-race-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            sudo mkdir -p "$base/supervisor" "$base/jobs"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+            sudo chown -R "$(id -u):$(id -g)" $base
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+            sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+            if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+            Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+            Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+            $env:TSGK_CGROUP_PARENT = "$base/jobs"
+          }
           go test -race -count=1 -timeout 600s ./src/...
           if ($LASTEXITCODE -ne 0) { throw 'race diagnostic failed' }
+      - name: 진단 outcome과 실행 identity 기록
+        if: always()
+        env:
+          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
+          PRIOR_JOB_STATUS: ${{ job.status }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          GO_SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          MODULES_OUTCOME: ${{ steps.modules.outcome }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP "race-diagnostic-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $dest | Out-Null
+          [ordered]@{ schema = 'tsgk-ci-diagnostic/r1'; outcome = $env:DIAGNOSTIC_OUTCOME; prior_job_status = $env:PRIOR_JOB_STATUS; cgo_enabled = $env:CGO_ENABLED; preparation_outcomes = [ordered]@{ checkout = $env:CHECKOUT_OUTCOME; setup = $env:GO_SETUP_OUTCOME; modules = $env:MODULES_OUTCOME } } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $dest 'diagnostic.json') -Encoding utf8NoBOM
+          if ($env:CHECKOUT_OUTCOME -eq 'success' -and $env:GO_SETUP_OUTCOME -eq 'success') {
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $dest -HeadSHA $env:PR_HEAD_SHA
+          } else {
+            Write-Warning 'run identity unavailable: checkout or Go setup did not succeed'
+          }
+      - name: race 진단 근거 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: race-diagnostic-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/race-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+          if-no-files-found: error
+          retention-days: 7
+
+  macos-regenerate:
+    # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
+    name: regenerate diagnostic (macos-15)
+    needs: native-routes
+    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: checkout
+        continue-on-error: true
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        id: setup
+        continue-on-error: true
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        id: modules
+        continue-on-error: true
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        id: input
+        continue-on-error: true
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          $state = git status --porcelain=v1 --untracked-files=all --ignored=matching
+          if ($LASTEXITCODE -ne 0 -or $state) { throw 'clean worktree check failed' }
+          $sha = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $sha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+      - name: macOS 26 route 재생성 (등록 출력 대조)
+        id: diagnostic
+        if: ${{ steps.checkout.outcome == 'success' && steps.setup.outcome == 'success' && steps.modules.outcome == 'success' && steps.input.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP "s05-macos-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform darwin/arm64
+          if ($LASTEXITCODE -ne 0) { throw 'macOS regeneration failed' }
+          $state = git status --porcelain=v1 --untracked-files=all --ignored=matching
+          if ($LASTEXITCODE -ne 0 -or $state) { throw 'clean worktree check failed' }
+      - name: 진단 outcome과 실행 identity 기록
+        if: always()
+        env:
+          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
+          PRIOR_JOB_STATUS: ${{ job.status }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          GO_SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          MODULES_OUTCOME: ${{ steps.modules.outcome }}
+          INPUT_OUTCOME: ${{ steps.input.outcome }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP "macos-regeneration-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $dest | Out-Null
+          [ordered]@{ schema = 'tsgk-ci-diagnostic/r1'; outcome = $env:DIAGNOSTIC_OUTCOME; prior_job_status = $env:PRIOR_JOB_STATUS; cgo_enabled = $env:CGO_ENABLED; preparation_outcomes = [ordered]@{ checkout = $env:CHECKOUT_OUTCOME; setup = $env:GO_SETUP_OUTCOME; modules = $env:MODULES_OUTCOME; input = $env:INPUT_OUTCOME } } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $dest 'diagnostic.json') -Encoding utf8NoBOM
+          if ($env:CHECKOUT_OUTCOME -eq 'success' -and $env:GO_SETUP_OUTCOME -eq 'success') {
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $dest -HeadSHA $env:PR_HEAD_SHA
+          } else {
+            Write-Warning 'run identity unavailable: checkout or Go setup did not succeed'
+          }
+      - name: macOS 재생성 근거 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s05-macos-regeneration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/macos-regeneration-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/prepared.json
+            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/profiles/*.json
+            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/repro/*/result.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
 
   native-prepare:
     # S05: one Linux job fetches the 26 pinned route sources, applies the patch chains of
