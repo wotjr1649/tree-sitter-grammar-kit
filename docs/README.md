@@ -25,6 +25,7 @@ The current implementation consists of repository foundation checks, the Session
 | Observed Session 06 results | [native oracle report](reports/session-06-native-oracle.md) |
 | Observed Session 07 results | [evidence and replay report](reports/session-07-evidence-replay.md) |
 | Observed Session 08 results and 78-cell matrix (current support status: [platform](specs/platform-support.md)) | [qualification report](reports/session-08-qualification.md), [qualification inventory](../src/contracts/qualification-c1.json) |
+| Current T-SQL overacceptance and dynamic SQL fallback classification (#109) | [T-SQL 재분류](reports/issue-109-tsql-reclassification.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

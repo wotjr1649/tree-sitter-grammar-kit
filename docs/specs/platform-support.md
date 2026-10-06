@@ -25,6 +25,12 @@ native 준비와 build는 기반 runtime commit에 [검토된 6줄 patch](../pro
 
 2026-10-06 Windows 로컬 비교는 26 route와 추가 csharp-svc·대형 입력을 같은 조건에서 실행했다. 5069개 S05/S06 case record의 tree·incremental·query·사실·요구 결과는 같고 helper failures는 양쪽 모두 0이다. `api_findings`는 142→69건(`field_lookup_extra` 133→62, 다른 자식 반환 5→3, 누락 4→4)이다. csharp-svc 1건을 제외한 qualification 대상은 host당 141→68건이며 세 OS의 실제 합계와 판정은 #105의 CI 근거로 확인한다. 이는 사례별 첫 차이의 수다. 남은 C# ERROR field 관측과 Swift hidden wrapper의 field 우선순위 차이는 이번 visible-alias patch의 처리 범위 밖이며 API 비교 검사는 유지한다.
 
+## 개발 main의 T-SQL 한계 (#109)
+
+현재 고정 parser의 Windows 합성 입력 23개로 [재분류한 결과](../reports/issue-109-tsql-reclassification.md), S08의 과잉 수용 다섯 종류(예약어 단독 호출, Unicode 3.2 밖 식별자, master-key PASSWORD 문맥의 CERTIFICATE, 빈 BEGIN END, 세미콜론 없는 BEGIN WITH)는 모두 남아 있다. grammar 수정은 [#113](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/113)이 추적한다.
+
+비첫 `SELECT 1;sp_executesql…`은 ERROR·사실 0·known miss 0으로 거부한다. 같은 batch에서 EXEC를 생략한 비첫 호출의 거부는 의도된 동작이며, 그 모양의 batch-first known-miss 오분류는 재현되지 않았다. `SELECT 1;;sp_executesql…`은 ERROR이지만 여전히 `BATCH_FIRST_CALL_WITHOUT_EXEC`로 오분류한다([#114](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/114)). 실제 첫 호출·명시적 EXEC·GO 뒤 첫 호출은 사실 1·known miss 0이다. 입력·관측 CST·공식 문법 근거·대조군은 위 보고서가 소유한다. 등록 fixture의 known miss 0을 모든 입력에 확대하지 않는다.
+
 ## Release v0.2.0의 claim
 
 release의 범위는 [제품 범위](scope.md)가 정한다. 아래 한계는 source tag `v0.2.0`의 역사적 상태다. 개발 main의 runtime 수정과 새 macOS CI lane 상태는 위 표와 #105·#108 근거를 따르며 새 release를 뜻하지 않는다.
