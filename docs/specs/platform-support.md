@@ -4,7 +4,7 @@
 
 Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 route](../validation/language-feature-scope.md)의 등록 native workload를 필수로 검증한다. `26 × 3 = 78` 요약 칸은 각 route의 feature·fixture·query·edit·source/tool/policy/comparator 근거를 참조한다. compiler version이나 cross-build만으로 native 실행 칸을 채우지 않는다. 미지원 필수 capability는 전체 지원 완료를 막으며 OS 행을 삭제하는 사유가 아니다.
 
-아래 표는 main `03ea1f0`의 상태다. 근거는 post-merge CI run 37184449649(foundation 세 OS, native prepare, native routes 세 OS, qualification, attempt 1)와 각 Session 보고서다. `qualify` 행은 main `8038e8f`의 post-merge CI run 37357247559(attempt 1)를, `regenerate` 행의 Linux 26 route는 main `c325ed3`의 post-merge CI run 37397153335(attempt 1)를 근거로 한다.
+아래 표는 main `03ea1f0`의 상태다. 근거는 post-merge CI run 37184449649(foundation 세 OS, native prepare, native routes 세 OS, qualification, attempt 1)와 각 Session 보고서다. `qualify` 행과 `regenerate` 행의 Linux 26 route는 main `c325ed3`의 post-merge CI run 37397153335(attempt 1)를 근거로 한다.
 
 | capability | 현재 상태 | 근거와 범위 |
 |---|---|---|
@@ -30,7 +30,7 @@ release의 범위는 [제품 범위](scope.md)가 정한다.
   - native 실행에는 승인된 capability(`BUILD_NATIVE`, `EXEC_NATIVE`, `EXEC_GENERATOR`)와 host compiler가 필요하다.
 - **알려진 한계**
   - tree-sitter runtime의 field 조회와 cursor가 다른 API claim 관측 423건. 판정에 들어가지 않는 기록이며, runtime 결함 수정 뒤 다시 잰다([#105](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/105)).
-  - Campaign 02 grammar patch의 heuristic과 미구현 부분: C/C++ macro heuristic(모호한 입력을 오류 없이 받을 수 있음), go 자동 세미콜론의 미구현 상태, C# 조건부 section의 제한된 선택. 자세한 내용은 [변경 기록](../../CHANGELOG.md)의 v0.2.0 절에 있다.
+  - Campaign 02 grammar patch의 heuristic과 미구현 부분. 주요 항목은 C/C++ macro heuristic(모호한 입력을 오류 없이 받을 수 있음), go 자동 세미콜론의 미구현 상태, C# 조건부 section의 제한된 선택이다. 전체 목록은 [변경 기록](../../CHANGELOG.md) v0.2.0 절의 Campaign 02 이력에 있다.
   - T-SQL 과잉 수용(S08 기록: r6에서 3종, r5부터 2종)과, 첫 문장이 아닌 `;sp_executesql`을 known miss로 두는 동적 SQL 탐지. 둘 다 Campaign 02 뒤에 다시 분류하지 않았다.
   - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
   - BrightScript·cooklang 역할 NOT_RUN

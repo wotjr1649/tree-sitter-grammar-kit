@@ -8,16 +8,19 @@ release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거�
 
 - offline core와 그 공개 API(`src/kit`): `inspect`, `identity`, `verify`, `schema check`/`schema diff`. v0.1.0과 같다.
 - 26 route qualification 판정 **SUPPORTED**(Campaign 02, #76). main `c325ed3`의 병합 후 CI run 37397153335에서 `platform_claims`가 세 OS 모두 SUPPORTED이고, 78칸과 필수 의무 2478건이 모두 PASS다. 등록 사례와 qualification inventory에 대한 판정이며 임의 입력 지원을 인증하지 않는다.
-- 26 route 재생성: Linux CI의 `native prepare`가 26 route 모두 등록 출력과 일치(`reference_match` PASS)
 
 ### experimental(호환성 약속 없음)
 
 - `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API. v0.1.0과 같다.
 
+### 상태
+
+- 26 route 재생성: Linux CI의 `native prepare`가 26 route 모두 등록 출력과 일치한다(`reference_match` PASS). Windows는 로컬 실행 근거이고 macOS는 NOT_RUN이다.
+
 ### 알려진 한계
 
 - tree-sitter runtime의 field 조회와 cursor가 다른 API claim 관측 423건. 판정에 들어가지 않는 기록이다(#105).
-- Campaign 02 grammar patch의 heuristic과 미구현 부분: C/C++ macro heuristic, go 자동 세미콜론의 미구현 상태, C# 조건부 section의 제한된 선택(아래 이력의 각 항목)
+- Campaign 02 grammar patch의 heuristic과 미구현 부분. 주요 항목은 C/C++ macro heuristic, go 자동 세미콜론의 미구현 상태, C# 조건부 section의 제한된 선택이고, 전체는 아래 이력의 각 항목(yaml BOM, T-SQL `QUOTED_IDENTIFIER`, SVC 관측 전용 기록 등)에 있다.
 - T-SQL 과잉 수용(S08 기록)과 첫 문장이 아닌 `;sp_executesql`의 동적 SQL known miss. Campaign 02 뒤에 다시 분류하지 않았다.
 - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
 - BrightScript·cooklang 역할 NOT_RUN, `n461-large`는 Windows에서만 실행
