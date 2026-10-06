@@ -4,6 +4,22 @@
  "commit": "659cda7c7f86ebe31cc825dc5da59e9add172dc7",
  "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/659cda7c7f86ebe31cc825dc5da59e9add172dc7",
  "note": "Pinned Tree-sitter runtime source for the S05 driver build (same identity as the PREPARE runtime, ABI 13..15); a runtime directory must contain exactly these files with these hashes.",
+ "patches": [
+  {
+   "subject": "src/drivers/native-c/runtime-field-lookup.patch.json",
+   "sha256": "e694b4d7268a8f2b163f2f1a0085bdcffb1ae86de3de970d768b88293b35a5c6",
+   "bytes": 702,
+   "pointer": "/files/0",
+   "field": "operations",
+   "target": "lib/src/node.c",
+   "before_sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
+   "before_bytes": 25151,
+   "source_repository": "mgsloan/tree-sitter",
+   "source_commit": "18302989e05fcc8da7ce7fca3f8aedadb7191fdd",
+   "license": "MIT",
+   "remove_when": "A pinned upstream release contains the fix and passes the same field ownership and three-platform qualification checks."
+  }
+ ],
  "files": [
   {
    "path": "LICENSE",
@@ -87,8 +103,8 @@
   },
   {
    "path": "lib/src/node.c",
-   "sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
-   "bytes": 25151
+   "sha256": "0c2531b763ae83ae87e76d3af6ec69137628eb0d4231faedf3cd6ab23bfc8de0",
+   "bytes": 25390
   },
   {
    "path": "lib/src/parser.c",

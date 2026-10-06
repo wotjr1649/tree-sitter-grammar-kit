@@ -1,0 +1,15 @@
+{
+  "schema": "tsgk-native-runtime-patch/r1",
+  "files": [
+    {
+      "target": "lib/src/node.c",
+      "operations": [
+        {
+          "before": "      // Hidden nodes' fields are \"inherited\" by their visible parent.\n      if (field_map->inherited) {\n\n",
+          "after": "      // Hidden nodes' fields are \"inherited\" by their visible parent.\n      if (field_map->inherited) {\n        // A visible alias owns its fields, so they are not inherited.\n        if (ts_node__is_relevant(child, true)) {\n          field_map++;\n          if (field_map == field_map_end) return ts_node__null();\n          continue;\n        }\n\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}

@@ -43,3 +43,13 @@ Actions의 공식 release·manifest·입력과 실행 효과를 검토했으며 
 PREPARE owned fixture는 기존 Tree-sitter CLI 0.27.0(ABI15), UCRT64 GCC16.2.0, 별도 고정 runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`(header 허용 ABI13~15)을 사용한다. 이 runtime commit을 v0.27.0 release라고 부르지 않는다. CLI v0.27.0 tag object는 `3e719425fc48f5b4cdb25c580e44023882f5e2a7`, peeled commit은 `6070dbfefd326bd735e5683eb128cc1b57dad0c0`이며 runtime 후보와 unicode/header 관련 변경이 있다. 각 identity와 실제 build/parse 결과를 따로 기록한다. 원본 checkout은 변경하지 않고 승인한 새 scratch의 복사본에서 검사한다.
 
 언어별 SDK·DB server·전역 tool·새 Go dependency는 추가하지 않는다. maintainer README의 지원 문구와 release 여부는 출처 관측이며 full conformance나 법적 license 검토로 확대하지 않는다. [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)가 실제 미해결 입력과 준비 상태를 연결한다.
+
+## Native runtime의 field 조회 patch (#105)
+
+runtime 기반 commit은 `659cda7c7f86ebe31cc825dc5da59e9add172dc7`로 유지한다. [MIT fork의 수정 commit](https://github.com/mgsloan/tree-sitter/commit/18302989e05fcc8da7ce7fca3f8aedadb7191fdd)에서 `ts_node_child_by_field_id`의 6줄만 가져온다. visible alias는 자기 field를 소유하므로 부모의 inherited field 조회에서 건너뛴다. `ts_node_child_by_field_name`과 negated-field query도 이 함수를 호출한다. fork 전체를 runtime pin으로 승격하지 않는다.
+
+[literal patch 파일](../../src/drivers/native-c/runtime-field-lookup.patch.json)은 702 bytes, SHA-256 `e694b4d7268a8f2b163f2f1a0085bdcffb1ae86de3de970d768b88293b35a5c6`다. 원본 `lib/src/node.c`는 25151 bytes, SHA-256 `fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5`; 적용 후에는 25390 bytes, SHA-256 `0c2531b763ae83ae87e76d3af6ec69137628eb0d4231faedf3cd6ab23bfc8de0`다. [runtime manifest](../../src/drivers/native-c/runtime-manifest.json)는 출처·MIT·patch identity·원본 identity·적용 후 전체 closure를 결속한다. build identity는 기반 commit과 적용 후 입력 hash를 함께 포함한다.
+
+2026-10-06 독립 정적 리뷰는 field-map 경계, 진행 보장, alias의 visible 판정과 query 호출을 확인했다. 새 할당·I/O·외부 실행은 없다. 동일 field/child의 inherited 중복 가능성은 pinned generator의 field key 집합과 26 parser의 4022개 nonempty field-map slice에서 중복이 없다는 확인으로 처분했다. 등록 밖 수작업 parser나 다른 generator로 확대하지 않는다. owned fixture는 named·anonymous alias, 뒤의 직속 field, 일반 hidden 상속과 negated-field query를 검사한다. 원본 runtime mutant는 alias 4개 사례에서 field 조회로 실패하고 hidden 상속 2개는 통과했다. runtime 전체의 보안 감사는 아니다. 전체 route·host 검증 근거는 [#105](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/105)와 연결 PR에 기록한다.
+
+고정 upstream release에 수정이 포함되면 local patch 제거 후보를 만든다. 기반 pin·전체 closure hash를 갱신하고 patch 파일과 manifest의 `patches`를 제거하되 field ownership 시험은 유지한다. 같은 26 route·대형 입력·Oracle 비교와 세 OS qualification이 기존 결과를 유지한 뒤 PR로 제거한다. upstream branch의 이동이나 commit의 존재만으로 자동 제거하지 않는다.
