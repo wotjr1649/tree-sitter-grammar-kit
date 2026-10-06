@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- 26 route 지원 claim이 **SUPPORTED**가 됐다(#76). main `8038e8f`의 병합 후 CI run 37357247559에서 세 OS `platform_claims`가 모두 SUPPORTED이고, 78칸과 필수 의무 2478건이 모두 PASS다. [플랫폼 지원](docs/specs/platform-support.md)의 `qualify` 행과 AGENTS.md의 판정 문구를 이에 맞췄다(#103).
 - W(공개 실사용 sample) 요구 행 34개 모두에 sample 사례 `w-<row>-1`을 등록했다(#101). 각 사례는 고정 commit의 공개 파일 bytes 그대로이고, step 0 `NO_ERROR`와 실제로 있는 node type 몇 개를 기대하며, `sample`(repository·commit·path·SPDX license·sha256·bytes)을 갖는다. `src/testdata/native/samples/NOTICE.md`에 sample마다 upstream license 파일 원문을 실었고 qualification inventory를 다시 만들었다.
   - 선택 기준(parse 전에 기록): 널리 쓰이는 저장소, 허용 license(고정 commit의 license 파일 확인), 행의 구성을 쓰는 일반 크기 파일(64 KiB 이하, 수정 없음, LF·BOM 없는 UTF-8), grammar 자체 test corpus가 아닌 파일, 내장 자격 증명 없음.
   - Windows amd64 실행: 32개 사례 모두 routes PASS이고 descendant_count는 342~4441이다. oracle에서는 30개가 PASS이고 `w-swift-B01-1`·`w-typescript-B02-1`은 API claim(field lookup)만 다르다. baseline에서 PASS였다가 FAIL이 된 사례는 없다.
