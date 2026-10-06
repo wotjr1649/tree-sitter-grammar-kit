@@ -4,7 +4,7 @@ A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go A
 
 ## Status and scope
 
-Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)). For the first release candidate (v0.1.0), the offline core is **VERIFIED** on Windows amd64, Linux amd64 and macOS arm64. The other areas are **experimental**: they work as their reports show, but they carry no compatibility promise. See the [platform contract](docs/specs/platform-support.md) for the evidence and the known limitations.
+Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)). In release v0.2.0, the offline core is **VERIFIED** on Windows amd64, Linux amd64 and macOS arm64, and the 26-route qualification verdict is **SUPPORTED** on all three for the registered cases; it does not certify arbitrary inputs. The other areas are **experimental**: they work as their reports show, but they carry no compatibility promise. See the [platform contract](docs/specs/platform-support.md) for the evidence and the known limitations.
 
 | Area | CLI | Public API (`src/kit`) | Release status | Notes |
 |---|---|---|---|---|
