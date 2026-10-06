@@ -61,6 +61,12 @@ CI rejects staged, unstaged, untracked, and ignored worktree material before and
 
 Bind receipts to repository, workflow path, run ID, attempt, event, base/head identity, checkout SHA, job/step status, and URL. Account for API pagination and use the current attempt of the run. Distinguish log retrieval failures from execution failures; missing required evidence means NOT_VERIFIED. Preserve failed runs and do not retry without changed evidence. Do not transfer another SHA's success to the current candidate. A completed PR template or same-name job from an unrelated workflow is not gate evidence; verify the referenced receipt and current candidate.
 
+### Native runtime patch 검증 (#105)
+
+[runtime patch 정책과 identity](../provenance/upstream-sources.md#native-runtime의-field-조회-patch-105)는 runtime manifest가 소유한다. `prepare-routes.ps1`의 `-LocalRuntime`은 고정 기반 commit의 **원본** source를 받는다. 준비 과정은 원본 target hash·bytes, local patch subject hash·bytes, literal 문맥의 정확한 occurrence 수, 적용 후 83개 closure hash를 확인한다. 이미 patch된 source를 원본 대신 넣거나 hash 검사를 우회하지 않는다. build의 `RUNTIME_MISMATCH` 검사는 적용 후 closure를 그대로 강제한다.
+
+patch 변경은 원본과 후보를 별도 준비한 같은 host에서 `run-routes.ps1 -Large -Oracle`로 비교한다. API findings가 줄고 모든 기존 사례의 tree·incremental·query·사실 결과와 `requirement_results`가 유지되어야 한다. 시간과 producer identity는 host 관측으로 구분한다. foundation의 `TestRuntimePatch`는 원본·subject·출력 hash와 literal 문맥의 실패를 검사하고, native의 `TestRuntimeFieldOwnership`은 alias/hidden 상속과 negated-field query를 검사한다. 원본 runtime mutant가 의도한 field 조회·query 이유로 실패해야 한다. 독립 보안 관점 리뷰와 실제 세 OS CI에서 qualification artifact의 `support_claim`·`platform_claims` 및 감소한 `api_findings`를 직접 확인한 뒤 병합한다. 기반 runtime 갱신이나 patch 제거에도 같은 검증을 적용한다.
+
 ## Starting ordinary work and completing it locally
 
 Ordinary work does not require session prompts, Milestones, or prior handoffs. Change work, including documentation fixes, requires an Issue and a dedicated task branch. Analysis-only and read-only reviews create neither unless separately requested. At start/resume, scope changes, and PR preparation, reconcile the current request with the Issue's goal, requirements, scope/exclusions, acceptance criteria, validation, dependencies, and this PR's subset. Reuse matching Issues and branches rather than create one for every request. Record scope changes without silently dropping requirements or treating Issue text as authority.

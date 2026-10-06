@@ -19,6 +19,12 @@ Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 rou
 
 각 행의 상태는 AVAILABLE(기능 존재), VERIFIED(정확한 시험 근거), UNSUPPORTED, NOT_RUN을 구분한다. foundation 성공은 제품/native 지원 근거가 아니다. 실제 관측값은 Session 보고서와 CI receipt가 소유한다.
 
+## 개발 runtime의 field 조회 (#105)
+
+native 준비와 build는 기반 runtime commit에 [검토된 6줄 patch](../provenance/upstream-sources.md#native-runtime의-field-조회-patch-105)를 적용한 closure를 사용한다. visible alias의 field가 부모로 상속되는 조회를 막으며 일반 hidden-node 상속은 유지한다. 출처 commit, patch 파일·원본·적용 후 hash와 upstream release 포함 시 제거 조건은 provenance와 runtime manifest가 소유한다. 원본 runtime과의 동일 입력 비교 및 세 OS qualification은 [validation 계약](../validation/validation.md#native-runtime-patch-검증-105)을 따른다. API 결과의 변화는 기존 tree·incremental·query 의미와 지원 판정의 유지 근거를 함께 기록한다. 아래 release 시점의 관측값은 v0.2.0 source tag의 역사적 결과다.
+
+2026-10-06 Windows 로컬 비교는 26 route와 추가 csharp-svc·대형 입력을 같은 조건에서 실행했다. 5069개 S05/S06 case record의 tree·incremental·query·사실·요구 결과는 같고 helper failures는 양쪽 모두 0이다. `api_findings`는 142→69건(`field_lookup_extra` 133→62, 다른 자식 반환 5→3, 누락 4→4)이다. csharp-svc 1건을 제외한 qualification 대상은 host당 141→68건이며 세 OS의 실제 합계와 판정은 #105의 CI 근거로 확인한다. 이는 사례별 첫 차이의 수다. 남은 C# ERROR field 관측과 Swift hidden wrapper의 field 우선순위 차이는 이번 visible-alias patch의 처리 범위 밖이며 API 비교 검사는 유지한다.
+
 ## Release v0.2.0의 claim
 
 release의 범위는 [제품 범위](scope.md)가 정한다.

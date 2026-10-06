@@ -142,6 +142,19 @@ function Get-PatchedText([string]$Text, $Chain, [string]$Target) {
   return $text
 }
 
+# Runtime patches use the same literal operations as grammar patches. Both the
+# pristine target and the local patch subject are pinned before any transformation.
+function Set-RuntimePatches([string]$Path, [string]$Target, $Manifest) {
+  foreach ($step in @(Get-JsonMember $Manifest 'patches')) {
+    if ($null -eq $step -or $step.target -ne $Target) { continue }
+    Assert-File $Path $step.before_sha256 $step.before_bytes 'runtime patch input'
+    Assert-File (Join-Path $repo $step.subject) $step.sha256 $step.bytes 'runtime patch subject'
+    if ((Get-StepNode $step).target -ne $Target) { throw 'runtime patch target mismatch' }
+    $text = Get-PatchedText ([IO.File]::ReadAllText($Path, [Text.UTF8Encoding]::new($false, $true))) @($step) $Target
+    [IO.File]::WriteAllText($Path, $text, [Text.UTF8Encoding]::new($false))
+  }
+}
+
 # A created C2 file starts from empty text: it must not be an npm input, exist at the pinned
 # commit, or be patched by an adoption step.
 function Assert-Creatable([string]$Route, [string]$Path, [bool]$Exists, $OwnSteps) {
@@ -220,6 +233,7 @@ else {
 foreach ($f in $runtimeManifest.files) {
   $to = Join-Path $runtime $f.path
   Copy-Into (Join-Path $rtSrc $f.path) $to
+  Set-RuntimePatches $to $f.path $runtimeManifest
   Assert-File $to $f.sha256 $f.bytes 'runtime file'
 }
 

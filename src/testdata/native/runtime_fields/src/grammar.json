@@ -1,0 +1,130 @@
+{
+  "name": "tsgk_runtime_fields",
+  "rules": {
+    "source_file": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "a"
+            },
+            {
+              "type": "ALIAS",
+              "value": "aliased_child",
+              "named": true,
+              "content": {
+                "type": "SYMBOL",
+                "name": "_hidden"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "STRING",
+                    "value": "y"
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "h"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_hidden"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "STRING",
+                    "value": "y"
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "n"
+            },
+            {
+              "type": "ALIAS",
+              "value": "anon",
+              "named": false,
+              "content": {
+                "type": "SYMBOL",
+                "name": "_hidden"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "STRING",
+                    "value": "y"
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "_hidden": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "STRING",
+            "value": "x"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "."
+        }
+      ]
+    }
+  },
+  "extras": [],
+  "conflicts": [],
+  "precedences": [],
+  "externals": [],
+  "inline": [],
+  "supertypes": []
+}
