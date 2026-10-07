@@ -561,6 +561,24 @@ jobs:
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: Windows 대용량 전체 API audit
+        if: runner.os == 'Windows'
+        timeout-minutes: 45
+        run: |
+          $cc = & src/dev/s05-native/select-compiler.ps1
+          $work = Join-Path $env:RUNNER_TEMP "large-api-work-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $receipt = Join-Path $env:RUNNER_TEMP "large-api-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+          go run ./src/dev/large-api -prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -cc $cc -work $work -out $receipt
+          if ($LASTEXITCODE -ne 0) { throw 'large API audit failed' }
+      - name: Windows 대용량 API audit 근거 보관
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: large-api-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/large-api-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -943,6 +943,179 @@
           "declarations": ""
         }
       ]
-    }
+    },
+    {
+      "id": "tsql-issue122-cte-batch-missing-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-block-missing-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;", "replace": "BEGIN SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;"}, {"find": "BEGIN SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;", "replace": "BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-nested-missing-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "BEGIN BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "BEGIN BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END; END;", "replace": "BEGIN BEGIN SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END; END;"}, {"find": "BEGIN BEGIN SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END; END;", "replace": "BEGIN BEGIN SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END; END;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-after-block-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "BEGIN SELECT 1; END; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "BEGIN SELECT 1; END; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "BEGIN SELECT 1; END WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "BEGIN SELECT 1; END WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "BEGIN SELECT 1; END; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-after-if-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "IF 1=1 SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-after-else-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=0 SELECT 1; ELSE SELECT 2 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "IF 1=0 SELECT 1; ELSE SELECT 2 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-try-missing-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "BEGIN TRY SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END TRY BEGIN CATCH SELECT 3; END CATCH;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "BEGIN TRY SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END TRY BEGIN CATCH SELECT 3; END CATCH;", "replace": "BEGIN TRY SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END TRY BEGIN CATCH SELECT 3; END CATCH;"}, {"find": "BEGIN TRY SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c; END TRY BEGIN CATCH SELECT 3; END CATCH;", "replace": "BEGIN TRY SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END TRY BEGIN CATCH SELECT 3; END CATCH;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-procedure-missing-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "CREATE PROCEDURE dbo.p AS SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE PROCEDURE dbo.p AS SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "CREATE PROCEDURE dbo.p AS SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-default-quoted-unknown-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[foo]()));\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[foo]()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT ([foo]()));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT ([foo]()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[foo]()));"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-default-quoted-percent-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[PERCENT]()));\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[PERCENT]()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT ([PERCENT]()));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT ([PERCENT]()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT (dbo.[PERCENT]()));"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-default-quoted-abs-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "CREATE TABLE t (a sql_variant DEFAULT (ABS(-1)));\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE TABLE t (a sql_variant DEFAULT (ABS(-1)));", "replace": "CREATE TABLE t (a sql_variant DEFAULT ([ABS](-1)));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT ([ABS](-1)));", "replace": "CREATE TABLE t (a sql_variant DEFAULT (ABS(-1)));"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-default-quoted-getdate-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "CREATE TABLE t (a sql_variant DEFAULT (GETDATE()));\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE TABLE t (a sql_variant DEFAULT (GETDATE()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT ([GETDATE]()));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT ([GETDATE]()));", "replace": "CREATE TABLE t (a sql_variant DEFAULT (GETDATE()));"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-select-quoted-unknown-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "SELECT dbo.[foo]();\nGO\n\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n",
+      "edits": [{"find": "SELECT dbo.[foo]();", "replace": "SELECT [foo]();"}, {"find": "SELECT [foo]();", "replace": "SELECT dbo.[foo]();"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-select-quoted-builtin-r1",
+      "kind": "gap",
+      "features": ["tsql-B01"],
+      "source_utf8": "SELECT ABS(-1);\nGO\n\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n",
+      "edits": [{"find": "SELECT ABS(-1);", "replace": "SELECT [ABS](-1);"}, {"find": "SELECT [ABS](-1);", "replace": "SELECT ABS(-1);"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-label-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-if-direct-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-while-direct-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-cte-block-start-semicolon-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;", "replace": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;"}, {"find": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;", "replace": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-batch-first-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue122-module-first-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}]
+    },
+    {
+      "id": "tsql-issue123-bare-hint-vs-call-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT * FROM dbo.t (NOLOCK);\nGO\n\nSELECT 1 AS fixture_anchor;\n",
+      "edits": [{"find": "SELECT * FROM dbo.t (NOLOCK);", "replace": "SELECT * FROM dbo.f(1);"}, {"find": "SELECT * FROM dbo.f(1);", "replace": "SELECT * FROM dbo.t (NOLOCK);"}],
+      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["table_hint"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["table_hint"], "declarations": ""}]
+    },
+    {"id": "tsql-issue122-review-setvar-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+    {"id": "tsql-issue122-review-include-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+    {"id": "tsql-issue122-review-setvar-tail-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+    {"id": "tsql-issue122-review-label-after-select-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+    {"id": "tsql-issue122-review-setvar-implicit-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":setvar Name Value\np 1;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":setvar Name Value\np 1;", "replace": ":setvar Name Value\np 2;"}, {"find": ":setvar Name Value\np 2;", "replace": ":setvar Name Value\np 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]}
   ]
 }
