@@ -204,3 +204,5 @@ engine REJECT/native NO_ERROR12개 중111을 가진10개는 module/batch placeme
 | `test/corpus/expressions.txt:17` | 137 / 137 | BINDING | typed CONVERT gap 해소 뒤에도 남는 undeclared variable 문맥 |
 
 `EVENT SESSION` 단독 CREATE의 NOEXEC는 두 level에서 수용하지만 upstream의 동일 ALTER statement ADD/DROP 혼합은343이고 comma 추가 대조도156/343이다. [ALTER EVENT SESSION 계약](https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-event-session-transact-sql?view=sql-server-ver17)은 동일 statement의 ADD/DROP 혼합을 허용하지 않는다. 이를 LocalDB의 전체 EVENT SESSION 미지원으로 분류하지 않는다. HADOOP external data source 제거 경계는 [SQL Server의 discontinued 기능](https://learn.microsoft.com/en-us/sql/database-engine/discontinued-database-engine-functionality-in-sql-server?view=sql-server-ver17)에 따른다.
+
+후속 [#131 원인별 조사](issue-131-tsql-overacceptance.md)는 위18개 NEGATIVE_SYNTAX의 구문 수정과 잔여 처분을 소유한다. 이 표는 #128 당시 관측으로 보존한다. `select.txt:10`의 생략 segment 설명은 후속 최소 대조에서 bare SCHEMA 예약어 문제로 정정됐다.

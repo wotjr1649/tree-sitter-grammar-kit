@@ -114,7 +114,8 @@
   "tsql-issue123-unqualified-delimited-function",
   "tsql-issue122-sqlcmd-cte-context",
   "tsql-issue128-constant-default",
-  "tsql-issue128-corpus-context"
+  "tsql-issue128-corpus-context",
+  "tsql-issue131-overacceptance"
  ],
  "files": [
   {
@@ -179,6 +180,21 @@
      "before": "    [$._query_specification_core],\n",
      "after": "    [$._query_specification_core],\n    [$.relation],\n",
      "occurrences": 1
+    },
+    {
+     "before": "  // T-SQL block comments nest, and a regex cannot match balanced nesting.\n  // tsgk P2-75: the scanner also reads the option name of SET\n  // QUOTED_IDENTIFIER and, while that setting is OFF, a double-quoted literal.\n  externals: ($) => [$.marginalia, $._quoted_identifier_setting, $._double_quoted_literal],\n\n  // Every entry arbitrates a real fork the parser must carry a few tokens\n  // before it can settle; tree-sitter reports any that stop being needed\n",
+     "after": "  // T-SQL block comments nest, and a regex cannot match balanced nesting.\n  // tsgk P2-75: the scanner also reads the option name of SET\n  // QUOTED_IDENTIFIER and, while that setting is OFF, a double-quoted literal.\n  externals: ($) => [$.marginalia, $._quoted_identifier_setting, $._double_quoted_literal, $._merge_terminator],\n\n  // Every entry arbitrates a real fork the parser must carry a few tokens\n  // before it can settle; tree-sitter reports any that stop being needed\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n",
+     "after": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$._function_relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  word: ($) => $._identifier,\n\n  reserved: {\n    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent],\n  },\n\n  rules: {\n",
+     "after": "  word: ($) => $._identifier,\n\n  reserved: {\n    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n  },\n\n  rules: {\n",
+     "occurrences": 1
     }
    ]
   },
@@ -223,6 +239,16 @@
     {
      "before": "  return true;\n}\n",
      "after": "  return true;\n}\n\n// Skips whitespace, `--` line comments and (nested) block comments while\n// looking past the token. Returns false where a lone `-` or `/` was consumed,\n// which cannot precede ON / OFF.\nstatic bool skip_space_and_comments(TSLexer *lexer) {\n  for (;;) {\n    if (is_space(lexer->lookahead)) {\n      lexer->advance(lexer, false);\n    } else if (lexer->lookahead == '-') {\n      lexer->advance(lexer, false);\n      if (lexer->lookahead != '-') {\n        return false;\n      }\n      while (!lexer->eof(lexer) && lexer->lookahead != '\\n') {\n        lexer->advance(lexer, false);\n      }\n    } else if (lexer->lookahead == '/') {\n      lexer->advance(lexer, false);\n      if (lexer->lookahead != '*') {\n        return false;\n      }\n      lexer->advance(lexer, false);\n      unsigned depth = 1;\n      while (depth > 0 && !lexer->eof(lexer)) {\n        if (lexer->lookahead == '/') {\n          lexer->advance(lexer, false);\n          if (lexer->lookahead == '*') {\n            lexer->advance(lexer, false);\n            depth++;\n          }\n        } else if (lexer->lookahead == '*') {\n          lexer->advance(lexer, false);\n          if (lexer->lookahead == '/') {\n            lexer->advance(lexer, false);\n            depth--;\n          }\n        } else {\n          lexer->advance(lexer, false);\n        }\n      }\n    } else {\n      return true;\n    }\n  }\n}\n\n// QUOTED_IDENTIFIER, then a look past it at ON / OFF (not part of the token):\n// past comments and past the rest of an option list (`, NAME` or `, [NAME]`),\n// since the setting of a list applies to every option in it.\nstatic bool scan_quoted_identifier_setting(Scanner *scanner, TSLexer *lexer) {\n  if (!scan_word(lexer, \"QUOTED_IDENTIFIER\")) {\n    return false;\n  }\n  lexer->mark_end(lexer);\n  lexer->result_symbol = QUOTED_IDENTIFIER_SETTING;\n  for (;;) {\n    if (!skip_space_and_comments(lexer)) {\n      return true;\n    }\n    if (lexer->lookahead != ',') {\n      break;\n    }\n    lexer->advance(lexer, false);\n    if (!skip_space_and_comments(lexer)) {\n      return true;\n    }\n    if (lexer->lookahead == '[') {\n      while (!lexer->eof(lexer) && lexer->lookahead != ']') {\n        lexer->advance(lexer, false);\n      }\n      lexer->advance(lexer, false);\n    } else if (is_word_char(lexer->lookahead)) {\n      while (is_word_char(lexer->lookahead)) {\n        lexer->advance(lexer, false);\n      }\n    } else {\n      return true;\n    }\n  }\n  if (ascii_upper(lexer->lookahead) == 'O') {\n    lexer->advance(lexer, false);\n    if (ascii_upper(lexer->lookahead) == 'N') {\n      lexer->advance(lexer, false);\n      if (!is_word_char(lexer->lookahead)) {\n        scanner->quoted_identifier_off = false;\n      }\n    } else if (ascii_upper(lexer->lookahead) == 'F') {\n      lexer->advance(lexer, false);\n      if (ascii_upper(lexer->lookahead) == 'F') {\n        lexer->advance(lexer, false);\n        if (!is_word_char(lexer->lookahead)) {\n          scanner->quoted_identifier_off = true;\n        }\n      }\n    }\n  }\n  return true;\n}\n\n// \"text\" with \"\" as the escaped quote.\nstatic bool scan_double_quoted_literal(TSLexer *lexer) {\n  lexer->advance(lexer, false);\n  for (;;) {\n    if (lexer->eof(lexer)) {\n      return false;\n    }\n    if (lexer->lookahead == '\"') {\n      lexer->advance(lexer, false);\n      if (lexer->lookahead != '\"') {\n        break;\n      }\n    }\n    lexer->advance(lexer, false);\n  }\n  lexer->mark_end(lexer);\n  lexer->result_symbol = DOUBLE_QUOTED_LITERAL;\n  return true;\n}\n\nbool tree_sitter_mssql_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n  Scanner *scanner = payload;\n  // The option name and a literal are never valid in the same parse state;\n  // both at once means error recovery, where neither is attempted.\n  bool recovering = valid_symbols[QUOTED_IDENTIFIER_SETTING] && valid_symbols[DOUBLE_QUOTED_LITERAL];\n  while (is_space(lexer->lookahead)) {\n    lexer->advance(lexer, true);\n  }\n  if (lexer->lookahead == '/') {\n    return valid_symbols[MARGINALIA] && scan_marginalia(lexer);\n  }\n  if (recovering) {\n    return false;\n  }\n  if (lexer->lookahead == '\"') {\n    return valid_symbols[DOUBLE_QUOTED_LITERAL] && scanner->quoted_identifier_off &&\n           scan_double_quoted_literal(lexer);\n  }\n  if (valid_symbols[QUOTED_IDENTIFIER_SETTING] && ascii_upper(lexer->lookahead) == 'Q') {\n    return scan_quoted_identifier_setting(scanner, lexer);\n  }\n  return false;\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  MARGINALIA,\n  QUOTED_IDENTIFIER_SETTING,\n  DOUBLE_QUOTED_LITERAL,\n};\n\ntypedef struct {\n",
+     "after": "  MARGINALIA,\n  QUOTED_IDENTIFIER_SETTING,\n  DOUBLE_QUOTED_LITERAL,\n  MERGE_TERMINATOR,\n};\n\ntypedef struct {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  if (recovering) {\n    return false;\n  }\n  if (lexer->lookahead == '\"') {\n    return valid_symbols[DOUBLE_QUOTED_LITERAL] && scanner->quoted_identifier_off &&\n           scan_double_quoted_literal(lexer);\n",
+     "after": "  if (recovering) {\n    return false;\n  }\n  // The statement list consumes ';', so its next CTE/trigger keeps head context.\n  if (valid_symbols[MERGE_TERMINATOR] && lexer->lookahead == ';') {\n    lexer->mark_end(lexer);\n    lexer->result_symbol = MERGE_TERMINATOR;\n    return true;\n  }\n  if (lexer->lookahead == '\"') {\n    return valid_symbols[DOUBLE_QUOTED_LITERAL] && scanner->quoted_identifier_off &&\n           scan_double_quoted_literal(lexer);\n",
      "occurrences": 1
     }
    ]
@@ -359,6 +385,11 @@
      "before": "          // tsgk P2-91: [WITH VALUES]\n          seq(\n            $.keyword_default,\n            $._expression,\n            $.keyword_for,\n            field('column', $.identifier),\n            optional(seq($.keyword_with, $.keyword_values)),\n",
      "after": "          // tsgk P2-91: [WITH VALUES]\n          seq(\n            $.keyword_default,\n            $._constant_expression,\n            $.keyword_for,\n            field('column', $.identifier),\n            optional(seq($.keyword_with, $.keyword_values)),\n",
      "occurrences": 1
+    },
+    {
+     "before": "    seq(\n      field('name', $.identifier),\n      field('name', $.identifier),\n      optional(field('name', $.identifier)),\n      '=',\n      field('value', choice($._option_value, paren_list($.truncate_partition_range, true))),\n    ),\n",
+     "after": "    seq(\n      field('name', $.identifier),\n      field('name', $.identifier),\n      optional(field('name', choice($.identifier, alias($.keyword_key, $.identifier)))),\n      '=',\n      field('value', choice($._option_value, paren_list($.truncate_partition_range, true))),\n    ),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -489,6 +520,21 @@
      "before": "  identifier: ($) =>\n    choice(\n      $._identifier,\n      $._bracketed_identifier,\n      $._double_quote_string,\n      $._tsql_parameter,\n",
      "after": "  identifier: ($) =>\n    choice(\n      $._identifier,\n      alias(choice($.keyword_match, $.keyword_window), $._identifier),\n      $._bracketed_identifier,\n      $._double_quote_string,\n      $._tsql_parameter,\n",
      "occurrences": 1
+    },
+    {
+     "before": "\n  graph_match_expr: ($) => comma_list(choice($.graph_shortest_path, $.graph_path), true),\n\n  // SHORTEST_PATH(path+) — the arbitrary-length form of a path. SQL Server\n  // supports only the `+` (one-or-more) quantifier here, not `*` — a\n  // shortest-path search needs at least one edge to traverse.\n  // tsgk P2-67: also the documented node(-(edge)->node){1,n} | + and\n",
+     "after": "\n  graph_match_expr: ($) => comma_list(choice($.graph_shortest_path, $.graph_path), true),\n\n  // SHORTEST_PATH(node(path)+) — the repeated hop is parenthesized. SQL Server\n  // supports only the `+` (one-or-more) quantifier here, not `*` — a\n  // shortest-path search needs at least one edge to traverse.\n  // tsgk P2-67: also the documented node(-(edge)->node){1,n} | + and\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.keyword_shortest_path,\n      wrapped_in_parenthesis(\n        choice(\n          seq($.graph_path, '+'),\n          seq(\n            field('node', $.identifier),\n            wrapped_in_parenthesis(repeat1($.graph_hop)),\n",
+     "after": "      $.keyword_shortest_path,\n      wrapped_in_parenthesis(\n        choice(\n          seq(\n            field('node', $.identifier),\n            wrapped_in_parenthesis(repeat1($.graph_hop)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('node', $.identifier),\n    ),\n\n  // One or more `|`-separated edge-table names — a polymorphic edge\n  // pattern spanning heterogeneous edge tables, e.g. `-(led_by|reports_to)->`.\n  _graph_edge_names: ($) =>\n    seq(field('edge', $.identifier), repeat(seq('|', field('edge', $.identifier)))),\n\n  // name(args). `DEFAULT` is a legal argument to a procedure or function\n  // call, and STRING_AGG takes a WITHIN GROUP (ORDER BY ...) suffix. The\n",
+     "after": "      field('node', $.identifier),\n    ),\n\n  // Each hop names one edge; heterogeneous alternatives require separate MATCH predicates.\n  _graph_edge_names: ($) =>\n    field('edge', $.identifier),\n\n  // name(args). `DEFAULT` is a legal argument to a procedure or function\n  // call, and STRING_AGG takes a WITHIN GROUP (ORDER BY ...) suffix. The\n",
+     "occurrences": 1
     }
    ]
   },
@@ -518,6 +564,11 @@
     {
      "before": "  keyword_between: (_) => make_keyword('between'),\n  keyword_exists: (_) => make_keyword('exists'),\n  keyword_cast: (_) => make_keyword('cast'),\n  keyword_try_cast: (_) => make_keyword('try_cast'),\n  keyword_collate: (_) => make_keyword('collate'),\n  keyword_null: (_) => make_keyword('null'),\n",
      "after": "  keyword_between: (_) => make_keyword('between'),\n  keyword_exists: (_) => make_keyword('exists'),\n  keyword_cast: (_) => make_keyword('cast'),\n  keyword_convert: (_) => make_keyword('convert'),\n  keyword_try_convert: (_) => make_keyword('try_convert'),\n  keyword_try_cast: (_) => make_keyword('try_cast'),\n  keyword_collate: (_) => make_keyword('collate'),\n  keyword_null: (_) => make_keyword('null'),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  keyword_workload: (_) => make_keyword('workload'),\n  keyword_filestream: (_) => make_keyword('filestream'),\n  keyword_rowguidcol: (_) => make_keyword('rowguidcol'),\n  keyword_sparse: (_) => make_keyword('sparse'),\n  keyword_filestream_on: (_) => make_keyword('filestream_on'),\n  keyword_reduce: (_) => make_keyword('reduce'),\n",
+     "after": "  keyword_workload: (_) => make_keyword('workload'),\n  keyword_filestream: (_) => make_keyword('filestream'),\n  keyword_rowguidcol: (_) => make_keyword('rowguidcol'),\n  keyword_openjson: (_) => make_keyword('openjson'),\n  keyword_sparse: (_) => make_keyword('sparse'),\n  keyword_filestream_on: (_) => make_keyword('filestream_on'),\n  keyword_reduce: (_) => make_keyword('reduce'),\n",
      "occurrences": 1
     }
    ]
@@ -688,6 +739,36 @@
     {
      "before": "        $.keyword_used,\n        optional($.identifier),\n      ),\n    ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n",
      "after": "        $.keyword_used,\n        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "              seq($.keyword_drop, $.keyword_masked),\n              // tsgk P2-56: { ADD | DROP } NOT FOR REPLICATION\n              seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n              seq(choice($.keyword_add, $.keyword_drop), $.identifier),\n            ),\n          ),\n          seq(\n",
+     "after": "              seq($.keyword_drop, $.keyword_masked),\n              // tsgk P2-56: { ADD | DROP } NOT FOR REPLICATION\n              seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n              seq(choice($.keyword_add, $.keyword_drop), alias(choice($.keyword_rowguidcol, $.keyword_persisted, $.keyword_sparse, $.keyword_hidden), $.identifier)),\n            ),\n          ),\n          seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.keyword_on,\n        // tsgk P2-31: ON DATABASE (Azure SQL Database)\n        choice($.keyword_server, $.keyword_database),\n        choice(event_session_body($), $.option),\n      ),\n    ),\n\n",
+     "after": "        $.keyword_on,\n        // tsgk P2-31: ON DATABASE (Azure SQL Database)\n        choice($.keyword_server, $.keyword_database),\n        choice(event_session_body($, true), $.option),\n      ),\n    ),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq($.keyword_rebuild, optional($.with_options)),\n        // tsgk P2-36: REORGANIZE [WITH (LOB_COMPACTION = { ON | OFF })] is\n        // parenthesized; the bare spelling stays accepted.\n        seq($.keyword_reorganize, optional(choice($.with_clause, $.with_options))),\n        // tsgk P2-36: MOVE TO { file_group | \"default\" }\n        seq($.keyword_move, $.keyword_to, field('filegroup', $.identifier)),\n      ),\n",
+     "after": "        seq($.keyword_rebuild, optional($.with_options)),\n        // tsgk P2-36: REORGANIZE [WITH (LOB_COMPACTION = { ON | OFF })] is\n        // parenthesized; the bare spelling stays accepted.\n        seq($.keyword_reorganize, optional($.with_options)),\n        // tsgk P2-36: MOVE TO { file_group | \"default\" }\n        seq($.keyword_move, $.keyword_to, field('filegroup', $.identifier)),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq(\n          $.keyword_drop,\n          $.keyword_file,\n          choice($.keyword_all, comma_list(choice($.literal, $.identifier), true)),\n        ),\n      ),\n      optional(\n",
+     "after": "        seq(\n          $.keyword_drop,\n          $.keyword_file,\n          choice($.keyword_all, comma_list(alias($._literal_string, $.literal), true)),\n        ),\n      ),\n      optional(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.keyword_add,\n          $.keyword_file,\n          $.keyword_from,\n          comma_list(seq($.literal, optional(seq($.keyword_as, choice($.literal, $.identifier)))), true),\n        ),\n      ),\n    ),\n",
+     "after": "          $.keyword_add,\n          $.keyword_file,\n          $.keyword_from,\n          comma_list(seq($.literal, optional(seq($.keyword_as, alias($._literal_string, $.literal)))), true),\n        ),\n      ),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n  // WITH is optional here — a no-op ALTER ROUTE with no options is valid —\n  // which gives the trailing WITH the same trailing-WITH-vs-following-CTE\n  // ambiguity `alter_fulltext_catalog` documents; see the `[$.alter_route]`\n  // conflicts entry in grammar.js.\n  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, optional($.with_clause)),\n};\n",
+     "after": "        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name WITH option [, ...]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, $.with_clause),\n};\n",
      "occurrences": 1
     }
    ]
@@ -924,6 +1005,21 @@
      "before": "  // tsgk P2-41: CREATE DEFAULT name AS constant_expression and CREATE RULE\n  // name AS condition_expression (deprecated, still documented).\n  create_default: ($) =>\n    seq($.keyword_create, $.keyword_default, field('name', $.object_reference), $.keyword_as, $._expression),\n\n  create_rule: ($) =>\n    seq($.keyword_create, $.keyword_rule, field('name', $.object_reference), $.keyword_as, $._expression),\n",
      "after": "  // tsgk P2-41: CREATE DEFAULT name AS constant_expression and CREATE RULE\n  // name AS condition_expression (deprecated, still documented).\n  create_default: ($) =>\n    seq($.keyword_create, $.keyword_default, field('name', $.object_reference), $.keyword_as, $._constant_expression),\n\n  create_rule: ($) =>\n    seq($.keyword_create, $.keyword_rule, field('name', $.object_reference), $.keyword_as, $._expression),\n",
      "occurrences": 1
+    },
+    {
+     "before": "import create_function_rules from './create-function.js';\nimport create_procedure_rules from './create-procedure.js';\n\n// The ADD EVENT / ADD TARGET / DROP EVENT / DROP TARGET / WITH clause body\n// shared by CREATE EVENT SESSION and the non-STATE form of ALTER EVENT\n// SESSION (alter_event_session in alter.js — STATE = value must be that\n// statement's only clause, so it is not part of this body). A plain\n// function rather than a named grammar rule, since every segment here is\n// optional and a named rule that can match the empty string is rejected by\n// tree-sitter unless it is the grammar's start rule.\n// Fixes the clause order to ADD EVENT*, ADD TARGET*, DROP EVENT*, DROP\n// TARGET*, WITH — SQL Server itself allows these in any order and\n// interleaved, but every generated script (SSMS, DDL-triggers) emits them\n// this way, and a stricter, order-sensitive grammar is what lets this rule\n// stay conflict-free without a `conflicts` entry. A script that reorders or\n// interleaves these clauses hits an ERROR node; widen the order here if\n// that turns up in real use.\nexport function event_session_body($) {\n  return seq(\n    optional(comma_list($._add_event_clause, true)),\n    optional(comma_list($._add_target_clause, true)),\n    optional(comma_list($._drop_event_clause, true)),\n    optional(comma_list($._drop_target_clause, true)),\n    optional($.with_options),\n  );\n}\n",
+     "after": "import create_function_rules from './create-function.js';\nimport create_procedure_rules from './create-procedure.js';\n\n// CREATE combines ADD EVENT and ADD TARGET. ALTER selects one homogeneous\n// ADD/DROP EVENT/TARGET list; options may follow that list.\nexport function event_session_body($, altering = false) {\n  return seq(\n    optional(altering\n      ? choice(comma_list($._add_event_clause, true), comma_list($._add_target_clause, true),\n          comma_list($._drop_event_clause, true), comma_list($._drop_target_clause, true))\n      : seq(optional(comma_list($._add_event_clause, true)), optional(comma_list($._add_target_clause, true)))),\n    optional($.with_options),\n  );\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional($.on_filegroup),\n    ),\n\n  // CREATE CONTRACT name ( {DEFAULT | message_type} SENT BY {INITIATOR|TARGET|ANY} [, ...] )   (Service Broker)\n  create_contract: ($) =>\n    seq(\n      $.keyword_create,\n",
+     "after": "      optional($.on_filegroup),\n    ),\n\n  // CREATE CONTRACT name ( message_type SENT BY {INITIATOR|TARGET|ANY} [, ...] )   (Service Broker)\n  create_contract: ($) =>\n    seq(\n      $.keyword_create,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n  contract_message: ($) =>\n    seq(\n      choice($.keyword_default, $.identifier),\n      $.keyword_sent,\n      $.keyword_by,\n      choice($.keyword_initiator, $.keyword_target, $.keyword_any),\n",
+     "after": "\n  contract_message: ($) =>\n    seq(\n      $.identifier,\n      $.keyword_sent,\n      $.keyword_by,\n      choice($.keyword_initiator, $.keyword_target, $.keyword_any),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -943,6 +1039,16 @@
     {
      "before": "  _set_values: ($) => seq($.keyword_set, comma_list(choice($.assignment, $.invocation), true)),\n",
      "after": "  // tsgk: in this position the call can only be a method of a column\n  // (udt_column_name.method_name(...), column_name.WRITE(...) or a mutator),\n  // never schema.function(...), so it is a method_call. `invocation` is\n  // visible, so its fields stay on the aliased node.\n  _set_values: ($) =>\n    seq($.keyword_set, comma_list(choice($.assignment, alias($.invocation, $.method_call)), true)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
+     "after": "// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // DEFAULT is a DML value, not a general expression or identifier.\n  _dml_value: ($) => choice($._expression, $.keyword_default),\n  _dml_value_list: ($) => paren_list($._dml_value),\n\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._expression),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('column', alias($._qualified_field, $.field)),\n        alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|=', '||='), $.assignment_operator),\n        field('right', $._expression),\n      ),\n    ),\n\n",
+     "after": "      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._dml_value),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('column', alias($._qualified_field, $.field)),\n        alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|=', '||='), $.assignment_operator),\n        field('right', $._dml_value),\n      ),\n    ),\n\n",
      "occurrences": 1
     }
    ]
@@ -968,6 +1074,11 @@
     {
      "before": "      $.keyword_server,\n    ),\n",
      "after": "      choice($.keyword_server, $.keyword_database),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  drop_role: ($) =>\n    seq(\n      $.keyword_drop,\n      optional($.keyword_server),\n      $.keyword_role,\n      optional($._if_exists),\n      field('name', $.identifier),\n    ),\n\n",
+     "after": "  drop_role: ($) =>\n    seq(\n      $.keyword_drop,\n      choice(seq($.keyword_server, $.keyword_role), seq($.keyword_role, optional($._if_exists))),\n      field('name', $.identifier),\n    ),\n\n",
      "occurrences": 1
     }
    ]
@@ -1174,6 +1285,51 @@
      "before": "  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n",
      "after": "  // value]` shape. MOVE keeps logical and OS file arguments in its own node;\n  // the OS file accepts a literal or @parameter, excluding a bare path name.\n",
      "occurrences": 1
+    },
+    {
+     "before": "  return choice(\n      $._ddl_statement,\n      allowCTE ? $._dml_write : choice($._delete_statement, $._insert_statement, $._update_statement, $._merge_statement),\n      optional_parenthesis(allowCTE ? $._dml_read : $._query_expression),\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n",
+     "after": "  return choice(\n      $._ddl_statement,\n      allowCTE ? $._dml_write : choice($._delete_statement, $._insert_statement, $._update_statement, $._merge_statement),\n      allowCTE ? $._dml_read : $._query_expression,\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.deallocate_cursor_statement,\n      $.execute_as_statement,\n      $.revert_statement,\n      $.enable_trigger_statement,\n      $.grant_statement,\n      $.update_statistics_statement,\n      $.kill_statement,\n",
+     "after": "      $.deallocate_cursor_statement,\n      $.execute_as_statement,\n      $.revert_statement,\n      ...(allowCTE ? [$.enable_trigger_statement] : []),\n      $.grant_statement,\n      $.update_statistics_statement,\n      $.kill_statement,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  _statement_without_cte: ($) => statement($, false),\n  _label_only_statement: ($) => $.label_statement,\n\n  // A CTE starts a list or follows a terminator; labels are not SQL statements.\n  _statement_list: ($) =>\n    seq(choice($.statement, $.block, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._statement_tail)),\n  _statement_tail: ($) =>\n",
+     "after": "  _statement_without_cte: ($) => statement($, false),\n  _label_only_statement: ($) => $.label_statement,\n\n  // CTE and ENABLE/DISABLE TRIGGER start a list or follow a terminator.\n  // Labels are not SQL statements.\n  _statement_list: ($) =>\n    seq(choice($.statement, $.block, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._statement_tail)),\n  _statement_tail: ($) =>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            wrapped_in_parenthesis(\n              comma_list(seq($._expression, optional(choice($.keyword_out, $.keyword_output))), true),\n            ),\n            optional(seq($.keyword_as, choice($.keyword_user, $.keyword_login), '=', $._expression)),\n            optional(seq($.keyword_at, optional($.keyword_data_source), $.identifier)),\n          ),\n        ),\n",
+     "after": "            wrapped_in_parenthesis(\n              comma_list(seq($._expression, optional(choice($.keyword_out, $.keyword_output))), true),\n            ),\n            optional(seq($.keyword_as, choice($.keyword_user, $.keyword_login), '=', alias($._literal_string, $.literal))),\n            optional(seq($.keyword_at, optional($.keyword_data_source), $.identifier)),\n          ),\n        ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  _exec_argument_value: ($) =>\n    choice($.field, $.literal, alias($._signed_literal, $.unary_expression), $.keyword_default),\n\n  _signed_literal: ($) => seq(field('operator', choice('-', '+')), field('operand', $.literal)),\n\n  // EXECUTE AS { LOGIN | USER } = 'name' [WITH NO REVERT | WITH COOKIE INTO @c]\n  // EXECUTE AS { CALLER | SELF | OWNER }\n",
+     "after": "  _exec_argument_value: ($) =>\n    choice($.field, $.literal, alias($._signed_literal, $.unary_expression), $.keyword_default),\n\n  _signed_literal: ($) => seq(field('operator', '-'), field('operand', $.literal)),\n\n  // EXECUTE AS { LOGIN | USER } = 'name' [WITH NO REVERT | WITH COOKIE INTO @c]\n  // EXECUTE AS { CALLER | SELF | OWNER }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // was, so a securable named like a class word is unaffected. Shared by\n  // GRANT/DENY/REVOKE, ALTER AUTHORIZATION and ALTER SCHEMA TRANSFER.\n  _securable_class: ($) =>\n    seq($.identifier, optional(seq($.identifier, optional($.identifier))), '::'),\n\n  // The column list is aliased to a named `list` node (the same pattern\n  // `_column_list`/`aliased_with_columns` uses — alias a rule reference,\n",
+     "after": "  // was, so a securable named like a class word is unaffected. Shared by\n  // GRANT/DENY/REVOKE, ALTER AUTHORIZATION and ALTER SCHEMA TRANSFER.\n  _securable_class: ($) =>\n    seq(\n      choice($.identifier, alias($.keyword_schema, $.identifier)),\n      optional(seq(choice($.identifier, alias($.keyword_key, $.identifier), alias($.keyword_schema, $.identifier)), optional($.identifier))),\n      '::',\n    ),\n\n  // The column list is aliased to a named `list` node (the same pattern\n  // `_column_list`/`aliased_with_columns` uses — alias a rule reference,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ),\n\n  // The deprecated bare-parenthesis table hint, `FROM t (NOLOCK)` or\n  // `JOIN t x (NOLOCK, INDEX(ix1))`, which pre-WITH vendor code still uses.\n  // After a table name a `(` also opens a table-valued function's argument\n  // list, and after an alias it also opens a column list, so what\n  // distinguishes the hint is its contents: every item is one of SQL\n",
+     "after": "    ),\n\n  // The deprecated bare-parenthesis table hint, `FROM t (NOLOCK)` or\n  // `JOIN t x (NOLOCK)`; multiple hints require WITH (...).\n  // After a table name a `(` also opens a table-valued function's argument\n  // list, and after an alias it also opens a column list, so what\n  // distinguishes the hint is its contents: every item is one of SQL\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // an identifier and stays an invocation. The names are aliased to\n  // `identifier` so the bare and WITH spellings produce the same tree.\n  _bare_table_hint: ($) =>\n    prec.dynamic(1, wrapped_in_parenthesis(comma_list(alias($._bare_table_hint_item, $.table_hint_item), true))),\n\n  _bare_table_hint_item: ($) =>\n    choice(\n",
+     "after": "  // an identifier and stays an invocation. The names are aliased to\n  // `identifier` so the bare and WITH spellings produce the same tree.\n  _bare_table_hint: ($) =>\n    prec.dynamic(1, wrapped_in_parenthesis(alias($._bare_table_hint_item, $.table_hint_item))),\n\n  _bare_table_hint_item: ($) =>\n    choice(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // not inside a derived table or another CTE.\n  _query_expression: ($) => optional_parenthesis(choice($._select_statement, $.set_operation)),\n\n  _dml_read: ($) => seq(optional(optional_parenthesis($._cte)), $._query_expression),\n\n  ...select_rules,\n  ...set_rules,\n",
+     "after": "  // not inside a derived table or another CTE.\n  _query_expression: ($) => optional_parenthesis(choice($._select_statement, $.set_operation)),\n\n  _dml_read: ($) => seq(optional($._cte), $._query_expression),\n\n  ...select_rules,\n  ...set_rules,\n",
+     "occurrences": 1
     }
    ]
   },
@@ -1193,6 +1349,11 @@
     {
      "before": "\n  // The SELECT/set-operation alternative goes straight to that choice\n",
      "after": "\n  _insert_rowset_target: ($) =>\n    seq(\n      alias($._insert_rowset_name, $.object_reference),\n      paren_list(field('parameter', $.term), true),\n    ),\n\n  _insert_rowset_name: ($) =>\n    field('name', alias(choice($.keyword_openquery, $.keyword_openrowset), $.identifier)),\n\n  // The SELECT/set-operation alternative goes straight to that choice\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // carry two sibling OPTION clauses where SQL Server permits only one.\n  _insert_source: ($) =>\n    choice(\n      seq($.keyword_values, comma_list($.list, true), optional($.option_clause)),\n      optional_parenthesis(choice($._select_statement, $.set_operation)),\n      $.execute_statement,\n      seq($.keyword_default, $.keyword_values, optional($.option_clause)),\n",
+     "after": "  // carry two sibling OPTION clauses where SQL Server permits only one.\n  _insert_source: ($) =>\n    choice(\n      seq($.keyword_values, comma_list(alias($._dml_value_list, $.list), true), optional($.option_clause)),\n      optional_parenthesis(choice($._select_statement, $.set_operation)),\n      $.execute_statement,\n      seq($.keyword_default, $.keyword_values, optional($.option_clause)),\n",
      "occurrences": 1
     }
    ]
@@ -1369,6 +1530,21 @@
      "before": "  // TABLESAMPLE sit here, after `relation` has reduced, rather than inside\n  // `relation` next to the invocation: `relation` is prec.right, so an\n  // alternative inside it wins the `WITH (` outright and a table hint\n  // after an un-aliased function call (`FROM dbo.f(1) WITH (NOLOCK)`) is\n  // read as a column list with an empty type. From this state the two are\n  // an ordinary LR(1) choice — a hint item is an identifier followed by\n  // `,` or `)`, a schema column is an identifier followed by a type.\n",
      "after": "  // TABLESAMPLE sit here, after `relation` has reduced. Ordinary function\n  // hints stay outside relation; dedicated rowset schemas stay inside it.\n  // A hint item is an identifier followed by `,` or `)`, while a schema\n  // column is an identifier followed by a type.\n",
      "occurrences": 1
+    },
+    {
+     "before": "      seq(\n        choice(\n          $.subquery,\n          $.invocation,\n          $.object_reference,\n          wrapped_in_parenthesis($.values),\n          // A MERGE with an OUTPUT clause is a legal row source: INSERT\n",
+     "after": "      seq(\n        choice(\n          $.subquery,\n          $.object_reference,\n          wrapped_in_parenthesis($.values),\n          // A MERGE with an OUTPUT clause is a legal row source: INSERT\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_function_name: ($) =>\n    field('name', alias(choice($.keyword_openrowset, $.keyword_openxml, $.keyword_predict), $.identifier)),\n\n  // WITH (column type [COLLATE c] ['path' | ordinal] [NULL | NOT NULL] [, ...]) | WITH table_name\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n",
+     "after": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_function_name: ($) =>\n    field('name', alias(choice($.keyword_openrowset, $.keyword_openxml, $.keyword_predict, $.keyword_openjson), $.identifier)),\n\n  // WITH (column type [COLLATE c] ['path' | ordinal] [NULL | NOT NULL] [, ...]) | WITH table_name\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      ),\n    ),\n\n  // A relation with an optional trailing table hint, e.g. `dbo.t AS x WITH\n  // (NOLOCK)`, OPENJSON's schema followed by its own alias:\n  // `OPENJSON(@j) WITH (a INT '$.a') AS j`, or TABLESAMPLE. The schema and\n  // TABLESAMPLE sit here, after `relation` has reduced. Ordinary function\n  // hints stay outside relation; dedicated rowset schemas stay inside it.\n  // A hint item is an identifier followed by `,` or `)`, while a schema\n  // column is an identifier followed by a type.\n  _relation_with_hint: ($) =>\n    seq(\n      $.relation,\n      // TABLESAMPLE precedes a table hint and is independent of it — `FROM\n      // t TABLESAMPLE (10 PERCENT) WITH (NOLOCK)` is valid — so it is its\n      // own optional slot ahead of the table_hint/openjson_schema choice,\n      // not one more alternative inside that choice's mutual exclusion.\n      optional($.tablesample_clause),\n      optional(choice($.table_hint, seq($.openjson_schema, aliased_with_columns($)))),\n    ),\n\n  // OPENJSON(...) WITH (name type ['path'] [AS JSON] [, ...]) — the\n",
+     "after": "      ),\n    ),\n\n  // Ordinary table-valued functions accept aliases, but no table hint or schema.\n  // OPENJSON and the dedicated rowset functions keep their schema inside relation.\n  _function_relation: ($) => prec.dynamic(1, seq($.invocation, aliased_with_columns($))),\n\n  _relation_with_hint: ($) =>\n    choice(\n      alias($._function_relation, $.relation),\n      seq(\n        $.relation,\n        // TABLESAMPLE precedes an independent optional table hint.\n        optional($.tablesample_clause),\n        optional(choice($.table_hint, seq($.openjson_schema, aliased_with_columns($)))),\n      ),\n    ),\n\n  // OPENJSON(...) WITH (name type ['path'] [AS JSON] [, ...]) — the\n",
+     "occurrences": 1
     }
    ]
   },
@@ -1448,6 +1624,21 @@
     {
      "before": "// The Unicode ranges SQL Server accepts as \"a letter\" in an identifier,\n// shared by `_identifier`, `_tsql_parameter` and `_temporary_table` so a\n// future change to the class only has to be made once. A letter is any\n// Unicode letter (`\\p{L}`, e.g. Hangul), and a later character may also be a\n// decimal digit of any script (`\\p{Nd}`) — SQL Server's regular-identifier\n// rule. `×` and `÷` stay excluded: they are Unicode `Sm`, not letters.\nexport const IDENTIFIER_START = '\\\\p{L}_';\nexport const IDENTIFIER_CONTINUE = '\\\\p{L}\\\\p{Nd}_#$';\n",
      "after": "// SQL Server regular identifiers use Unicode 3.2 BMP letters and decimal\n// digits. Delimited identifiers have their own unrestricted token rules.\nexport const IDENTIFIER_START = \"\\\\u0041-\\\\u005a\\\\u0061-\\\\u007a\\\\u00aa\\\\u00b5\\\\u00ba\\\\u00c0-\\\\u00d6\\\\u00d8-\\\\u00f6\\\\u00f8-\\\\u0220\\\\u0222-\\\\u0233\\\\u0250-\\\\u02ad\\\\u02b0-\\\\u02b8\\\\u02bb-\\\\u02c1\\\\u02d0-\\\\u02d1\\\\u02e0-\\\\u02e4\\\\u02ee\\\\u037a\\\\u0386\\\\u0388-\\\\u038a\\\\u038c\\\\u038e-\\\\u03a1\\\\u03a3-\\\\u03ce\\\\u03d0-\\\\u03f5\\\\u0400-\\\\u0481\\\\u048a-\\\\u04ce\\\\u04d0-\\\\u04f5\\\\u04f8-\\\\u04f9\\\\u0500-\\\\u050f\\\\u0531-\\\\u0556\\\\u0559\\\\u0561-\\\\u0587\\\\u05d0-\\\\u05ea\\\\u05f0-\\\\u05f2\\\\u0621-\\\\u063a\\\\u0640-\\\\u064a\\\\u066e-\\\\u066f\\\\u0671-\\\\u06d3\\\\u06d5\\\\u06e5-\\\\u06e6\\\\u06fa-\\\\u06fc\\\\u0710\\\\u0712-\\\\u072c\\\\u0780-\\\\u07a5\\\\u07b1\\\\u0905-\\\\u0939\\\\u093d\\\\u0950\\\\u0958-\\\\u0961\\\\u0985-\\\\u098c\\\\u098f-\\\\u0990\\\\u0993-\\\\u09a8\\\\u09aa-\\\\u09b0\\\\u09b2\\\\u09b6-\\\\u09b9\\\\u09dc-\\\\u09dd\\\\u09df-\\\\u09e1\\\\u09f0-\\\\u09f1\\\\u0a05-\\\\u0a0a\\\\u0a0f-\\\\u0a10\\\\u0a13-\\\\u0a28\\\\u0a2a-\\\\u0a30\\\\u0a32-\\\\u0a33\\\\u0a35-\\\\u0a36\\\\u0a38-\\\\u0a39\\\\u0a59-\\\\u0a5c\\\\u0a5e\\\\u0a72-\\\\u0a74\\\\u0a85-\\\\u0a8b\\\\u0a8d\\\\u0a8f-\\\\u0a91\\\\u0a93-\\\\u0aa8\\\\u0aaa-\\\\u0ab0\\\\u0ab2-\\\\u0ab3\\\\u0ab5-\\\\u0ab9\\\\u0abd\\\\u0ad0\\\\u0ae0\\\\u0b05-\\\\u0b0c\\\\u0b0f-\\\\u0b10\\\\u0b13-\\\\u0b28\\\\u0b2a-\\\\u0b30\\\\u0b32-\\\\u0b33\\\\u0b36-\\\\u0b39\\\\u0b3d\\\\u0b5c-\\\\u0b5d\\\\u0b5f-\\\\u0b61\\\\u0b83\\\\u0b85-\\\\u0b8a\\\\u0b8e-\\\\u0b90\\\\u0b92-\\\\u0b95\\\\u0b99-\\\\u0b9a\\\\u0b9c\\\\u0b9e-\\\\u0b9f\\\\u0ba3-\\\\u0ba4\\\\u0ba8-\\\\u0baa\\\\u0bae-\\\\u0bb5\\\\u0bb7-\\\\u0bb9\\\\u0c05-\\\\u0c0c\\\\u0c0e-\\\\u0c10\\\\u0c12-\\\\u0c28\\\\u0c2a-\\\\u0c33\\\\u0c35-\\\\u0c39\\\\u0c60-\\\\u0c61\\\\u0c85-\\\\u0c8c\\\\u0c8e-\\\\u0c90\\\\u0c92-\\\\u0ca8\\\\u0caa-\\\\u0cb3\\\\u0cb5-\\\\u0cb9\\\\u0cde\\\\u0ce0-\\\\u0ce1\\\\u0d05-\\\\u0d0c\\\\u0d0e-\\\\u0d10\\\\u0d12-\\\\u0d28\\\\u0d2a-\\\\u0d39\\\\u0d60-\\\\u0d61\\\\u0d85-\\\\u0d96\\\\u0d9a-\\\\u0db1\\\\u0db3-\\\\u0dbb\\\\u0dbd\\\\u0dc0-\\\\u0dc6\\\\u0e01-\\\\u0e30\\\\u0e32-\\\\u0e33\\\\u0e40-\\\\u0e46\\\\u0e81-\\\\u0e82\\\\u0e84\\\\u0e87-\\\\u0e88\\\\u0e8a\\\\u0e8d\\\\u0e94-\\\\u0e97\\\\u0e99-\\\\u0e9f\\\\u0ea1-\\\\u0ea3\\\\u0ea5\\\\u0ea7\\\\u0eaa-\\\\u0eab\\\\u0ead-\\\\u0eb0\\\\u0eb2-\\\\u0eb3\\\\u0ebd\\\\u0ec0-\\\\u0ec4\\\\u0ec6\\\\u0edc-\\\\u0edd\\\\u0f00\\\\u0f40-\\\\u0f47\\\\u0f49-\\\\u0f6a\\\\u0f88-\\\\u0f8b\\\\u1000-\\\\u1021\\\\u1023-\\\\u1027\\\\u1029-\\\\u102a\\\\u1050-\\\\u1055\\\\u10a0-\\\\u10c5\\\\u10d0-\\\\u10f8\\\\u1100-\\\\u1159\\\\u115f-\\\\u11a2\\\\u11a8-\\\\u11f9\\\\u1200-\\\\u1206\\\\u1208-\\\\u1246\\\\u1248\\\\u124a-\\\\u124d\\\\u1250-\\\\u1256\\\\u1258\\\\u125a-\\\\u125d\\\\u1260-\\\\u1286\\\\u1288\\\\u128a-\\\\u128d\\\\u1290-\\\\u12ae\\\\u12b0\\\\u12b2-\\\\u12b5\\\\u12b8-\\\\u12be\\\\u12c0\\\\u12c2-\\\\u12c5\\\\u12c8-\\\\u12ce\\\\u12d0-\\\\u12d6\\\\u12d8-\\\\u12ee\\\\u12f0-\\\\u130e\\\\u1310\\\\u1312-\\\\u1315\\\\u1318-\\\\u131e\\\\u1320-\\\\u1346\\\\u1348-\\\\u135a\\\\u13a0-\\\\u13f4\\\\u1401-\\\\u166c\\\\u166f-\\\\u1676\\\\u1681-\\\\u169a\\\\u16a0-\\\\u16ea\\\\u1700-\\\\u170c\\\\u170e-\\\\u1711\\\\u1720-\\\\u1731\\\\u1740-\\\\u1751\\\\u1760-\\\\u176c\\\\u176e-\\\\u1770\\\\u1780-\\\\u17b3\\\\u17d7\\\\u17dc\\\\u1820-\\\\u1877\\\\u1880-\\\\u18a8\\\\u1e00-\\\\u1e9b\\\\u1ea0-\\\\u1ef9\\\\u1f00-\\\\u1f15\\\\u1f18-\\\\u1f1d\\\\u1f20-\\\\u1f45\\\\u1f48-\\\\u1f4d\\\\u1f50-\\\\u1f57\\\\u1f59\\\\u1f5b\\\\u1f5d\\\\u1f5f-\\\\u1f7d\\\\u1f80-\\\\u1fb4\\\\u1fb6-\\\\u1fbc\\\\u1fbe\\\\u1fc2-\\\\u1fc4\\\\u1fc6-\\\\u1fcc\\\\u1fd0-\\\\u1fd3\\\\u1fd6-\\\\u1fdb\\\\u1fe0-\\\\u1fec\\\\u1ff2-\\\\u1ff4\\\\u1ff6-\\\\u1ffc\\\\u2071\\\\u207f\\\\u2102\\\\u2107\\\\u210a-\\\\u2113\\\\u2115\\\\u2119-\\\\u211d\\\\u2124\\\\u2126\\\\u2128\\\\u212a-\\\\u212d\\\\u212f-\\\\u2131\\\\u2133-\\\\u2139\\\\u213d-\\\\u213f\\\\u2145-\\\\u2149\\\\u3005-\\\\u3006\\\\u3031-\\\\u3035\\\\u303b-\\\\u303c\\\\u3041-\\\\u3096\\\\u309d-\\\\u309f\\\\u30a1-\\\\u30fa\\\\u30fc-\\\\u30ff\\\\u3105-\\\\u312c\\\\u3131-\\\\u318e\\\\u31a0-\\\\u31b7\\\\u31f0-\\\\u31ff\\\\u3400-\\\\u4db5\\\\u4e00-\\\\u9fa5\\\\ua000-\\\\ua48c\\\\uac00-\\\\ud7a3\\\\uf900-\\\\ufa2d\\\\ufa30-\\\\ufa6a\\\\ufb00-\\\\ufb06\\\\ufb13-\\\\ufb17\\\\ufb1d\\\\ufb1f-\\\\ufb28\\\\ufb2a-\\\\ufb36\\\\ufb38-\\\\ufb3c\\\\ufb3e\\\\ufb40-\\\\ufb41\\\\ufb43-\\\\ufb44\\\\ufb46-\\\\ufbb1\\\\ufbd3-\\\\ufd3d\\\\ufd50-\\\\ufd8f\\\\ufd92-\\\\ufdc7\\\\ufdf0-\\\\ufdfb\\\\ufe70-\\\\ufe74\\\\ufe76-\\\\ufefc\\\\uff21-\\\\uff3a\\\\uff41-\\\\uff5a\\\\uff66-\\\\uffbe\\\\uffc2-\\\\uffc7\\\\uffca-\\\\uffcf\\\\uffd2-\\\\uffd7\\\\uffda-\\\\uffdc_\";\nexport const IDENTIFIER_CONTINUE = IDENTIFIER_START + \"\\\\u0030-\\\\u0039\\\\u0660-\\\\u0669\\\\u06f0-\\\\u06f9\\\\u0966-\\\\u096f\\\\u09e6-\\\\u09ef\\\\u0a66-\\\\u0a6f\\\\u0ae6-\\\\u0aef\\\\u0b66-\\\\u0b6f\\\\u0be7-\\\\u0bef\\\\u0c66-\\\\u0c6f\\\\u0ce6-\\\\u0cef\\\\u0d66-\\\\u0d6f\\\\u0e50-\\\\u0e59\\\\u0ed0-\\\\u0ed9\\\\u0f20-\\\\u0f29\\\\u1040-\\\\u1049\\\\u1369-\\\\u1371\\\\u17e0-\\\\u17e9\\\\u1810-\\\\u1819\\\\uff10-\\\\uff19#$\";\n",
+     "occurrences": 1
+    }
+   ]
+  },
+  {
+   "target": "grammar/statements/merge.js",
+   "operations": [
+    {
+     "before": "//     { WHEN [NOT] MATCHED [BY TARGET | BY SOURCE] [AND predicate] THEN action } [...]\n//     [OUTPUT ...] [OPTION (...)]\nexport default {\n  _merge_statement: ($) => $.merge,\n\n  merge: ($) =>\n    seq(\n",
+     "after": "//     { WHEN [NOT] MATCHED [BY TARGET | BY SOURCE] [AND predicate] THEN action } [...]\n//     [OUTPUT ...] [OPTION (...)]\nexport default {\n  // Standalone MERGE requires a list terminator; composable MERGE does not.\n  // Require the list's next terminator without consuming it.\n  _merge_statement: ($) => seq($.merge, $._merge_terminator),\n\n  merge: ($) =>\n    seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          $.keyword_insert,\n          optional(alias($._column_list, $.list)),\n          choice(\n            seq($.keyword_values, comma_list($.list, true)),\n            seq($.keyword_default, $.keyword_values),\n          ),\n        ),\n",
+     "after": "          $.keyword_insert,\n          optional(alias($._column_list, $.list)),\n          choice(\n            seq($.keyword_values, comma_list(alias($._dml_value_list, $.list), true)),\n            seq($.keyword_default, $.keyword_values),\n          ),\n        ),\n",
      "occurrences": 1
     }
    ]
