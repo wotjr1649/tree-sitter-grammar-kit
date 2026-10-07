@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"go/build"
 	"os"
 	"strings"
 	"testing"
@@ -10,6 +11,18 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+func TestStandaloneCExcludedFromGoPackage(t *testing.T) {
+	ctx := build.Default
+	ctx.CgoEnabled = true
+	pkg, err := ctx.ImportDir(".", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pkg.CFiles) != 0 || len(pkg.CgoFiles) != 0 {
+		t.Fatalf("standalone native audit entered Go package: C=%v cgo=%v", pkg.CFiles, pkg.CgoFiles)
+	}
+}
 
 func TestReceiptRejectsTampering(t *testing.T) {
 	req := native.Request{ID: "control", Source: []byte("a"), Limits: native.LimitsFor(kit.NativeOperations()["native-query-large"])}

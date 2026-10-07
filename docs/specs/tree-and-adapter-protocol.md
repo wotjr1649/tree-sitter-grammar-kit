@@ -216,6 +216,8 @@ Go decoder는 단일 frame·엄격 JSON(중복/unknown member 거부)·source id
 
 이 audit는 canonical cursor tree metadata를 기준으로 선택된 `tsgk-api/r1` 관계·field·registered-point API를 비교한다. `ts_node_is_named`와 byte-range accessor 자체의 독립 semantic 적합성은 검증하지 않는다. descendant/named-descendant는 byte를 덮는 조건을 검사하고 exact deepest node 선택은 주장하지 않는다. first-child-for-byte는 첫 direct child index를 비교한다.
 
+`src/dev/large-api/audit.c`는 `//go:build ignore`로 Go package에서 제외하며 CGO0·CGO1 모두 Go/cgo source가 아니다. 기존 native build가 별도 C process로 직접 compile한다. 필수 CGO0 시험에서도 CGO1 build context로 이 경계를 검사한다.
+
 full receipt의 `tsgk-large-api-validation/r1`, `mode: REGISTERED_LARGE_ALL_NODES`, `large_complete: true`, `pass: true`는 정확히 등록3개 fixture 전체 연속 구간 완료를 요구한다. `-controls-only`는 별도 `tsgk-large-api-controls/r1`, `mode: SMALL_CONTROLS`, `large_complete: false`다. 등록 fixture inventory 전체의 frozen SHA256과 route registry SHA256을 기록하고 fixture 대체·unknown/duplicate member·중복 ID를 거부한다. compiler를 custom compile 직전에, executable을 각 launch 전후에 재검증한다. 이는 task 소유의 변하지 않는 build directory를 전제로 하며 hostile concurrent file replacement의 sandbox는 아니다.
 
 작은 정상·오류4개 full oracle와8개 거부 mutant 외에 실제 MISSING semicolon의 `ZERO_SKIP` 허용 control을 요구한다. `POSITIVE_SKIP`은 실패하고 `ZERO_SKIP`은 difference0과 별도 positional divergence·첫 node/column/expected/observed 좌표를 남긴다. 1-byte request memory control은 기존 allocator의 `RESOURCE_LIMIT`/`ALLOCATION_LIMIT`을 기존 `DecodeResponse`·`native.Check`로 검증하고 전체 API 완료로 세지 않는다. OS hard memory cap은 그대로8GiB다. first-difference와 first-divergence 좌표는 검사 구간과 observation 축 범위 안이어야 한다.

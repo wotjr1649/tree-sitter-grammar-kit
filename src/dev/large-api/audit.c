@@ -1,3 +1,5 @@
+//go:build ignore
+
 /* Development-only whole-tree API audit. Reuse the pinned driver parser,
  * allocator, framing and cursor walk; do not change the product wire protocol. */
 #define main protocol_main
