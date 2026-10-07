@@ -2007,8 +2007,8 @@
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 35560,
-            "sha256": "eb7a71fd7cdf34fafdff694f176c11a76cc924fd24a435918df19f305cc273ef"
+            "bytes": 35196,
+            "sha256": "4151fac96607eb243dde1a47be0ae9f6a4c5df57feb196063b2abcd974c424f6"
           },
           {
             "path": "grammar/statements/select.js",
