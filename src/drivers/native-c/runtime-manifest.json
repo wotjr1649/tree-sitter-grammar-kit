@@ -7,17 +7,17 @@
  "patches": [
   {
    "subject": "src/drivers/native-c/runtime-field-lookup.patch.json",
-   "sha256": "e694b4d7268a8f2b163f2f1a0085bdcffb1ae86de3de970d768b88293b35a5c6",
-   "bytes": 702,
+   "sha256": "f489c7a7dc8c948274e673f2713fc0dedf54aa39bf10c194a57ee411e7cbaa1d",
+   "bytes": 3326,
    "pointer": "/files/0",
    "field": "operations",
    "target": "lib/src/node.c",
    "before_sha256": "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5",
    "before_bytes": 25151,
-   "source_repository": "mgsloan/tree-sitter",
-   "source_commit": "18302989e05fcc8da7ce7fca3f8aedadb7191fdd",
    "license": "MIT",
-   "remove_when": "A pinned upstream release contains the fix and passes the same field ownership and three-platform qualification checks."
+   "remove_when": "A pinned upstream release preserves visible aliases, closest hidden fields, ERROR recovery and extra boundaries, and passes the same owned controls, 26-route/large comparisons and three-platform qualification.",
+   "origin": "LOCAL",
+   "tracking_issue": "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/118"
   }
  ],
  "files": [
@@ -103,8 +103,8 @@
   },
   {
    "path": "lib/src/node.c",
-   "sha256": "0c2531b763ae83ae87e76d3af6ec69137628eb0d4231faedf3cd6ab23bfc8de0",
-   "bytes": 25390
+   "sha256": "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740",
+   "bytes": 23579
   },
   {
    "path": "lib/src/parser.c",
