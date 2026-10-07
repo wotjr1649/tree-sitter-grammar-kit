@@ -1967,8 +1967,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 8566,
-            "sha256": "ae9f0d730dc633dc1b8b8753e2fda2ca14b3a6a7adbcf2b861e86c73aac49ebd"
+            "bytes": 8826,
+            "sha256": "a885f41d210736db4a6cd8d92134fecfb8d6a815ccf71f2ff5ef7a9846beb67d"
           },
           {
             "path": "grammar/keywords.js",

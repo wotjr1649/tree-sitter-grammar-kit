@@ -22,6 +22,14 @@
 
 새 fixture21개는 normal/error/restore14개와 label·IF·WHILE·block-leading-semicolon 정상4개, batch/module 첫 CTE와 bare hint/function 구분 정상3개다. SELECT 오류 fixture의 target batch는 그대로 두고 뒤 독립 batch를 추가해 재사용을 관측한다. 기존 fixture의 기대값은 변경하지 않는다. 정상 build인 이전 parser mutant를 새21개 fixture에 적용해 음성14개 모두 오류 단계1의 syntax expectation에서 실패하고 정상 대조7개는 PASS하는 것을 확인했다. 모든21개는 완료됐고 API·incremental route/equality·query equality·fact reproduction은 PASS다. root-cause 검출이 runtime 또는 route 실패에 의존하지 않는다. 등록 후 재생성, 전체 등록 회귀, mutant 결과와 main 통합 근거는 해당 Issue/PR의 정확한 후보 SHA에 결속한다.
 
-최종 등록 회귀는 incremental686개와 oracle692개 모두 완료·PASS이며 oracle set valid, API 차이0, helper 실패0이다. baseline incremental665개·oracle671개와 대조해 기존 claim·문법 판정 차이0, 정상 tree 차이0을 확인했다. 비교한 incremental/fresh817개 tree projection 중 오류 recovery16개만 구조가 달라졌다. 기존 오류 판정·기대값·query/fact·route/equality claim은 유지된다. 재생성은 두 workspace의 generator/determinism PASS와 등록 reference6개 MATCH를 확인했고 원본 source는 변경되지 않았다. 생성 parser는67,700,075 bytes로 기존100MiB file/128MiB build cap 안에 있다.
+리뷰 보완 후 최종 등록 회귀는 incremental691개와 oracle697개 모두 완료·PASS이며 oracle set valid, API 차이0, helper 실패0이다. baseline incremental665개·oracle671개와 대조해 기존 claim·문법 판정 차이0, 정상 tree 차이0을 확인했다. 비교한 incremental/fresh817개 tree projection 중 오류 recovery16개만 구조가 달라졌다. 기존 오류 판정·기대값·query/fact·route/equality claim은 유지된다. 재생성은 두 workspace의 generator/determinism PASS와 등록 reference6개 MATCH를 확인했고 원본 source는 변경되지 않았다. 생성 parser는67,841,287 bytes로 기존100MiB file/128MiB build cap 안에 있다.
 
 전체 비공개 SQL corpus, large-input 전체 API 관측과 추가 격차 처분은 [#126](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/126)의 범위다. 비공개 입력·파일 이름·경로·hash는 ignored local evidence에만 보존하고 공개 결과는 count와 판정만 사용한다. 이 보고서의 합성 입력 대조가 그 확대 범위의 완료를 뜻하지 않는다.
+
+## PR #127 문맥 리뷰 보완
+
+SQLCMD 지시문은 앞선 서버 SQL 문장으로 세지 않는다. batch 시작에서 하나 이상의 `:setvar`/`:r` 뒤 첫 CTE와 implicit procedure call을 허용하고, 이미 SQL 문장이 있으면 그 문장의 `;` 종료 여부를 directive 너머에서도 보존한다. include 파일의 실제 실행·변수 치환은 이 parser 검사의 범위가 아니다. directive-only·leading semicolon·GO·일반 SELECT도 기존 visible node 구조로 유지한다. 생성기가 실제로 지적한 batch-prefix와 semicolon/directive-tail의 fork만 conflict로 둔다.
+
+정확한 `SELECT 1`–newline–`x:`–newline–CTE 입력은 compatibility110·170의 PARSEONLY에서 모두 ACCEPT/errors0이다. label 뒤 CTE에 세미콜론을 추가로 강제하라는 리뷰 제안은 이 관측과 맞지 않아 수용 동작을 유지하고 정상 fixture로 고정했다. SQLCMD 줄을 명시적으로 제거한 고정 합성 대조와 이 label 입력6개, 합계12회 engine 관측도 두 설정에서 같았고, 실제 선행 SELECT가 끝나지 않은 한 입력만319로 거부됐다. task DB 제거를 확인했다.
+
+수정 후보의 공개 control12개는 완료·PASS, API 차이0이다. 이전 후보 `b93bdb2`의 정상 build는 이 중 정상6개를 ERROR로 잘못 읽어 syntax expectation에서 실패했다. 다른 기존 정상5개 control의 CST 차이는0이다. 새 등록 fixture5개는 directive 앞/뒤 CTE normal/error/restore3개와 label·implicit procedure 정상2개다. 기존 fixture의 기대값은 유지한다. 리뷰 이전 후보의 기존 incremental686개·oracle692개를 새 후보와 대조해 claim·문법 판정·정상/오류 tree 차이 모두0을 확인했다. incremental/fresh tree projection은 각각922개·948개다. qualification inventory는 기존 생성기로 재생성했고 core 전체 test/vet/build도 PASS다. exact-head CI는 이 보완을 포함한 후보에 다시 결속한다.
