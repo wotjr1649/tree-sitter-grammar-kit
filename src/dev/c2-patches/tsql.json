@@ -956,28 +956,13 @@
      "occurrences": 1
     },
     {
-     "before": "  statement: ($) =>\n    choice(\n      $._ddl_statement,\n      $._dml_write,\n      optional_parenthesis($._dml_read),\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n      $.try_catch_statement,\n      $.return_statement,\n      $.break_statement,\n      $.continue_statement,\n      $.goto_statement,\n      $.label_statement,\n      $.throw_statement,\n      $.raiserror_statement,\n      $.var_declarations,\n      $.print_statement,\n      $.waitfor_statement,\n      $.begin_transaction_statement,\n      $.commit_statement,\n      $.rollback_statement,\n      $.save_transaction_statement,\n      $.declare_cursor_statement,\n      $.open_cursor_statement,\n      $.fetch_cursor_statement,\n      $.close_cursor_statement,\n      $.deallocate_cursor_statement,\n      $.execute_as_statement,\n      $.revert_statement,\n      $.enable_trigger_statement,\n      $.grant_statement,\n      $.update_statistics_statement,\n      $.kill_statement,\n      $.checkpoint_statement,\n      $.shutdown_statement,\n      $.backup_statement,\n      $.restore_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n      $.writetext_statement,\n      $.updatetext_statement,\n      $.bulk_insert_statement,\n      $.begin_dialog_statement,\n      $.send_statement,\n      $.receive_statement,\n      $.end_conversation_statement,\n      $.get_conversation_group_statement,\n      $.move_conversation_statement,\n      $.begin_conversation_timer_statement,\n      $.add_sensitivity_classification,\n      $.drop_sensitivity_classification,\n      $.add_signature,\n      $.drop_signature,\n      $.open_key_statement,\n      $.close_key_statement,\n    ),\n\n",
-     "after": "  statement: ($) => statement($, true),\n\n  block_first_statement: ($) => statement($, false),\n\n",
-     "occurrences": 1
-    },
-    {
-     "before": "export default {",
-     "after": "function statement($, allowCTE) {\n  return choice(\n      $._ddl_statement,\n      allowCTE ? $._dml_write : dml_write($),\n      optional_parenthesis(allowCTE ? $._dml_read : $._query_expression),\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n      $.try_catch_statement,\n      $.return_statement,\n      $.break_statement,\n      $.continue_statement,\n      $.goto_statement,\n      $.label_statement,\n      $.throw_statement,\n      $.raiserror_statement,\n      $.var_declarations,\n      $.print_statement,\n      $.waitfor_statement,\n      $.begin_transaction_statement,\n      $.commit_statement,\n      $.rollback_statement,\n      $.save_transaction_statement,\n      $.declare_cursor_statement,\n      $.open_cursor_statement,\n      $.fetch_cursor_statement,\n      $.close_cursor_statement,\n      $.deallocate_cursor_statement,\n      $.execute_as_statement,\n      $.revert_statement,\n      $.enable_trigger_statement,\n      $.grant_statement,\n      $.update_statistics_statement,\n      $.kill_statement,\n      $.checkpoint_statement,\n      $.shutdown_statement,\n      $.backup_statement,\n      $.restore_statement,\n      $.setuser_statement,\n      $.readtext_statement,\n      $.writetext_statement,\n      $.updatetext_statement,\n      $.bulk_insert_statement,\n      $.begin_dialog_statement,\n      $.send_statement,\n      $.receive_statement,\n      $.end_conversation_statement,\n      $.get_conversation_group_statement,\n      $.move_conversation_statement,\n      $.begin_conversation_timer_statement,\n      $.add_sensitivity_classification,\n      $.drop_sensitivity_classification,\n      $.add_signature,\n      $.drop_signature,\n      $.open_key_statement,\n      $.close_key_statement,\n    );\n}\n\nfunction dml_write($) {\n  return choice($._delete_statement, $._insert_statement, $._update_statement, $._merge_statement);\n}\n\nexport default {",
-     "occurrences": 1
-    },
-    {
      "before": "  // A bare BEGIN ... END grouping block. Body items are `;`-optional, as\n  // everywhere else in T-SQL.\n  // tsgk r6: BEGIN [ ; ] { sql_statement | statement_block } END [ ; ] — a\n  // `;` may directly follow BEGIN (`BEGIN;`, `BEGIN ;WITH c AS ...`). With\n  // that `;` the block needs a statement: SQL Server rejects an empty block\n  // even with semicolons (the bare `BEGIN END` form stays as before).\n",
-     "after": "  // Blocks require a statement. A leading CTE needs the BEGIN semicolon.\n",
+     "after": "  // Blocks require a statement. A CTE may be the first statement.\n",
      "occurrences": 1
     },
     {
      "before": "seq($.keyword_begin, repeat($._body_item), $.keyword_end)",
-     "after": "seq(\n        $.keyword_begin,\n        prec.right(seq(choice(alias($.block_first_statement, $.statement), $.block), repeat(';'))),\n        repeat($._body_item),\n        $.keyword_end,\n      )",
-     "occurrences": 1
-    },
-    {
-     "before": "choice($._delete_statement, $._insert_statement, $._update_statement, $._merge_statement),\n    ),",
-     "after": "dml_write($),\n    ),",
+     "after": "seq($.keyword_begin, repeat1($._body_item), $.keyword_end)",
      "occurrences": 1
     },
     {

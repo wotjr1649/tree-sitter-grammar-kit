@@ -182,15 +182,15 @@
       "features": [
         "tsql-B01"
       ],
-      "source_utf8": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));\n\nSELECT 1 AS fixture_anchor;\n",
+      "source_utf8": "CREATE TABLE t (a int DEFAULT (dbo.[PERCENT]()));\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
         {
-          "find": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));",
-          "replace": "CREATE TABLE t (a int DEFAULT (PERCENT()));"
+          "find": "CREATE TABLE t (a int DEFAULT (dbo.[PERCENT]()));",
+          "replace": "CREATE TABLE t (a int DEFAULT (dbo.PERCENT()));"
         },
         {
-          "find": "CREATE TABLE t (a int DEFAULT (PERCENT()));",
-          "replace": "CREATE TABLE t (a int DEFAULT ([PERCENT]()));"
+          "find": "CREATE TABLE t (a int DEFAULT (dbo.PERCENT()));",
+          "replace": "CREATE TABLE t (a int DEFAULT (dbo.[PERCENT]()));"
         }
       ],
       "expect": [
@@ -708,8 +708,10 @@
         },
         {
           "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
           "declarations": ""
         },
         {
@@ -750,8 +752,10 @@
         },
         {
           "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
           "declarations": ""
         },
         {
@@ -792,8 +796,10 @@
         },
         {
           "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
+          "syntax": "NO_ERROR",
+          "contains": [
+            "block"
+          ],
           "declarations": ""
         },
         {

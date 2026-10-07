@@ -205728,8 +205728,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "e1d4e8912cd9b860f1ad32cb53b4962c8a13b322582781eb48d61f186dcbf83f",
-      "bytes": 58380607
+      "sha256": "7f559b271f0a4f3c89d7bb9c9c615cddd08d2b86bf183a42df6fa583ee984ae5",
+      "bytes": 58332580
      },
      {
       "path": "src/scanner.c",
@@ -259812,23 +259812,23 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "e4deb17d0989662af65ddced5f5b3f1d02463e1f2fa7088008cd21c6a53f8566",
-       "bytes": 75
+       "sha256": "1ef81f83c0f738f7432e0dd6fae8bd24d8164972b178363ac088539020b13d5c",
+       "bytes": 79
       },
       "edits": [
        {
         "start_byte": 0,
-        "old_end_byte": 45,
-        "new_end_byte": 43,
-        "old": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKFtQRVJDRU5UXSgpKSk7",
-        "new": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKFBFUkNFTlQoKSkpOw=="
+        "old_end_byte": 49,
+        "new_end_byte": 47,
+        "old": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKGRiby5bUEVSQ0VOVF0oKSkpOw==",
+        "new": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKGRiby5QRVJDRU5UKCkpKTs="
        },
        {
         "start_byte": 0,
-        "old_end_byte": 43,
-        "new_end_byte": 45,
-        "old": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKFBFUkNFTlQoKSkpOw==",
-        "new": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKFtQRVJDRU5UXSgpKSk7"
+        "old_end_byte": 47,
+        "new_end_byte": 49,
+        "old": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKGRiby5QRVJDRU5UKCkpKTs=",
+        "new": "Q1JFQVRFIFRBQkxFIHQgKGEgaW50IERFRkFVTFQgKGRiby5bUEVSQ0VOVF0oKSkpOw=="
        }
       ],
       "expect": [
@@ -260634,8 +260634,10 @@
        },
        {
         "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block"
+        ],
         "declarations": ""
        },
        {
@@ -260656,7 +260658,6 @@
       "covers": {
        "tsql-B04": [
         "P",
-        "N",
         "E"
        ]
       },
@@ -260700,8 +260701,10 @@
        },
        {
         "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block"
+        ],
         "declarations": ""
        },
        {
@@ -260722,7 +260725,6 @@
       "covers": {
        "tsql-B04": [
         "P",
-        "N",
         "E"
        ]
       },
@@ -260766,8 +260768,10 @@
        },
        {
         "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
+        "syntax": "NO_ERROR",
+        "contains": [
+         "block"
+        ],
         "declarations": ""
        },
        {
@@ -260788,7 +260792,6 @@
       "covers": {
        "tsql-B04": [
         "P",
-        "N",
         "E"
        ]
       },
