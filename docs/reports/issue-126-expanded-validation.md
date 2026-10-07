@@ -4,7 +4,7 @@
 
 ## 전체 SQL corpus
 
-공개 등록 T-SQL은 incremental686개와 oracle692개 모두 COMPLETED/PASS, API 차이0, helper 실패0이다. 원래107개 엔진 입력도 설정마다107회, 합계214회 관측에서 설정 간 차이0을 확인했다. 원래 중복 포함 네 불일치는4→0이다. 등록 회귀와 engine/PARSEONLY의 의미는 구분한다.
+공개 등록 T-SQL은 incremental691개와 oracle697개 모두 COMPLETED/PASS, API 차이0, helper 실패0이다. 원래107개 엔진 입력도 설정마다107회, 합계214회 관측에서 설정 간 차이0을 확인했다. 원래 중복 포함 네 불일치는4→0이다. 등록 회귀와 engine/PARSEONLY의 의미는 구분한다.
 
 공개 upstream `meloncholera/tree-sitter-mssql@8620fbcfca9438e1ff7104835bcb8305aba3bdfa`의31개 corpus 파일에서351개 입력을 분리하고 `.sql`162개를 모두 포함해513개를 추가 대조했다.193개 원본 파일은 해당 commit의 공개 Git tree blob identity와 전부 MATCH했고 corpus header 경계도351개 모두 확인했다. native513개는 COMPLETED/PASS, API 차이0이며 NO_ERROR478개·ERROR35개다. upstream expected CST의 동일성을 주장하지 않는다. 현재 C2 문법의 tree/API 관측과 engine parse status를 비교한다.
 
@@ -12,7 +12,7 @@ upstream engine 관측은 설정별513개·728개 batch, 합계1,026개·1,456�
 
 upstream의 설정 간 전체 status/error 차이는5개다. OPENJSON fixture는 두 설정 모두 REJECT지만110에서102 진단이 추가되고, REGEXP_LIKE·확장 TRIM·WINDOW 두 사례는110 REJECT/170 ACCEPT다. 이는 [OPENJSON의130 이상 요구](https://learn.microsoft.com/en-us/sql/t-sql/functions/openjson-transact-sql?view=sql-server-ver17), [REGEXP_LIKE의170 이상 요구](https://learn.microsoft.com/en-us/sql/t-sql/functions/regexp-like-transact-sql?view=sql-server-ver17), [확장 TRIM의160 요구](https://learn.microsoft.com/en-us/sql/t-sql/functions/trim-transact-sql?view=sql-server-ver17), [WINDOW의160 이상 요구](https://learn.microsoft.com/en-us/sql/t-sql/queries/select-window-transact-sql?view=sql-server-ver17)와 일치한다. OPENJSON의 중복 변수134는 두 설정에서 남는다. 문법은2012~2025 합집합 계약이므로 이 기능들을 모든 level에서 거부하도록 바꾸지 않는다. 이5개를 업무 corpus의 설정 간 차이0 또는 원래 네 결함과 혼동하지 않는다.
 
-비공개 corpus의 현재 `.sql` 전체6,150개를 다시 열거하고 size/SHA256을 재확인했다. source와 파일 이름·경로·hash는 ignored local evidence에만 보존한다. 원래 root 전체 inventory는 SQL 외의 읽기 불가 파일에서 중단됐다. 해당 파일의 권한을 바꾸지 않고 SQL 선택 집합을 독립적으로 재검증했다. encoding은 UTF-8 2,777개·UTF-16LE 2,788개·CP949 585개 모두 PASS다. native는6,150/6,150개,13개 batch 모두 COMPLETED/PASS, fatal/not-run/resource/encoding block0이다. CST의 NO_ERROR는6,088개, ERROR는62개다. 이 PASS는 native 처리·관측의 완료이며 SQL source 전체의 engine 적합성 PASS를 뜻하지 않는다.
+비공개 corpus의 현재 `.sql` 전체6,150개를 다시 열거하고 size/SHA256을 재확인했다. source와 파일 이름·경로·hash는 ignored local evidence에만 보존한다. 원래 root 전체 inventory는 SQL 외의 읽기 불가 파일에서 중단됐다. 해당 파일의 권한을 바꾸지 않고 SQL 선택 집합을 독립적으로 재검증했다. encoding은 UTF-8 2,777개·UTF-16LE 2,788개·CP949 585개 모두 PASS다. native는6,150/6,150개,13개 batch 모두 COMPLETED/PASS, fatal/not-run/resource/encoding block0이다. CST의 NO_ERROR는6,088개, ERROR는62개다. 이 PASS는 native 처리·관측의 완료이며 SQL source 전체의 engine 적합성 PASS를 뜻하지 않는다. 최종 SQLCMD 보완 parser로6,150개를 다시 검사해 기존 source identity·완료/오류 판정 차이0을 확인했다. tree digest는 정상1개·오류1개에서 달랐다. 두 입력을 별도 full tree로 대조했으며 node count·node type 순서는 같고 semicolon/후속 statement의 소유자가 batch에서 procedure_body로 옮겨진 차이다. engine status는 두 설정 모두 기존 REJECT를 유지했다. 이 module-body ownership 경계는 #128에서 공개 합성 재현으로 추가 확인하며 전체 corpus CST 차이0이라고 주장하지 않는다.
 
 기존 LocalDB17.0.1000.7에 task 소유 임시 DB 두 개를 만들어 compatibility110·170을 read-back하고 SQL을 in-place로 읽었다. data/log max64/32MiB, 연결·명령5초, 전체 probe1,800초로 제한했다. 모든 입력은 [PARSEONLY](https://learn.microsoft.com/en-us/sql/t-sql/statements/set-parseonly-transact-sql?view=sql-server-ver17)로 검사하며 arbitrary SQL 실행·DDL 실행·결과 row 수집은 하지 않는다. PARSEONLY를 바꾸는 입력과 SQLCMD directive는 guard로 처분한다. GO는 quote/bracket/nested comment 밖의 단독 batch delimiter만 인식하며 repeat는 한 번만 parse한다. SQL 오류 뒤에도 나머지 batch를 전부 시도하고 각 batch 전에 task DB context를 복구한다. 다른 DB·사용자 설정은 변경하지 않고 task DB 제거를 확인했다. 오류 message/raw SQL을 기록하지 않는다.
 
@@ -40,7 +40,7 @@ native가 수용한 engine REJECT12개는 오류 signature `{111}`8개, `{111,17
 
 기존 input32MiB·output16MiB·request50,331,648 bytes·node25m·depth100k·parse60초·process90초·memory8GiB HARD 한도를 유지한다. 구간별 최대1m node를 검사하고 처음0부터 마지막 node까지 연속 coverage, normal driver baseline node count, 모든 child field의 합node count-1을 요구한다. 구간 실패·누락·중복·resource limit은 전체 PASS가 아니다. 단일 process의 전체 관측이90초를 넘었던 초기 실행은 RESOURCE_LIMIT으로 보존하고 PASS로 승격하지 않았다.
 
-최종 검토 보완을 반영한 정확한 C/Go 후보의 로컬 full audit는 등록3개 입력에서33,110,006개 node·35개 연속 구간·2,185,260,882개 비교를 완료했다. difference와 positional divergence는 모두0, cleanup 검증·HARD memory는 모든 구간에서 PASS다. 실행한 C/Go source hash를 최종 후보와 대조했다. small control은 full large 완료를 뜻하지 않도록 별도 schema를 사용한다. 작은 정상·오류4개 full Go oracle,8개 거부 mutant, 실제 MISSING semicolon의 ZERO_SKIP 허용 control, typed ALLOCATION_LIMIT control과 strict receipt/inventory 변조 검사를 유지한다.
+최종 검토 보완을 반영한 정확한 C/Go 후보의 로컬 full audit는 등록3개 입력에서33,110,006개 node·35개 연속 구간·2,185,260,882개 비교를 완료했다. difference와 positional divergence는 모두0, cleanup 검증·HARD memory는 모든 구간에서 PASS다. 실행한 C/Go source hash를 최종 후보와 대조했다. 이후 T-SQL pin 갱신으로 전체 route registry hash는 달라졌지만 선택한 C# route·runtime·large fixture inventory와 C/Go source는 모두 같음을 별도로 대조했다. 최종 exact-head Windows CI는 갱신된 registry에 다시 결속한 full audit를 실행한다. small control은 full large 완료를 뜻하지 않도록 별도 schema를 사용한다. 작은 정상·오류4개 full Go oracle,8개 거부 mutant, 실제 MISSING semicolon의 ZERO_SKIP 허용 control, typed ALLOCATION_LIMIT control과 strict receipt/inventory 변조 검사를 유지한다.
 
 | 등록 입력 | 전체 node | 연속 구간 | 비교 수 | 최대 process wall | 최대 memory bytes |
 |---|---:|---:|---:|---:|---:|
