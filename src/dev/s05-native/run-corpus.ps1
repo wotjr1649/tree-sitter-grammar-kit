@@ -10,9 +10,12 @@ param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
   [Parameter(Mandatory)][string]$Compiler,
+  [ValidateCount(1, 4)][ValidateSet("csharp", "tsql", "xml", "svc")][string[]]$Routes = @("csharp", "tsql", "xml", "svc"),
+  [string]$InventoryPath,
   [int]$WallSeconds = 3600
 )
 $ErrorActionPreference = 'Stop'
+if (@($Routes | Select-Object -Unique).Count -ne $Routes.Count) { throw 'duplicate route selection' }
 # No strict mode: the results carry optional (omitted) JSON members.
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $start = Get-Date
@@ -43,10 +46,16 @@ $ccLines = @(& $Compiler --version) # whole output: a cut pipeline would leave $
 if ($LASTEXITCODE -ne 0) { throw 'compiler --version failed' }
 $ccVersion = $ccLines | Select-Object -First 1
 
-# 1. inventory (S01 operation, cp949 profile) with the S05 table-completed encodings
+# 1. Fresh S01 inventory, or caller-supplied inventory whose current complete file set
+# was independently verified. The native command rechecks each selected source hash.
+# InventoryPath does not establish freshness or coverage by itself.
 $inventory = Join-Path $Destination 'inventory.json'
-& $cli corpus --root $CorpusRoot --out $inventory | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "corpus inventory exit $LASTEXITCODE" }
+if ($InventoryPath) {
+  Copy-Item -LiteralPath $InventoryPath -Destination $inventory
+} else {
+  & $cli corpus --root $CorpusRoot --out $inventory | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "corpus inventory exit $LASTEXITCODE" }
+}
 $inv = Get-Content -LiteralPath $inventory -Raw | ConvertFrom-Json
 
 function Test-Portable([string]$p) {
@@ -63,7 +72,7 @@ $groups = @{ csharp = @(); tsql = @(); xml = @(); svc = @() }
 $i = 0
 foreach ($rec in $inv.records) {
   $i++
-  if (-not $rec.route -or $rec.state -eq 'PRESENCE_ONLY') { continue }
+  if (-not $rec.route -or $rec.route -notin $Routes -or $rec.state -eq 'PRESENCE_ONLY') { continue }
   $id = 'f{0:d6}' -f $i
   $entry = [ordered]@{ id = $id; path = $rec.path; route = $rec.route; size = $rec.size; generated = $rec.generated; encoding = $rec.encoding
     execution_status = 'NOT_RUN'; assessment = 'NOT_ASSESSED'; code = 'NOT_RUN'; has_error = $null; descendant_count = $null; digest = $null; errors_total = $null; form = $null; svc_coverage = $null }
@@ -89,7 +98,7 @@ function Get-Declarations([string]$Route) {
 $work = Join-Path $Destination 'work'
 New-Item -ItemType Directory -Path $work | Out-Null
 $runs = @()
-foreach ($g in @('csharp', 'tsql', 'xml', 'svc')) {
+foreach ($g in $Routes) {
   $cases = $groups[$g]
   if (-not $cases.Count) { continue }
   $remaining = [int]($WallSeconds - ((Get-Date) - $start).TotalSeconds)
@@ -137,7 +146,7 @@ $summary = [ordered]@{ schema = 'tsgk-s05-private-corpus-run/r1'; corpus = 'NET4
   host = [ordered]@{ os = [Environment]::OSVersion.VersionString; arch = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString(); processors = [Environment]::ProcessorCount
     memory_bytes = [GC]::GetGCMemoryInfo().TotalAvailableMemoryBytes }
   tools = [ordered]@{ compiler_sha256 = $ccSha; compiler_version = $ccVersion; runtime_commit = (Get-Content -LiteralPath (Join-Path $repo 'src/drivers/native-c/runtime-manifest.json') -Raw | ConvertFrom-Json).commit }
-  inventory = [ordered]@{ records = @($inv.records).Count; routed_non_presence = $records.Count; presence_only = @($inv.records | Where-Object { $_.state -eq 'PRESENCE_ONLY' }).Count
+  inventory = [ordered]@{ source = $(if ($InventoryPath) { 'CALLER_SUPPLIED' } else { 'FRESH_CORPUS' }); selected_routes = @($Routes); records = @($inv.records).Count; routed_non_presence = $records.Count; presence_only = @($inv.records | Where-Object { $_.state -eq 'PRESENCE_ONLY' }).Count
     unrouted = @($inv.records | Where-Object { -not $_.route }).Count; encoding_codes = $inv.summary.encoding_codes }
   by_route_status = & $count { param($e) "$($e.route):$($e.execution_status):$($e.assessment)" }
   has_error = & $count { param($e) if ($e.execution_status -eq 'COMPLETED') { "$($e.route):$(if ($null -eq $e.has_error) { 'null' } else { $e.has_error })" } }
