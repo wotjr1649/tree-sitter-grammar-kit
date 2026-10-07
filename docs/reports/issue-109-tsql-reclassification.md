@@ -1,5 +1,8 @@
 # T-SQL 한계 재분류 (#109)
 
+이 보고서는 #109 당시의 관측·분류를 보존한다. `BEGIN WITH`를 과잉 수용으로 분류한 해석은 이후 [#121 SQL Server 엔진 대조](issue-121-tsql-engine-validation.md)에서 잘못됐음을 확인했다. 현재 경계는 [#113 보정 보고서](issue-113-tsql-boundaries.md)를 따른다.
+
+
 2026-10-07(KST), 기준 main `fc0850074c7f0f1229dde7b54349b9278dc00aef`. [#109](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/109)의 분석·문서 범위다. S08의 과잉 수용 다섯 종류는 모두 남아 있다. 비첫 `;sp_executesql`이라는 포괄적 known-miss 설명은 입력 모양별로 나눈다. 단일 `;` 사례는 ERROR·사실 0·known miss 0이며 문법상 비첫 EXEC 생략 호출의 거부는 의도된 동작이다. `;;` 사례의 batch-first known-miss 오분류는 남아 있다.
 
 ## 관측 범위와 identity
