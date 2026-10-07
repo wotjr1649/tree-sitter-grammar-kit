@@ -30,6 +30,7 @@ The current implementation consists of repository foundation checks, the Session
 | SQL Server 2025 engine comparison and first CTE correction (#121) | [T-SQL 엔진 대조](reports/issue-121-tsql-engine-validation.md) |
 | CTE terminators, function target boundaries and compatibility110/170 (#122·#123) | [T-SQL 후속 경계](reports/issue-122-123-tsql-boundaries.md) |
 | Whole T-SQL corpus, compatibility110/170 and Windows large API scope (#126) | [확대 검증](reports/issue-126-expanded-validation.md) |
+| DEFAULT·TRY/CATCH 및 전체 corpus의 문맥 격차 (#128) | [T-SQL corpus 경계](reports/issue-128-tsql-corpus-gaps.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

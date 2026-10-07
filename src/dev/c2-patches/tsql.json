@@ -112,7 +112,9 @@
   "tsql-P2-108",
   "tsql-issue122-cte-terminator",
   "tsql-issue123-unqualified-delimited-function",
-  "tsql-issue122-sqlcmd-cte-context"
+  "tsql-issue122-sqlcmd-cte-context",
+  "tsql-issue128-constant-default",
+  "tsql-issue128-corpus-context"
  ],
  "files": [
   {
@@ -166,6 +168,16 @@
     {
      "before": "    _terminated_batch: ($) => seq(optional($._batch_body), $.go_statement),\n    _batch_body: ($) =>\n      prec.right(choice(\n        seq(repeat(';'), choice($.statement, $.block, $.sqlcmd_setvar, $.sqlcmd_include, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._batch_tail)),\n        seq(alias($.implicit_execute, $.execute_statement), optional($._batch_tail)),\n        repeat1(';'),\n      )),\n    _batch_tail: ($) =>\n      prec.right(repeat1(choice($._statement_tail_item, $.sqlcmd_setvar, $.sqlcmd_include))),\n\n    // Visible (not `_`-hidden) so that its `procedure` field stays on the\n    // aliased execute_statement and is not inherited by `batch`.\n",
      "after": "    _terminated_batch: ($) => seq(optional($._batch_body), $.go_statement),\n    _batch_body: ($) =>\n      prec.right(choice(\n        seq(repeat(';'), repeat(choice($.sqlcmd_setvar, $.sqlcmd_include)), choice($.statement, $.block, $.sqlcmd_setvar, $.sqlcmd_include, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._batch_tail)),\n        seq(repeat(choice($.sqlcmd_setvar, $.sqlcmd_include)), alias($.implicit_execute, $.execute_statement), optional($._batch_tail)),\n        repeat1(';'),\n      )),\n    _batch_tail: ($) =>\n      prec.right(repeat1(choice($._statement_tail_item, $.sqlcmd_setvar, $.sqlcmd_include, seq(';', repeat1(choice($.sqlcmd_setvar, $.sqlcmd_include)), choice($.statement, $.block))))),\n\n    // Visible (not `_`-hidden) so that its `procedure` field stays on the\n    // aliased execute_statement and is not inherited by `batch`.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._batch_body],\n    [$._batch_tail, $._statement_tail_item],\n    [$._statement_list],\n    [$._statement_tail_item],\n    [$._statement_without_cte, $._label_only_statement],\n    [$.statement, $._label_only_statement],\n",
+     "after": "    [$._batch_body],\n    [$._batch_tail, $._statement_tail_item],\n    [$._statement_list],\n    [$._query_specification_core],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.alter_partition_scheme],\n    [$._statement_tail_item],\n    [$._statement_without_cte, $._label_only_statement],\n    [$.statement, $._label_only_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._query_specification_core],\n",
+     "after": "    [$._query_specification_core],\n    [$.relation],\n",
      "occurrences": 1
     }
    ]
@@ -327,6 +339,26 @@
      "before": "seq($.literal, optional(choice($.identifier, seq($.keyword_after, $.literal))))",
      "after": "seq($.literal, optional(choice($.identifier, alias($.keyword_percent, $.identifier), seq($.keyword_after, $.literal))))",
      "occurrences": 1
+    },
+    {
+     "before": "// list — the constraint's own column is implied) and table level (an\n// explicit `ordered_columns` list). tsgk r6: a column-level PRIMARY KEY or\n// UNIQUE may still name its columns, `[ ( column_name [ ,...n ] ) ]` —\n// plain names, without ASC/DESC (`columnList`).\nfunction index_spec($, { columns, columnList } = {}) {\n  return [\n    optional($._constraint_index_kind),\n    ...(columns ? [$.ordered_columns] : []),\n    ...(columnList ? [optional($._column_list)] : []),\n    optional($._index_with),\n    optional($.on_filegroup),\n  ];\n",
+     "after": "// list — the constraint's own column is implied) and table level (an\n// explicit `ordered_columns` list). tsgk r6: a column-level PRIMARY KEY or\n// UNIQUE may still name its columns, `[ ( column_name [ ,...n ] ) ]` —\n// ordered names, including ASC/DESC (`columnList`).\nfunction index_spec($, { columns, columnList } = {}) {\n  return [\n    optional($._constraint_index_kind),\n    ...(columns ? [$.ordered_columns] : []),\n    ...(columnList ? [optional($.ordered_columns)] : []),\n    optional($._index_with),\n    optional($.on_filegroup),\n  ];\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        seq($._primary_key, ...index_spec($, { columnList: true })),\n        seq($.keyword_unique, ...index_spec($, { columnList: true })),\n        seq(\n          optional(seq($.keyword_foreign, $.keyword_key)),\n          $.keyword_references,\n          $.object_reference,\n          optional(paren_list($.identifier, true)),\n",
+     "after": "        seq($._primary_key, ...index_spec($, { columnList: true })),\n        seq($.keyword_unique, ...index_spec($, { columnList: true })),\n        seq(\n          optional(seq($.keyword_foreign, $.keyword_key, optional(paren_list($.identifier, true)))),\n          $.keyword_references,\n          $.object_reference,\n          optional(paren_list($.identifier, true)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // tsgk r6: the `binary_in` precedence ends a column default before a `NOT`\n  // (`DEFAULT 0 NOT NULL`): a default is never a predicate, so `NOT IN`,\n  // `NOT LIKE` and `NOT BETWEEN` cannot continue it.\n  _column_default: ($) => prec.left('binary_in', seq($.keyword_default, $._expression)),\n\n  // tsgk P2-92/P2-97: [HIDDEN] belongs to the clause; ledger tables add the\n  // TRANSACTION_ID and SEQUENCE_NUMBER columns.\n",
+     "after": "  // tsgk r6: the `binary_in` precedence ends a column default before a `NOT`\n  // (`DEFAULT 0 NOT NULL`): a default is never a predicate, so `NOT IN`,\n  // `NOT LIKE` and `NOT BETWEEN` cannot continue it.\n  _column_default: ($) => prec.left('binary_in', seq($.keyword_default, $._constant_expression)),\n\n  // tsgk P2-92/P2-97: [HIDDEN] belongs to the clause; ledger tables add the\n  // TRANSACTION_ID and SEQUENCE_NUMBER columns.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          // tsgk P2-91: [WITH VALUES]\n          seq(\n            $.keyword_default,\n            $._expression,\n            $.keyword_for,\n            field('column', $.identifier),\n            optional(seq($.keyword_with, $.keyword_values)),\n",
+     "after": "          // tsgk P2-91: [WITH VALUES]\n          seq(\n            $.keyword_default,\n            $._constant_expression,\n            $.keyword_for,\n            field('column', $.identifier),\n            optional(seq($.keyword_with, $.keyword_values)),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -427,6 +459,36 @@
      "before": "    prec(\n      1,\n      seq(\n        $.object_reference,\n        wrapped_in_parenthesis(\n          seq(\n            comma_list(\n",
      "after": "    prec(\n      1,\n      seq(\n        alias($._function_reference, $.object_reference),\n        wrapped_in_parenthesis(\n          seq(\n            comma_list(\n",
      "occurrences": 1
+    },
+    {
+     "before": "import {\n  optional_parenthesis,\n  paren_list,\n  comma_list,\n",
+     "after": "import {\n  make_keyword,\n  optional_parenthesis,\n  paren_list,\n  comma_list,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.window_function,\n        $.subquery,\n        $.cast,\n        $.exists,\n        $.graph_match_predicate,\n        $.invocation,\n",
+     "after": "        $.window_function,\n        $.subquery,\n        $.cast,\n        alias($._convert_call, $.invocation),\n        $.exists,\n        $.graph_match_predicate,\n        $.invocation,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        alias($.fulltext_predicate, $.invocation),\n      ),\n    ),\n\n  // tsgk P2-69: JSON_ARRAYAGG(value [ORDER BY ...] [NULL | ABSENT ON NULL]\n  // [RETURNING JSON]) and JSON_OBJECTAGG(key : value ...) — invocation nodes\n",
+     "after": "        alias($.fulltext_predicate, $.invocation),\n      ),\n    ),\n\n  // DEFAULT is a scalar constant expression: reject column references at\n  // every nested argument, while retaining the public expression node kinds.\n  _constant_expression: ($) => choice(\n    $.literal,\n    alias($._constant_parentheses, $.parenthesized_expression),\n    alias($._constant_binary, $.binary_expression),\n    alias($._constant_unary, $.unary_expression),\n    alias($._constant_invocation, $.invocation),\n    alias($._constant_cast, $.cast),\n    alias($._constant_convert, $.invocation),\n    $.next_value_for,\n    $.odbc_literal_escape,\n    alias($._constant_case, $.case),\n    alias($._constant_odbc, $.odbc_function_escape),\n    alias($.constant_reference, $.field),\n    alias($._constant_iif, $.invocation),\n  ),\n  constant_reference: ($) => field('name', alias(choice(\n    $._tsql_system_variable, $._tsql_parameter, $._niladic_function,\n  ), $.identifier)),\n  _niladic_function: (_) => choice(\n    ...['current_timestamp', 'current_user', 'session_user', 'system_user', 'user'].map(make_keyword),\n  ),\n  _constant_iif: ($) => seq(\n    alias($._iif_name, $.object_reference),\n    wrapped_in_parenthesis(seq(field('parameter', $._constant_condition), ',',\n      field('parameter', $._constant_expression), ',', field('parameter', $._constant_expression))),\n  ),\n  _iif_name: (_) => make_keyword('iif'),\n  _constant_case: ($) => seq(\n    $.keyword_case, optional(field('input', $._constant_expression)),\n    repeat1(alias($._constant_when, $.when_clause)),\n    optional(seq($.keyword_else, field('else', $._constant_expression))), $.keyword_end,\n  ),\n  _constant_when: ($) => seq($.keyword_when, field('condition', $._constant_condition),\n    $.keyword_then, field('result', $._constant_expression)),\n  _constant_condition: ($) => prec(1, choice(\n    $._constant_expression,\n    alias($._constant_comparison, $.binary_expression),\n    alias($._constant_condition_parentheses, $.parenthesized_expression),\n    alias($._constant_not, $.unary_expression),\n    alias($._constant_between, $.between_expression),\n    alias($._constant_in, $.binary_expression),\n  )),\n  _constant_condition_parentheses: ($) => prec(2, wrapped_in_parenthesis($._constant_condition)),\n  _constant_not: ($) => prec.left('logical_not', seq(\n    field('operator', $.keyword_not), field('operand', $._constant_condition))),\n  _constant_between: ($) => choice(\n    ...[$.keyword_between, seq($.keyword_not, $.keyword_between)].map((operator) =>\n      prec.left('between', seq(field('left', $._constant_expression),\n        field('operator', operator), field('low', $._constant_expression), $.keyword_and,\n        field('high', $._constant_expression)))),\n  ),\n  _constant_in: ($) => choice(\n    ...[$.keyword_in, $.not_in].map((operator) => prec.left('binary_in', seq(\n      field('left', $._constant_expression), field('operator', operator),\n      field('right', alias($._constant_list, $.list))))),\n  ),\n  _constant_list: ($) => paren_list($._constant_expression, true),\n  _constant_comparison: ($) => choice(\n    ...[['=', 'binary_relation'], ['<', 'binary_relation'], ['>', 'binary_relation'],\n        ['<=', 'binary_relation'], ['>=', 'binary_relation'], ['<>', 'binary_relation'],\n        ['!=', 'binary_relation'], [$.keyword_is, 'binary_is'], [$.is_not, 'binary_is'],\n        [$.keyword_like, 'pattern_matching'], [$.not_like, 'pattern_matching'],\n        [$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']]\n      .map(([operator, precedence]) => prec.left(precedence, seq(\n        field('left', $._constant_condition), field('operator', operator),\n        field('right', $._constant_condition)))),\n  ),\n  _constant_odbc: ($) => seq('{', $.keyword_fn, alias($._constant_invocation, $.invocation), '}'),\n  _constant_parentheses: ($) => prec(2, wrapped_in_parenthesis($._constant_expression)),\n  _constant_binary: ($) => choice(\n    ...[['+', 'binary_plus'], ['-', 'binary_plus'], ['*', 'binary_times'],\n        ['/', 'binary_times'], ['%', 'binary_times'], ['^', 'binary_plus'],\n        ['||', 'binary_plus'], ['<<', 'binary_plus'], ['>>', 'binary_plus'],\n        [$.op_other, 'binary_plus']].map(([operator, precedence]) =>\n      prec.left(precedence, seq(field('left', $._constant_expression),\n        field('operator', operator), field('right', $._constant_expression)))),\n  ),\n  _constant_unary: ($) => choice(\n    ...['-', '+', '~'].map((operator) => prec.left('unary_sign',\n      seq(field('operator', operator), field('operand', $._constant_expression)))),\n  ),\n  _constant_invocation: ($) => prec(1, seq(\n    alias($._function_reference, $.object_reference),\n    paren_list(field('parameter', $._constant_expression)),\n  )),\n  _constant_cast: ($) => seq(\n    field('name', choice($.keyword_cast, $.keyword_try_cast)),\n    wrapped_in_parenthesis(seq(field('parameter', $._constant_expression), $.keyword_as, $._type)),\n  ),\n  _constant_convert: ($) => seq(\n    alias($._convert_name, $.object_reference),\n    wrapped_in_parenthesis(seq($._type, ',', field('parameter', $._constant_expression),\n      optional(seq(',', field('parameter', $._constant_expression))))),\n  ),\n  _convert_call: ($) => seq(\n    alias($._convert_name, $.object_reference),\n    wrapped_in_parenthesis(seq($._type, ',', field('parameter', $._expression),\n      optional(seq(',', field('parameter', $._expression))))),\n  ),\n  _convert_name: ($) => field('name', alias(choice($.keyword_convert, $.keyword_try_convert), $.identifier)),\n\n  // tsgk P2-69: JSON_ARRAYAGG(value [ORDER BY ...] [NULL | ABSENT ON NULL]\n  // [RETURNING JSON]) and JSON_OBJECTAGG(key : value ...) — invocation nodes\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      1,\n      choice(\n        seq(\n          choice($.subquery, $.parenthesized_expression),\n          '.',\n          field('method', $.identifier),\n          paren_list(field('parameter', $.term)),\n",
+     "after": "      1,\n      choice(\n        seq(\n          choice($.subquery, $.parenthesized_expression, $.cast),\n          '.',\n          field('method', $.identifier),\n          paren_list(field('parameter', $.term)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('result', $._expression),\n    ),\n\n  // CAST(x AS type) and TRY_CAST(x AS type). CONVERT, TRY_CONVERT and PARSE\n  // are ordinary invocations — their type argument reads as an identifier.\n  cast: ($) =>\n    seq(\n      field('name', choice($.keyword_cast, $.keyword_try_cast)),\n",
+     "after": "      field('result', $._expression),\n    ),\n\n  // CAST and TRY_CAST use AS; CONVERT and TRY_CONVERT use a leading type\n  // argument, including sized delimited types. PARSE has its own AS form.\n  cast: ($) =>\n    seq(\n      field('name', choice($.keyword_cast, $.keyword_try_cast)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  identifier: ($) =>\n    choice(\n      $._identifier,\n      $._bracketed_identifier,\n      $._double_quote_string,\n      $._tsql_parameter,\n",
+     "after": "  identifier: ($) =>\n    choice(\n      $._identifier,\n      alias(choice($.keyword_match, $.keyword_window), $._identifier),\n      $._bracketed_identifier,\n      $._double_quote_string,\n      $._tsql_parameter,\n",
+     "occurrences": 1
     }
    ]
   },
@@ -451,6 +513,11 @@
     {
      "before": "\n  // Operators\n",
      "after": "\n  // tsgk P2: object kinds of the DROP/CREATE/ALTER statements and securable\n  // classes added by the c2 patch.\n  keyword_aggregate: (_) => make_keyword('aggregate'),\n  keyword_rule: (_) => make_keyword('rule'),\n  keyword_application: (_) => make_keyword('application'),\n  keyword_availability: (_) => make_keyword('availability'),\n  keyword_broker: (_) => make_keyword('broker'),\n  keyword_priority: (_) => make_keyword('priority'),\n  keyword_credential: (_) => make_keyword('credential'),\n  keyword_cryptographic: (_) => make_keyword('cryptographic'),\n  keyword_specification: (_) => make_keyword('specification'),\n  keyword_endpoint: (_) => make_keyword('endpoint'),\n  keyword_notification: (_) => make_keyword('notification'),\n  keyword_language: (_) => make_keyword('language'),\n  keyword_library: (_) => make_keyword('library'),\n  keyword_resource: (_) => make_keyword('resource'),\n  keyword_pool: (_) => make_keyword('pool'),\n  keyword_stoplist: (_) => make_keyword('stoplist'),\n  keyword_binding: (_) => make_keyword('binding'),\n  keyword_search: (_) => make_keyword('search'),\n  keyword_property: (_) => make_keyword('property'),\n  keyword_list: (_) => make_keyword('list'),\n  keyword_workload: (_) => make_keyword('workload'),\n  keyword_filestream: (_) => make_keyword('filestream'),\n  keyword_rowguidcol: (_) => make_keyword('rowguidcol'),\n  keyword_sparse: (_) => make_keyword('sparse'),\n  keyword_filestream_on: (_) => make_keyword('filestream_on'),\n  keyword_reduce: (_) => make_keyword('reduce'),\n  keyword_replicate: (_) => make_keyword('replicate'),\n  keyword_redistribute: (_) => make_keyword('redistribute'),\n  keyword_content: (_) => make_keyword('content'),\n  keyword_document: (_) => make_keyword('document'),\n  keyword_executable: (_) => make_keyword('executable'),\n  keyword_counter: (_) => make_keyword('counter'),\n  keyword_signature: (_) => make_keyword('signature'),\n  keyword_query: (_) => make_keyword('query'),\n  keyword_subscription: (_) => make_keyword('subscription'),\n  keyword_stats: (_) => make_keyword('stats'),\n  keyword_job: (_) => make_keyword('job'),\n  keyword_approximate: (_) => make_keyword('approximate'),\n  keyword_escape: (_) => make_keyword('escape'),\n  keyword_json_arrayagg: (_) => make_keyword('json_arrayagg'),\n  keyword_json_objectagg: (_) => make_keyword('json_objectagg'),\n  keyword_offsets: (_) => make_keyword('offsets'),\n  keyword_browse: (_) => make_keyword('browse'),\n  keyword_insensitive: (_) => make_keyword('insensitive'),\n  keyword_scroll: (_) => make_keyword('scroll'),\n  keyword_read_only: (_) => make_keyword('read_only'),\n  keyword_hidden: (_) => make_keyword('hidden'),\n  keyword_transaction_id: (_) => make_keyword('transaction_id'),\n  keyword_sequence_number: (_) => make_keyword('sequence_number'),\n  keyword_column_set: (_) => make_keyword('column_set'),\n  keyword_all_sparse_columns: (_) => make_keyword('all_sparse_columns'),\n  keyword_connection: (_) => make_keyword('connection'),\n  keyword_national: (_) => make_keyword('national'),\n  keyword_parse: (_) => make_keyword('parse'),\n  keyword_try_parse: (_) => make_keyword('try_parse'),\n  keyword_openrowset: (_) => make_keyword('openrowset'),\n  keyword_openxml: (_) => make_keyword('openxml'),\n  keyword_openquery: (_) => make_keyword('openquery'),\n  keyword_predict: (_) => make_keyword('predict'),\n  keyword_freetext: (_) => make_keyword('freetext'),\n  keyword_filetable: (_) => make_keyword('filetable'),\n  keyword_raw: (_) => make_keyword('raw'),\n  keyword_auto: (_) => make_keyword('auto'),\n  keyword_explicit: (_) => make_keyword('explicit'),\n  keyword_path: (_) => make_keyword('path'),\n  keyword_graph: (_) => make_keyword('graph'),\n  keyword_governor: (_) => make_keyword('governor'),\n  keyword_reset: (_) => make_keyword('reset'),\n  keyword_filegroup: (_) => make_keyword('filegroup'),\n  keyword_contains: (_) => make_keyword('contains'),\n  keyword_selective: (_) => make_keyword('selective'),\n  keyword_xquery: (_) => make_keyword('xquery'),\n  keyword_sql: (_) => make_keyword('sql'),\n  keyword_maxlength: (_) => make_keyword('maxlength'),\n  keyword_singleton: (_) => make_keyword('singleton'),\n  keyword_mirror: (_) => make_keyword('mirror'),\n  keyword_containment: (_) => make_keyword('containment'),\n  keyword_result: (_) => make_keyword('result'),\n  keyword_object: (_) => make_keyword('object'),\n  keyword_data_source: (_) => make_keyword('data_source'),\n  keyword_password: (_) => make_keyword('password'),\n  keyword_old_password: (_) => make_keyword('old_password'),\n  keyword_must_change: (_) => make_keyword('must_change'),\n  keyword_unlock: (_) => make_keyword('unlock'),\n  keyword_hashed: (_) => make_keyword('hashed'),\n  keyword_sensitivity: (_) => make_keyword('sensitivity'),\n  keyword_classification: (_) => make_keyword('classification'),\n  keyword_hint: (_) => make_keyword('hint'),\n  keyword_filelistonly: (_) => make_keyword('filelistonly'),\n  keyword_headeronly: (_) => make_keyword('headeronly'),\n  keyword_labelonly: (_) => make_keyword('labelonly'),\n  keyword_verifyonly: (_) => make_keyword('verifyonly'),\n  keyword_rewindonly: (_) => make_keyword('rewindonly'),\n  keyword_native_compilation: (_) => make_keyword('native_compilation'),\n  keyword_atomic: (_) => make_keyword('atomic'),\n  keyword_name: (_) => make_keyword('name'),\n  keyword_fillfactor: (_) => make_keyword('fillfactor'),\n  keyword_timer: (_) => make_keyword('timer'),\n  keyword_replica: (_) => make_keyword('replica'),\n  keyword_listener: (_) => make_keyword('listener'),\n  keyword_failover: (_) => make_keyword('failover'),\n  keyword_force_failover_allow_data_loss: (_) => make_keyword('force_failover_allow_data_loss'),\n  keyword_offline: (_) => make_keyword('offline'),\n\n  // Operators\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  keyword_between: (_) => make_keyword('between'),\n  keyword_exists: (_) => make_keyword('exists'),\n  keyword_cast: (_) => make_keyword('cast'),\n  keyword_try_cast: (_) => make_keyword('try_cast'),\n  keyword_collate: (_) => make_keyword('collate'),\n  keyword_null: (_) => make_keyword('null'),\n",
+     "after": "  keyword_between: (_) => make_keyword('between'),\n  keyword_exists: (_) => make_keyword('exists'),\n  keyword_cast: (_) => make_keyword('cast'),\n  keyword_convert: (_) => make_keyword('convert'),\n  keyword_try_convert: (_) => make_keyword('try_convert'),\n  keyword_try_cast: (_) => make_keyword('try_cast'),\n  keyword_collate: (_) => make_keyword('collate'),\n  keyword_null: (_) => make_keyword('null'),\n",
      "occurrences": 1
     }
    ]
@@ -612,6 +679,16 @@
      "before": "        seq($.keyword_add, paren_list($.fulltext_index_column, true), optional($.with_clause)),\n",
      "after": "        // tsgk P2-15: ALTER COLUMN c { ADD | DROP } STATISTICAL_SEMANTICS [WITH NO POPULATION]\n        seq(\n          $.keyword_alter,\n          $.keyword_column,\n          $.identifier,\n          choice($.keyword_add, $.keyword_drop),\n          $.identifier,\n          optional($.with_clause),\n        ),\n        seq(choice($.keyword_pause, $.keyword_resume), $.identifier),\n        seq($.keyword_add, paren_list($.fulltext_index_column, true), optional($.with_clause)),\n",
      "occurrences": 1
+    },
+    {
+     "before": "\n  // ALTER PARTITION SCHEME name NEXT USED [filegroup]\n  alter_partition_scheme: ($) =>\n    prec.right(\n      seq(\n        $.keyword_alter,\n        $.keyword_partition,\n",
+     "after": "\n  // ALTER PARTITION SCHEME name NEXT USED [filegroup]\n  alter_partition_scheme: ($) =>\n      seq(\n        $.keyword_alter,\n        $.keyword_partition,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.keyword_used,\n        optional($.identifier),\n      ),\n    ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n",
+     "after": "        $.keyword_used,\n        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n",
+     "occurrences": 1
     }
    ]
   },
@@ -676,6 +753,11 @@
     {
      "before": "        ),\n        true,\n      ),\n      repeat($._body_item),\n      $.keyword_end,\n    ),\n\n  // One statement of a module body: a statement or a nested BEGIN ... END\n  // block, with an optional `;`. prec.right so a trailing `;` binds to the\n  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  //\n  // tsgk r6: as at batch level, extra `;` may follow a statement of a\n  // statement list (`SELECT 1;; SELECT 2`). A `;` before the first statement\n  // of a block or body (`BEGIN; ...`, `AS BEGIN ;WITH ...`) is not\n  // established and stays an error.\n  _body_item: ($) => prec.right(seq(choice($.statement, $.block), repeat(';'))),\n};\n",
      "after": "        ),\n        true,\n      ),\n      optional($._statement_list),\n      $.keyword_end,\n    ),\n\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // natively compiled BEGIN ATOMIC block.\n  procedure_body: ($) =>\n    prec.right(\n      seq($.keyword_as, choice(optional($._statement_list), $.external_name, $.atomic_block)),\n    ),\n\n  // tsgk P2-22: BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = level,\n",
+     "after": "  // natively compiled BEGIN ATOMIC block.\n  procedure_body: ($) =>\n    prec.right(\n      seq($.keyword_as, choice(seq(repeat(';'), optional($._statement_list)), $.external_name, $.atomic_block)),\n    ),\n\n  // tsgk P2-22: BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = level,\n",
      "occurrences": 1
     }
    ]
@@ -831,6 +913,16 @@
     {
      "before": "        $.keyword_server,\n        event_session_body($),\n",
      "after": "        // tsgk P2-31: ON DATABASE (Azure SQL Database)\n        choice($.keyword_server, $.keyword_database),\n        event_session_body($),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // definition (`(a int, b int,)`), which SQL Server accepts for a permanent\n  // or temporary table but not for a table variable, so the shared\n  // `column_definitions` stays strict. A comma after a final table\n  // constraint is not established and stays an error.\n  _create_table_columns: ($) =>\n    wrapped_in_parenthesis(\n      seq(\n        repeat(seq(choice($.column_definition, $.constraint, $.period_for_system_time), ',')),\n        choice($.column_definition, $.constraint, $.period_for_system_time, seq($.column_definition, ',')),\n      ),\n    ),\n\n",
+     "after": "  // definition (`(a int, b int,)`), which SQL Server accepts for a permanent\n  // or temporary table but not for a table variable, so the shared\n  // `column_definitions` stays strict. A comma after a final table\n  // constraint is also accepted, as observed in issue #128.\n  _create_table_columns: ($) =>\n    wrapped_in_parenthesis(\n      seq(\n        repeat(seq(choice($.column_definition, $.constraint, $.period_for_system_time), ',')),\n        choice($.column_definition, $.constraint, $.period_for_system_time, seq(choice($.column_definition, $.constraint, $.period_for_system_time), ',')),\n      ),\n    ),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // tsgk P2-41: CREATE DEFAULT name AS constant_expression and CREATE RULE\n  // name AS condition_expression (deprecated, still documented).\n  create_default: ($) =>\n    seq($.keyword_create, $.keyword_default, field('name', $.object_reference), $.keyword_as, $._expression),\n\n  create_rule: ($) =>\n    seq($.keyword_create, $.keyword_rule, field('name', $.object_reference), $.keyword_as, $._expression),\n",
+     "after": "  // tsgk P2-41: CREATE DEFAULT name AS constant_expression and CREATE RULE\n  // name AS condition_expression (deprecated, still documented).\n  create_default: ($) =>\n    seq($.keyword_create, $.keyword_default, field('name', $.object_reference), $.keyword_as, $._constant_expression),\n\n  create_rule: ($) =>\n    seq($.keyword_create, $.keyword_rule, field('name', $.object_reference), $.keyword_as, $._expression),\n",
      "occurrences": 1
     }
    ]
@@ -1062,6 +1154,26 @@
      "before": "    wrapped_in_parenthesis(comma_list(alias($._bare_table_hint_item, $.table_hint_item), true)),\n",
      "after": "    prec.dynamic(1, wrapped_in_parenthesis(comma_list(alias($._bare_table_hint_item, $.table_hint_item), true))),\n",
      "occurrences": 1
+    },
+    {
+     "before": "\n  try_catch_statement: ($) => seq($.try_block, $.catch_block),\n  try_block: ($) =>\n    seq($.keyword_begin, $.keyword_try, optional($._statement_list), $.keyword_end, $.keyword_try),\n  catch_block: ($) =>\n    seq($.keyword_begin, $.keyword_catch, optional($._statement_list), $.keyword_end, $.keyword_catch),\n\n  return_statement: ($) => prec.right(seq($.keyword_return, optional($._expression))),\n  print_statement: ($) => seq($.keyword_print, $._expression),\n",
+     "after": "\n  try_catch_statement: ($) => seq($.try_block, $.catch_block),\n  try_block: ($) =>\n    seq($.keyword_begin, $.keyword_try, repeat(';'), $._statement_list, $.keyword_end, $.keyword_try),\n  catch_block: ($) =>\n    seq($.keyword_begin, $.keyword_catch, choice(optional($._statement_list), seq(repeat1(';'), $._statement_list)), $.keyword_end, $.keyword_catch),\n\n  return_statement: ($) => prec.right(seq($.keyword_return, optional($._expression))),\n  print_statement: ($) => seq($.keyword_print, $._expression),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', $.literal),\n    ),\n\n  // SETUSER ['user' [WITH NORESET]] — deprecated impersonation; a bare\n",
+     "after": "      $.keyword_move,\n      field('logical_file', choice($.literal, $.identifier)),\n      $.keyword_to,\n      field('os_file', choice($.literal, $.identifier)),\n    ),\n\n  // SETUSER ['user' [WITH NORESET]] — deprecated impersonation; a bare\n",
+     "occurrences": 1
+    },
+    {
+     "before": "field('os_file', choice($.literal, $.identifier))",
+     "after": "field('os_file', choice($.literal, alias($._tsql_parameter, $.identifier)))",
+     "occurrences": 1
+    },
+    {
+     "before": "  // value]` shape; MOVE { 'logical_file' | logical_file } TO 'os_file' is\n  // its own node (a variable after MOVE is not established).\n",
+     "after": "  // value]` shape. MOVE keeps logical and OS file arguments in its own node;\n  // the OS file accepts a literal or @parameter, excluding a bare path name.\n",
+     "occurrences": 1
     }
    ]
   },
@@ -1221,6 +1333,41 @@
     {
      "before": "    seq($.keyword_group, $.keyword_by, comma_list(choice($._expression, $.grouping_sets), true)),\n",
      "after": "    seq(\n      $.keyword_group,\n      $.keyword_by,\n      comma_list(choice($._expression, $.grouping_sets), true),\n      optional(choice($.keyword_with_cube, $.keyword_with_rollup)),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "}\n\n// FROM/WHERE/GROUP BY/HAVING/WINDOW — shared by every query body. GROUP BY\n// and HAVING stay nested under FROM. tsgk r6: WHERE may also stand without\n// FROM (`SELECT 1 AS a WHERE @x = 1`) — SQL Server's query_specification\n// makes FROM and WHERE separately optional.\nfunction query_specification_rest($) {\n  return seq(\n    optional(\n      choice(seq($.from, optional($.where), optional($.group_by), optional($.having)), $.where),\n    ),\n    optional($.window_clause),\n  );\n}\n",
+     "after": "}\n\n// FROM/WHERE/GROUP BY/HAVING/WINDOW — shared by every query body. GROUP BY\n// and HAVING may also stand without FROM. tsgk r6: WHERE may stand without\n// FROM (`SELECT 1 AS a WHERE @x = 1`) — SQL Server's query_specification\n// makes FROM and WHERE separately optional.\nfunction query_specification_rest($) {\n  return seq(\n    optional(\n      choice(seq($.from, optional($.where)), $.where),\n    ),\n    optional($.group_by),\n    optional($.having),\n    optional($.window_clause),\n  );\n}\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // WINDOW becoming a keyword takes the AS-less alias slot right after a\n  // relation reduces, the same collision class as `bulk`/`tablesample`\n  // (see AGENTS.md): `FROM t window` errors; `FROM t AS window` still\n  // works, and `SELECT window FROM t` (the column slot) is unaffected.\n",
+     "after": "  // WINDOW is a contextual keyword: the identifier alternative keeps both\n  // AS-less relation aliases and column names, while this rule parses WINDOW\n  // followed by named window definitions.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  relation: ($) =>\n    prec.right(\n",
+     "after": "  relation: ($) =>\n    prec.dynamic(1,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // WHERE/GROUP BY/HAVING stay nested under FROM.\n",
+     "after": "  // FROM, WHERE, GROUP BY and HAVING are independently optional.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  rowset_schema: ($) =>\n    seq($.keyword_with, choice(paren_list($.openjson_column, true), field('table', $.object_reference))),\n",
+     "after": "  // Prefer schema ownership inside relation when both WITH paths parse.\n  rowset_schema: ($) =>\n    prec.dynamic(1, seq($.keyword_with, choice(paren_list($.openjson_column, true), field('table', $.object_reference)))),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  relation: ($) =>\n",
+     "after": "  // Keep contextual WINDOW alias/clause alternatives until later tokens.\n  relation: ($) =>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // TABLESAMPLE sit here, after `relation` has reduced, rather than inside\n  // `relation` next to the invocation: `relation` is prec.right, so an\n  // alternative inside it wins the `WITH (` outright and a table hint\n  // after an un-aliased function call (`FROM dbo.f(1) WITH (NOLOCK)`) is\n  // read as a column list with an empty type. From this state the two are\n  // an ordinary LR(1) choice — a hint item is an identifier followed by\n  // `,` or `)`, a schema column is an identifier followed by a type.\n",
+     "after": "  // TABLESAMPLE sit here, after `relation` has reduced. Ordinary function\n  // hints stay outside relation; dedicated rowset schemas stay inside it.\n  // A hint item is an identifier followed by `,` or `)`, while a schema\n  // column is an identifier followed by a type.\n",
      "occurrences": 1
     }
    ]

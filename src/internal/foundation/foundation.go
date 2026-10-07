@@ -33,6 +33,7 @@ var required = []string{
 	"docs/validation/net461-workload.md",
 	"docs/reports/campaign-01-2026-09-29-preparation.md",
 	"docs/reports/issue-109-tsql-reclassification.md",
+	"docs/reports/issue-128-tsql-corpus-gaps.md",
 	"docs/reports/issue-113-tsql-boundaries.md",
 	"docs/reports/issue-121-tsql-engine-validation.md", "docs/reports/issue-122-123-tsql-boundaries.md", "docs/reports/issue-126-expanded-validation.md",
 	"docs/design/decisions/0001-core-and-execution.md",
