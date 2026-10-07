@@ -52,28 +52,50 @@ func TestRuntimePatch(t *testing.T) {
 			Bytes        int
 		}
 	}
-	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 1 || len(manifest.Files) != 83 || manifest.Commit != "659cda7c7f86ebe31cc825dc5da59e9add172dc7" {
+	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 2 || len(manifest.Files) != 83 || manifest.Commit != "659cda7c7f86ebe31cc825dc5da59e9add172dc7" {
 		t.Fatalf("runtime patch registration: %v", err)
-	}
-	step := manifest.Patches[0]
-	removal, _ := step["remove_when"].(string)
-	if step["origin"] != "LOCAL" || step["tracking_issue"] != "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/118" || step["license"] != "MIT" || step["target"] != "lib/src/node.c" || step["pointer"] != "/files/0" || step["field"] != "operations" || strings.TrimSpace(removal) == "" {
-		t.Fatal("runtime patch provenance/target/removal policy changed without review")
-	}
-	if step["before_sha256"] != "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5" || step["before_bytes"] != float64(25151) {
-		t.Fatal("pristine node.c identity changed")
 	}
 	var nodePin bool
 	for _, f := range manifest.Files {
 		if f.Path == "lib/src/node.c" {
-			nodePin = f.SHA256 == "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740" && f.Bytes == 23579
+			nodePin = f.SHA256 == "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01" && f.Bytes == 23700
 		}
 	}
 	if !nodePin {
 		t.Fatal("patched node.c must remain bound by the runtime input closure")
 	}
+	for i, tc := range []struct {
+		issue, subject, beforeSHA string
+		beforeBytes               int
+	}{
+		{"118", "src/drivers/native-c/runtime-field-lookup.patch.json", "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5", 25151},
+		{"120", "src/drivers/native-c/runtime-navigation.patch.json", "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740", 23579},
+	} {
+		t.Run(tc.issue, func(t *testing.T) {
+			checkRuntimePatch(t, root, manifest.Patches[i], tc.issue, tc.subject, tc.beforeSHA, tc.beforeBytes)
+		})
+	}
+}
+
+func checkRuntimePatch(t *testing.T, root string, step map[string]any, issue, expectedSubject, beforeSHA string, beforeBytes int) {
+	t.Helper()
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	removal, _ := step["remove_when"].(string)
+	if step["origin"] != "LOCAL" || step["tracking_issue"] != "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/"+issue || step["license"] != "MIT" || step["target"] != "lib/src/node.c" || step["pointer"] != "/files/0" || step["field"] != "operations" || strings.TrimSpace(removal) == "" {
+		t.Fatal("runtime patch provenance/target/removal policy changed without review")
+	}
+	if step["before_sha256"] != beforeSHA || step["before_bytes"] != float64(beforeBytes) {
+		t.Fatal("patch input node.c identity changed")
+	}
 	subject, ok := step["subject"].(string)
-	if !ok || subject != "src/drivers/native-c/runtime-field-lookup.patch.json" {
+	if !ok || subject != expectedSubject {
 		t.Fatal("unexpected patch subject")
 	}
 	raw := read(subject)

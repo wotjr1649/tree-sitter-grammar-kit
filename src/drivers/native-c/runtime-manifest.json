@@ -18,6 +18,20 @@
    "remove_when": "A pinned upstream release preserves visible aliases, closest hidden fields, ERROR recovery and extra boundaries, and passes the same owned controls, 26-route/large comparisons and three-platform qualification.",
    "origin": "LOCAL",
    "tracking_issue": "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/118"
+  },
+  {
+   "subject": "src/drivers/native-c/runtime-navigation.patch.json",
+   "sha256": "2c4b03cbd44e5f252ac2cb321b6b3f94b60db66c58cb33db82ddc5b99fb5c790",
+   "bytes": 1083,
+   "pointer": "/files/0",
+   "field": "operations",
+   "target": "lib/src/node.c",
+   "before_sha256": "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740",
+   "before_bytes": 23579,
+   "license": "MIT",
+   "remove_when": "A pinned upstream release preserves visible anonymous aliases as named-navigation boundaries and hidden child flattening, and passes the same owned navigation/field controls, 26-route/large comparisons and three-platform qualification.",
+   "origin": "LOCAL",
+   "tracking_issue": "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/120"
   }
  ],
  "files": [
@@ -103,8 +117,8 @@
   },
   {
    "path": "lib/src/node.c",
-   "sha256": "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740",
-   "bytes": 23579
+   "sha256": "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01",
+   "bytes": 23700
   },
   {
    "path": "lib/src/parser.c",

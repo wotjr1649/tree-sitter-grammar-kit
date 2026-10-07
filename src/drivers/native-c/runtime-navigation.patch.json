@@ -1,0 +1,15 @@
+{
+  "schema": "tsgk-native-runtime-patch/r1",
+  "files": [
+    {
+      "target": "lib/src/node.c",
+      "operations": [
+        {
+          "before": "static inline uint32_t ts_node__relevant_child_count(\n  TSNode self,\n  bool include_anonymous\n) {\n  Subtree tree = ts_node__subtree(self);\n  if (ts_subtree_child_count(tree) > 0) {\n    if (include_anonymous) {\n      return tree.ptr->visible_child_count;\n    } else {\n      return tree.ptr->named_child_count;\n    }\n  } else {\n    return 0;\n  }\n}\n\n",
+          "after": "static inline uint32_t ts_node__relevant_child_count(\n  TSNode self,\n  bool include_anonymous\n) {\n  Subtree tree = ts_node__subtree(self);\n  // Visible nodes are child boundaries; only hidden nodes flatten into the parent.\n  if (!ts_node__is_relevant(self, true) && ts_subtree_child_count(tree) > 0) {\n    if (include_anonymous) {\n      return tree.ptr->visible_child_count;\n    } else {\n      return tree.ptr->named_child_count;\n    }\n  } else {\n    return 0;\n  }\n}\n\n",
+          "occurrences": 1
+        }
+      ]
+    }
+  ]
+}
