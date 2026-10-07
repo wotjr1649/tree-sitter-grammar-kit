@@ -3405,8 +3405,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "7f559b271f0a4f3c89d7bb9c9c615cddd08d2b86bf183a42df6fa583ee984ae5",
-     "bytes": 58332580
+     "sha256": "632cfa9872842e1a556f13f9258829b598d5befa774e0c1d66abfea0a8d5586a",
+     "bytes": 67700075
     },
     {
      "path": "src/scanner.c",
@@ -3441,18 +3441,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "9b2d1b4f56530ade5c281a2f53f3d593b099ad5507c53b5df478367048e47645",
-      "bytes": 1119854
+      "sha256": "a92921a8d286febbc920d6304bd4490b1ea1aaeade11956d97b9f94f25ea73ec",
+      "bytes": 1137563
      },
      {
       "path": "node-types.json",
-      "sha256": "bd7c179925d7207d6c721cf297d22188137de16eb975fc6ae7e10e86aa4550ff",
-      "bytes": 535818
+      "sha256": "1e19403b8f73c2cc0c958ad6a770ba8475f03a94005261699dee7adfa8bacb55",
+      "bytes": 535819
      },
      {
       "path": "parser.c",
-      "sha256": "7f559b271f0a4f3c89d7bb9c9c615cddd08d2b86bf183a42df6fa583ee984ae5",
-      "bytes": 58332580
+      "sha256": "632cfa9872842e1a556f13f9258829b598d5befa774e0c1d66abfea0a8d5586a",
+      "bytes": 67700075
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -3478,8 +3478,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "072b31ca1ef283cb85d9025a88eab03f3edbc8b832695e6e3b3c60e719c6664f",
-      "bytes": 9230
+      "sha256": "ae9f0d730dc633dc1b8b8753e2fda2ca14b3a6a7adbcf2b861e86c73aac49ebd",
+      "bytes": 8566
      },
      {
       "path": "grammar/column-lists.js",
@@ -3490,8 +3490,8 @@
      {
       "path": "grammar/expressions.js",
       "role": "js_helper",
-      "sha256": "713613d6badbde29bc89cf78f93a73a29e7476381757514b1631c3be7495793f",
-      "bytes": 22835
+      "sha256": "1674d09a7cc164c665783281d16cdbc3de9efc74fa1af44e605e8bd1d8f44401",
+      "bytes": 23260
      },
      {
       "path": "grammar/helpers.js",
@@ -3514,14 +3514,14 @@
      {
       "path": "grammar/statements/create-function.js",
       "role": "js_helper",
-      "sha256": "54b7d563eaba184a48a509ab6abb82a66a7618f36dcc117a064b8ef45d143f56",
-      "bytes": 3302
+      "sha256": "1598bc1d71c7842e64f56ba7b7aa30bba337255ebe8cef98a9d17e0d6cfcb798",
+      "bytes": 3309
      },
      {
       "path": "grammar/statements/create-procedure.js",
       "role": "js_helper",
-      "sha256": "4cbea9ad98517dbb9eb92678c04870308654dd5acc438211b006443aabf86333",
-      "bytes": 5112
+      "sha256": "dcff7159ebcae219d6bd5d7c5703da1963fbe5612d9dc4f25a2ba0b47c6341a8",
+      "bytes": 4503
      },
      {
       "path": "grammar/statements/create.js",
@@ -3550,8 +3550,8 @@
      {
       "path": "grammar/statements/index.js",
       "role": "js_helper",
-      "sha256": "4151fac96607eb243dde1a47be0ae9f6a4c5df57feb196063b2abcd974c424f6",
-      "bytes": 35196
+      "sha256": "b655f8900ee34a907e704b1929ee1cad24f1e8dab1e4f01536206f5624af08f9",
+      "bytes": 36119
      },
      {
       "path": "grammar/statements/insert.js",
@@ -3847,8 +3847,8 @@
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 9230,
-      "sha256": "072b31ca1ef283cb85d9025a88eab03f3edbc8b832695e6e3b3c60e719c6664f"
+      "bytes": 8566,
+      "sha256": "ae9f0d730dc633dc1b8b8753e2fda2ca14b3a6a7adbcf2b861e86c73aac49ebd"
      },
      {
       "path": "grammar/keywords.js",
@@ -3867,8 +3867,8 @@
      },
      {
       "path": "grammar/expressions.js",
-      "bytes": 22835,
-      "sha256": "713613d6badbde29bc89cf78f93a73a29e7476381757514b1631c3be7495793f"
+      "bytes": 23260,
+      "sha256": "1674d09a7cc164c665783281d16cdbc3de9efc74fa1af44e605e8bd1d8f44401"
      },
      {
       "path": "grammar/helpers.js",
@@ -3877,8 +3877,8 @@
      },
      {
       "path": "grammar/statements/create-procedure.js",
-      "bytes": 5112,
-      "sha256": "4cbea9ad98517dbb9eb92678c04870308654dd5acc438211b006443aabf86333"
+      "bytes": 4503,
+      "sha256": "dcff7159ebcae219d6bd5d7c5703da1963fbe5612d9dc4f25a2ba0b47c6341a8"
      },
      {
       "path": "grammar/statements/drop.js",
@@ -3887,8 +3887,8 @@
      },
      {
       "path": "grammar/statements/index.js",
-      "bytes": 35196,
-      "sha256": "4151fac96607eb243dde1a47be0ae9f6a4c5df57feb196063b2abcd974c424f6"
+      "bytes": 36119,
+      "sha256": "b655f8900ee34a907e704b1929ee1cad24f1e8dab1e4f01536206f5624af08f9"
      },
      {
       "path": "grammar/statements/select.js",
@@ -3907,8 +3907,8 @@
      },
      {
       "path": "grammar/statements/create-function.js",
-      "bytes": 3302,
-      "sha256": "54b7d563eaba184a48a509ab6abb82a66a7618f36dcc117a064b8ef45d143f56"
+      "bytes": 3309,
+      "sha256": "1598bc1d71c7842e64f56ba7b7aa30bba337255ebe8cef98a9d17e0d6cfcb798"
      },
      {
       "path": "grammar/statements/dml-shared.js",

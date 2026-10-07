@@ -109,7 +109,9 @@
   "tsql-P2-105",
   "tsql-P2-106",
   "tsql-P2-107",
-  "tsql-P2-108"
+  "tsql-P2-108",
+  "tsql-issue122-cte-terminator",
+  "tsql-issue123-unqualified-delimited-function"
  ],
  "files": [
   {
@@ -133,6 +135,26 @@
     {
      "before": "column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated]",
      "after": "column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent]",
+     "occurrences": 1
+    },
+    {
+     "before": "  // before it can settle; tree-sitter reports any that stop being needed\n  // as \"unnecessary conflicts\" on generate, and those are removed.\n  conflicts: ($) => [\n    // `a.b` — the prefix of a qualified column vs. an object reference.\n    [$.object_reference, $._qualified_field],\n    // `a.b.c.d` — how many parts belong to the reference.\n",
+     "after": "  // before it can settle; tree-sitter reports any that stop being needed\n  // as \"unnecessary conflicts\" on generate, and those are removed.\n  conflicts: ($) => [\n    [$._statement_list],\n    [$._statement_tail_item],\n    [$._statement_without_cte, $._label_only_statement],\n    [$.statement, $._label_only_statement],\n    [$._function_identifier, $.identifier],\n    [$.object_reference, $._function_reference],\n    // `a.b` — the prefix of a qualified column vs. an object reference.\n    [$.object_reference, $._qualified_field],\n    // `a.b.c.d` — how many parts belong to the reference.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // option list (or WITH SCHEMA COLLECTION suffix) or the next\n    // statement's CTE.\n    [$.dbcc_statement],\n    [$.reconfigure_statement],\n    [$.raiserror_statement],\n    [$.create_message_type],\n    [$.create_queue],\n    [$.truncate_statement],\n    [$.alter_queue],\n    [$.alter_assembly],\n    [$.alter_fulltext_catalog],\n    [$.alter_fulltext_index],\n    [$.alter_route],\n    // `OUTPUT a, b INTO t` — where the term list ends.\n    [$.output_clause],\n    // `FROM t WITH` — a table hint or the next statement's CTE.\n",
+     "after": "    // option list (or WITH SCHEMA COLLECTION suffix) or the next\n    // statement's CTE.\n    [$.dbcc_statement],\n    [$.create_message_type],\n    [$.alter_assembly],\n    // `OUTPUT a, b INTO t` — where the term list ends.\n    [$.output_clause],\n    // `FROM t WITH` — a table hint or the next statement's CTE.\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._option_assignment, $._qualified_field],\n    // tsgk P2-09: ALTER MESSAGE TYPE's trailing WITH SCHEMA COLLECTION, as\n    // for create_message_type.\n    [$.alter_message_type],\n    // tsgk P2-14: `DECLARE @c CURSOR` declares a cursor variable unless\n    // cursor options or FOR follow.\n    [$.var_declaration, $.declare_cursor_statement],\n",
+     "after": "    [$._option_assignment, $._qualified_field],\n    // tsgk P2-09: ALTER MESSAGE TYPE's trailing WITH SCHEMA COLLECTION, as\n    // for create_message_type.\n    // tsgk P2-14: `DECLARE @c CURSOR` declares a cursor variable unless\n    // cursor options or FOR follow.\n    [$.var_declaration, $.declare_cursor_statement],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    // sibling of `statement`, is what lets a consumer iterate a script's\n    // batches directly instead of re-deriving them by scanning for\n    // `go_statement` and slicing.\n    program: ($) => repeat($.batch),\n\n    // Each statement/block may be terminated by `;`; only the batch's last\n    // one may instead (or additionally) be closed by `GO`, which is why the\n    // trailing `go_statement` sits outside the `repeat1` rather than beside\n    // `;` on every item — `;` doesn't end a batch, `GO` always does. A bare\n    // `GO` with nothing before it (consecutive `GO`s, or a script that\n    // opens with one) is the second alternative, since `repeat1` cannot\n    // itself be empty.\n    //\n    // tsgk r6: the batch's first statement may also be a module call with\n    // EXEC[UTE] omitted (`sp_who`, `dbo.p 1, 'a'`), which SQL Server\n    // accepts only there; it stays an `execute_statement`. Between and\n    // before a batch's statements any number of extra `;` may stand\n    // (`;WITH c AS ...`, `;/* c */`, `SELECT 1;;`): SQL Server ignores an\n    // empty statement at batch level, though not inside a view or inline\n    // function body.\n    batch: ($) =>\n      choice(\n        prec.right(\n          seq(\n            choice(\n              seq(repeat(';'), repeat1($._batch_item)),\n              seq(\n                alias($.implicit_execute, $.execute_statement),\n                repeat(';'),\n                repeat($._batch_item),\n              ),\n            ),\n            optional($.go_statement),\n          ),\n        ),\n        seq(repeat(';'), $.go_statement),\n      ),\n\n    _batch_item: ($) =>\n      choice(\n        prec.right(seq(choice($.statement, $.block), repeat(';'))),\n        $.sqlcmd_setvar,\n        $.sqlcmd_include,\n      ),\n\n    // Visible (not `_`-hidden) so that its `procedure` field stays on the\n    // aliased execute_statement and is not inherited by `batch`.\n",
+     "after": "    // sibling of `statement`, is what lets a consumer iterate a script's\n    // batches directly instead of re-deriving them by scanning for\n    // `go_statement` and slicing.\n    program: ($) =>\n      seq(repeat(alias($._terminated_batch, $.batch)), optional($.batch)),\n\n    // GO alone separates batches. A CTE starts a statement list or follows\n    // a semicolon; labels do not count as preceding SQL statements.\n    // An implicit procedure call remains valid only at the batch's start.\n    batch: ($) => $._batch_body,\n    _terminated_batch: ($) => seq(optional($._batch_body), $.go_statement),\n    _batch_body: ($) =>\n      prec.right(choice(\n        seq(repeat(';'), choice($.statement, $.block, $.sqlcmd_setvar, $.sqlcmd_include, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._batch_tail)),\n        seq(alias($.implicit_execute, $.execute_statement), optional($._batch_tail)),\n        repeat1(';'),\n      )),\n    _batch_tail: ($) =>\n      prec.right(repeat1(choice($._statement_tail_item, $.sqlcmd_setvar, $.sqlcmd_include))),\n\n    // Visible (not `_`-hidden) so that its `procedure` field stays on the\n    // aliased execute_statement and is not inherited by `batch`.\n",
      "occurrences": 1
     }
    ]
@@ -379,6 +401,21 @@
      "before": "  _sqlcmd_variable: (_) => /\\$\\([A-Za-z_][0-9A-Za-z_]*\\)/,\n",
      "after": "  _dollar_pseudo_column: (_) =>\n    /\\$([iI][dD][eE][nN][tT][iI][tT][yY]|[rR][oO][wW][gG][uU][iI][dD]|([nN][oO][dD][eE]|[eE][dD][gG][eE]|[fF][rR][oO][mM]|[tT][oO])_[iI][dD])/,\n  _sqlcmd_variable: (_) => /\\$\\([A-Za-z_][0-9A-Za-z_]*\\)/,\n",
      "occurrences": 1
+    },
+    {
+     "before": "  IDENTIFIER_START,\n  IDENTIFIER_CONTINUE,\n} from './helpers.js';\n\nexport default {\n  _expression: ($) =>\n",
+     "after": "  IDENTIFIER_START,\n  IDENTIFIER_CONTINUE,\n} from './helpers.js';\n\nfunction object_reference($, singleName) {\n  return choice(\n      seq(\n        field('server', $.identifier),\n        '.',\n        field('database', $.identifier),\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(\n        field('server', $.identifier),\n        '.',\n        field('database', $.identifier),\n        '.',\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(\n        field('server', $.identifier),\n        '.',\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(field('server', $.identifier), '.', '.', '.', field('name', $.identifier)),\n      seq(\n        field('database', $.identifier),\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(field('database', $.identifier), '.', '.', field('name', $.identifier)),\n      seq(field('schema', $.identifier), '.', field('name', $.identifier)),\n      field('name', singleName),\n    );\n}\n\nexport default {\n  _expression: ($) =>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // (`mydb..mytable`, `srv.db..t`) — the omitted field is left absent\n  // rather than filled with a sentinel, so consumers can tell \"defaulted\"\n  // from \"named\" by field presence.\n  object_reference: ($) =>\n    choice(\n      seq(\n        field('server', $.identifier),\n        '.',\n        field('database', $.identifier),\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(\n        field('server', $.identifier),\n        '.',\n        field('database', $.identifier),\n        '.',\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(\n        field('server', $.identifier),\n        '.',\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(field('server', $.identifier), '.', '.', '.', field('name', $.identifier)),\n      seq(\n        field('database', $.identifier),\n        '.',\n        field('schema', $.identifier),\n        '.',\n        field('name', $.identifier),\n      ),\n      seq(field('database', $.identifier), '.', '.', field('name', $.identifier)),\n      seq(field('schema', $.identifier), '.', field('name', $.identifier)),\n      field('name', $.identifier),\n    ),\n\n  field: ($) => field('name', $.identifier),\n\n",
+     "after": "  // (`mydb..mytable`, `srv.db..t`) — the omitted field is left absent\n  // rather than filled with a sentinel, so consumers can tell \"defaulted\"\n  // from \"named\" by field presence.\n  object_reference: ($) => object_reference($, $.identifier),\n  _function_reference: ($) => object_reference($, alias($._function_identifier, $.identifier)),\n  _function_identifier: ($) => choice(\n    $._identifier, $._tsql_parameter, $._tsql_system_variable, $._temporary_table,\n    $._dollar_action, $._dollar_partition, $._dollar_pseudo_column, $._sqlcmd_variable,\n  ),\n\n  field: ($) => field('name', $.identifier),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    prec(\n      1,\n      seq(\n        $.object_reference,\n        wrapped_in_parenthesis(\n          seq(\n            comma_list(\n",
+     "after": "    prec(\n      1,\n      seq(\n        alias($._function_reference, $.object_reference),\n        wrapped_in_parenthesis(\n          seq(\n            comma_list(\n",
+     "occurrences": 1
     }
    ]
   },
@@ -594,6 +631,11 @@
      "before": "    ),\n};\n",
      "after": "      // tsgk P2-08/P2-22: [AS] EXTERNAL NAME a.c.m, and AS BEGIN ATOMIC ... END\n      seq(optional($.keyword_as), $.external_name),\n      seq(optional($.keyword_as), $.atomic_block),\n    ),\n};\n",
      "occurrences": 1
+    },
+    {
+     "before": "    choice(\n      // Scalar and multi-statement table-valued: a BEGIN ... END block whose\n      // RETURN is an ordinary return_statement among the body items.\n      seq(optional($.keyword_as), $.keyword_begin, repeat($._body_item), $.keyword_end),\n      // Inline table-valued: RETURN followed directly by the query, with or\n      // without parentheses.\n      seq(optional($.keyword_as), $.keyword_return, $._dml_read),\n",
+     "after": "    choice(\n      // Scalar and multi-statement table-valued: a BEGIN ... END block whose\n      // RETURN is an ordinary return_statement among the body items.\n      seq(optional($.keyword_as), $.keyword_begin, optional($._statement_list), $.keyword_end),\n      // Inline table-valued: RETURN followed directly by the query, with or\n      // without parentheses.\n      seq(optional($.keyword_as), $.keyword_return, $._dml_read),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -613,6 +655,16 @@
     {
      "before": "  procedure_body: ($) => prec.right(seq($.keyword_as, repeat($._body_item))),\n",
      "after": "  // tsgk P2-08/P2-22: the body may instead be a SQLCLR EXTERNAL NAME or a\n  // natively compiled BEGIN ATOMIC block.\n  procedure_body: ($) =>\n    prec.right(\n      seq($.keyword_as, choice(repeat($._body_item), $.external_name, $.atomic_block)),\n    ),\n\n  // tsgk P2-22: BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = level,\n  // LANGUAGE = 'lang' [, DATEFIRST = n] [, DATEFORMAT = f] [,\n  // DELAYED_DURABILITY = ON | OFF]) statements END\n  atomic_block: ($) =>\n    seq(\n      $.keyword_begin,\n      $.keyword_atomic,\n      $.keyword_with,\n      paren_list(\n        choice(\n          $.option,\n          seq(\n            $.keyword_transaction,\n            $.keyword_isolation,\n            $.keyword_level,\n            '=',\n            choice(\n              $.keyword_snapshot,\n              seq($.keyword_repeatable, $.keyword_read),\n              $.keyword_serializable,\n            ),\n          ),\n        ),\n        true,\n      ),\n      repeat($._body_item),\n      $.keyword_end,\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // natively compiled BEGIN ATOMIC block.\n  procedure_body: ($) =>\n    prec.right(\n      seq($.keyword_as, choice(repeat($._body_item), $.external_name, $.atomic_block)),\n    ),\n\n  // tsgk P2-22: BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = level,\n",
+     "after": "  // natively compiled BEGIN ATOMIC block.\n  procedure_body: ($) =>\n    prec.right(\n      seq($.keyword_as, choice(optional($._statement_list), $.external_name, $.atomic_block)),\n    ),\n\n  // tsgk P2-22: BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = level,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        ),\n        true,\n      ),\n      repeat($._body_item),\n      $.keyword_end,\n    ),\n\n  // One statement of a module body: a statement or a nested BEGIN ... END\n  // block, with an optional `;`. prec.right so a trailing `;` binds to the\n  // body item it follows rather than to `program`'s own separator —\n  // otherwise a bare body would end at its first semicolon.\n  //\n  // tsgk r6: as at batch level, extra `;` may follow a statement of a\n  // statement list (`SELECT 1;; SELECT 2`). A `;` before the first statement\n  // of a block or body (`BEGIN; ...`, `AS BEGIN ;WITH ...`) is not\n  // established and stays an error.\n  _body_item: ($) => prec.right(seq(choice($.statement, $.block), repeat(';'))),\n};\n",
+     "after": "        ),\n        true,\n      ),\n      optional($._statement_list),\n      $.keyword_end,\n    ),\n\n};\n",
      "occurrences": 1
     }
    ]
@@ -978,6 +1030,26 @@
     {
      "before": "_decryption_by_option: ($) => seq($.keyword_decryption, $.keyword_by, $.option)",
      "after": "_decryption_by_option: ($) => seq($.keyword_decryption, $.keyword_by, alias($._key_password_option, $.option)),\n\n  _key_password_option: ($) =>\n    seq(\n      field('name', alias($.keyword_password, $.identifier)),\n      '=',\n      field('value', alias($._single_quote_string, $.literal)),\n    )",
+     "occurrences": 1
+    },
+    {
+     "before": "import service_broker_rules from './service-broker.js';\nimport security_rules from './security.js';\n\nexport default {\n  // Blocks require a statement. A CTE may be the first statement.\n  block: ($) =>\n    choice(\n      seq($.keyword_begin, repeat1($._body_item), $.keyword_end),\n      seq($.keyword_begin, ';', repeat1($._body_item), $.keyword_end),\n    ),\n\n  statement: ($) =>\n    choice(\n      $._ddl_statement,\n      $._dml_write,\n      optional_parenthesis($._dml_read),\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n",
+     "after": "import service_broker_rules from './service-broker.js';\nimport security_rules from './security.js';\n\nfunction statement($, allowCTE) {\n  return choice(\n      $._ddl_statement,\n      allowCTE ? $._dml_write : choice($._delete_statement, $._insert_statement, $._update_statement, $._merge_statement),\n      optional_parenthesis(allowCTE ? $._dml_read : $._query_expression),\n      $.use_statement,\n      $.if_statement,\n      $.while_statement,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.drop_signature,\n      $.open_key_statement,\n      $.close_key_statement,\n    ),\n\n  // WHILE condition { statement | BEGIN ... END }\n",
+     "after": "      $.drop_signature,\n      $.open_key_statement,\n      $.close_key_statement,\n    );\n}\n\nexport default {\n  // Blocks require a statement. A CTE may be the first statement.\n  block: ($) =>\n    choice(\n      seq($.keyword_begin, $._statement_list, $.keyword_end),\n      seq($.keyword_begin, repeat1(';'), $._statement_list, $.keyword_end),\n    ),\n\n  statement: ($) => statement($, true),\n  _statement_without_cte: ($) => statement($, false),\n  _label_only_statement: ($) => $.label_statement,\n\n  // A CTE starts a list or follows a terminator; labels are not SQL statements.\n  _statement_list: ($) =>\n    seq(choice($.statement, $.block, seq(repeat1(alias($._label_only_statement, $.statement)), choice($.statement, $.block))), optional($._statement_tail)),\n  _statement_tail: ($) =>\n    repeat1($._statement_tail_item),\n  _statement_tail_item: ($) =>\n    choice(\n      ';',\n      alias($._statement_without_cte, $.statement),\n      $.block,\n      seq(';', choice($.statement, $.block)),\n      seq(alias($._label_only_statement, $.statement), choice($.statement, $.block)),\n    ),\n\n  // WHILE condition { statement | BEGIN ... END }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n  try_catch_statement: ($) => seq($.try_block, $.catch_block),\n  try_block: ($) =>\n    seq($.keyword_begin, $.keyword_try, repeat($._body_item), $.keyword_end, $.keyword_try),\n  catch_block: ($) =>\n    seq($.keyword_begin, $.keyword_catch, repeat($._body_item), $.keyword_end, $.keyword_catch),\n\n  return_statement: ($) => prec.right(seq($.keyword_return, optional($._expression))),\n  print_statement: ($) => seq($.keyword_print, $._expression),\n",
+     "after": "\n  try_catch_statement: ($) => seq($.try_block, $.catch_block),\n  try_block: ($) =>\n    seq($.keyword_begin, $.keyword_try, optional($._statement_list), $.keyword_end, $.keyword_try),\n  catch_block: ($) =>\n    seq($.keyword_begin, $.keyword_catch, optional($._statement_list), $.keyword_end, $.keyword_catch),\n\n  return_statement: ($) => prec.right(seq($.keyword_return, optional($._expression))),\n  print_statement: ($) => seq($.keyword_print, $._expression),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    wrapped_in_parenthesis(comma_list(alias($._bare_table_hint_item, $.table_hint_item), true)),\n",
+     "after": "    prec.dynamic(1, wrapped_in_parenthesis(comma_list(alias($._bare_table_hint_item, $.table_hint_item), true))),\n",
      "occurrences": 1
     }
    ]

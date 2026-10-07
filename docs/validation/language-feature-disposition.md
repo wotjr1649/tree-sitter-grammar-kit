@@ -433,6 +433,11 @@ revision 날짜가 표에 생략된 행도 floating latest가 아니다. 위 고
 
 근거: [T-SQL language reference, ver17](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17)의 SQL Server 대상 Syntax 전 항목, [SQL Server2025 변경](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025?view=sql-server-ver17). 2012/compat110~2025/compat170 SQL Server source를 합집합으로 유지한다. Azure/Synapse/Fabric 전용 alternative는 X01이다.
 
+T-SQL 문장 목록의 첫 CTE는 batch·block·module body에서 허용한다. 실제 선행 SQL 문장 뒤의 CTE는 `;`로 종료한 경우에만 허용하며 `GO`는 새 batch를 연다. label과 IF/WHILE의 body 시작은 선행 SQL 문장으로 세지 않는다. table hint·module option의 `WITH`는 CTE와 구분한다. 함수 expression의 single-part 호출 대상은 구분 식별자를 허용하지 않고 schema-qualified 호출은 허용한다. built-in의 정상 호출과 EXEC의 구분 식별자 대상은 유지한다. [#122·#123 엔진 대조](../reports/issue-122-123-tsql-boundaries.md)가 이 경계의 합성 입력과 관측을 기록한다.
+
+SQL Server 2025의 compatibility110 검사는 기존 SQL source의 상위 엔진 수용 근거다. SQL Server2012 실제 engine과 같다는 근거는 아니며, 신규 T-SQL 기능 전부를 차단하는 설정도 아니다. 실제2012 engine 검증은 별도 관측이 필요하다.
+
+
 | ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case | Primary section/revision |
 |---|---|---|---|---|---|---|
 | tsql-B01 | 2012~2025/script | REQ | identifier/bracket/quoted identifier, @/@@ variable, string/N-string/number/binary/comment, expression/operator/predicate/type/function call | quoted-vs-string·case-insensitive name·precedence | P,N,R,E,Q,W | [Language elements](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/language-elements-transact-sql?view=sql-server-ver17) [Expressions](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/expressions-transact-sql?view=sql-server-ver17) |

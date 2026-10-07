@@ -58,3 +58,5 @@ Windows 로컬 등록 회귀는 **incremental665 / oracle671 모두 PASS**, set 
 기존 첫 CTE guard를 갖는 정상 build를 mutant로 실행했다. 같은 세 fixture의 단계0·2는 각각 PASS이고 단계1의 `NO_ERROR` 단언만 `root has_error`로 FAIL이었다. 세 사례 모두 실행 COMPLETED, incremental equality와 route PASS여서 hash/build 거부나 비교기 완화로 검출한 결과가 아니다.
 
 최종 local·hosted 회귀, 독립 리뷰와 actual main 통합은 #121 및 PR의 해당 후보 SHA·run에 결속해 기록한다. SQL Server2012 실제 엔진, compatibility110, 전체 SQL corpus, semantic/runtime 전반의 적합성은 미검증이다. [compatibility 문서](https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-database-transact-sql-compatibility-level?view=sql-server-ver17)와 별개로 이번 관측은170 하나다. #122·#123의 잔여를 이 결과로 해결된 것으로 처리하지 않는다.
+
+후속 #122·#123의 경계 구현과 compatibility110/170 대조는 [후속 보고서](issue-122-123-tsql-boundaries.md)에 기록한다. 위95개 원문의 역사적 결과는 그대로 보존한다.
