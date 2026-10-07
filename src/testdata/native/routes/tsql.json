@@ -120,7 +120,7 @@
         },
         {
           "find": "PRIMARY KEY (Id),",
-          "replace": "PRIMARY KEY (Id ASC),"
+          "replace": "PRIMARY KEY (Id ASCX),"
         }
       ],
       "expect": [
@@ -38007,6 +38007,7 @@
         "sha256": "2bf63b974c680d54515d7ffe866cf732b1affc033de8454233eee099367960c1",
         "bytes": 24678
       }
-    }
+    },
+    {"id": "tsql-issue128-procedure-owner-r1","kind": "feature","features": ["tsql-B03","tsql-B04"],"source_utf8": "CREATE PROCEDURE dbo.p AS ; SELECT 1;; SELECT 2;\nGO\nSELECT 3;\n","edits": [{"find": "SELECT 2","replace": "SELECT 22"},{"find": "SELECT 22","replace": "SELECT 2"}],"expect": [{"step": 0,"syntax": "NO_ERROR","contains": ["create_procedure","procedure_body"],"declarations": ""},{"step": 1,"syntax": "NO_ERROR","contains": ["create_procedure","procedure_body"],"declarations": ""},{"step": 2,"syntax": "NO_ERROR","contains": ["create_procedure","procedure_body"],"declarations": ""}]}
   ]
 }

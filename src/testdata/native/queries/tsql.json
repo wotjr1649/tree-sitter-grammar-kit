@@ -21,6 +21,10 @@
     {
       "id": "q.probe-v22",
       "source": "(named_window name: (identifier) @window_name)\n"
+    },
+    {
+      "id": "q.issue128-ownership",
+      "source": "(procedure_body \";\" @module.semi)\n(procedure_body (statement (query_specification (select (select_expression (term (literal) @module.value))))))\n(batch (statement (query_specification (select (select_expression (term (literal) @batch.value))))))\n"
     }
   ],
   "cases": [
@@ -298,6 +302,148 @@
               "name": "window_name",
               "type": "identifier",
               "text": "w2"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue128-ownership-query-r1",
+      "source_case": "tsql-issue128-procedure-owner-r1",
+      "features": [
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue128-ownership",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "1"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "2"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "batch.value",
+              "type": "literal",
+              "text": "3"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.issue128-ownership",
+          "step": 1,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "1"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "22"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "batch.value",
+              "type": "literal",
+              "text": "3"
+            }
+          ],
+          "error": null
+        },
+        {
+          "query": "q.issue128-ownership",
+          "step": 2,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "1"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "module.value",
+              "type": "literal",
+              "text": "2"
+            },
+            {
+              "name": "module.semi",
+              "type": ";",
+              "text": ";"
+            },
+            {
+              "name": "batch.value",
+              "type": "literal",
+              "text": "3"
             }
           ],
           "error": null
