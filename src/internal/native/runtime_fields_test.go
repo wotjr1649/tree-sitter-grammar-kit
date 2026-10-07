@@ -136,3 +136,65 @@ func TestRuntimeFieldByName(t *testing.T) {
 		})
 	}
 }
+
+// Named navigation skips a visible anonymous alias as a whole. Its ERROR
+// children remain inside that alias; ordinary hidden nodes still flatten.
+func TestRuntimeNamedNavigationBoundary(t *testing.T) {
+	b := fixtureBuild(t, "runtime_fields")
+	for _, tc := range []struct {
+		src               string
+		first, next, prev int64
+		last              int
+	}{
+		{"nxy.", -1, -1, -1, 2}, {"nx?.", -1, -1, -1, 2},
+		{"nxy.y", -1, -1, -1, 7}, {"nx?.y", -1, -1, -1, 7},
+		{"nxy.?", 7, 7, -1, 7}, {"nx?.?", 7, 7, -1, 7},
+		{"nxy..", 7, 7, -1, 7}, {"nx?..", 7, 7, -1, 7},
+		{"nxy. y", 7, 7, 7, 9}, {"nx?. y", 7, 7, 7, 9},
+		{"nxy.!", 7, 7, -1, 7}, {"nx?.!", 7, 7, -1, 7},
+		{"axy.y", 2, 2, 2, 7}, {"ax?.y", 2, 2, 2, 7},
+		{"hxy.y", 3, 3, 3, 6}, {"hx?.y", 3, 3, 3, 6},
+		{"ax.y", 2, 2, 2, 5}, {"nx.y", -1, -1, -1, 5},
+		{"hx.y", -1, -1, -1, 4},
+	} {
+		t.Run(tc.src, func(t *testing.T) {
+			req := baseRequest(tc.src, "native-query")
+			req.Protocol, req.API = ProtocolR2, true
+			res, resp, err := rawExec(t, b, Frame(req.Encode()), "native-query")
+			if err != nil || resp.Status != kit.StatusCompleted || len(resp.Steps) != 1 {
+				t.Fatalf("navigation execution: %v %s %s", err, resp.Status, resp.Code)
+			}
+			checked, err := Check(resp, req, [][]byte{req.Source}, nil, res.ExitCode)
+			if err != nil {
+				t.Fatalf("navigation response: %v", err)
+			}
+			tree := checked.Steps[0].Incremental
+			if tree.API == nil || len(tree.API.Nodes) <= tc.last {
+				t.Fatal("navigation observations missing")
+			}
+			for _, want := range []struct {
+				name      string
+				node, col int
+				value     int64
+			}{
+				{"first_named_child", 0, 6, tc.first},
+				{"next_named_sibling", 1, 4, tc.next},
+				{"prev_named_sibling", tc.last, 3, tc.prev},
+			} {
+				if got := tree.API.Nodes[want.node][want.col]; got != want.value {
+					t.Errorf("%s node%d: got %d, want %d", want.name, want.node, got, want.value)
+				}
+			}
+			if tc.src[0] == 'n' && tc.src[2] != '.' {
+				alias, inner := tree.Nodes[2], tree.Nodes[4]
+				if alias.Type != "anon" || alias.Named || alias.Parent != 0 || alias.StartByte != 1 || alias.EndByte != 4 ||
+					inner.Type != "ERROR" || !inner.Named || inner.Parent != 2 || inner.StartByte != 2 || inner.EndByte != 3 {
+					t.Fatal("anonymous alias / inner ERROR boundary changed")
+				}
+			}
+			if difference, _ := compareAPI(tree.Nodes, tree.API); difference != nil {
+				t.Errorf("navigation API: %+v", difference)
+			}
+		})
+	}
+}
