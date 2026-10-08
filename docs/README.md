@@ -31,6 +31,7 @@ The current implementation consists of repository foundation checks, the Session
 | CTE terminators, function target boundaries and compatibility110/170 (#122·#123) | [T-SQL 후속 경계](reports/issue-122-123-tsql-boundaries.md) |
 | Whole T-SQL corpus, compatibility110/170 and Windows large API scope (#126) | [확대 검증](reports/issue-126-expanded-validation.md) |
 | DEFAULT·TRY/CATCH 및 전체 corpus의 문맥 격차 (#128) | [T-SQL corpus 경계](reports/issue-128-tsql-corpus-gaps.md) |
+| 공개 과잉 수용18개 원인·구문 수정·문서/엔진 불일치 (#131) | [T-SQL 과잉 수용](reports/issue-131-tsql-overacceptance.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

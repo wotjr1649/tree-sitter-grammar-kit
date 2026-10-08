@@ -1163,6 +1163,855 @@
     {"id": "tsql-issue128-try-only-semis-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nBEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "BEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;", "replace": "BEGIN TRY ;; END TRY BEGIN CATCH END CATCH;"}, {"find": "BEGIN TRY ;; END TRY BEGIN CATCH END CATCH;", "replace": "BEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
     {"id": "tsql-issue128-window-clause-r1", "kind": "gap", "features": ["tsql-V22"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);", "replace": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITIOX BY b);"}, {"find": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITIOX BY b);", "replace": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}]},
     {"id": "tsql-issue128-window-inherited-clause-r1", "kind": "gap", "features": ["tsql-V22"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT SUM(a) OVER (w ORDER BY b) FROM t WINDOW w AS (PARTITION BY c);\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT SUM(a) OVER (w ORDER BY b) FROM t WINDOW w AS (PARTITION BY c);", "replace": "SELECT SUM(a) OVER (w ORDER BY b) FROM t WINDOW w AS (PARTITIOX BY c);"}, {"find": "SELECT SUM(a) OVER (w ORDER BY b) FROM t WINDOW w AS (PARTITIOX BY c);", "replace": "SELECT SUM(a) OVER (w ORDER BY b) FROM t WINDOW w AS (PARTITION BY c);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}]},
-    {"id": "tsql-issue128-relation-aliases-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;", "replace": "SELECT * FROM t JOIX u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;"}, {"find": "SELECT * FROM t JOIX u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;", "replace": "SELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}]}
+    {"id": "tsql-issue128-relation-aliases-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;", "replace": "SELECT * FROM t JOIX u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;"}, {"find": "SELECT * FROM t JOIX u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;", "replace": "SELECT * FROM t JOIN u window ON t.a = window.a;\nSELECT * FROM t CROSS APPLY (SELECT 1 AS a) window;\nSELECT * FROM t OUTER APPLY (SELECT 1 AS a) window;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}]},
+    {
+      "id": "tsql-gap-issue131-key-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT t.[key] FROM dbo.t AS t;",
+      "edits": [
+        {"find": "[key]", "replace": "key"},
+        {"find": "key", "replace": "[key]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["query_specification"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["query_specification"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT t.[default] FROM dbo.t AS t;",
+      "edits": [
+        {"find": "[default]", "replace": "default"},
+        {"find": "default", "replace": "[default]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["query_specification"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["query_specification"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-schema-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM s..[schema].t;",
+      "edits": [
+        {"find": "[schema]", "replace": "schema"},
+        {"find": "schema", "replace": "[schema]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-cte-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nWITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "WITH c AS (SELECT 1 AS a) SELECT a FROM c", "replace": "(WITH c AS (SELECT 1 AS a) SELECT a FROM c)"},
+        {"find": "(WITH c AS (SELECT 1 AS a) SELECT a FROM c)", "replace": "WITH c AS (SELECT 1 AS a) SELECT a FROM c"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-cte-head-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nWITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "WITH c AS (SELECT 1 AS a", "replace": "(WITH c AS (SELECT 1 AS a)"},
+        {"find": "(WITH c AS (SELECT 1 AS a)", "replace": "WITH c AS (SELECT 1 AS a"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-end-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+      "edits": [
+        {"find": "TE;", "replace": "TE"},
+        {"find": "TE", "replace": "TE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-exec-sign-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nEXEC dbo.p -3;",
+      "edits": [
+        {"find": "-", "replace": "+"},
+        {"find": "+", "replace": "-"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-exec-login-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nEXEC ('SELECT 1') AS LOGIN = 'u';",
+      "edits": [
+        {"find": "'u'", "replace": "@login"},
+        {"find": "@login", "replace": "'u'"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-exec-login-expression-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nEXEC ('SELECT 1') AS LOGIN = 'u';",
+      "edits": [
+        {"find": "'u'", "replace": "CONCAT('a','b')"},
+        {"find": "CONCAT('a','b')", "replace": "'u'"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-graph-edge-r1",
+      "kind": "gap",
+      "features": ["tsql-V16"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM p,e,q WHERE MATCH(p-(e)->q);",
+      "edits": [
+        {"find": "(e", "replace": "(e|f"},
+        {"find": "(e|f", "replace": "(e"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["graph_match_predicate"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["graph_match_predicate"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-graph-shortest-r1",
+      "kind": "gap",
+      "features": ["tsql-V16"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM p,e,q WHERE MATCH(SHORTEST_PATH(p(-(e)->q)+));",
+      "edits": [
+        {"find": "(-(e)->q)", "replace": "-(e)->q"},
+        {"find": "-(e)->q", "replace": "(-(e)->q)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["graph_match_predicate"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["graph_match_predicate"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-column-replication-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER TABLE dbo.t ALTER COLUMN a DROP NOT FOR REPLICATION;",
+      "edits": [
+        {"find": " FOR ", "replace": "_FOR_"},
+        {"find": "_FOR_", "replace": " FOR "}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_table"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_table"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-server-role-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nDROP SERVER ROLE r;",
+      "edits": [
+        {"find": "E ", "replace": "E IF EXISTS "},
+        {"find": "E IF EXISTS ", "replace": "E "}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["drop_role"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["drop_role"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-event-mixed-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock, ADD EVENT sqlserver.lock_deadlock_chain;",
+      "edits": [
+        {"find": ", ADD", "replace": " DROP"},
+        {"find": " DROP", "replace": ", ADD"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_event_session"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_event_session"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-event-add-target-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock, ADD EVENT sqlserver.lock_deadlock_chain;",
+      "edits": [
+        {"find": ", ADD EVENT sqlserver.lock_deadlock_chain", "replace": " ADD TARGET package0.event_file(SET filename=N'x.xel')"},
+        {"find": " ADD TARGET package0.event_file(SET filename=N'x.xel')", "replace": ", ADD EVENT sqlserver.lock_deadlock_chain"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_event_session"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_event_session"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-contract-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nCREATE CONTRACT c ([DEFAULT] SENT BY ANY);",
+      "edits": [
+        {"find": "[DEFAULT]", "replace": "DEFAULT"},
+        {"find": "DEFAULT", "replace": "[DEFAULT]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["create_contract"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["create_contract"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-queue-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER QUEUE dbo.q REORGANIZE WITH (LOB_COMPACTION=ON);",
+      "edits": [
+        {"find": "(LOB_COMPACTION=ON)", "replace": "LOB_COMPACTION=ON"},
+        {"find": "LOB_COMPACTION=ON", "replace": "(LOB_COMPACTION=ON)"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_queue"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_queue"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-assembly-alias-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource';",
+      "edits": [
+        {"find": "Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource'", "replace": "a ADD FILE FROM N'x.cs' AS 1"},
+        {"find": "a ADD FILE FROM N'x.cs' AS 1", "replace": "Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource'"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-assembly-drop-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point DROP FILE 'PointSource';",
+      "edits": [
+        {"find": "Point DROP FILE 'PointSource'", "replace": "a DROP FILE 1"},
+        {"find": "a DROP FILE 1", "replace": "Point DROP FILE 'PointSource'"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-route-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER ROUTE r WITH ADDRESS=N'LOCAL';",
+      "edits": [
+        {"find": " r WITH ADDRESS=N'LOCAL'", "replace": " r"},
+        {"find": " r", "replace": " r WITH ADDRESS=N'LOCAL'"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_route"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["alter_route"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-bare-hints-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT 1 FROM dbo.t x WITH (NOLOCK, INDEX(ix));",
+      "edits": [
+        {"find": "x WITH ", "replace": "x "},
+        {"find": "x ", "replace": "x WITH "}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-function-hint-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT 1 FROM dbo.f(1) AS y;",
+      "edits": [
+        {"find": "AS y", "replace": "WITH (NOLOCK)"},
+        {"find": "WITH (NOLOCK)", "replace": "AS y"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-function-join-hint-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM t CROSS JOIN dbo.f(1) AS j;",
+      "edits": [
+        {"find": "AS j", "replace": "WITH (NOLOCK)"},
+        {"find": "WITH (NOLOCK)", "replace": "AS j"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-function-apply-hint-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM t CROSS APPLY dbo.f(1) AS j;",
+      "edits": [
+        {"find": "AS j", "replace": "WITH (NOLOCK)"},
+        {"find": "WITH (NOLOCK)", "replace": "AS j"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-trigger-prefix-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT 1; ENABLE TRIGGER trg ON dbo.t;",
+      "edits": [
+        {"find": " 1;", "replace": " 1"},
+        {"find": " 1", "replace": " 1;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-trigger-pair-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nENABLE TRIGGER a ON ALL SERVER; DISABLE TRIGGER b ON DATABASE; ENABLE TRIGGER ALL ON dbo.t; DISABLE TRIGGER dbo.a, dbo.b ON dbo.t;",
+      "edits": [
+        {"find": "; DISABLE TRIGGER b ON DATABASE; ENABLE TRIGGER ALL ON dbo.t; DISABLE TRIGGER dbo.a, dbo.b ON dbo.t;", "replace": "\nDISABLE TRIGGER b ON DATABASE\nENABLE TRIGGER ALL ON dbo.t\nDISABLE TRIGGER dbo.a, dbo.b ON dbo.t"},
+        {"find": "\nDISABLE TRIGGER b ON DATABASE\nENABLE TRIGGER ALL ON dbo.t\nDISABLE TRIGGER dbo.a, dbo.b ON dbo.t", "replace": "; DISABLE TRIGGER b ON DATABASE; ENABLE TRIGGER ALL ON dbo.t; DISABLE TRIGGER dbo.a, dbo.b ON dbo.t;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-trigger-block-prefix-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nBEGIN SELECT 1; ENABLE TRIGGER trg ON dbo.t END;",
+      "edits": [
+        {"find": " 1;", "replace": " 1"},
+        {"find": " 1", "replace": " 1;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-label-tail-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT 1 label: ENABLE TRIGGER trg ON dbo.t;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-comment-next-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nENABLE TRIGGER trg ON dbo.t /* outer /* inner */ rest */ SELECT 1;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-comment-end-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nBEGIN ENABLE TRIGGER trg ON dbo.t /* end */ END;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-end-conversation-declared-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nDECLARE @h uniqueidentifier; ENABLE TRIGGER trg ON dbo.t END CONVERSATION @h;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-if-else-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nIF 1=1 ENABLE TRIGGER trg ON dbo.t ELSE SELECT 1;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-trigger-go-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nENABLE TRIGGER trg ON dbo.t\nGO\nSELECT 1;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-graph-shortest-reverse-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM p,e,q WHERE MATCH(SHORTEST_PATH((q<-(e)-)+p));",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-openjson-schema-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT j.a FROM OPENJSON(N'{\"a\":1}') WITH (a int) AS j;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-object-server-both-omitted-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM s...t;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-control-security-replication-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER SECURITY POLICY p NOT FOR REPLICATION;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-trigger-eof-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_anchor;\nENABLE TRIGGER ALL ON dbo.t",
+      "edits": [
+        {"find": "ALL ON dbo.t", "replace": "ALL ON dbo.t SELECT 1;"},
+        {"find": "SELECT 1;", "replace": "DISABLE TRIGGER ALL ON dbo.t;"},
+        {"find": "dbo.t DISABLE", "replace": "dbo.t; DISABLE"},
+        {"find": "dbo.t; DISABLE TRIGGER ALL ON dbo.t;", "replace": "dbo.t"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 3, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 4, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-cte-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-trigger-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; ENABLE TRIGGER a ON dbo.t;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-select-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; SELECT 1;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-label-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; l: WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-comment-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE /* a /* b */ c */; SELECT 1;",
+      "edits": [
+        {"find": "DELETE /* a /* b */ c */;", "replace": "DELETE /* a /* b */ c */"},
+        {"find": "DELETE /* a /* b */ c */", "replace": "DELETE /* a /* b */ c */;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-line-comment-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE -- a\n; WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "DELETE -- a\n;", "replace": "DELETE -- a\n"},
+        {"find": "DELETE -- a\n", "replace": "DELETE -- a\n;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-go-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;\nGO\nWITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-block-cte-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nBEGIN MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-module-cte-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "CREATE PROCEDURE dbo.p AS MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE; WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [
+        {"find": "DELETE;", "replace": "DELETE"},
+        {"find": "DELETE", "replace": "DELETE;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-composable-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nINSERT dbo.log SELECT act FROM (MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE OUTPUT $action AS act) AS changes;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-merge-boundary-merge-composable-cte-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS merge131_anchor;\nINSERT dbo.log SELECT act FROM (MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE OUTPUT $action AS act) AS changes; WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-insert-empty-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nINSERT dbo.t VALUES (1);",
+      "edits": [
+        {"find": "(1", "replace": "("},
+        {"find": "(", "replace": "(1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["insert"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["insert"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-merge-empty-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN NOT MATCHED THEN INSERT (id) VALUES (1);",
+      "edits": [
+        {"find": "S (1", "replace": "S ("},
+        {"find": "S (", "replace": "S (1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-update-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-merge-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN UPDATE SET c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-capture-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-variable-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-openjson-semicolon-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nSELECT * FROM OPENJSON(N'{}', '$') AS j;",
+      "edits": [
+        {"find": "',", "replace": "';"},
+        {"find": "';", "replace": "',"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-trigger-print-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nPRINT N'x';\nENABLE TRIGGER trg ON dbo.t;",
+      "edits": [
+        {"find": "x';", "replace": "x'"},
+        {"find": "x'", "replace": "x';"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-variable-chain-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = c = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-assembly-doc-bare-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS PointSource;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-assembly-drop-bare-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point DROP FILE PointSource;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-bracket-variable-column-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET [@v] = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-qualified-column-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET t.c = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    }
   ]
 }
