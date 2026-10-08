@@ -205728,8 +205728,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
-      "bytes": 66425482
+      "sha256": "b3a545183a40f41048c8eda96d17dbdc3848d9f8b7de8be0f4d6f2eedcdc7463",
+      "bytes": 66409406
      },
      {
       "path": "src/scanner.c",
@@ -267664,7 +267664,7 @@
       "expect": [
        {
         "step": 0,
-        "syntax": "NO_ERROR",
+        "syntax": "ERROR",
         "contains": [],
         "declarations": ""
        }
@@ -267675,7 +267675,11 @@
       "expect_status": "",
       "expect_assessment": "",
       "expect_code": "",
-      "covers": {},
+      "covers": {
+       "tsql-B03": [
+        "N"
+       ]
+      },
       "alternatives": [],
       "sample": null,
       "source": null
@@ -269129,6 +269133,674 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-add-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a243a6fcca6e1a7ff64044058fb59a29e9bff044d9f54e1c6e39a9234d41e726",
+       "bytes": 81
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 81,
+        "new_end_byte": 77,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OOw==",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIE5PVCBGT1IgUkVQTElDQVRJT047"
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 77,
+        "new_end_byte": 81,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIE5PVCBGT1IgUkVQTElDQVRJT047",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OOw=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-drop-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "627e182d8d5f77d12e8982a5fd3d890d5f5551390b9491f61dbb81e1f5fc8c36",
+       "bytes": 82
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 82,
+        "new_end_byte": 77,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIERST1AgTk9UIEZPUiBSRVBMSUNBVElPTjs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIE5PVCBGT1IgUkVQTElDQVRJT047"
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 77,
+        "new_end_byte": 82,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIE5PVCBGT1IgUkVQTElDQVRJT047",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIERST1AgTk9UIEZPUiBSRVBMSUNBVElPTjs="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-state-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "45f0efa1869acc7d3f4e2c6721ee067f606e1450d2c6b4655d12b5b2e066d016",
+       "bytes": 73
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 73,
+        "new_end_byte": 93,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKTs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKSBOT1QgRk9SIFJFUExJQ0FUSU9OOw=="
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 93,
+        "new_end_byte": 73,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKSBOT1QgRk9SIFJFUExJQ0FUSU9OOw==",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKTs="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-predicate-state-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b5330663488a0875d547031726cc955612a0113a721175b2f3cf71c1fcdf50d1",
+       "bytes": 96
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 96,
+        "new_end_byte": 112,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50Ow==",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50IFdJVEggKFNUQVRFPU9OKTs="
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 112,
+        "new_end_byte": 96,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50IFdJVEggKFNUQVRFPU9OKTs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50Ow=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-predicate-tail-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b5330663488a0875d547031726cc955612a0113a721175b2f3cf71c1fcdf50d1",
+       "bytes": 96
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 96,
+        "new_end_byte": 116,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50Ow==",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50IE5PVCBGT1IgUkVQTElDQVRJT047"
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 116,
+        "new_end_byte": 96,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50IE5PVCBGT1IgUkVQTElDQVRJT047",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBGSUxURVIgUFJFRElDQVRFIGRiby5mKGEpIE9OIGRiby50Ow=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-add-state-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a243a6fcca6e1a7ff64044058fb59a29e9bff044d9f54e1c6e39a9234d41e726",
+       "bytes": 81
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 81,
+        "new_end_byte": 97,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OOw==",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OIFdJVEggKFNUQVRFPU9OKTs="
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 97,
+        "new_end_byte": 81,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OIFdJVEggKFNUQVRFPU9OKTs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIEFERCBOT1QgRk9SIFJFUExJQ0FUSU9OOw=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-state-add-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "45f0efa1869acc7d3f4e2c6721ee067f606e1450d2c6b4655d12b5b2e066d016",
+       "bytes": 73
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 73,
+        "new_end_byte": 97,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKTs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKSBBREQgTk9UIEZPUiBSRVBMSUNBVElPTjs="
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 97,
+        "new_end_byte": 73,
+        "old": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKSBBREQgTk9UIEZPUiBSRVBMSUNBVElPTjs=",
+        "new": "QUxURVIgU0VDVVJJVFkgUE9MSUNZIGRiby5wIFdJVEggKFNUQVRFPU9OKTs="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-create-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c32e9f8640ba375bc53cfb97b2c2c073079dbcd60dd9d217cf2a88de21404499",
+       "bytes": 133
+      },
+      "edits": [
+       {
+        "start_byte": 29,
+        "old_end_byte": 133,
+        "new_end_byte": 121,
+        "old": "Q1JFQVRFIFNFQ1VSSVRZIFBPTElDWSBkYm8ucCBBREQgRklMVEVSIFBSRURJQ0FURSBkYm8uZihhKSBPTiBkYm8udCBXSVRIIChTVEFURT1PTikgTk9UIEZPUiBSRVBMSUNBVElPTjs=",
+        "new": "Q1JFQVRFIFNFQ1VSSVRZIFBPTElDWSBkYm8ucCBBREQgRklMVEVSIFBSRURJQ0FURSBkYm8uZihhKSBPTiBkYm8udCBBREQgTk9UIEZPUiBSRVBMSUNBVElPTjs="
+       },
+       {
+        "start_byte": 29,
+        "old_end_byte": 121,
+        "new_end_byte": 133,
+        "old": "Q1JFQVRFIFNFQ1VSSVRZIFBPTElDWSBkYm8ucCBBREQgRklMVEVSIFBSRURJQ0FURSBkYm8uZihhKSBPTiBkYm8udCBBREQgTk9UIEZPUiBSRVBMSUNBVElPTjs=",
+        "new": "Q1JFQVRFIFNFQ1VSSVRZIFBPTElDWSBkYm8ucCBBREQgRklMVEVSIFBSRURJQ0FURSBkYm8uZihhKSBPTiBkYm8udCBXSVRIIChTVEFURT1PTikgTk9UIEZPUiBSRVBMSUNBVElPTjs="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "create_security_policy"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "create_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-control-separate-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c6785fb22d2f234c42be8eb34c0ddd6998aa07e768c596e6f87431fda9c48a21",
+       "bytes": 194
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-control-multi-predicate-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d594cb7c3e0384b933e4e84697e7abb1b50c34e4084d8f5f8e246edf71ede4e8",
+       "bytes": 127
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-control-next-cte-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "878637e44b4c6af029561bf55752df95683c6ef4e71a0b67462c6e3169fa1034",
+       "bytes": 124
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue132-control-next-select-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "65e00a60090382fa3a9e7fb18ec102a4f977b2a135a45880a16a60a07b6128ce",
+       "bytes": 92
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "alter_security_policy"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B03": [
+        "P"
+       ]
+      },
       "alternatives": [],
       "sample": null,
       "source": null

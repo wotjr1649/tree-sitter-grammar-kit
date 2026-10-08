@@ -115,7 +115,8 @@
   "tsql-issue122-sqlcmd-cte-context",
   "tsql-issue128-constant-default",
   "tsql-issue128-corpus-context",
-  "tsql-issue131-overacceptance"
+  "tsql-issue131-overacceptance",
+  "tsql-issue132-security-policy"
  ],
  "files": [
   {
@@ -1379,6 +1380,16 @@
     {
      "before": "    ),\n\n  // DROP SYMMETRIC KEY name [REMOVE PROVIDER KEY]\n",
      "after": "      // tsgk P2-80: [, mechanism ...]\n      repeat(seq(',', $._key_encryptor_continuation)),\n    ),\n\n  // DROP SYMMETRIC KEY name [REMOVE PROVIDER KEY]\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      ),\n    ),\n\n  // ALTER SECURITY POLICY name\n  //   { predicate [, ...] [WITH (options)] [NOT FOR REPLICATION]\n  //   | WITH (options) [NOT FOR REPLICATION]\n  //   | NOT FOR REPLICATION }\n  // At least one clause is required; a predicate here is ADD, ALTER or\n  // DROP [FILTER | BLOCK] PREDICATE.\n  alter_security_policy: ($) =>\n    prec.right(\n      seq(\n",
+     "after": "      ),\n    ),\n\n  // ALTER changes predicates, state, or replication in separate statements.\n  // CREATE alone permits the trailing NOT FOR REPLICATION option.\n  alter_security_policy: ($) =>\n    prec.right(\n      seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          seq(\n            comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n            optional($.with_options),\n            optional($._not_for_replication),\n          ),\n          seq($.with_options, optional($._not_for_replication)),\n          $._not_for_replication,\n        ),\n      ),\n    ),\n",
+     "after": "        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n          $.with_options,\n          seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n        ),\n      ),\n    ),\n",
      "occurrences": 1
     }
    ]

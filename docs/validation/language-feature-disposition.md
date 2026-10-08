@@ -457,7 +457,7 @@ SQL Server 2025의 compatibility110 검사는 기존 SQL source의 상위 엔진
 | tsql-R01 | 누적 | RUN | database/server/auth/backup/network/extension 실행 제외 | 위험 statement도 source text만 | - | [runtime/library 근거](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) |
 | tsql-X01 | 범위 밖 | EXT | SQLCMD :r/:setvar, Azure-only/Fabric/Synapse syntax, embedded host 언어 제외 | GO는 B05의 명시된 예외 | - | [mode/extension 경계](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) |
 
-각 statement 계열은 reference의 SQL Server 적용 표시가 있는 Syntax alternatives를 모두 포함한다. 기본 SELECT 한 건으로 DDL/procedural/관리 syntax의 지원을 대체하지 않는다. configuration 함수가 LOCAL_ID로 분류된다는 upstream errata는 B01의 구조 목표와 연결하되 실제 parse 실패로 기록하지 않는다.
+각 statement 계열은 reference의 SQL Server 적용 표시가 있는 Syntax alternatives를 모두 포함한다. 확인된 문서 erratum은 공식 version별 parser·test fixture와 engine 대조를 근거로 별도 처분하며 실제 버전에서 유효했던 source의 합집합은 보존한다. ALTER SECURITY POLICY는 predicate 목록·STATE·ADD/DROP NOT FOR REPLICATION을 독립 대안으로 사용하고 CREATE의 복제 옵션 suffix와 구분한다. [#132 erratum 근거와 회귀](../reports/issue-132-security-policy-erratum.md)가 #131의 SECURITY POLICY 보류 처분을 대체한다. 기본 SELECT 한 건으로 DDL/procedural/관리 syntax의 지원을 대체하지 않는다. configuration 함수가 LOCAL_ID로 분류된다는 upstream errata는 B01의 구조 목표와 연결하되 실제 parse 실패로 기록하지 않는다.
 
 ## postgresql-sql
 
