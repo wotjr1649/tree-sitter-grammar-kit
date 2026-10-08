@@ -116,7 +116,8 @@
   "tsql-issue128-constant-default",
   "tsql-issue128-corpus-context",
   "tsql-issue131-overacceptance",
-  "tsql-issue132-security-policy"
+  "tsql-issue132-security-policy",
+  "tsql-issue134-assembly-file-name"
  ],
  "files": [
   {
@@ -770,6 +771,16 @@
     {
      "before": "        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name [WITH option [, ...]]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n  // WITH is optional here — a no-op ALTER ROUTE with no options is valid —\n  // which gives the trailing WITH the same trailing-WITH-vs-following-CTE\n  // ambiguity `alter_fulltext_catalog` documents; see the `[$.alter_route]`\n  // conflicts entry in grammar.js.\n  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, optional($.with_clause)),\n};\n",
      "after": "        optional($.identifier),\n      ),\n\n  // ALTER ROUTE name WITH option [, ...]   (Service Broker)\n  // The bare `with_clause` mirrors `create_route`'s own WITH option list.\n  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, $.with_clause),\n};\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          choice($.keyword_all, comma_list(choice(alias($._literal_string, $.literal), $.identifier), true)),\n",
+     "after": "          choice($.keyword_all, comma_list(alias(choice($._literal_string, $._double_quoted_literal), $.literal), true)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          comma_list(seq($.literal, optional(seq($.keyword_as, choice(alias($._literal_string, $.literal), $.identifier)))), true),\n",
+     "after": "          comma_list(seq($.literal, optional(seq($.keyword_as, alias(choice($._literal_string, $._double_quoted_literal), $.literal)))), true),\n",
      "occurrences": 1
     }
    ]

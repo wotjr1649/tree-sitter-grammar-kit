@@ -2022,8 +2022,8 @@
           },
           {
             "path": "grammar/statements/alter.js",
-            "bytes": 33123,
-            "sha256": "0c378f1a1f6a1c037e283d7544f8825b22baa4d330f586f20247c7d8e3303d65"
+            "bytes": 33147,
+            "sha256": "8a227439c791e24d63be46159a3da6ed61c8954c302888f24d57e20e3fb8f90d"
           },
           {
             "path": "grammar/statements/create-function.js",
