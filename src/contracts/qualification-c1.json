@@ -205728,8 +205728,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "4e75313358dcc53a52f33cddb8100df1cb7054d0222e4e95b5e315d4d1de9346",
-      "bytes": 69977338
+      "sha256": "b705939f0bd23ce6e58b04b8f18f033531c58cf16c9bf5408024adf2ff74b09a",
+      "bytes": 67116272
      },
      {
       "path": "src/scanner.c",
@@ -276157,6 +276157,526 @@
         "new_end_byte": 37,
         "old": "U0VMRUNUIDEgV0hFUkUgQ09OVEFJTlModC4qLCdhcHBsZScsJ2V4dHJhJyk7",
         "new": "U0VMRUNUIDEgV0hFUkUgQ09OVEFJTlModC4qLCdhcHBsZScpOw=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-and-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "235d595867c6b929d8dc36e88e67979007f8e015fdf2ad14834d49c9f0da233e",
+       "bytes": 59
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 59,
+        "new_end_byte": 57,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgQkVUV0VFTiAxIEFORCAyKTs=",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgQkVUV0VFTiAxIEFORCk7"
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 57,
+        "new_end_byte": 59,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgQkVUV0VFTiAxIEFORCk7",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgQkVUV0VFTiAxIEFORCAyKTs="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-or-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "21cea73e5c5e87ac321349321cfc8082ee0a25615c297025aa7ddd7f937d5fb7",
+       "bytes": 60
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 60,
+        "new_end_byte": 58,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgKGE9MSBPUiAoQHAgQkVUV0VFTiAxIEFORCAyKSk7",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgKGE9MSBPUiAoQHAgQkVUV0VFTiAxIEFORCkpOw=="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 58,
+        "new_end_byte": 60,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgKGE9MSBPUiAoQHAgQkVUV0VFTiAxIEFORCkpOw==",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgKGE9MSBPUiAoQHAgQkVUV0VFTiAxIEFORCAyKSk7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-not-between-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d3e1792929dca2adc646cb81c446032b1131869be62d3bae263eb78d0492600d",
+       "bytes": 63
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 63,
+        "new_end_byte": 61,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgTk9UIEJFVFdFRU4gMSBBTkQgMik7",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgTk9UIEJFVFdFRU4gMSBBTkQpOw=="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 61,
+        "new_end_byte": 63,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgTk9UIEJFVFdFRU4gMSBBTkQpOw==",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIEFORCAoQHAgTk9UIEJFVFdFRU4gMSBBTkQgMik7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-function-range-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0852d7d5834d0f417b07539f2bed3978293003969ee2f23774bc03f1ef63499b",
+       "bytes": 72
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 72,
+        "new_end_byte": 64,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIE9SIChAcCBCRVRXRUVOIGRiby5mKGIpIEFORCBkYm8uZihjKSk7",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIE9SIChAcCBCRVRXRUVOIGRiby5mKGIpIEFORCk7IA=="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 64,
+        "new_end_byte": 72,
+        "old": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIE9SIChAcCBCRVRXRUVOIGRiby5mKGIpIEFORCk7IA==",
+        "new": "REVDTEFSRSBAcCBpbnQ7U0VMRUNUIDEgV0hFUkUgYT0xIE9SIChAcCBCRVRXRUVOIGRiby5mKGIpIEFORCBkYm8uZihjKSk7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-left-or-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a889287bb3c8513dc285bc4a44b31c3c331dc86bf900cbc5ec8c6c3d0d1ed000",
+       "bytes": 42
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 42,
+        "new_end_byte": 40,
+        "old": "U0VMRUNUIDEgV0hFUkUgKGEgQkVUV0VFTiAxIEFORCAyKSBPUiBiPTM7",
+        "new": "U0VMRUNUIDEgV0hFUkUgKGEgQkVUV0VFTiAxIEFORCkgT1IgYj0zOw=="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 40,
+        "new_end_byte": 42,
+        "old": "U0VMRUNUIDEgV0hFUkUgKGEgQkVUV0VFTiAxIEFORCkgT1IgYj0zOw==",
+        "new": "U0VMRUNUIDEgV0hFUkUgKGEgQkVUV0VFTiAxIEFORCAyKSBPUiBiPTM7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-between-double-not-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "33560c342d5b00ac362e7072e98d5679ee09294817cafa048f2376efbbed51bc",
+       "bytes": 52
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 52,
+        "new_end_byte": 50,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIE5PVCAoKGEgQkVUV0VFTiAxIEFORCAyKSBPUiBiPTMpOw==",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIE5PVCAoKGEgQkVUV0VFTiAxIEFORCkgT1IgYj0zKTs="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 50,
+        "new_end_byte": 52,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIE5PVCAoKGEgQkVUV0VFTiAxIEFORCkgT1IgYj0zKTs=",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIE5PVCAoKGEgQkVUV0VFTiAxIEFORCAyKSBPUiBiPTMpOw=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-not-exists-and-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "53dd0aeaff97f4c64e90dd3dd3d031233164c06a652973d806a19f932e3aa2bf",
+       "bytes": 45
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 45,
+        "new_end_byte": 41,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIEFORCBhPTE7",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIEFORDs="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 41,
+        "new_end_byte": 45,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIEFORDs=",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIEFORCBhPTE7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue137-not-exists-or-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4bec22f0e460c49d12068b7ecac388a00be9e33859a8f702bf9e5183484606e",
+       "bytes": 44
+      },
+      "edits": [
+       {
+        "start_byte": 0,
+        "old_end_byte": 44,
+        "new_end_byte": 40,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIE9SIGE9MTs=",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIE9SOw=="
+       },
+       {
+        "start_byte": 0,
+        "old_end_byte": 40,
+        "new_end_byte": 44,
+        "old": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIE9SOw==",
+        "new": "U0VMRUNUIDEgV0hFUkUgTk9UIEVYSVNUUyAoU0VMRUNUIDEpIE9SIGE9MTs="
        }
       ],
       "expect": [

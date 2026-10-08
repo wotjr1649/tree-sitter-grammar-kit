@@ -1967,8 +1967,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 9777,
-            "sha256": "d973036b7c9d665f2fdc94d807592e22f094133aed2a53bcbbb4797ce0879207"
+            "bytes": 9818,
+            "sha256": "76ca3c8e1582e938026ccfa834246ec5c87c6ca505908f75a5522789f4ed2daa"
           },
           {
             "path": "grammar/keywords.js",
@@ -1987,8 +1987,8 @@
           },
           {
             "path": "grammar/expressions.js",
-            "bytes": 31689,
-            "sha256": "0a7c1c9ebc7a45d48f7968eb37762535d1b912a42d08dbad573a0d27f2f55488"
+            "bytes": 32085,
+            "sha256": "2d46c55ee3e1ea185732e9f9484be903b8f7abed7631818c39cb2f0d38d2b044"
           },
           {
             "path": "grammar/helpers.js",

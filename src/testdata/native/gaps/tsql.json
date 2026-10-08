@@ -6178,6 +6178,318 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "tsql-issue137-between-and-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);",
+      "edits": [
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND);"
+        },
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND);",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-between-or-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
+      "edits": [
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
+          "replace": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND));"
+        },
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND));",
+          "replace": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-between-not-between-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);",
+      "edits": [
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND);"
+        },
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND);",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-between-function-range-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));",
+      "edits": [
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND); "
+        },
+        {
+          "find": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND); ",
+          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-between-left-or-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;",
+          "replace": "SELECT 1 WHERE (a BETWEEN 1 AND) OR b=3;"
+        },
+        {
+          "find": "SELECT 1 WHERE (a BETWEEN 1 AND) OR b=3;",
+          "replace": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-between-double-not-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);",
+          "replace": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND) OR b=3);"
+        },
+        {
+          "find": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND) OR b=3);",
+          "replace": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-not-exists-and-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;",
+          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND;"
+        },
+        {
+          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND;",
+          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-not-exists-or-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;",
+          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR;"
+        },
+        {
+          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR;",
+          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

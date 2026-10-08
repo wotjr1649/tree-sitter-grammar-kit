@@ -3405,8 +3405,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "4e75313358dcc53a52f33cddb8100df1cb7054d0222e4e95b5e315d4d1de9346",
-     "bytes": 69977338
+     "sha256": "b705939f0bd23ce6e58b04b8f18f033531c58cf16c9bf5408024adf2ff74b09a",
+     "bytes": 67116272
     },
     {
      "path": "src/scanner.c",
@@ -3441,8 +3441,8 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "dc8e358bf2d1b2088548107e6c1e033ce5c61cba5b1d8ff2ad24b420420ad4ce",
-      "bytes": 1273683
+      "sha256": "ce2a96e742dd62ed615e9e270c975c5b2d1ffdcadee2335a89ee067831f6c78e",
+      "bytes": 1276189
      },
      {
       "path": "node-types.json",
@@ -3451,8 +3451,8 @@
      },
      {
       "path": "parser.c",
-      "sha256": "4e75313358dcc53a52f33cddb8100df1cb7054d0222e4e95b5e315d4d1de9346",
-      "bytes": 69977338
+      "sha256": "b705939f0bd23ce6e58b04b8f18f033531c58cf16c9bf5408024adf2ff74b09a",
+      "bytes": 67116272
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -3478,8 +3478,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "d973036b7c9d665f2fdc94d807592e22f094133aed2a53bcbbb4797ce0879207",
-      "bytes": 9777
+      "sha256": "76ca3c8e1582e938026ccfa834246ec5c87c6ca505908f75a5522789f4ed2daa",
+      "bytes": 9818
      },
      {
       "path": "grammar/column-lists.js",
@@ -3490,8 +3490,8 @@
      {
       "path": "grammar/expressions.js",
       "role": "js_helper",
-      "sha256": "0a7c1c9ebc7a45d48f7968eb37762535d1b912a42d08dbad573a0d27f2f55488",
-      "bytes": 31689
+      "sha256": "2d46c55ee3e1ea185732e9f9484be903b8f7abed7631818c39cb2f0d38d2b044",
+      "bytes": 32085
      },
      {
       "path": "grammar/helpers.js",
@@ -3853,8 +3853,8 @@
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 9777,
-      "sha256": "d973036b7c9d665f2fdc94d807592e22f094133aed2a53bcbbb4797ce0879207"
+      "bytes": 9818,
+      "sha256": "76ca3c8e1582e938026ccfa834246ec5c87c6ca505908f75a5522789f4ed2daa"
      },
      {
       "path": "grammar/keywords.js",
@@ -3873,8 +3873,8 @@
      },
      {
       "path": "grammar/expressions.js",
-      "bytes": 31689,
-      "sha256": "0a7c1c9ebc7a45d48f7968eb37762535d1b912a42d08dbad573a0d27f2f55488"
+      "bytes": 32085,
+      "sha256": "2d46c55ee3e1ea185732e9f9484be903b8f7abed7631818c39cb2f0d38d2b044"
      },
      {
       "path": "grammar/helpers.js",

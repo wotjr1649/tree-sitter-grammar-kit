@@ -16,7 +16,7 @@ Microsoft [CREATE ROUTE](https://learn.microsoft.com/en-us/sql/t-sql/statements/
 
 등록 회귀는 정상→음성→복구를 포함한다. source C2 literal chain, patched source 및 생성물 pins, qualification inventory, source export 필수 파일 목록과 canonical disposition을 함께 갱신한다. comparator·API 허용 목록·상한·skip 정책은 유지한다. 공개 합성 입력과 비공개 corpus의 세부 자료는 분리하며 원문·파일 이름·경로는 공개 보고서에 넣지 않는다.
 
-이름 범위 확대 후 `ADD EVENT .lock_deadlock`의 새로운 수용 회귀를 engine102로 확인했다. Extended Events의 ADD/DROP EVENT/TARGET와 ACTION package 이름은 첫 qualifier 생략을 허용하지 않는 shared helper로 분리하며 sibling5개를 추가해 총83개 등록 정상→음성→복구를 고정한다. `.t WITH (NOLOCK,HOLDLOCK)` 두 입력은 leading-dot 구문 수정 뒤에도 engine1047인 hint conflict이며 새로운 순수 구문 결함으로 세지 않는다.
+이름 범위 확대 후 `ADD EVENT .lock_deadlock`의 새로운 수용 회귀를 engine102로 확인했다. Extended Events의 ADD/DROP EVENT/TARGET와 ACTION package 이름은 첫 qualifier 생략을 허용하지 않는 shared helper로 분리하며 sibling5개를 추가해 총91개 등록 정상→음성→복구를 고정한다. `.t WITH (NOLOCK,HOLDLOCK)` 두 입력은 leading-dot 구문 수정 뒤에도 engine1047인 hint conflict이며 새로운 순수 구문 결함으로 세지 않는다.
 
 NOT와 AND/OR의 predicate alternatives에는 CONTAINS/FREETEXT도 포함한다. 기존 full-text 양성 둘의 회귀를 확인해 동일 predicate family에 복구하고 NOT full-text 대조군을 추가했다. COUNT window 호출, VECTOR_SEARCH의 TABLE alias와 OPENROWSET의 ORDER 인자는 각 문맥의 전용 대안으로 보존한다. 기존 양성 fixture·anchor를 완화하지 않는다.
 
@@ -29,3 +29,9 @@ VECTOR_SEARCH는 version별 syntax union을 보존한다. 설치 빌드의 PARSE
 full-text 검색식은 문자열 또는 @변수이며 LANGUAGE는 문자열·integer/hex·@변수를 허용한다. numeric 검색식·LANGUAGE 산술식·숫자 PROPERTY 이름은 실제102다. 엔진이 수용하는 qualified wildcard는 보존한다. catalog 이름·LCID domain 및 runtime 값은 검증하지 않는다.
 
 수정 후 원래 토큰 변형에 남는23개 의미·문맥 관측은 [#141](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/141)에서 추적한다. 구문 수정의 완료와 의미 분석의 미완료를 구별한다.
+
+일반 AND/OR는 기존 expression operand를 유지하며, NOT guard의 논리 결합만 predicate operand로 제한한다. BETWEEN/NOT BETWEEN은 shared predicate rule을 named/aliased public node로 재사용한다. 공개 AND/OR·NOT BETWEEN·함수 range 정상→음성→복원6개로 괄호 연결의 회귀를 고정한다.
+
+NOT predicate의 reduction precedence를 고정하고 `NOT EXISTS ... AND/OR ...` 두 정상→음성→복구를 추가했다. 괄호 없는 NOT는 EXISTS까지만 결합하며 외부 AND/OR는 별도 binary node라는 CST 범위도 공개 대조군에서 확인한다.
+
+최종 공개 대조군91쌍(182개)은 parser와 전체 node API가 모두 기대와 일치하며, 실제 LocalDB110·170의364개 PARSEONLY 판정과도 일치했다. 최종2,860개 변형에서는112개 순수 구문 음성과24개 leading-dot 양성이 모두 복구됐고 전체 API가 PASS였다. 남은23개는 #141의 문맥·의미 범위다. 네 개 PARSEONLY ACCEPT/parser ERROR 변형은 대상 table을 준비한 NOEXEC가 거부하는 type length/INSERT column 문맥이고, level110의 추가 둘은 OPENJSON compatibility 문맥이다. 따라서 raw engine/parser 불일치 수를 구문 결함 수로 승격하지 않는다.

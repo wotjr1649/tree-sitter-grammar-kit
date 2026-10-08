@@ -310,6 +310,11 @@
      "before": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],",
      "after": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order],",
      "occurrences": 1
+    },
+    {
+     "before": "    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.unary_expression, $._predicate_not],\n    [$.binary_expression, $._predicate_expression],\n    [$.between_expression, $._predicate_binary],\n    [$.alter_partition_scheme],\n    [$._statement_tail_item],\n",
+     "after": "    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.unary_expression, $._predicate_not],\n    [$._predicate_between, $._predicate_binary],\n    [$.binary_expression, $._event_condition],\n    [$._expression, $._predicate_expression],\n    [$.alter_partition_scheme],\n    [$._statement_tail_item],\n",
+     "occurrences": 1
     }
    ]
   },
@@ -799,6 +804,26 @@
     {
      "before": "  _fulltext_property_name: (_) => make_keyword('property'),",
      "after": "  _fulltext_property_name: (_) => make_keyword('property'),\n  _fulltext_variable: ($) => field('name', alias($._tsql_parameter, $.identifier)),\n  _fulltext_string_value: ($) => choice(alias($._single_quote_string, $.literal),\n    alias($._fulltext_variable, $.field)),\n  _fulltext_search_term: ($) => field('value', $._fulltext_string_value),\n  _fulltext_language_term: ($) => field('value', choice($._fulltext_string_value, alias($._integer, $.literal))),",
+     "occurrences": 1
+    },
+    {
+     "before": "  binary_expression: ($) => choice(\n    $._predicate_binary,\n    ...[['+', 'binary_plus'], ['-', 'binary_plus'], ['*', 'binary_times'],\n      ['/', 'binary_times'], ['%', 'binary_times'], ['^', 'binary_plus'],\n",
+     "after": "  binary_expression: ($) => choice(\n    $._predicate_binary,\n    ...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op, p]) =>\n      prec.left(p, seq(field('left', $._expression), field('operator', op), field('right', $._expression)))),\n    ...[['+', 'binary_plus'], ['-', 'binary_plus'], ['*', 'binary_times'],\n      ['/', 'binary_times'], ['%', 'binary_times'], ['^', 'binary_plus'],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ),\n\n  between_expression: ($) =>\n    choice(\n      ...[\n",
+     "after": "    ),\n\n  between_expression: ($) => $._predicate_between,\n  _predicate_between: ($) =>\n    choice(\n      ...[\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ),\n\n  _predicate_expression: ($) => choice(\n    alias($._predicate_binary, $.binary_expression), $.between_expression, $.exists,\n    $.graph_match_predicate, alias($.fulltext_predicate, $.invocation),\n    alias($._predicate_parentheses, $.parenthesized_expression),\n    alias($._predicate_not, $.unary_expression),\n  ),\n  _predicate_parentheses: ($) => prec(2, wrapped_in_parenthesis($._predicate_expression)),\n  _predicate_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not),\n",
+     "after": "    ),\n\n  _predicate_expression: ($) => prec(1, choice(\n    alias($._predicate_binary, $.binary_expression), alias($._predicate_logical, $.binary_expression),\n    alias($._predicate_between, $.between_expression), $.exists,\n    $.graph_match_predicate, alias($.fulltext_predicate, $.invocation),\n    alias($._predicate_parentheses, $.parenthesized_expression),\n    alias($._predicate_not, $.unary_expression),\n  )),\n  _predicate_parentheses: ($) => prec(2, wrapped_in_parenthesis($._predicate_expression)),\n  _predicate_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ...[$.keyword_in, $.not_in].map(op => prec.left('binary_in',\n      seq(field('left', $._expression), field('operator', op), field('right', choice($.list, $.subquery))))),\n    ...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op, p]) =>\n      prec.left(p, seq(field('left', $._predicate_expression), field('operator', op),\n",
+     "after": "    ...[$.keyword_in, $.not_in].map(op => prec.left('binary_in',\n      seq(field('left', $._expression), field('operator', op), field('right', choice($.list, $.subquery))))),\n  ),\n  _predicate_logical: ($) => choice(\n    ...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op, p]) =>\n      prec.left(p, seq(field('left', $._predicate_expression), field('operator', op),\n",
      "occurrences": 1
     }
    ]
