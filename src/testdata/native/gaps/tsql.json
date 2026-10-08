@@ -1980,7 +1980,7 @@
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS PointSource;",
       "edits": [],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+        {"step": 0, "syntax": "ERROR", "contains": [], "declarations": ""}
       ]
     },
     {
@@ -1990,7 +1990,7 @@
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point DROP FILE PointSource;",
       "edits": [],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+        {"step": 0, "syntax": "ERROR", "contains": [], "declarations": ""}
       ]
     },
     {
@@ -2420,6 +2420,475 @@
           "syntax": "NO_ERROR",
           "contains": [
             "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-add-bare-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS src;"
+        },
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS src;",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-add-bracket-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS [src];"
+        },
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS [src];",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-add-number-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 1;"
+        },
+        {
+          "find": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 1;",
+          "replace": "ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-drop-bare-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE 'src';",
+          "replace": "ALTER ASSEMBLY a DROP FILE src;"
+        },
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE src;",
+          "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-drop-bracket-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE 'src';",
+          "replace": "ALTER ASSEMBLY a DROP FILE [src];"
+        },
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE [src];",
+          "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-drop-number-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src';",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE 'src';",
+          "replace": "ALTER ASSEMBLY a DROP FILE 1;"
+        },
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE 1;",
+          "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-add-on-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03",
+        "tsql-B05"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nSET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS \"src\";",
+      "edits": [
+        {
+          "find": "SET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS \"src\";",
+          "replace": "SET QUOTED_IDENTIFIER ON; ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS \"src\";"
+        },
+        {
+          "find": "SET QUOTED_IDENTIFIER ON; ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS \"src\";",
+          "replace": "SET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a ADD FILE FROM 'file.cs' AS \"src\";"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-drop-on-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03",
+        "tsql-B05"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nSET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a DROP FILE \"src\";",
+      "edits": [
+        {
+          "find": "SET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a DROP FILE \"src\";",
+          "replace": "SET QUOTED_IDENTIFIER ON; ALTER ASSEMBLY a DROP FILE \"src\";"
+        },
+        {
+          "find": "SET QUOTED_IDENTIFIER ON; ALTER ASSEMBLY a DROP FILE \"src\";",
+          "replace": "SET QUOTED_IDENTIFIER OFF; ALTER ASSEMBLY a DROP FILE \"src\";"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-drop-all-list-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE ALL;",
+      "edits": [
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE ALL;",
+          "replace": "ALTER ASSEMBLY a DROP FILE ALL, 'src';"
+        },
+        {
+          "find": "ALTER ASSEMBLY a DROP FILE ALL, 'src';",
+          "replace": "ALTER ASSEMBLY a DROP FILE ALL;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-control-unicode-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE N'파일', N's''rc' ADD FILE FROM 'file.cs' AS N'파일', 0x01 AS N's''rc';",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-control-multi-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'old', 'other' ADD FILE FROM 'file.cs' AS 'old', 'second.cs' AS 'other';",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-control-noalias-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a ADD FILE FROM 'file.cs';",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue134-control-next-select-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src'; SELECT 1;",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_assembly"
           ],
           "declarations": ""
         }

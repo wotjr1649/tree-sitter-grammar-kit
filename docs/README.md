@@ -33,6 +33,7 @@ The current implementation consists of repository foundation checks, the Session
 | DEFAULT·TRY/CATCH 및 전체 corpus의 문맥 격차 (#128) | [T-SQL corpus 경계](reports/issue-128-tsql-corpus-gaps.md) |
 | 공개 과잉 수용18개 원인·구문 수정·문서/엔진 불일치 (#131) | [T-SQL 과잉 수용](reports/issue-131-tsql-overacceptance.md) |
 | SECURITY POLICY 문서 erratum·ALTER 작업 분리 (#132) | [SECURITY POLICY 경계](reports/issue-132-security-policy-erratum.md) |
+| ASSEMBLY file_name 문서 erratum·문자열 경계 (#134) | [ASSEMBLY file_name 경계](reports/issue-134-assembly-file-name-erratum.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
