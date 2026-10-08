@@ -205728,8 +205728,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "5d31ecc4b84469599930475e214644ab5503127d618cdf2f0f2a6171931157df",
-      "bytes": 66087899
+      "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
+      "bytes": 66425482
      },
      {
       "path": "src/scanner.c",
@@ -266736,23 +266736,23 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "33ecdd98aa69c037446f46a554d2c550497b8c8fab9bc3c81c25949d888f3b23",
-       "bytes": 78
+       "sha256": "c646a18d20dcd03a00cefdc0251d10b987784d1898e0f6517a1226eb3ef3c210",
+       "bytes": 117
       },
       "edits": [
        {
-        "start_byte": 71,
-        "old_end_byte": 77,
-        "new_end_byte": 74,
-        "old": "TidzcmMn",
-        "new": "c3Jj"
+        "start_byte": 51,
+        "old_end_byte": 116,
+        "new_end_byte": 79,
+        "old": "UG9pbnQgQUREIEZJTEUgRlJPTSAnQzovUHJvamVjdHMvUG9pbnQvUG9pbnQuY3MnIEFTICdQb2ludFNvdXJjZSc=",
+        "new": "YSBBREQgRklMRSBGUk9NIE4neC5jcycgQVMgMQ=="
        },
        {
-        "start_byte": 71,
-        "old_end_byte": 74,
-        "new_end_byte": 77,
-        "old": "c3Jj",
-        "new": "TidzcmMn"
+        "start_byte": 51,
+        "old_end_byte": 79,
+        "new_end_byte": 116,
+        "old": "YSBBREQgRklMRSBGUk9NIE4neC5jcycgQVMgMQ==",
+        "new": "UG9pbnQgQUREIEZJTEUgRlJPTSAnQzovUHJvamVjdHMvUG9pbnQvUG9pbnQuY3MnIEFTICdQb2ludFNvdXJjZSc="
        }
       ],
       "expect": [
@@ -266802,23 +266802,23 @@
       "input": {
        "path": "",
        "role": "",
-       "sha256": "dce834013df31886e65acffc3cf6baaaeb2ad7e73b52044e33c2d11500c55c66",
-       "bytes": 63
+       "sha256": "bc5c1cd2cc774254f81578f35dc677add87d8f27d1380420df7c72d6623e1329",
+       "bytes": 81
       },
       "edits": [
        {
-        "start_byte": 56,
-        "old_end_byte": 62,
-        "new_end_byte": 59,
-        "old": "TidzcmMn",
-        "new": "c3Jj"
+        "start_byte": 51,
+        "old_end_byte": 80,
+        "new_end_byte": 64,
+        "old": "UG9pbnQgRFJPUCBGSUxFICdQb2ludFNvdXJjZSc=",
+        "new": "YSBEUk9QIEZJTEUgMQ=="
        },
        {
-        "start_byte": 56,
-        "old_end_byte": 59,
-        "new_end_byte": 62,
-        "old": "c3Jj",
-        "new": "TidzcmMn"
+        "start_byte": 51,
+        "old_end_byte": 64,
+        "new_end_byte": 80,
+        "old": "YSBEUk9QIEZJTEUgMQ==",
+        "new": "UG9pbnQgRFJPUCBGSUxFICdQb2ludFNvdXJjZSc="
        }
       ],
       "expect": [
@@ -268436,6 +268436,699 @@
         "P"
        ]
       },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-insert-empty-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a455bf345dfbd9c843634acf73eed70c1833e04c622a7f85187525620ed1cc6e",
+       "bytes": 60
+      },
+      "edits": [
+       {
+        "start_byte": 56,
+        "old_end_byte": 58,
+        "new_end_byte": 57,
+        "old": "KDE=",
+        "new": "KA=="
+       },
+       {
+        "start_byte": 56,
+        "old_end_byte": 57,
+        "new_end_byte": 58,
+        "old": "KA==",
+        "new": "KDE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "insert"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "insert"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-merge-empty-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ba43b46bafc30b4e5496d4c1593766e8884dff899bd3679186f3ae8687ee9827",
+       "bytes": 128
+      },
+      "edits": [
+       {
+        "start_byte": 122,
+        "old_end_byte": 126,
+        "new_end_byte": 125,
+        "old": "UyAoMQ==",
+        "new": "UyAo"
+       },
+       {
+        "start_byte": 122,
+        "old_end_byte": 125,
+        "new_end_byte": 126,
+        "old": "UyAo",
+        "new": "UyAoMQ=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "merge"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "merge"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-update-compound-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a6c683983f8804f0b9237e076a30de9c38ac4e76d0bd07893fe7c99e2c995d88",
+       "bytes": 60
+      },
+      "edits": [
+       {
+        "start_byte": 57,
+        "old_end_byte": 59,
+        "new_end_byte": 65,
+        "old": "IDE=",
+        "new": "IERFRkFVTFQ="
+       },
+       {
+        "start_byte": 57,
+        "old_end_byte": 65,
+        "new_end_byte": 59,
+        "old": "IERFRkFVTFQ=",
+        "new": "IDE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-merge-compound-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8d5603474cc704b21bf2b94e0f0e895eadedc55b3540ec28dd46cf46ddeb8372",
+       "bytes": 119
+      },
+      "edits": [
+       {
+        "start_byte": 116,
+        "old_end_byte": 118,
+        "new_end_byte": 124,
+        "old": "IDE=",
+        "new": "IERFRkFVTFQ="
+       },
+       {
+        "start_byte": 116,
+        "old_end_byte": 124,
+        "new_end_byte": 118,
+        "old": "IERFRkFVTFQ=",
+        "new": "IDE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "merge"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "merge"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-capture-compound-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d539ef89e11dde554c9400d6bee9ff492e25f0399e5583ad462c9839438a710d",
+       "bytes": 81
+      },
+      "edits": [
+       {
+        "start_byte": 78,
+        "old_end_byte": 80,
+        "new_end_byte": 86,
+        "old": "IDE=",
+        "new": "IERFRkFVTFQ="
+       },
+       {
+        "start_byte": 78,
+        "old_end_byte": 86,
+        "new_end_byte": 80,
+        "old": "IERFRkFVTFQ=",
+        "new": "IDE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-variable-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4d8536b51049a6473505058d4d73627600c9fedf3448d0d55c93ab57627984d5",
+       "bytes": 76
+      },
+      "edits": [
+       {
+        "start_byte": 73,
+        "old_end_byte": 75,
+        "new_end_byte": 81,
+        "old": "IDE=",
+        "new": "IERFRkFVTFQ="
+       },
+       {
+        "start_byte": 73,
+        "old_end_byte": 81,
+        "new_end_byte": 75,
+        "old": "IERFRkFVTFQ=",
+        "new": "IDE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "update"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "P",
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-openjson-semicolon-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2e3a1f7a1a4ec2034768ae7fcd82f8e3b4c65fd2e3f87a3caf7e38be85b45796",
+       "bytes": 76
+      },
+      "edits": [
+       {
+        "start_byte": 63,
+        "old_end_byte": 65,
+        "new_end_byte": 65,
+        "old": "Jyw=",
+        "new": "Jzs="
+       },
+       {
+        "start_byte": 63,
+        "old_end_byte": 65,
+        "new_end_byte": 65,
+        "old": "Jzs=",
+        "new": "Jyw="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "relation"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "relation"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B02": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-trigger-print-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2f2212d1f3cc019d34c52080c97c7347dae9648a5699303f66e1061d3a806499",
+       "bytes": 76
+      },
+      "edits": [
+       {
+        "start_byte": 44,
+        "old_end_byte": 47,
+        "new_end_byte": 46,
+        "old": "eCc7",
+        "new": "eCc="
+       },
+       {
+        "start_byte": 44,
+        "old_end_byte": 46,
+        "new_end_byte": 47,
+        "old": "eCc=",
+        "new": "eCc7"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "enable_trigger_statement"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "enable_trigger_statement"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B04": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-control-variable-chain-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d661bf3d8faa70416b470654b15f64eda373651d2bc79f68a13fc7150aab1f60",
+       "bytes": 86
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-control-assembly-doc-bare-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "80ed6d34ab495f89bdf60613616462cb4887a5dc262e5eb8bb9a9da4c6551de6",
+       "bytes": 115
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-control-assembly-drop-bare-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "9b0e639e989da704ef4c5fdaf9cee9a71af5815e720f03ce20bb2cf5828503d5",
+       "bytes": 79
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-control-bracket-variable-column-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "80bb7787a993f587e39518af92590aed3b0e74c1a623017154e8efe960ec1218",
+       "bytes": 68
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-gap-issue131-review-control-qualified-column-default-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d8826d06dcb7232d494b572592525e4dec6dc82b7bb0820b1e5b86b849f9dac3",
+       "bytes": 67
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
       "alternatives": [],
       "sample": null,
       "source": null

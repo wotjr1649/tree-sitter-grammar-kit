@@ -3405,8 +3405,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "5d31ecc4b84469599930475e214644ab5503127d618cdf2f0f2a6171931157df",
-     "bytes": 66087899
+     "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
+     "bytes": 66425482
     },
     {
      "path": "src/scanner.c",
@@ -3441,18 +3441,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "c34bd0a18de421e45a2f24487109fa94147427b17733f4cb890c422a03e9760b",
-      "bytes": 1191131
+      "sha256": "6a8894724a94c0f18ca1c660aab4e9e2528fac9e23a21c4d0c926a75c5c456a3",
+      "bytes": 1199996
      },
      {
       "path": "node-types.json",
-      "sha256": "61cd55848d1757e0f10d3e18807bf53eea2464af92235f61a461627dcf4bc4f6",
-      "bytes": 535085
+      "sha256": "d9b5c380baf503086e3d22baa77a043c0db8245c4dd8d2f09c57bc262aeae1d7",
+      "bytes": 535171
      },
      {
       "path": "parser.c",
-      "sha256": "5d31ecc4b84469599930475e214644ab5503127d618cdf2f0f2a6171931157df",
-      "bytes": 66087899
+      "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
+      "bytes": 66425482
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -3478,8 +3478,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "6fef34a22307508853c5464b9a33f2475a74508e156ae4d63531f99a9bcfa71e",
-      "bytes": 9227
+      "sha256": "d393821cb95382777f1bb85d0abc136a7368efe1a58a1c147e39124e6af070bd",
+      "bytes": 9268
      },
      {
       "path": "grammar/column-lists.js",
@@ -3508,8 +3508,8 @@
      {
       "path": "grammar/statements/alter.js",
       "role": "js_helper",
-      "sha256": "d46de547e7ce1a7ce9f6581197f2a8fac9177d71b6c4b45c853ababdddb057ee",
-      "bytes": 33079
+      "sha256": "0c378f1a1f6a1c037e283d7544f8825b22baa4d330f586f20247c7d8e3303d65",
+      "bytes": 33123
      },
      {
       "path": "grammar/statements/create-function.js",
@@ -3538,8 +3538,8 @@
      {
       "path": "grammar/statements/dml-shared.js",
       "role": "js_helper",
-      "sha256": "e11fc518d41b051661fce2b10eb1c7eab48fe5ebf66731548974c21b6645d33f",
-      "bytes": 2057
+      "sha256": "7af4f8ea7c88f8ab749be6f8bee6ff4b2d70c5d5e94a9b84cc8f223810a2c6e8",
+      "bytes": 3151
      },
      {
       "path": "grammar/statements/drop.js",
@@ -3580,8 +3580,8 @@
      {
       "path": "grammar/statements/select.js",
       "role": "js_helper",
-      "sha256": "1f6ee98920a4839fe7cc69e7866bc71a0b20f909c230c392be14d88631ec0568",
-      "bytes": 31770
+      "sha256": "341b04fe2bd476ce795682322a11e93395f602ff54adfcd9d360d3cb078a9c5e",
+      "bytes": 32125
      },
      {
       "path": "grammar/statements/service-broker.js",
@@ -3853,8 +3853,8 @@
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 9227,
-      "sha256": "6fef34a22307508853c5464b9a33f2475a74508e156ae4d63531f99a9bcfa71e"
+      "bytes": 9268,
+      "sha256": "d393821cb95382777f1bb85d0abc136a7368efe1a58a1c147e39124e6af070bd"
      },
      {
       "path": "grammar/keywords.js",
@@ -3898,8 +3898,8 @@
      },
      {
       "path": "grammar/statements/select.js",
-      "bytes": 31770,
-      "sha256": "1f6ee98920a4839fe7cc69e7866bc71a0b20f909c230c392be14d88631ec0568"
+      "bytes": 32125,
+      "sha256": "341b04fe2bd476ce795682322a11e93395f602ff54adfcd9d360d3cb078a9c5e"
      },
      {
       "path": "src/scanner.c",
@@ -3908,8 +3908,8 @@
      },
      {
       "path": "grammar/statements/alter.js",
-      "bytes": 33079,
-      "sha256": "d46de547e7ce1a7ce9f6581197f2a8fac9177d71b6c4b45c853ababdddb057ee"
+      "bytes": 33123,
+      "sha256": "0c378f1a1f6a1c037e283d7544f8825b22baa4d330f586f20247c7d8e3303d65"
      },
      {
       "path": "grammar/statements/create-function.js",
@@ -3918,8 +3918,8 @@
      },
      {
       "path": "grammar/statements/dml-shared.js",
-      "bytes": 2057,
-      "sha256": "e11fc518d41b051661fce2b10eb1c7eab48fe5ebf66731548974c21b6645d33f"
+      "bytes": 3151,
+      "sha256": "7af4f8ea7c88f8ab749be6f8bee6ff4b2d70c5d5e94a9b84cc8f223810a2c6e8"
      },
      {
       "path": "grammar/statements/insert.js",

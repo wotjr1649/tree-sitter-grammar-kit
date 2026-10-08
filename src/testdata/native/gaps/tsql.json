@@ -1423,10 +1423,10 @@
       "id": "tsql-gap-issue131-assembly-alias-r1",
       "kind": "gap",
       "features": ["tsql-B03"],
-      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER ASSEMBLY a ADD FILE FROM N'x.cs' AS N'src';",
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource';",
       "edits": [
-        {"find": "N'src'", "replace": "src"},
-        {"find": "src", "replace": "N'src'"}
+        {"find": "Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource'", "replace": "a ADD FILE FROM N'x.cs' AS 1"},
+        {"find": "a ADD FILE FROM N'x.cs' AS 1", "replace": "Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS 'PointSource'"}
       ],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""},
@@ -1438,10 +1438,10 @@
       "id": "tsql-gap-issue131-assembly-drop-r1",
       "kind": "gap",
       "features": ["tsql-B03"],
-      "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER ASSEMBLY a DROP FILE N'src';",
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point DROP FILE 'PointSource';",
       "edits": [
-        {"find": "N'src'", "replace": "src"},
-        {"find": "src", "replace": "N'src'"}
+        {"find": "Point DROP FILE 'PointSource'", "replace": "a DROP FILE 1"},
+        {"find": "a DROP FILE 1", "replace": "Point DROP FILE 'PointSource'"}
       ],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["alter_assembly"], "declarations": ""},
@@ -1841,6 +1841,176 @@
       "edits": [],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-insert-empty-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nINSERT dbo.t VALUES (1);",
+      "edits": [
+        {"find": "(1", "replace": "("},
+        {"find": "(", "replace": "(1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["insert"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["insert"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-merge-empty-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN NOT MATCHED THEN INSERT (id) VALUES (1);",
+      "edits": [
+        {"find": "S (1", "replace": "S ("},
+        {"find": "S (", "replace": "S (1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-update-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-merge-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nMERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN UPDATE SET c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-capture-compound-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = c += 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-variable-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = 1;",
+      "edits": [
+        {"find": " 1", "replace": " DEFAULT"},
+        {"find": " DEFAULT", "replace": " 1"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-openjson-semicolon-r1",
+      "kind": "gap",
+      "features": ["tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nSELECT * FROM OPENJSON(N'{}', '$') AS j;",
+      "edits": [
+        {"find": "',", "replace": "';"},
+        {"find": "';", "replace": "',"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-trigger-print-r1",
+      "kind": "gap",
+      "features": ["tsql-B04"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nPRINT N'x';\nENABLE TRIGGER trg ON dbo.t;",
+      "edits": [
+        {"find": "x';", "replace": "x'"},
+        {"find": "x'", "replace": "x';"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["enable_trigger_statement"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-variable-chain-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = c = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-assembly-doc-bare-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point ADD FILE FROM 'C:/Projects/Point/Point.cs' AS PointSource;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-assembly-drop-bare-r1",
+      "kind": "gap",
+      "features": ["tsql-B03"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nALTER ASSEMBLY Point DROP FILE PointSource;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-bracket-variable-column-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET [@v] = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue131-review-control-qualified-column-default-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02"],
+      "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET t.c = DEFAULT;",
+      "edits": [],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
       ]
     }
   ]

@@ -187,8 +187,8 @@
      "occurrences": 1
     },
     {
-     "before": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n",
-     "after": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$._function_relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n",
+     "before": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.alter_partition_scheme],\n    [$._statement_tail_item],\n",
+     "after": "    [$._statement_list],\n    [$._query_specification_core],\n    [$.relation],\n    [$._function_relation],\n    [$.graph_match_predicate, $.identifier],\n    [$.constant_reference, $._function_identifier],\n    [$.identifier, $._dml_column_field],\n    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.alter_partition_scheme],\n    [$._statement_tail_item],\n",
      "occurrences": 1
     },
     {
@@ -758,12 +758,12 @@
     },
     {
      "before": "        seq(\n          $.keyword_drop,\n          $.keyword_file,\n          choice($.keyword_all, comma_list(choice($.literal, $.identifier), true)),\n        ),\n      ),\n      optional(\n",
-     "after": "        seq(\n          $.keyword_drop,\n          $.keyword_file,\n          choice($.keyword_all, comma_list(alias($._literal_string, $.literal), true)),\n        ),\n      ),\n      optional(\n",
+     "after": "        seq(\n          $.keyword_drop,\n          $.keyword_file,\n          choice($.keyword_all, comma_list(choice(alias($._literal_string, $.literal), $.identifier), true)),\n        ),\n      ),\n      optional(\n",
      "occurrences": 1
     },
     {
      "before": "          $.keyword_add,\n          $.keyword_file,\n          $.keyword_from,\n          comma_list(seq($.literal, optional(seq($.keyword_as, choice($.literal, $.identifier)))), true),\n        ),\n      ),\n    ),\n",
-     "after": "          $.keyword_add,\n          $.keyword_file,\n          $.keyword_from,\n          comma_list(seq($.literal, optional(seq($.keyword_as, alias($._literal_string, $.literal)))), true),\n        ),\n      ),\n    ),\n",
+     "after": "          $.keyword_add,\n          $.keyword_file,\n          $.keyword_from,\n          comma_list(seq($.literal, optional(seq($.keyword_as, choice(alias($._literal_string, $.literal), $.identifier)))), true),\n        ),\n      ),\n    ),\n",
      "occurrences": 1
     },
     {
@@ -1042,13 +1042,13 @@
      "occurrences": 1
     },
     {
-     "before": "// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
-     "after": "// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // DEFAULT is a DML value, not a general expression or identifier.\n  _dml_value: ($) => choice($._expression, $.keyword_default),\n  _dml_value_list: ($) => paren_list($._dml_value),\n\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
+     "before": "import { comma_list, paren_list } from '../helpers.js';\n\n// Rules shared by more than one DML writer. `output_clause` is used by\n// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
+     "after": "import { comma_list, paren_list, optional_parenthesis } from '../helpers.js';\n\n// Rules shared by more than one DML writer. `output_clause` is used by\n// INSERT, UPDATE, DELETE and MERGE; `assignment`/`_set_values` are used by\n// UPDATE and MERGE's `WHEN MATCHED THEN UPDATE SET` action, but not INSERT.\nexport default {\n  // DEFAULT is a DML value, not a general expression or identifier.\n  _dml_value: ($) => choice($._expression, $.keyword_default),\n  _dml_value_list: ($) => paren_list($._dml_value, true),\n\n  // Exclude @variables while retaining delimited column names and SQLCMD placeholders.\n  _dml_column_field: ($) =>\n    seq(\n      optional(seq(optional_parenthesis($.object_reference), '.')),\n      field('name', alias(choice(\n        $._identifier, alias(choice($.keyword_match, $.keyword_window), $._identifier),\n        $._bracketed_identifier, $._double_quote_string, $._temporary_table, $._sqlcmd_variable,\n      ), $.identifier)),\n    ),\n\n  // OUTPUT term [, ...] [INTO table [(columns)]] — on INSERT, UPDATE, DELETE\n  // and MERGE. The terms reference the `inserted`/`deleted` pseudo-tables\n  // and `$action`, all of which are ordinary identifiers here.\n",
      "occurrences": 1
     },
     {
-     "before": "      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._expression),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('column', alias($._qualified_field, $.field)),\n        alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|=', '||='), $.assignment_operator),\n        field('right', $._expression),\n      ),\n    ),\n\n",
-     "after": "      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._dml_value),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('column', alias($._qualified_field, $.field)),\n        alias(choice('+=', '-=', '*=', '/=', '%=', '&=', '^=', '|=', '||='), $.assignment_operator),\n        field('right', $._dml_value),\n      ),\n    ),\n\n",
+     "before": "        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._expression),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n",
+     "after": "        field('left', alias($._qualified_field, $.field)),\n        $.assignment_operator,\n        field('right', $._expression),\n      ),\n      // DEFAULT belongs to a plain column assignment, never a variable or compound value.\n      seq(\n        field('left', alias($._dml_column_field, $.field)),\n        alias('=', $.assignment_operator),\n        field('right', $.keyword_default),\n      ),\n      // Capture the column's default into @variable without making DEFAULT a variable value.\n      seq(\n        field('left', alias($.local_variable, $.field)),\n        alias('=', $.assignment_operator),\n        field('column', alias($._dml_column_field, $.field)),\n        alias('=', $.assignment_operator),\n        field('right', $.keyword_default),\n      ),\n      seq(\n        field('left', alias($._qualified_field, $.field)),\n",
      "occurrences": 1
     }
    ]
@@ -1537,8 +1537,8 @@
      "occurrences": 1
     },
     {
-     "before": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_function_name: ($) =>\n    field('name', alias(choice($.keyword_openrowset, $.keyword_openxml, $.keyword_predict), $.identifier)),\n\n  // WITH (column type [COLLATE c] ['path' | ordinal] [NULL | NOT NULL] [, ...]) | WITH table_name\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n",
-     "after": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_function_name: ($) =>\n    field('name', alias(choice($.keyword_openrowset, $.keyword_openxml, $.keyword_predict, $.keyword_openjson), $.identifier)),\n\n  // WITH (column type [COLLATE c] ['path' | ordinal] [NULL | NOT NULL] [, ...]) | WITH table_name\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n",
+     "before": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_invocation: ($) =>\n    seq(\n      alias($.rowset_function_name, $.object_reference),\n      paren_list(seq(field('parameter', $.term), repeat(seq(';', field('parameter', $.term)))), true),\n    ),\n\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n",
+     "after": "  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n  rowset_invocation: ($) =>\n    choice(\n      seq(\n        alias($.rowset_function_name, $.object_reference),\n        paren_list(seq(field('parameter', $.term), repeat(seq(';', field('parameter', $.term)))), true),\n      ),\n      seq(\n        alias($.openjson_function_name, $.object_reference),\n        '(', field('parameter', $.term), optional(seq(',', field('parameter', $.term))), ')',\n      ),\n    ),\n\n  // OPENJSON uses commas; OPENROWSET's connection-string separators do not apply.\n  openjson_function_name: ($) => field('name', alias($.keyword_openjson, $.identifier)),\n\n  // Visible (not `_`-hidden), like `implicit_execute`, so that its fields\n  // stay on the aliased node and are not inherited by the parent.\n",
      "occurrences": 1
     },
     {
