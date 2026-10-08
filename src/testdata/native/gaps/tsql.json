@@ -2893,6 +2893,3291 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "tsql-issue137-reserved-table-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT a FROM [NOT];",
+      "edits": [
+        {
+          "find": "SELECT a FROM [NOT];",
+          "replace": "SELECT a FROM NOT;"
+        },
+        {
+          "find": "SELECT a FROM NOT;",
+          "replace": "SELECT a FROM [NOT];"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-reserved-exec-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "[NOT];",
+      "edits": [
+        {
+          "find": "[NOT];",
+          "replace": "NOT;"
+        },
+        {
+          "find": "NOT;",
+          "replace": "[NOT];"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-reserved-type-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE TABLE dbo.t(a [NOT]);",
+      "edits": [
+        {
+          "find": "CREATE TABLE dbo.t(a [NOT]);",
+          "replace": "CREATE TABLE dbo.t(a NOT);"
+        },
+        {
+          "find": "CREATE TABLE dbo.t(a NOT);",
+          "replace": "CREATE TABLE dbo.t(a [NOT]);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-reserved-with-call-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM dbo.t, dbo.[WITH](1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t, dbo.[WITH](1);",
+          "replace": "SELECT * FROM dbo.t, WITH(1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t, WITH(1);",
+          "replace": "SELECT * FROM dbo.t, dbo.[WITH](1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-scalar-not-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT 1 = 0;",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT 1 = 0;",
+          "replace": "SELECT NOT 1;"
+        },
+        {
+          "find": "SELECT NOT 1;",
+          "replace": "SELECT 1 WHERE NOT 1 = 0;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-scalar-not-arithmetic-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT (1 + 2 = 0);",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT (1 + 2 = 0);",
+          "replace": "SELECT NOT (1 + 2);"
+        },
+        {
+          "find": "SELECT NOT (1 + 2);",
+          "replace": "SELECT 1 WHERE NOT (1 + 2 = 0);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-scalar-not-function-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT EXISTS(SELECT 1);",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT EXISTS(SELECT 1);",
+          "replace": "SELECT ABS(NOT 1);"
+        },
+        {
+          "find": "SELECT ABS(NOT 1);",
+          "replace": "SELECT 1 WHERE NOT EXISTS(SELECT 1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-scalar-not-nested-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
+          "replace": "SELECT NOT NOT 1;"
+        },
+        {
+          "find": "SELECT NOT NOT 1;",
+          "replace": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-queue-equal-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
+      "edits": [
+        {
+          "find": "ALTER QUEUE q WITH STATUS = ON;",
+          "replace": "ALTER QUEUE q WITH STATUS ON;"
+        },
+        {
+          "find": "ALTER QUEUE q WITH STATUS ON;",
+          "replace": "ALTER QUEUE q WITH STATUS = ON;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-queue-value-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
+      "edits": [
+        {
+          "find": "ALTER QUEUE q WITH STATUS = ON;",
+          "replace": "ALTER QUEUE q WITH STATUS = 1;"
+        },
+        {
+          "find": "ALTER QUEUE q WITH STATUS = 1;",
+          "replace": "ALTER QUEUE q WITH STATUS = ON;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-queue-default-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER QUEUE q WITH RETENTION = OFF;",
+      "edits": [
+        {
+          "find": "ALTER QUEUE q WITH RETENTION = OFF;",
+          "replace": "ALTER QUEUE q WITH RETENTION = DEFAULT;"
+        },
+        {
+          "find": "ALTER QUEUE q WITH RETENTION = DEFAULT;",
+          "replace": "ALTER QUEUE q WITH RETENTION = OFF;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-queue-activation-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);",
+      "edits": [
+        {
+          "find": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);",
+          "replace": "ALTER QUEUE q WITH ACTIVATION (STATUS ON);"
+        },
+        {
+          "find": "ALTER QUEUE q WITH ACTIVATION (STATUS ON);",
+          "replace": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-queue-poison-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);",
+      "edits": [
+        {
+          "find": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);",
+          "replace": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = 1);"
+        },
+        {
+          "find": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = 1);",
+          "replace": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-route-equal-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';",
+      "edits": [
+        {
+          "find": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';",
+          "replace": "ALTER ROUTE r WITH ADDRESS 'LOCAL';"
+        },
+        {
+          "find": "ALTER ROUTE r WITH ADDRESS 'LOCAL';",
+          "replace": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-route-value-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
+      "edits": [
+        {
+          "find": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
+          "replace": "CREATE ROUTE r WITH ADDRESS = 1, LIFETIME = 60;"
+        },
+        {
+          "find": "CREATE ROUTE r WITH ADDRESS = 1, LIFETIME = 60;",
+          "replace": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-policy-equal-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE OFF);"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE OFF);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-policy-value-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = 1);"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = 1);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-policy-kind-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-policy-create-kind-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
+      "edits": [
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);"
+        },
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-policy-default-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(DEFAULT) ON dbo.t;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(DEFAULT) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-builtin-default-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT COUNT(a) FROM dbo.t;",
+      "edits": [
+        {
+          "find": "SELECT COUNT(a) FROM dbo.t;",
+          "replace": "SELECT COUNT(DEFAULT) FROM dbo.t;"
+        },
+        {
+          "find": "SELECT COUNT(DEFAULT) FROM dbo.t;",
+          "replace": "SELECT COUNT(a) FROM dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-udf-default-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT dbo.f(DEFAULT);",
+      "edits": [
+        {
+          "find": "SELECT dbo.f(DEFAULT);",
+          "replace": "SELECT f(DEFAULT);"
+        },
+        {
+          "find": "SELECT f(DEFAULT);",
+          "replace": "SELECT dbo.f(DEFAULT);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-star-alias-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM dbo.t;",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t;",
+          "replace": "SELECT * p FROM dbo.t;"
+        },
+        {
+          "find": "SELECT * p FROM dbo.t;",
+          "replace": "SELECT * FROM dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-qualified-star-alias-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT t.* FROM dbo.t t;",
+      "edits": [
+        {
+          "find": "SELECT t.* FROM dbo.t t;",
+          "replace": "SELECT t.* AS x FROM dbo.t t;"
+        },
+        {
+          "find": "SELECT t.* AS x FROM dbo.t t;",
+          "replace": "SELECT t.* FROM dbo.t t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-count-wildcard-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;",
+      "edits": [
+        {
+          "find": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;",
+          "replace": "SELECT COUNTNOT(*) HAVING COUNT_BIG(*) > 0;"
+        },
+        {
+          "find": "SELECT COUNTNOT(*) HAVING COUNT_BIG(*) > 0;",
+          "replace": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-function-star-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT ABS(1);",
+      "edits": [
+        {
+          "find": "SELECT ABS(1);",
+          "replace": "SELECT ABS(*);"
+        },
+        {
+          "find": "SELECT ABS(*);",
+          "replace": "SELECT ABS(1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-dynamic-payload-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
+      "edits": [
+        {
+          "find": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
+          "replace": "EXEC (1) AS LOGIN = 'u';"
+        },
+        {
+          "find": "EXEC (1) AS LOGIN = 'u';",
+          "replace": "EXEC (N'SELECT 1') AS LOGIN = 'u';"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-dynamic-concat-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
+      "edits": [
+        {
+          "find": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
+          "replace": "DECLARE @sql nvarchar(max) = N'1'; EXEC (1 + @sql);"
+        },
+        {
+          "find": "DECLARE @sql nvarchar(max) = N'1'; EXEC (1 + @sql);",
+          "replace": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-openjson-comma-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM OPENJSON(N'[]', '$');",
+      "edits": [
+        {
+          "find": "SELECT * FROM OPENJSON(N'[]', '$');",
+          "replace": "SELECT * FROM OPENJSON(N'[]' '$');"
+        },
+        {
+          "find": "SELECT * FROM OPENJSON(N'[]' '$');",
+          "replace": "SELECT * FROM OPENJSON(N'[]', '$');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue139-procedure-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
+      "edits": [
+        {
+          "find": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
+          "replace": "ALTER PROCEDURE dbo.p a int AS SELECT 1;"
+        },
+        {
+          "find": "ALTER PROCEDURE dbo.p a int AS SELECT 1;",
+          "replace": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue139-function-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
+      "edits": [
+        {
+          "find": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
+          "replace": "CREATE FUNCTION dbo.g(a int) RETURNS int AS BEGIN RETURN 1; END;"
+        },
+        {
+          "find": "CREATE FUNCTION dbo.g(a int) RETURNS int AS BEGIN RETURN 1; END;",
+          "replace": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue139-output-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+      "edits": [
+        {
+          "find": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+          "replace": "CREATE PROCEDURE dbo.p a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+        },
+        {
+          "find": "CREATE PROCEDURE dbo.p a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+          "replace": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue139-clr-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+      "edits": [
+        {
+          "find": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+          "replace": "CREATE FUNCTION dbo.g(a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+        },
+        {
+          "find": "CREATE FUNCTION dbo.g(a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+          "replace": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00223-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+      "edits": [
+        {
+          "find": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE . AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+        },
+        {
+          "find": "MERGE . AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00247-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+      "edits": [
+        {
+          "find": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING . AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+        },
+        {
+          "find": "MERGE dbo.t AS t USING . AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00271-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;",
+      "edits": [
+        {
+          "find": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON .=s.id WHEN MATCHED THEN DELETE;"
+        },
+        {
+          "find": "MERGE dbo.t AS t USING dbo.s AS s ON .=s.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00287-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;",
+      "edits": [
+        {
+          "find": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=. WHEN MATCHED THEN DELETE;"
+        },
+        {
+          "find": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=. WHEN MATCHED THEN DELETE;",
+          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00423-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "PRINT 1; ENABLE TRIGGER ALL ON .t;",
+      "edits": [
+        {
+          "find": "PRINT 1; ENABLE TRIGGER ALL ON .t;",
+          "replace": "PRINT 1; ENABLE TRIGGER ALL ON .;"
+        },
+        {
+          "find": "PRINT 1; ENABLE TRIGGER ALL ON .;",
+          "replace": "PRINT 1; ENABLE TRIGGER ALL ON .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-00479-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "EXEC .p @a=-3;",
+      "edits": [
+        {
+          "find": "EXEC .p @a=-3;",
+          "replace": "EXEC . @a=-3;"
+        },
+        {
+          "find": "EXEC . @a=-3;",
+          "replace": "EXEC .p @a=-3;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01052-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM .f(1) AS a;",
+      "edits": [
+        {
+          "find": "SELECT * FROM .f(1) AS a;",
+          "replace": "SELECT * FROM .(1) AS a;"
+        },
+        {
+          "find": "SELECT * FROM .(1) AS a;",
+          "replace": "SELECT * FROM .f(1) AS a;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01098-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM dbo, .f(1) AS a;",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo, .f(1) AS a;",
+          "replace": "SELECT * FROM dbo, .(1) AS a;"
+        },
+        {
+          "find": "SELECT * FROM dbo, .(1) AS a;",
+          "replace": "SELECT * FROM dbo, .f(1) AS a;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01133-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;",
+          "replace": "ALTER TABLE . ALTER COLUMN a DROP NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER TABLE . ALTER COLUMN a DROP NOT FOR REPLICATION;",
+          "replace": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01473-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
+          "replace": "ALTER SECURITY POLICY . WITH (STATE = OFF);"
+        },
+        {
+          "find": "ALTER SECURITY POLICY . WITH (STATE = OFF);",
+          "replace": "ALTER SECURITY POLICY .p WITH (STATE = OFF);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01567-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01591-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01619-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01709-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+        },
+        {
+          "find": "CREATE SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01733-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+        },
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-01761-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON . WITH (STATE = ON) NOT FOR REPLICATION;"
+        },
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON . WITH (STATE = ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02133-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE TABLE .t (a int DEFAULT (1));",
+      "edits": [
+        {
+          "find": "CREATE TABLE .t (a int DEFAULT (1));",
+          "replace": "CREATE TABLE . (a int DEFAULT (1));"
+        },
+        {
+          "find": "CREATE TABLE . (a int DEFAULT (1));",
+          "replace": "CREATE TABLE .t (a int DEFAULT (1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02428-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "INSERT INTO .t (a) VALUES (1);",
+      "edits": [
+        {
+          "find": "INSERT INTO .t (a) VALUES (1);",
+          "replace": "INSERT INTO . (a) VALUES (1);"
+        },
+        {
+          "find": "INSERT INTO . (a) VALUES (1);",
+          "replace": "INSERT INTO .t (a) VALUES (1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02516-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "UPDATE .t SET a = DEFAULT;",
+      "edits": [
+        {
+          "find": "UPDATE .t SET a = DEFAULT;",
+          "replace": "UPDATE . SET a = DEFAULT;"
+        },
+        {
+          "find": "UPDATE . SET a = DEFAULT;",
+          "replace": "UPDATE .t SET a = DEFAULT;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02657-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
+      "edits": [
+        {
+          "find": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
+          "replace": "CREATE FUNCTION .() RETURNS int AS BEGIN RETURN 1; END;"
+        },
+        {
+          "find": "CREATE FUNCTION .() RETURNS int AS BEGIN RETURN 1; END;",
+          "replace": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02773-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT [KEY] FROM .t;",
+      "edits": [
+        {
+          "find": "SELECT [KEY] FROM .t;",
+          "replace": "SELECT [KEY] FROM .;"
+        },
+        {
+          "find": "SELECT [KEY] FROM .;",
+          "replace": "SELECT [KEY] FROM .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02800-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT [KEY] FROM dbo, .t;",
+      "edits": [
+        {
+          "find": "SELECT [KEY] FROM dbo, .t;",
+          "replace": "SELECT [KEY] FROM dbo, .;"
+        },
+        {
+          "find": "SELECT [KEY] FROM dbo, .;",
+          "replace": "SELECT [KEY] FROM dbo, .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02821-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 한 FROM .t;",
+      "edits": [
+        {
+          "find": "SELECT 한 FROM .t;",
+          "replace": "SELECT 한 FROM .;"
+        },
+        {
+          "find": "SELECT 한 FROM .;",
+          "replace": "SELECT 한 FROM .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-leading-02848-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT 한 FROM dbo, .t;",
+      "edits": [
+        {
+          "find": "SELECT 한 FROM dbo, .t;",
+          "replace": "SELECT 한 FROM dbo, .;"
+        },
+        {
+          "find": "SELECT 한 FROM dbo, .;",
+          "replace": "SELECT 한 FROM dbo, .t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-middle-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT a FROM db..t;",
+      "edits": [
+        {
+          "find": "SELECT a FROM db..t;",
+          "replace": "SELECT a FROM db..;"
+        },
+        {
+          "find": "SELECT a FROM db..;",
+          "replace": "SELECT a FROM db..t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-qualified-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT a FROM srv.db.dbo.t;",
+      "edits": [
+        {
+          "find": "SELECT a FROM srv.db.dbo.t;",
+          "replace": "SELECT a FROM srv.db.dbo.;"
+        },
+        {
+          "find": "SELECT a FROM srv.db.dbo.;",
+          "replace": "SELECT a FROM srv.db.dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-event-add-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;",
+      "edits": [
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;"
+        },
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-event-drop-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;",
+      "edits": [
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;",
+          "replace": "ALTER EVENT SESSION s ON SERVER DROP EVENT .lock_deadlock;"
+        },
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER DROP EVENT .lock_deadlock;",
+          "replace": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-target-add-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;",
+      "edits": [
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD TARGET .ring_buffer;"
+        },
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD TARGET .ring_buffer;",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-target-drop-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;",
+      "edits": [
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;",
+          "replace": "ALTER EVENT SESSION s ON SERVER DROP TARGET .ring_buffer;"
+        },
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER DROP TARGET .ring_buffer;",
+          "replace": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue138-event-action-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));",
+      "edits": [
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(.sql_text));"
+        },
+        {
+          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(.sql_text));",
+          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue137-fulltext-not-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');",
+      "edits": [
+        {
+          "find": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');",
+          "replace": "SELECT a FROM dbo.t WHERE NOT 1 OR FREETEXT(a, 'pear');"
+        },
+        {
+          "find": "SELECT a FROM dbo.t WHERE NOT 1 OR FREETEXT(a, 'pear');",
+          "replace": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-distinct-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT COUNT(DISTINCT a) FROM t;",
+      "edits": [
+        {
+          "find": "SELECT COUNT(DISTINCT a) FROM t;",
+          "replace": "SELECT COUNT(DISTINCT a,b) FROM t;"
+        },
+        {
+          "find": "SELECT COUNT(DISTINCT a,b) FROM t;",
+          "replace": "SELECT COUNT(DISTINCT a) FROM t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-contains-extra-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(a,'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(a,'apple','extra');"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(a,'apple','extra');",
+          "replace": "SELECT 1 WHERE CONTAINS(a,'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-freetext-extra-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE FREETEXT(a,'pear');",
+          "replace": "SELECT 1 WHERE FREETEXT(a,'pear','extra');"
+        },
+        {
+          "find": "SELECT 1 WHERE FREETEXT(a,'pear','extra');",
+          "replace": "SELECT 1 WHERE FREETEXT(a,'pear');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-fulltext-columns-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);",
+          "replace": "SELECT 1 WHERE CONTAINS((a,b),'apple',1033);"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS((a,b),'apple',1033);",
+          "replace": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-fulltext-wildcard-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(*,'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(*,'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(*);"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(*);",
+          "replace": "SELECT 1 WHERE CONTAINS(*,'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-fulltext-property-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'));"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'));",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-fulltext-language-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);",
+          "replace": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE);"
+        },
+        {
+          "find": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE);",
+          "replace": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-bulk-order-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
+      "edits": [
+        {
+          "find": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
+          "replace": "SELECT * FROM OPENROWSET('p','c','q',ORDER(a)) AS r;"
+        },
+        {
+          "find": "SELECT * FROM OPENROWSET('p','c','q',ORDER(a)) AS r;",
+          "replace": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-xml-order-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;",
+      "edits": [
+        {
+          "find": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;",
+          "replace": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',ORDER(a)) AS r;"
+        },
+        {
+          "find": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',ORDER(a)) AS r;",
+          "replace": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-predict-order-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;",
+      "edits": [
+        {
+          "find": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;",
+          "replace": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d,ORDER(a)) WITH(y float) AS r;"
+        },
+        {
+          "find": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d,ORDER(a)) WITH(y float) AS r;",
+          "replace": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-target-literal-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(a,'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(1,'apple');"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(1,'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(a,'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-target-property-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a),'apple');"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a),'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-target-list-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE FREETEXT((a,b),'pear');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE FREETEXT((a,b),'pear');",
+          "replace": "SELECT 1 WHERE FREETEXT((1,2),'pear');"
+        },
+        {
+          "find": "SELECT 1 WHERE FREETEXT((1,2),'pear');",
+          "replace": "SELECT 1 WHERE FREETEXT((a,b),'pear');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-search-type-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);",
+      "edits": [
+        {
+          "find": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);",
+          "replace": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,1);"
+        },
+        {
+          "find": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,1);",
+          "replace": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-language-expression-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');",
+          "replace": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 1+1);"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 1+1);",
+          "replace": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-language-variable-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);",
+      "edits": [
+        {
+          "find": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);",
+          "replace": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l+1);"
+        },
+        {
+          "find": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l+1);",
+          "replace": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-property-type-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,1),'apple');"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,1),'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue140-qualified-star-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT 1 WHERE CONTAINS(t.*,'apple');",
+      "edits": [
+        {
+          "find": "SELECT 1 WHERE CONTAINS(t.*,'apple');",
+          "replace": "SELECT 1 WHERE CONTAINS(t.*,'apple','extra');"
+        },
+        {
+          "find": "SELECT 1 WHERE CONTAINS(t.*,'apple','extra');",
+          "replace": "SELECT 1 WHERE CONTAINS(t.*,'apple');"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

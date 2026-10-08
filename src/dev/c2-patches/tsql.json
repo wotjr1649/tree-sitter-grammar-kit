@@ -117,7 +117,10 @@
   "tsql-issue128-corpus-context",
   "tsql-issue131-overacceptance",
   "tsql-issue132-security-policy",
-  "tsql-issue134-assembly-file-name"
+  "tsql-issue134-assembly-file-name",
+  "tsql-issue137-mutation-boundaries",
+  "tsql-issue138-leading-dot",
+  "tsql-issue139-formal-parameter"
  ],
  "files": [
   {
@@ -196,6 +199,116 @@
     {
      "before": "  word: ($) => $._identifier,\n\n  reserved: {\n    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent],\n  },\n\n  rules: {\n",
      "after": "  word: ($) => $._identifier,\n\n  reserved: {\n    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n  },\n\n  rules: {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.identifier, $.local_variable],",
+     "after": "    [$.identifier, $.local_variable],\n    [$._function_reference, $._qualified_field],",
+     "occurrences": 1
+    },
+    {
+     "before": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n",
+     "after": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema],\n",
+     "after": "    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._function_reference, $._qualified_field],",
+     "after": "    [$._function_reference, $._qualified_field],\n    [$.object_reference, $._function_reference, $._qualified_function_reference],\n    [$._function_reference, $._qualified_function_reference],\n    [$.object_reference, $._qualified_function_reference],\n    [$._qualified_function_reference, $._qualified_field],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._function_reference, $._qualified_field],",
+     "after": "    [$._function_reference, $._qualified_field],\n    [$._function_reference, $._qualified_function_reference, $._qualified_field],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._constant_condition, $._constant_between, $._constant_in],",
+     "after": "    [$._constant_condition, $._constant_between, $._constant_in],\n    [$.unary_expression, $._predicate_not],\n    [$.binary_expression, $._predicate_binary],\n    [$.parenthesized_expression, $._predicate_parentheses],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $._predicate_binary],",
+     "after": "    [$.binary_expression, $._predicate_binary],\n    [$.binary_expression, $.between_expression, $._predicate_binary],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $._predicate_binary],",
+     "after": "    [$.binary_expression, $._predicate_binary],\n    [$.binary_expression, $._predicate_expression],\n    [$.unary_expression, $._event_not],\n    [$.binary_expression, $._event_logical],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $.between_expression, $._predicate_binary],",
+     "after": "    [$.binary_expression, $.between_expression, $._predicate_binary],\n    [$.between_expression, $._predicate_binary],\n    [$._predicate_binary],",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._function_reference, $._qualified_field],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._predicate_binary],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$._qualified_function_reference, $._qualified_field],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $._event_logical],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $._predicate_binary],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.binary_expression, $.between_expression, $._predicate_binary],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.object_reference, $._function_reference],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.object_reference, $._qualified_function_reference],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.parenthesized_expression, $._predicate_parentheses],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    [$.unary_expression, $._event_not],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "    // `x BETWEEN a AND b` vs. `x BETWEEN (a AND b)`.\n    [$.between_expression, $.binary_expression],\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "  conflicts: ($) => [",
+     "after": "  conflicts: ($) => [\n    [$._bulk_rowset_name, $.rowset_function_name],",
+     "occurrences": 1
+    },
+    {
+     "before": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],",
+     "after": "    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order],",
      "occurrences": 1
     }
    ]
@@ -392,6 +505,16 @@
      "before": "    seq(\n      field('name', $.identifier),\n      field('name', $.identifier),\n      optional(field('name', $.identifier)),\n      '=',\n      field('value', choice($._option_value, paren_list($.truncate_partition_range, true))),\n    ),\n",
      "after": "    seq(\n      field('name', $.identifier),\n      field('name', $.identifier),\n      optional(field('name', choice($.identifier, alias($.keyword_key, $.identifier)))),\n      '=',\n      field('value', choice($._option_value, paren_list($.truncate_partition_range, true))),\n    ),\n",
      "occurrences": 1
+    },
+    {
+     "before": "import { comma_list, paren_list, wrapped_in_parenthesis } from './helpers.js';\n",
+     "after": "import { make_keyword, comma_list, paren_list, wrapped_in_parenthesis } from './helpers.js';\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  with_clause: ($) => prec.right(seq($.keyword_with, comma_list($.option, true))),",
+     "after": "  _security_with_options: ($) => seq($.keyword_with,\n    paren_list(alias($._security_option, $.option), true)),\n  _security_option: ($) => seq(field('name', alias(choice($._security_state, $.keyword_schemabinding), $.identifier)),\n    '=', field('value', choice($.keyword_on, $.keyword_off))),\n  _security_state: (_) => make_keyword('state'),\n\n  _route_with_clause: ($) => seq($.keyword_with, comma_list(alias($._route_option, $.option), true)),\n  _route_option: ($) => choice(\n    seq(field('name', alias($._route_string_name, $.identifier)), '=',\n      field('value', alias(choice($._literal_string, $._double_quoted_literal), $.literal))),\n    seq(field('name', alias($._route_lifetime, $.identifier)), '=',\n      field('value', choice(alias($._natural_number, $.literal), alias($._signed_literal, $.unary_expression)))),\n  ),\n  _route_string_name: (_) => choice(...['service_name', 'broker_instance', 'address', 'mirror_address'].map(make_keyword)),\n  _route_lifetime: (_) => make_keyword('lifetime'),\n\n  _queue_with_clause: ($) => seq($.keyword_with, comma_list(alias($._queue_option, $.option), true)),\n  _queue_option: ($) => choice(\n    seq(field('name', alias($._queue_toggle_name, $.identifier)), '=', field('value', choice($.keyword_on, $.keyword_off))),\n    seq(field('name', alias($._queue_activation, $.identifier)), paren_list(choice(\n      alias($._queue_activation_option, $.option), $.execute_as_clause, $.keyword_drop), true)),\n    seq(field('name', alias($._queue_poison, $.identifier)), paren_list(alias($._queue_status_option, $.option), true)),\n  ),\n  _queue_toggle_name: (_) => choice(make_keyword('status'), make_keyword('retention')),\n  _queue_activation: (_) => make_keyword('activation'),\n  _queue_poison: (_) => make_keyword('poison_message_handling'),\n  _queue_status: (_) => make_keyword('status'),\n  _queue_procedure: (_) => make_keyword('procedure_name'),\n  _queue_readers: (_) => make_keyword('max_queue_readers'),\n  _queue_status_option: ($) => seq(field('name', alias($._queue_status, $.identifier)), '=', field('value', choice($.keyword_on, $.keyword_off))),\n  _queue_activation_option: ($) => choice(\n    $._queue_status_option,\n    seq(field('name', alias($._queue_procedure, $.identifier)), '=', field('value', $.object_reference)),\n    seq(field('name', alias($._queue_readers, $.identifier)), '=', field('value', alias($._natural_number, $.literal))),\n  ),\n\n  with_clause: ($) => prec.right(seq($.keyword_with, comma_list($.option, true))),",
+     "occurrences": 1
     }
    ]
   },
@@ -536,6 +659,146 @@
     {
      "before": "      field('node', $.identifier),\n    ),\n\n  // One or more `|`-separated edge-table names — a polymorphic edge\n  // pattern spanning heterogeneous edge tables, e.g. `-(led_by|reports_to)->`.\n  _graph_edge_names: ($) =>\n    seq(field('edge', $.identifier), repeat(seq('|', field('edge', $.identifier)))),\n\n  // name(args). `DEFAULT` is a legal argument to a procedure or function\n  // call, and STRING_AGG takes a WITHIN GROUP (ORDER BY ...) suffix. The\n",
      "after": "      field('node', $.identifier),\n    ),\n\n  // Each hop names one edge; heterogeneous alternatives require separate MATCH predicates.\n  _graph_edge_names: ($) =>\n    field('edge', $.identifier),\n\n  // name(args). `DEFAULT` is a legal argument to a procedure or function\n  // call, and STRING_AGG takes a WITHIN GROUP (ORDER BY ...) suffix. The\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('name', singleName),",
+     "after": "      // A leading omitted segment defaults the qualifier, just like an\n      // omitted middle segment; the terminal name remains required.\n      seq('.', field('name', $.identifier)),\n      seq('.', '.', field('name', $.identifier)),\n      seq('.', field('schema', $.identifier), '.', field('name', $.identifier)),\n      seq('.', '.', '.', field('name', $.identifier)),\n      seq('.', field('database', $.identifier), '.', optional(field('schema', $.identifier)), '.', field('name', $.identifier)),\n      seq('.', '.', field('schema', $.identifier), '.', field('name', $.identifier)),\n      field('name', singleName),",
+     "occurrences": 1
+    },
+    {
+     "before": "    seq(optional(seq(optional_parenthesis($.object_reference), '.')), field('name', $.identifier)),",
+     "after": "    seq(optional(choice('.', seq(optional_parenthesis($.object_reference), '.'))), field('name', $.identifier)),",
+     "occurrences": 1
+    },
+    {
+     "before": "field('parameter', choice($.term, $.keyword_default)),",
+     "after": "field('parameter', alias($._call_term, $.term)),",
+     "occurrences": 1
+    },
+    {
+     "before": "  parenthesized_expression: ($) => prec(2, wrapped_in_parenthesis($._expression)),",
+     "after": "  _call_term: ($) => field('value', $._expression),\n\n  // Only COUNT/COUNT_BIG accept a wildcard argument. Preserve invocation shape.\n  _count_call: ($) => seq(alias($._count_reference, $.object_reference),\n    wrapped_in_parenthesis(choice('*', comma_list(seq(optional($.keyword_distinct),\n      field('parameter', alias($._call_term, $.term))))))),\n  _count_reference: ($) => field('name', alias($._count_name, $.identifier)),\n  _count_name: (_) => choice(make_keyword('count'), make_keyword('count_big')),\n\n  parenthesized_expression: ($) => prec(2, wrapped_in_parenthesis($._expression)),",
+     "occurrences": 1
+    },
+    {
+     "before": "        $.invocation,\n        $.binary_expression,",
+     "after": "        $.invocation,\n        alias($._count_call, $.invocation),\n        alias($._udf_default_call, $.invocation),\n        $.binary_expression,",
+     "occurrences": 1
+    },
+    {
+     "before": "function object_reference($, singleName) {",
+     "after": "function object_reference($, singleName, qualifiedOnly = false) {",
+     "occurrences": 1
+    },
+    {
+     "before": "      field('name', singleName),",
+     "after": "      ...(qualifiedOnly ? [] : [field('name', singleName)]),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _function_identifier: ($) => choice(",
+     "after": "  _qualified_function_reference: ($) => object_reference($, $.identifier, true),\n  _udf_default_call: ($) => seq(alias($._qualified_function_reference, $.object_reference),\n    paren_list(field('parameter', choice(alias($._call_term, $.term), $.keyword_default)))),\n  _function_identifier: ($) => choice(",
+     "occurrences": 1
+    },
+    {
+     "before": "seq(field('operator', $.keyword_not), field('operand', $._expression)),",
+     "after": "seq(field('operator', $.keyword_not), field('operand', $._predicate_expression)),",
+     "occurrences": 1
+    },
+    {
+     "before": "  not_in: ($) => seq($.keyword_not, $.keyword_in),",
+     "after": "  _predicate_expression: ($) => choice(\n    alias($._predicate_binary, $.binary_expression), $.between_expression, $.exists,\n    $.graph_match_predicate,\n    alias($._predicate_parentheses, $.parenthesized_expression),\n    alias($._predicate_not, $.unary_expression),\n  ),\n  _predicate_parentheses: ($) => prec(2, wrapped_in_parenthesis($._predicate_expression)),\n  _predicate_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not),\n    field('operand', $._predicate_expression))),\n  _predicate_binary: ($) => choice(\n    ...[['=', 'binary_relation'], ['<', 'binary_relation'], ['<=', 'binary_relation'],\n      ['!=', 'binary_relation'], ['>=', 'binary_relation'], ['>', 'binary_relation'],\n      ['<>', 'binary_relation'], ['!<', 'binary_relation'], ['!>', 'binary_relation'],\n      [alias(token(seq('<', /\\s+/, '>')), '<>'), 'binary_relation'],\n      [alias(token(seq('!', /\\s+/, '<')), '!<'), 'binary_relation'],\n      [alias(token(seq('!', /\\s+/, '>')), '!>'), 'binary_relation'],\n      [$.keyword_is, 'binary_is'], [$.is_not, 'binary_is'],\n      [$.keyword_like, 'pattern_matching'], [$.not_like, 'pattern_matching'],\n      [$.distinct_from, 'binary_is'], [$.not_distinct_from, 'binary_is']].map(([op, p]) =>\n        prec.left(p, seq(field('left', $._expression), field('operator', op), field('right', $._expression)))),\n    ...[$.keyword_like, $.not_like].map(op => prec.left('pattern_matching',\n      seq(field('left', $._expression), field('operator', op), field('right', $._expression),\n        $.keyword_escape, field('escape', $._expression)))),\n    ...[$.keyword_in, $.not_in].map(op => prec.left('binary_in',\n      seq(field('left', $._expression), field('operator', op), field('right', choice($.list, $.subquery))))),\n    ...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op, p]) =>\n      prec.left(p, seq(field('left', $._predicate_expression), field('operator', op),\n        field('right', $._predicate_expression)))),\n  ),\n\n  not_in: ($) => seq($.keyword_not, $.keyword_in),",
+     "occurrences": 1
+    },
+    {
+     "before": "        alias($._count_call, $.invocation),\n        alias($._udf_default_call, $.invocation),\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "  invocation: ($) =>\n    prec(",
+     "after": "  invocation: ($) => choice($._ordinary_invocation, $._count_call, $._udf_default_call, $._vector_search_call),\n\n  _ordinary_invocation: ($) =>\n    prec(",
+     "occurrences": 1
+    },
+    {
+     "before": "  binary_expression: ($) =>\n    choice(\n      ...[\n        ['+', 'binary_plus'],\n        ['-', 'binary_plus'],\n        ['*', 'binary_times'],\n        ['/', 'binary_times'],\n        ['%', 'binary_times'],\n        ['^', 'binary_plus'],\n        // tsgk P2-47/P2-78: string concatenation (2025) and bit shifts (2022)\n        ['||', 'binary_plus'],\n        ['<<', 'binary_plus'],\n        ['>>', 'binary_plus'],\n        ['=', 'binary_relation'],\n        ['<', 'binary_relation'],\n        ['<=', 'binary_relation'],\n        ['!=', 'binary_relation'],\n        ['>=', 'binary_relation'],\n        ['>', 'binary_relation'],\n        ['<>', 'binary_relation'],\n        ['!<', 'binary_relation'],\n        ['!>', 'binary_relation'],\n        // tsgk P2-79: SQL Server also accepts these written with whitespace inside.\n        [alias(token(seq('<', /\\s+/, '>')), '<>'), 'binary_relation'],\n        [alias(token(seq('!', /\\s+/, '<')), '!<'), 'binary_relation'],\n        [alias(token(seq('!', /\\s+/, '>')), '!>'), 'binary_relation'],\n        [$.op_other, 'binary_plus'],\n        [$.keyword_is, 'binary_is'],\n        [$.is_not, 'binary_is'],\n        [$.keyword_collate, 'binary_is'],\n        [$.keyword_like, 'pattern_matching'],\n        [$.not_like, 'pattern_matching'],\n        // binary_is precedence disambiguates `(is not distinct from)` from an\n        // `is (not distinct from)` with a unary `not`\n        [$.distinct_from, 'binary_is'],\n        [$.not_distinct_from, 'binary_is'],\n        // AT TIME ZONE — same precedence family as COLLATE, the closest\n        // existing analogue (a postfix modifier over an expression). Left\n        // associative, so it chains: `d AT TIME ZONE 'UTC' AT TIME ZONE\n        // 'Eastern Standard Time'`.\n        [$.at_time_zone, 'binary_is'],\n      ].map(([operator, precedence]) =>\n        prec.left(\n          precedence,\n          seq(\n            field('left', $._expression),\n            field('operator', operator),\n            field('right', $._expression),\n          ),\n        ),\n      ),\n      ...[\n        [$.keyword_and, 'clause_connective'],\n        [$.keyword_or, 'clause_disjunctive'],\n      ].map(([operator, precedence]) =>\n        prec.left(\n          precedence,\n          seq(\n            field('left', $._expression),\n            field('operator', operator),\n            field('right', $._expression),\n          ),\n        ),\n      ),\n      // tsgk P2-71: pattern LIKE pattern ESCAPE escape_character\n      ...[$.keyword_like, $.not_like].map((operator) =>\n        prec.left(\n          'pattern_matching',\n          seq(\n            field('left', $._expression),\n            field('operator', operator),\n            field('right', $._expression),\n            $.keyword_escape,\n            field('escape', $._expression),\n          ),\n        ),\n      ),\n      ...[\n        [$.keyword_in, 'binary_in'],\n        [$.not_in, 'binary_in'],\n      ].map(([operator, precedence]) =>\n        prec.left(\n          precedence,\n          seq(\n            field('left', $._expression),\n            field('operator', operator),\n            field('right', choice($.list, $.subquery)),\n          ),\n        ),\n      ),\n    ),\n\n",
+     "after": "  binary_expression: ($) => choice(\n    $._predicate_binary,\n    ...[['+', 'binary_plus'], ['-', 'binary_plus'], ['*', 'binary_times'],\n      ['/', 'binary_times'], ['%', 'binary_times'], ['^', 'binary_plus'],\n      ['||', 'binary_plus'], ['<<', 'binary_plus'], ['>>', 'binary_plus'],\n      [$.op_other, 'binary_plus'], [$.keyword_collate, 'binary_is'], [$.at_time_zone, 'binary_is']].map(([op,p]) =>\n      prec.left(p, seq(field('left', $._expression), field('operator', op), field('right', $._expression)))),\n  ),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  _call_term: ($) => field('value', $._expression),",
+     "after": "  _call_term: ($) => field('value', $._expression),\n  _vector_search_call: ($) => seq(alias($._vector_search_reference, $.object_reference),\n    paren_list(choice(alias($._call_term, $.term), $._vector_table_argument), true)),\n  _vector_search_reference: ($) => field('name', alias($._vector_search_name, $.identifier)),\n  _vector_search_name: (_) => make_keyword('vector_search'),\n  _vector_table_argument: ($) => seq($.keyword_table, '=', $.object_reference, optional($._column_alias)),",
+     "occurrences": 1
+    },
+    {
+     "before": "function object_reference($, singleName, qualifiedOnly = false) {",
+     "after": "function object_reference($, singleName, qualifiedOnly = false, allowLeading = true) {",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq('.', field('name', $.identifier)),\n      seq('.', '.', field('name', $.identifier)),\n      seq('.', field('schema', $.identifier), '.', field('name', $.identifier)),\n      seq('.', '.', '.', field('name', $.identifier)),\n      seq('.', field('database', $.identifier), '.', optional(field('schema', $.identifier)), '.', field('name', $.identifier)),\n      seq('.', '.', field('schema', $.identifier), '.', field('name', $.identifier)),\n",
+     "after": "      ...(allowLeading ? [\n      seq('.', field('name', $.identifier)),\n      seq('.', '.', field('name', $.identifier)),\n      seq('.', field('schema', $.identifier), '.', field('name', $.identifier)),\n      seq('.', '.', '.', field('name', $.identifier)),\n      seq('.', field('database', $.identifier), '.', optional(field('schema', $.identifier)), '.', field('name', $.identifier)),\n      seq('.', '.', field('schema', $.identifier), '.', field('name', $.identifier)),\n      ] : []),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  object_reference: ($) => object_reference($, $.identifier),",
+     "after": "  object_reference: ($) => object_reference($, $.identifier),\n  // Extended Events package names have no default qualifier.\n  _event_reference: ($) => object_reference($, $.identifier, false, false),",
+     "occurrences": 1
+    },
+    {
+     "before": "    $.graph_match_predicate,\n    alias($._predicate_parentheses",
+     "after": "    $.graph_match_predicate, alias($.fulltext_predicate, $.invocation),\n    alias($._predicate_parentheses",
+     "occurrences": 1
+    },
+    {
+     "before": "            comma_list(\n              seq(\n                optional($.keyword_distinct),\n                field('parameter', alias($._call_term, $.term)),\n              ),\n            ),",
+     "after": "            choice(seq($.keyword_distinct, field('parameter', alias($._call_term, $.term))),\n              comma_list(field('parameter', alias($._call_term, $.term)))),",
+     "occurrences": 1
+    },
+    {
+     "before": "wrapped_in_parenthesis(choice('*', comma_list(seq(optional($.keyword_distinct),\n      field('parameter', alias($._call_term, $.term))))))",
+     "after": "wrapped_in_parenthesis(choice('*',\n      seq($.keyword_distinct, field('parameter', alias($._call_term, $.term))),\n      comma_list(field('parameter', alias($._call_term, $.term)))))",
+     "occurrences": 1
+    },
+    {
+     "before": "          comma_list(field('parameter', $.term), true),\n          optional(seq(',', $.keyword_language, field('language', $.term))),",
+     "after": "          field('parameter', choice($.term, alias(paren_list(alias($._qualified_field, $.field), true), $.term))),\n          ',', field('parameter', alias($._call_term, $.term)),\n          optional(seq(',', $.keyword_language, field('language', alias($._call_term, $.term)))),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _function_identifier: ($) => choice(\n    $._identifier, $._tsql_parameter, $._tsql_system_variable, $._temporary_table,\n    $._dollar_action, $._dollar_partition, $._dollar_pseudo_column, $._sqlcmd_variable,\n  ),",
+     "after": "  _function_identifier: ($) => reserved('function_name', choice(\n    $._identifier, $._tsql_parameter, $._tsql_system_variable, $._temporary_table,\n    $._dollar_action, $._dollar_partition, $._dollar_pseudo_column, $._sqlcmd_variable,\n  )),",
+     "occurrences": 1
+    },
+    {
+     "before": "field('parameter', choice($.term, alias(paren_list(alias($._qualified_field, $.field), true), $.term))),",
+     "after": "field('parameter', alias($._fulltext_target, $.term)),",
+     "occurrences": 1
+    },
+    {
+     "before": "  fulltext_function: ($) =>\n",
+     "after": "  _fulltext_target: ($) => field('value', choice(\n    alias($._qualified_field, $.field), alias($._fulltext_star, $.all_fields),\n    alias(paren_list(alias($._qualified_field, $.field), true), $.parenthesized_expression),\n    alias($._fulltext_property, $.invocation))),\n  _fulltext_star: (_) => '*',\n  _fulltext_property: ($) => seq(alias($._fulltext_property_reference, $.object_reference),\n    wrapped_in_parenthesis(seq(\n      field('parameter', alias($._fulltext_column, $.term)), ',',\n      field('parameter', alias($._fulltext_property_string, $.term))))),\n  _fulltext_column: ($) => field('value', alias($._qualified_field, $.field)),\n  _fulltext_property_string: ($) => field('value', alias($._single_quote_string, $.literal)),\n  _fulltext_property_reference: ($) => field('name', alias($._fulltext_property_name, $.identifier)),\n  _fulltext_property_name: (_) => make_keyword('property'),\n  fulltext_function: ($) =>\n",
+     "occurrences": 1
+    },
+    {
+     "before": "alias($._fulltext_star, $.all_fields)",
+     "after": "$.all_fields",
+     "occurrences": 1
+    },
+    {
+     "before": "  _fulltext_star: (_) => '*',\n",
+     "after": "",
+     "occurrences": 1
+    },
+    {
+     "before": "          ',', field('parameter', alias($._call_term, $.term)),\n          optional(seq(',', $.keyword_language, field('language', alias($._call_term, $.term)))),",
+     "after": "          ',', field('parameter', alias($._fulltext_search_term, $.term)),\n          optional(seq(',', $.keyword_language, field('language', alias($._fulltext_language_term, $.term)))),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _fulltext_property_name: (_) => make_keyword('property'),",
+     "after": "  _fulltext_property_name: (_) => make_keyword('property'),\n  _fulltext_variable: ($) => field('name', alias($._tsql_parameter, $.identifier)),\n  _fulltext_string_value: ($) => choice(alias($._single_quote_string, $.literal),\n    alias($._fulltext_variable, $.field)),\n  _fulltext_search_term: ($) => field('value', $._fulltext_string_value),\n  _fulltext_language_term: ($) => field('value', choice($._fulltext_string_value, alias($._integer, $.literal))),",
      "occurrences": 1
     }
    ]
@@ -782,6 +1045,16 @@
      "before": "          comma_list(seq($.literal, optional(seq($.keyword_as, choice(alias($._literal_string, $.literal), $.identifier)))), true),\n",
      "after": "          comma_list(seq($.literal, optional(seq($.keyword_as, alias(choice($._literal_string, $._double_quoted_literal), $.literal)))), true),\n",
      "occurrences": 1
+    },
+    {
+     "before": "  alter_queue: ($) =>\n    seq(\n      $.keyword_alter,\n      $.keyword_queue,\n      $.object_reference,\n      choice(\n        $.with_clause,\n        seq($.keyword_rebuild, optional($.with_options)),\n        // tsgk P2-36: REORGANIZE [WITH (LOB_COMPACTION = { ON | OFF })] is\n        // parenthesized; the bare spelling stays accepted.\n        seq($.keyword_reorganize, optional($.with_options)),\n        // tsgk P2-36: MOVE TO { file_group | \"default\" }\n        seq($.keyword_move, $.keyword_to, field('filegroup', $.identifier)),\n      ),\n    ),\n",
+     "after": "  alter_queue: ($) =>\n    seq(\n      $.keyword_alter,\n      $.keyword_queue,\n      $.object_reference,\n      choice(\n        alias($._queue_with_clause, $.with_clause),\n        seq($.keyword_rebuild, optional($.with_options)),\n        // tsgk P2-36: REORGANIZE [WITH (LOB_COMPACTION = { ON | OFF })] is\n        // parenthesized; the bare spelling stays accepted.\n        seq($.keyword_reorganize, optional($.with_options)),\n        // tsgk P2-36: MOVE TO { file_group | \"default\" }\n        seq($.keyword_move, $.keyword_to, field('filegroup', $.identifier)),\n      ),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, $.with_clause),\n};\n",
+     "after": "  alter_route: ($) => seq($.keyword_alter, $.keyword_route, $.identifier, alias($._route_with_clause, $.with_clause)),\n};\n",
+     "occurrences": 1
     }
    ]
   },
@@ -816,6 +1089,11 @@
     {
      "before": "    choice(\n      // Scalar and multi-statement table-valued: a BEGIN ... END block whose\n      // RETURN is an ordinary return_statement among the body items.\n      seq(optional($.keyword_as), $.keyword_begin, repeat($._body_item), $.keyword_end),\n      // Inline table-valued: RETURN followed directly by the query, with or\n      // without parentheses.\n      seq(optional($.keyword_as), $.keyword_return, $._dml_read),\n",
      "after": "    choice(\n      // Scalar and multi-statement table-valued: a BEGIN ... END block whose\n      // RETURN is an ordinary return_statement among the body items.\n      seq(optional($.keyword_as), $.keyword_begin, optional($._statement_list), $.keyword_end),\n      // Inline table-valued: RETURN followed directly by the query, with or\n      // without parentheses.\n      seq(optional($.keyword_as), $.keyword_return, $._dml_read),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  function_argument: ($) =>\n    seq(\n      $.identifier,",
+     "after": "  function_argument: ($) =>\n    seq(\n      alias($._tsql_parameter, $.identifier),",
      "occurrences": 1
     }
    ]
@@ -1031,6 +1309,31 @@
     {
      "before": "\n  contract_message: ($) =>\n    seq(\n      choice($.keyword_default, $.identifier),\n      $.keyword_sent,\n      $.keyword_by,\n      choice($.keyword_initiator, $.keyword_target, $.keyword_any),\n",
      "after": "\n  contract_message: ($) =>\n    seq(\n      $.identifier,\n      $.keyword_sent,\n      $.keyword_by,\n      choice($.keyword_initiator, $.keyword_target, $.keyword_any),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  create_queue: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_queue,\n      field('name', $.object_reference),\n      optional($.with_clause),\n      optional($.on_filegroup),\n    ),\n",
+     "after": "  create_queue: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_queue,\n      field('name', $.object_reference),\n      optional(alias($._queue_with_clause, $.with_clause)),\n      optional($.on_filegroup),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  create_route: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_route,\n      field('name', $.identifier),\n      optional(seq($.keyword_authorization, $.identifier)),\n      $.with_clause,\n    ),\n",
+     "after": "  create_route: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_route,\n      field('name', $.identifier),\n      optional(seq($.keyword_authorization, $.identifier)),\n      alias($._route_with_clause, $.with_clause),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  event_session_event: ($) =>\n    prec.right(\n      seq(\n        field('name', $.object_reference),\n        optional(\n          wrapped_in_parenthesis(\n            repeat(\n              choice(\n                seq($.keyword_set, comma_list($.option, true)),\n                seq($.keyword_action, paren_list($.object_reference, true)),\n                $.where,\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // target_module_guid [(SET param=value [, ...])]\n",
+     "after": "  event_session_event: ($) =>\n    prec.right(\n      seq(\n        field('name', $.object_reference),\n        optional(\n          wrapped_in_parenthesis(\n            repeat(\n              choice(\n                seq($.keyword_set, comma_list($.option, true)),\n                seq($.keyword_action, paren_list($.object_reference, true)),\n                alias($._event_where, $.where),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // target_module_guid [(SET param=value [, ...])]\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  event_session_event: ($) =>",
+     "after": "  _event_where: ($) => seq($.keyword_where, field('predicate', $._event_condition)),\n  _event_condition: ($) => choice($._expression,\n    alias($._event_not, $.unary_expression), alias($._event_logical, $.binary_expression)),\n  _event_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not), field('operand', $._event_condition))),\n  _event_logical: ($) => choice(...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op,p]) =>\n    prec.left(p, seq(field('left', $._event_condition), field('operator', op), field('right', $._event_condition))))),\n\n  event_session_event: ($) =>",
+     "occurrences": 1
+    },
+    {
+     "before": "  _drop_event_clause: ($) =>\n    seq($.keyword_drop, $.keyword_event, field('name', $.object_reference)),\n  _drop_target_clause: ($) =>\n    seq($.keyword_drop, $.keyword_target, field('name', $.object_reference)),\n\n  // event_module_guid [( [SET attr=value [, ...]] [ACTION (action [, ...])] [WHERE predicate] )]\n  // Event and action names are dotted (`sqlserver.sql_statement_completed`),\n  // so both are object_references rather than bare identifiers.\n  _event_where: ($) => seq($.keyword_where, field('predicate', $._event_condition)),\n  _event_condition: ($) => choice($._expression,\n    alias($._event_not, $.unary_expression), alias($._event_logical, $.binary_expression)),\n  _event_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not), field('operand', $._event_condition))),\n  _event_logical: ($) => choice(...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op,p]) =>\n    prec.left(p, seq(field('left', $._event_condition), field('operator', op), field('right', $._event_condition))))),\n\n  event_session_event: ($) =>\n    prec.right(\n      seq(\n        field('name', $.object_reference),\n        optional(\n          wrapped_in_parenthesis(\n            repeat(\n              choice(\n                seq($.keyword_set, comma_list($.option, true)),\n                seq($.keyword_action, paren_list($.object_reference, true)),\n                alias($._event_where, $.where),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // target_module_guid [(SET param=value [, ...])]\n  event_session_target: ($) =>\n    prec.right(\n      seq(\n        field('name', $.object_reference),\n        optional(wrapped_in_parenthesis(seq($.keyword_set, comma_list($.option, true)))),\n      ),\n    ),\n};\n",
+     "after": "  _drop_event_clause: ($) =>\n    seq($.keyword_drop, $.keyword_event, field('name', alias($._event_reference, $.object_reference))),\n  _drop_target_clause: ($) =>\n    seq($.keyword_drop, $.keyword_target, field('name', alias($._event_reference, $.object_reference))),\n\n  // event_module_guid [( [SET attr=value [, ...]] [ACTION (action [, ...])] [WHERE predicate] )]\n  // Event and action names are dotted (`sqlserver.sql_statement_completed`),\n  // so both are object_references rather than bare identifiers.\n  _event_where: ($) => seq($.keyword_where, field('predicate', $._event_condition)),\n  _event_condition: ($) => choice($._expression,\n    alias($._event_not, $.unary_expression), alias($._event_logical, $.binary_expression)),\n  _event_not: ($) => prec.left('logical_not', seq(field('operator', $.keyword_not), field('operand', $._event_condition))),\n  _event_logical: ($) => choice(...[[$.keyword_and, 'clause_connective'], [$.keyword_or, 'clause_disjunctive']].map(([op,p]) =>\n    prec.left(p, seq(field('left', $._event_condition), field('operator', op), field('right', $._event_condition))))),\n\n  event_session_event: ($) =>\n    prec.right(\n      seq(\n        field('name', alias($._event_reference, $.object_reference)),\n        optional(\n          wrapped_in_parenthesis(\n            repeat(\n              choice(\n                seq($.keyword_set, comma_list($.option, true)),\n                seq($.keyword_action, paren_list(alias($._event_reference, $.object_reference), true)),\n                alias($._event_where, $.where),\n              ),\n            ),\n          ),\n        ),\n      ),\n    ),\n\n  // target_module_guid [(SET param=value [, ...])]\n  event_session_target: ($) =>\n    prec.right(\n      seq(\n        field('name', alias($._event_reference, $.object_reference)),\n        optional(wrapped_in_parenthesis(seq($.keyword_set, comma_list($.option, true)))),\n      ),\n    ),\n};\n",
      "occurrences": 1
     }
    ]
@@ -1342,6 +1645,26 @@
      "before": "  // not inside a derived table or another CTE.\n  _query_expression: ($) => optional_parenthesis(choice($._select_statement, $.set_operation)),\n\n  _dml_read: ($) => seq(optional(optional_parenthesis($._cte)), $._query_expression),\n\n  ...select_rules,\n  ...set_rules,\n",
      "after": "  // not inside a derived table or another CTE.\n  _query_expression: ($) => optional_parenthesis(choice($._select_statement, $.set_operation)),\n\n  _dml_read: ($) => seq(optional($._cte), $._query_expression),\n\n  ...select_rules,\n  ...set_rules,\n",
      "occurrences": 1
+    },
+    {
+     "before": "comma_list(seq($._expression, optional(choice($.keyword_out, $.keyword_output))), true),",
+     "after": "seq($._exec_string, repeat(seq(',', seq($._expression, optional(choice($.keyword_out, $.keyword_output)))))),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _procedure_number: (_) => token(seq(';', /\\d+/)),",
+     "after": "  _exec_string: ($) => choice(\n    alias(choice($._literal_string, $._double_quoted_literal), $.literal),\n    alias($._tsql_parameter, $.field),\n    alias($._exec_string_concat, $.binary_expression),\n  ),\n  _exec_string_concat: ($) => prec.left('binary_plus', seq(field('left', $._exec_string),\n    field('operator', '+'), field('right', $._exec_string))),\n\n  _procedure_number: (_) => token(seq(';', /\\d+/)),",
+     "occurrences": 1
+    },
+    {
+     "before": "    alias($._tsql_parameter, $.field),",
+     "after": "    alias($.exec_string_variable, $.field),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _exec_string_concat: ($) =>",
+     "after": "  exec_string_variable: ($) => field('name', alias($._tsql_parameter, $.identifier)),\n  _exec_string_concat: ($) =>",
+     "occurrences": 1
     }
    ]
   },
@@ -1401,6 +1724,26 @@
     {
      "before": "        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          seq(\n            comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n            optional($.with_options),\n            optional($._not_for_replication),\n          ),\n          seq($.with_options, optional($._not_for_replication)),\n          $._not_for_replication,\n        ),\n      ),\n    ),\n",
      "after": "        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n          $.with_options,\n          seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n        ),\n      ),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        optional(choice($.keyword_filter, $.keyword_block)),\n        $.keyword_predicate,\n        field('function', $.invocation),",
+     "after": "        choice($.keyword_filter, $.keyword_block),\n        $.keyword_predicate,\n        field('function', alias($._security_invocation, $.invocation)),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _security_predicate_body: ($) =>",
+     "after": "  _security_invocation: ($) => seq($.object_reference, paren_list(field('parameter', alias($._call_term, $.term)))),\n\n  _security_predicate_body: ($) =>",
+     "occurrences": 1
+    },
+    {
+     "before": "  create_security_policy: ($) =>\n    prec.right(\n      seq(\n        $.keyword_create,\n        $.keyword_security,\n        $.keyword_policy,\n        field('name', $.object_reference),\n        comma_list(alias($._add_security_predicate, $.security_predicate), true),\n        optional($.with_options),\n        optional($._not_for_replication),\n      ),\n    ),\n",
+     "after": "  create_security_policy: ($) =>\n    prec.right(\n      seq(\n        $.keyword_create,\n        $.keyword_security,\n        $.keyword_policy,\n        field('name', $.object_reference),\n        comma_list(alias($._add_security_predicate, $.security_predicate), true),\n        optional(alias($._security_with_options, $.with_options)),\n        optional($._not_for_replication),\n      ),\n    ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  alter_security_policy: ($) =>\n    prec.right(\n      seq(\n        $.keyword_alter,\n        $.keyword_security,\n        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n          $.with_options,\n          seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n        ),\n      ),\n    ),\n",
+     "after": "  alter_security_policy: ($) =>\n    prec.right(\n      seq(\n        $.keyword_alter,\n        $.keyword_security,\n        $.keyword_policy,\n        field('name', $.object_reference),\n        choice(\n          comma_list(alias($._alter_security_predicate, $.security_predicate), true),\n          alias($._security_with_options, $.with_options),\n          seq(choice($.keyword_add, $.keyword_drop), $._not_for_replication),\n        ),\n      ),\n    ),\n",
      "occurrences": 1
     }
    ]
@@ -1566,6 +1909,41 @@
     {
      "before": "      ),\n    ),\n\n  // A relation with an optional trailing table hint, e.g. `dbo.t AS x WITH\n  // (NOLOCK)`, OPENJSON's schema followed by its own alias:\n  // `OPENJSON(@j) WITH (a INT '$.a') AS j`, or TABLESAMPLE. The schema and\n  // TABLESAMPLE sit here, after `relation` has reduced. Ordinary function\n  // hints stay outside relation; dedicated rowset schemas stay inside it.\n  // A hint item is an identifier followed by `,` or `)`, while a schema\n  // column is an identifier followed by a type.\n  _relation_with_hint: ($) =>\n    seq(\n      $.relation,\n      // TABLESAMPLE precedes a table hint and is independent of it — `FROM\n      // t TABLESAMPLE (10 PERCENT) WITH (NOLOCK)` is valid — so it is its\n      // own optional slot ahead of the table_hint/openjson_schema choice,\n      // not one more alternative inside that choice's mutual exclusion.\n      optional($.tablesample_clause),\n      optional(choice($.table_hint, seq($.openjson_schema, aliased_with_columns($)))),\n    ),\n\n  // OPENJSON(...) WITH (name type ['path'] [AS JSON] [, ...]) — the\n",
      "after": "      ),\n    ),\n\n  // Ordinary table-valued functions accept aliases, but no table hint or schema.\n  // OPENJSON and the dedicated rowset functions keep their schema inside relation.\n  _function_relation: ($) => prec.dynamic(1, seq($.invocation, aliased_with_columns($))),\n\n  _relation_with_hint: ($) =>\n    choice(\n      alias($._function_relation, $.relation),\n      seq(\n        $.relation,\n        // TABLESAMPLE precedes an independent optional table hint.\n        optional($.tablesample_clause),\n        optional(choice($.table_hint, seq($.openjson_schema, aliased_with_columns($)))),\n      ),\n    ),\n\n  // OPENJSON(...) WITH (name type ['path'] [AS JSON] [, ...]) — the\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  term: ($) =>\n    seq(\n      field(\n        'value',\n        choice(\n          $.all_fields,\n          $._expression,\n          alias($.select_compound_assignment, $.assignment),\n        ),\n      ),\n      optional($._column_alias),\n    ),\n\n",
+     "after": "  term: ($) => choice(\n    field('value', $.all_fields),\n    seq(field('value', choice($._expression, alias($.select_compound_assignment, $.assignment))),\n      optional($._column_alias)),\n  ),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "'(', field('parameter', $.term), optional(seq(',', field('parameter', $.term))), ')',",
+     "after": "'(', field('parameter', $._expression), optional(seq(',', field('parameter', $._expression))), ')',",
+     "occurrences": 1
+    },
+    {
+     "before": "paren_list(seq(field('parameter', $.term), repeat(seq(';', field('parameter', $.term)))), true),",
+     "after": "paren_list(seq(field('parameter', choice($.term, alias($._bulk_order_call, $.term))), repeat(seq(';', field('parameter', $.term)))), true),",
+     "occurrences": 1
+    },
+    {
+     "before": "  openjson_function_name: ($) =>",
+     "after": "  _bulk_order_call: ($) => seq($.keyword_order, $.ordered_columns, optional($.keyword_unique)),\n\n  openjson_function_name: ($) =>",
+     "occurrences": 1
+    },
+    {
+     "before": "        paren_list(seq(field('parameter', choice($.term, alias($._bulk_order_call, $.term))), repeat(seq(';', field('parameter', $.term)))), true),",
+     "after": "        paren_list(seq(field('parameter', $.term), repeat(seq(';', field('parameter', $.term)))), true),",
+     "occurrences": 1
+    },
+    {
+     "before": "      seq(\n        alias($.openjson_function_name, $.object_reference),",
+     "after": "      seq(alias($._bulk_rowset_name, $.object_reference), '(',\n        field('parameter', alias($._bulk_source, $.term)),\n        repeat(seq(',', field('parameter', choice($.term, alias($._bulk_order_call, $.term))))), ')'),\n      seq(\n        alias($.openjson_function_name, $.object_reference),",
+     "occurrences": 1
+    },
+    {
+     "before": "  _bulk_order_call: ($) => seq($.keyword_order, $.ordered_columns, optional($.keyword_unique)),",
+     "after": "  _bulk_rowset_name: ($) => field('name', alias($.keyword_openrowset, $.identifier)),\n  _bulk_source: ($) => seq($.keyword_bulk, field('value', $.literal)),\n  _bulk_order_call: ($) => seq($.keyword_order, $.ordered_columns, optional($.keyword_unique)),",
      "occurrences": 1
     }
    ]
