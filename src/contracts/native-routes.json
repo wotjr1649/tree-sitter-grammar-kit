@@ -3405,8 +3405,8 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
-     "bytes": 66425482
+     "sha256": "b3a545183a40f41048c8eda96d17dbdc3848d9f8b7de8be0f4d6f2eedcdc7463",
+     "bytes": 66409406
     },
     {
      "path": "src/scanner.c",
@@ -3441,18 +3441,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "6a8894724a94c0f18ca1c660aab4e9e2528fac9e23a21c4d0c926a75c5c456a3",
-      "bytes": 1199996
+      "sha256": "053b24e0c502c7259ea8546a93782d3a13c1bbc9d66a45a3a86d1cd363674783",
+      "bytes": 1199058
      },
      {
       "path": "node-types.json",
-      "sha256": "d9b5c380baf503086e3d22baa77a043c0db8245c4dd8d2f09c57bc262aeae1d7",
-      "bytes": 535171
+      "sha256": "0814edef5741154842eb7b5210a4f914eee7ce887d07e78258ef8eb9d3ebfd09",
+      "bytes": 535328
      },
      {
       "path": "parser.c",
-      "sha256": "46f7380fd0b0f3d47e974beb3e017696311c56d962cd0f544e0184f781d9db6f",
-      "bytes": 66425482
+      "sha256": "b3a545183a40f41048c8eda96d17dbdc3848d9f8b7de8be0f4d6f2eedcdc7463",
+      "bytes": 66409406
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -3574,8 +3574,8 @@
      {
       "path": "grammar/statements/security.js",
       "role": "js_helper",
-      "sha256": "f5c2939be34f42de83b77df83e2e7be02c2735f2941904407faf2cd33e0f7564",
-      "bytes": 14529
+      "sha256": "7de6892515bdb0ee30acfcb0b767dcbeeac3516ba7ff07b0a278e279c6170df7",
+      "bytes": 14279
      },
      {
       "path": "grammar/statements/select.js",
@@ -3933,8 +3933,8 @@
      },
      {
       "path": "grammar/statements/security.js",
-      "bytes": 14529,
-      "sha256": "f5c2939be34f42de83b77df83e2e7be02c2735f2941904407faf2cd33e0f7564"
+      "bytes": 14279,
+      "sha256": "7de6892515bdb0ee30acfcb0b767dcbeeac3516ba7ff07b0a278e279c6170df7"
      },
      {
       "path": "grammar/statements/service-broker.js",

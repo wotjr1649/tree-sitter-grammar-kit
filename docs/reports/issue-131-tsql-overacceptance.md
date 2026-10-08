@@ -23,6 +23,8 @@ MERGE는 hidden external guard로 바로 다음 세미콜론을 요구하며 실
 
 ## 문서와 실제 엔진의 불일치
 
+아래는 #131 완료 당시의 보류 기록이다. SECURITY POLICY의 후속 조사·구현 처분은 [#132 erratum 보고서](issue-132-security-policy-erratum.md)가 대체한다. ASSEMBLY 보류는 #134에서 독립적으로 추적한다.
+
 `ALTER SECURITY POLICY p NOT FOR REPLICATION;`은110·170 모두102이며 관련 조합도102/319다. 그러나 [Microsoft ALTER SECURITY POLICY 문서](https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-security-policy-transact-sql?view=sql-server-ver17)는 해당 suffix를 명시한다. 현재 지원 계약은2012~2025 source 합집합이다. 이 관측만으로 문서상 문법을 삭제하거나 “수정 완료”로 표시하지 않는다. engine-version 또는 문서 오류를 확인하는 [후속 Issue #132](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/132)로 추적한다.
 
 ASSEMBLY의 `ADD FILE ... AS PointSource`는110·170에서102지만 [Microsoft CLR 예제](https://learn.microsoft.com/en-us/sql/relational-databases/clr-integration/assemblies/altering-an-assembly?view=sql-server-ver17)가 bare 형태를 명시한다. ADD/DROP file_name의 bare·문자열 형태를 합집합 계약에 유지하고 [후속 Issue #134](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/134)로 engine·문서 revision 차이를 추적한다. 따라서 원래18개 중 순수 구문16개를 수정하고 문서/엔진 불일치2개를 보존한다.

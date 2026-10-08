@@ -1666,7 +1666,7 @@
       "source_utf8": "SELECT 0 AS issue131_anchor;\nALTER SECURITY POLICY p NOT FOR REPLICATION;",
       "edits": [],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+        {"step": 0, "syntax": "ERROR", "contains": [], "declarations": ""}
       ]
     },
     {
@@ -2011,6 +2011,418 @@
       "edits": [],
       "expect": [
         {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-add-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-drop-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p DROP NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p DROP NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p DROP NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-state-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p WITH (STATE=ON);",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON) NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON) NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-predicate-state-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE=ON);"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE=ON);",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-predicate-tail-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-add-state-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION WITH (STATE=ON);"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION WITH (STATE=ON);",
+          "replace": "ALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-state-add-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p WITH (STATE=ON);",
+      "edits": [
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON);",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON) ADD NOT FOR REPLICATION;"
+        },
+        {
+          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON) ADD NOT FOR REPLICATION;",
+          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE=ON);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-create-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE=ON) NOT FOR REPLICATION;",
+      "edits": [
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE=ON) NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t ADD NOT FOR REPLICATION;"
+        },
+        {
+          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t ADD NOT FOR REPLICATION;",
+          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE=ON) NOT FOR REPLICATION;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_security_policy"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "create_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-control-separate-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;\nALTER SECURITY POLICY dbo.p WITH (STATE=ON);\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-control-multi-predicate-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t, DROP BLOCK PREDICATE ON dbo.u;",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-control-next-cte-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;\nWITH c AS (SELECT 1 AS a) SELECT a FROM c;",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-gap-issue132-control-next-select-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p DROP NOT FOR REPLICATION;\nSELECT 1;",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "alter_security_policy"
+          ],
+          "declarations": ""
+        }
       ]
     }
   ]
