@@ -20,6 +20,7 @@ type TSQLDiagnostic struct {
 // table hint names/conflicts, COUNT/COUNT_BIG arity and empty scalar-function RETURN.
 // It also checks DML target hints, column permissions, local window frames and
 // fixed CREATE/ALTER trigger name, event and execution-context restrictions.
+// EXEC OUT/OUTPUT values must be local variables, including pass-through calls.
 // An empty result means these rules found no violation, not that SQL Server will
 // compile or execute the source. Catalog, type, collation and runtime checks are
 // outside this API. The caller binds the CST to the source and grammar identity.
@@ -70,6 +71,17 @@ func CheckTSQLContext(nodes []TreeNode, source []byte, encoding string) ([]TSQLD
 			scalarFunction[i] = scalarFunction[n.Parent]
 		}
 		switch n.Type {
+		case "exec_argument", "execute_statement":
+			previous := -1
+			for _, c := range children[i] {
+				if nodes[c].Extra {
+					continue
+				}
+				if (nodes[c].Type == "keyword_out" || nodes[c].Type == "keyword_output") && previous >= 0 && !x.localVariable(previous) {
+					add("TSQL_EXEC_OUTPUT_VARIABLE", previous)
+				}
+				previous = c
+			}
 		case "create_function", "alter_function":
 			scalarFunction[i] = true
 			for _, c := range children[i] {
@@ -204,6 +216,30 @@ func (x tsqlContext) functionName(i int) string {
 		return name
 	}
 	return ""
+}
+
+func (x tsqlContext) localVariable(i int) bool {
+	if x.nodes[i].Type != "field" {
+		return false
+	}
+	identifier := -1
+	for _, c := range x.children[i] {
+		if x.nodes[c].Extra {
+			continue
+		}
+		if x.nodes[c].Type != "identifier" || identifier >= 0 {
+			return false
+		}
+		identifier = c
+	}
+	if identifier < 0 {
+		return false
+	}
+	n := x.nodes[identifier]
+	// Four bytes cover the @/@@ prefix in every supported encoding, without
+	// copying arbitrarily long variable names or applying catalog/name limits.
+	prefix := x.source.span(n.StartByte, n.StartByte+min(4, n.EndByte-n.StartByte))
+	return strings.HasPrefix(prefix, "@") && !strings.HasPrefix(prefix, "@@")
 }
 
 func (x tsqlContext) boolean(i int, values []bool) bool {

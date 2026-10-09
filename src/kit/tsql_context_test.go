@@ -32,7 +32,7 @@ func tsqlContextCases(t *testing.T) []tsqlContextCase {
 	if err := json.Unmarshal(b, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if len(fixture.Cases) != 694 {
+	if len(fixture.Cases) != 726 {
 		t.Fatal("missing native snapshot cases")
 	}
 	registryBytes, err := os.ReadFile("../contracts/native-routes.json")
@@ -110,40 +110,51 @@ func TestTSQLContextNativeSnapshots(t *testing.T) {
 
 func TestTSQLContextEncodingsAndInputGuards(t *testing.T) {
 	var sample tsqlContextCase
+	samples := []tsqlContextCase{}
+	ids := []string{"hint-comma-conflict", "issue151-literal", "issue151-local", "issue151-global", "issue151-remote-literal", "issue151-remote-local"}
 	for _, c := range tsqlContextCases(t) {
+		if slices.Contains(ids, c.ID) {
+			samples = append(samples, c)
+		}
 		if c.ID == "hint-comma-conflict" {
 			sample = c
 		}
 	}
-	if sample.ID == "" {
+	if sample.ID == "" || len(samples) != len(ids) {
 		t.Fatal("missing encoding control")
 	}
-	for _, enc := range []string{EncodingUTF8, EncodingCP949, EncodingUTF16LE, EncodingUTF16BE} {
-		nodes, source := slices.Clone(sample.Nodes), []byte(sample.Source)
-		if enc == EncodingUTF16LE || enc == EncodingUTF16BE {
-			source = nil
-			for _, b := range []byte(sample.Source) {
-				if enc == EncodingUTF16LE {
-					source = append(source, b, 0)
-				} else {
-					source = append(source, 0, b)
+	for _, sample := range samples {
+		for _, enc := range []string{EncodingUTF8, EncodingCP949, EncodingUTF16LE, EncodingUTF16BE} {
+			nodes, source := slices.Clone(sample.Nodes), []byte(sample.Source)
+			if enc == EncodingUTF16LE || enc == EncodingUTF16BE {
+				source = nil
+				for _, b := range []byte(sample.Source) {
+					if enc == EncodingUTF16LE {
+						source = append(source, b, 0)
+					} else {
+						source = append(source, 0, b)
+					}
+				}
+				for i := range nodes {
+					nodes[i].StartByte *= 2
+					nodes[i].EndByte *= 2
+					nodes[i].StartPoint.Column *= 2
+					nodes[i].EndPoint.Column *= 2
 				}
 			}
-			for i := range nodes {
-				nodes[i].StartByte *= 2
-				nodes[i].EndByte *= 2
-				nodes[i].StartPoint.Column *= 2
-				nodes[i].EndPoint.Column *= 2
+			got, err := CheckTSQLContext(nodes, source, enc)
+			codes := make([]string, len(got))
+			for i, d := range got {
+				codes[i] = d.Code
 			}
-		}
-		got, err := CheckTSQLContext(nodes, source, enc)
-		if err != nil || len(got) != 1 || got[0].Code != "TSQL_TABLE_HINT_CONFLICT" {
-			t.Fatalf("%s: %v %v", enc, got, err)
-		}
-		if enc == EncodingUTF16LE {
-			nodes[1].StartByte++
-			if _, err := CheckTSQLContext(nodes, source, enc); !hasErrCode(err, "TREE_ENCODING_BOUNDARY") {
-				t.Fatalf("odd UTF16 node accepted: %v", err)
+			if err != nil || !slices.Equal(codes, sample.Codes) {
+				t.Fatalf("%s %s: %v %v", sample.ID, enc, got, err)
+			}
+			if enc == EncodingUTF16LE {
+				nodes[1].StartByte++
+				if _, err := CheckTSQLContext(nodes, source, enc); !hasErrCode(err, "TREE_ENCODING_BOUNDARY") {
+					t.Fatalf("odd UTF16 node accepted: %v", err)
+				}
 			}
 		}
 	}
