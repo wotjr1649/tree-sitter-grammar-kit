@@ -1967,8 +1967,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 10126,
-            "sha256": "8ca5319dccd98d79f14168a0436c31294d8803063a92ebc9d05f26e3bf666c84"
+            "bytes": 10194,
+            "sha256": "4e3bf4bf43e929049e33146729c35c8cf4c93dcc505c9bcbf231b0c24edbfa18"
           },
           {
             "path": "grammar/keywords.js",
@@ -1982,13 +1982,13 @@
           },
           {
             "path": "grammar/statements/create.js",
-            "bytes": 43503,
-            "sha256": "865ee11a8f7a86d62ceb5320f25985a5ee84b033a9876ec71da4ce98b859d45c"
+            "bytes": 43535,
+            "sha256": "226a84c94ef2d2ba61f4930860982de156373fd9ef38028bd924e58a73a3776a"
           },
           {
             "path": "grammar/expressions.js",
-            "bytes": 34055,
-            "sha256": "0205171e2acf16a998739f77da56d87a3184193369b62b2be7f79d8e14ffecfc"
+            "bytes": 34198,
+            "sha256": "55a846b087946184e79e34a67be069adc1123ffefc18ae07b640b83cb3377c54"
           },
           {
             "path": "grammar/helpers.js",
@@ -2002,8 +2002,8 @@
           },
           {
             "path": "grammar/statements/drop.js",
-            "bytes": 8398,
-            "sha256": "2de2bba8ae424cb4620646eb3b5c0683282f5c1697f4259e2871eeb5e100a080"
+            "bytes": 8397,
+            "sha256": "d07687b1f42ed1b38f3da352f9c86ffb4484fe068a1820bbeadb1c6b3e2dcdeb"
           },
           {
             "path": "grammar/statements/index.js",
@@ -2022,8 +2022,8 @@
           },
           {
             "path": "grammar/statements/alter.js",
-            "bytes": 33165,
-            "sha256": "2806edd4ec75c16a23009436377d7b9f41e14467451c3390e97c5091d63331af"
+            "bytes": 33568,
+            "sha256": "0c1ae9dbfffc3043c79720c22698f60582c06de3213e857ad81b29e1d5688b29"
           },
           {
             "path": "grammar/statements/create-function.js",

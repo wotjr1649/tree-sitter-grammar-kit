@@ -128,7 +128,9 @@
   "tsql-issue148-provider-schema-boundary",
   "tsql-issue141-regexp-predicate",
   "tsql-issue149-write-target-argument",
-  "tsql-issue149-cache-binary-handle"
+  "tsql-issue149-cache-binary-handle",
+  "tsql-issue150-table-reserved",
+  "tsql-issue150-xml-schema-name-drop"
  ],
  "files": [
   {
@@ -377,6 +379,11 @@
     {
      "before": "    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update],\n  },\n\n",
      "after": "    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update],\n    write_function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update, $.keyword_openquery, $.keyword_openrowset],\n  },\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  reserved: {\n    global: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update],\n    write_function_name: ($) => [$.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update, $.keyword_openquery, $.keyword_openrowset],\n  },",
+     "after": "  reserved: {\n    global: ($) => [$.keyword_table, $.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    column_constraint: ($) => [$.keyword_table, $.keyword_from, $.keyword_as, $.keyword_generated, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with],\n    function_name: ($) => [$.keyword_table, $.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update],\n    write_function_name: ($) => [$.keyword_table, $.keyword_from, $.keyword_as, $.keyword_percent, $.keyword_key, $.keyword_default, $.keyword_schema, $.keyword_not, $.keyword_with, $.keyword_order, $.keyword_update, $.keyword_openquery, $.keyword_openrowset],\n  },",
      "occurrences": 1
     }
    ]
@@ -1023,6 +1030,11 @@
      "before": "  _predicate_expression: ($) => prec(1, choice(\n    alias($._predicate_binary, $.binary_expression), alias($._predicate_logical, $.binary_expression),\n    alias($._predicate_between, $.between_expression), $.exists,\n    $.graph_match_predicate, alias($.fulltext_predicate, $.invocation), alias($._update_predicate, $.invocation),\n    alias($._predicate_parentheses, $.parenthesized_expression),\n    alias($._predicate_not, $.unary_expression),\n  )),\n",
      "after": "  _predicate_expression: ($) => prec(1, choice(\n    alias($._predicate_binary, $.binary_expression), alias($._predicate_logical, $.binary_expression),\n    alias($._predicate_between, $.between_expression), $.exists,\n    $.graph_match_predicate, alias($.fulltext_predicate, $.invocation), alias($._update_predicate, $.invocation), alias($.regexp_predicate, $.invocation),\n    alias($._predicate_parentheses, $.parenthesized_expression),\n    alias($._predicate_not, $.unary_expression),\n  )),\n",
      "occurrences": 1
+    },
+    {
+     "before": "  object_reference: ($) => object_reference($, $.identifier),\n",
+     "after": "  object_reference: ($) => object_reference($, $.identifier),\n  _xml_schema_reference: ($) => choice(field('name', $.identifier),\n    seq(field('schema', $.identifier), '.', field('name', $.identifier))),\n",
+     "occurrences": 1
     }
    ]
   },
@@ -1297,6 +1309,26 @@
     {
      "before": "            // word, so it is its own keyword rather than two keywords or a\n            // free identifier (a free identifier would also accept CLEAR\n            // followed by any name). The handle is a varbinary literal or a\n            // variable. A bare identifier would also match, and an optional\n            // one in this trailing slot swallows a following statement's\n            // label.\n            seq(\n              $.keyword_clear,\n              $.keyword_procedure_cache,\n              optional(choice($.literal, alias($._tsql_parameter, $.identifier))),\n            ),\n          ),\n",
      "after": "            // word, so it is its own keyword rather than two keywords or a\n            // free identifier (a free identifier would also accept CLEAR\n            // followed by any name). The handle is a binary literal. A variable or other\n            // literal is rejected by the engine. No identifier alternative\n            // may consume a following statement's label.\n            seq(\n              $.keyword_clear,\n              $.keyword_procedure_cache,\n              optional(alias(/0[xX][0-9A-Fa-f]*/, $.literal)),\n            ),\n          ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  alter_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_alter,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      field('name', $.object_reference),\n      $.keyword_add,\n      $._expression,\n    ),",
+     "after": "  alter_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_alter,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      field('name', alias($._xml_schema_reference, $.object_reference)),\n      $.keyword_add,\n      $._expression,\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "import { comma_list, paren_list, wrapped_in_parenthesis } from '../helpers.js';\n",
+     "after": "import { make_keyword, comma_list, paren_list, wrapped_in_parenthesis } from '../helpers.js';\n",
+     "occurrences": 1
+    },
+    {
+     "before": "          seq(choice($.keyword_enable, $.keyword_disable), $.identifier, optional($.with_options)),\n          seq($.keyword_set, paren_list($.option, true)),\n",
+     "after": "          seq(choice($.keyword_enable, $.keyword_disable), $.identifier, optional($.with_options)),\n          seq($.keyword_set, paren_list(choice($.option, alias($._lock_escalation_table_option, $.option)), true)),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  _alter_table_drop_item: ($) =>\n",
+     "after": "  _lock_escalation_table_option: ($) => seq(\n    field('name', alias($._lock_escalation_name, $.identifier)), '=',\n    field('value', alias(choice($.keyword_table, $.keyword_auto, $.keyword_disable), $.identifier))),\n  _lock_escalation_name: (_) => token(prec(1, make_keyword('lock_escalation'))),\n\n  _alter_table_drop_item: ($) =>\n",
      "occurrences": 1
     }
    ]
@@ -1588,6 +1620,11 @@
      "before": "      $.keyword_route,\n      field('name', $.identifier),\n      optional(seq($.keyword_authorization, $.identifier)),\n      alias($._route_with_clause, $.with_clause),\n    ),\n\n  // tsgk P2-38: a named rule, so ALTER SERVER AUDIT's repeated clause keeps\n",
      "after": "      $.keyword_route,\n      field('name', $.identifier),\n      optional(seq($.keyword_authorization, $.identifier)),\n      alias($._create_route_with_clause, $.with_clause),\n    ),\n\n  // tsgk P2-38: a named rule, so ALTER SERVER AUDIT's repeated clause keeps\n",
      "occurrences": 1
+    },
+    {
+     "before": "  create_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      field('name', $.object_reference),\n      $.keyword_as,\n      $._expression,\n    ),",
+     "after": "  create_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_create,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      field('name', alias($._xml_schema_reference, $.object_reference)),\n      $.keyword_as,\n      $._expression,\n    ),",
+     "occurrences": 1
     }
    ]
   },
@@ -1647,6 +1684,16 @@
     {
      "before": "  drop_role: ($) =>\n    seq(\n      $.keyword_drop,\n      optional($.keyword_server),\n      $.keyword_role,\n      optional($._if_exists),\n      field('name', $.identifier),\n    ),\n\n",
      "after": "  drop_role: ($) =>\n    seq(\n      $.keyword_drop,\n      choice(seq($.keyword_server, $.keyword_role), seq($.keyword_role, optional($._if_exists))),\n      field('name', $.identifier),\n    ),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  drop_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_drop,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      optional($._if_exists),\n      field('name', $.object_reference),\n    ),",
+     "after": "  drop_xml_schema_collection: ($) =>\n    seq(\n      $.keyword_drop,\n      $.keyword_xml,\n      $.keyword_schema,\n      $.keyword_collection,\n      field('name', alias($._xml_schema_reference, $.object_reference)),\n    ),",
+     "occurrences": 1
+    },
+    {
+     "before": "// DROP XML SCHEMA COLLECTION [IF EXISTS] name",
+     "after": "// DROP XML SCHEMA COLLECTION [schema.]name",
      "occurrences": 1
     }
    ]
