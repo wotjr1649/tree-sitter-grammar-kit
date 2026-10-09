@@ -148358,7 +148358,7 @@
             "kind": "production",
             "variant_of": null,
             "fact": "Query hints (Transact-SQL) <table_hint>",
-            "production": "Query hints (Transact-SQL) / <table_hint> [alt 1/23]: NOEXPAND [ , INDEX ( <index_value> [ ,...n ] ) | INDEX = ( <index_value> ) ]",
+            "production": "Query hints (Transact-SQL) / <table_hint> [alt 1/23]: NOEXPAND [ , INDEX ( <index_value> [ ,...n ] ) | INDEX = <index_value> ]",
             "ref": "https://learn.microsoft.com/en-us/sql/t-sql/queries/hints-transact-sql-query?view=sql-server-ver17#syntax"
           },
           {
@@ -148374,7 +148374,7 @@
             "kind": "production",
             "variant_of": null,
             "fact": "Query hints (Transact-SQL) <table_hint>",
-            "production": "Query hints (Transact-SQL) / <table_hint> [alt 3/23]: INDEX = ( <index_value> )",
+            "production": "Query hints (Transact-SQL) / <table_hint> [alt 3/23]: INDEX = <index_value>",
             "ref": "https://learn.microsoft.com/en-us/sql/t-sql/queries/hints-transact-sql-query?view=sql-server-ver17#syntax"
           },
           {
@@ -148566,7 +148566,7 @@
             "kind": "production",
             "variant_of": null,
             "fact": "Table hints (Transact-SQL) <table_hint>",
-            "production": "Table hints (Transact-SQL) / <table_hint> [alt 3/23]: INDEX = ( <index_value> )",
+            "production": "Table hints (Transact-SQL) / <table_hint> [alt 3/23]: INDEX = <index_value>",
             "ref": "https://learn.microsoft.com/en-us/sql/t-sql/queries/hints-transact-sql-table?view=sql-server-ver17#syntax"
           },
           {

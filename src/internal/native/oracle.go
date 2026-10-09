@@ -203,7 +203,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	policy := PolicyRef(op, n.Output)
 	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: n.Schema, SHA256: n.SHA256}, policy)
 	var queries []QuerySource
-	var qids []kit.IdentityRef
+	qids := make([]kit.IdentityRef, 0, len(prof.Queries))
 	for _, q := range prof.Queries {
 		queries = append(queries, QuerySource{ID: q.ID, Source: []byte(q.Source)})
 		qids = append(qids, kit.IdentityRef{Role: "query:" + q.ID, Schema: "tsgk-query-source/r1", SHA256: sha([]byte(q.Source))})

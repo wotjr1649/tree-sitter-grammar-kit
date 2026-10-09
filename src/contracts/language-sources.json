@@ -1967,33 +1967,33 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 9268,
-            "sha256": "d393821cb95382777f1bb85d0abc136a7368efe1a58a1c147e39124e6af070bd"
+            "bytes": 10194,
+            "sha256": "4e3bf4bf43e929049e33146729c35c8cf4c93dcc505c9bcbf231b0c24edbfa18"
           },
           {
             "path": "grammar/keywords.js",
-            "bytes": 32203,
-            "sha256": "2ca1e1e513d6894ac55aebac441e0ec269c8f70921a3be7acadecb89c4658f3a"
+            "bytes": 32288,
+            "sha256": "b02d127f34386ab623971419dcb25a2a0b7b0ec4ea624114de7e045a710b8b46"
           },
           {
             "path": "grammar/column-lists.js",
-            "bytes": 17281,
-            "sha256": "24ef22f8732ee19d2ba8411ea1d22bf975a16da8037c1b0826960ebcc1105386"
+            "bytes": 21694,
+            "sha256": "40b0fc4930dc2b18bb10b906a6ceca92c2f5c28aaf701875aab670298d97f91f"
           },
           {
             "path": "grammar/statements/create.js",
-            "bytes": 42662,
-            "sha256": "5789d3f89914cf91d3f5096675304c77510119b7361d475066a8cbd8161b6a88"
+            "bytes": 43535,
+            "sha256": "226a84c94ef2d2ba61f4930860982de156373fd9ef38028bd924e58a73a3776a"
           },
           {
             "path": "grammar/expressions.js",
-            "bytes": 28686,
-            "sha256": "2b241e6ed336b0c3e29dbcbd2abe8b354aec93ef329e3702fd045d63fcaac4ff"
+            "bytes": 34198,
+            "sha256": "55a846b087946184e79e34a67be069adc1123ffefc18ae07b640b83cb3377c54"
           },
           {
             "path": "grammar/helpers.js",
-            "bytes": 7819,
-            "sha256": "2cc0d7dab84aaf548fdd07c8d12dcb582290210bfb436c2eeb6b1415616b6111"
+            "bytes": 7910,
+            "sha256": "2c58f9dcf369865435eadfbb334190666caae2c1c590a82fef3d9ab226255684"
           },
           {
             "path": "grammar/statements/create-procedure.js",
@@ -2002,33 +2002,33 @@
           },
           {
             "path": "grammar/statements/drop.js",
-            "bytes": 8398,
-            "sha256": "2de2bba8ae424cb4620646eb3b5c0683282f5c1697f4259e2871eeb5e100a080"
+            "bytes": 8397,
+            "sha256": "d07687b1f42ed1b38f3da352f9c86ffb4484fe068a1820bbeadb1c6b3e2dcdeb"
           },
           {
             "path": "grammar/statements/index.js",
-            "bytes": 36372,
-            "sha256": "94014ac511134a52ab1e9009a916e185dd886dd20246660ea313711df7f9dd22"
+            "bytes": 37078,
+            "sha256": "cb5dc6d39d37512e21c73c21e51e99351b49cb35d470e1b1743550cae09f78ad"
           },
           {
             "path": "grammar/statements/select.js",
-            "bytes": 32125,
-            "sha256": "341b04fe2bd476ce795682322a11e93395f602ff54adfcd9d360d3cb078a9c5e"
+            "bytes": 34459,
+            "sha256": "baaf42870b76380f36b4dbfacf36b86702d5f48f5e6a801282a812c90424b183"
           },
           {
             "path": "src/scanner.c",
-            "bytes": 8262,
-            "sha256": "fcf51e93929e24e88493f20ee5b5136f2b2e477c9d8edf05744594e9d6492a1c"
+            "bytes": 9351,
+            "sha256": "766459e2f9abf42bef3a8436c487ec797e5f6f6a99332eb5ef2db5604f367f3d"
           },
           {
             "path": "grammar/statements/alter.js",
-            "bytes": 33147,
-            "sha256": "8a227439c791e24d63be46159a3da6ed61c8954c302888f24d57e20e3fb8f90d"
+            "bytes": 33568,
+            "sha256": "0c1ae9dbfffc3043c79720c22698f60582c06de3213e857ad81b29e1d5688b29"
           },
           {
             "path": "grammar/statements/create-function.js",
-            "bytes": 3309,
-            "sha256": "1598bc1d71c7842e64f56ba7b7aa30bba337255ebe8cef98a9d17e0d6cfcb798"
+            "bytes": 3335,
+            "sha256": "dc3cdc5f23a1dd1c027d4a87af5572fa3c6bce222738f19b33240cedf102e992"
           },
           {
             "path": "grammar/statements/dml-shared.js",
@@ -2047,8 +2047,8 @@
           },
           {
             "path": "grammar/statements/security.js",
-            "bytes": 14279,
-            "sha256": "7de6892515bdb0ee30acfcb0b767dcbeeac3516ba7ff07b0a278e279c6170df7"
+            "bytes": 14490,
+            "sha256": "6be6f3befa89dd83ac2d294818ce62c449cbfa4e7202a56b69675ebb56ee5854"
           },
           {
             "path": "grammar/statements/service-broker.js",
@@ -2072,8 +2072,8 @@
           },
           {
             "path": "grammar/statements/merge.js",
-            "bytes": 3418,
-            "sha256": "d3c821dfcdfcc53aae4cd7f044da1b2544073cf461b4150e292cc5c887353381"
+            "bytes": 3438,
+            "sha256": "64bd51d24cfafc0710994831d7f6e8ae97a4ea848ff7f49c0fa7ace3da6524d7"
           }
         ]
       }

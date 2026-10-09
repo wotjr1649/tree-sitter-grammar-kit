@@ -213,6 +213,36 @@ func TestQueryLimits(t *testing.T) {
 	})
 }
 
+// Leading padding can put a requested byte before the root's visible range.
+func TestAPIBytePointsOutsideRoot(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	src := "    a = f(1);\n"
+	r := runOracleCase(t, b, oracleContext(true), src, nil, kit.NativePoint{ID: "before-root", Byte: 0})
+	if r.ExecutionStatus != kit.StatusCompleted || len(r.Steps) != 1 || r.Steps[0].Incremental.Tree.Nodes[0].StartByte == 0 {
+		t.Fatalf("leading padding control did not produce a root after byte zero: %s", r.ExecutionStatus)
+	}
+	if r.Oracle.API != ClaimPass {
+		t.Fatalf("root before-range lookup rejected: %+v", r.Oracle)
+	}
+	resp, err := DecodeResponse(r.Raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var a WireAPI
+	if err := jsonv2.Unmarshal(resp.Steps[0].Incremental.API, &a); err != nil {
+		t.Fatal(err)
+	}
+	for k := 1; k <= 2; k++ {
+		bad := a
+		bad.Points = slices.Clone(a.Points)
+		bad.Points[0] = slices.Clone(a.Points[0])
+		bad.Points[0][k] = 1 // A child cannot stand in for the root outside its range.
+		if d, _ := compareAPI(r.Steps[0].Incremental.Tree.Nodes, &bad); d == nil {
+			t.Fatalf("outside-root child accepted for lookup column %d", k)
+		}
+	}
+}
+
 // S06-A07: the node API, field lookups, cursor positions and byte lookups agree with the
 // cursor serialization, including ERROR, MISSING and extra (comment) nodes.
 func TestAPIObservations(t *testing.T) {

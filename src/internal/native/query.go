@@ -369,9 +369,10 @@ func compareAPI(nodes []kit.TreeNode, a *WireAPI) (*APIDifference, []APIDifferen
 	}
 	for _, r := range a.Points {
 		b := r[0]
+		outsideRoot := b < int64(nodes[0].StartByte) || b > int64(nodes[0].EndByte)
 		for k, check := range []string{"descendant_for_byte", "named_descendant_for_byte"} {
 			x := r[1+k]
-			if x < 0 || x >= int64(n) || int64(nodes[x].StartByte) > b || b > int64(nodes[x].EndByte) || (k == 1 && !nodes[x].Named && x != 0) {
+			if x < 0 || x >= int64(n) || (outsideRoot && x != 0) || (!outsideRoot && (int64(nodes[x].StartByte) > b || b > int64(nodes[x].EndByte) || (k == 1 && !nodes[x].Named && x != 0))) {
 				return diff(check, x, b, -1), divergences
 			}
 		}

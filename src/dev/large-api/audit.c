@@ -187,7 +187,8 @@ static void audit_tree(Req *r, TSTree *tree, Checks *checks, uint32_t *count, ui
     TSNode found[] = {ts_node_descendant_for_byte_range(root,b,b), ts_node_named_descendant_for_byte_range(root,b,b)};
     for (uint32_t named = 0; named < 2; named++) {
       int64_t i = idx_of(&a.map, found[named]);
-      bool valid = i >= 0 && i < n && a.nodes[i].start <= b && b <= a.nodes[i].end && (!named || a.nodes[i].named || i == 0);
+      bool outside_root = b < a.nodes[0].start || b > a.nodes[0].end;
+      bool valid = outside_root ? i == 0 : (i >= 0 && i < n && a.nodes[i].start <= b && b <= a.nodes[i].end && (!named || a.nodes[i].named || i == 0));
 #ifdef TSGK_AUDIT_FAULT_POINT
       valid = false;
 #endif
