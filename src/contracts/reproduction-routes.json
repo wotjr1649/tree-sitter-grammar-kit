@@ -85,16 +85,16 @@
       "candidate": "P05-CSHARP-REMEDY-r5",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 344251,
-          "sha256": "f1bdc1afa1d0c9ecaade041c6c83a7527eccd720d1a173119fc66d6661e0793b"
+          "bytes": 417988,
+          "sha256": "d915178bbd79b9a05268d030fb8f260dda9f7760e293f6dd96c7d98a3fa41d2a"
         },
         "node-types.json": {
           "bytes": 134115,
           "sha256": "59a2e3de1ec46759a715b04424b0385f587975e72e34d3029c455e0aa2acd56d"
         },
         "parser.c": {
-          "bytes": 33334001,
-          "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad"
+          "bytes": 33628390,
+          "sha256": "ce88abe0be276e2ac7ab0bfc5fe43083c426e8deab4af6fd339836f7bc709466"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
@@ -887,16 +887,16 @@
       "candidate": "P05-MSSQL-REMEDY-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 1442637,
-          "sha256": "a8c4de2381558731fca75bee4f47d68119bd369f633cbc572da814f3707ffa37"
+          "bytes": 1442645,
+          "sha256": "4f6cc99d25c7c8c1cf4658cae52b85abe75c935fe36129c65622e810bad6f2e7"
         },
         "node-types.json": {
           "bytes": 535421,
           "sha256": "66a0cbdca8007c6573d3855bc1a35d3ecc8215d52e41ee3a8ef6442447e51e21"
         },
         "parser.c": {
-          "bytes": 70688986,
-          "sha256": "c3e74335829fcacfb4c15c82e312bc7623c657519a91973c1c33d1998e3af320"
+          "bytes": 70688831,
+          "sha256": "e2f30b9321079eb4faca4676ffd487f41d48473ac0a5b1bd174f99fda0dd9557"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,

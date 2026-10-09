@@ -70,6 +70,8 @@ func TestValidateTree(t *testing.T) {
 		mutate func([]TreeNode) []TreeNode
 		code   string
 	}{
+		"root-field":     {func(n []TreeNode) []TreeNode { f := "name"; n[0].Field = &f; return n }, "TREE_FIELD_INVALID"},
+		"empty-field":    {func(n []TreeNode) []TreeNode { f := ""; n[2].Field = &f; return n }, "TREE_FIELD_INVALID"},
 		"empty":          {func(n []TreeNode) []TreeNode { return nil }, "TREE_EMPTY"},
 		"two-roots":      {func(n []TreeNode) []TreeNode { n[1].Parent = -1; return n }, "TREE_PARENT_INVALID"},
 		"forward-parent": {func(n []TreeNode) []TreeNode { n[2].Parent = 3; return n }, "TREE_PARENT_INVALID"},

@@ -156,6 +156,9 @@ func ValidateTree(nodes []TreeNode, inputBytes uint64) error {
 		if i > 0 && len(stack) == 0 {
 			return bad("TREE_PREORDER_INVALID")
 		}
+		if n.Field != nil && (i == 0 || *n.Field == "") {
+			return bad("TREE_FIELD_INVALID")
+		}
 		stack = append(stack, int64(i))
 		if n.StartByte > n.EndByte || uint64(n.EndByte) > inputBytes {
 			return bad("TREE_RANGE_INVALID")

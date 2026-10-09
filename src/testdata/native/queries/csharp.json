@@ -45,6 +45,14 @@
     {
       "id": "q.probe-V14b",
       "source": "(constructor_declaration name: (identifier) @ctor)\n(event_declaration name: (identifier) @event)\n(accessor_declaration body: (arrow_expression_clause) @field_accessor)\n(operator_declaration operator: _ @op)\n"
+    },
+    {
+      "id": "q.issue152-name",
+      "source": "(variable_declarator name: (identifier) @name)"
+    },
+    {
+      "id": "q.issue153-eof",
+      "source": "(preproc_define) @define\n(preproc_if) @conditional"
     }
   ],
   "cases": [
@@ -551,6 +559,397 @@
               "name": "op",
               "type": "++",
               "text": "++"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-cf-part-query",
+      "source_case": "issue152-cf-part",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "a​b"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-lm-start-query",
+      "source_case": "issue152-lm-start",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "ͺ"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-ascii-escape-query",
+      "source_case": "issue152-ascii-escape",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "\\u0061"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-escaped-keyword-query",
+      "source_case": "issue152-escaped-keyword",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "cl\\u0061ss"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-verbatim-query",
+      "source_case": "issue152-verbatim",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "@class"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-supplementary-query",
+      "source_case": "issue152-supplementary",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "\\U00010400"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-supplementary-literal-query",
+      "source_case": "issue152-supplementary-literal",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "𐐀"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-cf-escape-query",
+      "source_case": "issue152-cf-escape",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "a\\u200Bb"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-combining-part-query",
+      "source_case": "issue152-combining-part",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "á"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-connector-part-query",
+      "source_case": "issue152-connector-part",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "a‿"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-upper-escape-query",
+      "source_case": "issue152-upper-escape",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "\\U00000041"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-nl-start-query",
+      "source_case": "issue152-nl-start",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "Ⅰ"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-digit-part-query",
+      "source_case": "issue152-digit-part",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "a\\u0031"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-unicode17-literal-query",
+      "source_case": "issue152-unicode17-literal",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "𞛀"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue152-unicode17-escape-query",
+      "source_case": "issue152-unicode17-escape",
+      "features": [
+        "csharp-B01"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue152-name",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "name",
+              "type": "identifier",
+              "text": "\\U0001E6C0"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue153-define-eof-query",
+      "source_case": "issue153-define-eof",
+      "features": [
+        "csharp-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue153-eof",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "define",
+              "type": "preproc_define",
+              "text": "#define A"
+            }
+          ],
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "issue153-conditional-eof-query",
+      "source_case": "issue153-conditional-eof",
+      "features": [
+        "csharp-B03"
+      ],
+      "query_expect": [
+        {
+          "query": "q.issue153-eof",
+          "step": 0,
+          "status": "COMPLETED",
+          "code": "",
+          "captures": [
+            {
+              "name": "conditional",
+              "type": "preproc_if",
+              "text": "#if true\nclass C {}\n#endif"
             }
           ],
           "error": null

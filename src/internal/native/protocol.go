@@ -334,6 +334,11 @@ func SplitFrame(out []byte) ([]byte, error) {
 
 // Nodes converts compact node arrays to public nodes and checks the name-table indices.
 func Nodes(rows [][]int64, types, fields []string) ([]kit.TreeNode, error) {
+	for _, field := range fields {
+		if field == "" {
+			return nil, invalid("RESPONSE_INVALID", errors.New("empty field name"))
+		}
+	}
 	out := make([]kit.TreeNode, 0, len(rows))
 	for i, r := range rows {
 		bad := func(what string) error {
@@ -341,6 +346,9 @@ func Nodes(rows [][]int64, types, fields []string) ([]kit.TreeNode, error) {
 		}
 		if len(r) != 10 {
 			return nil, bad("arity")
+		}
+		if i == 0 && r[0] != -1 {
+			return nil, bad("root parent")
 		}
 		for k := 4; k < 10; k++ {
 			if r[k] < 0 || r[k] > 0xffffffff {
@@ -352,6 +360,9 @@ func Nodes(rows [][]int64, types, fields []string) ([]kit.TreeNode, error) {
 		}
 		n := kit.TreeNode{Parent: r[0], Type: types[r[1]], Named: r[3]&1 != 0, Extra: r[3]&2 != 0, IsError: r[3]&4 != 0, HasError: r[3]&8 != 0, IsMissing: r[3]&16 != 0,
 			StartByte: uint32(r[4]), EndByte: uint32(r[5]), StartPoint: kit.Point{Row: uint32(r[6]), Column: uint32(r[7])}, EndPoint: kit.Point{Row: uint32(r[8]), Column: uint32(r[9])}}
+		if r[0] == -1 && r[2] >= 0 {
+			return nil, bad("root field")
+		}
 		if r[2] >= 0 {
 			f := fields[r[2]]
 			n.Field = &f
@@ -471,7 +482,7 @@ func checkTree(w WireTree, sourceBytes uint64, nodes uint64, req Request) (Tree,
 			if err != nil {
 				return t, err
 			}
-			if len(ns) > 0 && !p.Truncated {
+			if len(ns) > 0 {
 				if err := kit.ValidateTree(ns, sourceBytes); err != nil {
 					return t, invalid("RESPONSE_INVALID", err)
 				}
