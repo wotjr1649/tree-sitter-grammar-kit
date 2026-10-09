@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf16"
 	"unicode/utf8"
 )
@@ -703,6 +704,44 @@ var (
 	CommandAPIProperties = []string{"CommandText"}
 )
 
+// C# 6.4.3 compares identifiers after removing @, decoding Unicode escapes,
+// and removing formatting characters. Keep source ranges and variable spelling intact.
+func csharpIdentifierName(s string) string {
+	s = strings.TrimPrefix(s, "@")
+	var name strings.Builder
+	for len(s) > 0 {
+		var r rune
+		var n int
+		if s[0] == '\\' {
+			if len(s) < 2 || (s[1] != 'u' && s[1] != 'U') {
+				return ""
+			}
+			n = 6
+			if s[1] == 'U' {
+				n = 10
+			}
+			if len(s) < n {
+				return ""
+			}
+			value, err := strconv.ParseUint(s[2:n], 16, 32)
+			if err != nil || !utf8.ValidRune(rune(value)) {
+				return ""
+			}
+			r = rune(value)
+		} else {
+			r, n = utf8.DecodeRuneInString(s)
+			if r == utf8.RuneError && n == 1 {
+				return ""
+			}
+		}
+		if !unicode.Is(unicode.Cf, r) {
+			name.WriteRune(r)
+		}
+		s = s[n:]
+	}
+	return name.String()
+}
+
 func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 	lastIdent := map[int64]Capture{} // type node -> its last identifier
 	for _, n := range []struct{ parent, child string }{{"qn", "qn.name"}, {"aq", "aq.name"}, {"gn", "gn.name"}} {
@@ -762,7 +801,7 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 			continue
 		}
 		id, ok := resolve(t)
-		if !ok || !slices.Contains(CommandAPITypes, text(src, id)) {
+		if !ok || !slices.Contains(CommandAPITypes, csharpIdentifierName(text(src, id))) {
 			continue
 		}
 		if v, ok := argExpr[pc[1].Node]; ok {
@@ -778,7 +817,7 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 			right[pc[0].Node] = pc[1]
 		}
 		for as, l := range left {
-			if r, ok := right[as]; ok && slices.Contains(CommandAPIProperties, text(src, l)) {
+			if r, ok := right[as]; ok && slices.Contains(CommandAPIProperties, csharpIdentifierName(text(src, l))) {
 				sites = append(sites, site{as, r})
 			}
 		}

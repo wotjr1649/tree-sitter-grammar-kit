@@ -1,0 +1,40 @@
+# C#·T-SQL 잔여 구문 경계 보완 (#157–#166)
+
+기준은 main `e18a819c74715d4cb756305822d71caff717c60f`다. 공개 합성 입력으로 재현한 결함을 원인별 Issue로 분리하고 C2 patch, canonical 계약, native fixture와 generated identity를 함께 갱신했다. Go core는 offline API 경계를 유지한다.
+
+| Issue | 원인과 수정 | 검증에서 구분한 경계 |
+|---|---|---|
+| [#157](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/157) | 전처리 메시지와 지시문 token의 물리적 줄 경계를 고정 | slash·backslash 메시지 뒤 declaration과 comment의 CST 범위를 보존; recovery·EOF·Unicode newline·raw string 대조 |
+| [#158](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/158) | GO의 line guard, 같은 줄 repeat count, 일반 GO identifier 경로 분리 | 다음 줄 숫자는 count가 아님; qualified/delimited 이름과 일반 field/function 경로 보존 |
+| [#159](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/159) | IN/VALUES 목록의 필수 element와 scalar 괄호의 단일 expression | CHANGETABLE의 두 구문 구분; grouping tuple·빈 grand-total set은 GROUP BY 문맥에 한정 |
+| [#160](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/160) | PP 조건식에서 일반 literal과 verbatim symbol 제거 | Boolean literal·conditional symbol·허용 operator의 우선순위와 EOF 보존 |
+| [#161](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/161) | define/undef의 conditional symbol 규칙 분리 | raw true/false와 @symbol 거부; 유효한 Unicode escape spelling 보존 |
+| [#162](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/162) | #line 전용 decimal token과 raw quoted filename | enhanced #line 유지; filename의 backslash를 일반 string escape로 해석하지 않음 |
+| [#163](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/163) | 빈/일반 pragma text와 known pragma token 경계 | 정상 warning ID를 개별 node로 보존; warning-only compiler 진단을 fatal grammar 오류로 바꾸지 않음 |
+| [#164](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/164) | C# command API 비교에 lexical identifier 정규화 적용 | @·유효한 Unicode escape·formatting character만 정규화; 원문 source span은 유지 |
+| [#165](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/165) | block comment의 모든 nesting level에서 closing mark 요구 | EOF에서 닫히지 않은 주석을 성공한 extra로 반환하지 않음 |
+| [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166) | CHANGETABLE의 CHANGES/VERSION 인자를 전용 규칙으로 분리 | sync version의 일반 expression 과잉수용 제거; VERSION column 목록과 value 목록 분리; 두 form의 optional FORCESEEK 보존 |
+
+## 재현과 검증
+
+Tree-sitter `0.27.0`, Node `24.21.0`, runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`과 등록된 runtime patch를 사용한다. 두 grammar의 독립 workspace 생성, deterministic 비교와 등록한 6개 출력의 reference match가 모두 PASS다. Windows amd64의 GCC `16.2.0`에서 공개 C# 161개 및 T-SQL 97개 집중 대조의 구문 기대값, API 일치와 fact reproduction이 모두 PASS다. C# mandatory-body recovery 5개와 ordinary identifier의 정확한 CST 대조 2개도 추가로 PASS다. 기대값에는 ERROR 여부뿐 아니라 후속 declaration, comment, identifier와 warning ID의 정확한 source 범위를 포함한다.
+
+C# S05 전체 292개와 S06 전체 321개가 PASS다. T-SQL S05 993개는 전부 실행됐으며 PASS 982개와 기존 오류 트리의 reuse 관측이 불가능한 BLOCKED 11개로 나뉜다. C# SVC 22개 역시 기존 관측 한계의 BLOCKED다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
+
+T-SQL S06 1,000개는 PASS 989개와 같은 기존 reuse BLOCKED 11개다. 999개의 구문 기대값은 모두 PASS이며, syntax expectation을 주장하지 않는 dynamic SQL support 1개는 fact 기대값이 PASS다. 1,000개 전체 API claim은 PASS이며 kit failure와 API finding은 0이다. 오류 트리의 route 관측 한계 11개가 S05/S06에 각각 기록되는 것을 22개 새 parser 결함으로 합산하지 않는다.
+
+SQL Server 2025 LocalDB `17.0.1000.7`의 compatibility level `110`·`170`에서 공개 구문 대조 27개씩, 총 54개가 기대값과 일치했다. 검증은 `PARSEONLY`이며 임시 DB와 파일은 제거했다. 이는 실제 SQL Server 2012 엔진 검증이 아니다. [CHANGETABLE의 공식 구문](https://learn.microsoft.com/en-us/sql/relational-databases/system-functions/changetable-transact-sql?view=sql-server-ver17)에 맞춰 sync version과 column/value 위치를 구분하며, bigint 범위·catalog binding·alias의 오류 22104는 engine 의미 영역으로 분리한다.
+
+등록한 large fixture 3개와 large Oracle의 fact reproduction도 PASS다. 이번 host의 22MiB·8MiB·32MiB parse 관측은 각각 `14,608`·`5,604`·`23,540`ms다. 일반 C# `word` lexer를 복원하고 PP Boolean/pragma keyword를 directive 전용 external token으로 분리하여 prototype의 32MiB 시간 초과를 해소했다. 60초·memory·출력 상한은 유지했다. 별도 over-capture 대조는 의도한 `RESOURCE_LIMIT:OUTPUT_LIMIT` BLOCKED였다. summary Oracle은 API를 활성화하지 않으므로 전체 node API 판정은 별도 large audit으로 검증한다.
+
+`CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`에서 전체 `go test ./src/... -count=1 -timeout 300s`, `go vet ./src/...`, `go build ./src/...`, `go mod verify`, gofmt와 diff 검사가 PASS다. 독립 STATIC_REVIEW에서 PP, T-SQL, core/facts와 fixture/identity 등록을 검토했다. pragma prefix, coverage와 문서 등록 지적을 보완한 뒤 미해결 BLOCKER/MATERIAL은 0이다. 문서 경로 정리 후 foundation 재검사도 PASS다.
+
+이 보고서는 공개 합성 입력에 대한 로컬 검증을 기록한다. 전체 node large API의 별도 audit receipt, 최종 head의 세 OS qualification과 병합 후 main CI를 완료 판정 gate로 삼는다. 아직 실행하지 않은 gate를 로컬 PASS로 대체하지 않으며, 해당 판정·producer identity·최종 diff와 finding 처분은 PR의 검증 기록에 결속한다. STATIC_REVIEW는 실행한 검사를 대신하지 않는다.
+
+## 판정의 범위
+
+[C# lexical specification](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure)과 Roslyn `5.0.0.0`의 공개 합성 대조를 사용한다. 불완전한 `#pragma checksum`/warning이 compiler warning만 내는 경우에는 prefix와 opaque tail을 보존한다. Raw #line filename은 `string_literal` leaf이며 일반 string의 escape/content child를 만들지 않는다. Inactive section은 명세의 opaque 처리 규칙을 따른다.
+
+[GO](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/sql-server-utilities-statements-go?view=sql-server-ver17)는 client command다. 닫힌 trailing block comment가 물리적 줄을 넘으면 뒤 SQL은 다음 batch에 속한다. Decimal count의 실행 의미와 특정 SQLCMD 구현의 명령 처리 성공은 parser의 수용 기준과 구분한다. [중첩 block comment](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/slash-star-comment-transact-sql)는 모든 closing mark를 요구한다. 기존 [함수 target 경계](issue-122-123-tsql-boundaries.md)는 별도 문맥이며 GO 일반 이름을 허용한다고 그 경계를 넓히지 않는다.
+
+이 보고서와 `SUPPORTED`는 등록한 입력·문법 mode·검증 정책에 대한 근거다. 임의의 모든 C#·T-SQL에서 결함이 없다는 증명, compiler 의미 분석, catalog/type/name binding 또는 실행 성공 판정은 아니다. 실제 검사하지 않은 입력과 버전은 미검증으로 남는다. 제공된 로컬 corpus의 경로·source·개별 결과는 저장소에 등록하거나 외부로 전송하지 않는다.

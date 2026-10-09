@@ -684,265 +684,424 @@
       "id": "tsql-issue113-first-cte-select-r1",
       "kind": "gap",
       "features": [
-        "tsql-B04"
-      ],
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
-          "replace": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
-        },
-        {
-          "find": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
-          "replace": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
-        }
-      ],
+  {
+    "find": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
+    "replace": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
+  },
+  {
+    "find": "BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;",
+    "replace": "BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT GO FROM dbo.t;\n"
+  },
+  {
+    "find": "O\nSELECT ",
+    "replace": "O\nSELECT dbo."
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-first-cte-insert-r1",
       "kind": "gap",
       "features": [
-        "tsql-B04"
-      ],
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
-          "replace": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
-        },
-        {
-          "find": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
-          "replace": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
-        }
-      ],
+  {
+    "find": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
+    "replace": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
+  },
+  {
+    "find": "BEGIN WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;",
+    "replace": "BEGIN; WITH c AS (SELECT 1 AS a) INSERT INTO t SELECT a FROM c; END;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT rollup FROM dbo.t GROUP BY rollup;"
+  },
+  {
+    "find": "rollup FROM dbo.t GROUP BY rollup",
+    "replace": "cube FROM dbo.t GROUP BY cube"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-nested-cte-r1",
       "kind": "gap",
       "features": [
-        "tsql-B04"
-      ],
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
-          "replace": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
-        },
-        {
-          "find": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
-          "replace": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
-        }
-      ],
+  {
+    "find": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
+    "replace": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
+  },
+  {
+    "find": "BEGIN BEGIN WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;",
+    "replace": "BEGIN BEGIN; WITH c AS (SELECT 1 AS a) SELECT a FROM c; END; END;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT COUNT(*) FROM dbo.t GROUP BY dbo.f((a,b));"
+  },
+  {
+    "find": "COUNT(*) FROM dbo.t GROUP BY dbo.f((a,b))",
+    "replace": "ROLLUPX"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "block"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "block"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue113-unicode-delimited-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS [Ა];\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS [Ა];",
-          "replace": "SELECT 1 AS \"Ა\";"
-        },
-        {
-          "find": "SELECT 1 AS \"Ა\";",
-          "replace": "SELECT 1 AS [Ა];"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS [Ა];",
+    "replace": "SELECT 1 AS \"Ა\";"
+  },
+  {
+    "find": "SELECT 1 AS \"Ა\";",
+    "replace": "SELECT 1 AS [Ა];"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT CUBEX;"
+  },
+  {
+    "find": "CUBE",
+    "replace": "ROLLUPX FROM dbo.t GROUP BY ROLLUP"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "CUBEX",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue113-percent-option-r1",
       "kind": "gap",
       "features": [
-        "tsql-B04"
-      ],
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;",
-          "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;"
-        },
-        {
-          "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;",
-          "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;"
-        }
-      ],
+  {
+    "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;",
+    "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;"
+  },
+  {
+    "find": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 51 PERCENT;",
+    "replace": "CREATE STATISTICS st ON dbo.t (c) WITH SAMPLE 50 PERCENT;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM OPENQUERY(GO, 'SELECT 1');"
+  },
+  {
+    "find": "SELECT * FROM OPENQUERY(GO, 'SELECT 1'",
+    "replace": "DELETE FROM GO(1"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_statistics"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_statistics"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_statistics"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_statistics"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_statistics"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_statistics"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "invocation"
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-certificate-context-r1",
       "kind": "gap",
       "features": [
-        "tsql-B03"
-      ],
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;",
-          "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];"
-        },
-        {
-          "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];",
-          "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;"
-        }
-      ],
+  {
+    "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;",
+    "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];"
+  },
+  {
+    "find": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE [c];",
+    "replace": "CREATE SYMMETRIC KEY k WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nINSERT INTO dbo.t (GO) VALUES (1);"
+  },
+  {
+    "find": "INSERT INTO dbo.t (GO) VALUES (1",
+    "replace": "SELECT * FROM dbo.t WITH (GO"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_symmetric_key"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_symmetric_key"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "create_symmetric_key"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_symmetric_key"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_symmetric_key"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_symmetric_key"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue122-cte-batch-missing-r1",
@@ -1059,64 +1218,580 @@
   {
       "id": "tsql-issue122-cte-label-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+      "edits": [
+  {
+    "find": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "x: WITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "x: WITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nEXEC GO;"
+  },
+  {
+    "find": "EXEC GO;",
+    "replace": "GO /* trailing\n*/ SELECT 1;\n"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue122-cte-if-direct-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+      "edits": [
+  {
+    "find": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "IF 1=1 WITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "IF 1=1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nGO /* trailing\n*/ .proc\n"
+  },
+  {
+    "find": ".proc",
+    "replace": "5; SELECT 1;"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue122-cte-while-direct-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+      "edits": [
+  {
+    "find": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "WHILE 1=0 WITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "WHILE 1=0 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t,(1),(1)) AS c;"
+  },
+  {
+    "find": "t,(",
+    "replace": "t,(a+"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue122-cte-block-start-semicolon-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;", "replace": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;"}, {"find": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;", "replace": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
+      "edits": [
+  {
+    "find": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;",
+    "replace": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;"
+  },
+  {
+    "find": "BEGIN; WITH c AS (SELECT 3 AS a) SELECT a FROM c; END;",
+    "replace": "BEGIN; WITH c AS (SELECT 2 AS a) SELECT a FROM c; END;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t,(@a),(1)) AS c;"
+  },
+  {
+    "find": "@",
+    "replace": "dbo."
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue122-batch-first-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["cte"], "declarations": ""}]
+      "edits": [
+  {
+    "find": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "WITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "WITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,1+1) AS c;"
+  },
+  {
+    "find": "1+1",
+    "replace": "(1)"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue122-module-first-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["create_procedure", "cte"], "declarations": ""}]
+      "edits": [
+  {
+    "find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "CREATE PROCEDURE dbo.p AS WITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,a) AS c;"
+  },
+  {
+    "find": ",a",
+    "replace": ",@@ROWCOUNT"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_procedure",
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_procedure",
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "create_procedure",
+      "cte"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue123-bare-hint-vs-call-r1",
       "kind": "gap",
-      "features": ["tsql-B02"],
+      "features": [
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT * FROM dbo.t (NOLOCK);\nGO\n\nSELECT 1 AS fixture_anchor;\n",
-      "edits": [{"find": "SELECT * FROM dbo.t (NOLOCK);", "replace": "SELECT * FROM dbo.f(1);"}, {"find": "SELECT * FROM dbo.f(1);", "replace": "SELECT * FROM dbo.t (NOLOCK);"}],
-      "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["table_hint"], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["table_hint"], "declarations": ""}]
+      "edits": [
+  {
+    "find": "SELECT * FROM dbo.t (NOLOCK);",
+    "replace": "SELECT * FROM dbo.f(1);"
+  },
+  {
+    "find": "SELECT * FROM dbo.f(1);",
+    "replace": "SELECT * FROM dbo.t (NOLOCK);"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,'1') AS c;"
+  },
+  {
+    "find": "'1'",
+    "replace": "1.2"
+  }
+],
+      "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "table_hint"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "invocation"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "table_hint"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {"id": "tsql-issue122-review-setvar-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": ":setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue122-review-include-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": ":r other.sql\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue122-review-setvar-tail-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1;\n:setvar Name Value\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue122-review-label-after-select-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;"}, {"find": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;", "replace": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue122-review-setvar-implicit-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": ":setvar Name Value\np 1;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [{"find": ":setvar Name Value\np 1;", "replace": ":setvar Name Value\np 2;"}, {"find": ":setvar Name Value\np 2;", "replace": ":setvar Name Value\np 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+  {"id": "tsql-issue122-review-label-after-select-r1", "kind": "gap", "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [
+  {
+    "find": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;",
+    "replace": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "SELECT 1\nx:\nWITH c AS (SELECT 3 AS a) SELECT a FROM c;",
+    "replace": "SELECT 1\nx:\nWITH c AS (SELECT 2 AS a) SELECT a FROM c;"
+  },
+  {
+    "find": "x;\n",
+    "replace": "x;\n\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,0x1) AS c;"
+  },
+  {
+    "find": "0x",
+    "replace": "+"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue122-review-setvar-implicit-r1", "kind": "gap", "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": ":setvar Name Value\np 1;\nGO\nSELECT 1 AS fixture_anchor;\nGO\nSELECT 9 AS fixture_suffix;\n", "edits": [
+  {
+    "find": ":setvar Name Value\np 1;",
+    "replace": ":setvar Name Value\np 2;"
+  },
+  {
+    "find": ":setvar Name Value\np 2;",
+    "replace": ":setvar Name Value\np 1;"
+  },
+  {
+    "find": "x;\n",
+    "replace": "x;\n\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,1,FORCESEEK) AS c;"
+  },
+  {
+    "find": "CHANGES dbo.t,1",
+    "replace": "VERSION dbo.t,(a),(1)"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]},
   {"id": "tsql-issue128-default-arithmetic-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nCREATE TABLE t (a int DEFAULT ((1 + 2) * -3));\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "CREATE TABLE t (a int DEFAULT ((1 + 2) * -3));", "replace": "CREATE TABLE t (a sql_variant DEFAULT (foo));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT (foo));", "replace": "CREATE TABLE t (a int DEFAULT ((1 + 2) * -3));"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-default-function-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nCREATE TABLE t (a int DEFAULT dbo.foo());\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "CREATE TABLE t (a int DEFAULT dbo.foo());", "replace": "CREATE TABLE t (a sql_variant DEFAULT (dbo.foo));"}, {"find": "CREATE TABLE t (a sql_variant DEFAULT (dbo.foo));", "replace": "CREATE TABLE t (a int DEFAULT dbo.foo());"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-default-builtin-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nCREATE TABLE t (a int DEFAULT ABS(-1));\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "CREATE TABLE t (a int DEFAULT ABS(-1));", "replace": "CREATE TABLE t (a int DEFAULT ABS(foo));"}, {"find": "CREATE TABLE t (a int DEFAULT ABS(foo));", "replace": "CREATE TABLE t (a int DEFAULT ABS(-1));"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
@@ -1152,7 +1827,48 @@
   {"id": "tsql-issue128-match-column-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT match FROM t;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT match FROM t;", "replace": "SELECT match FRXM t;"}, {"find": "SELECT match FRXM t;", "replace": "SELECT match FROM t;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-partition-label-r1", "kind": "gap", "features": ["tsql-B03"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nALTER PARTITION SCHEME ps NEXT USED mylabel: SELECT 1;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "ALTER PARTITION SCHEME ps NEXT USED mylabel: SELECT 1;", "replace": "ALTER PARTITION SCHEME ps NEXX USED mylabel: SELECT 1;"}, {"find": "ALTER PARTITION SCHEME ps NEXX USED mylabel: SELECT 1;", "replace": "ALTER PARTITION SCHEME ps NEXT USED mylabel: SELECT 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-client-parameter-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nDECLARE @p int; SELECT ABS(@p);\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "DECLARE @p int; SELECT ABS(@p);", "replace": "DECLARE @p int; SELECT ABS(:p);"}, {"find": "DECLARE @p int; SELECT ABS(:p);", "replace": "DECLARE @p int; SELECT ABS(@p);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-group-constant-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 GROUP BY 1;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1 GROUP BY 1;", "replace": "SELECT 2 GROUP BY 1;"}, {"find": "SELECT 2 GROUP BY 1;", "replace": "SELECT 1 GROUP BY 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+  {"id": "tsql-issue128-group-constant-r1", "kind": "gap", "features": [
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 GROUP BY 1;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT 1 GROUP BY 1;",
+    "replace": "SELECT 2 GROUP BY 1;"
+  },
+  {
+    "find": "SELECT 2 GROUP BY 1;",
+    "replace": "SELECT 1 GROUP BY 1;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nDECLARE @a bigint; SELECT * FROM CHANGETABLE(CHANGES dbo.t,@a) AS c;"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]},
   {"id": "tsql-issue128-group-valid-no-from-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 GROUP BY @@SPID;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1 GROUP BY @@SPID;", "replace": "SELECT 2 GROUP BY @@SPID;"}, {"find": "SELECT 2 GROUP BY @@SPID;", "replace": "SELECT 1 GROUP BY @@SPID;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-module-batch-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;", "replace": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;"}, {"find": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;", "replace": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-function-arity-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT ABS(1, 2);\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT ABS(1, 2);", "replace": "SELECT ABS(2, 2);"}, {"find": "SELECT ABS(2, 2);", "replace": "SELECT ABS(1, 2);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
@@ -1573,20 +2289,62 @@
    "id": "tsql-issue150-preserved-normal-siblings-r1",
    "kind": "gap",
    "features": [
-    "tsql-B04",
-    "tsql-B02",
-    "tsql-B01"
-   ],
+  "tsql-B04",
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
    "source_utf8": "-- preserved tsql-gap-issue131-control-trigger-label-tail-r1\nSELECT 0 AS issue131_anchor;\nSELECT 1 label: ENABLE TRIGGER trg ON dbo.t;\nGO\n-- preserved tsql-gap-issue131-control-trigger-comment-next-r1\nSELECT 0 AS issue131_anchor;\nENABLE TRIGGER trg ON dbo.t /* outer /* inner */ rest */ SELECT 1;\nGO\n-- preserved tsql-gap-issue131-control-trigger-comment-end-r1\nSELECT 0 AS issue131_anchor;\nBEGIN ENABLE TRIGGER trg ON dbo.t /* end */ END;\nGO\n-- preserved tsql-gap-issue131-control-trigger-end-conversation-declared-r1\nSELECT 0 AS issue131_anchor;\nDECLARE @h uniqueidentifier; ENABLE TRIGGER trg ON dbo.t END CONVERSATION @h;\nGO\n-- preserved tsql-gap-issue131-control-trigger-if-else-r1\nSELECT 0 AS issue131_anchor;\nIF 1=1 ENABLE TRIGGER trg ON dbo.t ELSE SELECT 1;\nGO\n-- preserved tsql-gap-issue131-control-trigger-go-r1\nSELECT 0 AS issue131_anchor;\nENABLE TRIGGER trg ON dbo.t\nGO\nSELECT 1;\nGO\n-- preserved tsql-gap-issue131-control-graph-shortest-reverse-r1\nSELECT 0 AS issue131_anchor;\nSELECT * FROM p,e,q WHERE MATCH(SHORTEST_PATH((q<-(e)-)+p));\nGO\n-- preserved tsql-gap-issue131-control-openjson-schema-r1\nSELECT 0 AS issue131_anchor;\nSELECT j.a FROM OPENJSON(N'{\"a\":1}') WITH (a int) AS j;\nGO\n-- preserved tsql-gap-issue131-control-object-server-both-omitted-r1\nSELECT 0 AS issue131_anchor;\nSELECT * FROM s...t;\nGO\n-- preserved tsql-gap-issue131-review-control-variable-chain-default-r1\nSELECT 0 AS issue131_review_anchor;\nDECLARE @v int; UPDATE dbo.t SET @v = c = DEFAULT;\nGO\n",
-   "edits": [],
+   "edits": [
+  {
+    "find": "T;\nGO\n",
+    "replace": "T;\nGO\n\nGO\nSELECT 1;\nGO\nSELECT 2;"
+  },
+  {
+    "find": "\n\nGO\nSELECT 1;\nGO",
+    "replace": "\n\nGO\nSELECT 1;\nGO 2"
+  },
+  {
+    "find": "\nGO 2\n",
+    "replace": " GO "
+  },
+  {
+    "find": "O ",
+    "replace": "O\n"
+  }
+],
    "expect": [
-    {
-     "step": 0,
-     "syntax": "NO_ERROR",
-     "contains": [],
-     "declarations": ""
-    }
-   ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
   },
   {
       "id": "tsql-gap-issue131-control-security-replication-r1",
@@ -1755,22 +2513,126 @@
   {
       "id": "tsql-gap-issue131-merge-boundary-merge-composable-r1",
       "kind": "gap",
-      "features": ["tsql-B02"],
+      "features": [
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS merge131_anchor;\nINSERT dbo.log SELECT act FROM (MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE OUTPUT $action AS act) AS changes;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "s;",
+    "replace": "s;\nGO\nSELECT 1;\nGO SELECT 2;"
+  },
+  {
+    "find": "O ",
+    "replace": "O;\n"
+  },
+  {
+    "find": "O;",
+    "replace": "O -- comment"
+  },
+  {
+    "find": "-- comment",
+    "replace": "0"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "merge"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-merge-boundary-merge-composable-cte-r1",
       "kind": "gap",
-      "features": ["tsql-B02"],
+      "features": [
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS merge131_anchor;\nINSERT dbo.log SELECT act FROM (MERGE dbo.t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE OUTPUT $action AS act) AS changes; WITH c AS (SELECT 1 AS a) SELECT a FROM c;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "c;",
+    "replace": "c;\nGO\nSELECT 'GO'; SELECT 2;"
+  },
+  {
+    "find": "'GO'; SELECT 2",
+    "replace": "[GO] FROM t"
+  },
+  {
+    "find": "[GO] FROM t",
+    "replace": "1;\nGO 1.5\nSELECT 2"
+  },
+  {
+    "find": "1.5",
+    "replace": "-1"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["merge"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "merge"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-review-insert-empty-r1",
@@ -1915,22 +2777,122 @@
   {
       "id": "tsql-gap-issue131-review-control-bracket-variable-column-r1",
       "kind": "gap",
-      "features": ["tsql-B01", "tsql-B02"],
+      "features": [
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET [@v] = DEFAULT;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "T;",
+    "replace": "T;\nGO\nSELECT 0x;"
+  },
+  {
+    "find": "0x",
+    "replace": "* FROM t WHERE a IN ()"
+  },
+  {
+    "find": "* FROM t WHERE a IN ()",
+    "replace": ""
+  },
+  {
+    "find": "\nSELECT ",
+    "replace": "\nSELECT * AS x FROM t"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-review-control-qualified-column-default-r1",
       "kind": "gap",
-      "features": ["tsql-B01", "tsql-B02"],
+      "features": [
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET t.c = DEFAULT;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "T;",
+    "replace": "T;\nGO\nINSERT INTO t VALUES ();"
+  },
+  {
+    "find": "INSERT INTO t VALUES ()",
+    "replace": "sp_executesql N'SELECT 1'"
+  },
+  {
+    "find": "O\n",
+    "replace": "O\nlbl: "
+  },
+  {
+    "find": ": ",
+    "replace": ": EXEC "
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue132-add-r1",
@@ -2272,77 +3234,249 @@
       "id": "tsql-gap-issue132-control-separate-r1",
       "kind": "gap",
       "features": [
-        "tsql-B03"
-      ],
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;\nALTER SECURITY POLICY dbo.p WITH (STATE=ON);\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "N;",
+    "replace": "N;\nGO\n;sp_executesql N'SELECT 1';"
+  },
+  {
+    "find": ";sp_executesql N'SELECT 1'",
+    "replace": "SELECT 1 --c\rSELECT 2"
+  },
+  {
+    "find": "SELECT 1 --c\rSELECT 2",
+    "replace": "IF 1 = 1 BEGIN END"
+  },
+  {
+    "find": "IF 1 = 1 BEGIN END",
+    "replace": "SELECT TOP () 1"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_security_policy"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_security_policy"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue132-control-multi-predicate-r1",
       "kind": "gap",
       "features": [
-        "tsql-B03"
-      ],
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t, DROP BLOCK PREDICATE ON dbo.u;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "u;",
+    "replace": "u;\nGO\nSELECT 'abc''def';"
+  },
+  {
+    "find": "''def'",
+    "replace": ""
+  },
+  {
+    "find": "'abc",
+    "replace": "1 WHERE 1 IN (1)"
+  },
+  {
+    "find": "(1",
+    "replace": "("
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_security_policy"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_security_policy"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue132-control-next-cte-r1",
       "kind": "gap",
       "features": [
-        "tsql-B03"
-      ],
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p ADD NOT FOR REPLICATION;\nWITH c AS (SELECT 1 AS a) SELECT a FROM c;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "c;",
+    "replace": "c;\nGO\nSELECT 1 WHERE 1 NOT IN ();"
+  },
+  {
+    "find": "NOT IN (",
+    "replace": "IN (/* c */"
+  },
+  {
+    "find": "/* c */",
+    "replace": "SELECT 1"
+  },
+  {
+    "find": "N (SELECT 1",
+    "replace": "N (1,2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_security_policy"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_security_policy"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue132-control-next-select-r1",
       "kind": "gap",
       "features": [
-        "tsql-B03"
-      ],
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue132_anchor;\nALTER SECURITY POLICY dbo.p DROP NOT FOR REPLICATION;\nSELECT 1;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "1;",
+    "replace": "1;\nGO\nSELECT 1 WHERE 1 IN (1,);"
+  },
+  {
+    "find": "1,",
+    "replace": "( )"
+  },
+  {
+    "find": " WHERE 1 IN (( ))",
+    "replace": ";\n  GO 2 --comment\nSELECT 2"
+  },
+  {
+    "find": "\n  GO 2 --comment\n",
+    "replace": "\rGO\r"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_security_policy"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_security_policy"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-add-bare-r1",
@@ -2736,82 +3870,250 @@
       "id": "tsql-gap-issue134-control-unicode-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B03",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE N'파일', N's''rc' ADD FILE FROM 'file.cs' AS N'파일', 0x01 AS N's''rc';",
-      "edits": [],
+      "edits": [
+  {
+    "find": "';",
+    "replace": "';\nGO\nSELECT 1; GO 2 SELECT 2;"
+  },
+  {
+    "find": " GO 2 ",
+    "replace": "\n  GO\n"
+  },
+  {
+    "find": "\n  GO\n",
+    "replace": "\rGO\r"
+  },
+  {
+    "find": "GO\r",
+    "replace": "\n\tGO 2\r\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-control-multi-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B03",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'old', 'other' ADD FILE FROM 'file.cs' AS 'old', 'second.cs' AS 'other';",
-      "edits": [],
+      "edits": [
+  {
+    "find": "';",
+    "replace": "';\nGO\nSELECT 1;\ngO\nSELECT 2;"
+  },
+  {
+    "find": "SELECT 1;\ngO\nSELECT 2",
+    "replace": "GO"
+  },
+  {
+    "find": "O;",
+    "replace": "O foo"
+  },
+  {
+    "find": "GO foo",
+    "replace": "SELECT 1\nGO\nFROM t;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-control-noalias-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B03",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a ADD FILE FROM 'file.cs';",
-      "edits": [],
+      "edits": [
+  {
+    "find": "';",
+    "replace": "';\nGO\n/*comment*/ GO\nSELECT 1;"
+  },
+  {
+    "find": "t",
+    "replace": "t\n"
+  },
+  {
+    "find": "/*comment\n*/ GO\nSELECT 1",
+    "replace": "SELECT 1;\nGO /*comment*/\nSELECT 2"
+  },
+  {
+    "find": "t",
+    "replace": "t\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-control-next-select-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src'; SELECT 1;",
-      "edits": [],
+      "edits": [
+  {
+    "find": "1;",
+    "replace": "1;\nGO\n[GO] 1;"
+  },
+  {
+    "find": "[GO]",
+    "replace": "dbo.GO"
+  },
+  {
+    "find": "dbo.GO 1",
+    "replace": "SELECT GO FROM t"
+  },
+  {
+    "find": "SELECT GO FROM t",
+    "replace": "WITH q AS (SELECT 1 AS x) SELECT x FROM q WHERE x IN (SELECT x FROM q)"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue149-preserved-pair-01-r1",
@@ -7438,139 +8740,181 @@
       "id": "tsql-issue145-146-normal-siblings-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "-- tsql-issue145-hint-space-good-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK NOWAIT);\nGO\n-- tsql-issue145-hint-space-three-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (UPDLOCK ROWLOCK READPAST);\nGO\n-- tsql-issue146-hint-index-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(ix), NOWAIT);\nGO\n-- tsql-issue146-index-zero-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0));\nGO\n-- tsql-issue146-index-one-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-index-number-list-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0,1));\nGO\n-- tsql-issue146-index-equals-zero-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=0);\nGO\n-- tsql-issue146-index-mixed-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0,ix));\nGO\n-- tsql-issue146-force-seek-number-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(2(a)));\nGO\n-- tsql-issue146-force-seek-name-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(ix(a)));\nGO\n-- tsql-issue146-spatial-int-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue145-openjson-from-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON(N'[{\"a\":1}]') WITH (a int) AS j;\nGO\n-- tsql-issue145-openjson-apply-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENJSON(t.js) WITH (a int) AS j;\nGO\n-- tsql-issue146-numeric-006-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1ROWLOCK);\nGO\n-- tsql-issue146-numeric-008-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=00XLOCK);\nGO\n-- tsql-issue146-numeric-009-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=01ROWLOCK);\nGO\n-- tsql-issue146-numeric-010-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1/*c*/ROWLOCK);\nGO\n-- tsql-issue146-numeric-011-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1 ROWLOCK);\nGO\n-- tsql-issue146-numeric-012-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1,ROWLOCK);\nGO\n-- tsql-issue146-range-000-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=2147483647);\nGO\n-- tsql-issue146-range-002-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0000000000000000000000000000000000000000000000000000000000000000000001);\nGO\n-- tsql-issue146-range-005-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(2147483647));\nGO\n-- tsql-issue146-range-010-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(2147483647(a)));\nGO\n",
-      "edits": [],
+      "edits": [
+  {
+    "find": "7(a)));\nGO\n",
+    "replace": "7(a)));\nGO\n\nGO\nSELECT ((1 + 2));"
+  },
+  {
+    "find": "(1 + 2)",
+    "replace": "1,2"
+  },
+  {
+    "find": "(1,2",
+    "replace": "* FROM (VALUES ()) AS v(x"
+  },
+  {
+    "find": ")) AS v(x",
+    "replace": "1,2),(3,4)) AS v(x,y"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "openjson_schema",
-            "table_hint"
-          ],
-          "declarations": "",
-          "anchors": [
-            {
-              "type": "table_hint",
-              "text": "WITH (NOLOCK NOWAIT)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (UPDLOCK ROWLOCK READPAST)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(ix), NOWAIT)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(0))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(1))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(0,1))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX=0)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(0,ix))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (FORCESEEK(2(a)))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (FORCESEEK(ix(a)))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1)",
-              "occurrence": 1
-            },
-            {
-              "type": "openjson_schema",
-              "text": "WITH (a int)",
-              "occurrence": 1
-            },
-            {
-              "type": "openjson_schema",
-              "text": "WITH (a int)",
-              "occurrence": 2
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1ROWLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=00XLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=01ROWLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1/*c*/ROWLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1 ROWLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1,ROWLOCK)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=2147483647)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=0000000000000000000000000000000000000000000000000000000000000000000001)",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (INDEX(2147483647))",
-              "occurrence": 1
-            },
-            {
-              "type": "table_hint",
-              "text": "WITH (FORCESEEK(2147483647(a)))",
-              "occurrence": 1
-            }
-          ]
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "openjson_schema",
+      "table_hint"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "table_hint",
+        "text": "WITH (NOLOCK NOWAIT)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (UPDLOCK ROWLOCK READPAST)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(ix), NOWAIT)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(0))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(1))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(0,1))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX=0)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(0,ix))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (FORCESEEK(2(a)))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (FORCESEEK(ix(a)))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1)",
+        "occurrence": 1
+      },
+      {
+        "type": "openjson_schema",
+        "text": "WITH (a int)",
+        "occurrence": 1
+      },
+      {
+        "type": "openjson_schema",
+        "text": "WITH (a int)",
+        "occurrence": 2
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1ROWLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=00XLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=01ROWLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1/*c*/ROWLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1 ROWLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1,ROWLOCK)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=2147483647)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=0000000000000000000000000000000000000000000000000000000000000000000001)",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (INDEX(2147483647))",
+        "occurrence": 1
+      },
+      {
+        "type": "table_hint",
+        "text": "WITH (FORCESEEK(2147483647(a)))",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue148-negative-pair-00-r1",
@@ -9447,20 +10791,62 @@
       "id": "tsql-issue148-normal-siblings-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B05"
+],
       "source_utf8": "-- tsql-issue148-qi-off-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-off-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-off-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-off-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n-- tsql-issue148-security-8-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = OFF);\n\nGO\n-- tsql-issue148-security-9-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (SCHEMABINDING = OFF);\n\nGO\n-- tsql-issue148-security-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = OFF, SCHEMABINDING = OFF);\n\nGO\n-- tsql-issue148-security-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE = OFF);\n\nGO\n-- tsql-issue148-event-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT server.sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-action-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));\n\nGO\n-- tsql-issue148-queue-30-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-32-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (DROP);\n\nGO\n-- tsql-issue148-queue-35-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-36-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-route-39-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-40-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-41-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-42-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH SERVICE_NAME = 's', LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-44-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-45-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-46-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-47-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH SERVICE_NAME = 's', LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-rowset-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2) WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-51-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2) WITH dbo.t AS x;\n\nGO\n-- tsql-issue148-rowset-52-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2)  AS x;\n\nGO\n-- tsql-issue148-rowset-58-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1')  AS x;\n\nGO\n-- tsql-issue148-rowset-62-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-64-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}')  AS x;\n\nGO\n-- tsql-issue148-rowset-65-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-67-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}')  AS x;\n\nGO\n-- tsql-issue148-rowset-68-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d) WITH (id int) AS x;\n\nGO\n-- tsql-issue148-regex-74-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-75-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-76-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x') AND 1=1;\n\nGO\n-- tsql-issue148-regex-77-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x') OR 1=0;\n\nGO\n-- tsql-issue148-regex-78-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (REGEXP_LIKE('x','x'));\n\nGO\n-- tsql-issue148-regex-79-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE dbo.REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-80-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_COUNT('x','x');\n\nGO\n-- tsql-issue148-queue-order-create-00-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-01-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-02-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-03-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-04-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-05-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-06-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-07-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-08-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-09-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-00-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-01-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-02-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-03-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-04-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-05-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-06-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-07-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-08-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-09-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-missing-51-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-regexp-column-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-regexp-column-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE NOT REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-regexp-column-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x') AND 1=1;\n\nGO\n-- tsql-issue148-regexp-column-3-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x') OR 1=0;\n\nGO\n-- tsql-issue148-regexp-column-4-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE NOT (REGEXP_LIKE(a,'x'));\n\nGO\n-- tsql-issue148-regexp-scalar-control-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_COUNT(a,'x');\n\nGO\n-- tsql-issue148-regexp-qualified-control-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE dbo.REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-event-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n-- tsql-issue148-event-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;\n\nGO\n-- tsql-issue148-bulk-schema-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-bulk-schema-apply-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-provider-column-OPENXML-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int '$.id') AS r;\n\nGO\n-- tsql-issue148-provider-column-PREDICT-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int NULL) AS r;\n\nGO\n",
-      "edits": [],
+      "edits": [
+  {
+    "find": "L) AS r;\n\nGO\n",
+    "replace": "L) AS r;\n\nGO\n\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t, (id), (1)) AS ct;"
+  },
+  {
+    "find": "VERSION dbo.t, (id), (1)",
+    "replace": "CHANGES dbo.t, 0"
+  },
+  {
+    "find": "* FROM CHANGETABLE(CHANGES dbo.t, 0) AS ct;",
+    "replace": "1; /* open"
+  },
+  {
+    "find": "pen",
+    "replace": "uter /* inner */"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue149-syntax-pair-01-r1",
@@ -10977,18 +12363,60 @@
    "id": "tsql-issue150-normal-siblings-r1",
    "kind": "gap",
    "features": [
-    "tsql-B01"
-   ],
+  "tsql-B01",
+  "tsql-B05"
+],
    "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue150 column-bracket\nSELECT [TABLE] FROM dbo.t;\n\nGO\n-- issue150 schema-drop-if\nDROP SCHEMA IF EXISTS x;\n\nGO\n-- issue150 table-bracket\nSELECT * FROM [TABLE];\n\nGO\n-- issue150 table-create\nCREATE TABLE [TABLE] (a int);\n\nGO\n-- issue150 table-qualified-bracket\nSELECT * FROM dbo.[TABLE];\n\nGO\n-- issue150 table-quote\nSELECT * FROM \"TABLE\";\n\nGO\n-- issue150 table-temp\nCREATE TABLE #TABLE (a int);\n\nGO\n-- issue150 table-variable\nDECLARE @TABLE int; SELECT @TABLE;\n\nGO\n-- issue150 xml-alter-0\nALTER XML SCHEMA COLLECTION x ADD N'<x/>';\n\nGO\n-- issue150 xml-alter-1\nALTER XML SCHEMA COLLECTION dbo.x ADD N'<x/>';\n\nGO\n-- issue150 xml-alter-5\nALTER XML SCHEMA COLLECTION [TABLE] ADD N'<x/>';\n\nGO\n-- issue150 xml-create-0\nCREATE XML SCHEMA COLLECTION x AS N'<x/>';\n\nGO\n-- issue150 xml-create-1\nCREATE XML SCHEMA COLLECTION dbo.x AS N'<x/>';\n\nGO\n-- issue150 xml-create-5\nCREATE XML SCHEMA COLLECTION [TABLE] AS N'<x/>';\n\nGO\n-- issue150 xml-drop-0\nDROP XML SCHEMA COLLECTION x;\n\nGO\n-- issue150 xml-drop-1\nDROP XML SCHEMA COLLECTION dbo.x;\n\nGO\n-- issue150 xml-drop-5\nDROP XML SCHEMA COLLECTION [TABLE];\n\nGO\n-- issue150 xml-drop-bracket\nDROP XML SCHEMA COLLECTION [IF EXISTS];\n\nGO\n-- issue150 xml-drop-quoted\nDROP XML SCHEMA COLLECTION \"IF EXISTS\";\n\nGO\n-- issue150 xml-drop-two-statements\nDROP XML SCHEMA COLLECTION dbo.x; SELECT 1;\n\nGO\nALTER TABLE dbo.t SET (LOCK_ESCALATION = TABLE);\n\nGO\nALTER TABLE dbo.t SET (LOCK_ESCALATION = AUTO);\n\nGO\nALTER TABLE dbo.t SET (LOCK_ESCALATION = DISABLE);\n\nGO\n",
-   "edits": [],
+   "edits": [
+  {
+    "find": "SABLE);\n\nGO\n",
+    "replace": "SABLE);\n\nGO\n\nGO\nSELECT 1; /* outer /* inner */ */"
+  },
+  {
+    "find": "; /* outer /* inner */ */",
+    "replace": " +\nGO\nSELECT 2\n"
+  },
+  {
+    "find": "SELECT 1 +\nGO\nSELECT 2",
+    "replace": "GO\n5;\nSELECT 1"
+  },
+  {
+    "find": "\n5;\n",
+    "replace": " -- comment\r\n5; "
+  }
+],
    "expect": [
-    {
-     "step": 0,
-     "syntax": "NO_ERROR",
-     "contains": [],
-     "declarations": ""
-    }
-   ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
   }
  ]
 }

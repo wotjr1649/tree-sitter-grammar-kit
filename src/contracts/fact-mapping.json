@@ -108,7 +108,7 @@
     "heuristic": true,
     "types": ["SqlCommand", "SqlDataAdapter", "OleDbCommand", "OleDbDataAdapter", "OdbcCommand", "OdbcDataAdapter"],
     "properties": ["CommandText"],
-    "type_match": "the last identifier of the written type name (simple, qualified or alias-qualified); generic arguments are not part of the match",
+    "type_match": "the lexical value of the last identifier of the written type name (simple, qualified or alias-qualified); remove a verbatim @ prefix, decode fixed-width u/U Unicode escapes and ignore Cf formatting characters for both type and property comparisons; preserve original source ranges and spellings; generic arguments are not part of the match",
     "known_false_positive": "CommandText assigned a stored-procedure name while CommandType is StoredProcedure"
   },
   "dynamic_sql": {

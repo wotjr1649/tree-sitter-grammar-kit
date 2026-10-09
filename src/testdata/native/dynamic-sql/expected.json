@@ -313,8 +313,8 @@
     {
       "path": "csharp-command.cs",
       "route": "csharp",
-      "sha256": "db2d2507e413ef3b32e261b336aa8054d4925e52fcb19524c3e6495cb4c1e80a",
-      "bytes": 1656,
+      "sha256": "c2fc77c074c4917a071a5aa8816e1a9042217344dc775bbad03f5ebaee9a5db0",
+      "bytes": 2210,
       "facts": [
         {
           "construct": "CSHARP_COMMAND",
@@ -520,6 +520,150 @@
           "end_point": {
             "row": 34,
             "column": 44
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1675,
+          "end_byte": 1690,
+          "start_point": {
+            "row": 35,
+            "column": 37
+          },
+          "end_point": {
+            "row": 35,
+            "column": 52
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1740,
+          "end_byte": 1755,
+          "start_point": {
+            "row": 36,
+            "column": 41
+          },
+          "end_point": {
+            "row": 36,
+            "column": 56
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1809,
+          "end_byte": 1825,
+          "start_point": {
+            "row": 37,
+            "column": 45
+          },
+          "end_point": {
+            "row": 37,
+            "column": 61
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1876,
+          "end_byte": 1892,
+          "start_point": {
+            "row": 38,
+            "column": 42
+          },
+          "end_point": {
+            "row": 38,
+            "column": 58
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1940,
+          "end_byte": 1956,
+          "start_point": {
+            "row": 39,
+            "column": 39
+          },
+          "end_point": {
+            "row": 39,
+            "column": 55
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 1995,
+          "end_byte": 2011,
+          "start_point": {
+            "row": 40,
+            "column": 30
+          },
+          "end_point": {
+            "row": 40,
+            "column": 46
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 2047,
+          "end_byte": 2063,
+          "start_point": {
+            "row": 41,
+            "column": 34
+          },
+          "end_point": {
+            "row": 41,
+            "column": 50
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 2100,
+          "end_byte": 2116,
+          "start_point": {
+            "row": 42,
+            "column": 35
+          },
+          "end_point": {
+            "row": 42,
+            "column": 51
+          },
+          "variable": null,
+          "heuristic": true
+        },
+        {
+          "construct": "CSHARP_COMMAND",
+          "argument_kind": "literal_unicode",
+          "start_byte": 2172,
+          "end_byte": 2188,
+          "start_point": {
+            "row": 43,
+            "column": 54
+          },
+          "end_point": {
+            "row": 43,
+            "column": 70
           },
           "variable": null,
           "heuristic": true

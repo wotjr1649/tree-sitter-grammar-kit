@@ -91,6 +91,2867 @@
         {"step": 1, "syntax": "NO_ERROR", "contains": ["shebang_directive", "file_based_app_directive", "preproc_arg", "using_directive", "global_statement"], "declarations": ""},
         {"step": 2, "syntax": "ERROR", "contains": [], "declarations": ""}
       ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-ok-0-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if A\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-ok-1-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if true\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-ok-2-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if !false\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-ok-3-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if A && (B || !C)\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-4-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 1\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-5-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 'x'\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-6-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if @A\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-7-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 1 == 1\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-8-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 0x1\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-bad-9-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 1u\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-ok-10-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-ok-11-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define \\u0041\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-ok-12-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A // comment\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-13-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define 1\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-14-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A B\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-15-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A + B\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-16-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define true\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-17-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define @A\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-define-bad-18-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define \\u0031\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-ok-19-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef A\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-ok-20-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef \\u0041\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-ok-21-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef A // comment\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-22-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef 1\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-23-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef A B\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-24-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef A + B\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-25-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef true\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-26-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef @A\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-undef-bad-27-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef \\u0031\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-28-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning message\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-29-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning x/*\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-30-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning x/\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-31-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning /*\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-32-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning // comment\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-message-33-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning x/* comment */\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-continuation-structure-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning message\\\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-warning-continuation-invalid-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning message\\\n!!!\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-region-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region x/*\nclass C {}\n#endregion\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-name-37-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new SqlCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-name-38-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new @SqlCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-name-39-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new \\u0053qlCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-name-40-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new S​lCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-name-41-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new System.Data.SqlClient.SqlCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-property-42-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { c.CommandText = \"SELECT 1\"; } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-property-43-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { c.@CommandText = \"SELECT 1\"; } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-property-44-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { c.\\u0043ommandText = \"SELECT 1\"; } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-property-45-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { c.Com​mandText = \"SELECT 1\"; } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-if-adjacent-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if true\nclass C {}\n#elif 1\nclass D {}\n#endif",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-normal-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10 \"source.cs\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-path-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10 \"C:\\src\\file.cs\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-unknown-escape-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10 \"a\\q.cs\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-hex-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 0x10\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-underscore-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 1_0\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-suffix-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10u\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-raw-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10 \"\"\"file.cs\"\"\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-empty-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-unknown-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma custom text /*\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-warning-ok-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warning disable CS0168\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-command-cf-correct-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { var c = new Sq​lCommand(\"SELECT 1\"); } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-warning-boundary-11-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning x/*\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-warning-boundary-12-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning x/\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-warning-boundary-13-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#warning message\\\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-error-boundary-14-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#error x/*\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-error-boundary-15-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#error x/\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-error-boundary-16-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#error message\\\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-region-boundary-17-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region x/*\nclass C {}\n#endregion\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-region-boundary-18-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region x/\nclass C {}\n#endregion\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-region-boundary-19-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region message\\\nclass C {}\n#endregion\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-endregion-boundary-20-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region\n#endregion x/*\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-endregion-boundary-21-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region\n#endregion x/\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-endregion-boundary-22-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#region\n#endregion message\\\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-if-split-op-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if A\n&& B\nclass C {}\n#endif",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-if-split-symbol-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if\nA\nclass C {}\n#endif",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-define-split-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define\nA\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-define-trailing-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A B\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-define-escaped-true-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define \\u0074rue\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-define-escaped-false-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define \\u0066alse\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-define-keyword-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define class\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-line-split-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line\n10\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-text-slash-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma custom x/\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-warning-known-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warning disable CS0168, 219\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pragma-checksum-known-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma checksum \"file.cs\" \"{406ea660-64cf-4c82-b6f0-42d48172a799}\" \"abc123\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-inline-directive-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C {} #define A\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-9-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#\tdefine A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-11-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#\u000bdefine A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-12-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#\fdefine A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-160-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "# define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-5760-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "# define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-8192-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "# define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-8239-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "# define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-pp-after-hash-space-12288-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#　define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-recovery-define-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define A B\n#define GOOD\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-recovery-condition-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if 1\nclass A {}\n#endif\n#define GOOD\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-skipped-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if false\n// #endif\nclass X {}\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_skipped_section",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-skipped-inline-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if false\nint x; #endif\nclass X {}\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_skipped_section",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-raw-directive-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "var s = \"\"\"\n#define X\n\"\"\";\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "raw_string_literal",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-interpolated-raw-directive-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "var s = $\"\"\"\n#if DEBUG\n\"\"\";\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "interpolated_string_expression",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-warning-spaces-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warning disable 1000 , 2000\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_pragma",
+            "integer_literal",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            },
+            {
+              "type": "integer_literal",
+              "text": "1000",
+              "occurrence": 1
+            },
+            {
+              "type": "integer_literal",
+              "text": "2000",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-warning-ignored-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warning custom\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_pragma",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-checksum-ignored-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma checksum \"a\"\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_pragma",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-endif-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if true\nclass A {}\n#endif // keep\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "comment",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            },
+            {
+              "type": "comment",
+              "text": "// keep",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-leading-unicode-space-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": " # define A\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_define",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-ordinary-keywords-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { void M() { return; } }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "method_declaration",
+            "return_statement"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-filebased-newline-133-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#:sdk Microsoft.NET.Sdkclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "file_based_app_directive",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-filebased-newline-8232-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#:sdk Microsoft.NET.Sdk class C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "file_based_app_directive",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-filebased-newline-8233-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#:sdk Microsoft.NET.Sdk class C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "file_based_app_directive",
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-warningx-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warningx\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "preproc_arg",
+              "text": "warningx",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-warningdisable-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warningdisable 1000\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "preproc_arg",
+              "text": "warningdisable 1000",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-checksumx-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma checksumx\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "preproc_arg",
+              "text": "checksumx",
+              "occurrence": 1
+            },
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pragma-disablex-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#pragma warning disablex\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pp-multiline-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if A /* comment\n*/ && B\nclass C {}\n#endif",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-line-multiline-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#line 10 /* comment\n*/ \"file.cs\"\nclass C {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-pp-inline-block-comment-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if A /* comment */\nclass C {}\n#endif",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-ordinary-value-word-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { int value; void M() { value = value; } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "field_declaration",
+            "identifier"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C { int value; void M() { value = value; } }",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "value",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "value",
+              "occurrence": 2
+            },
+            {
+              "type": "identifier",
+              "text": "value",
+              "occurrence": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-review-ordinary-verbatim-keyword-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "class C { int @return; }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "field_declaration",
+            "identifier"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C { int @return; }",
+              "occurrence": 1
+            },
+            {
+              "type": "identifier",
+              "text": "@return",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-missing-body-if-empty-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-missing-body-define-empty-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#define\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-missing-body-undef-empty-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#undef\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-missing-body-if-space-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if \t\nclass C {}\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue157-missing-body-elif-empty-r1",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B05"
+      ],
+      "source_utf8": "#if true\nclass A {}\n#elif\nclass Inner {}\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class C {}",
+              "occurrence": 1
+            }
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }
