@@ -339,7 +339,7 @@ func execute() error {
 	}
 	completedFixtures := 0
 	op := kit.NativeOperations()["native-query-large"]
-	small := []string{"class C { int M(int a) { return a + 1; } }\n", "class C { int M(int a) { return a + ; } }\n", "class C { void M() { F(1; } }\n", "class C { int M() { return 1 } }\n"}
+	small := []string{"    class C { int M(int a) { return a + 1; } }\n", "class C { int M(int a) { return a + ; } }\n", "class C { void M() { F(1; } }\n", "class C { int M() { return 1 } }\n"}
 	var first native.Request
 	var firstNodes uint64
 	var zero native.Request
@@ -358,6 +358,10 @@ func execute() error {
 		}
 		nodes := oracle.Steps[0].Incremental.DescendantCount
 		if i == 0 {
+			if oracle.Steps[0].Incremental.Tree.Nodes[0].StartByte != 4 {
+				result.Pass = false
+				continue
+			}
 			firstNodes = nodes
 		}
 		if i == 3 {

@@ -72,6 +72,25 @@ func snapshot(t *testing.T, dir string) map[string]string {
 	return out
 }
 
+// Query-free API records still publish an empty identity array in the manifest.
+func TestOracleRecordSetWithoutQueries(t *testing.T) {
+	t.Parallel() // Independent build and output, like TestOracleRecordSet.
+	profile, root := oracleProfile(t, nil, "a = f(1);\n")
+	out := filepath.Join(t.TempDir(), "set")
+	res, err := runOracle(t, oracleRequest(t, profile, root, out))
+	if err != nil || res.ExecutionStatus != kit.StatusCompleted || res.Set == nil || !res.Set.Valid || res.Set.Records != 1 {
+		t.Fatalf("%v %s %+v %+v", err, res.ExecutionStatus, res.Set, res.Findings)
+	}
+	if len(res.Cases) != 1 || res.Cases[0].Oracle == nil || res.Cases[0].Oracle.API != ClaimPass || res.Cases[0].Oracle.QueryEquality != ClaimNotClaimed {
+		t.Fatalf("query-free API claims: %+v", res.Cases)
+	}
+	data, err := os.ReadFile(filepath.Join(out, "manifest.json"))
+	var manifest map[string]json.RawMessage
+	if err != nil || json.Unmarshal(data, &manifest) != nil || string(manifest["queries"]) != "[]" {
+		t.Fatalf("empty query identities: %v %s", err, manifest["queries"])
+	}
+}
+
 // S06-A02/A09/A10: a record run publishes a verified set bound to the build and the inputs;
 // an existing output or a concurrent run on the same output is refused without touching
 // it; a member write failure leaves no manifest and no completed set.

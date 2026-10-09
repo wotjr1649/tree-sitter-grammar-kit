@@ -350,7 +350,7 @@
       "features": [
         "tsql-B01"
       ],
-      "source_utf8": "CREATE TABLE #가 (id int);\n\nSELECT 1 AS fixture_anchor;\n",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TABLE #가 (id int);\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
         {
           "find": "CREATE TABLE #가 (id int);",
@@ -948,7 +948,7 @@
       "id": "tsql-issue122-cte-batch-missing-r1",
       "kind": "gap",
       "features": ["tsql-B04"],
-      "source_utf8": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [{"find": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
       "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
     },
@@ -980,7 +980,7 @@
       "id": "tsql-issue122-cte-after-if-r1",
       "kind": "gap",
       "features": ["tsql-B04"],
-      "source_utf8": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nIF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [{"find": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "IF 1=1 SELECT 1 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=1 SELECT 1; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
       "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
     },
@@ -988,7 +988,7 @@
       "id": "tsql-issue122-cte-after-else-r1",
       "kind": "gap",
       "features": ["tsql-B04"],
-      "source_utf8": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nIF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [{"find": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=0 SELECT 1; ELSE SELECT 2 WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}, {"find": "IF 1=0 SELECT 1; ELSE SELECT 2 WITH c AS (SELECT 2 AS a) SELECT a FROM c;", "replace": "IF 1=0 SELECT 1; ELSE SELECT 2; WITH c AS (SELECT 2 AS a) SELECT a FROM c;"}],
       "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]
     },
@@ -2904,12 +2904,12 @@
       "source_utf8": "SELECT a FROM [NOT];",
       "edits": [
         {
-          "find": "SELECT a FROM [NOT];",
-          "replace": "SELECT a FROM NOT;"
+          "find": "[NOT]",
+          "replace": "NOT"
         },
         {
-          "find": "SELECT a FROM NOT;",
-          "replace": "SELECT a FROM [NOT];"
+          "find": "NOT",
+          "replace": "[NOT]"
         }
       ],
       "expect": [
@@ -2940,15 +2940,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "[NOT];",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\n[NOT];",
       "edits": [
         {
-          "find": "[NOT];",
-          "replace": "NOT;"
+          "find": "[NOT]",
+          "replace": "NOT"
         },
         {
-          "find": "NOT;",
-          "replace": "[NOT];"
+          "find": "NOT",
+          "replace": "[NOT]"
         }
       ],
       "expect": [
@@ -2982,12 +2982,12 @@
       "source_utf8": "CREATE TABLE dbo.t(a [NOT]);",
       "edits": [
         {
-          "find": "CREATE TABLE dbo.t(a [NOT]);",
-          "replace": "CREATE TABLE dbo.t(a NOT);"
+          "find": "[NOT]",
+          "replace": "NOT"
         },
         {
-          "find": "CREATE TABLE dbo.t(a NOT);",
-          "replace": "CREATE TABLE dbo.t(a [NOT]);"
+          "find": "NOT",
+          "replace": "[NOT]"
         }
       ],
       "expect": [
@@ -3021,12 +3021,12 @@
       "source_utf8": "SELECT * FROM dbo.t, dbo.[WITH](1);",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t, dbo.[WITH](1);",
-          "replace": "SELECT * FROM dbo.t, WITH(1);"
+          "find": "dbo.[WITH]",
+          "replace": "WITH"
         },
         {
-          "find": "SELECT * FROM dbo.t, WITH(1);",
-          "replace": "SELECT * FROM dbo.t, dbo.[WITH](1);"
+          "find": "WITH",
+          "replace": "dbo.[WITH]"
         }
       ],
       "expect": [
@@ -3057,15 +3057,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT 1 WHERE NOT 1 = 0;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT 1 = 0;",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT 1 = 0;",
-          "replace": "SELECT NOT 1;"
+          "find": "1 WHERE NOT 1 = 0",
+          "replace": "NOT 1"
         },
         {
-          "find": "SELECT NOT 1;",
-          "replace": "SELECT 1 WHERE NOT 1 = 0;"
+          "find": "NOT 1",
+          "replace": "1 WHERE NOT 1 = 0"
         }
       ],
       "expect": [
@@ -3096,15 +3096,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT 1 WHERE NOT (1 + 2 = 0);",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (1 + 2 = 0);",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT (1 + 2 = 0);",
-          "replace": "SELECT NOT (1 + 2);"
+          "find": "1 WHERE NOT (1 + 2 = 0",
+          "replace": "NOT (1 + 2"
         },
         {
-          "find": "SELECT NOT (1 + 2);",
-          "replace": "SELECT 1 WHERE NOT (1 + 2 = 0);"
+          "find": "NOT (1 + 2",
+          "replace": "1 WHERE NOT (1 + 2 = 0"
         }
       ],
       "expect": [
@@ -3135,15 +3135,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT 1 WHERE NOT EXISTS(SELECT 1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT EXISTS(SELECT 1);",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT EXISTS(SELECT 1);",
-          "replace": "SELECT ABS(NOT 1);"
+          "find": "1 WHERE NOT EXISTS(SELEC",
+          "replace": "ABS(NO"
         },
         {
-          "find": "SELECT ABS(NOT 1);",
-          "replace": "SELECT 1 WHERE NOT EXISTS(SELECT 1);"
+          "find": "ABS(NO",
+          "replace": "1 WHERE NOT EXISTS(SELEC"
         }
       ],
       "expect": [
@@ -3174,15 +3174,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
-          "replace": "SELECT NOT NOT 1;"
+          "find": "1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3))",
+          "replace": "NOT NOT 1"
         },
         {
-          "find": "SELECT NOT NOT 1;",
-          "replace": "SELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));"
+          "find": "NOT NOT 1",
+          "replace": "1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3))"
         }
       ],
       "expect": [
@@ -3216,12 +3216,12 @@
       "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
       "edits": [
         {
-          "find": "ALTER QUEUE q WITH STATUS = ON;",
-          "replace": "ALTER QUEUE q WITH STATUS ON;"
+          "find": "= ",
+          "replace": ""
         },
         {
-          "find": "ALTER QUEUE q WITH STATUS ON;",
-          "replace": "ALTER QUEUE q WITH STATUS = ON;"
+          "find": "S ",
+          "replace": "S = "
         }
       ],
       "expect": [
@@ -3255,12 +3255,12 @@
       "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
       "edits": [
         {
-          "find": "ALTER QUEUE q WITH STATUS = ON;",
-          "replace": "ALTER QUEUE q WITH STATUS = 1;"
+          "find": "ON",
+          "replace": "1"
         },
         {
-          "find": "ALTER QUEUE q WITH STATUS = 1;",
-          "replace": "ALTER QUEUE q WITH STATUS = ON;"
+          "find": "1",
+          "replace": "ON"
         }
       ],
       "expect": [
@@ -3294,12 +3294,12 @@
       "source_utf8": "ALTER QUEUE q WITH RETENTION = OFF;",
       "edits": [
         {
-          "find": "ALTER QUEUE q WITH RETENTION = OFF;",
-          "replace": "ALTER QUEUE q WITH RETENTION = DEFAULT;"
+          "find": "OFF",
+          "replace": "DEFAULT"
         },
         {
-          "find": "ALTER QUEUE q WITH RETENTION = DEFAULT;",
-          "replace": "ALTER QUEUE q WITH RETENTION = OFF;"
+          "find": "DEFAULT",
+          "replace": "OFF"
         }
       ],
       "expect": [
@@ -3333,12 +3333,12 @@
       "source_utf8": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);",
       "edits": [
         {
-          "find": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);",
-          "replace": "ALTER QUEUE q WITH ACTIVATION (STATUS ON);"
+          "find": "= ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER",
+          "replace": "ON"
         },
         {
-          "find": "ALTER QUEUE q WITH ACTIVATION (STATUS ON);",
-          "replace": "ALTER QUEUE q WITH ACTIVATION (STATUS = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);"
+          "find": " ON",
+          "replace": " = ON, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER"
         }
       ],
       "expect": [
@@ -3372,12 +3372,12 @@
       "source_utf8": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);",
       "edits": [
         {
-          "find": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);",
-          "replace": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = 1);"
+          "find": "OFF",
+          "replace": "1"
         },
         {
-          "find": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = 1);",
-          "replace": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);"
+          "find": "1",
+          "replace": "OFF"
         }
       ],
       "expect": [
@@ -3408,15 +3408,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL';",
       "edits": [
         {
-          "find": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';",
-          "replace": "ALTER ROUTE r WITH ADDRESS 'LOCAL';"
+          "find": "= ",
+          "replace": ""
         },
         {
-          "find": "ALTER ROUTE r WITH ADDRESS 'LOCAL';",
-          "replace": "ALTER ROUTE r WITH ADDRESS = 'LOCAL';"
+          "find": "ADDRESS ",
+          "replace": "ADDRESS = "
         }
       ],
       "expect": [
@@ -3450,12 +3450,12 @@
       "source_utf8": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
       "edits": [
         {
-          "find": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
-          "replace": "CREATE ROUTE r WITH ADDRESS = 1, LIFETIME = 60;"
+          "find": "'LOCAL'",
+          "replace": "1"
         },
         {
-          "find": "CREATE ROUTE r WITH ADDRESS = 1, LIFETIME = 60;",
-          "replace": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;"
+          "find": "1",
+          "replace": "'LOCAL'"
         }
       ],
       "expect": [
@@ -3489,12 +3489,12 @@
       "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
-          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE OFF);"
+          "find": "= ",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE OFF);",
-          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);"
+          "find": "E ",
+          "replace": "E = "
         }
       ],
       "expect": [
@@ -3528,12 +3528,12 @@
       "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
-          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = 1);"
+          "find": "OFF",
+          "replace": "1"
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p WITH (STATE = 1);",
-          "replace": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);"
+          "find": "1",
+          "replace": "OFF"
         }
       ],
       "expect": [
@@ -3564,15 +3564,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t;"
+          "find": "FILTER ",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+          "find": "D ",
+          "replace": "D FILTER "
         }
       ],
       "expect": [
@@ -3603,15 +3603,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
       "edits": [
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);"
+          "find": "BLOCK ",
+          "replace": ""
         },
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD BLOCK PREDICATE dbo.f(a) ON dbo.t AFTER INSERT WITH (STATE = ON, SCHEMABINDING = OFF);"
+          "find": "D ",
+          "replace": "D BLOCK "
         }
       ],
       "expect": [
@@ -3645,12 +3645,12 @@
       "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(DEFAULT) ON dbo.t;"
+          "find": "a",
+          "replace": "DEFAULT"
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(DEFAULT) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+          "find": "DEFAULT",
+          "replace": "a"
         }
       ],
       "expect": [
@@ -3684,12 +3684,12 @@
       "source_utf8": "SELECT COUNT(a) FROM dbo.t;",
       "edits": [
         {
-          "find": "SELECT COUNT(a) FROM dbo.t;",
-          "replace": "SELECT COUNT(DEFAULT) FROM dbo.t;"
+          "find": "a",
+          "replace": "DEFAULT"
         },
         {
-          "find": "SELECT COUNT(DEFAULT) FROM dbo.t;",
-          "replace": "SELECT COUNT(a) FROM dbo.t;"
+          "find": "DEFAULT",
+          "replace": "a"
         }
       ],
       "expect": [
@@ -3720,15 +3720,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT dbo.f(DEFAULT);",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT dbo.f(DEFAULT);",
       "edits": [
         {
-          "find": "SELECT dbo.f(DEFAULT);",
-          "replace": "SELECT f(DEFAULT);"
+          "find": "dbo.",
+          "replace": ""
         },
         {
-          "find": "SELECT f(DEFAULT);",
-          "replace": "SELECT dbo.f(DEFAULT);"
+          "find": "SELECT f(",
+          "replace": "SELECT dbo.f("
         }
       ],
       "expect": [
@@ -3759,15 +3759,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT * FROM dbo.t;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t;",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t;",
-          "replace": "SELECT * p FROM dbo.t;"
+          "find": "* ",
+          "replace": "* p "
         },
         {
-          "find": "SELECT * p FROM dbo.t;",
-          "replace": "SELECT * FROM dbo.t;"
+          "find": "p ",
+          "replace": ""
         }
       ],
       "expect": [
@@ -3798,15 +3798,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT t.* FROM dbo.t t;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT t.* FROM dbo.t t;",
       "edits": [
         {
-          "find": "SELECT t.* FROM dbo.t t;",
-          "replace": "SELECT t.* AS x FROM dbo.t t;"
+          "find": "* ",
+          "replace": "* AS x "
         },
         {
-          "find": "SELECT t.* AS x FROM dbo.t t;",
-          "replace": "SELECT t.* FROM dbo.t t;"
+          "find": "AS x ",
+          "replace": ""
         }
       ],
       "expect": [
@@ -3837,15 +3837,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT COUNT(*) HAVING COUNT_BIG(*) > 0;",
       "edits": [
         {
-          "find": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;",
-          "replace": "SELECT COUNTNOT(*) HAVING COUNT_BIG(*) > 0;"
+          "find": "T COUNT",
+          "replace": "T COUNTNOT"
         },
         {
-          "find": "SELECT COUNTNOT(*) HAVING COUNT_BIG(*) > 0;",
-          "replace": "SELECT COUNT(*) HAVING COUNT_BIG(*) > 0;"
+          "find": "NOT",
+          "replace": ""
         }
       ],
       "expect": [
@@ -3876,15 +3876,15 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT ABS(1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT ABS(1);",
       "edits": [
         {
-          "find": "SELECT ABS(1);",
-          "replace": "SELECT ABS(*);"
+          "find": "1",
+          "replace": "*"
         },
         {
-          "find": "SELECT ABS(*);",
-          "replace": "SELECT ABS(1);"
+          "find": "*",
+          "replace": "1"
         }
       ],
       "expect": [
@@ -3918,12 +3918,12 @@
       "source_utf8": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
       "edits": [
         {
-          "find": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
-          "replace": "EXEC (1) AS LOGIN = 'u';"
+          "find": "N'SELECT 1'",
+          "replace": "1"
         },
         {
-          "find": "EXEC (1) AS LOGIN = 'u';",
-          "replace": "EXEC (N'SELECT 1') AS LOGIN = 'u';"
+          "find": "1",
+          "replace": "N'SELECT 1'"
         }
       ],
       "expect": [
@@ -3957,12 +3957,12 @@
       "source_utf8": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
       "edits": [
         {
-          "find": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
-          "replace": "DECLARE @sql nvarchar(max) = N'1'; EXEC (1 + @sql);"
+          "find": "N'SELECT '",
+          "replace": "1"
         },
         {
-          "find": "DECLARE @sql nvarchar(max) = N'1'; EXEC (1 + @sql);",
-          "replace": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);"
+          "find": "(1",
+          "replace": "(N'SELECT '"
         }
       ],
       "expect": [
@@ -3996,12 +3996,12 @@
       "source_utf8": "SELECT * FROM OPENJSON(N'[]', '$');",
       "edits": [
         {
-          "find": "SELECT * FROM OPENJSON(N'[]', '$');",
-          "replace": "SELECT * FROM OPENJSON(N'[]' '$');"
+          "find": ",",
+          "replace": ""
         },
         {
-          "find": "SELECT * FROM OPENJSON(N'[]' '$');",
-          "replace": "SELECT * FROM OPENJSON(N'[]', '$');"
+          "find": "]'",
+          "replace": "]',"
         }
       ],
       "expect": [
@@ -4035,12 +4035,12 @@
       "source_utf8": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
       "edits": [
         {
-          "find": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
-          "replace": "ALTER PROCEDURE dbo.p a int AS SELECT 1;"
+          "find": "@",
+          "replace": ""
         },
         {
-          "find": "ALTER PROCEDURE dbo.p a int AS SELECT 1;",
-          "replace": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;"
+          "find": "p ",
+          "replace": "p @"
         }
       ],
       "expect": [
@@ -4074,12 +4074,12 @@
       "source_utf8": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
         {
-          "find": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
-          "replace": "CREATE FUNCTION dbo.g(a int) RETURNS int AS BEGIN RETURN 1; END;"
+          "find": "@",
+          "replace": ""
         },
         {
-          "find": "CREATE FUNCTION dbo.g(a int) RETURNS int AS BEGIN RETURN 1; END;",
-          "replace": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;"
+          "find": "(",
+          "replace": "(@"
         }
       ],
       "expect": [
@@ -4113,12 +4113,12 @@
       "source_utf8": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
       "edits": [
         {
-          "find": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
-          "replace": "CREATE PROCEDURE dbo.p a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+          "find": "p @",
+          "replace": "p "
         },
         {
-          "find": "CREATE PROCEDURE dbo.p a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
-          "replace": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+          "find": "p ",
+          "replace": "p @"
         }
       ],
       "expect": [
@@ -4152,12 +4152,12 @@
       "source_utf8": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
       "edits": [
         {
-          "find": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
-          "replace": "CREATE FUNCTION dbo.g(a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+          "find": "@",
+          "replace": ""
         },
         {
-          "find": "CREATE FUNCTION dbo.g(a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
-          "replace": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+          "find": "g(",
+          "replace": "g(@"
         }
       ],
       "expect": [
@@ -4190,15 +4190,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nMERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
       "edits": [
         {
-          "find": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE . AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+          "find": ".t",
+          "replace": "."
         },
         {
-          "find": "MERGE . AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE .t AS t USING dbo.s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+          "find": " .",
+          "replace": " .t"
         }
       ],
       "expect": [
@@ -4234,12 +4234,12 @@
       "source_utf8": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
       "edits": [
         {
-          "find": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING . AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+          "find": ".s",
+          "replace": "."
         },
         {
-          "find": "MERGE dbo.t AS t USING . AS s ON t.id=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING .s AS s ON t.id=s.id WHEN MATCHED THEN DELETE;"
+          "find": " .",
+          "replace": " .s"
         }
       ],
       "expect": [
@@ -4275,12 +4275,12 @@
       "source_utf8": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;",
       "edits": [
         {
-          "find": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON .=s.id WHEN MATCHED THEN DELETE;"
+          "find": " .id",
+          "replace": " ."
         },
         {
-          "find": "MERGE dbo.t AS t USING dbo.s AS s ON .=s.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON .id=s.id WHEN MATCHED THEN DELETE;"
+          "find": " .",
+          "replace": " .id"
         }
       ],
       "expect": [
@@ -4316,12 +4316,12 @@
       "source_utf8": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;",
       "edits": [
         {
-          "find": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=. WHEN MATCHED THEN DELETE;"
+          "find": "=.id",
+          "replace": "=."
         },
         {
-          "find": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=. WHEN MATCHED THEN DELETE;",
-          "replace": "MERGE dbo.t AS t USING dbo.s AS s ON t.id=.id WHEN MATCHED THEN DELETE;"
+          "find": "=.",
+          "replace": "=.id"
         }
       ],
       "expect": [
@@ -4357,12 +4357,12 @@
       "source_utf8": "PRINT 1; ENABLE TRIGGER ALL ON .t;",
       "edits": [
         {
-          "find": "PRINT 1; ENABLE TRIGGER ALL ON .t;",
-          "replace": "PRINT 1; ENABLE TRIGGER ALL ON .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "PRINT 1; ENABLE TRIGGER ALL ON .;",
-          "replace": "PRINT 1; ENABLE TRIGGER ALL ON .t;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -4395,15 +4395,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "EXEC .p @a=-3;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nEXEC .p @a=-3;",
       "edits": [
         {
-          "find": "EXEC .p @a=-3;",
-          "replace": "EXEC . @a=-3;"
+          "find": "p",
+          "replace": ""
         },
         {
-          "find": "EXEC . @a=-3;",
-          "replace": "EXEC .p @a=-3;"
+          "find": ".",
+          "replace": ".p"
         }
       ],
       "expect": [
@@ -4439,12 +4439,12 @@
       "source_utf8": "SELECT * FROM .f(1) AS a;",
       "edits": [
         {
-          "find": "SELECT * FROM .f(1) AS a;",
-          "replace": "SELECT * FROM .(1) AS a;"
+          "find": "f",
+          "replace": ""
         },
         {
-          "find": "SELECT * FROM .(1) AS a;",
-          "replace": "SELECT * FROM .f(1) AS a;"
+          "find": ".",
+          "replace": ".f"
         }
       ],
       "expect": [
@@ -4480,12 +4480,12 @@
       "source_utf8": "SELECT * FROM dbo, .f(1) AS a;",
       "edits": [
         {
-          "find": "SELECT * FROM dbo, .f(1) AS a;",
-          "replace": "SELECT * FROM dbo, .(1) AS a;"
+          "find": "f",
+          "replace": ""
         },
         {
-          "find": "SELECT * FROM dbo, .(1) AS a;",
-          "replace": "SELECT * FROM dbo, .f(1) AS a;"
+          "find": ".",
+          "replace": ".f"
         }
       ],
       "expect": [
@@ -4518,15 +4518,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;",
       "edits": [
         {
-          "find": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;",
-          "replace": "ALTER TABLE . ALTER COLUMN a DROP NOT FOR REPLICATION;"
+          "find": ".t",
+          "replace": "."
         },
         {
-          "find": "ALTER TABLE . ALTER COLUMN a DROP NOT FOR REPLICATION;",
-          "replace": "ALTER TABLE .t ALTER COLUMN a DROP NOT FOR REPLICATION;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -4562,12 +4562,12 @@
       "source_utf8": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
-          "replace": "ALTER SECURITY POLICY . WITH (STATE = OFF);"
+          "find": "p",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY . WITH (STATE = OFF);",
-          "replace": "ALTER SECURITY POLICY .p WITH (STATE = OFF);"
+          "find": ".",
+          "replace": ".p"
         }
       ],
       "expect": [
@@ -4600,15 +4600,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+          "find": "p",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t;"
+          "find": " .",
+          "replace": " .p"
         }
       ],
       "expect": [
@@ -4644,12 +4644,12 @@
       "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t;"
+          "find": "f",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t;"
+          "find": " .",
+          "replace": " .f"
         }
       ],
       "expect": [
@@ -4685,12 +4685,12 @@
       "source_utf8": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;",
       "edits": [
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .;",
-          "replace": "ALTER SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t;"
+          "find": " .",
+          "replace": " .t"
         }
       ],
       "expect": [
@@ -4723,15 +4723,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
       "edits": [
         {
-          "find": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": "p",
+          "replace": ""
         },
         {
-          "find": "CREATE SECURITY POLICY . ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY .p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": " .",
+          "replace": " .p"
         }
       ],
       "expect": [
@@ -4767,12 +4767,12 @@
       "source_utf8": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
       "edits": [
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": "f",
+          "replace": ""
         },
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE .f(a) ON dbo.t WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": " .",
+          "replace": " .f"
         }
       ],
       "expect": [
@@ -4808,12 +4808,12 @@
       "source_utf8": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;",
       "edits": [
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON . WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON . WITH (STATE = ON) NOT FOR REPLICATION;",
-          "replace": "CREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON .t WITH (STATE = ON) NOT FOR REPLICATION;"
+          "find": " .",
+          "replace": " .t"
         }
       ],
       "expect": [
@@ -4849,12 +4849,12 @@
       "source_utf8": "CREATE TABLE .t (a int DEFAULT (1));",
       "edits": [
         {
-          "find": "CREATE TABLE .t (a int DEFAULT (1));",
-          "replace": "CREATE TABLE . (a int DEFAULT (1));"
+          "find": ".t",
+          "replace": "."
         },
         {
-          "find": "CREATE TABLE . (a int DEFAULT (1));",
-          "replace": "CREATE TABLE .t (a int DEFAULT (1));"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -4890,12 +4890,12 @@
       "source_utf8": "INSERT INTO .t (a) VALUES (1);",
       "edits": [
         {
-          "find": "INSERT INTO .t (a) VALUES (1);",
-          "replace": "INSERT INTO . (a) VALUES (1);"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "INSERT INTO . (a) VALUES (1);",
-          "replace": "INSERT INTO .t (a) VALUES (1);"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -4928,15 +4928,15 @@
         "tsql-B03",
         "tsql-B04"
       ],
-      "source_utf8": "UPDATE .t SET a = DEFAULT;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nUPDATE .t SET a = DEFAULT;",
       "edits": [
         {
-          "find": "UPDATE .t SET a = DEFAULT;",
-          "replace": "UPDATE . SET a = DEFAULT;"
+          "find": ".t",
+          "replace": "."
         },
         {
-          "find": "UPDATE . SET a = DEFAULT;",
-          "replace": "UPDATE .t SET a = DEFAULT;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -4972,12 +4972,12 @@
       "source_utf8": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
         {
-          "find": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
-          "replace": "CREATE FUNCTION .() RETURNS int AS BEGIN RETURN 1; END;"
+          "find": "f",
+          "replace": ""
         },
         {
-          "find": "CREATE FUNCTION .() RETURNS int AS BEGIN RETURN 1; END;",
-          "replace": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;"
+          "find": ".",
+          "replace": ".f"
         }
       ],
       "expect": [
@@ -5013,12 +5013,12 @@
       "source_utf8": "SELECT [KEY] FROM .t;",
       "edits": [
         {
-          "find": "SELECT [KEY] FROM .t;",
-          "replace": "SELECT [KEY] FROM .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT [KEY] FROM .;",
-          "replace": "SELECT [KEY] FROM .t;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -5054,12 +5054,12 @@
       "source_utf8": "SELECT [KEY] FROM dbo, .t;",
       "edits": [
         {
-          "find": "SELECT [KEY] FROM dbo, .t;",
-          "replace": "SELECT [KEY] FROM dbo, .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT [KEY] FROM dbo, .;",
-          "replace": "SELECT [KEY] FROM dbo, .t;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -5095,12 +5095,12 @@
       "source_utf8": "SELECT 한 FROM .t;",
       "edits": [
         {
-          "find": "SELECT 한 FROM .t;",
-          "replace": "SELECT 한 FROM .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT 한 FROM .;",
-          "replace": "SELECT 한 FROM .t;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -5136,12 +5136,12 @@
       "source_utf8": "SELECT 한 FROM dbo, .t;",
       "edits": [
         {
-          "find": "SELECT 한 FROM dbo, .t;",
-          "replace": "SELECT 한 FROM dbo, .;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT 한 FROM dbo, .;",
-          "replace": "SELECT 한 FROM dbo, .t;"
+          "find": ".",
+          "replace": ".t"
         }
       ],
       "expect": [
@@ -5175,12 +5175,12 @@
       "source_utf8": "SELECT a FROM db..t;",
       "edits": [
         {
-          "find": "SELECT a FROM db..t;",
-          "replace": "SELECT a FROM db..;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT a FROM db..;",
-          "replace": "SELECT a FROM db..t;"
+          "find": "..",
+          "replace": "..t"
         }
       ],
       "expect": [
@@ -5214,12 +5214,12 @@
       "source_utf8": "SELECT a FROM srv.db.dbo.t;",
       "edits": [
         {
-          "find": "SELECT a FROM srv.db.dbo.t;",
-          "replace": "SELECT a FROM srv.db.dbo.;"
+          "find": "t",
+          "replace": ""
         },
         {
-          "find": "SELECT a FROM srv.db.dbo.;",
-          "replace": "SELECT a FROM srv.db.dbo.t;"
+          "find": "o.",
+          "replace": "o.t"
         }
       ],
       "expect": [
@@ -5250,15 +5250,15 @@
         "tsql-B01",
         "tsql-B03"
       ],
-      "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;",
       "edits": [
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;"
+          "find": "sqlserver",
+          "replace": ""
         },
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;"
+          "find": "D EVENT ",
+          "replace": "D EVENT sqlserver"
         }
       ],
       "expect": [
@@ -5289,15 +5289,15 @@
         "tsql-B01",
         "tsql-B03"
       ],
-      "source_utf8": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;",
       "edits": [
         {
-          "find": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;",
-          "replace": "ALTER EVENT SESSION s ON SERVER DROP EVENT .lock_deadlock;"
+          "find": "sqlserver",
+          "replace": ""
         },
         {
-          "find": "ALTER EVENT SESSION s ON SERVER DROP EVENT .lock_deadlock;",
-          "replace": "ALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;"
+          "find": "P EVENT ",
+          "replace": "P EVENT sqlserver"
         }
       ],
       "expect": [
@@ -5328,15 +5328,15 @@
         "tsql-B01",
         "tsql-B03"
       ],
-      "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;",
       "edits": [
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD TARGET .ring_buffer;"
+          "find": "package0",
+          "replace": ""
         },
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD TARGET .ring_buffer;",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;"
+          "find": "ET ",
+          "replace": "ET package0"
         }
       ],
       "expect": [
@@ -5367,15 +5367,15 @@
         "tsql-B01",
         "tsql-B03"
       ],
-      "source_utf8": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;",
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;",
       "edits": [
         {
-          "find": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;",
-          "replace": "ALTER EVENT SESSION s ON SERVER DROP TARGET .ring_buffer;"
+          "find": "package0",
+          "replace": ""
         },
         {
-          "find": "ALTER EVENT SESSION s ON SERVER DROP TARGET .ring_buffer;",
-          "replace": "ALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;"
+          "find": "ET ",
+          "replace": "ET package0"
         }
       ],
       "expect": [
@@ -5409,12 +5409,12 @@
       "source_utf8": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));",
       "edits": [
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(.sql_text));"
+          "find": "(sqlserver",
+          "replace": "("
         },
         {
-          "find": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(.sql_text));",
-          "replace": "ALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));"
+          "find": "N(",
+          "replace": "N(sqlserver"
         }
       ],
       "expect": [
@@ -5448,12 +5448,12 @@
       "source_utf8": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');",
       "edits": [
         {
-          "find": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');",
-          "replace": "SELECT a FROM dbo.t WHERE NOT 1 OR FREETEXT(a, 'pear');"
+          "find": "CONTAINS(a, 'apple')",
+          "replace": "1"
         },
         {
-          "find": "SELECT a FROM dbo.t WHERE NOT 1 OR FREETEXT(a, 'pear');",
-          "replace": "SELECT a FROM dbo.t WHERE NOT CONTAINS(a, 'apple') OR FREETEXT(a, 'pear');"
+          "find": "1",
+          "replace": "CONTAINS(a, 'apple')"
         }
       ],
       "expect": [
@@ -5487,12 +5487,12 @@
       "source_utf8": "SELECT COUNT(DISTINCT a) FROM t;",
       "edits": [
         {
-          "find": "SELECT COUNT(DISTINCT a) FROM t;",
-          "replace": "SELECT COUNT(DISTINCT a,b) FROM t;"
+          "find": "a",
+          "replace": "a,b"
         },
         {
-          "find": "SELECT COUNT(DISTINCT a,b) FROM t;",
-          "replace": "SELECT COUNT(DISTINCT a) FROM t;"
+          "find": ",b",
+          "replace": ""
         }
       ],
       "expect": [
@@ -5526,12 +5526,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(a,'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(a,'apple','extra');"
+          "find": "e'",
+          "replace": "e','extra'"
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(a,'apple','extra');",
-          "replace": "SELECT 1 WHERE CONTAINS(a,'apple');"
+          "find": ",'extra'",
+          "replace": ""
         }
       ],
       "expect": [
@@ -5565,12 +5565,12 @@
       "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE FREETEXT(a,'pear');",
-          "replace": "SELECT 1 WHERE FREETEXT(a,'pear','extra');"
+          "find": "r'",
+          "replace": "r','extra'"
         },
         {
-          "find": "SELECT 1 WHERE FREETEXT(a,'pear','extra');",
-          "replace": "SELECT 1 WHERE FREETEXT(a,'pear');"
+          "find": ",'extra'",
+          "replace": ""
         }
       ],
       "expect": [
@@ -5604,12 +5604,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);",
-          "replace": "SELECT 1 WHERE CONTAINS((a,b),'apple',1033);"
+          "find": "LANGUAGE ",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS((a,b),'apple',1033);",
-          "replace": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);"
+          "find": "',",
+          "replace": "',LANGUAGE "
         }
       ],
       "expect": [
@@ -5643,12 +5643,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(*,'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(*,'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(*);"
+          "find": ",'apple'",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(*);",
-          "replace": "SELECT 1 WHERE CONTAINS(*,'apple');"
+          "find": "*",
+          "replace": "*,'apple'"
         }
       ],
       "expect": [
@@ -5682,12 +5682,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'));"
+          "find": ",'apple'",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'));",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+          "find": "')",
+          "replace": "'),'apple'"
         }
       ],
       "expect": [
@@ -5721,12 +5721,12 @@
       "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);",
       "edits": [
         {
-          "find": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);",
-          "replace": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE);"
+          "find": " 0x409",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE);",
-          "replace": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);"
+          "find": "GE",
+          "replace": "GE 0x409"
         }
       ],
       "expect": [
@@ -5760,12 +5760,12 @@
       "source_utf8": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
       "edits": [
         {
-          "find": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
-          "replace": "SELECT * FROM OPENROWSET('p','c','q',ORDER(a)) AS r;"
+          "find": "BULK 'x',SINGLE_CLOB",
+          "replace": "'p','c','q'"
         },
         {
-          "find": "SELECT * FROM OPENROWSET('p','c','q',ORDER(a)) AS r;",
-          "replace": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;"
+          "find": "'p','c','q'",
+          "replace": "BULK 'x',SINGLE_CLOB"
         }
       ],
       "expect": [
@@ -5799,12 +5799,12 @@
       "source_utf8": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;",
       "edits": [
         {
-          "find": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;",
-          "replace": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',ORDER(a)) AS r;"
+          "find": "2",
+          "replace": "ORDER(a)"
         },
         {
-          "find": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',ORDER(a)) AS r;",
-          "replace": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;"
+          "find": "ORDER(a)",
+          "replace": "2"
         }
       ],
       "expect": [
@@ -5838,12 +5838,12 @@
       "source_utf8": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;",
       "edits": [
         {
-          "find": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;",
-          "replace": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d,ORDER(a)) WITH(y float) AS r;"
+          "find": "d",
+          "replace": "d,ORDER(a)"
         },
         {
-          "find": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d,ORDER(a)) WITH(y float) AS r;",
-          "replace": "DECLARE @m varbinary(max);SELECT * FROM PREDICT(MODEL=@m,DATA=t AS d) WITH(y float) AS r;"
+          "find": ",ORDER(a)",
+          "replace": ""
         }
       ],
       "expect": [
@@ -5877,12 +5877,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(a,'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(1,'apple');"
+          "find": "(a",
+          "replace": "(1"
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(1,'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(a,'apple');"
+          "find": "(1",
+          "replace": "(a"
         }
       ],
       "expect": [
@@ -5916,12 +5916,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a),'apple');"
+          "find": ",'Title'",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a),'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+          "find": "(a",
+          "replace": "(a,'Title'"
         }
       ],
       "expect": [
@@ -5955,12 +5955,12 @@
       "source_utf8": "SELECT 1 WHERE FREETEXT((a,b),'pear');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE FREETEXT((a,b),'pear');",
-          "replace": "SELECT 1 WHERE FREETEXT((1,2),'pear');"
+          "find": "a,b",
+          "replace": "1,2"
         },
         {
-          "find": "SELECT 1 WHERE FREETEXT((1,2),'pear');",
-          "replace": "SELECT 1 WHERE FREETEXT((a,b),'pear');"
+          "find": "1,2",
+          "replace": "a,b"
         }
       ],
       "expect": [
@@ -5994,12 +5994,12 @@
       "source_utf8": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);",
       "edits": [
         {
-          "find": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);",
-          "replace": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,1);"
+          "find": ",@s",
+          "replace": ",1"
         },
         {
-          "find": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,1);",
-          "replace": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);"
+          "find": ",1",
+          "replace": ",@s"
         }
       ],
       "expect": [
@@ -6033,12 +6033,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');",
-          "replace": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 1+1);"
+          "find": "'English'",
+          "replace": "1+1"
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 1+1);",
-          "replace": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');"
+          "find": "1+1",
+          "replace": "'English'"
         }
       ],
       "expect": [
@@ -6072,12 +6072,12 @@
       "source_utf8": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);",
       "edits": [
         {
-          "find": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);",
-          "replace": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l+1);"
+          "find": "GE @l",
+          "replace": "GE @l+1"
         },
         {
-          "find": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l+1);",
-          "replace": "DECLARE @l int;SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE @l);"
+          "find": "+1",
+          "replace": ""
         }
       ],
       "expect": [
@@ -6111,12 +6111,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,1),'apple');"
+          "find": "'Title'",
+          "replace": "1"
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(PROPERTY(a,1),'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');"
+          "find": ",1",
+          "replace": ",'Title'"
         }
       ],
       "expect": [
@@ -6150,12 +6150,12 @@
       "source_utf8": "SELECT 1 WHERE CONTAINS(t.*,'apple');",
       "edits": [
         {
-          "find": "SELECT 1 WHERE CONTAINS(t.*,'apple');",
-          "replace": "SELECT 1 WHERE CONTAINS(t.*,'apple','extra');"
+          "find": "e'",
+          "replace": "e','extra'"
         },
         {
-          "find": "SELECT 1 WHERE CONTAINS(t.*,'apple','extra');",
-          "replace": "SELECT 1 WHERE CONTAINS(t.*,'apple');"
+          "find": ",'extra'",
+          "replace": ""
         }
       ],
       "expect": [
@@ -6189,12 +6189,12 @@
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);",
       "edits": [
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND);"
+          "find": " 2",
+          "replace": ""
         },
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND);",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);"
+          "find": " 1 AND",
+          "replace": " 1 AND 2"
         }
       ],
       "expect": [
@@ -6228,12 +6228,12 @@
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
       "edits": [
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
-          "replace": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND));"
+          "find": " 2",
+          "replace": ""
         },
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND));",
-          "replace": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));"
+          "find": "ND",
+          "replace": "ND 2"
         }
       ],
       "expect": [
@@ -6267,12 +6267,12 @@
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);",
       "edits": [
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND);"
+          "find": " 2",
+          "replace": ""
         },
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND);",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p NOT BETWEEN 1 AND 2);"
+          "find": " 1 AND",
+          "replace": " 1 AND 2"
         }
       ],
       "expect": [
@@ -6306,12 +6306,12 @@
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));",
       "edits": [
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND); "
+          "find": " dbo.f(c));",
+          "replace": "); "
         },
         {
-          "find": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND); ",
-          "replace": "DECLARE @p int;SELECT 1 WHERE a=1 OR (@p BETWEEN dbo.f(b) AND dbo.f(c));"
+          "find": "); ",
+          "replace": " dbo.f(c));"
         }
       ],
       "expect": [
@@ -6345,12 +6345,12 @@
       "source_utf8": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;",
       "edits": [
         {
-          "find": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;",
-          "replace": "SELECT 1 WHERE (a BETWEEN 1 AND) OR b=3;"
+          "find": " 2",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE (a BETWEEN 1 AND) OR b=3;",
-          "replace": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;"
+          "find": "D",
+          "replace": "D 2"
         }
       ],
       "expect": [
@@ -6384,12 +6384,12 @@
       "source_utf8": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);",
-          "replace": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND) OR b=3);"
+          "find": " 2",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND) OR b=3);",
-          "replace": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);"
+          "find": "D",
+          "replace": "D 2"
         }
       ],
       "expect": [
@@ -6423,12 +6423,12 @@
       "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;",
-          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND;"
+          "find": " a=1",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND;",
-          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;"
+          "find": "D",
+          "replace": "D a=1"
         }
       ],
       "expect": [
@@ -6462,12 +6462,12 @@
       "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;",
       "edits": [
         {
-          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;",
-          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR;"
+          "find": " a=1",
+          "replace": ""
         },
         {
-          "find": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR;",
-          "replace": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;"
+          "find": "OR",
+          "replace": "OR a=1"
         }
       ],
       "expect": [
@@ -6489,6 +6489,231 @@
           "contains": [],
           "declarations": ""
         }
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-00-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT UPDATE(a) SELECT 1; END;",
+      "edits": [
+        {"find": "a", "replace": ""},
+        {"find": "(", "replace": "(a"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-01-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT (UPDATE([a])) SELECT 1; END;",
+      "edits": [
+        {"find": "[a]", "replace": "1"},
+        {"find": "(1", "replace": "([a]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-02-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT NOT UPDATE(\"a\") SELECT 1; END;",
+      "edits": [
+        {"find": "\"a\"", "replace": "a,b"},
+        {"find": "a,b", "replace": "\"a\""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-03-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT UPDATE(a) AND UPDATE(b) SELECT 1; END;",
+      "edits": [
+        {"find": "T UPDATE(", "replace": "T UPDATE(t."},
+        {"find": "t.", "replace": ""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-04-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT (UPDATE(a) OR UPDATE(b)) SELECT 1; END;",
+      "edits": [
+        {"find": "a", "replace": "DEFAULT"},
+        {"find": "DEFAULT", "replace": "a"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-predicate-05-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT UPDATE(a) OR NOT UPDATE(b) SELECT 1; END;",
+      "edits": [
+        {"find": "F NOT UPDATE(", "replace": "F NOT UPDATE(DISTINCT "},
+        {"find": "DISTINCT ", "replace": ""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["if_statement", "unary_expression", "invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-variable-column-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "CREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF NOT UPDATE(a) SELECT 1; END;",
+      "edits": [
+        {"find": "(", "replace": "(@"},
+        {"find": "@", "replace": ""}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-qualified-udf-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT dbo.[UPDATE](a); SELECT dbo.\"UPDATE\"(a);",
+      "edits": [
+        {"find": "[UPDATE]", "replace": "UPDATE"},
+        {"find": "dbo.UPDATE", "replace": "dbo.[UPDATE]"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-if-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN IF UPDATE(a) SELECT 1; END;",
+      "edits": [
+        {"find": "IF UPDATE(a) SELECT 1;", "replace": "SELECT UPDATE(a);"},
+        {"find": "SELECT UPDATE(a);", "replace": "IF UPDATE(a) SELECT 1;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-where-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN SELECT 1 WHERE UPDATE(a); END;",
+      "edits": [
+        {"find": "SELECT 1 WHERE UPDATE(a);", "replace": "SELECT dbo.f(UPDATE(a));"},
+        {"find": "SELECT dbo.f(UPDATE(a));", "replace": "SELECT 1 WHERE UPDATE(a);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-while-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN WHILE UPDATE(a) BREAK; END;",
+      "edits": [
+        {"find": "WHILE UPDATE(a) BREAK;", "replace": "WHILE UPDATE(a) SELECT UPDATE(a);"},
+        {"find": "WHILE UPDATE(a) SELECT UPDATE(a);", "replace": "WHILE UPDATE(a) BREAK;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-having-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN SELECT 1 HAVING UPDATE(a); END;",
+      "edits": [
+        {"find": "SELECT 1 HAVING UPDATE(a);", "replace": "SELECT 1 ORDER BY UPDATE(a);"},
+        {"find": "SELECT 1 ORDER BY UPDATE(a);", "replace": "SELECT 1 HAVING UPDATE(a);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-case-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN SELECT CASE WHEN UPDATE(a) THEN 1 ELSE 0 END; END;",
+      "edits": [
+        {"find": "SELECT CASE WHEN UPDATE(a) THEN 1 ELSE 0 END;", "replace": "SELECT CASE UPDATE(a) WHEN 1 THEN 1 ELSE 0 END;"},
+        {"find": "SELECT CASE UPDATE(a) WHEN 1 THEN 1 ELSE 0 END;", "replace": "SELECT CASE WHEN UPDATE(a) THEN 1 ELSE 0 END;"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-join-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN SELECT 1 FROM dbo.t AS t JOIN dbo.s AS s ON UPDATE(a); END;",
+      "edits": [
+        {"find": "SELECT 1 FROM dbo.t AS t JOIN dbo.s AS s ON UPDATE(a);", "replace": "SELECT 1 FROM dbo.t AS t JOIN dbo.s AS s ON dbo.f(UPDATE(a));"},
+        {"find": "SELECT 1 FROM dbo.t AS t JOIN dbo.s AS s ON dbo.f(UPDATE(a));", "replace": "SELECT 1 FROM dbo.t AS t JOIN dbo.s AS s ON UPDATE(a);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue137-update-placement-iif-r1",
+      "kind": "gap",
+      "features": ["tsql-B01", "tsql-B02", "tsql-B04"],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE TRIGGER dbo.tr ON dbo.t AFTER UPDATE AS BEGIN SELECT IIF(UPDATE(a),1,0); END;",
+      "edits": [
+        {"find": "SELECT IIF(UPDATE(a),1,0);", "replace": "SELECT IIF(1=1,UPDATE(a),0);"},
+        {"find": "SELECT IIF(1=1,UPDATE(a),0);", "replace": "SELECT IIF(UPDATE(a),1,0);"}
+      ],
+      "expect": [
+        {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
+        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
+        {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
       ]
     }
   ]
