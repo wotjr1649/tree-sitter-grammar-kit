@@ -119,6 +119,8 @@ Immediately before each mutation, recheck identities, tips, worktree contents, a
 
 Keep a local receipt of removed/retained targets, preserved material, checks, failures, and revisit conditions. Record archive size and a review date; age or disk pressure alone never authorizes deletion. Worktree counts are review signals, not hard limits or automatic deletion triggers. `git worktree prune` removes stale administrative entries, not existing workspaces; it is not a substitute for safe removal. Tag creation/push, Release, and package publication remain separate work. This contract defines future cleanup conditions, not permission to delete existing workspaces while editing the contract.
 
+The Foundation workflow shares a width-3 lane: native route hosts have matrix `max-parallel: 2` alongside the single `large-api` job. Qualification may finish while the large audit is still running. The two race jobs and macOS regeneration wait for native routes, large API, and qualification before using their width-3 diagnostic cohort. `TestWorkflowSharedHeavyLane` enumerates completed/active/pending cohorts and rejects the former four-job overlap and early diagnostic release; job timeouts, evidence, and validation coverage remain unchanged.
+
 ## Campaign 01 준비와 후속 단계
 
 PREPARE는 [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)의 D1~D13 소유와 [26 route/feature 범위](language-feature-scope.md)를 채택한다. 공급 prompt와 역사적 S00/r2는 서로 다른 revision으로 보존한다. local hash/receipt는 권한이나 성공을 만들어내지 않으며 CI와 공개 API는 local prompt 없이 동작해야 한다.

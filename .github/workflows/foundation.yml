@@ -181,9 +181,9 @@ jobs:
   race:
     # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
     # CGO-free foundation gate above stays the required core check and is not relaxed.
-    # It waits for the three native route jobs so at most three heavy jobs run at once.
+    # Diagnostics wait for native/large validation and qualification; their width is 3.
     name: race diagnostic (${{ matrix.os }})
-    needs: native-routes
+    needs: [native-routes, large-api, qualification]
     if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
@@ -284,7 +284,7 @@ jobs:
   macos-regenerate:
     # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
     name: regenerate diagnostic (macos-15)
-    needs: native-routes
+    needs: [native-routes, large-api, qualification]
     if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
     runs-on: macos-15
     timeout-minutes: 30
@@ -452,7 +452,8 @@ jobs:
     needs: native-prepare
     strategy:
       fail-fast: false
-      max-parallel: 3
+      # Two route hosts plus the independent large-api job share the width-3 lane.
+      max-parallel: 2
       matrix:
         include:
           - os: windows-2025
