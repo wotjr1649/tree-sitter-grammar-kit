@@ -1967,13 +1967,13 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 9882,
-            "sha256": "352d33a7a498d5c2e6dec2bdb0c6026f60706854c5db1ed18dd34c399b88fdc6"
+            "bytes": 10126,
+            "sha256": "8ca5319dccd98d79f14168a0436c31294d8803063a92ebc9d05f26e3bf666c84"
           },
           {
             "path": "grammar/keywords.js",
             "bytes": 32288,
-            "sha256": "a8b442be7583b7203bd2c8ba8592374e95a0cf87262ffdde6568dbdcf1f0e60e"
+            "sha256": "b02d127f34386ab623971419dcb25a2a0b7b0ec4ea624114de7e045a710b8b46"
           },
           {
             "path": "grammar/column-lists.js",
@@ -1992,8 +1992,8 @@
           },
           {
             "path": "grammar/helpers.js",
-            "bytes": 7819,
-            "sha256": "2cc0d7dab84aaf548fdd07c8d12dcb582290210bfb436c2eeb6b1415616b6111"
+            "bytes": 7910,
+            "sha256": "2c58f9dcf369865435eadfbb334190666caae2c1c590a82fef3d9ab226255684"
           },
           {
             "path": "grammar/statements/create-procedure.js",
@@ -2012,8 +2012,8 @@
           },
           {
             "path": "grammar/statements/select.js",
-            "bytes": 33281,
-            "sha256": "83402562c6f53641d50fdca96859eee8a2d21c217bc0c5e544840cf0497b675e"
+            "bytes": 34459,
+            "sha256": "baaf42870b76380f36b4dbfacf36b86702d5f48f5e6a801282a812c90424b183"
           },
           {
             "path": "src/scanner.c",
@@ -2022,8 +2022,8 @@
           },
           {
             "path": "grammar/statements/alter.js",
-            "bytes": 33211,
-            "sha256": "be2fe39587336f06b3260230f6130b3ee043e8aeb22a3de52a301899ce2d4277"
+            "bytes": 33165,
+            "sha256": "2806edd4ec75c16a23009436377d7b9f41e14467451c3390e97c5091d63331af"
           },
           {
             "path": "grammar/statements/create-function.js",

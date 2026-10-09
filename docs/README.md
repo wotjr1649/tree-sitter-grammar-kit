@@ -36,6 +36,7 @@ The current implementation consists of repository foundation checks, the Session
 | ASSEMBLY file_name 문서 erratum·문자열 경계 (#134) | [ASSEMBLY file_name 경계](reports/issue-134-assembly-file-name-erratum.md) |
 | #137·#138·#139·#140 토큰 변형의 구문·leading dot·formal parameter 경계 | [T-SQL 토큰 경계](reports/issues-137-139-tsql-token-boundaries.md) |
 | T-SQL 문맥 검사·hint·문맥별 구문 경계 (#141·#145·#146·#148) | [T-SQL 문맥 검사](reports/issue-141-tsql-context-and-hints.md) |
+| DML target·cache handle·column permission·window frame·trigger 문맥 (#149) | [T-SQL 잔여 corpus 경계](reports/issue-149-tsql-corpus-context.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

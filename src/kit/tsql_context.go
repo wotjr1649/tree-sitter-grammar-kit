@@ -18,6 +18,8 @@ type TSQLDiagnostic struct {
 // CheckTSQLContext checks a complete, error-free T-SQL CST against its original
 // source snapshot. It checks SELECT CTEs without a table source, scalar predicates,
 // table hint names/conflicts, COUNT/COUNT_BIG arity and empty scalar-function RETURN.
+// It also checks DML target hints, column permissions, local window frames and
+// fixed CREATE/ALTER trigger name, event and execution-context restrictions.
 // An empty result means these rules found no violation, not that SQL Server will
 // compile or execute the source. Catalog, type, collation and runtime checks are
 // outside this API. The caller binds the CST to the source and grammar identity.
@@ -77,6 +79,9 @@ func CheckTSQLContext(nodes []TreeNode, source []byte, encoding string) ([]TSQLD
 			}
 		case "create_procedure", "alter_procedure", "create_trigger", "alter_trigger":
 			scalarFunction[i] = false
+			if n.Type == "create_trigger" || n.Type == "alter_trigger" {
+				x.trigger(i, add)
+			}
 		case "statement":
 			cte, selectBody := false, false
 			for _, c := range children[i] {
@@ -88,6 +93,22 @@ func CheckTSQLContext(nodes []TreeNode, source []byte, encoding string) ([]TSQLD
 			}
 		case "table_hint", "query_hint":
 			x.hints(i, add)
+		case "grant_statement":
+			x.columnPermissions(i, add)
+		case "window_specification":
+			frame, order, base := -1, false, false
+			for _, c := range children[i] {
+				if nodes[c].Type == "window_frame" {
+					frame = c
+				}
+				order = order || nodes[c].Type == "order_by"
+				base = base || x.field(c) == "base_window"
+			}
+			if frame >= 0 && !order && !base {
+				add("TSQL_WINDOW_FRAME_ORDER", frame)
+			}
+		case "window_frame":
+			x.windowFrame(i, add)
 		case "invocation":
 			name := x.functionName(i)
 			if name == "COUNT" || name == "COUNT_BIG" {
@@ -256,6 +277,12 @@ func (x tsqlContext) hints(i int, add func(string, int)) {
 		if name == "SERIALIZABLE" {
 			name = "HOLDLOCK"
 		}
+		if name == "NOLOCK" && x.nodes[i].Parent >= 0 {
+			switch x.nodes[x.nodes[i].Parent].Type {
+			case "delete", "update", "insert", "merge":
+				add("TSQL_DML_TARGET_HINT", c)
+			}
+		}
 		indexHint = indexHint || name == "INDEX"
 		for _, p := range x.children[c] {
 			parameterizedSeek = parameterizedSeek || name == "FORCESEEK" && x.nodes[p].Type == "("
@@ -281,5 +308,98 @@ func (x tsqlContext) hints(i int, add func(string, int)) {
 	}
 	if conflict || parameterizedSeek && indexHint {
 		add("TSQL_TABLE_HINT_CONFLICT", i)
+	}
+}
+
+func (x tsqlContext) columnPermissions(i int, add func(string, int)) {
+	global := false
+	for _, c := range x.children[i] {
+		global = global || x.nodes[c].Type == "("
+	}
+	for _, c := range x.children[i] {
+		if x.nodes[c].Type != "permission" {
+			continue
+		}
+		columns, words := global, []string{}
+		for _, p := range x.children[c] {
+			if x.nodes[p].Type == "list" {
+				columns = true
+			} else if !x.nodes[p].Extra {
+				words = append(words, x.token(p))
+			}
+		}
+		if columns {
+			switch strings.Join(words, " ") {
+			case "SELECT", "UPDATE", "REFERENCES", "UNMASK":
+			default:
+				add("TSQL_COLUMN_PERMISSION", c)
+			}
+		}
+	}
+}
+
+func (x tsqlContext) windowFrame(i int, add func(string, int)) {
+	rangeFrame, invalid := false, false
+	definitions := []int{}
+	for _, c := range x.children[i] {
+		rangeFrame = rangeFrame || x.nodes[c].Type == "keyword_range"
+		if x.nodes[c].Type == "frame_definition" {
+			definitions = append(definitions, c)
+		}
+	}
+	for k, d := range definitions {
+		unbounded, preceding, following := false, false, false
+		for _, c := range x.children[d] {
+			unbounded = unbounded || x.nodes[c].Type == "keyword_unbounded"
+			preceding = preceding || x.nodes[c].Type == "keyword_preceding"
+			following = following || x.nodes[c].Type == "keyword_following"
+			invalid = invalid || rangeFrame && (x.field(c) == "start" || x.field(c) == "end")
+		}
+		invalid = invalid || len(definitions) == 1 && following ||
+			unbounded && (k == 0 && following || k == 1 && preceding)
+	}
+	if invalid {
+		add("TSQL_WINDOW_FRAME_BOUND", i)
+	}
+}
+
+func (x tsqlContext) trigger(i int, add func(string, int)) {
+	ddl, database, name := false, false, -1
+	for _, c := range x.children[i] {
+		ddl = ddl || x.nodes[c].Type == "keyword_database" || x.nodes[c].Type == "keyword_server"
+		database = database || x.nodes[c].Type == "keyword_database"
+		if name < 0 && x.nodes[c].Type == "object_reference" {
+			name = c
+		}
+	}
+	if ddl && name >= 0 {
+		for _, c := range x.children[name] {
+			if !x.nodes[c].Extra && x.field(c) != "name" {
+				add("TSQL_DDL_TRIGGER_NAME", name)
+				break
+			}
+		}
+	}
+	for _, c := range x.children[i] {
+		if x.nodes[c].Type == "trigger_event" {
+			event := x.token(c)
+			dml := event == "INSERT" || event == "UPDATE" || event == "DELETE"
+			if ddl == dml || database && (event == "DDL_SERVER_LEVEL_EVENTS" || event == "CREATE_LOGIN") {
+				add("TSQL_TRIGGER_EVENT_SCOPE", c)
+			}
+		}
+		if ddl && x.nodes[c].Type == "trigger_options" {
+			for _, option := range x.children[c] {
+				for _, clause := range x.children[option] {
+					if x.nodes[clause].Type == "execute_as_clause" {
+						for _, p := range x.children[clause] {
+							if x.nodes[p].Type == "keyword_owner" {
+								add("TSQL_DDL_TRIGGER_OWNER", clause)
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }

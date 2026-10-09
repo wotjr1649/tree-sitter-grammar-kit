@@ -32,7 +32,7 @@ func tsqlContextCases(t *testing.T) []tsqlContextCase {
 	if err := json.Unmarshal(b, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if len(fixture.Cases) != 502 {
+	if len(fixture.Cases) != 649 {
 		t.Fatal("missing native snapshot cases")
 	}
 	registryBytes, err := os.ReadFile("../contracts/native-routes.json")

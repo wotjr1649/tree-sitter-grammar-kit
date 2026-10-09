@@ -205728,8 +205728,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "af5d8422f8379b7abf6d554d2b824e0b56b7ea4be620742416881c963de178a6",
-      "bytes": 69729431
+      "sha256": "88af8f62573a257d5b986e30f9b4db9e17b4932f71c88f14b974b674367af430",
+      "bytes": 70669279
      },
      {
       "path": "src/scanner.c",
@@ -270613,28 +270613,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue137-reserved-table-r1",
+      "id": "tsql-issue149-preserved-pair-01-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "40b30da0e16b6ac33d6c38995550d5de645ba7b86d4225470a229c2036be3d0b",
-       "bytes": 20
+       "sha256": "a0bcdeda42990549c9bb36bf8b887681d02c658e26494a1395a1afe5e3fbe8e3",
+       "bytes": 183
       },
       "edits": [
        {
-        "start_byte": 14,
-        "old_end_byte": 19,
-        "new_end_byte": 17,
-        "old": "W05PVF0=",
-        "new": "Tk9U"
+        "start_byte": 41,
+        "old_end_byte": 100,
+        "new_end_byte": 98,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10YWJsZS1yMQpTRUxFQ1QgYSBGUk9NIFtOT1RdOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10YWJsZS1yMQpTRUxFQ1QgYSBGUk9NIE5PVDsKR08K"
        },
        {
-        "start_byte": 14,
-        "old_end_byte": 17,
-        "new_end_byte": 19,
-        "old": "Tk9U",
-        "new": "W05PVF0="
+        "start_byte": 41,
+        "old_end_byte": 98,
+        "new_end_byte": 100,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10YWJsZS1yMQpTRUxFQ1QgYSBGUk9NIE5PVDsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10YWJsZS1yMQpTRUxFQ1QgYSBGUk9NIFtOT1RdOwpHTwo="
+       },
+       {
+        "start_byte": 100,
+        "old_end_byte": 183,
+        "new_end_byte": 181,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC1leGVjLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPCltOT1RdOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC1leGVjLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPCk5PVDsKR08K"
+       },
+       {
+        "start_byte": 100,
+        "old_end_byte": 181,
+        "new_end_byte": 183,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC1leGVjLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPCk5PVDsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC1leGVjLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPCltOT1RdOwpHTwo="
        }
       ],
       "expect": [
@@ -270652,6 +270666,18 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
@@ -270678,28 +270704,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue137-reserved-exec-r1",
+      "id": "tsql-issue149-preserved-pair-02-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "e934a6a95a579337544480eebc97a078e5b2a2b5a7cd055439edf5f69671ffa5",
-       "bytes": 45
+       "sha256": "c44f8ea8f5d3fe2c12e3c3f2f42e29687bd731b5a13801617ab0ae08a7dc6611",
+       "bytes": 185
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 44,
-        "new_end_byte": 42,
-        "old": "W05PVF0=",
-        "new": "Tk9U"
+        "start_byte": 41,
+        "old_end_byte": 107,
+        "new_end_byte": 105,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10eXBlLXIxCkNSRUFURSBUQUJMRSBkYm8udChhIFtOT1RdKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10eXBlLXIxCkNSRUFURSBUQUJMRSBkYm8udChhIE5PVCk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 42,
-        "new_end_byte": 44,
-        "old": "Tk9U",
-        "new": "W05PVF0="
+        "start_byte": 41,
+        "old_end_byte": 105,
+        "new_end_byte": 107,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10eXBlLXIxCkNSRUFURSBUQUJMRSBkYm8udChhIE5PVCk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC10eXBlLXIxCkNSRUFURSBUQUJMRSBkYm8udChhIFtOT1RdKTsKR08K"
+       },
+       {
+        "start_byte": 107,
+        "old_end_byte": 185,
+        "new_end_byte": 179,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC13aXRoLWNhbGwtcjEKU0VMRUNUICogRlJPTSBkYm8udCwgZGJvLltXSVRIXSgxKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC13aXRoLWNhbGwtcjEKU0VMRUNUICogRlJPTSBkYm8udCwgV0lUSCgxKTsKR08K"
+       },
+       {
+        "start_byte": 107,
+        "old_end_byte": 179,
+        "new_end_byte": 185,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC13aXRoLWNhbGwtcjEKU0VMRUNUICogRlJPTSBkYm8udCwgV0lUSCgxKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1yZXNlcnZlZC13aXRoLWNhbGwtcjEKU0VMRUNUICogRlJPTSBkYm8udCwgZGJvLltXSVRIXSgxKTsKR08K"
        }
       ],
       "expect": [
@@ -270717,6 +270757,18 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
@@ -270743,28 +270795,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue137-reserved-type-r1",
+      "id": "tsql-issue149-preserved-pair-03-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "d0aebb23c6821a18ceb488a93244f64f33a7d704739a7079a4da81d6d90f7a9e",
-       "bytes": 28
+       "sha256": "521a254a2d5771694f04a693826807660ab50b9daec0e07144263cee029f0916",
+       "bytes": 256
       },
       "edits": [
        {
-        "start_byte": 21,
-        "old_end_byte": 26,
-        "new_end_byte": 24,
-        "old": "W05PVF0=",
-        "new": "Tk9U"
+        "start_byte": 41,
+        "old_end_byte": 140,
+        "new_end_byte": 128,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAxIFdIRVJFIE5PVCAxID0gMDsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCBOT1QgMTsKR08K"
        },
        {
-        "start_byte": 21,
-        "old_end_byte": 24,
-        "new_end_byte": 26,
-        "old": "Tk9U",
-        "new": "W05PVF0="
+        "start_byte": 41,
+        "old_end_byte": 128,
+        "new_end_byte": 140,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCBOT1QgMTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAxIFdIRVJFIE5PVCAxID0gMDsKR08K"
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 256,
+        "new_end_byte": 244,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWFyaXRobWV0aWMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUIDEgV0hFUkUgTk9UICgxICsgMiA9IDApOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWFyaXRobWV0aWMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUIE5PVCAoMSArIDIpOwpHTwo="
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 244,
+        "new_end_byte": 256,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWFyaXRobWV0aWMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUIE5PVCAoMSArIDIpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWFyaXRobWV0aWMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUIDEgV0hFUkUgTk9UICgxICsgMiA9IDApOwpHTwo="
        }
       ],
       "expect": [
@@ -270782,6 +270848,18 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
@@ -270808,28 +270886,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue137-reserved-with-call-r1",
+      "id": "tsql-issue149-preserved-pair-04-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "8561a61aa4b5939757029d3fff0cd8a43e074773035af3bba5734cc748550a44",
-       "bytes": 35
+       "sha256": "2ab02774555ddf3cc509f110846449523d6a213cc8c3cf93d9dcdc41b239145c",
+       "bytes": 296
       },
       "edits": [
        {
-        "start_byte": 21,
-        "old_end_byte": 31,
-        "new_end_byte": 25,
-        "old": "ZGJvLltXSVRIXQ==",
-        "new": "V0lUSA=="
+        "start_byte": 41,
+        "old_end_byte": 160,
+        "new_end_byte": 142,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWZ1bmN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAxIFdIRVJFIE5PVCBFWElTVFMoU0VMRUNUIDEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWZ1bmN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCBBQlMoTk9UIDEpOwpHTwo="
        },
        {
-        "start_byte": 21,
-        "old_end_byte": 25,
-        "new_end_byte": 31,
-        "old": "V0lUSA==",
-        "new": "ZGJvLltXSVRIXQ=="
+        "start_byte": 41,
+        "old_end_byte": 142,
+        "new_end_byte": 160,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWZ1bmN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCBBQlMoTk9UIDEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LWZ1bmN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAxIFdIRVJFIE5PVCBFWElTVFMoU0VMRUNUIDEpOwpHTwo="
+       },
+       {
+        "start_byte": 160,
+        "old_end_byte": 296,
+        "new_end_byte": 258,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LW5lc3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgMSBXSEVSRSBOT1QgTk9UIChhIEJFVFdFRU4gMSBBTkQgMiBPUiBhIElOICgzKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LW5lc3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgTk9UIE5PVCAxOwpHTwo="
+       },
+       {
+        "start_byte": 160,
+        "old_end_byte": 258,
+        "new_end_byte": 296,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LW5lc3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgTk9UIE5PVCAxOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1zY2FsYXItbm90LW5lc3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgMSBXSEVSRSBOT1QgTk9UIChhIEJFVFdFRU4gMSBBTkQgMiBPUiBhIElOICgzKSk7CkdPCg=="
        }
       ],
       "expect": [
@@ -270847,6 +270939,18 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
@@ -270873,28 +270977,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue137-scalar-not-r1",
+      "id": "tsql-issue149-preserved-pair-05-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "253e9fa2c0186f6f2316014e0aea3dab6c299b2376877e9b040af5d983f4d192",
-       "bytes": 64
+       "sha256": "ad37456fcf74a92e91b6c7bbce623a0786850a802a1556e446f0b3b345d5fb58",
+       "bytes": 175
       },
       "edits": [
        {
-        "start_byte": 46,
-        "old_end_byte": 63,
-        "new_end_byte": 51,
-        "old": "MSBXSEVSRSBOT1QgMSA9IDA=",
-        "new": "Tk9UIDE="
+        "start_byte": 41,
+        "old_end_byte": 108,
+        "new_end_byte": 106,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS1lcXVhbC1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gT047CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS1lcXVhbC1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTIE9OOwpHTwo="
        },
        {
-        "start_byte": 46,
-        "old_end_byte": 51,
-        "new_end_byte": 63,
-        "old": "Tk9UIDE=",
-        "new": "MSBXSEVSRSBOT1QgMSA9IDA="
+        "start_byte": 41,
+        "old_end_byte": 106,
+        "new_end_byte": 108,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS1lcXVhbC1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTIE9OOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS1lcXVhbC1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gT047CkdPCg=="
+       },
+       {
+        "start_byte": 108,
+        "old_end_byte": 175,
+        "new_end_byte": 174,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS12YWx1ZS1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gT047CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS12YWx1ZS1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gMTsKR08K"
+       },
+       {
+        "start_byte": 108,
+        "old_end_byte": 174,
+        "new_end_byte": 175,
+        "old": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS12YWx1ZS1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gMTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTEzNy1xdWV1ZS12YWx1ZS1yMQpBTFRFUiBRVUVVRSBxIFdJVEggU1RBVFVTID0gT047CkdPCg=="
        }
       ],
       "expect": [
@@ -270915,328 +271033,15 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "N",
-        "E"
-       ],
-       "tsql-B04": [
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue137-scalar-not-arithmetic-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "8d0a58872b5a08ee9696c8587f1a39241f9b4c37149ccaaa1a29dfb817cf46ae",
-       "bytes": 70
-      },
-      "edits": [
-       {
-        "start_byte": 46,
-        "old_end_byte": 68,
-        "new_end_byte": 56,
-        "old": "MSBXSEVSRSBOT1QgKDEgKyAyID0gMA==",
-        "new": "Tk9UICgxICsgMg=="
        },
        {
-        "start_byte": 46,
-        "old_end_byte": 56,
-        "new_end_byte": 68,
-        "old": "Tk9UICgxICsgMg==",
-        "new": "MSBXSEVSRSBOT1QgKDEgKyAyID0gMA=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 1,
+        "step": 3,
         "syntax": "ERROR",
         "contains": [],
         "declarations": ""
        },
        {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "N",
-        "E"
-       ],
-       "tsql-B04": [
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue137-scalar-not-function-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "a0a483237d49f0d40a24f42f94810fa1a4edcc4efc3423cb8b16119e0efd0e85",
-       "bytes": 75
-      },
-      "edits": [
-       {
-        "start_byte": 46,
-        "old_end_byte": 70,
-        "new_end_byte": 52,
-        "old": "MSBXSEVSRSBOT1QgRVhJU1RTKFNFTEVD",
-        "new": "QUJTKE5P"
-       },
-       {
-        "start_byte": 46,
-        "old_end_byte": 52,
-        "new_end_byte": 70,
-        "old": "QUJTKE5P",
-        "new": "MSBXSEVSRSBOT1QgRVhJU1RTKFNFTEVD"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "N",
-        "E"
-       ],
-       "tsql-B04": [
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue137-scalar-not-nested-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "414c1a9ba1e4a93ef09a3898525225908eef19f632d325ebee3dc96ef24e1609",
-       "bytes": 94
-      },
-      "edits": [
-       {
-        "start_byte": 46,
-        "old_end_byte": 93,
-        "new_end_byte": 55,
-        "old": "MSBXSEVSRSBOT1QgTk9UIChhIEJFVFdFRU4gMSBBTkQgMiBPUiBhIElOICgzKSk=",
-        "new": "Tk9UIE5PVCAx"
-       },
-       {
-        "start_byte": 46,
-        "old_end_byte": 55,
-        "new_end_byte": 93,
-        "old": "Tk9UIE5PVCAx",
-        "new": "MSBXSEVSRSBOT1QgTk9UIChhIEJFVFdFRU4gMSBBTkQgMiBPUiBhIElOICgzKSk="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "N",
-        "E"
-       ],
-       "tsql-B04": [
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue137-queue-equal-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "96bfabbe84da70e6cc61c287a51bd87d709a1609ea860eb865aa75d143fe624e",
-       "bytes": 31
-      },
-      "edits": [
-       {
-        "start_byte": 26,
-        "old_end_byte": 28,
-        "new_end_byte": 26,
-        "old": "PSA=",
-        "new": ""
-       },
-       {
-        "start_byte": 24,
-        "old_end_byte": 26,
-        "new_end_byte": 28,
-        "old": "UyA=",
-        "new": "UyA9IA=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "N",
-        "E"
-       ],
-       "tsql-B04": [
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue137-queue-value-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "96bfabbe84da70e6cc61c287a51bd87d709a1609ea860eb865aa75d143fe624e",
-       "bytes": 31
-      },
-      "edits": [
-       {
-        "start_byte": 28,
-        "old_end_byte": 30,
-        "new_end_byte": 29,
-        "old": "T04=",
-        "new": "MQ=="
-       },
-       {
-        "start_byte": 28,
-        "old_end_byte": 29,
-        "new_end_byte": 30,
-        "old": "MQ==",
-        "new": "T04="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
@@ -277884,28 +277689,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-equals-paren-zero-r1",
+      "id": "tsql-issue149-hints-pair-01-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "f99176f9153c800de6dd64a2da5e0b6948dd6f120bbb2b4f58bc5de8f58f4d4c",
+       "bytes": 287
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 76,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWD0oMCkpOw=="
+        "start_byte": 41,
+        "old_end_byte": 164,
+        "new_end_byte": 165,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4temVyby1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4temVyby1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYPSgwKSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 76,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWD0oMCkpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 165,
+        "new_end_byte": 164,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4temVyby1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYPSgwKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4temVyby1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K"
+       },
+       {
+        "start_byte": 164,
+        "old_end_byte": 287,
+        "new_end_byte": 289,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4tbmFtZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4tbmFtZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYPShpeCkpOwpHTwo="
+       },
+       {
+        "start_byte": 164,
+        "old_end_byte": 289,
+        "new_end_byte": 287,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4tbmFtZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYPShpeCkpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1lcXVhbHMtcGFyZW4tbmFtZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K"
        }
       ],
       "expect": [
@@ -277925,6 +277744,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -277955,28 +277788,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-equals-paren-name-r1",
+      "id": "tsql-issue149-hints-pair-02-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "ba0a5c2fb14defd801f4a723868777d623db5301fcfa7b20b9822242fcc8c375",
+       "bytes": 269
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 77,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWD0oaXgpKTs="
+        "start_byte": 41,
+        "old_end_byte": 155,
+        "new_end_byte": 156,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1uZWdhdGl2ZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1uZWdhdGl2ZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKC0xKSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 77,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWD0oaXgpKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 156,
+        "new_end_byte": 155,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1uZWdhdGl2ZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKC0xKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1uZWdhdGl2ZS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K"
+       },
+       {
+        "start_byte": 155,
+        "old_end_byte": 269,
+        "new_end_byte": 271,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1mcmFjdGlvbi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1mcmFjdGlvbi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEuNSkpOwpHTwo="
+       },
+       {
+        "start_byte": 155,
+        "old_end_byte": 271,
+        "new_end_byte": 269,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1mcmFjdGlvbi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEuNSkpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1mcmFjdGlvbi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKElOREVYKDEpKTsKR08K"
        }
       ],
       "expect": [
@@ -277996,6 +277843,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278026,28 +277887,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-negative-r1",
+      "id": "tsql-issue149-hints-pair-03-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "cbcd04305885ef3fd1f45f2038ed697029c1d34b9eff651555fc62e344d7df31",
+       "bytes": 262
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 76,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgtMSkpOw=="
+        "start_byte": 41,
+        "old_end_byte": 153,
+        "new_end_byte": 156,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1zdHJpbmctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1zdHJpbmctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgnaXgnKSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 76,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgtMSkpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 156,
+        "new_end_byte": 153,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1zdHJpbmctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgnaXgnKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1zdHJpbmctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg=="
+       },
+       {
+        "start_byte": 153,
+        "old_end_byte": 262,
+        "new_end_byte": 264,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1oZXgtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1oZXgtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgweDEpKTsKR08K"
+       },
+       {
+        "start_byte": 153,
+        "old_end_byte": 264,
+        "new_end_byte": 262,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1oZXgtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgweDEpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1pbmRleC1oZXgtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg=="
        }
       ],
       "expect": [
@@ -278067,6 +277942,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278097,28 +277986,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-fraction-r1",
+      "id": "tsql-issue149-hints-pair-04-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "206432602896ab1b22d6fcd7e2fecf6032c44638cb10256ad3b1218c59ae5c3c",
+       "bytes": 277
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 77,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxLjUpKTs="
+        "start_byte": 41,
+        "old_end_byte": 167,
+        "new_end_byte": 168,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKDEoYSkpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKC0xKGEpKSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 77,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxLjUpKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 168,
+        "new_end_byte": 167,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKC0xKGEpKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKDEoYSkpKTsKR08K"
+       },
+       {
+        "start_byte": 167,
+        "old_end_byte": 277,
+        "new_end_byte": 279,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1ub2xvY2stdmFsdWUtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1ub2xvY2stdmFsdWUtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0s9MSk7CkdPCg=="
+       },
+       {
+        "start_byte": 167,
+        "old_end_byte": 279,
+        "new_end_byte": 277,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1ub2xvY2stdmFsdWUtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0s9MSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1ub2xvY2stdmFsdWUtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOwpHTwo="
        }
       ],
       "expect": [
@@ -278138,6 +278041,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278168,28 +278085,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-string-r1",
+      "id": "tsql-issue149-hints-pair-05-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "2294cac4319b5a9d38ce0c3e114f41a2d524d2fb09b56c7f38f7c61369ccd145",
+       "bytes": 292
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 78,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgnaXgnKSk7"
+        "start_byte": 41,
+        "old_end_byte": 158,
+        "new_end_byte": 165,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yb3dsb2NrLXBhcmFtZXRlcnMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yb3dsb2NrLXBhcmFtZXRlcnMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKGl4KGEpKSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 78,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgnaXgnKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 165,
+        "new_end_byte": 158,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yb3dsb2NrLXBhcmFtZXRlcnMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKGl4KGEpKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yb3dsb2NrLXBhcmFtZXRlcnMtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKTsKR08K"
+       },
+       {
+        "start_byte": 158,
+        "old_end_byte": 292,
+        "new_end_byte": 294,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWZyYWN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWZyYWN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEuNSk7CkdPCg=="
+       },
+       {
+        "start_byte": 158,
+        "old_end_byte": 294,
+        "new_end_byte": 292,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWZyYWN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEuNSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWZyYWN0aW9uLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEpOwpHTwo="
        }
       ],
       "expect": [
@@ -278209,6 +278140,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278239,28 +278184,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-index-hex-r1",
+      "id": "tsql-issue149-hints-pair-06-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
+       "sha256": "59ce3c637475ba248b5aac032200cc26cc3ad9e3cddadb8e07c6af8c4e1303e0",
+       "bytes": 302
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 77,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgweDEpKTs="
+        "start_byte": 41,
+        "old_end_byte": 173,
+        "new_end_byte": 175,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLXN0cmluZy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLXN0cmluZy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0nMScpOwpHTwo="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 77,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgweDEpKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
+        "start_byte": 41,
+        "old_end_byte": 175,
+        "new_end_byte": 173,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLXN0cmluZy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0nMScpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLXN0cmluZy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
+       },
+       {
+        "start_byte": 173,
+        "old_end_byte": 302,
+        "new_end_byte": 304,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWhleC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWhleC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weDEpOwpHTwo="
+       },
+       {
+        "start_byte": 173,
+        "old_end_byte": 304,
+        "new_end_byte": 302,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWhleC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weDEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLWhleC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
        }
       ],
       "expect": [
@@ -278280,6 +278239,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278310,28 +278283,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-force-seek-negative-r1",
+      "id": "tsql-issue149-hints-pair-07-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "f588415fa695390ceb0846c53c61d83168057474dfc93d4bf0207f97a39ddbbc",
-       "bytes": 82
+       "sha256": "a85c002da6cd6e17d2760193491bc5318610ed057459d759468dcd369d1d1944",
+       "bytes": 298
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 82,
-        "new_end_byte": 83,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoMShhKSkpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoLTEoYSkpKTs="
+        "start_byte": 41,
+        "old_end_byte": 175,
+        "new_end_byte": 176,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPS0xKTsKR08K"
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 83,
-        "new_end_byte": 82,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoLTEoYSkpKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoMShhKSkpOw=="
+        "start_byte": 41,
+        "old_end_byte": 176,
+        "new_end_byte": 175,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPS0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1zcGF0aWFsLW5lZ2F0aXZlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoU1BBVElBTF9XSU5ET1dfTUFYX0NFTExTPTEpOwpHTwo="
+       },
+       {
+        "start_byte": 175,
+        "old_end_byte": 298,
+        "new_end_byte": 294,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLXZhbHVlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKDEoYSkpKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLXZhbHVlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLPTEpOwpHTwo="
+       },
+       {
+        "start_byte": 175,
+        "old_end_byte": 294,
+        "new_end_byte": 298,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLXZhbHVlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLPTEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1mb3JjZS1zZWVrLXZhbHVlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoRk9SQ0VTRUVLKDEoYSkpKTsKR08K"
        }
       ],
       "expect": [
@@ -278351,6 +278338,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278381,28 +278382,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-nolock-value-r1",
+      "id": "tsql-issue149-hints-pair-08-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "a8612f980423f469f01db49a25f0e05121b74d1fb10c9906a3a3276f0d5459de",
-       "bytes": 73
+       "sha256": "50c9625607b57ed089ef70984d2a4fd89823b82f4acd18ec8dc4d3ccd9738948",
+       "bytes": 269
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 73,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0s9MSk7"
+        "start_byte": 41,
+        "old_end_byte": 152,
+        "new_end_byte": 151,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXZhcmlhYmxlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoTk9MT0NLKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXZhcmlhYmxlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoQGhpbnQpOwpHTwo="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 73,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0s9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw=="
+        "start_byte": 41,
+        "old_end_byte": 151,
+        "new_end_byte": 152,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXZhcmlhYmxlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoQGhpbnQpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXZhcmlhYmxlLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoTk9MT0NLKTsKR08K"
+       },
+       {
+        "start_byte": 152,
+        "old_end_byte": 269,
+        "new_end_byte": 268,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXRlbXBvcmFyeS1uYW1lLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoTk9MT0NLKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXRlbXBvcmFyeS1uYW1lLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoI2hpbnQpOwpHTwo="
+       },
+       {
+        "start_byte": 152,
+        "old_end_byte": 268,
+        "new_end_byte": 269,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXRlbXBvcmFyeS1uYW1lLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoI2hpbnQpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXRlbXBvcmFyeS1uYW1lLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgV0lUSCAoTk9MT0NLKTsKR08K"
        }
       ],
       "expect": [
@@ -278422,6 +278437,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -278452,28 +278481,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-rowlock-parameters-r1",
+      "id": "tsql-issue149-hints-pair-09-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "34f5b600746c914ad3ece99f1891503a6d7e6bb8a374fc940d5191712ff84ea2",
-       "bytes": 74
+       "sha256": "c7fa8282989adee48f7b1b168c22004508186a6137984669eca302658895e1db",
+       "bytes": 254
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 74,
-        "new_end_byte": 81,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKGl4KGEpKSk7"
+        "start_byte": 41,
+        "old_end_byte": 150,
+        "new_end_byte": 152,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXF1b3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKE5PTE9DSyk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXF1b3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFtOT0xPQ0tdKTsKR08K"
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 81,
-        "new_end_byte": 74,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKGl4KGEpKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChST1dMT0NLKTs="
+        "start_byte": 41,
+        "old_end_byte": 152,
+        "new_end_byte": 150,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXF1b3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFtOT0xPQ0tdKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1oaW50LXF1b3RlZC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKE5PTE9DSyk7CkdPCg=="
+       },
+       {
+        "start_byte": 150,
+        "old_end_byte": 254,
+        "new_end_byte": 267,
+        "old": "LS0gdHNxbC1pc3N1ZTE0NS1oaW50LXNjaGVtYS1vbi11ZGYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8uZigpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0NS1oaW50LXNjaGVtYS1vbi11ZGYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8uZigpIFdJVEggKGEgaW50KTsKR08K"
+       },
+       {
+        "start_byte": 150,
+        "old_end_byte": 267,
+        "new_end_byte": 254,
+        "old": "LS0gdHNxbC1pc3N1ZTE0NS1oaW50LXNjaGVtYS1vbi11ZGYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8uZigpIFdJVEggKGEgaW50KTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0NS1oaW50LXNjaGVtYS1vbi11ZGYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8uZigpOwpHTwo="
        }
       ],
       "expect": [
@@ -278481,645 +278524,7 @@
         "step": 0,
         "syntax": "NO_ERROR",
         "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-spatial-fraction-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MS41KTs="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MS41KTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-spatial-string-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9JzEnKTs="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9JzEnKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-spatial-hex-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgxKTs="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgxKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-spatial-negative-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 94,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9LTEpOw=="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 94,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9LTEpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-force-seek-value-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "f588415fa695390ceb0846c53c61d83168057474dfc93d4bf0207f97a39ddbbc",
-       "bytes": 82
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 82,
-        "new_end_byte": 78,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoMShhKSkpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUs9MSk7"
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 78,
-        "new_end_byte": 82,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUs9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChGT1JDRVNFRUsoMShhKSkpOw=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-hint-variable-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "a8612f980423f469f01db49a25f0e05121b74d1fb10c9906a3a3276f0d5459de",
-       "bytes": 73
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 73,
-        "new_end_byte": 72,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChAaGludCk7"
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 72,
-        "new_end_byte": 73,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChAaGludCk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-hint-temporary-name-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "a8612f980423f469f01db49a25f0e05121b74d1fb10c9906a3a3276f0d5459de",
-       "bytes": 73
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 73,
-        "new_end_byte": 72,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIICgjaGludCk7"
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 72,
-        "new_end_byte": 73,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIICgjaGludCk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-hint-quoted-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "a8612f980423f469f01db49a25f0e05121b74d1fb10c9906a3a3276f0d5459de",
-       "bytes": 73
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 73,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChbTk9MT0NLXSk7"
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 73,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChbTk9MT0NLXSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChOT0xPQ0spOw=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue145-hint-schema-on-udf-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "548390c8c5f423a6c0de0065644489cfa28acf92c667bd61bcf7dbb000c3dcc1",
-       "bytes": 61
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 61,
-        "new_end_byte": 74,
-        "old": "U0VMRUNUICogRlJPTSBkYm8uZigpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8uZigpIFdJVEggKGEgaW50KTs="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 74,
-        "new_end_byte": 61,
-        "old": "U0VMRUNUICogRlJPTSBkYm8uZigpIFdJVEggKGEgaW50KTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8uZigpOw=="
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
+         "table_hint",
          "invocation"
         ],
         "declarations": ""
@@ -279134,6 +278539,22 @@
         "step": 2,
         "syntax": "NO_ERROR",
         "contains": [
+         "table_hint",
+         "invocation"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint",
          "invocation"
         ],
         "declarations": ""
@@ -279162,28 +278583,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue145-apply-schema-on-udf-r1",
+      "id": "tsql-issue149-hints-pair-10-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "402d4a6a67cb96e8347d96dad3cfe682c74786da9cbaa528223a28430aa64973",
-       "bytes": 84
+       "sha256": "cdee7aa770786f5fe22858549c7bcd73582be7c604511195f20cd2d70b2acd53",
+       "bytes": 298
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 84,
-        "new_end_byte": 97,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBDUk9TUyBBUFBMWSBkYm8uZigpIEFTIGY7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBDUk9TUyBBUFBMWSBkYm8uZigpIFdJVEggKGEgaW50KSBBUyBmOw=="
+        "start_byte": 41,
+        "old_end_byte": 169,
+        "new_end_byte": 182,
+        "old": "LS0gdHNxbC1pc3N1ZTE0NS1hcHBseS1zY2hlbWEtb24tdWRmLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgQ1JPU1MgQVBQTFkgZGJvLmYoKSBBUyBmOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0NS1hcHBseS1zY2hlbWEtb24tdWRmLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgQ1JPU1MgQVBQTFkgZGJvLmYoKSBXSVRIIChhIGludCkgQVMgZjsKR08K"
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 97,
-        "new_end_byte": 84,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBDUk9TUyBBUFBMWSBkYm8uZigpIFdJVEggKGEgaW50KSBBUyBmOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBDUk9TUyBBUFBMWSBkYm8uZigpIEFTIGY7"
+        "start_byte": 41,
+        "old_end_byte": 182,
+        "new_end_byte": 169,
+        "old": "LS0gdHNxbC1pc3N1ZTE0NS1hcHBseS1zY2hlbWEtb24tdWRmLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgQ1JPU1MgQVBQTFkgZGJvLmYoKSBXSVRIIChhIGludCkgQVMgZjsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0NS1hcHBseS1zY2hlbWEtb24tdWRmLXIxClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFTEVDVCAqIEZST00gZGJvLnQgQ1JPU1MgQVBQTFkgZGJvLmYoKSBBUyBmOwpHTwo="
+       },
+       {
+        "start_byte": 169,
+        "old_end_byte": 298,
+        "new_end_byte": 300,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weDEpOwpHTwo="
+       },
+       {
+        "start_byte": 169,
+        "old_end_byte": 300,
+        "new_end_byte": 298,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weDEpOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMC1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
        }
       ],
       "expect": [
@@ -279191,77 +278626,7 @@
         "step": 0,
         "syntax": "NO_ERROR",
         "contains": [
-         "invocation"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "invocation"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-numeric-000-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgxKTs="
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgxKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
+         "invocation",
          "table_hint"
         ],
         "declarations": ""
@@ -279276,6 +278641,22 @@
         "step": 2,
         "syntax": "NO_ERROR",
         "contains": [
+         "invocation",
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "invocation",
          "table_hint"
         ],
         "declarations": ""
@@ -279304,28 +278685,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-numeric-002-r1",
+      "id": "tsql-issue149-hints-pair-11-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
+       "sha256": "c335fce739f0424a53e943ff85b96634fd46fb1a0b3675d20715268bc76e94f5",
+       "bytes": 299
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MS4wKTs="
+        "start_byte": 41,
+        "old_end_byte": 170,
+        "new_end_byte": 172,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xLjApOwpHTwo="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MS4wKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
+        "start_byte": 41,
+        "old_end_byte": 172,
+        "new_end_byte": 170,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xLjApOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMi1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
+       },
+       {
+        "start_byte": 170,
+        "old_end_byte": 299,
+        "new_end_byte": 301,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xZTApOwpHTwo="
+       },
+       {
+        "start_byte": 170,
+        "old_end_byte": 301,
+        "new_end_byte": 299,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xZTApOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwMy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
        }
       ],
       "expect": [
@@ -279350,72 +278745,15 @@
          "table_hint"
         ],
         "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-numeric-003-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 95,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MWUwKTs="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 95,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MWUwKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
+        "step": 3,
         "syntax": "ERROR",
         "contains": [],
         "declarations": ""
        },
        {
-        "step": 2,
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -279446,28 +278784,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-numeric-007-r1",
+      "id": "tsql-issue149-hints-pair-12-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
+       "sha256": "5fb34f405f349b857c154766963c224f2b00873f8dffa3efbf0267f70c661120",
+       "bytes": 299
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 98,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MFhMT0NLKTs="
+        "start_byte": 41,
+        "old_end_byte": 170,
+        "new_end_byte": 175,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwNy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwNy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0wWExPQ0spOwpHTwo="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 98,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MFhMT0NLKTs=",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
+        "start_byte": 41,
+        "old_end_byte": 175,
+        "new_end_byte": 170,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwNy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0wWExPQ0spOwpHTwo=",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAwNy1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
+       },
+       {
+        "start_byte": 170,
+        "old_end_byte": 299,
+        "new_end_byte": 300,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAxNS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAxNS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weCk7CkdPCg=="
+       },
+       {
+        "start_byte": 170,
+        "old_end_byte": 300,
+        "new_end_byte": 299,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAxNS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0weCk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1udW1lcmljLTAxNS1yMQpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRUxFQ1QgKiBGUk9NIGRiby50IFdJVEggKFNQQVRJQUxfV0lORE9XX01BWF9DRUxMUz0xKTsKR08K"
        }
       ],
       "expect": [
@@ -279487,6 +278839,20 @@
        },
        {
         "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "table_hint"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -279517,28 +278883,42 @@
       "source": null
      },
      {
-      "id": "tsql-issue146-numeric-015-r1",
+      "id": "tsql-issue149-hints-pair-13-r1",
       "role": "requirement",
       "input": {
        "path": "",
        "role": "",
-       "sha256": "9d68b2451431aaa434074e88767d541ad881ccb1d3c8fd962f84bc4ebaba8fb8",
-       "bytes": 93
+       "sha256": "b57ed1c5e0f4ab175ca1dbae1cf2a91d8ee27ec6613c8bcfc3d7552527ecffea",
+       "bytes": 259
       },
       "edits": [
        {
-        "start_byte": 39,
-        "old_end_byte": 93,
-        "new_end_byte": 94,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgpOw=="
+        "start_byte": 41,
+        "old_end_byte": 150,
+        "new_end_byte": 159,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgyMTQ3NDgzNjQ4KSk7CkdPCg=="
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 94,
-        "new_end_byte": 93,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MHgpOw==",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChTUEFUSUFMX1dJTkRPV19NQVhfQ0VMTFM9MSk7"
+        "start_byte": 41,
+        "old_end_byte": 159,
+        "new_end_byte": 150,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgyMTQ3NDgzNjQ4KSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDYtcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg=="
+       },
+       {
+        "start_byte": 150,
+        "old_end_byte": 259,
+        "new_end_byte": 328,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxKSk7CkdPCg=="
+       },
+       {
+        "start_byte": 150,
+        "old_end_byte": 328,
+        "new_end_byte": 259,
+        "old": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxKSk7CkdPCg==",
+        "new": "LS0gdHNxbC1pc3N1ZTE0Ni1yYW5nZS0wMDctcjEKU0VMRUNUIEBAUk9XQ09VTlQgQVMgcm93c19hZmZlY3RlZDsKR08KU0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7CkdPCg=="
        }
       ],
       "expect": [
@@ -279563,143 +278943,15 @@
          "table_hint"
         ],
         "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-range-006-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 84,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgyMTQ3NDgzNjQ4KSk7"
        },
        {
-        "start_byte": 39,
-        "old_end_byte": 84,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgyMTQ3NDgzNjQ4KSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
+        "step": 3,
         "syntax": "ERROR",
         "contains": [],
         "declarations": ""
        },
        {
-        "step": 2,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       }
-      ],
-      "query_expect": [],
-      "points": null,
-      "dynamic_sql_expect": null,
-      "expect_status": "",
-      "expect_assessment": "",
-      "expect_code": "",
-      "covers": {
-       "tsql-B01": [
-        "P",
-        "N",
-        "E"
-       ],
-       "tsql-B02": [
-        "P",
-        "N",
-        "E"
-       ]
-      },
-      "alternatives": [],
-      "sample": null,
-      "source": null
-     },
-     {
-      "id": "tsql-issue146-range-007-r1",
-      "role": "requirement",
-      "input": {
-       "path": "",
-       "role": "",
-       "sha256": "06d0425b8b82328bc33bcfd510d8b8f97e00e568a6eac456e4ef0ec365dbbe26",
-       "bytes": 75
-      },
-      "edits": [
-       {
-        "start_byte": 39,
-        "old_end_byte": 75,
-        "new_end_byte": 144,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxKSk7"
-       },
-       {
-        "start_byte": 39,
-        "old_end_byte": 144,
-        "new_end_byte": 75,
-        "old": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxKSk7",
-        "new": "U0VMRUNUICogRlJPTSBkYm8udCBXSVRIIChJTkRFWCgxKSk7"
-       }
-      ],
-      "expect": [
-       {
-        "step": 0,
-        "syntax": "NO_ERROR",
-        "contains": [
-         "table_hint"
-        ],
-        "declarations": ""
-       },
-       {
-        "step": 1,
-        "syntax": "ERROR",
-        "contains": [],
-        "declarations": ""
-       },
-       {
-        "step": 2,
+        "step": 4,
         "syntax": "NO_ERROR",
         "contains": [
          "table_hint"
@@ -282879,6 +282131,1630 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-01-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "58ce33638ac541c53ace80c6c85cdf3af25ba2f4f7043946b3697b2e6adbb64e",
+       "bytes": 229
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 134,
+        "new_end_byte": 135,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtbm9sb2NrCi0tIGlzc3VlMTQ5LWRlbGV0ZS1iYXJlLW5vbG9jawpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtbm9sb2NrCi0tIGlzc3VlMTQ5LWRlbGV0ZS1iYXJlLW5vbG9jawpERUxFVEUgRlJPTSBkYm8udCAoTk9MT0NLKTsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 135,
+        "new_end_byte": 134,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtbm9sb2NrCi0tIGlzc3VlMTQ5LWRlbGV0ZS1iYXJlLW5vbG9jawpERUxFVEUgRlJPTSBkYm8udCAoTk9MT0NLKTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtbm9sb2NrCi0tIGlzc3VlMTQ5LWRlbGV0ZS1iYXJlLW5vbG9jawpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       },
+       {
+        "start_byte": 134,
+        "old_end_byte": 229,
+        "new_end_byte": 231,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtdGFibG9jawotLSBpc3N1ZTE0OS1kZWxldGUtYmFyZS10YWJsb2NrClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtdGFibG9jawotLSBpc3N1ZTE0OS1kZWxldGUtYmFyZS10YWJsb2NrCkRFTEVURSBGUk9NIGRiby50IChUQUJMT0NLKTsKCkdPCg=="
+       },
+       {
+        "start_byte": 134,
+        "old_end_byte": 231,
+        "new_end_byte": 229,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtdGFibG9jawotLSBpc3N1ZTE0OS1kZWxldGUtYmFyZS10YWJsb2NrCkRFTEVURSBGUk9NIGRiby50IChUQUJMT0NLKTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWJhcmUtdGFibG9jawotLSBpc3N1ZTE0OS1kZWxldGUtYmFyZS10YWJsb2NrClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-02-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "3d04c677d6c989de4dbd2aa80f764557934e8c982594a3b262972393d49e6e69",
+       "bytes": 195
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 120,
+        "new_end_byte": 125,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKLS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKLS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKVVBEQVRFIGRiby50IChUQUJMT0NLKSBTRVQgYT0xOwoKR08K"
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 125,
+        "new_end_byte": 120,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKLS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKVVBEQVRFIGRiby50IChUQUJMT0NLKSBTRVQgYT0xOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKLS0gaXNzdWUxNDktdXBkYXRlLWJhcmUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       },
+       {
+        "start_byte": 120,
+        "old_end_byte": 195,
+        "new_end_byte": 255,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtaW50Ci0tIGlzc3VlMTQ5LWNhY2hlLWludApTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtaW50Ci0tIGlzc3VlMTQ5LWNhY2hlLWludApERUNMQVJFIEBoIHZhcmJpbmFyeSg2NCk7IEFMVEVSIERBVEFCQVNFIFNDT1BFRCBDT05GSUdVUkFUSU9OIENMRUFSIFBST0NFRFVSRV9DQUNIRSAxOwoKR08K"
+       },
+       {
+        "start_byte": 120,
+        "old_end_byte": 255,
+        "new_end_byte": 195,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtaW50Ci0tIGlzc3VlMTQ5LWNhY2hlLWludApERUNMQVJFIEBoIHZhcmJpbmFyeSg2NCk7IEFMVEVSIERBVEFCQVNFIFNDT1BFRCBDT05GSUdVUkFUSU9OIENMRUFSIFBST0NFRFVSRV9DQUNIRSAxOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtaW50Ci0tIGlzc3VlMTQ5LWNhY2hlLWludApTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ],
+       "tsql-B03": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-03-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2f5723ec6e06293b92f6578ea4ed64b3d1354ece1f7407dfb41da89b43437513",
+       "bytes": 207
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 122,
+        "new_end_byte": 189,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtc3RyaW5nCi0tIGlzc3VlMTQ5LWNhY2hlLXN0cmluZwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtc3RyaW5nCi0tIGlzc3VlMTQ5LWNhY2hlLXN0cmluZwpERUNMQVJFIEBoIHZhcmJpbmFyeSg2NCk7IEFMVEVSIERBVEFCQVNFIFNDT1BFRCBDT05GSUdVUkFUSU9OIENMRUFSIFBST0NFRFVSRV9DQUNIRSAnMHgxMjM0JzsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 189,
+        "new_end_byte": 122,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtc3RyaW5nCi0tIGlzc3VlMTQ5LWNhY2hlLXN0cmluZwpERUNMQVJFIEBoIHZhcmJpbmFyeSg2NCk7IEFMVEVSIERBVEFCQVNFIFNDT1BFRCBDT05GSUdVUkFUSU9OIENMRUFSIFBST0NFRFVSRV9DQUNIRSAnMHgxMjM0JzsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtc3RyaW5nCi0tIGlzc3VlMTQ5LWNhY2hlLXN0cmluZwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       },
+       {
+        "start_byte": 122,
+        "old_end_byte": 207,
+        "new_end_byte": 268,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKLS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKLS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKREVDTEFSRSBAaCB2YXJiaW5hcnkoNjQpOyBBTFRFUiBEQVRBQkFTRSBTQ09QRUQgQ09ORklHVVJBVElPTiBDTEVBUiBQUk9DRURVUkVfQ0FDSEUgQGg7CgpHTwo="
+       },
+       {
+        "start_byte": 122,
+        "old_end_byte": 268,
+        "new_end_byte": 207,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKLS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKREVDTEFSRSBAaCB2YXJiaW5hcnkoNjQpOyBBTFRFUiBEQVRBQkFTRSBTQ09QRUQgQ09ORklHVVJBVElPTiBDTEVBUiBQUk9DRURVUkVfQ0FDSEUgQGg7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKLS0gaXNzdWUxNDktY2FjaGUtdmFyaWFibGUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B03": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-04-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6c51dbca24f371696fd7c9b5537fc63efd4bb9ba540eb848d9ef249440d52fbf",
+       "bytes": 203
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 126,
+        "new_end_byte": 187,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKLS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKLS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKREVDTEFSRSBAaCB2YXJiaW5hcnkoNjQpOyBBTFRFUiBEQVRBQkFTRSBTQ09QRUQgQ09ORklHVVJBVElPTiBDTEVBUiBQUk9DRURVUkVfQ0FDSEUgLTE7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 187,
+        "new_end_byte": 126,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKLS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKREVDTEFSRSBAaCB2YXJiaW5hcnkoNjQpOyBBTFRFUiBEQVRBQkFTRSBTQ09QRUQgQ09ORklHVVJBVElPTiBDTEVBUiBQUk9DRURVUkVfQ0FDSEUgLTE7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKLS0gaXNzdWUxNDktY2FjaGUtbmVnYXRpdmUKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       },
+       {
+        "start_byte": 126,
+        "old_end_byte": 203,
+        "new_end_byte": 266,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtbnVsbAotLSBpc3N1ZTE0OS1jYWNoZS1udWxsClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtbnVsbAotLSBpc3N1ZTE0OS1jYWNoZS1udWxsCkRFQ0xBUkUgQGggdmFyYmluYXJ5KDY0KTsgQUxURVIgREFUQUJBU0UgU0NPUEVEIENPTkZJR1VSQVRJT04gQ0xFQVIgUFJPQ0VEVVJFX0NBQ0hFIE5VTEw7CgpHTwo="
+       },
+       {
+        "start_byte": 126,
+        "old_end_byte": 266,
+        "new_end_byte": 203,
+        "old": "LS0gaXNzdWUxNDktY2FjaGUtbnVsbAotLSBpc3N1ZTE0OS1jYWNoZS1udWxsCkRFQ0xBUkUgQGggdmFyYmluYXJ5KDY0KTsgQUxURVIgREFUQUJBU0UgU0NPUEVEIENPTkZJR1VSQVRJT04gQ0xFQVIgUFJPQ0VEVVJFX0NBQ0hFIE5VTEw7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktY2FjaGUtbnVsbAotLSBpc3N1ZTE0OS1jYWNoZS1udWxsClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B03": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-05-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a84afc14d7a2e1ff384f892feef1654ff578b23fb1c8ac89908f8f78cd7fed9f",
+       "bytes": 221
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 118,
+        "new_end_byte": 176,
+        "old": "LS0gaXNzdWUxNDktbWVyZ2UtYmFyZQotLSBpc3N1ZTE0OS1tZXJnZS1iYXJlClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktbWVyZ2UtYmFyZQotLSBpc3N1ZTE0OS1tZXJnZS1iYXJlCk1FUkdFIGRiby50IChUQUJMT0NLKSB0IFVTSU5HIGRiby5zIHMgT04gdC5pZD1zLmlkIFdIRU4gTUFUQ0hFRCBUSEVOIFVQREFURSBTRVQgYT0xOwoKR08K"
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 176,
+        "new_end_byte": 118,
+        "old": "LS0gaXNzdWUxNDktbWVyZ2UtYmFyZQotLSBpc3N1ZTE0OS1tZXJnZS1iYXJlCk1FUkdFIGRiby50IChUQUJMT0NLKSB0IFVTSU5HIGRiby5zIHMgT04gdC5pZD1zLmlkIFdIRU4gTUFUQ0hFRCBUSEVOIFVQREFURSBTRVQgYT0xOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktbWVyZ2UtYmFyZQotLSBpc3N1ZTE0OS1tZXJnZS1iYXJlClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 118,
+        "old_end_byte": 221,
+        "new_end_byte": 263,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKLS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKLS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKREVMRVRFIEZST00gT1BFTlFVRVJZKCdUU0dLXzE0OV9VTkRFRklORURfTElOSycsICdTRUxFQ1QgYSBGUk9NIHQnKTsKCkdPCg=="
+       },
+       {
+        "start_byte": 118,
+        "old_end_byte": 263,
+        "new_end_byte": 221,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKLS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKREVMRVRFIEZST00gT1BFTlFVRVJZKCdUU0dLXzE0OV9VTkRFRklORURfTElOSycsICdTRUxFQ1QgYSBGUk9NIHQnKTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKLS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1zdHJpbmcKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-06-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5ca6d8b7cd9adb8197c7cefdeb9581732261ee6121e388aaa555dd9db4b8141e",
+       "bytes": 249
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 148,
+        "new_end_byte": 170,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS12YXJpYWJsZQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LXZhcmlhYmxlClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS12YXJpYWJsZQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LXZhcmlhYmxlCkRFTEVURSBGUk9NIE9QRU5RVUVSWShAbGluaywgJ1NFTEVDVCBhIEZST00gdCcpOwoKR08K"
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 170,
+        "new_end_byte": 148,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS12YXJpYWJsZQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LXZhcmlhYmxlCkRFTEVURSBGUk9NIE9QRU5RVUVSWShAbGluaywgJ1NFTEVDVCBhIEZST00gdCcpOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS12YXJpYWJsZQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LXZhcmlhYmxlClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 148,
+        "old_end_byte": 249,
+        "new_end_byte": 294,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1leHRyYQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LWV4dHJhClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1leHRyYQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LWV4dHJhCkRFTEVURSBGUk9NIE9QRU5RVUVSWShbVFNHS18xNDlfVU5ERUZJTkVEX0xJTktdLCAnU0VMRUNUIGEgRlJPTSB0JywgMSk7CgpHTwo="
+       },
+       {
+        "start_byte": 148,
+        "old_end_byte": 294,
+        "new_end_byte": 249,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1leHRyYQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LWV4dHJhCkRFTEVURSBGUk9NIE9QRU5RVUVSWShbVFNHS18xNDlfVU5ERUZJTkVEX0xJTktdLCAnU0VMRUNUIGEgRlJPTSB0JywgMSk7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5xdWVyeS1leHRyYQotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnF1ZXJ5LWV4dHJhClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-07-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "af08ac5629b5d7e8eb52c515f71bc66636e350db8ea53ef3ea02879b5598e193",
+       "bytes": 237
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 142,
+        "new_end_byte": 176,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5yb3dzZXQtYnVsawotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnJvd3NldC1idWxrClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5yb3dzZXQtYnVsawotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnJvd3NldC1idWxrCkRFTEVURSBGUk9NIE9QRU5ST1dTRVQoQlVMSyAnVFNHS18xNDlfVU5VU0VEJywgU0lOR0xFX0JMT0IpOwoKR08K"
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 176,
+        "new_end_byte": 142,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5yb3dzZXQtYnVsawotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnJvd3NldC1idWxrCkRFTEVURSBGUk9NIE9QRU5ST1dTRVQoQlVMSyAnVFNHS18xNDlfVU5VU0VEJywgU0lOR0xFX0JMT0IpOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLW9wZW5yb3dzZXQtYnVsawotLSBpc3N1ZTE0OS1kZWxldGUtb3BlbnJvd3NldC1idWxrClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 237,
+        "new_end_byte": 250,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0yClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0yCkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKGEpOwoKR08K"
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 250,
+        "new_end_byte": 237,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0yCkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKGEpOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0yClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-08-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f3cb846c3ced94042ac0eee13c30704c565ef7ee8f3e481de8e273d6ba1d2a9e",
+       "bytes": 231
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 136,
+        "new_end_byte": 154,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMwotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0zClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMwotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0zCkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKE5PTE9DSyk7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 154,
+        "new_end_byte": 136,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMwotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0zCkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKE5PTE9DSyk7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctMwotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy0zClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 231,
+        "new_end_byte": 250,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNAotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy00ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNAotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy00CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKFRBQkxPQ0spOwoKR08K"
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 250,
+        "new_end_byte": 231,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNAotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy00CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKFRBQkxPQ0spOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNAotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy00ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-09-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "dad9e38f2f2f01a58ba469f81c191469e75be56c697b0db3ea1d451ed4ce4cd0",
+       "bytes": 231
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 136,
+        "new_end_byte": 151,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNQotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy01ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNQotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy01CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKDErMik7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 151,
+        "new_end_byte": 136,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNQotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy01CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKDErMik7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNQotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy01ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 231,
+        "new_end_byte": 246,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy02ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy02CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKCgxKSk7CgpHTwo="
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 246,
+        "new_end_byte": 231,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy02CkRFQ0xBUkUgQGEgaW50PTE7IERFTEVURSBGUk9NIGRiby5mKCgxKSk7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLXRhcmdldC1hcmctNgotLSBpc3N1ZTE0OS1kZWxldGUtdGFyZ2V0LWFyZy02ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-10-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "9ef887f3b551f819f61f339797723dabeeadc0170442aa5d8ddce486229ef79e",
+       "bytes": 233
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 136,
+        "new_end_byte": 152,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctOQotLSBpc3N1ZTE0OS11cGRhdGUtdGFyZ2V0LWFyZy05ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctOQotLSBpc3N1ZTE0OS11cGRhdGUtdGFyZ2V0LWFyZy05CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZihhKSBTRVQgYT0xOwoKR08K"
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 152,
+        "new_end_byte": 136,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctOQotLSBpc3N1ZTE0OS11cGRhdGUtdGFyZ2V0LWFyZy05CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZihhKSBTRVQgYT0xOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctOQotLSBpc3N1ZTE0OS11cGRhdGUtdGFyZ2V0LWFyZy05ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 233,
+        "new_end_byte": 254,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKE5PTE9DSykgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 136,
+        "old_end_byte": 254,
+        "new_end_byte": 233,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKE5PTE9DSykgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTAKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-11-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4e159e2e8a796f0ca83aee16244dca0ec220a34e821b72ebae118a3a8a6ae265",
+       "bytes": 235
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 138,
+        "new_end_byte": 160,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKFRBQkxPQ0spIFNFVCBhPTE7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 160,
+        "new_end_byte": 138,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKFRBQkxPQ0spIFNFVCBhPTE7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTEKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       },
+       {
+        "start_byte": 138,
+        "old_end_byte": 235,
+        "new_end_byte": 253,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKDErMikgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 138,
+        "old_end_byte": 253,
+        "new_end_byte": 235,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKDErMikgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTIKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-12-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "458cd0f24bb18e7d7e36ccb9065ab8e6eb7883c39da4cc3e249cd43fa3ec92d6",
+       "bytes": 237
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 138,
+        "new_end_byte": 156,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKCgxKSkgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 156,
+        "new_end_byte": 138,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKREVDTEFSRSBAYSBpbnQ9MTsgVVBEQVRFIGRiby5mKCgxKSkgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKLS0gaXNzdWUxNDktdXBkYXRlLXRhcmdldC1hcmctMTMKU0VMRUNUIDEgQVMgcmVjb3ZlcnlfdmFsdWU7CkdPCg=="
+       },
+       {
+        "start_byte": 138,
+        "old_end_byte": 237,
+        "new_end_byte": 255,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy01Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNQpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy01Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNQpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhAQFNQSUQpOwoKR08K"
+       },
+       {
+        "start_byte": 138,
+        "old_end_byte": 255,
+        "new_end_byte": 237,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy01Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNQpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhAQFNQSUQpOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy01Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNQpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-13-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "bfd6e67353ff2c153d71189551fea9c344299e6e679fe80fad66e0a05efbfe56",
+       "bytes": 239
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 140,
+        "new_end_byte": 169,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy02Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNgpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy02Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNgpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhDVVJSRU5UX1RJTUVTVEFNUCk7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 169,
+        "new_end_byte": 140,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy02Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNgpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhDVVJSRU5UX1RJTUVTVEFNUCk7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy02Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNgpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 239,
+        "new_end_byte": 260,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy03Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy03Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNwpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhHRVREQVRFKCkpOwoKR08K"
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 260,
+        "new_end_byte": 239,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy03Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNwpERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhHRVREQVRFKCkpOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy03Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctNwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-14-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "50c0abb100bd6f5b2a6ed50d18d96141b05708efde86044a9aec221b0c344b07",
+       "bytes": 241
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 140,
+        "new_end_byte": 166,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy04Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctOApTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy04Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctOApERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhDQVNUKDEgQVMgaW50KSk7CgpHTwo="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 166,
+        "new_end_byte": 140,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy04Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctOApERUNMQVJFIEBhIGludD0xOyBERUxFVEUgRlJPTSBkYm8uZyhDQVNUKDEgQVMgaW50KSk7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctdGFyZ2V0LWFyZy04Ci0tIGlzc3VlMTQ5LWRlbGV0ZS1nLXRhcmdldC1hcmctOApTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 241,
+        "new_end_byte": 262,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNAotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE0ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNAotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE0CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhAQFNQSUQpIFNFVCBhPTE7CgpHTwo="
+       },
+       {
+        "start_byte": 140,
+        "old_end_byte": 262,
+        "new_end_byte": 241,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNAotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE0CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhAQFNQSUQpIFNFVCBhPTE7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNAotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE0ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-15-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "03738eaaf241752bff4b63ff1f7947cabbfcc9473baccbfc1060c65bff80d8fe",
+       "bytes": 243
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 142,
+        "new_end_byte": 174,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNQotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE1ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNQotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE1CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhDVVJSRU5UX1RJTUVTVEFNUCkgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 174,
+        "new_end_byte": 142,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNQotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE1CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhDVVJSRU5UX1RJTUVTVEFNUCkgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNQotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE1ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 243,
+        "new_end_byte": 267,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNgotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE2ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNgotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE2CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhHRVREQVRFKCkpIFNFVCBhPTE7CgpHTwo="
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 267,
+        "new_end_byte": 243,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNgotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE2CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhHRVREQVRFKCkpIFNFVCBhPTE7CgpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNgotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE2ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-16-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a192ac04ea29ecfef821e23d5ff7d89ebfdf67486f678753ddf77ddb85b268aa",
+       "bytes": 225
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 142,
+        "new_end_byte": 171,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNwotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE3ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNwotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE3CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhDQVNUKDEgQVMgaW50KSkgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 171,
+        "new_end_byte": 142,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNwotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE3CkRFQ0xBUkUgQGEgaW50PTE7IFVQREFURSBkYm8uZyhDQVNUKDEgQVMgaW50KSkgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctdGFyZ2V0LWFyZy0xNwotLSBpc3N1ZTE0OS11cGRhdGUtZy10YXJnZXQtYXJnLTE3ClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 225,
+        "new_end_byte": 221,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctcGx1cwotLSBpc3N1ZTE0OS1kZWxldGUtZy1wbHVzClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctcGx1cwotLSBpc3N1ZTE0OS1kZWxldGUtZy1wbHVzCkRFTEVURSBGUk9NIGRiby5nKCsxKTsKCkdPCg=="
+       },
+       {
+        "start_byte": 142,
+        "old_end_byte": 221,
+        "new_end_byte": 225,
+        "old": "LS0gaXNzdWUxNDktZGVsZXRlLWctcGx1cwotLSBpc3N1ZTE0OS1kZWxldGUtZy1wbHVzCkRFTEVURSBGUk9NIGRiby5nKCsxKTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktZGVsZXRlLWctcGx1cwotLSBpc3N1ZTE0OS1kZWxldGUtZy1wbHVzClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-syntax-pair-17-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ab8ecc08f95b17fa62b3ea187c526f933ee971f73bf4b9a60b3eebd3bfdafaf7",
+       "bytes": 199
+      },
+      "edits": [
+       {
+        "start_byte": 41,
+        "old_end_byte": 124,
+        "new_end_byte": 123,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctcGx1cwotLSBpc3N1ZTE0OS11cGRhdGUtZy1wbHVzClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo=",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctcGx1cwotLSBpc3N1ZTE0OS11cGRhdGUtZy1wbHVzClVQREFURSBkYm8uZygrMSkgU0VUIGE9MTsKCkdPCg=="
+       },
+       {
+        "start_byte": 41,
+        "old_end_byte": 123,
+        "new_end_byte": 124,
+        "old": "LS0gaXNzdWUxNDktdXBkYXRlLWctcGx1cwotLSBpc3N1ZTE0OS11cGRhdGUtZy1wbHVzClVQREFURSBkYm8uZygrMSkgU0VUIGE9MTsKCkdPCg==",
+        "new": "LS0gaXNzdWUxNDktdXBkYXRlLWctcGx1cwotLSBpc3N1ZTE0OS11cGRhdGUtZy1wbHVzClNFTEVDVCAxIEFTIHJlY292ZXJ5X3ZhbHVlOwpHTwo="
+       },
+       {
+        "start_byte": 124,
+        "old_end_byte": 199,
+        "new_end_byte": 187,
+        "old": "LS0gaXNzdWUxNDktZXhlYy1wbHVzCi0tIGlzc3VlMTQ5LWV4ZWMtcGx1cwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K",
+        "new": "LS0gaXNzdWUxNDktZXhlYy1wbHVzCi0tIGlzc3VlMTQ5LWV4ZWMtcGx1cwpFWEVDIGRiby5wICsxOwoKR08K"
+       },
+       {
+        "start_byte": 124,
+        "old_end_byte": 187,
+        "new_end_byte": 199,
+        "old": "LS0gaXNzdWUxNDktZXhlYy1wbHVzCi0tIGlzc3VlMTQ5LWV4ZWMtcGx1cwpFWEVDIGRiby5wICsxOwoKR08K",
+        "new": "LS0gaXNzdWUxNDktZXhlYy1wbHVzCi0tIGlzc3VlMTQ5LWV4ZWMtcGx1cwpTRUxFQ1QgMSBBUyByZWNvdmVyeV92YWx1ZTsKR08K"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B02": [
+        "N",
+        "E"
+       ],
+       "tsql-B04": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "tsql-issue149-normal-siblings-r1",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "7352e629814911cd1c591faeb14c22ecb176040438021ab6dbfa41f298e2cbe4",
+       "bytes": 11178
+      },
+      "edits": [
+       {
+        "start_byte": 7,
+        "old_end_byte": 36,
+        "new_end_byte": 44,
+        "old": "QEBST1dDT1VOVCBBUyB1bmNoYW5nZWRfcHJvYmU=",
+        "new": "QEBST1dDT1VOVCBBUyB1bmNoYW5nZWRfcHJvYmVfY2hhbmdlZA=="
+       },
+       {
+        "start_byte": 7,
+        "old_end_byte": 44,
+        "new_end_byte": 36,
+        "old": "QEBST1dDT1VOVCBBUyB1bmNoYW5nZWRfcHJvYmVfY2hhbmdlZA==",
+        "new": "QEBST1dDT1VOVCBBUyB1bmNoYW5nZWRfcHJvYmU="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "tsql-B01": [
+        "E"
+       ],
+       "tsql-B02": [
+        "E"
+       ],
+       "tsql-B03": [
+        "E"
+       ],
+       "tsql-B04": [
+        "E"
+       ]
+      },
       "alternatives": [],
       "sample": null,
       "source": null

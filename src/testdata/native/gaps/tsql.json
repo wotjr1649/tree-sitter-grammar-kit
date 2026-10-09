@@ -2895,21 +2895,29 @@
       ]
     },
     {
-      "id": "tsql-issue137-reserved-table-r1",
+      "id": "tsql-issue149-preserved-pair-01-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT a FROM [NOT];",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue137-reserved-table-r1\nSELECT a FROM [NOT];\nGO\n-- tsql-issue137-reserved-exec-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\n[NOT];\nGO\n",
       "edits": [
         {
-          "find": "[NOT]",
-          "replace": "NOT"
+          "find": "-- tsql-issue137-reserved-table-r1\nSELECT a FROM [NOT];\nGO\n",
+          "replace": "-- tsql-issue137-reserved-table-r1\nSELECT a FROM NOT;\nGO\n"
         },
         {
-          "find": "NOT",
-          "replace": "[NOT]"
+          "find": "-- tsql-issue137-reserved-table-r1\nSELECT a FROM NOT;\nGO\n",
+          "replace": "-- tsql-issue137-reserved-table-r1\nSELECT a FROM [NOT];\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-reserved-exec-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\n[NOT];\nGO\n",
+          "replace": "-- tsql-issue137-reserved-exec-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nNOT;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-reserved-exec-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nNOT;\nGO\n",
+          "replace": "-- tsql-issue137-reserved-exec-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\n[NOT];\nGO\n"
         }
       ],
       "expect": [
@@ -2927,6 +2935,18 @@
         },
         {
           "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
@@ -2934,21 +2954,29 @@
       ]
     },
     {
-      "id": "tsql-issue137-reserved-exec-r1",
+      "id": "tsql-issue149-preserved-pair-02-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\n[NOT];",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue137-reserved-type-r1\nCREATE TABLE dbo.t(a [NOT]);\nGO\n-- tsql-issue137-reserved-with-call-r1\nSELECT * FROM dbo.t, dbo.[WITH](1);\nGO\n",
       "edits": [
         {
-          "find": "[NOT]",
-          "replace": "NOT"
+          "find": "-- tsql-issue137-reserved-type-r1\nCREATE TABLE dbo.t(a [NOT]);\nGO\n",
+          "replace": "-- tsql-issue137-reserved-type-r1\nCREATE TABLE dbo.t(a NOT);\nGO\n"
         },
         {
-          "find": "NOT",
-          "replace": "[NOT]"
+          "find": "-- tsql-issue137-reserved-type-r1\nCREATE TABLE dbo.t(a NOT);\nGO\n",
+          "replace": "-- tsql-issue137-reserved-type-r1\nCREATE TABLE dbo.t(a [NOT]);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-reserved-with-call-r1\nSELECT * FROM dbo.t, dbo.[WITH](1);\nGO\n",
+          "replace": "-- tsql-issue137-reserved-with-call-r1\nSELECT * FROM dbo.t, WITH(1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-reserved-with-call-r1\nSELECT * FROM dbo.t, WITH(1);\nGO\n",
+          "replace": "-- tsql-issue137-reserved-with-call-r1\nSELECT * FROM dbo.t, dbo.[WITH](1);\nGO\n"
         }
       ],
       "expect": [
@@ -2966,6 +2994,18 @@
         },
         {
           "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
@@ -2973,21 +3013,29 @@
       ]
     },
     {
-      "id": "tsql-issue137-reserved-type-r1",
+      "id": "tsql-issue149-preserved-pair-03-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE TABLE dbo.t(a [NOT]);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue137-scalar-not-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT 1 = 0;\nGO\n-- tsql-issue137-scalar-not-arithmetic-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (1 + 2 = 0);\nGO\n",
       "edits": [
         {
-          "find": "[NOT]",
-          "replace": "NOT"
+          "find": "-- tsql-issue137-scalar-not-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT 1 = 0;\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT 1;\nGO\n"
         },
         {
-          "find": "NOT",
-          "replace": "[NOT]"
+          "find": "-- tsql-issue137-scalar-not-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT 1;\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT 1 = 0;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-scalar-not-arithmetic-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (1 + 2 = 0);\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-arithmetic-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT (1 + 2);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-scalar-not-arithmetic-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT (1 + 2);\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-arithmetic-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (1 + 2 = 0);\nGO\n"
         }
       ],
       "expect": [
@@ -3005,6 +3053,18 @@
         },
         {
           "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
@@ -3012,21 +3072,29 @@
       ]
     },
     {
-      "id": "tsql-issue137-reserved-with-call-r1",
+      "id": "tsql-issue149-preserved-pair-04-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT * FROM dbo.t, dbo.[WITH](1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue137-scalar-not-function-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT EXISTS(SELECT 1);\nGO\n-- tsql-issue137-scalar-not-nested-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));\nGO\n",
       "edits": [
         {
-          "find": "dbo.[WITH]",
-          "replace": "WITH"
+          "find": "-- tsql-issue137-scalar-not-function-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT EXISTS(SELECT 1);\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-function-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT ABS(NOT 1);\nGO\n"
         },
         {
-          "find": "WITH",
-          "replace": "dbo.[WITH]"
+          "find": "-- tsql-issue137-scalar-not-function-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT ABS(NOT 1);\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-function-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT EXISTS(SELECT 1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-scalar-not-nested-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-nested-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT NOT 1;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-scalar-not-nested-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT NOT NOT 1;\nGO\n",
+          "replace": "-- tsql-issue137-scalar-not-nested-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));\nGO\n"
         }
       ],
       "expect": [
@@ -3044,6 +3112,18 @@
         },
         {
           "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
@@ -3051,21 +3131,29 @@
       ]
     },
     {
-      "id": "tsql-issue137-scalar-not-r1",
+      "id": "tsql-issue149-preserved-pair-05-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT 1 = 0;",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue137-queue-equal-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n-- tsql-issue137-queue-value-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n",
       "edits": [
         {
-          "find": "1 WHERE NOT 1 = 0",
-          "replace": "NOT 1"
+          "find": "-- tsql-issue137-queue-equal-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n",
+          "replace": "-- tsql-issue137-queue-equal-r1\nALTER QUEUE q WITH STATUS ON;\nGO\n"
         },
         {
-          "find": "NOT 1",
-          "replace": "1 WHERE NOT 1 = 0"
+          "find": "-- tsql-issue137-queue-equal-r1\nALTER QUEUE q WITH STATUS ON;\nGO\n",
+          "replace": "-- tsql-issue137-queue-equal-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-queue-value-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n",
+          "replace": "-- tsql-issue137-queue-value-r1\nALTER QUEUE q WITH STATUS = 1;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue137-queue-value-r1\nALTER QUEUE q WITH STATUS = 1;\nGO\n",
+          "replace": "-- tsql-issue137-queue-value-r1\nALTER QUEUE q WITH STATUS = ON;\nGO\n"
         }
       ],
       "expect": [
@@ -3086,198 +3174,15 @@
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue137-scalar-not-arithmetic-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (1 + 2 = 0);",
-      "edits": [
-        {
-          "find": "1 WHERE NOT (1 + 2 = 0",
-          "replace": "NOT (1 + 2"
         },
         {
-          "find": "NOT (1 + 2",
-          "replace": "1 WHERE NOT (1 + 2 = 0"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
+          "step": 3,
           "syntax": "ERROR",
           "contains": [],
           "declarations": ""
         },
         {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue137-scalar-not-function-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT EXISTS(SELECT 1);",
-      "edits": [
-        {
-          "find": "1 WHERE NOT EXISTS(SELEC",
-          "replace": "ABS(NO"
-        },
-        {
-          "find": "ABS(NO",
-          "replace": "1 WHERE NOT EXISTS(SELEC"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue137-scalar-not-nested-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3));",
-      "edits": [
-        {
-          "find": "1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3))",
-          "replace": "NOT NOT 1"
-        },
-        {
-          "find": "NOT NOT 1",
-          "replace": "1 WHERE NOT NOT (a BETWEEN 1 AND 2 OR a IN (3))"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue137-queue-equal-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
-      "edits": [
-        {
-          "find": "= ",
-          "replace": ""
-        },
-        {
-          "find": "S ",
-          "replace": "S = "
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue137-queue-value-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "ALTER QUEUE q WITH STATUS = ON;",
-      "edits": [
-        {
-          "find": "ON",
-          "replace": "1"
-        },
-        {
-          "find": "1",
-          "replace": "ON"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""
@@ -6717,21 +6622,29 @@
       ]
     },
     {
-      "id": "tsql-issue146-index-equals-paren-zero-r1",
+      "id": "tsql-issue149-hints-pair-01-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-index-equals-paren-zero-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-index-equals-paren-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX=(0));"
+          "find": "-- tsql-issue146-index-equals-paren-zero-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-equals-paren-zero-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=(0));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX=(0));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-index-equals-paren-zero-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=(0));\nGO\n",
+          "replace": "-- tsql-issue146-index-equals-paren-zero-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-equals-paren-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-equals-paren-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=(ix));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-equals-paren-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=(ix));\nGO\n",
+          "replace": "-- tsql-issue146-index-equals-paren-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
         }
       ],
       "expect": [
@@ -6756,25 +6669,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-index-equals-paren-name-r1",
+      "id": "tsql-issue149-hints-pair-02-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-index-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-index-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX=(ix));"
+          "find": "-- tsql-issue146-index-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(-1));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX=(ix));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-index-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(-1));\nGO\n",
+          "replace": "-- tsql-issue146-index-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1.5));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1.5));\nGO\n",
+          "replace": "-- tsql-issue146-index-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
         }
       ],
       "expect": [
@@ -6799,25 +6734,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-index-negative-r1",
+      "id": "tsql-issue149-hints-pair-03-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-index-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-index-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(-1));"
+          "find": "-- tsql-issue146-index-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX('ix'));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(-1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-index-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX('ix'));\nGO\n",
+          "replace": "-- tsql-issue146-index-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-index-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0x1));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-index-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0x1));\nGO\n",
+          "replace": "-- tsql-issue146-index-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
         }
       ],
       "expect": [
@@ -6842,25 +6799,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-index-fraction-r1",
+      "id": "tsql-issue149-hints-pair-04-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-force-seek-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n-- tsql-issue146-nolock-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1.5));"
+          "find": "-- tsql-issue146-force-seek-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n",
+          "replace": "-- tsql-issue146-force-seek-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1.5));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-force-seek-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));\nGO\n",
+          "replace": "-- tsql-issue146-force-seek-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-nolock-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-nolock-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-nolock-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK=1);\nGO\n",
+          "replace": "-- tsql-issue146-nolock-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n"
         }
       ],
       "expect": [
@@ -6885,25 +6864,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-index-string-r1",
+      "id": "tsql-issue149-hints-pair-05-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-rowlock-parameters-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK);\nGO\n-- tsql-issue146-spatial-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX('ix'));"
+          "find": "-- tsql-issue146-rowlock-parameters-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-rowlock-parameters-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX('ix'));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-rowlock-parameters-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));\nGO\n",
+          "replace": "-- tsql-issue146-rowlock-parameters-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-spatial-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-spatial-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-fraction-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
         }
       ],
       "expect": [
@@ -6928,25 +6929,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-index-hex-r1",
+      "id": "tsql-issue149-hints-pair-06-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-spatial-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue146-spatial-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(0x1));"
+          "find": "-- tsql-issue146-spatial-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(0x1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+          "find": "-- tsql-issue146-spatial-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');\nGO\n",
+          "replace": "-- tsql-issue146-spatial-string-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-spatial-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-spatial-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-hex-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
         }
       ],
       "expect": [
@@ -6971,25 +6994,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-force-seek-negative-r1",
+      "id": "tsql-issue149-hints-pair-07-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-spatial-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue146-force-seek-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
-          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));"
+          "find": "-- tsql-issue146-spatial-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));",
-          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));"
+          "find": "-- tsql-issue146-spatial-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);\nGO\n",
+          "replace": "-- tsql-issue146-spatial-negative-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-force-seek-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n",
+          "replace": "-- tsql-issue146-force-seek-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-force-seek-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK=1);\nGO\n",
+          "replace": "-- tsql-issue146-force-seek-value-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));\nGO\n"
         }
       ],
       "expect": [
@@ -7014,25 +7059,47 @@
             "table_hint"
           ],
           "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
         }
       ]
     },
     {
-      "id": "tsql-issue146-nolock-value-r1",
+      "id": "tsql-issue149-hints-pair-08-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-hint-variable-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n-- tsql-issue146-hint-temporary-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH (NOLOCK=1);"
+          "find": "-- tsql-issue146-hint-variable-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-hint-variable-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (@hint);\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (NOLOCK=1);",
-          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
+          "find": "-- tsql-issue146-hint-variable-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (@hint);\nGO\n",
+          "replace": "-- tsql-issue146-hint-variable-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-hint-temporary-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-hint-temporary-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (#hint);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-hint-temporary-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (#hint);\nGO\n",
+          "replace": "-- tsql-issue146-hint-temporary-name-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n"
         }
       ],
       "expect": [
@@ -7057,44 +7124,15 @@
             "table_hint"
           ],
           "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-rowlock-parameters-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (ROWLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));",
-          "replace": "SELECT * FROM dbo.t WITH (ROWLOCK);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
+          "step": 3,
           "syntax": "ERROR",
           "contains": [],
           "declarations": ""
         },
         {
-          "step": 2,
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [
             "table_hint"
@@ -7104,21 +7142,29 @@
       ]
     },
     {
-      "id": "tsql-issue146-spatial-fraction-r1",
+      "id": "tsql-issue149-hints-pair-09-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-hint-quoted-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n-- tsql-issue145-hint-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f();\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);"
+          "find": "-- tsql-issue146-hint-quoted-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-hint-quoted-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH ([NOLOCK]);\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+          "find": "-- tsql-issue146-hint-quoted-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH ([NOLOCK]);\nGO\n",
+          "replace": "-- tsql-issue146-hint-quoted-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue145-hint-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f();\nGO\n",
+          "replace": "-- tsql-issue145-hint-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f() WITH (a int);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue145-hint-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f() WITH (a int);\nGO\n",
+          "replace": "-- tsql-issue145-hint-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f();\nGO\n"
         }
       ],
       "expect": [
@@ -7126,350 +7172,7 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-spatial-string-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-spatial-hex-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-spatial-negative-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-force-seek-value-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
-          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK=1);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (FORCESEEK=1);",
-          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-hint-variable-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH (@hint);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (@hint);",
-          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-hint-temporary-name-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH (#hint);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (#hint);",
-          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-hint-quoted-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH ([NOLOCK]);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH ([NOLOCK]);",
-          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue145-hint-schema-on-udf-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f();",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.f();",
-          "replace": "SELECT * FROM dbo.f() WITH (a int);"
-        },
-        {
-          "find": "SELECT * FROM dbo.f() WITH (a int);",
-          "replace": "SELECT * FROM dbo.f();"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
+            "table_hint",
             "invocation"
           ],
           "declarations": ""
@@ -7484,6 +7187,22 @@
           "step": 2,
           "syntax": "NO_ERROR",
           "contains": [
+            "table_hint",
+            "invocation"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint",
             "invocation"
           ],
           "declarations": ""
@@ -7491,21 +7210,29 @@
       ]
     },
     {
-      "id": "tsql-issue145-apply-schema-on-udf-r1",
+      "id": "tsql-issue149-hints-pair-10-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue145-apply-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;\nGO\n-- tsql-issue146-numeric-000-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;",
-          "replace": "SELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;"
+          "find": "-- tsql-issue145-apply-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;\nGO\n",
+          "replace": "-- tsql-issue145-apply-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;",
-          "replace": "SELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;"
+          "find": "-- tsql-issue145-apply-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;\nGO\n",
+          "replace": "-- tsql-issue145-apply-schema-on-udf-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-000-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-000-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-000-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-000-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
         }
       ],
       "expect": [
@@ -7513,49 +7240,7 @@
           "step": 0,
           "syntax": "NO_ERROR",
           "contains": [
-            "invocation"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "invocation"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-numeric-000-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
+            "invocation",
             "table_hint"
           ],
           "declarations": ""
@@ -7570,6 +7255,22 @@
           "step": 2,
           "syntax": "NO_ERROR",
           "contains": [
+            "invocation",
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "invocation",
             "table_hint"
           ],
           "declarations": ""
@@ -7577,21 +7278,29 @@
       ]
     },
     {
-      "id": "tsql-issue146-numeric-002-r1",
+      "id": "tsql-issue149-hints-pair-11-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-numeric-002-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue146-numeric-003-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);"
+          "find": "-- tsql-issue146-numeric-002-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-002-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+          "find": "-- tsql-issue146-numeric-002-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-002-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-003-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-003-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-003-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-003-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
         }
       ],
       "expect": [
@@ -7616,44 +7325,15 @@
             "table_hint"
           ],
           "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-numeric-003-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
+          "step": 3,
           "syntax": "ERROR",
           "contains": [],
           "declarations": ""
         },
         {
-          "step": 2,
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [
             "table_hint"
@@ -7663,21 +7343,29 @@
       ]
     },
     {
-      "id": "tsql-issue146-numeric-007-r1",
+      "id": "tsql-issue149-hints-pair-12-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-numeric-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue146-numeric-015-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);"
+          "find": "-- tsql-issue146-numeric-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+          "find": "-- tsql-issue146-numeric-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-015-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-015-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-numeric-015-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);\nGO\n",
+          "replace": "-- tsql-issue146-numeric-015-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n"
         }
       ],
       "expect": [
@@ -7697,6 +7385,20 @@
         },
         {
           "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [
             "table_hint"
@@ -7706,21 +7408,29 @@
       ]
     },
     {
-      "id": "tsql-issue146-numeric-015-r1",
+      "id": "tsql-issue149-hints-pair-13-r1",
       "kind": "gap",
       "features": [
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue146-range-006-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-range-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
       "edits": [
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);"
+          "find": "-- tsql-issue146-range-006-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-range-006-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(2147483648));\nGO\n"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);",
-          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+          "find": "-- tsql-issue146-range-006-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(2147483648));\nGO\n",
+          "replace": "-- tsql-issue146-range-006-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-range-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n",
+          "replace": "-- tsql-issue146-range-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue146-range-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));\nGO\n",
+          "replace": "-- tsql-issue146-range-007-r1\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n"
         }
       ],
       "expect": [
@@ -7745,87 +7455,15 @@
             "table_hint"
           ],
           "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-range-006-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(2147483648));"
         },
         {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(2147483648));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
+          "step": 3,
           "syntax": "ERROR",
           "contains": [],
           "declarations": ""
         },
         {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        }
-      ]
-    },
-    {
-      "id": "tsql-issue146-range-007-r1",
-      "kind": "gap",
-      "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
-      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
-      "edits": [
-        {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));"
-        },
-        {
-          "find": "SELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));",
-          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
-        }
-      ],
-      "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "table_hint"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
+          "step": 4,
           "syntax": "NO_ERROR",
           "contains": [
             "table_hint"
@@ -9899,6 +9537,1053 @@
       "expect": [
         {
           "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-01-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-bare-nolock\n-- issue149-delete-bare-nolock\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-bare-tablock\n-- issue149-delete-bare-tablock\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-bare-nolock\n-- issue149-delete-bare-nolock\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-bare-nolock\n-- issue149-delete-bare-nolock\nDELETE FROM dbo.t (NOLOCK);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-bare-nolock\n-- issue149-delete-bare-nolock\nDELETE FROM dbo.t (NOLOCK);\n\nGO\n",
+          "replace": "-- issue149-delete-bare-nolock\n-- issue149-delete-bare-nolock\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-bare-tablock\n-- issue149-delete-bare-tablock\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-bare-tablock\n-- issue149-delete-bare-tablock\nDELETE FROM dbo.t (TABLOCK);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-bare-tablock\n-- issue149-delete-bare-tablock\nDELETE FROM dbo.t (TABLOCK);\n\nGO\n",
+          "replace": "-- issue149-delete-bare-tablock\n-- issue149-delete-bare-tablock\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-02-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-bare\n-- issue149-update-bare\nSELECT 1 AS recovery_value;\nGO\n-- issue149-cache-int\n-- issue149-cache-int\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-bare\n-- issue149-update-bare\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-bare\n-- issue149-update-bare\nUPDATE dbo.t (TABLOCK) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-bare\n-- issue149-update-bare\nUPDATE dbo.t (TABLOCK) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-bare\n-- issue149-update-bare\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-int\n-- issue149-cache-int\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-cache-int\n-- issue149-cache-int\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE 1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-int\n-- issue149-cache-int\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE 1;\n\nGO\n",
+          "replace": "-- issue149-cache-int\n-- issue149-cache-int\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-03-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-cache-string\n-- issue149-cache-string\nSELECT 1 AS recovery_value;\nGO\n-- issue149-cache-variable\n-- issue149-cache-variable\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-cache-string\n-- issue149-cache-string\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-cache-string\n-- issue149-cache-string\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE '0x1234';\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-string\n-- issue149-cache-string\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE '0x1234';\n\nGO\n",
+          "replace": "-- issue149-cache-string\n-- issue149-cache-string\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-variable\n-- issue149-cache-variable\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-cache-variable\n-- issue149-cache-variable\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE @h;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-variable\n-- issue149-cache-variable\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE @h;\n\nGO\n",
+          "replace": "-- issue149-cache-variable\n-- issue149-cache-variable\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-04-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-cache-negative\n-- issue149-cache-negative\nSELECT 1 AS recovery_value;\nGO\n-- issue149-cache-null\n-- issue149-cache-null\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-cache-negative\n-- issue149-cache-negative\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-cache-negative\n-- issue149-cache-negative\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE -1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-negative\n-- issue149-cache-negative\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE -1;\n\nGO\n",
+          "replace": "-- issue149-cache-negative\n-- issue149-cache-negative\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-null\n-- issue149-cache-null\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-cache-null\n-- issue149-cache-null\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE NULL;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-cache-null\n-- issue149-cache-null\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE NULL;\n\nGO\n",
+          "replace": "-- issue149-cache-null\n-- issue149-cache-null\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-05-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-merge-bare\n-- issue149-merge-bare\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-openquery-string\n-- issue149-delete-openquery-string\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-merge-bare\n-- issue149-merge-bare\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-merge-bare\n-- issue149-merge-bare\nMERGE dbo.t (TABLOCK) t USING dbo.s s ON t.id=s.id WHEN MATCHED THEN UPDATE SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-merge-bare\n-- issue149-merge-bare\nMERGE dbo.t (TABLOCK) t USING dbo.s s ON t.id=s.id WHEN MATCHED THEN UPDATE SET a=1;\n\nGO\n",
+          "replace": "-- issue149-merge-bare\n-- issue149-merge-bare\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openquery-string\n-- issue149-delete-openquery-string\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-openquery-string\n-- issue149-delete-openquery-string\nDELETE FROM OPENQUERY('TSGK_149_UNDEFINED_LINK', 'SELECT a FROM t');\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openquery-string\n-- issue149-delete-openquery-string\nDELETE FROM OPENQUERY('TSGK_149_UNDEFINED_LINK', 'SELECT a FROM t');\n\nGO\n",
+          "replace": "-- issue149-delete-openquery-string\n-- issue149-delete-openquery-string\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-06-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-openquery-variable\n-- issue149-delete-openquery-variable\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-openquery-extra\n-- issue149-delete-openquery-extra\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-openquery-variable\n-- issue149-delete-openquery-variable\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-openquery-variable\n-- issue149-delete-openquery-variable\nDELETE FROM OPENQUERY(@link, 'SELECT a FROM t');\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openquery-variable\n-- issue149-delete-openquery-variable\nDELETE FROM OPENQUERY(@link, 'SELECT a FROM t');\n\nGO\n",
+          "replace": "-- issue149-delete-openquery-variable\n-- issue149-delete-openquery-variable\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openquery-extra\n-- issue149-delete-openquery-extra\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-openquery-extra\n-- issue149-delete-openquery-extra\nDELETE FROM OPENQUERY([TSGK_149_UNDEFINED_LINK], 'SELECT a FROM t', 1);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openquery-extra\n-- issue149-delete-openquery-extra\nDELETE FROM OPENQUERY([TSGK_149_UNDEFINED_LINK], 'SELECT a FROM t', 1);\n\nGO\n",
+          "replace": "-- issue149-delete-openquery-extra\n-- issue149-delete-openquery-extra\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-07-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-openrowset-bulk\n-- issue149-delete-openrowset-bulk\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-target-arg-2\n-- issue149-delete-target-arg-2\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-openrowset-bulk\n-- issue149-delete-openrowset-bulk\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-openrowset-bulk\n-- issue149-delete-openrowset-bulk\nDELETE FROM OPENROWSET(BULK 'TSGK_149_UNUSED', SINGLE_BLOB);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-openrowset-bulk\n-- issue149-delete-openrowset-bulk\nDELETE FROM OPENROWSET(BULK 'TSGK_149_UNUSED', SINGLE_BLOB);\n\nGO\n",
+          "replace": "-- issue149-delete-openrowset-bulk\n-- issue149-delete-openrowset-bulk\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-2\n-- issue149-delete-target-arg-2\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-target-arg-2\n-- issue149-delete-target-arg-2\nDECLARE @a int=1; DELETE FROM dbo.f(a);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-2\n-- issue149-delete-target-arg-2\nDECLARE @a int=1; DELETE FROM dbo.f(a);\n\nGO\n",
+          "replace": "-- issue149-delete-target-arg-2\n-- issue149-delete-target-arg-2\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-08-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-target-arg-3\n-- issue149-delete-target-arg-3\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-target-arg-4\n-- issue149-delete-target-arg-4\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-target-arg-3\n-- issue149-delete-target-arg-3\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-target-arg-3\n-- issue149-delete-target-arg-3\nDECLARE @a int=1; DELETE FROM dbo.f(NOLOCK);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-3\n-- issue149-delete-target-arg-3\nDECLARE @a int=1; DELETE FROM dbo.f(NOLOCK);\n\nGO\n",
+          "replace": "-- issue149-delete-target-arg-3\n-- issue149-delete-target-arg-3\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-4\n-- issue149-delete-target-arg-4\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-target-arg-4\n-- issue149-delete-target-arg-4\nDECLARE @a int=1; DELETE FROM dbo.f(TABLOCK);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-4\n-- issue149-delete-target-arg-4\nDECLARE @a int=1; DELETE FROM dbo.f(TABLOCK);\n\nGO\n",
+          "replace": "-- issue149-delete-target-arg-4\n-- issue149-delete-target-arg-4\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-09-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-target-arg-5\n-- issue149-delete-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-target-arg-6\n-- issue149-delete-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-target-arg-5\n-- issue149-delete-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-target-arg-5\n-- issue149-delete-target-arg-5\nDECLARE @a int=1; DELETE FROM dbo.f(1+2);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-5\n-- issue149-delete-target-arg-5\nDECLARE @a int=1; DELETE FROM dbo.f(1+2);\n\nGO\n",
+          "replace": "-- issue149-delete-target-arg-5\n-- issue149-delete-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-6\n-- issue149-delete-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-target-arg-6\n-- issue149-delete-target-arg-6\nDECLARE @a int=1; DELETE FROM dbo.f((1));\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-target-arg-6\n-- issue149-delete-target-arg-6\nDECLARE @a int=1; DELETE FROM dbo.f((1));\n\nGO\n",
+          "replace": "-- issue149-delete-target-arg-6\n-- issue149-delete-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-10-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-target-arg-9\n-- issue149-update-target-arg-9\nSELECT 1 AS recovery_value;\nGO\n-- issue149-update-target-arg-10\n-- issue149-update-target-arg-10\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-target-arg-9\n-- issue149-update-target-arg-9\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-target-arg-9\n-- issue149-update-target-arg-9\nDECLARE @a int=1; UPDATE dbo.f(a) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-9\n-- issue149-update-target-arg-9\nDECLARE @a int=1; UPDATE dbo.f(a) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-target-arg-9\n-- issue149-update-target-arg-9\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-10\n-- issue149-update-target-arg-10\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-target-arg-10\n-- issue149-update-target-arg-10\nDECLARE @a int=1; UPDATE dbo.f(NOLOCK) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-10\n-- issue149-update-target-arg-10\nDECLARE @a int=1; UPDATE dbo.f(NOLOCK) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-target-arg-10\n-- issue149-update-target-arg-10\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-11-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-target-arg-11\n-- issue149-update-target-arg-11\nSELECT 1 AS recovery_value;\nGO\n-- issue149-update-target-arg-12\n-- issue149-update-target-arg-12\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-target-arg-11\n-- issue149-update-target-arg-11\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-target-arg-11\n-- issue149-update-target-arg-11\nDECLARE @a int=1; UPDATE dbo.f(TABLOCK) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-11\n-- issue149-update-target-arg-11\nDECLARE @a int=1; UPDATE dbo.f(TABLOCK) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-target-arg-11\n-- issue149-update-target-arg-11\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-12\n-- issue149-update-target-arg-12\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-target-arg-12\n-- issue149-update-target-arg-12\nDECLARE @a int=1; UPDATE dbo.f(1+2) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-12\n-- issue149-update-target-arg-12\nDECLARE @a int=1; UPDATE dbo.f(1+2) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-target-arg-12\n-- issue149-update-target-arg-12\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-12-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-target-arg-13\n-- issue149-update-target-arg-13\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-g-target-arg-5\n-- issue149-delete-g-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-target-arg-13\n-- issue149-update-target-arg-13\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-target-arg-13\n-- issue149-update-target-arg-13\nDECLARE @a int=1; UPDATE dbo.f((1)) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-target-arg-13\n-- issue149-update-target-arg-13\nDECLARE @a int=1; UPDATE dbo.f((1)) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-target-arg-13\n-- issue149-update-target-arg-13\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-5\n-- issue149-delete-g-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-5\n-- issue149-delete-g-target-arg-5\nDECLARE @a int=1; DELETE FROM dbo.g(@@SPID);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-5\n-- issue149-delete-g-target-arg-5\nDECLARE @a int=1; DELETE FROM dbo.g(@@SPID);\n\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-5\n-- issue149-delete-g-target-arg-5\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-13-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-g-target-arg-6\n-- issue149-delete-g-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-g-target-arg-7\n-- issue149-delete-g-target-arg-7\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-g-target-arg-6\n-- issue149-delete-g-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-6\n-- issue149-delete-g-target-arg-6\nDECLARE @a int=1; DELETE FROM dbo.g(CURRENT_TIMESTAMP);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-6\n-- issue149-delete-g-target-arg-6\nDECLARE @a int=1; DELETE FROM dbo.g(CURRENT_TIMESTAMP);\n\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-6\n-- issue149-delete-g-target-arg-6\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-7\n-- issue149-delete-g-target-arg-7\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-7\n-- issue149-delete-g-target-arg-7\nDECLARE @a int=1; DELETE FROM dbo.g(GETDATE());\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-7\n-- issue149-delete-g-target-arg-7\nDECLARE @a int=1; DELETE FROM dbo.g(GETDATE());\n\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-7\n-- issue149-delete-g-target-arg-7\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-14-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-g-target-arg-8\n-- issue149-delete-g-target-arg-8\nSELECT 1 AS recovery_value;\nGO\n-- issue149-update-g-target-arg-14\n-- issue149-update-g-target-arg-14\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-delete-g-target-arg-8\n-- issue149-delete-g-target-arg-8\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-8\n-- issue149-delete-g-target-arg-8\nDECLARE @a int=1; DELETE FROM dbo.g(CAST(1 AS int));\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-target-arg-8\n-- issue149-delete-g-target-arg-8\nDECLARE @a int=1; DELETE FROM dbo.g(CAST(1 AS int));\n\nGO\n",
+          "replace": "-- issue149-delete-g-target-arg-8\n-- issue149-delete-g-target-arg-8\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-14\n-- issue149-update-g-target-arg-14\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-14\n-- issue149-update-g-target-arg-14\nDECLARE @a int=1; UPDATE dbo.g(@@SPID) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-14\n-- issue149-update-g-target-arg-14\nDECLARE @a int=1; UPDATE dbo.g(@@SPID) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-14\n-- issue149-update-g-target-arg-14\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-15-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-g-target-arg-15\n-- issue149-update-g-target-arg-15\nSELECT 1 AS recovery_value;\nGO\n-- issue149-update-g-target-arg-16\n-- issue149-update-g-target-arg-16\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-g-target-arg-15\n-- issue149-update-g-target-arg-15\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-15\n-- issue149-update-g-target-arg-15\nDECLARE @a int=1; UPDATE dbo.g(CURRENT_TIMESTAMP) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-15\n-- issue149-update-g-target-arg-15\nDECLARE @a int=1; UPDATE dbo.g(CURRENT_TIMESTAMP) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-15\n-- issue149-update-g-target-arg-15\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-16\n-- issue149-update-g-target-arg-16\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-16\n-- issue149-update-g-target-arg-16\nDECLARE @a int=1; UPDATE dbo.g(GETDATE()) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-16\n-- issue149-update-g-target-arg-16\nDECLARE @a int=1; UPDATE dbo.g(GETDATE()) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-16\n-- issue149-update-g-target-arg-16\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-16-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-g-target-arg-17\n-- issue149-update-g-target-arg-17\nSELECT 1 AS recovery_value;\nGO\n-- issue149-delete-g-plus\n-- issue149-delete-g-plus\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-g-target-arg-17\n-- issue149-update-g-target-arg-17\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-17\n-- issue149-update-g-target-arg-17\nDECLARE @a int=1; UPDATE dbo.g(CAST(1 AS int)) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-target-arg-17\n-- issue149-update-g-target-arg-17\nDECLARE @a int=1; UPDATE dbo.g(CAST(1 AS int)) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-g-target-arg-17\n-- issue149-update-g-target-arg-17\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-plus\n-- issue149-delete-g-plus\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-delete-g-plus\n-- issue149-delete-g-plus\nDELETE FROM dbo.g(+1);\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-delete-g-plus\n-- issue149-delete-g-plus\nDELETE FROM dbo.g(+1);\n\nGO\n",
+          "replace": "-- issue149-delete-g-plus\n-- issue149-delete-g-plus\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-syntax-pair-17-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B04"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-update-g-plus\n-- issue149-update-g-plus\nSELECT 1 AS recovery_value;\nGO\n-- issue149-exec-plus\n-- issue149-exec-plus\nSELECT 1 AS recovery_value;\nGO\n",
+      "edits": [
+        {
+          "find": "-- issue149-update-g-plus\n-- issue149-update-g-plus\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-update-g-plus\n-- issue149-update-g-plus\nUPDATE dbo.g(+1) SET a=1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-update-g-plus\n-- issue149-update-g-plus\nUPDATE dbo.g(+1) SET a=1;\n\nGO\n",
+          "replace": "-- issue149-update-g-plus\n-- issue149-update-g-plus\nSELECT 1 AS recovery_value;\nGO\n"
+        },
+        {
+          "find": "-- issue149-exec-plus\n-- issue149-exec-plus\nSELECT 1 AS recovery_value;\nGO\n",
+          "replace": "-- issue149-exec-plus\n-- issue149-exec-plus\nEXEC dbo.p +1;\n\nGO\n"
+        },
+        {
+          "find": "-- issue149-exec-plus\n-- issue149-exec-plus\nEXEC dbo.p +1;\n\nGO\n",
+          "replace": "-- issue149-exec-plus\n-- issue149-exec-plus\nSELECT 1 AS recovery_value;\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue149-normal-siblings-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03",
+        "tsql-B04"
+      ],
+      "covers": {},
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- issue149-delete-with-tablock\nDELETE FROM dbo.t WITH (TABLOCK);\n\nGO\n-- issue149-delete-with-nolock\nDELETE FROM dbo.t WITH (NOLOCK);\n\nGO\n-- issue149-delete-source-bare\nDELETE t FROM dbo.t t (NOLOCK);\n\nGO\n-- issue149-delete-no-hint\nDELETE FROM dbo.t;\n\nGO\n-- issue149-cache-none\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;\n\nGO\n-- issue149-cache-hex\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE 0x1234;\n\nGO\n-- issue149-cache-zero\nDECLARE @h varbinary(64); ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE 0x;\n\nGO\n-- issue149-cache-label\nALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE\nlabel1: SELECT 1;\n\nGO\n-- issue149-cache-next\nALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE\nSELECT 1;\n\nGO\n-- issue149-permission-grant-select\nGRANT SELECT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-update\nGRANT UPDATE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-references\nGRANT REFERENCES ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-unmask\nGRANT UNMASK ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-insert\nGRANT INSERT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-delete\nGRANT DELETE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-execute\nGRANT EXECUTE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-select-update\nGRANT SELECT, UPDATE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-grant-select-insert\nGRANT SELECT, INSERT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-select\nDENY SELECT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-update\nDENY UPDATE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-references\nDENY REFERENCES ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-unmask\nDENY UNMASK ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-insert\nDENY INSERT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-delete\nDENY DELETE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-execute\nDENY EXECUTE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-select-update\nDENY SELECT, UPDATE ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-deny-select-insert\nDENY SELECT, INSERT ON dbo.t (a) TO public;\n\nGO\n-- issue149-permission-revoke-select\nREVOKE SELECT ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-update\nREVOKE UPDATE ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-references\nREVOKE REFERENCES ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-unmask\nREVOKE UNMASK ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-insert\nREVOKE INSERT ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-delete\nREVOKE DELETE ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-execute\nREVOKE EXECUTE ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-select-update\nREVOKE SELECT, UPDATE ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-revoke-select-insert\nREVOKE SELECT, INSERT ON dbo.t (a) FROM public;\n\nGO\n-- issue149-permission-local-valid\nGRANT SELECT(a), INSERT ON dbo.t TO public;\n\nGO\n-- issue149-permission-local-invalid\nGRANT SELECT, INSERT(a) ON dbo.t TO public;\n\nGO\n-- issue149-window-no-order-rows\nSELECT MAX(a) OVER (PARTITION BY id ROWS 1 PRECEDING) FROM dbo.t;\n\nGO\n-- issue149-window-no-order-range\nSELECT MAX(a) OVER (PARTITION BY id RANGE CURRENT ROW) FROM dbo.t;\n\nGO\n-- issue149-window-order-rows\nSELECT MAX(a) OVER (ORDER BY id ROWS 1 PRECEDING) FROM dbo.t;\n\nGO\n-- issue149-window-order-range\nSELECT MAX(a) OVER (ORDER BY id RANGE CURRENT ROW) FROM dbo.t;\n\nGO\n-- issue149-window-partition-only\nSELECT MAX(a) OVER (PARTITION BY id) FROM dbo.t;\n\nGO\n-- issue149-window-range-offset\nSELECT MAX(a) OVER (ORDER BY id RANGE 1 PRECEDING) FROM dbo.t;\n\nGO\n-- issue149-window-rows-follow-short\nSELECT MAX(a) OVER (ORDER BY id ROWS 1 FOLLOWING) FROM dbo.t;\n\nGO\n-- issue149-window-range-follow-short\nSELECT MAX(a) OVER (ORDER BY id RANGE UNBOUNDED FOLLOWING) FROM dbo.t;\n\nGO\n-- issue149-window-rows-current\nSELECT MAX(a) OVER (ORDER BY id ROWS CURRENT ROW) FROM dbo.t;\n\nGO\n-- issue149-window-rows-between\nSELECT MAX(a) OVER (ORDER BY id ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) FROM dbo.t;\n\nGO\n-- issue149-window-inherited\nSELECT MAX(a) OVER (w ROWS 1 PRECEDING) FROM dbo.t WINDOW w AS (ORDER BY id);\n\nGO\n-- issue149-window-nested-order\nSELECT MAX(a) OVER (PARTITION BY (SELECT 1 ORDER BY (SELECT 1) OFFSET 0 ROWS) ROWS 1 PRECEDING) FROM dbo.t;\n\nGO\n-- issue149-trigger-all-server-ddl_database_level_events\nCREATE TRIGGER tr149 ON ALL SERVER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-all-server-ddl_server_level_events\nCREATE TRIGGER tr149 ON ALL SERVER FOR DDL_SERVER_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-all-server-ddl_table_events\nCREATE TRIGGER tr149 ON ALL SERVER FOR DDL_TABLE_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-all-server-create_table\nCREATE TRIGGER tr149 ON ALL SERVER FOR CREATE_TABLE AS RETURN;\n\nGO\n-- issue149-trigger-all-server-create_login\nCREATE TRIGGER tr149 ON ALL SERVER FOR CREATE_LOGIN AS RETURN;\n\nGO\n-- issue149-trigger-all-server-insert\nCREATE TRIGGER tr149 ON ALL SERVER FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-database-ddl_database_level_events\nCREATE TRIGGER tr149 ON DATABASE FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-database-ddl_server_level_events\nCREATE TRIGGER tr149 ON DATABASE FOR DDL_SERVER_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-database-ddl_table_events\nCREATE TRIGGER tr149 ON DATABASE FOR DDL_TABLE_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-database-create_table\nCREATE TRIGGER tr149 ON DATABASE FOR CREATE_TABLE AS RETURN;\n\nGO\n-- issue149-trigger-database-create_login\nCREATE TRIGGER tr149 ON DATABASE FOR CREATE_LOGIN AS RETURN;\n\nGO\n-- issue149-trigger-database-insert\nCREATE TRIGGER tr149 ON DATABASE FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-ddl_database_level_events\nCREATE TRIGGER tr149 ON dbo.t FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-ddl_server_level_events\nCREATE TRIGGER tr149 ON dbo.t FOR DDL_SERVER_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-ddl_table_events\nCREATE TRIGGER tr149 ON dbo.t FOR DDL_TABLE_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-create_table\nCREATE TRIGGER tr149 ON dbo.t FOR CREATE_TABLE AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-create_login\nCREATE TRIGGER tr149 ON dbo.t FOR CREATE_LOGIN AS RETURN;\n\nGO\n-- issue149-trigger-dbo-t-insert\nCREATE TRIGGER tr149 ON dbo.t FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-execute-all-server-caller\nCREATE TRIGGER tr149 ON ALL SERVER WITH EXECUTE AS CALLER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-all-server-self\nCREATE TRIGGER tr149 ON ALL SERVER WITH EXECUTE AS SELF FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-all-server-owner\nCREATE TRIGGER tr149 ON ALL SERVER WITH EXECUTE AS OWNER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-all-server-sa\nCREATE TRIGGER tr149 ON ALL SERVER WITH EXECUTE AS 'sa' FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-database-caller\nCREATE TRIGGER tr149 ON DATABASE WITH EXECUTE AS CALLER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-database-self\nCREATE TRIGGER tr149 ON DATABASE WITH EXECUTE AS SELF FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-database-owner\nCREATE TRIGGER tr149 ON DATABASE WITH EXECUTE AS OWNER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-database-sa\nCREATE TRIGGER tr149 ON DATABASE WITH EXECUTE AS 'sa' FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-execute-dbo-t-caller\nCREATE TRIGGER tr149 ON dbo.t WITH EXECUTE AS CALLER FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-execute-dbo-t-self\nCREATE TRIGGER tr149 ON dbo.t WITH EXECUTE AS SELF FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-execute-dbo-t-owner\nCREATE TRIGGER tr149 ON dbo.t WITH EXECUTE AS OWNER FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-execute-dbo-t-sa\nCREATE TRIGGER tr149 ON dbo.t WITH EXECUTE AS 'sa' FOR INSERT AS RETURN;\n\nGO\n-- issue149-update-with-nolock\nUPDATE dbo.t WITH (NOLOCK) SET a=1;\n\nGO\n-- issue149-update-with-tablock\nUPDATE dbo.t WITH (TABLOCK) SET a=1;\n\nGO\n-- issue149-insert-with-nolock\nINSERT dbo.t WITH (NOLOCK) (a) VALUES(1);\n\nGO\n-- issue149-merge-with\nMERGE dbo.t WITH (TABLOCK) t USING dbo.s s ON t.id=s.id WHEN MATCHED THEN UPDATE SET a=1;\n\nGO\n-- issue149-merge-with-nolock\nMERGE dbo.t WITH (NOLOCK) t USING dbo.s s ON t.id=s.id WHEN MATCHED THEN UPDATE SET a=1;\n\nGO\n-- issue149-trigger-qualified-all-server\nCREATE TRIGGER dbo.tr149 ON ALL SERVER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-qualified-all-server-bracket\nCREATE TRIGGER [dbo].[tr149] ON ALL SERVER FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-qualified-database\nCREATE TRIGGER dbo.tr149 ON DATABASE FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-qualified-database-bracket\nCREATE TRIGGER [dbo].[tr149] ON DATABASE FOR DDL_DATABASE_LEVEL_EVENTS AS RETURN;\n\nGO\n-- issue149-trigger-qualified-dbo-t\nCREATE TRIGGER dbo.tr149 ON dbo.t FOR INSERT AS RETURN;\n\nGO\n-- issue149-trigger-qualified-dbo-t-bracket\nCREATE TRIGGER [dbo].[tr149] ON dbo.t FOR INSERT AS RETURN;\n\nGO\n-- issue149-delete-openquery\nDELETE FROM OPENQUERY([TSGK_149_UNDEFINED_LINK], 'SELECT a FROM t');\n\nGO\n-- issue149-update-openquery\nUPDATE OPENQUERY([TSGK_149_UNDEFINED_LINK], 'SELECT a FROM t') SET a=1;\n\nGO\n-- issue149-delete-openrowset\nDELETE FROM OPENROWSET('TSGK_149_UNKNOWN_PROVIDER','TSGK_149_UNUSED','SELECT a FROM t');\n\nGO\n-- issue149-update-openrowset\nUPDATE OPENROWSET('TSGK_149_UNKNOWN_PROVIDER','TSGK_149_UNUSED','SELECT a FROM t') SET a=1;\n\nGO\n-- issue149-delete-openjson\nDELETE FROM OPENJSON(N'[]');\n\nGO\n-- issue149-update-openjson\nUPDATE OPENJSON(N'[]') SET a=1;\n\nGO\n-- issue149-delete-function\nDELETE FROM dbo.fn(1);\n\nGO\n-- issue149-update-function\nUPDATE dbo.fn(1) SET a=1;\n\nGO\n-- issue149-delete-target-arg-0\nDECLARE @a int=1; DELETE FROM dbo.f(1);\n\nGO\n-- issue149-delete-target-arg-1\nDECLARE @a int=1; DELETE FROM dbo.f(@a);\n\nGO\n-- issue149-update-target-arg-7\nDECLARE @a int=1; UPDATE dbo.f(1) SET a=1;\n\nGO\n-- issue149-update-target-arg-8\nDECLARE @a int=1; UPDATE dbo.f(@a) SET a=1;\n\nGO\n-- issue149-delete-g-target-arg-0\nDECLARE @a int=1; DELETE FROM dbo.g(1);\n\nGO\n-- issue149-delete-g-target-arg-1\nDECLARE @a int=1; DELETE FROM dbo.g(@a);\n\nGO\n-- issue149-delete-g-target-arg-2\nDECLARE @a int=1; DELETE FROM dbo.g(-1);\n\nGO\n-- issue149-delete-g-target-arg-3\nDECLARE @a int=1; DELETE FROM dbo.g(NULL);\n\nGO\n-- issue149-delete-g-target-arg-4\nDECLARE @a int=1; DELETE FROM dbo.g(DEFAULT);\n\nGO\n-- issue149-update-g-target-arg-9\nDECLARE @a int=1; UPDATE dbo.g(1) SET a=1;\n\nGO\n-- issue149-update-g-target-arg-10\nDECLARE @a int=1; UPDATE dbo.g(@a) SET a=1;\n\nGO\n-- issue149-update-g-target-arg-11\nDECLARE @a int=1; UPDATE dbo.g(-1) SET a=1;\n\nGO\n-- issue149-update-g-target-arg-12\nDECLARE @a int=1; UPDATE dbo.g(NULL) SET a=1;\n\nGO\n-- issue149-update-g-target-arg-13\nDECLARE @a int=1; UPDATE dbo.g(DEFAULT) SET a=1;\n\nGO\n",
+      "edits": [
+        {
+          "find": "@@ROWCOUNT AS unchanged_probe",
+          "replace": "@@ROWCOUNT AS unchanged_probe_changed"
+        },
+        {
+          "find": "@@ROWCOUNT AS unchanged_probe_changed",
+          "replace": "@@ROWCOUNT AS unchanged_probe"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
           "syntax": "NO_ERROR",
           "contains": [],
           "declarations": ""

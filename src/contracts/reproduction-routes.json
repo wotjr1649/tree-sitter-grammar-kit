@@ -887,16 +887,16 @@
       "candidate": "P05-MSSQL-REMEDY-r1",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 1431825,
-          "sha256": "b56d98e8cf00fb3ed6c03c071c1f020fb9cd57a93f0615c71ca6ba37c4dd7d87"
+          "bytes": 1438590,
+          "sha256": "acbaf6d175dba36e5d6de1307745462053ee047f9c00bebb83058d4d0a084c0d"
         },
         "node-types.json": {
-          "bytes": 535489,
-          "sha256": "c9d82e14204feba5561301fc8c5230d7b8f5fd1d3ab4cf540d133465f2fbdb50"
+          "bytes": 535579,
+          "sha256": "f250d3594ba0173569413750a28d6d48c2e462c5734675551b5afe58ba77bb05"
         },
         "parser.c": {
-          "bytes": 69729431,
-          "sha256": "af5d8422f8379b7abf6d554d2b824e0b56b7ea4be620742416881c963de178a6"
+          "bytes": 70669279,
+          "sha256": "88af8f62573a257d5b986e30f9b4db9e17b4932f71c88f14b974b674367af430"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,
