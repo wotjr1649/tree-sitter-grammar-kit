@@ -2012,8 +2012,8 @@
           },
           {
             "path": "grammar/statements/select.js",
-            "bytes": 36014,
-            "sha256": "d7c24cf839e4a5a20cdd0dab5d52bebb857b06271e9770404401f5964a2cebd0"
+            "bytes": 36161,
+            "sha256": "93ee63dbabfc5db727da3bf95eb55f35465ea1d054d5d49ce951a11095ad5874"
           },
           {
             "path": "src/scanner.c",

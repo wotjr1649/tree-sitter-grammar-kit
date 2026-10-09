@@ -1842,6 +1842,10 @@
   {
     "find": "r;\n",
     "replace": "r;\n\nGO\nDECLARE @a bigint; SELECT * FROM CHANGETABLE(CHANGES dbo.t,@a) AS c;"
+  },
+  {
+    "find": "DECLARE @a bigint; SELECT * FROM CHANGETABLE(CHANGES dbo.t,@a) AS c",
+    "replace": "SELECT 1 FROM dbo.t GROUP BY ROLLUP(())"
   }
 ], "expect": [
   {
@@ -1867,14 +1871,360 @@
     "syntax": "NO_ERROR",
     "contains": [],
     "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
   }
 ]},
-  {"id": "tsql-issue128-group-valid-no-from-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 GROUP BY @@SPID;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1 GROUP BY @@SPID;", "replace": "SELECT 2 GROUP BY @@SPID;"}, {"find": "SELECT 2 GROUP BY @@SPID;", "replace": "SELECT 1 GROUP BY @@SPID;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-module-batch-first-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;", "replace": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;"}, {"find": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;", "replace": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-function-arity-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT ABS(1, 2);\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT ABS(1, 2);", "replace": "SELECT ABS(2, 2);"}, {"find": "SELECT ABS(2, 2);", "replace": "SELECT ABS(1, 2);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-return-context-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nRETURN 1;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "RETURN 1;", "replace": "RETURN 2;"}, {"find": "RETURN 2;", "replace": "RETURN 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-unknown-function-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT foo(1);\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT foo(1);", "replace": "SELECT foo(2);"}, {"find": "SELECT foo(2);", "replace": "SELECT foo(1);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
-  {"id": "tsql-issue128-undeclared-variable-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT @x;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT @x;", "replace": "SELECT @x;\n"}, {"find": "SELECT @x;\n", "replace": "SELECT @x;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
+  {"id": "tsql-issue128-group-valid-no-from-r1", "kind": "gap", "features": [
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 GROUP BY @@SPID;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT 1 GROUP BY @@SPID;",
+    "replace": "SELECT 2 GROUP BY @@SPID;"
+  },
+  {
+    "find": "SELECT 2 GROUP BY @@SPID;",
+    "replace": "SELECT 1 GROUP BY @@SPID;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(a,());"
+  },
+  {
+    "find": "CUBE(a,()",
+    "replace": "("
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "list",
+        "text": "()",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue128-module-batch-first-r1", "kind": "gap", "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;",
+    "replace": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;"
+  },
+  {
+    "find": "SELECT 2; CREATE PROCEDURE dbo.p AS SELECT 2;",
+    "replace": "SELECT 1; CREATE PROCEDURE dbo.p AS SELECT 2;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY ROLLUP((),a);"
+  },
+  {
+    "find": "(),a",
+    "replace": "a,()"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue128-function-arity-r1", "kind": "gap", "features": [
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT ABS(1, 2);\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT ABS(1, 2);",
+    "replace": "SELECT ABS(2, 2);"
+  },
+  {
+    "find": "SELECT ABS(2, 2);",
+    "replace": "SELECT ABS(1, 2);"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(());"
+  },
+  {
+    "find": "((",
+    "replace": "((a,b),("
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue128-return-context-r1", "kind": "gap", "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nRETURN 1;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "RETURN 1;",
+    "replace": "RETURN 2;"
+  },
+  {
+    "find": "RETURN 2;",
+    "replace": "RETURN 1;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY ROLLUP((()));"
+  },
+  {
+    "find": "()",
+    "replace": "a,b"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "invocation",
+        "text": "ROLLUP((a,b))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue128-unknown-function-r1", "kind": "gap", "features": [
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT foo(1);\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT foo(1);",
+    "replace": "SELECT foo(2);"
+  },
+  {
+    "find": "SELECT foo(2);",
+    "replace": "SELECT foo(1);"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(a,(b,c));"
+  },
+  {
+    "find": "CUBE(a,(b,c",
+    "replace": "GROUPING SETS (("
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "invocation",
+        "text": "CUBE(a,(b,c))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "grouping_sets",
+        "text": "GROUPING SETS (())",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]},
+  {"id": "tsql-issue128-undeclared-variable-r1", "kind": "gap", "features": [
+  "tsql-B01",
+  "tsql-B05"
+], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT @x;\nGO\nSELECT 1 AS fixture_anchor;\n", "edits": [
+  {
+    "find": "SELECT @x;",
+    "replace": "SELECT @x;\n"
+  },
+  {
+    "find": "SELECT @x;\n",
+    "replace": "SELECT @x;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1 FROM dbo.t GROUP BY GROUPING SETS ((),ROLLUP((a,b)));"
+  }
+], "expect": [
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "grouping_sets",
+        "text": "GROUPING SETS ((),ROLLUP((a,b)))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]},
   {"id": "tsql-issue128-having-no-from-r1", "kind": "gap", "features": ["tsql-B01"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT 1 HAVING 1 = 1;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT 1 HAVING 1 = 1;", "replace": "SELECT 1 HAVINX 1 = 1;"}, {"find": "SELECT 1 HAVINX 1 = 1;", "replace": "SELECT 1 HAVING 1 = 1;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-try-only-semis-r1", "kind": "gap", "features": ["tsql-B04"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nBEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "BEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;", "replace": "BEGIN TRY ;; END TRY BEGIN CATCH END CATCH;"}, {"find": "BEGIN TRY ;; END TRY BEGIN CATCH END CATCH;", "replace": "BEGIN TRY ; SELECT 1; END TRY BEGIN CATCH END CATCH;"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": [], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": [], "declarations": ""}]},
   {"id": "tsql-issue128-window-clause-r1", "kind": "gap", "features": ["tsql-V22"], "source_utf8": "SELECT 1 AS fixture_prefix;\nGO\nSELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);\nSELECT 1 AS fixture_anchor;\n", "edits": [{"find": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);", "replace": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITIOX BY b);"}, {"find": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITIOX BY b);", "replace": "SELECT SUM(a) OVER w FROM t WINDOW w AS (PARTITION BY b);"}], "expect": [{"step": 0, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}, {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""}, {"step": 2, "syntax": "NO_ERROR", "contains": ["window_clause", "named_window"], "declarations": ""}]},

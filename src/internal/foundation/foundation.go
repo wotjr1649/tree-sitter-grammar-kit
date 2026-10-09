@@ -41,7 +41,7 @@ var required = []string{
 	"docs/reports/issue-141-tsql-context-and-hints.md",
 	"docs/reports/issue-149-tsql-corpus-context.md",
 	"docs/reports/issue-150-tsql-identifier-xml.md", "docs/reports/issue-151-tsql-exec-output.md",
-	"docs/reports/issues-157-166-residual-syntax.md",
+	"docs/reports/issues-157-168-residual-syntax.md",
 	"docs/reports/issue-113-tsql-boundaries.md",
 	"docs/reports/issue-121-tsql-engine-validation.md", "docs/reports/issue-122-123-tsql-boundaries.md", "docs/reports/issue-126-expanded-validation.md",
 	"docs/design/decisions/0001-core-and-execution.md",

@@ -135,7 +135,8 @@
   "issue158-go-line-boundary",
   "issue159-nonempty-expression-list",
   "issue165-comment-closure",
-  "issue166-changetable-arguments"
+  "issue166-changetable-arguments",
+  "issue168-nonempty-function-grouping-tuple"
  ],
  "files": [
   {
@@ -2453,7 +2454,7 @@
     },
     {
      "before": "    seq(\n      $.keyword_group,\n      $.keyword_by,\n      comma_list(choice($._expression, $.grouping_sets), true),\n      optional(choice($.keyword_with_cube, $.keyword_with_rollup)),\n    ),\n\n  grouping_sets: ($) => seq($.keyword_grouping, $.keyword_sets, paren_list($._expression, true)),\n\n  having: ($) => seq($.keyword_having, $._condition_expression),\n\n",
-     "after": "    seq(\n      $.keyword_group,\n      $.keyword_by,\n      comma_list(choice($._expression, alias($._grouping_tuple, $.list), alias($._grouping_function, $.invocation), $.grouping_sets), true),\n      optional(choice($.keyword_with_cube, $.keyword_with_rollup)),\n    ),\n\n  // Tuples and the empty grand-total grouping set are local to GROUP BY.\n  // They never become scalar expressions or empty IN/VALUES lists.\n  _grouping_tuple: ($) => paren_list($._expression),\n  _grouping_function_name: (_) => token(prec(1, choice(/[rR][oO][lL][lL][uU][pP]/, /[cC][uU][bB][eE]/))),\n  _grouping_function_reference: ($) => prec(2, field('name', alias($._grouping_function_name, $.identifier))),\n  _grouping_function: ($) => prec(2, seq(alias($._grouping_function_reference, $.object_reference),\n    paren_list(field('parameter', choice($._expression, alias($._grouping_tuple, $.list))), true))),\n  grouping_sets: ($) => seq($.keyword_grouping, $.keyword_sets,\n    paren_list(choice($._expression, alias($._grouping_tuple, $.list), alias($._grouping_function, $.invocation)), true)),\n\n  having: ($) => seq($.keyword_having, $._condition_expression),\n\n",
+     "after": "    seq(\n      $.keyword_group,\n      $.keyword_by,\n      comma_list(choice($._expression, alias($._grouping_tuple, $.list), alias($._grouping_function, $.invocation), $.grouping_sets), true),\n      optional(choice($.keyword_with_cube, $.keyword_with_rollup)),\n    ),\n\n  // Tuples and the empty grand-total grouping set are local to GROUP BY.\n  // They never become scalar expressions or empty IN/VALUES lists.\n  _grouping_tuple: ($) => paren_list($._expression),\n  _grouping_function_name: (_) => token(prec(1, choice(/[rR][oO][lL][lL][uU][pP]/, /[cC][uU][bB][eE]/))),\n  _grouping_function_reference: ($) => prec(2, field('name', alias($._grouping_function_name, $.identifier))),\n  // A function grouping element cannot be the empty grand-total set.\n  _nonempty_grouping_tuple: ($) => paren_list($._expression, true),\n  _grouping_function: ($) => prec(2, seq(alias($._grouping_function_reference, $.object_reference),\n    paren_list(field('parameter', choice($._expression, alias($._nonempty_grouping_tuple, $.list))), true))),\n  grouping_sets: ($) => seq($.keyword_grouping, $.keyword_sets,\n    paren_list(choice($._expression, alias($._grouping_tuple, $.list), alias($._grouping_function, $.invocation)), true)),\n\n  having: ($) => seq($.keyword_having, $._condition_expression),\n\n",
      "occurrences": 1
     }
    ]

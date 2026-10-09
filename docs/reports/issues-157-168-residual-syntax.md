@@ -1,4 +1,4 @@
-# C#·T-SQL 잔여 구문 경계 보완 (#157–#166)
+# C#·T-SQL 잔여 구문 경계 보완 (#157–#166·#168)
 
 기준은 main `e18a819c74715d4cb756305822d71caff717c60f`다. 공개 합성 입력으로 재현한 결함을 원인별 Issue로 분리하고 C2 patch, canonical 계약, native fixture와 generated identity를 함께 갱신했다. Go core는 offline API 경계를 유지한다.
 
@@ -15,21 +15,23 @@
 | [#165](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/165) | block comment의 모든 nesting level에서 closing mark 요구 | EOF에서 닫히지 않은 주석을 성공한 extra로 반환하지 않음 |
 | [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166) | CHANGETABLE의 CHANGES/VERSION 인자를 전용 규칙으로 분리 | sync version의 일반 expression 과잉수용 제거; VERSION column 목록과 value 목록 분리; 두 form의 optional FORCESEEK 보존 |
 
+| [#168](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/168) | ROLLUP/CUBE 내부 tuple을 non-empty 전용 규칙으로 분리 | 함수의 빈 tuple 거부; 직접 GROUP BY ()와 GROUPING SETS(())의 정상 grand-total set 보존 |
+
 ## 재현과 검증
 
-Tree-sitter `0.27.0`, Node `24.21.0`, runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`과 등록된 runtime patch를 사용한다. 두 grammar의 독립 workspace 생성, deterministic 비교와 등록한 6개 출력의 reference match가 모두 PASS다. Windows amd64의 GCC `16.2.0`에서 공개 C# 161개 및 T-SQL 97개 집중 대조의 구문 기대값, API 일치와 fact reproduction이 모두 PASS다. C# mandatory-body recovery 5개와 ordinary identifier의 정확한 CST 대조 2개도 추가로 PASS다. 기대값에는 ERROR 여부뿐 아니라 후속 declaration, comment, identifier와 warning ID의 정확한 source 범위를 포함한다.
+Tree-sitter `0.27.0`, Node `24.21.0`, runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`과 등록된 runtime patch를 사용한다. 두 grammar의 독립 workspace 생성, deterministic 비교와 등록한 6개 출력의 reference match가 모두 PASS다. Windows amd64의 GCC `16.2.0`에서 공개 C# 161개 및 T-SQL 109개 집중 대조의 구문 기대값, API 일치와 fact reproduction이 모두 PASS다. C# mandatory-body recovery 5개와 ordinary identifier의 정확한 CST 대조 2개도 추가로 PASS다. 기대값에는 ERROR 여부뿐 아니라 후속 declaration, comment, identifier와 warning ID의 정확한 source 범위를 포함한다.
 
 C# S05 전체 292개와 S06 전체 321개가 PASS다. T-SQL S05 993개는 전부 실행됐으며 PASS 982개와 기존 오류 트리의 reuse 관측이 불가능한 BLOCKED 11개로 나뉜다. C# SVC 22개 역시 기존 관측 한계의 BLOCKED다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
 
 T-SQL S06 1,000개는 PASS 989개와 같은 기존 reuse BLOCKED 11개다. 999개의 구문 기대값은 모두 PASS이며, syntax expectation을 주장하지 않는 dynamic SQL support 1개는 fact 기대값이 PASS다. 1,000개 전체 API claim은 PASS이며 kit failure와 API finding은 0이다. 오류 트리의 route 관측 한계 11개가 S05/S06에 각각 기록되는 것을 22개 새 parser 결함으로 합산하지 않는다.
 
-SQL Server 2025 LocalDB `17.0.1000.7`의 compatibility level `110`·`170`에서 공개 구문 대조 27개씩, 총 54개가 기대값과 일치했다. 검증은 `PARSEONLY`이며 임시 DB와 파일은 제거했다. 이는 실제 SQL Server 2012 엔진 검증이 아니다. [CHANGETABLE의 공식 구문](https://learn.microsoft.com/en-us/sql/relational-databases/system-functions/changetable-transact-sql?view=sql-server-ver17)에 맞춰 sync version과 column/value 위치를 구분하며, bigint 범위·catalog binding·alias의 오류 22104는 engine 의미 영역으로 분리한다.
+SQL Server 2025 LocalDB `17.0.1000.7`의 compatibility level `110`·`170`에서 공개 구문 대조 39개씩, 총 78개가 기대값과 일치했다. 검증은 `PARSEONLY`이며 임시 DB와 파일은 제거했다. 이는 실제 SQL Server 2012 엔진 검증이 아니다. [CHANGETABLE의 공식 구문](https://learn.microsoft.com/en-us/sql/relational-databases/system-functions/changetable-transact-sql?view=sql-server-ver17)에 맞춰 sync version과 column/value 위치를 구분하며, bigint 범위·catalog binding·alias의 오류 22104는 engine 의미 영역으로 분리한다.
 
-등록한 large fixture 3개와 large Oracle의 fact reproduction도 PASS다. 이번 host의 22MiB·8MiB·32MiB parse 관측은 각각 `14,608`·`5,604`·`23,540`ms다. 일반 C# `word` lexer를 복원하고 PP Boolean/pragma keyword를 directive 전용 external token으로 분리하여 prototype의 32MiB 시간 초과를 해소했다. 60초·memory·출력 상한은 유지했다. 별도 over-capture 대조는 의도한 `RESOURCE_LIMIT:OUTPUT_LIMIT` BLOCKED였다. summary Oracle은 API를 활성화하지 않으므로 전체 node API 판정은 별도 large audit으로 검증한다.
+등록한 large fixture 3개와 large Oracle의 fact reproduction도 PASS다. 이번 host의 22MiB·8MiB·32MiB parse 관측은 각각 `14,608`·`5,604`·`23,540`ms다. 일반 C# `word` lexer를 복원하고 PP Boolean/pragma keyword를 directive 전용 external token으로 분리하여 prototype의 32MiB 시간 초과를 해소했다. 60초·memory·출력 상한은 유지했다. 별도 over-capture 대조는 의도한 `RESOURCE_LIMIT:OUTPUT_LIMIT` BLOCKED였다. summary Oracle은 API를 활성화하지 않으므로 전체 node API를 별도 audit으로 검증했다. 등록한 large 입력의 33,110,006개 node와 2,185,260,882개 필수 API 검사가 PASS이며 필수 차이는 0이다. 9개 fault 대조도 PASS다. Small malformed/zero-width 입력의 기존 position-navigation 관측 4개는 정책상 별도 진단으로 남으며 필수 API 실패와 혼동하지 않는다.
 
 `CGO_ENABLED=0`, `GOWORK=off`, `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOFLAGS=-mod=readonly`에서 전체 `go test ./src/... -count=1 -timeout 300s`, `go vet ./src/...`, `go build ./src/...`, `go mod verify`, gofmt와 diff 검사가 PASS다. 독립 STATIC_REVIEW에서 PP, T-SQL, core/facts와 fixture/identity 등록을 검토했다. pragma prefix, coverage와 문서 등록 지적을 보완한 뒤 미해결 BLOCKER/MATERIAL은 0이다. 문서 경로 정리 후 foundation 재검사도 PASS다.
 
-이 보고서는 공개 합성 입력에 대한 로컬 검증을 기록한다. 전체 node large API의 별도 audit receipt, 최종 head의 세 OS qualification과 병합 후 main CI를 완료 판정 gate로 삼는다. 아직 실행하지 않은 gate를 로컬 PASS로 대체하지 않으며, 해당 판정·producer identity·최종 diff와 finding 처분은 PR의 검증 기록에 결속한다. STATIC_REVIEW는 실행한 검사를 대신하지 않는다.
+이 보고서는 공개 합성 입력에 대한 로컬 검증을 기록한다. 전체 node large API audit의 PASS receipt를 확보했으며 최종 head의 세 OS qualification과 병합 후 main CI를 완료 판정 gate로 삼는다. 아직 실행하지 않은 gate를 로컬 PASS로 대체하지 않으며, 해당 판정·producer identity·최종 diff와 finding 처분은 PR의 검증 기록에 결속한다. STATIC_REVIEW는 실행한 검사를 대신하지 않는다.
 
 ## 판정의 범위
 

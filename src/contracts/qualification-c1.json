@@ -213679,8 +213679,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "945fbe6f929202a33fc4be51afad32d36d2e3df51b4a4ed78924c7094e006b12",
-      "bytes": 68638687
+      "sha256": "542db94c263993ff68c0dddabcc12252dbb0bcf309e0d1acf2de8d4cd18abc24",
+      "bytes": 68647192
      },
      {
       "path": "src/scanner.c",
@@ -273754,6 +273754,13 @@
         "new_end_byte": 155,
         "old": "cjsK",
         "new": "cjsKCkdPCkRFQ0xBUkUgQGEgYmlnaW50OyBTRUxFQ1QgKiBGUk9NIENIQU5HRVRBQkxFKENIQU5HRVMgZGJvLnQsQGEpIEFTIGM7"
+       },
+       {
+        "start_byte": 87,
+        "old_end_byte": 154,
+        "new_end_byte": 126,
+        "old": "REVDTEFSRSBAYSBiaWdpbnQ7IFNFTEVDVCAqIEZST00gQ0hBTkdFVEFCTEUoQ0hBTkdFUyBkYm8udCxAYSkgQVMgYw==",
+        "new": "U0VMRUNUIDEgRlJPTSBkYm8udCBHUk9VUCBCWSBST0xMVVAoKCkp"
        }
       ],
       "expect": [
@@ -273780,6 +273787,12 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -273790,9 +273803,11 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
+        "N",
         "E"
        ],
        "tsql-B05": [
+        "N",
         "E"
        ]
       },
@@ -273823,6 +273838,20 @@
         "new_end_byte": 56,
         "old": "U0VMRUNUIDIgR1JPVVAgQlkgQEBTUElEOw==",
         "new": "U0VMRUNUIDEgR1JPVVAgQlkgQEBTUElEOw=="
+       },
+       {
+        "start_byte": 85,
+        "old_end_byte": 88,
+        "new_end_byte": 132,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgQ1VCRShhLCgpKTs="
+       },
+       {
+        "start_byte": 121,
+        "old_end_byte": 130,
+        "new_end_byte": 122,
+        "old": "Q1VCRShhLCgp",
+        "new": "KA=="
        }
       ],
       "expect": [
@@ -273843,6 +273872,25 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "list",
+          "start_byte": 121,
+          "end_byte": 123
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -273853,6 +273901,11 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
+        "N",
         "E"
        ]
       },
@@ -273883,6 +273936,20 @@
         "new_end_byte": 76,
         "old": "U0VMRUNUIDI7IENSRUFURSBQUk9DRURVUkUgZGJvLnAgQVMgU0VMRUNUIDI7",
         "new": "U0VMRUNUIDE7IENSRUFURSBQUk9DRURVUkUgZGJvLnAgQVMgU0VMRUNUIDI7"
+       },
+       {
+        "start_byte": 105,
+        "old_end_byte": 108,
+        "new_end_byte": 154,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgUk9MTFVQKCgpLGEpOw=="
+       },
+       {
+        "start_byte": 148,
+        "old_end_byte": 152,
+        "new_end_byte": 152,
+        "old": "KCksYQ==",
+        "new": "YSwoKQ=="
        }
       ],
       "expect": [
@@ -273903,6 +273970,18 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -273912,7 +273991,16 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
        "tsql-B04": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
+        "N",
         "E"
        ]
       },
@@ -273943,6 +274031,20 @@
         "new_end_byte": 48,
         "old": "U0VMRUNUIEFCUygyLCAyKTs=",
         "new": "U0VMRUNUIEFCUygxLCAyKTs="
+       },
+       {
+        "start_byte": 77,
+        "old_end_byte": 80,
+        "new_end_byte": 122,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgQ1VCRSgoKSk7"
+       },
+       {
+        "start_byte": 117,
+        "old_end_byte": 119,
+        "new_end_byte": 125,
+        "old": "KCg=",
+        "new": "KChhLGIpLCg="
        }
       ],
       "expect": [
@@ -273963,6 +274065,18 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -273973,6 +274087,11 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
+        "N",
         "E"
        ]
       },
@@ -274003,6 +274122,20 @@
         "new_end_byte": 40,
         "old": "UkVUVVJOIDI7",
         "new": "UkVUVVJOIDE7"
+       },
+       {
+        "start_byte": 69,
+        "old_end_byte": 72,
+        "new_end_byte": 118,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgUk9MTFVQKCgoKSkpOw=="
+       },
+       {
+        "start_byte": 113,
+        "old_end_byte": 115,
+        "new_end_byte": 116,
+        "old": "KCk=",
+        "new": "YSxi"
        }
       ],
       "expect": [
@@ -274023,6 +274156,25 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "invocation",
+          "start_byte": 105,
+          "end_byte": 118
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -274032,7 +274184,16 @@
       "expect_assessment": "",
       "expect_code": "",
       "covers": {
+       "tsql-B01": [
+        "N",
+        "E"
+       ],
        "tsql-B04": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
+        "N",
         "E"
        ]
       },
@@ -274063,6 +274224,20 @@
         "new_end_byte": 45,
         "old": "U0VMRUNUIGZvbygyKTs=",
         "new": "U0VMRUNUIGZvbygxKTs="
+       },
+       {
+        "start_byte": 74,
+        "old_end_byte": 77,
+        "new_end_byte": 124,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgQ1VCRShhLChiLGMpKTs="
+       },
+       {
+        "start_byte": 110,
+        "old_end_byte": 121,
+        "new_end_byte": 126,
+        "old": "Q1VCRShhLChiLGM=",
+        "new": "R1JPVVBJTkcgU0VUUyAoKA=="
        }
       ],
       "expect": [
@@ -274083,6 +274258,32 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "invocation",
+          "start_byte": 110,
+          "end_byte": 123
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "grouping_sets",
+          "start_byte": 110,
+          "end_byte": 128
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -274093,6 +274294,9 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
+        "E"
+       ],
+       "tsql-B05": [
         "E"
        ]
       },
@@ -274123,6 +274327,13 @@
         "new_end_byte": 41,
         "old": "U0VMRUNUIEB4Owo=",
         "new": "U0VMRUNUIEB4Ow=="
+       },
+       {
+        "start_byte": 70,
+        "old_end_byte": 73,
+        "new_end_byte": 139,
+        "old": "cjsK",
+        "new": "cjsKCkdPClNFTEVDVCAxIEZST00gZGJvLnQgR1JPVVAgQlkgR1JPVVBJTkcgU0VUUyAoKCksUk9MTFVQKChhLGIpKSk7"
        }
       ],
       "expect": [
@@ -274143,6 +274354,19 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "grouping_sets",
+          "start_byte": 106,
+          "end_byte": 138
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -274153,6 +274377,9 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
+        "E"
+       ],
+       "tsql-B05": [
         "E"
        ]
       },

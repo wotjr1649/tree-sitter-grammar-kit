@@ -39,7 +39,7 @@ The current implementation consists of repository foundation checks, the Session
 | DML target·cache handle·column permission·window frame·trigger 문맥 (#149) | [T-SQL 잔여 corpus 경계](reports/issue-149-tsql-corpus-context.md) |
 | #150 TABLE 예약어·XML collection 구문 | [검증 보고서](reports/issue-150-tsql-identifier-xml.md) |
 | #151 EXEC OUTPUT 반환 변수 | [검증 보고서](reports/issue-151-tsql-exec-output.md) |
-| #157–#166 C# 전처리·API 식별자·T-SQL GO/list/comment 경계 | [잔여 구문 보완](reports/issues-157-166-residual-syntax.md) |
+| #157–#166·#168 C# 전처리·API 식별자·T-SQL GO/list/comment 경계 | [잔여 구문 보완](reports/issues-157-168-residual-syntax.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
