@@ -1,4 +1,4 @@
-# C#·T-SQL 잔여 구문 경계 보완 (#157–#166·#168)
+# C#·T-SQL 잔여 구문 경계 보완 (#157–#166·#168·#169)
 
 기준은 main `e18a819c74715d4cb756305822d71caff717c60f`다. 공개 합성 입력으로 재현한 결함을 원인별 Issue로 분리하고 C2 patch, canonical 계약, native fixture와 generated identity를 함께 갱신했다. Go core는 offline API 경계를 유지한다.
 
@@ -14,8 +14,15 @@
 | [#164](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/164) | C# command API 비교에 lexical identifier 정규화 적용 | @·유효한 Unicode escape·formatting character만 정규화; 원문 source span은 유지 |
 | [#165](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/165) | block comment의 모든 nesting level에서 closing mark 요구 | EOF에서 닫히지 않은 주석을 성공한 extra로 반환하지 않음 |
 | [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166) | CHANGETABLE의 CHANGES/VERSION 인자를 전용 규칙으로 분리 | sync version의 일반 expression 과잉수용 제거; VERSION column 목록과 value 목록 분리; 두 form의 optional FORCESEEK 보존 |
-
 | [#168](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/168) | ROLLUP/CUBE 내부 tuple을 non-empty 전용 규칙으로 분리 | 함수의 빈 tuple 거부; 직접 GROUP BY ()와 GROUPING SETS(())의 정상 grand-total set 보존 |
+
+| [#169](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/169) | 회귀 입력을 긴 정상 source 뒤에 반복 배치해 evidence 읽기 상한 초과 | 기존 353개 history와 모든 기존 source/edit/expect prefix를 보존하고 동일한 107개 추가 입력을 작은 최종 NO_ERROR source 뒤에 재배치; raw/hash 검증과 512 MiB 상한 유지 |
+
+## 회귀 fixture 비용
+
+최초 PR CI `37990648300`의 12개 job 중 11개는 성공했으나 qualification은 `RESOURCE_LIMIT:TOTAL_BYTES_LIMIT`로 중단됐다. Windows archive의 raw와 normalized record 합계는 `555,286,805` bytes로 host별 `536,870,912` bytes 상한을 넘었다. 긴 normal-siblings source 뒤의 신규 상태가 큰 CST/API evidence를 반복한 것이 원인이었다. 상한이나 검증을 완화하지 않고 추가 입력의 배치를 수정했다.
+
+107개 public 입력은 같은 source bytes와 구문/구조 기대값을 유지한다. 작은 source를 가진 기존 history 54개에서 마지막 NO_ERROR 상태 뒤에 독립 GO batch로 붙이고, unique find/replace와 전체 source의 anchor 위치를 재생성했다. 기존 ERROR 상태를 포함한 모든 원래 history prefix, 최대 4 edits, 전체 case 수와 C1 의무를 보존한다. 신규 상태에서 반복하는 prefix는 총 `119,691` bytes에서 `4,911` bytes로 줄었다. 새 배치의 native S05/S06 전체 검증은 완료됐고 kit failure와 API finding은 0이다. 기존 Windows run의 변하지 않은 필수 member에 새 T-SQL native 결과를 합산한 크기 예측은 `531,892,569` bytes로, 상한보다 `4,978,343` bytes 작다. 이는 새 세 OS qualification을 대신하는 PASS가 아니며, 최종 head의 실제 qualification이 성공해야 비용 finding을 종료한다.
 
 ## 재현과 검증
 
