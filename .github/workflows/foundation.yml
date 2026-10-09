@@ -561,24 +561,6 @@ jobs:
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-      - name: Windows 대용량 전체 API audit
-        if: runner.os == 'Windows'
-        timeout-minutes: 45
-        run: |
-          $cc = & src/dev/s05-native/select-compiler.ps1
-          $work = Join-Path $env:RUNNER_TEMP "large-api-work-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          $receipt = Join-Path $env:RUNNER_TEMP "large-api-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
-          go run ./src/dev/large-api -prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -cc $cc -work $work -out $receipt
-          if ($LASTEXITCODE -ne 0) { throw 'large API audit failed' }
-      - name: Windows 대용량 API audit 근거 보관
-        if: always() && runner.os == 'Windows'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: large-api-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/large-api-${{ github.run_id }}-${{ github.run_attempt }}.json
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 6
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -591,6 +573,77 @@ jobs:
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/records
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/profiles/s06-*.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: Verify clean validation output
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+
+  large-api:
+    # #147: independent workloads keep their existing limits and complete evidence.
+    name: large API (windows-2025)
+    needs: native-prepare
+    runs-on: windows-2025
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+      - name: 준비한 입력 받기
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: s05-prepared-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/s05-prepared
+      - name: Windows 대용량 전체 API audit
+        timeout-minutes: 45
+        run: |
+          $cc = & src/dev/s05-native/select-compiler.ps1
+          $work = Join-Path $env:RUNNER_TEMP "large-api-work-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $receipt = Join-Path $env:RUNNER_TEMP "large-api-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+          go run ./src/dev/large-api -prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -cc $cc -work $work -out $receipt
+          $auditExit = $LASTEXITCODE
+          $identity = Join-Path $env:RUNNER_TEMP "large-api-identity-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $identity | Out-Null
+          & src/dev/s08-qualify/run-identity.ps1 -Destination $identity -HeadSHA $env:PR_HEAD_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'large API identity failed' }
+          if ($auditExit -ne 0) { throw 'large API audit failed' }
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: Windows 대용량 API audit 근거 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: large-api-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/large-api-${{ github.run_id }}-${{ github.run_attempt }}.json
+            ${{ runner.temp }}/large-api-identity-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
