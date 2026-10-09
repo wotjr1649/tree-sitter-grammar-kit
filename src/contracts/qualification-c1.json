@@ -45,14 +45,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
-      "bytes": 33334001
+      "sha256": "ce88abe0be276e2ac7ab0bfc5fe43083c426e8deab4af6fd339836f7bc709466",
+      "bytes": 33628390
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
-      "bytes": 27090
+      "sha256": "9804e3f2f5d4856090c6adb99a62dfa0ecbb204879649fe9530d241005a4d134",
+      "bytes": 27578
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -222,6 +222,14 @@
      {
       "id": "q.probe-V14b",
       "sha256": "e9505d002fef25a6895165a3532cf5dbabd9045ae7ccebe5bb22b0a34b125024"
+     },
+     {
+      "id": "q.issue152-name",
+      "sha256": "01df7a8b868b88c4f6bb650924118ba96095c65cee321629fb0917c10227d5b1"
+     },
+     {
+      "id": "q.issue153-eof",
+      "sha256": "c40403f570069875add4a3eab115c280673f9048c286426338ac0e5419ff92e3"
      },
      {
       "id": "facts.declarations",
@@ -14132,6 +14140,1885 @@
       "source": null
      },
      {
+      "id": "issue152-digit-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "de25d22f2b2f66babf30e6f311a155dd0c04e7298832fd0c77cac6a03887ffb0",
+       "bytes": 24
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-space-part",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "df0fc0f9c58c6ba2abeba3242a48cfbab4073e3a8f01ccaead39f48d793c361c",
+       "bytes": 25
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-cf-part",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "591261e2e4c7c683dc81b2e866c74cd9a377605504ab3b2e675826f44ce9124a",
+       "bytes": 22
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 19
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-lm-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1b49481e0b98e92ed43719e3a06c31b6d1b4345426309cf04a9760fbd5cc765d",
+       "bytes": 19
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 16
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-sm-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "69ae5cc206dc20d01274f69bac1917951f8858ddf52a300a9669967a1cea5615",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-ascii-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "07ff815d0216b6d86f9bc62a67461fa897ad44b91944af3b8584d009d2ce8323",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 20
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-escaped-keyword",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f2920ba5ca60c6b2b3fb6319f0dba68d742295d8cf76c283805bf99848957b69",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-verbatim",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a1f3de9746d3c69be08e961e47a8319cb5fe7a7f6271db0bdc3177b2597de1fa",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 20
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-supplementary",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ce32968160c0c1edd3d5e4b5391440c0d9ad37d8de16881a4ea75ccffb808655",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-supplementary-literal",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "37e264a3ed72139815fbfa0f8caf3314f99efe05e1cba2fa6f903da751b5cadd",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-surrogate",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "cb1a1c56d9d3f69d3a2d2046b4e4b7be0c4e35d3322190428c57056f0c44dcb4",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-out-of-range",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5a1a46527cd661249ef75f2af4db5f699fe487d9c66a734450995be1be05ac6b",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-cf-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f981384324c1e47b3e5c199081add04669ceb3c984e79a38f2c2ddedad4a2f6e",
+       "bytes": 25
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 22
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-cf-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "47b2e235d4bf5c31c4f9037bd8cf247106cc463165606c0f0e34ceb56e93951e",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-combining-part",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f13f40ee39c787ea39233eefff0ad46a988b891072e256c362e1aefc44dd6310",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 17
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-combining-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5faf4b8d440583a5eb3616e7c0b38e0679aca6903b0f2b181918e2597a72bc62",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-connector-part",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4b7422a9d3dc688b43269b4e92ee55ffa1f25ae4d4f196fd32a3196d82344d61",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-connector-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f8d0742187a9febb15788287428a77f98a8710cdf7effe964fd247d012a59d87",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-upper-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "826d125907c34d4170a7c6f14ad129aaf28fed4d69984972b27a54f73f68685b",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-sm-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "29c6810b07f9a2843cd8633d3bbb2b8f2923605ee264ba9bc11a15956587ac60",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-nl-start",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "017bb89c2e062217971f258880a3354db47ba86965aaafa4450b0defa0ccfab0",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 17
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-digit-part",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "59035d8a4c7ed35bd64565ed3211b2d7b963626ea2d9948c5222a32387561164",
+       "bytes": 24
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 21
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-edit-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "61a12ae1f8f0bab9c71da992e98d055ceaeacba8433f0b6edf02a9c9495f8a45",
+       "bytes": 24
+      },
+      "edits": [
+       {
+        "start_byte": 14,
+        "old_end_byte": 20,
+        "new_end_byte": 20,
+        "old": "XHUwMDYx",
+        "new": "XHUwMDMx"
+       },
+       {
+        "start_byte": 14,
+        "old_end_byte": 20,
+        "new_end_byte": 20,
+        "old": "XHUwMDMx",
+        "new": "XHUwMDYx"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4342cebc1c4b162457213203ce862cac93c73b402f3ac7a004b6c2be418629c",
+       "bytes": 9
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_define",
+          "start_byte": 0,
+          "end_byte": 9
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-undef-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8fe8f38c530c4a49872186b525e3b332467d9715166c8aef5ce2a76949a72174",
+       "bytes": 8
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_undef"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_undef",
+          "start_byte": 0,
+          "end_byte": 8
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-region-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "de178c645eba3a83e1a96fc3a4f95a39aad5da90a3506664aa7fbff7f4945d1c",
+       "bytes": 13
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_region"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_region",
+          "start_byte": 0,
+          "end_byte": 13
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-endregion-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c3f75444600add4d988a31ecc42cb9b5d20bcd170d1cbeb8dc45886c7459a098",
+       "bytes": 10
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_endregion"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_endregion",
+          "start_byte": 0,
+          "end_byte": 10
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-line-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "147853e66a242639bbc77178a6197e893181753ffc32ee0648bbc7c4eba857ac",
+       "bytes": 12
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_line"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_line",
+          "start_byte": 0,
+          "end_byte": 12
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-pragma-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c5b1d7f9830c2695c0d9184cb3d14a76708e2697a00699ef61db6737ea7f50e4",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_pragma"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_pragma",
+          "start_byte": 0,
+          "end_byte": 23
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-nullable-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "21d444754414af86b3d669e9ea73b41a57ece5a5d721ce7546c4fa73831b333a",
+       "bytes": 16
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_nullable"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_nullable",
+          "start_byte": 0,
+          "end_byte": 16
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-error-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a10841291f6acb3d81baca295012e54e23700f2cd62f13c1a41f31196a12ca8c",
+       "bytes": 14
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_error"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_error",
+          "start_byte": 0,
+          "end_byte": 14
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-warning-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "08cd6c706e7930db842382325be6e354e5a513a69f3b07ad081ea6506d1170ec",
+       "bytes": 16
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_warning"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_warning",
+          "start_byte": 0,
+          "end_byte": 16
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-lf",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f3fff02ad25954e9665729978c645058adb3bf530a99ca6884a343972becd29a",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-crlf",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c0f0dd228974e7ae2448bcec09ee474dba23f3c0a043981212284f3ce6bde861",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-cr",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "746d400cd4df0a8829563594cec88fb02c5caf35405365642561c31bd90f87ac",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-nel",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4bc11cb3c9a9c1b29817ab3c2c73121734480d208eb6f70fb90d123405c18e34",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-ls",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "53fafe06a39ff7ec45dfba138744185ac98a119ce091daadd7523ac54f1fa299",
+       "bytes": 22
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-define-ps",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5a1b63280d4dd3fe123145a4f9548b2e85473a025f70676790b51302e8cfb492",
+       "bytes": 22
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-unterminated-if",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "923916d49532dd71d17786cb3fe6208faca4ebf1ee508bf13adbd2a724d75116",
+       "bytes": 8
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-line-invalid",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "c690965e08826db352990936897189b53be10255554ad240f65566783bda9f1e",
+       "bytes": 11
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-nullable-invalid",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "43d2d3d5f2a0a6cb065be33cc1a1161f4686fe0b49a9f0c67b0d1c23f52c4fed",
+       "bytes": 15
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-edit-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "31ca956418fe940fc86a98819174db844133ebb5825b37969800536f81d94f26",
+       "bytes": 53
+      },
+      "edits": [
+       {
+        "start_byte": 42,
+        "old_end_byte": 53,
+        "new_end_byte": 42,
+        "old": "CmNsYXNzIEMge30=",
+        "new": ""
+       },
+       {
+        "start_byte": 33,
+        "old_end_byte": 42,
+        "new_end_byte": 53,
+        "old": "I2RlZmluZSBB",
+        "new": "I2RlZmluZSBBCmNsYXNzIEMge30="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_define"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_define",
+          "start_byte": 33,
+          "end_byte": 42
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "preproc_define",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-unicode17-literal",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0f37a6c4d113da89a292df9a652666216cf575cb491178a356e5d9d3b2e5015b",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue152-unicode17-escape",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "bcccc56c24fd4cb640eb63723ba0925302cd6504d6af34207ceec62da8b7a6a2",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-conditional-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1b651ea6b92325b816b99b56988053090a3fe5d75e0224316f72454348a98a92",
+       "bytes": 26
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_if",
+          "start_byte": 0,
+          "end_byte": 26
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue153-edit-conditional-eof",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "34910fbaa5910ba09c57e0e03c18c34ddd81f95cc6b6316a6bf07e7bb6eab4ae",
+       "bytes": 60
+      },
+      "edits": [
+       {
+        "start_byte": 42,
+        "old_end_byte": 60,
+        "new_end_byte": 48,
+        "old": "Y2xhc3MgQyB7fQojZW5kaWYK",
+        "new": "I2VuZGlm"
+       },
+       {
+        "start_byte": 33,
+        "old_end_byte": 48,
+        "new_end_byte": 60,
+        "old": "I2lmIHRydWUKI2VuZGlm",
+        "new": "I2lmIHRydWUKY2xhc3MgQyB7fQojZW5kaWYK"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_if",
+          "start_byte": 33,
+          "end_byte": 48
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "P",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
       "id": "csharp-gap-generic-arg-r1",
       "role": "requirement",
       "input": {
@@ -16516,6 +18403,916 @@
       "alternatives": [],
       "sample": null,
       "source": "using System;\n\npublic partial class Widget\n{\n    public partial Widget(int size);\n    public partial Widget(int size) : this() { Size = size; }\n    public Widget() { }\n\n    public partial event EventHandler? Changed;\n    public partial event EventHandler? Changed\n    {\n        add { }\n        remove { }\n    }\n\n    public int Size\n    {\n        get;\n        set =\u003e field = value \u003c 0 ? 0 : value;\n    }\n\n    public void operator +=(int delta)\n    {\n        Size += delta;\n    }\n\n    public void operator ++()\n    {\n        Size++;\n    }\n}\n"
+     },
+     {
+      "id": "issue152-cf-part-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "591261e2e4c7c683dc81b2e866c74cd9a377605504ab3b2e675826f44ce9124a",
+       "bytes": 22
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 19
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "a​b"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int a​b; }"
+     },
+     {
+      "id": "issue152-lm-start-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1b49481e0b98e92ed43719e3a06c31b6d1b4345426309cf04a9760fbd5cc765d",
+       "bytes": 19
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 16
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "ͺ"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int ͺ; }"
+     },
+     {
+      "id": "issue152-ascii-escape-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "07ff815d0216b6d86f9bc62a67461fa897ad44b91944af3b8584d009d2ce8323",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 20
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "\\u0061"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int \\u0061; }"
+     },
+     {
+      "id": "issue152-escaped-keyword-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f2920ba5ca60c6b2b3fb6319f0dba68d742295d8cf76c283805bf99848957b69",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "cl\\u0061ss"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int cl\\u0061ss; }"
+     },
+     {
+      "id": "issue152-verbatim-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "a1f3de9746d3c69be08e961e47a8319cb5fe7a7f6271db0bdc3177b2597de1fa",
+       "bytes": 23
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 20
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "@class"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int @class; }"
+     },
+     {
+      "id": "issue152-supplementary-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ce32968160c0c1edd3d5e4b5391440c0d9ad37d8de16881a4ea75ccffb808655",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "\\U00010400"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int \\U00010400; }"
+     },
+     {
+      "id": "issue152-supplementary-literal-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "37e264a3ed72139815fbfa0f8caf3314f99efe05e1cba2fa6f903da751b5cadd",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "𐐀"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int 𐐀; }"
+     },
+     {
+      "id": "issue152-cf-escape-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f981384324c1e47b3e5c199081add04669ceb3c984e79a38f2c2ddedad4a2f6e",
+       "bytes": 25
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 22
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "a\\u200Bb"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int a\\u200Bb; }"
+     },
+     {
+      "id": "issue152-combining-part-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f13f40ee39c787ea39233eefff0ad46a988b891072e256c362e1aefc44dd6310",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 17
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "á"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int á; }"
+     },
+     {
+      "id": "issue152-connector-part-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4b7422a9d3dc688b43269b4e92ee55ffa1f25ae4d4f196fd32a3196d82344d61",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "a‿"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int a‿; }"
+     },
+     {
+      "id": "issue152-upper-escape-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "826d125907c34d4170a7c6f14ad129aaf28fed4d69984972b27a54f73f68685b",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "\\U00000041"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int \\U00000041; }"
+     },
+     {
+      "id": "issue152-nl-start-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "017bb89c2e062217971f258880a3354db47ba86965aaafa4450b0defa0ccfab0",
+       "bytes": 20
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 17
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "Ⅰ"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int Ⅰ; }"
+     },
+     {
+      "id": "issue152-digit-part-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "59035d8a4c7ed35bd64565ed3211b2d7b963626ea2d9948c5222a32387561164",
+       "bytes": 24
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 21
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "a\\u0031"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int a\\u0031; }"
+     },
+     {
+      "id": "issue152-unicode17-literal-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0f37a6c4d113da89a292df9a652666216cf575cb491178a356e5d9d3b2e5015b",
+       "bytes": 21
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 18
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "𞛀"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int 𞛀; }"
+     },
+     {
+      "id": "issue152-unicode17-escape-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "bcccc56c24fd4cb640eb63723ba0925302cd6504d6af34207ceec62da8b7a6a2",
+       "bytes": 27
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "variable_declarator"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 14,
+          "end_byte": 24
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue152-name",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "name",
+          "type": "identifier",
+          "text": "\\U0001E6C0"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {},
+      "alternatives": [],
+      "sample": null,
+      "source": "class C { int \\U0001E6C0; }"
+     },
+     {
+      "id": "issue153-define-eof-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4342cebc1c4b162457213203ce862cac93c73b402f3ac7a004b6c2be418629c",
+       "bytes": 9
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_define"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_define",
+          "start_byte": 0,
+          "end_byte": 9
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue153-eof",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "define",
+          "type": "preproc_define",
+          "text": "#define A"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "Q"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": "#define A"
+     },
+     {
+      "id": "issue153-conditional-eof-query",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1b651ea6b92325b816b99b56988053090a3fe5d75e0224316f72454348a98a92",
+       "bytes": 26
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "anchors": [
+         {
+          "type": "preproc_if",
+          "start_byte": 0,
+          "end_byte": 26
+         }
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [
+       {
+        "query": "q.issue153-eof",
+        "step": 0,
+        "status": "COMPLETED",
+        "code": "",
+        "captures": [
+         {
+          "name": "conditional",
+          "type": "preproc_if",
+          "text": "#if true\nclass C {}\n#endif"
+         }
+        ],
+        "error": null
+       }
+      ],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B03": [
+        "Q"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": "#if true\nclass C {}\n#endif"
      },
      {
       "id": "dynamic-sql-csharp",
@@ -205728,14 +208525,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "c3e74335829fcacfb4c15c82e312bc7623c657519a91973c1c33d1998e3af320",
-      "bytes": 70688986
+      "sha256": "e2f30b9321079eb4faca4676ffd487f41d48473ac0a5b1bd174f99fda0dd9557",
+      "bytes": 70688831
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "766459e2f9abf42bef3a8436c487ec797e5f6f6a99332eb5ef2db5604f367f3d",
-      "bytes": 9351
+      "sha256": "62297f29273e1b7a6fb554aa6b5874d26ea38fd883c6ddd6582ca0946c96fdef",
+      "bytes": 9379
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -206411,7 +209208,36 @@
        "sha256": "f8e9d8978514ccf130d7aafd71da4ffd17ac51928ffb8e29c598da4acdf8dc2e",
        "bytes": 267
       },
-      "edits": [],
+      "edits": [
+       {
+        "start_byte": 267,
+        "old_end_byte": 267,
+        "new_end_byte": 314,
+        "old": "",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjCiBPRkYKU0VMRUNUICJ4Igo="
+       },
+       {
+        "start_byte": 267,
+        "old_end_byte": 314,
+        "new_end_byte": 313,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjCiBPRkYKU0VMRUNUICJ4Igo=",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjCiBPTgpTRUxFQ1QgIngiCg=="
+       },
+       {
+        "start_byte": 267,
+        "old_end_byte": 313,
+        "new_end_byte": 297,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjCiBPTgpTRUxFQ1QgIngiCg==",
+        "new": "CkdPCi0tIGMKU0VMRUNUIDE7Ci0tIHRyYWlsaW5n"
+       },
+       {
+        "start_byte": 267,
+        "old_end_byte": 297,
+        "new_end_byte": 317,
+        "old": "CkdPCi0tIGMKU0VMRUNUIDE7Ci0tIHRyYWlsaW5n",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDQogT0ZGDQpTRUxFQ1QgIngiDQo="
+       }
+      ],
       "expect": [
        {
         "step": 0,
@@ -206503,6 +209329,73 @@
          }
         ],
         "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 310,
+          "end_byte": 313
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_on",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 309,
+          "end_byte": 312
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "comment",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "select",
+          "start_byte": 276,
+          "end_byte": 284
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 312,
+          "end_byte": 315
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -206513,7 +209406,8 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
-        "P"
+        "P",
+        "E"
        ]
       },
       "alternatives": [
@@ -206541,7 +209435,36 @@
        "sha256": "4bbf2680b4b3079e60ad09e15be183b7fe6bb12f742206fd3eabd635989417f9",
        "bytes": 179
       },
-      "edits": [],
+      "edits": [
+       {
+        "start_byte": 179,
+        "old_end_byte": 179,
+        "new_end_byte": 228,
+        "old": "",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDQogT04NClNFTEVDVCAieCINCg=="
+       },
+       {
+        "start_byte": 179,
+        "old_end_byte": 228,
+        "new_end_byte": 211,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDQogT04NClNFTEVDVCAieCINCg==",
+        "new": "CkdPCi0tIGMNClNFTEVDVCAxOw0KLS0gdHJhaWxpbmc="
+       },
+       {
+        "start_byte": 179,
+        "old_end_byte": 211,
+        "new_end_byte": 226,
+        "old": "CkdPCi0tIGMNClNFTEVDVCAxOw0KLS0gdHJhaWxpbmc=",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDSBPRkYNU0VMRUNUICJ4Ig0="
+       },
+       {
+        "start_byte": 179,
+        "old_end_byte": 226,
+        "new_end_byte": 225,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDSBPRkYNU0VMRUNUICJ4Ig0=",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDSBPTg1TRUxFQ1QgIngiDQ=="
+       }
+      ],
       "expect": [
        {
         "step": 0,
@@ -206591,6 +209514,73 @@
          }
         ],
         "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_on",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 223,
+          "end_byte": 226
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "comment",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "select",
+          "start_byte": 189,
+          "end_byte": 197
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 222,
+          "end_byte": 225
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "set_statement",
+         "keyword_on",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 221,
+          "end_byte": 224
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -206601,7 +209591,8 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
-        "P"
+        "P",
+        "E"
        ]
       },
       "alternatives": [
@@ -206622,7 +209613,36 @@
        "sha256": "9642249aa0e8f55afae82b2de5289c06076111952ccdc52a9d96264535196d6a",
        "bytes": 262
       },
-      "edits": [],
+      "edits": [
+       {
+        "start_byte": 262,
+        "old_end_byte": 262,
+        "new_end_byte": 292,
+        "old": "",
+        "new": "CkdPCi0tIGMNU0VMRUNUIDE7DS0tIHRyYWlsaW5n"
+       },
+       {
+        "start_byte": 262,
+        "old_end_byte": 292,
+        "new_end_byte": 321,
+        "old": "CkdPCi0tIGMNU0VMRUNUIDE7DS0tIHRyYWlsaW5n",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAvKiBhIC8qIGIgKi8gYyAqLyBPRkYNU0VMRUNUICJ4Ijs="
+       },
+       {
+        "start_byte": 262,
+        "old_end_byte": 321,
+        "new_end_byte": 283,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAvKiBhIC8qIGIgKi8gYyAqLyBPRkYNU0VMRUNUICJ4Ijs=",
+        "new": "CkdPCi0tIGMNU0VMRUNUIEZST007"
+       },
+       {
+        "start_byte": 262,
+        "old_end_byte": 283,
+        "new_end_byte": 309,
+        "old": "CkdPCi0tIGMNU0VMRUNUIEZST007",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjCiBPRkYKU0VMRUNUICJ4Ijs="
+       }
+      ],
       "expect": [
        {
         "step": 0,
@@ -206727,6 +209747,60 @@
          }
         ],
         "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "comment",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "select",
+          "start_byte": 271,
+          "end_byte": 279
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 317,
+          "end_byte": 320
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 305,
+          "end_byte": 308
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -206737,7 +209811,9 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
-        "P"
+        "P",
+        "N",
+        "E"
        ]
       },
       "alternatives": [
@@ -206768,7 +209844,22 @@
        "sha256": "2d988b6d4191b650ac4b19423d2ff6c9371587af98e7bd1e56c60902a43bbe7a",
        "bytes": 161
       },
-      "edits": [],
+      "edits": [
+       {
+        "start_byte": 161,
+        "old_end_byte": 161,
+        "new_end_byte": 207,
+        "old": "",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDSBPTgpTRUxFQ1QgIngiOw=="
+       },
+       {
+        "start_byte": 161,
+        "old_end_byte": 207,
+        "new_end_byte": 209,
+        "old": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDSBPTgpTRUxFQ1QgIngiOw==",
+        "new": "CkdPClNFVCBRVU9URURfSURFTlRJRklFUiAtLSBjDQogT0ZGClNFTEVDVCAieCI7"
+       }
+      ],
       "expect": [
        {
         "step": 0,
@@ -206864,6 +209955,38 @@
          }
         ],
         "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "keyword_on",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "identifier",
+          "start_byte": 203,
+          "end_byte": 206
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "keyword_off",
+         "select"
+        ],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 205,
+          "end_byte": 208
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -206874,7 +209997,8 @@
       "expect_code": "",
       "covers": {
        "tsql-B01": [
-        "P"
+        "P",
+        "E"
        ]
       },
       "alternatives": [
@@ -335456,14 +338580,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
-       "bytes": 33334001
+       "sha256": "ce88abe0be276e2ac7ab0bfc5fe43083c426e8deab4af6fd339836f7bc709466",
+       "bytes": 33628390
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
-       "bytes": 27090
+       "sha256": "9804e3f2f5d4856090c6adb99a62dfa0ecbb204879649fe9530d241005a4d134",
+       "bytes": 27578
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -336322,14 +339446,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
-       "bytes": 33334001
+       "sha256": "ce88abe0be276e2ac7ab0bfc5fe43083c426e8deab4af6fd339836f7bc709466",
+       "bytes": 33628390
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
-       "bytes": 27090
+       "sha256": "9804e3f2f5d4856090c6adb99a62dfa0ecbb204879649fe9530d241005a4d134",
+       "bytes": 27578
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -336604,14 +339728,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "60a9840f2a3fee9015e31c4637a6a4ab211864f4ec45fe8f4b515d4a0a36f7ad",
-       "bytes": 33334001
+       "sha256": "ce88abe0be276e2ac7ab0bfc5fe43083c426e8deab4af6fd339836f7bc709466",
+       "bytes": 33628390
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "34408b21f95cff41b0d6f1897bf45ea5a0085093eb1ce7dd0e73c281501db25b",
-       "bytes": 27090
+       "sha256": "9804e3f2f5d4856090c6adb99a62dfa0ecbb204879649fe9530d241005a4d134",
+       "bytes": 27578
       },
       {
        "path": "src/tree_sitter/alloc.h",

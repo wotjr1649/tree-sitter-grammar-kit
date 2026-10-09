@@ -350,12 +350,14 @@ func checkFactPack(prof kit.OracleProfile, data []byte) (kit.FactPack, *Error) {
 	}
 	r := p.Routes[i]
 	selected := 0
+	dynamicSelected := false
 	for _, q := range r.Queries {
 		j := slices.IndexFunc(prof.Queries, func(o kit.OracleQuery) bool { return o.ID == q.ID })
 		if j < 0 {
 			continue
 		}
 		selected++
+		dynamicSelected = dynamicSelected || q.Facts == kit.FactDynamicSQL
 		if prof.Queries[j].Source != q.Source {
 			return bad("query " + q.ID)
 		}
@@ -371,6 +373,9 @@ func checkFactPack(prof kit.OracleProfile, data []byte) (kit.FactPack, *Error) {
 	}
 	if selected == 0 {
 		return bad("no pack query selected")
+	}
+	if !dynamicSelected && slices.ContainsFunc(prof.OracleCases, func(c kit.OracleCase) bool { return c.DynamicSQL != nil }) {
+		return bad("dynamic SQL expectation without a selected dynamic SQL query")
 	}
 	return p, nil
 }
@@ -410,6 +415,11 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 	}
 	if pack != nil && cr.ExecutionStatus == kit.StatusCompleted && len(cr.Steps) > 0 {
 		f := &FactsOut{Pack: *prof.FactPack}
+		setDifference := func(detail string) {
+			if f.Difference == "" {
+				f.Difference = detail
+			}
+		}
 		r := pack.Routes[slices.IndexFunc(pack.Routes, func(r kit.FactPackRoute) bool { return r.Route == prof.FactPack.Route })]
 		t := cr.Steps[0].Incremental
 		for _, q := range r.Queries {
@@ -418,7 +428,7 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 			}
 			i := slices.IndexFunc(t.Queries, func(o QueryOut) bool { return o.ID == q.ID })
 			if i < 0 || t.Queries[i].Status != kit.StatusCompleted {
-				f.Difference = "pack query " + q.ID + " not completed"
+				setDifference("pack query " + q.ID + " not completed")
 				cr.Oracle.FactReproduction = worse(cr.Oracle.FactReproduction, ClaimBlocked)
 				continue
 			}
@@ -444,11 +454,11 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 					d.Reproduces = a.Fact == b.Fact && a.NodeType == b.NodeType && a.StartByte == b.StartByte && a.EndByte == b.EndByte && a.Status == b.Status &&
 						(an == nil) == (bn == nil) && (an == nil || *an == *bn)
 					if !d.Reproduces {
-						f.Difference = fmt.Sprintf("declaration item %d", k)
+						setDifference(fmt.Sprintf("declaration item %d", k))
 					}
 				}
 				if !d.Reproduces && f.Difference == "" {
-					f.Difference = fmt.Sprintf("declaration items %d != %d", len(items), len(s05))
+					setDifference(fmt.Sprintf("declaration items %d != %d", len(items), len(s05)))
 				}
 				f.Declarations = d
 				if d.Reproduces {
@@ -457,11 +467,16 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 					cr.Oracle.FactReproduction = ClaimFail
 				}
 			case kit.FactDynamicSQL:
-				ds := kit.DeriveDynamicSQL(prof.FactPack.Route, oc.Encoding, caps, src)
+				ds, err := kit.DeriveDynamicSQLChecked(prof.FactPack.Route, oc.Encoding, caps, src)
+				if err != nil {
+					setDifference(err.Error())
+					cr.Oracle.DynamicSQL = worse(cr.Oracle.DynamicSQL, ClaimBlocked)
+					continue
+				}
 				f.DynamicSQL = &ds
 				if oc.DynamicSQL != nil {
 					if d := compareDynamicSQL(*oc.DynamicSQL, ds); d != "" {
-						f.Difference = d
+						setDifference(d)
 						cr.Oracle.DynamicSQL = ClaimFail
 					} else {
 						cr.Oracle.DynamicSQL = worse(cr.Oracle.DynamicSQL, ClaimPass)

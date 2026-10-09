@@ -13,7 +13,9 @@
   "csharp-P2-PP",
   "csharp-P2-01",
   "csharp-P2-03",
-  "csharp-P2-11"
+  "csharp-P2-11",
+  "issue152-identifier-categories",
+  "issue153-directive-eof"
  ],
  "files": [
   {
@@ -128,6 +130,36 @@
      "before": "    _preproc_expression: $ => choice(\n",
      "after": "    // a condition that is the literal false or !true (no symbol needed to evaluate it)\n    _preproc_false: $ => choice(\n      prec(1, alias('false', $.boolean_literal)),\n      alias($.preproc_not_true, $.unary_expression),\n    ),\n\n    preproc_not_true: $ => prec(1, seq(\n      field('operator', '!'),\n      field('argument', alias('true', $.boolean_literal)),\n    )),\n\n    _preproc_expression: $ => choice(\n",
      "occurrences": 1
+    },
+    {
+     "before": "export default grammar({",
+     "after": "// C# 6.4.3: escapes use the same Unicode categories as literal identifier characters.\n// Generate compact fixed-width hexadecimal alternatives with the pinned Node Unicode data.\nfunction identifierCharacter(categories) {\n  const literal = new RegExp(`[${categories}]`, 'u');\n  const ranges = [];\n  for (let c = 0; c <= 0x10FFFF; c++) {\n    if (!literal.test(String.fromCodePoint(c))) continue;\n    const last = ranges[ranges.length - 1];\n    if (last && last[1] === c - 1) last[1] = c;\n    else ranges.push([c, c]);\n  }\n  function hexPattern(low, digits, subset) {\n    const high = low + 16 ** digits - 1;\n    subset = subset.filter(([a, b]) => a <= high && b >= low);\n    if (!subset.length) return null;\n    if (subset[0][0] <= low && subset[0][1] >= high)\n      return digits ? `[0-9A-Fa-f]{${digits}}` : '';\n    const groups = new Map();\n    for (let digit = 0; digit < 16; digit++) {\n      const suffix = hexPattern(low + digit * 16 ** (digits - 1), digits - 1, subset);\n      if (suffix === null) continue;\n      const chars = digit.toString(16);\n      const previous = groups.get(suffix) || '';\n      groups.set(suffix, previous + chars + (digit >= 10 ? chars.toUpperCase() : ''));\n    }\n    const alternatives = [...groups].map(([suffix, chars]) =>\n      (chars.length === 1 ? chars : `[${chars}]`) + suffix);\n    return alternatives.length === 1 ? alternatives[0] : `(${alternatives.join('|')})`;\n  }\n  // Use these same ranges for literals: the generator's Unicode table may differ.\n  const characters = ranges.map(([a, b]) => `\\\\u{${a.toString(16)}}` +\n    (a === b ? '' : `-\\\\u{${b.toString(16)}}`)).join('');\n  return new RegExp(`([${characters}]|\\\\\\\\u${hexPattern(0, 4, ranges)}|\\\\\\\\U${hexPattern(0, 8, ranges)})`, 'u');\n}\n\nconst identifierStart = identifierCharacter('\\\\p{L}\\\\p{Nl}_');\nconst identifierPart = identifierCharacter('\\\\p{L}\\\\p{Nl}\\\\p{Nd}\\\\p{Pc}\\\\p{Mn}\\\\p{Mc}\\\\p{Cf}');\n\nexport default grammar({",
+     "occurrences": 1
+    },
+    {
+     "before": "    _identifier_token: _ => token(seq(optional('@'), /(\\p{XID_Start}|_|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})(\\p{XID_Continue}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*/)),",
+     "after": "    _identifier_token: _ => token(seq(optional('@'), identifierStart, repeat(identifierPart))),",
+     "occurrences": 1
+    },
+    {
+     "before": "    $.preproc_skipped_section,\n  ],",
+     "after": "    $.preproc_skipped_section,\n    $._preproc_eof,\n  ],",
+     "occurrences": 1
+    },
+    {
+     "before": "/\\n|\\u0085|\\u2028|\\u2029/,",
+     "after": "choice(/\\r\\n?|\\n|\\u0085|\\u2028|\\u2029/, $._preproc_eof),",
+     "occurrences": 14
+    },
+    {
+     "before": "    preproc_nullable: _ => seq(",
+     "after": "    preproc_nullable: $ => seq(",
+     "occurrences": 1
+    },
+    {
+     "before": "/\\S([^/\\n\\u0085\\u2028\\u2029]|\\/[^*]|\\\\\\r?\\n)*/",
+     "after": "/\\S([^/\\r\\n\\u0085\\u2028\\u2029]|\\/[^*\\r\\n\\u0085\\u2028\\u2029]|\\\\\\r?\\n)*/",
+     "occurrences": 1
     }
    ]
   },
@@ -147,6 +179,16 @@
     {
      "before": "bool tree_sitter_c_sharp_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *scanner = (Scanner *)payload;\n",
      "after": "static inline bool is_pp_new_line(int32_t c) {\n    return c == '\\n' || c == '\\r' || c == 0x85 || c == 0x2028 || c == 0x2029;\n}\n\nstatic inline bool is_pp_space(int32_t c) {\n    return c == ' ' || c == '\\t' || c == '\\v' || c == '\\f' || c == 0xA0 || c == 0xFEFF || c == 0x1680 ||\n           (c >= 0x2000 && c <= 0x200A) || c == 0x202F || c == 0x205F || c == 0x3000;\n}\n\n// ECMA-334 6.5.5: the grammar selects the first section whose condition is not\n// the literal false (or !true); every other section is skipped. A skipped section is not\n// lexically processed except for directives, which only matter for finding\n// the #elif / #else / #endif that ends the section (nested #if..#endif groups\n// are skipped whole). The token covers the section from its first to its last\n// non-white-space character; white space around it stays extras.\nstatic bool scan_preproc_skipped_section(TSLexer *lexer) {\n    if (lexer->get_column(lexer) != 0) {\n        // Rest of the #else line: white space and an optional single-line\n        // comment, which the grammar lexes before calling here again.\n        while (is_pp_space(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (!lexer->eof(lexer) && !is_pp_new_line(lexer->lookahead)) {\n            return false;\n        }\n    }\n    bool has_content = false;\n    unsigned depth = 0;\n    for (;;) {\n        while (!lexer->eof(lexer) && (is_pp_new_line(lexer->lookahead) || is_pp_space(lexer->lookahead))) {\n            lexer->advance(lexer, !has_content);\n        }\n        if (lexer->eof(lexer)) {\n            break;\n        }\n        if (lexer->lookahead == '#') {\n            advance(lexer);\n            while (is_pp_space(lexer->lookahead)) {\n                advance(lexer);\n            }\n            char name[6];\n            size_t n = consume_identifier_into(lexer, name, sizeof(name));\n            if (buf_equals(name, n, \"if\")) {\n                depth++;\n            } else if (buf_equals(name, n, \"endif\") || buf_equals(name, n, \"elif\") || buf_equals(name, n, \"else\")) {\n                if (depth == 0) {\n                    break;\n                }\n                if (name[1] == 'n') {\n                    depth--;\n                }\n            }\n            lexer->mark_end(lexer);\n            has_content = true;\n        }\n        while (!lexer->eof(lexer) && !is_pp_new_line(lexer->lookahead)) {\n            bool space = is_pp_space(lexer->lookahead);\n            advance(lexer);\n            if (!space) {\n                lexer->mark_end(lexer);\n                has_content = true;\n            }\n        }\n    }\n    lexer->result_symbol = PREPROC_SKIPPED_SECTION;\n    return has_content;\n}\n\nbool tree_sitter_c_sharp_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {\n    Scanner *scanner = (Scanner *)payload;\n\n    // Valid only right after an #else line or the condition line of a skipped\n    // section; never together with the\n    // string tokens except during error recovery.\n    if (valid_symbols[PREPROC_SKIPPED_SECTION] && !valid_symbols[INTERPOLATION_REGULAR_START]) {\n        return scan_preproc_skipped_section(lexer);\n    }\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    PREPROC_SKIPPED_SECTION,\n};",
+     "after": "    PREPROC_SKIPPED_SECTION,\n    PREPROC_EOF,\n};",
+     "occurrences": 1
+    },
+    {
+     "before": "    Scanner *scanner = (Scanner *)payload;\n\n    // Valid only right after",
+     "after": "    Scanner *scanner = (Scanner *)payload;\n\n    // C# 6.3.2 permits a final directive without a physical newline. This\n    // zero-width token is only valid at a directive terminator, outside recovery.\n    if (valid_symbols[PREPROC_EOF] && !valid_symbols[INTERPOLATION_REGULAR_START]) {\n        while (is_pp_space(lexer->lookahead)) {\n            skip(lexer);\n        }\n        if (lexer->eof(lexer)) {\n            lexer->result_symbol = PREPROC_EOF;\n            return true;\n        }\n        return false;\n    }\n\n    // Valid only right after",
      "occurrences": 1
     }
    ]

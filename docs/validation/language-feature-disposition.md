@@ -48,6 +48,8 @@
 | csharp-R01 | net461/net10 | RUN | framework/API/ASP.NET 서버·DI·HTTP·NuGet restore는 source parser 대상 밖 | 빌드·서버 성공 미주장 | - | [runtime/library 근거](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history) |
 | csharp-X01 | 범위 밖 | EXT | Razor, .csx 별도 host, preview/interceptors는 채택된 일반 .cs stable 범위 밖 | 파일/모드 경계 유지 | - | [mode/extension 경계](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history) |
 
+C# B01의 identifier는 [6.4.3](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure#643-identifiers)의 start=`L/Nl/_`, part=추가 `Nd/Pc/Mn/Mc/Cf` 범주를 literal과 `\u`·`\U`의 decoded 값에 동일하게 적용한다(#152). escape 값은 scalar 범위 안이어야 하고 surrogate는 identifier 범주에 없다. escape를 원문에서 치환하지 않으며 `cl\u0061ss`는 정상 identifier다. escape 대안은 고정 Node 24.21.0의 Unicode 17.0 데이터로 생성한다. B03의 directive는 [6.3.2](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure#632-line-terminators)의 final newline 없는 EOF를 zero-width 종료 token으로 허용한다(#153). CR/LF/CRLF/NEL/LS/PS 종료는 원문 byte 범위를 보존하며 inactive source의 기존 branch 정책을 바꾸지 않는다.
+
 이전 부분 목록의 C#14 9개 항목은 V14a/b/c와 S01에 대응한다. 기존 기록은 삭제하지 않는다. `async/var/await` identifier 및 V14c의 후보 문서상 격차는 B01/V14c의 REQ를 그대로 유지한다.
 
 ## go
@@ -430,6 +432,8 @@ revision 날짜가 표에 생략된 행도 floating latest가 아니다. 위 고
 | xml-X01 | 범위 밖 | EXT | XSD/XSLT/XQuery/DTD-only route 별도 채택 없음 | 내부 DTD source B02는 필수 | - | [mode/extension 경계](https://www.w3.org/TR/2008/REC-xml-20081126/#sec-conformance) |
 
 ## tsql
+
+T-SQL B01의 `--` comment는 [Microsoft 구문](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/comment-transact-sql?view=sql-server-ver17)의 CR·LF·CRLF 또는 EOF에서 종료한다(#154). grammar와 scanner의 comment skip이 같은 경계를 사용하고, 뒤 statement 및 `QUOTED_IDENTIFIER` ON/OFF에 따른 literal/identifier 구조를 보존한다. 원문이나 Go Point의 LF row convention을 정규화하지 않는다.
 
 근거: [T-SQL language reference, ver17](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17)의 SQL Server 대상 Syntax 전 항목, [SQL Server2025 변경](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025?view=sql-server-ver17). 2012/compat110~2025/compat170 SQL Server source를 합집합으로 유지한다. Azure/Synapse/Fabric 전용 alternative는 X01이다.
 

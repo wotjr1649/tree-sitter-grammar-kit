@@ -124,7 +124,7 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 	if len(qs) > MaxQueries {
 		return o, t.bad("QUERIES_COUNT_INVALID", x.top["queries"])
 	}
-	ids := map[string]bool{}
+	ids := map[string]string{}
 	for _, qv := range qs {
 		qm, e := t.object(qv, []string{"id", "source"})
 		if e != nil {
@@ -133,15 +133,15 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 		var q OracleQuery
 		if q.ID, e = t.str(qm["id"]); e != nil {
 			return o, e
-		} else if !validID(q.ID) || ids[q.ID] {
+		} else if !validID(q.ID) || ids[q.ID] != "" {
 			return o, t.bad("QUERY_ID_INVALID", qm["id"])
 		}
-		ids[q.ID] = true
 		if q.Source, e = t.str(qm["source"]); e != nil {
 			return o, e
 		} else if q.Source == "" || len(q.Source) > MaxQueryBytes {
 			return o, t.bad("QUERY_SOURCE_INVALID", qm["source"])
 		}
+		ids[q.ID] = q.Source
 		o.Queries = append(o.Queries, q)
 	}
 	if fv := x.top["fact_pack"]; fv.kind != 'n' {
@@ -183,7 +183,7 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 			var q QueryExpectation
 			if q.Query, e = t.str(em["query"]); e != nil {
 				return o, e
-			} else if !ids[q.Query] {
+			} else if ids[q.Query] == "" {
 				return o, t.bad("EXPECT_QUERY_UNKNOWN", em["query"])
 			}
 			step, e := t.uint(em["step"])
@@ -238,7 +238,10 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 				if e != nil {
 					return o, e
 				}
-				qe.Offset = uint32(min(off, 1<<32-1))
+				if off > uint64(len(ids[q.Query])) {
+					return o, t.bad("EXPECT_QUERY_OFFSET_INVALID", xm["offset"])
+				}
+				qe.Offset = uint32(off)
 				q.Error = &qe
 			}
 			if (q.Error != nil) != (q.Status == "INVALID_QUERY") || (q.Captures != nil && q.Status != StatusCompleted) {
@@ -247,7 +250,7 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 			oc.QueryExpect = append(oc.QueryExpect, q)
 		}
 		if dv := cm["dynamic_sql_expect"]; dv.kind != 'n' {
-			d, e := parseDynamicSQLExpect(t, dv)
+			d, e := parseDynamicSQLExpect(t, dv, c.Input.Bytes)
 			if e != nil {
 				return o, e
 			}
@@ -261,7 +264,7 @@ func parseOracle(data []byte) (OracleProfile, *Error) {
 	return o, nil
 }
 
-func parseDynamicSQLExpect(t typed, v *jv) (*DynamicSQLExpectation, *Error) {
+func parseDynamicSQLExpect(t typed, v *jv, inputBytes uint64) (*DynamicSQLExpectation, *Error) {
 	m, e := t.object(v, []string{"facts", "known_misses"})
 	if e != nil {
 		return nil, e
@@ -281,7 +284,13 @@ func parseDynamicSQLExpect(t typed, v *jv) (*DynamicSQLExpectation, *Error) {
 			return Point{}, e
 		}
 		c, e := t.uint(pm["column"])
-		return Point{Row: uint32(min(r, 1<<32-1)), Column: uint32(min(c, 1<<32-1))}, e
+		if e != nil {
+			return Point{}, e
+		}
+		if r > 0xffffffff || c > 0xffffffff || r > inputBytes || c > inputBytes {
+			return Point{}, t.bad("EXPECT_DYNAMIC_POINT_INVALID", v)
+		}
+		return Point{Row: uint32(r), Column: uint32(c)}, nil
 	}
 	span := func(m map[string]*jv) (uint32, uint32, *Error) {
 		s, e := t.uint(m["start_byte"])
@@ -289,7 +298,13 @@ func parseDynamicSQLExpect(t typed, v *jv) (*DynamicSQLExpectation, *Error) {
 			return 0, 0, e
 		}
 		en, e := t.uint(m["end_byte"])
-		return uint32(min(s, 1<<32-1)), uint32(min(en, 1<<32-1)), e
+		if e != nil {
+			return 0, 0, e
+		}
+		if s > en || en > 0xffffffff || en > inputBytes {
+			return 0, 0, t.bad("EXPECT_DYNAMIC_RANGE_INVALID", m["end_byte"])
+		}
+		return uint32(s), uint32(en), nil
 	}
 	for _, fv := range facts {
 		fm, e := t.object(fv, []string{"construct", "argument_kind", "start_byte", "end_byte", "start_point", "end_point", "variable", "heuristic"})
@@ -311,6 +326,9 @@ func parseDynamicSQLExpect(t typed, v *jv) (*DynamicSQLExpectation, *Error) {
 		}
 		if f.EndPoint, e = point(fm["end_point"]); e != nil {
 			return nil, e
+		}
+		if f.StartPoint.Row > f.EndPoint.Row || (f.StartPoint.Row == f.EndPoint.Row && f.StartPoint.Column > f.EndPoint.Column) {
+			return nil, t.bad("EXPECT_DYNAMIC_POINT_INVALID", fm["end_point"])
 		}
 		if vv := fm["variable"]; vv.kind != 'n' {
 			s, e := t.str(vv)

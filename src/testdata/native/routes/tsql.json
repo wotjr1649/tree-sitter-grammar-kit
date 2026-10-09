@@ -354,7 +354,24 @@
         "tsql-B01.a0011"
       ],
       "source_utf8": "DECLARE @v int = 1;\nSELECT 1 /* block comment\n   second line */ AS k, ABS(-1) AS f, t.c1, @v AS v, (c1 + 1) AS p, (SELECT MAX(c1) FROM dbo.t2) AS q, -c1 AS n, c1 * 2 AS m,\n  ROW_NUMBER() OVER (ORDER BY c1) AS rn, SUM(c1) OVER (PARTITION BY c2) AS s\nFROM dbo.t1 AS t;\n",
-      "edits": [],
+      "edits": [
+        {
+          "find": "",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\n OFF\nSELECT \"x\"\n"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER -- c\n OFF\nSELECT \"x\"\n",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\n ON\nSELECT \"x\"\n"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER -- c\n ON\nSELECT \"x\"\n",
+          "replace": "\nGO\n-- c\nSELECT 1;\n-- trailing"
+        },
+        {
+          "find": "\nGO\n-- c\nSELECT 1;\n-- trailing",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r\n OFF\r\nSELECT \"x\"\r\n"
+        }
+      ],
       "expect": [
         {
           "step": 0,
@@ -431,6 +448,70 @@
               "text": "SUM(c1) OVER (PARTITION BY c2)"
             }
           ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_on",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "select",
+              "text": "SELECT 1",
+              "occurrence": 2
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
         }
       ]
     },
@@ -446,7 +527,24 @@
         "tsql-B01.a0015"
       ],
       "source_utf8": "SELECT CASE c1 WHEN 1 THEN N'one' WHEN 2 THEN N'two' ELSE N'other' END AS a,\n  CASE WHEN c1 > 2 THEN 1 ELSE 0 END AS b, COALESCE(c1, c2, 0) AS c, NULLIF(c1, c2) AS d\nFROM dbo.t1;\n",
-      "edits": [],
+      "edits": [
+        {
+          "find": "",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r\n ON\r\nSELECT \"x\"\r\n"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER -- c\r\n ON\r\nSELECT \"x\"\r\n",
+          "replace": "\nGO\n-- c\r\nSELECT 1;\r\n-- trailing"
+        },
+        {
+          "find": "\nGO\n-- c\r\nSELECT 1;\r\n-- trailing",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r OFF\rSELECT \"x\"\r"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER -- c\r OFF\rSELECT \"x\"\r",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r ON\rSELECT \"x\"\r"
+        }
+      ],
       "expect": [
         {
           "step": 0,
@@ -488,6 +586,69 @@
               "text": "NULLIF(c1, c2)"
             }
           ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_on",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "select",
+              "text": "SELECT 1"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "set_statement",
+            "keyword_on",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
         }
       ]
     },
@@ -513,7 +674,24 @@
         "tsql-B01.a0078"
       ],
       "source_utf8": "SELECT +c1 AS a, -c2 AS b, c1 + c2 AS c, c1 - c2 AS d, c1 * c2 AS e, c3 / c4 AS f, c3 % c4 AS g,\n  c5 & c6 AS h, c5 | c6 AS i, c5 ^ c6 AS j, LEFT_SHIFT(c7, 2) AS k, c7 << 3 AS l,\n  RIGHT_SHIFT(c8, 2) AS m, c8 >> 3 AS n, ~c9 AS o, N'ab' + N'cd' AS p\nFROM dbo.t1;\n",
-      "edits": [],
+      "edits": [
+        {
+          "find": "",
+          "replace": "\nGO\n-- c\rSELECT 1;\r-- trailing"
+        },
+        {
+          "find": "\nGO\n-- c\rSELECT 1;\r-- trailing",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER /* a /* b */ c */ OFF\rSELECT \"x\";"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER /* a /* b */ c */ OFF\rSELECT \"x\";",
+          "replace": "\nGO\n-- c\rSELECT FROM;"
+        },
+        {
+          "find": "\nGO\n-- c\rSELECT FROM;",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\n OFF\nSELECT \"x\";"
+        }
+      ],
       "expect": [
         {
           "step": 0,
@@ -599,6 +777,58 @@
               "text": "N'ab' + N'cd'"
             }
           ]
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "comment",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "select",
+              "text": "SELECT 1"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": "",
+          "anchors": []
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": ""
         }
       ]
     },
@@ -620,7 +850,16 @@
         "tsql-B01.a0079"
       ],
       "source_utf8": "DECLARE @s nvarchar(20) = N'a', @n int = 10;\nSET @s += N'b';\nUPDATE dbo.t1 SET c1 += 1, c2 -= 2, c3 *= 3, c4 /= 4, c5 %= 5, c6 &= 6, c7 |= 7, c8 ^= 8, @n += c9;\n",
-      "edits": [],
+      "edits": [
+        {
+          "find": "",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r ON\nSELECT \"x\";"
+        },
+        {
+          "find": "\nGO\nSET QUOTED_IDENTIFIER -- c\r ON\nSELECT \"x\";",
+          "replace": "\nGO\nSET QUOTED_IDENTIFIER -- c\r\n OFF\nSELECT \"x\";"
+        }
+      ],
       "expect": [
         {
           "step": 0,
@@ -699,6 +938,36 @@
               "text": "@n += c9"
             }
           ]
+        },
+        {
+          "syntax": "NO_ERROR",
+          "contains": [
+            "keyword_on",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "identifier",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": "",
+          "step": 1
+        },
+        {
+          "syntax": "NO_ERROR",
+          "contains": [
+            "keyword_off",
+            "select"
+          ],
+          "anchors": [
+            {
+              "type": "literal",
+              "text": "\"x\""
+            }
+          ],
+          "declarations": "",
+          "step": 2
         }
       ]
     },

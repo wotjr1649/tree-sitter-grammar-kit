@@ -488,8 +488,22 @@ func unquote(s string) string {
 // (UTF-8, UTF-16LE/BE or CP949; text is compared after decoding, ranges stay original
 // bytes). Facts are in document order of their site; tsql known misses are reported with
 // their ranges. Comments (extra nodes that are not ERROR) are never a construct part or an
-// argument.
+// argument. Invalid capture ranges return the zero value (Mapping is empty), never
+// a valid empty fact result. Use DeriveDynamicSQLChecked to obtain the typed error.
 func DeriveDynamicSQL(route, enc string, caps []Capture, srcBytes []byte) DynamicSQLFacts {
+	out, _ := DeriveDynamicSQLChecked(route, enc, caps, srcBytes)
+	return out
+}
+
+// DeriveDynamicSQLChecked returns an INVALID_INPUT/CAPTURE_RANGE_INVALID error for
+// an inverted or out-of-source capture, before any source slicing or fact derivation.
+// On error no facts are returned. It otherwise follows DeriveDynamicSQL's contract.
+func DeriveDynamicSQLChecked(route, enc string, caps []Capture, srcBytes []byte) (DynamicSQLFacts, error) {
+	for i, c := range caps {
+		if c.StartByte > c.EndByte || uint64(c.EndByte) > uint64(len(srcBytes)) {
+			return DynamicSQLFacts{}, fail(KindInvalidInput, "CAPTURE_RANGE_INVALID", "#/captures/"+strconv.Itoa(i), nil)
+		}
+	}
 	src := srcText{srcBytes, enc}
 	x := indexCaptures(caps)
 	out := DynamicSQLFacts{Mapping: "dynamic-sql-r1", Items: []DynamicSQLFact{}, KnownMisses: []KnownMiss{}, Unlisted: []string{}}
@@ -501,7 +515,7 @@ func DeriveDynamicSQL(route, enc string, caps []Capture, srcBytes []byte) Dynami
 		deriveCSharp(x, src, &out)
 		out.Unlisted = []string{MissAtDataSource, MissWithResultSets, MissBatchFirstNoExe}
 	}
-	return out
+	return out, nil
 }
 
 func fact(construct, kind string, arg Capture, variable *string, heuristic bool) DynamicSQLFact {
