@@ -3447,7 +3447,7 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;",
       "edits": [
         {
           "find": "'LOCAL'",
@@ -6714,6 +6714,3195 @@
         {"step": 0, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""},
         {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
         {"step": 2, "syntax": "NO_ERROR", "contains": ["invocation"], "declarations": ""}
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-equals-paren-zero-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX=(0));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX=(0));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-equals-paren-name-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX=(ix));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX=(ix));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-negative-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(-1));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(-1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-fraction-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1.5));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1.5));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-string-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX('ix'));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX('ix'));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-index-hex-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(0x1));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(0x1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-force-seek-negative-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(-1(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-nolock-value-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH (NOLOCK=1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (NOLOCK=1);",
+          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-rowlock-parameters-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (ROWLOCK);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (ROWLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (ROWLOCK(ix(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (ROWLOCK);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-spatial-fraction-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.5);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-spatial-string-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS='1');",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-spatial-hex-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-spatial-negative-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=-1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-force-seek-value-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK=1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK=1);",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-hint-variable-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH (@hint);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (@hint);",
+          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-hint-temporary-name-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH (#hint);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (#hint);",
+          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-hint-quoted-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (NOLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH ([NOLOCK]);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH ([NOLOCK]);",
+          "replace": "SELECT * FROM dbo.t WITH (NOLOCK);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue145-hint-schema-on-udf-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.f();",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.f();",
+          "replace": "SELECT * FROM dbo.f() WITH (a int);"
+        },
+        {
+          "find": "SELECT * FROM dbo.f() WITH (a int);",
+          "replace": "SELECT * FROM dbo.f();"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "invocation"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "invocation"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue145-apply-schema-on-udf-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;",
+          "replace": "SELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;"
+        },
+        {
+          "find": "SELECT * FROM dbo.t CROSS APPLY dbo.f() WITH (a int) AS f;",
+          "replace": "SELECT * FROM dbo.t CROSS APPLY dbo.f() AS f;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "invocation"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "invocation"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-numeric-000-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-numeric-002-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1.0);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-numeric-003-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1e0);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-numeric-007-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0XLOCK);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-numeric-015-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0x);",
+          "replace": "SELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-range-006-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(2147483648));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(2147483648));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-range-007-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(1));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (INDEX(0000000000000000000000000000000000000000000000000000000000000000000001));",
+          "replace": "SELECT * FROM dbo.t WITH (INDEX(1));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue146-range-011-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+      "edits": [
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(2147483648(a)));"
+        },
+        {
+          "find": "SELECT * FROM dbo.t WITH (FORCESEEK(2147483648(a)));",
+          "replace": "SELECT * FROM dbo.t WITH (FORCESEEK(1(a)));"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "table_hint"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue145-146-normal-siblings-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue145-hint-space-good-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (NOLOCK NOWAIT);\nGO\n-- tsql-issue145-hint-space-three-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (UPDLOCK ROWLOCK READPAST);\nGO\n-- tsql-issue146-hint-index-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(ix), NOWAIT);\nGO\n-- tsql-issue146-index-zero-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0));\nGO\n-- tsql-issue146-index-one-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(1));\nGO\n-- tsql-issue146-index-number-list-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0,1));\nGO\n-- tsql-issue146-index-equals-zero-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX=0);\nGO\n-- tsql-issue146-index-mixed-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(0,ix));\nGO\n-- tsql-issue146-force-seek-number-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(2(a)));\nGO\n-- tsql-issue146-force-seek-name-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(ix(a)));\nGO\n-- tsql-issue146-spatial-int-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1);\nGO\n-- tsql-issue145-openjson-from-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON(N'[{\"a\":1}]') WITH (a int) AS j;\nGO\n-- tsql-issue145-openjson-apply-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENJSON(t.js) WITH (a int) AS j;\nGO\n-- tsql-issue146-numeric-006-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1ROWLOCK);\nGO\n-- tsql-issue146-numeric-008-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=00XLOCK);\nGO\n-- tsql-issue146-numeric-009-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=01ROWLOCK);\nGO\n-- tsql-issue146-numeric-010-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1/*c*/ROWLOCK);\nGO\n-- tsql-issue146-numeric-011-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1 ROWLOCK);\nGO\n-- tsql-issue146-numeric-012-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=1,ROWLOCK);\nGO\n-- tsql-issue146-range-000-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=2147483647);\nGO\n-- tsql-issue146-range-002-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (SPATIAL_WINDOW_MAX_CELLS=0000000000000000000000000000000000000000000000000000000000000000000001);\nGO\n-- tsql-issue146-range-005-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (INDEX(2147483647));\nGO\n-- tsql-issue146-range-010-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t WITH (FORCESEEK(2147483647(a)));\nGO\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "openjson_schema",
+            "table_hint"
+          ],
+          "declarations": "",
+          "anchors": [
+            {
+              "type": "table_hint",
+              "text": "WITH (NOLOCK NOWAIT)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (UPDLOCK ROWLOCK READPAST)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(ix), NOWAIT)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(0))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(1))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(0,1))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX=0)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(0,ix))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (FORCESEEK(2(a)))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (FORCESEEK(ix(a)))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1)",
+              "occurrence": 1
+            },
+            {
+              "type": "openjson_schema",
+              "text": "WITH (a int)",
+              "occurrence": 1
+            },
+            {
+              "type": "openjson_schema",
+              "text": "WITH (a int)",
+              "occurrence": 2
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1ROWLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=00XLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=01ROWLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1/*c*/ROWLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1 ROWLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=1,ROWLOCK)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=2147483647)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (SPATIAL_WINDOW_MAX_CELLS=0000000000000000000000000000000000000000000000000000000000000000000001)",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (INDEX(2147483647))",
+              "occurrence": 1
+            },
+            {
+              "type": "table_hint",
+              "text": "WITH (FORCESEEK(2147483647(a)))",
+              "occurrence": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-00-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-01-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-02-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-security-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n-- tsql-issue148-security-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-security-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-security-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (SCHEMABINDING = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-security-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (SCHEMABINDING = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-security-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-security-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-security-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE = OFF, SCHEMABINDING = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-security-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE = OFF, SCHEMABINDING = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-security-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE=OFF);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-03-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-event-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT .lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-04-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-event-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver..lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver..lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT server.db.sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT server.db.sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-05-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-target-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-target-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-target-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-target-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-target-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-target-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-06-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-target-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-action-24-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-target-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0..ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-target-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0..ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-target-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-action-24-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-action-24-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sql_text));\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-action-24-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sql_text));\n\nGO\n",
+          "replace": "-- tsql-issue148-action-24-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-07-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-action-25-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-queue-26-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-action-25-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-action-25-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver..sql_text));\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-action-25-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver..sql_text));\n\nGO\n",
+          "replace": "-- tsql-issue148-action-25-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-26-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-26-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (DROP);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-26-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (DROP);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-26-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-08-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-27-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-28-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-27-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-27-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (DROP, STATUS = ON);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-27-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (DROP, STATUS = ON);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-27-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-28-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-28-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = ON, DROP);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-28-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = ON, DROP);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-28-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-09-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-29-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-31-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-29-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-29-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-29-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-29-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-31-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-31-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION ();\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-31-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION ();\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-31-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-10-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-33-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-34-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-33-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-33-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (DROP, STATUS = ON);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-33-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (DROP, STATUS = ON);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-33-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-34-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-34-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = ON, DROP);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-34-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = ON, DROP);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-34-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-11-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-37-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-route-38-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-37-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-37-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION ();\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-37-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION ();\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-37-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-route-38-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n",
+          "replace": "-- tsql-issue148-route-38-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH LIFETIME = 60;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-route-38-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH LIFETIME = 60;\n\nGO\n",
+          "replace": "-- tsql-issue148-route-38-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-12-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-route-43-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n-- tsql-issue148-route-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-route-43-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n",
+          "replace": "-- tsql-issue148-route-43-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL', ADDRESS = 'LOCAL';\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-route-43-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL', ADDRESS = 'LOCAL';\n\nGO\n",
+          "replace": "-- tsql-issue148-route-43-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-route-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n",
+          "replace": "-- tsql-issue148-route-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL', ADDRESS = 'LOCAL';\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-route-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL', ADDRESS = 'LOCAL';\n\nGO\n",
+          "replace": "-- tsql-issue148-route-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS='LOCAL';\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-13-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-53-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-54-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-53-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-53-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2) WITH (id int) AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-53-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2) WITH (id int) AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-53-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-54-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-54-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2) WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-54-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2) WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-54-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-14-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-55-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-56-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-55-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-55-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2)  AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-55-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc; N'/root/row'; 2)  AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-55-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-56-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-56-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1') WITH (id int) AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-56-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1') WITH (id int) AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-56-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-15-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-57-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-59-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-57-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-57-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1') WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-57-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1') WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-57-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-59-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-59-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1') WITH (id int) AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-59-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1') WITH (id int) AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-59-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-16-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-rowset-60-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-61-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-60-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-60-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1') WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-60-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1') WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-60-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-61-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-61-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1')  AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-61-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p'; 'd'; 'u'; 'pw'; 'SELECT 1')  AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-61-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-17-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-63-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-66-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-63-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-63-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-63-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-63-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-66-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-66-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-66-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-66-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-18-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-rowset-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d) WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d) WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d)  AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d)  AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-19-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-rowset-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d) WITH (id int) AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d) WITH (id int) AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d) WITH dbo.t AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d) WITH dbo.t AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-20-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-rowset-73-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-queue-missing-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-rowset-73-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-73-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d)  AS x;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-rowset-73-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model; DATA = dbo.t AS d)  AS x;\n\nGO\n",
+          "replace": "-- tsql-issue148-rowset-73-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-missing-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-missing-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-21-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-missing-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-missing-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-missing-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-missing-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-49-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-missing-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-missing-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-missing-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-22-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-queue-duplicate-create-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-duplicate-alter-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-queue-duplicate-create-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-duplicate-create-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-duplicate-create-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-duplicate-create-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-duplicate-alter-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-duplicate-alter-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-queue-duplicate-alter-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n",
+          "replace": "-- tsql-issue148-queue-duplicate-alter-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME=dbo.p, MAX_QUEUE_READERS=1, EXECUTE AS OWNER);\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-23-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-event-unqualified-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-unqualified-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-unqualified-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD EVENT lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD EVENT lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD TARGET ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD TARGET ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-24-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-event-unqualified-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-unqualified-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-unqualified-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP EVENT lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP EVENT lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP TARGET ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-unqualified-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP TARGET ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-unqualified-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-25-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-bulk-schema-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-bulk-schema-apply-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-bulk-schema-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-bulk-schema-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH dbo.t AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-bulk-schema-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH dbo.t AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-bulk-schema-71-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-bulk-schema-apply-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-bulk-schema-apply-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH dbo.t AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-bulk-schema-apply-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH dbo.t AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-bulk-schema-apply-72-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-26-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-provider-apply-OPENXML-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-provider-apply-OPENJSON-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-provider-apply-OPENXML-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-OPENXML-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY OPENXML(@idoc; '/r'; 2) WITH dbo.t AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-apply-OPENXML-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY OPENXML(@idoc; '/r'; 2) WITH dbo.t AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-OPENXML-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-apply-OPENJSON-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-OPENJSON-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY OPENJSON('{}') WITH dbo.t AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-apply-OPENJSON-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY OPENJSON('{}') WITH dbo.t AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-OPENJSON-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-27-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-provider-apply-PREDICT-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-event-create-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-provider-apply-PREDICT-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-PREDICT-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY PREDICT(MODEL=@model; DATA=dbo.t AS d) WITH dbo.t AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-apply-PREDICT-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM dbo.t CROSS APPLY PREDICT(MODEL=@model; DATA=dbo.t AS d) WITH dbo.t AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-apply-PREDICT-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-create-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-create-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-28-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-event-alter-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-create-target-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-alter-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-alter-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-alter-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-alter-empty-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-create-target-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-target-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-create-target-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-target-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-29-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-event-create-with-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-provider-column-OPENXML-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-event-create-with-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-with-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER WITH (MAX_MEMORY = 4096 KB);\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-event-create-with-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER WITH (MAX_MEMORY = 4096 KB);\n\nGO\n",
+          "replace": "-- tsql-issue148-event-create-with-only-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-OPENXML-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-OPENXML-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int AS JSON) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-OPENXML-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int AS JSON) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-OPENXML-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-30-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "-- tsql-issue148-provider-column-OPENXML-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-provider-column-PREDICT-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-provider-column-OPENXML-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-OPENXML-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int NULL) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-OPENXML-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int NULL) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-OPENXML-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-PREDICT-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-PREDICT-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int '$.id') AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-PREDICT-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int '$.id') AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-PREDICT-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 3,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 4,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-negative-pair-31-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02"
+      ],
+      "source_utf8": "SELECT @@ROWCOUNT AS unchanged_probe;\nGO\n-- tsql-issue148-provider-column-PREDICT-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+      "edits": [
+        {
+          "find": "-- tsql-issue148-provider-column-PREDICT-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-PREDICT-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int AS JSON) AS r;\n\nGO\n"
+        },
+        {
+          "find": "-- tsql-issue148-provider-column-PREDICT-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int AS JSON) AS r;\n\nGO\n",
+          "replace": "-- tsql-issue148-provider-column-PREDICT-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENJSON('{}') WITH (id int) AS r;\n\nGO\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "tsql-issue148-normal-siblings-r1",
+      "kind": "gap",
+      "features": [
+        "tsql-B01",
+        "tsql-B02",
+        "tsql-B03"
+      ],
+      "source_utf8": "-- tsql-issue148-qi-off-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-off-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-off-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-off-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n-- tsql-issue148-security-8-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = OFF);\n\nGO\n-- tsql-issue148-security-9-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (SCHEMABINDING = OFF);\n\nGO\n-- tsql-issue148-security-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE SECURITY POLICY dbo.p ADD FILTER PREDICATE dbo.f(a) ON dbo.t WITH (STATE = OFF, SCHEMABINDING = OFF);\n\nGO\n-- tsql-issue148-security-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER SECURITY POLICY dbo.p WITH (STATE = OFF);\n\nGO\n-- tsql-issue148-event-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT server.sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-action-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock(ACTION(sqlserver.sql_text));\n\nGO\n-- tsql-issue148-queue-30-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-32-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (DROP);\n\nGO\n-- tsql-issue148-queue-35-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-36-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-route-39-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-40-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-41-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-42-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE ROUTE r WITH SERVICE_NAME = 's', LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-44-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-45-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-46-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH ADDRESS = 'LOCAL', LIFETIME = 60;\n\nGO\n-- tsql-issue148-route-47-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-route-48-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER ROUTE r WITH SERVICE_NAME = 's', LIFETIME = 60, ADDRESS = 'LOCAL';\n\nGO\n-- tsql-issue148-rowset-50-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2) WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-51-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2) WITH dbo.t AS x;\n\nGO\n-- tsql-issue148-rowset-52-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, N'/root/row', 2)  AS x;\n\nGO\n-- tsql-issue148-rowset-58-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENROWSET('p', 'd'; 'u'; 'pw', 'SELECT 1')  AS x;\n\nGO\n-- tsql-issue148-rowset-62-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-64-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}')  AS x;\n\nGO\n-- tsql-issue148-rowset-65-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}') WITH (id int) AS x;\n\nGO\n-- tsql-issue148-rowset-67-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENJSON('{}')  AS x;\n\nGO\n-- tsql-issue148-rowset-68-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL = @model, DATA = dbo.t AS d) WITH (id int) AS x;\n\nGO\n-- tsql-issue148-regex-74-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-75-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-76-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x') AND 1=1;\n\nGO\n-- tsql-issue148-regex-77-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_LIKE('x','x') OR 1=0;\n\nGO\n-- tsql-issue148-regex-78-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE NOT (REGEXP_LIKE('x','x'));\n\nGO\n-- tsql-issue148-regex-79-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE dbo.REGEXP_LIKE('x','x');\n\nGO\n-- tsql-issue148-regex-80-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT 1 WHERE REGEXP_COUNT('x','x');\n\nGO\n-- tsql-issue148-queue-order-create-00-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-01-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-02-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-03-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-04-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-05-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-06-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-07-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-08-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-09-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-create-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-create-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-create-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-create-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-00-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-01-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-02-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-03-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-04-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-05-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-06-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-07-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-08-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-09-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-10-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-11-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (MAX_QUEUE_READERS = 1, STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-12-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-13-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, STATUS = OFF, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-14-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, STATUS = OFF);\n\nGO\n-- tsql-issue148-queue-order-alter-15-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, STATUS = OFF, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-16-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-17-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (EXECUTE AS OWNER, STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-18-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-19-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-20-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-queue-order-alter-21-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-order-alter-22-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1);\n\nGO\n-- tsql-issue148-queue-order-alter-23-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER QUEUE dbo.q WITH ACTIVATION (STATUS = OFF, EXECUTE AS OWNER, MAX_QUEUE_READERS = 1, PROCEDURE_NAME = dbo.p);\n\nGO\n-- tsql-issue148-queue-missing-51-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nCREATE QUEUE dbo.q WITH ACTIVATION (PROCEDURE_NAME = dbo.p, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER);\n\nGO\n-- tsql-issue148-regexp-column-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-regexp-column-1-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE NOT REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-regexp-column-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x') AND 1=1;\n\nGO\n-- tsql-issue148-regexp-column-3-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_LIKE(a,'x') OR 1=0;\n\nGO\n-- tsql-issue148-regexp-column-4-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE NOT (REGEXP_LIKE(a,'x'));\n\nGO\n-- tsql-issue148-regexp-scalar-control-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE REGEXP_COUNT(a,'x');\n\nGO\n-- tsql-issue148-regexp-qualified-control-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT a FROM dbo.t WHERE dbo.REGEXP_LIKE(a,'x');\n\nGO\n-- tsql-issue148-event-add-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-add-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER ADD TARGET package0.ring_buffer;\n\nGO\n-- tsql-issue148-event-drop-event-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP EVENT sqlserver.lock_deadlock;\n\nGO\n-- tsql-issue148-event-drop-target-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nALTER EVENT SESSION s ON SERVER DROP TARGET package0.ring_buffer;\n\nGO\n-- tsql-issue148-bulk-schema-69-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-bulk-schema-apply-70-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t CROSS APPLY OPENROWSET(BULK 'test.csv', FORMAT = 'CSV') WITH (id int) AS r;\n\nGO\n-- tsql-issue148-provider-column-OPENXML-0-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM OPENXML(@idoc, '/r', 2) WITH (id int '$.id') AS r;\n\nGO\n-- tsql-issue148-provider-column-PREDICT-2-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nDECLARE @idoc int, @model varbinary(max); SELECT * FROM PREDICT(MODEL=@model, DATA=dbo.t AS d) WITH (id int NULL) AS r;\n\nGO\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
       ]
     }
   ]

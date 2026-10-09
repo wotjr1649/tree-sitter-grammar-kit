@@ -48,3 +48,5 @@ UPDATE(column)는 IF/WHILE·WHERE/HAVING·JOIN ON·searched CASE·IIF의 첫 con
 query 없는 API profile의 manifest `queries:null` 자기 검증 실패는 [#143](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/143)으로 추적한다. producer가 빈 identity 배열을 만들도록 고치며 strict array 검증은 유지한다. `TestOracleRecordSetWithoutQueries`와 공개 합성 T-SQL 재현 입력은 수정 전 JSON_NULL, 수정 후 완결 set·API PASS를 확인했다.
 
 BOM/padding 앞 byte 조회에서 정상 root 반환을 오류로 판정하는 비교기 결함은 [#144](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/144)이다. 공개 UTF-16LE BOM `SELECT 1;`과 byte0으로 재현했다. root 밖에서는 root만 반환해야 하며 root 안의 범위·named 검사와 mutant 거부는 유지한다. runtime patch와 운영 한도를 변경하지 않는다.
+
+최종 리뷰의 fulltext QUOTED_IDENTIFIER와 CREATE/ALTER·provider별 공유 경계는 [#148을 포함한 문맥 보고서](issue-141-tsql-context-and-hints.md)가 소유한다. bare Extended Events 이름의 실제2025 PARSEONLY/NOEXEC 수용은 formal 문법과 충돌하므로 두 결과를 분리해 기록한다.

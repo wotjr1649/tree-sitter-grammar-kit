@@ -38,6 +38,7 @@ var required = []string{
 	"docs/reports/issue-132-security-policy-erratum.md",
 	"docs/reports/issue-134-assembly-file-name-erratum.md",
 	"docs/reports/issues-137-139-tsql-token-boundaries.md",
+	"docs/reports/issue-141-tsql-context-and-hints.md",
 	"docs/reports/issue-113-tsql-boundaries.md",
 	"docs/reports/issue-121-tsql-engine-validation.md", "docs/reports/issue-122-123-tsql-boundaries.md", "docs/reports/issue-126-expanded-validation.md",
 	"docs/design/decisions/0001-core-and-execution.md",

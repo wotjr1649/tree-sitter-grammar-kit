@@ -235,6 +235,7 @@ func TestAPIBytePointsOutsideRoot(t *testing.T) {
 	for k := 1; k <= 2; k++ {
 		bad := a
 		bad.Points = slices.Clone(a.Points)
+		bad.Points[0] = slices.Clone(a.Points[0])
 		bad.Points[0][k] = 1 // A child cannot stand in for the root outside its range.
 		if d, _ := compareAPI(r.Steps[0].Incremental.Tree.Nodes, &bad); d == nil {
 			t.Fatalf("outside-root child accepted for lookup column %d", k)

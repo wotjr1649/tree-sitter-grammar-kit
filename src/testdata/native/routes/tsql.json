@@ -5928,7 +5928,7 @@
         "tsql-B02.a0314",
         "tsql-B02.a0315"
       ],
-      "source_utf8": "SELECT a.c1 FROM dbo.t1 AS a INNER REDISTRIBUTE (1) JOIN dbo.t2 AS b ON a.c1 = b.c1;\nSELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = (ix3)) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1;\nSELECT a.c1 FROM dbo.t1 AS a JOIN dbo.v2 AS j ON a.c1 = j.c1 OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = (ix5)));\n",
+      "source_utf8": "SELECT a.c1 FROM dbo.t1 AS a INNER REDISTRIBUTE (1) JOIN dbo.t2 AS b ON a.c1 = b.c1;\nSELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = ix3) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1;\nSELECT a.c1 FROM dbo.t1 AS a JOIN dbo.v2 AS j ON a.c1 = j.c1 OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = ix5));\n",
       "edits": [],
       "expect": [
         {
@@ -5956,15 +5956,15 @@
             },
             {
               "type": "statement",
-              "text": "SELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = (ix3)) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1"
+              "text": "SELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = ix3) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1"
             },
             {
               "type": "query_specification",
-              "text": "SELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = (ix3)) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1"
+              "text": "SELECT a.c1 FROM dbo.t1 AS a WITH (INDEX = ix3) JOIN dbo.t9 AS v WITH (FORCE_ANN_ONLY) ON a.c1 = v.c1"
             },
             {
               "type": "table_hint",
-              "text": "WITH (INDEX = (ix3))"
+              "text": "WITH (INDEX = ix3)"
             },
             {
               "type": "table_hint",
@@ -5972,7 +5972,7 @@
             },
             {
               "type": "statement",
-              "text": "SELECT a.c1 FROM dbo.t1 AS a JOIN dbo.v2 AS j ON a.c1 = j.c1 OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = (ix5)))"
+              "text": "SELECT a.c1 FROM dbo.t1 AS a JOIN dbo.v2 AS j ON a.c1 = j.c1 OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = ix5))"
             },
             {
               "type": "query_specification",
@@ -5980,7 +5980,7 @@
             },
             {
               "type": "option_clause",
-              "text": "OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = (ix5)))"
+              "text": "OPTION (TABLE HINT (a, READPAST), TABLE HINT (j, NOEXPAND, INDEX = ix5))"
             }
           ]
         }

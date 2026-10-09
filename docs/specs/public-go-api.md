@@ -113,6 +113,16 @@ caller는 호출 중 request의 slice와 source snapshot을 변경하지 않는�
 
 실패 시 오류와 함께 반환된 report는 `COMPLETED`/`PASS`가 될 수 없다. 실패 결과는 E0 축·policy·실패 finding만 담고 entries/manifest/records는 비운다. `IdentityResult.SetSHA256`은 완전한 선택 집합을 읽지 못하면 비어 있다. 결과의 JSON encoding(+CLI 줄바꿈 1 byte)이 `OutputBytes`(corpus는 `ReportBytes`)를 넘으면 `RESOURCE_LIMIT`이다. CLI의 파일 publication은 API 반환 후 별도 no-clobber 단계이며 publication 실패도 CLI 실패다.
 
+## T-SQL의 한정된 문맥 검사 (#141)
+
+`CheckTSQLContext(nodes []TreeNode, source []byte, encoding string) ([]TSQLDiagnostic, error)`는 caller가 source·grammar identity에 묶은 완전한 T-SQL CST와 원래 bytes를 받는다. source나 파일 이름을 출력하지 않으며 process·filesystem·network 효과가 없다. `TSQLDiagnostic`은 `Code`, preorder `Node`, 원래 byte/point `Range Span`을 반환한다. 입력을 변경·보관하지 않고 결과는 caller가 소유한다.
+
+검사 범위는 SELECT CTE 뒤 table source 부재(`TSQL_CTE_SELECT_WITHOUT_TABLE_SOURCE`), scalar predicate(`TSQL_SCALAR_PREDICATE`), table hint 이름(`TSQL_TABLE_HINT_NAME`)과 locking/access hint 충돌(`TSQL_TABLE_HINT_CONFLICT`), single-part COUNT/COUNT_BIG의 인자 수(`TSQL_COUNT_ARITY`), scalar function의 값 없는 RETURN(`TSQL_SCALAR_FUNCTION_RETURN_VALUE`)이다. FORCESEEK의 index0은 `TSQL_TABLE_HINT_ARGUMENT`로 진단하고 parameterized FORCESEEK와 INDEX의 병용도 충돌에 포함한다. unqualified REGEXP_LIKE predicate, simple CASE의 WHEN 값, qualified UDF, TVF·procedure·batch의 bare RETURN, 중복 및 동의어 hint는 구분한다. CTE 이름의 binding·collation을 추정하지 않고 SELECT가 table source를 전혀 갖지 않는 관측만 진단한다. hint 이름은 SQL Server 2012~2025의 문서화된 구문 합집합을 대상으로 한다.
+
+`ValidateTree`와 native source encoding 검증을 먼저 수행하며, 구조·범위·encoding 오류는 기존 `*kit.Error`를 반환한다. UTF-16 node의 홀수 byte 경계는 `TREE_ENCODING_BOUNDARY`, ERROR·missing·has-error CST는 `TSQL_TREE_HAS_ERROR`로 거부한다. source decoding은 UTF-8·UTF-16LE/BE·고정 CP949 table을 재사용한다. 이름 token 복사는 512 bytes 안으로 한정한다. context 결과는 ERROR tree에 대한 성공 판정을 대신하지 않는다. WITH·bare hint와 OPTION(TABLE HINT ...)의 같은 table_hint_item을 검사하며 일반 query hint를 table hint로 취급하지 않는다. 숫자 hint 인자는0..2147483647이고 FORCESEEK의 index0은 진단한다.
+
+빈 diagnostics는 이 검사 범위에서 위반을 관측하지 않았다는 뜻이다. 전체 SQL Server의 compile·execution 성공이나 모든 T-SQL의 무결함을 뜻하지 않는다. catalog/name binding, type resolution, collation/configuration, version compatibility, 계획·권한·runtime 검증은 별도의 엔진 근거가 필요하다. 기존 oracle/API claim 및 parser ERROR의 의미는 보존한다.
+
 ## S02 함수와 추가 필드 — 설계 r3
 
 S02는 r2에 아래를 더한다. 기존 S01 함수의 의미와 결과는 profile을 주지 않으면 바뀌지 않는다.
