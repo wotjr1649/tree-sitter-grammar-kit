@@ -1210,7 +1210,11 @@ func TestQualifyErrorNodesInTree(t *testing.T) {
 	f = covered([]string{"bad"})
 	record := func(s string, recs []map[string]any) {
 		if s == "s06-fxa" {
-			recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["form"] = "record"
+			delete(tr, "tree")
+			recs[0]["oracle_claims"].(map[string]string)["api"] = claimBlocked
+			recs[0]["assessment"] = AssessBlocked
 		}
 	}
 	r = f.run(t, f.all(t, qfxAll(qfxMut{record: record})))
@@ -1382,7 +1386,11 @@ func TestQualifySampleW(t *testing.T) {
 		"error-node": {qfxErrorNode("s06-fxa", "bad", 0), claimFail},
 		"no-full-tree": {func(s string, recs []map[string]any) {
 			if s == "s06-fxa" {
-				recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+				tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+				tr["form"] = "record"
+				delete(tr, "tree")
+				recs[0]["oracle_claims"].(map[string]string)["api"] = claimBlocked
+				recs[0]["assessment"] = AssessBlocked
 			}
 		}, claimBlocked},
 	} {
@@ -1484,8 +1492,8 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 			qfxRouteNoReuse(true, claimBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1")(s, recs)
 			if s == "s06-fxa" {
 				tr := recs[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
-				tr["form"] = "summary"
-				delete(tr, "tree")
+				fxSummaryOut(tr)
+				recs[1]["oracle_claims"].(map[string]string)["api"] = claimBlocked
 			}
 		}, ""},
 	} {
@@ -1566,5 +1574,76 @@ func TestQualifyRequiresCompleteAPIProof(t *testing.T) {
 				t.Fatalf("%s: mechanism %s API failures %d codes %v", bad, c.Mechanism, c.Set.APIFails, setCodes(c))
 			}
 		})
+	}
+}
+
+func TestQualifyRejectsMissingTreeEnvelope(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		tree := records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		delete(tree, "tree")
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if c.Mechanism == AssessPass {
+		t.Fatalf("missing full envelope accepted: mechanism %s codes %v", c.Mechanism, setCodes(c))
+	}
+}
+
+func TestQualifyAPIClaimMatchesReducedTree(t *testing.T) {
+	for _, form := range []string{"summary", "record"} {
+		for _, claim := range []string{claimBlocked, claimPass, claimNotClaimed, "unknown", ""} {
+			t.Run(form+"/"+claim, func(t *testing.T) {
+				f := newQfx(t)
+				mut := qfxMut{record: func(set string, records []map[string]any) {
+					if set != "s06-fxa" {
+						return
+					}
+					rec := records[0]
+					tr := rec["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+					if form == "summary" {
+						fxSummaryOut(tr)
+					} else {
+						tr["form"] = "record"
+						delete(tr, "tree")
+					}
+					delete(tr, "api")
+					rec["oracle_claims"].(map[string]string)["api"] = claim
+					if claim == claimBlocked {
+						rec["assessment"] = AssessBlocked
+					}
+				}}
+				r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+				c := cellOf(r, "fxa", "windows-amd64")
+				if slices.Contains(setCodes(c), "API_CLAIM_MISSING") != (claim != claimBlocked) {
+					t.Fatalf("%s %s: %v", form, claim, setCodes(c))
+				}
+			})
+		}
+	}
+}
+
+func TestQualifyMixedSummaryAPIFailure(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		rec := records[1]
+		steps := rec["steps"].([]any)
+		tr := steps[0].(map[string]any)["incremental"].(map[string]any)
+		fxSummaryOut(tr)
+		delete(tr, "api")
+		api := steps[1].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)
+		api["position_navigation_divergences"], api["first_divergence"] = 1, map[string]any{"node": 1}
+		rec["oracle_claims"].(map[string]string)["api"], rec["assessment"] = claimFail, AssessFail
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if slices.Contains(setCodes(c), "API_CLAIM_MISSING") || c.Set.APIFails != 1 {
+		t.Fatalf("%v API failures %d", setCodes(c), c.Set.APIFails)
 	}
 }

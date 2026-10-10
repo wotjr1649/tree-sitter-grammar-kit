@@ -12,7 +12,7 @@
 | [#175](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/175) | SVC가 정상·비정상 구문을 검증하지 못한 관측 행에 머물렀다. 원본 bytes를 profile과 qualification inventory에 등록하고 47개 합성 case의 구문·복구·참조를 검증한다. 비C# inline 대조군은 BLOCKED를 유지한다. |
 | [#176](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/176) | byte 위치로 형제를 찾으면 같은 위치의 zero-width node를 구별하지 못했다. cursor의 visible child에서 정확한 node identity를 찾아 다음 sibling을 반환한다. 실제 large API 후보에는 positional divergence 0을 요구한다. |
 
-r2 replay는 등록 원본과 edit로 composite를 다시 관측한다. 비SVC profile의 composite, 원본 누락, step 순서 변경, 누락·중복·변조 identity와 참조 결과를 거부한다. composite inline tree는 같은 step의 full tree와 입력·CST·metadata 전체가 같아야 한다. API 활성 full tree에는 완전한 API 관측과 사례 claim을 요구하며, 누락과 첫 차이를 PASS로 숨기는 기록을 거부한다. r1 profile은 기존 context 없는 읽기 경로를 유지한다. native와 core의 분리, core의 CGO 비활성화, 기존 시험·resource 한도를 유지한다.
+r2 replay는 등록 원본과 edit로 composite를 다시 관측한다. 비SVC profile의 composite, 원본 누락, step 순서 변경, 누락·중복·변조 identity와 참조 결과를 거부한다. composite inline tree는 같은 step의 full tree와 입력·CST·metadata 전체가 같아야 한다. full/summary/record form과 envelope의 일치를 요구하며, 두 full tree가 모두 null인 composite도 거부한다. API 활성 full tree에는 완전한 API 관측과 사례 claim을 요구하며, 누락과 첫 차이를 PASS로 숨기는 기록을 거부한다. r1 profile은 기존 context 없는 읽기 경로를 유지한다. native와 core의 분리, core의 CGO 비활성화, 기존 시험·resource 한도를 유지한다.
 
 ## 독립 대조와 검증
 

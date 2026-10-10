@@ -23,13 +23,13 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 		g.fail(c.ID, "SVC_SOURCE_MISSING", "r2 재관측용 원본 등록이 없다")
 		return
 	}
-	if c.ExecutionStatus != StatusCompleted {
-		return
-	}
 	if ref {
 		for _, s := range c.Steps {
 			g.check(s.Composite == nil, c.ID, "SVC_REFERENCE_INVALID", "참조 C# case에 composite가 있다")
 		}
+		return
+	}
+	if c.ExecutionStatus != StatusCompleted {
 		return
 	}
 	var versions [][]byte
@@ -86,7 +86,7 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 			c.ID, "SVC_OBSERVATION_MISMATCH", "composite가 등록된 원본 재관측과 다르다")
 		g.check((s.Incremental != nil) == (o.IncludedRanges != nil), c.ID, "SVC_INLINE_MISMATCH", "inline tree 유무가 실제 included range와 다르다")
 		if o.IncludedRanges != nil {
-			g.check(a.Inline != nil && s.Incremental != nil && reflect.DeepEqual(a.Inline.Tree, s.Incremental.Tree) && reflect.DeepEqual(a.Inline.IncludedRanges, o.IncludedRanges), c.ID, "SVC_INLINE_MISMATCH", "inline tree 또는 included range가 실제 step과 다르다")
+			g.check(a.Inline != nil && s.Incremental != nil && (s.Incremental.Form != "full" || s.Incremental.Tree != nil) && reflect.DeepEqual(a.Inline.Tree, s.Incremental.Tree) && reflect.DeepEqual(a.Inline.IncludedRanges, o.IncludedRanges), c.ID, "SVC_INLINE_MISMATCH", "inline tree 또는 included range가 실제 step과 다르다")
 		} else {
 			g.check(a.Inline == nil, c.ID, "SVC_INLINE_MISMATCH", "관측 전용 step에 inline이 있다")
 		}

@@ -683,10 +683,24 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		kit["query_equality"], kit["fact_reproduction"], kit["dynamic_sql"] = c.Oracle.QueryEquality, c.Oracle.FactReproduction, c.Oracle.DynamicSQL
 	}
 	if completed && apiWanted {
-		apiInvalid, fullTrees := false, 0
-		for _, step := range extra.Steps {
-			for _, tree := range []*qTree{step.Incremental, step.Fresh} {
-				if tree == nil || tree.Form != "full" || tree.Status != StatusCompleted {
+		apiInvalid, fullTrees, reducedTrees := false, 0, false
+		observationOnly := svc && len(c.Steps) > 0
+		for _, step := range c.Steps {
+			observationOnly = observationOnly && step.Composite != nil && step.Incremental == nil
+		}
+		for i, step := range extra.Steps {
+			actual := []*rcTree{c.Steps[i].Incremental, c.Steps[i].Fresh}
+			for j, tree := range []*qTree{step.Incremental, step.Fresh} {
+				if tree == nil || tree.Status != StatusCompleted {
+					continue
+				}
+				if tree.Form != "full" {
+					reducedTrees = true
+					continue
+				}
+				if actual[j] == nil || actual[j].Tree == nil {
+					add("API_RECORD_INVALID", path, "API 성공을 검증할 full tree envelope가 없다")
+					apiInvalid = true
 					continue
 				}
 				fullTrees++
@@ -705,8 +719,19 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 				}
 			}
 		}
-		if c.Oracle == nil || fullTrees > 0 && c.Oracle.API != claimPass && c.Oracle.API != claimFail && c.Oracle.API != claimBlocked || fullTrees == 0 && c.Oracle.API == claimPass {
-			add("API_CLAIM_MISSING", path, "등록 API 관측에 대응하는 claim이 없거나 유효하지 않다")
+		claimValid := c.Oracle != nil
+		if claimValid {
+			switch {
+			case observationOnly:
+				claimValid = c.Oracle.API == claimNotClaimed
+			case reducedTrees || fullTrees == 0:
+				claimValid = c.Oracle.API == claimBlocked || fullTrees > 0 && apiInvalid && c.Oracle.API == claimFail
+			default:
+				claimValid = c.Oracle.API == claimPass || c.Oracle.API == claimFail || c.Oracle.API == claimBlocked
+			}
+		}
+		if !claimValid {
+			add("API_CLAIM_MISSING", path, "실제 tree form에 대응하는 API claim이 없거나 유효하지 않다")
 			apiInvalid = true
 		}
 		if apiInvalid && c.Oracle != nil && c.Oracle.API == claimPass {

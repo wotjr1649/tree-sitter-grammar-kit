@@ -53,6 +53,9 @@ type rcTree struct {
 	Digest          string      `json:"digest"`
 	Tree            *rcFullTree `json:"tree"`
 	Summary         *struct {
+		Schema          string        `json:"schema"`
+		Input           rcInput       `json:"input"`
+		Status          string        `json:"status"`
 		Identities      []IdentityRef `json:"identities"`
 		DescendantCount uint64        `json:"descendant_count"`
 		Digest          struct {
@@ -361,7 +364,28 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if t == nil {
 				continue
 			}
-			if t.Form != "full" || t.Tree == nil {
+			shape := t.Form == "full" && t.Tree != nil && t.Summary == nil ||
+				t.Form == "summary" && t.Tree == nil && t.Summary != nil ||
+				t.Form == "record" && t.Tree == nil && t.Summary == nil
+			if !tg.check(shape, name, "TREE_FORM_INVALID", fmt.Sprintf("step %d의 form과 envelope가 다르다", s.Step)) {
+				continue
+			}
+			var input *rcInput
+			if t.Tree != nil {
+				if !tg.check(t.Tree.Schema == TreeSchema && t.Tree.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "full tree schema 또는 status가 다르다") {
+					continue
+				}
+				input = &t.Tree.Input
+			} else if t.Summary != nil {
+				if !tg.check(t.Summary.Schema == TreeSummarySchema && t.Summary.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "summary schema 또는 status가 다르다") {
+					continue
+				}
+				input = &t.Summary.Input
+			}
+			if input != nil && !tg.check(input.SHA256 == s.SourceSHA256 && input.Bytes == s.SourceBytes && (want == nil || input.Encoding == want.Encoding), name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step)) {
+				continue
+			}
+			if t.Form != "full" {
 				ok := t.Summary == nil || (t.Summary.Digest.SHA256 == t.Digest && t.Summary.DescendantCount == t.DescendantCount)
 				if !ok {
 					tg.fail(name, "SUMMARY_INCONSISTENT", "summary digest 또는 node 수가 tree 기록과 다르다")
@@ -378,8 +402,6 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				tg.fail(name, "TREE_DIGEST_MISMATCH", fmt.Sprintf("step %d digest를 다시 계산한 값이 기록과 다르다", s.Step))
 			case uint64(len(nodes)) != t.DescendantCount || nodes[0].HasError != t.HasError:
 				tg.fail(name, "TREE_COUNT_MISMATCH", fmt.Sprintf("step %d node 수 또는 has_error가 nodes와 다르다", s.Step))
-			case t.Tree.Input.SHA256 != s.SourceSHA256 || t.Tree.Input.Bytes != s.SourceBytes:
-				tg.fail(name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step))
 			default:
 				tg.pass()
 			}

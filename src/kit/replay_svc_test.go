@@ -134,7 +134,7 @@ func TestQualifyRejectsStepOrdinal(t *testing.T) {
 func TestSvcReplayBindsInlineTree(t *testing.T) {
 	source := []byte(`<%@ ServiceHost Language="C#" Service="S" %>` + "\nclass S {}")
 	o := ObserveServiceHost(EncodingUTF8, source)
-	for _, bad := range []string{"", "null", "identities", "input", "nodes", "status", "schema", "capabilities", "captures", "encoding_source"} {
+	for _, bad := range []string{"", "null", "both-null", "identities", "input", "nodes", "status", "schema", "capabilities", "captures", "encoding_source"} {
 		data, _ := json.Marshal(o)
 		var m map[string]any
 		_ = json.Unmarshal(data, &m)
@@ -157,6 +157,9 @@ func TestSvcReplayBindsInlineTree(t *testing.T) {
 		}
 		c := &rcCase{ID: "owner", ExecutionStatus: StatusCompleted, Steps: []rcStep{{Composite: &comp, SourceBytes: uint64(len(source)), SourceSHA256: digestHex(source), Incremental: &rcTree{Status: StatusCompleted, Form: "full", Tree: &full}}}}
 		switch bad {
+		case "both-null":
+			comp.Inline.Tree = nil
+			c.Steps[0].Incremental.Tree = nil
 		case "null":
 			comp.Inline.Tree = nil
 		case "identities":
@@ -180,6 +183,18 @@ func TestSvcReplayBindsInlineTree(t *testing.T) {
 		x.checkSvcComposite(c, &IncrementalCase{ID: c.ID, Encoding: EncodingUTF8, SvcSource: source})
 		if (x.gate("case-binding").Failed > 0) != (bad != "") {
 			t.Fatalf("%s: %+v", bad, x.gate("case-binding"))
+		}
+	}
+}
+
+func TestSvcReplayReferenceShapeBeforeStatus(t *testing.T) {
+	source := []byte("class S {}")
+	for _, status := range []string{StatusCompleted, StatusNotRun} {
+		x := &replayEnv{svcFormat: SvcFormat, svcContext: &SvcContext{CodeBehind: []SvcReference{{Name: "a.cs", Case: "ref"}}}}
+		c := &rcCase{ID: "ref", ExecutionStatus: status, Steps: []rcStep{{Composite: &rcComposite{}}}}
+		x.checkSvcComposite(c, &IncrementalCase{SvcSource: source})
+		if x.gate("case-binding").Code != "SVC_REFERENCE_INVALID" {
+			t.Fatalf("%s: %+v", status, x.gate("case-binding"))
 		}
 	}
 }
