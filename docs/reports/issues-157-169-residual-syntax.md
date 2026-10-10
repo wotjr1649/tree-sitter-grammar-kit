@@ -36,7 +36,7 @@ PR head `246f510`의 [CI 38000320983](https://github.com/wotjr1649/tree-sitter-g
 
 Tree-sitter `0.27.0`, Node `24.21.0`, runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`과 등록된 runtime patch를 사용한다. 두 grammar의 독립 workspace 생성, deterministic 비교와 등록한 6개 출력의 reference match가 모두 PASS다. Windows amd64의 GCC `16.2.0`에서 공개 C# 161개 및 T-SQL 109개 집중 대조의 구문 기대값, API 일치와 fact reproduction이 모두 PASS다. C# mandatory-body recovery 5개와 ordinary identifier의 정확한 CST 대조 2개도 추가로 PASS다. 기대값에는 ERROR 여부뿐 아니라 후속 declaration, comment, identifier와 warning ID의 정확한 source 범위를 포함한다.
 
-C# S05 전체 292개와 S06 전체 321개가 PASS다. #170 보완 전 T-SQL S05 993개는 PASS 982개와 오류 tree의 reuse BLOCKED 11개였으며, 이 관측 한계를 위 E 의무 문제로 추적했다. C# SVC 22개는 기존 관측 한계의 BLOCKED다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
+C# S05 전체 292개와 S06 전체 321개가 PASS다. #170 보완 전 T-SQL S05 993개는 PASS 982개와 오류 tree의 reuse BLOCKED 11개였으며, 이 관측 한계를 위 E 의무 문제로 추적했다. C# SVC 전체 행의 assessment는 기존 관측 한계로 BLOCKED였지만, 22개 case는 PASS 14개와 BLOCKED 8개(SVC_INLINE_UNRESOLVED 4, SVC_DIRECTIVE_DIAGNOSTICS 2, SVC_INLINE_NOT_PARSED 1, SVC_INLINE_UNSUPPORTED 1)로 구성됐다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
 
 #170 보완 전 T-SQL S06 1,000개는 PASS 989개와 같은 reuse BLOCKED 11개였다. 999개의 구문 기대값은 모두 PASS이며, syntax expectation을 주장하지 않는 dynamic SQL support 1개는 fact 기대값이 PASS다. 1,000개 전체 API claim은 PASS이며 kit failure와 API finding은 0이다. 오류 tree의 같은 관측 한계가 S05/S06에 두 번 기록되는 것을 22개 새 parser 결함으로 합산하지 않는다.
 
