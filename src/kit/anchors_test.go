@@ -22,11 +22,7 @@ func anchorNodes() []TreeNode {
 func anchorTree(form string) *rcTree {
 	t := &rcTree{Status: StatusCompleted, Form: form}
 	if form == "full" {
-		t.Tree = &struct {
-			Input      rcInput       `json:"input"`
-			Nodes      []TreeNode    `json:"nodes"`
-			Identities []IdentityRef `json:"identities"`
-		}{Nodes: anchorNodes()}
+		t.Tree = &rcFullTree{Nodes: anchorNodes()}
 	}
 	return t
 }

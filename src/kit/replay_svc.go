@@ -86,7 +86,7 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 			c.ID, "SVC_OBSERVATION_MISMATCH", "composite가 등록된 원본 재관측과 다르다")
 		g.check((s.Incremental != nil) == (o.IncludedRanges != nil), c.ID, "SVC_INLINE_MISMATCH", "inline tree 유무가 실제 included range와 다르다")
 		if o.IncludedRanges != nil {
-			g.check(a.Inline != nil && reflect.DeepEqual(a.Inline.IncludedRanges, o.IncludedRanges), c.ID, "SVC_INLINE_MISMATCH", "included range가 실제 원본 경계와 다르다")
+			g.check(a.Inline != nil && s.Incremental != nil && reflect.DeepEqual(a.Inline.Tree, s.Incremental.Tree) && reflect.DeepEqual(a.Inline.IncludedRanges, o.IncludedRanges), c.ID, "SVC_INLINE_MISMATCH", "inline tree 또는 included range가 실제 step과 다르다")
 		} else {
 			g.check(a.Inline == nil, c.ID, "SVC_INLINE_MISMATCH", "관측 전용 step에 inline이 있다")
 		}

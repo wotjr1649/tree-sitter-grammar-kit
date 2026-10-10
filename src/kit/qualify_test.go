@@ -110,9 +110,13 @@ func qfxRecord(id, src string, edits bool, query bool) map[string]any {
 		"oracle_claims": map[string]string{"query_equality": qeq, "query_expectations": qe, "api": "PASS", "fact_reproduction": "NOT_CLAIMED", "dynamic_sql": "NOT_CLAIMED"}}
 }
 
+func qfxAPI() map[string]any {
+	return map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil, "position_navigation_divergences": 0, "first_divergence": nil}
+}
+
 func qfxStep(i int, s string, fresh, query bool) map[string]any {
 	inc := fxTreeOut(s, false)
-	inc["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil}
+	inc["api"] = qfxAPI()
 	if query {
 		n := uint32(len(s))
 		inc["queries"] = []any{map[string]any{"id": "q.x", "status": "COMPLETED", "code": "", "evaluation": "NOT_EVALUATED",
@@ -120,7 +124,9 @@ func qfxStep(i int, s string, fresh, query bool) map[string]any {
 	}
 	m := map[string]any{"step": i, "source_bytes": len(s), "source_sha256": sum([]byte(s)), "edit": nil, "route": nil, "comparison": nil, "incremental": inc, "fresh": nil}
 	if fresh {
-		m["fresh"] = fxTreeOut(s, false)
+		freshTree := fxTreeOut(s, false)
+		freshTree["api"] = qfxAPI()
+		m["fresh"] = freshTree
 		m["route"] = map[string]any{"edit_has_changes": true, "edited_root_end_byte": len(s), "reused_nodes": 1, "fresh_reused_nodes": 0, "proven": true}
 		m["comparison"] = map[string]any{"equal": true, "first_difference": nil}
 		m["query_comparison"] = map[string]any{"equal": true}
@@ -1516,5 +1522,49 @@ func TestQualifyRejectsPositionalAPIPass(t *testing.T) {
 		if c.Set.APIFails != 1 || c.Mechanism == AssessPass {
 			t.Fatalf("positional API PASS: %+v", c)
 		}
+	}
+}
+
+func TestQualifyRequiresCompleteAPIProof(t *testing.T) {
+	for _, bad := range []string{"", "claims", "claim", "api", "null", "empty", "revision", "consistent", "first_difference", "position_navigation_divergences", "first_divergence", "false", "difference", "divergence", "fresh"} {
+		t.Run(bad, func(t *testing.T) {
+			f := newQfx(t)
+			mut := qfxMut{record: func(set string, records []map[string]any) {
+				if set != "s06-fxa" {
+					return
+				}
+				rec := records[1]
+				step := rec["steps"].([]any)[1].(map[string]any)
+				tree := step["incremental"].(map[string]any)
+				api := tree["api"].(map[string]any)
+				switch bad {
+				case "claims":
+					delete(rec, "oracle_claims")
+				case "claim":
+					delete(rec["oracle_claims"].(map[string]string), "api")
+				case "api":
+					delete(tree, "api")
+				case "null":
+					tree["api"] = nil
+				case "empty":
+					tree["api"] = map[string]any{}
+				case "revision", "consistent", "first_difference", "position_navigation_divergences", "first_divergence":
+					delete(api, bad)
+				case "false":
+					api["consistent"] = false
+				case "difference":
+					api["first_difference"] = map[string]any{"node": 1}
+				case "divergence":
+					api["first_divergence"] = map[string]any{"node": 1}
+				case "fresh":
+					delete(step["fresh"].(map[string]any), "api")
+				}
+			}}
+			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+			c := cellOf(r, "fxa", "windows-amd64")
+			if (c.Mechanism == AssessPass) != (bad == "") || (c.Set.APIFails > 0) != (bad != "") {
+				t.Fatalf("%s: mechanism %s API failures %d codes %v", bad, c.Mechanism, c.Set.APIFails, setCodes(c))
+			}
+		})
 	}
 }

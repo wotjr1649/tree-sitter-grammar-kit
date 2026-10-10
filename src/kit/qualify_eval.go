@@ -629,7 +629,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
 		x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, errNodes, &c, &extra, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat)
+		q.judgeCase(s, qc, errNodes, &c, &extra, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
@@ -669,7 +669,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string, svc bool) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string, svc, apiWanted bool) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -681,28 +681,38 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	kit := map[string]string{"incremental_equality": c.Claims.IncrementalEquality, "incremental_route": c.Claims.IncrementalRoute}
 	if c.Oracle != nil {
 		kit["query_equality"], kit["fact_reproduction"], kit["dynamic_sql"] = c.Oracle.QueryEquality, c.Oracle.FactReproduction, c.Oracle.DynamicSQL
-		apiInvalid := false
+	}
+	if completed && apiWanted {
+		apiInvalid, fullTrees := false, 0
 		for _, step := range extra.Steps {
 			for _, tree := range []*qTree{step.Incremental, step.Fresh} {
-				if tree == nil || len(tree.API) == 0 || string(tree.API) == "null" {
+				if tree == nil || tree.Form != "full" || tree.Status != StatusCompleted {
 					continue
 				}
+				fullTrees++
 				var obs struct {
-					Consistent         *bool `json:"consistent"`
-					PositionNavigation int   `json:"position_navigation_divergences"`
+					Revision           string         `json:"revision"`
+					Consistent         *bool          `json:"consistent"`
+					First              jsontext.Value `json:"first_difference"`
+					PositionNavigation *int           `json:"position_navigation_divergences"`
+					FirstDivergence    jsontext.Value `json:"first_divergence"`
 				}
-				if err := jsonv2.Unmarshal(tree.API, &obs); err != nil || obs.PositionNavigation < 0 {
-					add("API_RECORD_INVALID", path, "API navigation 관측을 읽을 수 없다")
+				if err := jsonv2.Unmarshal(tree.API, &obs); err != nil || obs.Revision != "tsgk-api/r1" || obs.Consistent == nil || obs.PositionNavigation == nil || *obs.PositionNavigation < 0 || len(obs.First) == 0 || len(obs.FirstDivergence) == 0 {
+					add("API_RECORD_INVALID", path, "full tree의 필수 API 관측이 없거나 유효하지 않다")
 					apiInvalid = true
-				} else if obs.PositionNavigation > 0 || obs.Consistent != nil && !*obs.Consistent {
+				} else if !*obs.Consistent || *obs.PositionNavigation > 0 || string(obs.First) != "null" || string(obs.FirstDivergence) != "null" {
 					apiInvalid = true
 				}
 			}
 		}
-		if apiInvalid && c.Oracle.API == claimPass {
-			add("API_CLAIM_MISMATCH", path, "positional divergence가 있는 API를 PASS로 주장했다")
+		if c.Oracle == nil || fullTrees > 0 && c.Oracle.API != claimPass && c.Oracle.API != claimFail && c.Oracle.API != claimBlocked || fullTrees == 0 && c.Oracle.API == claimPass {
+			add("API_CLAIM_MISSING", path, "등록 API 관측에 대응하는 claim이 없거나 유효하지 않다")
+			apiInvalid = true
 		}
-		if apiInvalid || c.Oracle.API == claimFail || c.Oracle.API == claimBlocked {
+		if apiInvalid && c.Oracle != nil && c.Oracle.API == claimPass {
+			add("API_CLAIM_MISMATCH", path, "누락 또는 차이가 있는 API를 PASS로 주장했다")
+		}
+		if apiInvalid || c.Oracle != nil && (c.Oracle.API == claimFail || c.Oracle.API == claimBlocked) {
 			s.APIFails++
 		}
 	}

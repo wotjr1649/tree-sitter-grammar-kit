@@ -24,28 +24,35 @@ const (
 )
 
 type rcInput struct {
-	Encoding string `json:"encoding"`
-	Bytes    uint64 `json:"bytes"`
-	SHA256   string `json:"sha256"`
+	Encoding       string `json:"encoding"`
+	EncodingSource string `json:"encoding_source,omitempty"`
+	Bytes          uint64 `json:"bytes"`
+	SHA256         string `json:"sha256"`
 }
 
 type rcDecl struct {
 	Status string `json:"status"`
 }
 
+type rcFullTree struct {
+	Schema       string            `json:"schema"`
+	Input        rcInput           `json:"input"`
+	Status       string            `json:"status"`
+	Capabilities map[string]string `json:"capabilities"`
+	Nodes        []TreeNode        `json:"nodes"`
+	Captures     jsontext.Value    `json:"captures"`
+	Identities   []IdentityRef     `json:"identities"`
+}
+
 type rcTree struct {
-	Status          string `json:"status"`
-	Code            string `json:"code"`
-	Form            string `json:"form"`
-	DescendantCount uint64 `json:"descendant_count"`
-	HasError        bool   `json:"has_error"`
-	Digest          string `json:"digest"`
-	Tree            *struct {
-		Input      rcInput       `json:"input"`
-		Nodes      []TreeNode    `json:"nodes"`
-		Identities []IdentityRef `json:"identities"`
-	} `json:"tree"`
-	Summary *struct {
+	Status          string      `json:"status"`
+	Code            string      `json:"code"`
+	Form            string      `json:"form"`
+	DescendantCount uint64      `json:"descendant_count"`
+	HasError        bool        `json:"has_error"`
+	Digest          string      `json:"digest"`
+	Tree            *rcFullTree `json:"tree"`
+	Summary         *struct {
 		Identities      []IdentityRef `json:"identities"`
 		DescendantCount uint64        `json:"descendant_count"`
 		Digest          struct {
@@ -100,10 +107,8 @@ type rcComposite struct {
 	Coverage             SvcCoverage     `json:"coverage"`
 	Identities           []IdentityRef   `json:"identities"`
 	Inline               *struct {
-		IncludedRanges []Span `json:"included_ranges"`
-		Tree           *struct {
-			Identities []IdentityRef `json:"identities"`
-		} `json:"tree"`
+		IncludedRanges []Span      `json:"included_ranges"`
+		Tree           *rcFullTree `json:"tree"`
 	} `json:"inline"`
 }
 

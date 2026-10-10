@@ -130,3 +130,56 @@ func TestQualifyRejectsStepOrdinal(t *testing.T) {
 		t.Fatalf("ordinal mismatch accepted: %+v", c)
 	}
 }
+
+func TestSvcReplayBindsInlineTree(t *testing.T) {
+	source := []byte(`<%@ ServiceHost Language="C#" Service="S" %>` + "\nclass S {}")
+	o := ObserveServiceHost(EncodingUTF8, source)
+	for _, bad := range []string{"", "null", "identities", "input", "nodes", "status", "schema", "capabilities", "captures", "encoding_source"} {
+		data, _ := json.Marshal(o)
+		var m map[string]any
+		_ = json.Unmarshal(data, &m)
+		m["schema"], m["format"] = SvcCompositeSchema, SvcFormat
+		ids := []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", digestHex(source)}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+		m["identities"] = ids
+		m["input"] = rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8}
+		tree := fxTreeOut(string(source), false)["tree"].(map[string]any)
+		tree["captures"] = nil
+		m["inline"] = map[string]any{"included_ranges": o.IncludedRanges, "tree": tree}
+		data, _ = json.Marshal(m)
+		var comp rcComposite
+		if err := json.Unmarshal(data, &comp); err != nil {
+			t.Fatal(err)
+		}
+		data, _ = json.Marshal(tree)
+		var full rcFullTree
+		if err := json.Unmarshal(data, &full); err != nil {
+			t.Fatal(err)
+		}
+		c := &rcCase{ID: "owner", ExecutionStatus: StatusCompleted, Steps: []rcStep{{Composite: &comp, SourceBytes: uint64(len(source)), SourceSHA256: digestHex(source), Incremental: &rcTree{Status: StatusCompleted, Form: "full", Tree: &full}}}}
+		switch bad {
+		case "null":
+			comp.Inline.Tree = nil
+		case "identities":
+			comp.Inline.Tree.Identities = nil
+		case "input":
+			comp.Inline.Tree.Input.SHA256 = fxPolicy
+		case "nodes":
+			comp.Inline.Tree.Nodes[0].Type = "forged"
+		case "status":
+			comp.Inline.Tree.Status = StatusNotRun
+		case "schema":
+			comp.Inline.Tree.Schema = "wrong"
+		case "capabilities":
+			comp.Inline.Tree.Capabilities["api"] = "UNSUPPORTED"
+		case "captures":
+			comp.Inline.Tree.Captures = []byte(`[]`)
+		case "encoding_source":
+			comp.Inline.Tree.Input.EncodingSource = "wrong"
+		}
+		x := &replayEnv{svcFormat: SvcFormat}
+		x.checkSvcComposite(c, &IncrementalCase{ID: c.ID, Encoding: EncodingUTF8, SvcSource: source})
+		if (x.gate("case-binding").Failed > 0) != (bad != "") {
+			t.Fatalf("%s: %+v", bad, x.gate("case-binding"))
+		}
+	}
+}
