@@ -143,6 +143,8 @@ S05가 구현 전에 고정한 driver protocol·edit·encoding·한도·상태·
 
 모든 step에 included range가 있으면 기존 한 native history를 사용한다. 손상으로 range가 없는 step은 관측 결과를 남기고 연속된 파싱 가능 구간별로 native process를 실행한다. gap 뒤 첫 tree에는 `restarted: true`를 기록하고 transition edit를 보존한다. `segments[{start_step,end_step,process,claims}]`는 각 구간의 실행·회수 증거이며 범위는 half-open step index다. gap을 가로지르는 whole-history equality·reuse는 NOT_CLAIMED다. 구간 내부 equality·reuse의 FAIL/BLOCKED는 최종 사례 판정과 replay에서 유지한다. query equality도 gap 때문에 PASS를 주장하지 않지만 구간 내부 FAIL/BLOCKED는 유지한다. 같은 step의 복수 expectation은 등록 순서의 독립 결과로 모두 보존한다. 정상·복구 tree와 구간 내 fresh 비교를 유지하며 raw 응답 없는 구간을 raw 재실행 증거로 표시하지 않는다.
 
+r2 관측 전용 완료 사례에도 `oracle_claims`를 초기 NOT_CLAIMED로 명시한다. inline tree가 없는 결과의 API는 PASS나 BLOCKED로 대체하지 않는다. 요청된 query/fact의 관측 불가능 판정은 별도로 수행하며 기존 composite FAIL/BLOCKED를 유지한다.
+
 r2 replay와 qualification은 hash/bytes로 고정한 등록 source 및 edits에서 directive·진단 위치·기본 언어 provenance·CodeBehind 이름→case·included range를 재관측한다. composite 삭제, source/문맥/참조 바꿔치기, tree 유무와 range 불일치는 증거 오류다. 참조 target은 별도로 파싱하는 일반 C#이며 SVC owner 자체를 참조 target으로 대체하지 않는다. CodeBehind mapping이 같은 owner case를 가리키면 directive 앞의 주석·문자열·공백과 무관하게 SVC_REFERENCE_INVALID로 거부한다. batch operation의 참조 mapping은 거부한다.
 
 Framework의 [ServiceParser.ParseString](https://github.com/microsoft/referencesource/blob/main/System.ServiceModel.Activation/System/ServiceModel/Activation/ServiceParser.cs)은 regex match를 반복하고 마지막 directive 뒤의 suffix를 inline source로 삼는다. 따라서 inline 문자열·주석의 directive 모양도 인식될 수 있다. r2는 이 동작을 호환하며 prefix-only 규칙으로 바꾸지 않는다. 실제 WCF 활성화·compiler·type binding·IIS·assembly dependency 성공은 구문 판정의 범위 밖이다.

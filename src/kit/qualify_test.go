@@ -970,6 +970,31 @@ func TestQualifySvcExpectedAssessment(t *testing.T) {
 	}
 }
 
+func TestQualifySvcObservationOnlyAPIClaim(t *testing.T) {
+	for _, claim := range []string{claimNotClaimed, claimPass, claimBlocked, "missing"} {
+		f := newQfx(t)
+		w := f.svcRole()
+		w.API = true
+		w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		mut := qfxMut{record: func(set string, records []map[string]any) {
+			qfxSvcObserved(set, records)
+			if set != "s06-fxs" {
+				return
+			}
+			if claim == "missing" {
+				delete(records[0], "oracle_claims")
+			} else {
+				records[0]["oracle_claims"].(map[string]string)["api"] = claim
+			}
+		}}
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+		row := roleRow(r, "fx-svc", "windows-amd64")
+		if (row.Mechanism == AssessPass) != (claim == claimNotClaimed) || (row.Sets[0].APIFails == 0) != (claim == claimNotClaimed) {
+			t.Fatalf("%s: %s API failures %d", claim, row.Mechanism, row.Sets[0].APIFails)
+		}
+	}
+}
+
 // #76 inventory guard: the registered verdict belongs only to an SVC-format case that
 // covers no row and needs no tree, as a PASS without code or a BLOCKED with one.
 func TestQualificationInventorySvcExpectation(t *testing.T) {

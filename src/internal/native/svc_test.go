@@ -74,6 +74,28 @@ func TestSvcComposite(t *testing.T) {
 	}
 }
 
+func TestSvcObservationOnlyOracleClaims(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	for _, format := range []string{kit.SvcLegacyFormat, kit.SvcFormat} {
+		for _, api := range []bool{false, true} {
+			x := oracleContext(api)
+			x.Format = format
+			for _, source := range []string{`<%@ ServiceHost Service="S" %>`, `<%@ ServiceHost Language="VB" Service="S" %>` + "\nClass S", `<%@ ServiceHost Service="S"`, `<%@ ServiceHost Service="S" Bogus="x" %>`} {
+				r := runOracleCase(t, b, x, source, nil)
+				want := OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+				if r.ExecutionStatus != kit.StatusCompleted || r.Process != nil || r.Oracle == nil || *r.Oracle != want || len(r.Steps) != 1 || r.Steps[0].Incremental != nil {
+					t.Fatalf("%s API %t: %s oracle %+v", format, api, r.ExecutionStatus, r.Oracle)
+				}
+				assessment := r.Assessment
+				judgeOracle(&r, kit.OracleCase{}, kit.OracleProfile{}, nil, x, []byte(source))
+				if r.Assessment != assessment || *r.Oracle != want {
+					t.Fatalf("%s API %t: oracle changed %s to %s", format, api, assessment, r.Assessment)
+				}
+			}
+		}
+	}
+}
+
 func TestSvcExplicitReferenceAndSelfRejection(t *testing.T) {
 	b := fixtureBuild(t, "plain")
 	x := testContext("native-parse-edit")

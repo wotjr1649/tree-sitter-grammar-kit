@@ -304,6 +304,9 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 			}
 			// No C# inline code to parse in some step: the composite is the directive
 			// observation alone and no driver process runs.
+			if req.Revision() == ProtocolR2 {
+				out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+			}
 			for k, o := range svc {
 				sum := sha256.Sum256(versions[k])
 				in := TreeInput{Bytes: uint64(len(versions[k])), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}

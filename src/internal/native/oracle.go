@@ -515,7 +515,9 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 		cr.Facts = f
 	}
 	if cr.ExecutionStatus == kit.StatusCompleted {
+		assessment := cr.Assessment
 		foldAssessment(cr)
+		cr.Assessment = worse(assessment, cr.Assessment)
 		if cr.Assessment == kit.AssessFail && (cr.Code == "" || strings.HasPrefix(cr.Code, routeUnobservablePrefix)) {
 			// a blocked route code names the case only when nothing fails
 			cr.Code = "ORACLE_CLAIM_FAILED"

@@ -186,8 +186,23 @@ function Add-RequirementResult([string]$Label, $Case, $QueryFailures) {
   if ($qe -in @('FAIL', 'BLOCKED')) {
     $script:summary.requirement_results += [ordered]@{ case = "$Label/$($Case.id)"; claim = 'query_expectations'; result = $qe; code = $Case.code; failures = @($QueryFailures) }
   }
-  if ($Case.claims.incremental_route -eq 'BLOCKED') {
-    $script:summary.requirement_results += [ordered]@{ case = "$Label/$($Case.id)"; claim = 'incremental_route'; result = 'BLOCKED'; code = $Case.code; failures = @() }
+}
+
+function Add-IncrementalResult([string]$Label, $Case, $Segments = @()) {
+  $parts = @([ordered]@{ label = "$Label/$($Case.id)"; claims = $Case.claims })
+  if ($Case.PSObject.Properties['segments']) {
+    $Segments = @($Case.segments)
+  }
+  foreach ($s in @($Segments)) {
+    $parts += [ordered]@{ label = "$Label/$($Case.id) segment [$($s.start_step),$($s.end_step))"; claims = $s.claims }
+  }
+  foreach ($p in $parts) {
+    if ($p.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $p.claims.incremental_route -eq 'FAIL') {
+      $script:summary.failures += "$($p.label): incremental $($p.claims.incremental_equality)/$($p.claims.incremental_route) $($Case.code)"
+    }
+    if ($p.claims.incremental_route -eq 'BLOCKED') {
+      $script:summary.requirement_results += [ordered]@{ case = $p.label; claim = 'incremental_route'; result = 'BLOCKED'; code = $Case.code; failures = @() }
+    }
   }
 }
 
@@ -205,7 +220,7 @@ function Add-Result([string]$Label, $Run) {
       steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $(if ($_.incremental) { $_.incremental.has_error } else { $null }); digest = $(if ($_.incremental) { $_.incremental.digest } else { $null }); equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
             svc_coverage = $(if ($_.PSObject.Properties['composite']) { $_.composite.coverage } else { $null }) } }) }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "$Label/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "$Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route) $($c.code)" }
+    Add-IncrementalResult $Label $c
     Add-RequirementResult $Label $c @()
   }
   if ($res.execution_status -ne 'COMPLETED' -and -not @($res.cases).Count) { $script:summary.failures += "${Label}: $($res.execution_status) build or refusal" }
@@ -315,7 +330,9 @@ function Add-OracleResult([string]$Label, $Run) {
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; oracle = $c.oracle_claims
       query_expectation_failures = $qfails; facts = $facts }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "oracle $Label/$($c.id): $($c.execution_status) $($c.code)" }
-    if ($c.claims.incremental_equality -in @('FAIL', 'BLOCKED') -or $c.claims.incremental_route -eq 'FAIL') { $script:summary.failures += "oracle $Label/$($c.id): incremental $($c.claims.incremental_equality)/$($c.claims.incremental_route)" }
+    $segments = @()
+    if ($detail -and $detail.PSObject.Properties['segments']) { $segments = @($detail.segments) }
+    Add-IncrementalResult "oracle $Label" $c $segments
     Add-RequirementResult "oracle $Label" $c $qfails
     if ($c.oracle_claims) {
       foreach ($k in @('query_equality', 'fact_reproduction', 'dynamic_sql')) {
