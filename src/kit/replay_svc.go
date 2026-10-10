@@ -41,7 +41,10 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 			return
 		}
 		var err error
-		versions, _, err = ApplyEdits(want.Encoding, want.SvcSource, want.Edits, uint64(len(want.SvcSource))+1<<20)
+		if !g.check(x.nativeInputBytes > 0, c.ID, "SVC_OPERATION_UNREGISTERED", "등록 native operation의 입력 상한이 없다") {
+			return
+		}
+		versions, _, err = ApplyEdits(want.Encoding, want.SvcSource, want.Edits, x.nativeInputBytes)
 		if err != nil {
 			g.fail(c.ID, "SVC_SOURCE_INVALID", "등록된 원본의 edit가 유효하지 않다")
 			return
@@ -83,7 +86,7 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 			}
 		}
 		a := s.Composite
-		g.check(a.Schema == SvcCompositeSchema && a.Format == SvcFormat && a.Input.SHA256 == digestHex(versions[i]) && a.Input.Bytes == uint64(len(versions[i])) && a.Input.Encoding == want.Encoding &&
+		g.check(a.Schema == SvcCompositeSchema && a.Format == SvcFormat && a.Input.SHA256 == digestHex(versions[i]) && a.Input.Bytes == uint64(len(versions[i])) && a.Input.Encoding == want.Encoding && a.Input.EncodingSource == SourceDeclaration &&
 			reflect.DeepEqual(a.Directive, o.Directive) && reflect.DeepEqual(a.AdditionalDirectives, o.AdditionalDirectives) && reflect.DeepEqual(a.Language, o.Language) && reflect.DeepEqual(a.CodeBehind, cb) && a.Coverage == o.Coverage,
 			c.ID, "SVC_OBSERVATION_MISMATCH", "composite가 등록된 원본 재관측과 다르다")
 		g.check((s.Incremental != nil) == (o.IncludedRanges != nil), c.ID, "SVC_INLINE_MISMATCH", "inline tree 유무가 실제 included range와 다르다")

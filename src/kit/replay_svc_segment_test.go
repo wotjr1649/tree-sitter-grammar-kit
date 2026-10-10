@@ -114,7 +114,7 @@ func TestSvcQualificationKeepsRecordedSegmentFailures(t *testing.T) {
 				qc := &QualCase{ID: c.ID, Expect: []StepExpectation{{Step: 2, Syntax: "ERROR"}}}
 				kitFailed := false
 				q := &qualifier{}
-				q.judgeCase(s, qc, nil, &c, &qRecord{}, out, func(code, _, _ string) { kitFailed = kitFailed || code == "KIT_CLAIM_FAILED" }, "synthetic", true, false)
+				q.judgeCase(s, qc, nil, &c, &qRecord{}, out, NativeOperations()["native-parse-edit"].InputBytes, func(code, _, _ string) { kitFailed = kitFailed || code == "KIT_CLAIM_FAILED" }, "synthetic", true, false)
 				if s.checks[c.ID] != c.Assessment || kitFailed != (failure != "blocked-route") {
 					t.Fatalf("failure hidden: check=%s kitFailed=%v", s.checks[c.ID], kitFailed)
 				}
@@ -225,7 +225,7 @@ func TestSvcSegmentExpectationsAndSingletons(t *testing.T) {
 				qc.Expect = append(qc.Expect, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains})
 			}
 			q := &qualifier{}
-			q.judgeCase(s, qc, nil, &c, &qRecord{}, out, func(_, _, _ string) {}, "synthetic", true, false)
+			q.judgeCase(s, qc, nil, &c, &qRecord{}, out, NativeOperations()["native-parse-edit"].InputBytes, func(_, _, _ string) {}, "synthetic", true, false)
 			if s.checks[c.ID] != want {
 				t.Fatalf("check=%s want=%s", s.checks[c.ID], want)
 			}
@@ -238,13 +238,13 @@ func TestSvcSegmentExpectationsAndSingletons(t *testing.T) {
 
 func TestSvcObservationOnlyRejectsUnexpectedSegments(t *testing.T) {
 	for _, format := range []string{SvcFormat, SvcLegacyFormat, ""} {
-		x := &replayEnv{svcFormat: format, seen: map[string]map[string]bool{}}
+		x := &replayEnv{svcFormat: format, nativeInputBytes: NativeOperations()["native-parse-edit"].InputBytes, seen: map[string]map[string]bool{}}
 		source := []byte(`<%@ ServiceHost Service="S" %>`)
 		o := ObserveServiceHost(EncodingUTF8, source)
 		c := rcCase{ID: "synthetic", ExecutionStatus: StatusCompleted, Assessment: AssessPass,
 			Input: NativeInput{Bytes: uint64(len(source)), SHA256: digestHex(source)},
 			Steps: []rcStep{{SourceBytes: uint64(len(source)), SourceSHA256: digestHex(source), Composite: &rcComposite{
-				Schema: SvcCompositeSchema, Format: SvcFormat, Input: rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8},
+				Schema: SvcCompositeSchema, Format: SvcFormat, Input: rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8, EncodingSource: SourceDeclaration},
 				Directive: o.Directive, Language: o.Language, Coverage: o.Coverage,
 				Identities: []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", digestHex(source)}, {"policy", "tsgk-native-policy/r1", fxPolicy}},
 			}}}, Segments: []rcSvcSegment{{StartStep: 0, EndStep: 1}}}

@@ -94,7 +94,7 @@ func TestSvcReplayCompositeSyntax(t *testing.T) {
 func TestSvcReplayRejectsCompositeTampering(t *testing.T) {
 	source := []byte(`<%@ ServiceHost Service="S" CodeBehind="A.cs" %>`)
 	ctx := &SvcContext{DefaultLanguage: "C#", LanguageSource: "owned", CodeBehind: []SvcReference{{Name: "A.cs", Case: "ref"}, {Name: "B.cs", Case: "other"}}}
-	for _, bad := range []string{"", "removed", "language", "spelling", "resolution", "diagnostic", "input", "tree", "missing-source", "identity-missing", "identity-duplicate", "identity-source", "identity-schema", "noncompleted-missing-source"} {
+	for _, bad := range []string{"", "removed", "language", "spelling", "resolution", "diagnostic", "input", "encoding-source-missing", "encoding-source-bom", "tree", "missing-source", "identity-missing", "identity-duplicate", "identity-source", "identity-schema", "noncompleted-missing-source"} {
 		o := ObserveServiceHostWithContext(EncodingUTF8, source, ctx)
 		o.CodeBehind.Resolution = "PARSED"
 		data, _ := json.Marshal(o)
@@ -102,7 +102,7 @@ func TestSvcReplayRejectsCompositeTampering(t *testing.T) {
 		_ = json.Unmarshal(data, &m)
 		m["schema"], m["format"] = SvcCompositeSchema, SvcFormat
 		m["identities"] = []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", digestHex(source)}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
-		m["input"] = rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8}
+		m["input"] = rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8, EncodingSource: SourceDeclaration}
 		data, _ = json.Marshal(m)
 		var comp rcComposite
 		if e := json.Unmarshal(data, &comp); e != nil {
@@ -124,6 +124,10 @@ func TestSvcReplayRejectsCompositeTampering(t *testing.T) {
 			comp.Directive.Diagnostics = []string{"ATTRIBUTE_UNKNOWN"}
 		case "input":
 			comp.Input.SHA256 = "wrong"
+		case "encoding-source-missing":
+			comp.Input.EncodingSource = ""
+		case "encoding-source-bom":
+			comp.Input.EncodingSource = SourceBOM
 		case "tree":
 			c.Steps[0].Incremental = &rcTree{Status: StatusCompleted}
 		case "identity-missing":
@@ -140,7 +144,7 @@ func TestSvcReplayRejectsCompositeTampering(t *testing.T) {
 		case "missing-source":
 			want.SvcSource = nil
 		}
-		x := &replayEnv{svcFormat: SvcFormat, svcContext: ctx}
+		x := &replayEnv{svcFormat: SvcFormat, svcContext: ctx, nativeInputBytes: NativeOperations()["native-parse-edit"].InputBytes}
 		x.checkSvcComposite(c, want)
 		if (x.gate("case-binding").Failed > 0) != (bad != "") {
 			t.Fatalf("%s: %+v", bad, x.gate("case-binding"))
@@ -206,7 +210,7 @@ func TestSvcReplayBindsInlineTree(t *testing.T) {
 		m["schema"], m["format"] = SvcCompositeSchema, SvcFormat
 		ids := []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", digestHex(source)}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
 		m["identities"] = ids
-		m["input"] = rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8}
+		m["input"] = rcInput{Bytes: uint64(len(source)), SHA256: digestHex(source), Encoding: EncodingUTF8, EncodingSource: SourceDeclaration}
 		tree := fxTreeOut(string(source), false)["tree"].(map[string]any)
 		tree["captures"] = nil
 		m["inline"] = map[string]any{"included_ranges": o.IncludedRanges, "tree": tree}
@@ -244,7 +248,7 @@ func TestSvcReplayBindsInlineTree(t *testing.T) {
 		case "encoding_source":
 			comp.Inline.Tree.Input.EncodingSource = "wrong"
 		}
-		x := &replayEnv{svcFormat: SvcFormat}
+		x := &replayEnv{svcFormat: SvcFormat, nativeInputBytes: NativeOperations()["native-parse-edit"].InputBytes}
 		x.checkSvcComposite(c, &IncrementalCase{ID: c.ID, Encoding: EncodingUTF8, SvcSource: source})
 		if (x.gate("case-binding").Failed > 0) != (bad != "") {
 			t.Fatalf("%s: %+v", bad, x.gate("case-binding"))

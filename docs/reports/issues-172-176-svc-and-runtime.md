@@ -46,3 +46,5 @@ sibling 탐색의 visible prefix 반복은 owned plain grammar의 27,001 node·5
 후속 리뷰에서 public qualification이 올바르게 FAIL/BLOCKED로 기록된 segment를 최상위 NOT_CLAIMED 때문에 놓치는 경로를 추가 확인했다. 세 구간 각각의 equality·route·query 실패, segment claim 누락·변조를 회귀시험으로 재현했다. replay의 기존 comparator 결과로 구간 claim을 재계산하고 qualification에 전달한다. 마지막 구간, 한 step 구간, 같은 step의 복수 기대값, gap 기대값과 directive diagnostic을 별도 검사하며 observation-only 기록의 unexpected segment도 거부한다.
 
 Linux UBSan에서 identity fixture의 내부 `ts_tree_new(..., NULL, 0)` 호출이 non-null `memcpy` 입력 규칙을 위반했다. fixture가 실제 zero-width/positive tail 범위의 `TSRange`를 전달하도록 수정했다. sibling·cursor·cross-tree assertion, sanitizer 설정과 runtime product patch는 유지한다.
+
+후속 자동 리뷰의 네 replay 경계도 수정 전 실패로 재현했다. 관측 전용 기록이 tree 없는 API/equality/route claim을 우회하는 경로, producer의 32MiB source 한도에 못 미치는 임의 edit 상한, fresh-only gap의 nil pointer panic, native full·summary encoding provenance의 누락/변조 수용이다. 공유 replay와 qualification 호출부에 등록 operation의 입력 한도를 전달하고, 관측 전용 claim과 gap 형태를 검증한다. query/fact의 recorded claim은 UNRESOLVED로 남기며 native envelope와 composite의 DECLARATION provenance를 검사한다. 기존 정상 S05/Oracle 기록과 1MiB 이상 edit의 정상 대조군을 음성 대조군과 함께 확인한다.

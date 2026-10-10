@@ -276,10 +276,19 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			"완료되지 않은 case가 허용되지 않는 판정이나 claim을 가진다")
 		return out
 	}
+	if x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat {
+		for _, s := range c.Steps {
+			if s.Composite != nil && s.Incremental == nil {
+				st.check(s.Fresh == nil && s.Comparison == nil && s.Route == nil && s.QueryCompare == nil && !s.Restarted, name, "STATUS_TREE_INCONSISTENT", "관측 공백에 native tree나 비교 기록이 있다")
+			}
+		}
+	}
 	if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Incremental != nil || s.Composite == nil }) {
 		// an SVC observation-only case: no inline tree; the verdict is the S05 rule over the
 		// recorded directive observations
 		st.pass()
+		x.gate("incremental-equality").check(c.Claims.IncrementalEquality == claimNotClaimed, name, "CLAIM_MISMATCH", "관측 전용 SVC는 incremental equality를 주장할 수 없다")
+		x.gate("incremental-route").check(c.Claims.IncrementalRoute == claimNotClaimed, name, "CLAIM_MISMATCH", "관측 전용 SVC는 incremental route를 주장할 수 없다")
 		got, code := svcVerdict(c.Steps, want != nil && len(want.Expect) > 0)
 		exps := []StepExpectation{}
 		if want != nil {
@@ -289,10 +298,10 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				exps = append(exps, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains, Anchors: e.Anchors, Declarations: e.Declarations})
 			}
 		}
+		x.gate("expectations").check(len(exps) == len(c.Expectations), name, "EXPECTATION_REGISTRATION_MISMATCH", "SVC 기대값 수가 다르다")
 		if len(exps) > 0 {
 			claim := claimPass
 			eg := x.gate("expectations")
-			eg.check(len(exps) == len(c.Expectations), name, "EXPECTATION_REGISTRATION_MISMATCH", "SVC 기대값 수가 다르다")
 			for i, e := range exps {
 				if e.Step < 0 || e.Step >= len(c.Steps) {
 					eg.fail(name, "EXPECTATION_STEP_INVALID", "SVC step이 없다")
@@ -314,12 +323,27 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if claim == claimBlocked {
 				code = "SVC_EXPECTATION_UNASSESSABLE"
 			}
+		} else {
+			x.gate("expectations").check(c.Claims.Expectations == claimNotClaimed, name, "CLAIM_MISMATCH", "기대값 없는 관측 전용 SVC의 expectations claim이 다르다")
 		}
 		for _, r := range c.References {
 			got = foldClaims([]string{got, r.Assessment})
 		}
-		x.gate("verdict").check(got == c.Assessment && code == c.Code, name, "VERDICT_MISMATCH", "SVC 관측 판정이 다시 계산한 값과 다르다")
+		out.recomputedAssessment = got
+		x.gate("api").check(c.Schema != OracleRecordSchema || c.Oracle != nil, name, "ORACLE_CLAIMS_MISSING", "Oracle record에 claim이 없다")
+		if c.Oracle != nil {
+			x.gate("api").check(c.Oracle.API == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 API를 주장할 수 없다")
+			x.gate("query-equality").check(c.Oracle.QueryEquality == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 query equality를 주장할 수 없다")
+		}
+		recorded := x.recordOracleClaims(c, name)
+		if foldClaims(recorded) == AssessFail && code == "" {
+			code = "ORACLE_CLAIM_FAILED"
+		}
+		x.gate("verdict").check(foldClaims(append([]string{got}, recorded...)) == c.Assessment && code == c.Code, name, "VERDICT_MISMATCH", "SVC 관측 판정이 다시 계산한 값과 다르다")
 		out.assess = got
+		if len(recorded) > 0 && got != AssessFail {
+			out.assess, out.complete = AssessUnresolved, false
+		}
 		return out
 	}
 	completedTrees := len(c.Steps) > 0
@@ -329,6 +353,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			completedTrees = false
 		}
 		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && s.Incremental == nil && s.Composite != nil {
+			completedTrees = completedTrees && s.Fresh == nil
 			continue
 		}
 		if s.Incremental == nil || s.Incremental.Status != StatusCompleted || (s.Fresh != nil && s.Fresh.Status != StatusCompleted) {
@@ -389,7 +414,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				}
 				input = &t.Summary.Input
 			}
-			if input != nil && !tg.check(input.SHA256 == s.SourceSHA256 && input.Bytes == s.SourceBytes && (want == nil || input.Encoding == want.Encoding), name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step)) {
+			if input != nil && !tg.check(input.SHA256 == s.SourceSHA256 && input.Bytes == s.SourceBytes && input.EncodingSource == SourceDeclaration && (want == nil || input.Encoding == want.Encoding), name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step)) {
 				continue
 			}
 			if t.Form != "full" {
@@ -604,7 +629,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		if queries && len(c.Steps) > 1 {
 			qg := x.gate("query-equality")
 			for _, s := range c.Steps[1:] {
-				if s.Fresh == nil {
+				if s.Fresh == nil || s.Incremental == nil {
 					continue
 				}
 				a, b := s.Incremental.Queries, s.Fresh.Queries
@@ -648,13 +673,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		} else {
 			recorded = append(recorded, c.Oracle.QueryEquality)
 		}
-		for _, rc := range []struct{ id, v string }{{"api", c.Oracle.API}, {"query-expectations", c.Oracle.QueryExpectations},
-			{"fact-reproduction", c.Oracle.FactReproduction}, {"dynamic-sql", c.Oracle.DynamicSQL}} {
-			if rc.v != claimNotClaimed {
-				x.gate(rc.id).recorded()
-				recorded = append(recorded, rc.v)
-			}
-		}
+		recorded = append(recorded, x.recordOracleClaims(c, name)...)
 	}
 	vg := x.gate("verdict")
 	for _, r := range c.References {
@@ -672,6 +691,22 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		out.assess, out.complete = AssessUnresolved, false
 	}
 	return out
+}
+
+func (x *replayEnv) recordOracleClaims(c *rcCase, name string) []string {
+	if c.Oracle == nil {
+		return nil
+	}
+	var recorded []string
+	for _, rc := range []struct{ id, v string }{{"api", c.Oracle.API}, {"query-expectations", c.Oracle.QueryExpectations},
+		{"fact-reproduction", c.Oracle.FactReproduction}, {"dynamic-sql", c.Oracle.DynamicSQL}} {
+		x.gate(rc.id).check(slices.Contains([]string{claimNotClaimed, claimPass, claimFail, claimBlocked}, rc.v), name, "CLAIM_INVALID", "Oracle claim 값이 유효하지 않다")
+		if rc.v != claimNotClaimed {
+			x.gate(rc.id).recorded()
+			recorded = append(recorded, rc.v)
+		}
+	}
+	return recorded
 }
 
 // seeRun records the producer and policy identities a case names; they are compared with
@@ -1103,6 +1138,7 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 	}()
 	x.startSvcReferences(prof.SvcContext)
 	x.svcFormat = prof.Format
+	x.nativeInputBytes = NativeOperations()[prof.Operation].InputBytes
 	defer x.checkSvcReferences()
 	m, e := x.stream(resultPath)
 	if e != nil {
@@ -1294,6 +1330,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	defer x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
 	x.startSvcReferences(prof.Native.SvcContext)
 	x.svcFormat = prof.Native.Format
+	x.nativeInputBytes = NativeOperations()[prof.Native.Operation].InputBytes
 	defer x.checkSvcReferences()
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}

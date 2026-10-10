@@ -388,6 +388,8 @@ type replayEnv struct {
 	needOver       bool   // a member the reducer needed was beyond the limits: it stopped early
 	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
 	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
+
+	nativeInputBytes uint64
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

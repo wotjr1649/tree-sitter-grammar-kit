@@ -456,6 +456,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	x := h.x
 	x.startSvcReferences(w.SvcContext)
 	x.svcFormat = w.Format
+	x.nativeInputBytes = NativeOperations()[w.Operation].InputBytes
 	x.gates, x.findings, x.seen = nil, nil, map[string]map[string]bool{}
 	over := false
 	done := func() (*qset, *Error) {
@@ -629,7 +630,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
 		out := x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, errNodes, &c, &extra, out, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
+		q.judgeCase(s, qc, errNodes, &c, &extra, out, x.nativeInputBytes, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
@@ -669,7 +670,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, replay caseOutcome, add func(code, path, msg string), path string, svc, apiWanted bool) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, replay caseOutcome, inputBytes uint64, add func(code, path, msg string), path string, svc, apiWanted bool) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -798,7 +799,7 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	var qeDetail []string
 	if len(qc.QueryExpect) > 0 {
 		qe = claimPass
-		versions, _, err := ApplyEdits(EncodingUTF8, []byte(*qc.Source), qc.Edits, uint64(len(*qc.Source))+1<<20)
+		versions, _, err := ApplyEdits(EncodingUTF8, []byte(*qc.Source), qc.Edits, inputBytes)
 		for _, e := range qc.QueryExpect {
 			r, d := claimPass, ""
 			var t *qTree
