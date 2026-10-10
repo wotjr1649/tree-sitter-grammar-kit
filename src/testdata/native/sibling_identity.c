@@ -32,7 +32,8 @@ int main(void) {
         children = (SubtreeArray){0};
         array_push(&children, wrapper);
       }
-      TSTree *tree = ts_tree_new(ts_subtree_from_mut(ts_subtree_new_node(root_symbol, &children, 0, language)), language, NULL, 0);
+      TSRange range = {{0, 0}, {0, positive_tail}, 0, positive_tail};
+      TSTree *tree = ts_tree_new(ts_subtree_from_mut(ts_subtree_new_node(root_symbol, &children, 0, language)), language, &range, 1);
       TSNode root = ts_tree_root_node(tree), nodes[4];
       unsigned count = 0;
       TSTreeCursor cursor = ts_tree_cursor_new(root);

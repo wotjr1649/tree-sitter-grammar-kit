@@ -44,3 +44,5 @@ sibling 탐색의 visible prefix 반복은 owned plain grammar의 27,001 node·5
 추가 자동 리뷰의 두 연결 누락도 수정 전 시험 실패로 확인했다. CI route 집계는 최상위와 segment의 incremental claim을 같은 규칙으로 검사하고 오류 tree의 BLOCKED route는 별도 requirement로 기록한다. S06의 stdout 요약에 없는 segment는 상세 record에서 읽는다. observation-only r2 producer는 tree·process 없이 Oracle claim을 초기 NOT_CLAIMED로 명시하며 qualification은 API claim의 누락·PASS·BLOCKED 대체를 거부한다. Oracle의 후속 판정도 기존 composite FAIL/BLOCKED를 유지한다.
 
 후속 리뷰에서 public qualification이 올바르게 FAIL/BLOCKED로 기록된 segment를 최상위 NOT_CLAIMED 때문에 놓치는 경로를 추가 확인했다. 세 구간 각각의 equality·route·query 실패, segment claim 누락·변조를 회귀시험으로 재현했다. replay의 기존 comparator 결과로 구간 claim을 재계산하고 qualification에 전달한다. 마지막 구간, 한 step 구간, 같은 step의 복수 기대값, gap 기대값과 directive diagnostic을 별도 검사하며 observation-only 기록의 unexpected segment도 거부한다.
+
+Linux UBSan에서 identity fixture의 내부 `ts_tree_new(..., NULL, 0)` 호출이 non-null `memcpy` 입력 규칙을 위반했다. fixture가 실제 zero-width/positive tail 범위의 `TSRange`를 전달하도록 수정했다. sibling·cursor·cross-tree assertion, sanitizer 설정과 runtime product patch는 유지한다.
