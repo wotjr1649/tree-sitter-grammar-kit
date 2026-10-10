@@ -24,8 +24,9 @@ const (
 )
 
 type rcInput struct {
-	Bytes  uint64 `json:"bytes"`
-	SHA256 string `json:"sha256"`
+	Encoding string `json:"encoding"`
+	Bytes    uint64 `json:"bytes"`
+	SHA256   string `json:"sha256"`
 }
 
 type rcDecl struct {
@@ -66,6 +67,7 @@ type rcTree struct {
 }
 
 type rcStep struct {
+	Restarted    bool   `json:"restarted"`
 	Step         int    `json:"step"`
 	SourceBytes  uint64 `json:"source_bytes"`
 	SourceSHA256 string `json:"source_sha256"`
@@ -84,16 +86,25 @@ type rcStep struct {
 	QueryCompare *struct {
 		Equal bool `json:"equal"`
 	} `json:"query_comparison"`
-	Composite *struct {
-		Directive  *SvcDirective `json:"directive"`
-		Coverage   SvcCoverage   `json:"coverage"`
-		Identities []IdentityRef `json:"identities"`
-		Inline     *struct {
-			Tree *struct {
-				Identities []IdentityRef `json:"identities"`
-			} `json:"tree"`
-		} `json:"inline"`
-	} `json:"composite"`
+	Composite *rcComposite `json:"composite"`
+}
+
+type rcComposite struct {
+	Schema               string          `json:"schema"`
+	Format               string          `json:"format"`
+	Input                rcInput         `json:"input"`
+	Language             SvcLanguage     `json:"language"`
+	Directive            *SvcDirective   `json:"directive"`
+	AdditionalDirectives []*SvcDirective `json:"additional_directives"`
+	CodeBehind           *SvcCodeBehind  `json:"code_behind"`
+	Coverage             SvcCoverage     `json:"coverage"`
+	Identities           []IdentityRef   `json:"identities"`
+	Inline               *struct {
+		IncludedRanges []Span `json:"included_ranges"`
+		Tree           *struct {
+			Identities []IdentityRef `json:"identities"`
+		} `json:"tree"`
+	} `json:"inline"`
 }
 
 type rcExpect struct {
@@ -108,13 +119,15 @@ type rcExpect struct {
 // rcCase is the part of a recorded S05 case or S06 record the reducer reads; the rest
 // (process, producer, host observations) is retained in the raw and not judged.
 type rcCase struct {
-	Schema          string      `json:"schema"`
-	Case            string      `json:"case"`
-	ID              string      `json:"id"`
-	Input           NativeInput `json:"input"`
-	ExecutionStatus string      `json:"execution_status"`
-	Assessment      string      `json:"assessment"`
-	Code            string      `json:"code"`
+	Segments        []rcSvcSegment   `json:"segments"`
+	References      []rcSvcReference `json:"references"`
+	Schema          string           `json:"schema"`
+	Case            string           `json:"case"`
+	ID              string           `json:"id"`
+	Input           NativeInput      `json:"input"`
+	ExecutionStatus string           `json:"execution_status"`
+	Assessment      string           `json:"assessment"`
+	Code            string           `json:"code"`
 	Claims          struct {
 		IncrementalEquality string `json:"incremental_equality"`
 		IncrementalRoute    string `json:"incremental_route"`
@@ -132,6 +145,18 @@ type rcCase struct {
 	Producer     *struct {
 		Query string `json:"query"`
 	} `json:"producer"`
+}
+
+type rcSvcSegment struct {
+	StartStep int `json:"start_step"`
+	EndStep   int `json:"end_step"`
+	Process   *struct {
+		Status   string `json:"status"`
+		ExitCode int    `json:"exit_code"`
+		Cleanup  struct {
+			Verified bool `json:"verified"`
+		} `json:"cleanup"`
+	} `json:"process"`
 }
 
 // caseOutcome is the replayed verdict of one case; complete is false when a claim the
@@ -193,6 +218,8 @@ func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
 func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, queries bool) caseOutcome {
+	x.checkSvcComposite(c, want)
+	x.observeSvcReferences(c)
 	name := x.name(c.ID, idx)
 	out := caseOutcome{status: c.ExecutionStatus, assess: c.Assessment, complete: true}
 	bind := x.gate("case-binding")
@@ -208,7 +235,8 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	}
 	bind.check(ok, name, "CASE_BINDING_MISMATCH", "case id, 입력 identity 또는 step 수가 workload 등록과 다르다")
 	// an SVC composite names the run's producer and policy too (checked by checkSeen)
-	for _, s := range c.Steps {
+	for i, s := range c.Steps {
+		bind.check(s.Step == i, name, "STEP_INDEX_MISMATCH", "step 순서가 index와 다르다")
 		if s.Composite == nil {
 			continue
 		}
@@ -233,17 +261,61 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			"완료되지 않은 case가 허용되지 않는 판정이나 claim을 가진다")
 		return out
 	}
-	if len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Incremental != nil || s.Composite == nil }) {
+	if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Incremental != nil || s.Composite == nil }) {
 		// an SVC observation-only case: no inline tree; the verdict is the S05 rule over the
 		// recorded directive observations
 		st.pass()
 		got, code := svcVerdict(c.Steps, want != nil && len(want.Expect) > 0)
+		exps := []StepExpectation{}
+		if want != nil {
+			exps = want.Expect
+		} else {
+			for _, e := range c.Expectations {
+				exps = append(exps, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains, Anchors: e.Anchors, Declarations: e.Declarations})
+			}
+		}
+		if len(exps) > 0 {
+			claim := claimPass
+			eg := x.gate("expectations")
+			eg.check(len(exps) == len(c.Expectations), name, "EXPECTATION_REGISTRATION_MISMATCH", "SVC 기대값 수가 다르다")
+			for i, e := range exps {
+				if e.Step < 0 || e.Step >= len(c.Steps) {
+					eg.fail(name, "EXPECTATION_STEP_INVALID", "SVC step이 없다")
+					claim = claimFail
+					continue
+				}
+				r, _ := svcExpectResult(e, c.Steps[e.Step])
+				claim = worseClaim(claim, r)
+				if i < len(c.Expectations) {
+					rec := c.Expectations[i]
+					eg.check(rec.Step == e.Step && rec.Syntax == e.Syntax && slices.Equal(rec.Contains, e.Contains) && slices.Equal(rec.Anchors, e.Anchors) && rec.Declarations == e.Declarations && rec.Result == r, name, "EXPECTATION_MISMATCH", "SVC 기대값 결과가 다르다")
+				}
+			}
+			eg.check(claim == c.Claims.Expectations, name, "CLAIM_MISMATCH", "SVC 기대값 claim이 다르다")
+			got, code = claim, ""
+			if claim == claimFail {
+				code = "EXPECTATION_FAILED"
+			}
+			if claim == claimBlocked {
+				code = "SVC_EXPECTATION_UNASSESSABLE"
+			}
+		}
+		for _, r := range c.References {
+			got = foldClaims([]string{got, r.Assessment})
+		}
 		x.gate("verdict").check(got == c.Assessment && code == c.Code, name, "VERDICT_MISMATCH", "SVC 관측 판정이 다시 계산한 값과 다르다")
 		out.assess = got
 		return out
 	}
 	completedTrees := len(c.Steps) > 0
-	for _, s := range c.Steps {
+	for k, s := range c.Steps {
+		if s.Restarted && (s.Composite == nil || s.Incremental == nil || k == 0 || c.Steps[k-1].Incremental != nil) {
+			st.fail(name, "SVC_RESTART_INVALID", "restart에 관측 공백이 없다")
+			completedTrees = false
+		}
+		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && s.Incremental == nil && s.Composite != nil {
+			continue
+		}
 		if s.Incremental == nil || s.Incremental.Status != StatusCompleted || (s.Fresh != nil && s.Fresh.Status != StatusCompleted) {
 			completedTrees = false
 		}
@@ -315,6 +387,10 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		ie, ir = claimPass, claimPass
 		eq := x.gate("incremental-equality")
 		for _, s := range c.Steps[1:] {
+			if s.Incremental == nil && s.Composite != nil || s.Restarted {
+				eq.check(s.Comparison == nil, name, "COMPARISON_UNEXPECTED", "SVC boundary에 comparison이 있다")
+				continue
+			}
 			if s.Fresh == nil || s.Incremental.Form != "full" || s.Fresh.Form != "full" || s.Incremental.Tree == nil || s.Fresh.Tree == nil {
 				eq.check(s.Comparison == nil, name, "COMPARISON_UNEXPECTED", fmt.Sprintf("step %d 비교할 full tree가 없는데 비교 기록이 있다", s.Step))
 				ie = worseClaim(ie, claimBlocked)
@@ -329,10 +405,17 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		}
 		rg := x.gate("incremental-route")
 		for k, s := range c.Steps[1:] {
+			if s.Incremental == nil && s.Composite != nil || s.Restarted {
+				rg.check(s.Route == nil, name, "ROUTE_PROOF_MISMATCH", "SVC boundary에 reuse proof가 있다")
+				continue
+			}
 			r := s.Route
 			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
 			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
 			ir = worseClaim(ir, routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental))
+		}
+		if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+			ie, ir = claimNotClaimed, claimNotClaimed
 		}
 	}
 	x.gate("incremental-equality").check(ie == c.Claims.IncrementalEquality, name, "CLAIM_MISMATCH", "incremental_equality claim이 다시 계산한 값과 다르다")
@@ -363,6 +446,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			continue
 		}
 		res, known := expectResult(e, c.Steps[e.Step].Incremental)
+		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && c.Steps[e.Step].Composite != nil {
+			res, known = svcExpectResult(e, c.Steps[e.Step])
+		}
 		if !known {
 			eg.recorded()
 			ecOK = false
@@ -383,6 +469,15 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				ec = claimBlocked
 			}
 		}
+	}
+	if len(exps) == 0 && slices.ContainsFunc(c.Steps, func(s rcStep) bool {
+		if s.Composite == nil {
+			return false
+		}
+		e, k := (SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}).Syntax(nil)
+		return e && k
+	}) {
+		ec = claimBlocked
 	}
 	if ecOK {
 		eg.check(ec == c.Claims.Expectations, name, "CLAIM_MISMATCH", "expectations claim이 다시 계산한 값과 다르다")
@@ -428,6 +523,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 					qe = claimFail
 				}
 			}
+			if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+				qe = claimNotClaimed
+			}
 		}
 		if qeOK {
 			x.gate("query-equality").check(qe == c.Oracle.QueryEquality, name, "CLAIM_MISMATCH", "query_equality claim이 다시 계산한 값과 다르다")
@@ -444,6 +542,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		}
 	}
 	vg := x.gate("verdict")
+	for _, r := range c.References {
+		claims = append(claims, r.Assessment)
+	}
 	vg.check(foldClaims(append(slices.Clone(claims), recorded...)) == c.Assessment, name, "VERDICT_MISMATCH", "case 판정이 claim의 가장 나쁜 값과 다르다")
 	re := foldClaims(claims)
 	switch {
@@ -505,11 +606,37 @@ func svcVerdict(steps []rcStep, expect bool) (string, string) {
 		return AssessBlocked, "SVC_EXPECTATION_UNASSESSABLE"
 	}
 	for _, s := range steps {
-		if len(s.Composite.Directive.Diagnostics) > 0 {
+		if e, k := (SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}).Syntax(nil); e && k {
 			return AssessBlocked, "SVC_DIRECTIVE_DIAGNOSTICS"
 		}
 	}
 	return AssessPass, ""
+}
+
+func svcExpectResult(e StepExpectation, s rcStep) (string, bool) {
+	o := SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}
+	var inline *bool
+	result := claimPass
+	if s.Incremental != nil {
+		inline = &s.Incremental.HasError
+		copy := e
+		copy.Syntax = "ANY"
+		var known bool
+		result, known = expectResult(copy, s.Incremental)
+		if !known {
+			return result, false
+		}
+	} else if len(e.Contains) > 0 || len(e.Anchors) > 0 || e.Declarations != "" {
+		result = claimBlocked
+	}
+	hasError, known := o.Syntax(inline)
+	if e.Syntax != "ANY" && !known {
+		return claimBlocked, true
+	}
+	if e.Syntax == "NO_ERROR" && hasError || e.Syntax == "ERROR" && !hasError && known {
+		return claimFail, true
+	}
+	return result, true
 }
 
 // expectResult recomputes one expectation as S05 evaluate does; known is false when the
@@ -858,6 +985,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		}
 		x.checkSeen(run)
 	}()
+	x.startSvcReferences(prof.SvcContext)
+	x.svcFormat = prof.Format
+	defer x.checkSvcReferences()
 	m, e := x.stream(resultPath)
 	if e != nil {
 		return top, nil, e
@@ -1046,6 +1176,9 @@ func replayOracleSet(x *replayEnv) *Error {
 	}
 	x.seen = map[string]map[string]bool{}
 	defer x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
+	x.startSvcReferences(prof.Native.SvcContext)
+	x.svcFormat = prof.Native.Format
+	defer x.checkSvcReferences()
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
 	records := 0

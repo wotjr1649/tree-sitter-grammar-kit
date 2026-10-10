@@ -345850,7 +345850,7 @@
    "id": "n461-svc",
    "role": "owned",
    "status": "EXECUTED",
-   "reason": "NET461 SVC-SERVICEHOST-r1 composite on the owned .svc fixtures (OWNED_FIXTURE, three hosts)",
+   "reason": "SVC-SERVICEHOST-r2 directive, C# inline, recovery and explicitly registered C# reference fixtures (OWNED_FIXTURE, three hosts; syntax only)",
    "platforms": [
     "windows-amd64",
     "linux-amd64",
@@ -345859,13 +345859,27 @@
    "not_applicable": {},
    "workloads": [
     {
+     "svc_context": {
+      "default_language": "C#",
+      "language_source": "OWNED_FIXTURE_PROJECT",
+      "code_behind": [
+       {
+        "name": "OrderService.svc.cs",
+        "case": "n461-svc-reference-p-r2"
+       },
+       {
+        "name": "App_Code/OrderService.cs",
+        "case": "n461-svc-reference-p-r2"
+       }
+      ]
+     },
      "set": "s06-csharp-svc",
      "profile": "s06-csharp-svc",
      "route": "csharp",
      "operation": "native-query",
      "output": "tree",
      "symbol": "tree_sitter_c_sharp",
-     "format": "SVC-SERVICEHOST-r1",
+     "format": "SVC-SERVICEHOST-r2",
      "grammar": [
       {
        "path": "src/parser.c",
@@ -345973,7 +345987,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-inline-n-r1",
@@ -346002,7 +346016,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text));\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-inline-r-r1",
@@ -346058,7 +346072,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"c#\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-boundary-pe-r1",
@@ -346132,7 +346146,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-boundary-n-r1",
@@ -346161,7 +346175,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %\u003e\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-boundary-r-r1",
@@ -346243,7 +346257,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.ClockService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract]\n    public interface IClockService\n    {\n        [OperationContract]\n        DateTime Now();\n    }\n\n    public class ClockService : IClockService\n    {\n        public DateTime Now()\n        {\n            return DateTime.UtcNow;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-encoding-pe-r1",
@@ -346304,7 +346318,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "﻿\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %\u003e\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n"
       },
       {
        "id": "n461-svc-encoding-n-r1",
@@ -346333,7 +346347,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "﻿\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %\u003e\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name));\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n"
       },
       {
        "id": "n461-svc-encoding-r-r1",
@@ -346389,7 +346403,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "﻿\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %\u003e\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n"
       },
       {
        "id": "n461-svc-directive-p-r1",
@@ -346401,7 +346415,14 @@
         "bytes": 70
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
@@ -346411,7 +346432,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" %\u003e\n"
       },
       {
        "id": "n461-svc-directive-n-r1",
@@ -346423,17 +346444,24 @@
         "bytes": 147
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_INLINE_UNRESOLVED",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Service=\"Demo.Services.OrderService\" Service=\"Demo.Services.Other\" Mode=\"Fast\" %\u003e\n\u003c%@ ServiceHost Service=\"Demo.Services.Again\" %\u003e\n"
       },
       {
        "id": "n461-svc-codebehind-p-r1",
@@ -346445,7 +346473,14 @@
         "bytes": 116
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
@@ -346455,7 +346490,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %\u003e\n"
       },
       {
        "id": "n461-svc-codebehind-n-r1",
@@ -346467,17 +346502,24 @@
         "bytes": 128
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_INLINE_UNRESOLVED",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind CodeBehind=\"App_Code/OrderService.cs\" %\u003e\npublic class Stray\n{\n}\n"
       },
       {
        "id": "n461-svc-multiline-p-r1",
@@ -346489,7 +346531,14 @@
         "bytes": 197
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
@@ -346499,7 +346548,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost\n    Language=\"C#\"\n    Debug='false'\n    Service=\"Demo.Services.OrderService\"\n    Factory=\"System.ServiceModel.Activation.ServiceHostFactory\"\n    CodeBehind=\"OrderService.svc.cs\"\n%\u003e\n"
       },
       {
        "id": "n461-svc-multiline-n-r1",
@@ -346511,7 +346560,14 @@
         "bytes": 108
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
@@ -346521,7 +346577,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost\n    Language=\"C#\"\n    Service='Demo.Services.OrderService'\n    Debug=true ;\n    Factory=\n%\u003e\n"
       },
       {
        "id": "n461-svc-quote-n-r1",
@@ -346533,17 +346589,24 @@
         "bytes": 102
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs %\u003e\n"
       },
       {
        "id": "n461-svc-quote-r-r1",
@@ -346570,17 +346633,36 @@
          "new": "T3JkZXJTZXJ2aWNlIiBDb2RlQmVoaW5k"
         }
        ],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %\u003e\n"
       },
       {
        "id": "n461-svc-terminator-n-r1",
@@ -346592,17 +346674,24 @@
         "bytes": 165
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_INLINE_UNRESOLVED",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\"\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n"
       },
       {
        "id": "n461-svc-terminator-r-r1",
@@ -346629,17 +346718,36 @@
          "new": "T3JkZXJTZXJ2aWNlIiAlPgo="
         }
        ],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_INLINE_NOT_PARSED",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" %\u003e\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n"
       },
       {
        "id": "n461-svc-language-p-r1",
@@ -346651,7 +346759,14 @@
         "bytes": 89
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
@@ -346661,7 +346776,7 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %\u003e\n"
       },
       {
        "id": "n461-svc-language-unresolved-n-r1",
@@ -346673,17 +346788,24 @@
         "bytes": 442
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": null,
        "dynamic_sql_expect": null,
        "expect_status": "",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "SVC_INLINE_UNRESOLVED",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Debug=\"true\" Service=\"Demo.Services.EchoService\" %\u003e\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n"
       },
       {
        "id": "n461-svc-language-vb-n-r1",
@@ -346705,7 +346827,735 @@
        "covers": {},
        "alternatives": [],
        "sample": null,
-       "source": null
+       "source": "\u003c%@ ServiceHost Language=\"VB\" Debug=\"true\" Service=\"Demo.Services.EchoService\" %\u003e\nImports System.ServiceModel\n\nPublic Class EchoService\n    Public Function Echo(ByVal text As String) As String\n        Return text\n    End Function\nEnd Class\n"
+      },
+      {
+       "id": "n461-svc-reference-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "77bde3591a310cffb99d2e557536b22e188d781626f2d0a9436b04f21bccbd51",
+        "bytes": 148
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration",
+          "method_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "namespace Demo.Services { public class OrderService { const string Marker = \"\u003c%@ ServiceHost Service=\\\"S\\\" %\u003e\"; public int Count() { return 1; } } }"
+      },
+      {
+       "id": "n461-svc-space-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "072a9bf8d4da5a1e9f0ddb6c45f8ef5f51efbd5cb174fc56e143989c36749fb5",
+        "bytes": 55
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c% @ServiceHost Service=\"S\" Language=\"C#\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-quoted-close-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "07881698b65fa003b0c6e00c4ccdd12b2d4d400878f646ec8072673e25103c29",
+        "bytes": 58
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"A%\u003eB\" Language=\"C#\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-compiler-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "6c4bead950c8e4233f6b94e601475267568c17f0cfae90712b733a1158486160",
+        "bytes": 92
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" WarningLevel=\"4\" CompilerOptions=\"/define:OWNED\" Debug=\"TRUE\" %\u003e"
+      },
+      {
+       "id": "n461-svc-assembly-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "19c638229ac19f6730c84579e3199ca04d4b76af6592287d89b3200e9ab8a928",
+        "bytes": 116
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ Assembly Name=\"System\" %\u003e\n\u003c%@ ServiceHost Service=\"S\" Language=\"C#\" %\u003e\n\u003c%@ Assembly Src=\"inert.cs\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-unicode-space-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "b4ad6857feefbf12c49c858b973bc0400ff36e92b11eefc97302423d3cad98f2",
+        "bytes": 62
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c% @ServiceHost Service=\"S\" Language=\" C# \" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-bare-service-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "288d454756132dba0338941a28d0df2c799d950c3c2a75ef17dc8cea1e548d41",
+        "bytes": 26
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service %\u003e"
+      },
+      {
+       "id": "n461-svc-empty-service-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "fecf4585660e9ea974b4d75be3274557138b1d518e7e5b857b7cb2242b39d05a",
+        "bytes": 27
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service= %\u003e"
+      },
+      {
+       "id": "n461-svc-missing-main-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "4fd431048e5487ffb57998df7f945f26f45c83794faefe71e5a109f4d9bb901e",
+        "bytes": 32
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" %\u003e"
+      },
+      {
+       "id": "n461-svc-page-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "f26cd72ad7ebf6847e3e6c930bbdf779553e805d5960e31026df96266edfa159",
+        "bytes": 23
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ Page Service=\"S\" %\u003e"
+      },
+      {
+       "id": "n461-svc-punctuation-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "fc02de4f3bc6d15101f49223e18eba2684d5f15d66c7733341686a4e7475d7f2",
+        "bytes": 32
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" ; %\u003e"
+      },
+      {
+       "id": "n461-svc-debug-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "07341d1d0760cdfdeb23e3d8f6d8fba201734f04d6a578e1e6c9970d2d88ddce",
+        "bytes": 45
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" Debug=\"banana\" %\u003e"
+      },
+      {
+       "id": "n461-svc-warning-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "d75f1afb1707f9c30366dc3307a0ff220d99d6b466021730939095b5aee4bfe6",
+        "bytes": 48
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" WarningLevel=\"-1\" %\u003e"
+      },
+      {
+       "id": "n461-svc-duplicate-case-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "6a3a40d9d6eb4e783cc32e37e9b156738611f4b4c20c0d3fb3708dca48e5961e",
+        "bytes": 42
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" SERVICE=\"T\" %\u003e"
+      },
+      {
+       "id": "n461-svc-assembly-exclusive-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "323c08898008b49d083cf88b1ae0bcdece817c2fe25e66989675fcebff0e96f6",
+        "bytes": 74
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" %\u003e\u003c%@ Assembly Name=\"System\" Src=\"inert.cs\" %\u003e"
+      },
+      {
+       "id": "n461-svc-assembly-missing-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "85aa15543a2eef6af15d3f26554f763b94e7ff848e57350d632bc3c3312e59ce",
+        "bytes": 45
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" %\u003e\u003c%@ Assembly %\u003e"
+      },
+      {
+       "id": "n461-svc-inline-bad-directive-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "9c08afb227febf8f0a26cb40fb6721f60090863e74f5687c63222d989c76cde2",
+        "bytes": 65
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" Language=\"C#\" Bogus=\"x\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-language-cs-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "fd80a38f9da4b0183fefd065357a8c3ed8a40370e77c1ca2f39b920209ae489c",
+        "bytes": 55
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" Language=\"cs\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-language-csharp-p-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "6a9abc4cbbb60b9c5f6a1dd2044dbf802dbcbfff0c3bf17f9e0078cda131602f",
+        "bytes": 59
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service=\"S\" Language=\"csharp\" %\u003e\nclass S {}"
+      },
+      {
+       "id": "n461-svc-inline-marker-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "90ba2129f4f8df2e28772e0986c7402da01971ae92625743f4337887c2790a74",
+        "bytes": 98
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"S\" %\u003e\nconst string marker=\"\u003c%@ ServiceHost Service='T' %\u003e\";"
+      },
+      {
+       "id": "n461-svc-inline-comment-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "69032dbb948ba345a36595ecd9dff7d21840fbb4c81e237df7f301bbc599ef34",
+        "bytes": 78
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"S\" %\u003e\n// \u003c%@ ServiceHost Service='T' %\u003e"
+      },
+      {
+       "id": "n461-svc-unquoted-debug-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "8d8bc781dd3944352f39018b5c30369be65d8c9ca4f1544fac0b86038c3f05da",
+        "bytes": 40
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c% @ServiceHost Service= Debug=\"true\" %\u003e"
+      },
+      {
+       "id": "n461-svc-unquoted-language-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "7d8c64d80e5bb22fe01b2b5567cd410d04b387fbb3d9cd0452342bafc03b25c5",
+        "bytes": 58
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Factory= Language=\"C#\" WarningLevel=\"4\" %\u003e"
+      },
+      {
+       "id": "n461-svc-unquoted-warning-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "ae0c471c8a762789867c530da8878ca5d77563a0ee8b4150e028d5c6197012be",
+        "bytes": 57
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Factory=\"F\" Language= WarningLevel=\"4\" %\u003e"
+      },
+      {
+       "id": "n461-svc-unquoted-codebehind-n-r2",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "76ab9d03777cdcabf3fbb2505cc45e38ed101b46727c2969b3e28d0bacbe9b24",
+        "bytes": 48
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Service= CodeBehind=\"a%\u003eb.cs\" %\u003e"
       }
      ]
     }

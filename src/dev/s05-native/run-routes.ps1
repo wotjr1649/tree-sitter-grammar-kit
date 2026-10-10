@@ -115,7 +115,7 @@ function New-Root($r) {
   return $root
 }
 
-function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, [string]$Format = '') {
+function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, [string]$Format = '', $SvcContext = $null) {
   # the profile requires byte-ascending paths
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
@@ -123,6 +123,7 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   $profile = [ordered]@{ schema = 'tsgk-incremental/r2'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
     compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases) }
   if ($Format) { $profile.format = $Format }
+  if ($SvcContext) { $profile.svc_context = $SvcContext }
   $pf = Join-Path $Destination "profiles/$Id.json"
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pf) | Out-Null
   $profile | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
@@ -214,7 +215,7 @@ function Add-Result([string]$Label, $Run) {
 
 # S06: an oracle profile is the incremental profile plus queries, the pack binding and the
 # API switch; every case carries its query and dynamic SQL expectations.
-function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, $Queries, [bool]$UsePack, [bool]$Api, [string]$Format = '') {
+function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, $Queries, [bool]$UsePack, [bool]$Api, [string]$Format = '', $SvcContext = $null) {
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
@@ -223,6 +224,7 @@ function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [stri
   $profile = [ordered]@{ schema = 'tsgk-oracle/r2'; id = $Id; route = $r.route; operation = $Operation; symbol = $r.symbol; encoding = 'UTF-8'; output = $Output
     compiler = $compilerId; grammar = @($sorted); declarations = $Decls; cases = @($Cases); queries = @($Queries); fact_pack = $factPack; api = $Api }
   if ($Format) { $profile.format = $Format }
+  if ($SvcContext) { $profile.svc_context = $SvcContext }
   $pf = Join-Path $Destination "profiles/$Id.json"
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pf) | Out-Null
   $profile | ConvertTo-Json -Depth 16 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
@@ -352,7 +354,7 @@ foreach ($r in $registry.routes) {
   }
 }
 
-# SVC-SERVICEHOST-r1 composite cases: the C# route with the format set.
+# SVC composite cases: the C# route with explicit caller context and registered references.
 $svcFile = Join-Path $repo 'src/testdata/native/n461/svc.json'
 if ((Test-Path -LiteralPath $svcFile) -and (-not $Routes.Count -or $Routes -contains 'csharp')) {
   $r = $registry.routes | Where-Object { $_.route -eq 'csharp' }
@@ -360,9 +362,11 @@ if ((Test-Path -LiteralPath $svcFile) -and (-not $Routes.Count -or $Routes -cont
   $root2 = Join-Path $Destination 'roots/csharp-svc'
   Move-Item -LiteralPath $root -Destination $root2
   $svcCases = Convert-Cases $svcFile $root2
-  Add-Result 'csharp-svc' (Invoke-Profile $r $root2 's05-csharp-svc' 'native-parse-edit' 'tree' $svcCases $null 'SVC-SERVICEHOST-r1')
+  $svcDoc = Get-Content -LiteralPath $svcFile -Raw | ConvertFrom-Json
+  foreach ($c in $svcCases) { $c.svc_source = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $root2 $c.input.path))) }
+  Add-Result 'csharp-svc' (Invoke-Profile $r $root2 's05-csharp-svc' 'native-parse-edit' 'tree' $svcCases $null $svcDoc.format $svcDoc.svc_context)
   if ($Oracle) {
-    Add-OracleResult 'csharp-svc' (Invoke-Oracle $r $root2 's06-csharp-svc' 'native-query' 'tree' (Add-OracleFields $svcCases) $null (Get-PackQueries 'csharp') $false $true 'SVC-SERVICEHOST-r1')
+    Add-OracleResult 'csharp-svc' (Invoke-Oracle $r $root2 's06-csharp-svc' 'native-query' 'tree' (Add-OracleFields $svcCases) $null (Get-PackQueries 'csharp') $false $true $svcDoc.format $svcDoc.svc_context)
   }
 }
 

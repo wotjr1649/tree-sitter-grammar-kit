@@ -40,6 +40,7 @@ The current implementation consists of repository foundation checks, the Session
 | #150 TABLE 예약어·XML collection 구문 | [검증 보고서](reports/issue-150-tsql-identifier-xml.md) |
 | #151 EXEC OUTPUT 반환 변수 | [검증 보고서](reports/issue-151-tsql-exec-output.md) |
 | #157–#166·#168–#170 C# 전처리·API 식별자·T-SQL 구문·incremental 근거 | [잔여 구문 보완](reports/issues-157-169-residual-syntax.md) |
+| #172–#176 SVC composite·복구·참조·zero-width runtime 탐색 | [SVC/runtime 보완](reports/issues-172-176-svc-and-runtime.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

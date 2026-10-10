@@ -193,7 +193,8 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
-		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, CgroupParent: req.CgroupParent, PolicyRef: policy}
+		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy}
+		refs := b.runSvcReferences(runCtx, x, prof.Cases, req.Root)
 		if op.Batch {
 			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases)
 		} else {
@@ -204,7 +205,11 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 						Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}})
 					continue
 				}
-				cr := b.RunCase(runCtx, x, c, src)
+				cr, found := refs[c.ID]
+				if !found {
+					cr = b.RunCase(runCtx, x, c, src)
+					linkSvcReferences(&cr, refs)
+				}
 				if cr.Raw != nil {
 					// The case order makes the name unique on case-insensitive filesystems too.
 					name := fmt.Sprintf("%05d-%s.json", len(res.Cases), c.ID)
@@ -342,11 +347,11 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 			total += c.Input.Bytes
 			r := x.request(c, src)
 			r.Points, r.Edits = nil, nil
-			if x.Format == kit.SvcFormat {
-				o := kit.ObserveServiceHost(c.Encoding, src)
+			if x.Format == kit.SvcFormat || x.Format == kit.SvcLegacyFormat {
+				o := kit.ObserveServiceHostWithContext(c.Encoding, src, x.SvcContext)
 				sum := sha256.Sum256(src)
 				in := TreeInput{Bytes: uint64(len(src)), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
-				out[i].Steps = []StepResult{{Step: 0, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)}}
+				out[i].Steps = []StepResult{{Step: 0, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: in.SHA256}, x.PolicyRef}, nil)}}
 				if o.IncludedRanges == nil { // directive observation only: no frame
 					out[i].ExecutionStatus = kit.StatusCompleted
 					out[i].Assessment, out[i].Code = svcObservationOnly([]kit.SvcObservation{o}, false)

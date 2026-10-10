@@ -12,14 +12,14 @@
 | N461-RESOURCE | Resources.Designer.cs, `.resx`, 등록 문화권 리소스 | generated partial/member·ResourceManager 접근; XML 요소·속성·문자값·선언된 참조 / C# 및 inert XML |
 | N461-DX202 | 실제 DevExpress 20.2 사용·초기화 `.cs` | qualified component type, generic, new/init/cast/property/event 구조 / source만 검사 |
 | N461-WCF-CS | 계약·구현 `.cs`, `.svc.cs`, 생성 Reference.cs | ServiceContract/OperationContract attribute, interface/implementation, generic ClientBase/channel/proxy / C# source |
-| N461-SVC | `.svc` | `SVC-SERVICEHOST-r1` directive + 등록 inline C# + 원본 included range |
+| N461-SVC | `.svc` | `SVC-SERVICEHOST-r2` directive + 등록 inline C# + 원본 included range |
 | N461-XML | App.config/Web.config, 필요한 기존 WSDL/XSD | XML source, namespace/qualified 이름, 값·import/include/설정 참조 선언 / inert XML |
 
 실제 20.2.x·사용 component·compiler·LangVersion은 caller가 읽기를 허용한 metadata에서 확인하고 미확인 값은 UNKNOWN이다. project 설정을 변경하지 않는다. 역할의 실제 파일이 제공 corpus에 없으면 NOT_PROVIDED이며 요구는 유지한다. 소스 구문/구조, net461 build, Framework runtime 실행, designer/WCF 통합은 별도 축이다. IIS/WCF endpoint·폼·component·designer 실행, SDK 설치·restore·MSBuild target·svcutil·runtime downgrade는 승인되지 않았다.
 
 요구의 기존 feature 연결은 C# lexical `csharp-B01`, type `csharp-B02`, expression `csharp-B03`, statement `csharp-B04`, member/attribute `csharp-B05`, 채택 C#7.3 경계 `csharp-V73`이다. XML 파일은 `xml-B01`/`xml-B02`와 등록된 version 경계 `xml-V11`을 사용한다. WSDL/XSD는 XML source이며 별도 XSD language route를 추가하지 않는다. `.svc` composite case는 아래 별도 format 등록부에서 C#/XML의 적용 segment와 coverage를 연결하며 기존256행을 늘리거나 줄이지 않는다.
 
-## `SVC-SERVICEHOST-r1` 형식과 위치
+## `SVC-SERVICEHOST-r2` 형식과 위치
 
 일반 XML/C# PASS는 `.svc` 전체 지원 근거가 아니다. [공식 ServiceHost 정의](https://learn.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/wcf-directive/servicehost)의 `Service`, `Factory`, `Debug`, `Language`, `CodeBehind`를 이름·값·quote·구분자·원문 span으로 보존한다. Factory/Language 생략도 등록한다. [공식 배치 설명](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/deploying-an-internet-information-services-hosted-wcf-service)은 directive 뒤 inline source와 별도 구현 파일을 구분한다.
 
@@ -53,7 +53,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 | N461-SVC-QUOTE | N,R,E | quote 손상/복구, 오류 위치·후속 source 보존 | svc / S05 |
 | N461-SVC-TERMINATOR | N,R,E | `%>` 손상/복구·segment 경계 진단 | svc / S05 |
 | N461-SVC-BOUNDARY | P,N,R,E | directive/코드 경계 edit·included range 재계산·fresh 대조 | svc+C# / S03,S05 |
-| N461-SVC-LANGUAGE | P,N | directive-only 생략, inline 생략 UNRESOLVED, 비C# UNSUPPORTED | svc / S03,S05 |
+| N461-SVC-LANGUAGE | P,N | directive-only 생략, inline 생략은 caller context 없을 때 UNRESOLVED, 비C# UNSUPPORTED | svc / S03,S05 |
 | N461-SVC-ENCODING | P,N,R,E | BOM/CRLF/LF/Unicode·UTF-16 직접 입력과 included range; 불명/손상 encoding 거부 | svc included range / S01,S02,S03,S05 |
 
 ## 실사용 source 입력 정책
@@ -118,7 +118,7 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 * `bin`·`obj`·`.vs`·`packages`·`TestResults` 빌드 산출물과 `.git`·`.svn`·`.hg` VCS 디렉터리는 제외한다. MSBuild는 실행하지 않는다. `.csproj`에 적힌 포함 목록만 관측한다. 순서는 MSBuild `%xx` decode → `\`를 `/`로 정규화 → `.csproj` 디렉터리 기준 `..` lexical 해석 → corpus root 확인이다. decode 결과 드라이브(`:`)·UNC(`//`)가 생기면 root 밖으로 본다. root 안이면 허용하며, 경로 비교는 Windows 규칙대로 대소문자를 구분하지 않는다. 조건·import·wildcard·`$(...)` 속성은 `UNRESOLVED`, corpus root 밖이거나 없는 항목은 읽지 않고 `NOT_FOUND`다. 파일마다 N461 역할은 하나다.
 * S01은 이를 위해 소유 계약인 [identity/evidence](../specs/identity-and-evidence.md), [공개 API](../specs/public-go-api.md), [CLI/profile](../specs/cli-and-profile.md)을 개정할 수 있다. encoding 선언 필드와 corpus 한도 표현, kit가 설정한 wall 초과는 `RESOURCE_LIMIT`이고 caller의 context 취소·deadline만 `CANCELLED`라는 API 매핑이 여기에 포함된다. manifest revision에서 판별 encoding을 identity에 결속하고, sha256 없는 `PRESENCE_ONLY` 레코드와 corpus 진입점을 정의한다.
 * 연산은 `private-corpus-local`이다. 파일 26000, 합계 3489660928 bytes, 단일 파일 33554432 bytes, 레코드 26000이다. 제외 디렉터리는 읽지 않고 잘라내며 수에 넣지 않는다. `PRESENCE_ONLY` 파일은 파일 수와 레코드에는 넣고 bytes에는 넣지 않는다. 레코드는 파일 항목 하나가 1개이며 포함 관계·중복 묶음은 항목의 필드다. 단일 파일 한도를 넘는 파일은 그 파일 레코드만 `RESOURCE_LIMIT`이고, 파일 수·합계·레코드·보고 한도를 넘으면 실행 전체가 `RESOURCE_LIMIT`다. `PRESENCE_ONLY` 파일은 단일 파일 한도에서 제외한다. 디렉터리 깊이 32, inventory 보고 67108864 bytes, Go 프로세스 memory 2147483648 bytes다(runner 밖 in-process inventory는 sampling으로 관측하는 non-strict 한도이며 at/one-over 판정 대상이 아니다). native 단계는 batch 요청으로 프로세스 하나가 최대 500 파일 또는 268435456 bytes를 처리하며 1 invocation으로 센다(파일당 60초, batch 프로세스 wall 3600초). batch는 한 프로세스 안에서 길이-접두 frame을 파일마다 순서대로 주고받는다. frame마다 encoded 요청 50331648 bytes와 응답 16777216 bytes 상한을, batch 전체 stdout에 268435456 bytes 상한(정합화 값, 사용자 미설정)을 둔다. 비공개 corpus의 frame 응답은 파일당 보존 레코드만 담고 full tree는 담지 않는다. runner는 frame마다 60초+유예 5초 watchdog을 둔다. 파일 자체 한도(watchdog·frame 상한)를 넘은 파일은 `RESOURCE_LIMIT`, batch 전체 한도(3600초·stdout)로 끝나면 진행 중이던 파일은 다시 넣고, 프로세스가 crash하면 진행 중이던 파일은 `FAILED`다. 완결성 검증을 통과한 frame만 파일별 결과로 인정하고 시작하지 않은 파일은 새 batch로 다시 넣으며, 이것은 재시도로 세지 않는다. 실행 wall을 다 쓰고 처리되지 않은 파일은 `execution_status=NOT_RUN`이며, 그 실행 전체는 `RESOURCE_LIMIT`이다. in-process inventory는 invocation으로 세지 않는다. pg-large-source-r1 예외는 이 연산에 적용하지 않는다. 보존은 파일당 레코드(상태·has_error·digest·상한 있는 ERROR 범위·encoding)만이며 full tree는 보존하지 않는다. 로컬 저장은 실행 1회당 2147483648 bytes이며 해당 Session의 저장 한도와 campaign 보존 저장에 포함한다. 실행 wall은 S01 1800초, S05 3600초, S07 1800초, S08 7200초다. S07 비공개 replay는 파일 26000, 레코드 합계 2147483648 bytes다. corpus profile은 `cp949`를 선언한다. 파일별 선언은 사용자가 제공한 로컬 manifest로만 주며 해당 실행의 결과를 관측하기 전에 등록한다. 사용자 manifest가 없으면 파일별 선언을 적용하지 않는다. 한도를 넘으면 `RESOURCE_LIMIT`이며 자동으로 올리지 않는다.
-* corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r1` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. route는 N461 역할과 무관하게 확장자로 정하며, 표에 없는 확장자만 route 없음(unrouted)이다. `UNCLASSIFIED`는 역할 축에만 쓰는 값이고 route를 없애지 않는다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록한다. route를 줄이는 변경은 분리 리뷰와 사용자 결정이 필요하며 결과를 관측하기 전에만 적용한다.
+* corpus route 표: `.cs`(`.Designer.cs`·`.svc.cs`·Reference.cs 포함)는 csharp, `.sql`은 tsql, `.svc`는 `SVC-SERVICEHOST-r2` composite, `.config`·`.resx`·`.xsd`·`.wsdl`·`.xml`·`.settings`·`.datasource`는 xml이다. route는 N461 역할과 무관하게 확장자로 정하며, 표에 없는 확장자만 route 없음(unrouted)이다. `UNCLASSIFIED`는 역할 축에만 쓰는 값이고 route를 없애지 않는다. S01이 역할을 붙이고 S07이 이 표를 workload로 등록한다. route를 줄이는 변경은 분리 리뷰와 사용자 결정이 필요하며 결과를 관측하기 전에만 적용한다.
 * S08 판정은 route가 있는 파일마다 `execution_status` COMPLETED(`has_error` 구분)·CANCELLED·RESOURCE_LIMIT·FAILED·NOT_RUN(batch 미처리), 또는 실행하지 않은 `assessment=BLOCKED`(인코딩·정책)로 집계한다. unrouted와 `PRESENCE_ONLY` 파일은 따로 센다. 통과는 kit 결함 0, 모든 파일의 상태 집계, ERROR 파일(COMPLETED이면서 `has_error`) 전부 처분(grammar gap·원본 손상·미지원; `UNDISPOSITIONED`가 남아 있는 동안은 통과가 아니며 사용자의 처분 답이 기록된 뒤에만 센다), CANCELLED·RESOURCE_LIMIT·FAILED 파일의 한도·환경·kit 결함 분류다. 분류하지 못한 FAILED는 kit 결함으로 센다. `NOT_RUN` 파일이 하나라도 있으면 통과가 아니다. 비율 임계값은 없다. 26 route·78칸과 별도 row이며, 세 host 비교는 OWNED_FIXTURE만 쓴다.
 
 ## Session 책임과 준비 전제
@@ -136,3 +136,13 @@ XML source는 데이터다. 객체 역직렬화, vendor assembly 로딩, 외부 
 PREPARE 필수 전제는 scope/roles/format/위치·encoding/안전 경계/case 종류/owner와 feasibility 경로의 정합성이다. C# 등 producer의 현재 필수 source 격차는 P05에 남긴다. 비공개 로컬 corpus는 등록됐지만 실행은 NOT_RUN이고, 미제공 업무 파일·svc 제품 기능·S08 78셀도 NOT_RUN/NOT_PROVIDED이며 미래 업무 검증 전체를 pre-S01 gate로 추가하지 않는다. 세 host source parser 검증은 WinForms/WCF 애플리케이션의 세 플랫폼 실행이 아니다.
 
 새 native 실행은 정확한 owned/비공개 input·expectation·producer·owner·effect·유한 한도를 별도 manifest에 연결하고 기존 allowlist 포함 여부를 확인한다. private 원본 hosted 전송 권한은 없다. 이번 scope 채택은 source/build/runtime/designer 지원 증거가 아니다.
+
+## Issue #172–#175의 r2 구문 범위
+
+`WarningLevel`·`CompilerOptions`와 Assembly directive를 포함한다. Language 생략은 caller의 `svc_context.default_language`와 provenance인 `language_source`로만 해석한다. 명시 VB는 C#으로 대체하지 않는다. CodeBehind는 등록된 case의 원본 hash/bytes와 별도 C# parse 결과에 연결하며 자동 파일 접근을 하지 않는다. 이 결과는 `.NET Framework 4.6.1`에서의 compile·activation 인증이 아니다. 설치된 Framework 4.8의 내부 directive parser 관측과 공개 reference source를 구문 대조 근거로 사용한다.
+
+owned fixture는 directive의 정상·비정상, quote/terminator 복구, alias/Unicode 공백, inline C# 및 별도 참조를 검증한다. UTF-16LE/BE와 CP949 관측은 Go/native mechanism 시험에서 따로 검증한다. 세 host qualification의 `n461-svc` 추가 행이 이 등록 범위를 판단하며 78개 일반 route 칸을 SVC 전체 언어 보장으로 읽지 않는다.
+
+compiler provider 이름의 설치·config 해석, WCF 타입 로딩·서비스 활성화는 구문 판정 밖이다. 예를 들어 `Language=?`를 설치 Framework가 거부해도 이를 directive lexical error로 등록하지 않는다. C# 외 inline 언어는 `UNSUPPORTED_LANGUAGE`이며 C# 파싱 성공으로 승계하지 않는다. unquoted attribute 값에는 따옴표·등호·꺾쇠를 허용하지 않아 다음 attribute를 값으로 삼는 token 변형을 거부한다.
+
+r2 directive separator는 Unicode 공백이다. 파일 시작 BOM은 보존하지만 `<%`와 `@` 사이 U+FEFF는 separator로 허용하지 않는다. `TestSvcBOMIsNotDirectiveSeparator`는 UTF-8·UTF-16 두 endian에서 이 축소를 고정한다.

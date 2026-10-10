@@ -267,11 +267,10 @@ func TestAPIObservations(t *testing.T) {
 	if errs == 0 || missing == 0 || extra == 0 {
 		t.Fatalf("fixture lacks ERROR/MISSING/extra: %d %d %d", errs, missing, extra)
 	}
-	// the pinned runtime's positional sibling navigation skips the zero-width MISSING ")":
-	// observed and recorded, never silently equal
+	// Identity navigation preserves the zero-width MISSING ")" as a distinct sibling.
 	api := r.Steps[0].Incremental.API
-	if api.PositionNavigation == 0 || api.FirstDivergence == nil || api.FirstDivergence.Check != "position_navigation:next_sibling" {
-		t.Fatalf("zero-width sibling divergence not recorded: %+v", api)
+	if api.PositionNavigation != 0 || api.FirstDivergence != nil {
+		t.Fatalf("zero-width sibling divergence: %+v", api)
 	}
 	// negative controls on the comparison itself: a wrong parent and a wrong sibling of a
 	// node with width are differences, not divergences
@@ -313,6 +312,40 @@ func TestAPIObservations(t *testing.T) {
 			}
 			break
 		}
+	}
+	// A zero-width skip remains observable, but the current producer must fail its API claim.
+	planted := false
+	for i, n := range tree {
+		if !n.IsMissing || n.StartByte != n.EndByte {
+			continue
+		}
+		for j, row := range w.Nodes {
+			if row[2] != int64(i) {
+				continue
+			}
+			bad := w
+			bad.Nodes = slices.Clone(w.Nodes)
+			bad.Nodes[j] = slices.Clone(row)
+			bad.Nodes[j][2] = w.Nodes[i][2]
+			d, div := compareAPI(tree, &bad)
+			if d != nil || len(div) == 0 {
+				t.Fatalf("positional control: %v %v", d, div)
+			}
+			step := StepResult{Incremental: &TreeOut{}}
+			claims := OracleClaims{API: ClaimNotClaimed}
+			oracleContext(true).oracleTrees(&step, CheckedStep{Incremental: Tree{Status: kit.StatusCompleted, Nodes: tree, API: &bad}}, kit.EncodingUTF8, []byte(src), &Producer{}, &claims)
+			if claims.API != ClaimFail || step.Incremental.API.PositionNavigation == 0 {
+				t.Fatalf("positional skip passed: %+v", claims)
+			}
+			planted = true
+			break
+		}
+		if planted {
+			break
+		}
+	}
+	if !planted {
+		t.Fatal("fixture lacks an observable zero-width skip")
 	}
 	lookups := w
 	lookups.FieldLookups = w.FieldLookups[1:]

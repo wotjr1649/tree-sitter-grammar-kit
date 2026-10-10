@@ -454,9 +454,12 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 	}
 	x := h.x
+	x.startSvcReferences(w.SvcContext)
+	x.svcFormat = w.Format
 	x.gates, x.findings, x.seen = nil, nil, map[string]map[string]bool{}
 	over := false
 	done := func() (*qset, *Error) {
+		x.checkSvcReferences()
 		for _, g := range x.gates {
 			g.finish()
 			s.Gates = append(s.Gates, *g)
@@ -618,12 +621,15 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			}
 		}
 		next++
-		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect}
+		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect, Encoding: EncodingUTF8}
+		if w.Format == SvcFormat && qc.Source != nil {
+			reg.SvcSource = []byte(*qc.Source)
+		}
 		if c.Input.Path != "" {
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
 		x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, errNodes, &c, &extra, add, full)
+		q.judgeCase(s, qc, errNodes, &c, &extra, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
@@ -663,7 +669,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string, svc bool) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -675,8 +681,29 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	kit := map[string]string{"incremental_equality": c.Claims.IncrementalEquality, "incremental_route": c.Claims.IncrementalRoute}
 	if c.Oracle != nil {
 		kit["query_equality"], kit["fact_reproduction"], kit["dynamic_sql"] = c.Oracle.QueryEquality, c.Oracle.FactReproduction, c.Oracle.DynamicSQL
-		if c.Oracle.API == claimFail || c.Oracle.API == claimBlocked {
-			s.APIFails++ // the runtime node API disagreeing with its cursor: an observation for disposition
+		apiInvalid := false
+		for _, step := range extra.Steps {
+			for _, tree := range []*qTree{step.Incremental, step.Fresh} {
+				if tree == nil || len(tree.API) == 0 || string(tree.API) == "null" {
+					continue
+				}
+				var obs struct {
+					Consistent         *bool `json:"consistent"`
+					PositionNavigation int   `json:"position_navigation_divergences"`
+				}
+				if err := jsonv2.Unmarshal(tree.API, &obs); err != nil || obs.PositionNavigation < 0 {
+					add("API_RECORD_INVALID", path, "API navigation 관측을 읽을 수 없다")
+					apiInvalid = true
+				} else if obs.PositionNavigation > 0 || obs.Consistent != nil && !*obs.Consistent {
+					apiInvalid = true
+				}
+			}
+		}
+		if apiInvalid && c.Oracle.API == claimPass {
+			add("API_CLAIM_MISMATCH", path, "positional divergence가 있는 API를 PASS로 주장했다")
+		}
+		if apiInvalid || c.Oracle.API == claimFail || c.Oracle.API == claimBlocked {
+			s.APIFails++
 		}
 	}
 	for _, k := range sortedKeys(kit) {
@@ -694,7 +721,11 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	for i, e := range qc.Expect {
 		stepRes[i] = claimBlocked
 		if completed && e.Step < len(c.Steps) {
-			if r, ok := expectResult(e, c.Steps[e.Step].Incremental); ok {
+			r, ok := expectResult(e, c.Steps[e.Step].Incremental)
+			if svc && c.Steps[e.Step].Composite != nil {
+				r, ok = svcExpectResult(e, c.Steps[e.Step])
+			}
+			if ok {
 				stepRes[i] = r
 			}
 		}
@@ -834,6 +865,9 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		}
 		s.checks[qc.ID] = v
 	}
+	for _, ref := range c.References {
+		s.checks[qc.ID] = worseClaim(s.checks[qc.ID], ref.Assessment)
+	}
 	if qc.Role == "detector" {
 		d := claimPass
 		for _, r := range stepRes {
@@ -953,6 +987,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	if !jsonEqual(n.Declarations, w.Declarations) {
 		return "declarations"
 	}
+	if !jsonEqual(n.SvcContext, w.SvcContext) {
+		return "svc_context"
+	}
 	if (p.FactPack == nil) != (w.FactPack == nil) || (p.FactPack != nil && *p.FactPack != *w.FactPack) {
 		return "fact_pack"
 	}
@@ -969,6 +1006,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	}
 	for i, c := range n.Cases {
 		r := w.Cases[i]
+		if w.Format == SvcFormat && (r.Source == nil || string(c.SvcSource) != *r.Source) {
+			return "cases/" + c.ID + "/svc_source"
+		}
 		if c.ID != r.ID || c.Input.SHA256 != r.Input.SHA256 || c.Input.Bytes != r.Input.Bytes || !slices.EqualFunc(c.Edits, r.Edits, sameEdit) ||
 			!slices.EqualFunc(c.Expect, r.Expect, sameExpect) || (len(p.OracleCases[i].QueryExpect)+len(r.QueryExpect) > 0 && !jsonEqual(p.OracleCases[i].QueryExpect, r.QueryExpect)) ||
 			(c.Encoding != "" && c.Encoding != EncodingUTF8) || (len(c.Points)+len(r.Points) > 0 && !slices.Equal(c.Points, r.Points)) ||

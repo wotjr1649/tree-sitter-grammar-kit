@@ -1,7 +1,7 @@
 {
   "schema": "tsgk-native-route-cases/r1",
   "route": "csharp",
-  "format": "SVC-SERVICEHOST-r1",
+  "format": "SVC-SERVICEHOST-r2",
   "cases": [
     {
       "id": "n461-svc-inline-pe-r1",
@@ -237,15 +237,15 @@
       "features": [
         "N461-SVC-ENCODING"
       ],
-      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "source_utf8": "﻿<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n",
       "edits": [
         {
           "find": "        string Greet(string name);\r\n",
           "replace": "        string Greet(string name);\r\n\r\n        [OperationContract]\r\n        string Farewell(string name);\r\n"
         },
         {
-          "find": "\" / Gr\u00fc\u00dfe\"",
-          "replace": "\" / Gr\u00fc\u00df Gott\""
+          "find": "\" / Grüße\"",
+          "replace": "\" / Grüß Gott\""
         }
       ],
       "expect": [
@@ -280,7 +280,7 @@
       "features": [
         "N461-SVC-ENCODING"
       ],
-      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name));\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "source_utf8": "﻿<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name));\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n",
       "edits": [],
       "expect": [
         {
@@ -297,7 +297,7 @@
       "features": [
         "N461-SVC-ENCODING"
       ],
-      "source_utf8": "\ufeff<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: \u00e9.\r\n        public string Greet(string name)\r\n        {\r\n            return \"\uc548\ub155\ud558\uc138\uc694, \" + name + \" / Gr\u00fc\u00dfe\";\r\n        }\r\n    }\r\n}\r\n",
+      "source_utf8": "﻿<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.GreetingService\" %>\r\nusing System.ServiceModel;\r\n\r\nnamespace Demo.Services\r\n{\r\n    [ServiceContract]\r\n    public interface IGreetingService\r\n    {\r\n        [OperationContract]\r\n        string Greet(string name);\r\n    }\r\n\r\n    public class GreetingService : IGreetingService\r\n    {\r\n        // Greeting text contains non-ASCII characters on purpose: é.\r\n        public string Greet(string name)\r\n        {\r\n            return \"안녕하세요, \" + name + \" / Grüße\";\r\n        }\r\n    }\r\n}\r\n",
       "edits": [
         {
           "find": ")\r\n        {\r\n            return \"",
@@ -337,7 +337,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" %>\n",
       "edits": [],
-      "expect": []
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-directive-n-r1",
@@ -347,9 +354,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" Service=\"Demo.Services.Other\" Mode=\"Fast\" %>\n<%@ ServiceHost Service=\"Demo.Services.Again\" %>\n",
       "edits": [],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_INLINE_UNRESOLVED"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-codebehind-p-r1",
@@ -359,7 +371,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Debug=\"true\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %>\n",
       "edits": [],
-      "expect": []
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-codebehind-n-r1",
@@ -369,9 +388,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind CodeBehind=\"App_Code/OrderService.cs\" %>\npublic class Stray\n{\n}\n",
       "edits": [],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_INLINE_UNRESOLVED"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-multiline-p-r1",
@@ -381,7 +405,14 @@
       ],
       "source_utf8": "<%@ ServiceHost\n    Language=\"C#\"\n    Debug='false'\n    Service=\"Demo.Services.OrderService\"\n    Factory=\"System.ServiceModel.Activation.ServiceHostFactory\"\n    CodeBehind=\"OrderService.svc.cs\"\n%>\n",
       "edits": [],
-      "expect": []
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-multiline-n-r1",
@@ -391,7 +422,14 @@
       ],
       "source_utf8": "<%@ ServiceHost\n    Language=\"C#\"\n    Service='Demo.Services.OrderService'\n    Debug=true ;\n    Factory=\n%>\n",
       "edits": [],
-      "expect": []
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-quote-n-r1",
@@ -401,9 +439,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs %>\n",
       "edits": [],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-quote-r-r1",
@@ -422,9 +465,26 @@
           "replace": "OrderService\" CodeBehind"
         }
       ],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_DIRECTIVE_DIAGNOSTICS"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-terminator-n-r1",
@@ -434,9 +494,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"Demo.Services.OrderService\"\nusing System;\n\npublic class OrderService\n{\n    public int Count()\n    {\n        return 0;\n    }\n}\n",
       "edits": [],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_INLINE_UNRESOLVED"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-terminator-r-r1",
@@ -455,9 +520,26 @@
           "replace": "OrderService\" %>\n"
         }
       ],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_INLINE_NOT_PARSED"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-language-p-r1",
@@ -467,7 +549,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Service=\"Demo.Services.OrderService\" CodeBehind=\"OrderService.svc.cs\" %>\n",
       "edits": [],
-      "expect": []
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-language-unresolved-n-r1",
@@ -477,9 +566,14 @@
       ],
       "source_utf8": "<%@ ServiceHost Debug=\"true\" Service=\"Demo.Services.EchoService\" %>\nusing System;\nusing System.ServiceModel;\n\nnamespace Demo.Services\n{\n    [ServiceContract(Namespace = \"urn:example:echo\")]\n    public interface IEchoService\n    {\n        [OperationContract]\n        string Echo(string text);\n    }\n\n    public class EchoService : IEchoService\n    {\n        public string Echo(string text)\n        {\n            return text;\n        }\n    }\n}\n",
       "edits": [],
-      "expect": [],
-      "expect_assessment": "BLOCKED",
-      "expect_code": "SVC_INLINE_UNRESOLVED"
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     },
     {
       "id": "n461-svc-language-vb-n-r1",
@@ -492,6 +586,448 @@
       "expect": [],
       "expect_assessment": "BLOCKED",
       "expect_code": "SVC_INLINE_UNSUPPORTED"
+    },
+    {
+      "id": "n461-svc-reference-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "namespace Demo.Services { public class OrderService { const string Marker = \"<%@ ServiceHost Service=\\\"S\\\" %>\"; public int Count() { return 1; } } }",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration",
+            "method_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-space-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<% @ServiceHost Service=\"S\" Language=\"C#\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-quoted-close-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"A%>B\" Language=\"C#\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-compiler-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" WarningLevel=\"4\" CompilerOptions=\"/define:OWNED\" Debug=\"TRUE\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-assembly-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ Assembly Name=\"System\" %>\n<%@ ServiceHost Service=\"S\" Language=\"C#\" %>\n<%@ Assembly Src=\"inert.cs\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-unicode-space-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<% @ServiceHost Service=\"S\" Language=\" C# \" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-bare-service-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-empty-service-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service= %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-missing-main-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-page-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ Page Service=\"S\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-punctuation-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" ; %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-debug-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" Debug=\"banana\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-warning-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" WarningLevel=\"-1\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-duplicate-case-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" SERVICE=\"T\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-assembly-exclusive-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" %><%@ Assembly Name=\"System\" Src=\"inert.cs\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-assembly-missing-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" %><%@ Assembly %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-inline-bad-directive-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" Language=\"C#\" Bogus=\"x\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-language-cs-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" Language=\"cs\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-language-csharp-p-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service=\"S\" Language=\"csharp\" %>\nclass S {}",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-inline-marker-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nconst string marker=\"<%@ ServiceHost Service='T' %>\";",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-inline-comment-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\n// <%@ ServiceHost Service='T' %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-unquoted-debug-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<% @ServiceHost Service= Debug=\"true\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-unquoted-language-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Factory= Language=\"C#\" WarningLevel=\"4\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-unquoted-warning-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Factory=\"F\" Language= WarningLevel=\"4\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-unquoted-codebehind-n-r2",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-DIRECTIVE"
+      ],
+      "source_utf8": "<%@ ServiceHost Service= CodeBehind=\"a%>b.cs\" %>",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
     }
-  ]
+  ],
+  "svc_context": {
+    "default_language": "C#",
+    "language_source": "OWNED_FIXTURE_PROJECT",
+    "code_behind": [
+      {
+        "name": "OrderService.svc.cs",
+        "case": "n461-svc-reference-p-r2"
+      },
+      {
+        "name": "App_Code/OrderService.cs",
+        "case": "n461-svc-reference-p-r2"
+      }
+    ]
+  }
 }

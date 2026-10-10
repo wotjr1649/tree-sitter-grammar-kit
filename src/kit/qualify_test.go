@@ -555,21 +555,32 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 				}
 			}
 			ids := func() []IdentityRef {
-				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"source", "tsgk-source-bytes/r1", sum([]byte("svc"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"source", "tsgk-source-bytes/r1", sum([]byte("alpha"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
 			}
-			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": "C#", "identities": ids(),
+			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": map[string]any{"status": "CSHARP", "value": nil}, "identities": ids(),
+				"directive": &SvcDirective{Close: &Span{}, Diagnostics: []string{}}, "coverage": SvcCoverage{Inline: "OBSERVED"},
 				"inline": map[string]any{"tree": map[string]any{"identities": ids()}}}
 			if edit != nil {
 				edit(c)
 			}
-			recs[0]["steps"].([]any)[0].(map[string]any)["composite"] = c
+			for _, rc := range recs {
+				for _, st := range rc["steps"].([]any) {
+					st.(map[string]any)["composite"] = c
+				}
+			}
 		}, manifest: func(s string, m map[string]any) {
 			if s == "s06-fxa" {
 				m["producer"].(map[string]string)["build_identity"] = build
 			}
 		}}
 	}
-	f := newQfx(t)
+	fixture := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[0].Workload.Format = SvcLegacyFormat
+		f.inv.Routes[0].Workload.Symbol = "tree_sitter_c_sharp"
+		return f
+	}
+	f := fixture()
 	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": host(fxProducer, nil)}))
 	for _, pl := range qfxPlatforms {
 		if c := cellOf(r, "fxa", pl.ID); c.Comparison != AssessPass || c.Mechanism != AssessPass {
@@ -580,14 +591,14 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 		t.Fatalf("host build identity not retained: %v", l.Set.Host)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	mixed := host(other, func(c map[string]any) { c["identities"].([]IdentityRef)[0].SHA256 = fxProducer })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": mixed, "darwin-arm64": host(fxProducer, nil)}))
 	if l := cellOf(r, "fxa", "linux-amd64"); l.Mechanism == AssessPass || !slices.ContainsFunc(l.Set.Gates, func(g ReplayGate) bool { return g.ID == "case-binding" && g.Code == "MIXED_IDENTITY" }) {
 		t.Fatalf("composite from another build accepted: %s %+v", l.Mechanism, l.Set.Gates)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	inline := host(other, func(c map[string]any) {
 		c["inline"].(map[string]any)["tree"].(map[string]any)["identities"].([]IdentityRef)[0].SHA256 = fxProducer
 	})
@@ -597,14 +608,14 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 	}
 
 	// only the producer is left out: a different composite source is still a difference
-	f = newQfx(t)
+	f = fixture()
 	src := host(fxProducer, func(c map[string]any) { c["identities"].([]IdentityRef)[1].SHA256 = sum([]byte("other")) })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": src}))
 	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
 		t.Fatalf("composite source difference not reported: %s %v", c.Comparison, r.Comparisons[0].Differences)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	vb := host(fxProducer, func(c map[string]any) { c["language"] = "VB" })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": vb}))
 	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
@@ -800,7 +811,7 @@ func roleRow(r QualificationResult, id, plat string) QualRoleRow {
 func (f *qfx) svcRole() *QualWorkload {
 	w := qfxWorkload("s06-fxs", "fxs", []QualCase{{ID: "s1", Role: "support", Input: NativeInput{SHA256: sum([]byte("alpha")), Bytes: 5}, Edits: []Edit{},
 		Expect: []StepExpectation{}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{}}})
-	w.Symbol, w.Format = "tree_sitter_c_sharp", SvcFormat
+	w.Symbol, w.Format = "tree_sitter_c_sharp", SvcLegacyFormat
 	f.inv.ExtraRoles = append(f.inv.ExtraRoles, QualRole{ID: "fx-svc", Role: "owned", Status: RoleExecuted, Reason: "owned .svc fixture", Platforms: []string{"windows-amd64"},
 		NotApplicable: map[string]string{"linux-amd64": "windows only", "darwin-arm64": "windows only"}, Workloads: []QualWorkload{w}})
 	return &f.inv.ExtraRoles[len(f.inv.ExtraRoles)-1].Workloads[0]
@@ -881,8 +892,8 @@ func TestQualifyPlatformClaims(t *testing.T) {
 	f = covered()
 	api := func(s string, recs []map[string]any) {
 		if s == "s06-fxa" {
-			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
-			tr["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil, "position_navigation_divergences": 1}
+			tr := recs[2]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["queries"].([]any)[0].(map[string]any)["captures"].([]Capture)[0].Pattern = 1
 		}
 	}
 	r = f.run(t, f.all(t, map[string]qfxMut{"darwin-arm64": {record: api}}))
@@ -959,7 +970,7 @@ func TestQualificationInventorySvcExpectation(t *testing.T) {
 	// the fxa route workload in the SVC format; c2 has no step or query expectation
 	base := func() *qfx {
 		f := newQfx(t)
-		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcFormat
+		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcLegacyFormat
 		c := &f.inv.Routes[0].Workload.Cases[1]
 		c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
 		return f
@@ -1488,5 +1499,22 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 				t.Fatalf("clean-tree route FAIL: E %+v", ob)
 			}
 		})
+	}
+}
+
+func TestQualifyRejectsPositionalAPIPass(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "position_navigation_divergences": 1}
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut, "linux-amd64": mut, "darwin-arm64": mut}))
+	for _, platform := range qfxPlatforms {
+		c := cellOf(r, "fxa", platform.ID)
+		if c.Set.APIFails != 1 || c.Mechanism == AssessPass {
+			t.Fatalf("positional API PASS: %+v", c)
+		}
 	}
 }

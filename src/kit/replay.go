@@ -362,6 +362,10 @@ func Reducers() []ReducerInfo {
 // replayEnv is the state of one replay: the bounded root, the walked file set and the
 // reducer's accounting.
 type replayEnv struct {
+	svcContext     *SvcContext
+	svcFormat      string
+	svcEvidence    map[string]svcCaseEvidence
+	svcReferences  []svcReferenceLink
 	r              *run
 	g              *guard
 	lim            ReplayLimits
