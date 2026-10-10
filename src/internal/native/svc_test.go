@@ -79,8 +79,8 @@ func TestSvcExplicitReferenceAndSelfRejection(t *testing.T) {
 	x := testContext("native-parse-edit")
 	x.Format = kit.SvcFormat
 	x.SvcContext = &kit.SvcContext{DefaultLanguage: "C#", LanguageSource: "owned", CodeBehind: []kit.SvcReference{{Name: "ref.cs", Case: "ref"}}}
-	for variant := 0; variant < 4; variant++ {
-		self := variant == 1 || variant == 2
+	for variant := 0; variant < 5; variant++ {
+		self := variant == 1 || variant == 2 || variant == 4
 		enc := kit.EncodingUTF8
 		root := t.TempDir()
 		source := []byte("z = [1, 2];")
@@ -93,6 +93,9 @@ func TestSvcExplicitReferenceAndSelfRejection(t *testing.T) {
 		}
 		if variant == 3 {
 			source = []byte("# <%@ ServiceHost Service='S' %>\nz = [1, 2];")
+		}
+		if variant == 4 {
+			source = append([]byte("// prefix\n"), source...)
 		}
 		if e := os.WriteFile(filepath.Join(root, "ref.txt"), source, 0600); e != nil {
 			t.Fatal(e)
@@ -118,6 +121,51 @@ func TestSvcExplicitReferenceAndSelfRejection(t *testing.T) {
 		linkSvcReferences(&owner, refs)
 		if owner.Assessment != kit.AssessPass || len(owner.References) != 1 || owner.References[0].Input != c.Input || owner.Steps[0].Composite.CodeBehind.Resolution != "PARSED" {
 			t.Fatalf("owner %s %s", owner.Assessment, owner.Code)
+		}
+	}
+}
+
+func TestSvcSegmentsPreserveEveryExpectation(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	x := testContext("native-parse-edit")
+	x.Format = kit.SvcFormat
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
+	for _, step := range []int{0, 1} {
+		c := kit.IncrementalCase{ID: "svc-duplicate-expect", Encoding: kit.EncodingUTF8, Edits: editsBy(source, edit{"%>", ""}), Expect: []kit.StepExpectation{{Step: step, Syntax: "ERROR"}, {Step: step, Syntax: "NO_ERROR"}}}
+		if step == 1 {
+			c.Expect[0].Syntax, c.Expect[1].Syntax = "NO_ERROR", "ERROR"
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		r := b.RunCase(ctx, x, c, []byte(source))
+		cancel()
+		if r.Assessment != kit.AssessFail || len(r.Expectations) != 2 || r.Expectations[0].Result != ClaimFail || r.Expectations[1].Result != ClaimPass {
+			t.Fatalf("step %d: %s %+v", step, r.Assessment, r.Expectations)
+		}
+	}
+}
+
+func TestSvcSegmentsRetainNativeFailures(t *testing.T) {
+	x := testContext("native-parse-edit")
+	x.Format = kit.SvcFormat
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
+	for _, fault := range []string{"TSGK_FAULT_STEP1_FLAG", "TSGK_FAULT_OMIT_OLD_TREE"} {
+		b := fixtureBuild(t, "plain", fault)
+		c := kit.IncrementalCase{ID: "svc-segment-fault", Encoding: kit.EncodingUTF8, Edits: editsBy(source, edit{"f(1)", "f(2, 3)"}, edit{"%>", ""}), Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}, {Step: 2, Syntax: "ERROR"}}}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		r := b.RunCase(ctx, x, c, []byte(source))
+		cancel()
+		if len(r.Segments) != 1 || r.Assessment != kit.AssessFail {
+			t.Fatalf("%s: %s %+v", fault, r.Assessment, r.Segments)
+		}
+	}
+}
+
+func TestSvcReferenceKeepsParentVerdictAndClaims(t *testing.T) {
+	for _, assessment := range []string{kit.AssessFail, kit.AssessBlocked} {
+		out := CaseResult{ExecutionStatus: kit.StatusCompleted, Assessment: assessment, Code: "SVC_PARTIAL_HISTORY", Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimPass}, Steps: []StepResult{{Composite: &SvcComposite{CodeBehind: &kit.SvcCodeBehind{Case: "ref"}}}}}
+		linkSvcReferences(&out, map[string]CaseResult{"ref": {ID: "ref", ExecutionStatus: kit.StatusCompleted, Assessment: kit.AssessPass}})
+		if out.Assessment != assessment || out.Claims.Expectations != ClaimPass || len(out.References) != 1 {
+			t.Fatalf("%s: %s %+v", assessment, out.Assessment, out.Claims)
 		}
 	}
 }

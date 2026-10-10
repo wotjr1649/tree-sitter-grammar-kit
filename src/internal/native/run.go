@@ -515,6 +515,9 @@ func stepRoute(old, s StepResult) string {
 // is FAIL, else any BLOCKED is BLOCKED, else PASS.
 func foldAssessment(out *CaseResult) {
 	claims := []string{out.Claims.IncrementalEquality, out.Claims.IncrementalRoute, out.Claims.Expectations}
+	for _, s := range out.Segments {
+		claims = append(claims, s.Claims.IncrementalEquality, s.Claims.IncrementalRoute, s.Claims.Expectations)
+	}
 	for _, r := range out.References {
 		claims = append(claims, r.Assessment)
 	}

@@ -39,11 +39,14 @@ func TestSvcCP949ReferenceSpelling(t *testing.T) {
 
 func TestSvcProfileSourceIdentity(t *testing.T) {
 	for _, schema := range []string{IncrementalSchema, OracleSchema} {
-		for _, bad := range []string{"", "hash", "encoding", "noncanonical", "self-reference", "batch", "reference-string"} {
+		for _, bad := range []string{"", "hash", "encoding", "noncanonical", "self-reference", "prefixed-self-reference", "batch", "reference-string"} {
 			p := anchorProfile(schema, nil, nil)
 			p["symbol"], p["format"] = "tree_sitter_c_sharp", SvcFormat
 			c := p["cases"].([]any)[0].(map[string]any)
 			source := []byte(`<%@ ServiceHost Service="S" CodeBehind="self.cs" %>`)
+			if bad == "prefixed-self-reference" {
+				source = append([]byte("// prefix\n"), source...)
+			}
 			if bad == "reference-string" {
 				source = []byte(`class S { string text = "<%@ ServiceHost Service='S' %>"; }`)
 				p["svc_context"] = map[string]any{"default_language": "C#", "language_source": "owned", "code_behind": []any{map[string]any{"name": "S.cs", "case": "c1"}}}
@@ -57,7 +60,7 @@ func TestSvcProfileSourceIdentity(t *testing.T) {
 				c["encoding"] = EncodingUTF16LE
 			case "noncanonical":
 				c["svc_source"] = c["svc_source"].(string) + "\n"
-			case "self-reference", "batch":
+			case "self-reference", "prefixed-self-reference", "batch":
 				p["svc_context"] = map[string]any{"default_language": "C#", "language_source": "owned", "code_behind": []any{map[string]any{"name": "self.cs", "case": "c1"}}}
 				if bad == "batch" {
 					p["operation"], p["output"] = "private-corpus-local", OutputRecord

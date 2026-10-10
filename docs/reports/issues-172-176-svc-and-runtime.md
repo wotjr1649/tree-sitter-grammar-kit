@@ -34,3 +34,9 @@ r2 replay는 등록 원본과 edit로 composite를 다시 관측한다. 비SVC p
 full-node large API 및 세 OS의 실제 PR/main qualification은 [PR #177](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/177)의 실행 identity와 CI artifact를 최종 근거로 사용한다. 위 표는 로컬 검사 기록이다. 임의의 모든 C#·T-SQL·SVC 입력이 완전하게 처리된다는 판정은 하지 않는다. 등록 비정상 입력의 기대 ERROR가 PASS인 것은 시험 성공이며 유효 프로그램이라는 뜻이 아니다.
 
 C# S06 321건의 모든 incremental/fresh API에서 mandatory mismatch와 positional divergence는 0이다. 이전 large API small 관측의 4개 divergence는 모두 `next_sibling` 방향이었다. `prev_sibling`에는 기존 node identity/trailing empty descendant 처리가 있으며 대응 결함은 현재 입력에서 재현되지 않았다. 현재 producer는 positional divergence를 API FAIL로 처리하고 qualification은 같은 위조 PASS가 세 host에 있어도 거부한다. CP949 U+3000 prefix는 기존 decoder를 공유하는 `HasDirectivePrefix` guard로 검사한다. Framework와 kit는 marker 내부 U+FEFF를 모두 REJECTED로 관측했다.
+
+## PR 리뷰의 추가 보완
+
+PR #177 자동 리뷰의 네 지적을 공개 합성 입력으로 재검증했다. 주석 prefix 자기 참조의 decoder 수용, 같은 step의 FAIL expectation이 뒤 PASS로 덮어쓰이는 현상, 실제 fault-control segment의 FAIL이 최종 PASS로 사라지는 현상은 수정 전 실패·수정 후 통과로 확인했다. replay도 gap 앞의 incremental 차이가 PASS로 승격되는 입력을 거부한다. parent 판정은 참조 결과를 연결한 뒤에도 유지하고 정상 expectation claim을 BLOCKED로 바꾸지 않는다.
+
+sibling 탐색의 visible prefix 반복은 owned plain grammar의 27,001 node·54,002 sibling 호출에서 기존 2-patch 약 6ms, 최초 3-patch 약 397ms로 재현됐다. hidden chunk seek와 정확한 identity 역탐색 보완은 같은 조건에서 약 10ms, 49,501 node에서 약 19ms를 관측했다. 이는 GCC 16.2.0/O2 로컬 CPU 시간이며 일반적인 선형 시간 보장은 아니다. 별도 native fixture는 실제 runtime constructor로 같은 위치의 missing node 3개를 만들고 public sibling API에서 named/anonymous 혼합·hidden wrapper·EOF·서로 다른 tree의 identity를 검사한다. 실제 parser의 9,001-node flat source와 MISSING·extra 입력도 API 차이 0으로 검증한다.

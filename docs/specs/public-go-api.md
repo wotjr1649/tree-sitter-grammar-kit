@@ -324,4 +324,4 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 
 `SvcObservation.AdditionalDirectives`, `SvcDirective.DiagnosticSpans`는 복수 directive와 오류 위치를 원본 좌표로 보존한다. `Syntax(nil)`은 directive 오류만으로 ERROR를 알 수 있지만 필요한 inline tree 없이 NO_ERROR를 증명하지 않는다. bool 포인터를 주는 caller는 해당 원본 included range의 실제 parse 결과를 제공해야 한다. 시험 PASS와 source 유효성을 구분하며 코드의 실행 성공을 판단하지 않는다.
 
-`SvcObservation.HasDirectivePrefix(encoding, source)`는 같은 source의 관측에서 ServiceHost 앞이 공백/BOM뿐인지 판정한다. UTF-8·UTF-16·CP949를 같은 decoder로 처리한다. 일반 C# 문자열의 directive marker와 host source를 구별하는 참조 guard이며 C# 구문 검증은 별도 parser가 수행한다.
+`SvcObservation.HasDirectivePrefix(encoding, source)`는 같은 source의 관측에서 ServiceHost 앞이 공백/BOM뿐인지 판정한다. UTF-8·UTF-16·CP949를 같은 decoder로 처리한다. 일반 C# 문자열의 directive marker와 host source를 구별하는 참조 guard이며 C# 구문 검증은 별도 parser가 수행한다. 별도로 CodeBehind의 같은 case 자기 참조는 prefix와 무관하게 거부한다.

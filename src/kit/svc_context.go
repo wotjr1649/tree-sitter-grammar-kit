@@ -174,6 +174,15 @@ func parseSvcContext(t typed, v *jv, p IncrementalProfile) (*SvcContext, *Error)
 		seen[r.Name] = true
 		out.CodeBehind = append(out.CodeBehind, r)
 	}
+	for _, c := range p.Cases {
+		if c.SvcSource == nil {
+			continue
+		}
+		o := ObserveServiceHostWithContext(c.Encoding, c.SvcSource, out)
+		if o.CodeBehind != nil && o.CodeBehind.Case == c.ID {
+			return nil, t.bad("SVC_REFERENCE_INVALID", v)
+		}
+	}
 	return out, nil
 }
 

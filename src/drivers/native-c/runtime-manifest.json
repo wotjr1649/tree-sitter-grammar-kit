@@ -35,8 +35,8 @@
   },
   {
    "subject": "src/drivers/native-c/runtime-sibling-identity.patch.json",
-   "sha256": "35ab9c396d154c86a2d227c5f6a4356b91e0db34c0bc11def1b02075e3ff0495",
-   "bytes": 3009,
+   "sha256": "06d8738fa24fa8c88403971642e98c4ae00b5bbdee5e7450e5346eca2ae67b68",
+   "bytes": 3182,
    "pointer": "/files/0",
    "field": "operations",
    "target": "lib/src/node.c",
@@ -131,8 +131,8 @@
   },
   {
    "path": "lib/src/node.c",
-   "sha256": "d3a6de61de5c4ea993e25ddf127f6a471fd1a29ae0bb8df623ed581071dc5041",
-   "bytes": 22529
+   "sha256": "c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062",
+   "bytes": 22738
   },
   {
    "path": "lib/src/parser.c",

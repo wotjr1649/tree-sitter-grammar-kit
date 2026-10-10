@@ -442,6 +442,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			ir = worseClaim(ir, routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental))
 		}
 		if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+			claims = append(claims, ie, ir)
 			ie, ir = claimNotClaimed, claimNotClaimed
 		}
 	}
@@ -512,6 +513,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	} else {
 		recorded = append(recorded, c.Claims.Expectations)
 	}
+	if len(exps) == 0 && slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+		claims = append(claims, claimBlocked)
+	}
 	if c.Oracle != nil {
 		qe := claimNotClaimed
 		qeOK := true
@@ -551,7 +555,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				}
 			}
 			if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
-				qe = claimNotClaimed
+				if qe == claimPass {
+					qe = claimNotClaimed
+				}
 			}
 		}
 		if qeOK {

@@ -5,6 +5,71 @@ import (
 	"testing"
 )
 
+func TestSvcReplayKeepsSegmentFailuresAcrossGap(t *testing.T) {
+	for _, failure := range []string{"equality", "route", "blocked-route", "query-equality"} {
+		f := newFxNative()
+		if failure == "query-equality" {
+			f.cases[1]["oracle_claims"] = map[string]string{"query_equality": claimNotClaimed, "query_expectations": claimNotClaimed, "api": claimNotClaimed, "fact_reproduction": claimNotClaimed, "dynamic_sql": claimNotClaimed}
+		}
+		data, _ := json.Marshal(f.cases[1])
+		var c rcCase
+		if err := json.Unmarshal(data, &c); err != nil {
+			t.Fatal(err)
+		}
+		for i := range c.Steps {
+			c.Steps[i].Composite = &rcComposite{}
+		}
+		step := &c.Steps[1]
+		want := AssessFail
+		if failure == "equality" {
+			step.Fresh.Tree.Nodes[1].Type = "different"
+			step.Fresh.Digest = TreeDigest(step.Fresh.Tree.Nodes)
+			step.Comparison.Equal = false
+			step.Comparison.First = CompareTrees(step.Incremental.Tree.Nodes, step.Fresh.Tree.Nodes)
+		} else if failure == "query-equality" {
+			if err := json.Unmarshal([]byte(`{"queries":[{"id":"q"}]}`), step.Fresh); err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			step.Route.ReusedNodes, step.Route.Proven = 0, false
+			if failure == "blocked-route" {
+				want = AssessBlocked
+				for _, tree := range []*rcTree{c.Steps[0].Incremental, step.Incremental, step.Fresh} {
+					tree.HasError, tree.Tree.Nodes[0].HasError = true, true
+					tree.Digest = TreeDigest(tree.Tree.Nodes)
+				}
+			}
+		}
+		c.Steps = append(c.Steps, rcStep{Step: 2, Composite: &rcComposite{}})
+		c.Expectations = []rcExpect{{Step: 2, Syntax: "ERROR", Result: claimPass}}
+		c.Claims.Expectations = claimPass
+		c.Claims.IncrementalEquality, c.Claims.IncrementalRoute = claimNotClaimed, claimNotClaimed
+		x := &replayEnv{svcFormat: SvcLegacyFormat, errorTreeRoute: true, seen: map[string]map[string]bool{}}
+		out := x.replayCase(&c, 0, nil, failure == "query-equality")
+		if out.assess != want || x.gate("verdict").Code != "VERDICT_MISMATCH" {
+			t.Fatalf("%s: %s %+v", failure, out.assess, x.gate("verdict"))
+		}
+	}
+}
+
+func TestSvcReplayUnregisteredGapStaysBlocked(t *testing.T) {
+	f := newFxNative()
+	data, _ := json.Marshal(f.cases[1])
+	var c rcCase
+	if err := json.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+	for i := range c.Steps {
+		c.Steps[i].Composite = &rcComposite{Directive: &SvcDirective{Close: &Span{}}, Coverage: SvcCoverage{Inline: "OBSERVED"}}
+	}
+	c.Steps = append(c.Steps, rcStep{Step: 2, Composite: &rcComposite{Directive: &SvcDirective{Close: &Span{}}, Coverage: SvcCoverage{Inline: "UNRESOLVED"}}})
+	c.Claims.IncrementalEquality, c.Claims.IncrementalRoute, c.Assessment = claimNotClaimed, claimNotClaimed, AssessBlocked
+	x := &replayEnv{svcFormat: SvcLegacyFormat, seen: map[string]map[string]bool{}}
+	if out := x.replayCase(&c, 0, nil, false); out.assess != AssessBlocked || x.gate("verdict").Failed != 0 {
+		t.Fatalf("%s %+v", out.assess, x.gate("verdict"))
+	}
+}
+
 func TestSvcReplayCompositeSyntax(t *testing.T) {
 	for _, source := range []string{`<%@ ServiceHost Service="S" ; %>`, `<%@ ServiceHost Language="C#" Service="S" Bogus="x" %>` + "\nclass S {}"} {
 		o := ObserveServiceHost(EncodingUTF8, []byte(source))

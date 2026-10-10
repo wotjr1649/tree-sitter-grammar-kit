@@ -24,6 +24,7 @@ func (b *Build) runSvcReferences(ctx context.Context, x Context, cases []kit.Inc
 		return out
 	}
 	declared := x.SvcContext.CodeBehind
+	svcContext := x.SvcContext
 	x.Format = ""
 	x.SvcContext = nil
 	for _, r := range declared {
@@ -39,8 +40,8 @@ func (b *Build) runSvcReferences(ctx context.Context, x Context, cases []kit.Inc
 				out[c.ID] = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessBlocked, Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}}
 				break
 			}
-			o := kit.ObserveServiceHost(c.Encoding, src)
-			if o.HasDirectivePrefix(c.Encoding, src) {
+			o := kit.ObserveServiceHostWithContext(c.Encoding, src, svcContext)
+			if o.HasDirectivePrefix(c.Encoding, src) || o.CodeBehind != nil && o.CodeBehind.Case == c.ID {
 				out[c.ID] = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessBlocked, Code: "SVC_REFERENCE_INVALID", Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}}
 				break
 			}
@@ -84,10 +85,9 @@ func linkSvcReferences(out *CaseResult, refs map[string]CaseResult) {
 		out.References = append(out.References, SvcReferenceResult{Case: id, Input: r.Input, ExecutionStatus: r.ExecutionStatus, Assessment: assessment, HasError: hasError})
 	}
 	if len(out.References) > 0 && out.ExecutionStatus == kit.StatusCompleted {
-		if out.Assessment == kit.AssessBlocked && out.Code != "" {
-			out.Claims.Expectations = worse(out.Claims.Expectations, ClaimBlocked)
+		for _, r := range out.References {
+			out.Assessment = worse(out.Assessment, r.Assessment)
 		}
-		foldAssessment(out)
 	}
 }
 
@@ -100,7 +100,7 @@ type SvcSegment struct {
 }
 
 func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.IncrementalCase, versions [][]byte, points []kit.EditPoints, svc []kit.SvcObservation, out CaseResult) CaseResult {
-	expectations := map[int]ExpectationResult{}
+	expectations := map[int][]ExpectationResult{}
 	for k := 0; k < len(versions); {
 		if svc[k].IncludedRanges == nil {
 			sum := sha256.Sum256(versions[k])
@@ -116,7 +116,7 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 					local.Step = 0
 					res, _ := evaluateSvc([]kit.StepExpectation{local}, nil, svc[k:k+1])
 					res[0].Step = k
-					expectations[k] = res[0]
+					expectations[k] = append(expectations[k], res[0])
 				}
 			}
 			k++
@@ -142,6 +142,9 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 			return out
 		}
 		out.Producer = result.Producer
+		if (result.Assessment == kit.AssessFail || result.Assessment == kit.AssessBlocked) && out.Code == "" {
+			out.Code = result.Code
+		}
 		for _, s := range result.Steps {
 			s.Step += k
 			if s.Step == k && k > 0 {
@@ -152,7 +155,7 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		}
 		for _, e := range result.Expectations {
 			e.Step += k
-			expectations[e.Step] = e
+			expectations[e.Step] = append(expectations[e.Step], e)
 		}
 		if result.Oracle != nil {
 			if out.Oracle == nil {
@@ -171,13 +174,14 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		out.Claims.Expectations = ClaimPass
 	}
 	for _, e := range c.Expect {
-		r := expectations[e.Step]
+		r := expectations[e.Step][0]
+		expectations[e.Step] = expectations[e.Step][1:]
 		out.Expectations = append(out.Expectations, r)
 		out.Claims.Expectations = worse(out.Claims.Expectations, r.Result)
 	}
 	// Whole-history reuse/equality is not claimed across an unparsed boundary.
 	out.Claims.IncrementalEquality, out.Claims.IncrementalRoute = ClaimNotClaimed, ClaimNotClaimed
-	if out.Oracle != nil {
+	if out.Oracle != nil && out.Oracle.QueryEquality == ClaimPass {
 		out.Oracle.QueryEquality = ClaimNotClaimed
 	}
 	foldAssessment(&out)
@@ -187,7 +191,7 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 	if out.Claims.Expectations == ClaimBlocked {
 		out.Code = "SVC_EXPECTATION_UNASSESSABLE"
 	}
-	if len(c.Expect) == 0 {
+	if len(c.Expect) == 0 && out.Assessment != kit.AssessFail {
 		out.Assessment, out.Code = svcObservationOnly(svc, false)
 		if out.Code == "SVC_INLINE_NOT_PARSED" {
 			out.Code = "SVC_PARTIAL_HISTORY"

@@ -58,7 +58,7 @@ func TestRuntimePatch(t *testing.T) {
 	var nodePin bool
 	for _, f := range manifest.Files {
 		if f.Path == "lib/src/node.c" {
-			nodePin = f.SHA256 == "d3a6de61de5c4ea993e25ddf127f6a471fd1a29ae0bb8df623ed581071dc5041" && f.Bytes == 22529
+			nodePin = f.SHA256 == "c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062" && f.Bytes == 22738
 		}
 	}
 	if !nodePin {

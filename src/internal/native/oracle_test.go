@@ -4,11 +4,36 @@ import (
 	"context"
 	jsonv2 "encoding/json/v2"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+func TestAPISiblingIdentityBoundaries(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	coLocated := 0
+	for _, source := range []string{"a = f([1", "a = f(((1;", "a = f([1;", "c = (1;", "a = f([1]);\nb = f(2);", "# extra\na = f(1);\n", strings.Repeat("a = f(1);\n", 1000)} {
+		r := runOracleCase(t, b, oracleContext(true), source, nil)
+		if r.ExecutionStatus != kit.StatusCompleted || r.Oracle == nil || r.Oracle.API != ClaimPass || r.Steps[0].Incremental.API == nil || r.Steps[0].Incremental.API.PositionNavigation != 0 {
+			t.Fatalf("bytes %d: %s %s %+v", len(source), r.ExecutionStatus, r.Assessment, r.Oracle)
+		}
+		byByte := map[uint32]int{}
+		for _, node := range r.Steps[0].Incremental.Tree.Nodes {
+			if node.IsMissing && node.StartByte == node.EndByte {
+				byByte[node.StartByte]++
+				if byByte[node.StartByte] > coLocated {
+					coLocated = byByte[node.StartByte]
+				}
+			}
+		}
+		t.Logf("bytes %d missing-by-byte %v", len(source), byByte)
+	}
+	if coLocated < 1 {
+		t.Fatal("parsed fixtures must include a zero-width missing node")
+	}
+}
 
 // oracleContext is the native-query context with the given queries and API switch.
 func oracleContext(api bool, queries ...string) Context {
