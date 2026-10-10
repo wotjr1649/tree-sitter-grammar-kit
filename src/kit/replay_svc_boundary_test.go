@@ -131,6 +131,51 @@ func TestSvcReplayRejectsFreshOnlyGap(t *testing.T) {
 	}
 }
 
+func TestSvcQualificationKeepsRecordedOnlyClaimsUnresolved(t *testing.T) {
+	for _, kind := range []string{"query", "facts", "dynamic"} {
+		for _, claim := range []string{claimNotClaimed, claimPass, claimFail, claimBlocked} {
+			for _, registered := range []bool{false, true} {
+				t.Run(kind+"/"+claim+"/"+map[bool]string{true: "registered", false: "unregistered"}[registered], func(t *testing.T) {
+					c, want := svcObservedCase(t, []byte(`<%@ ServiceHost Service="S" %>`))
+					switch kind {
+					case "query":
+						c.Oracle.QueryExpectations = claim
+					case "facts":
+						c.Oracle.FactReproduction = claim
+					case "dynamic":
+						c.Oracle.DynamicSQL = claim
+					}
+					c.Assessment = foldClaims([]string{claimPass, claim})
+					if c.Assessment == AssessFail {
+						c.Code = "ORACLE_CLAIM_FAILED"
+					}
+					x := &replayEnv{svcFormat: SvcFormat, nativeInputBytes: NativeOperations()["native-parse-edit"].InputBytes, seen: map[string]map[string]bool{}}
+					out := x.replayCase(&c, 0, &want, false)
+					for _, gate := range x.gates {
+						if gate.Failed > 0 {
+							t.Fatalf("valid recorded-only case rejected: %+v", gate)
+						}
+					}
+					qc := &QualCase{ID: c.ID}
+					if registered {
+						qc.ExpectAssessment, qc.ExpectCode = c.Assessment, c.Code
+					}
+					s := &qset{kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
+					q := &qualifier{}
+					q.judgeCase(s, qc, nil, &c, &qRecord{}, out, x.nativeInputBytes, func(_, _, _ string) {}, "synthetic", true, false)
+					expected := claimBlocked
+					if claim == claimNotClaimed {
+						expected = claimPass
+					}
+					if s.checks[c.ID] != expected {
+						t.Fatalf("recorded-only claim promoted: check=%s expected=%s replay=%+v", s.checks[c.ID], expected, out)
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestReplayRejectsNativeEncodingProvenance(t *testing.T) {
 	for _, form := range []string{"full", "summary"} {
 		for _, provenance := range []string{"", "BOM", "VALIDATION", "wrong"} {

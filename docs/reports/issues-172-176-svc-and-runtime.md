@@ -48,3 +48,5 @@ sibling 탐색의 visible prefix 반복은 owned plain grammar의 27,001 node·5
 Linux UBSan에서 identity fixture의 내부 `ts_tree_new(..., NULL, 0)` 호출이 non-null `memcpy` 입력 규칙을 위반했다. fixture가 실제 zero-width/positive tail 범위의 `TSRange`를 전달하도록 수정했다. sibling·cursor·cross-tree assertion, sanitizer 설정과 runtime product patch는 유지한다.
 
 후속 자동 리뷰의 네 replay 경계도 수정 전 실패로 재현했다. 관측 전용 기록이 tree 없는 API/equality/route claim을 우회하는 경로, producer의 32MiB source 한도에 못 미치는 임의 edit 상한, fresh-only gap의 nil pointer panic, native full·summary encoding provenance의 누락/변조 수용이다. 공유 replay와 qualification 호출부에 등록 operation의 입력 한도를 전달하고, 관측 전용 claim과 gap 형태를 검증한다. query/fact의 recorded claim은 UNRESOLVED로 남기며 native envelope와 composite의 DECLARATION provenance를 검사한다. 기존 정상 S05/Oracle 기록과 1MiB 이상 edit의 정상 대조군을 음성 대조군과 함께 확인한다.
+
+독립 리뷰는 replay의 recorded-only UNRESOLVED를 qualification이 recorded verdict로 다시 PASS 처리하는 호출부도 찾았다. query·fact·dynamic SQL 각각의 NOT_CLAIMED/PASS/FAIL/BLOCKED와 등록 verdict 유무를 24개 대조로 검사한다. qualification은 replay가 재계산을 완료하지 않은 관측 전용 결과를 BLOCKED로 유지한다.

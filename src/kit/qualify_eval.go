@@ -894,6 +894,10 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	case len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(st rcStep) bool { return st.Incremental != nil || st.Composite == nil }):
 		// SVC observation-only: the S05 verdict the verdict gate recomputed (assessment and
 		// code); a registered verdict must match it exactly
+		if !replay.complete || replay.assess == AssessUnresolved {
+			s.checks[qc.ID] = claimBlocked
+			break
+		}
 		if qc.ExpectAssessment != "" {
 			s.checks[qc.ID] = map[bool]string{true: claimPass, false: claimFail}[c.Assessment == qc.ExpectAssessment && c.Code == qc.ExpectCode]
 			break
