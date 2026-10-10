@@ -1,4 +1,4 @@
-# C#·T-SQL 잔여 구문 경계 보완 (#157–#166·#168·#169)
+# C#·T-SQL 잔여 구문·증거 경계 보완 (#157–#166·#168–#170)
 
 기준은 main `e18a819c74715d4cb756305822d71caff717c60f`다. 공개 합성 입력으로 재현한 결함을 원인별 Issue로 분리하고 C2 patch, canonical 계약, native fixture와 generated identity를 함께 갱신했다. Go core는 offline API 경계를 유지한다.
 
@@ -15,22 +15,30 @@
 | [#165](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/165) | block comment의 모든 nesting level에서 closing mark 요구 | EOF에서 닫히지 않은 주석을 성공한 extra로 반환하지 않음 |
 | [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166) | CHANGETABLE의 CHANGES/VERSION 인자를 전용 규칙으로 분리 | sync version의 일반 expression 과잉수용 제거; VERSION column 목록과 value 목록 분리; 두 form의 optional FORCESEEK 보존 |
 | [#168](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/168) | ROLLUP/CUBE 내부 tuple을 non-empty 전용 규칙으로 분리 | 함수의 빈 tuple 거부; 직접 GROUP BY ()와 GROUPING SETS(())의 정상 grand-total set 보존 |
-
 | [#169](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/169) | 회귀 입력을 긴 정상 source 뒤에 반복 배치해 evidence 읽기 상한 초과 | 기존 353개 history와 모든 기존 source/edit/expect prefix를 보존하고 동일한 107개 추가 입력을 작은 최종 NO_ERROR source 뒤에 재배치; raw/hash 검증과 512 MiB 상한 유지 |
+| [#170](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/170) | 오류 history에 변경되지 않는 정상 subtree가 없어 incremental E 의무의 reuse 미관측 | 11개 history 앞에 보호된 정상 sibling을 추가; 원래 모든 source state는 suffix로 보존하고 ERROR 기대값·기존 main edits·E coverage·reuse guard 유지 |
 
 ## 회귀 fixture 비용
 
 최초 PR CI `37990648300`의 12개 job 중 11개는 성공했으나 qualification은 `RESOURCE_LIMIT:TOTAL_BYTES_LIMIT`로 중단됐다. Windows archive의 raw와 normalized record 합계는 `555,286,805` bytes로 host별 `536,870,912` bytes 상한을 넘었다. 긴 normal-siblings source 뒤의 신규 상태가 큰 CST/API evidence를 반복한 것이 원인이었다. 상한이나 검증을 완화하지 않고 추가 입력의 배치를 수정했다.
 
-107개 public 입력은 같은 source bytes와 구문/구조 기대값을 유지한다. 작은 source를 가진 기존 history 54개에서 마지막 NO_ERROR 상태 뒤에 독립 GO batch로 붙이고, unique find/replace와 전체 source의 anchor 위치를 재생성했다. 기존 ERROR 상태를 포함한 모든 원래 history prefix, 최대 4 edits, 전체 case 수와 C1 의무를 보존한다. 신규 상태에서 반복하는 prefix는 총 `119,691` bytes에서 `4,911` bytes로 줄었다. 새 배치의 native S05/S06 전체 검증은 완료됐고 kit failure와 API finding은 0이다. 기존 Windows run의 변하지 않은 필수 member에 새 T-SQL native 결과를 합산한 크기 예측은 `531,892,569` bytes로, 상한보다 `4,978,343` bytes 작다. 이는 새 세 OS qualification을 대신하는 PASS가 아니며, 최종 head의 실제 qualification이 성공해야 비용 finding을 종료한다.
+107개 public 입력은 같은 source bytes와 구문/구조 기대값을 유지한다. #169 단계에서는 작은 source를 가진 기존 history 54개에서 마지막 NO_ERROR 상태 뒤에 독립 GO batch로 붙이고, unique find/replace와 전체 source의 anchor 위치를 재생성했다. 기존 ERROR 상태를 포함한 모든 원래 history prefix, 최대 4 edits, 전체 case 수와 C1 의무를 보존했다. 신규 상태에서 반복하는 prefix는 총 `119,691` bytes에서 `4,911` bytes로 줄었다. 그 배치의 native S05/S06 전체 검증은 완료됐고 kit failure와 API finding은 0이다. 기존 Windows run의 변하지 않은 필수 member에 당시 T-SQL native 결과를 합산한 크기 예측은 `531,892,569` bytes로, 상한보다 `4,978,343` bytes 작았다. 실제 후속 CI에서는 읽기 상한을 통과했지만, 아래 incremental E 의무가 BLOCKED여서 전체 지원 판정은 통과하지 않았다.
+
+## Incremental 의무의 실제 관측
+
+PR head `246f510`의 [CI 38000320983](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/38000320983)은 12개 job 모두 성공했다. 그러나 내려받은 qualification JSON은 `mechanism_gate=PASS`, `completeness=PASS`와 별도로 `support_claim=BLOCKED`였다. T-SQL B01~B05의 E 의무가 세 OS에서 각각 BLOCKED여서 75/78칸과 2,463/2,478 의무만 PASS였다. 구문·API·비교 실패는 0이다. 기준 main `e18a819c`의 실제 qualification은 78칸과 2,478 의무 모두 PASS였다. Job success를 지원 판정으로 대체하지 않는다.
+
+11개 오류 history의 source 앞에 `SELECT NULL;\nSELECT NULL;\nGO\n` 29 bytes를 추가해 변경되지 않는 정상 sibling을 명시한다. 원래 source와 모든 mutation state는 각 단계의 suffix로 byte 단위 보존하며, 원래 ERROR/NO_ERROR·contains·declaration·anchor 의미와 기존 main의 edit 표현을 유지한다. Task가 추가한 edit 5개는 `;` 검색이 prefix와 충돌하지 않도록 변경되지 않는 주변 문자를 함께 포함하는 동등한 find/replace로 확장했다. Anchor occurrence와 C1 byte range는 실제 새 source에서 다시 결속한다. GO는 원래 batch의 시작 위치와 QUOTED_IDENTIFIER setting 문맥을 보존한다. Grammar, runtime, guard, coverage, case 수와 상한은 변경하지 않는다.
+
+같은 parser/runtime의 집중 native 실험은 이 11개 history 모두에서 구문 기대값, fresh/incremental equality와 실제 incremental reuse가 PASS임을 확인했다. 실제 converter를 거친 보완 후 전체 T-SQL 실행도 S05 993개와 S06 1,000개 모두 PASS다. S06의 API·fact reproduction 1,000개는 각각 전부 PASS다. 편집 history 359개의 incremental equality·reuse·query equality는 PASS이고, 편집 없는 641개는 해당 비교를 NOT_CLAIMED로 유지한다. Kit failure·API finding·reuse BLOCKED는 0이다. 원래 형태에서 관측하지 못한 reuse를 PASS로 재표시하지 않고, 새 보호 sibling을 가진 입력의 실제 관측으로 판정한다. 최종 head의 세 OS qualification 및 actual main CI를 완료 gate로 유지한다.
 
 ## 재현과 검증
 
 Tree-sitter `0.27.0`, Node `24.21.0`, runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`과 등록된 runtime patch를 사용한다. 두 grammar의 독립 workspace 생성, deterministic 비교와 등록한 6개 출력의 reference match가 모두 PASS다. Windows amd64의 GCC `16.2.0`에서 공개 C# 161개 및 T-SQL 109개 집중 대조의 구문 기대값, API 일치와 fact reproduction이 모두 PASS다. C# mandatory-body recovery 5개와 ordinary identifier의 정확한 CST 대조 2개도 추가로 PASS다. 기대값에는 ERROR 여부뿐 아니라 후속 declaration, comment, identifier와 warning ID의 정확한 source 범위를 포함한다.
 
-C# S05 전체 292개와 S06 전체 321개가 PASS다. T-SQL S05 993개는 전부 실행됐으며 PASS 982개와 기존 오류 트리의 reuse 관측이 불가능한 BLOCKED 11개로 나뉜다. C# SVC 22개 역시 기존 관측 한계의 BLOCKED다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
+C# S05 전체 292개와 S06 전체 321개가 PASS다. #170 보완 전 T-SQL S05 993개는 PASS 982개와 오류 tree의 reuse BLOCKED 11개였으며, 이 관측 한계를 위 E 의무 문제로 추적했다. C# SVC 22개는 기존 관측 한계의 BLOCKED다. BLOCKED를 PASS로 집계하지 않는다. T-SQL context의 공개 source 726개는 새 parser로 다시 파싱해 실제 CST snapshot을 갱신했고, 기존 source identity·syntax 기대값·engine 관측·context 진단 코드를 보존했다.
 
-T-SQL S06 1,000개는 PASS 989개와 같은 기존 reuse BLOCKED 11개다. 999개의 구문 기대값은 모두 PASS이며, syntax expectation을 주장하지 않는 dynamic SQL support 1개는 fact 기대값이 PASS다. 1,000개 전체 API claim은 PASS이며 kit failure와 API finding은 0이다. 오류 트리의 route 관측 한계 11개가 S05/S06에 각각 기록되는 것을 22개 새 parser 결함으로 합산하지 않는다.
+#170 보완 전 T-SQL S06 1,000개는 PASS 989개와 같은 reuse BLOCKED 11개였다. 999개의 구문 기대값은 모두 PASS이며, syntax expectation을 주장하지 않는 dynamic SQL support 1개는 fact 기대값이 PASS다. 1,000개 전체 API claim은 PASS이며 kit failure와 API finding은 0이다. 오류 tree의 같은 관측 한계가 S05/S06에 두 번 기록되는 것을 22개 새 parser 결함으로 합산하지 않는다.
 
 SQL Server 2025 LocalDB `17.0.1000.7`의 compatibility level `110`·`170`에서 공개 구문 대조 39개씩, 총 78개가 기대값과 일치했다. 검증은 `PARSEONLY`이며 임시 DB와 파일은 제거했다. 이는 실제 SQL Server 2012 엔진 검증이 아니다. [CHANGETABLE의 공식 구문](https://learn.microsoft.com/en-us/sql/relational-databases/system-functions/changetable-transact-sql?view=sql-server-ver17)에 맞춰 sync version과 column/value 위치를 구분하며, bigint 범위·catalog binding·alias의 오류 22104는 engine 의미 영역으로 분리한다.
 

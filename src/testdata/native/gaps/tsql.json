@@ -3950,7 +3950,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "SELECT COUNT(a) FROM dbo.t;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nSELECT COUNT(a) FROM dbo.t;",
       "edits": [
   {
     "find": "a",
@@ -3961,8 +3961,8 @@
     "replace": "a"
   },
   {
-    "find": ";",
-    "replace": ";\nGO\nSELECT 0x;"
+    "find": "t;",
+    "replace": "t;\nGO\nSELECT 0x;"
   },
   {
     "find": "0x",
@@ -4244,7 +4244,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nEXEC (N'SELECT 1') AS LOGIN = 'u';",
       "edits": [
   {
     "find": "N'SELECT 1'",
@@ -4255,8 +4255,8 @@
     "replace": "N'SELECT 1'"
   },
   {
-    "find": ";",
-    "replace": ";\nGO\nIF 1 = 1 BEGIN END;"
+    "find": "';",
+    "replace": "';\nGO\nIF 1 = 1 BEGIN END;"
   },
   {
     "find": "IF 1 = 1 BEGIN END",
@@ -4403,7 +4403,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nALTER PROCEDURE dbo.p @a int AS SELECT 1;",
       "edits": [
   {
     "find": "@",
@@ -4414,8 +4414,8 @@
     "replace": "p @"
   },
   {
-    "find": ";",
-    "replace": ";\nGO\nSELECT 1;\nGO /*comment*/\nSELECT 2;"
+    "find": "1;",
+    "replace": "1;\nGO\nSELECT 1;\nGO /*comment*/\nSELECT 2;"
   },
   {
     "find": "ent",
@@ -4462,37 +4462,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
-        {
-          "find": "@",
-          "replace": ""
-        },
-        {
-          "find": "(",
-          "replace": "(@"
-        }
-      ],
+  {
+    "find": "@",
+    "replace": ""
+  },
+  {
+    "find": "(",
+    "replace": "(@"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-output-r1",
@@ -4501,37 +4501,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
       "edits": [
-        {
-          "find": "p @",
-          "replace": "p "
-        },
-        {
-          "find": "p ",
-          "replace": "p @"
-        }
-      ],
+  {
+    "find": "p @",
+    "replace": "p "
+  },
+  {
+    "find": "p ",
+    "replace": "p @"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-clr-r1",
@@ -4540,37 +4540,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
       "edits": [
-        {
-          "find": "@",
-          "replace": ""
-        },
-        {
-          "find": "g(",
-          "replace": "g(@"
-        }
-      ],
+  {
+    "find": "@",
+    "replace": ""
+  },
+  {
+    "find": "g(",
+    "replace": "g(@"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-00223-r1",
@@ -5035,7 +5035,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nALTER SECURITY POLICY .p WITH (STATE = OFF);",
       "edits": [
   {
     "find": "p",
@@ -5046,8 +5046,8 @@
     "replace": ".p"
   },
   {
-    "find": ";",
-    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t, (id), (1)) AS ct;"
+    "find": ");",
+    "replace": ");\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t, (id), (1)) AS ct;"
   },
   {
     "find": "VERSION dbo.t, (id), (1)",
@@ -5343,7 +5343,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "CREATE TABLE .t (a int DEFAULT (1));",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE TABLE .t (a int DEFAULT (1));",
       "edits": [
   {
     "find": ".t",
@@ -5354,8 +5354,8 @@
     "replace": ".t"
   },
   {
-    "find": ";",
-    "replace": ";\nGO\nSELECT 1;\rGO\rSELECT 2;"
+    "find": ");",
+    "replace": ");\nGO\nSELECT 1;\rGO\rSELECT 2;"
   },
   {
     "find": "GO\r",
@@ -5508,7 +5508,7 @@
   "tsql-B04",
   "tsql-B05"
 ],
-      "source_utf8": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
   {
     "find": "f",
@@ -8912,57 +8912,57 @@
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\n-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
       "edits": [
-        {
-          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
-        }
-      ],
+  {
+    "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 3,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 4,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue148-negative-pair-01-r1",
@@ -8971,57 +8971,57 @@
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\n-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
       "edits": [
-        {
-          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
-        }
-      ],
+  {
+    "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 3,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 4,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue148-negative-pair-02-r1",
