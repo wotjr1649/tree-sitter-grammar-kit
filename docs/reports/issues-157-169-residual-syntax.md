@@ -1,4 +1,4 @@
-# C#·T-SQL 잔여 구문·증거 경계 보완 (#157–#166·#168–#170)
+# C#·T-SQL 잔여 구문·증거 경계 보완 (#157–#166·#168–#171)
 
 기준은 main `e18a819c74715d4cb756305822d71caff717c60f`다. 공개 합성 입력으로 재현한 결함을 원인별 Issue로 분리하고 C2 patch, canonical 계약, native fixture와 generated identity를 함께 갱신했다. Go core는 offline API 경계를 유지한다.
 
@@ -17,6 +17,16 @@
 | [#168](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/168) | ROLLUP/CUBE 내부 tuple을 non-empty 전용 규칙으로 분리 | 함수의 빈 tuple 거부; 직접 GROUP BY ()와 GROUPING SETS(())의 정상 grand-total set 보존 |
 | [#169](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/169) | 회귀 입력을 긴 정상 source 뒤에 반복 배치해 evidence 읽기 상한 초과 | 기존 353개 history와 모든 기존 source/edit/expect prefix를 보존하고 동일한 107개 추가 입력을 작은 최종 NO_ERROR source 뒤에 재배치; raw/hash 검증과 512 MiB 상한 유지 |
 | [#170](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/170) | 오류 history에 변경되지 않는 정상 subtree가 없어 incremental E 의무의 reuse 미관측 | 11개 history 앞에 보호된 정상 sibling을 추가; 원래 모든 source state는 suffix로 보존하고 ERROR 기대값·기존 main edits·E coverage·reuse guard 유지 |
+
+## Unicode 공백 추가 리뷰 (#171)
+
+PR #167의 최종 gate 전 추가 리뷰에서 T-SQL external `_line_space`가 원래 extras의 Unicode 공백을 잃은 결함을 확인했다. [#171](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/171)은 고정 code-point predicate와 keyword boundary를 함께 수정한다. Locale에 따라 결과가 달라지는 C library 분류는 사용하지 않는다. GO의 CR/LF 물리적 줄 구분과 scanner serialization 형식은 유지한다. Scanner만 변경하므로 grammar.js·생성기 입력과 등록된 parser/node-types/header 6개 출력은 동일하다.
+
+SQL Server 2025 LocalDB 17.0.1000.7 PARSEONLY에서 `SELECT 0; SELECT<character>1;`로 30개 code point를 대조했다. 앞 문장은 batch-first implicit EXEC 오인을 방지하며 `SELECT 0; SELECTX1;` 음성도 거부됐다. 공백 26개는 수용, U+180E·U+200C·U+200D·중간 U+FEFF 4개는 오류 102였다. 기존 공개 대조 39개에 공백 30개·QUOTED_IDENTIFIER 9개를 추가해 compatibility level 110·170에서 각 78개, 총 156개 PARSEONLY 대조가 모두 기대값과 일치했다. 임시 DB와 파일은 제거했다. 실제 SQL Server 2012 엔진 검증은 아니다. 집중 native 51개는 모두 PASS다. Unicode SELECT, GO indentation/tail/count, QUOTED_IDENTIFIER OFF/ON, 같은 줄 GO 음성과 UTF-16LE 2개를 포함하며 API·fact reproduction도 모두 PASS다. QUOTED_IDENTIFIER OFF의 double-quoted text는 literal, ON의 이름은 identifier로 실제 CST에 나타난다.
+
+기존 353개 gap history의 모든 source/edit/expect prefix를 보존하며 작은 정상 prefix 뒤에 12개 추가 상태를 6개 history에 배치했다. Unicode SELECT의 정확한 query 범위, OFF literal과 ON identifier의 정확한 source anchor를 등록한다. 최대 4 edits, case 수와 모든 검증 상한을 유지한다. 전체 새 scanner의 native·qualification 및 main 결과는 PR의 실제 검증 기록으로 결속한다.
+
+같은 리뷰의 C# NBSP 지적은 수정 없이 처분했다. Pinned runtime의 `get_column`은 byte extent와 별개로 decoded code point 단위 column을 반환한다. Native 6개(ASCII·NBSP·EM SPACE·NARROW NBSP·UTF-16LE와 같은 줄 directive 음성)가 모두 PASS여서 scanner의 `horizontal++`와 일치한다. Byte 길이로 변경하지 않는다.
 
 ## 회귀 fixture 비용
 

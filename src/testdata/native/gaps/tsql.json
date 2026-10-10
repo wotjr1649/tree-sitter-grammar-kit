@@ -2157,17 +2157,139 @@
   {
       "id": "tsql-gap-issue131-review-update-compound-default-r1",
       "kind": "gap",
-      "features": ["tsql-B01", "tsql-B02"],
+      "features": [
+  "tsql-B01",
+  "tsql-B02"
+],
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET c += 1;",
       "edits": [
-        {"find": " 1", "replace": " DEFAULT"},
-        {"find": " DEFAULT", "replace": " 1"}
-      ],
+  {
+    "find": " 1",
+    "replace": " DEFAULT"
+  },
+  {
+    "find": " DEFAULT",
+    "replace": " 1"
+  },
+  {
+    "find": "1;",
+    "replace": "1;\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 select-0\nSELECT 0; SELECT\t1;\nSELECT 0; SELECT\n1;\nSELECT 0; SELECT\u000b1;\nSELECT 0; SELECT\f1;\nSELECT 0; SELECT\r1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT1;"
+  },
+  {
+    "find": "0\nSELECT 0; SELECT\t1;\nSELECT 0; SELECT\n1;\nSELECT 0; SELECT\u000b1;\nSELECT 0; SELECT\f1;\nSELECT 0; SELECT\r1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT1;",
+    "replace": "7\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "update"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "update"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT\t1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\n1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\u000b1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\f1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\r1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT1",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-review-merge-compound-default-r1",
@@ -2829,44 +2951,64 @@
       "id": "tsql-gap-issue134-drop-bare-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B03"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src';",
       "edits": [
-        {
-          "find": "ALTER ASSEMBLY a DROP FILE 'src';",
-          "replace": "ALTER ASSEMBLY a DROP FILE src;"
-        },
-        {
-          "find": "ALTER ASSEMBLY a DROP FILE src;",
-          "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
-        }
-      ],
+  {
+    "find": "ALTER ASSEMBLY a DROP FILE 'src';",
+    "replace": "ALTER ASSEMBLY a DROP FILE src;"
+  },
+  {
+    "find": "ALTER ASSEMBLY a DROP FILE src;",
+    "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
+  },
+  {
+    "find": "';",
+    "replace": "';\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 negative-65279\nSELECT 0; SELECT﻿1;"
+  },
+  {
+    "find": "negative-65279\nSELECT 0; SELECT﻿1;",
+    "replace": "same-line-go\nSELECT 0; GO\nSELECT 1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-drop-bracket-r1",
@@ -4006,40 +4148,93 @@
       "id": "tsql-issue137-udf-default-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT dbo.f(DEFAULT);",
       "edits": [
-        {
-          "find": "dbo.",
-          "replace": ""
-        },
-        {
-          "find": "SELECT f(",
-          "replace": "SELECT dbo.f("
-        }
-      ],
+  {
+    "find": "dbo.",
+    "replace": ""
+  },
+  {
+    "find": "SELECT f(",
+    "replace": "SELECT dbo.f("
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 go-qi-6\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8239\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8239\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8287\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8287\";\n　GO　\nSELECT 1;\nGO　2\nSELECT 2;\nSET　QUOTED_IDENTIFIER　OFF; SELECT \"issue171_text12288\"; SET　QUOTED_IDENTIFIER　ON; SELECT \"issue171_name12288\";"
+  },
+  {
+    "find": "go-qi-6\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8239\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8239\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8287\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8287\";\n　GO　\nSELECT 1;\nGO　2\nSELECT 2;\nSET　QUOTED_IDENTIFIER　OFF; SELECT \"issue171_text12288\"; SET　QUOTED_IDENTIFIER　ON; SELECT \"issue171_name12288\";",
+    "replace": "negative-6158\nSELECT 0; SELECT᠎1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text8239\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8239\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8287\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8287\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text12288\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name12288\"",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-star-alias-r1",
@@ -4300,40 +4495,125 @@
       "id": "tsql-issue137-dynamic-concat-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
       "edits": [
-        {
-          "find": "N'SELECT '",
-          "replace": "1"
-        },
-        {
-          "find": "(1",
-          "replace": "(N'SELECT '"
-        }
-      ],
+  {
+    "find": "N'SELECT '",
+    "replace": "1"
+  },
+  {
+    "find": "(1",
+    "replace": "(N'SELECT '"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 go-qi-0\nGO\nSELECT 1;\nGO2\nSELECT 2;\nSETQUOTED_IDENTIFIEROFF; SELECT \"issue171_text133\"; SETQUOTED_IDENTIFIERON; SELECT \"issue171_name133\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text160\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name160\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text5760\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name5760\";"
+  },
+  {
+    "find": "0\nGO\nSELECT 1;\nGO2\nSELECT 2;\nSETQUOTED_IDENTIFIEROFF; SELECT \"issue171_text133\"; SETQUOTED_IDENTIFIERON; SELECT \"issue171_name133\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text160\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name160\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text5760\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name5760\";",
+    "replace": "3\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8195\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8195\";\n​GO​\nSELECT 1;\nGO​2\nSELECT 2;\nSET​QUOTED_IDENTIFIER​OFF; SELECT \"issue171_text8203\"; SET​QUOTED_IDENTIFIER​ON; SELECT \"issue171_name8203\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8232\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8232\";"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text133\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name133\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text160\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name160\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text5760\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name5760\"",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text8195\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8195\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8203\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8203\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8232\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8232\"",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue137-openjson-comma-r1",
@@ -6596,40 +6876,60 @@
       "id": "tsql-issue140-bulk-order-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04"
+],
       "source_utf8": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
       "edits": [
-        {
-          "find": "BULK 'x',SINGLE_CLOB",
-          "replace": "'p','c','q'"
-        },
-        {
-          "find": "'p','c','q'",
-          "replace": "BULK 'x',SINGLE_CLOB"
-        }
-      ],
+  {
+    "find": "BULK 'x',SINGLE_CLOB",
+    "replace": "'p','c','q'"
+  },
+  {
+    "find": "'p','c','q'",
+    "replace": "BULK 'x',SINGLE_CLOB"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 negative-8204\nSELECT 0; SELECT‌1;"
+  },
+  {
+    "find": "4\nSELECT 0; SELECT‌1;",
+    "replace": "5\nSELECT 0; SELECT‍1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-xml-order-r1",
@@ -7286,40 +7586,124 @@
       "id": "tsql-issue137-between-or-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02"
+],
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
       "edits": [
-        {
-          "find": " 2",
-          "replace": ""
-        },
-        {
-          "find": "ND",
-          "replace": "ND 2"
-        }
-      ],
+  {
+    "find": " 2",
+    "replace": ""
+  },
+  {
+    "find": "ND",
+    "replace": "ND 2"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 select-14\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT​1;"
+  },
+  {
+    "find": "14\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT​1;",
+    "replace": "21\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT　1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT​1",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT　1",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue137-between-not-between-r1",

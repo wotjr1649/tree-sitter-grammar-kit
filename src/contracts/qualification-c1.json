@@ -213685,8 +213685,8 @@
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "e0b3a746f983b142f7273269b3e6224aacb76b6a7b5451983969225cf6a9bbf6",
-      "bytes": 14110
+      "sha256": "1efec197937cc59be09e480baae01008bbf8a2bec22ab95a7e731a670238bea4",
+      "bytes": 14415
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -277000,6 +277000,20 @@
         "new_end_byte": 59,
         "old": "IERFRkFVTFQ=",
         "new": "IDE="
+       },
+       {
+        "start_byte": 58,
+        "old_end_byte": 60,
+        "new_end_byte": 251,
+        "old": "MTs=",
+        "new": "MTsKR08KU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwotLSBpc3N1ZTE3MSBzZWxlY3QtMApTRUxFQ1QgMDsgU0VMRUNUCTE7ClNFTEVDVCAwOyBTRUxFQ1QKMTsKU0VMRUNUIDA7IFNFTEVDVAsxOwpTRUxFQ1QgMDsgU0VMRUNUDDE7ClNFTEVDVCAwOyBTRUxFQ1QNMTsKU0VMRUNUIDA7IFNFTEVDVCAxOwpTRUxFQ1QgMDsgU0VMRUNUwoUxOw=="
+       },
+       {
+        "start_byte": 109,
+        "old_end_byte": 251,
+        "new_end_byte": 263,
+        "old": "MApTRUxFQ1QgMDsgU0VMRUNUCTE7ClNFTEVDVCAwOyBTRUxFQ1QKMTsKU0VMRUNUIDA7IFNFTEVDVAsxOwpTRUxFQ1QgMDsgU0VMRUNUDDE7ClNFTEVDVCAwOyBTRUxFQ1QNMTsKU0VMRUNUIDA7IFNFTEVDVCAxOwpTRUxFQ1QgMDsgU0VMRUNUwoUxOw==",
+        "new": "NwpTRUxFQ1QgMDsgU0VMRUNUwqAxOwpTRUxFQ1QgMDsgU0VMRUNU4ZqAMTsKU0VMRUNUIDA7IFNFTEVDVOKAgDE7ClNFTEVDVCAwOyBTRUxFQ1TigIExOwpTRUxFQ1QgMDsgU0VMRUNU4oCCMTsKU0VMRUNUIDA7IFNFTEVDVOKAgzE7ClNFTEVDVCAwOyBTRUxFQ1TigIQxOw=="
        }
       ],
       "expect": [
@@ -277022,6 +277036,92 @@
         "syntax": "NO_ERROR",
         "contains": [
          "update"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "query_specification",
+          "start_byte": 121,
+          "end_byte": 129
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 141,
+          "end_byte": 149
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 161,
+          "end_byte": 169
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 181,
+          "end_byte": 189
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 201,
+          "end_byte": 209
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 221,
+          "end_byte": 229
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 241,
+          "end_byte": 250
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "query_specification",
+          "start_byte": 121,
+          "end_byte": 130
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 142,
+          "end_byte": 152
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 164,
+          "end_byte": 174
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 186,
+          "end_byte": 196
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 208,
+          "end_byte": 218
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 230,
+          "end_byte": 240
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 252,
+          "end_byte": 262
+         }
         ],
         "declarations": ""
        }
@@ -278421,6 +278521,20 @@
         "new_end_byte": 62,
         "old": "QUxURVIgQVNTRU1CTFkgYSBEUk9QIEZJTEUgc3JjOw==",
         "new": "QUxURVIgQVNTRU1CTFkgYSBEUk9QIEZJTEUgJ3NyYyc7"
+       },
+       {
+        "start_byte": 60,
+        "old_end_byte": 62,
+        "new_end_byte": 140,
+        "old": "Jzs=",
+        "new": "JzsKR08KU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwotLSBpc3N1ZTE3MSBuZWdhdGl2ZS02NTI3OQpTRUxFQ1QgMDsgU0VMRUNU77u/MTs="
+       },
+       {
+        "start_byte": 104,
+        "old_end_byte": 140,
+        "new_end_byte": 140,
+        "old": "bmVnYXRpdmUtNjUyNzkKU0VMRUNUIDA7IFNFTEVDVO+7vzE7",
+        "new": "c2FtZS1saW5lLWdvClNFTEVDVCAwO8KgR08KU0VMRUNUIDE7"
        }
       ],
       "expect": [
@@ -278444,6 +278558,18 @@
         "contains": [
          "alter_assembly"
         ],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
+        "contains": [],
         "declarations": ""
        }
       ],
@@ -280334,6 +280460,20 @@
         "new_end_byte": 52,
         "old": "U0VMRUNUIGYo",
         "new": "U0VMRUNUIGRiby5mKA=="
+       },
+       {
+        "start_byte": 59,
+        "old_end_byte": 61,
+        "new_end_byte": 571,
+        "old": "KTs=",
+        "new": "KTsKR08KU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwotLSBpc3N1ZTE3MSBnby1xaS02CuKAr0dP4oCvClNFTEVDVCAxOwpHT+KArzIKU0VMRUNUIDI7ClNFVOKAr1FVT1RFRF9JREVOVElGSUVS4oCvT0ZGOyBTRUxFQ1QgImlzc3VlMTcxX3RleHQ4MjM5IjsgU0VU4oCvUVVPVEVEX0lERU5USUZJRVLigK9PTjsgU0VMRUNUICJpc3N1ZTE3MV9uYW1lODIzOSI7CuKBn0dP4oGfClNFTEVDVCAxOwpHT+KBnzIKU0VMRUNUIDI7ClNFVOKBn1FVT1RFRF9JREVOVElGSUVS4oGfT0ZGOyBTRUxFQ1QgImlzc3VlMTcxX3RleHQ4Mjg3IjsgU0VU4oGfUVVPVEVEX0lERU5USUZJRVLigZ9PTjsgU0VMRUNUICJpc3N1ZTE3MV9uYW1lODI4NyI7CuOAgEdP44CAClNFTEVDVCAxOwpHT+OAgDIKU0VMRUNUIDI7ClNFVOOAgFFVT1RFRF9JREVOVElGSUVS44CAT0ZGOyBTRUxFQ1QgImlzc3VlMTcxX3RleHQxMjI4OCI7IFNFVOOAgFFVT1RFRF9JREVOVElGSUVS44CAT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTEyMjg4Ijs="
+       },
+       {
+        "start_byte": 103,
+        "old_end_byte": 571,
+        "new_end_byte": 138,
+        "old": "Z28tcWktNgrigK9HT+KArwpTRUxFQ1QgMTsKR0/igK8yClNFTEVDVCAyOwpTRVTigK9RVU9URURfSURFTlRJRklFUuKAr09GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0ODIzOSI7IFNFVOKAr1FVT1RFRF9JREVOVElGSUVS4oCvT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTgyMzkiOwrigZ9HT+KBnwpTRUxFQ1QgMTsKR0/igZ8yClNFTEVDVCAyOwpTRVTigZ9RVU9URURfSURFTlRJRklFUuKBn09GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0ODI4NyI7IFNFVOKBn1FVT1RFRF9JREVOVElGSUVS4oGfT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTgyODciOwrjgIBHT+OAgApTRUxFQ1QgMTsKR0/jgIAyClNFTEVDVCAyOwpTRVTjgIBRVU9URURfSURFTlRJRklFUuOAgE9GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0MTIyODgiOyBTRVTjgIBRVU9URURfSURFTlRJRklFUuOAgE9OOyBTRUxFQ1QgImlzc3VlMTcxX25hbWUxMjI4OCI7",
+        "new": "bmVnYXRpdmUtNjE1OApTRUxFQ1QgMDsgU0VMRUNU4aCOMTs="
        }
       ],
       "expect": [
@@ -280354,6 +280494,50 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 185,
+          "end_byte": 204
+         },
+         {
+          "type": "identifier",
+          "start_byte": 243,
+          "end_byte": 262
+         },
+         {
+          "type": "literal",
+          "start_byte": 338,
+          "end_byte": 357
+         },
+         {
+          "type": "identifier",
+          "start_byte": 396,
+          "end_byte": 415
+         },
+         {
+          "type": "literal",
+          "start_byte": 491,
+          "end_byte": 511
+         },
+         {
+          "type": "identifier",
+          "start_byte": 550,
+          "end_byte": 570
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -280368,6 +280552,10 @@
         "E"
        ],
        "tsql-B04": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
         "N",
         "E"
        ]
@@ -280808,6 +280996,20 @@
         "new_end_byte": 51,
         "old": "KDE=",
         "new": "KE4nU0VMRUNUICc="
+       },
+       {
+        "start_byte": 58,
+        "old_end_byte": 60,
+        "new_end_byte": 550,
+        "old": "KTs=",
+        "new": "KTsKR08KU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwotLSBpc3N1ZTE3MSBnby1xaS0wCsKFR0/ChQpTRUxFQ1QgMTsKR0/ChTIKU0VMRUNUIDI7ClNFVMKFUVVPVEVEX0lERU5USUZJRVLChU9GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0MTMzIjsgU0VUwoVRVU9URURfSURFTlRJRklFUsKFT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTEzMyI7CsKgR0/CoApTRUxFQ1QgMTsKR0/CoDIKU0VMRUNUIDI7ClNFVMKgUVVPVEVEX0lERU5USUZJRVLCoE9GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0MTYwIjsgU0VUwqBRVU9URURfSURFTlRJRklFUsKgT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTE2MCI7CuGagEdP4ZqAClNFTEVDVCAxOwpHT+GagDIKU0VMRUNUIDI7ClNFVOGagFFVT1RFRF9JREVOVElGSUVS4ZqAT0ZGOyBTRUxFQ1QgImlzc3VlMTcxX3RleHQ1NzYwIjsgU0VU4ZqAUVVPVEVEX0lERU5USUZJRVLhmoBPTjsgU0VMRUNUICJpc3N1ZTE3MV9uYW1lNTc2MCI7"
+       },
+       {
+        "start_byte": 108,
+        "old_end_byte": 550,
+        "new_end_byte": 568,
+        "old": "MArChUdPwoUKU0VMRUNUIDE7CkdPwoUyClNFTEVDVCAyOwpTRVTChVFVT1RFRF9JREVOVElGSUVSwoVPRkY7IFNFTEVDVCAiaXNzdWUxNzFfdGV4dDEzMyI7IFNFVMKFUVVPVEVEX0lERU5USUZJRVLChU9OOyBTRUxFQ1QgImlzc3VlMTcxX25hbWUxMzMiOwrCoEdPwqAKU0VMRUNUIDE7CkdPwqAyClNFTEVDVCAyOwpTRVTCoFFVT1RFRF9JREVOVElGSUVSwqBPRkY7IFNFTEVDVCAiaXNzdWUxNzFfdGV4dDE2MCI7IFNFVMKgUVVPVEVEX0lERU5USUZJRVLCoE9OOyBTRUxFQ1QgImlzc3VlMTcxX25hbWUxNjAiOwrhmoBHT+GagApTRUxFQ1QgMTsKR0/hmoAyClNFTEVDVCAyOwpTRVThmoBRVU9URURfSURFTlRJRklFUuGagE9GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0NTc2MCI7IFNFVOGagFFVT1RFRF9JREVOVElGSUVS4ZqAT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTU3NjAiOw==",
+        "new": "MwrigINHT+KAgwpTRUxFQ1QgMTsKR0/igIMyClNFTEVDVCAyOwpTRVTigINRVU9URURfSURFTlRJRklFUuKAg09GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0ODE5NSI7IFNFVOKAg1FVT1RFRF9JREVOVElGSUVS4oCDT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTgxOTUiOwrigItHT+KAiwpTRUxFQ1QgMTsKR0/igIsyClNFTEVDVCAyOwpTRVTigItRVU9URURfSURFTlRJRklFUuKAi09GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0ODIwMyI7IFNFVOKAi1FVT1RFRF9JREVOVElGSUVS4oCLT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTgyMDMiOwrigKhHT+KAqApTRUxFQ1QgMTsKR0/igKgyClNFTEVDVCAyOwpTRVTigKhRVU9URURfSURFTlRJRklFUuKAqE9GRjsgU0VMRUNUICJpc3N1ZTE3MV90ZXh0ODIzMiI7IFNFVOKAqFFVT1RFRF9JREVOVElGSUVS4oCoT047IFNFTEVDVCAiaXNzdWUxNzFfbmFtZTgyMzIiOw=="
        }
       ],
       "expect": [
@@ -280828,6 +281030,82 @@
         "syntax": "NO_ERROR",
         "contains": [],
         "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 179,
+          "end_byte": 197
+         },
+         {
+          "type": "identifier",
+          "start_byte": 234,
+          "end_byte": 252
+         },
+         {
+          "type": "literal",
+          "start_byte": 323,
+          "end_byte": 341
+         },
+         {
+          "type": "identifier",
+          "start_byte": 378,
+          "end_byte": 396
+         },
+         {
+          "type": "literal",
+          "start_byte": 472,
+          "end_byte": 491
+         },
+         {
+          "type": "identifier",
+          "start_byte": 530,
+          "end_byte": 549
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "literal",
+          "start_byte": 184,
+          "end_byte": 203
+         },
+         {
+          "type": "identifier",
+          "start_byte": 242,
+          "end_byte": 261
+         },
+         {
+          "type": "literal",
+          "start_byte": 337,
+          "end_byte": 356
+         },
+         {
+          "type": "identifier",
+          "start_byte": 395,
+          "end_byte": 414
+         },
+         {
+          "type": "literal",
+          "start_byte": 490,
+          "end_byte": 509
+         },
+         {
+          "type": "identifier",
+          "start_byte": 548,
+          "end_byte": 567
+         }
+        ],
+        "declarations": ""
        }
       ],
       "query_expect": [],
@@ -280842,6 +281120,10 @@
         "E"
        ],
        "tsql-B04": [
+        "N",
+        "E"
+       ],
+       "tsql-B05": [
         "N",
         "E"
        ]
@@ -284627,6 +284909,20 @@
         "new_end_byte": 45,
         "old": "J3AnLCdjJywncSc=",
         "new": "QlVMSyAneCcsU0lOR0xFX0NMT0I="
+       },
+       {
+        "start_byte": 60,
+        "old_end_byte": 61,
+        "new_end_byte": 138,
+        "old": "Ow==",
+        "new": "OwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047Ci0tIGlzc3VlMTcxIG5lZ2F0aXZlLTgyMDQKU0VMRUNUIDA7IFNFTEVDVOKAjDE7"
+       },
+       {
+        "start_byte": 115,
+        "old_end_byte": 138,
+        "new_end_byte": 138,
+        "old": "NApTRUxFQ1QgMDsgU0VMRUNU4oCMMTs=",
+        "new": "NQpTRUxFQ1QgMDsgU0VMRUNU4oCNMTs="
        }
       ],
       "expect": [
@@ -284645,6 +284941,18 @@
        {
         "step": 2,
         "syntax": "NO_ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "ERROR",
         "contains": [],
         "declarations": ""
        }
@@ -285715,6 +286023,20 @@
         "new_end_byte": 57,
         "old": "TkQ=",
         "new": "TkQgMg=="
+       },
+       {
+        "start_byte": 58,
+        "old_end_byte": 60,
+        "new_end_byte": 265,
+        "old": "KTs=",
+        "new": "KTsKR08KU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwotLSBpc3N1ZTE3MSBzZWxlY3QtMTQKU0VMRUNUIDA7IFNFTEVDVOKAhTE7ClNFTEVDVCAwOyBTRUxFQ1TigIYxOwpTRUxFQ1QgMDsgU0VMRUNU4oCHMTsKU0VMRUNUIDA7IFNFTEVDVOKAiDE7ClNFTEVDVCAwOyBTRUxFQ1TigIkxOwpTRUxFQ1QgMDsgU0VMRUNU4oCKMTsKU0VMRUNUIDA7IFNFTEVDVOKAizE7"
+       },
+       {
+        "start_byte": 109,
+        "old_end_byte": 265,
+        "new_end_byte": 221,
+        "old": "MTQKU0VMRUNUIDA7IFNFTEVDVOKAhTE7ClNFTEVDVCAwOyBTRUxFQ1TigIYxOwpTRUxFQ1QgMDsgU0VMRUNU4oCHMTsKU0VMRUNUIDA7IFNFTEVDVOKAiDE7ClNFTEVDVCAwOyBTRUxFQ1TigIkxOwpTRUxFQ1QgMDsgU0VMRUNU4oCKMTsKU0VMRUNUIDA7IFNFTEVDVOKAizE7",
+        "new": "MjEKU0VMRUNUIDA7IFNFTEVDVOKAqDE7ClNFTEVDVCAwOyBTRUxFQ1TigKkxOwpTRUxFQ1QgMDsgU0VMRUNU4oCvMTsKU0VMRUNUIDA7IFNFTEVDVOKBnzE7ClNFTEVDVCAwOyBTRUxFQ1TjgIAxOw=="
        }
       ],
       "expect": [
@@ -285734,6 +286056,82 @@
         "step": 2,
         "syntax": "NO_ERROR",
         "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 3,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "query_specification",
+          "start_byte": 122,
+          "end_byte": 132
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 144,
+          "end_byte": 154
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 166,
+          "end_byte": 176
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 188,
+          "end_byte": 198
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 210,
+          "end_byte": 220
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 232,
+          "end_byte": 242
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 254,
+          "end_byte": 264
+         }
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 4,
+        "syntax": "NO_ERROR",
+        "contains": [],
+        "anchors": [
+         {
+          "type": "query_specification",
+          "start_byte": 122,
+          "end_byte": 132
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 144,
+          "end_byte": 154
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 166,
+          "end_byte": 176
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 188,
+          "end_byte": 198
+         },
+         {
+          "type": "query_specification",
+          "start_byte": 210,
+          "end_byte": 220
+         }
+        ],
         "declarations": ""
        }
       ],
