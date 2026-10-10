@@ -628,8 +628,8 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		if c.Input.Path != "" {
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
-		x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, errNodes, &c, &extra, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
+		out := x.replayCase(&c, i, &reg, len(w.Queries) > 0)
+		q.judgeCase(s, qc, errNodes, &c, &extra, out, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
@@ -669,7 +669,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string, svc, apiWanted bool) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, replay caseOutcome, add func(code, path, msg string), path string, svc, apiWanted bool) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -681,6 +681,21 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	kit := map[string]string{"incremental_equality": c.Claims.IncrementalEquality, "incremental_route": c.Claims.IncrementalRoute}
 	if c.Oracle != nil {
 		kit["query_equality"], kit["fact_reproduction"], kit["dynamic_sql"] = c.Oracle.QueryEquality, c.Oracle.FactReproduction, c.Oracle.DynamicSQL
+	}
+	segmentCheck := claimNotClaimed
+	if len(replay.segmentClaims) > 0 {
+		if !replay.segmentClaimsValid {
+			segmentCheck = claimBlocked
+		} else {
+			for _, seg := range replay.segmentClaims {
+				kit["incremental_equality"] = worseClaim(kit["incremental_equality"], seg.IncrementalEquality)
+				kit["incremental_route"] = worseClaim(kit["incremental_route"], seg.IncrementalRoute)
+				for _, v := range []string{seg.IncrementalEquality, seg.IncrementalRoute, seg.Expectations} {
+					segmentCheck = worseClaim(segmentCheck, v)
+				}
+			}
+			segmentCheck = worseClaim(segmentCheck, replay.recomputedAssessment)
+		}
 	}
 	if completed && apiWanted {
 		apiInvalid, fullTrees, reducedTrees := false, 0, false
@@ -903,6 +918,9 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	for _, ref := range c.References {
 		s.checks[qc.ID] = worseClaim(s.checks[qc.ID], ref.Assessment)
 	}
+	if completed && len(replay.segmentClaims) > 0 {
+		s.checks[qc.ID] = worseClaim(s.checks[qc.ID], segmentCheck)
+	}
 	if qc.Role == "detector" {
 		d := claimPass
 		for _, r := range stepRes {
@@ -936,6 +954,7 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		steps = append(steps, x)
 	}
 	sum, _ := json.Marshal(map[string]any{"status": c.ExecutionStatus, "assessment": c.Assessment, "code": c.Code, "claims": c.Claims, "oracle": c.Oracle,
+		"segment_claims": replay.segmentClaims, "segment_claims_valid": replay.segmentClaimsValid,
 		"expectations": stepRes, "query_expectations": qe, "query_detail": qeDetail, "steps": steps})
 	s.summaries[qc.ID] = string(sum)
 }

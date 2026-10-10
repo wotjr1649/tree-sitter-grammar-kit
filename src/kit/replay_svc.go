@@ -6,6 +6,7 @@ import "reflect"
 func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 	g := x.gate("case-binding")
 	if x.svcFormat != SvcFormat && x.svcFormat != SvcLegacyFormat {
+		g.check(len(c.Segments) == 0, c.ID, "SVC_SEGMENT_UNEXPECTED", "SVC format에 등록되지 않은 segment다")
 		for _, s := range c.Steps {
 			g.check(s.Composite == nil, c.ID, "SVC_COMPOSITE_UNEXPECTED", "SVC format에 등록되지 않은 composite다")
 		}
@@ -24,6 +25,7 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 		return
 	}
 	if ref {
+		g.check(len(c.Segments) == 0, c.ID, "SVC_REFERENCE_INVALID", "참조 C# case에 segment가 있다")
 		for _, s := range c.Steps {
 			g.check(s.Composite == nil, c.ID, "SVC_REFERENCE_INVALID", "참조 C# case에 composite가 있다")
 		}
@@ -91,8 +93,19 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 			g.check(a.Inline == nil, c.ID, "SVC_INLINE_MISMATCH", "관측 전용 step에 inline이 있다")
 		}
 	}
+	segments := svcNativeSegments(c.Steps)
+	g.check(len(segments) == len(c.Segments), c.ID, "SVC_SEGMENT_MISMATCH", "native segment 수가 tree 구간과 다르다")
+	for i, seg := range c.Segments {
+		if i >= len(segments) {
+			break
+		}
+		g.check(seg.StartStep == segments[i][0] && seg.EndStep == segments[i][1] && seg.Process != nil && seg.Process.Status == StatusCompleted && seg.Process.ExitCode == 0 && seg.Process.Cleanup.Verified, c.ID, "SVC_SEGMENT_MISMATCH", "segment 경계나 실행·회수 증거가 다르다")
+	}
+}
+
+func svcNativeSegments(steps []rcStep) [][2]int {
 	gap, trees := false, false
-	for _, s := range c.Steps {
+	for _, s := range steps {
 		if s.Incremental == nil {
 			gap = true
 		} else {
@@ -101,26 +114,20 @@ func (x *replayEnv) checkSvcComposite(c *rcCase, want *IncrementalCase) {
 	}
 	segments := [][2]int{}
 	if gap && trees {
-		for i := 0; i < len(c.Steps); {
-			if c.Steps[i].Incremental == nil {
+		for i := 0; i < len(steps); {
+			if steps[i].Incremental == nil {
 				i++
 				continue
 			}
 			end := i + 1
-			for end < len(c.Steps) && c.Steps[end].Incremental != nil {
+			for end < len(steps) && steps[end].Incremental != nil {
 				end++
 			}
 			segments = append(segments, [2]int{i, end})
 			i = end
 		}
 	}
-	g.check(len(segments) == len(c.Segments), c.ID, "SVC_SEGMENT_MISMATCH", "native segment 수가 tree 구간과 다르다")
-	for i, seg := range c.Segments {
-		if i >= len(segments) {
-			break
-		}
-		g.check(seg.StartStep == segments[i][0] && seg.EndStep == segments[i][1] && seg.Process != nil && seg.Process.Status == StatusCompleted && seg.Process.ExitCode == 0 && seg.Process.Cleanup.Verified, c.ID, "SVC_SEGMENT_MISMATCH", "segment 경계나 실행·회수 증거가 다르다")
-	}
+	return segments
 }
 
 type rcSvcReference struct {
