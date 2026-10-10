@@ -96,85 +96,127 @@
       "id": "tsql-issue113-percent-call-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "[PERCENT];\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "[PERCENT];",
-          "replace": "PERCENT;"
-        },
-        {
-          "find": "PERCENT;",
-          "replace": "[PERCENT];"
-        }
-      ],
+  {
+    "find": "[PERCENT];",
+    "replace": "PERCENT;"
+  },
+  {
+    "find": "PERCENT;",
+    "replace": "[PERCENT];"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\n/*comment*/ GO\nSELECT 1;"
+  },
+  {
+    "find": "nt",
+    "replace": "nt\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "execute_statement"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "execute_statement"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "execute_statement"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "execute_statement"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-percent-alias-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS [PERCENT];\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS [PERCENT];",
-          "replace": "SELECT 1 AS PERCENT;"
-        },
-        {
-          "find": "SELECT 1 AS PERCENT;",
-          "replace": "SELECT 1 AS [PERCENT];"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS [PERCENT];",
+    "replace": "SELECT 1 AS PERCENT;"
+  },
+  {
+    "find": "SELECT 1 AS PERCENT;",
+    "replace": "SELECT 1 AS [PERCENT];"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nINSERT INTO dbo.t (GO) VALUES (1);"
+  },
+  {
+    "find": "INSERT INTO dbo.t (GO) VALUES (1",
+    "replace": "SELECT * FROM dbo.t WITH (GO"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-percent-constraint-r1",
@@ -222,85 +264,127 @@
       "id": "tsql-issue113-unicode-letter-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS ა;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS ა;",
-          "replace": "SELECT 1 AS Ა;"
-        },
-        {
-          "find": "SELECT 1 AS Ა;",
-          "replace": "SELECT 1 AS ა;"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS ა;",
+    "replace": "SELECT 1 AS Ა;"
+  },
+  {
+    "find": "SELECT 1 AS Ა;",
+    "replace": "SELECT 1 AS ა;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nGO\n5;\nSELECT 1\n"
+  },
+  {
+    "find": "\n5;\n",
+    "replace": " -- comment\r\n5; "
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-unicode-digit-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS a١;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS a١;",
-          "replace": "SELECT 1 AS a᮰;"
-        },
-        {
-          "find": "SELECT 1 AS a᮰;",
-          "replace": "SELECT 1 AS a١;"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS a١;",
+    "replace": "SELECT 1 AS a᮰;"
+  },
+  {
+    "find": "SELECT 1 AS a᮰;",
+    "replace": "SELECT 1 AS a١;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT 1; /* outer /* inner */ */"
+  },
+  {
+    "find": "; /* outer /* inner */ */",
+    "replace": " +\nGO\nSELECT 2\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-unicode-variable-r1",
@@ -390,43 +474,64 @@
       "id": "tsql-issue113-unicode-supplementary-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS a;\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS a;",
-          "replace": "SELECT 1 AS 𐐀;"
-        },
-        {
-          "find": "SELECT 1 AS 𐐀;",
-          "replace": "SELECT 1 AS a;"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS a;",
+    "replace": "SELECT 1 AS 𐐀;"
+  },
+  {
+    "find": "SELECT 1 AS 𐐀;",
+    "replace": "SELECT 1 AS a;"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT ((1 + 2));"
+  },
+  {
+    "find": "(1 + 2)",
+    "replace": "1,2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue113-backup-database-r1",
@@ -816,45 +921,85 @@
       "id": "tsql-issue113-unicode-delimited-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01"
-      ],
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 AS [Ა];\n\nSELECT 1 AS fixture_anchor;\n",
       "edits": [
-        {
-          "find": "SELECT 1 AS [Ა];",
-          "replace": "SELECT 1 AS \"Ა\";"
-        },
-        {
-          "find": "SELECT 1 AS \"Ა\";",
-          "replace": "SELECT 1 AS [Ა];"
-        }
-      ],
+  {
+    "find": "SELECT 1 AS [Ა];",
+    "replace": "SELECT 1 AS \"Ა\";"
+  },
+  {
+    "find": "SELECT 1 AS \"Ა\";",
+    "replace": "SELECT 1 AS [Ა];"
+  },
+  {
+    "find": "r;\n",
+    "replace": "r;\n\nGO\nSELECT CUBEX;"
+  },
+  {
+    "find": "CUBE",
+    "replace": "ROLLUPX FROM dbo.t GROUP BY ROLLUP"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "identifier"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "identifier"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "CUBEX",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue113-percent-option-r1",
@@ -1197,17 +1342,68 @@
   {
       "id": "tsql-gap-issue131-schema-r1",
       "kind": "gap",
-      "features": ["tsql-B02"],
+      "features": [
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT * FROM s..[schema].t;",
       "edits": [
-        {"find": "[schema]", "replace": "schema"},
-        {"find": "schema", "replace": "[schema]"}
-      ],
+  {
+    "find": "[schema]",
+    "replace": "schema"
+  },
+  {
+    "find": "schema",
+    "replace": "[schema]"
+  },
+  {
+    "find": "t;",
+    "replace": "t;\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(());"
+  },
+  {
+    "find": "((",
+    "replace": "((a,b),("
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "relation"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "relation"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-cte-r1",
@@ -1257,17 +1453,66 @@
   {
       "id": "tsql-gap-issue131-exec-sign-r1",
       "kind": "gap",
-      "features": ["tsql-B04"],
+      "features": [
+  "tsql-B04",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_anchor;\nEXEC dbo.p -3;",
       "edits": [
-        {"find": "-", "replace": "+"},
-        {"find": "+", "replace": "-"}
-      ],
+  {
+    "find": "-",
+    "replace": "+"
+  },
+  {
+    "find": "+",
+    "replace": "-"
+  },
+  {
+    "find": "3;",
+    "replace": "3;\nGO\nSELECT GO FROM t;"
+  },
+  {
+    "find": "SELECT GO FROM t",
+    "replace": "WITH q AS (SELECT 1 AS x) SELECT x FROM q WHERE x IN (SELECT x FROM q)"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["execute_statement"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "execute_statement"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "execute_statement"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-exec-login-r1",
@@ -1347,17 +1592,73 @@
   {
       "id": "tsql-gap-issue131-server-role-r1",
       "kind": "gap",
-      "features": ["tsql-B03"],
+      "features": [
+  "tsql-B03",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_anchor;\nDROP SERVER ROLE r;",
       "edits": [
-        {"find": "E ", "replace": "E IF EXISTS "},
-        {"find": "E IF EXISTS ", "replace": "E "}
-      ],
+  {
+    "find": "E ",
+    "replace": "E IF EXISTS "
+  },
+  {
+    "find": "E IF EXISTS ",
+    "replace": "E "
+  },
+  {
+    "find": " r;",
+    "replace": " r;\nGO\nSELECT COUNT(*) FROM dbo.t GROUP BY dbo.f((a,b));"
+  },
+  {
+    "find": "COUNT(*) FROM dbo.t GROUP BY dbo.f((a,b))",
+    "replace": "ROLLUPX"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["drop_role"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["drop_role"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "drop_role"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "drop_role"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "identifier",
+        "text": "ROLLUPX",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-event-mixed-r1",
@@ -1482,17 +1783,68 @@
   {
       "id": "tsql-gap-issue131-function-hint-r1",
       "kind": "gap",
-      "features": ["tsql-B02"],
+      "features": [
+  "tsql-B02",
+  "tsql-B01",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 0 AS issue131_anchor;\nSELECT 1 FROM dbo.f(1) AS y;",
       "edits": [
-        {"find": "AS y", "replace": "WITH (NOLOCK)"},
-        {"find": "WITH (NOLOCK)", "replace": "AS y"}
-      ],
+  {
+    "find": "AS y",
+    "replace": "WITH (NOLOCK)"
+  },
+  {
+    "find": "WITH (NOLOCK)",
+    "replace": "AS y"
+  },
+  {
+    "find": "y;",
+    "replace": "y;\nGO\nSELECT 1 FROM dbo.t GROUP BY ROLLUP((),a);"
+  },
+  {
+    "find": "(),a",
+    "replace": "a,()"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["relation"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "relation"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "relation"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-function-join-hint-r1",
@@ -1805,17 +2157,139 @@
   {
       "id": "tsql-gap-issue131-review-update-compound-default-r1",
       "kind": "gap",
-      "features": ["tsql-B01", "tsql-B02"],
+      "features": [
+  "tsql-B01",
+  "tsql-B02"
+],
       "source_utf8": "SELECT 0 AS issue131_review_anchor;\nUPDATE dbo.t SET c += 1;",
       "edits": [
-        {"find": " 1", "replace": " DEFAULT"},
-        {"find": " DEFAULT", "replace": " 1"}
-      ],
+  {
+    "find": " 1",
+    "replace": " DEFAULT"
+  },
+  {
+    "find": " DEFAULT",
+    "replace": " 1"
+  },
+  {
+    "find": "1;",
+    "replace": "1;\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 select-0\nSELECT 0; SELECT\t1;\nSELECT 0; SELECT\n1;\nSELECT 0; SELECT\u000b1;\nSELECT 0; SELECT\f1;\nSELECT 0; SELECT\r1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT1;"
+  },
+  {
+    "find": "0\nSELECT 0; SELECT\t1;\nSELECT 0; SELECT\n1;\nSELECT 0; SELECT\u000b1;\nSELECT 0; SELECT\f1;\nSELECT 0; SELECT\r1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT1;",
+    "replace": "7\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;"
+  }
+],
       "expect": [
-        {"step": 0, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""},
-        {"step": 1, "syntax": "ERROR", "contains": [], "declarations": ""},
-        {"step": 2, "syntax": "NO_ERROR", "contains": ["update"], "declarations": ""}
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "update"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "update"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT\t1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\n1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\u000b1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\f1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT\r1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT1",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-gap-issue131-review-merge-compound-default-r1",
@@ -2477,44 +2951,64 @@
       "id": "tsql-gap-issue134-drop-bare-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B03"
-      ],
+  "tsql-B01",
+  "tsql-B03"
+],
       "source_utf8": "SELECT 0 AS issue134_anchor;\nALTER ASSEMBLY a DROP FILE 'src';",
       "edits": [
-        {
-          "find": "ALTER ASSEMBLY a DROP FILE 'src';",
-          "replace": "ALTER ASSEMBLY a DROP FILE src;"
-        },
-        {
-          "find": "ALTER ASSEMBLY a DROP FILE src;",
-          "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
-        }
-      ],
+  {
+    "find": "ALTER ASSEMBLY a DROP FILE 'src';",
+    "replace": "ALTER ASSEMBLY a DROP FILE src;"
+  },
+  {
+    "find": "ALTER ASSEMBLY a DROP FILE src;",
+    "replace": "ALTER ASSEMBLY a DROP FILE 'src';"
+  },
+  {
+    "find": "';",
+    "replace": "';\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 negative-65279\nSELECT 0; SELECT﻿1;"
+  },
+  {
+    "find": "negative-65279\nSELECT 0; SELECT﻿1;",
+    "replace": "same-line-go\nSELECT 0; GO\nSELECT 1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [
-            "alter_assembly"
-          ],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "alter_assembly"
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-gap-issue134-drop-bracket-r1",
@@ -3112,40 +3606,61 @@
       "id": "tsql-issue137-queue-default-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "ALTER QUEUE q WITH RETENTION = OFF;",
       "edits": [
-        {
-          "find": "OFF",
-          "replace": "DEFAULT"
-        },
-        {
-          "find": "DEFAULT",
-          "replace": "OFF"
-        }
-      ],
+  {
+    "find": "OFF",
+    "replace": "DEFAULT"
+  },
+  {
+    "find": "DEFAULT",
+    "replace": "OFF"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1 WHERE 1 IN (SELECT 1);"
+  },
+  {
+    "find": "(SELECT 1",
+    "replace": "(1,2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-queue-activation-r1",
@@ -3190,40 +3705,69 @@
       "id": "tsql-issue137-queue-poison-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "ALTER QUEUE q WITH POISON_MESSAGE_HANDLING (STATUS = OFF);",
       "edits": [
-        {
-          "find": "OFF",
-          "replace": "1"
-        },
-        {
-          "find": "1",
-          "replace": "OFF"
-        }
-      ],
+  {
+    "find": "OFF",
+    "replace": "1"
+  },
+  {
+    "find": "1",
+    "replace": "OFF"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1 FROM dbo.t GROUP BY ROLLUP((()));"
+  },
+  {
+    "find": "()",
+    "replace": "a,b"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "invocation",
+        "text": "ROLLUP((a,b))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-route-equal-r1",
@@ -3307,79 +3851,121 @@
       "id": "tsql-issue137-policy-equal-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
       "edits": [
-        {
-          "find": "= ",
-          "replace": ""
-        },
-        {
-          "find": "E ",
-          "replace": "E = "
-        }
-      ],
+  {
+    "find": "= ",
+    "replace": ""
+  },
+  {
+    "find": "E ",
+    "replace": "E = "
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT GO FROM dbo.t;\n"
+  },
+  {
+    "find": "T ",
+    "replace": "T dbo."
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-policy-value-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "ALTER SECURITY POLICY dbo.p WITH (STATE = OFF);",
       "edits": [
-        {
-          "find": "OFF",
-          "replace": "1"
-        },
-        {
-          "find": "1",
-          "replace": "OFF"
-        }
-      ],
+  {
+    "find": "OFF",
+    "replace": "1"
+  },
+  {
+    "find": "1",
+    "replace": "OFF"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT rollup FROM dbo.t GROUP BY rollup;"
+  },
+  {
+    "find": "rollup FROM dbo.t GROUP BY rollup",
+    "replace": "cube FROM dbo.t GROUP BY cube"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-policy-kind-r1",
@@ -3502,118 +4088,210 @@
       "id": "tsql-issue137-builtin-default-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "SELECT COUNT(a) FROM dbo.t;",
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nSELECT COUNT(a) FROM dbo.t;",
       "edits": [
-        {
-          "find": "a",
-          "replace": "DEFAULT"
-        },
-        {
-          "find": "DEFAULT",
-          "replace": "a"
-        }
-      ],
+  {
+    "find": "a",
+    "replace": "DEFAULT"
+  },
+  {
+    "find": "DEFAULT",
+    "replace": "a"
+  },
+  {
+    "find": "t;",
+    "replace": "t;\nGO\nSELECT 0x;"
+  },
+  {
+    "find": "0x",
+    "replace": "* FROM t WHERE a IN ()"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-udf-default-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT dbo.f(DEFAULT);",
       "edits": [
-        {
-          "find": "dbo.",
-          "replace": ""
-        },
-        {
-          "find": "SELECT f(",
-          "replace": "SELECT dbo.f("
-        }
-      ],
+  {
+    "find": "dbo.",
+    "replace": ""
+  },
+  {
+    "find": "SELECT f(",
+    "replace": "SELECT dbo.f("
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 go-qi-6\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8239\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8239\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8287\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8287\";\n　GO　\nSELECT 1;\nGO　2\nSELECT 2;\nSET　QUOTED_IDENTIFIER　OFF; SELECT \"issue171_text12288\"; SET　QUOTED_IDENTIFIER　ON; SELECT \"issue171_name12288\";"
+  },
+  {
+    "find": "go-qi-6\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8239\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8239\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8287\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8287\";\n　GO　\nSELECT 1;\nGO　2\nSELECT 2;\nSET　QUOTED_IDENTIFIER　OFF; SELECT \"issue171_text12288\"; SET　QUOTED_IDENTIFIER　ON; SELECT \"issue171_name12288\";",
+    "replace": "negative-6158\nSELECT 0; SELECT᠎1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text8239\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8239\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8287\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8287\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text12288\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name12288\"",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-star-alias-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT * FROM dbo.t;",
       "edits": [
-        {
-          "find": "* ",
-          "replace": "* p "
-        },
-        {
-          "find": "p ",
-          "replace": ""
-        }
-      ],
+  {
+    "find": "* ",
+    "replace": "* p "
+  },
+  {
+    "find": "p ",
+    "replace": ""
+  },
+  {
+    "find": "t;",
+    "replace": "t;\nGO\nSELECT 1 FROM dbo.t GROUP BY GROUPING SETS ((),ROLLUP((a,b)));"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "grouping_sets",
+        "text": "GROUPING SETS ((),ROLLUP((a,b)))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-qualified-star-alias-r1",
@@ -3697,196 +4375,365 @@
       "id": "tsql-issue137-function-star-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nSELECT ABS(1);",
       "edits": [
-        {
-          "find": "1",
-          "replace": "*"
-        },
-        {
-          "find": "*",
-          "replace": "1"
-        }
-      ],
+  {
+    "find": "1",
+    "replace": "*"
+  },
+  {
+    "find": "*",
+    "replace": "1"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t,(1),(1)) AS c;"
+  },
+  {
+    "find": "t,(",
+    "replace": "t,(a+"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-dynamic-payload-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nEXEC (N'SELECT 1') AS LOGIN = 'u';",
       "edits": [
-        {
-          "find": "N'SELECT 1'",
-          "replace": "1"
-        },
-        {
-          "find": "1",
-          "replace": "N'SELECT 1'"
-        }
-      ],
+  {
+    "find": "N'SELECT 1'",
+    "replace": "1"
+  },
+  {
+    "find": "1",
+    "replace": "N'SELECT 1'"
+  },
+  {
+    "find": "';",
+    "replace": "';\nGO\nIF 1 = 1 BEGIN END;"
+  },
+  {
+    "find": "IF 1 = 1 BEGIN END",
+    "replace": "SELECT TOP () 1"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-dynamic-concat-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "DECLARE @sql nvarchar(max) = N'1'; EXEC (N'SELECT ' + @sql);",
       "edits": [
-        {
-          "find": "N'SELECT '",
-          "replace": "1"
-        },
-        {
-          "find": "(1",
-          "replace": "(N'SELECT '"
-        }
-      ],
+  {
+    "find": "N'SELECT '",
+    "replace": "1"
+  },
+  {
+    "find": "(1",
+    "replace": "(N'SELECT '"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 go-qi-0\nGO\nSELECT 1;\nGO2\nSELECT 2;\nSETQUOTED_IDENTIFIEROFF; SELECT \"issue171_text133\"; SETQUOTED_IDENTIFIERON; SELECT \"issue171_name133\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text160\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name160\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text5760\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name5760\";"
+  },
+  {
+    "find": "0\nGO\nSELECT 1;\nGO2\nSELECT 2;\nSETQUOTED_IDENTIFIEROFF; SELECT \"issue171_text133\"; SETQUOTED_IDENTIFIERON; SELECT \"issue171_name133\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text160\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name160\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text5760\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name5760\";",
+    "replace": "3\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8195\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8195\";\n​GO​\nSELECT 1;\nGO​2\nSELECT 2;\nSET​QUOTED_IDENTIFIER​OFF; SELECT \"issue171_text8203\"; SET​QUOTED_IDENTIFIER​ON; SELECT \"issue171_name8203\";\n GO \nSELECT 1;\nGO 2\nSELECT 2;\nSET QUOTED_IDENTIFIER OFF; SELECT \"issue171_text8232\"; SET QUOTED_IDENTIFIER ON; SELECT \"issue171_name8232\";"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text133\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name133\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text160\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name160\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text5760\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name5760\"",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "literal",
+        "text": "\"issue171_text8195\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8195\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8203\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8203\"",
+        "occurrence": 1
+      },
+      {
+        "type": "literal",
+        "text": "\"issue171_text8232\"",
+        "occurrence": 1
+      },
+      {
+        "type": "identifier",
+        "text": "\"issue171_name8232\"",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue137-openjson-comma-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT * FROM OPENJSON(N'[]', '$');",
       "edits": [
-        {
-          "find": ",",
-          "replace": ""
-        },
-        {
-          "find": "]'",
-          "replace": "]',"
-        }
-      ],
+  {
+    "find": ",",
+    "replace": ""
+  },
+  {
+    "find": "]'",
+    "replace": "]',"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1 WHERE 1 NOT IN ();"
+  },
+  {
+    "find": "NOT IN (",
+    "replace": "IN (/* c */"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-procedure-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
-      "source_utf8": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
+  "tsql-B01",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nALTER PROCEDURE dbo.p @a int AS SELECT 1;",
       "edits": [
-        {
-          "find": "@",
-          "replace": ""
-        },
-        {
-          "find": "p ",
-          "replace": "p @"
-        }
-      ],
+  {
+    "find": "@",
+    "replace": ""
+  },
+  {
+    "find": "p ",
+    "replace": "p @"
+  },
+  {
+    "find": "1;",
+    "replace": "1;\nGO\nSELECT 1;\nGO /*comment*/\nSELECT 2;"
+  },
+  {
+    "find": "ent",
+    "replace": "ent\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-function-r1",
@@ -3895,37 +4742,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
-        {
-          "find": "@",
-          "replace": ""
-        },
-        {
-          "find": "(",
-          "replace": "(@"
-        }
-      ],
+  {
+    "find": "@",
+    "replace": ""
+  },
+  {
+    "find": "(",
+    "replace": "(@"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-output-r1",
@@ -3934,37 +4781,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
       "edits": [
-        {
-          "find": "p @",
-          "replace": "p "
-        },
-        {
-          "find": "p ",
-          "replace": "p @"
-        }
-      ],
+  {
+    "find": "p @",
+    "replace": "p "
+  },
+  {
+    "find": "p ",
+    "replace": "p @"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue139-clr-r1",
@@ -3973,37 +4820,37 @@
         "tsql-B01",
         "tsql-B04"
       ],
-      "source_utf8": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
       "edits": [
-        {
-          "find": "@",
-          "replace": ""
-        },
-        {
-          "find": "g(",
-          "replace": "g(@"
-        }
-      ],
+  {
+    "find": "@",
+    "replace": ""
+  },
+  {
+    "find": "g(",
+    "replace": "g(@"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-00223-r1",
@@ -4173,165 +5020,249 @@
       "id": "tsql-issue138-leading-00423-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "PRINT 1; ENABLE TRIGGER ALL ON .t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": "t;",
+    "replace": "t;\nGO\nSELECT 'abc''def';"
+  },
+  {
+    "find": "''def'",
+    "replace": ""
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-00479-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT @@ROWCOUNT AS rows_affected;\nGO\nEXEC .p @a=-3;",
       "edits": [
-        {
-          "find": "p",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".p"
-        }
-      ],
+  {
+    "find": "p",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".p"
+  },
+  {
+    "find": "3;",
+    "replace": "3;\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t,(@a),(1)) AS c;"
+  },
+  {
+    "find": "(@",
+    "replace": "(dbo."
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-01052-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT * FROM .f(1) AS a;",
       "edits": [
-        {
-          "find": "f",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".f"
-        }
-      ],
+  {
+    "find": "f",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".f"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 'GO'; SELECT 2;"
+  },
+  {
+    "find": "'GO'; SELECT 2",
+    "replace": "[GO] FROM t"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-01098-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT * FROM dbo, .f(1) AS a;",
       "edits": [
-        {
-          "find": "f",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".f"
-        }
-      ],
+  {
+    "find": "f",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".f"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nINSERT INTO t VALUES ();"
+  },
+  {
+    "find": "INSERT INTO t VALUES ()",
+    "replace": "sp_executesql N'SELECT 1'"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-01133-r1",
@@ -4378,42 +5309,63 @@
       "id": "tsql-issue138-leading-01473-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
-      "source_utf8": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nALTER SECURITY POLICY .p WITH (STATE = OFF);",
       "edits": [
-        {
-          "find": "p",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".p"
-        }
-      ],
+  {
+    "find": "p",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".p"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t, (id), (1)) AS ct;"
+  },
+  {
+    "find": "VERSION dbo.t, (id), (1)",
+    "replace": "CHANGES dbo.t, 0"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-01567-r1",
@@ -4665,83 +5617,125 @@
       "id": "tsql-issue138-leading-02133-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
-      "source_utf8": "CREATE TABLE .t (a int DEFAULT (1));",
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE TABLE .t (a int DEFAULT (1));",
       "edits": [
-        {
-          "find": ".t",
-          "replace": "."
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": ".t",
+    "replace": "."
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSELECT 1;\rGO\rSELECT 2;"
+  },
+  {
+    "find": "GO\r",
+    "replace": "\n\tGO 2\r\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02428-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "INSERT INTO .t (a) VALUES (1);",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nlbl: sp_executesql N'SELECT 1';"
+  },
+  {
+    "find": ": ",
+    "replace": ": EXEC "
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02516-r1",
@@ -4788,284 +5782,439 @@
       "id": "tsql-issue138-leading-02657-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
-      "source_utf8": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\nCREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
       "edits": [
-        {
-          "find": "f",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".f"
-        }
-      ],
+  {
+    "find": "f",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".f"
+  },
+  {
+    "find": "D;",
+    "replace": "D;\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(a,());"
+  },
+  {
+    "find": "CUBE(a,()",
+    "replace": "("
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "list",
+        "text": "()",
+        "occurrence": 2
+      }
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02773-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT [KEY] FROM .t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\nGO SELECT 2;"
+  },
+  {
+    "find": "O ",
+    "replace": "O;\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02800-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT [KEY] FROM dbo, .t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\nGO 1.5\nSELECT 2;"
+  },
+  {
+    "find": "1.5",
+    "replace": "-1"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02821-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 한 FROM .t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\nGO\nSELECT 2;"
+  },
+  {
+    "find": "1;\nGO",
+    "replace": "1;\nGO 2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-leading-02848-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02",
-        "tsql-B03",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B03",
+  "tsql-B04",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 한 FROM dbo, .t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": ".",
-          "replace": ".t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": ".",
+    "replace": ".t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\nGO -- comment\nSELECT 2;"
+  },
+  {
+    "find": "-- comment",
+    "replace": "0"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-middle-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT a FROM db..t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": "..",
-          "replace": "..t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": "..",
+    "replace": "..t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1; GO SELECT 2;"
+  },
+  {
+    "find": "O ",
+    "replace": "O\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-qualified-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT a FROM srv.db.dbo.t;",
       "edits": [
-        {
-          "find": "t",
-          "replace": ""
-        },
-        {
-          "find": "o.",
-          "replace": "o.t"
-        }
-      ],
+  {
+    "find": "t",
+    "replace": ""
+  },
+  {
+    "find": "o.",
+    "replace": "o.t"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT ;"
+  },
+  {
+    "find": "\nSELECT ",
+    "replace": "\nSELECT * AS x FROM t"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue138-event-add-r1",
@@ -5305,352 +6454,560 @@
       "id": "tsql-issue140-distinct-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT COUNT(DISTINCT a) FROM t;",
       "edits": [
-        {
-          "find": "a",
-          "replace": "a,b"
-        },
-        {
-          "find": ",b",
-          "replace": ""
-        }
-      ],
+  {
+    "find": "a",
+    "replace": "a,b"
+  },
+  {
+    "find": ",b",
+    "replace": ""
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\n;sp_executesql N'SELECT 1';"
+  },
+  {
+    "find": ";sp_executesql N'SELECT 1'",
+    "replace": "SELECT 1 --c\rSELECT 2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-contains-extra-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
       "edits": [
-        {
-          "find": "e'",
-          "replace": "e','extra'"
-        },
-        {
-          "find": ",'extra'",
-          "replace": ""
-        }
-      ],
+  {
+    "find": "e'",
+    "replace": "e','extra'"
+  },
+  {
+    "find": ",'extra'",
+    "replace": ""
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1 WHERE 1 IN (1,);"
+  },
+  {
+    "find": "1,",
+    "replace": "( )"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-freetext-extra-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear');",
       "edits": [
-        {
-          "find": "r'",
-          "replace": "r','extra'"
-        },
-        {
-          "find": ",'extra'",
-          "replace": ""
-        }
-      ],
+  {
+    "find": "r'",
+    "replace": "r','extra'"
+  },
+  {
+    "find": ",'extra'",
+    "replace": ""
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1 WHERE 1 IN (1);"
+  },
+  {
+    "find": "(1",
+    "replace": "("
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-fulltext-columns-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS((a,b),'apple',LANGUAGE 1033);",
       "edits": [
-        {
-          "find": "LANGUAGE ",
-          "replace": ""
-        },
-        {
-          "find": "',",
-          "replace": "',LANGUAGE "
-        }
-      ],
+  {
+    "find": "LANGUAGE ",
+    "replace": ""
+  },
+  {
+    "find": "',",
+    "replace": "',LANGUAGE "
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,1+1) AS c;"
+  },
+  {
+    "find": "1+1",
+    "replace": "(1)"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-fulltext-wildcard-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(*,'apple');",
       "edits": [
-        {
-          "find": ",'apple'",
-          "replace": ""
-        },
-        {
-          "find": "*",
-          "replace": "*,'apple'"
-        }
-      ],
+  {
+    "find": ",'apple'",
+    "replace": ""
+  },
+  {
+    "find": "*",
+    "replace": "*,'apple'"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\n  GO 2 --comment\nSELECT 2;"
+  },
+  {
+    "find": "\n  GO 2 --comment\n",
+    "replace": "\rGO\r"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-fulltext-property-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
-        {
-          "find": ",'apple'",
-          "replace": ""
-        },
-        {
-          "find": "')",
-          "replace": "'),'apple'"
-        }
-      ],
+  {
+    "find": ",'apple'",
+    "replace": ""
+  },
+  {
+    "find": "')",
+    "replace": "'),'apple'"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,a) AS c;"
+  },
+  {
+    "find": ",a",
+    "replace": ",@@ROWCOUNT"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-fulltext-language-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE FREETEXT(a,'pear',LANGUAGE 0x409);",
       "edits": [
-        {
-          "find": " 0x409",
-          "replace": ""
-        },
-        {
-          "find": "GE",
-          "replace": "GE 0x409"
-        }
-      ],
+  {
+    "find": " 0x409",
+    "replace": ""
+  },
+  {
+    "find": "GE",
+    "replace": "GE 0x409"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM OPENQUERY(GO, 'SELECT 1');"
+  },
+  {
+    "find": "SELECT * FROM OPENQUERY(GO, 'SELECT 1'",
+    "replace": "DELETE FROM GO(1"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "invocation"
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-bulk-order-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B04"
-      ],
+  "tsql-B01",
+  "tsql-B04"
+],
       "source_utf8": "SELECT * FROM OPENROWSET(BULK 'x',SINGLE_CLOB,ORDER(a)) AS r;",
       "edits": [
-        {
-          "find": "BULK 'x',SINGLE_CLOB",
-          "replace": "'p','c','q'"
-        },
-        {
-          "find": "'p','c','q'",
-          "replace": "BULK 'x',SINGLE_CLOB"
-        }
-      ],
+  {
+    "find": "BULK 'x',SINGLE_CLOB",
+    "replace": "'p','c','q'"
+  },
+  {
+    "find": "'p','c','q'",
+    "replace": "BULK 'x',SINGLE_CLOB"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 negative-8204\nSELECT 0; SELECT‌1;"
+  },
+  {
+    "find": "4\nSELECT 0; SELECT‌1;",
+    "replace": "5\nSELECT 0; SELECT‍1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-xml-order-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "DECLARE @d int;SELECT * FROM OPENXML(@d,'x',2) AS r;",
       "edits": [
-        {
-          "find": "2",
-          "replace": "ORDER(a)"
-        },
-        {
-          "find": "ORDER(a)",
-          "replace": "2"
-        }
-      ],
+  {
+    "find": "2",
+    "replace": "ORDER(a)"
+  },
+  {
+    "find": "ORDER(a)",
+    "replace": "2"
+  },
+  {
+    "find": "r;",
+    "replace": "r;\nGO\nGO /* trailing\n*/ .proc\n"
+  },
+  {
+    "find": ".proc",
+    "replace": "5; SELECT 1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue140-predict-order-r1",
@@ -5695,196 +7052,302 @@
       "id": "tsql-issue140-target-literal-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple');",
       "edits": [
-        {
-          "find": "(a",
-          "replace": "(1"
-        },
-        {
-          "find": "(1",
-          "replace": "(a"
-        }
-      ],
+  {
+    "find": "(a",
+    "replace": "(1"
+  },
+  {
+    "find": "(1",
+    "replace": "(a"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1; GO 2 SELECT 2;"
+  },
+  {
+    "find": " GO 2 ",
+    "replace": "\n  GO\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-target-property-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
-        {
-          "find": ",'Title'",
-          "replace": ""
-        },
-        {
-          "find": "(a",
-          "replace": "(a,'Title'"
-        }
-      ],
+  {
+    "find": ",'Title'",
+    "replace": ""
+  },
+  {
+    "find": "(a",
+    "replace": "(a,'Title'"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,0x1) AS c;"
+  },
+  {
+    "find": "0x",
+    "replace": "+"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-target-list-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE FREETEXT((a,b),'pear');",
       "edits": [
-        {
-          "find": "a,b",
-          "replace": "1,2"
-        },
-        {
-          "find": "1,2",
-          "replace": "a,b"
-        }
-      ],
+  {
+    "find": "a,b",
+    "replace": "1,2"
+  },
+  {
+    "find": "1,2",
+    "replace": "a,b"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nGO foo"
+  },
+  {
+    "find": "GO foo",
+    "replace": "SELECT 1\nGO\nFROM t;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-search-type-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "DECLARE @s nvarchar(50);SELECT 1 WHERE CONTAINS(a,@s);",
       "edits": [
-        {
-          "find": ",@s",
-          "replace": ",1"
-        },
-        {
-          "find": ",1",
-          "replace": ",@s"
-        }
-      ],
+  {
+    "find": ",@s",
+    "replace": ",1"
+  },
+  {
+    "find": ",1",
+    "replace": ",@s"
+  },
+  {
+    "find": "s);",
+    "replace": "s);\nGO\nDECLARE @a bigint; SELECT * FROM CHANGETABLE(CHANGES dbo.t,@a) AS c;"
+  },
+  {
+    "find": "DECLARE @a bigint; SELECT * FROM CHANGETABLE(CHANGES dbo.t,@a) AS c",
+    "replace": "SELECT 1 FROM dbo.t GROUP BY ROLLUP(())"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "anchors": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-language-expression-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(a,'apple',LANGUAGE 'English');",
       "edits": [
-        {
-          "find": "'English'",
-          "replace": "1+1"
-        },
-        {
-          "find": "1+1",
-          "replace": "'English'"
-        }
-      ],
+  {
+    "find": "'English'",
+    "replace": "1+1"
+  },
+  {
+    "find": "1+1",
+    "replace": "'English'"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,1,FORCESEEK) AS c;"
+  },
+  {
+    "find": "CHANGES dbo.t,1",
+    "replace": "VERSION dbo.t,(a),(1)"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-language-variable-r1",
@@ -5929,157 +7392,318 @@
       "id": "tsql-issue140-property-type-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(PROPERTY(a,'Title'),'apple');",
       "edits": [
-        {
-          "find": "'Title'",
-          "replace": "1"
-        },
-        {
-          "find": ",1",
-          "replace": ",'Title'"
-        }
-      ],
+  {
+    "find": "'Title'",
+    "replace": "1"
+  },
+  {
+    "find": ",1",
+    "replace": ",'Title'"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM CHANGETABLE(CHANGES dbo.t,'1') AS c;"
+  },
+  {
+    "find": "'1'",
+    "replace": "1.2"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue140-qualified-star-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE CONTAINS(t.*,'apple');",
       "edits": [
-        {
-          "find": "e'",
-          "replace": "e','extra'"
-        },
-        {
-          "find": ",'extra'",
-          "replace": ""
-        }
-      ],
+  {
+    "find": "e'",
+    "replace": "e','extra'"
+  },
+  {
+    "find": ",'extra'",
+    "replace": ""
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1;\ngO\nSELECT 2;"
+  },
+  {
+    "find": "SELECT 1;\ngO\nSELECT 2",
+    "replace": "GO"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-between-and-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE a=1 AND (@p BETWEEN 1 AND 2);",
       "edits": [
-        {
-          "find": " 2",
-          "replace": ""
-        },
-        {
-          "find": " 1 AND",
-          "replace": " 1 AND 2"
-        }
-      ],
+  {
+    "find": " 2",
+    "replace": ""
+  },
+  {
+    "find": " 1 AND",
+    "replace": " 1 AND 2"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(a,(b,c));"
+  },
+  {
+    "find": "CUBE(a,(b,c",
+    "replace": "GROUPING SETS (("
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "invocation",
+        "text": "CUBE(a,(b,c))",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "anchors": [
+      {
+        "type": "grouping_sets",
+        "text": "GROUPING SETS (())",
+        "occurrence": 1
+      }
+    ],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-between-or-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02"
+],
       "source_utf8": "DECLARE @p int;SELECT 1 WHERE (a=1 OR (@p BETWEEN 1 AND 2));",
       "edits": [
-        {
-          "find": " 2",
-          "replace": ""
-        },
-        {
-          "find": "ND",
-          "replace": "ND 2"
-        }
-      ],
+  {
+    "find": " 2",
+    "replace": ""
+  },
+  {
+    "find": "ND",
+    "replace": "ND 2"
+  },
+  {
+    "find": ");",
+    "replace": ");\nGO\nSET QUOTED_IDENTIFIER ON;\n-- issue171 select-14\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT​1;"
+  },
+  {
+    "find": "14\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT​1;",
+    "replace": "21\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT 1;\nSELECT 0; SELECT　1;"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT​1",
+        "occurrence": 1
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT 1",
+        "occurrence": 1
+      },
+      {
+        "type": "query_specification",
+        "text": "SELECT　1",
+        "occurrence": 1
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue137-between-not-between-r1",
@@ -6163,157 +7787,250 @@
       "id": "tsql-issue137-between-left-or-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE (a BETWEEN 1 AND 2) OR b=3;",
       "edits": [
-        {
-          "find": " 2",
-          "replace": ""
-        },
-        {
-          "find": "D",
-          "replace": "D 2"
-        }
-      ],
+  {
+    "find": " 2",
+    "replace": ""
+  },
+  {
+    "find": "D",
+    "replace": "D 2"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\n[GO] 1;"
+  },
+  {
+    "find": "[GO]",
+    "replace": "dbo.GO"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-between-double-not-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE NOT NOT ((a BETWEEN 1 AND 2) OR b=3);",
       "edits": [
-        {
-          "find": " 2",
-          "replace": ""
-        },
-        {
-          "find": "D",
-          "replace": "D 2"
-        }
-      ],
+  {
+    "find": " 2",
+    "replace": ""
+  },
+  {
+    "find": "D",
+    "replace": "D 2"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nEXEC GO;"
+  },
+  {
+    "find": "EXEC GO;",
+    "replace": "GO /* trailing\n*/ SELECT 1;\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [
+      "go_statement"
+    ],
+    "declarations": "",
+    "anchors": [
+      {
+        "type": "go_statement",
+        "text": "GO",
+        "occurrence": 2
+      }
+    ]
+  }
+]
     },
   {
       "id": "tsql-issue137-not-exists-and-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) AND a=1;",
       "edits": [
-        {
-          "find": " a=1",
-          "replace": ""
-        },
-        {
-          "find": "D",
-          "replace": "D a=1"
-        }
-      ],
+  {
+    "find": " a=1",
+    "replace": ""
+  },
+  {
+    "find": "D",
+    "replace": "D a=1"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT 1; /* open"
+  },
+  {
+    "find": "pen",
+    "replace": "uter /* inner */"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-not-exists-or-r1",
       "kind": "gap",
       "features": [
-        "tsql-B01",
-        "tsql-B02"
-      ],
+  "tsql-B01",
+  "tsql-B02",
+  "tsql-B05"
+],
       "source_utf8": "SELECT 1 WHERE NOT EXISTS (SELECT 1) OR a=1;",
       "edits": [
-        {
-          "find": " a=1",
-          "replace": ""
-        },
-        {
-          "find": "OR",
-          "replace": "OR a=1"
-        }
-      ],
+  {
+    "find": " a=1",
+    "replace": ""
+  },
+  {
+    "find": "OR",
+    "replace": "OR a=1"
+  },
+  {
+    "find": ";",
+    "replace": ";\nGO\nSELECT * FROM (VALUES ()) AS v(x);"
+  },
+  {
+    "find": ")) AS v(x",
+    "replace": "1,2),(3,4)) AS v(x,y"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue137-update-predicate-00-r1",
@@ -7579,57 +9296,57 @@
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\n-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
       "edits": [
-        {
-          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
-        }
-      ],
+  {
+    "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 3,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 4,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue148-negative-pair-01-r1",
@@ -7638,57 +9355,57 @@
         "tsql-B01",
         "tsql-B02"
       ],
-      "source_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+      "source_utf8": "SELECT NULL;\nSELECT NULL;\nGO\n-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
       "edits": [
-        {
-          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
-        },
-        {
-          "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
-          "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
-        }
-      ],
+  {
+    "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+  },
+  {
+    "find": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+    "replace": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+  }
+],
       "expect": [
-        {
-          "step": 0,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 1,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 2,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 3,
-          "syntax": "ERROR",
-          "contains": [],
-          "declarations": ""
-        },
-        {
-          "step": 4,
-          "syntax": "NO_ERROR",
-          "contains": [],
-          "declarations": ""
-        }
-      ]
+  {
+    "step": 0,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 1,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 2,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 3,
+    "syntax": "ERROR",
+    "contains": [],
+    "declarations": ""
+  },
+  {
+    "step": 4,
+    "syntax": "NO_ERROR",
+    "contains": [],
+    "declarations": ""
+  }
+]
     },
   {
       "id": "tsql-issue148-negative-pair-02-r1",

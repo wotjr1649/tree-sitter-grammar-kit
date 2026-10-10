@@ -7,6 +7,54 @@ import (
 	"testing"
 )
 
+func TestCSharpCommandIdentifierSpelling(t *testing.T) {
+	for _, name := range []string{"SqlCommand", "@SqlCommand", `\u0053qlCommand`, `\U00000053qlCommand`, "Sq\u200blCommand", `Sq\u200blCommand`, `@\u0053qlCommand`} {
+		src := "new " + name + "(query)"
+		d := &dynCaps{t: t, src: src}
+		creation := d.at("object_creation_expression", src, 1, true)
+		d.pair("oc", creation, "oc.type", d.at("identifier", name, 1, true))
+		argument := d.at("argument", "query", 1, true)
+		d.pair("oc.a", creation, "oc.arg", argument)
+		d.pair("arg", argument, "arg.expr", d.at("identifier", "query", 1, true))
+		got, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, d.caps, []byte(src))
+		start := uint32(strings.Index(src, "query"))
+		if err != nil || len(got.Items) != 1 || !got.Heuristic || got.Items[0].StartByte != start || got.Items[0].EndByte != start+5 || got.Items[0].Variable == nil || *got.Items[0].Variable != "query" {
+			t.Fatalf("%q: %+v, %v", name, got, err)
+		}
+	}
+	for _, name := range []string{"CommandText", "@CommandText", `\u0043ommandText`, "Com\u200bmandText", `Com\U0000200BmandText`} {
+		for _, initializer := range []bool{false, true} {
+			src := "x." + name + " = query"
+			d := &dynCaps{t: t, src: src}
+			assignment := d.at("assignment_expression", src, 1, true)
+			left := d.at("identifier", name, 1, true)
+			right := d.at("identifier", "query", 1, true)
+			if initializer {
+				d.pair("ini.as", assignment, "ini.left", left)
+				d.pair("ini.as", assignment, "ini.right", right)
+			} else {
+				d.pair("ma.as", assignment, "ma.name", left)
+				d.pair("ma.as", assignment, "ma.right", right)
+			}
+			got, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, d.caps, []byte(src))
+			start := uint32(strings.Index(src, "query"))
+			if err != nil || len(got.Items) != 1 || got.Items[0].StartByte != start || got.Items[0].EndByte != start+5 {
+				t.Fatalf("%q initializer=%v: %+v, %v", name, initializer, got, err)
+			}
+		}
+	}
+	for _, name := range []string{`\u0053qlCommand`, `\U00000053qlCommand`} {
+		if csharpIdentifierName(name) != "SqlCommand" {
+			t.Fatalf("escaped name %q", name)
+		}
+	}
+	for _, name := range []string{`\u00`, `\x53qlCommand`, `\uZZZZqlCommand`, `\U00110000qlCommand`, `\uD800qlCommand`, `sqlCommand`, `@@SqlCommand`, "SlCommand"} {
+		if slices.Contains(CommandAPITypes, csharpIdentifierName(name)) {
+			t.Fatalf("invalid or different spelling matched: %q", name)
+		}
+	}
+}
+
 // dynCaps builds the captures of the tsql dynamic SQL pack query for a synthetic tree over
 // src. Nodes are located by their text (the occurrence-th match, from 1).
 type dynCaps struct {

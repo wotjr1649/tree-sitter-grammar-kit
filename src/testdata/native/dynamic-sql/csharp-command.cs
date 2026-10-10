@@ -33,6 +33,15 @@ namespace Fixtures.DynamicSql
             sp.Connection = conn;
             sp.CommandType = CommandType.StoredProcedure;
             sp.CommandText = "dbo.GetOrders";
+            var e1 = new @SqlCommand("SELECT 8 AS a", conn);
+            var e2 = new \u0053qlCommand("SELECT 9 AS a", conn);
+            var e3 = new \U00000053qlCommand("SELECT 10 AS a", conn);
+            var e4 = new Sq\u200BlCommand("SELECT 11 AS a", conn);
+            var e5 = new Sq​lCommand("SELECT 12 AS a", conn);
+            c1.@CommandText = "SELECT 13 AS a";
+            c1.\u0043ommandText = "SELECT 14 AS a";
+            c1.Com\u200BmandText = "SELECT 15 AS a";
+            var e6 = new @SqlCommand { @CommandText = "SELECT 16 AS a" };
         }
     }
 }

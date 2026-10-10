@@ -25,6 +25,10 @@
 
 ## csharp
 
+C# lexical directive 경계(#157·#160~#163)는 [lexical specification](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure)의 물리적 줄을 따른다. `#warning`·`#error`·`#region`·`#endregion`의 message에는 slash·comment처럼 보이는 텍스트·backslash를 허용하되 다음 줄로 이어 붙이지 않는다. Directive는 줄 앞의 horizontal whitespace 뒤에서만 시작하고 인자·조건식은 물리적 줄을 넘지 않는다. 뒤 declaration와 기존 CST byte 범위를 보존한다.
+
+조건식에는 conditional symbol, Boolean literal, `!`, `==`·`!=`·`&&`·`||`, 괄호만 허용한다. Conditional symbol은 일반 identifier lexical form이며 `@`와 raw `true`·`false`는 define/undef symbol이 아니다. Unicode escape로 쓴 symbol은 허용한다. `#line`의 수는 decimal digit sequence이며 filename은 ordinary string escape 해석을 하지 않는 quoted lexical token이다. 빈/unknown `#pragma`는 일반 text directive로 파싱하고 known warning/checksum 구조는 유지한다. 유효한 warning ID 목록은 쉼표 양쪽의 공백과 각 identifier/integer node를 보존한다. Roslyn이 warning만 발생시키는 불완전한 known pragma는 prefix와 opaque tail로 보존하며, 이를 fatal syntax error로 승격하지 않는다. Raw filename은 `string_literal` 이름의 leaf와 원본 범위를 유지하고 일반 string의 escape/content child를 만들지 않는다. Symbol 값의 평가, directive가 의도적으로 발생시키는 compiler 진단, line 값의 실행 의미는 문법 수용과 구분한다.
+
 근거: [C# 문법](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/grammar), [7.3~14 변경](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history), [14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives). mode는 일반 `.cs`, 고정 preprocessor symbols, legacy/modern 및 ASP.NET `.cs` source다.
 
 | ID | Version/mode | 분류 | 근거 장·구문 사실 | 구조 목표 | Case | Primary section/revision |
@@ -432,6 +436,12 @@ revision 날짜가 표에 생략된 행도 floating latest가 아니다. 위 고
 | xml-X01 | 범위 밖 | EXT | XSD/XSLT/XQuery/DTD-only route 별도 채택 없음 | 내부 DTD source B02는 필수 | - | [mode/extension 경계](https://www.w3.org/TR/2008/REC-xml-20081126/#sec-conformance) |
 
 ## tsql
+
+`GO`(#158)는 CR·LF·CRLF로 구분되는 물리적 줄의 client batch separator이다. 같은 줄에 SQL token이나 `;`를 붙일 수 없으며 indentation·comment·decimal count는 보존한다. 잘못된 bare `GO`를 implicit procedure로 재해석하지 않고 delimited/qualified procedure 이름은 유지한다. Count의 실행 의미는 syntax 판정에 포함하지 않는다. Repeat count는 GO와 같은 물리적 줄에만 속한다. 완전히 닫힌 trailing block comment가 물리적 줄을 넘으면 그 뒤의 SQL은 다음 batch에 속하며, comment의 모든 nesting level은 닫혀야 한다. 이 parser 경계는 특정 SQLCMD 구현의 명령 실행 성공을 보증하지 않는다. `ROLLUP`/`CUBE`의 grouping tuple과 빈 grand-total set은 GROUP BY 문맥에만 두고 일반 scalar comma tuple은 허용하지 않는다. `ROLLUP`/`CUBE`의 내부 grouping tuple은 element를 하나 이상 요구한다(#168). 직접 `GROUP BY ()`와 `GROUPING SETS(())`는 빈 grand-total set으로 보존한다.
+
+T-SQL token 공백(#171)은 host locale 없이 ASCII U+0009~U+000D·U+0020, U+0085·U+00A0·U+1680, U+2000~U+200B, U+2028·U+2029·U+202F·U+205F·U+3000을 처리한다. Keyword boundary, GO indentation/tail, QUOTED_IDENTIFIER lookahead는 같은 predicate를 사용한다. GO의 물리적 줄은 계속 CR/LF로만 구분한다. 중간의 U+FEFF와 U+180E·U+200C·U+200D는 token 구분자로 수용하지 않는다. 이 집합은 SQL Server 2025 LocalDB 17.0.1000.7의 앞 문장을 가진 PARSEONLY 대조에 결속하며, batch-first implicit EXEC와 구분한다. [회귀 기록](../reports/issues-157-169-residual-syntax.md)은 Unicode·encoding·CST·incremental 대조 범위를 명시한다.
+
+`IN` 목록과 VALUES row(#159)는 element를 하나 이상 요구한다. Scalar 괄호에는 expression 하나만 허용하고 comma list와 분리한다. CHANGETABLE CHANGES의 last_sync_version은 decimal integer·음의 integer·NULL·local variable이며 일반 expression을 허용하지 않는다. VERSION은 비어 있지 않은 unqualified column name 목록과 별도의 value expression 목록을 요구한다. 두 form의 optional FORCESEEK는 [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166)에서 지원한다. bigint 값의 범위·binding·필수 alias의 engine22104 진단은 별도 의미 영역이다. [Block comment](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/slash-star-comment-transact-sql)의 모든 nesting level은 closing mark를 요구하며 닫히지 않은 EOF를 정상 comment로 수용하지 않는다(#165).
 
 T-SQL B01의 `--` comment는 [Microsoft 구문](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/comment-transact-sql?view=sql-server-ver17)의 CR·LF·CRLF 또는 EOF에서 종료한다(#154). grammar와 scanner의 comment skip이 같은 경계를 사용하고, 뒤 statement 및 `QUOTED_IDENTIFIER` ON/OFF에 따른 literal/identifier 구조를 보존한다. 원문이나 Go Point의 LF row convention을 정규화하지 않는다.
 
