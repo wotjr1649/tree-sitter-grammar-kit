@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"strconv"
+	"strings"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
@@ -101,6 +103,8 @@ type SvcSegment struct {
 
 func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.IncrementalCase, versions [][]byte, points []kit.EditPoints, svc []kit.SvcObservation, out CaseResult) CaseResult {
 	expectations := map[int][]ExpectationResult{}
+	failureCode, blockedCode := "", ""
+	failureFound := false
 	for k := 0; k < len(versions); {
 		if svc[k].IncludedRanges == nil {
 			sum := sha256.Sum256(versions[k])
@@ -139,11 +143,18 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		out.Segments = append(out.Segments, SvcSegment{StartStep: k, EndStep: end, Process: result.Process, Claims: result.Claims})
 		if result.ExecutionStatus != kit.StatusCompleted {
 			out.ExecutionStatus, out.Assessment, out.Code = result.ExecutionStatus, result.Assessment, result.Code
+			if out.Oracle != nil {
+				*out.Oracle = OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+			}
 			return out
 		}
 		out.Producer = result.Producer
-		if (result.Assessment == kit.AssessFail || result.Assessment == kit.AssessBlocked) && out.Code == "" {
-			out.Code = result.Code
+		if result.Assessment == kit.AssessFail && !failureFound {
+			failureCode = svcSegmentCode(result.Code, k)
+			failureFound = true
+		}
+		if result.Assessment == kit.AssessBlocked && blockedCode == "" {
+			blockedCode = svcSegmentCode(result.Code, k)
 		}
 		for _, s := range result.Steps {
 			s.Step += k
@@ -185,11 +196,15 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		out.Oracle.QueryEquality = ClaimNotClaimed
 	}
 	foldAssessment(&out)
-	if out.Claims.Expectations == ClaimFail {
-		out.Code = "EXPECTATION_FAILED"
+	if out.Claims.Expectations == ClaimFail && !failureFound {
+		failureCode = "EXPECTATION_FAILED"
 	}
-	if out.Claims.Expectations == ClaimBlocked {
-		out.Code = "SVC_EXPECTATION_UNASSESSABLE"
+	if out.Claims.Expectations == ClaimBlocked && blockedCode == "" {
+		blockedCode = "SVC_EXPECTATION_UNASSESSABLE"
+	}
+	out.Code = failureCode
+	if out.Assessment != kit.AssessFail && out.Code == "" {
+		out.Code = blockedCode
 	}
 	if len(c.Expect) == 0 && out.Assessment != kit.AssessFail {
 		out.Assessment, out.Code = svcObservationOnly(svc, false)
@@ -198,6 +213,17 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		}
 	}
 	return out
+}
+
+func svcSegmentCode(code string, start int) string {
+	for _, prefix := range []string{"INCREMENTAL_FRESH_MISMATCH_STEP_", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_", routeUnobservablePrefix} {
+		if strings.HasPrefix(code, prefix) {
+			if step, err := strconv.Atoi(strings.TrimPrefix(code, prefix)); err == nil {
+				return prefix + strconv.Itoa(start+step)
+			}
+		}
+	}
+	return code
 }
 
 func svcStepEdit(edit kit.Edit, point kit.EditPoints) *StepEdit {

@@ -131,14 +131,19 @@ type qset struct {
 	order     []string
 }
 
+type qProcess struct {
+	WallMS int64 `json:"wall_ms"`
+	Memory struct {
+		PeakBytes uint64 `json:"peak_bytes"`
+	} `json:"memory"`
+}
+
 // qRecord is the part of a record the qualification reads beyond the S07 case view.
 type qRecord struct {
-	Process *struct {
-		WallMS int64 `json:"wall_ms"`
-		Memory struct {
-			PeakBytes uint64 `json:"peak_bytes"`
-		} `json:"memory"`
-	} `json:"process"`
+	Process  *qProcess `json:"process"`
+	Segments []struct {
+		Process *qProcess `json:"process"`
+	} `json:"segments"`
 	Steps []struct {
 		Incremental *qTree `json:"incremental"`
 		Fresh       *qTree `json:"fresh"`
@@ -634,6 +639,12 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
+		}
+		for _, segment := range extra.Segments {
+			if segment.Process != nil {
+				maxWall = max(maxWall, segment.Process.WallMS)
+				maxPeak = max(maxPeak, segment.Process.Memory.PeakBytes)
+			}
 		}
 		if e := x.r.check(); e != nil {
 			return nil, e

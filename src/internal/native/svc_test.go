@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -182,6 +183,57 @@ func TestSvcSegmentsRetainNativeFailures(t *testing.T) {
 	}
 }
 
+func TestSvcSegmentFailureCodeOverridesBlocked(t *testing.T) {
+	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
+	x := testContext("native-parse-edit")
+	x.Format = kit.SvcFormat
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
+	for _, gap := range []string{"%>", "Language=\"C#\" "} {
+		broken := strings.Replace(source, "z = [1, 2];", "z = [1, 2;", 1)
+		gapSource := strings.Replace(broken, gap, "", 1)
+		gapSyntax := "ERROR"
+		if gap != "%>" {
+			gapSyntax = "NO_ERROR"
+		}
+		c := kit.IncrementalCase{ID: "svc-blocked-then-fail", Encoding: kit.EncodingUTF8,
+			Edits:  editsBy(source, edit{"z = [1, 2];", "z = [1, 2;"}, edit{gap, ""}, edit{gapSource, source}, edit{"f(1)", "f(2, 3)"}),
+			Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}, {Step: 1, Syntax: "ERROR"}, {Step: 2, Syntax: gapSyntax}, {Step: 3, Syntax: "NO_ERROR"}, {Step: 4, Syntax: "NO_ERROR"}}}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		r := b.RunCase(ctx, x, c, []byte(source))
+		cancel()
+		if len(r.Segments) != 2 || r.Segments[0].Claims.IncrementalRoute != ClaimBlocked || r.Segments[1].Claims.IncrementalRoute != ClaimFail || r.Assessment != kit.AssessFail || r.Code != "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_4" {
+			t.Fatalf("gap %q: %s %s %+v", gap, r.Assessment, r.Code, r.Segments)
+		}
+	}
+}
+
+func TestSvcObservationOnlyEditMetadata(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	for _, format := range []string{kit.SvcLegacyFormat, kit.SvcFormat} {
+		for _, enc := range []string{kit.EncodingUTF8, kit.EncodingUTF16LE, kit.EncodingUTF16BE, kit.EncodingCP949} {
+			for _, tail := range []string{"", "class S {}"} {
+				source := "<%@ ServiceHost Service=\"S\" %>\r\n" + tail
+				next := strings.Replace(source, "Service=\"S\"", "Service=\"Longer\"", 1) + "\r\n "
+				src, replacement := []byte(source), []byte(next)
+				if enc == kit.EncodingUTF16LE || enc == kit.EncodingUTF16BE {
+					src, replacement = utf16(enc, source), utf16(enc, next)
+				}
+				e := kit.Edit{OldEndByte: uint32(len(src)), NewEndByte: uint32(len(replacement)), Old: src, New: replacement}
+				x := testContext("native-parse-edit")
+				x.Format = format
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				r := b.RunCase(ctx, x, kit.IncrementalCase{ID: "svc-observed-edit", Encoding: enc, Edits: []kit.Edit{e}}, src)
+				cancel()
+				oldPoint, newPoint := kit.PointAt(enc, src, len(src)), kit.PointAt(enc, replacement, len(replacement))
+				want := StepEdit{OldEndByte: e.OldEndByte, NewEndByte: e.NewEndByte, OldEndPoint: [2]uint32{oldPoint.Row, oldPoint.Column}, NewEndPoint: [2]uint32{newPoint.Row, newPoint.Column}}
+				if r.ExecutionStatus != kit.StatusCompleted || r.Process != nil || len(r.Steps) != 2 || r.Steps[0].Edit != nil || r.Steps[1].Edit == nil || *r.Steps[1].Edit != want {
+					t.Fatalf("%s %s tail %q: missing/wrong edit metadata: %+v", format, enc, tail, r.Steps)
+				}
+			}
+		}
+	}
+}
+
 func TestSvcReferenceKeepsParentVerdictAndClaims(t *testing.T) {
 	for _, assessment := range []string{kit.AssessFail, kit.AssessBlocked} {
 		out := CaseResult{ExecutionStatus: kit.StatusCompleted, Assessment: assessment, Code: "SVC_PARTIAL_HISTORY", Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimPass}, Steps: []StepResult{{Composite: &SvcComposite{CodeBehind: &kit.SvcCodeBehind{Case: "ref"}}}}}
@@ -262,5 +314,43 @@ func TestSvcNativeEncodingCoordinates(t *testing.T) {
 		if in.Tree.Nodes[0].StartPoint.Row != 1 || in.Tree.Input.Bytes != uint64(len(src)) || in.IncludedRanges[0].StartPoint != kit.PointAt(enc, src, int(in.IncludedRanges[0].StartByte)) {
 			t.Fatalf("%s coordinates", enc)
 		}
+	}
+}
+
+func TestSvcSegmentTerminalStatusClearsWholeClaims(t *testing.T) {
+	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
+	x := oracleContext(true)
+	x.Format = kit.SvcFormat
+	x.Op.Nodes, x.Op.FullNodes = 64, 64
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
+	gap := strings.Replace(strings.Replace(source, "f(1)", "f(2, 3)", 1), "Language=\"C#\" ", "", 1)
+	large := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\n" + strings.Repeat("a = f(1);\n", 128)
+	c := kit.IncrementalCase{ID: "svc-terminal-limit", Encoding: kit.EncodingUTF8, Edits: editsBy(source, edit{"f(1)", "f(2, 3)"}, edit{"Language=\"C#\" ", ""}, edit{gap, large})}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	r := b.RunCase(ctx, x, c, []byte(source))
+	if len(r.Segments) != 2 || r.Segments[0].Claims.IncrementalRoute != ClaimFail || r.Segments[1].Process == nil || !r.Segments[1].Process.Cleanup.Verified || r.ExecutionStatus != kit.StatusResourceLimit || r.Assessment != kit.AssessBlocked || r.Code != "NODE_LIMIT" {
+		t.Fatalf("terminal status/evidence: %s %s %s %+v", r.ExecutionStatus, r.Assessment, r.Code, r.Segments)
+	}
+	want := OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+	if r.Claims != (Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}) || r.Oracle == nil || *r.Oracle != want {
+		t.Fatalf("incomplete whole-history claims: %+v %+v", r.Claims, r.Oracle)
+	}
+}
+
+func TestSvcSegmentFirstFailureSurvivesLaterBlocked(t *testing.T) {
+	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
+	x := testContext("native-parse-edit")
+	x.Format = kit.SvcFormat
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
+	gap := strings.Replace(strings.Replace(source, "f(1)", "f(2, 3)", 1), "%>", "", 1)
+	c := kit.IncrementalCase{ID: "svc-fail-then-blocked", Encoding: kit.EncodingUTF8,
+		Edits:  editsBy(source, edit{"f(1)", "f(2, 3)"}, edit{"%>", ""}, edit{gap, source}, edit{"z = [1, 2];", "z = [1, 2;"}),
+		Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}, {Step: 1, Syntax: "NO_ERROR"}, {Step: 2, Syntax: "ERROR"}, {Step: 3, Syntax: "NO_ERROR"}, {Step: 4, Syntax: "ERROR"}}}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	r := b.RunCase(ctx, x, c, []byte(source))
+	if len(r.Segments) != 2 || r.Segments[0].Claims.IncrementalRoute != ClaimFail || r.Segments[1].Claims.IncrementalRoute != ClaimBlocked || r.Assessment != kit.AssessFail || r.Code != "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1" {
+		t.Fatalf("first failure lost: %s %s %+v", r.Assessment, r.Code, r.Segments)
 	}
 }

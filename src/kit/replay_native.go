@@ -76,11 +76,21 @@ type rcTree struct {
 	} `json:"queries"`
 }
 
+type rcEdit struct {
+	StartByte   *uint32  `json:"start_byte"`
+	OldEndByte  *uint32  `json:"old_end_byte"`
+	NewEndByte  *uint32  `json:"new_end_byte"`
+	StartPoint  []uint32 `json:"start_point"`
+	OldEndPoint []uint32 `json:"old_end_point"`
+	NewEndPoint []uint32 `json:"new_end_point"`
+}
+
 type rcStep struct {
-	Restarted    bool   `json:"restarted"`
-	Step         int    `json:"step"`
-	SourceBytes  uint64 `json:"source_bytes"`
-	SourceSHA256 string `json:"source_sha256"`
+	Edit         *rcEdit `json:"edit"`
+	Restarted    bool    `json:"restarted"`
+	Step         int     `json:"step"`
+	SourceBytes  uint64  `json:"source_bytes"`
+	SourceSHA256 string  `json:"source_sha256"`
 	Route        *struct {
 		EditHasChanges   bool   `json:"edit_has_changes"`
 		ReusedNodes      uint64 `json:"reused_nodes"`

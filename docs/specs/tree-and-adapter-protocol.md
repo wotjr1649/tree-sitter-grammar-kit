@@ -241,3 +241,7 @@ full receipt의 `tsgk-large-api-validation/r1`, `mode: REGISTERED_LARGE_ALL_NODE
 앞쪽 공백으로 root start가4인 정상을 포함한 작은 정상·오류4개 full oracle와8개 거부 mutant 외에 실제 MISSING semicolon의 `ZERO_SKIP` 허용 control을 요구한다. `POSITIVE_SKIP`은 실패하고 `ZERO_SKIP`은 difference0과 별도 positional divergence·첫 node/column/expected/observed 좌표를 남긴다. 1-byte request memory control은 기존 allocator의 `RESOURCE_LIMIT`/`ALLOCATION_LIMIT`을 기존 `DecodeResponse`·`native.Check`로 검증하고 전체 API 완료로 세지 않는다. OS hard memory cap은 그대로8GiB다. first-difference와 first-divergence 좌표는 검사 구간과 observation 축 범위 안이어야 한다.
 
 현재 qualification은 각 tree의 positional divergence 개수도 검사한다. divergence가 있는데 API PASS로 기록하면 `API_CLAIM_MISMATCH`이며 API 실패 집계에 포함한다. 세 host 모두 같은 잘못된 PASS를 기록해 comparison이 일치해도 이 검사를 통과하지 못한다.
+
+SVC r2의 완료된 모든 step은 등록 source edit에서 byte offset과 LF 기준 point 세 쌍을 다시 계산해 `edit`와 대조한다. 초기 step은 edit가 없어야 하며 observation-only·gap·restart도 동일한 계약이다. 누락·null·잘못된 좌표는 `SVC_EDIT_MISMATCH`다. r1은 기존 source-binding 면제 범위를 유지하며, 미완료 사례의 부분 기록은 전체 source 재현 완료로 주장하지 않는다.
+
+완료된 SVC 사례의 `code`는 첫 FAIL 구간의 code를 우선하고, FAIL이 없으면 첫 BLOCKED code를 사용한다. incremental/fresh 및 route의 step code는 전체 history index로 환산한다. 뒤 구간이 미완료면 그 terminal execution status·assessment·code를 사용하고 전체 claim과 Oracle claim은 NOT_CLAIMED로 남긴다. 이미 완료한 구간의 process·claim은 부분 증거로 보존한다. qualification의 host 관측 `process_wall_ms_max`·`memory_peak_bytes_max`는 최상위와 모든 segment process의 최댓값이며, 이 자원 값은 host 사이 의미 비교에 포함하지 않는다.

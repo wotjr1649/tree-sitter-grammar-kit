@@ -310,7 +310,11 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 			for k, o := range svc {
 				sum := sha256.Sum256(versions[k])
 				in := TreeInput{Bytes: uint64(len(versions[k])), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
-				out.Steps = append(out.Steps, StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: in.SHA256}, x.PolicyRef}, nil)})
+				step := StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: in.SHA256}, x.PolicyRef}, nil)}
+				if k > 0 {
+					step.Edit = svcStepEdit(c.Edits[k-1], points[k-1])
+				}
+				out.Steps = append(out.Steps, step)
 			}
 			out.ExecutionStatus = kit.StatusCompleted
 			out.Assessment, out.Code = svcObservationOnly(svc, len(c.Expect) > 0)

@@ -50,3 +50,7 @@ Linux UBSan에서 identity fixture의 내부 `ts_tree_new(..., NULL, 0)` 호출�
 후속 자동 리뷰의 네 replay 경계도 수정 전 실패로 재현했다. 관측 전용 기록이 tree 없는 API/equality/route claim을 우회하는 경로, producer의 32MiB source 한도에 못 미치는 임의 edit 상한, fresh-only gap의 nil pointer panic, native full·summary encoding provenance의 누락/변조 수용이다. 공유 replay와 qualification 호출부에 등록 operation의 입력 한도를 전달하고, 관측 전용 claim과 gap 형태를 검증한다. query/fact의 recorded claim은 UNRESOLVED로 남기며 native envelope와 composite의 DECLARATION provenance를 검사한다. 기존 정상 S05/Oracle 기록과 1MiB 이상 edit의 정상 대조군을 음성 대조군과 함께 확인한다.
 
 독립 리뷰는 replay의 recorded-only UNRESOLVED를 qualification이 recorded verdict로 다시 PASS 처리하는 호출부도 찾았다. query·fact·dynamic SQL 각각의 NOT_CLAIMED/PASS/FAIL/BLOCKED와 등록 verdict 유무를 24개 대조로 검사한다. qualification은 replay가 재계산을 완료하지 않은 관측 전용 결과를 BLOCKED로 유지한다.
+
+후속 세 자동 리뷰 지적은 실제 BLOCKED 구간 뒤 FAIL 구간의 code 은폐, observation-only edit 증거 누락, qualification의 segment process 자원 집계 누락이다. 실제 native fault에서 FAIL code의 전체 history step 번호를 검증하고 반대 순서도 대조했다. 관측 전용 r1/r2·UTF-8/UTF-16LE/UTF-16BE/CP949 edit 증거를 보완했으며 r2 replay는 등록 source에서 계산한 byte·point 여섯 필드를 대조한다. process는 최상위·구간별 최댓값을 host 관측에 보존하되 의미 비교에서 제외한다. 이 process 시험의 미등록 segment는 mechanism FAIL을 유지한다.
+
+추가 실제 node-limit 대조에서 앞 구간의 API PASS가 뒤 RESOURCE_LIMIT 후에도 남는 결함을 수정 전 실패로 재현했다. terminal 상태와 앞 구간의 부분 증거를 보존하며 전체 Oracle claim은 NOT_CLAIMED로 제거한다. 미완료 기록의 부분 tree를 전체 source 재현 완료로 주장하지 않는다.

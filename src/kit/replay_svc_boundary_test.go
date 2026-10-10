@@ -3,6 +3,7 @@ package kit
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -212,12 +213,58 @@ func TestSvcReplayExpandedSourceBudget(t *testing.T) {
 	part.Steps[0].Step = 1
 	c.Steps = append(c.Steps, part.Steps[0])
 	want.Edits = []Edit{{NewEndByte: uint32(len(prefix)), New: prefix}}
+	e := want.Edits[0]
+	c.Steps[1].Edit = &rcEdit{StartByte: &e.StartByte, OldEndByte: &e.OldEndByte, NewEndByte: &e.NewEndByte,
+		StartPoint: []uint32{0, 0}, OldEndPoint: []uint32{0, 0}, NewEndPoint: []uint32{0, e.NewEndByte}}
 	for _, operation := range []string{"real-world-source-r2", "native-parse-edit", "unknown"} {
 		t.Run(operation, func(t *testing.T) {
 			x := &replayEnv{svcFormat: SvcFormat, nativeInputBytes: NativeOperations()[operation].InputBytes}
 			x.checkSvcComposite(&c, &want)
 			if (x.gate("case-binding").Failed == 0) != (operation == "real-world-source-r2") {
 				t.Fatalf("registered source budget not applied: %+v", x.gate("case-binding"))
+			}
+		})
+	}
+}
+
+func TestSvcReplayBindsEditMetadata(t *testing.T) {
+	for _, bad := range []string{"valid", "missing", "start_byte", "old_end_byte", "new_end_byte", "start_point", "old_end_point", "new_end_point", "step-zero", "missing-start_byte", "missing-old_end_byte", "missing-new_end_byte", "missing-start_point", "missing-old_end_point", "missing-new_end_point", "empty-point"} {
+		t.Run(bad, func(t *testing.T) {
+			src := []byte("<%@ ServiceHost Service=\"S\" %>\r\n")
+			next := []byte("<%@ ServiceHost Service=\"Longer\" %>\r\n ")
+			c, want := svcObservedCase(t, src)
+			part, _ := svcObservedCase(t, next)
+			part.Steps[0].Step = 1
+			c.Steps = append(c.Steps, part.Steps[0])
+			want.Edits = []Edit{{OldEndByte: uint32(len(src)), NewEndByte: uint32(len(next)), Old: src, New: next}}
+			e := map[string]any{"start_byte": 0, "old_end_byte": len(src), "new_end_byte": len(next), "start_point": []uint32{0, 0}, "old_end_point": []uint32{1, 0}, "new_end_point": []uint32{1, 1}}
+			switch bad {
+			case "start_byte", "old_end_byte", "new_end_byte":
+				e[bad] = 999
+			case "start_point", "old_end_point", "new_end_point":
+				e[bad] = []uint32{9, 9}
+			case "empty-point":
+				e["start_point"] = []uint32{}
+			default:
+				if strings.HasPrefix(bad, "missing-") {
+					delete(e, strings.TrimPrefix(bad, "missing-"))
+				}
+			}
+			if bad != "missing" {
+				data, _ := json.Marshal(map[string]any{"edit": e})
+				if err := json.Unmarshal(data, &c.Steps[1]); err != nil {
+					t.Fatal(err)
+				}
+				if bad == "step-zero" {
+					if err := json.Unmarshal(data, &c.Steps[0]); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			x := &replayEnv{svcFormat: SvcFormat, nativeInputBytes: NativeOperations()["native-parse-edit"].InputBytes}
+			x.checkSvcComposite(&c, &want)
+			if (x.gate("case-binding").Failed == 0) != (bad == "valid") {
+				t.Fatalf("edit metadata binding: %s %+v", bad, x.gate("case-binding"))
 			}
 		})
 	}

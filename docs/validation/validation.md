@@ -170,3 +170,5 @@ S01~S03은 공개 offline API/CLI equivalence와 직접 API guard, checkout 밖 
 All gates are required: G00-01 target/authority; 02 pinned references; 03 src/module/local boundaries; 04 AGENTS at most 60 nonblank lines; 05 design; 06 observed foundation/negative/CGO-free checks; 07 exact three-OS CI; 08 Issue/Milestone work program; 09 local prompts/hashes; 10 independent review with zero open BLOCKER/MATERIAL findings; 11 merge/post-merge; 12 handoff.
 
 Use FOUNDATION_READY only when all are observed; READY_FOR_MERGE when only merge remains; BLOCKED_EXTERNAL when a mandatory external gate is unavailable; HOLD_FOR_CORRECTION for unresolved design, validation, or findings. Never declare all gates PASS in advance. The [workload matrix](workload-matrix.md) owns feature-specific gates.
+
+SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKED 구간 순서를 모두 검증하고 전체 step code를 확인한다. 앞 구간 완료 뒤 NODE_LIMIT이 발생하는 실제 process 대조는 부분 segment 증거와 terminal 상태를 보존하면서 전체 API claim을 제거하는지 검사한다. r1/r2·네 encoding의 관측 전용 edit 증거, r2 edit의 여섯 byte/point 필드 누락·변조, segment process가 최상위 process보다 작거나 크거나 최상위가 없는 경우의 host 최댓값 및 의미 비교 제외도 검사한다. 잘못 등록된 segment에 대한 mechanism FAIL은 유지한다.
