@@ -135,3 +135,21 @@ func TestCorpusEvidenceStorageExactAndOneByteOver(t *testing.T) {
 		t.Fatal("one-byte-over changed evidence")
 	}
 }
+
+func TestCorpusEnvelopeOnlyLowersLimitsAndBindsPolicy(t *testing.T) {
+	for _, p := range []corpusPlan{{}, {Storage: corpusStorageBytes, Wall: 3600}, {Storage: 3, Wall: 1}} {
+		s, w, err := corpusEnvelope(p)
+		if err != nil || s == 0 || s > corpusStorageBytes || w == 0 || w > 3600 {
+			t.Fatalf("valid envelope refused: %v", err)
+		}
+	}
+	for _, p := range []corpusPlan{{Storage: corpusStorageBytes + 1}, {Wall: 3601}} {
+		if _, _, err := corpusEnvelope(p); err == nil {
+			t.Fatal("raised limit accepted")
+		}
+	}
+	base := corpusPolicySHA(corpusStorageBytes, 3600)
+	if base == corpusPolicySHA(corpusStorageBytes-1, 3600) || base == corpusPolicySHA(corpusStorageBytes, 3599) {
+		t.Fatal("lowered limits did not change policy identity")
+	}
+}

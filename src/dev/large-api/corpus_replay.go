@@ -139,14 +139,18 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 	if err = jsonv2.Unmarshal(data, &result, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return err
 	}
-	if !result.Complete || result.Error != "" || result.Schema != "tsgk-corpus-cst-api-result/r1" || result.PlanSHA != registration.PlanSHA || result.Candidate != plan.Candidate || result.HostSHA != registration.HostSHA || result.Policy != corpusPolicySHA() || result.StorageLimit != corpusStorageBytes || result.Expected != len(plan.Expected) || result.Completed != result.Expected || result.API+result.SvcNotClaimed != result.Expected || result.BindingsSHA != registration.Bindings.SHA || result.WallMS > 3600000 {
+	storage, wall, err := corpusEnvelope(plan)
+	if err != nil {
+		return err
+	}
+	if !result.Complete || result.Error != "" || result.Schema != "tsgk-corpus-cst-api-result/r1" || result.PlanSHA != registration.PlanSHA || result.Candidate != plan.Candidate || result.HostSHA != registration.HostSHA || result.Policy != corpusPolicySHA(storage, wall) || result.StorageLimit != storage || result.WallLimit != wall || result.Expected != len(plan.Expected) || result.Completed != result.Expected || result.API+result.SvcNotClaimed != result.Expected || result.BindingsSHA != registration.Bindings.SHA || result.WallMS < 0 || result.WallMS > int64(wall)*1000 {
 		return errors.New("CORPUS_REPLAY_RESULT_BINDING_OR_COMPLETION_INVALID")
 	}
 	bindings, err := readPinned(root, registration.Bindings, 134217728)
 	if err != nil {
 		return err
 	}
-	if uint64(len(bindings))+uint64(len(data)) > corpusStorageBytes {
+	if uint64(len(bindings))+uint64(len(data)) > storage {
 		return errors.New("CORPUS_REPLAY_TOTAL_LIMIT")
 	}
 	expected := map[string]corpusExpected{}
@@ -211,7 +215,7 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 			return errors.New("CORPUS_REPLAY_CASE_OR_PRODUCER_BINDING_INVALID")
 		}
 		paths[binding.Page.Path] = true
-		if totalBytes+binding.Page.Bytes > corpusStorageBytes {
+		if totalBytes+binding.Page.Bytes > storage {
 			return errors.New("CORPUS_REPLAY_TOTAL_LIMIT")
 		}
 		pageBytes, err := readPinned(root, binding.Page, 16777220)

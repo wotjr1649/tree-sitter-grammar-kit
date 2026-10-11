@@ -73,7 +73,7 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 			}
 			page := native.Frame(marshal(p))
 			write(filepath.Join(dataDir, "page.bin"), page)
-			binding := corpusBinding{ID: e.ID, Route: e.Route, Encoding: e.Encoding, Input: e.Input, Producer: producerID, Policy: corpusPolicySHA(), Page: pinnedFile{Path: "page.bin", SHA: digest(page), Bytes: uint64(len(page))}, End: 2, Nodes: 2, Process: runner.Result{Status: runner.StatusCompleted, Reason: runner.ReasonExited, StdoutBytes: int64(len(page)), Cleanup: runner.Cleanup{Verified: true, Scope: "JOB_OBJECT"}, Memory: runner.MemoryObservation{Enforcement: runner.MemoryHard, Limit: 8589934592, PeakKnown: true}}}
+			binding := corpusBinding{ID: e.ID, Route: e.Route, Encoding: e.Encoding, Input: e.Input, Producer: producerID, Policy: corpusPolicySHA(corpusStorageBytes, 3600), Page: pinnedFile{Path: "page.bin", SHA: digest(page), Bytes: uint64(len(page))}, End: 2, Nodes: 2, Process: runner.Result{Status: runner.StatusCompleted, Reason: runner.ReasonExited, StdoutBytes: int64(len(page)), Cleanup: runner.Cleanup{Verified: true, Scope: "JOB_OBJECT"}, Memory: runner.MemoryObservation{Enforcement: runner.MemoryHard, Limit: 8589934592, PeakKnown: true}}}
 			switch mutation {
 			case "producer":
 				binding.Producer = strings.Repeat("b", 64)
@@ -96,7 +96,7 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 				bindings = nil
 			}
 			write(filepath.Join(dataDir, "bindings.jsonl"), bindings)
-			result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, Policy: corpusPolicySHA(), HostSHA: strings.Repeat("a", 64), StorageLimit: corpusStorageBytes, Expected: 1, Completed: 1, API: 1, Nodes: 2, Pages: 1, Bytes: uint64(len(bindings) + len(page)), Checks: 37, Producers: map[string]corpusProducer{"csharp": producer}, BindingsSHA: digest(bindings), Complete: true}
+			result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, Policy: corpusPolicySHA(corpusStorageBytes, 3600), HostSHA: strings.Repeat("a", 64), StorageLimit: corpusStorageBytes, WallLimit: 3600, Expected: 1, Completed: 1, API: 1, Nodes: 2, Pages: 1, Bytes: uint64(len(bindings) + len(page)), Checks: 37, Producers: map[string]corpusProducer{"csharp": producer}, BindingsSHA: digest(bindings), Complete: true}
 			resultBytes := marshal(result)
 			write(filepath.Join(dataDir, "result.json"), resultBytes)
 			registration := corpusRegistration{Schema: "tsgk-corpus-cst-api-registration/r1", PlanSHA: result.PlanSHA, HostSHA: result.HostSHA, Result: pinnedFile{Path: "result.json", SHA: digest(resultBytes), Bytes: uint64(len(resultBytes))}, Bindings: pinnedFile{Path: "bindings.jsonl", SHA: digest(bindings), Bytes: uint64(len(bindings))}}

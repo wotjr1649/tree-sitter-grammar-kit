@@ -47,6 +47,22 @@ type corpusPlan struct {
 	Candidate string           `json:"candidate"`
 	Profiles  []pinnedFile     `json:"profiles"`
 	Expected  []corpusExpected `json:"expected"`
+	Storage   uint64           `json:"storage_limit,omitempty"`
+	Wall      uint64           `json:"wall_seconds,omitempty"`
+}
+
+func corpusEnvelope(p corpusPlan) (storage, wall uint64, err error) {
+	storage, wall = p.Storage, p.Wall
+	if storage == 0 {
+		storage = corpusStorageBytes
+	}
+	if wall == 0 {
+		wall = 3600
+	}
+	if storage > corpusStorageBytes || wall > 3600 {
+		err = errors.New("CORPUS_ENVELOPE_CANNOT_RAISE_LIMIT")
+	}
+	return
 }
 
 type cstPage struct {
@@ -300,13 +316,14 @@ type corpusResult struct {
 	Producers     map[string]corpusProducer `json:"producers"`
 	BindingsSHA   string                    `json:"bindings_sha256"`
 	WallMS        int64                     `json:"wall_ms"`
+	WallLimit     uint64                    `json:"wall_seconds"`
 	Complete      bool                      `json:"complete"`
 	Error         string                    `json:"error,omitempty"`
 }
 
-func corpusPolicySHA() string {
+func corpusPolicySHA(storage, wall uint64) string {
 	op := kit.NativeOperations()["native-query-large"]
-	text := fmt.Sprintf("tsgk-corpus-cst-api-policy/r1\n%s\npage_nodes=%d\nstorage=%d\nprofiles=67108864\nwall=3600\npoints=0,EOF\ncomparator=large-api-r1\nCST=tsgk-tree-digest/r1\n", native.PolicyRef(op, kit.OutputAuto).SHA256, op.FullNodes, corpusStorageBytes)
+	text := fmt.Sprintf("tsgk-corpus-cst-api-policy/r1\n%s\npage_nodes=%d\nstorage=%d\nprofiles=67108864\nwall=%d\npoints=0,EOF\ncomparator=large-api-r1\nCST=tsgk-tree-digest/r1\n", native.PolicyRef(op, kit.OutputAuto).SHA256, op.FullNodes, storage, wall)
 	return digest([]byte(text))
 }
 
@@ -382,8 +399,6 @@ func validCorpusProcess(r runner.Result, bytes uint64) bool {
 
 func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnErr error) {
 	start := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
-	defer cancel()
 	if rootName == "" {
 		return errors.New("CORPUS_ROOT_REQUIRED")
 	}
@@ -398,6 +413,12 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 	if plan.Schema != "tsgk-corpus-cst-api-plan/r1" || len(plan.Expected) == 0 || len(plan.Expected) > 26000 || len(plan.Profiles) == 0 || len(plan.Profiles) > 500 || len(plan.Candidate) != 40 {
 		return errors.New("CORPUS_PLAN_INVALID")
 	}
+	storage, wall, err := corpusEnvelope(plan)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithDeadline(context.Background(), start.Add(time.Duration(wall)*time.Second))
+	defer cancel()
 	profileRoot, err := os.OpenRoot(filepath.Dir(planName))
 	if err != nil {
 		return err
@@ -476,23 +497,26 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 	if err != nil {
 		return err
 	}
-	bindings, err := os.OpenFile(filepath.Join(out, "bindings.jsonl"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return err
-	}
-	quota := &corpusQuota{limit: corpusStorageBytes}
 	hostBytes, err := os.ReadFile(hostPath)
 	if err != nil {
 		return err
 	}
-	result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, HostSHA: digest(hostBytes), StorageLimit: corpusStorageBytes, Expected: len(expected), Producers: map[string]corpusProducer{}}
+	bindings, err := os.OpenFile(filepath.Join(out, "bindings.jsonl"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	quota := &corpusQuota{limit: storage}
+	result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, HostSHA: digest(hostBytes), StorageLimit: storage, WallLimit: wall, Expected: len(expected), Producers: map[string]corpusProducer{}}
 	op := kit.NativeOperations()["native-query-large"]
-	result.Policy = corpusPolicySHA()
+	result.Policy = corpusPolicySHA(storage, wall)
 	bindingHash := sha256.New()
 	bindEncoder := json.NewEncoder(io.MultiWriter(corpusQuotaWriter{quota, bindings}, bindingHash))
 	defer func() {
 		returnErr = errors.Join(returnErr, bindings.Sync(), bindings.Close())
 		result.WallMS = time.Since(start).Milliseconds()
+		if ctx.Err() != nil || result.WallMS > int64(wall)*1000 {
+			returnErr = errors.Join(returnErr, errors.New("CORPUS_GLOBAL_WALL_LIMIT"))
+		}
 		result.Complete = returnErr == nil && result.Completed == result.Expected
 		if returnErr != nil {
 			result.Error = returnErr.Error()
