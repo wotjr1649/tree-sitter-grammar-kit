@@ -58,7 +58,7 @@ func TestRuntimePatch(t *testing.T) {
 	var nodePin bool
 	for _, f := range manifest.Files {
 		if f.Path == "lib/src/node.c" {
-			nodePin = f.SHA256 == "c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062" && f.Bytes == 22738
+			nodePin = f.SHA256 == "557ba7a3ccc10aaf79ef8dde5c506ba4efb0d2c60af073577dd0613e3483a35d" && f.Bytes == 22742
 		}
 	}
 	if !nodePin {
@@ -67,18 +67,19 @@ func TestRuntimePatch(t *testing.T) {
 	for i, tc := range []struct {
 		issue, subject, beforeSHA string
 		beforeBytes               int
+		operations                int
 	}{
-		{"118", "src/drivers/native-c/runtime-field-lookup.patch.json", "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5", 25151},
-		{"120", "src/drivers/native-c/runtime-navigation.patch.json", "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740", 23579},
-		{"176", "src/drivers/native-c/runtime-sibling-identity.patch.json", "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01", 23700},
+		{"118", "src/drivers/native-c/runtime-field-lookup.patch.json", "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5", 25151, 1},
+		{"120", "src/drivers/native-c/runtime-navigation.patch.json", "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740", 23579, 1},
+		{"178", "src/drivers/native-c/runtime-sibling-identity.patch.json", "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01", 23700, 3},
 	} {
 		t.Run(tc.issue, func(t *testing.T) {
-			checkRuntimePatch(t, root, manifest.Patches[i], tc.issue, tc.subject, tc.beforeSHA, tc.beforeBytes)
+			checkRuntimePatch(t, root, manifest.Patches[i], tc.issue, tc.subject, tc.beforeSHA, tc.beforeBytes, tc.operations)
 		})
 	}
 }
 
-func checkRuntimePatch(t *testing.T, root string, step map[string]any, issue, expectedSubject, beforeSHA string, beforeBytes int) {
+func checkRuntimePatch(t *testing.T, root string, step map[string]any, issue, expectedSubject, beforeSHA string, beforeBytes, operations int) {
 	t.Helper()
 	read := func(name string) []byte {
 		t.Helper()
@@ -114,10 +115,23 @@ func checkRuntimePatch(t *testing.T, root string, step map[string]any, issue, ex
 			}
 		}
 	}
-	if err := json.Unmarshal(raw, &patch); err != nil || patch.Schema != "tsgk-native-runtime-patch/r1" || len(patch.Files) != 1 || patch.Files[0].Target != step["target"] || len(patch.Files[0].Operations) != 1 || patch.Files[0].Operations[0].Occurrences != 1 {
+	if err := json.Unmarshal(raw, &patch); err != nil || patch.Schema != "tsgk-native-runtime-patch/r1" || len(patch.Files) != 1 || patch.Files[0].Target != step["target"] || len(patch.Files[0].Operations) != operations {
 		t.Fatalf("patch literal contract: %v", err)
 	}
-	op := patch.Files[0].Operations[0]
+	var op struct{ Before, After string }
+	for _, operation := range patch.Files[0].Operations {
+		if operation.Occurrences != 1 || operation.Before == "" {
+			t.Fatal("runtime operations must replace one nonempty literal")
+		}
+		op.Before += operation.Before + "\n"
+	}
+	op.After = op.Before
+	for _, operation := range patch.Files[0].Operations {
+		if strings.Count(op.After, operation.Before) != 1 {
+			t.Fatal("runtime literals overlap in the guard fixture")
+		}
+		op.After = strings.Replace(op.After, operation.Before, operation.After, 1)
+	}
 	pwsh, err := exec.LookPath("pwsh")
 	if err != nil {
 		t.Skip("pwsh unavailable: runtime preparation guards unrun; metadata checked")

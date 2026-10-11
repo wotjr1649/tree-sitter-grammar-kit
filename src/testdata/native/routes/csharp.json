@@ -1226,7 +1226,7 @@
             },
             {
               "type": "preproc_if",
-              "text": "# if DEBUG || (TRACE && !RELEASE) == true != false\nclass A { }\n#elif RELEASE\nclass B { }\n#else\nclass C { }\n#endif"
+              "text": "# if DEBUG || (TRACE && !RELEASE) == true != false\nclass A { }\n#elif RELEASE\nclass B { }\n#else\nclass C { }\n#endif // trailing comment\n"
             },
             {
               "type": "preproc_elif",
@@ -9570,7 +9570,7 @@
           "anchors": [
             {
               "type": "preproc_if",
-              "text": "#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif"
+              "text": "#if false\nclass X { int ; @@ }\nstruct\n#else\nclass Y { }\n#endif\n"
             },
             {
               "type": "preproc_skipped_section",
@@ -9619,12 +9619,20 @@
               "text": "#else\n#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
             },
             {
-              "type": "preproc_skipped_section",
-              "text": "#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\nnot code @ {"
-            },
-            {
               "type": "class_declaration",
               "text": "class B { }"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if NESTED\nclass Q { }\n#elif OTHER\n#else\n#endif\n"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "class Q { }"
+            },
+            {
+              "type": "preproc_skipped_section",
+              "text": "not code @ {"
             }
           ]
         }
@@ -11707,6 +11715,606 @@
             "class_declaration"
           ],
           "anchors": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-define-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#define 123\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#define 123",
+          "replace": "#define ABC"
+        },
+        {
+          "find": "#define ABC",
+          "replace": "#define 123"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-undef-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#undef true\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#undef true",
+          "replace": "#undef ABC"
+        },
+        {
+          "find": "#undef ABC",
+          "replace": "#undef true"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-unknown-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#unknown abc\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#unknown abc",
+          "replace": "#pragma abc"
+        },
+        {
+          "find": "#pragma abc",
+          "replace": "#unknown abc"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-nested-else-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#if true\n#else\n#else\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#if true\n#else\n#else\n#endif",
+          "replace": "#if true\n#elif false\n#else\n#endif"
+        },
+        {
+          "find": "#if true\n#elif false\n#else\n#endif",
+          "replace": "#if true\n#else\n#else\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-nested-elif-after-else-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#if true\n#else\n#elif false\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#if true\n#else\n#elif false\n#endif",
+          "replace": "#if true\n#elif false\n#else\n#endif"
+        },
+        {
+          "find": "#if true\n#elif false\n#else\n#endif",
+          "replace": "#if true\n#else\n#elif false\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-nested-expression-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#if 123\nopaque code\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#if 123\nopaque code\n#endif",
+          "replace": "#if true\nopaque code\n#endif"
+        },
+        {
+          "find": "#if true\nopaque code\n#endif",
+          "replace": "#if 123\nopaque code\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-endif-tail-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#if true\n#endif garbage\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#if true\n#endif garbage",
+          "replace": "#if true\n#endif // comment"
+        },
+        {
+          "find": "#if true\n#endif // comment",
+          "replace": "#if true\n#endif garbage"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-line-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#line abc\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#line abc",
+          "replace": "#line 123 \"x\\y\""
+        },
+        {
+          "find": "#line 123 \"x\\y\"",
+          "replace": "#line abc"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-define-tail-edit",
+      "kind": "recovery",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nopaque % text\n#define ABC extra\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#define ABC extra",
+          "replace": "#define ABC // comment"
+        },
+        {
+          "find": "#define ABC // comment",
+          "replace": "#define ABC extra"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-all-directives-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#define ABC\n#undef ABC\n#line 123 \"x\\y\"\n#pragma warning disable CS1234\n#pragma unknown text\n#nullable enable\n#error inert message\n#warning inert message\n#region text\n#endregion text\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-nested-all-skipped-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if true\ninvalid active-looking C# % text\n#elif true\ninvalid inactive C# @ text\n#else\ninvalid fallback C# @ text\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-hash-in-body-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\nordinary inactive body #unknown \"#define 123\"\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-unicode-symbol-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#define cl\\u0061ss\n#undef Å\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-symbol-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-true-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if true\n#if true\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-alternatives-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#elif C\n#if D\ninvalid C# % body\n#endif\n#else\n#if E\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-define-edit",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\n#define 123\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [
+        {
+          "find": "#define 123",
+          "replace": "#define ABC"
+        },
+        {
+          "find": "#define ABC",
+          "replace": "#define 123"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
           "declarations": ""
         }
       ]

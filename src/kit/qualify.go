@@ -64,10 +64,10 @@ var caseKinds = []string{"P", "N", "R", "E", "Q", "W"}
 
 // QualificationLimits are the bounds of one `qualification` operation (S08): per host
 // 10000 files, 64 MiB per file (the windows-only NET461 large records reach 56 MiB),
-// 512 MiB read and 100000 records; one wall of 360 s and a 16 MiB result for the whole
+// 528 MiB read and 100000 records; one wall of 360 s and a 16 MiB result for the whole
 // aggregation.
 func QualificationLimits() ReplayLimits {
-	return ReplayLimits{Files: 10000, FileBytes: 67108864, TotalBytes: 536870912, Records: 100000, RecordBytes: 67108864, OutputBytes: 16777216, Wall: 360 * time.Second, WallMillis: 360000}
+	return ReplayLimits{Files: 10000, FileBytes: 67108864, TotalBytes: 553648128, Records: 100000, RecordBytes: 67108864, OutputBytes: 16777216, Wall: 360 * time.Second, WallMillis: 360000}
 }
 
 // QualPlatform is one registered OS/architecture of the inventory.

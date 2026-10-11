@@ -244,9 +244,9 @@ P 의무는 행의 `alternatives_status`가 `COMPLETE`이고, 행의 모든 대�
 
 | `operation` | host당 파일 | 파일당 | host당 합계 | record 수 | 출력 | wall | host |
 |---|---|---|---|---|---|---|---|
-| `qualification` | 10000 | 67108864 | 536870912 | 100000 | 16777216 | 360초(전체) | 세 OS 근거, 집계는 어디서나 |
+| `qualification` | 10000 | 67108864 | 553648128 | 100000 | 16777216 | 360초(전체) | 세 OS 근거, 집계는 어디서나 |
 
-`qualification`은 S08이 정한 연산이다. 파일당 64 MiB는 windows 전용 NET461 대용량 기록(최대 56 MiB)을 읽기 위해서이고, host당 합계는 그 host 근거 전체(로컬 windows 약 225 MB)를 한 번 읽는 크기다. 한도를 넘은 member는 읽지 않고 그 set의 kit 축을 `BLOCKED`로 둔다. 칸은 `INCOMPLETE`이고 `mechanism_gate`는 FAIL이다(PASS가 아니다). host당 record 수 한도(`RECORDS_LIMIT`), 파일·byte 한도와 wall은 `RESOURCE_LIMIT`(exit 3)다. host 디렉터리가 없거나 link·special 파일이 있으면 exit 2다. memory는 강제하지 않는다(record 하나씩 decode).
+`qualification`은 S08이 정한 연산이다. 파일당 64 MiB는 windows 전용 NET461 대용량 기록(최대 56 MiB)을 읽기 위해서다. host당 읽기 합계는 528 MiB다(2026-10-11 사용자 채택, [#187](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/187)). PR #186의 Windows 등록 근거는 541,648,660 bytes로 기존 512 MiB를 4,777,748 bytes 초과했다. 필수 사례와 raw/record 근거를 유지하기 위해 이 합계만 조정했으며, 다른 한도와 검증은 유지한다. 기존 512 MiB 관측의 `TOTAL_BYTES_LIMIT` 판정은 실패 근거로 보존한다. 한도를 넘은 member는 읽지 않고 그 set의 kit 축을 `BLOCKED`로 둔다. 칸은 `INCOMPLETE`이고 `mechanism_gate`는 FAIL이다(PASS가 아니다). host당 record 수 한도(`RECORDS_LIMIT`), 파일·byte 한도와 wall은 `RESOURCE_LIMIT`(exit 3)다. host 디렉터리가 없거나 link·special 파일이 있으면 exit 2다. memory는 강제하지 않는다(record 하나씩 decode).
 
 ## discovery와 strict profile
 

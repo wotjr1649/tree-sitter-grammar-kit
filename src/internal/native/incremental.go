@@ -412,7 +412,7 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				var checked Checked
 				checked, err = Check(resp, reqs[k], [][]byte{reqs[k].Source}, nil, want[resp.Status])
 				if err == nil {
-					*c = recordResult(*c, resp, checked, x)
+					*c = recordResult(*c, resp, checked, x, b.Identity)
 					if resp.Code == "ALLOCATION_LIMIT" {
 						fatal = true
 						rec.Fatal = "ALLOCATION_LIMIT"
@@ -446,7 +446,7 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 
 // recordResult keeps only the retained record of a corpus file: status, has_error,
 // descendant count, digest, the capped ERROR/MISSING list and the encoding.
-func recordResult(c CaseResult, resp Response, checked Checked, x Context) CaseResult {
+func recordResult(c CaseResult, resp Response, checked Checked, x Context, buildID string) CaseResult {
 	var comp *SvcComposite
 	if len(c.Steps) == 1 {
 		comp = c.Steps[0].Composite // the directive observation made before the frame
@@ -469,7 +469,9 @@ func recordResult(c CaseResult, resp Response, checked Checked, x Context) CaseR
 			DescendantCount: w.DescendantCount, MaxDepth: w.MaxDepth, HasError: w.HasError, Digest: w.Digest}
 		if w.Errors != nil {
 			s := &SummaryEnvelope{Schema: "tsgk-tree-record/r1", Errors: summaryErrors(w.Errors), Declarations: x.decls(w.Declarations), Digest: SummaryDigest{kit.TreeDigestScheme, w.Digest},
-				DescendantCount: w.DescendantCount, Status: cs.Incremental.Status, PartialTrees: []PartialTree{}, Identities: []kit.IdentityRef{}}
+				Input:           TreeInput{Bytes: cs.Step.SourceBytes, SHA256: cs.Step.SourceSHA256, Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration},
+				DescendantCount: w.DescendantCount, Status: cs.Incremental.Status, PartialTrees: []PartialTree{},
+				Identities: []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: buildID}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: cs.Step.SourceSHA256}, x.PolicyRef}}
 			t.Summary = s
 		}
 		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: &t, Composite: comp})

@@ -62,8 +62,10 @@ owned fixture는 named·anonymous alias와 일반 hidden 상속, 안쪽 field sh
 
 ## Issue #176: zero-width sibling identity
 
-[세 번째 literal patch](../../src/drivers/native-c/runtime-sibling-identity.patch.json)는 #118·#120 뒤에 적용한다. subject는 3182 bytes, SHA-256 `06d8738fa24fa8c88403971642e98c4ae00b5bbdee5e7450e5346eca2ae67b68`이며 적용 후 node.c는 22738 bytes, SHA-256 `c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062`다.
+[세 번째 literal patch](../../src/drivers/native-c/runtime-sibling-identity.patch.json)는 #118·#120 뒤에 적용한다. 현재 #178 보완 subject는 4320 bytes, SHA-256 `6ad0899223d026c6958a009b5de89b75e235e8b3467da3aabeb731f3471969ad`이며 적용 후 node.c는 22742 bytes, SHA-256 `557ba7a3ccc10aaf79ef8dde5c506ba4efb0d2c60af073577dd0613e3483a35d`다.
 
 `ts_node__next_sibling`은 부모의 cursor에서 byte 위치로 hidden 구간을 건너뛴 뒤 정확한 node identity까지 되돌아가 다음 visible/named sibling을 반환한다. seek 실패 시 마지막 child에서 찾으며 child index 0도 성공으로 처리한다. 같은 byte 범위의 MISSING·zero-width node를 위치 비교만으로 건너뛰지 않는다. 이전 field·hidden/alias 경계 patch와 나머지 82개 runtime 파일은 유지한다. 임시 cursor는 성공·실패 모두 해제한다. 매번 visible child 전체 prefix를 펼치는 비용 회귀를 줄인다. 직접 넓은 physical parent나 zero-width 연쇄의 기존 탐색 비용까지 선형이라고 보장하지 않는다. cursor 할당과 실제 비용은 등록 전체 large API의 기존 한도 안에서 검증한다.
 
 일반 API comparator의 진단 형식은 유지하되 개발 large audit의 실제 candidate는 mandatory 차이와 positional divergence 모두 0이어야 통과한다. ZERO_SKIP fault는 의도한 divergence를 검출하는 반례로만 유지한다. 원래 runtime의 네 small divergence를 현재 candidate의 허용 결과로 승계하지 않는다. 전체 runtime 보안 감사나 임의 source의 완전성을 주장하지 않는다.
+
+#178의 previous sibling 보완은 trailing empty descendant를 찾을 때 inline Subtree 값 대신 실제 child slot 주소(`TSNode.id`)를 비교한다. 여러 hidden wrapper가 같은 값의 MISSING leaf를 가져도 이전 wrapper를 target의 ancestor로 오인하지 않는다. 기존 previous 탐색·할당 정책과 next cursor 구현은 유지한다. Owned identity 시험은 flat·단일·복수·중첩 hidden wrapper, named/anonymous, zero-width 뒤 positive tail 및 EOF에서 양방향 API를 독립 cursor 순서와 대조한다.

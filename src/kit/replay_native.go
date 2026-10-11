@@ -386,6 +386,15 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			case t.Summary != nil:
 				ids = t.Summary.Identities
 			}
+			if t.Form == "record" && t.Summary != nil {
+				roles := map[string]string{"producer": "tsgk-native-build/r1", "source": "tsgk-source-bytes/r1", "policy": "tsgk-native-policy/r1"}
+				valid := len(ids) == len(roles)
+				for _, id := range ids {
+					valid = valid && roles[id.Role] == id.Schema && hex64.MatchString(id.SHA256)
+					delete(roles, id.Role)
+				}
+				bind.check(valid && len(roles) == 0, name, "TREE_IDENTITY_INVALID", "record envelope의 producer/source/policy identity가 없거나 다르다")
+			}
 			for _, id := range ids {
 				switch id.Role {
 				case "source":
@@ -408,7 +417,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 			shape := t.Form == "full" && t.Tree != nil && t.Summary == nil ||
 				t.Form == "summary" && t.Tree == nil && t.Summary != nil ||
-				t.Form == "record" && t.Tree == nil && t.Summary == nil
+				t.Form == "record" && t.Tree == nil
 			if !tg.check(shape, name, "TREE_FORM_INVALID", fmt.Sprintf("step %d의 form과 envelope가 다르다", s.Step)) {
 				continue
 			}
@@ -419,7 +428,11 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				}
 				input = &t.Tree.Input
 			} else if t.Summary != nil {
-				if !tg.check(t.Summary.Schema == TreeSummarySchema && t.Summary.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "summary schema 또는 status가 다르다") {
+				schema := TreeSummarySchema
+				if t.Form == "record" {
+					schema = "tsgk-tree-record/r1"
+				}
+				if !tg.check(t.Summary.Schema == schema && t.Summary.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "보존 envelope schema 또는 status가 다르다") {
 					continue
 				}
 				input = &t.Summary.Input

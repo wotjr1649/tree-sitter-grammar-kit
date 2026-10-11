@@ -245,6 +245,75 @@ func fxPrivate(t *testing.T, mutate func(files map[string][]byte, sum map[string
 // S07-A15: the private corpus workload binds every routed inventory record to exactly one
 // route case, recomputes the projection and the counts, checks the local-run identity and
 // reports ordinals, never paths.
+func TestReplayRecordEnvelope(t *testing.T) {
+	for _, reducer := range []string{"private-corpus-r1", "private-corpus-r2"} {
+		for _, mutation := range []string{"none", "schema", "source", "bytes", "encoding", "encoding-source", "digest", "count", "producer", "identity-missing", "identity-schema", "identity-duplicate"} {
+			t.Run(reducer+"/"+mutation, func(t *testing.T) {
+				root, reg := fxPrivate(t, func(files map[string][]byte, _ map[string]any, _ []map[string]any) {
+					var result map[string]any
+					if err := json.Unmarshal(files["result-tsql/result.json"], &result); err != nil {
+						t.Fatal(err)
+					}
+					c := result["cases"].([]any)[0].(map[string]any)
+					step := c["steps"].([]any)[0].(map[string]any)
+					input := map[string]any{"bytes": len("select 1"), "sha256": sum([]byte("select 1")), "encoding": EncodingUTF8, "encoding_source": SourceDeclaration}
+					digest := map[string]any{"sha256": fxExe}
+					ids := []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", sum([]byte("select 1"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+					envelope := map[string]any{"schema": "tsgk-tree-record/r1", "status": StatusCompleted, "input": input, "identities": ids, "descendant_count": 4, "digest": digest}
+					switch mutation {
+					case "schema":
+						envelope["schema"] = TreeSummarySchema
+					case "source":
+						input["sha256"] = fxCompiler
+					case "bytes":
+						input["bytes"] = 9
+					case "encoding":
+						input["encoding"] = EncodingUTF16LE
+					case "encoding-source":
+						input["encoding_source"] = SourceBOM
+					case "digest":
+						digest["sha256"] = fxCompiler
+					case "count":
+						envelope["descendant_count"] = 5
+					case "producer":
+						ids[0].SHA256 = fxExe
+					case "identity-missing":
+						envelope["identities"] = ids[:2]
+					case "identity-schema":
+						ids[1].Schema = "tsgk-native-policy/r1"
+					case "identity-duplicate":
+						ids[2] = ids[1]
+					}
+					step["incremental"].(map[string]any)["summary"] = envelope
+					data, err := json.Marshal(result)
+					if err != nil {
+						t.Fatal(err)
+					}
+					files["result-tsql/result.json"] = data
+				})
+				reg["reducer"] = reducer
+				r := runReg(t, root, reg)
+				if mutation == "none" {
+					if !r.EvidenceValid || r.Assessment != AssessPass || gateOf(r, "tree").EvidenceMode != ModeRecordedNotRecomputed {
+						t.Fatalf("bound record envelope: %s %+v", r.Assessment, r.Gates)
+					}
+				} else if r.Assessment != AssessFail {
+					t.Fatalf("accepted mutated record envelope %s: %s %+v", mutation, r.Assessment, r.Gates)
+				} else {
+					wantCode := map[string]string{"schema": "TREE_ENVELOPE_INVALID", "source": "TREE_INPUT_MISMATCH", "bytes": "TREE_INPUT_MISMATCH", "encoding": "TREE_INPUT_MISMATCH", "encoding-source": "TREE_INPUT_MISMATCH", "digest": "SUMMARY_INCONSISTENT", "count": "SUMMARY_INCONSISTENT", "producer": "MIXED_IDENTITY", "identity-missing": "TREE_IDENTITY_INVALID", "identity-schema": "TREE_IDENTITY_INVALID", "identity-duplicate": "TREE_IDENTITY_INVALID"}[mutation]
+					found := false
+					for _, g := range r.Gates {
+						found = found || g.Code == wantCode
+					}
+					if !found {
+						t.Fatalf("record mutation did not reach %s: %+v", wantCode, r.Gates)
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestReplayPrivateCorpus(t *testing.T) {
 	root, reg := fxPrivate(t, nil)
 	r := runReg(t, root, reg)
