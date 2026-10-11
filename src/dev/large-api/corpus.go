@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	jsonv2 "encoding/json/v2"
@@ -17,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
@@ -122,8 +126,68 @@ func readCorpusSource(root *os.Root, e corpusExpected) ([]byte, error) {
 	return b, err
 }
 
-func corpusSvcEligible(o kit.SvcObservation) bool {
-	return o.IncludedRanges == nil && o.Coverage.Directive == "OBSERVED" && o.Coverage.Inline == "ABSENT" && o.Directive != nil && len(o.Directive.Diagnostics) == 0
+func corpusSvcEligible(enc string, source []byte, o kit.SvcObservation) bool {
+	bad, known := o.Syntax(nil)
+	if bad || !known || o.IncludedRanges != nil || o.Coverage.Directive != "OBSERVED" || o.Coverage.Inline != "ABSENT" {
+		return false
+	}
+	directives := append([]*kit.SvcDirective{o.Directive}, o.AdditionalDirectives...)
+	slices.SortFunc(directives, func(a, b *kit.SvcDirective) int { return int(a.Range.StartByte) - int(b.Range.StartByte) })
+	var end uint32
+	for _, d := range directives {
+		r := d.Range
+		if r.StartByte < end || r.StartByte > r.EndByte || uint64(r.EndByte) > uint64(len(source)) || d.Open.StartByte != r.StartByte || d.Close.EndByte != r.EndByte || d.Open.EndByte > d.Name.StartByte || d.Name.StartByte > d.Name.EndByte || d.Name.EndByte > d.Close.StartByte || d.Close.StartByte > d.Close.EndByte || !corpusSvcWhitespace(enc, source[end:r.StartByte], end == 0) {
+			return false
+		}
+		end = r.EndByte
+	}
+	return corpusSvcWhitespace(enc, source[end:], false)
+}
+
+func corpusSvcWhitespace(enc string, b []byte, prefix bool) bool {
+	if prefix {
+		bom := map[string][]byte{kit.EncodingUTF8: {0xef, 0xbb, 0xbf}, kit.EncodingUTF16LE: {0xff, 0xfe}, kit.EncodingUTF16BE: {0xfe, 0xff}}[enc]
+		if len(bom) != 0 && bytes.HasPrefix(b, bom) {
+			b = b[len(bom):]
+		}
+	}
+	for len(b) > 0 {
+		var r rune
+		width := 1
+		switch enc {
+		case kit.EncodingUTF8:
+			r, width = utf8.DecodeRune(b)
+		case kit.EncodingCP949:
+			r = rune(b[0])
+			if b[0] >= 0x80 {
+				if len(b) < 2 {
+					return false
+				}
+				var ok bool
+				r, ok = kit.CP949Rune(b[0], b[1])
+				if !ok {
+					return false
+				}
+				width = 2
+			}
+		case kit.EncodingUTF16LE, kit.EncodingUTF16BE:
+			if len(b) < 2 {
+				return false
+			}
+			width = 2
+			r = rune(binary.LittleEndian.Uint16(b))
+			if enc == kit.EncodingUTF16BE {
+				r = rune(binary.BigEndian.Uint16(b))
+			}
+		default:
+			return false
+		}
+		if !unicode.IsSpace(r) {
+			return false
+		}
+		b = b[width:]
+	}
+	return true
 }
 
 func corpusProfileAllowed(p kit.OracleProfile) bool {
@@ -616,7 +680,7 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 			}
 			if e.Route == "svc" {
 				obs := kit.ObserveServiceHost(c.Encoding, source)
-				if !slices.Equal(source, c.SvcSource) || !corpusSvcEligible(obs) {
+				if !slices.Equal(source, c.SvcSource) || !corpusSvcEligible(c.Encoding, source, obs) {
 					return errors.New("SVC_OBSERVATION_OR_SOURCE_MISMATCH")
 				}
 				observation, err := json.Marshal(struct {

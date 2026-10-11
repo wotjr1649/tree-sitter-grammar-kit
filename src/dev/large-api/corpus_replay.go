@@ -238,7 +238,7 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 				return err
 			}
 			o := kit.ObserveServiceHost(e.Encoding, original)
-			if !corpusSvcEligible(o) {
+			if !corpusSvcEligible(e.Encoding, original, o) {
 				return errors.New("CORPUS_REPLAY_SVC_INELIGIBLE")
 			}
 			var x struct {

@@ -1,22 +1,25 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
 func TestCorpusSourceEncodingAndSvcReplayEligibility(t *testing.T) {
 	valid := `<%@ ServiceHost Language="C#" Service="C" %>`
-	for _, test := range []struct {
+	type svcTest struct {
 		name, encoding, text string
 		bytes                []byte
 		pass                 bool
-	}{
+	}
+	tests := []svcTest{
 		{name: "UTF8", encoding: kit.EncodingUTF8, text: valid, pass: true},
 		{name: "CP949", encoding: kit.EncodingCP949, text: valid, pass: true},
 		{name: "UTF16LE", encoding: kit.EncodingUTF16LE, text: valid, pass: true},
@@ -33,7 +36,32 @@ func TestCorpusSourceEncodingAndSvcReplayEligibility(t *testing.T) {
 		{name: "NUL", encoding: kit.EncodingUTF16LE, bytes: []byte{0, 0}},
 		{name: "bad-CP949", encoding: kit.EncodingCP949, bytes: []byte{0x81, 0x20}},
 		{name: "unknown", encoding: "unknown", text: valid},
-	} {
+	}
+	for _, enc := range []string{kit.EncodingUTF8, kit.EncodingUTF16LE, kit.EncodingUTF16BE, kit.EncodingCP949} {
+		if enc != kit.EncodingCP949 {
+			tests = append(tests, svcTest{name: enc + "-Unicode-space", encoding: enc, text: "\u3000" + valid + "\u00a0", pass: true})
+		}
+		for _, pattern := range []struct {
+			name, text string
+			pass       bool
+		}{
+			{"assembly-after", valid + "\n<%@ Assembly Name=\"A\" %>", true},
+			{"assembly-before", "<%@ Assembly Name=\"A\" %>\n" + valid, true},
+			{"duplicate", valid + "\n<%@ ServiceHost Service=\"D\" %>", false},
+			{"unknown-additional", valid + "\n<%@ Unknown Name=\"A\" %>", false},
+			{"diagnostic-additional", valid + "\n<%@ Assembly %>", false},
+			{"missing-close-additional", valid + "\n<%@ Assembly Name=\"A\"", false},
+			{"prefix-code", "class C {}\n" + valid, false},
+			{"gap-code", valid + "\nclass C {}\n<%@ Assembly Name=\"A\" %>", false},
+		} {
+			tests = append(tests, svcTest{name: enc + "-" + pattern.name, encoding: enc, text: pattern.text, pass: pattern.pass})
+		}
+	}
+	for _, enc := range []string{kit.EncodingUTF8, kit.EncodingUTF16LE, kit.EncodingUTF16BE} {
+		tests = append(tests, svcTest{name: enc + "-BOM", encoding: enc, text: valid, pass: true})
+	}
+	tests = append(tests, svcTest{name: "CP949-Unicode-space", encoding: kit.EncodingCP949, bytes: append(append([]byte{0xa1, 0xa1}, []byte(valid)...), 0xa1, 0xa1), pass: true})
+	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			dir := t.TempDir()
 			sourceDir, dataDir := filepath.Join(dir, "source"), filepath.Join(dir, "data")
@@ -44,16 +72,21 @@ func TestCorpusSourceEncodingAndSvcReplayEligibility(t *testing.T) {
 			}
 			b := test.bytes
 			if b == nil {
-				for _, ch := range []byte(test.text) {
-					switch test.encoding {
-					case kit.EncodingUTF16LE:
-						b = append(b, ch, 0)
-					case kit.EncodingUTF16BE:
-						b = append(b, 0, ch)
-					default:
-						b = append(b, ch)
+				if test.encoding == kit.EncodingUTF16LE || test.encoding == kit.EncodingUTF16BE {
+					for _, u := range utf16.Encode([]rune(test.text)) {
+						if test.encoding == kit.EncodingUTF16LE {
+							b = binary.LittleEndian.AppendUint16(b, u)
+						} else {
+							b = binary.BigEndian.AppendUint16(b, u)
+						}
 					}
+				} else {
+					b = []byte(test.text)
 				}
+			}
+			if strings.HasSuffix(test.name, "-BOM") {
+				bom := map[string][]byte{kit.EncodingUTF8: {0xef, 0xbb, 0xbf}, kit.EncodingUTF16LE: {0xff, 0xfe}, kit.EncodingUTF16BE: {0xfe, 0xff}}[test.encoding]
+				b = append(bom, b...)
 			}
 			marshal := func(v any) []byte {
 				t.Helper()
