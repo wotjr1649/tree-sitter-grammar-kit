@@ -339,6 +339,11 @@ func (p *Process) launch() error {
 	}
 	go func() {
 		p.waitErr = p.cmd.Wait()
+		if p.cmd.ProcessState != nil && p.cmd.ProcessState.Exited() {
+			if t, ok := p.tree.(interface{ rootExited() }); ok {
+				t.rootExited()
+			}
+		}
 		close(p.exited)
 	}()
 	return nil

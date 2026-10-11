@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 
@@ -46,6 +47,7 @@ type jobTree struct {
 	hit       bool
 	mu        sync.Mutex
 	wg        sync.WaitGroup
+	rootDone  atomic.Bool
 }
 
 func newTree(s *Spec, probe bool) (tree, Capabilities, error) {
@@ -154,12 +156,23 @@ func (t *jobTree) attach(p *os.Process) error {
 
 func (t *jobTree) stop(bool) { windows.TerminateJobObject(t.job, 1) }
 
+func (t *jobTree) rootExited() { t.rootDone.Store(true) }
+
 func (t *jobTree) live() (int, error) {
+	rootDone := t.rootDone.Load()
 	var acc jobAccounting
 	if err := windows.QueryInformationJobObject(t.job, windows.JobObjectBasicAccountingInformation, uintptr(unsafe.Pointer(&acc)), uint32(unsafe.Sizeof(acc)), nil); err != nil {
 		return 0, err
 	}
-	return int(acc.ActiveProcesses), nil
+	return jobActiveProcesses(acc, rootDone), nil
+}
+
+func jobActiveProcesses(acc jobAccounting, rootDone bool) int {
+	// A sole root already reaped by Wait cannot be a running descendant.
+	if rootDone && acc.TotalProcesses == 1 && acc.ActiveProcesses == 1 {
+		return 0
+	}
+	return int(acc.ActiveProcesses)
 }
 
 func (t *jobTree) limitHit() bool {
