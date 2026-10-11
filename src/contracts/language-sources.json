@@ -69,8 +69,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 72537,
-            "sha256": "03fc9e0d9ba829e285d74bf071f799ff239825afb63c00083d1e4f3ffef581f2"
+            "bytes": 72591,
+            "sha256": "5e8db47c580392f3bbfb5c1c5422ea7038f7c0099c654fc8bf5f2c6446c7935a"
           },
           {
             "path": "src/scanner.c",

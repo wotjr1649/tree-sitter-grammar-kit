@@ -45,8 +45,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
-      "bytes": 46821469
+      "sha256": "9d86b116c722ade98182b05999b0001db74b9e4271d7b0f847a155c0ad0a7773",
+      "bytes": 46816403
      },
      {
       "path": "src/scanner.c",
@@ -16853,6 +16853,201 @@
        ],
        "csharp-B03": [
         "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-recursive-symbol-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d02373a35aff78351e2bd47f270f26121b452704c19883322082528593e27dca",
+       "bytes": 72
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-recursive-true-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0295ee3aada3505bc1e24a2cc75356d65232759cb2f46076780b7a444b4c813b",
+       "bytes": 78
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-recursive-alternatives-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0794fdaf4d2dbeca2e41e3c0ac98c394d44eedf2c6741ee70f791da404da20c7",
+       "bytes": 148
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-recursive-define-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "938bf168e4a6a78272e2b74dff943bb713f733820dab006bd8330f7889f31748",
+       "bytes": 66
+      },
+      "edits": [
+       {
+        "start_byte": 22,
+        "old_end_byte": 33,
+        "new_end_byte": 33,
+        "old": "I2RlZmluZSAxMjM=",
+        "new": "I2RlZmluZSBBQkM="
+       },
+       {
+        "start_byte": 22,
+        "old_end_byte": 33,
+        "new_end_byte": 33,
+        "old": "I2RlZmluZSBBQkM=",
+        "new": "I2RlZmluZSAxMjM="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
        ]
       },
       "alternatives": [],
@@ -346725,8 +346920,8 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
-       "bytes": 46821469
+       "sha256": "9d86b116c722ade98182b05999b0001db74b9e4271d7b0f847a155c0ad0a7773",
+       "bytes": 46816403
       },
       {
        "path": "src/scanner.c",
@@ -348583,6 +348778,103 @@
        "alternatives": [],
        "sample": null,
        "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"C\" %\u003e\n#if false\nopaque % text\n#if true\n#else\n#else\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n"
+      },
+      {
+       "id": "svc-issue179-recursive-symbol-control",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "eba3729687456d6137d275d19c64d0dd9524ac2cf15b8df520062ba68add26e1",
+        "bytes": 121
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "preproc_if",
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"App.S\" %\u003e\n#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n"
+      },
+      {
+       "id": "svc-issue179-recursive-define-edit",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "0a20bc00fa138dd2d7cb4b1ed797cbda8ba2ccdd78c03adf184222e22f0f03ab",
+        "bytes": 115
+       },
+       "edits": [
+        {
+         "start_byte": 71,
+         "old_end_byte": 82,
+         "new_end_byte": 82,
+         "old": "I2RlZmluZSAxMjM=",
+         "new": "I2RlZmluZSBBQkM="
+        },
+        {
+         "start_byte": 71,
+         "old_end_byte": 82,
+         "new_end_byte": 82,
+         "old": "I2RlZmluZSBBQkM=",
+         "new": "I2RlZmluZSAxMjM="
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "preproc_if",
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "preproc_if",
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "ERROR",
+         "contains": [
+          "preproc_if",
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"App.S\" %\u003e\n#if false\n#if A\n#if B\n#define 123\n#endif\n#endif\n#endif\nclass C {}\n"
       }
      ]
     }
@@ -348613,8 +348905,8 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
-       "bytes": 46821469
+       "sha256": "9d86b116c722ade98182b05999b0001db74b9e4271d7b0f847a155c0ad0a7773",
+       "bytes": 46816403
       },
       {
        "path": "src/scanner.c",
@@ -348895,8 +349187,8 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
-       "bytes": 46821469
+       "sha256": "9d86b116c722ade98182b05999b0001db74b9e4271d7b0f847a155c0ad0a7773",
+       "bytes": 46816403
       },
       {
        "path": "src/scanner.c",

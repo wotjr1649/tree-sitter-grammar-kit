@@ -199,7 +199,7 @@
     },
     {
      "before": "    preproc_warning: $ => seq(\n      preprocessor($, 'warning'), pp($, optional($.preproc_arg)), choice($._preproc_newline, $._preproc_eof),\n    ),\n    preproc_define: $ => seq(\n      preprocessor($, 'define'), pp($, alias($._preproc_identifier_token, $.preproc_arg)),\n      choice($._preproc_newline, $._preproc_eof),\n",
-     "after": "    preproc_warning: $ => seq(\n      preprocessor($, 'warning'), pp($, optional($.preproc_arg)), choice($._preproc_newline, $._preproc_eof),\n    ),\n    ...preprocIf('_in_skipped', $ => $.preproc_skipped_section),\n\n    preproc_define: $ => seq(\n      preprocessor($, 'define'), pp($, alias($._preproc_identifier_token, $.preproc_arg)),\n      choice($._preproc_newline, $._preproc_eof),\n",
+     "after": "    preproc_warning: $ => seq(\n      preprocessor($, 'warning'), pp($, optional($.preproc_arg)), choice($._preproc_newline, $._preproc_eof),\n    ),\n    ...preprocIf('_in_skipped', $ => choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n\n    preproc_define: $ => seq(\n      preprocessor($, 'define'), pp($, alias($._preproc_identifier_token, $.preproc_arg)),\n      choice($._preproc_newline, $._preproc_eof),\n",
      "occurrences": 1
     },
     {

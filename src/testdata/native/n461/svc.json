@@ -1146,6 +1146,73 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "svc-issue179-recursive-symbol-control",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\n#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue179-recursive-define-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\n#if false\n#if A\n#if B\n#define 123\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [
+        {
+          "find": "#define 123",
+          "replace": "#define ABC"
+        },
+        {
+          "find": "#define ABC",
+          "replace": "#define 123"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ],
   "svc_context": {

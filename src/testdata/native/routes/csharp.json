@@ -12207,6 +12207,117 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "csharp-issue179-recursive-symbol-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-true-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if true\n#if true\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-alternatives-control",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\ninvalid C# @ body\n#endif\n#elif C\n#if D\ninvalid C# % body\n#endif\n#else\n#if E\ninvalid C# @ body\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue179-recursive-define-edit",
+      "kind": "feature",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "#if false\n#if A\n#if B\n#define 123\n#endif\n#endif\n#endif\nclass C {}\n",
+      "edits": [
+        {
+          "find": "#define 123",
+          "replace": "#define ABC"
+        },
+        {
+          "find": "#define ABC",
+          "replace": "#define 123"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "preproc_if",
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }
