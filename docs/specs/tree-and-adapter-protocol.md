@@ -63,6 +63,12 @@ S03의 정적 node-types 비교와 S05부터 생성하는 runtime CST는 다른 
 
 T-SQL #128의 DEFAULT 제한은 `field`·`invocation`·`cast`·`case`·`binary_expression`·`unary_expression`·`parenthesized_expression`의 공개 node kind를 유지하는 별도 constant-expression 경로다. CONVERT의 첫 argument는 type 구조로 나타내고 후속 값은 parameter field다. `procedure_body`의 앞·뒤 세미콜론과 문장은 GO 전까지 body의 직접 자식이며, GO 다음 문장은 다음 batch의 자식이다. 등록 `q.issue128-ownership`은 이 두 소유 관계를 normal/edit/restore의 capture stream으로 검사한다. `FROM t window`의 contextual alias와 `FROM t WINDOW w AS (...)`의 `window_clause`를 다음 토큰으로 구분한다. OPENROWSET·OPENXML·PREDICT의 WITH schema와 alias는 기존처럼 `relation` 안에 소유한다. 구문 수용·engine 문맥의 경계는 [T-SQL 처분 계약](../validation/language-feature-disposition.md#tsql)이 소유한다.
 
+#182의 conditional syntax fragment도 원문을 전처리하거나 새로운 source 좌표를 만들지 않는다. `argument_list` 안 group은 `preproc_if`로 alias하며 선택된 prefix는 인자와 쉼표를, tail은 마지막 인자를 소유한다. Branch 안에서 initializer와 `;`가 끝나는 선언은 기존 `variable_declaration`/`variable_declarator` 이름과 name locator를 유지하고, 선언 범위는 group의 `#endif` 줄 종료까지 포함한다. 일반 선언의 범위는 바꾸지 않는다.
+
+조건부 if header는 `if_statement` 안 `preproc_if`의 named `if_header{condition}` 자식으로 나타난다. Group의 `condition`은 전처리 조건식이고 `if_header.condition`은 C# 조건식이다. 공통 body는 기존 `consequence` field다. 두 conditional group 사이에 공통 statement가 있는 try/catch/finally는 새 `preproc_try_statement`이며 header group, 공통 statement, tail group을 원본 순서로 보존한다. 분리된 brace를 완전한 `block`이나 기존 `try_statement.body`로 합성하지 않는다. 일반 `if_statement`/`try_statement`는 기존 구조를 유지한다. 새 구조의 의미·범위·incremental 관측은 [#182 보고서](../reports/issue-182-csharp-conditional-fragments.md)가 기록하며 모든 토큰 fragment의 일반화된 AST를 약속하지 않는다.
+
+#185의 private corpus producer는 `form: record`의 `summary` member에 `tsgk-tree-record/r1` 보존 envelope를 둔다. `input`은 원본 step의 bytes·SHA-256·encoding·`DECLARATION` 출처이고 `identities`는 producer·source·policy다. Partial tree는 보존하지 않는다. R1/R2 replay는 이 envelope가 있을 때 record schema·완료 status·step/profile source identity·digest/node count 일치를 검사한다. 과거 envelope 없는 bare record는 기존 recorded-only 경계로 읽으며, record digest를 full CST에서 재계산한 것으로 승격하지 않는다. 잘못된 schema나 source를 허용해 완료 receipt를 만들지 않는다.
+
 ## Ordered tree
 
 envelope는 `schema: tsgk-tree/r0`, `input`(`bytes`, `sha256`, `encoding: bytes`; 실사용 source의 판별 encoding·출처는 아래 `tsgk-tree/r1`), `status`, `capabilities`, `nodes`, `captures`와 producer/source/policy identity를 가진다. parse status는 COMPLETED/CANCELLED/RESOURCE_LIMIT/FAILED다. tree가 없으면 `nodes: null`이고 빈 성공 tree로 바꾸지 않는다. 완료된 tree는 최소 root 하나를 가진다.

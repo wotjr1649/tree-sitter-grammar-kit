@@ -1213,6 +1213,706 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "svc-issue182-argument-prefix-symbol",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\nF(\n#if A\n1,\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if A\n1,\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-initializer-terminated-symbol",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1;\n#else\n2;\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "int x =\n#if A\n1;\n#else\n2;\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-if-header-symbol",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\n#if A\nif(F())\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "if_header",
+              "text": "if(F())"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-if-header-nested",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\n#if true\n#if A\nif(F())\n#endif\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-try-split-symbol",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n} catch(System.Exception e) {}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "preproc_try_statement",
+              "text": "#if A\ntry {\n#endif\nF();\n#if A\n} catch(System.Exception e) {}\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-argument-separator-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1 2,\n#endif\n3);\n} }\n",
+      "edits": [
+        {
+          "find": "1 2,",
+          "replace": "1, 2,"
+        },
+        {
+          "find": "1, 2,",
+          "replace": "1 2,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-initializer-terminator-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1\n#else\n2\n#endif\n} }\n",
+      "edits": [
+        {
+          "find": "\n1\n",
+          "replace": "\n1;\n"
+        },
+        {
+          "find": "\n1;\n",
+          "replace": "\n1\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-if-header-paren-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\n#if A\nif(F()\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [
+        {
+          "find": "if(F()\n",
+          "replace": "if(F())\n"
+        },
+        {
+          "find": "if(F())\n",
+          "replace": "if(F()\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue182-try-handler-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n}\n#endif\n} }\n",
+      "edits": [
+        {
+          "find": "\n}\n#endif",
+          "replace": "\n} catch(System.Exception e) {}\n#endif"
+        },
+        {
+          "find": "\n} catch(System.Exception e) {}\n#endif",
+          "replace": "\n}\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-active-block",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-inactive-block",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if false\nclass C {}\n#endif /* bad */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-nested-block",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if false\n#if A\nclass C {}\n#endif /* bad */\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-active-multiline",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad\n comment */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-line-comment",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if A\nclass C {}\n#endif // valid\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-active-block-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad */\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-inactive-block-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if false\nclass C {}\n#endif /* bad */\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "svc-issue184-endif-nested-block-edit",
+      "kind": "feature",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"App.S\" %>\nclass Keep { int A; int B; }\n#if false\n#if A\nclass C {}\n#endif /* bad */\n#endif\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ],
   "svc_context": {

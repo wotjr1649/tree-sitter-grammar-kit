@@ -110,9 +110,37 @@ foreach ($g in $Routes) {
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
   $profile = [ordered]@{ schema = 'tsgk-incremental/r2'; id = "s05-corpus-$g"; route = $route; operation = 'private-corpus-local'; symbol = $r.symbol
     encoding = 'UTF-8'; output = 'record'; compiler = $compilerId; grammar = @($sorted); declarations = (Get-Declarations $route); cases = @($cases) }
-  if ($g -eq 'svc') { $profile.format = 'SVC-SERVICEHOST-r2' }
+  if ($g -eq 'svc') {
+    $profile.format = 'SVC-SERVICEHOST-r2'
+    $sourceEncodedBytes = 0L
+    foreach ($case in $cases) {
+      # R2 replay needs the pinned original; keep it only in this local private profile.
+      if ($case.input.bytes -gt 33554432) { throw 'SVC_SOURCE_INPUT_LIMIT' }
+      $sourceEncodedBytes += 4L * [long][Math]::Ceiling($case.input.bytes / 3.0)
+      if ($sourceEncodedBytes -gt 16777216) { throw 'PROFILE_DOCUMENT_LIMIT' }
+      $target = $CorpusRoot
+      if ((Get-Item -LiteralPath $target).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'SVC_SOURCE_LINK' }
+      foreach ($segment in $case.input.path -split '/') {
+        $target = Join-Path $target $segment
+        if ((Get-Item -LiteralPath $target).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'SVC_SOURCE_LINK' }
+      }
+      $source = [byte[]]::new([int]$case.input.bytes)
+      $stream = [IO.File]::Open($target, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+      try {
+        $stream.ReadExactly($source, 0, $source.Length)
+        if ($stream.ReadByte() -ne -1) { throw 'SVC_SOURCE_SIZE_MISMATCH' }
+      } catch [IO.EndOfStreamException] {
+        throw 'SVC_SOURCE_SIZE_MISMATCH'
+      } finally { $stream.Dispose() }
+      $sourceSha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($source)).ToLowerInvariant()
+      if ($sourceSha -ne $case.input.sha256) { throw 'SVC_SOURCE_HASH_MISMATCH' }
+      $case.svc_source = [Convert]::ToBase64String($source)
+    }
+  }
   $pf = Join-Path $Destination "profile-$g.json"
-  $profile | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
+  $profileJson = $profile | ConvertTo-Json -Depth 12
+  if ([Text.Encoding]::UTF8.GetByteCount($profileJson) -gt 16777216) { throw 'PROFILE_DOCUMENT_LIMIT' }
+  $profileJson | Set-Content -LiteralPath $pf -Encoding utf8NoBOM -NoNewline
   $out = Join-Path $Destination "result-$g"
   $t0 = Get-Date
   $line = & $cli incremental --root $CorpusRoot --grammar-root (Join-Path $Prepared "routes/$route") --profile $pf --runtime (Join-Path $Prepared 'runtime') `

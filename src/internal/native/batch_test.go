@@ -31,6 +31,7 @@ func TestBatchRecords(t *testing.T) {
 	add("bad16.txt", kit.EncodingUTF16LE, []byte{'a', 0, 0, 0xd8})
 	x := testContext("private-corpus-local")
 	x.Output = kit.OutputRecord
+	x.PolicyRef = PolicyRef(x.Op, x.Output)
 	x.Op.BatchFiles = 2
 	x.Declarations = &kit.Declarations{Mapping: "owned-r1", Items: []kit.NativeDeclaration{{Fact: "type_declaration", Node: "assignment", Name: "field:name"}}}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -49,6 +50,11 @@ func TestBatchRecords(t *testing.T) {
 		if c.ExecutionStatus != kit.StatusCompleted || len(s) != 1 || s[0].Incremental.Form != "record" || !s[0].Incremental.HasError ||
 			s[0].Incremental.Summary.Errors.Total == 0 || len(s[0].Incremental.Digest) != 64 || s[0].Incremental.Summary.Declarations.Assessment == "" {
 			t.Fatalf("record %s: %s %s %+v", c.ID, c.ExecutionStatus, c.Code, s)
+		}
+		envelope := s[0].Incremental.Summary
+		if envelope.Input.Bytes != c.Input.Bytes || envelope.Input.SHA256 != c.Input.SHA256 || envelope.Input.Encoding != c.Encoding || envelope.Input.EncodingSource != kit.SourceDeclaration ||
+			len(envelope.Identities) != 3 || envelope.Identities[0].SHA256 != b.Identity || envelope.Identities[1].SHA256 != c.Input.SHA256 || envelope.Identities[2] != x.PolicyRef {
+			t.Fatalf("record source/producer/policy binding %s: %+v", c.ID, envelope)
 		}
 	}
 	if bad := out[5]; bad.ExecutionStatus != kit.StatusNotRun || bad.Assessment != kit.AssessBlocked || bad.Code != "SOURCE_ENCODING_INVALID" {

@@ -21,7 +21,9 @@
   "issue161-conditional-symbol",
   "issue162-line-lexical-form",
   "issue163-general-pragma",
-  "issue179-inactive-directives"
+  "issue179-inactive-directives",
+  "issue182-conditional-syntax-fragments",
+  "issue184-endif-delimited-comment"
  ],
  "files": [
   {
@@ -216,6 +218,86 @@
      "before": "      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_false)),\n      choice($._preproc_newline, $._preproc_eof),\n      optional($.preproc_skipped_section),\n      field('alternative', optional(liveAlternativeBlock($))),\n    )),\n\n    ['preproc_else' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'else'),\n      choice($._preproc_newline, $._preproc_eof),\n      optional($.preproc_skipped_section),\n    )),\n\n    ['preproc_elif' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_expression)),\n      choice($._preproc_newline, $._preproc_eof),\n      optional($.preproc_skipped_section),\n      field('alternative', optional(alternativeBlock($))),\n    )),\n  };\n",
      "after": "      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_false)),\n      choice($._preproc_newline, $._preproc_eof),\n      repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n      field('alternative', optional(liveAlternativeBlock($))),\n    )),\n\n    ['preproc_else' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'else'),\n      choice($._preproc_newline, $._preproc_eof),\n      repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n    )),\n\n    ['preproc_elif' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_expression)),\n      choice($._preproc_newline, $._preproc_eof),\n      repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n      field('alternative', optional(alternativeBlock($))),\n    )),\n  };\n",
      "occurrences": 1
+    },
+    {
+     "before": "  name: 'c_sharp',\n\n  conflicts: $ => [\n    // Directive-only explicit spaces defer operator attachment until its token.\n    [$.preproc_binary_expression],\n    [$._simple_name, $.generic_name],\n",
+     "after": "  name: 'c_sharp',\n\n  conflicts: $ => [\n    [$.variable_declaration, $._terminated_variable_declaration],\n    // Directive-only explicit spaces defer operator attachment until its token.\n    [$.preproc_binary_expression],\n    [$._simple_name, $.generic_name],\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    field_declaration: $ => seq(\n      repeat($._attribute_list),\n      repeat($.modifier),\n      $.variable_declaration,\n      ';',\n    ),\n\n    constructor_declaration: $ => seq(\n",
+     "after": "    field_declaration: $ => seq(\n      repeat($._attribute_list),\n      repeat($.modifier),\n      choice(\n        seq($.variable_declaration, ';'),\n        alias($._terminated_variable_declaration, $.variable_declaration),\n      ),\n    ),\n\n    constructor_declaration: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      repeat($._attribute_list),\n      repeat($.modifier),\n      'event',\n      $.variable_declaration,\n      ';',\n    )),\n\n    accessor_list: $ => seq(\n",
+     "after": "      repeat($._attribute_list),\n      repeat($.modifier),\n      'event',\n      choice(\n        seq($.variable_declaration, ';'),\n        alias($._terminated_variable_declaration, $.variable_declaration),\n      ),\n    )),\n\n    accessor_list: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.argument_list,\n    ),\n\n    argument_list: $ => seq('(', commaSep($.argument), ')'),\n\n    tuple_pattern: $ => seq(\n      '(',\n",
+     "after": "      $.argument_list,\n    ),\n\n    argument_list: $ => seq('(', optional(seq(\n      repeat($._argument_prefix),\n      choice($.argument, alias($.preproc_if_in_argument_tail, $.preproc_if)),\n    )), ')'),\n\n    _argument_prefix: $ => choice(\n      seq($.argument, ','),\n      alias($.preproc_if_in_argument_prefix, $.preproc_if),\n    ),\n    _argument_tail: $ => seq(repeat($._argument_prefix), $.argument),\n\n    tuple_pattern: $ => seq(\n      '(',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      choice(field('name', $.identifier), $.tuple_pattern),\n      optional($.bracketed_argument_list),\n      optional(seq('=', $.expression)),\n    ),\n\n    using_variable_declarator: $ => seq(\n",
+     "after": "      choice(field('name', $.identifier), $.tuple_pattern),\n      optional($.bracketed_argument_list),\n      optional(seq('=', $.expression)),\n    ),\n    _terminated_variable_declaration: $ => seq(\n      field('type', $.type),\n      repeat(seq($.variable_declarator, ',')),\n      alias($._terminated_variable_declarator, $.variable_declarator),\n    ),\n    _terminated_variable_declarator: $ => seq(\n      choice(field('name', $.identifier), $.tuple_pattern),\n      optional($.bracketed_argument_list), '=',\n      alias($.preproc_if_in_terminated_initializer, $.preproc_if),\n    ),\n\n    using_variable_declarator: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.switch_statement,\n      $.throw_statement,\n      $.try_statement,\n      $.unsafe_statement,\n      $.using_statement,\n      $.foreach_statement,\n",
+     "after": "      $.switch_statement,\n      $.throw_statement,\n      $.try_statement,\n      $.preproc_try_statement,\n      $.unsafe_statement,\n      $.using_statement,\n      $.foreach_statement,\n",
+     "occurrences": 1
+    },
+    {
+     "before": "\n    throw_statement: $ => seq('throw', optional($.expression), ';'),\n\n    try_statement: $ => seq(\n      'try',\n      field('body', $.block),\n",
+     "after": "\n    throw_statement: $ => seq('throw', optional($.expression), ';'),\n\n    preproc_try_statement: $ => seq(\n      alias($.preproc_if_in_try_header, $.preproc_if),\n      repeat($.statement),\n      alias($.preproc_if_in_try_tail, $.preproc_if),\n    ),\n    _try_tail: $ => seq('}', choice(\n      seq(repeat1($.catch_clause), optional($.finally_clause)),\n      $.finally_clause,\n    )),\n    try_statement: $ => seq(\n      'try',\n      field('body', $.block),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      $.statement,\n    ),\n\n    if_statement: $ => prec.right(seq(\n      'if',\n      '(',\n      field('condition', $.expression),\n      ')',\n      field('consequence', $.statement),\n      optional(seq(\n        'else',\n",
+     "after": "      $.statement,\n    ),\n\n    _if_header: $ => seq('if', '(', field('condition', $.expression), ')'),\n    if_statement: $ => prec.right(seq(\n      choice($._if_header, alias($.preproc_if_in_if_header, $.preproc_if)),\n      field('consequence', $.statement),\n      optional(seq(\n        'else',\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      optional('await'),\n      optional('using'),\n      repeat($.modifier),\n      $.variable_declaration,\n      ';',\n    ),\n\n    local_function_statement: $ => seq(\n",
+     "after": "      optional('await'),\n      optional('using'),\n      repeat($.modifier),\n      choice(\n        seq($.variable_declaration, ';'),\n        alias($._terminated_variable_declaration, $.variable_declaration),\n      ),\n    ),\n\n    local_function_statement: $ => seq(\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ...preprocIf('_in_expression', $ => $.expression, -2, false),\n    ...preprocIf('_in_enum_member_declaration', $ => $.enum_member_declaration, 0, false),\n    ...preprocIf('_in_attribute_list', $ => $.attribute_list, -1, false),\n\n    // Each directive token is immediate after explicit horizontal whitespace.\n    // General C# whitespace and recovery stay in the ordinary lexer.\n",
+     "after": "    ...preprocIf('_in_expression', $ => $.expression, -2, false),\n    ...preprocIf('_in_enum_member_declaration', $ => $.enum_member_declaration, 0, false),\n    ...preprocIf('_in_attribute_list', $ => $.attribute_list, -1, false),\n    ...preprocIf('_in_if_header', $ => choice(\n      alias($._if_header, $.if_header),\n      alias($.preproc_if_in_if_header, $.preproc_if),\n    ), -2, false, true),\n    ...preprocIf('_in_try_header', $ => seq('try', '{'), -2, false, true),\n    ...preprocIf('_in_try_tail', $ => $._try_tail, -2, false, true),\n    ...preprocIf('_in_argument_prefix', $ => repeat1($._argument_prefix), -2, false, true),\n    ...preprocIf('_in_argument_tail', $ => $._argument_tail, -2, false, true),\n    ...preprocIf('_in_terminated_initializer', $ => choice(\n      seq($.expression, ';'),\n      alias($.preproc_if_in_terminated_initializer, $.preproc_if),\n    ), -2, false, true),\n\n    // Each directive token is immediate after explicit horizontal whitespace.\n    // General C# whitespace and recovery stay in the ordinary lexer.\n",
+     "occurrences": 1
+    },
+    {
+     "before": " *\n * @returns {RuleBuilders<string, string>}\n */\nfunction preprocIf(suffix, content, precedence = 0, rep = true) {\n  /**\n   *\n   * @param {GrammarSymbols<string>} $\n",
+     "after": " *\n * @returns {RuleBuilders<string, string>}\n */\nfunction preprocIf(suffix, content, precedence = 0, rep = true, required = false) {\n  /**\n   *\n   * @param {GrammarSymbols<string>} $\n",
+     "occurrences": 1
+    },
+    {
+     "before": "  // ECMA-334 6.5.5 without symbols: a condition that is the literal false (or !true) is\n  // false, and any other condition counts as true. The first section whose condition is\n  // not a literal false (an #else when no earlier section was taken) is parsed as code;\n  // every other section is one opaque preproc_skipped_section.\n\n  // the sections after a taken one: all skipped\n  function alternativeBlock($) {\n",
+     "after": "  // ECMA-334 6.5.5 without symbols: a condition that is the literal false (or !true) is\n  // false, and any other condition counts as true. The first section whose condition is\n  // not a literal false (an #else when no earlier section was taken) is parsed as code;\n  // Ordinary text in every other section is opaque; nested directives remain groups.\n\n  // the sections after a taken one: all skipped\n  function alternativeBlock($) {\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        preprocessor($, 'if'),\n        pp($, field('condition', $._preproc_expression)),\n        choice($._preproc_newline, $._preproc_eof),\n        rep ? repeat(content($)) : optional(content($)),\n        field('alternative', optional(alternativeBlock($))),\n        preprocessor($, 'endif'),\n      ),\n",
+     "after": "        preprocessor($, 'if'),\n        pp($, field('condition', $._preproc_expression)),\n        choice($._preproc_newline, $._preproc_eof),\n        rep ? repeat(content($)) : required ? content($) : optional(content($)),\n        field('alternative', optional(alternativeBlock($))),\n        preprocessor($, 'endif'),\n      ),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "        pp($, field('condition', $._preproc_false)),\n        choice($._preproc_newline, $._preproc_eof),\n        repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n        field('alternative', optional(liveAlternativeBlock($))),\n        preprocessor($, 'endif'),\n      ),\n    )),\n",
+     "after": "        pp($, field('condition', $._preproc_false)),\n        choice($._preproc_newline, $._preproc_eof),\n        repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n        field('alternative', required ? liveAlternativeBlock($) : optional(liveAlternativeBlock($))),\n        preprocessor($, 'endif'),\n      ),\n    )),\n",
+     "occurrences": 1
+    },
+    {
+     "before": "    ['preproc_else_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'else'),\n      choice($._preproc_newline, $._preproc_eof),\n      rep ? repeat(content($)) : optional(content($)),\n    )),\n\n    ['preproc_elif_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_expression)),\n      choice($._preproc_newline, $._preproc_eof),\n      rep ? repeat(content($)) : optional(content($)),\n      field('alternative', optional(alternativeBlock($))),\n    )),\n\n",
+     "after": "    ['preproc_else_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'else'),\n      choice($._preproc_newline, $._preproc_eof),\n      rep ? repeat(content($)) : required ? content($) : optional(content($)),\n    )),\n\n    ['preproc_elif_taken' + suffix]: $ => prec(precedence, seq(\n      preprocessor($, 'elif'),\n      pp($, field('condition', $._preproc_expression)),\n      choice($._preproc_newline, $._preproc_eof),\n      rep ? repeat(content($)) : required ? content($) : optional(content($)),\n      field('alternative', optional(alternativeBlock($))),\n    )),\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "      pp($, field('condition', $._preproc_false)),\n      choice($._preproc_newline, $._preproc_eof),\n      repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n      field('alternative', optional(liveAlternativeBlock($))),\n    )),\n\n    ['preproc_else' + suffix]: $ => prec(precedence, seq(\n",
+     "after": "      pp($, field('condition', $._preproc_false)),\n      choice($._preproc_newline, $._preproc_eof),\n      repeat(choice($.preproc_skipped_section, alias($.preproc_if_in_skipped, $.preproc_if))),\n      field('alternative', required ? liveAlternativeBlock($) : optional(liveAlternativeBlock($))),\n    )),\n\n    ['preproc_else' + suffix]: $ => prec(precedence, seq(\n",
+     "occurrences": 1
     }
    ]
   },
@@ -315,6 +397,11 @@
     {
      "before": "    // Valid only right after an #else line or the condition line of a skipped\n    // section; never together with the\n    // string tokens except during error recovery.\n    if (valid_symbols[PREPROC_SKIPPED_SECTION] && !valid_symbols[INTERPOLATION_REGULAR_START]) {\n        return scan_preproc_skipped_section(scanner, lexer, valid_symbols);\n    }\n\n",
      "after": "    // Valid only right after an #else line or the condition line of a skipped\n    // section; never together with the\n    // string tokens except during error recovery.\n    if (!scanner->in_directive && valid_symbols[PREPROC_SKIPPED_SECTION] && !valid_symbols[INTERPOLATION_REGULAR_START]) {\n        return scan_preproc_skipped_section(scanner, lexer, valid_symbols);\n    }\n\n",
+     "occurrences": 1
+    },
+    {
+     "before": "            // condition. Column, string and directive-state guards still apply.\n            if (symbol >= 0 && valid_symbols[symbol]) {\n                lexer->mark_end(lexer);\n                if (symbol == PREPROC_DEFINE_START || symbol == PREPROC_UNDEF_START) {\n                    while (is_pp_space(lexer->lookahead)) advance(lexer);\n                    char name[16];\n",
+     "after": "            // condition. Column, string and directive-state guards still apply.\n            if (symbol >= 0 && valid_symbols[symbol]) {\n                lexer->mark_end(lexer);\n                if (symbol == PREPROC_ENDIF_START) {\n                    while (is_pp_space(lexer->lookahead)) advance(lexer);\n                    if (lexer->lookahead == '/') {\n                        advance(lexer);\n                        if (lexer->lookahead != '/') return false;\n                    }\n                }\n                if (symbol == PREPROC_DEFINE_START || symbol == PREPROC_UNDEF_START) {\n                    while (is_pp_space(lexer->lookahead)) advance(lexer);\n                    char name[16];\n",
      "occurrences": 1
     }
    ]

@@ -2952,6 +2952,1784 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "csharp-issue182-argument-prefix-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if A\n1,\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "preproc_if",
+              "text": "#if A\n1,\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-middle-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(0,\n#if A\n1,\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-tail-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if A\n1, 2\n#else\n3\n#endif\n);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-prefix-false-else",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if false\ninvalid ! text\n#else\n1,\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-prefix-inactive",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1,\n#else\ninvalid ! text\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-prefix-nested",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n#if A\n1,\n#endif\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-trailing-comma",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1,\n#endif\n);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-leading-comma",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n,\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-missing-comma",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1 2,\n#endif\n3);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-terminated-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1;\n#else\n2;\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "variable_declaration",
+              "text": "int x =\n#if A\n1;\n#else\n2;\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-terminated-false",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if false\ninvalid ! text\n#else\n2;\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-terminated-nested",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if true\n#if A\n1;\n#else\n2;\n#endif\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-outer-semicolon",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1\n#else\n2\n#endif\n;\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-missing-semicolon",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1\n#else\n2\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-double-value",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1 2;\n#else\n3;\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\nif(F())\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "if_header",
+              "text": "if(F())"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-false-else",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if false\ninvalid ! text\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-nested",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if true\n#if A\nif(F())\n#endif\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-disabled",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if false\nif(F())\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-missing-paren",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\nif(F()\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-symbol",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n} catch(System.Exception e) {}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            },
+            {
+              "type": "preproc_try_statement",
+              "text": "#if A\ntry {\n#endif\nF();\n#if A\n} catch(System.Exception e) {}\n#endif\n"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-literal",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if true\ntry {\n#endif\nF();\n#if true\n} catch(System.Exception e) {}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-disabled",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if false\ntry {\n#endif\nF();\n#if false\n} catch(System.Exception e) {}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-finally",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n} finally { H(); }\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-mismatched",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if true\ntry {\n#endif\nF();\n#if false\n} catch(System.Exception e) {}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-split-missing-handler",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n}\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-statement-control",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\nF();\n#else\nG();\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-invalid-directive",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1,\n#else extra\ninvalid ! text\n#endif\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-missing-endif",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if A\n1,\n2);\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-field-terminated",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04",
+        "csharp-B05"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { int x =\n#if A\n1;\n#else\n2;\n#endif\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-event-terminated",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04",
+        "csharp-B05"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { event System.Action x =\n#if A\nnull;\n#else\nnull;\n#endif\n}\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-multiple-declarators",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04",
+        "csharp-B05"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() { int a=0, x =\n#if A\n1;\n#else\n2;\n#endif\n} }\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-separator-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1 2,\n#endif\n3);\n} }\n",
+      "edits": [
+        {
+          "find": "1 2,",
+          "replace": "1, 2,"
+        },
+        {
+          "find": "1, 2,",
+          "replace": "1 2,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-initializer-terminator-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if A\n1\n#else\n2\n#endif\n} }\n",
+      "edits": [
+        {
+          "find": "\n1\n",
+          "replace": "\n1;\n"
+        },
+        {
+          "find": "\n1;\n",
+          "replace": "\n1\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-if-header-paren-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\nif(F()\n#else\nif(G())\n#endif\n{ H(); }\n} }\n",
+      "edits": [
+        {
+          "find": "if(F()\n",
+          "replace": "if(F())\n"
+        },
+        {
+          "find": "if(F())\n",
+          "replace": "if(F()\n"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-try-handler-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if A\ntry {\n#endif\nF();\n#if A\n}\n#endif\n} }\n",
+      "edits": [
+        {
+          "find": "\n}\n#endif",
+          "replace": "\n} catch(System.Exception e) {}\n#endif"
+        },
+        {
+          "find": "\n} catch(System.Exception e) {}\n#endif",
+          "replace": "\n}\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-argument-directive-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n1,\n#else extra\ninvalid ! text\n#endif\n2);\n} }\n",
+      "edits": [
+        {
+          "find": "#else extra",
+          "replace": "#else"
+        },
+        {
+          "find": "#else",
+          "replace": "#else extra"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-nested-argument-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nF(\n#if true\n#if A\n1,\n#endif\n#endif\n2);\n} }\n",
+      "edits": [
+        {
+          "find": "1,",
+          "replace": "1 2,"
+        },
+        {
+          "find": "1 2,",
+          "replace": "1,"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-nested-initializer-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\nint x =\n#if true\n#if A\n1;\n#else\n2;\n#endif\n#endif\n} }\n",
+      "edits": [
+        {
+          "find": "1;",
+          "replace": "1 2;"
+        },
+        {
+          "find": "1 2;",
+          "replace": "1;"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue182-nested-if-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B04"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\nclass C { void M() {\n#if true\n#if A\nif(F())\n#endif\n#endif\n{ H(); }\n} }\n",
+      "edits": [
+        {
+          "find": "if(F())",
+          "replace": "if(F()"
+        },
+        {
+          "find": "if(F()",
+          "replace": "if(F())"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-active-block",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-inactive-block",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if false\nclass C {}\n#endif /* bad */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-active-block-eof",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad */",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-nested-block",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if false\n#if A\nclass C {}\n#endif /* bad */\n#endif\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-line-comment",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif // valid\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-eof-line-comment",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif // valid",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-ordinary-comment-next-line",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif\n/* valid */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-active-multiline",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad\n comment */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-inactive-multiline",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if false\nopaque @ text\n#endif /* bad\n comment */\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-active-block-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if A\nclass C {}\n#endif /* bad */\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-inactive-block-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if false\nclass C {}\n#endif /* bad */\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "csharp-issue184-endif-nested-block-edit",
+      "kind": "gap",
+      "features": [
+        "csharp-B01",
+        "csharp-B03"
+      ],
+      "source_utf8": "class Keep { int A; int B; }\n#if false\n#if A\nclass C {}\n#endif /* bad */\n#endif\n",
+      "edits": [
+        {
+          "find": "/* bad */",
+          "replace": "// valid"
+        },
+        {
+          "find": "// valid",
+          "replace": "/* bad */"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "anchors": [
+            {
+              "type": "class_declaration",
+              "text": "class Keep { int A; int B; }"
+            }
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }
