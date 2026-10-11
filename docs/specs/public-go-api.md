@@ -263,6 +263,8 @@ func CP949Pair(lead, trail byte) bool
 func CP949Rune(lead, trail byte) (rune, bool)
 func ValidLanguageSymbol(s string) bool
 func ObserveServiceHost(enc string, src []byte) SvcObservation
+func ObserveServiceHostWithContext(enc string, src []byte, context *SvcContext) SvcObservation
+func (o SvcObservation) Syntax(inlineHasError *bool) (hasError, known bool)
 func NativeOperations() map[string]NativeOperation
 func ParseIncrementalProfile(data []byte) (IncrementalProfile, error)
 ```
@@ -315,3 +317,11 @@ offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.
 
 S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModuleProxyConsumer`는 checkout의 추적 파일로 module zip(`github.com/wotjr1649/tree-sitter-grammar-kit@v0.0.0-20261004000000-000000000000`)을 만들고 파일 module proxy(`GOPROXY=file://…`, 고정 `golang.org/x/sys`는 module cache의 download 파일)로만 별도 module이 그 version을 require해 build한다. replace·checkout 경로·network·tag가 없다. module zip에 실행 파일·native library·object 파일이 있으면 실패한다. 그 module의 `kit.Qualify` 결과가 `PATH`를 비운 환경에서 CLI `qualify`와 같은 bytes인지 확인한다. publication은 수행하지 않는다. CLI만으로 하는 grammar 갱신 흐름(기준 identity → 후보 verify FAIL과 변경 파일 → node schema diff의 검토 항목, 입력 불변·자동 채택 없음)은 `TestGrammarUpdateWorkflow`가 확인한다.
+
+## SVC r2 offline 관측
+
+`SvcFormat`은 `SVC-SERVICEHOST-r2`, `SvcLegacyFormat`은 `SVC-SERVICEHOST-r1`, `SvcCompositeSchema`는 `tsgk-svc-composite/r2`다. observer 입력은 `SourceEncodingValid`를 만족해야 한다. `SvcContext{DefaultLanguage,LanguageSource,CodeBehind []SvcReference}`는 caller가 검증해 준 문맥이며 `SvcReference{Name,Case}`는 불활성 문자열을 등록 case에 연결한다. API는 configuration·CodeBehind 파일·assembly를 읽거나 실행하지 않는다. profile decoder가 문맥의 상한·pair·고유 이름·등록 ID를 검사하며 직접 Go caller도 같은 사전조건을 유지해야 한다. `IncrementalCase.SvcSource`는 profile input identity와 결속한 원본 재관측 bytes다.
+
+`SvcObservation.AdditionalDirectives`, `SvcDirective.DiagnosticSpans`는 복수 directive와 오류 위치를 원본 좌표로 보존한다. `Syntax(nil)`은 directive 오류만으로 ERROR를 알 수 있지만 필요한 inline tree 없이 NO_ERROR를 증명하지 않는다. bool 포인터를 주는 caller는 해당 원본 included range의 실제 parse 결과를 제공해야 한다. 시험 PASS와 source 유효성을 구분하며 코드의 실행 성공을 판단하지 않는다.
+
+`SvcObservation.HasDirectivePrefix(encoding, source)`는 같은 source의 관측에서 ServiceHost 앞이 공백/BOM뿐인지 판정한다. UTF-8·UTF-16·CP949를 같은 decoder로 처리한다. 일반 C# 문자열의 directive marker와 host source를 구별하는 참조 guard이며 C# 구문 검증은 별도 parser가 수행한다. 별도로 CodeBehind의 같은 case 자기 참조는 prefix와 무관하게 거부한다.

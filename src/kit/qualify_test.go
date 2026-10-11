@@ -110,9 +110,13 @@ func qfxRecord(id, src string, edits bool, query bool) map[string]any {
 		"oracle_claims": map[string]string{"query_equality": qeq, "query_expectations": qe, "api": "PASS", "fact_reproduction": "NOT_CLAIMED", "dynamic_sql": "NOT_CLAIMED"}}
 }
 
+func qfxAPI() map[string]any {
+	return map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil, "position_navigation_divergences": 0, "first_divergence": nil}
+}
+
 func qfxStep(i int, s string, fresh, query bool) map[string]any {
 	inc := fxTreeOut(s, false)
-	inc["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil}
+	inc["api"] = qfxAPI()
 	if query {
 		n := uint32(len(s))
 		inc["queries"] = []any{map[string]any{"id": "q.x", "status": "COMPLETED", "code": "", "evaluation": "NOT_EVALUATED",
@@ -120,7 +124,9 @@ func qfxStep(i int, s string, fresh, query bool) map[string]any {
 	}
 	m := map[string]any{"step": i, "source_bytes": len(s), "source_sha256": sum([]byte(s)), "edit": nil, "route": nil, "comparison": nil, "incremental": inc, "fresh": nil}
 	if fresh {
-		m["fresh"] = fxTreeOut(s, false)
+		freshTree := fxTreeOut(s, false)
+		freshTree["api"] = qfxAPI()
+		m["fresh"] = freshTree
 		m["route"] = map[string]any{"edit_has_changes": true, "edited_root_end_byte": len(s), "reused_nodes": 1, "fresh_reused_nodes": 0, "proven": true}
 		m["comparison"] = map[string]any{"equal": true, "first_difference": nil}
 		m["query_comparison"] = map[string]any{"equal": true}
@@ -555,21 +561,32 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 				}
 			}
 			ids := func() []IdentityRef {
-				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"source", "tsgk-source-bytes/r1", sum([]byte("svc"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
+				return []IdentityRef{{"producer", "tsgk-native-build/r1", build}, {"source", "tsgk-source-bytes/r1", sum([]byte("alpha"))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}
 			}
-			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": "C#", "identities": ids(),
+			c := map[string]any{"schema": "tsgk-svc-composite/r1", "language": map[string]any{"status": "CSHARP", "value": nil}, "identities": ids(),
+				"directive": &SvcDirective{Close: &Span{}, Diagnostics: []string{}}, "coverage": SvcCoverage{Inline: "OBSERVED"},
 				"inline": map[string]any{"tree": map[string]any{"identities": ids()}}}
 			if edit != nil {
 				edit(c)
 			}
-			recs[0]["steps"].([]any)[0].(map[string]any)["composite"] = c
+			for _, rc := range recs {
+				for _, st := range rc["steps"].([]any) {
+					st.(map[string]any)["composite"] = c
+				}
+			}
 		}, manifest: func(s string, m map[string]any) {
 			if s == "s06-fxa" {
 				m["producer"].(map[string]string)["build_identity"] = build
 			}
 		}}
 	}
-	f := newQfx(t)
+	fixture := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[0].Workload.Format = SvcLegacyFormat
+		f.inv.Routes[0].Workload.Symbol = "tree_sitter_c_sharp"
+		return f
+	}
+	f := fixture()
 	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": host(fxProducer, nil)}))
 	for _, pl := range qfxPlatforms {
 		if c := cellOf(r, "fxa", pl.ID); c.Comparison != AssessPass || c.Mechanism != AssessPass {
@@ -580,14 +597,14 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 		t.Fatalf("host build identity not retained: %v", l.Set.Host)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	mixed := host(other, func(c map[string]any) { c["identities"].([]IdentityRef)[0].SHA256 = fxProducer })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": mixed, "darwin-arm64": host(fxProducer, nil)}))
 	if l := cellOf(r, "fxa", "linux-amd64"); l.Mechanism == AssessPass || !slices.ContainsFunc(l.Set.Gates, func(g ReplayGate) bool { return g.ID == "case-binding" && g.Code == "MIXED_IDENTITY" }) {
 		t.Fatalf("composite from another build accepted: %s %+v", l.Mechanism, l.Set.Gates)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	inline := host(other, func(c map[string]any) {
 		c["inline"].(map[string]any)["tree"].(map[string]any)["identities"].([]IdentityRef)[0].SHA256 = fxProducer
 	})
@@ -597,14 +614,14 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 	}
 
 	// only the producer is left out: a different composite source is still a difference
-	f = newQfx(t)
+	f = fixture()
 	src := host(fxProducer, func(c map[string]any) { c["identities"].([]IdentityRef)[1].SHA256 = sum([]byte("other")) })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": src}))
 	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
 		t.Fatalf("composite source difference not reported: %s %v", c.Comparison, r.Comparisons[0].Differences)
 	}
 
-	f = newQfx(t)
+	f = fixture()
 	vb := host(fxProducer, func(c map[string]any) { c["language"] = "VB" })
 	r = f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": host(fxProducer, nil), "linux-amd64": host(other, nil), "darwin-arm64": vb}))
 	if c := cellOf(r, "fxa", "darwin-arm64"); c.Comparison != AssessFail || len(r.Comparisons[0].Differences) == 0 {
@@ -800,7 +817,7 @@ func roleRow(r QualificationResult, id, plat string) QualRoleRow {
 func (f *qfx) svcRole() *QualWorkload {
 	w := qfxWorkload("s06-fxs", "fxs", []QualCase{{ID: "s1", Role: "support", Input: NativeInput{SHA256: sum([]byte("alpha")), Bytes: 5}, Edits: []Edit{},
 		Expect: []StepExpectation{}, QueryExpect: []QueryExpectation{}, Covers: map[string][]string{}}})
-	w.Symbol, w.Format = "tree_sitter_c_sharp", SvcFormat
+	w.Symbol, w.Format = "tree_sitter_c_sharp", SvcLegacyFormat
 	f.inv.ExtraRoles = append(f.inv.ExtraRoles, QualRole{ID: "fx-svc", Role: "owned", Status: RoleExecuted, Reason: "owned .svc fixture", Platforms: []string{"windows-amd64"},
 		NotApplicable: map[string]string{"linux-amd64": "windows only", "darwin-arm64": "windows only"}, Workloads: []QualWorkload{w}})
 	return &f.inv.ExtraRoles[len(f.inv.ExtraRoles)-1].Workloads[0]
@@ -881,8 +898,8 @@ func TestQualifyPlatformClaims(t *testing.T) {
 	f = covered()
 	api := func(s string, recs []map[string]any) {
 		if s == "s06-fxa" {
-			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
-			tr["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "first_difference": nil, "position_navigation_divergences": 1}
+			tr := recs[2]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["queries"].([]any)[0].(map[string]any)["captures"].([]Capture)[0].Pattern = 1
 		}
 	}
 	r = f.run(t, f.all(t, map[string]qfxMut{"darwin-arm64": {record: api}}))
@@ -953,13 +970,38 @@ func TestQualifySvcExpectedAssessment(t *testing.T) {
 	}
 }
 
+func TestQualifySvcObservationOnlyAPIClaim(t *testing.T) {
+	for _, claim := range []string{claimNotClaimed, claimPass, claimBlocked, "missing"} {
+		f := newQfx(t)
+		w := f.svcRole()
+		w.API = true
+		w.Cases[0].ExpectAssessment, w.Cases[0].ExpectCode = AssessBlocked, "SVC_INLINE_UNRESOLVED"
+		mut := qfxMut{record: func(set string, records []map[string]any) {
+			qfxSvcObserved(set, records)
+			if set != "s06-fxs" {
+				return
+			}
+			if claim == "missing" {
+				delete(records[0], "oracle_claims")
+			} else {
+				records[0]["oracle_claims"].(map[string]string)["api"] = claim
+			}
+		}}
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+		row := roleRow(r, "fx-svc", "windows-amd64")
+		if (row.Mechanism == AssessPass) != (claim == claimNotClaimed) || (row.Sets[0].APIFails == 0) != (claim == claimNotClaimed) {
+			t.Fatalf("%s: %s API failures %d", claim, row.Mechanism, row.Sets[0].APIFails)
+		}
+	}
+}
+
 // #76 inventory guard: the registered verdict belongs only to an SVC-format case that
 // covers no row and needs no tree, as a PASS without code or a BLOCKED with one.
 func TestQualificationInventorySvcExpectation(t *testing.T) {
 	// the fxa route workload in the SVC format; c2 has no step or query expectation
 	base := func() *qfx {
 		f := newQfx(t)
-		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcFormat
+		f.inv.Routes[0].Workload.Symbol, f.inv.Routes[0].Workload.Format = "tree_sitter_c_sharp", SvcLegacyFormat
 		c := &f.inv.Routes[0].Workload.Cases[1]
 		c.Covers, c.ExpectAssessment, c.ExpectCode = map[string][]string{}, AssessBlocked, "SVC_INLINE_UNRESOLVED"
 		return f
@@ -1193,7 +1235,11 @@ func TestQualifyErrorNodesInTree(t *testing.T) {
 	f = covered([]string{"bad"})
 	record := func(s string, recs []map[string]any) {
 		if s == "s06-fxa" {
-			recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+			tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tr["form"] = "record"
+			delete(tr, "tree")
+			recs[0]["oracle_claims"].(map[string]string)["api"] = claimBlocked
+			recs[0]["assessment"] = AssessBlocked
 		}
 	}
 	r = f.run(t, f.all(t, qfxAll(qfxMut{record: record})))
@@ -1365,7 +1411,11 @@ func TestQualifySampleW(t *testing.T) {
 		"error-node": {qfxErrorNode("s06-fxa", "bad", 0), claimFail},
 		"no-full-tree": {func(s string, recs []map[string]any) {
 			if s == "s06-fxa" {
-				recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = "record"
+				tr := recs[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+				tr["form"] = "record"
+				delete(tr, "tree")
+				recs[0]["oracle_claims"].(map[string]string)["api"] = claimBlocked
+				recs[0]["assessment"] = AssessBlocked
 			}
 		}, claimBlocked},
 	} {
@@ -1467,8 +1517,8 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 			qfxRouteNoReuse(true, claimBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1")(s, recs)
 			if s == "s06-fxa" {
 				tr := recs[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
-				tr["form"] = "summary"
-				delete(tr, "tree")
+				fxSummaryOut(tr)
+				recs[1]["oracle_claims"].(map[string]string)["api"] = claimBlocked
 			}
 		}, ""},
 	} {
@@ -1488,5 +1538,137 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 				t.Fatalf("clean-tree route FAIL: E %+v", ob)
 			}
 		})
+	}
+}
+
+func TestQualifyRejectsPositionalAPIPass(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"] = map[string]any{"revision": "tsgk-api/r1", "consistent": true, "position_navigation_divergences": 1}
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut, "linux-amd64": mut, "darwin-arm64": mut}))
+	for _, platform := range qfxPlatforms {
+		c := cellOf(r, "fxa", platform.ID)
+		if c.Set.APIFails != 1 || c.Mechanism == AssessPass {
+			t.Fatalf("positional API PASS: %+v", c)
+		}
+	}
+}
+
+func TestQualifyRequiresCompleteAPIProof(t *testing.T) {
+	for _, bad := range []string{"", "claims", "claim", "api", "null", "empty", "revision", "consistent", "first_difference", "position_navigation_divergences", "first_divergence", "false", "difference", "divergence", "fresh"} {
+		t.Run(bad, func(t *testing.T) {
+			f := newQfx(t)
+			mut := qfxMut{record: func(set string, records []map[string]any) {
+				if set != "s06-fxa" {
+					return
+				}
+				rec := records[1]
+				step := rec["steps"].([]any)[1].(map[string]any)
+				tree := step["incremental"].(map[string]any)
+				api := tree["api"].(map[string]any)
+				switch bad {
+				case "claims":
+					delete(rec, "oracle_claims")
+				case "claim":
+					delete(rec["oracle_claims"].(map[string]string), "api")
+				case "api":
+					delete(tree, "api")
+				case "null":
+					tree["api"] = nil
+				case "empty":
+					tree["api"] = map[string]any{}
+				case "revision", "consistent", "first_difference", "position_navigation_divergences", "first_divergence":
+					delete(api, bad)
+				case "false":
+					api["consistent"] = false
+				case "difference":
+					api["first_difference"] = map[string]any{"node": 1}
+				case "divergence":
+					api["first_divergence"] = map[string]any{"node": 1}
+				case "fresh":
+					delete(step["fresh"].(map[string]any), "api")
+				}
+			}}
+			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+			c := cellOf(r, "fxa", "windows-amd64")
+			if (c.Mechanism == AssessPass) != (bad == "") || (c.Set.APIFails > 0) != (bad != "") {
+				t.Fatalf("%s: mechanism %s API failures %d codes %v", bad, c.Mechanism, c.Set.APIFails, setCodes(c))
+			}
+		})
+	}
+}
+
+func TestQualifyRejectsMissingTreeEnvelope(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		tree := records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		delete(tree, "tree")
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if c.Mechanism == AssessPass {
+		t.Fatalf("missing full envelope accepted: mechanism %s codes %v", c.Mechanism, setCodes(c))
+	}
+}
+
+func TestQualifyAPIClaimMatchesReducedTree(t *testing.T) {
+	for _, form := range []string{"summary", "record"} {
+		for _, claim := range []string{claimBlocked, claimPass, claimNotClaimed, "unknown", ""} {
+			t.Run(form+"/"+claim, func(t *testing.T) {
+				f := newQfx(t)
+				mut := qfxMut{record: func(set string, records []map[string]any) {
+					if set != "s06-fxa" {
+						return
+					}
+					rec := records[0]
+					tr := rec["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+					if form == "summary" {
+						fxSummaryOut(tr)
+					} else {
+						tr["form"] = "record"
+						delete(tr, "tree")
+					}
+					delete(tr, "api")
+					rec["oracle_claims"].(map[string]string)["api"] = claim
+					if claim == claimBlocked {
+						rec["assessment"] = AssessBlocked
+					}
+				}}
+				r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+				c := cellOf(r, "fxa", "windows-amd64")
+				if slices.Contains(setCodes(c), "API_CLAIM_MISSING") != (claim != claimBlocked) {
+					t.Fatalf("%s %s: %v", form, claim, setCodes(c))
+				}
+			})
+		}
+	}
+}
+
+func TestQualifyMixedSummaryAPIFailure(t *testing.T) {
+	f := newQfx(t)
+	mut := qfxMut{record: func(set string, records []map[string]any) {
+		if set != "s06-fxa" {
+			return
+		}
+		rec := records[1]
+		steps := rec["steps"].([]any)
+		tr := steps[0].(map[string]any)["incremental"].(map[string]any)
+		fxSummaryOut(tr)
+		delete(tr, "api")
+		api := steps[1].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)
+		api["position_navigation_divergences"], api["first_divergence"] = 1, map[string]any{"node": 1}
+		rec["oracle_claims"].(map[string]string)["api"], rec["assessment"] = claimFail, AssessFail
+	}}
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))
+	c := cellOf(r, "fxa", "windows-amd64")
+	if slices.Contains(setCodes(c), "API_CLAIM_MISSING") || c.Set.APIFails != 1 {
+		t.Fatalf("%v API failures %d", setCodes(c), c.Set.APIFails)
 	}
 }

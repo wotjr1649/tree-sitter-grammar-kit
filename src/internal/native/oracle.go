@@ -229,8 +229,20 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
-		x := Context{Op: op, Route: n.Route, Output: n.Output, Declarations: n.Declarations, Format: n.Format, CgroupParent: req.CgroupParent, PolicyRef: policy,
+		x := Context{Op: op, Route: n.Route, Output: n.Output, Declarations: n.Declarations, Format: n.Format, SvcContext: n.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy,
 			Protocol: ProtocolR2, Queries: queries, API: prof.API}
+		refs := b.runSvcReferences(runCtx, x, n.Cases, req.Root)
+		for _, oc := range prof.OracleCases {
+			if ref, found := refs[oc.ID]; found && ref.ExecutionStatus == kit.StatusCompleted {
+				src, err := readCase(req.Root, oc.Input)
+				if err != nil {
+					ref.ExecutionStatus, ref.Assessment, ref.Code = kit.StatusNotRun, kit.AssessBlocked, err.(*Error).Code
+				} else {
+					judgeOracle(&ref, oc, prof, pack, x, src)
+				}
+				refs[oc.ID] = ref
+			}
+		}
 		for i, oc := range prof.OracleCases {
 			c := oc.IncrementalCase
 			var cr CaseResult
@@ -239,8 +251,13 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 				cr = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
 					Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
 			} else {
-				cr = b.RunCase(runCtx, x, c, src)
-				judgeOracle(&cr, oc, prof, pack, x, src)
+				var found bool
+				cr, found = refs[c.ID]
+				if !found {
+					cr = b.RunCase(runCtx, x, c, src)
+					linkSvcReferences(&cr, refs)
+					judgeOracle(&cr, oc, prof, pack, x, src)
+				}
 			}
 			cases = append(cases, cr)
 			name := fmt.Sprintf("%05d-%s.json", i, c.ID)
@@ -413,7 +430,13 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 			cr.QueryExpect = append(cr.QueryExpect, r)
 		}
 	}
-	if pack != nil && cr.ExecutionStatus == kit.StatusCompleted && len(cr.Steps) > 0 {
+	if pack != nil && cr.ExecutionStatus == kit.StatusCompleted && (len(cr.Steps) == 0 || cr.Steps[0].Incremental == nil) {
+		cr.Oracle.FactReproduction = ClaimBlocked
+		if oc.DynamicSQL != nil {
+			cr.Oracle.DynamicSQL = ClaimBlocked
+		}
+	}
+	if pack != nil && cr.ExecutionStatus == kit.StatusCompleted && len(cr.Steps) > 0 && cr.Steps[0].Incremental != nil {
 		f := &FactsOut{Pack: *prof.FactPack}
 		setDifference := func(detail string) {
 			if f.Difference == "" {
@@ -492,7 +515,9 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 		cr.Facts = f
 	}
 	if cr.ExecutionStatus == kit.StatusCompleted {
+		assessment := cr.Assessment
 		foldAssessment(cr)
+		cr.Assessment = worse(assessment, cr.Assessment)
 		if cr.Assessment == kit.AssessFail && (cr.Code == "" || strings.HasPrefix(cr.Code, routeUnobservablePrefix)) {
 			// a blocked route code names the case only when nothing fails
 			cr.Code = "ORACLE_CLAIM_FAILED"

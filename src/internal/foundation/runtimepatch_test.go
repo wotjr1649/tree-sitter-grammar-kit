@@ -52,13 +52,13 @@ func TestRuntimePatch(t *testing.T) {
 			Bytes        int
 		}
 	}
-	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 2 || len(manifest.Files) != 83 || manifest.Commit != "659cda7c7f86ebe31cc825dc5da59e9add172dc7" {
+	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 3 || len(manifest.Files) != 83 || manifest.Commit != "659cda7c7f86ebe31cc825dc5da59e9add172dc7" {
 		t.Fatalf("runtime patch registration: %v", err)
 	}
 	var nodePin bool
 	for _, f := range manifest.Files {
 		if f.Path == "lib/src/node.c" {
-			nodePin = f.SHA256 == "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01" && f.Bytes == 23700
+			nodePin = f.SHA256 == "c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062" && f.Bytes == 22738
 		}
 	}
 	if !nodePin {
@@ -70,6 +70,7 @@ func TestRuntimePatch(t *testing.T) {
 	}{
 		{"118", "src/drivers/native-c/runtime-field-lookup.patch.json", "fb0b5eecacb6d7e324f60914893801c0d147f413dd0af73a19ef270d341a77b5", 25151},
 		{"120", "src/drivers/native-c/runtime-navigation.patch.json", "4ffa3a64675b95316ae92e11cbfc9754f908bb151c5499c73fa6371a93358740", 23579},
+		{"176", "src/drivers/native-c/runtime-sibling-identity.patch.json", "ef9c9e15b6dec11646416207db3421c58054bef7cb5209df10d36c5f872b2f01", 23700},
 	} {
 		t.Run(tc.issue, func(t *testing.T) {
 			checkRuntimePatch(t, root, manifest.Patches[i], tc.issue, tc.subject, tc.beforeSHA, tc.beforeBytes)

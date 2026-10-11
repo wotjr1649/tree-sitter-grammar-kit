@@ -4,11 +4,36 @@ import (
 	"context"
 	jsonv2 "encoding/json/v2"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+func TestAPISiblingIdentityBoundaries(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	coLocated := 0
+	for _, source := range []string{"a = f([1", "a = f(((1;", "a = f([1;", "c = (1;", "a = f([1]);\nb = f(2);", "# extra\na = f(1);\n", strings.Repeat("a = f(1);\n", 1000)} {
+		r := runOracleCase(t, b, oracleContext(true), source, nil)
+		if r.ExecutionStatus != kit.StatusCompleted || r.Oracle == nil || r.Oracle.API != ClaimPass || r.Steps[0].Incremental.API == nil || r.Steps[0].Incremental.API.PositionNavigation != 0 {
+			t.Fatalf("bytes %d: %s %s %+v", len(source), r.ExecutionStatus, r.Assessment, r.Oracle)
+		}
+		byByte := map[uint32]int{}
+		for _, node := range r.Steps[0].Incremental.Tree.Nodes {
+			if node.IsMissing && node.StartByte == node.EndByte {
+				byByte[node.StartByte]++
+				if byByte[node.StartByte] > coLocated {
+					coLocated = byByte[node.StartByte]
+				}
+			}
+		}
+		t.Logf("bytes %d missing-by-byte %v", len(source), byByte)
+	}
+	if coLocated < 1 {
+		t.Fatal("parsed fixtures must include a zero-width missing node")
+	}
+}
 
 // oracleContext is the native-query context with the given queries and API switch.
 func oracleContext(api bool, queries ...string) Context {
@@ -267,11 +292,10 @@ func TestAPIObservations(t *testing.T) {
 	if errs == 0 || missing == 0 || extra == 0 {
 		t.Fatalf("fixture lacks ERROR/MISSING/extra: %d %d %d", errs, missing, extra)
 	}
-	// the pinned runtime's positional sibling navigation skips the zero-width MISSING ")":
-	// observed and recorded, never silently equal
+	// Identity navigation preserves the zero-width MISSING ")" as a distinct sibling.
 	api := r.Steps[0].Incremental.API
-	if api.PositionNavigation == 0 || api.FirstDivergence == nil || api.FirstDivergence.Check != "position_navigation:next_sibling" {
-		t.Fatalf("zero-width sibling divergence not recorded: %+v", api)
+	if api.PositionNavigation != 0 || api.FirstDivergence != nil {
+		t.Fatalf("zero-width sibling divergence: %+v", api)
 	}
 	// negative controls on the comparison itself: a wrong parent and a wrong sibling of a
 	// node with width are differences, not divergences
@@ -313,6 +337,40 @@ func TestAPIObservations(t *testing.T) {
 			}
 			break
 		}
+	}
+	// A zero-width skip remains observable, but the current producer must fail its API claim.
+	planted := false
+	for i, n := range tree {
+		if !n.IsMissing || n.StartByte != n.EndByte {
+			continue
+		}
+		for j, row := range w.Nodes {
+			if row[2] != int64(i) {
+				continue
+			}
+			bad := w
+			bad.Nodes = slices.Clone(w.Nodes)
+			bad.Nodes[j] = slices.Clone(row)
+			bad.Nodes[j][2] = w.Nodes[i][2]
+			d, div := compareAPI(tree, &bad)
+			if d != nil || len(div) == 0 {
+				t.Fatalf("positional control: %v %v", d, div)
+			}
+			step := StepResult{Incremental: &TreeOut{}}
+			claims := OracleClaims{API: ClaimNotClaimed}
+			oracleContext(true).oracleTrees(&step, CheckedStep{Incremental: Tree{Status: kit.StatusCompleted, Nodes: tree, API: &bad}}, kit.EncodingUTF8, []byte(src), &Producer{}, &claims)
+			if claims.API != ClaimFail || step.Incremental.API.PositionNavigation == 0 {
+				t.Fatalf("positional skip passed: %+v", claims)
+			}
+			planted = true
+			break
+		}
+		if planted {
+			break
+		}
+	}
+	if !planted {
+		t.Fatal("fixture lacks an observable zero-width skip")
 	}
 	lookups := w
 	lookups.FieldLookups = w.FieldLookups[1:]

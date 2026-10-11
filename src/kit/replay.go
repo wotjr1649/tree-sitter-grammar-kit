@@ -362,6 +362,10 @@ func Reducers() []ReducerInfo {
 // replayEnv is the state of one replay: the bounded root, the walked file set and the
 // reducer's accounting.
 type replayEnv struct {
+	svcContext     *SvcContext
+	svcFormat      string
+	svcEvidence    map[string]svcCaseEvidence
+	svcReferences  []svcReferenceLink
 	r              *run
 	g              *guard
 	lim            ReplayLimits
@@ -384,6 +388,8 @@ type replayEnv struct {
 	needOver       bool   // a member the reducer needed was beyond the limits: it stopped early
 	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
 	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
+
+	nativeInputBytes uint64
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

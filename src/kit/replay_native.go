@@ -24,27 +24,38 @@ const (
 )
 
 type rcInput struct {
-	Bytes  uint64 `json:"bytes"`
-	SHA256 string `json:"sha256"`
+	Encoding       string `json:"encoding"`
+	EncodingSource string `json:"encoding_source,omitempty"`
+	Bytes          uint64 `json:"bytes"`
+	SHA256         string `json:"sha256"`
 }
 
 type rcDecl struct {
 	Status string `json:"status"`
 }
 
+type rcFullTree struct {
+	Schema       string            `json:"schema"`
+	Input        rcInput           `json:"input"`
+	Status       string            `json:"status"`
+	Capabilities map[string]string `json:"capabilities"`
+	Nodes        []TreeNode        `json:"nodes"`
+	Captures     jsontext.Value    `json:"captures"`
+	Identities   []IdentityRef     `json:"identities"`
+}
+
 type rcTree struct {
-	Status          string `json:"status"`
-	Code            string `json:"code"`
-	Form            string `json:"form"`
-	DescendantCount uint64 `json:"descendant_count"`
-	HasError        bool   `json:"has_error"`
-	Digest          string `json:"digest"`
-	Tree            *struct {
-		Input      rcInput       `json:"input"`
-		Nodes      []TreeNode    `json:"nodes"`
-		Identities []IdentityRef `json:"identities"`
-	} `json:"tree"`
-	Summary *struct {
+	Status          string      `json:"status"`
+	Code            string      `json:"code"`
+	Form            string      `json:"form"`
+	DescendantCount uint64      `json:"descendant_count"`
+	HasError        bool        `json:"has_error"`
+	Digest          string      `json:"digest"`
+	Tree            *rcFullTree `json:"tree"`
+	Summary         *struct {
+		Schema          string        `json:"schema"`
+		Input           rcInput       `json:"input"`
+		Status          string        `json:"status"`
 		Identities      []IdentityRef `json:"identities"`
 		DescendantCount uint64        `json:"descendant_count"`
 		Digest          struct {
@@ -65,10 +76,21 @@ type rcTree struct {
 	} `json:"queries"`
 }
 
+type rcEdit struct {
+	StartByte   *uint32  `json:"start_byte"`
+	OldEndByte  *uint32  `json:"old_end_byte"`
+	NewEndByte  *uint32  `json:"new_end_byte"`
+	StartPoint  []uint32 `json:"start_point"`
+	OldEndPoint []uint32 `json:"old_end_point"`
+	NewEndPoint []uint32 `json:"new_end_point"`
+}
+
 type rcStep struct {
-	Step         int    `json:"step"`
-	SourceBytes  uint64 `json:"source_bytes"`
-	SourceSHA256 string `json:"source_sha256"`
+	Edit         *rcEdit `json:"edit"`
+	Restarted    bool    `json:"restarted"`
+	Step         int     `json:"step"`
+	SourceBytes  uint64  `json:"source_bytes"`
+	SourceSHA256 string  `json:"source_sha256"`
 	Route        *struct {
 		EditHasChanges   bool   `json:"edit_has_changes"`
 		ReusedNodes      uint64 `json:"reused_nodes"`
@@ -84,16 +106,23 @@ type rcStep struct {
 	QueryCompare *struct {
 		Equal bool `json:"equal"`
 	} `json:"query_comparison"`
-	Composite *struct {
-		Directive  *SvcDirective `json:"directive"`
-		Coverage   SvcCoverage   `json:"coverage"`
-		Identities []IdentityRef `json:"identities"`
-		Inline     *struct {
-			Tree *struct {
-				Identities []IdentityRef `json:"identities"`
-			} `json:"tree"`
-		} `json:"inline"`
-	} `json:"composite"`
+	Composite *rcComposite `json:"composite"`
+}
+
+type rcComposite struct {
+	Schema               string          `json:"schema"`
+	Format               string          `json:"format"`
+	Input                rcInput         `json:"input"`
+	Language             SvcLanguage     `json:"language"`
+	Directive            *SvcDirective   `json:"directive"`
+	AdditionalDirectives []*SvcDirective `json:"additional_directives"`
+	CodeBehind           *SvcCodeBehind  `json:"code_behind"`
+	Coverage             SvcCoverage     `json:"coverage"`
+	Identities           []IdentityRef   `json:"identities"`
+	Inline               *struct {
+		IncludedRanges []Span      `json:"included_ranges"`
+		Tree           *rcFullTree `json:"tree"`
+	} `json:"inline"`
 }
 
 type rcExpect struct {
@@ -105,22 +134,26 @@ type rcExpect struct {
 	Result       string         `json:"result"`
 }
 
+type rcClaims struct {
+	IncrementalEquality string `json:"incremental_equality"`
+	IncrementalRoute    string `json:"incremental_route"`
+	Expectations        string `json:"expectations"`
+}
+
 // rcCase is the part of a recorded S05 case or S06 record the reducer reads; the rest
 // (process, producer, host observations) is retained in the raw and not judged.
 type rcCase struct {
-	Schema          string      `json:"schema"`
-	Case            string      `json:"case"`
-	ID              string      `json:"id"`
-	Input           NativeInput `json:"input"`
-	ExecutionStatus string      `json:"execution_status"`
-	Assessment      string      `json:"assessment"`
-	Code            string      `json:"code"`
-	Claims          struct {
-		IncrementalEquality string `json:"incremental_equality"`
-		IncrementalRoute    string `json:"incremental_route"`
-		Expectations        string `json:"expectations"`
-	} `json:"claims"`
-	Oracle *struct {
+	Segments        []rcSvcSegment   `json:"segments"`
+	References      []rcSvcReference `json:"references"`
+	Schema          string           `json:"schema"`
+	Case            string           `json:"case"`
+	ID              string           `json:"id"`
+	Input           NativeInput      `json:"input"`
+	ExecutionStatus string           `json:"execution_status"`
+	Assessment      string           `json:"assessment"`
+	Code            string           `json:"code"`
+	Claims          rcClaims         `json:"claims"`
+	Oracle          *struct {
 		QueryEquality     string `json:"query_equality"`
 		QueryExpectations string `json:"query_expectations"`
 		API               string `json:"api"`
@@ -134,12 +167,28 @@ type rcCase struct {
 	} `json:"producer"`
 }
 
+type rcSvcSegment struct {
+	StartStep int       `json:"start_step"`
+	EndStep   int       `json:"end_step"`
+	Claims    *rcClaims `json:"claims"`
+	Process   *struct {
+		Status   string `json:"status"`
+		ExitCode int    `json:"exit_code"`
+		Cleanup  struct {
+			Verified bool `json:"verified"`
+		} `json:"cleanup"`
+	} `json:"process"`
+}
+
 // caseOutcome is the replayed verdict of one case; complete is false when a claim the
 // verdict depends on was not recomputed.
 type caseOutcome struct {
-	status, assess string
-	complete       bool
-	hasError       bool
+	status, assess       string
+	complete             bool
+	hasError             bool
+	segmentClaims        []rcClaims
+	segmentClaimsValid   bool
+	recomputedAssessment string
 }
 
 // statusAssessments are the assessments a non-completed case may carry.
@@ -193,6 +242,9 @@ func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
 func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, queries bool) caseOutcome {
+	bindFailures := x.gate("case-binding").Failed
+	x.checkSvcComposite(c, want)
+	x.observeSvcReferences(c)
 	name := x.name(c.ID, idx)
 	out := caseOutcome{status: c.ExecutionStatus, assess: c.Assessment, complete: true}
 	bind := x.gate("case-binding")
@@ -208,7 +260,8 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	}
 	bind.check(ok, name, "CASE_BINDING_MISMATCH", "case id, 입력 identity 또는 step 수가 workload 등록과 다르다")
 	// an SVC composite names the run's producer and policy too (checked by checkSeen)
-	for _, s := range c.Steps {
+	for i, s := range c.Steps {
+		bind.check(s.Step == i, name, "STEP_INDEX_MISMATCH", "step 순서가 index와 다르다")
 		if s.Composite == nil {
 			continue
 		}
@@ -233,17 +286,86 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			"완료되지 않은 case가 허용되지 않는 판정이나 claim을 가진다")
 		return out
 	}
-	if len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Incremental != nil || s.Composite == nil }) {
+	if x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat {
+		for _, s := range c.Steps {
+			if s.Composite != nil && s.Incremental == nil {
+				st.check(s.Fresh == nil && s.Comparison == nil && s.Route == nil && s.QueryCompare == nil && !s.Restarted, name, "STATUS_TREE_INCONSISTENT", "관측 공백에 native tree나 비교 기록이 있다")
+			}
+		}
+	}
+	if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Incremental != nil || s.Composite == nil }) {
 		// an SVC observation-only case: no inline tree; the verdict is the S05 rule over the
 		// recorded directive observations
 		st.pass()
+		x.gate("incremental-equality").check(c.Claims.IncrementalEquality == claimNotClaimed, name, "CLAIM_MISMATCH", "관측 전용 SVC는 incremental equality를 주장할 수 없다")
+		x.gate("incremental-route").check(c.Claims.IncrementalRoute == claimNotClaimed, name, "CLAIM_MISMATCH", "관측 전용 SVC는 incremental route를 주장할 수 없다")
 		got, code := svcVerdict(c.Steps, want != nil && len(want.Expect) > 0)
-		x.gate("verdict").check(got == c.Assessment && code == c.Code, name, "VERDICT_MISMATCH", "SVC 관측 판정이 다시 계산한 값과 다르다")
+		exps := []StepExpectation{}
+		if want != nil {
+			exps = want.Expect
+		} else {
+			for _, e := range c.Expectations {
+				exps = append(exps, StepExpectation{Step: e.Step, Syntax: e.Syntax, Contains: e.Contains, Anchors: e.Anchors, Declarations: e.Declarations})
+			}
+		}
+		x.gate("expectations").check(len(exps) == len(c.Expectations), name, "EXPECTATION_REGISTRATION_MISMATCH", "SVC 기대값 수가 다르다")
+		if len(exps) > 0 {
+			claim := claimPass
+			eg := x.gate("expectations")
+			for i, e := range exps {
+				if e.Step < 0 || e.Step >= len(c.Steps) {
+					eg.fail(name, "EXPECTATION_STEP_INVALID", "SVC step이 없다")
+					claim = claimFail
+					continue
+				}
+				r, _ := svcExpectResult(e, c.Steps[e.Step])
+				claim = worseClaim(claim, r)
+				if i < len(c.Expectations) {
+					rec := c.Expectations[i]
+					eg.check(rec.Step == e.Step && rec.Syntax == e.Syntax && slices.Equal(rec.Contains, e.Contains) && slices.Equal(rec.Anchors, e.Anchors) && rec.Declarations == e.Declarations && rec.Result == r, name, "EXPECTATION_MISMATCH", "SVC 기대값 결과가 다르다")
+				}
+			}
+			eg.check(claim == c.Claims.Expectations, name, "CLAIM_MISMATCH", "SVC 기대값 claim이 다르다")
+			got, code = claim, ""
+			if claim == claimFail {
+				code = "EXPECTATION_FAILED"
+			}
+			if claim == claimBlocked {
+				code = "SVC_EXPECTATION_UNASSESSABLE"
+			}
+		} else {
+			x.gate("expectations").check(c.Claims.Expectations == claimNotClaimed, name, "CLAIM_MISMATCH", "기대값 없는 관측 전용 SVC의 expectations claim이 다르다")
+		}
+		for _, r := range c.References {
+			got = foldClaims([]string{got, r.Assessment})
+		}
+		out.recomputedAssessment = got
+		x.gate("api").check(c.Schema != OracleRecordSchema || c.Oracle != nil, name, "ORACLE_CLAIMS_MISSING", "Oracle record에 claim이 없다")
+		if c.Oracle != nil {
+			x.gate("api").check(c.Oracle.API == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 API를 주장할 수 없다")
+			x.gate("query-equality").check(c.Oracle.QueryEquality == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 query equality를 주장할 수 없다")
+		}
+		recorded := x.recordOracleClaims(c, name)
+		if foldClaims(recorded) == AssessFail && code == "" {
+			code = "ORACLE_CLAIM_FAILED"
+		}
+		x.gate("verdict").check(foldClaims(append([]string{got}, recorded...)) == c.Assessment && code == c.Code, name, "VERDICT_MISMATCH", "SVC 관측 판정이 다시 계산한 값과 다르다")
 		out.assess = got
+		if len(recorded) > 0 && got != AssessFail {
+			out.assess, out.complete = AssessUnresolved, false
+		}
 		return out
 	}
 	completedTrees := len(c.Steps) > 0
-	for _, s := range c.Steps {
+	for k, s := range c.Steps {
+		if s.Restarted && (s.Composite == nil || s.Incremental == nil || k == 0 || c.Steps[k-1].Incremental != nil) {
+			st.fail(name, "SVC_RESTART_INVALID", "restart에 관측 공백이 없다")
+			completedTrees = false
+		}
+		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && s.Incremental == nil && s.Composite != nil {
+			completedTrees = completedTrees && s.Fresh == nil
+			continue
+		}
 		if s.Incremental == nil || s.Incremental.Status != StatusCompleted || (s.Fresh != nil && s.Fresh.Status != StatusCompleted) {
 			completedTrees = false
 		}
@@ -284,7 +406,28 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if t == nil {
 				continue
 			}
-			if t.Form != "full" || t.Tree == nil {
+			shape := t.Form == "full" && t.Tree != nil && t.Summary == nil ||
+				t.Form == "summary" && t.Tree == nil && t.Summary != nil ||
+				t.Form == "record" && t.Tree == nil && t.Summary == nil
+			if !tg.check(shape, name, "TREE_FORM_INVALID", fmt.Sprintf("step %d의 form과 envelope가 다르다", s.Step)) {
+				continue
+			}
+			var input *rcInput
+			if t.Tree != nil {
+				if !tg.check(t.Tree.Schema == TreeSchema && t.Tree.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "full tree schema 또는 status가 다르다") {
+					continue
+				}
+				input = &t.Tree.Input
+			} else if t.Summary != nil {
+				if !tg.check(t.Summary.Schema == TreeSummarySchema && t.Summary.Status == StatusCompleted, name, "TREE_ENVELOPE_INVALID", "summary schema 또는 status가 다르다") {
+					continue
+				}
+				input = &t.Summary.Input
+			}
+			if input != nil && !tg.check(input.SHA256 == s.SourceSHA256 && input.Bytes == s.SourceBytes && input.EncodingSource == SourceDeclaration && (want == nil || input.Encoding == want.Encoding), name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step)) {
+				continue
+			}
+			if t.Form != "full" {
 				ok := t.Summary == nil || (t.Summary.Digest.SHA256 == t.Digest && t.Summary.DescendantCount == t.DescendantCount)
 				if !ok {
 					tg.fail(name, "SUMMARY_INCONSISTENT", "summary digest 또는 node 수가 tree 기록과 다르다")
@@ -301,23 +444,52 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 				tg.fail(name, "TREE_DIGEST_MISMATCH", fmt.Sprintf("step %d digest를 다시 계산한 값이 기록과 다르다", s.Step))
 			case uint64(len(nodes)) != t.DescendantCount || nodes[0].HasError != t.HasError:
 				tg.fail(name, "TREE_COUNT_MISMATCH", fmt.Sprintf("step %d node 수 또는 has_error가 nodes와 다르다", s.Step))
-			case t.Tree.Input.SHA256 != s.SourceSHA256 || t.Tree.Input.Bytes != s.SourceBytes:
-				tg.fail(name, "TREE_INPUT_MISMATCH", fmt.Sprintf("step %d tree 입력 identity가 step과 다르다", s.Step))
 			default:
 				tg.pass()
 			}
 		}
 	}
 	var claims, recorded []string // recomputed claims; recorded-only claims
+	segments := [][2]int{}
+	if x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat {
+		segments = svcNativeSegments(c.Steps)
+	}
+	out.segmentClaimsValid = x.gate("case-binding").Failed == bindFailures
+	var stepSegments []int
+	if len(segments) > 0 {
+		stepSegments = make([]int, len(c.Steps))
+	}
+	for i := range stepSegments {
+		stepSegments[i] = -1
+	}
+	for i, seg := range segments {
+		out.segmentClaims = append(out.segmentClaims, rcClaims{claimNotClaimed, claimNotClaimed, claimNotClaimed})
+		for step := seg[0]; step < seg[1]; step++ {
+			stepSegments[step] = i
+		}
+	}
+	segmentAt := func(step int) *rcClaims {
+		if step < 0 || step >= len(stepSegments) || stepSegments[step] < 0 {
+			return nil
+		}
+		return &out.segmentClaims[stepSegments[step]]
+	}
 	// incremental/fresh equality and route proof
 	ie, ir := claimNotClaimed, claimNotClaimed
 	if len(c.Steps) > 1 {
 		ie, ir = claimPass, claimPass
 		eq := x.gate("incremental-equality")
-		for _, s := range c.Steps[1:] {
+		for k, s := range c.Steps[1:] {
+			if s.Incremental == nil && s.Composite != nil || s.Restarted {
+				eq.check(s.Comparison == nil, name, "COMPARISON_UNEXPECTED", "SVC boundary에 comparison이 있다")
+				continue
+			}
 			if s.Fresh == nil || s.Incremental.Form != "full" || s.Fresh.Form != "full" || s.Incremental.Tree == nil || s.Fresh.Tree == nil {
 				eq.check(s.Comparison == nil, name, "COMPARISON_UNEXPECTED", fmt.Sprintf("step %d 비교할 full tree가 없는데 비교 기록이 있다", s.Step))
 				ie = worseClaim(ie, claimBlocked)
+				if seg := segmentAt(k + 1); seg != nil {
+					seg.IncrementalEquality = worseClaim(seg.IncrementalEquality, claimBlocked)
+				}
 				continue
 			}
 			d := CompareTrees(s.Incremental.Tree.Nodes, s.Fresh.Tree.Nodes)
@@ -326,13 +498,32 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if d != nil {
 				ie = claimFail
 			}
+			if seg := segmentAt(k + 1); seg != nil {
+				v := claimPass
+				if d != nil {
+					v = claimFail
+				}
+				seg.IncrementalEquality = worseClaim(seg.IncrementalEquality, v)
+			}
 		}
 		rg := x.gate("incremental-route")
 		for k, s := range c.Steps[1:] {
+			if s.Incremental == nil && s.Composite != nil || s.Restarted {
+				rg.check(s.Route == nil, name, "ROUTE_PROOF_MISMATCH", "SVC boundary에 reuse proof가 있다")
+				continue
+			}
 			r := s.Route
 			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
 			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
-			ir = worseClaim(ir, routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental))
+			v := routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental)
+			ir = worseClaim(ir, v)
+			if seg := segmentAt(k + 1); seg != nil {
+				seg.IncrementalRoute = worseClaim(seg.IncrementalRoute, v)
+			}
+		}
+		if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+			claims = append(claims, ie, ir)
+			ie, ir = claimNotClaimed, claimNotClaimed
 		}
 	}
 	x.gate("incremental-equality").check(ie == c.Claims.IncrementalEquality, name, "CLAIM_MISMATCH", "incremental_equality claim이 다시 계산한 값과 다르다")
@@ -357,15 +548,21 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		ecOK = false
 	}
 	for i, e := range exps {
-		if e.Step >= len(c.Steps) {
+		if e.Step < 0 || e.Step >= len(c.Steps) {
 			eg.fail(name, "EXPECTATION_STEP_INVALID", "기대값 step이 기록에 없다")
 			ecOK = false
 			continue
 		}
 		res, known := expectResult(e, c.Steps[e.Step].Incremental)
+		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && c.Steps[e.Step].Composite != nil {
+			res, known = svcExpectResult(e, c.Steps[e.Step])
+		}
 		if !known {
 			eg.recorded()
 			ecOK = false
+			if segmentAt(e.Step) != nil {
+				out.segmentClaimsValid = false
+			}
 			if i < len(c.Expectations) {
 				res = c.Expectations[i].Result
 			}
@@ -374,6 +571,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			eg.check(r.Step == e.Step && r.Syntax == e.Syntax && slices.Equal(r.Contains, e.Contains) && slices.Equal(r.Anchors, e.Anchors) &&
 				r.Declarations == e.Declarations && r.Result == res,
 				name, "EXPECTATION_MISMATCH", fmt.Sprintf("기대값 %d을 다시 계산한 결과가 기록과 다르다", i))
+		}
+		if seg := segmentAt(e.Step); seg != nil {
+			seg.Expectations = worseClaim(seg.Expectations, res)
 		}
 		switch res {
 		case claimFail:
@@ -384,11 +584,54 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 		}
 	}
+	if len(exps) == 0 && slices.ContainsFunc(c.Steps, func(s rcStep) bool {
+		if s.Composite == nil {
+			return false
+		}
+		e, k := (SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}).Syntax(nil)
+		return e && k
+	}) {
+		ec = claimBlocked
+	}
 	if ecOK {
 		eg.check(ec == c.Claims.Expectations, name, "CLAIM_MISMATCH", "expectations claim이 다시 계산한 값과 다르다")
 		claims = append(claims, ec)
 	} else {
 		recorded = append(recorded, c.Claims.Expectations)
+	}
+	if len(exps) == 0 && slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+		claims = append(claims, claimBlocked)
+	}
+	for i, actual := range out.segmentClaims {
+		if actual.Expectations == claimNotClaimed {
+			for step := segments[i][0]; step < segments[i][1]; step++ {
+				s := c.Steps[step]
+				if s.Composite != nil {
+					e, k := (SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}).Syntax(nil)
+					if e && k {
+						actual.Expectations = claimBlocked
+						break
+					}
+				}
+			}
+			out.segmentClaims[i] = actual
+		}
+		claims = append(claims, actual.IncrementalEquality, actual.IncrementalRoute, actual.Expectations)
+		if i >= len(c.Segments) || c.Segments[i].Claims == nil {
+			x.gate("case-binding").fail(name, "SVC_SEGMENT_CLAIM_MISSING", "segment claim 세 필드가 없다")
+			out.segmentClaimsValid = false
+			continue
+		}
+		seg := c.Segments[i]
+		for _, v := range []struct{ gate, actual, recorded string }{
+			{"incremental-equality", actual.IncrementalEquality, seg.Claims.IncrementalEquality},
+			{"incremental-route", actual.IncrementalRoute, seg.Claims.IncrementalRoute},
+			{"expectations", actual.Expectations, seg.Claims.Expectations},
+		} {
+			if !x.gate(v.gate).check(v.actual == v.recorded, name, "SVC_SEGMENT_CLAIM_MISMATCH", fmt.Sprintf("segment [%d,%d) claim이 다시 계산한 값과 다르다", seg.StartStep, seg.EndStep)) {
+				out.segmentClaimsValid = false
+			}
+		}
 	}
 	if c.Oracle != nil {
 		qe := claimNotClaimed
@@ -396,7 +639,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		if queries && len(c.Steps) > 1 {
 			qg := x.gate("query-equality")
 			for _, s := range c.Steps[1:] {
-				if s.Fresh == nil {
+				if s.Fresh == nil || s.Incremental == nil {
 					continue
 				}
 				a, b := s.Incremental.Queries, s.Fresh.Queries
@@ -428,6 +671,11 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 					qe = claimFail
 				}
 			}
+			if slices.ContainsFunc(c.Steps, func(s rcStep) bool { return s.Composite != nil && s.Incremental == nil }) {
+				if qe == claimPass {
+					qe = claimNotClaimed
+				}
+			}
 		}
 		if qeOK {
 			x.gate("query-equality").check(qe == c.Oracle.QueryEquality, name, "CLAIM_MISMATCH", "query_equality claim이 다시 계산한 값과 다르다")
@@ -435,17 +683,15 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		} else {
 			recorded = append(recorded, c.Oracle.QueryEquality)
 		}
-		for _, rc := range []struct{ id, v string }{{"api", c.Oracle.API}, {"query-expectations", c.Oracle.QueryExpectations},
-			{"fact-reproduction", c.Oracle.FactReproduction}, {"dynamic-sql", c.Oracle.DynamicSQL}} {
-			if rc.v != claimNotClaimed {
-				x.gate(rc.id).recorded()
-				recorded = append(recorded, rc.v)
-			}
-		}
+		recorded = append(recorded, x.recordOracleClaims(c, name)...)
 	}
 	vg := x.gate("verdict")
+	for _, r := range c.References {
+		claims = append(claims, r.Assessment)
+	}
 	vg.check(foldClaims(append(slices.Clone(claims), recorded...)) == c.Assessment, name, "VERDICT_MISMATCH", "case 판정이 claim의 가장 나쁜 값과 다르다")
 	re := foldClaims(claims)
+	out.recomputedAssessment = re
 	switch {
 	case len(recorded) == 0:
 		out.assess = re
@@ -455,6 +701,22 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		out.assess, out.complete = AssessUnresolved, false
 	}
 	return out
+}
+
+func (x *replayEnv) recordOracleClaims(c *rcCase, name string) []string {
+	if c.Oracle == nil {
+		return nil
+	}
+	var recorded []string
+	for _, rc := range []struct{ id, v string }{{"api", c.Oracle.API}, {"query-expectations", c.Oracle.QueryExpectations},
+		{"fact-reproduction", c.Oracle.FactReproduction}, {"dynamic-sql", c.Oracle.DynamicSQL}} {
+		x.gate(rc.id).check(slices.Contains([]string{claimNotClaimed, claimPass, claimFail, claimBlocked}, rc.v), name, "CLAIM_INVALID", "Oracle claim 값이 유효하지 않다")
+		if rc.v != claimNotClaimed {
+			x.gate(rc.id).recorded()
+			recorded = append(recorded, rc.v)
+		}
+	}
+	return recorded
 }
 
 // seeRun records the producer and policy identities a case names; they are compared with
@@ -505,11 +767,37 @@ func svcVerdict(steps []rcStep, expect bool) (string, string) {
 		return AssessBlocked, "SVC_EXPECTATION_UNASSESSABLE"
 	}
 	for _, s := range steps {
-		if len(s.Composite.Directive.Diagnostics) > 0 {
+		if e, k := (SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}).Syntax(nil); e && k {
 			return AssessBlocked, "SVC_DIRECTIVE_DIAGNOSTICS"
 		}
 	}
 	return AssessPass, ""
+}
+
+func svcExpectResult(e StepExpectation, s rcStep) (string, bool) {
+	o := SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}
+	var inline *bool
+	result := claimPass
+	if s.Incremental != nil {
+		inline = &s.Incremental.HasError
+		copy := e
+		copy.Syntax = "ANY"
+		var known bool
+		result, known = expectResult(copy, s.Incremental)
+		if !known {
+			return result, false
+		}
+	} else if len(e.Contains) > 0 || len(e.Anchors) > 0 || e.Declarations != "" {
+		result = claimBlocked
+	}
+	hasError, known := o.Syntax(inline)
+	if e.Syntax != "ANY" && !known {
+		return claimBlocked, true
+	}
+	if e.Syntax == "NO_ERROR" && hasError || e.Syntax == "ERROR" && !hasError && known {
+		return claimFail, true
+	}
+	return result, true
 }
 
 // expectResult recomputes one expectation as S05 evaluate does; known is false when the
@@ -858,6 +1146,10 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		}
 		x.checkSeen(run)
 	}()
+	x.startSvcReferences(prof.SvcContext)
+	x.svcFormat = prof.Format
+	x.nativeInputBytes = NativeOperations()[prof.Operation].InputBytes
+	defer x.checkSvcReferences()
 	m, e := x.stream(resultPath)
 	if e != nil {
 		return top, nil, e
@@ -1046,6 +1338,10 @@ func replayOracleSet(x *replayEnv) *Error {
 	}
 	x.seen = map[string]map[string]bool{}
 	defer x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
+	x.startSvcReferences(prof.Native.SvcContext)
+	x.svcFormat = prof.Native.Format
+	x.nativeInputBytes = NativeOperations()[prof.Native.Operation].InputBytes
+	defer x.checkSvcReferences()
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
 	records := 0

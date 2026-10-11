@@ -352,7 +352,7 @@ func execute() error {
 		nq := kit.NativeOperations()["native-query"]
 		oracle := b.RunCase(ctx, native.Context{Op: nq, Route: "csharp", Output: kit.OutputTree, Protocol: native.ProtocolR2, API: true}, kit.IncrementalCase{ID: req.ID, Encoding: kit.EncodingUTF8, Points: req.Points}, req.Source)
 		result.SmallOracle = append(result.SmallOracle, oracle)
-		if oracle.ExecutionStatus != kit.StatusCompleted || oracle.Oracle == nil || oracle.Oracle.API != native.ClaimPass || len(oracle.Steps) != 1 || oracle.Steps[0].Incremental == nil {
+		if oracle.ExecutionStatus != kit.StatusCompleted || oracle.Oracle == nil || oracle.Oracle.API != native.ClaimPass || len(oracle.Steps) != 1 || oracle.Steps[0].Incremental == nil || oracle.Steps[0].Incremental.API == nil || oracle.Steps[0].Incremental.API.PositionNavigation != 0 {
 			result.Pass = false
 			continue
 		}
@@ -370,7 +370,7 @@ func execute() error {
 		}
 		o := run(ctx, exe, result.ExecutableSHA, b.Dir, req, 0, op.Nodes, nodes)
 		result.Observations = append(result.Observations, o)
-		if o.Error != "" || o.Receipt.Differences != 0 || oracle.Producer == nil || oracle.Producer.FieldCount == nil || o.Receipt.Fields != uint64(*oracle.Producer.FieldCount) {
+		if o.Error != "" || o.Receipt.Differences != 0 || o.Receipt.Divergences != 0 || oracle.Producer == nil || oracle.Producer.FieldCount == nil || o.Receipt.Fields != uint64(*oracle.Producer.FieldCount) {
 			result.Pass = false
 		}
 	}
@@ -439,7 +439,7 @@ func execute() error {
 				o := run(ctx, exe, result.ExecutableSHA, b.Dir, req, covered, min(covered+1000000, op.Nodes), expectedNodes)
 				result.Observations = append(result.Observations, o)
 				fmt.Printf("audit %s: range=%d..%d nodes=%d differences=%d status=%s\n", f.ID, o.Receipt.Start, o.Receipt.End, o.Receipt.Nodes, o.Receipt.Differences, o.Process.Status)
-				if o.Error != "" || o.Receipt.Differences != 0 || o.Receipt.Fields != result.Observations[0].Receipt.Fields || (nodes != 0 && nodes != o.Receipt.Nodes) {
+				if o.Error != "" || o.Receipt.Differences != 0 || o.Receipt.Divergences != 0 || o.Receipt.Fields != result.Observations[0].Receipt.Fields || (nodes != 0 && nodes != o.Receipt.Nodes) {
 					result.Pass = false
 					break
 				}

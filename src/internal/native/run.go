@@ -166,19 +166,21 @@ type SvcInline struct {
 
 // SvcComposite is the tsgk-svc-composite/r1 record of one step.
 type SvcComposite struct {
-	Schema     string             `json:"schema"`
-	Format     string             `json:"format"`
-	Input      TreeInput          `json:"input"`
-	Identities []kit.IdentityRef  `json:"identities"`
-	Directive  *kit.SvcDirective  `json:"directive"`
-	Language   kit.SvcLanguage    `json:"language"`
-	CodeBehind *kit.SvcCodeBehind `json:"code_behind"`
-	Inline     *SvcInline         `json:"inline"`
-	Coverage   kit.SvcCoverage    `json:"coverage"`
+	AdditionalDirectives []*kit.SvcDirective `json:"additional_directives,omitempty"`
+	Schema               string              `json:"schema"`
+	Format               string              `json:"format"`
+	Input                TreeInput           `json:"input"`
+	Identities           []kit.IdentityRef   `json:"identities"`
+	Directive            *kit.SvcDirective   `json:"directive"`
+	Language             kit.SvcLanguage     `json:"language"`
+	CodeBehind           *kit.SvcCodeBehind  `json:"code_behind"`
+	Inline               *SvcInline          `json:"inline"`
+	Coverage             kit.SvcCoverage     `json:"coverage"`
 }
 
 func composite(o kit.SvcObservation, in TreeInput, ids []kit.IdentityRef, tree *TreeEnvelope) *SvcComposite {
 	c := &SvcComposite{Schema: kit.SvcCompositeSchema, Format: kit.SvcFormat, Input: in, Identities: ids, Directive: o.Directive, Language: o.Language, CodeBehind: o.CodeBehind, Coverage: o.Coverage}
+	c.AdditionalDirectives = o.AdditionalDirectives
 	if o.IncludedRanges != nil {
 		c.Inline = &SvcInline{IncludedRanges: o.IncludedRanges, Tree: tree}
 	}
@@ -187,6 +189,7 @@ func composite(o kit.SvcObservation, in TreeInput, ids []kit.IdentityRef, tree *
 
 // StepResult is one step of a case.
 type StepResult struct {
+	Restarted    bool             `json:"restarted,omitempty"`
 	Composite    *SvcComposite    `json:"composite,omitempty"`
 	Step         int              `json:"step"`
 	SourceBytes  uint64           `json:"source_bytes"`
@@ -208,27 +211,30 @@ type ExpectationResult struct {
 
 // CaseResult is the outcome of one registered case.
 type CaseResult struct {
-	ID              string              `json:"id"`
-	Input           kit.NativeInput     `json:"input"`
-	Encoding        string              `json:"encoding"`
-	ExecutionStatus string              `json:"execution_status"`
-	Assessment      string              `json:"assessment"`
-	Code            string              `json:"code"`
-	Claims          Claims              `json:"claims"`
-	ResponseStatus  string              `json:"response_status"`
-	ResponseCode    string              `json:"response_code"`
-	Producer        *Producer           `json:"producer"`
-	Process         *runner.Result      `json:"process"`
-	Steps           []StepResult        `json:"steps"`
-	Expectations    []ExpectationResult `json:"expectations"`
-	Oracle          *OracleClaims       `json:"oracle_claims,omitempty"`
-	QueryExpect     []QueryExpectResult `json:"query_expectations,omitempty"`
-	Facts           *FactsOut           `json:"facts,omitempty"`
-	Raw             []byte              `json:"-"`
+	References      []SvcReferenceResult `json:"references,omitempty"`
+	Segments        []SvcSegment         `json:"segments,omitempty"`
+	ID              string               `json:"id"`
+	Input           kit.NativeInput      `json:"input"`
+	Encoding        string               `json:"encoding"`
+	ExecutionStatus string               `json:"execution_status"`
+	Assessment      string               `json:"assessment"`
+	Code            string               `json:"code"`
+	Claims          Claims               `json:"claims"`
+	ResponseStatus  string               `json:"response_status"`
+	ResponseCode    string               `json:"response_code"`
+	Producer        *Producer            `json:"producer"`
+	Process         *runner.Result       `json:"process"`
+	Steps           []StepResult         `json:"steps"`
+	Expectations    []ExpectationResult  `json:"expectations"`
+	Oracle          *OracleClaims        `json:"oracle_claims,omitempty"`
+	QueryExpect     []QueryExpectResult  `json:"query_expectations,omitempty"`
+	Facts           *FactsOut            `json:"facts,omitempty"`
+	Raw             []byte               `json:"-"`
 }
 
 // Context is the per-profile information a case run needs.
 type Context struct {
+	SvcContext   *kit.SvcContext
 	Op           kit.NativeOperation
 	Route        string
 	Output       string
@@ -285,23 +291,44 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	}
 	req := x.request(c, source)
 	var svc []kit.SvcObservation
-	if x.Format == kit.SvcFormat {
+	if x.Format == kit.SvcFormat || x.Format == kit.SvcLegacyFormat {
 		for _, v := range versions {
-			svc = append(svc, kit.ObserveServiceHost(c.Encoding, v))
+			svc = append(svc, kit.ObserveServiceHostWithContext(c.Encoding, v, x.SvcContext))
 		}
 		for _, o := range svc {
 			req.Ranges = append(req.Ranges, o.IncludedRanges)
 		}
 		if slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { return o.IncludedRanges == nil }) {
+			if slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { return o.IncludedRanges != nil }) {
+				return b.runSvcSegments(ctx, x, c, versions, points, svc, out)
+			}
 			// No C# inline code to parse in some step: the composite is the directive
 			// observation alone and no driver process runs.
+			if req.Revision() == ProtocolR2 {
+				out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
+			}
 			for k, o := range svc {
 				sum := sha256.Sum256(versions[k])
 				in := TreeInput{Bytes: uint64(len(versions[k])), SHA256: hex.EncodeToString(sum[:]), Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
-				out.Steps = append(out.Steps, StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{x.PolicyRef}, nil)})
+				step := StepResult{Step: k, SourceBytes: in.Bytes, SourceSHA256: in.SHA256, Composite: composite(o, in, []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: in.SHA256}, x.PolicyRef}, nil)}
+				if k > 0 {
+					step.Edit = svcStepEdit(c.Edits[k-1], points[k-1])
+				}
+				out.Steps = append(out.Steps, step)
 			}
 			out.ExecutionStatus = kit.StatusCompleted
 			out.Assessment, out.Code = svcObservationOnly(svc, len(c.Expect) > 0)
+			if len(c.Expect) > 0 {
+				out.Expectations, out.Claims.Expectations = evaluateSvc(c.Expect, nil, svc)
+				out.Assessment = out.Claims.Expectations
+				out.Code = ""
+				if out.Assessment == ClaimFail {
+					out.Code = "EXPECTATION_FAILED"
+				}
+				if out.Assessment == ClaimBlocked {
+					out.Code = "SVC_EXPECTATION_UNASSESSABLE"
+				}
+			}
 			return out
 		}
 	}
@@ -412,7 +439,15 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if len(c.Edits) > 0 {
 		blocked = judgeIncremental(&out)
 	}
-	out.Expectations, out.Claims.Expectations = evaluate(c.Expect, checked.Steps)
+	if svc != nil {
+		out.Expectations, out.Claims.Expectations = evaluateSvc(c.Expect, checked.Steps, svc)
+	} else {
+		out.Expectations, out.Claims.Expectations = evaluate(c.Expect, checked.Steps)
+	}
+	if svc != nil && len(c.Expect) == 0 && slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { e, k := o.Syntax(nil); return e && k }) {
+		blocked = "SVC_DIRECTIVE_DIAGNOSTICS"
+		out.Claims.Expectations = ClaimBlocked
+	}
 	if out.Claims.Expectations == ClaimFail && out.Code == "" {
 		out.Code = "EXPECTATION_FAILED"
 	}
@@ -487,6 +522,12 @@ func stepRoute(old, s StepResult) string {
 // is FAIL, else any BLOCKED is BLOCKED, else PASS.
 func foldAssessment(out *CaseResult) {
 	claims := []string{out.Claims.IncrementalEquality, out.Claims.IncrementalRoute, out.Claims.Expectations}
+	for _, s := range out.Segments {
+		claims = append(claims, s.Claims.IncrementalEquality, s.Claims.IncrementalRoute, s.Claims.Expectations)
+	}
+	for _, r := range out.References {
+		claims = append(claims, r.Assessment)
+	}
 	if o := out.Oracle; o != nil {
 		claims = append(claims, o.QueryEquality, o.QueryExpectations, o.API, o.FactReproduction, o.DynamicSQL)
 	}
@@ -528,7 +569,7 @@ func (x Context) oracleTrees(sr *StepResult, cs CheckedStep, enc string, src []b
 		if len(div) > 0 {
 			o.API.FirstDivergence = &div[0]
 		}
-		if d != nil {
+		if d != nil || len(div) > 0 {
 			claims.API = ClaimFail
 		} else {
 			claims.API = worse(claims.API, ClaimPass)
@@ -605,7 +646,7 @@ func svcObservationOnly(svc []kit.SvcObservation, expect bool) (string, string) 
 		return kit.AssessBlocked, "SVC_EXPECTATION_UNASSESSABLE"
 	}
 	for _, o := range svc {
-		if len(o.Directive.Diagnostics) > 0 { // a damaged directive is observed, not passed
+		if e, k := o.Syntax(nil); e && k { // a damaged directive is observed, not passed
 			return kit.AssessBlocked, "SVC_DIRECTIVE_DIAGNOSTICS"
 		}
 	}
@@ -692,6 +733,39 @@ func evaluate(expect []kit.StepExpectation, steps []CheckedStep) ([]ExpectationR
 				claim = ClaimBlocked
 			}
 		}
+		out = append(out, r)
+	}
+	return out, claim
+}
+
+func evaluateSvc(expect []kit.StepExpectation, steps []CheckedStep, svc []kit.SvcObservation) ([]ExpectationResult, string) {
+	out := []ExpectationResult{}
+	claim := ClaimNotClaimed
+	if len(expect) > 0 {
+		claim = ClaimPass
+	}
+	for _, e := range expect {
+		r := ExpectationResult{StepExpectation: e, Result: ClaimPass}
+		var inline *bool
+		if len(steps) > e.Step {
+			v := steps[e.Step].Incremental.Wire.HasError
+			inline = &v
+		}
+		hasError, known := svc[e.Step].Syntax(inline)
+		if inline != nil {
+			copy := e
+			copy.Syntax = "ANY"
+			checked, _ := evaluate([]kit.StepExpectation{copy}, steps)
+			r.Result, r.Detail = checked[0].Result, checked[0].Detail
+		} else if len(e.Contains) > 0 || len(e.Anchors) > 0 || e.Declarations != "" {
+			r.Result, r.Detail = ClaimBlocked, "inline tree unavailable"
+		}
+		if e.Syntax != "ANY" && !known {
+			r.Result, r.Detail = ClaimBlocked, "composite syntax unresolved"
+		} else if e.Syntax == "NO_ERROR" && hasError || e.Syntax == "ERROR" && !hasError && known {
+			r.Result, r.Detail = ClaimFail, "composite syntax mismatch"
+		}
+		claim = worse(claim, r.Result)
 		out = append(out, r)
 	}
 	return out, claim

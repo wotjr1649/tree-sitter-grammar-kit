@@ -27,8 +27,9 @@ import (
 const inventoryPath = "src/contracts/qualification-c1.json"
 
 type caseFile struct {
-	Format string `json:"format"`
-	Cases  []struct {
+	SvcContext *kit.SvcContext `json:"svc_context"`
+	Format     string          `json:"format"`
+	Cases      []struct {
 		ID       string   `json:"id"`
 		Kind     string   `json:"kind"`
 		Features []string `json:"features"`
@@ -455,8 +456,10 @@ func buildInventory(t *testing.T, root string) []byte {
 		inv.Routes = append(inv.Routes, kit.QualRoute{Route: route, ErrorNodes: errNodes, Workload: w, Requirements: req})
 		if route == "csharp" {
 			cs, format := load("src/testdata/native/n461/svc.json")
+			var svcFile caseFile
+			decode("src/testdata/native/n461/svc.json", &svcFile)
 			svc = kit.QualWorkload{Set: "s06-csharp-svc", Profile: "s06-csharp-svc", Route: "csharp", Operation: "native-query", Output: "tree", Symbol: symbol,
-				Format: format, Grammar: grammar, Queries: packQueries("csharp", ""), API: true}
+				Format: format, SvcContext: svcFile.SvcContext, Grammar: grammar, Queries: packQueries("csharp", ""), API: true}
 			for _, sc := range cs {
 				if err := supportCaseFields(sc.id, sc.alternatives, sc.sample); err != nil {
 					t.Fatal(err) // never dropped silently
@@ -464,6 +467,10 @@ func buildInventory(t *testing.T, root string) []byte {
 				c := convert(sc, sc.id)
 				c.Role = "support"
 				c.ExpectAssessment, c.ExpectCode = sc.expectAssess, sc.expectCode
+				if format == kit.SvcFormat {
+					source := sc.src
+					c.Source = &source
+				}
 				svc.Cases = append(svc.Cases, c)
 			}
 		}
@@ -490,7 +497,7 @@ func buildInventory(t *testing.T, root string) []byte {
 	}
 	r3 := "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
 	inv.ExtraRoles = []kit.QualRole{
-		{ID: "n461-svc", Role: "owned", Status: kit.RoleExecuted, Reason: "NET461 SVC-SERVICEHOST-r1 composite on the owned .svc fixtures (OWNED_FIXTURE, three hosts)",
+		{ID: "n461-svc", Role: "owned", Status: kit.RoleExecuted, Reason: "SVC-SERVICEHOST-r2 directive, C# inline, recovery and explicitly registered C# reference fixtures (OWNED_FIXTURE, three hosts; syntax only)",
 			Platforms: []string{"windows-amd64", "linux-amd64", "darwin-arm64"}, NotApplicable: map[string]string{}, Workloads: []kit.QualWorkload{svc}},
 		{ID: "n461-large", Role: "owned", Status: kit.RoleExecuted, Reason: "real-world-source-r3 / native-query-large synthetic large C# fixtures (OWNED_FIXTURE)",
 			Platforms: []string{"windows-amd64"}, NotApplicable: map[string]string{"linux-amd64": r3, "darwin-arm64": r3}, Workloads: []kit.QualWorkload{lw, over}},

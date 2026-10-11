@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +27,7 @@ Set-StrictMode -Version Latest
 $ast = [Management.Automation.Language.Parser]::ParseFile($Script, [ref]$null, [ref]$null)
 $defs = $ast.FindAll({ param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] }, $true)
 foreach ($f in $defs) {
-  if ($f.Name -in @('Add-RequirementResult', 'Add-Result', 'Add-OracleResult')) { . ([scriptblock]::Create($f.Extent.Text)) }
+  if ($f.Name -in @('Add-RequirementResult', 'Add-IncrementalResult', 'Add-Result', 'Add-OracleResult')) { . ([scriptblock]::Create($f.Extent.Text)) }
 }
 $summary = [ordered]@{ routes = @(); oracle = @(); api_findings = @(); requirement_results = @(); failures = @() }
 $in = Get-Content -LiteralPath $Runs -Raw | ConvertFrom-Json
@@ -78,12 +79,21 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		t.Fatal(err)
 	}
 	const blocked = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"
+	segmentCase := func(id, eq, route string, oracle map[string]string) map[string]any {
+		c := rrCase(id, "NOT_CLAIMED", "NOT_CLAIMED", blocked, oracle)
+		c["segments"] = []any{map[string]any{"start_step": 0, "end_step": 2, "claims": map[string]string{"incremental_equality": eq, "incremental_route": route, "expectations": "PASS"}}}
+		return c
+	}
 	runs := map[string]any{
 		"incremental": []any{map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": filepath.Join(dir, "r"), "res": map[string]any{
 			"execution_status": "COMPLETED", "assessment": "FAIL", "build": nil, "findings": []any{}, "cases": []any{
 				rrCase("route-fail", "PASS", "FAIL", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1", nil),
 				rrCase("route-blocked", "PASS", "BLOCKED", blocked, nil),
 				rrCase("eq-blocked", "BLOCKED", "PASS", "", nil),
+				segmentCase("segment-eq-fail", "FAIL", "PASS", nil),
+				segmentCase("segment-eq-blocked", "BLOCKED", "PASS", nil),
+				segmentCase("segment-route-fail", "PASS", "FAIL", nil),
+				segmentCase("segment-route-blocked", "PASS", "BLOCKED", nil),
 			}}}}},
 		"oracle": []any{
 			map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": out, "res": map[string]any{
@@ -93,11 +103,27 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 					rrCase("dyn-blocked", "NOT_CLAIMED", "NOT_CLAIMED", "", map[string]string{"dynamic_sql": "BLOCKED"}),
 					rrCase("route-fail", "PASS", "FAIL", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1", map[string]string{"query_equality": "PASS"}),
 					rrCase("route-blocked", "PASS", "BLOCKED", blocked, map[string]string{"query_equality": "PASS"}),
+					segmentCase("segment-eq-fail", "FAIL", "PASS", map[string]string{}),
+					segmentCase("segment-eq-blocked", "BLOCKED", "PASS", map[string]string{}),
+					segmentCase("segment-route-fail", "PASS", "FAIL", map[string]string{}),
+					segmentCase("segment-route-blocked", "PASS", "BLOCKED", map[string]string{}),
 				}}}},
 			map[string]any{"label": "bad", "run": map[string]any{"code": 1, "out": filepath.Join(dir, "bad"), "res": map[string]any{
 				"execution_status": "FAILED", "assessment": "NOT_ASSESSED", "set": map[string]any{"valid": false}, "build": nil,
 				"findings": []any{map[string]any{"code": "SET_BROKEN", "severity": "error"}}, "cases": []any{}}}},
 		},
+	}
+	// S06 stdout CaseLine omits segments; only the corresponding record carries them.
+	for i, item := range runs["oracle"].([]any)[0].(map[string]any)["run"].(map[string]any)["res"].(map[string]any)["cases"].([]any) {
+		c := item.(map[string]any)
+		if segments, ok := c["segments"]; ok {
+			data, _ := json.Marshal(map[string]any{"segments": segments})
+			name := fmt.Sprintf("%05d-%s.json", i, c["id"])
+			if err := os.WriteFile(filepath.Join(out, "records", name), data, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			delete(c, "segments")
+		}
 	}
 	data, _ := json.Marshal(runs)
 	in := filepath.Join(dir, "runs.json")
@@ -123,6 +149,8 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		"r/route-fail: incremental PASS/FAIL", "r/eq-blocked: incremental BLOCKED/PASS",
 		"oracle r/q-eq-fail: query_equality FAIL", "oracle r/dyn-blocked: dynamic_sql BLOCKED", "oracle r/route-fail: incremental PASS/FAIL",
 		"oracle bad: SET_BROKEN", "oracle bad: record set not verified", "oracle bad: FAILED build or refusal",
+		"r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "r/segment-route-fail segment [0,2): incremental PASS/FAIL",
+		"oracle r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "oracle r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "oracle r/segment-route-fail segment [0,2): incremental PASS/FAIL",
 	} {
 		if !has(want) {
 			t.Errorf("kit-axis failure %q not recorded: %q", want, s.Failures)
@@ -138,9 +166,11 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		got[r.Case+" "+r.Claim] = r.Result + " " + r.Code + " " + strings.Join(r.Failures, ";")
 	}
 	want := map[string]string{
-		"oracle r/q-fail query_expectations":       "FAIL ORACLE_CLAIM_FAILED q.x step 0: FAIL capture 0",
-		"r/route-blocked incremental_route":        "BLOCKED " + blocked + " ",
-		"oracle r/route-blocked incremental_route": "BLOCKED " + blocked + " ",
+		"oracle r/q-fail query_expectations":                             "FAIL ORACLE_CLAIM_FAILED q.x step 0: FAIL capture 0",
+		"r/route-blocked incremental_route":                              "BLOCKED " + blocked + " ",
+		"oracle r/route-blocked incremental_route":                       "BLOCKED " + blocked + " ",
+		"r/segment-route-blocked segment [0,2) incremental_route":        "BLOCKED " + blocked + " ",
+		"oracle r/segment-route-blocked segment [0,2) incremental_route": "BLOCKED " + blocked + " ",
 	}
 	if len(got) != len(want) {
 		t.Errorf("requirement_results %v, want %v", got, want)
@@ -161,8 +191,8 @@ func TestRunRoutesFailureAxesGuard(t *testing.T) {
 	if !strings.Contains(routes, "foreach ($k in @('query_equality', 'fact_reproduction', 'dynamic_sql'))") {
 		t.Error("the oracle failure loop does not list exactly query_equality, fact_reproduction and dynamic_sql")
 	}
-	if strings.Contains(routes, "incremental_route -in @('FAIL', 'BLOCKED')") || strings.Count(routes, "$c.claims.incremental_route -eq 'FAIL'") != 2 {
-		t.Error("an incremental route claim must fail the job when FAIL, and only then, in both result functions")
+	if strings.Contains(routes, "incremental_route -in @('FAIL', 'BLOCKED')") || strings.Count(routes, "$p.claims.incremental_route -eq 'FAIL'") != 1 || strings.Count(routes, "Add-IncrementalResult ") != 2 || !strings.Contains(routes, "$s.claims") {
+		t.Error("both result functions must classify top-level and segment claims through the shared failure-axis helper")
 	}
 	if strings.Count(routes, "Add-RequirementResult ") != 2 {
 		t.Error("both result functions must record requirement results")

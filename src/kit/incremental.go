@@ -197,17 +197,19 @@ func validAnchor(a ExpectAnchor, size uint64) bool {
 
 // IncrementalCase is one registered input with its edit sequence.
 type IncrementalCase struct {
-	ID       string            `json:"id"`
-	Input    NativeInput       `json:"input"`
-	Encoding string            `json:"encoding"`
-	Edits    []Edit            `json:"edits"`
-	Points   []NativePoint     `json:"points"`
-	Expect   []StepExpectation `json:"expect"`
+	SvcSource []byte            `json:"svc_source,omitempty"`
+	ID        string            `json:"id"`
+	Input     NativeInput       `json:"input"`
+	Encoding  string            `json:"encoding"`
+	Edits     []Edit            `json:"edits"`
+	Points    []NativePoint     `json:"points"`
+	Expect    []StepExpectation `json:"expect"`
 }
 
 // IncrementalProfile is a decoded tsgk-incremental/r2 (or r1) profile; Schema is the
 // revision the document declared.
 type IncrementalProfile struct {
+	SvcContext   *SvcContext       `json:"svc_context,omitempty"`
 	SHA256       string            `json:"-"`
 	Schema       string            `json:"-"`
 	ID           string            `json:"id"`
@@ -216,7 +218,7 @@ type IncrementalProfile struct {
 	Symbol       string            `json:"symbol"`
 	Encoding     string            `json:"encoding"`
 	Output       string            `json:"output"`
-	Format       string            `json:"format,omitempty"` // "" or SVC-SERVICEHOST-r1 (inline C# by included range)
+	Format       string            `json:"format,omitempty"` // "" or SVC-SERVICEHOST-r1/r2 (inline C# by included range)
 	Compiler     ToolIdentity      `json:"compiler"`
 	Grammar      []NativeInput     `json:"grammar"`
 	Declarations *Declarations     `json:"declarations"`
@@ -316,7 +318,7 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 	if e != nil {
 		return p, x, e
 	}
-	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format")
+	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format", "svc_context")
 	if e != nil {
 		return p, x, e
 	}
@@ -376,7 +378,7 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 	if f := m["format"]; f != nil {
 		if p.Format, e = t.str(f); e != nil {
 			return p, x, e
-		} else if p.Format != SvcFormat || p.Symbol != "tree_sitter_c_sharp" {
+		} else if (p.Format != SvcFormat && p.Format != SvcLegacyFormat) || p.Symbol != "tree_sitter_c_sharp" {
 			return p, x, t.bad("FORMAT_UNSUPPORTED", f)
 		}
 	}
@@ -413,6 +415,14 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 		}
 		seen[c.ID] = true
 		p.Cases = append(p.Cases, c)
+	}
+	if v := m["svc_context"]; v != nil {
+		if p.Format != SvcFormat {
+			return p, x, t.bad("SVC_CONTEXT_INVALID", v)
+		}
+		if p.SvcContext, e = parseSvcContext(t, v, p); e != nil {
+			return p, x, e
+		}
 	}
 	return p, x, nil
 }
@@ -526,7 +536,7 @@ func splitPath(s string) []string {
 // anchors.
 func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra []string, anchors bool) (IncrementalCase, map[string]*jv, *Error) {
 	var c IncrementalCase
-	m, e := t.object(v, append([]string{"id", "input", "edits", "points", "expect"}, extra...), "encoding")
+	m, e := t.object(v, append([]string{"id", "input", "edits", "points", "expect"}, extra...), "encoding", "svc_source")
 	if e != nil {
 		return c, nil, e
 	}
@@ -548,6 +558,20 @@ func parseCase(t typed, v *jv, p IncrementalProfile, op NativeOperation, extra [
 		} else if !encodingNames[c.Encoding] {
 			return c, nil, t.bad("ENCODING_UNSUPPORTED", x)
 		}
+	}
+	if v := m["svc_source"]; v != nil {
+		s, err := t.str(v)
+		if err != nil {
+			return c, nil, err
+		}
+		if p.Format != SvcFormat || uint64(len(s)) > (op.InputBytes+2)/3*4 {
+			return c, nil, t.bad("SVC_SOURCE_INVALID", v)
+		}
+		b, decodeErr := base64.StdEncoding.Strict().DecodeString(s)
+		if decodeErr != nil || base64.StdEncoding.EncodeToString(b) != s || uint64(len(b)) != c.Input.Bytes || digestHex(b) != c.Input.SHA256 || !SourceEncodingValid(c.Encoding, b) {
+			return c, nil, t.bad("SVC_SOURCE_INVALID", v)
+		}
+		c.SvcSource = b
 	}
 	edits, e := t.array(m["edits"])
 	if e != nil {

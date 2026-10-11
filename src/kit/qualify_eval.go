@@ -131,14 +131,19 @@ type qset struct {
 	order     []string
 }
 
+type qProcess struct {
+	WallMS int64 `json:"wall_ms"`
+	Memory struct {
+		PeakBytes uint64 `json:"peak_bytes"`
+	} `json:"memory"`
+}
+
 // qRecord is the part of a record the qualification reads beyond the S07 case view.
 type qRecord struct {
-	Process *struct {
-		WallMS int64 `json:"wall_ms"`
-		Memory struct {
-			PeakBytes uint64 `json:"peak_bytes"`
-		} `json:"memory"`
-	} `json:"process"`
+	Process  *qProcess `json:"process"`
+	Segments []struct {
+		Process *qProcess `json:"process"`
+	} `json:"segments"`
 	Steps []struct {
 		Incremental *qTree `json:"incremental"`
 		Fresh       *qTree `json:"fresh"`
@@ -454,9 +459,13 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 	}
 	x := h.x
+	x.startSvcReferences(w.SvcContext)
+	x.svcFormat = w.Format
+	x.nativeInputBytes = NativeOperations()[w.Operation].InputBytes
 	x.gates, x.findings, x.seen = nil, nil, map[string]map[string]bool{}
 	over := false
 	done := func() (*qset, *Error) {
+		x.checkSvcReferences()
 		for _, g := range x.gates {
 			g.finish()
 			s.Gates = append(s.Gates, *g)
@@ -618,15 +627,24 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			}
 		}
 		next++
-		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect}
+		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect, Encoding: EncodingUTF8}
+		if w.Format == SvcFormat && qc.Source != nil {
+			reg.SvcSource = []byte(*qc.Source)
+		}
 		if c.Input.Path != "" {
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
-		x.replayCase(&c, i, &reg, len(w.Queries) > 0)
-		q.judgeCase(s, qc, errNodes, &c, &extra, add, full)
+		out := x.replayCase(&c, i, &reg, len(w.Queries) > 0)
+		q.judgeCase(s, qc, errNodes, &c, &extra, out, x.nativeInputBytes, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
+		}
+		for _, segment := range extra.Segments {
+			if segment.Process != nil {
+				maxWall = max(maxWall, segment.Process.WallMS)
+				maxPeak = max(maxPeak, segment.Process.Memory.PeakBytes)
+			}
 		}
 		if e := x.r.check(); e != nil {
 			return nil, e
@@ -663,7 +681,7 @@ func markUsed(h *qhost, dir, profile string) {
 
 // judgeCase applies the mechanism rules to one recorded case and computes its kind results
 // and semantic summary.
-func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, add func(code, path, msg string), path string) {
+func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCase, extra *qRecord, replay caseOutcome, inputBytes uint64, add func(code, path, msg string), path string, svc, apiWanted bool) {
 	wantStatus := qc.ExpectStatus
 	if wantStatus == "" {
 		wantStatus = StatusCompleted
@@ -675,8 +693,79 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	kit := map[string]string{"incremental_equality": c.Claims.IncrementalEquality, "incremental_route": c.Claims.IncrementalRoute}
 	if c.Oracle != nil {
 		kit["query_equality"], kit["fact_reproduction"], kit["dynamic_sql"] = c.Oracle.QueryEquality, c.Oracle.FactReproduction, c.Oracle.DynamicSQL
-		if c.Oracle.API == claimFail || c.Oracle.API == claimBlocked {
-			s.APIFails++ // the runtime node API disagreeing with its cursor: an observation for disposition
+	}
+	segmentCheck := claimNotClaimed
+	if len(replay.segmentClaims) > 0 {
+		if !replay.segmentClaimsValid {
+			segmentCheck = claimBlocked
+		} else {
+			for _, seg := range replay.segmentClaims {
+				kit["incremental_equality"] = worseClaim(kit["incremental_equality"], seg.IncrementalEquality)
+				kit["incremental_route"] = worseClaim(kit["incremental_route"], seg.IncrementalRoute)
+				for _, v := range []string{seg.IncrementalEquality, seg.IncrementalRoute, seg.Expectations} {
+					segmentCheck = worseClaim(segmentCheck, v)
+				}
+			}
+			segmentCheck = worseClaim(segmentCheck, replay.recomputedAssessment)
+		}
+	}
+	if completed && apiWanted {
+		apiInvalid, fullTrees, reducedTrees := false, 0, false
+		observationOnly := svc && len(c.Steps) > 0
+		for _, step := range c.Steps {
+			observationOnly = observationOnly && step.Composite != nil && step.Incremental == nil
+		}
+		for i, step := range extra.Steps {
+			actual := []*rcTree{c.Steps[i].Incremental, c.Steps[i].Fresh}
+			for j, tree := range []*qTree{step.Incremental, step.Fresh} {
+				if tree == nil || tree.Status != StatusCompleted {
+					continue
+				}
+				if tree.Form != "full" {
+					reducedTrees = true
+					continue
+				}
+				if actual[j] == nil || actual[j].Tree == nil {
+					add("API_RECORD_INVALID", path, "API 성공을 검증할 full tree envelope가 없다")
+					apiInvalid = true
+					continue
+				}
+				fullTrees++
+				var obs struct {
+					Revision           string         `json:"revision"`
+					Consistent         *bool          `json:"consistent"`
+					First              jsontext.Value `json:"first_difference"`
+					PositionNavigation *int           `json:"position_navigation_divergences"`
+					FirstDivergence    jsontext.Value `json:"first_divergence"`
+				}
+				if err := jsonv2.Unmarshal(tree.API, &obs); err != nil || obs.Revision != "tsgk-api/r1" || obs.Consistent == nil || obs.PositionNavigation == nil || *obs.PositionNavigation < 0 || len(obs.First) == 0 || len(obs.FirstDivergence) == 0 {
+					add("API_RECORD_INVALID", path, "full tree의 필수 API 관측이 없거나 유효하지 않다")
+					apiInvalid = true
+				} else if !*obs.Consistent || *obs.PositionNavigation > 0 || string(obs.First) != "null" || string(obs.FirstDivergence) != "null" {
+					apiInvalid = true
+				}
+			}
+		}
+		claimValid := c.Oracle != nil
+		if claimValid {
+			switch {
+			case observationOnly:
+				claimValid = c.Oracle.API == claimNotClaimed
+			case reducedTrees || fullTrees == 0:
+				claimValid = c.Oracle.API == claimBlocked || fullTrees > 0 && apiInvalid && c.Oracle.API == claimFail
+			default:
+				claimValid = c.Oracle.API == claimPass || c.Oracle.API == claimFail || c.Oracle.API == claimBlocked
+			}
+		}
+		if !claimValid {
+			add("API_CLAIM_MISSING", path, "실제 tree form에 대응하는 API claim이 없거나 유효하지 않다")
+			apiInvalid = true
+		}
+		if apiInvalid && c.Oracle != nil && c.Oracle.API == claimPass {
+			add("API_CLAIM_MISMATCH", path, "누락 또는 차이가 있는 API를 PASS로 주장했다")
+		}
+		if apiInvalid || c.Oracle != nil && (c.Oracle.API == claimFail || c.Oracle.API == claimBlocked) {
+			s.APIFails++
 		}
 	}
 	for _, k := range sortedKeys(kit) {
@@ -694,7 +783,11 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	for i, e := range qc.Expect {
 		stepRes[i] = claimBlocked
 		if completed && e.Step < len(c.Steps) {
-			if r, ok := expectResult(e, c.Steps[e.Step].Incremental); ok {
+			r, ok := expectResult(e, c.Steps[e.Step].Incremental)
+			if svc && c.Steps[e.Step].Composite != nil {
+				r, ok = svcExpectResult(e, c.Steps[e.Step])
+			}
+			if ok {
 				stepRes[i] = r
 			}
 		}
@@ -717,7 +810,7 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	var qeDetail []string
 	if len(qc.QueryExpect) > 0 {
 		qe = claimPass
-		versions, _, err := ApplyEdits(EncodingUTF8, []byte(*qc.Source), qc.Edits, uint64(len(*qc.Source))+1<<20)
+		versions, _, err := ApplyEdits(EncodingUTF8, []byte(*qc.Source), qc.Edits, inputBytes)
 		for _, e := range qc.QueryExpect {
 			r, d := claimPass, ""
 			var t *qTree
@@ -812,6 +905,10 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 	case len(c.Steps) > 0 && !slices.ContainsFunc(c.Steps, func(st rcStep) bool { return st.Incremental != nil || st.Composite == nil }):
 		// SVC observation-only: the S05 verdict the verdict gate recomputed (assessment and
 		// code); a registered verdict must match it exactly
+		if !replay.complete || replay.assess == AssessUnresolved {
+			s.checks[qc.ID] = claimBlocked
+			break
+		}
 		if qc.ExpectAssessment != "" {
 			s.checks[qc.ID] = map[bool]string{true: claimPass, false: claimFail}[c.Assessment == qc.ExpectAssessment && c.Code == qc.ExpectCode]
 			break
@@ -833,6 +930,12 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 			v = worseClaim(v, qe)
 		}
 		s.checks[qc.ID] = v
+	}
+	for _, ref := range c.References {
+		s.checks[qc.ID] = worseClaim(s.checks[qc.ID], ref.Assessment)
+	}
+	if completed && len(replay.segmentClaims) > 0 {
+		s.checks[qc.ID] = worseClaim(s.checks[qc.ID], segmentCheck)
 	}
 	if qc.Role == "detector" {
 		d := claimPass
@@ -867,6 +970,7 @@ func (q *qualifier) judgeCase(s *qset, qc *QualCase, errNodes []string, c *rcCas
 		steps = append(steps, x)
 	}
 	sum, _ := json.Marshal(map[string]any{"status": c.ExecutionStatus, "assessment": c.Assessment, "code": c.Code, "claims": c.Claims, "oracle": c.Oracle,
+		"segment_claims": replay.segmentClaims, "segment_claims_valid": replay.segmentClaimsValid,
 		"expectations": stepRes, "query_expectations": qe, "query_detail": qeDetail, "steps": steps})
 	s.summaries[qc.ID] = string(sum)
 }
@@ -953,6 +1057,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	if !jsonEqual(n.Declarations, w.Declarations) {
 		return "declarations"
 	}
+	if !jsonEqual(n.SvcContext, w.SvcContext) {
+		return "svc_context"
+	}
 	if (p.FactPack == nil) != (w.FactPack == nil) || (p.FactPack != nil && *p.FactPack != *w.FactPack) {
 		return "fact_pack"
 	}
@@ -969,6 +1076,9 @@ func registrationDiff(p OracleProfile, w QualWorkload) string {
 	}
 	for i, c := range n.Cases {
 		r := w.Cases[i]
+		if w.Format == SvcFormat && (r.Source == nil || string(c.SvcSource) != *r.Source) {
+			return "cases/" + c.ID + "/svc_source"
+		}
 		if c.ID != r.ID || c.Input.SHA256 != r.Input.SHA256 || c.Input.Bytes != r.Input.Bytes || !slices.EqualFunc(c.Edits, r.Edits, sameEdit) ||
 			!slices.EqualFunc(c.Expect, r.Expect, sameExpect) || (len(p.OracleCases[i].QueryExpect)+len(r.QueryExpect) > 0 && !jsonEqual(p.OracleCases[i].QueryExpect, r.QueryExpect)) ||
 			(c.Encoding != "" && c.Encoding != EncodingUTF8) || (len(c.Points)+len(r.Points) > 0 && !slices.Equal(c.Points, r.Points)) ||

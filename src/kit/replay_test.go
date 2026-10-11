@@ -65,6 +65,12 @@ func fxTreeOut(src string, hasError bool) map[string]any {
 			"identities": []IdentityRef{{"producer", "tsgk-native-build/r1", fxProducer}, {"source", "tsgk-source-bytes/r1", sum([]byte(src))}, {"policy", "tsgk-native-policy/r1", fxPolicy}}}}
 }
 
+func fxSummaryOut(tr map[string]any) {
+	tree := tr["tree"].(map[string]any)
+	tr["form"], tr["summary"] = "summary", map[string]any{"schema": TreeSummarySchema, "status": StatusCompleted, "input": tree["input"], "identities": tree["identities"], "descendant_count": tr["descendant_count"], "digest": map[string]any{"sha256": tr["digest"]}}
+	delete(tr, "tree")
+}
+
 // fxNative is a mutable S05 fixture: a workload profile with two cases (one with an edit)
 // and the matching recorded result.
 type fxNative struct {
@@ -419,8 +425,7 @@ func TestReplayRouteOnErrorTree(t *testing.T) {
 func TestReplayRouteNeedsFullTrees(t *testing.T) {
 	summary := func(f *fxNative) *fxNative {
 		tr := f.cases[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
-		tr["form"] = "summary"
-		delete(tr, "tree")
+		fxSummaryOut(tr)
 		return under("native-result-r2", f)
 	}
 	f := summary(fxNoReuse(true, "BLOCKED", AssessBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"))
@@ -582,5 +587,45 @@ func TestReplayDeterministic(t *testing.T) {
 	jb, _ := json.Marshal(b)
 	if !bytes.Equal(ja, jb) {
 		t.Fatalf("replay is not deterministic:\n%s\n%s", ja, jb)
+	}
+}
+
+func TestReplayTreeEnvelopeForms(t *testing.T) {
+	for _, bad := range []string{"", "missing-full", "missing-summary", "summary-with-full", "record-with-full", "unknown", "schema", "status", "encoding", "summary-schema", "summary-input"} {
+		t.Run(bad, func(t *testing.T) {
+			f := newFxNative()
+			tr := f.cases[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			switch bad {
+			case "schema":
+				tr["tree"].(map[string]any)["schema"] = "wrong"
+			case "status":
+				tr["tree"].(map[string]any)["status"] = StatusNotRun
+			case "encoding":
+				tr["tree"].(map[string]any)["input"].(map[string]any)["encoding"] = EncodingUTF16LE
+			case "summary-schema":
+				fxSummaryOut(tr)
+				tr["summary"].(map[string]any)["schema"] = "wrong"
+			case "summary-input":
+				fxSummaryOut(tr)
+				tr["summary"].(map[string]any)["input"].(map[string]any)["sha256"] = fxPolicy
+			case "missing-full":
+				delete(tr, "tree")
+			case "missing-summary":
+				tr["form"] = "summary"
+				delete(tr, "tree")
+			case "summary-with-full":
+				tr["form"] = "summary"
+				tr["summary"] = map[string]any{}
+			case "record-with-full":
+				tr["form"] = "record"
+			case "unknown":
+				tr["form"] = "unknown"
+			}
+			root, reg := f.write(t, nil)
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			if err != nil || (gateOf(r, "tree").Failed > 0) != (bad != "") {
+				t.Fatalf("%s: %v %+v", bad, err, gateOf(r, "tree"))
+			}
+		})
 	}
 }

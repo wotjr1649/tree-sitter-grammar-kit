@@ -2,6 +2,7 @@ package kit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"slices"
@@ -135,6 +136,7 @@ type QualCase struct {
 // directory under records/, the workload profile under profiles/ and the semantic profile
 // fields the host profile must match exactly (host compiler and profile id excluded).
 type QualWorkload struct {
+	SvcContext   *SvcContext   `json:"svc_context,omitempty"`
 	Set          string        `json:"set"`
 	Profile      string        `json:"profile"`
 	Route        string        `json:"route"`
@@ -287,6 +289,9 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		ids := map[string]bool{}
 		for i, c := range w.Cases {
 			cp := fmt.Sprintf("/cases/%d", i)
+			if w.Format == SvcFormat && (c.Source == nil || !utf8.ValidString(*c.Source) || digestHex([]byte(*c.Source)) != c.Input.SHA256 || uint64(len(*c.Source)) != c.Input.Bytes) {
+				return badW("CASE_SOURCE_MISMATCH", cp)
+			}
 			if !validID(c.ID) || ids[c.ID] || !hex64.MatchString(c.Input.SHA256) {
 				return badW("CASE_INVALID", cp)
 			}
@@ -328,7 +333,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			if c.ExpectAssessment != "" || c.ExpectCode != "" {
 				// a registered SVC observation-only verdict: a composite-format case that covers
 				// no row and needs no tree, PASS without a code or BLOCKED with one
-				observed := w.Format == SvcFormat && len(c.Covers) == 0 && c.Role != "detector" && len(c.Expect) == 0 && len(c.QueryExpect) == 0 &&
+				observed := (w.Format == SvcFormat || w.Format == SvcLegacyFormat) && len(c.Covers) == 0 && c.Role != "detector" && len(c.Expect) == 0 && len(c.QueryExpect) == 0 &&
 					c.DynamicSQL == nil && c.ExpectStatus == ""
 				verdict := (c.ExpectAssessment == AssessPass && c.ExpectCode == "") || (c.ExpectAssessment == AssessBlocked && c.ExpectCode != "")
 				if !observed || !verdict {
@@ -367,6 +372,24 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 					return badW("CASE_INVALID", cp+"/alternatives")
 				}
 				alts[a] = true
+			}
+		}
+		if w.SvcContext != nil {
+			if w.Format != SvcFormat || w.Symbol != "tree_sitter_c_sharp" {
+				return badW("SVC_CONTEXT_INVALID", "/svc_context")
+			}
+			data, _ := json.Marshal(w.SvcContext)
+			t := typed{doc: doc}
+			v, e := decodeStrict(doc, data, MaxDocumentBytes)
+			if e != nil {
+				return e
+			}
+			p := IncrementalProfile{Output: w.Output, Operation: w.Operation}
+			for _, c := range w.Cases {
+				p.Cases = append(p.Cases, IncrementalCase{ID: c.ID, SvcSource: []byte(*c.Source), Encoding: EncodingUTF8})
+			}
+			if _, e := parseSvcContext(t, v, p); e != nil {
+				return e
 			}
 		}
 		return nil
