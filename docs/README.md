@@ -43,6 +43,7 @@ The current implementation consists of repository foundation checks, the Session
 | #172–#176 SVC composite·복구·참조·zero-width runtime 탐색 | [SVC/runtime 보완](reports/issues-172-176-svc-and-runtime.md) |
 | #178·#179 previous sibling identity·inactive C# directive·SVC 회귀 | [잔여 runtime/C# 보완](reports/issues-178-179-residual-runtime-csharp.md) |
 | #182–#185 C# conditional fragment·SVC source·record replay 보완 | [조건부 fragment와 receipt 보완](reports/issue-182-csharp-conditional-fragments.md) |
+| #188 로컬 corpus full CST/API·원문 처분·runtime 후속 | [corpus 후속 검증](reports/issue-188-corpus-cst-api.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

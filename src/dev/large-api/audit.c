@@ -14,7 +14,20 @@ typedef struct {
 } AuditNode;
 typedef struct { AuditNode *nodes; IdMap map; const TSLanguage *lang; } Audit;
 
+#ifdef TSGK_CORPUS_CST
+/* Pages retain every public CST value; the Go consumer rehashes the complete stream. */
+static TreeCtx cst_page;
+static uint32_t cst_start, cst_end, cst_written;
+#endif
+
 static void collect(Walk *w, TSNode node, uint32_t i, int64_t parent, const char *field) {
+#ifdef TSGK_CORPUS_CST
+  if (i >= cst_start && i < cst_end) {
+    if (cst_written++) put(&cst_page.nodes, ",", 1);
+    node_array(&cst_page.nodes, &cst_page, node, parent, field, node_flags(node));
+    if (cst_page.nodes.over) fatal_limit("OUTPUT_TOO_LARGE");
+  }
+#endif
   Audit *a = w->ctx;
   AuditNode *x = &a->nodes[i];
   x->start = ts_node_start_byte(node); x->end = ts_node_end_byte(node);
@@ -223,7 +236,13 @@ int main(int argc, char **argv) {
   uint8_t *input = t_malloc((size_t)len+1);
   if (read_full(input,len) != len || fgetc(stdin) != EOF) return 2;
   Req r; const char *error = parse_request(input,len,&r);
-  if (error || r.nedits || r.nqueries || r.nsteps_ranges || r.enc != ENC_UTF8 || !valid_source(r.enc,r.source,r.source_len)) return 2;
+  if (error || r.nedits || r.nqueries || r.nsteps_ranges || !valid_source(r.enc,r.source,r.source_len)) return 2;
+#ifdef TSGK_CORPUS_CST
+  if (end - start > r.full_nodes) return 2;
+  cst_start = start; cst_end = end; cst_page.nodes.limit = r.output_bytes;
+#else
+  if (r.enc != ENC_UTF8) return 2;
+#endif
   mem_limit = r.memory_bytes; cur_source_bytes = r.source_len;
   TSParser *parser = ts_parser_new();
   if (!ts_parser_set_language(parser,tsgk_language())) return 4;
@@ -237,7 +256,12 @@ int main(int argc, char **argv) {
   sha_hex(&checks.expected.sha,expected); sha_hex(&checks.observed.sha,observed);
   Sha source_hash; sha_init(&source_hash); sha_update(&source_hash,r.source,r.source_len); sha_hex(&source_hash,source_sha);
   Buf out = {0}; out.limit = r.output_bytes;
-  puts_(&out,"{\"schema\":\"tsgk-large-api-audit/r1\",\"id\":"); putstr(&out,r.id);
+#ifdef TSGK_CORPUS_CST
+  puts_(&out,"{\"schema\":\"tsgk-corpus-cst-api-page/r1\",\"id\":");
+#else
+  puts_(&out,"{\"schema\":\"tsgk-large-api-audit/r1\",\"id\":");
+#endif
+  putstr(&out,r.id);
   puts_(&out,",\"source_sha256\":"); putstr(&out,source_sha);
   puts_(&out,",\"source_bytes\":"); putu(&out,r.source_len);
   puts_(&out,",\"nodes\":"); putu(&out,count);
@@ -255,9 +279,20 @@ int main(int argc, char **argv) {
   puts_(&out,",\"first_difference\":["); putu(&out,checks.first_node); put(&out,",",1); putu(&out,checks.first_column); put(&out,",",1); puti(&out,checks.first_expected); put(&out,",",1); puti(&out,checks.first_observed); puts_(&out,"]");
   puts_(&out,",\"expected_sha256\":"); putstr(&out,expected);
   puts_(&out,",\"observed_sha256\":"); putstr(&out,observed);
+#ifdef TSGK_CORPUS_CST
+  puts_(&out,",\"cst_page\":{\"types\":"); names_put(&out,&cst_page.types);
+  puts_(&out,",\"fields\":"); names_put(&out,&cst_page.fields);
+  puts_(&out,",\"nodes\":["); put(&out,cst_page.nodes.data,cst_page.nodes.len);
+  const char *encodings[] = {"UTF-8", "UTF-16LE", "UTF-16BE", "CP949"};
+  puts_(&out,"]},\"encoding\":"); putstr(&out,encodings[r.enc]);
+  puts_(&out,",\"has_error\":"); puts_(&out,ts_node_has_error(ts_tree_root_node(tree)) ? "true" : "false");
+#endif
   puts_(&out,",\"complete\":true}");
   if (out.over) return 3;
   write_frame(out.data,out.len);
   ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input); buf_free(&out);
+#ifdef TSGK_CORPUS_CST
+  names_free(&cst_page.types); names_free(&cst_page.fields); buf_free(&cst_page.nodes);
+#endif
   return checks.differences ? 1 : 0;
 }

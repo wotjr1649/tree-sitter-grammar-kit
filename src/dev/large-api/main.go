@@ -233,7 +233,14 @@ func execute() error {
 	work := flag.String("work", "", "new task-owned build directory")
 	out := flag.String("out", "", "new receipt file")
 	controlsOnly := flag.Bool("controls-only", false, "small controls and faults only")
+	corpusPlan := flag.String("corpus-plan", "", "local-only pinned corpus page plan (separate evidence mode)")
+	corpusRoot := flag.String("corpus-root", "", "read-only original corpus root")
+	corpusReplay := flag.String("corpus-replay", "", "local page evidence root to verify without native execution")
+	corpusRegistration := flag.String("corpus-registration", "", "caller-trusted pins outside the replay root")
 	flag.Parse()
+	if *corpusReplay != "" {
+		return replayCorpus(*corpusReplay, *corpusRoot, *corpusPlan, *corpusRegistration, *out)
+	}
 	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 		return errors.New("large API audit currently requires windows/amd64")
 	}
@@ -252,6 +259,9 @@ func execute() error {
 	}
 	if _, e := os.Lstat(*out); !os.IsNotExist(e) {
 		return errors.New("output already exists")
+	}
+	if *corpusPlan != "" {
+		return executeCorpus(*prepared, *cc, *work, *out, *corpusRoot, *corpusPlan)
 	}
 	if err := os.Mkdir(*work, 0755); err != nil {
 		return err
