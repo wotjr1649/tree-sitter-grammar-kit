@@ -758,6 +758,44 @@ func TestQualifyMechanism(t *testing.T) {
 	}
 }
 
+// #187: every host has its own exact read budget; one byte beyond it removes all claims.
+func TestQualifyHostByteBoundary(t *testing.T) {
+	f := newQfx(t)
+	f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+	hosts := f.all(t, nil)
+	var hs []QualifyHost
+	var budget, total uint64
+	for _, p := range qfxPlatforms {
+		hs = append(hs, QualifyHost{p.ID, hosts[p.ID]})
+		var bytes uint64
+		if err := filepath.Walk(hosts[p.ID], func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() && info.Name() != "summary.json" {
+				bytes += uint64(info.Size())
+			}
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		budget = max(budget, bytes)
+		total += bytes
+	}
+	t.Cleanup(func() { testHookQualifyLimits = nil })
+	for _, delta := range []uint64{0, 1} {
+		testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = budget - delta; return l }
+		res, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: hs})
+		if delta == 0 {
+			if err != nil || res.Assessment != AssessPass || res.SupportClaim != "SUPPORTED" || res.BytesRead != total || total <= budget {
+				t.Fatalf("exact per-host budget: %v %s %s bytes=%d/%d budget=%d", err, res.Assessment, res.SupportClaim, res.BytesRead, total, budget)
+			}
+		} else if err == nil || !strings.Contains(err.Error(), "TOTAL_BYTES_LIMIT") || res.ExecutionStatus != StatusResourceLimit || res.SupportClaim != "BLOCKED" || len(res.PlatformClaims) != 0 {
+			t.Fatalf("one byte beyond host budget: %v %s %s %v", err, res.ExecutionStatus, res.SupportClaim, res.PlatformClaims)
+		}
+	}
+}
+
 // S08-A11: cancellation, limits and an oversized result end typed and never PASS.
 func TestQualifyLimitsAndCancel(t *testing.T) {
 	f := newQfx(t)
