@@ -90,6 +90,9 @@ func readLocalDocument(name string, limit uint64) ([]byte, error) {
 // native observations; full CST digest/shape and coverage are independently recomputed here.
 func replayCorpus(evidenceName, sourceName, planName, registrationName, outName string) error {
 	start := time.Now()
+	if !outsideCorpusRoot(outName, sourceName) {
+		return errors.New("CORPUS_WRITE_INSIDE_SOURCE_ROOT")
+	}
 	resolved, err := filepath.EvalSymlinks(evidenceName)
 	if err != nil {
 		return err
@@ -230,9 +233,13 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 			if seen[e.ID] || binding.Start != 0 || binding.End != 0 || binding.Nodes != 0 {
 				return errors.New("CORPUS_REPLAY_SVC_DUPLICATE_OR_TREE")
 			}
-			original, err := readPinned(sourceRoot, pinnedFile{Path: e.Input.Path, SHA: e.Input.SHA256, Bytes: e.Input.Bytes}, 33554432)
+			original, err := readCorpusSource(sourceRoot, e)
 			if err != nil {
 				return err
+			}
+			o := kit.ObserveServiceHost(e.Encoding, original)
+			if !corpusSvcEligible(o) {
+				return errors.New("CORPUS_REPLAY_SVC_INELIGIBLE")
 			}
 			var x struct {
 				Case        corpusExpected     `json:"case"`
@@ -243,7 +250,7 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 			if err = jsonv2.Unmarshal(pageBytes, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 				return err
 			}
-			observed, err := json.Marshal(kit.ObserveServiceHost(e.Encoding, original))
+			observed, err := json.Marshal(o)
 			if err != nil {
 				return err
 			}
@@ -268,7 +275,7 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 			current = e
 			active = e.ID
 			tree = newCorpusTree()
-			source, err = readPinned(sourceRoot, pinnedFile{Path: e.Input.Path, SHA: e.Input.SHA256, Bytes: e.Input.Bytes}, 33554432)
+			source, err = readCorpusSource(sourceRoot, e)
 			if err != nil {
 				return err
 			}

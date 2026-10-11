@@ -14,7 +14,7 @@ import (
 
 // This is a data-only replay fixture, not an observation of native execution.
 func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
-	for _, mutation := range []string{"none", "source", "page", "duplicate", "missing", "producer", "policy", "encoding", "cleanup", "memory", "scope", "navigation", "CST_flag", "CST_point", "CST_type", "CST_field", "short_row"} {
+	for _, mutation := range []string{"none", "source", "page", "duplicate", "missing", "producer", "policy", "encoding", "coherent_UTF16LE", "coherent_UTF16BE", "coherent_unknown", "coherent_surrogateLE", "coherent_surrogateBE", "coherent_NULLE", "coherent_NULBE", "coherent_CP949", "cleanup", "memory", "scope", "navigation", "CST_flag", "CST_point", "CST_type", "CST_field", "short_row"} {
 		t.Run(mutation, func(t *testing.T) {
 			dir := t.TempDir()
 			dataDir := filepath.Join(dir, "data")
@@ -38,7 +38,18 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 				}
 				return b
 			}
-			write(filepath.Join(sourceDir, "input"), []byte("a"))
+			source := []byte("a")
+			switch mutation {
+			case "coherent_surrogateLE":
+				source = []byte{0, 0xd8}
+			case "coherent_surrogateBE":
+				source = []byte{0xd8, 0}
+			case "coherent_NULLE", "coherent_NULBE":
+				source = []byte{0, 0}
+			case "coherent_CP949":
+				source = []byte{0x81, 0x20}
+			}
+			write(filepath.Join(sourceDir, "input"), source)
 			p := publicPage()
 			tree := newCorpusTree()
 			if err := tree.consume(p, 1); err != nil {
@@ -46,6 +57,12 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 			}
 			errFlag := false
 			e := corpusExpected{ID: "control", Route: "csharp", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "input", Role: "case", SHA256: digest([]byte("a")), Bytes: 1}, Nodes: 2, Digest: kit.TreeDigest([]kit.TreeNode{{Parent: -1, Type: "root", Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}, {Parent: 0, Type: "leaf", Field: &p.CST.Fields[0], Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}}), HasError: &errFlag}
+			if strings.HasPrefix(mutation, "coherent_") {
+				e.Encoding = map[string]string{"coherent_UTF16LE": kit.EncodingUTF16LE, "coherent_UTF16BE": kit.EncodingUTF16BE, "coherent_unknown": "unknown", "coherent_surrogateLE": kit.EncodingUTF16LE, "coherent_surrogateBE": kit.EncodingUTF16BE, "coherent_NULLE": kit.EncodingUTF16LE, "coherent_NULBE": kit.EncodingUTF16BE, "coherent_CP949": kit.EncodingCP949}[mutation]
+				p.Encoding = e.Encoding
+				e.Input.SHA256, e.Input.Bytes = digest(source), uint64(len(source))
+				p.SourceSHA, p.SourceBytes = e.Input.SHA256, e.Input.Bytes
+			}
 			plan := corpusPlan{Schema: "tsgk-corpus-cst-api-plan/r1", Candidate: strings.Repeat("a", 40), Expected: []corpusExpected{e}}
 			planBytes := marshal(plan)
 			planPath := filepath.Join(dir, "plan.json")

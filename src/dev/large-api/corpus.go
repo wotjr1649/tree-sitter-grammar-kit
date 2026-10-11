@@ -114,6 +114,22 @@ func readPinned(root *os.Root, p pinnedFile, limit uint64) ([]byte, error) {
 	return b, nil
 }
 
+func readCorpusSource(root *os.Root, e corpusExpected) ([]byte, error) {
+	b, err := readPinned(root, pinnedFile{Path: e.Input.Path, SHA: e.Input.SHA256, Bytes: e.Input.Bytes}, 33554432)
+	if err == nil && !kit.SourceEncodingValid(e.Encoding, b) {
+		err = errors.New("CORPUS_SOURCE_ENCODING_INVALID")
+	}
+	return b, err
+}
+
+func corpusSvcEligible(o kit.SvcObservation) bool {
+	return o.IncludedRanges == nil && o.Coverage.Directive == "OBSERVED" && o.Coverage.Inline == "ABSENT" && o.Directive != nil && len(o.Directive.Diagnostics) == 0
+}
+
+func corpusProfileAllowed(p kit.OracleProfile) bool {
+	return p.Native.Schema == kit.OracleSchema && (p.Native.Format == "" || p.Native.Format == kit.SvcFormat) && p.Native.Operation == "native-query-large" && p.Native.Output == kit.OutputAuto && len(p.Queries) == 0 && p.FactPack == nil && p.API && p.Native.SvcContext == nil
+}
+
 func appendTreeDigest(h hash.Hash, n kit.TreeNode) {
 	field := ""
 	if n.Field != nil {
@@ -402,6 +418,9 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 	if rootName == "" {
 		return errors.New("CORPUS_ROOT_REQUIRED")
 	}
+	if !outsideCorpusRoot(work, rootName) || !outsideCorpusRoot(out, rootName) {
+		return errors.New("CORPUS_WRITE_INSIDE_SOURCE_ROOT")
+	}
 	planBytes, err := readLocalDocument(planName, 16777216)
 	if err != nil {
 		return err
@@ -460,7 +479,7 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 		if err = corpusRegisteredProfile(prof); err != nil {
 			return err
 		}
-		if prof.Native.Operation != "native-query-large" || prof.Native.Output != kit.OutputAuto || len(prof.Queries) != 0 || prof.FactPack != nil || !prof.API || prof.Native.SvcContext != nil {
+		if !corpusProfileAllowed(prof) {
 			return errors.New("CORPUS_PROFILE_POLICY_MISMATCH")
 		}
 		for _, c := range prof.Native.Cases {
@@ -591,16 +610,13 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 				return errors.New("CORPUS_GLOBAL_WALL_LIMIT")
 			}
 			e := expected[c.ID]
-			source, err := readPinned(root, pinnedFile{Path: c.Input.Path, SHA: c.Input.SHA256, Bytes: c.Input.Bytes}, op.InputBytes)
+			source, err := readCorpusSource(root, e)
 			if err != nil {
 				return err
 			}
-			if !kit.SourceEncodingValid(c.Encoding, source) {
-				return errors.New("CORPUS_SOURCE_ENCODING_INVALID")
-			}
 			if e.Route == "svc" {
 				obs := kit.ObserveServiceHost(c.Encoding, source)
-				if !slices.Equal(source, c.SvcSource) || obs.IncludedRanges != nil || obs.Coverage.Directive != "OBSERVED" || obs.Coverage.Inline != "ABSENT" || obs.Directive == nil || len(obs.Directive.Diagnostics) != 0 {
+				if !slices.Equal(source, c.SvcSource) || !corpusSvcEligible(obs) {
 					return errors.New("SVC_OBSERVATION_OR_SOURCE_MISMATCH")
 				}
 				observation, err := json.Marshal(struct {
