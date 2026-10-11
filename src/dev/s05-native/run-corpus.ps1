@@ -110,7 +110,7 @@ foreach ($g in $Routes) {
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
   $profile = [ordered]@{ schema = 'tsgk-incremental/r2'; id = "s05-corpus-$g"; route = $route; operation = 'private-corpus-local'; symbol = $r.symbol
     encoding = 'UTF-8'; output = 'record'; compiler = $compilerId; grammar = @($sorted); declarations = (Get-Declarations $route); cases = @($cases) }
-  if ($g -eq 'svc') { $profile.format = 'SVC-SERVICEHOST-r1' }
+  if ($g -eq 'svc') { $profile.format = 'SVC-SERVICEHOST-r2' }
   $pf = Join-Path $Destination "profile-$g.json"
   $profile | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
   $out = Join-Path $Destination "result-$g"

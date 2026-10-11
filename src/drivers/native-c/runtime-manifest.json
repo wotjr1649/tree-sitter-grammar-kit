@@ -35,8 +35,8 @@
   },
   {
    "subject": "src/drivers/native-c/runtime-sibling-identity.patch.json",
-   "sha256": "06d8738fa24fa8c88403971642e98c4ae00b5bbdee5e7450e5346eca2ae67b68",
-   "bytes": 3182,
+   "sha256": "6ad0899223d026c6958a009b5de89b75e235e8b3467da3aabeb731f3471969ad",
+   "bytes": 4320,
    "pointer": "/files/0",
    "field": "operations",
    "target": "lib/src/node.c",
@@ -45,7 +45,7 @@
    "license": "MIT",
    "remove_when": "A pinned upstream runtime preserves exact visible sibling identity across zero-width, missing, alias, hidden, ERROR and extra nodes and passes the same owned, 26-route and full large API controls on three platforms.",
    "origin": "LOCAL",
-   "tracking_issue": "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/176"
+   "tracking_issue": "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/178"
   }
  ],
  "files": [
@@ -131,8 +131,8 @@
   },
   {
    "path": "lib/src/node.c",
-   "sha256": "c46fe8cb00deb779be917a69bf58bb543d9cc39e57ba41afe04bfff48466e062",
-   "bytes": 22738
+   "sha256": "557ba7a3ccc10aaf79ef8dde5c506ba4efb0d2c60af073577dd0613e3483a35d",
+   "bytes": 22742
   },
   {
    "path": "lib/src/parser.c",

@@ -45,14 +45,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-      "bytes": 46397791
+      "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+      "bytes": 46821469
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e",
-      "bytes": 36393
+      "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9",
+      "bytes": 33009
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -1767,7 +1767,7 @@
          {
           "type": "preproc_if",
           "start_byte": 29,
-          "end_byte": 142
+          "end_byte": 163
          },
          {
           "type": "preproc_elif",
@@ -12406,7 +12406,7 @@
          {
           "type": "preproc_if",
           "start_byte": 12,
-          "end_byte": 74
+          "end_byte": 75
          },
          {
           "type": "preproc_skipped_section",
@@ -12479,14 +12479,24 @@
           "end_byte": 87
          },
          {
-          "type": "preproc_skipped_section",
-          "start_byte": 27,
-          "end_byte": 87
-         },
-         {
           "type": "class_declaration",
           "start_byte": 95,
           "end_byte": 106
+         },
+         {
+          "type": "preproc_if",
+          "start_byte": 27,
+          "end_byte": 75
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 38,
+          "end_byte": 49
+         },
+         {
+          "type": "preproc_skipped_section",
+          "start_byte": 75,
+          "end_byte": 87
          }
         ],
         "declarations": ""
@@ -16012,6 +16022,837 @@
        "csharp-B03": [
         "P",
         "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-define-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "b9fd005348b54587e5e62aa299efc87f39a107065a0c8b938b34ba093ec7ac41",
+       "bytes": 98
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 35,
+        "new_end_byte": 35,
+        "old": "I2RlZmluZSAxMjM=",
+        "new": "I2RlZmluZSBBQkM="
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 35,
+        "new_end_byte": 35,
+        "old": "I2RlZmluZSBBQkM=",
+        "new": "I2RlZmluZSAxMjM="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-undef-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "770d3eac21610813135f1bd417bd50bc8c240649ff1838f5ed4baca73ab253f1",
+       "bytes": 98
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 35,
+        "new_end_byte": 34,
+        "old": "I3VuZGVmIHRydWU=",
+        "new": "I3VuZGVmIEFCQw=="
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 34,
+        "new_end_byte": 35,
+        "old": "I3VuZGVmIEFCQw==",
+        "new": "I3VuZGVmIHRydWU="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-unknown-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "3b238d61c2390b789a4985011da81698ed5620cf93b92bf4487984137026a145",
+       "bytes": 99
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 36,
+        "new_end_byte": 35,
+        "old": "I3Vua25vd24gYWJj",
+        "new": "I3ByYWdtYSBhYmM="
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 35,
+        "new_end_byte": 36,
+        "old": "I3ByYWdtYSBhYmM=",
+        "new": "I3Vua25vd24gYWJj"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-nested-else-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8670d5a1d0b862bf73dcccf0f5c597acd2f5dc0c40ef1673140ac82d4cb7b405",
+       "bytes": 114
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 51,
+        "new_end_byte": 57,
+        "old": "I2lmIHRydWUKI2Vsc2UKI2Vsc2UKI2VuZGlm",
+        "new": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm"
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 57,
+        "new_end_byte": 51,
+        "old": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm",
+        "new": "I2lmIHRydWUKI2Vsc2UKI2Vsc2UKI2VuZGlm"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-nested-elif-after-else-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "e4af1480e44d20df2008edd94107a9e991299cb775e337dd2f3aa2436ee2b58b",
+       "bytes": 120
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 57,
+        "new_end_byte": 57,
+        "old": "I2lmIHRydWUKI2Vsc2UKI2VsaWYgZmFsc2UKI2VuZGlm",
+        "new": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm"
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 57,
+        "new_end_byte": 57,
+        "old": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm",
+        "new": "I2lmIHRydWUKI2Vsc2UKI2VsaWYgZmFsc2UKI2VuZGlm"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-nested-expression-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "dd48be66da80967f4cf2ef1bf87b88a6f41130dca45b3276f44e9a0e319bc3af",
+       "bytes": 113
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 50,
+        "new_end_byte": 51,
+        "old": "I2lmIDEyMwpvcGFxdWUgY29kZQojZW5kaWY=",
+        "new": "I2lmIHRydWUKb3BhcXVlIGNvZGUKI2VuZGlm"
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 51,
+        "new_end_byte": 50,
+        "old": "I2lmIHRydWUKb3BhcXVlIGNvZGUKI2VuZGlm",
+        "new": "I2lmIDEyMwpvcGFxdWUgY29kZQojZW5kaWY="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-endif-tail-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "7beebd8a5ed6b7b1d6fbffff79421dcd24d9dcc2a54c06648ffe2f18fbbbc299",
+       "bytes": 110
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 47,
+        "new_end_byte": 50,
+        "old": "I2lmIHRydWUKI2VuZGlmIGdhcmJhZ2U=",
+        "new": "I2lmIHRydWUKI2VuZGlmIC8vIGNvbW1lbnQ="
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 50,
+        "new_end_byte": 47,
+        "old": "I2lmIHRydWUKI2VuZGlmIC8vIGNvbW1lbnQ=",
+        "new": "I2lmIHRydWUKI2VuZGlmIGdhcmJhZ2U="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-line-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "9fff0136b4e3032586aed824facd828230ce05f0a9733eb6be9c85391c10234a",
+       "bytes": 96
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 33,
+        "new_end_byte": 39,
+        "old": "I2xpbmUgYWJj",
+        "new": "I2xpbmUgMTIzICJ4XHki"
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 39,
+        "new_end_byte": 33,
+        "old": "I2xpbmUgMTIzICJ4XHki",
+        "new": "I2xpbmUgYWJj"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-define-tail-edit",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "83eb42d10854f421521fc8f207bb502d957fb51e3bda42d072a1a690e33a3d95",
+       "bytes": 104
+      },
+      "edits": [
+       {
+        "start_byte": 24,
+        "old_end_byte": 41,
+        "new_end_byte": 46,
+        "old": "I2RlZmluZSBBQkMgZXh0cmE=",
+        "new": "I2RlZmluZSBBQkMgLy8gY29tbWVudA=="
+       },
+       {
+        "start_byte": 24,
+        "old_end_byte": 46,
+        "new_end_byte": 41,
+        "old": "I2RlZmluZSBBQkMgLy8gY29tbWVudA==",
+        "new": "I2RlZmluZSBBQkMgZXh0cmE="
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "ERROR",
+        "contains": [
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ],
+       "csharp-B03": [
+        "P",
+        "N",
+        "R",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-all-directives-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d16a20f131291866bb79dd21d9d895d7ef4abecc9b229d66c17a0bbd5864fab7",
+       "bytes": 209
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-nested-all-skipped-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0c9d3dd114542d408caa38c379e3263c4ea80713553764273273189b7e5b24bb",
+       "bytes": 148
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-hash-in-body-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f1431b9c67da81004e2ee64f0d34e6a18074eefda05f085939f0d9c1c846a326",
+       "bytes": 74
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "csharp-issue179-unicode-symbol-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "59e82fd2c151135ccf4e69637ce8e125b430c5d641d8f827eaff3e2dc9916e2d",
+       "bytes": 57
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "preproc_if",
+         "class_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "csharp-B01": [
+        "P"
+       ],
+       "csharp-B03": [
+        "P"
        ]
       },
       "alternatives": [],
@@ -345884,14 +346725,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-       "bytes": 46397791
+       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+       "bytes": 46821469
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e",
-       "bytes": 36393
+       "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9",
+       "bytes": 33009
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -347556,6 +348397,192 @@
        "alternatives": [],
        "sample": null,
        "source": "\u003c%@ ServiceHost Service= CodeBehind=\"a%\u003eb.cs\" %\u003e"
+      },
+      {
+       "id": "n461-svc-issue179-define-edit",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "0e8fc6112c85f1533f471d40c67cfbad2e35792600f283d7bd1cd45dc089b433",
+        "bytes": 143
+       },
+       "edits": [
+        {
+         "start_byte": 69,
+         "old_end_byte": 80,
+         "new_end_byte": 80,
+         "old": "I2RlZmluZSAxMjM=",
+         "new": "I2RlZmluZSBBQkM="
+        },
+        {
+         "start_byte": 69,
+         "old_end_byte": 80,
+         "new_end_byte": 80,
+         "old": "I2RlZmluZSBBQkM=",
+         "new": "I2RlZmluZSAxMjM="
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"C\" %\u003e\n#if false\nopaque % text\n#define 123\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n"
+      },
+      {
+       "id": "n461-svc-issue179-unknown-edit",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "a488c64be0293beccbf3b309fe517ccd315a203f52ce2be4d3913683ef566172",
+        "bytes": 144
+       },
+       "edits": [
+        {
+         "start_byte": 69,
+         "old_end_byte": 81,
+         "new_end_byte": 80,
+         "old": "I3Vua25vd24gYWJj",
+         "new": "I3ByYWdtYSBhYmM="
+        },
+        {
+         "start_byte": 69,
+         "old_end_byte": 80,
+         "new_end_byte": 81,
+         "old": "I3ByYWdtYSBhYmM=",
+         "new": "I3Vua25vd24gYWJj"
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"C\" %\u003e\n#if false\nopaque % text\n#unknown abc\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n"
+      },
+      {
+       "id": "n461-svc-issue179-nested-else-edit",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "87ee71a6c65f26d253a63e9f1d93a610377182443a19393533a02776651e451d",
+        "bytes": 159
+       },
+       "edits": [
+        {
+         "start_byte": 69,
+         "old_end_byte": 96,
+         "new_end_byte": 102,
+         "old": "I2lmIHRydWUKI2Vsc2UKI2Vsc2UKI2VuZGlm",
+         "new": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm"
+        },
+        {
+         "start_byte": 69,
+         "old_end_byte": 102,
+         "new_end_byte": 96,
+         "old": "I2lmIHRydWUKI2VsaWYgZmFsc2UKI2Vsc2UKI2VuZGlm",
+         "new": "I2lmIHRydWUKI2Vsc2UKI2Vsc2UKI2VuZGlm"
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 2,
+         "syntax": "ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": null,
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "\u003c%@ ServiceHost Language=\"C#\" Service=\"C\" %\u003e\n#if false\nopaque % text\n#if true\n#else\n#else\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n"
       }
      ]
     }
@@ -347586,14 +348613,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-       "bytes": 46397791
+       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+       "bytes": 46821469
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e",
-       "bytes": 36393
+       "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9",
+       "bytes": 33009
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -347868,14 +348895,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-       "bytes": 46397791
+       "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+       "bytes": 46821469
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e",
-       "bytes": 36393
+       "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9",
+       "bytes": 33009
       },
       {
        "path": "src/tree_sitter/alloc.h",

@@ -85,16 +85,16 @@
       "candidate": "P05-CSHARP-REMEDY-r5",
       "prepare_generated": {
         "grammar.json": {
-          "bytes": 674977,
-          "sha256": "4fdd9d367f0a37d2f51a4222e9a07914001387ab3f7a40c6a06d37aecdbcf9dd"
+          "bytes": 706164,
+          "sha256": "9574d3f722cd2963f69cdaa32f66006d2f04f6077d010df0d4db384fe3017dda"
         },
         "node-types.json": {
-          "bytes": 132935,
-          "sha256": "9084049e249ee68c0eba5c294da07cd06a9411703b9704270bb5e25b1d37477e"
+          "bytes": 133011,
+          "sha256": "dd6957f47849f590096f75d9b7bda464533d1767e7a8ccb9711803e50e25d25a"
         },
         "parser.c": {
-          "bytes": 46397791,
-          "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f"
+          "bytes": 46821469,
+          "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2"
         },
         "tree_sitter/alloc.h": {
           "bytes": 985,

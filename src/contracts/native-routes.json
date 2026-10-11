@@ -19,15 +19,15 @@
      "path": "src/parser.c",
      "role": "parser",
      "origin": "generated",
-     "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-     "bytes": 46397791
+     "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+     "bytes": 46821469
     },
     {
      "path": "src/scanner.c",
      "role": "scanner",
      "origin": "patched",
-     "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e",
-     "bytes": 36393
+     "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9",
+     "bytes": 33009
     },
     {
      "path": "src/tree_sitter/alloc.h",
@@ -55,18 +55,18 @@
     "outputs": [
      {
       "path": "grammar.json",
-      "sha256": "4fdd9d367f0a37d2f51a4222e9a07914001387ab3f7a40c6a06d37aecdbcf9dd",
-      "bytes": 674977
+      "sha256": "9574d3f722cd2963f69cdaa32f66006d2f04f6077d010df0d4db384fe3017dda",
+      "bytes": 706164
      },
      {
       "path": "node-types.json",
-      "sha256": "9084049e249ee68c0eba5c294da07cd06a9411703b9704270bb5e25b1d37477e",
-      "bytes": 132935
+      "sha256": "dd6957f47849f590096f75d9b7bda464533d1767e7a8ccb9711803e50e25d25a",
+      "bytes": 133011
      },
      {
       "path": "parser.c",
-      "sha256": "c71e421dc99a17d034fa3d8e2149710d059d363e7e79ce935af64ccb0911e00f",
-      "bytes": 46397791
+      "sha256": "e1fb76775e633b2a08f4fbc1438c828a4aefcaea8b6e9584e112d5918af7b9e2",
+      "bytes": 46821469
      },
      {
       "path": "tree_sitter/alloc.h",
@@ -92,8 +92,8 @@
      {
       "path": "grammar.js",
       "role": "grammar_js",
-      "sha256": "e50f80bed9ab9292a520e0e917495cc1a64458005fb506239c335ebd387df94d",
-      "bytes": 72161
+      "sha256": "03fc9e0d9ba829e285d74bf071f799ff239825afb63c00083d1e4f3ffef581f2",
+      "bytes": 72537
      },
      {
       "path": "package.json",
@@ -161,13 +161,13 @@
     "patched_files": [
      {
       "path": "grammar.js",
-      "bytes": 72161,
-      "sha256": "e50f80bed9ab9292a520e0e917495cc1a64458005fb506239c335ebd387df94d"
+      "bytes": 72537,
+      "sha256": "03fc9e0d9ba829e285d74bf071f799ff239825afb63c00083d1e4f3ffef581f2"
      },
      {
       "path": "src/scanner.c",
-      "bytes": 36393,
-      "sha256": "cc16cf0572db3033d256185bb8539a299fa667d5373dcee84c337cfcdafac05e"
+      "bytes": 33009,
+      "sha256": "14ac3aafbb6f68c6ed60ac50a7044ffb9bda93e5e50682377f81c9958fd63df9"
      }
     ]
    }

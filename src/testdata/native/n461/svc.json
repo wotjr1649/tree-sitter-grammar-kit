@@ -1014,6 +1014,138 @@
           "declarations": ""
         }
       ]
+    },
+    {
+      "id": "n461-svc-issue179-define-edit",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"C\" %>\n#if false\nopaque % text\n#define 123\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#define 123",
+          "replace": "#define ABC"
+        },
+        {
+          "find": "#define ABC",
+          "replace": "#define 123"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-issue179-unknown-edit",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"C\" %>\n#if false\nopaque % text\n#unknown abc\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#unknown abc",
+          "replace": "#pragma abc"
+        },
+        {
+          "find": "#pragma abc",
+          "replace": "#unknown abc"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "n461-svc-issue179-nested-else-edit",
+      "kind": "n461",
+      "features": [
+        "N461-SVC-INLINE"
+      ],
+      "source_utf8": "<%@ ServiceHost Language=\"C#\" Service=\"C\" %>\n#if false\nopaque % text\n#if true\n#else\n#else\n#endif\nmore inactive @ text\n#endif\nclass C { int M() { return 1; } }\n",
+      "edits": [
+        {
+          "find": "#if true\n#else\n#else\n#endif",
+          "replace": "#if true\n#elif false\n#else\n#endif"
+        },
+        {
+          "find": "#if true\n#elif false\n#else\n#endif",
+          "replace": "#if true\n#else\n#else\n#endif"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ],
   "svc_context": {
