@@ -69,10 +69,12 @@ compiler·executable·OS image는 host별 identity를 유지한다. 같은 runti
 
 | OS | backend | tree 정리 | 그룹 이탈 하위 process | 메모리 |
 |---|---|---|---|---|
-| windows/amd64 | Job Object(정지 상태로 시작 → job 배정 → 재개, breakaway 불허, KILL_ON_JOB_CLOSE) | `TerminateJobObject`, active process 0 확인 | 포함 | hard: `JobMemoryLimit`(job commit bytes), 완료 port의 memory-limit 통지 |
+| windows/amd64 | Job Object(정지 상태로 시작 → job 배정 → 재개, breakaway 불허, KILL_ON_JOB_CLOSE) | `TerminateJobObject`, 실행 중 tree count 0 확인(아래 sole-root 종료 분류) | 포함 | hard: `JobMemoryLimit`(job commit bytes), 완료 port의 memory-limit 통지 |
 | linux/amd64 + 위임 cgroup | cgroup v2 leaf에 직접 시작(`CLONE_INTO_CGROUP`), process group leader | SIGTERM → grace → `cgroup.kill`, `cgroup.procs`가 비고 `cgroup.events`가 `populated 0`이 될 때까지 확인(종료 중인 task는 procs에서 먼저 빠짐) 뒤 leaf 제거 | 포함 | hard: `memory.max`·`memory.oom.group`·`memory.swap.max=0`, `memory.events` oom_kill |
 | linux/amd64, 위임 cgroup 없음 | process group | SIGTERM → grace → SIGKILL, `/proc` pgid 확인 | 미포함(`NOT_CONTAINED`) | sampled(`/proc/PID/statm`), non-strict |
 | darwin/arm64 | process group | SIGTERM → grace → SIGKILL, `kern.proc.pgrp` 확인 | 미포함(`NOT_CONTAINED`) | sampled(`/bin/ps` rss), non-strict |
+
+Windows runner는 동일 root의 `cmd.Wait`가 nonnil `ProcessState`와 `Exited()==true`를 반환한 사실을 backend에 게시한 뒤 exited channel을 닫는다. Backend는 이 사실을 먼저 읽고 kernel accounting을 조회한다. 조회가 성공하고 `ActiveProcesses==1 && TotalProcesses==1`이며 root 종료가 확인된 경우에만 실행 중 tree count를 0으로 분류한다. 이때 raw accounting 값이 0이라는 주장은 하지 않는다. Child 이력이 있거나 종료가 미확인인 경우의 count와 query 오류는 그대로 반환한다. Pipe·memory·output·wall·cancel·close와 최종 cleanup gate는 유지하며 과거 receipt를 새 분류로 재작성하지 않는다([#190](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/190)).
 
 hard memory를 요구한 요청은 hard backend가 없으면 실행 전에 `MEMORY_HARD_CAP_UNSUPPORTED`로 막는다. sampled 종료는 hard cap 근거가 아니다. 미포함 backend에서 그룹을 떠난 하위 process가 pipe를 잡고 있으면 cleanup은 verified가 아니다. pipe를 잡지 않은 이탈 process는 그 backend가 관측하지 못하므로, scope `PROCESS_GROUP`의 verified는 그런 process의 종료를 뜻하지 않는다. interactive 실행에서는 주 process가 끝나면(종료시킨 경우든 스스로 끝난 경우든) 남은 하위 process를 바로 종료하고, 그래도 stdout을 잡은 이탈 process가 있으면 grace 뒤 읽기 쪽을 닫아 대기를 끝낸다. 호출자는 Wait 전에 stdout을 읽으며, 닫힌 뒤의 읽기는 EOF가 아니라 오류다. Linux 위임 cgroup은 부모의 `cgroup.subtree_control`에 memory가 이미 켜져 있어야 하며 runner는 부모를 바꾸지 않는다. 이 backend들은 승인된 도구를 제한·정리하는 수단이며 적대적 native code 격리가 아니다. hosted Linux CI는 위임 cgroup에서 시험하고, cgroup 없이 실행되면 capability 시험이 실패한다.
 
