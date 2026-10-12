@@ -4,6 +4,8 @@ A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go A
 
 ## Status and scope
 
+목적·설계 이유와 26개 grammar의 지원 버전·테스트 의미·제외 사유는 [Grammar 지원 안내](docs/grammar-support.md)를 참조한다.
+
 Implemented, each with its owning contract and observed session report (see the [documentation map](docs/README.md)). In release v0.2.0, the offline core is **VERIFIED** on Windows amd64, Linux amd64 and macOS arm64, and the 26-route qualification verdict is **SUPPORTED** on all three for the registered cases; it does not certify arbitrary inputs. The other areas are **experimental**: they work as their reports show, but they carry no compatibility promise. See the [platform contract](docs/specs/platform-support.md) for the evidence and the known limitations.
 
 | Area | CLI | Public API (`src/kit`) | Release status | Notes |

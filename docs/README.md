@@ -5,6 +5,7 @@ The current implementation consists of repository foundation checks, the Session
 | Task | Canonical owner |
 |---|---|
 | Purpose and release-candidate scope | [scope](specs/scope.md) |
+| 목적·설계 이유, 전체 grammar 지원 버전과 테스트·제외 경계 안내 | [Grammar 지원 안내](grammar-support.md) (계약 소유자는 각 절의 링크 참조) |
 | Commands, errors, profile fields | [CLI/profile](specs/cli-and-profile.md) |
 | Public offline Go API, ownership, external consumers | [public API](specs/public-go-api.md) |
 | Fingerprints, manifests, evidence | [identity/evidence](specs/identity-and-evidence.md) |
