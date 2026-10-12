@@ -1,5 +1,7 @@
 # Grammar 지원과 검증 범위 안내
 
+[한국어](grammar-support.md) · [English](grammar-support.en.md)
+
 이 문서는 grammar-kit의 목적과 설계 이유, 등록된 grammar의 버전 범위와 테스트 의미를 설명하는 사용자 안내다. 새 지원 계약을 만들지 않는다. 제품 책임은 [scope](specs/scope.md), 구조는 [architecture](design/architecture.md), 지원 판정은 [platform](specs/platform-support.md), 구문 요구는 [feature scope](validation/language-feature-scope.md)와 [disposition](validation/language-feature-disposition.md)이 소유한다.
 
 ## 목적과 설계 이유
@@ -36,7 +38,7 @@ Offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API는 VERIFI
 
 | 문법 / route | 채택 구문 범위 | 버전별 테스트 등록 계열(기본 구문 포함) | 기반 grammar commit(12자리) |
 |---|---|---|---|
-| C# / `csharp` | 7.3 → 14 | 7.3·8·9·10·11·12·13·14, 14 file-based directive | `9150f7d56bb4` |
+| C# / `csharp` | 7.3 / net461 source → 14 / net10.0 source | 7.3·8·9·10·11·12·13·14, 14 file-based directive | `9150f7d56bb4` |
 | Go / `go` | 1.17 → 1.27 | 1.18~1.27 변경 계열, 1.27 항목 | `2346a3ab1bb3` |
 | Python / `python` | 3.8 → 3.14 | 3.8·3.9·3.10·3.11·3.12·3.13·3.14 | `26855eabccb1` |
 | JavaScript / `javascript` | ES5.1 → ECMAScript 2026 | ES2015, 2016~2019, 2020~2021, 2022~2025 계열, script/Annex B | `58404d8cf191` |
@@ -65,7 +67,7 @@ Offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API는 VERIFI
 
 Commit 열은 기반 upstream revision이다. 실제 후보는 해당 route의 patch chain·재생성물·runtime patch까지 포함하므로 commit만으로 같은 parser를 재현했다고 주장하지 않는다. JSX는 JavaScript grammar를 사용하고 TypeScript/TSX는 같은 repository의 `typescript`/`tsx` 디렉터리를 사용한다. 실제 closure는 [native routes](../src/contracts/native-routes.json)와 [runtime manifest](../src/drivers/native-c/runtime-manifest.json)가 고정한다. 등록 native 입력은 Tree-sitter CLI 0.27.0/ABI15로 재생성한다.
 
-여러 버전의 구문 합집합은 버전 선택형 compiler와 다르다. T-SQL이 채택한 2012~2025 구문을 받는다고 모든 구문이 compatibility110에서 유효하다는 뜻은 아니다. 같은 bytes의 해석이 달라지는 C++ `module`/`import`·comma subscript와 PHP legacy tag·`#[` 항목은 [version conflict 처분](validation/language-feature-disposition.md)에 따라 일부 legacy 해석을 제외한다.
+여러 버전의 구문 합집합은 버전 선택형 compiler와 다르다. C# 행의 net461/net10.0은 source profile이며 .NET runtime 실행을 보증하지 않는다. T-SQL이 채택한 2012~2025 구문을 받는다고 모든 구문이 compatibility110에서 유효하다는 뜻은 아니다. 같은 bytes의 해석이 달라지는 C++ `module`/`import`·comma subscript와 PHP legacy tag·`#[` 항목은 [version conflict 처분](validation/language-feature-disposition.md)에 따라 일부 legacy 해석을 제외한다.
 
 T-SQL에는 별도의 SQL Server2025 Express LocalDB17.0.1000.7 엔진 대조가 있다. Compatibility110·170으로 실행한 검사는 실제 SQL Server2012 engine 실행이나 전체 애플리케이션 실행 호환성의 대체 근거가 아니다. [엔진 대조 보고서](reports/issue-126-expanded-validation.md)가 실제 실행 범위와 미실행을 소유한다.
 
@@ -109,4 +111,4 @@ Offline `inspect`·`identity`·`verify`·`schema`는 26개 route만을 대상으
 
 ## 이 안내를 갱신할 때
 
-지원 범위·version·source·상태가 바뀌면 해당 canonical 계약과 등록부를 먼저 확인하고 표를 함께 갱신한다. 과거 source registry의 준비 상태나 release 당시 한계를 현재 native 성공/실패로 자동 승계하지 않는다. 지원 판정은 후보·run·platform 근거에 결속하고 로컬 문서 검사와 native/cross-platform 재실행을 구분한다. 검증·리뷰·통합 절차는 [validation](validation/validation.md)이 소유한다.
+지원 범위·version·source·상태가 바뀌면 해당 canonical 계약과 등록부를 먼저 확인하고 두 언어 문서를 함께 갱신한다. 과거 source registry의 준비 상태나 release 당시 한계를 현재 native 성공/실패로 자동 승계하지 않는다. 지원 판정은 후보·run·platform 근거에 결속하고 로컬 문서 검사와 native/cross-platform 재실행을 구분한다. 검증·리뷰·통합 절차는 [validation](validation/validation.md)이 소유한다.
