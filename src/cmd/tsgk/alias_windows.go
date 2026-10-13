@@ -5,7 +5,7 @@ import (
 	"syscall"
 )
 
-// isAlias reports symlinks and mount points (junctions, volume mounts) by reparse tag;
+// isAlias reports name-surrogate reparse tags (including symlinks and mount points);
 // other directory reparse points such as cloud placeholders are not path aliases.
 func isAlias(p string, info os.FileInfo) bool {
 	if info.Mode()&os.ModeSymlink != 0 {
@@ -24,6 +24,5 @@ func isAlias(p string, info os.FileInfo) bool {
 		return true // unknown reparse point: refuse rather than guess
 	}
 	syscall.FindClose(h)
-	const mountPoint, symlink = 0xA0000003, 0xA000000C
-	return d.Reserved0 == mountPoint || d.Reserved0 == symlink
+	return d.Reserved0&0x20000000 != 0 // name-surrogate bit, including unknown redirecting tags
 }

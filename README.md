@@ -1,6 +1,6 @@
 # tree-sitter-grammar-kit
 
-A Go project for a planned CGO-free CLI, `tsgk`, and a small public offline Go API that share grammar inspection, comparison, and evidence checks. The first use case is grammar adoption and updates; consumer conversion, scanners, runtime, and adoption remain separate responsibilities.
+Go로 구현한 CGO-free CLI `tsgk`와 작은 public offline Go API다. grammar inspection, comparison, evidence 검사를 공유하며 grammar 도입과 업데이트 검증이 첫 사용 목적이다. 소비자 변환, scanner/runtime 선택과 실제 도입은 별도 책임이다.
 
 ## Status and scope
 

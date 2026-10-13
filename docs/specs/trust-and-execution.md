@@ -26,6 +26,14 @@ grammar 선택의 `Selection.Grammar`와 source 등록부의 `grammar_subdirecto
 
 입력 root 자체의 실제 경로를 먼저 확정하고 내부 member와 구분한다. macOS `/var` → `/private/var` root alias를 archive 탈출로 오판하지 않는다. 내부 symlink/hardlink/junction/reparse point는 r0에서 거부한다. count/file/total/depth/output 제한은 [profile](cli-and-profile.md)이 소유한다. 파일 검사 후 교체 race를 막을 handle 기반 접근이 없으면 그런 capability를 제공한다고 주장하지 않는다.
 
+### CLI 입력 경계의 directory identity 검사
+
+CLI의 output, 외부 신뢰 문서, reproduce/native workspace 검사는 경로 조상과 입력 root만 비교하지 않는다. root 전체의 directory identity를 출력·문서·workspace parent 및 그 조상의 identity와 대조하여, root 하위 directory가 외부 이름으로 보이는 `subst`/bind-mount 형태도 검사한다. identity는 열린 directory의 `File.Stat`에서 얻는다. Windows의 path-based `os.Stat`은 identity 조회를 `os.SameFile`까지 지연시키고 조회 실패를 false로 숨길 수 있으므로 membership 근거로 쓰지 않는다. 이 검사는 OS의 file identity 의미를 사용하며 filesystem identity가 정상 제공되는 caller-owned local tree를 전제로 한다.
+
+root를 포함해 최대 10000 entries, root 기준 directory depth 64, destination ancestor 256, directory batch 128, 검사 한 쌍당 협력적 deadline 10초를 적용한다. file 내용은 읽지 않으며 root 내부 symlink와 Windows name-surrogate reparse alias를 따라가지 않는다. 이 alias·읽기/identity 오류·한도 초과는 미확인이다. bind mount 자체를 식별하여 제외하는 검사는 아니며, mount를 포함한 directory tree에 동일한 identity/탐색 한도를 적용한다. root가 큰 경우에도 확인한 일부만으로 outside를 승인하지 않는다. 동기 filesystem syscall을 중단시키는 hard timeout은 아니며, 열린 directory 수는 depth에 비례한다. 서로 다른 경로 검사마다 한도가 적용되므로 전체 명령의 wall cap과 같은 의미가 아니다.
+
+미확인 결과는 trust/workspace 검사에서 `INPUT_PATH_UNVERIFIED`(exit 2), output publication에서 `OUTPUT_PATH_UNVERIFIED`(exit 4), qualify의 사전 output 검사에서 `OUTPUT_PATH_UNVERIFIED`(exit 2)로 거부한다. 확인된 내부 경로의 기존 `*_INSIDE_INPUT` code와 output의 `OUTPUT_PARENT_ALIAS`·no-clobber publication은 유지한다. directory subject가 없는 archive/schema 명령은 입력 directory 검사를 적용하지 않고 기존 destination 거부를 유지한다. namespace가 적대적으로 동시에 교체되는 상황에 대한 TOCTOU 방어·native sandbox는 이 검사로 제공하지 않는다.
+
 archive inspection은 extraction과 분리한다. 절대·상위·중복·case collision·file/directory 겹침·link·비정상 metadata·압축/해제 size 한도 초과를 거부하고 실제 읽은 bytes에도 한도를 적용한다. extraction은 필요할 때만 새 caller-owned 빈 directory에서 수행하고 멤버별 no-follow/open 경계를 검증한다. 이름 정규화만으로 TOCTOU를 해결했다고 하지 않는다. 다른 process가 workspace를 적대적으로 변경하는 상황을 지원하려면 OS별 안전한 접근을 별도로 증명해야 한다.
 
 ### S02 구현 — archive profile `zip-r1`과 이름 정책 `portable-names-r1`

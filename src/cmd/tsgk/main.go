@@ -200,7 +200,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		} else {
 			// A trust document taken from inside the subject would certify itself.
 			for _, d := range [][2]string{{"EXPECTED_INSIDE_INPUT", *expected}, {"PROFILE_INSIDE_INPUT", *profile}} {
-				if name, p := d[0], d[1]; p != "" && documentInside(p, *root) {
+				name, p := d[0], d[1]
+				if p == "" {
+					continue
+				}
+				contained, err := documentInside(p, *root)
+				if err != nil {
+					fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 신뢰 문서 위치를 확인할 수 없다")
+					return exitUsage
+				}
+				if contained {
 					fmt.Fprintf(stderr, "tsgk: %s: 신뢰 문서는 검증 대상 root 밖에 있어야 한다\n", name)
 					return exitUsage
 				}
@@ -322,12 +331,26 @@ func runReproduce(ctx context.Context, args []string, stdout, stderr io.Writer) 
 			dir = filepath.Dir(dir)
 		}
 		real, err := filepath.EvalSymlinks(dir)
-		if err != nil || unresolvedAlias(real) || inside(real, abs["root"]) {
+		if err != nil || unresolvedAlias(real) {
+			fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
+			return exitUsage
+		}
+		contained, err := inside(real, abs["root"])
+		if err != nil {
+			fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
+			return exitUsage
+		}
+		if contained {
 			fmt.Fprintf(stderr, "tsgk: %s: --%s는 검증 대상 root 밖의 확인 가능한 경로여야 한다\n", code, name)
 			return exitUsage
 		}
 	}
-	if documentInside(*profile, abs["root"]) {
+	contained, err := documentInside(*profile, abs["root"])
+	if err != nil {
+		fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 신뢰 문서 위치를 확인할 수 없다")
+		return exitUsage
+	}
+	if contained {
 		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
 		return exitUsage
 	}
@@ -445,7 +468,12 @@ func runReplay(ctx context.Context, name string, args []string, stdout, stderr i
 		fmt.Fprintf(stderr, "tsgk: USAGE: tsgk %s --input DIR --profile FILE [--out PATH]\n", name)
 		return exitUsage
 	}
-	if documentInside(*profile, *input) {
+	contained, err := documentInside(*profile, *input)
+	if err != nil {
+		fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 신뢰 문서 위치를 확인할 수 없다")
+		return exitUsage
+	}
+	if contained {
 		fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 input 밖에 있어야 한다")
 		return exitUsage
 	}
@@ -490,14 +518,14 @@ func readDocument(p string) ([]byte, error) {
 }
 
 // documentInside reports whether a trust document's directory is the root or below it.
-func documentInside(doc, root string) bool {
+func documentInside(doc, root string) (bool, error) {
 	abs, err := filepath.Abs(doc)
 	if err != nil {
-		return false // readDocument reports the unreadable path
+		return false, err
 	}
 	dir, err := filepath.EvalSymlinks(filepath.Dir(abs))
 	if err != nil {
-		return false
+		return false, err
 	}
 	return inside(dir, root)
 }
@@ -535,7 +563,11 @@ func publish(out, root string, data []byte) (string, error) {
 	if unresolvedAlias(parent) {
 		return "OUTPUT_PARENT_ALIAS", errors.New("destination path keeps a junction or mount point that cannot be compared with the root")
 	}
-	if inside(parent, root) {
+	contained, err := inside(parent, root)
+	if err != nil {
+		return "OUTPUT_PATH_UNVERIFIED", err
+	}
+	if contained {
 		return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside the input root")
 	}
 	tmp, err := os.CreateTemp(parent, ".tsgk-out-*.tmp")
@@ -570,31 +602,12 @@ func publish(out, root string, data []byte) (string, error) {
 // testHookBeforeLink lets tests create a concurrent destination before the final link.
 var testHookBeforeLink func()
 
-// inside reports whether dir is the root or below it, comparing file identities of dir
-// and each of its ancestors with the root, so case, symlink and junction aliases match.
-func inside(dir, root string) bool {
-	rootInfo, err := os.Stat(root)
-	if err != nil {
-		return false
-	}
-	for p := dir; ; {
-		if info, err := os.Stat(p); err == nil && os.SameFile(info, rootInfo) {
-			return true
-		}
-		up := filepath.Dir(p)
-		if up == p {
-			return false
-		}
-		p = up
-	}
-}
-
 // unresolvedAlias reports a directory component that EvalSymlinks left in place (Windows
 // junctions and volume mount points); its target cannot be compared with the root.
-// ponytail: path-component check; subst drives and bind mounts are not detected.
+// Subst drives and bind mounts are checked by inside using descendant identities.
 func unresolvedAlias(dir string) bool {
 	for p := dir; ; {
-		if info, err := os.Lstat(p); err == nil && isAlias(p, info) {
+		if info, err := os.Lstat(p); err != nil || isAlias(p, info) {
 			return true
 		}
 		up := filepath.Dir(p)
