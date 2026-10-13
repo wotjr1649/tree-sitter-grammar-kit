@@ -95,7 +95,7 @@ go test ./src/internal/native -run '^Test(NativeJSONHoldout|JSONHoldoutLabels)$'
 if ($LASTEXITCODE -ne 0) { throw 'JSON holdout evaluation failed' }
 ```
 
-`TestJSONHoldoutLabels`는 native 도구 없이 실행된다. Native 평가 환경이 없으면 `TestNativeJSONHoldout`는 SKIP이고 위 결과를 새 호스트에 전이하지 않는다. 평가 test의 exit 0은 관측과 고정 사례 회귀 검사가 끝났다는 뜻이며 BLOCKED route를 PASS로 바꾸지 않는다.
+`TestJSONHoldoutLabels`는 native 도구 없이 실행된다. Native 평가 환경이 없으면 `TestNativeJSONHoldout`는 SKIP이고 위 결과를 새 호스트에 전이하지 않는다. Native 수용 여부가 고정된 `json.Valid` label과 다르면 사례별로 테스트를 실패시키며 TP/TN/FP/FN 집계와 edit 관측도 계속 기록한다. 평가 test의 exit 0은 관측과 고정 사례 회귀 검사가 끝났다는 뜻이며 BLOCKED route를 PASS로 바꾸지 않는다.
 
 Foundation의 Windows native job은 같은 run에서 준비한 source와 compiler로 holdout 및 native negative controls를 실행하고 `json-holdout.log`를 별도 `json-holdout-<run>-<attempt>` artifact에 보존한다. Qualification host artifact의 닫힌 파일 목록에 추가하지 않는다. 처음 후보 CI에서 그 목록 안에 log를 넣어 `HOST_FILE_UNREGISTERED`로 완결성이 실패한 근거는 보존한다. 속도 benchmark는 호스트 변동 때문에 CI 합격 조건으로 쓰지 않는다. 이 CI 연결의 통과 여부는 해당 후보의 실제 run 완료 후에 기록한다.
 

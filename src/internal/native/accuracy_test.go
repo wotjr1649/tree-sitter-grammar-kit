@@ -73,6 +73,9 @@ func TestNativeJSONHoldout(t *testing.T) {
 			t.Fatal("holdout identity drift")
 		}
 		accepted := !step.Incremental.HasError
+		if accepted != c.Valid {
+			t.Errorf("holdout %s: native acceptance=%t; json.Valid=%t", c.ID, accepted, c.Valid)
+		}
 		switch {
 		case c.Valid && accepted:
 			tp++
