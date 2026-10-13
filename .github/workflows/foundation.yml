@@ -117,6 +117,19 @@ jobs:
           }
           go test ./src/... -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+      - name: isolated bind-mount output boundary (#196)
+        if: runner.os == 'Linux'
+        timeout-minutes: 2
+        run: |
+          $testBinary = Join-Path $env:RUNNER_TEMP "tsgk-paths-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.test"
+          go test -c -o $testBinary ./src/cmd/tsgk
+          if ($LASTEXITCODE -ne 0) { throw 'path test build failed' }
+          # A flag alone cannot authorize a mount in the parent's namespace.
+          $negative = & timeout --kill-after=5s 15s env -i PATH=/usr/bin:/bin TSGK_PRIVATE_MOUNT_TEST=1 $testBinary -test.run '^TestBindMountMembership$' -test.v -test.timeout 10s 2>&1
+          if ($LASTEXITCODE -ne 1 -or ($negative -join "`n") -notmatch 'private mount namespace not established') { throw 'unisolated mount fixture was not refused' }
+          # Private propagation confines mount changes to this finite child namespace.
+          sudo -n timeout --kill-after=5s 40s unshare --mount --propagation private -- env -i PATH=/usr/bin:/bin TSGK_PRIVATE_MOUNT_TEST=1 $testBinary -test.run '^TestBindMountMembership$' -test.v -test.timeout 30s
+          if ($LASTEXITCODE -ne 0) { throw 'isolated bind-mount boundary failed' }
       - name: frame 상태와 native cancellation 반복 시험 (#65)
         timeout-minutes: 4
         run: |

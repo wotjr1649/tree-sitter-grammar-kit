@@ -37,7 +37,12 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 			fmt.Fprintln(stderr, usage)
 			return exitUsage
 		}
-		if documentInside(*inventory, dir) {
+		contained, err := documentInside(*inventory, dir)
+		if err != nil {
+			fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 신뢰 문서 위치를 확인할 수 없다")
+			return exitUsage
+		}
+		if contained {
 			fmt.Fprintln(stderr, "tsgk: INVENTORY_INSIDE_INPUT: 신뢰 문서는 host 근거 밖에 있어야 한다")
 			return exitUsage
 		}
@@ -45,7 +50,12 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 	}
 	if *out != "" {
 		for _, h := range req.Hosts {
-			if documentInside(*out, h.Root) {
+			contained, err := documentInside(*out, h.Root)
+			if err != nil {
+				fmt.Fprintln(stderr, "tsgk: OUTPUT_PATH_UNVERIFIED: 출력 위치를 확인할 수 없다")
+				return exitUsage
+			}
+			if contained {
 				fmt.Fprintln(stderr, "tsgk: OUTPUT_INSIDE_INPUT: 결과는 host 근거 밖에 써야 한다")
 				return exitUsage
 			}

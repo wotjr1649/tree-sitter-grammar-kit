@@ -93,6 +93,10 @@ Issue creation/updates and other remote effects require authority for the exact 
 
 Code, product-contract, CI, validation-policy, and semantic development-instruction changes require independent context review before integration into main. Only meaning- and behavior-preserving typos or formatting may use author diff review and relevant automated checks instead. File extension or line count does not determine the exception. Mixed changes follow the higher-impact requirement. Give the reviewer scope, acceptance criteria, canonical contracts, base/head, diff, observed checks, unrun checks, and reference identity. Label a review STATIC_REVIEW when the reviewer did not execute checks.
 
+### 출력 directory 별칭 회귀
+
+#196의 CLI 경로 검사는 foundation의 세 OS에서 실제 handle-derived directory identity, 내부/외부 경로, 미확인 거절과 기존 no-clobber 검사를 실행한다. Linux foundation은 `TestBindMountMembership` binary를 별도 private mount namespace에서 실행하여 root 하위 directory를 외부 위치에 bind한 반례를 확인한다. 먼저 같은 binary에 flag만 주고 parent와 같은 mount namespace에서 실행하여 mount 전 거절되는 negative control을 확인한다. 정상 fixture는 parent와 다른 mount namespace, private propagation, 최소 환경, 유한 timeout을 사용하며 unmount 뒤 임시 fixture를 제거한다. 실패·timeout·skip은 이 CI 검사의 PASS가 아니다. Windows 실제 `subst` mapping 생성은 이 검사에 포함되지 않는다.
+
 ## Integration into main and Git transaction
 
 Use a task branch based on verified main, then validated work-unit commits, PR, impact-appropriate review, fixes/retests, final-head CI/rule checks, merge commit, and main post-merge CI. Link the tracking Issue and state the completed subset and remaining work; do not use whole-Issue closing semantics for partial work. Campaign-specific Milestones, session branches, and handoffs apply only to that campaign's work. A campaign requiring independent review for every change takes precedence over the ordinary typo exception.

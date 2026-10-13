@@ -2,9 +2,9 @@
 
 ## Current security boundary
 
-The implemented code consists of development foundation checks for this repository. These checks assume a caller-owned tree that is not being modified concurrently. They are not a sandbox for arbitrary grammars or hostile code, and successful CI does not establish that a grammar or native runtime is safe to execute.
+구현 범위는 저장소 foundation 검사, offline inspection/identity/verification/schema API와 CLI, 그리고 experimental reproduction/native/evidence/qualification 기능이다. 세부 범위는 [문서 map](docs/README.md)과 [platform 계약](docs/specs/platform-support.md)을 따른다. 경로 검사는 caller-owned tree와 namespace가 검사·사용 중 변경되지 않는다는 전제를 갖는다. 이 프로젝트는 임의 grammar나 악성 native 코드의 보안 sandbox가 아니며, CI 통과는 실행 안전성 인증이 아니다.
 
-The [trust and execution contract](docs/specs/trust-and-execution.md) owns the planned offline, generator, native, and adapter boundaries. Those product capabilities are not implemented yet. Environment cleanup, private caches, and resource caps alone do not isolate malicious native code. Source/tool identities and preserved evidence support traceability; a self-generated fingerprint does not authenticate an input's origin.
+[trust와 실행 계약](docs/specs/trust-and-execution.md)이 offline 데이터 처리와 opt-in generator/native 실행의 경계를 소유한다. 구현 범위와 아직 계획 단계인 기능은 문서 map에서 구분한다. 환경 정리, private cache와 resource cap만으로 악성 native 코드를 격리할 수 없다. source/tool identity와 보존 evidence는 추적 근거이며, 자체 생성 fingerprint는 입력 출처를 인증하지 않는다.
 
 ## Reporting a concern
 
@@ -19,4 +19,4 @@ Do not post secrets, credentials, private inputs, personal information, or sensi
 
 ## Support and disclosure limits
 
-This foundation-stage project does not promise a supported-release matrix or response deadline. A report or a passing test is not a guarantee covering every input, platform, or future revision. Keep reports tied to the affected revision and distinguish observed failures from untested risks. Platform and validation claims are defined in the [platform](docs/specs/platform-support.md) and [validation](docs/validation/validation.md) contracts.
+지원 범위와 검증 상태는 [platform](docs/specs/platform-support.md) 및 [validation](docs/validation/validation.md) 계약에 정의한다. 모든 입력·플랫폼·미래 revision이나 security response deadline을 보장하지 않는다. 보고서는 영향받은 revision에 연결하고 관측 실패와 미검증 위험을 구분한다.

@@ -84,9 +84,20 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			dir = filepath.Dir(dir)
 		}
 		real, err := filepath.EvalSymlinks(dir)
-		if err != nil || unresolvedAlias(real) || inside(real, abs["root"]) || inside(real, abs["grammar-root"]) {
-			fmt.Fprintf(stderr, "tsgk: %s: --%s는 검증 대상 root 밖의 확인 가능한 경로여야 한다\n", code, k)
+		if err != nil || unresolvedAlias(real) {
+			fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
 			return exitUsage
+		}
+		for _, subject := range []string{abs["root"], abs["grammar-root"]} {
+			contained, err := inside(real, subject)
+			if err != nil {
+				fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
+				return exitUsage
+			}
+			if contained {
+				fmt.Fprintf(stderr, "tsgk: %s: --%s는 검증 대상 root 밖의 확인 가능한 경로여야 한다\n", code, k)
+				return exitUsage
+			}
 		}
 	}
 	docs := []string{*profile}
@@ -94,9 +105,16 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		docs = append(docs, *pack)
 	}
 	for _, d := range docs {
-		if documentInside(d, abs["root"]) || documentInside(d, abs["grammar-root"]) {
-			fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
-			return exitUsage
+		for _, subject := range []string{abs["root"], abs["grammar-root"]} {
+			contained, err := documentInside(d, subject)
+			if err != nil {
+				fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 신뢰 문서 위치를 확인할 수 없다")
+				return exitUsage
+			}
+			if contained {
+				fmt.Fprintln(stderr, "tsgk: PROFILE_INSIDE_INPUT: 신뢰 문서는 검증 대상 root 밖에 있어야 한다")
+				return exitUsage
+			}
 		}
 	}
 	data, err := readDocument(*profile)
