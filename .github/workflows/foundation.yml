@@ -580,9 +580,18 @@ jobs:
           path: |
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/summary.json
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
-            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/json-holdout.log
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/records
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/profiles/s06-*.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: 독립 JSON 평가 근거 보관 (Windows)
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # Separate evidence: the closed qualification host file set is unchanged.
+          name: json-holdout-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/json-holdout.log
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
