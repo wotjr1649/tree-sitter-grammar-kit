@@ -25,6 +25,9 @@ func repository(t *testing.T) string {
 	return root
 }
 
+// Source-only test copies also need the guides linked from README and the documentation map.
+var repositoryFixtureFiles = append(append([]string(nil), required...), "docs/grammar-support.md", "docs/grammar-support.en.md")
+
 func TestRepositoryFiles(t *testing.T) {
 	if err := CheckFiles(os.DirFS(repository(t))); err != nil {
 		t.Fatal(err)
@@ -66,6 +69,8 @@ func TestNegativeControls(t *testing.T) {
 		}},
 		{"missing-ignore", "root ignore missing", func(f fstest.MapFS) { f[".gitignore"].Data = []byte("/bin/\n") }},
 		{"broken-link", "broken link", func(f fstest.MapFS) { f["README.md"].Data = []byte("[missing](docs/missing.md)\n") }},
+		{"missing-korean-guide", "broken link in README.md: docs/grammar-support.md", func(f fstest.MapFS) { delete(f, "docs/grammar-support.md") }},
+		{"missing-english-guide", "broken link in README.md: docs/grammar-support.en.md", func(f fstest.MapFS) { delete(f, "docs/grammar-support.en.md") }},
 		{"outside-source", "outside src", func(f fstest.MapFS) { f["leak.go"] = &fstest.MapFile{Data: []byte("package leak\n")} }},
 		{"nested-module", "boundary violation", func(f fstest.MapFS) { f["src/go.mod"] = &fstest.MapFile{Data: []byte("module wrong\n")} }},
 		{"normalized-bytes", "byte preservation missing", func(f fstest.MapFS) { f[".gitattributes"].Data = []byte("* text=auto\n") }},
@@ -78,7 +83,7 @@ func TestNegativeControls(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			files := make(fstest.MapFS)
-			for _, name := range required {
+			for _, name := range repositoryFixtureFiles {
 				data, err := os.ReadFile(filepath.Join(repository(t), filepath.FromSlash(name)))
 				if err != nil {
 					t.Fatal(err)
@@ -103,7 +108,7 @@ func TestSourceOnlyDoesNotDiscoverParentGit(t *testing.T) {
 		t.Fatal(err)
 	}
 	export := filepath.Join(root, "export")
-	for _, name := range required {
+	for _, name := range repositoryFixtureFiles {
 		data, err := os.ReadFile(filepath.Join(repository(t), filepath.FromSlash(name)))
 		if err != nil {
 			t.Fatal(err)
