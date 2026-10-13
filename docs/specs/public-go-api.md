@@ -312,6 +312,14 @@ func QualificationLimits() ReplayLimits
 
 offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. 다만 host 디렉터리가 없거나 그 안에 link·special 파일이 있으면 S01 guard가 호출 전체를 `KindInvalidInput`으로 끝낸다. host당 record 수가 한도를 넘으면 `RECORDS_LIMIT`(`RESOURCE_LIMIT`)다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r3`을 strict decode하고 칸 수·identity 중복·coverage 규칙(`tsgk-coverage-rule/r2`)·production 대안·error node·W sample 등록·기대값 anchor 범위를 검사한다. `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
 
+## 버전과 소비자 채택 경계
+
+문서의 설계 revision, Go module의 version/commit, JSON schema·protocol revision, grammar/runtime upstream version은 서로 다른 identity다. `tsgk-manifest/r2` 같은 데이터 형식 이름으로 소비자의 grammar version이나 module 호환성을 추론하지 않는다. 소비자는 사용할 module commit/version과 읽는 schema를 고정하고, 갱신 후보를 별도 입력으로 비교한다. 문서나 검증 보고서의 추가가 새 release를 발행한 것은 아니다.
+
+검증된 offline core와 experimental 연산의 상태는 [platform 계약](platform-support.md)이 소유한다. 이 문서에 함수가 공개되어 있거나 등록 qualification이 SUPPORTED여도 experimental 연산의 안정 호환성을 약속하지 않는다. 내부 native build/runner 타입은 공개 소비 계약이 아니며, import 경계를 우회한 도입을 외부 API 검증으로 세지 않는다.
+
+실제 소비자 pilot의 통합 상태와 byte identity, 구문 적합성, C oracle agreement는 별도 축이다. [#193 평가](../reports/issue-193-evaluation.md)의 `go-treesitter` pilot은 로컬 CLI 도입이며 소비자 main/CI 채택 또는 runtime baseline 교체가 아니다. 일반 external consumer 시험의 PASS를 실제 제품 채택 수로 세지 않는다.
+
 ## 외부 소비자 검증
 
 `src/testdata/consumer/`에 source와 `go.mod.tmpl` 데이터를 두고, 실제 module은 checkout 밖 임시 디렉터리에 생성한다. 시험(`src/cmd/tsgk` 의 `TestExternalConsumerAndCLI`, schema는 `TestExternalConsumerSchema`)은 `GOWORK=off`, `GOTOOLCHAIN=local`, `CGO_ENABLED=0`, `GOPROXY=off`에서 공개 import만 사용해 build한다. internal/native/consumer 타입을 import하지 않는다. 같은 fixture에서 CLI 결과와 API 결과의 JSON bytes가 같고, 경로 탈출 selection에서 API 오류 code와 CLI 오류 code·exit가 같은지 확인한다. 두 실행 파일은 `PATH`를 비운 환경에서 실행한다.

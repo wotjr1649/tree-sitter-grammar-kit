@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -62,6 +63,50 @@ func TestCompareTrees(t *testing.T) {
 	nilField[2].Field = nil
 	if d := CompareTrees(a, nilField); d == nil || d.Field != "field" || d.Right != "null" {
 		t.Fatalf("absent field must differ from a name: %+v", d)
+	}
+}
+
+// Exact diagnostics and precedence are part of the public comparator contract.
+func TestCompareTreeDiagnostics(t *testing.T) {
+	for _, tc := range []struct {
+		field, left, right string
+		mutate             func(*TreeNode)
+	}{
+		{"parent", "1", "-1", func(n *TreeNode) { n.Parent = -1 }},
+		{"type", `"identifier"`, `"a\n\"b"`, func(n *TreeNode) { n.Type = "a\n\"b" }},
+		{"field", `"name"`, "null", func(n *TreeNode) { n.Field = nil }},
+		{"named", "true", "false", func(n *TreeNode) { n.Named = false }},
+		{"extra", "false", "true", func(n *TreeNode) { n.Extra = true }},
+		{"is_error", "false", "true", func(n *TreeNode) { n.IsError = true }},
+		{"has_error", "false", "true", func(n *TreeNode) { n.HasError = true }},
+		{"is_missing", "false", "true", func(n *TreeNode) { n.IsMissing = true }},
+		{"start_byte", "0", "4294967295", func(n *TreeNode) { n.StartByte = ^uint32(0) }},
+		{"end_byte", "1", "0", func(n *TreeNode) { n.EndByte = 0 }},
+		{"start_point", "[0,0]", "[1,2]", func(n *TreeNode) { n.StartPoint = Point{1, 2} }},
+		{"end_point", "[0,1]", "[3,4]", func(n *TreeNode) { n.EndPoint = Point{3, 4} }},
+	} {
+		a, b := sampleTree(), sampleTree()
+		tc.mutate(&b[2])
+		b[3].Type = "later-node"
+		want := &TreeDifference{2, tc.field, tc.left, tc.right}
+		if got := CompareTrees(a, b); !reflect.DeepEqual(got, want) {
+			t.Fatalf("%s: got %+v want %+v", tc.field, got, want)
+		}
+	}
+	a, b := sampleTree(), sampleTree()
+	b[2].Type, b[2].Named = "changed", false
+	if got := CompareTrees(a, b); got == nil || got.Field != "type" {
+		t.Fatalf("same-node precedence: %+v", got)
+	}
+	a[2].Field, b[2].Field = nil, field("")
+	b[2].Type, b[2].Named = a[2].Type, a[2].Named
+	if got := CompareTrees(a, b); got == nil || got.Field != "field" || got.Left != "null" || got.Right != `""` {
+		t.Fatalf("nil versus empty field: %+v", got)
+	}
+	a, b = sampleTree(), sampleTree()
+	a[2].Type, b[2].Type = "\xff", "\xfe"
+	if got := CompareTrees(a, b); got == nil || got.Left != `"\xff"` || got.Right != `"\xfe"` {
+		t.Fatalf("invalid UTF-8 quoting: %+v", got)
 	}
 }
 
