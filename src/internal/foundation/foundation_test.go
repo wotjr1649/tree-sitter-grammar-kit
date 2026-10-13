@@ -26,7 +26,7 @@ func repository(t *testing.T) string {
 }
 
 // Source-only test copies also need the guides linked from README and the documentation map.
-var repositoryFixtureFiles = append(append([]string(nil), required...), "docs/grammar-support.md", "docs/grammar-support.en.md")
+var repositoryFixtureFiles = append(append([]string(nil), required...), "docs/grammar-support.md", "docs/grammar-support.en.md", "docs/reports/issue-193-evaluation.md")
 
 func TestRepositoryFiles(t *testing.T) {
 	if err := CheckFiles(os.DirFS(repository(t))); err != nil {
@@ -71,6 +71,7 @@ func TestNegativeControls(t *testing.T) {
 		{"broken-link", "broken link", func(f fstest.MapFS) { f["README.md"].Data = []byte("[missing](docs/missing.md)\n") }},
 		{"missing-korean-guide", "broken link in README.md: docs/grammar-support.md", func(f fstest.MapFS) { delete(f, "docs/grammar-support.md") }},
 		{"missing-english-guide", "broken link in README.md: docs/grammar-support.en.md", func(f fstest.MapFS) { delete(f, "docs/grammar-support.en.md") }},
+		{"missing-evaluation-report", "broken link in docs/README.md: reports/issue-193-evaluation.md", func(f fstest.MapFS) { delete(f, "docs/reports/issue-193-evaluation.md") }},
 		{"outside-source", "outside src", func(f fstest.MapFS) { f["leak.go"] = &fstest.MapFile{Data: []byte("package leak\n")} }},
 		{"nested-module", "boundary violation", func(f fstest.MapFS) { f["src/go.mod"] = &fstest.MapFile{Data: []byte("module wrong\n")} }},
 		{"normalized-bytes", "byte preservation missing", func(f fstest.MapFS) { f[".gitattributes"].Data = []byte("* text=auto\n") }},

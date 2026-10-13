@@ -62,27 +62,32 @@ func pointText(p Point) string {
 func CompareTrees(a, b []TreeNode) *TreeDifference {
 	for i := 0; i < len(a) && i < len(b); i++ {
 		x, y := &a[i], &b[i]
-		pairs := []struct {
-			name string
-			l, r string
-		}{
-			{"parent", strconv.FormatInt(x.Parent, 10), strconv.FormatInt(y.Parent, 10)},
-			{"type", strconv.Quote(x.Type), strconv.Quote(y.Type)},
-			{"field", fieldText(x.Field), fieldText(y.Field)},
-			{"named", strconv.FormatBool(x.Named), strconv.FormatBool(y.Named)},
-			{"extra", strconv.FormatBool(x.Extra), strconv.FormatBool(y.Extra)},
-			{"is_error", strconv.FormatBool(x.IsError), strconv.FormatBool(y.IsError)},
-			{"has_error", strconv.FormatBool(x.HasError), strconv.FormatBool(y.HasError)},
-			{"is_missing", strconv.FormatBool(x.IsMissing), strconv.FormatBool(y.IsMissing)},
-			{"start_byte", strconv.FormatUint(uint64(x.StartByte), 10), strconv.FormatUint(uint64(y.StartByte), 10)},
-			{"end_byte", strconv.FormatUint(uint64(x.EndByte), 10), strconv.FormatUint(uint64(y.EndByte), 10)},
-			{"start_point", pointText(x.StartPoint), pointText(y.StartPoint)},
-			{"end_point", pointText(x.EndPoint), pointText(y.EndPoint)},
-		}
-		for _, p := range pairs {
-			if p.l != p.r {
-				return &TreeDifference{Node: i, Field: p.name, Left: p.l, Right: p.r}
-			}
+		// Compare values first; format only the first difference in contract order.
+		switch {
+		case x.Parent != y.Parent:
+			return &TreeDifference{i, "parent", strconv.FormatInt(x.Parent, 10), strconv.FormatInt(y.Parent, 10)}
+		case x.Type != y.Type:
+			return &TreeDifference{i, "type", strconv.Quote(x.Type), strconv.Quote(y.Type)}
+		case (x.Field == nil) != (y.Field == nil) || (x.Field != nil && y.Field != nil && *x.Field != *y.Field):
+			return &TreeDifference{i, "field", fieldText(x.Field), fieldText(y.Field)}
+		case x.Named != y.Named:
+			return &TreeDifference{i, "named", strconv.FormatBool(x.Named), strconv.FormatBool(y.Named)}
+		case x.Extra != y.Extra:
+			return &TreeDifference{i, "extra", strconv.FormatBool(x.Extra), strconv.FormatBool(y.Extra)}
+		case x.IsError != y.IsError:
+			return &TreeDifference{i, "is_error", strconv.FormatBool(x.IsError), strconv.FormatBool(y.IsError)}
+		case x.HasError != y.HasError:
+			return &TreeDifference{i, "has_error", strconv.FormatBool(x.HasError), strconv.FormatBool(y.HasError)}
+		case x.IsMissing != y.IsMissing:
+			return &TreeDifference{i, "is_missing", strconv.FormatBool(x.IsMissing), strconv.FormatBool(y.IsMissing)}
+		case x.StartByte != y.StartByte:
+			return &TreeDifference{i, "start_byte", strconv.FormatUint(uint64(x.StartByte), 10), strconv.FormatUint(uint64(y.StartByte), 10)}
+		case x.EndByte != y.EndByte:
+			return &TreeDifference{i, "end_byte", strconv.FormatUint(uint64(x.EndByte), 10), strconv.FormatUint(uint64(y.EndByte), 10)}
+		case x.StartPoint != y.StartPoint:
+			return &TreeDifference{i, "start_point", pointText(x.StartPoint), pointText(y.StartPoint)}
+		case x.EndPoint != y.EndPoint:
+			return &TreeDifference{i, "end_point", pointText(x.EndPoint), pointText(y.EndPoint)}
 		}
 	}
 	if len(a) != len(b) {
