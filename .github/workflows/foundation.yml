@@ -115,8 +115,15 @@ jobs:
             Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
             $env:TSGK_CGROUP_PARENT = "$base/jobs"
           }
-          go test ./src/... -count=1 -v -timeout 300s
+          $nativePackage = 'github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native'
+          $packages = @(go list ./src/...)
+          if ($LASTEXITCODE -ne 0 -or $packages -notcontains $nativePackage) { throw 'native package enumeration failed' }
+          $otherPackages = @($packages | Where-Object { $_ -ne $nativePackage })
+          if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
+          go test @otherPackages -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+          go test $nativePackage -count=1 -v -timeout 300s
+          if ($LASTEXITCODE -ne 0) { throw 'native test failed' }
       - name: isolated bind-mount output boundary (#196)
         if: runner.os == 'Linux'
         timeout-minutes: 2
