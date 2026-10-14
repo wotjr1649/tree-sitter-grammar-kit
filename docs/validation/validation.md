@@ -6,6 +6,8 @@
 
 ## Local foundation checks
 
+`TestNativeAuditSharedParser`는 Windows/amd64의 runtime-only foundation 입력과 owned plain grammar로 독립 audit와 corpus-page wrapper를 실제 compile·실행한다. 두 caller는 driver의 공용 parse 함수를 포함하므로 인자 변경의 회귀 범위다. audit는 legacy native r1/r2만 소비하고 logger r3는 exit 2로 거부한다. 시험은 r1/r2 receipt, corpus page와 같은 입력의 유효한 native r3/unsupported audit 대조를 확인하며, 전체 등록 대용량 audit를 대신하지 않는다. 다른 host에서는 Windows audit backend의 scope로 NOT_RUN/skip을 기록한다.
+
 Only Go 1.27.1, Git, and PowerShell 7 are required. Core checks do not require Node, Python, a C compiler, or WSL. Run from the repository root with PowerShell 7. Check each native command's exit status; do not use global `go env -w` settings.
 
 ```powershell

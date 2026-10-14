@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
   uint8_t *input = t_malloc((size_t)len+1);
   if (read_full(input,len) != len || fgetc(stdin) != EOF) return 2;
   Req r; const char *error = parse_request(input,len,&r);
-  if (error || r.nedits || r.nqueries || r.nsteps_ranges || !valid_source(r.enc,r.source,r.source_len)) return 2;
+  if (error || r.rev == 3 || r.nedits || r.nqueries || r.nsteps_ranges || !valid_source(r.enc,r.source,r.source_len)) return 2;
 #ifdef TSGK_CORPUS_CST
   if (end - start > r.full_nodes) return 2;
   cst_start = start; cst_end = end; cst_page.nodes.limit = r.output_bytes;
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
   TSParser *parser = ts_parser_new();
   if (!ts_parser_set_language(parser,tsgk_language())) return 4;
   Src source = {0}; source.s = r.source; source.n = r.source_len;
-  uint64_t millis; TSTree *tree = parse(parser,NULL,&source,r.enc,r.parse_ms,&error,&millis);
+  uint64_t millis; TSTree *tree = parse(parser,NULL,NULL,&source,r.enc,r.parse_ms,&error,&millis,NULL);
   if (!tree) return 3;
   Checks checks = {0}; sha_init(&checks.expected.sha); sha_init(&checks.observed.sha);
   uint32_t count, depth; audit_tree(&r,tree,&checks,&count,&depth,start,&end);
