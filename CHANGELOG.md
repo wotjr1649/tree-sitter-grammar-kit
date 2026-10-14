@@ -8,8 +8,9 @@
 - 선택적 incremental logger 관측과 source witness를 추가했다(#197). 기존 판정과 관측 증거를 구분하며, 관측된 reuse를 속도 향상으로 환산하지 않는다.
 - Go/C#/C/C++/T-SQL의 고정 holdout 82개·SDK 문맥 관측168건·native CST102개를 비교했다(#198). 이 세 수를 하나의 정확도 분모로 합치지 않는다.
 - Go identifier의 category·Unicode17 수정과 회귀는 PR #207에서 로컬 검증됐다(#205). 해당 PR의 새 세 OS CI·actual main 검증은 준비 시점에 미완료다.
+- 대형 native digest의 반복 숫자 포맷팅 비용을 줄였다(#208). 같은32 MiB C# 입력의 로컬 native wall은81,801→61,089 ms였고 digest·보존 의미가 같았다. parse 시간 차이·host 변동이 포함되므로 전체 parser 향상률이 아니며90초 wall·60초 parse·8 GiB와 새 CI 검증을 유지한다.
 - 공개 API 정적 대조는 추가21·변경9·제거0이다. experimental struct 필드 추가와 SVC r1→r2는 소비자의 명시적 검토가 필요하다. 이 수치는 behavior/wire 호환성 보증이 아니다.
-- Go1.27.2·CGO_ENABLED=0에서 PR 후보 `77e3414`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 확인했다. module/CI 기준은 Go1.27.1이며 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
+- Go1.27.2·CGO_ENABLED=0에서 과거 PR 후보 `77e3414`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 확인했다. module/CI 기준은 Go1.27.1이며 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
 - C# 조건부 fragment 문맥, T-SQL recovery 사례의 route BLOCKED, query host subset, macOS SAMPLED/NOT_CONTAINED 제약을 유지한다. 실사용 소비자 성능과 전체26언어 정확도는 미측정이다.
 
 ## v0.2.0 — 2026-10-06

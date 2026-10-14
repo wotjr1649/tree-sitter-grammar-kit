@@ -26,6 +26,7 @@ The current implementation consists of repository foundation checks, the Session
 | Observed Session 06 results | [native oracle report](reports/session-06-native-oracle.md) |
 | Observed Session 07 results | [evidence and replay report](reports/session-07-evidence-replay.md) |
 | 핵심 소비자 언어의 고정 입력·SDK 대조, CST 편집 복원과 미해결 경계 (#198) | [한국어](reports/issue-198-core-language-holdout.md) · [English](reports/issue-198-core-language-holdout.en.md) |
+| 대형 native digest 처리 비용과 Windows WALL_LIMIT 조사 (#208) | [한국어](reports/issue-208-native-digest-cost.md) · [English](reports/issue-208-native-digest-cost.en.md) |
 | Observed Session 08 results and 78-cell matrix (current support status: [platform](specs/platform-support.md)) | [qualification report](reports/session-08-qualification.md), [qualification inventory](../src/contracts/qualification-c1.json) |
 | Historical T-SQL overacceptance and dynamic SQL fallback classification (#109) | [T-SQL 재분류](reports/issue-109-tsql-reclassification.md) |
 | T-SQL acceptance boundaries and regression scope (#113) | [T-SQL 경계 수정](reports/issue-113-tsql-boundaries.md) |

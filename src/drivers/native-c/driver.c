@@ -1009,15 +1009,19 @@ typedef struct {
 
 static void digest_node(TreeCtx *x, TSNode n, int64_t parent, const char *field, uint32_t flags) {
   char t[24];
+  Buf number = {t, 0, sizeof t, sizeof t, false};
   const char *type = ts_node_type(n);
   TSPoint a = ts_node_start_point(n), b = ts_node_end_point(n);
   uint64_t v[6] = {ts_node_start_byte(n), ts_node_end_byte(n), a.row, a.column, b.row, b.column};
-  int k = snprintf(t, sizeof t, "%lld", (long long)parent);
-  sha_update(&x->sha, t, (size_t)k);
+  puti(&number, parent);
+  sha_update(&x->sha, number.data, number.len);
   const char *strs[2] = {type, field ? field : ""};
   for (int i = 0; i < 2; i++) {
-    k = snprintf(t, sizeof t, "%c%zu:", 0, strlen(strs[i]));
-    sha_update(&x->sha, t, (size_t)k);
+    number.len = 0;
+    put(&number, "\0", 1);
+    putu(&number, strlen(strs[i]));
+    put(&number, ":", 1);
+    sha_update(&x->sha, number.data, number.len);
     sha_update(&x->sha, strs[i], strlen(strs[i]));
   }
   for (int i = 0; i < 5; i++) {
@@ -1025,8 +1029,10 @@ static void digest_node(TreeCtx *x, TSNode n, int64_t parent, const char *field,
     sha_update(&x->sha, f, 2);
   }
   for (int i = 0; i < 6; i++) {
-    k = snprintf(t, sizeof t, "%c%llu", 0, (unsigned long long)v[i]);
-    sha_update(&x->sha, t, (size_t)k);
+    number.len = 0;
+    put(&number, "\0", 1);
+    putu(&number, v[i]);
+    sha_update(&x->sha, number.data, number.len);
   }
   sha_update(&x->sha, "\n", 1);
 }
