@@ -46,6 +46,7 @@ The current implementation consists of repository foundation checks, the Session
 | #182–#185 C# conditional fragment·SVC source·record replay 보완 | [조건부 fragment와 receipt 보완](reports/issue-182-csharp-conditional-fragments.md) |
 | #188 로컬 corpus full CST/API·원문 후보·방언 지원 경계 | [corpus 후속 검증](reports/issue-188-corpus-cst-api.md) |
 | #193 성능 기준선·독립 정확도·소비자 도입 평가 | [후속 평가](reports/issue-193-evaluation.md) |
+| #197 선택적 logger 관측·source witness·기존 판정 유지 | [한국어](reports/issue-197-reuse-observation.md), [English](reports/issue-197-reuse-observation.en.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.

@@ -304,6 +304,12 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 		b.EnvNames = append(b.EnvNames, name)
 	}
 	var defs, san []string
+	manifestBytes, err := drivers.NativeC.ReadFile("native-c/runtime-manifest.json")
+	if err != nil {
+		return fail("RUNTIME_MANIFEST_INVALID", err)
+	}
+	manifestHash := sha256.Sum256(manifestBytes)
+	defs = append(defs, fmt.Sprintf("-DTSGK_RUNTIME_MANIFEST_SHA256=\"%x\"", manifestHash))
 	for _, d := range b.Defines {
 		defs = append(defs, "-D"+d)
 	}

@@ -329,6 +329,20 @@ func reducerTable() map[string]reducer {
 	for _, id := range []string{"native-result", "oracle-set", "private-corpus"} {
 		t[id+"-r2"] = errorTreeRevision(t[id+"-r1"], id+"-r2")
 	}
+	r := t["native-result-r2"]
+	r.info.ID, r.info.Revision = "native-result-r3", "r3"
+	r.info.Inputs = []string{"tsgk-incremental-result/r2 result.json", "tsgk-incremental/r2 or r1 workload profile", "tsgk-native/r3 responses"}
+	r.info.Gates = append(slices.Clone(r.info.Gates), "reuse-observation", "edit-points")
+	r.info.Roles = append(slices.Clone(r.info.Roles), "case-source")
+	r.info.Recorded = []string{"native CST payload decoding outside the observation projection", "declaration expectations on r1 full trees", "summary/record tree digests", "edit points without a registered original-source witness"}
+	r.info.Description += "; r3: bounded logger provenance, parse roles, raw/projection agreement and separate observation claim recomputed"
+	r.run = func(x *replayEnv) *Error {
+		x.errorTreeRoute = true
+		x.reuseObservation = true
+		x.observationResponses = map[string]bool{}
+		return replayNativeResult(x)
+	}
+	t[r.info.ID] = r
 	return t
 }
 
@@ -389,7 +403,9 @@ type replayEnv struct {
 	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
 	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
 
-	nativeInputBytes uint64
+	nativeInputBytes     uint64
+	reuseObservation     bool
+	observationResponses map[string]bool
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

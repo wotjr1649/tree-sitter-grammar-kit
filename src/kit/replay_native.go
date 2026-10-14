@@ -86,11 +86,12 @@ type rcEdit struct {
 }
 
 type rcStep struct {
-	Edit         *rcEdit `json:"edit"`
-	Restarted    bool    `json:"restarted"`
-	Step         int     `json:"step"`
-	SourceBytes  uint64  `json:"source_bytes"`
-	SourceSHA256 string  `json:"source_sha256"`
+	Observations jsontext.Value `json:"observations,omitempty"`
+	Edit         *rcEdit        `json:"edit"`
+	Restarted    bool           `json:"restarted"`
+	Step         int            `json:"step"`
+	SourceBytes  uint64         `json:"source_bytes"`
+	SourceSHA256 string         `json:"source_sha256"`
 	Route        *struct {
 		EditHasChanges   bool   `json:"edit_has_changes"`
 		ReusedNodes      uint64 `json:"reused_nodes"`
@@ -143,17 +144,18 @@ type rcClaims struct {
 // rcCase is the part of a recorded S05 case or S06 record the reducer reads; the rest
 // (process, producer, host observations) is retained in the raw and not judged.
 type rcCase struct {
-	Segments        []rcSvcSegment   `json:"segments"`
-	References      []rcSvcReference `json:"references"`
-	Schema          string           `json:"schema"`
-	Case            string           `json:"case"`
-	ID              string           `json:"id"`
-	Input           NativeInput      `json:"input"`
-	ExecutionStatus string           `json:"execution_status"`
-	Assessment      string           `json:"assessment"`
-	Code            string           `json:"code"`
-	Claims          rcClaims         `json:"claims"`
-	Oracle          *struct {
+	ReuseObservationClaim jsontext.Value   `json:"reuse_observation_claim,omitempty"`
+	Segments              []rcSvcSegment   `json:"segments"`
+	References            []rcSvcReference `json:"references"`
+	Schema                string           `json:"schema"`
+	Case                  string           `json:"case"`
+	ID                    string           `json:"id"`
+	Input                 NativeInput      `json:"input"`
+	ExecutionStatus       string           `json:"execution_status"`
+	Assessment            string           `json:"assessment"`
+	Code                  string           `json:"code"`
+	Claims                rcClaims         `json:"claims"`
+	Oracle                *struct {
 		QueryEquality     string `json:"query_equality"`
 		QueryExpectations string `json:"query_expectations"`
 		API               string `json:"api"`
@@ -163,7 +165,8 @@ type rcCase struct {
 	Steps        []rcStep   `json:"steps"`
 	Expectations []rcExpect `json:"expectations"`
 	Producer     *struct {
-		Query string `json:"query"`
+		Query            string         `json:"query"`
+		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
 	} `json:"producer"`
 }
 
@@ -242,6 +245,15 @@ func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
 func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, queries bool) caseOutcome {
+	if !x.reuseObservation {
+		present := len(c.ReuseObservationClaim) != 0 || c.Producer != nil && len(c.Producer.ReuseObservation) != 0
+		for _, s := range c.Steps {
+			present = present || len(s.Observations) != 0
+		}
+		if present {
+			x.gate("reuse-observation").fail(x.name(c.ID, idx), "OBSERVATION_SCHEMA_UNSUPPORTED", "이 replay/qualification revision은 관측을 소비하지 않는다")
+		}
+	}
 	bindFailures := x.gate("case-binding").Failed
 	x.checkSvcComposite(c, want)
 	x.observeSvcReferences(c)
@@ -1104,13 +1116,15 @@ func (x *replayEnv) oneMember(role string) (ReplayMember, *Error) {
 
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
-	Schema          string        `json:"schema"`
-	ResultSchema    string        `json:"result_schema"`
-	ExecutionStatus string        `json:"execution_status"`
-	Assessment      string        `json:"assessment"`
-	Identities      []IdentityRef `json:"identities"`
-	Route           string        `json:"route"`
-	Operation       struct {
+	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
+	ObservationRunID       string        `json:"observation_run_id"`
+	Schema                 string        `json:"schema"`
+	ResultSchema           string        `json:"result_schema"`
+	ExecutionStatus        string        `json:"execution_status"`
+	Assessment             string        `json:"assessment"`
+	Identities             []IdentityRef `json:"identities"`
+	Route                  string        `json:"route"`
+	Operation              struct {
 		Name string `json:"name"`
 	} `json:"operation"`
 	Build *struct {
@@ -1139,6 +1153,11 @@ var responseName = regexp.MustCompile(`^responses/([0-9]{5})-(.+)\.json$`)
 // per-case projection used by the private corpus reducer.
 func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile, prefix string, onCase func(c *rcCase, o caseOutcome, i int)) (nativeResult, []caseOutcome, *Error) {
 	var top nativeResult
+	if x.reuseObservation {
+		if e := x.readObservationTop(resultPath, &top); e != nil {
+			return top, nil, e
+		}
+	}
 	want := map[string]*IncrementalCase{}
 	ids := make([]string, 0, len(prof.Cases))
 	for i := range prof.Cases {
@@ -1173,8 +1192,11 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		hasError, cases              int
 	}{map[string]int{}, map[string]int{}, map[string]int{}, 0, 0}
 	e = x.streamTop(m, "cases", func(name string, raw jsontext.Value) *Error {
+		if !x.reuseObservation && (name == "reuse_observation_policy" || name == "observation_run_id") {
+			return fail(KindUnsupported, "OBSERVATION_SCHEMA_UNSUPPORTED", resultPath, nil)
+		}
 		switch name {
-		case "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256":
+		case "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256", "reuse_observation_policy", "observation_run_id":
 			wrapped := append(append([]byte(`{"`+name+`":`), raw...), '}')
 			return decodeRecord(resultPath, wrapped, &top)
 		}
@@ -1188,6 +1210,18 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 			return nil
 		}
 		o := x.replayCase(&c, i, want[c.ID], false)
+		if x.reuseObservation {
+			unknownPoints := x.gate("edit-points").NotRecomputed
+			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
+				return e
+			}
+			if x.gate("edit-points").NotRecomputed > unknownPoints {
+				o.complete = false
+				if o.assess == AssessPass {
+					o.assess = AssessUnresolved
+				}
+			}
+		}
 		outs = append(outs, o)
 		sum.cases++
 		sum.statuses[c.ExecutionStatus]++
@@ -1207,7 +1241,11 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 	if e != nil {
 		return top, outs, e
 	}
-	if top.Schema != ReportSchema || top.ResultSchema != "tsgk-incremental-result/r1" {
+	wantSchema := "tsgk-incremental-result/r1"
+	if x.reuseObservation {
+		wantSchema = "tsgk-incremental-result/r2"
+	}
+	if top.Schema != ReportSchema || top.ResultSchema != wantSchema || (!x.reuseObservation && (top.ReuseObservationPolicy != "" || top.ObservationRunID != "")) {
 		return top, outs, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", resultPath, nil)
 	}
 	sg := x.gate("summary")
@@ -1291,6 +1329,10 @@ func replayNativeResult(x *replayEnv) *Error {
 	// responses: one raw member per case position, never parsed by the offline API
 	rg := x.gate("responses")
 	for _, m := range x.membersByRole("response") {
+		if x.reuseObservation {
+			rg.check(x.observationResponses[m.Path], m.Path, "RESPONSE_UNBOUND", "관측 원 응답이 case/segment와 결속되지 않았다")
+			continue
+		}
 		sm := responseName.FindStringSubmatch(m.Path)
 		ok := sm != nil
 		if ok {

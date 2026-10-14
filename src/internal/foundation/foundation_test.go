@@ -26,7 +26,7 @@ func repository(t *testing.T) string {
 }
 
 // Source-only test copies also need the guides linked from README and the documentation map.
-var repositoryFixtureFiles = append(append([]string(nil), required...), "docs/grammar-support.md", "docs/grammar-support.en.md", "docs/reports/issue-193-evaluation.md")
+var repositoryFixtureFiles = append(append([]string(nil), required...), "docs/grammar-support.md", "docs/grammar-support.en.md", "docs/reports/issue-193-evaluation.md", "docs/reports/issue-197-reuse-observation.md", "docs/reports/issue-197-reuse-observation.en.md")
 
 func TestRepositoryFiles(t *testing.T) {
 	if err := CheckFiles(os.DirFS(repository(t))); err != nil {

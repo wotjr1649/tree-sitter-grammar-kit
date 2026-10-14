@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -15,10 +16,12 @@ import (
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 // ResultSchema is the published incremental result.
 const ResultSchema = "tsgk-incremental-result/r1"
+const ObservationResultSchema = "tsgk-incremental-result/r2"
 
 // Capabilities a caller must grant to `tsgk incremental`.
 const (
@@ -28,16 +31,17 @@ const (
 
 // IncrementalRequest is one `tsgk incremental` run. Paths are absolute.
 type IncrementalRequest struct {
-	Root         string // case inputs
-	GrammarRoot  string // grammar files; empty means Root
-	Profile      []byte
-	Runtime      string
-	Compiler     string
-	Work         string
-	Out          string
-	Allow        []string
-	CgroupParent string
-	RunWall      time.Duration // optional, at most the operation's run wall
+	Root             string // case inputs
+	GrammarRoot      string // grammar files; empty means Root
+	Profile          []byte
+	Runtime          string
+	Compiler         string
+	Work             string
+	Out              string
+	Allow            []string
+	CgroupParent     string
+	RunWall          time.Duration // optional, at most the operation's run wall
+	ReuseObservation bool
 }
 
 // Summary counts case outcomes.
@@ -53,6 +57,8 @@ type Summary struct {
 
 // Result is the published tsgk-incremental-result/r1 document.
 type Result struct {
+	ReuseObservationPolicy string `json:"reuse_observation_policy,omitempty"`
+	ObservationRunID       string `json:"observation_run_id,omitempty"`
 	kit.Report
 	ResultSchema  string              `json:"result_schema"`
 	ProfileID     string              `json:"profile_id"`
@@ -127,6 +133,9 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	res := Result{Report: kit.Report{Schema: kit.ReportSchema, Command: "incremental", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{"query"}}},
 		ResultSchema: ResultSchema, Cases: []CaseResult{}, Batches: []BatchRecord{}, Platform: runtime.GOOS + "/" + runtime.GOARCH, StartedAt: start.UTC().Format(time.RFC3339)}
+	if req.ReuseObservation {
+		res.ResultSchema, res.ReuseObservationPolicy, res.ObservationRunID = ObservationResultSchema, reuseobs.Policy, rand.Text()
+	}
 	stop := func(err *Error) (Result, error) {
 		res.Findings = append(res.Findings, finding(err.Code, "error", "", "실행 전 거부했다"))
 		if err.Kind == kit.KindUnsupported {
@@ -194,9 +203,12 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
 		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy}
+		if req.ReuseObservation {
+			x.Protocol, x.ObservationRunID, x.ObservationProducerSHA256 = ProtocolR3, res.ObservationRunID, b.Identity
+		}
 		refs := b.runSvcReferences(runCtx, x, prof.Cases, req.Root)
 		if op.Batch {
-			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases)
+			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases, req.Out)
 		} else {
 			for _, c := range prof.Cases {
 				src, err := readCase(req.Root, c.Input)
@@ -218,8 +230,23 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 						writeFailed = true
 					}
 				}
+				if req.ReuseObservation {
+					for _, segment := range cr.Segments {
+						if len(segment.Raw) == 0 {
+							continue
+						}
+						name := fmt.Sprintf("%05d-%s-segment-%05d.json", len(res.Cases), c.ID, segment.StartStep)
+						if err := os.WriteFile(filepath.Join(req.Out, "responses", name), segment.Raw, 0o644); err != nil {
+							res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "segment 원 응답을 보존하지 못했다"))
+							writeFailed = true
+						}
+					}
+				}
 				res.Cases = append(res.Cases, cr)
 			}
+		}
+		for i := range res.Cases {
+			x.observeCase(&res.Cases[i])
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(res.Cases)
 		if writeFailed {
@@ -306,7 +333,8 @@ func summarize(cases []CaseResult, batches []BatchRecord) Summary {
 // cases or BatchBytes input bytes per driver process. Frames a batch-level limit or a
 // fatal frame left unanswered are re-queued into a new process (not a retry); a crash
 // mid-frame is FAILED; files never reached before the run wall are NOT_RUN.
-func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase) ([]CaseResult, []BatchRecord) {
+func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase, outDir string) ([]CaseResult, []BatchRecord) {
+	x.ObservationProducerSHA256 = b.Identity
 	out := make([]CaseResult, len(cases))
 	for i, c := range cases {
 		out[i] = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed, Code: "NOT_RUN",
@@ -413,6 +441,12 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				checked, err = Check(resp, reqs[k], [][]byte{reqs[k].Source}, nil, want[resp.Status])
 				if err == nil {
 					*c = recordResult(*c, resp, checked, x, b.Identity)
+					if x.Protocol == ProtocolR3 {
+						path := filepath.Join(outDir, "responses", fmt.Sprintf("%05d-%s.json", i, c.ID))
+						if err := os.WriteFile(path, fr.Response, 0o644); err != nil {
+							c.ExecutionStatus, c.Assessment, c.Code = kit.StatusFailed, kit.AssessNotAssessed, "EVIDENCE_WRITE_FAILED"
+						}
+					}
 					if resp.Code == "ALLOCATION_LIMIT" {
 						fatal = true
 						rec.Fatal = "ALLOCATION_LIMIT"
@@ -440,6 +474,9 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 		}
 		batches = append(batches, rec)
 		queue = append(requeue, queue...)
+	}
+	for i := range out {
+		x.observeCase(&out[i])
 	}
 	return out, batches
 }
@@ -474,7 +511,7 @@ func recordResult(c CaseResult, resp Response, checked Checked, x Context, build
 				Identities: []kit.IdentityRef{{Role: "producer", Schema: BuildSchema, SHA256: buildID}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: cs.Step.SourceSHA256}, x.PolicyRef}}
 			t.Summary = s
 		}
-		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: &t, Composite: comp})
+		c.Steps = append(c.Steps, StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Incremental: &t, Composite: comp, Observations: cs.Observations})
 	}
 	return c
 }

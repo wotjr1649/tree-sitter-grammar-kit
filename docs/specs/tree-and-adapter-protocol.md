@@ -179,6 +179,34 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 
 **비교 projection과 판정.** 하나의 비교 함수(`kit.CompareTrees`)가 같은 bytes·grammar·policy의 두 full tree를 node 수와 node별 12개 공개 필드(type·field는 표 index가 아니라 이름) 전부로, 정렬·중복 제거·span 보정 없이 preorder 순서대로 비교하고 첫 차이(node index, 필드, 두 값)를 낸다. 사례마다 claim 세 개를 따로 둔다. `incremental_equality`는 모든 edit step에서 incremental = fresh, `incremental_route`는 모든 edit step에서 `edit_has_changes`·`reused_nodes > 0`·`fresh_reused_nodes = 0`, `expectations`는 등록 사례의 언어 기대값(step별 `NO_ERROR`·`ERROR`, tree 어디든 있어야 할 named node type, 정확한 type과 byte 범위에 있어야 할 named node인 anchor)이다. anchor는 full tree에서만 판정하며 없으면 FAIL, full tree가 아니면 BLOCKED다(규칙은 [CLI/profile](cli-and-profile.md) `S05 구현`). native/fresh 일치는 언어 정확성이 아니며, 기대값 불일치는 kit가 충실히 보고한 grammar 결과라면 grammar gap으로 처분한다. 어느 claim이든 FAIL이면 그 사례의 assessment는 FAIL이다. 재사용할 node가 없는 edit는 route를 증명하지 못하므로 등록 사례는 바뀌지 않는 문맥을 남긴다. route를 증명하지 못한 edit step은 FAIL이다. 단, route 계측이 있고 `edit_has_changes`이며 `reused_nodes`와 `fresh_reused_nodes`가 모두 0인 step에서, 이전 tree(앞 step의 incremental tree)와 새 incremental tree가 모두 full tree이고 둘 중 하나가 `has_error`이면 그 step은 BLOCKED다. full tree만 보는 이유는 replay가 node에서 다시 계산하는 `has_error`가 full tree의 값뿐이기 때문이다. summary·record 형식 tree가 끼면 FAIL이다. tree-sitter는 오류가 있는 tree에서도 node를 재사용할 수 있다(`TestMalformedThenRepair`의 오류 중간 상태는 route가 증명된다). 그러나 grammar의 오류 tree에서는 재사용할 node가 남지 않을 수 있으므로, 이 규칙은 오류 tree 위의 무재사용을 kit 결함이 아니라 관측 불가로 취급한다. 이 예외 뒤에 실제 route 결함이 숨지 않도록, 등록 route마다 route·gap 사례 파일에 모든 step이 `NO_ERROR`인 edit 사례를 하나 이상 둔다(foundation `TestEveryRouteHasCleanEditCase`). 그 사례에서 증명되지 않은 route는 FAIL이다. route 계측이 없거나, 바뀐 것이 없거나, fresh parse가 node를 재사용한 step은 tree와 무관하게 FAIL이다. claim은 step 중 가장 나쁜 값(FAIL > BLOCKED > PASS)이다. 첫 BLOCKED step의 code `INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_<n>`은 다른 실패 code가 없을 때만 사례 code가 된다. S05 판정, r2 replay reducer와 qualify의 `incremental-route` gate가 같은 규칙으로 다시 계산한다. r1 reducer는 규칙 이전의 근거를 위해 이 예외 없이 계산한다([identity/evidence](identity-and-evidence.md) `등록 reducer`). route BLOCKED는 kit 축 실패가 아니며, qualify에서 E 의무를 BLOCKED로 만든다([identity/evidence](identity-and-evidence.md) `S08 구현`).
 
+### 선택적 public logger 관측 — `tsgk-native/r3` (#197)
+
+`r3`는 incremental에만 적용하는 명시적 opt-in이다. r1 request의 마지막 `edits` 뒤에 `reuse_observation:"tsgk-reuse-log/r1"`, `observation_run_id`, `observation_producer_sha256`, `observation_history_start`를 그 순서로 더한다. query/API인 r2와 결합하지 않는다. 기본 r1과 oracle r2의 wire shape는 유지한다. producer는 `reuse_observation:{policy,runtime_manifest_sha256}` capability를 선언한다. 현재 정책은 내장 `runtime-manifest.json`의 SHA-256 `affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080`에만 적용하며, manifest가 달라지면 같은 정책으로 성공 관측을 해석하지 않는다. 이는 runtime release version이나 generator version을 뜻하지 않는다.
+
+각 step에 `observations`를 더한다. 최초 parse는 `initial` 하나, edit step은 `incremental`, `fresh` 순서의 두 항목이다. 각 항목은 `tsgk-reuse-observation/r1`이며 다음 member를 모두 요구한다. 생략된 0과 실제 0을 같게 처리하지 않는다.
+
+| 필드 | 의미 |
+|---|---|
+| `schema`, `policy`, `runtime_manifest_sha256` | 관측 schema·해석 정책·고정 runtime closure의 manifest identity |
+| `request_id`, `run_id`, `producer_sha256` | case ID·한 invocation의 correlation ID·검증하고 실행한 build identity |
+| `history_start`, `step`, `role` | case의 native history 시작 번호·해당 request 안의 parse 순번·`initial`/`incremental`/`fresh` 역할; 시작 번호와 순번 합은 최대 4 |
+| `source_sha256`, `source_bytes` | parse에 전달한 입력 bytes의 hash·길이 |
+| `old_tree`, `old_source_sha256` | 실제 old-tree 인자 여부와 그 tree의 직전 입력 hash; old tree가 없으면 hash는 null |
+| `status`, `reason`, `events`, `bytes`, `counts` | 수집 상태·중단 이유·수집한 callback message 수·NUL 제외 byte 수·선택 parse event 수 |
+
+`counts`의 필수 unsigned integer는 `new_parse`, `parse_after_edit`, `resume_parse`, `done`, `accepted`, `changed`, `error`, `missing`, `fragile`, `included_range`, `external_scanner`, `lookahead`다. 시작 세 종류와 `done`은 exact message, accept/reject는 고정 runtime의 key·reason prefix로 분류한다. symbol text와 node 주소는 보존하지 않는다. `lookahead`는 고정 runtime의 `cant_reuse_node` 첫 leaf 검사 거부 event이며 고유 node 수가 아니다. lex callback은 전체 event/byte 상한에 포함하되 선택 counter로 해석하지 않는다. 알려진 일반 parse key는 선택 counter에 넣지 않고, 알 수 없는 key·선택 형식·호출 내 시작/종료 순서는 성공으로 처리하지 않는다.
+
+| 상태 | 이유·수치 해석 |
+|---|---|
+| `COMPLETE` | 동일 parse 호출에서 시작 event 하나와 마지막 `done` 하나를 정상 수집했다. 이유는 빈 문자열이며 완료 수집에서만 counter 0을 실제 관측 0으로 읽는다. ERROR/MISSING tree에서도 수집 완료가 가능하다. |
+| `UNAVAILABLE` | `LOGGER_MISSING`, `PARSE_NOT_RUN`, `NO_NATIVE_PARSE`, `PARSE_INCOMPLETE`, `FORMAT_UNKNOWN`. logger 누락/미실행은 event·byte 0, 부분 수집은 관측 prefix만 남긴다. 어떤 경우도 완료된 0으로 해석하지 않는다. |
+| `TRUNCATED` | `EVENT_LIMIT`, `BYTE_LIMIT`, `MESSAGE_LIMIT`. 실제 다음 callback을 수용하지 못한 때 중단하며 이미 수집한 prefix만 남긴다. 상한에 도달했어도 버린 callback이 없으면 이 상태로 바꾸지 않는다. |
+| `OVERFLOW` | `COUNTER_OVERFLOW`; counts 전체가 null이다. 알 수 없는 합계를 0으로 대체하지 않는다. |
+
+수집 상한은 callback 16,384개, message bytes 합 1,048,576, 개별 message의 NUL 탐색 1,024 bytes다. Go의 항목 decoder 상한은 4,096 bytes다. 전체 request/response·runner 상한도 그대로 적용한다. counter 합은 수집 event 수를 넘을 수 없다. 첫 수집 중단 이유를 보존하고 이후 callback은 해석하지 않는다. byte 수는 수집 event 수 × 1,023을 넘을 수 없고 BYTE_LIMIT prefix는 다음 message가 들어갈 수 없는 상한 근처여야 한다. 정상 수집은 event cap이 먼저 제한하므로 64-bit counter overflow에 도달하지 않는다. OVERFLOW negative control은 counter 상태를 의도적으로 주입해 방어 경로를 검사한 것이며 정상 도달성·속도 근거가 아니다. public `TSLogger`를 parse 진입 직전에 설치·확인하고 반환 직후 확인·복원한다. payload는 호출별 stack storage이며 다음 parse로 전달하지 않는다. runtime source patch는 추가하지 않는다.
+
+관측은 host가 검증한 입력 버전·edit point와 같은 step 안에서 결속된다. actual old-tree 인자 기록은 고정 driver의 호출 계보에서 얻으며, 외부의 독립적인 tree 소유 증명이나 암호학적 실행 인증은 아니다. `run_id`도 인증 토큰이 아니다. SVC native segment 재시작의 관측은 local step 0/`initial`을 유지하고 `history_start`를 실제 segment 시작 번호에 결속한다. `(run_id, request_id, history_start, step, role)`로 parse 호출을 구분하며 같은 입력으로 재시작해도 segment끼리 바꿔 붙이지 않는다. native parse가 없는 SVC 단계의 `UNAVAILABLE/NO_NATIVE_PARSE`는 host 생성 marker이며 native logger 증거가 아니다.
+
 ## S06 구현 — `tsgk-native/r2` query·API 관측·기록 set
 
 S06은 S05 driver를 같은 파일·같은 parse/직렬화 engine(`handle`, `emit_tree`)으로 확장한다. 두 번째 driver·runner·CLI 출력 해석 경로는 없다. driver는 요청의 revision으로 응답한다. `tsgk-native/r1` 요청은 S05 응답을 byte 단위로 그대로 받는다(`producer.query: "UNSUPPORTED"`, r2 member 없음). 예외는 `memory_bytes` 상한이다. S05에서 `LIMIT_INVALID`였던 4294967297~8589934592는 이제 받는다(r3 결정). 알 수 없는 revision은 `PROTOCOL_MISMATCH`이고, r2 머리에 r1 본문을 붙이면 r2 문법으로 읽혀 `REQUEST_MALFORMED`다(조용히 다시 해석하지 않음). Go는 응답 revision이 요청과 다르면 `RESPONSE_PROTOCOL_MISMATCH`, r1 응답에 r2 member가 있거나 r2 응답에 capability가 없으면(`predicates`는 `NOT_EVALUATED`여야 함) `RESPONSE_INVALID`로 거부한다. r2 query 결과와 그 안의 오류·predicate·단계, API 관측의 member는 하나라도 빠지면 거부한다. 빠진 member를 0이나 빈 목록으로 읽어 "predicate 없음" 같은 성공 값으로 바꾸지 않는다.

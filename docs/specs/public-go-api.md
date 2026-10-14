@@ -2,6 +2,10 @@
 
 이 문서는 S01에서 구현한 첫 공개 계약이다. root module의 `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`이 entry이고, CLI `src/cmd/tsgk`는 같은 operation을 호출하며 API가 CLI를 실행하지 않는다. r1 초안 대비 r2는 kit 설정 wall, encoding 선언, identity 한정 대용량 예외, 비공개 corpus 진입점과 결과의 policy 공개를 더했다. 고급 native/replay API 전체 공개는 약속하지 않는다.
 
+## #197 logger 관측의 offline validator
+
+`src/kit/reuseobs`는 native host와 offline replay가 공유하는 실험적 pure Go validator다. `Observation`, `Counts`, `Binding`, `Decode`와 `Judge` 및 고정 schema/policy/runtime·수집 상한을 제공한다. `Decode`는 호출자가 독립적으로 검증한 입력·build·run·history·role의 `Binding`과 versioned 관측을 대조하며, `Judge`는 유효한 수집과 actual old-tree 전달의 별도 축만 판정한다. event 수로 공개 node 재사용·구문 적합성·성능을 판정하지 않는다. 자체 구조 검증은 실행의 인증을 대신하지 않으며 연결되지 않은 관측을 `Judge`에 제공하는 것만으로 workload 결속을 주장할 수 없다. package는 파일·process·network를 사용하지 않는다. native 실행·logger 설치는 계속 CLI의 별도 process 경계 안에 있고 `TestOfflineClosure`의 기존 금지는 유지한다. 구체적인 값·상태는 [native protocol](tree-and-adapter-protocol.md), 공개 replay 선택자는 [identity/evidence](identity-and-evidence.md)가 소유한다.
+
 ## S01 함수와 소유권
 
 ```go
