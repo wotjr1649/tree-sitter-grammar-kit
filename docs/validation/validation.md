@@ -25,8 +25,15 @@ $env:GOPROXY = 'off'
 $env:GOFLAGS = '-mod=readonly'
 $formatted = gofmt -l src
 if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
-go test ./src/... -count=1 -v -timeout 300s
+$nativePackage = 'github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native'
+$packages = @(go list ./src/...)
+if ($LASTEXITCODE -ne 0 -or $packages -notcontains $nativePackage) { throw 'native package enumeration failed' }
+$otherPackages = @($packages | Where-Object { $_ -ne $nativePackage })
+if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
+go test @otherPackages -count=1 -v -timeout 300s
 if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+go test $nativePackage -count=1 -v -timeout 300s
+if ($LASTEXITCODE -ne 0) { throw 'native test failed' }
 go vet ./src/...
 if ($LASTEXITCODE -ne 0) { throw 'vet failed' }
 go build ./src/...
@@ -88,6 +95,8 @@ foundation 세 OS는 이 세 frame 시험과 native cancellation을 각각 `-cou
 [runtime patch 정책과 identity](../provenance/upstream-sources.md#native-runtime의-field-조회-patch-105)는 runtime manifest가 소유한다. `prepare-routes.ps1`의 `-LocalRuntime`은 고정 기반 commit의 **원본** source를 받는다. 준비 과정은 원본 target hash·bytes, local patch subject hash·bytes, literal 문맥의 정확한 occurrence 수, 적용 후 83개 closure hash를 확인한다. 이미 patch된 source를 원본 대신 넣거나 hash 검사를 우회하지 않는다. build의 `RUNTIME_MISMATCH` 검사는 적용 후 closure를 그대로 강제한다.
 
 patch 변경은 원본과 후보를 별도 준비한 같은 host에서 `run-routes.ps1 -Large -Oracle`로 비교한다. API findings가 줄고 모든 기존 사례의 tree·incremental·query·사실 결과와 `requirement_results`가 유지되어야 한다. 시간과 producer identity는 host 관측으로 구분한다. foundation의 `TestRuntimePatch`는 원본·subject·출력 hash와 literal 문맥의 실패를 검사한다. native의 `TestRuntimeFieldOwnership`·`TestRuntimeFieldRecoveryAndShadow`·`TestRuntimeFieldByName`은 alias/hidden 상속·가까운 field shadow·ERROR·extra 경계와 negated-field capture, by-name locator의 byte 범위·unknown field null을 독립 기대값으로 검사한다. 원본 runtime mutant가 의도한 field 조회·query 이유로 실패해야 한다. 독립 보안 관점 리뷰와 실제 세 OS CI에서 qualification artifact의 `support_claim`·`platform_claims` 및 감소한 `api_findings`를 직접 확인한 뒤 병합한다. [#118](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/118)의 완료 조건은 등록 26 route·SVC의 API 차이 0과 원래 잔여 7개 사례의 개별 API PASS다. large는 기존 API 비활성 정책과 시간·memory·출력 상한을 유지하며 전체 API 조회 성능 근거로 사용하지 않는다. [#120](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/120)의 `TestRuntimeNamedNavigationBoundary`는 first named child·next/previous named sibling의 독립 기대 index와 anonymous alias 안 ERROR의 소유 경계를 검사한다. #118 runtime을 정상 빌드한 mutant는 navigation 기대값으로 실패하고 기존 field 대조는 통과해야 한다. owned grammar는 변경 없이 JSON mode의 두 workspace 생성·5개 기준 출력·입력 grammar JSON 불변성을 확인한다. 기존 zero-width `position_navigation` 정책은 유지한다. 기반 runtime 갱신이나 patch 제거에도 같은 검증을 적용한다.
+
+foundation은 `go list ./src/...`의 전체 패키지를 native와 나머지로 나누어 모두 실행한다. 나머지 패키지의 기존 병렬 실행 뒤에 native를 별도로 실행하여, native의 실제 C 컴파일과 다른 테스트 패키지의 컴파일이 같은 host에서 경합하는 것을 줄인다. native 패키지 누락이나 열거 실패는 거부한다. 패키지 내부의 `t.Parallel`, 전체 테스트 범위, 패키지별 300초 timeout과 job의 10분 상한은 유지한다. 이 설정 자체는 성능 개선이나 실패 해결의 관측 근거가 아니며, 후보의 실제 세 host CI로 확인한다.
 
 ## Starting ordinary work and completing it locally
 
