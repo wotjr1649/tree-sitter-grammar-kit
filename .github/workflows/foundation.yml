@@ -575,6 +575,17 @@ jobs:
           & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
           if ($LASTEXITCODE -ne 0) { throw 'run identity failed' }
           if ($routesExit -ne 0) { throw 'route run reported failures' }
+          # #197: logger observation is a separate axis; the three JSON route BLOCKEDs stay.
+          $env:TSGK_NATIVE_REQUIRED = '1'
+          $env:TSGK_CGROUP_PARENT = $cgroup
+          $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'
+          $env:TSGK_NATIVE_RUNTIME = Join-Path $env:TSGK_BENCH_PREPARED 'runtime'
+          $env:TSGK_NATIVE_CC = $cc
+          go test ./src/internal/native -run '^TestNativeReuseJSONKeepsBlockedRoutes$' -count=1 -v -timeout=180s > (Join-Path $out 'reuse-observation.log') 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'JSON reuse observation/control failed' }
+          if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
+          go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }
           if ($IsWindows) {
             # #193: independent JSON syntax labels and recovery/edit classification.
             # Benchmark iterations are local measurements, not a hosted speed gate.
@@ -598,6 +609,17 @@ jobs:
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/records
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/profiles/s06-*.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: 독립 logger 관측 및 SVC replay 근거 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: reuse-observation-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/reuse-observation.log
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/svc-reuse-observation.log
           if-no-files-found: error
           retention-days: 7
           compression-level: 6

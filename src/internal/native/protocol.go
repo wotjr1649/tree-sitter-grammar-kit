@@ -13,13 +13,15 @@ import (
 	"strconv"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
-// Driver protocol revisions: r1 (S05) and r2 (S06: queries, API facts, capabilities). The
+// Driver protocol revisions: r1 (S05), r2 (S06), r3 (opt-in logger observations). The
 // driver answers each request in the revision it was asked in.
 const (
 	Protocol   = "tsgk-native/r1"
 	ProtocolR2 = "tsgk-native/r2"
+	ProtocolR3 = "tsgk-native/r3"
 )
 
 // MaxRequestFrame is the request frame payload ceiling.
@@ -45,18 +47,21 @@ type QuerySource struct {
 
 // Request is one driver request.
 type Request struct {
-	ID           string
-	Encoding     string
-	Output       string
-	Limits       Limits
-	Declarations []kit.NativeDeclaration
-	Points       []kit.NativePoint
-	Ranges       [][]kit.Span // included ranges per step (SVC inline code); nil for whole input
-	Source       []byte
-	Edits        []kit.Edit
-	Protocol     string // "" is r1
-	Queries      []QuerySource
-	API          bool
+	ID                        string
+	Encoding                  string
+	Output                    string
+	Limits                    Limits
+	Declarations              []kit.NativeDeclaration
+	Points                    []kit.NativePoint
+	Ranges                    [][]kit.Span // included ranges per step (SVC inline code); nil for whole input
+	Source                    []byte
+	Edits                     []kit.Edit
+	Protocol                  string // "" is r1
+	Queries                   []QuerySource
+	API                       bool
+	ObservationRunID          string
+	ObservationProducerSHA256 string
+	ObservationHistoryStart   uint64
 }
 
 // Revision is the request's protocol revision.
@@ -127,6 +132,9 @@ func (r Request) Encode() []byte {
 		}
 		fmt.Fprintf(&b, `],"api":%t`, r.API)
 	}
+	if r.Revision() == ProtocolR3 {
+		fmt.Fprintf(&b, `,"reuse_observation":%q,"observation_run_id":%q,"observation_producer_sha256":%q,"observation_history_start":%d`, reuseobs.Policy, r.ObservationRunID, r.ObservationProducerSHA256, r.ObservationHistoryStart)
+	}
 	b.WriteByte('}')
 	return b.Bytes()
 }
@@ -155,25 +163,27 @@ type Response struct {
 // its capabilities (query and API revisions, predicate handling) and the language shape;
 // those members are absent from r1.
 type Producer struct {
-	LanguageVersion        uint32  `json:"language_version"`
-	RuntimeLanguageVersion uint32  `json:"runtime_language_version"`
-	RuntimeMinCompatible   uint32  `json:"runtime_min_compatible"`
-	Query                  string  `json:"query"`
-	API                    *string `json:"api,omitempty"`
-	Predicates             *string `json:"predicates,omitempty"`
-	SymbolCount            *uint32 `json:"symbol_count,omitempty"`
-	FieldCount             *uint32 `json:"field_count,omitempty"`
+	LanguageVersion        uint32         `json:"language_version"`
+	RuntimeLanguageVersion uint32         `json:"runtime_language_version"`
+	RuntimeMinCompatible   uint32         `json:"runtime_min_compatible"`
+	Query                  string         `json:"query"`
+	API                    *string        `json:"api,omitempty"`
+	Predicates             *string        `json:"predicates,omitempty"`
+	SymbolCount            *uint32        `json:"symbol_count,omitempty"`
+	FieldCount             *uint32        `json:"field_count,omitempty"`
+	ReuseObservation       jsontext.Value `json:"reuse_observation,omitempty"`
 }
 
 // Step is one parse step of a response.
 type Step struct {
-	Step         int       `json:"step"`
-	SourceBytes  uint64    `json:"source_bytes"`
-	SourceSHA256 string    `json:"source_sha256"`
-	Edit         *StepEdit `json:"edit"`
-	Route        *Route    `json:"route"`
-	Incremental  WireTree  `json:"incremental"`
-	Fresh        *WireTree `json:"fresh"`
+	Step         int            `json:"step"`
+	SourceBytes  uint64         `json:"source_bytes"`
+	SourceSHA256 string         `json:"source_sha256"`
+	Edit         *StepEdit      `json:"edit"`
+	Route        *Route         `json:"route"`
+	Incremental  WireTree       `json:"incremental"`
+	Fresh        *WireTree      `json:"fresh"`
+	Observations jsontext.Value `json:"observations,omitempty"`
 }
 
 // StepEdit echoes an edit with the driver-computed points.
@@ -717,9 +727,10 @@ type Checked struct {
 
 // CheckedStep is one validated step.
 type CheckedStep struct {
-	Step        Step
-	Incremental Tree
-	Fresh       *Tree
+	Step         Step
+	Incremental  Tree
+	Fresh        *Tree
+	Observations []reuseobs.Observation
 }
 
 func sha(b []byte) string {
@@ -750,12 +761,33 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 		return c, invalid("RESPONSE_INVALID", errors.New("code"))
 	}
 	p := r.Producer
-	if req.Revision() == Protocol {
+	if req.Revision() != Protocol && req.Revision() != ProtocolR2 && req.Revision() != ProtocolR3 {
+		return c, invalid("RESPONSE_PROTOCOL_MISMATCH", errors.New("unknown protocol"))
+	}
+	if req.Revision() == ProtocolR3 && (len(req.Queries) != 0 || req.API) {
+		return c, invalid("RESPONSE_INVALID", errors.New("r3 query/API combination"))
+	}
+	if req.Revision() == Protocol || req.Revision() == ProtocolR3 {
 		if p.Query != "UNSUPPORTED" || p.API != nil || p.Predicates != nil || p.SymbolCount != nil || p.FieldCount != nil {
 			return c, invalid("RESPONSE_INVALID", errors.New("r1 producer"))
 		}
 	} else if p.API == nil || p.Predicates == nil || *p.Predicates != "NOT_EVALUATED" || p.SymbolCount == nil || p.FieldCount == nil || p.Query == "" {
 		return c, invalid("RESPONSE_INVALID", errors.New("r2 producer capabilities"))
+	}
+	if req.Revision() == ProtocolR3 {
+		if err := requireMembers(p.ReuseObservation, false, "policy", "runtime_manifest_sha256"); err != nil {
+			return c, err
+		}
+		var capability struct {
+			Policy                string `json:"policy"`
+			RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
+		}
+		if err := jsonv2.Unmarshal(p.ReuseObservation, &capability, jsonv2.RejectUnknownMembers(true)); err != nil ||
+			capability.Policy != reuseobs.Policy || capability.RuntimeManifestSHA256 != reuseobs.RuntimeManifestSHA256 {
+			return c, invalid("RESPONSE_INVALID", errors.New("r3 observation capability"))
+		}
+	} else if len(p.ReuseObservation) != 0 {
+		return c, invalid("RESPONSE_INVALID", errors.New("unexpected observation capability"))
 	}
 	if r.Status == "INVALID_REQUEST" {
 		if len(r.Steps) != 0 {
@@ -791,6 +823,35 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 			return c, err
 		}
 		cs := CheckedStep{Step: s, Incremental: inc}
+		if req.Revision() == ProtocolR3 {
+			var raw []jsontext.Value
+			if err := jsonv2.Unmarshal(s.Observations, &raw); err != nil || len(raw) != 1+min(k, 1) {
+				return c, invalid("RESPONSE_INVALID", errors.New("observation roles"))
+			}
+			for index, value := range raw {
+				role := "initial"
+				if k > 0 {
+					role = "incremental"
+					if index == 1 {
+						role = "fresh"
+					}
+				}
+				binding := reuseobs.Binding{RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256, RequestID: req.ID,
+					RunID: req.ObservationRunID, ProducerSHA256: req.ObservationProducerSHA256,
+					HistoryStart: req.ObservationHistoryStart,
+					Step:         uint64(k), Role: role, SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes}
+				if k > 0 {
+					binding.PreviousSourceSHA256 = sha(versions[k-1])
+				}
+				observation, err := reuseobs.Decode(value, binding)
+				if err != nil {
+					return c, invalid("RESPONSE_INVALID", err)
+				}
+				cs.Observations = append(cs.Observations, observation)
+			}
+		} else if len(s.Observations) != 0 {
+			return c, invalid("RESPONSE_INVALID", errors.New("unexpected observations"))
+		}
 		if s.Fresh != nil {
 			f, err := checkTree(*s.Fresh, s.SourceBytes, req.Limits.Nodes, req)
 			if err != nil {

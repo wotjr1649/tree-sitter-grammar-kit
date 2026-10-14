@@ -95,6 +95,7 @@ func linkSvcReferences(out *CaseResult, refs map[string]CaseResult) {
 
 // SvcSegment is one contiguous native history; no reuse crosses its start boundary.
 type SvcSegment struct {
+	Raw       []byte         `json:"-"`
 	StartStep int            `json:"start_step"`
 	EndStep   int            `json:"end_step"`
 	Process   *runner.Result `json:"process"`
@@ -139,8 +140,23 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 				part.Expect = append(part.Expect, e)
 			}
 		}
-		result := b.RunCase(ctx, x, part, versions[k])
+		segmentContext := x
+		segmentContext.ObservationHistoryStart = uint64(k)
+		result := b.RunCase(ctx, segmentContext, part, versions[k])
 		out.Segments = append(out.Segments, SvcSegment{StartStep: k, EndStep: end, Process: result.Process, Claims: result.Claims})
+		if x.Protocol == ProtocolR3 {
+			out.Segments[len(out.Segments)-1].Raw = result.Raw
+			if result.ExecutionStatus != kit.StatusCompleted {
+				for _, s := range result.Steps {
+					s.Step += k
+					if s.Step == k && k > 0 {
+						s.Restarted = true
+						s.Edit = svcStepEdit(c.Edits[k-1], points[k-1])
+					}
+					out.Steps = append(out.Steps, s)
+				}
+			}
+		}
 		if result.ExecutionStatus != kit.StatusCompleted {
 			out.ExecutionStatus, out.Assessment, out.Code = result.ExecutionStatus, result.Assessment, result.Code
 			if out.Oracle != nil {

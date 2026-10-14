@@ -1,4 +1,4 @@
-/* tsgk-native generic driver: r1 (Session 05) and r2 (Session 06, queries and API facts).
+/* tsgk-native generic driver: r1 (S05), r2 (S06), r3 (bounded public logger observations).
  *
  * Contract: docs/specs/tree-and-adapter-protocol.md, "S05 구현" and "S06 구현". An r1
  * request gets exactly the r1 response; r2 adds queries, API observations and a capability
@@ -33,6 +33,14 @@ const TSLanguage *tsgk_language(void);
 
 #define PROTOCOL_R1 "tsgk-native/r1"
 #define PROTOCOL_R2 "tsgk-native/r2"
+#define PROTOCOL_R3 "tsgk-native/r3"
+#define REUSE_POLICY "tsgk-reuse-log/r1"
+#define REUSE_EVENTS 16384u
+#define REUSE_BYTES 1048576u
+#define REUSE_MESSAGE 1024u
+#ifndef TSGK_RUNTIME_MANIFEST_SHA256
+#define TSGK_RUNTIME_MANIFEST_SHA256 ""
+#endif
 #define MAX_FRAME 50331648u
 #define MAX_INPUT 33554432u
 #define MAX_OUTPUT 16777216u
@@ -61,10 +69,12 @@ enum { OUT_TREE, OUT_AUTO, OUT_RECORD };
 typedef union { size_t n; max_align_t align; } Header;
 static uint64_t mem_used, mem_limit = MAX_MEMORY;
 static char req_id[MAX_TEXT + 1];
+static char observation_run_id[MAX_TEXT + 1], observation_producer_sha256[MAX_TEXT + 1];
+static uint64_t observation_history_start;
 static uint32_t cur_source_bytes, cur_steps_done;
 static int req_rev = 1; /* protocol revision of the current request; 1 until r2 is read */
-static char producer_json[2][384];
-static const char *protocol_name(void) { return req_rev == 2 ? PROTOCOL_R2 : PROTOCOL_R1; }
+static char producer_json[3][384];
+static const char *protocol_name(void) { return req_rev == 3 ? PROTOCOL_R3 : req_rev == 2 ? PROTOCOL_R2 : PROTOCOL_R1; }
 static const char *producer(void) { return producer_json[req_rev - 1]; }
 static void fatal_allocation(void);
 static void fatal_limit(const char *code);
@@ -386,6 +396,7 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   if (!text(&c, word, false)) return c.err;
   if (!strcmp(word, PROTOCOL_R1)) r->rev = 1;
   else if (!strcmp(word, PROTOCOL_R2)) r->rev = 2;
+  else if (!strcmp(word, PROTOCOL_R3)) r->rev = 3;
   else return "PROTOCOL_MISMATCH";
   req_rev = r->rev;
   lit(&c, ",\"id\":");
@@ -521,6 +532,18 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
     }
     lit(&c, "],\"api\":");
     if (peek(&c, 't')) { lit(&c, "true"); r->api = true; } else lit(&c, "false");
+  }
+  if (r->rev == 3) {
+    lit(&c, ",\"reuse_observation\":");
+    if (!text(&c, word, false)) return c.err;
+    if (strcmp(word, REUSE_POLICY)) return "REUSE_POLICY_UNSUPPORTED";
+    lit(&c, ",\"observation_run_id\":");
+    if (!text(&c, observation_run_id, true)) return c.err;
+    lit(&c, ",\"observation_producer_sha256\":");
+    if (!text(&c, observation_producer_sha256, false)) return c.err;
+    if (strlen(observation_producer_sha256) != 64 || strspn(observation_producer_sha256, "0123456789abcdef") != 64) return "REQUEST_MALFORMED";
+    lit(&c, ",\"observation_history_start\":"); observation_history_start = num(&c);
+    if (observation_history_start > MAX_EDITS || r->nedits > MAX_EDITS - observation_history_start) return "REQUEST_MALFORMED";
   }
   lit(&c, "}");
   if (c.err) return c.err;
@@ -697,15 +720,190 @@ static bool progress(TSParseState *state) {
   return false;
 }
 
-static TSTree *parse(TSParser *p, const TSTree *old, Src *src, int enc, uint64_t limit, const char **code, uint64_t *ms) {
+typedef struct {
+  const char *status, *reason;
+  uint64_t events, bytes, counts[12];
+  bool old_tree;
+  bool started, finished;
+  const Src *old_source;
+} Reuse;
+
+static Reuse reuse_not_run(void) {
+  Reuse r = {0};
+  r.status = "UNAVAILABLE"; r.reason = "PARSE_NOT_RUN";
+  return r;
+}
+
+static void reuse_stop(Reuse *r, const char *status, const char *reason) {
+  r->status = status; r->reason = reason;
+}
+
+static bool starts(const char *s, const char *prefix) { return !strncmp(s, prefix, strlen(prefix)); }
+
+static void reuse_log(void *payload, TSLogType kind, const char *message) {
+  Reuse *r = payload;
+  if (strcmp(r->status, "ACTIVE")) return;
+  size_t n = 0;
+  while (n < REUSE_MESSAGE && message[n]) n++;
+  if (n == REUSE_MESSAGE) { reuse_stop(r, "TRUNCATED", "MESSAGE_LIMIT"); return; }
+  if (r->events == REUSE_EVENTS) { reuse_stop(r, "TRUNCATED", "EVENT_LIMIT"); return; }
+  if (n > REUSE_BYTES - r->bytes) { reuse_stop(r, "TRUNCATED", "BYTE_LIMIT"); return; }
+  r->events++; r->bytes += n;
+  if (r->finished) { reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return; }
+  if (kind == TSLogTypeLex) return; /* lexical text is never interpreted or retained */
+  if (kind != TSLogTypeParse) { reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return; }
+  int index = -1;
+  if (!strcmp(message, "new_parse")) index = 0;
+  else if (!strcmp(message, "parse_after_edit")) index = 1;
+  else if (!strcmp(message, "resume_parsing")) index = 2;
+  else if (!strcmp(message, "done")) index = 3;
+  else {
+    static const char *prefixes[] = {"reuse_node symbol:", "cant_reuse_node_has_changes tree:",
+      "cant_reuse_node_is_error tree:", "cant_reuse_node_is_missing tree:", "cant_reuse_node_is_fragile tree:",
+      "cant_reuse_node_contains_different_included_range tree:", "reusable_node_has_different_external_scanner_state symbol:", "cant_reuse_node symbol:"};
+    for (int k = 0; k < 8; k++) {
+      if (!starts(message, prefixes[k])) continue;
+      if (!message[strlen(prefixes[k])]) {reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return;}
+      if (k == 7) {
+        const char *leaf = strstr(message + strlen(prefixes[k]), ", first_leaf_symbol:");
+        if (!leaf || leaf == message + strlen(prefixes[k]) || !leaf[strlen(", first_leaf_symbol:")]) {reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return;}
+      }
+      index = 4 + k; break;
+    }
+  }
+  if (index >= 0) {
+    if (index < 3) {
+      if (r->started) { reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return; }
+      r->started = true;
+    } else if (!r->started) { reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return; }
+    if (index == 3) r->finished = true;
+    if (r->counts[index] == UINT64_MAX) reuse_stop(r, "OVERFLOW", "COUNTER_OVERFLOW");
+    else r->counts[index]++;
+    return;
+  }
+  /* Only keys present in the manifest-pinned parser.c are ignored as unrelated events.
+   * A changed selected format or new key cannot become a completed zero observation. */
+  static const char *keys[] = {
+    "aborting", "accept", "before_reusable_node", "breakdown_top_of_stack", "condense",
+    "detect_error", "different_included_range", "ignore_empty_external_token", "lex_external",
+    "lex_internal", "lexed_lookahead", "no_lookahead_after_non_terminal_extra", "past_reusable_node", "process",
+    "recover_eof", "recover_to_previous", "recover_with_missing", "reduce", "removed", "resume",
+    "select_earlier", "select_existing", "select_higher_precedence", "select_smaller_error",
+    "shift", "shift_extra", "skip_token", "skip_unrecognized_character", "state_mismatch", "switch"
+  };
+  if (!r->started) { reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN"); return; }
+  for (size_t k = 0; k < sizeof keys / sizeof keys[0]; k++) {
+    size_t len = strlen(keys[k]);
+    if (!strncmp(message, keys[k], len) && (!message[len] || message[len] == ' ')) return;
+  }
+  reuse_stop(r, "UNAVAILABLE", "FORMAT_UNKNOWN");
+}
+
+static void emit_reuse(Buf *out, const Reuse *r, int step, const char *role, const Src *src) {
+  static const char *names[] = {"new_parse", "parse_after_edit", "resume_parse", "done",
+    "accepted", "changed", "error", "missing", "fragile", "included_range", "external_scanner", "lookahead"};
+  Sha hash; char hex[65];
+  puts_(out, "{\"schema\":\"tsgk-reuse-observation/r1\",\"policy\":\"" REUSE_POLICY "\",\"runtime_manifest_sha256\":");
+  putstr(out, TSGK_RUNTIME_MANIFEST_SHA256);
+  puts_(out, ",\"request_id\":"); putstr(out, req_id);
+  puts_(out, ",\"run_id\":"); putstr(out, observation_run_id);
+  puts_(out, ",\"producer_sha256\":"); putstr(out, observation_producer_sha256);
+  puts_(out, ",\"history_start\":"); putu(out, observation_history_start);
+  puts_(out, ",\"step\":"); putu(out, step);
+  puts_(out, ",\"role\":"); putstr(out, role);
+  sha_init(&hash); sha_update(&hash, src->s, src->n); sha_hex(&hash, hex);
+  puts_(out, ",\"source_sha256\":"); putstr(out, hex);
+  puts_(out, ",\"source_bytes\":"); putu(out, src->n);
+  puts_(out, ",\"old_tree\":"); putb(out, r->old_tree);
+  puts_(out, ",\"old_source_sha256\":");
+  if (r->old_tree && r->old_source) {
+    sha_init(&hash); sha_update(&hash, r->old_source->s, r->old_source->n); sha_hex(&hash, hex);
+    putstr(out, hex);
+  } else puts_(out, "null");
+  puts_(out, ",\"status\":"); putstr(out, r->status);
+  puts_(out, ",\"reason\":"); putstr(out, r->reason);
+  puts_(out, ",\"events\":"); putu(out, r->events);
+  puts_(out, ",\"bytes\":"); putu(out, r->bytes);
+  puts_(out, ",\"counts\":");
+  if (!strcmp(r->status, "OVERFLOW")) puts_(out, "null");
+  else {
+    put(out, "{", 1);
+    for (int k = 0; k < 12; k++) {
+      if (k) put(out, ",", 1);
+      putstr(out, names[k]); put(out, ":", 1); putu(out, r->counts[k]);
+    }
+    put(out, "}", 1);
+  }
+  put(out, "}", 1);
+}
+
+static void emit_reuse_step(Buf *out, int step, const Src *src, const Reuse *inc, const Reuse *fresh) {
+  if (req_rev != 3) return;
+  puts_(out, ",\"observations\":[");
+  emit_reuse(out, inc, step, step ? "incremental" : "initial", src);
+  if (step) { put(out, ",", 1); emit_reuse(out, fresh, step, "fresh", src); }
+  put(out, "]", 1);
+}
+
+static TSTree *parse(TSParser *p, const TSTree *old, const Src *old_source, Src *src, int enc, uint64_t limit,
+                     const char **code, uint64_t *ms, Reuse *reuse) {
   static const TSInputEncoding map[] = {TSInputEncodingUTF8, TSInputEncodingUTF16LE, TSInputEncodingUTF16BE, TSInputEncodingCustom};
   TSInput in = {src, read_input, map[enc], enc == ENC_CP949 ? cp949_decode : NULL};
   Clock clock = {now_ms(), limit, false};
   TSParseOptions opt = {&clock, progress};
+  TSLogger previous = {0};
+  if (req_rev == 3) {
+    *reuse = reuse_not_run();
+    reuse->old_tree = old != NULL; reuse->old_source = old ? old_source : NULL;
+    reuse->status = "ACTIVE"; reuse->reason = "";
+    previous = ts_parser_logger(p);
+#ifndef TSGK_FAULT_REUSE_MISSING
+    ts_parser_set_logger(p, (TSLogger){reuse, reuse_log});
+#endif
+    TSLogger installed = ts_parser_logger(p);
+    if (installed.log != reuse_log || installed.payload != reuse) reuse_stop(reuse, "UNAVAILABLE", "LOGGER_MISSING");
+#ifdef TSGK_FAULT_REUSE_UNKNOWN
+    reuse_log(reuse, TSLogTypeParse, "changed_logger_format");
+#endif
+#ifdef TSGK_FAULT_REUSE_EMPTY_SYMBOL
+    reuse_log(reuse, TSLogTypeParse, "new_parse");
+    reuse_log(reuse, TSLogTypeParse, "reuse_node symbol:");
+#endif
+#ifdef TSGK_FAULT_REUSE_AFTER_DONE
+    reuse_log(reuse, TSLogTypeParse, "new_parse");
+    reuse_log(reuse, TSLogTypeParse, "done");
+    reuse_log(reuse, TSLogTypeLex, "x");
+#endif
+#ifdef TSGK_FAULT_REUSE_OVERFLOW
+    reuse->counts[3] = UINT64_MAX; /* owned fault: exercise saturating arithmetic at done */
+#endif
+#ifdef TSGK_FAULT_REUSE_EVENT_LIMIT
+    reuse->events = REUSE_EVENTS;
+#endif
+#ifdef TSGK_FAULT_REUSE_BYTE_LIMIT
+    reuse->bytes = REUSE_BYTES;
+    reuse->events = (REUSE_BYTES + REUSE_MESSAGE - 2) / (REUSE_MESSAGE - 1);
+#endif
+#ifdef TSGK_FAULT_REUSE_MESSAGE_LIMIT
+    char message[REUSE_MESSAGE + 1]; memset(message, 'x', REUSE_MESSAGE); message[REUSE_MESSAGE] = 0;
+    reuse_log(reuse, TSLogTypeParse, message);
+#endif
+  }
   TSTree *t = ts_parser_parse_with_options(p, old, in, opt);
 #ifdef TSGK_FAULT_NULL_TREE
   if (t && old) { ts_tree_delete(t); t = NULL; } /* owned fault: a null tree without cancellation */
 #endif
+  if (req_rev == 3) {
+    TSLogger installed = ts_parser_logger(p);
+    if (!strcmp(reuse->status, "ACTIVE")) {
+      if (installed.log != reuse_log || installed.payload != reuse) reuse_stop(reuse, "UNAVAILABLE", "LOGGER_MISSING");
+      else if (!t) reuse_stop(reuse, "UNAVAILABLE", "PARSE_INCOMPLETE");
+      else if (reuse->counts[3] != 1 || reuse->counts[0] + reuse->counts[1] + reuse->counts[2] != 1)
+        reuse_stop(reuse, "UNAVAILABLE", "FORMAT_UNKNOWN");
+      else reuse->status = "COMPLETE";
+    }
+    ts_parser_set_logger(p, previous); /* no stack payload survives this parse */
+  }
   *ms = now_ms() - clock.start;
   *code = NULL;
   if (!t) {
@@ -1569,6 +1767,8 @@ static void step_header(Buf *b, int k, Src *src, const Edit *e, const Src *prev,
 static int handle(const uint8_t *data, size_t n) {
   Req r;
   req_id[0] = 0;
+  observation_run_id[0] = observation_producer_sha256[0] = 0;
+  observation_history_start = 0;
   req_rev = 1;
   cur_source_bytes = cur_steps_done = 0;
   const char *code = parse_request(data, n, &r);
@@ -1602,11 +1802,14 @@ static int handle(const uint8_t *data, size_t n) {
     uint64_t ms;
     const char *pcode;
     set_ranges(a, &r, 0);
-    TSTree *prev = parse(a, NULL, &v[0], r.enc, r.parse_ms, &pcode, &ms);
+    Reuse initial_reuse = reuse_not_run();
+    TSTree *prev = parse(a, NULL, NULL, &v[0], r.enc, r.parse_ms, &pcode, &ms, &initial_reuse);
     step_header(&steps, 0, &v[0], NULL, NULL, r.enc);
     puts_(&steps, ",\"route\":null,\"incremental\":");
     code = emit_tree(&steps, &r, prev, pcode, ms, r.out, false);
-    puts_(&steps, ",\"fresh\":null}");
+    puts_(&steps, ",\"fresh\":null");
+    emit_reuse_step(&steps, 0, &v[0], &initial_reuse, NULL);
+    put(&steps, "}", 1);
     if (!code) cur_steps_done = 1;
     for (int k = 0; !code && k < r.nedits; k++) {
       Edit *e = &r.edits[k];
@@ -1619,25 +1822,28 @@ static int handle(const uint8_t *data, size_t n) {
       bool changed = ts_node_has_changes(oldroot);
       uint32_t oldend = ts_node_end_byte(oldroot);
       set_ranges(a, &r, k + 1);
+      Reuse inc_reuse = reuse_not_run(), fresh_reuse = reuse_not_run();
 #ifdef TSGK_FAULT_OMIT_OLD_TREE
-      TSTree *inc = parse(a, NULL, &v[k + 1], r.enc, r.parse_ms, &pcode, &ms);
+      TSTree *inc = parse(a, NULL, NULL, &v[k + 1], r.enc, r.parse_ms, &pcode, &ms, &inc_reuse);
 #else
-      TSTree *inc = parse(a, prev, &v[k + 1], r.enc, r.parse_ms, &pcode, &ms);
+      TSTree *inc = parse(a, prev, &v[k], &v[k + 1], r.enc, r.parse_ms, &pcode, &ms, &inc_reuse);
 #endif
       step_header(&steps, k + 1, &v[k + 1], e, &v[k], r.enc);
       if (!inc) {
         puts_(&steps, ",\"route\":null,\"incremental\":");
         code = emit_tree(&steps, &r, NULL, pcode, ms, r.out, false);
-        puts_(&steps, ",\"fresh\":null}");
+        puts_(&steps, ",\"fresh\":null");
+        emit_reuse_step(&steps, k + 1, &v[k + 1], &inc_reuse, &fresh_reuse);
+        put(&steps, "}", 1);
         break;
       }
       uint64_t fms;
       const char *fcode;
       set_ranges(b, &r, k + 1);
 #ifdef TSGK_FAULT_FRESH_WITH_OLD
-      TSTree *fresh = parse(b, prev, &v[k + 1], r.enc, r.parse_ms, &fcode, &fms);
+      TSTree *fresh = parse(b, prev, &v[k], &v[k + 1], r.enc, r.parse_ms, &fcode, &fms, &fresh_reuse);
 #else
-      TSTree *fresh = parse(b, NULL, &v[k + 1], r.enc, r.parse_ms, &fcode, &fms);
+      TSTree *fresh = parse(b, NULL, NULL, &v[k + 1], r.enc, r.parse_ms, &fcode, &fms, &fresh_reuse);
 #endif
       if (fresh) {
         uint64_t reused, fresh_reused;
@@ -1658,6 +1864,7 @@ static int handle(const uint8_t *data, size_t n) {
       puts_(&steps, ",\"fresh\":");
       if (!code) code = emit_tree(&steps, &r, fresh, fcode, fms, r.out, false);
       else puts_(&steps, "null");
+      emit_reuse_step(&steps, k + 1, &v[k + 1], &inc_reuse, &fresh_reuse);
       put(&steps, "}", 1);
       if (fresh) ts_tree_delete(fresh);
       ts_tree_delete(prev);
@@ -1724,6 +1931,10 @@ int main(int argc, char **argv) {
            "\"predicates\":\"NOT_EVALUATED\",\"symbol_count\":%u,\"field_count\":%u}",
            abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, query_cap,
            (unsigned)ts_language_symbol_count(lang), (unsigned)ts_language_field_count(lang));
+  snprintf(producer_json[2], sizeof producer_json[2],
+           "{\"language_version\":%u,\"runtime_language_version\":%u,\"runtime_min_compatible\":%u,\"query\":\"UNSUPPORTED\","
+           "\"reuse_observation\":{\"policy\":\"" REUSE_POLICY "\",\"runtime_manifest_sha256\":\"" TSGK_RUNTIME_MANIFEST_SHA256 "\"}}",
+           abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
   for (;;) {
     uint8_t hdr[4];
     size_t got = read_full(hdr, 4);

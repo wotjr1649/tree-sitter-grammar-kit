@@ -18,7 +18,7 @@ import (
 )
 
 // Native benchmark configuration is explicit and mandatory; missing tools are a failure.
-func benchmarkJSONBuild(b testing.TB) *Build {
+func benchmarkJSONBuild(b testing.TB, defines ...string) *Build {
 	b.Helper()
 	prepared, cc := os.Getenv("TSGK_BENCH_PREPARED"), os.Getenv("TSGK_NATIVE_CC")
 	if !filepath.IsAbs(prepared) || !filepath.IsAbs(cc) {
@@ -26,7 +26,7 @@ func benchmarkJSONBuild(b testing.TB) *Build {
 	}
 	buildMu.Lock()
 	defer buildMu.Unlock()
-	key := "benchmark-json|" + prepared + "|" + cc + "|" + os.Getenv("TSGK_CGROUP_PARENT") + "|" + os.Getenv("TSGK_NATIVE_SANITIZE")
+	key := "benchmark-json|" + prepared + "|" + cc + "|" + os.Getenv("TSGK_CGROUP_PARENT") + "|" + os.Getenv("TSGK_NATIVE_SANITIZE") + "|" + strings.Join(defines, ",")
 	if cached := buildCache[key]; cached != nil {
 		return cached
 	}
@@ -68,6 +68,7 @@ func benchmarkJSONBuild(b testing.TB) *Build {
 	defer cancel()
 	req := testBuildRequest(buildWork, filepath.Join(prepared, "runtime"), filepath.Join(prepared, "routes", "json"), grammar, cc, kit.ToolIdentity{Name: "cc", Version: "benchmark", SHA256: hex.EncodeToString(sum[:]), Bytes: uint64(len(compiler))})
 	req.Symbol = symbol
+	req.Defines = defines
 	built, err := NewBuild(ctx, req)
 	if err != nil {
 		b.Fatalf("registered build refused: %v", err)

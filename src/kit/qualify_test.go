@@ -417,21 +417,25 @@ func TestQualifyCompleteness(t *testing.T) {
 }
 
 func TestQualifySeparateHoldoutEvidence(t *testing.T) {
-	f := newQfx(t)
-	hosts := f.all(t, nil)
-	// Independent evaluation logs belong outside the closed host file set.
-	external := filepath.Join(t.TempDir(), "json-holdout.log")
-	if err := os.WriteFile(external, []byte("independent evaluation\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if r := f.run(t, hosts); r.Completeness != AssessPass {
-		t.Fatalf("separate evaluation affected completeness: %v", codes(r.Findings))
-	}
-	if err := os.WriteFile(filepath.Join(hosts["windows-amd64"], "json-holdout.log"), []byte("independent evaluation\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if r := f.run(t, hosts); r.Completeness != AssessFail || !slices.Contains(codes(r.Findings), "HOST_FILE_UNREGISTERED") {
-		t.Fatalf("loose host log accepted: %v", codes(r.Findings))
+	for _, name := range []string{"json-holdout.log", "reuse-observation.log", "svc-reuse-observation.log"} {
+		t.Run(name, func(t *testing.T) {
+			f := newQfx(t)
+			hosts := f.all(t, nil)
+			// Independent evaluation logs belong outside the closed host file set.
+			external := filepath.Join(t.TempDir(), name)
+			if err := os.WriteFile(external, []byte("independent evaluation\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if r := f.run(t, hosts); r.Completeness != AssessPass {
+				t.Fatalf("separate evaluation affected completeness: %v", codes(r.Findings))
+			}
+			if err := os.WriteFile(filepath.Join(hosts["windows-amd64"], name), []byte("independent evaluation\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if r := f.run(t, hosts); r.Completeness != AssessFail || !slices.Contains(codes(r.Findings), "HOST_FILE_UNREGISTERED") {
+				t.Fatalf("loose host log accepted: %v", codes(r.Findings))
+			}
+		})
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 // Claim values.
@@ -189,17 +190,18 @@ func composite(o kit.SvcObservation, in TreeInput, ids []kit.IdentityRef, tree *
 
 // StepResult is one step of a case.
 type StepResult struct {
-	Restarted    bool             `json:"restarted,omitempty"`
-	Composite    *SvcComposite    `json:"composite,omitempty"`
-	Step         int              `json:"step"`
-	SourceBytes  uint64           `json:"source_bytes"`
-	SourceSHA256 string           `json:"source_sha256"`
-	Edit         *StepEdit        `json:"edit"`
-	Route        *RouteOut        `json:"route"`
-	Comparison   *Comparison      `json:"comparison"`
-	Incremental  *TreeOut         `json:"incremental"` // nil when no tree was parsed (SVC observation only)
-	Fresh        *TreeOut         `json:"fresh"`
-	QueryCompare *QueryComparison `json:"query_comparison,omitempty"`
+	Observations []reuseobs.Observation `json:"observations,omitempty"`
+	Restarted    bool                   `json:"restarted,omitempty"`
+	Composite    *SvcComposite          `json:"composite,omitempty"`
+	Step         int                    `json:"step"`
+	SourceBytes  uint64                 `json:"source_bytes"`
+	SourceSHA256 string                 `json:"source_sha256"`
+	Edit         *StepEdit              `json:"edit"`
+	Route        *RouteOut              `json:"route"`
+	Comparison   *Comparison            `json:"comparison"`
+	Incremental  *TreeOut               `json:"incremental"` // nil when no tree was parsed (SVC observation only)
+	Fresh        *TreeOut               `json:"fresh"`
+	QueryCompare *QueryComparison       `json:"query_comparison,omitempty"`
 }
 
 // ExpectationResult is one evaluated expectation.
@@ -211,40 +213,44 @@ type ExpectationResult struct {
 
 // CaseResult is the outcome of one registered case.
 type CaseResult struct {
-	References      []SvcReferenceResult `json:"references,omitempty"`
-	Segments        []SvcSegment         `json:"segments,omitempty"`
-	ID              string               `json:"id"`
-	Input           kit.NativeInput      `json:"input"`
-	Encoding        string               `json:"encoding"`
-	ExecutionStatus string               `json:"execution_status"`
-	Assessment      string               `json:"assessment"`
-	Code            string               `json:"code"`
-	Claims          Claims               `json:"claims"`
-	ResponseStatus  string               `json:"response_status"`
-	ResponseCode    string               `json:"response_code"`
-	Producer        *Producer            `json:"producer"`
-	Process         *runner.Result       `json:"process"`
-	Steps           []StepResult         `json:"steps"`
-	Expectations    []ExpectationResult  `json:"expectations"`
-	Oracle          *OracleClaims        `json:"oracle_claims,omitempty"`
-	QueryExpect     []QueryExpectResult  `json:"query_expectations,omitempty"`
-	Facts           *FactsOut            `json:"facts,omitempty"`
-	Raw             []byte               `json:"-"`
+	ReuseObservationClaim string               `json:"reuse_observation_claim,omitempty"`
+	References            []SvcReferenceResult `json:"references,omitempty"`
+	Segments              []SvcSegment         `json:"segments,omitempty"`
+	ID                    string               `json:"id"`
+	Input                 kit.NativeInput      `json:"input"`
+	Encoding              string               `json:"encoding"`
+	ExecutionStatus       string               `json:"execution_status"`
+	Assessment            string               `json:"assessment"`
+	Code                  string               `json:"code"`
+	Claims                Claims               `json:"claims"`
+	ResponseStatus        string               `json:"response_status"`
+	ResponseCode          string               `json:"response_code"`
+	Producer              *Producer            `json:"producer"`
+	Process               *runner.Result       `json:"process"`
+	Steps                 []StepResult         `json:"steps"`
+	Expectations          []ExpectationResult  `json:"expectations"`
+	Oracle                *OracleClaims        `json:"oracle_claims,omitempty"`
+	QueryExpect           []QueryExpectResult  `json:"query_expectations,omitempty"`
+	Facts                 *FactsOut            `json:"facts,omitempty"`
+	Raw                   []byte               `json:"-"`
 }
 
 // Context is the per-profile information a case run needs.
 type Context struct {
-	SvcContext   *kit.SvcContext
-	Op           kit.NativeOperation
-	Route        string
-	Output       string
-	Declarations *kit.Declarations
-	Format       string
-	CgroupParent string
-	PolicyRef    kit.IdentityRef
-	Protocol     string // "" (r1) or ProtocolR2
-	Queries      []QuerySource
-	API          bool
+	SvcContext                *kit.SvcContext
+	Op                        kit.NativeOperation
+	Route                     string
+	Output                    string
+	Declarations              *kit.Declarations
+	Format                    string
+	CgroupParent              string
+	PolicyRef                 kit.IdentityRef
+	Protocol                  string // "" (r1) or ProtocolR2
+	Queries                   []QuerySource
+	API                       bool
+	ObservationRunID          string
+	ObservationProducerSHA256 string
+	ObservationHistoryStart   uint64
 }
 
 // PolicyRef binds the operation limits, output form and encoding into a policy identity.
@@ -258,7 +264,8 @@ func PolicyRef(op kit.NativeOperation, output string) kit.IdentityRef {
 
 func (x Context) request(c kit.IncrementalCase, source []byte) Request {
 	r := Request{ID: c.ID, Encoding: c.Encoding, Output: x.Output, Limits: LimitsFor(x.Op), Points: c.Points, Source: source, Edits: c.Edits,
-		Protocol: x.Protocol, Queries: x.Queries, API: x.API}
+		Protocol: x.Protocol, Queries: x.Queries, API: x.API,
+		ObservationRunID: x.ObservationRunID, ObservationProducerSHA256: x.ObservationProducerSHA256, ObservationHistoryStart: x.ObservationHistoryStart}
 	if x.Declarations != nil {
 		r.Declarations = x.Declarations.Items
 	}
@@ -277,8 +284,10 @@ func (b *Build) Exec(ctx context.Context, mode string, stdin []byte, wall time.D
 }
 
 // RunCase validates the case, runs one driver process for it and assesses the result.
-func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte) CaseResult {
-	out := CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
+func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte) (out CaseResult) {
+	x.ObservationProducerSHA256 = b.Identity
+	out = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
+	defer func() { x.observeCase(&out) }()
 	notRun := func(status, assess, code string) CaseResult {
 		out.ExecutionStatus, out.Assessment, out.Code = status, assess, code
 		return out
@@ -399,7 +408,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	}
 	build := kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity}
 	for k, cs := range checked.Steps {
-		sr := StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Edit: cs.Step.Edit}
+		sr := StepResult{Step: k, SourceBytes: cs.Step.SourceBytes, SourceSHA256: cs.Step.SourceSHA256, Edit: cs.Step.Edit, Observations: cs.Observations}
 		in := TreeInput{Bytes: cs.Step.SourceBytes, SHA256: cs.Step.SourceSHA256, Encoding: c.Encoding, EncodingSource: kit.SourceDeclaration}
 		ids := []kit.IdentityRef{build, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: cs.Step.SourceSHA256}, x.PolicyRef}
 		t := x.treeOut(cs.Incremental, in, ids, c.Points)

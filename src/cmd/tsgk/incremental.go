@@ -43,6 +43,10 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	work := fs.String("work", "", "existing caller-owned build directory outside the root")
 	cgroup := fs.String("cgroup-parent", "", "delegated cgroup v2 directory (Linux hard memory cap)")
 	runWall := fs.Int("run-wall", 0, "seconds; narrows the operation run wall (0 keeps it)")
+	var reuseObservation bool
+	if kind == "incremental" {
+		fs.BoolVar(&reuseObservation, "reuse-observation", false, "record bounded public logger observations (result r2)")
+	}
 	var pack *string
 	if kind == "oracle" {
 		pack = fs.String("fact-pack", "", "fact query pack the profile binds (outside the root)")
@@ -139,7 +143,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
 		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
 	}
 	line, merr := json.Marshal(res)

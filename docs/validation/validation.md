@@ -1,6 +1,12 @@
 # Validation and merge contract
 
+## #197 선택적 logger 검증
+
+기본 r1/oracle r2와 기존 78칸 판정은 유지한다. native owned suite는 정상·old-tree 생략·logger/형식 누락·중단 순서·세 cap·합성 overflow·SVC segment·batch payload isolation을 검사하고 기존 full CST 비교를 유지한다. 세 native route job은 같은 준비 closure에서 `TestNativeReuseJSONKeepsBlockedRoutes`와 등록 C#의 `TestIncrementalCLI/svc-observation`을 실행한다. `reuse-observation.log`·`svc-reuse-observation.log`는 host별 `reuse-observation-<goos>-<run>-<attempt>` 독립 artifact에 보존하며, 닫힌 qualification host 파일 집합에는 넣지 않는다. SVC native→record→replay 정상과 원 입력이 같은 segment 응답의 rehashed 교환 검출을 확인한다. 세 JSON 사례의 기존 route BLOCKED, 별도 logger 관측과 omit-old control을 확인한다. 실제 후보의 이 로그·전체 필수 CI와 qualification artifact를 읽기 전에는 세 host 지원 성공으로 기록하지 않는다. source witness 기반 replay는 raw/projection point 동시 변조를 검출하고 witness가 없으면 UNRESOLVED로 남겨야 한다. 현재 S08에 소비할 수 없는 trace를 섞으면 explicit gate 실패이며 지원을 승격하지 않는다.
+
 ## Local foundation checks
+
+`TestNativeAuditSharedParser`는 Windows/amd64의 runtime-only foundation 입력과 owned plain grammar로 독립 audit와 corpus-page wrapper를 실제 compile·실행한다. 두 caller는 driver의 공용 parse 함수를 포함하므로 인자 변경의 회귀 범위다. audit는 legacy native r1/r2만 소비하고 logger r3는 exit 2로 거부한다. 시험은 r1/r2 receipt, corpus page와 같은 입력의 유효한 native r3/unsupported audit 대조를 확인하며, 전체 등록 대용량 audit를 대신하지 않는다. 다른 host에서는 Windows audit backend의 scope로 NOT_RUN/skip을 기록한다.
 
 Only Go 1.27.1, Git, and PowerShell 7 are required. Core checks do not require Node, Python, a C compiler, or WSL. Run from the repository root with PowerShell 7. Check each native command's exit status; do not use global `go env -w` settings.
 
