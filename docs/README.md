@@ -48,6 +48,7 @@ The current implementation consists of repository foundation checks, the Session
 | #188 로컬 corpus full CST/API·원문 후보·방언 지원 경계 | [corpus 후속 검증](reports/issue-188-corpus-cst-api.md) |
 | #193 성능 기준선·독립 정확도·소비자 도입 평가 | [후속 평가](reports/issue-193-evaluation.md) |
 | #197 선택적 logger 관측·source witness·기존 판정 유지 | [한국어](reports/issue-197-reuse-observation.md), [English](reports/issue-197-reuse-observation.en.md) |
+| #199 다음 source-only release의 API 변화·소비 검증·미완료 발행 준비 | [한국어](reports/issue-199-source-release.md) · [English](reports/issue-199-source-release.en.md) |
 | #205 Go 식별자 범주·Unicode 17 수정과 로컬 검증 | [한국어](reports/issue-205-go-identifiers.md), [English](reports/issue-205-go-identifiers.en.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 

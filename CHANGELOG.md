@@ -1,5 +1,17 @@
 # 변경 기록
 
+## Unreleased — 다음 0.x source-only release 준비 (#199)
+
+잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
+
+- `--out` 경로 별칭의 지원 경계와 문서 정합성을 정리했다(#196). 검출하지 못하는 별칭을 완전히 해결했다는 의미는 아니다.
+- 선택적 incremental logger 관측과 source witness를 추가했다(#197). 기존 판정과 관측 증거를 구분하며, 관측된 reuse를 속도 향상으로 환산하지 않는다.
+- Go/C#/C/C++/T-SQL의 고정 holdout 82개·SDK 문맥 관측168건·native CST102개를 비교했다(#198). 이 세 수를 하나의 정확도 분모로 합치지 않는다.
+- Go identifier의 category·Unicode17 수정과 회귀는 PR #207에서 로컬 검증됐다(#205). 해당 PR의 새 세 OS CI·actual main 검증은 준비 시점에 미완료다.
+- 공개 API 정적 대조는 추가21·변경9·제거0이다. experimental struct 필드 추가와 SVC r1→r2는 소비자의 명시적 검토가 필요하다. 이 수치는 behavior/wire 호환성 보증이 아니다.
+- Go1.27.2·CGO_ENABLED=0에서 PR 후보 `77e3414`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 확인했다. module/CI 기준은 Go1.27.1이며 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
+- C# 조건부 fragment 문맥, T-SQL recovery 사례의 route BLOCKED, query host subset, macOS SAMPLED/NOT_CONTAINED 제약을 유지한다. 실사용 소비자 성능과 전체26언어 정확도는 미측정이다.
+
 ## v0.2.0 — 2026-10-06
 
 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md)에 있다. tag `v0.2.0`과 GitHub Release로 소스만 발행한다. binary와 package는 없다(#106).
