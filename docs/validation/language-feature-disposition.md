@@ -76,6 +76,8 @@ C# B01의 identifier는 [6.4.3](https://learn.microsoft.com/en-us/dotnet/csharp/
 | go-R01 | 누적 | RUN | runtime/GC/stdlib/toolchain 변화는 parser 실행 요구가 아님 | API call은 B03 | - | [Program initialization and execution](https://go.dev/ref/spec#Program_initialization_and_execution) [Built-in functions](https://go.dev/ref/spec#Built-in_functions); 위 Go 1.27.1 고정 revision |
 | go-X01 | 범위 밖 | EXT | cgo preamble의 C 해석, compiler 내부 directive 의미, 제안 문법 제외 | comment/directive bytes 보존 | - | [Comments](https://go.dev/ref/spec#Comments) [Packages](https://go.dev/ref/spec#Packages); 위 Go 1.27.1 고정 revision, C 해석/제안 제외는 채택 mode 정책 |
 
+Go B01의 identifier는 시작 문자 `L/_`, 이후 문자 `L/Nd/_`를 사용한다(#205). `XID_Start/XID_Continue`는 Go의 범주와 다르므로 사용하지 않는다. 최신 1.27 lexical 범위의 문자 집합은 고정 Go 1.27.1·1.27.2의 Unicode 17.0 tables에 결속한다. 고정 tree-sitter 0.27.0 generator의 Unicode 16.0 `L`·`Nd`에 17.0에서 추가된 범위만 보충하며, generator 변경 때에는 생성 lexer의 전체 시작·연속 집합을 목표 집합과 다시 대조해야 한다. 이는 과거 모든 Go SDK가 같은 Unicode 표를 사용했다는 주장이 아니다. 공통 `identifier`의 type/field/package/label alias에도 같은 규칙을 적용하며 semicolon scanner는 변경하지 않는다.
+
 ## python
 
 근거: [3.14 grammar](https://docs.python.org/3.14/reference/grammar.html), [lexical](https://docs.python.org/3.14/reference/lexical_analysis.html), [3.8](https://docs.python.org/3.8/whatsnew/3.8.html), [3.9~3.14 변경 index](https://docs.python.org/3.14/whatsnew/index.html). module/script/async이며 REPL/eval entry의 별도 host는 포함하지 않는다.

@@ -8,6 +8,18 @@ On 2026-10-14, Windows/amd64, the CLI was built from main `cdc0564ce7e072d90aa64
 
 Inputs, labels, profiles, sources, and oracle contexts were frozen before native execution. There are82 language-case pairs: Go32, C#14, C9, C++9, T-SQL18, representing81 distinct raw byte strings because one C/C++ input is shared. Five cases register two edits: invalid original → closing brace/bracket repair → original restoration. Running an input under multiple SDK versions does not create additional distinct inputs. Consumer priority remains provisional; the paused go-treesitter repository was neither executed nor modified.
 
+Input sizes distinguish original UTF-8 bytes from each oracle's string units. The per-case input ceiling for `native-query` was 65,536 bytes in the [registered operation](../../src/kit/incremental.go). The observed maxima below describe the 82 preregistered original language-case pairs.
+
+| route | Largest original input, UTF-8 bytes | Per-case source bound in the independent oracle |
+|---|---:|---|
+| Go | 39 | 512 UTF-8 bytes |
+| C# | 74 | 1,024 UTF-16 code units |
+| C | 71 | Exact bytes and hashes of frozen compiler source files |
+| C++ | 56 | Exact bytes and hashes of frozen compiler source files |
+| T-SQL | 52 | 8,192 UTF-8 bytes |
+
+Serialized JSON passed to the Go, C#, and T-SQL helpers was capped at 65,536 bytes per input file. C/C++ used frozen source files and compiler argv; no separate helper's configurable source ceiling was tested. This small cohort did not exercise inputs at those ceilings or measure large-input performance.
+
 Native collection used existing `tsgk-oracle/r2`, `native-query`, `output=tree`, `api=false`, and no queries. Grammar/runtime compilation and execution use separate processes; no Cgo or consumer dependency was added to the core. The prepared source closure from the fixed [native registry](../../src/contracts/native-routes.json) contains107 files:24 across five grammars and83 runtime files. Hashes were checked before and after execution. Existing reference checkouts were preserved.
 
 | Route | Pinned upstream commit | Independent oracle and executed contexts |

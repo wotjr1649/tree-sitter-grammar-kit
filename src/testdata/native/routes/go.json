@@ -3270,6 +3270,498 @@
         "sha256": "d8a1b2c5b5b437825d46b0bac6e7b30b17cca36616cc3f8d6230b2d262aca484",
         "bytes": 9095
       }
+    },
+    {
+      "id": "issue205-ascii-control",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205ASCII = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-underscore-control",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar _ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-old-unicode-control",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar 한٠ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-legacy-start-037a",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar ͺx205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-legacy-cont-037a",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205ͺ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-unicode17-start-088f",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar ࢏x205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-unicode17-start-a7ce",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar ꟎x205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-unicode17-cont-11de0",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205𑷠 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-digit-start-control",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar 𑷠x205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-roman-start-2160",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar Ⅰx205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-mark-cont-0300",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205̀ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-spacing-mark-cont-0903",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205ः = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-connector-cont-203f",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205‿ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-joiner-cont-200d",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205‍ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-symbol-start-2118",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar ℘x205 = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-number-cont-1369",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x205፩ = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-nonjoiner-cont-200c",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package unicode205\nvar x‌y = 205\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-aliases-bom-crlf",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "﻿package ࢏\r\ntype ࢏Type struct { ࢏Field int }\r\nfunc (࢏Recv ࢏Type) ࢏Method() {\r\n࢏Label: for { break ࢏Label }\r\n}\r\nvar Greekαβ_٠韓漢 = 205\r\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "package_identifier",
+            "type_identifier",
+            "field_identifier",
+            "label_name",
+            "method_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-package-restore",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package ࢏\nvar x = 205\n",
+      "edits": [
+        {
+          "find": "࢏",
+          "replace": "x‌y"
+        },
+        {
+          "find": "x‌y",
+          "replace": "࢏"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-type-restore",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package p\ntype ࢏ int\n",
+      "edits": [
+        {
+          "find": "࢏",
+          "replace": "x‌y"
+        },
+        {
+          "find": "x‌y",
+          "replace": "࢏"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-field-restore",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package p\ntype T struct { ࢏ int }\n",
+      "edits": [
+        {
+          "find": "࢏",
+          "replace": "x‌y"
+        },
+        {
+          "find": "x‌y",
+          "replace": "࢏"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "type_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-label-restore",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package p\nfunc f(){ ࢏: for { break ࢏ } }\n",
+      "edits": [
+        {
+          "find": "࢏",
+          "replace": "x‌y"
+        },
+        {
+          "find": "x‌y",
+          "replace": "࢏"
+        }
+      ],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "ERROR",
+          "contains": [],
+          "declarations": ""
+        },
+        {
+          "step": 2,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "function_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    },
+    {
+      "id": "issue205-supplement-boundaries",
+      "features": [
+        "go-B01"
+      ],
+      "source_utf8": "package p\nvar ࢏x = 205\nvar ౜x = 205\nvar ೜x = 205\nvar ꟎x = 205\nvar ꟏x = 205\nvar ꟒x = 205\nvar ꟔x = 205\nvar ꟱x = 205\nvar 𐥀x = 205\nvar 𐥙x = 205\nvar 𐻅x = 205\nvar 𐻇x = 205\nvar 𑶰x = 205\nvar 𑷛x = 205\nvar 𖺠x = 205\nvar 𖺸x = 205\nvar 𖺻x = 205\nvar 𖻓x = 205\nvar 𖿲x = 205\nvar 𖿳x = 205\nvar 𘟸x = 205\nvar 𘟿x = 205\nvar 𘴉x = 205\nvar 𘴞x = 205\nvar 𘶀x = 205\nvar 𘷲x = 205\nvar 𞛀x = 205\nvar 𞛞x = 205\nvar 𞛠x = 205\nvar 𞛢x = 205\nvar 𞛤x = 205\nvar 𞛥x = 205\nvar 𞛧x = 205\nvar 𞛭x = 205\nvar 𞛰x = 205\nvar 𞛴x = 205\nvar 𞛾x = 205\nvar 𞛿x = 205\nvar 𫜺x = 205\nvar 𫜿x = 205\nvar 𬺢x = 205\nvar 𬺭x = 205\nvar 𲎰x = 205\nvar 𳑹x = 205\nvar x𑷠, x𑷩 = 0, 9\n",
+      "edits": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "var_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
     }
   ]
 }

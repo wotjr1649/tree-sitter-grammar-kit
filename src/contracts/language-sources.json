@@ -106,8 +106,8 @@
         "outputs": [
           {
             "path": "grammar.json",
-            "bytes": 203285,
-            "sha256": "0a1facf5530b3df3a711c090086d93261de4eee7fdcc88ec1d2df9fa652f5572"
+            "bytes": 204210,
+            "sha256": "74aff2838d07d44fcea340b4df33fbab7ca5796dddbfd79f802ac072ea68ee6d"
           },
           {
             "path": "node-types.json",
@@ -116,8 +116,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 1696398,
-            "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b"
+            "bytes": 1695280,
+            "sha256": "ec699b64a1133af5747071fc5a7eb5d7024ab7403d3f6b767479f589dbaf5436"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -144,8 +144,8 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 24946,
-            "sha256": "400ffe497ece4b4ebbb958ede1a980e4abbb3a0197d84cb7d1fad665bce0d0bd"
+            "bytes": 25846,
+            "sha256": "efa7d4cd9210c6bac7ec32433bcca2b162971eed846accb89863c80676bdca2a"
           },
           {
             "path": "src/scanner.c",

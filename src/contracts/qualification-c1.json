@@ -30436,8 +30436,8 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "20f1d2e97923c36e1e7cecfed562be40b96368f6426a07fe5b5000a8aa488d2b",
-      "bytes": 1696398
+      "sha256": "ec699b64a1133af5747071fc5a7eb5d7024ab7403d3f6b767479f589dbaf5436",
+      "bytes": 1695280
      },
      {
       "path": "src/scanner.c",
@@ -34783,6 +34783,921 @@
        "sha256": "d8a1b2c5b5b437825d46b0bac6e7b30b17cca36616cc3f8d6230b2d262aca484",
        "bytes": 9095
       },
+      "source": null
+     },
+     {
+      "id": "issue205-ascii-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f30c7dd231bacdd844d7544714d54aa3cbfd2edff58bc71b01812dfeae5f5470",
+       "bytes": 39
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-underscore-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "426bbd6e76d6135626504421671649f60a8281316e478094575edf5c99674644",
+       "bytes": 31
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-old-unicode-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "87014f8d19194778baff76de0552671e5591fd838e1efc9dec9c7032be2a570d",
+       "bytes": 35
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-legacy-start-037a",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ad52d92d3e88dd633d7d9591f106d29be8335dfb8eacd127cad3fcb81cd74d1c",
+       "bytes": 36
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-legacy-cont-037a",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2e07974e6d7aaa4dc6b6ab6ee5078f25393e6c86a9df760675d8dcc7d5b3a2ee",
+       "bytes": 36
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-unicode17-start-088f",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "3a5f86c6b6eb9056d58af40e60a008b6428201a9121579b07cf060cf615d3c77",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-unicode17-start-a7ce",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "6338ca1f24014c7a3b17704130736ab7454e1a0843f252aabfef5cdc6ef16330",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-unicode17-cont-11de0",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "1640f6d1d0437a7d5225ac018604bb69087719d83f318077d02210bd494f9995",
+       "bytes": 38
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-digit-start-control",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "0898a3821ed2700ca5d4a9b06a0e3aed576938e0533a096bdd1ad301e56fd2c9",
+       "bytes": 38
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-roman-start-2160",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "d2e4b6ef15c40022f774e1d7bceff71cc52a5ec84bde8addfc9127c9af143a9e",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-mark-cont-0300",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "36787cbb0feaf458801b91d0f93a75b58e02fbe8d79a1e2f37cda6e451902e98",
+       "bytes": 36
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-spacing-mark-cont-0903",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5616353c15ed4ee48fcf1abdee10f89d331f3d90fc7d86cc1c7147d608d2725b",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-connector-cont-203f",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "4e74234403054884d6d3620583997b2250755860638337a0e0829ebc93e37a48",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-joiner-cont-200d",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "443e811dcbb2fbea2b56415ad08a8b2e110f2fa6ecc53e8c76662de5d8a2a56c",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-symbol-start-2118",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "8512a7f7d7a56781a82216d1962b251dfbaf72ee0f9f3550d41077341ae12837",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-number-cont-1369",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "9d00e410a623b8fb2869c007d9bea491807aea4f0806a0bd8a35ec9bd6b88165",
+       "bytes": 37
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-nonjoiner-cont-200c",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2690ed8e0871e5b201a638124e717b13d2813b061b5225ce34479a82be557991",
+       "bytes": 35
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "N"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-aliases-bom-crlf",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "f3571d528b3a35d334596664cbde7bc24fc0a5f06075640375329b389c0d32e7",
+       "bytes": 159
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "package_identifier",
+         "type_identifier",
+         "field_identifier",
+         "label_name",
+         "method_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-package-restore",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5e2c87572e20cce86a5fc5b35e38e06c9bd2898e5953ddb3e3ab3ff8ce9f365e",
+       "bytes": 24
+      },
+      "edits": [
+       {
+        "start_byte": 8,
+        "old_end_byte": 11,
+        "new_end_byte": 13,
+        "old": "4KKP",
+        "new": "eOKAjHk="
+       },
+       {
+        "start_byte": 8,
+        "old_end_byte": 13,
+        "new_end_byte": 11,
+        "old": "eOKAjHk=",
+        "new": "4KKP"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-type-restore",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "5ca1a38b4996195ac64b9338504f4af60f1dc345b367e53ba1b85116d4d1a0da",
+       "bytes": 23
+      },
+      "edits": [
+       {
+        "start_byte": 15,
+        "old_end_byte": 18,
+        "new_end_byte": 20,
+        "old": "4KKP",
+        "new": "eOKAjHk="
+       },
+       {
+        "start_byte": 15,
+        "old_end_byte": 20,
+        "new_end_byte": 18,
+        "old": "eOKAjHk=",
+        "new": "4KKP"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-field-restore",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "40b121ef92710f27282d71e3f59ac12c77ac76a4fc650cfb6d7b176d06c113b0",
+       "bytes": 36
+      },
+      "edits": [
+       {
+        "start_byte": 26,
+        "old_end_byte": 29,
+        "new_end_byte": 31,
+        "old": "4KKP",
+        "new": "eOKAjHk="
+       },
+       {
+        "start_byte": 26,
+        "old_end_byte": 31,
+        "new_end_byte": 29,
+        "old": "eOKAjHk=",
+        "new": "4KKP"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "type_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-label-restore",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "ba99a15bb6126a3709e5445709a71f8ce93df17a301efd03536aa2a9efd8e7b4",
+       "bytes": 45
+      },
+      "edits": [
+       {
+        "start_byte": 20,
+        "old_end_byte": 23,
+        "new_end_byte": 25,
+        "old": "4KKP",
+        "new": "eOKAjHk="
+       },
+       {
+        "start_byte": 20,
+        "old_end_byte": 25,
+        "new_end_byte": 23,
+        "old": "eOKAjHk=",
+        "new": "4KKP"
+       }
+      ],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "declarations": ""
+       },
+       {
+        "step": 1,
+        "syntax": "ERROR",
+        "contains": [],
+        "declarations": ""
+       },
+       {
+        "step": 2,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "function_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P",
+        "N",
+        "E"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
+      "source": null
+     },
+     {
+      "id": "issue205-supplement-boundaries",
+      "role": "requirement",
+      "input": {
+       "path": "",
+       "role": "",
+       "sha256": "2f8e14463e4d35d61d35076d0b4e6588ff4542d29003b1a85b061a2927e3be1f",
+       "bytes": 730
+      },
+      "edits": [],
+      "expect": [
+       {
+        "step": 0,
+        "syntax": "NO_ERROR",
+        "contains": [
+         "var_declaration"
+        ],
+        "declarations": ""
+       }
+      ],
+      "query_expect": [],
+      "points": null,
+      "dynamic_sql_expect": null,
+      "expect_status": "",
+      "expect_assessment": "",
+      "expect_code": "",
+      "covers": {
+       "go-B01": [
+        "P"
+       ]
+      },
+      "alternatives": [],
+      "sample": null,
       "source": null
      },
      {
