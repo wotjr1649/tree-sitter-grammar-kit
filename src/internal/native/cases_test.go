@@ -559,9 +559,12 @@ func TestSummaryGate(t *testing.T) {
 	}
 	full := req
 	full.Limits.FullNodes = full.Limits.Nodes
-	_, fr, err := rawExec(t, b, Frame(full.Encode()), "real-world-source-r2")
+	fullRes, fr, err := rawExec(t, b, Frame(full.Encode()), "real-world-source-r2")
 	if err != nil || *fr.Steps[0].Incremental.Form != "full" || fr.Steps[0].Incremental.Digest != sum.Digest {
 		t.Fatalf("full and summary digests must match: %v", err)
+	}
+	if _, err := Check(fr, full, [][]byte{full.Source}, nil, fullRes.ExitCode); err != nil {
+		t.Fatalf("full digest must match the independent Go canonicalization: %v", err)
 	}
 	// An encoded request over 50331648 bytes is refused before any launch.
 	huge := bytes.Repeat([]byte("a;"), 33554432/2)

@@ -8,6 +8,18 @@
 
 입력·label·profile·source·oracle 문맥을 native 실행 전에 고정했다. 82개 language-case pair는 Go32, C#14, C9, C++9, T-SQL18이며 raw source bytes의 서로 다른 값은81개다. C/C++의 한 입력이 중복된다. 새 입력 중 5개에는 invalid 원본 → 닫는 brace/bracket 보완 → 원본 복원의 두 edit를 등록했다. SDK 버전별 관측을 새 입력 수로 세지 않는다. 소비자 도입 우선순위는 provisional이며 paused go-treesitter 저장소는 실행·수정하지 않았다.
 
+입력 크기는 원문 UTF-8 bytes와 oracle의 문자열 단위를 구분한다. `native-query`의 사례별 입력 상한은 [등록 operation](../../src/kit/incremental.go)의 65,536 bytes였다. 아래 실제 최대값은 사전 고정한 원본 82개 pair의 값이다.
+
+| route | 원본의 실제 최대 UTF-8 bytes | 독립 oracle의 사례별 source 한도 |
+|---|---:|---|
+| Go | 39 | 512 UTF-8 bytes |
+| C# | 74 | 1,024 UTF-16 code units |
+| C | 71 | 고정 compiler source 파일의 정확한 bytes·hash로 제한 |
+| C++ | 56 | 고정 compiler source 파일의 정확한 bytes·hash로 제한 |
+| T-SQL | 52 | 8,192 UTF-8 bytes |
+
+Go·C#·T-SQL helper에 전달한 직렬화 JSON은 각 파일을 65,536 bytes로 제한했다. C/C++는 사전 고정한 source 파일과 compiler argv를 사용했으며 별도 helper의 가변 source 상한을 검증한 것으로 세지 않는다. 이 작은 입력 집합은 각 상한 크기의 입력이나 대용량 성능을 검증하지 않았다.
+
 native는 기존 `tsgk-oracle/r2`, `native-query`, `output=tree`, `api=false`, 빈 query 목록을 사용했다. grammar·runtime을 별도 process에서 컴파일·실행하며 core에 Cgo 또는 소비자 의존성을 넣지 않았다. 고정 [native registry](../../src/contracts/native-routes.json)의 준비된 source 107개(5 grammar24개와 runtime83개)를 실행 전후 hash 대조했다. 기존 reference checkout은 수정하지 않았다.
 
 | route | 고정 upstream commit | 독립 oracle와 실제 문맥 |
