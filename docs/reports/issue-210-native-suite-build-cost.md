@@ -24,7 +24,7 @@ reuse 병렬 후보의 단계 2 paired process-wall 표본은 기존 69.955/82.8
 
 최종 코드의 로컬 `go test` native package는 150.140초로 300초 제한 안에서 통과했다. Go 명령을 포함한 process wall은 150.924초였다. foundation 전체는 process wall 57.235초, vet 0.898초, build 1.015초로 통과했다. 다른 test-bearing package는 r3 실행에서 통과한 동일 byte 결과를 집계했고, 수정한 foundation은 새 전체 실행으로 대체했다. 이는 하나의 전체 명령 성공을 주장하는 방식이 아니다. `src/drivers`는 test file이 없으며, 플랫폼·benchmark 도구 조건에 따른 기존 skip은 보존한다.
 
-native 도구 optional 미설정(둘 다 없음·runtime만·compiler만)은 신규 테스트 부모 전체가 SKIP·성공 종료했다. REQUIRED=1인데 둘 다 없으면 예상대로 FAIL·exit 1이었다. 도구가 설정된 실제 동시요청 검사는 통과했다. 최초 리뷰에서 발견한 optional 경로 결함을 부모 시작의 `nativeTools(t)`로 수정했다. 문서 LF와 source-only fixture의 명시적 report 목록 누락 때문에 실패했던 중간 실행은 보존하며, LF 및 fixture 경로를 수정한 집중 검사와 전체 foundation 결과로 해결을 확인했다.
+native 도구 optional 미설정(둘 다 없음·runtime만·compiler만)은 신규 테스트 부모 전체가 SKIP·성공 종료했다. REQUIRED=1인데 둘 다 없으면 예상대로 FAIL·exit 1이었다. 도구가 설정된 실제 동시요청 검사는 통과했다. STATIC 리뷰에서 발견한 optional 경로 결함을 부모 시작의 `nativeTools(t)`로 수정했다. 문서 LF와 source-only fixture의 명시적 report 목록 누락 때문에 실패했던 중간 실행은 보존하며, LF 및 fixture 경로를 수정한 집중 검사와 전체 foundation 결과로 해결을 확인했다.
 
 right pane의 두 차례 최종 코드 STATIC_REVIEW에서 optional 결함 해결과 추가 finding 없음을 확인했다. 이는 독립 실행이나 공식 GitHub 승인이 아니다. 새 PR의 세 OS 필수 CI와 actual-main post-merge 검증은 아직 미실행이며, 로컬 통과로 대체하지 않는다.
 
