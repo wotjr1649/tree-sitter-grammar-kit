@@ -179,7 +179,7 @@ source 등록부의 개발 검사는 현재 후보 metadata의 필수 값·상�
 
 S01~S03은 공개 offline API/CLI equivalence와 직접 API guard, checkout 밖 별도 consumer module을 검사한다. S04의 한 runner, S05 최소 native producer, S06 동일 producer 확장, S07 등록 reducer를 영향별 회귀로 검증한다. S08 최종 78칸은 새 현재 후보의 실제 세 host native 근거가 필요하다. PR synthetic tree와 actual merge tree가 동일하면 관계를 기록하고 필수 post-merge 검증을 수행하며, 다르면 영향 검사를 다시 수행한다. source-export/versioned local module-proxy 소비도 S08에 확인한다.
 
-시간/입력/출력/저장/지원되는 memory·process 한도와 campaign/session 소모량을 등록한다. local heavy는 1, campaign heavy CI는 겹치는 workflow 전체를 합쳐 최대 3이다. 현재 Foundation은 workflow 전체의 공통 concurrency group과 matrix max-parallel3으로 직렬 run을 보장한다. 이후 native workflow도 같은 공유 lane을 사용하거나 동등한 scheduler 근거를 갖춰야 한다. 무변경 재시도는 원인이 확인된 일시적 infrastructure 오류에 한해 1회이며 제품 수정은 새 후보·남은 예산으로 검증한다. null/0을 무제한으로 해석하거나 한도·golden·필수 범위를 자동 완화하지 않는다.
+시간/입력/출력/저장/지원되는 memory·process 한도와 campaign/session 소모량을 등록한다. local heavy는 1, campaign heavy CI는 겹치는 workflow 전체를 합쳐 최대 3이다. 현재 Foundation은 workflow 전체의 공통 concurrency group으로 run을 직렬화하고, native route matrix `max-parallel: 2`와 단일 `large-api` job으로 heavy 폭 3을 지킨다. 이후 native workflow도 같은 공유 lane을 사용하거나 동등한 scheduler 근거를 갖춰야 한다. 무변경 재시도는 원인이 확인된 일시적 infrastructure 오류에 한해 1회이며 제품 수정은 새 후보·남은 예산으로 검증한다. null/0을 무제한으로 해석하거나 한도·golden·필수 범위를 자동 완화하지 않는다.
 
 ### Campaign 01 Session 진행 규칙 — 2026-10-03 PREPARE 보완
 

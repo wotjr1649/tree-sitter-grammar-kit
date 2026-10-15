@@ -34,6 +34,12 @@ native 준비와 build는 기반 runtime commit에 [현재 local field patch](..
 
 비첫 `SELECT 1;sp_executesql…`과 `SELECT 1;;sp_executesql…`은 ERROR·사실 0·known miss 0으로 거부한다. 같은 batch에서 EXEC를 생략한 비첫 호출의 거부는 의도된 동작이다. [#114](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/114)는 program/batch의 선행 구문과 실제 GO 경계를 확인해 이중 세미콜론 ERROR의 `BATCH_FIRST_CALL_WITHOUT_EXEC` 오분류를 수정했다. 실제 첫 호출·명시적 EXEC·GO 뒤 첫 호출은 사실 1·known miss 0을 유지한다. [분류 계약](tree-and-adapter-protocol.md)의 위치 근거와 등록 대조군을 적용하며, #109의 당시 관측을 소급 변경하지 않는다. 등록 fixture의 known miss 0을 모든 입력에 확대하지 않는다.
 
+## 개발 main의 경로 검사와 C# 조건부 범위
+
+[#196](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/196) 이후 개발 main의 경로 검사는 출력·trust document·실행 workspace가 입력 root나 그 하위 디렉터리의 별칭인지 handle-derived directory identity로 대조한다. bind mount 별칭은 Linux CI의 private mount namespace에서 검증하지만, Windows `subst` 별칭의 실제 mapping 시험은 실행하지 않았다([#215](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/215)). 이 검사는 검사·사용 중 namespace가 바뀌지 않는다는 전제의 정적 검사이며, 검사와 쓰기 사이의 동시 경로 교체는 보장하지 않는다. 아래 v0.2.0 한계 목록의 미검출 문구는 그 tag의 역사적 상태다.
+
+C# 기본 parser에서 비리터럴 조건의 compiler symbol 분기 선택은 [disposition](../validation/language-feature-disposition.md#csharp)에 따라 `NOT_CLAIMED`다.
+
 ## Experimental 기능의 소비·유지보수 경계
 
 현재 experimental 구분은 아래 release claim과 동일하며, 개발 main에서 동작 근거가 추가되어도 자동으로 stable로 승격하지 않는다. Native·query·replay·qualification을 도입하는 소비자는 command/API, protocol/schema revision, source/runtime/producer/policy identity를 함께 고정하고 갱신 후보의 등록 회귀를 실행한다. Native 실행과 offline 기록 재검증은 서로 다른 효과다. 실행 capability와 host 제약은 [trust/execution](trust-and-execution.md)과 본 문서의 플랫폼 표를 따른다.
