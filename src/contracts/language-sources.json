@@ -102,7 +102,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -178,7 +178,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -254,7 +254,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -330,7 +330,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -555,7 +555,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -626,7 +626,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -640,8 +640,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 33870002,
-            "sha256": "8ec1afb61d86f72c1b91b0ec930bebef8c6282d2910a04a56285aab563b8db83"
+            "bytes": 33870017,
+            "sha256": "c13a776638ead65def356f8feeda4f612121cc96485fb4c78eed80757d906097"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -701,7 +701,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -715,8 +715,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 5611445,
-            "sha256": "649f5364bd3c3f0fd8249155c11fb900c48401bd979287696e5280451575dc86"
+            "bytes": 5611460,
+            "sha256": "e18ba3335e75a2d029ced1b302b8ecb50bd2539c7b0c4394f9abbfdb1719cd5b"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -772,7 +772,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -786,8 +786,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 49598494,
-            "sha256": "fd09c060b2ade89681da117fff01fd1970b9fe999c3517fd470f0f28e8e40e18"
+            "bytes": 49598509,
+            "sha256": "3856d51ead4b6ecf5d4e1ec3fd39c52c9ba0cb535e69ea1785822280c45b75fc"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -853,7 +853,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -867,8 +867,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 7448600,
-            "sha256": "25ca3843b59de1b8490fb61b784e9936c933f33bc240b56f9d3efdc1e426c549"
+            "bytes": 7448615,
+            "sha256": "be00454d4938a698e56f0c00a42b7e40ed761a2fe3d5c01533380b1e5b21ea5b"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -999,7 +999,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1013,8 +1013,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 7872937,
-            "sha256": "3ba2c77427dd3c5517c3987ac7b109915d235b491803f819e72496e00da61e44"
+            "bytes": 7872952,
+            "sha256": "a246324fd0a090bb4640c51ad4022e18bfe0d7e708b864a8a1346e94c4f1bf43"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1077,7 +1077,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1091,8 +1091,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 8115380,
-            "sha256": "bd656fd2d3c38b41e6e72ff7e3eda108919cb011d0cd06b28bb8c5ca5268d20b"
+            "bytes": 8115395,
+            "sha256": "2a57b3e51fc97f543cca681f3ee551005638d094eff7a9d348f71469ac698373"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1153,7 +1153,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1167,8 +1167,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 16268975,
-            "sha256": "65c87f797f5628041f2174f4e9ac415db62404e1c87a8ffac6f5809350674fdb"
+            "bytes": 16268990,
+            "sha256": "42b9c0f15b2b3ab44282b3428ff0cdd5e323473a4b898ae249811ce5b0f7260e"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1229,7 +1229,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1305,7 +1305,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1319,8 +1319,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 11527778,
-            "sha256": "9a62624d762d65d4d257a1aa6db6b006fa10121c08cca80c966adadb1c03eb9b"
+            "bytes": 11527793,
+            "sha256": "47c390de497085a147eccd7115e80ae378bf373aedffea45686b1727d38e6db2"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1381,7 +1381,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1395,8 +1395,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 6290078,
-            "sha256": "817d5c4795c7e72b909cbdac67f91744f475a288e2046e7d98992ce50386d13f"
+            "bytes": 6290093,
+            "sha256": "f4e94eb6e43095b7ccf626b6bad17f98b2eba5757efb73b9a31d9ae482eb5644"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1457,7 +1457,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1538,7 +1538,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1552,8 +1552,8 @@
           },
           {
             "path": "parser.c",
-            "bytes": 970824,
-            "sha256": "702c88cfd7b3ba7c7b2e23d23cc60ca98219605496bbeaf8b050051be40201be"
+            "bytes": 970839,
+            "sha256": "9010ec18975e886f2c274139a58fb3c2ae0f39aec02bb9d754857b089f44a2b0"
           },
           {
             "path": "tree_sitter/alloc.h",
@@ -1613,7 +1613,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1698,7 +1698,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, unpatched grammar at the pinned commit",
         "outputs": [
           {
             "path": "grammar.json",
@@ -1776,7 +1776,7 @@
       "known_gaps": [],
       "regeneration": {
         "decision": "C2-REGENERATE-r1",
-        "generation": "tree-sitter CLI 0.27.0 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
+        "generation": "tree-sitter CLI 0.27.1 generate --abi 15 --js-runtime node (Node 24.21.0) through tsgk reproduce, grammar at the pinned commit after its C2 patch chain (c2_patch)",
         "outputs": [
           {
             "path": "grammar.json",

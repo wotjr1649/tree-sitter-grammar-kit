@@ -864,7 +864,7 @@ var hex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
 // in order, with the source path it actually has (S04-A15) and the tool digests that gate
 // generator runs per OS (S04-A18).
 func checkReproductionRoutes(r reproductionRoutes, sources sourceRegistry) error {
-	if r.Schema != "tsgk-reproduction-routes/r1" || r.Generator.Version != "0.27.0" || r.Generator.ABI != 15 || r.JSRuntime.Version != "24.21.0" {
+	if r.Schema != "tsgk-reproduction-routes/r1" || r.Generator.Version != "0.27.1" || r.Generator.ABI != 15 || r.JSRuntime.Version != "24.21.0" {
 		return errors.New("reproduction registry identity")
 	}
 	for _, os := range []string{"windows/amd64", "linux/amd64", "darwin/arm64"} {

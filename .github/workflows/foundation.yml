@@ -182,7 +182,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'diff check failed' }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
-      - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.0)
+      - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.1)
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |

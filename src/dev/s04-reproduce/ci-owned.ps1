@@ -1,5 +1,5 @@
 #Requires -Version 7
-# S04 hosted check: acquire the registered tree-sitter 0.27.0 asset for this host, verify
+# S04 hosted check: acquire the registered tree-sitter asset for this host, verify
 # its release digest before any launch, and run `tsgk reproduce` (JSON mode, no JS runtime)
 # on the owned fixture src/testdata/reproduce with the registered reference outputs.
 # Everything is written under -Destination (outside the checkout).

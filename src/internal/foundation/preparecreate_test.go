@@ -155,3 +155,78 @@ func TestPrepareRoutesCreate(t *testing.T) {
 		}
 	}
 }
+
+// psRecordedRun defines prepare-routes.ps1's Test-RecordedRun from the script's AST and
+// reports, per synthetic reproduce result, whether -RecordOutputs would accept it.
+const psRecordedRun = `param([string]$Script, [string]$Cases)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+$ast = [Management.Automation.Language.Parser]::ParseFile($Script, [ref]$null, [ref]$null)
+$f = $ast.FindAll({ param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Test-RecordedRun' }, $true)
+. ([scriptblock]::Create(@($f)[0].Extent.Text))
+$out = foreach ($c in (Get-Content -LiteralPath $Cases -Raw | ConvertFrom-Json)) { [ordered]@{ name = $c.name; ok = [bool](Test-RecordedRun $c.rep) } }
+ConvertTo-Json -InputObject @($out) -Compress
+`
+
+// -RecordOutputs keeps only completed, deterministic runs whose sole gap is the absent
+// reference; a resource or cleanup failure with passing observation claims is refused.
+func TestPrepareRoutesRecordedRun(t *testing.T) {
+	root := repository(t)
+	pwsh, err := exec.LookPath("pwsh")
+	if err != nil {
+		t.Skip("pwsh not available: prepare-routes.ps1 record guard not executed")
+	}
+	rep := func(mut func(map[string]any)) map[string]any {
+		r := map[string]any{"execution_status": "COMPLETED", "assessment": "BLOCKED", "findings": []any{},
+			"claims":      map[string]any{"generator_ran": "PASS", "deterministic": "PASS", "reference_match": "NOT_CLAIMED"},
+			"comparisons": []any{map[string]any{"path": "parser.c", "across_runs": "EQUAL", "reference": "REFERENCE_ABSENT"}}}
+		if mut != nil {
+			mut(r)
+		}
+		return r
+	}
+	want := map[string]bool{"absent-reference": true}
+	cases := []any{map[string]any{"name": "absent-reference", "rep": rep(nil)}}
+	for name, mut := range map[string]func(map[string]any){
+		"storage-limit-b":   func(r map[string]any) { r["execution_status"] = "RESOURCE_LIMIT" },
+		"cleanup-failed":    func(r map[string]any) { r["execution_status"] = "FAILED" },
+		"not-deterministic": func(r map[string]any) { r["claims"].(map[string]any)["deterministic"] = "FAIL" },
+		"generator-failed":  func(r map[string]any) { r["claims"].(map[string]any)["generator_ran"] = "FAIL" },
+		"reference-present": func(r map[string]any) {
+			r["assessment"], r["claims"].(map[string]any)["reference_match"] = "PASS", "PASS"
+		},
+		"outputs-differ": func(r map[string]any) {
+			r["comparisons"] = []any{map[string]any{"path": "parser.c", "across_runs": "DIFFERENT", "reference": "REFERENCE_ABSENT"}}
+		},
+		"no-comparisons":      func(r map[string]any) { r["comparisons"] = []any{} },
+		"unregistered-output": func(r map[string]any) { r["findings"] = []any{map[string]any{"code": "UNREGISTERED_OUTPUT"}} },
+	} {
+		want[name] = false
+		cases = append(cases, map[string]any{"name": name, "rep": rep(mut)})
+	}
+	dir := t.TempDir()
+	b, _ := json.Marshal(cases)
+	casesPath, harness := filepath.Join(dir, "cases.json"), filepath.Join(dir, "harness.ps1")
+	if err := os.WriteFile(casesPath, b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(harness, []byte(psRecordedRun), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-File", harness, "-Script", filepath.Join(root, "src/dev/s05-native/prepare-routes.ps1"), "-Cases", casesPath).CombinedOutput()
+	if err != nil {
+		t.Fatalf("harness: %v: %s", err, out)
+	}
+	var got []struct {
+		Name string
+		OK   bool
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(string(out))), &got); err != nil || len(got) != len(want) {
+		t.Fatalf("harness output %v: %s", err, out)
+	}
+	for _, g := range got {
+		if g.OK != want[g.Name] {
+			t.Errorf("%s: accepted=%v want %v", g.Name, g.OK, want[g.Name])
+		}
+	}
+}

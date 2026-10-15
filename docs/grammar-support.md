@@ -65,7 +65,7 @@ Offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API는 VERIFI
 | T-SQL / `tsql` | SQL Server2012/compat110 → SQL Server2025/compat170 구문 | 기본 구문, 2016~2019, 2022~2025, batch·문맥 경계 | `8620fbcfca94` |
 | PostgreSQL SQL / `postgresql-sql` | 9.6 → 18 | 10~12, 13~15, 16~17, 18, legacy | `59d0d8cd7506` |
 
-Commit 열은 기반 upstream revision이다. 실제 후보는 해당 route의 patch chain·재생성물·runtime patch까지 포함하므로 commit만으로 같은 parser를 재현했다고 주장하지 않는다. JSX는 JavaScript grammar를 사용하고 TypeScript/TSX는 같은 repository의 `typescript`/`tsx` 디렉터리를 사용한다. 실제 closure는 [native routes](../src/contracts/native-routes.json)와 [runtime manifest](../src/drivers/native-c/runtime-manifest.json)가 고정한다. 등록 native 입력은 Tree-sitter CLI 0.27.0/ABI15로 재생성한다.
+Commit 열은 기반 upstream revision이다. 실제 후보는 해당 route의 patch chain·재생성물·runtime patch까지 포함하므로 commit만으로 같은 parser를 재현했다고 주장하지 않는다. JSX는 JavaScript grammar를 사용하고 TypeScript/TSX는 같은 repository의 `typescript`/`tsx` 디렉터리를 사용한다. 실제 closure는 [native routes](../src/contracts/native-routes.json)와 [runtime manifest](../src/drivers/native-c/runtime-manifest.json)가 고정한다. 등록 native 입력은 Tree-sitter CLI 0.27.1/ABI15로 재생성한다.
 
 여러 버전의 구문 합집합은 버전 선택형 compiler와 다르다. C# 행의 net461/net10.0은 source profile이며 .NET runtime 실행을 보증하지 않는다. T-SQL이 채택한 2012~2025 구문을 받는다고 모든 구문이 compatibility110에서 유효하다는 뜻은 아니다. 같은 bytes의 해석이 달라지는 C++ `module`/`import`·comma subscript와 PHP legacy tag·`#[` 항목은 [version conflict 처분](validation/language-feature-disposition.md)에 따라 일부 legacy 해석을 제외한다.
 

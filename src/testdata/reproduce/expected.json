@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-s04-owned-expected/r1",
-  "generator": "tree-sitter 0.27.0 windows/amd64 executable sha256 9fbc4f285c876b1a38c7e9d5223a51fb7842255285cdd7db3ffb0ba3934f2662; JSON mode (grammar.json is input, not re-emitted), abi 15, optimized",
+  "generator": "tree-sitter 0.27.1 windows/amd64 executable sha256 53f61ab94c9fd52b0916f2e998172b46fcd7b646e27f4e9f803a350b624db4a8 (outputs unchanged from 0.27.0); JSON mode (grammar.json is input, not re-emitted), abi 15, optimized",
   "observed": "S04 local Windows run; workspaces A and B byte-equal",
   "outputs": [
     {
