@@ -66,10 +66,18 @@ func fixtureGrammar(t *testing.T, name string) []kit.NativeInput {
 }
 
 var (
-	buildMu    sync.Mutex
-	buildCache = map[string]*Build{}
-	buildWork  string
+	buildMu           sync.Mutex
+	buildCache        = map[string]*Build{}
+	buildWork         string
+	fixtureBuildCache = map[string]*fixtureBuildEntry{}
+	fixtureBuildSlots = make(chan struct{}, 4)
 )
+
+type fixtureBuildEntry struct {
+	once  sync.Once
+	build *Build
+	err   error
+}
 
 // testBuildRequest is the one place a test build request is made, so no test build can
 // miss the host settings: Linux refuses a build without the delegated cgroup parent
@@ -84,24 +92,35 @@ func fixtureBuild(t *testing.T, name string, defines ...string) *Build {
 	t.Helper()
 	rt, cc := nativeTools(t)
 	key := name + "|" + strings.Join(defines, ",")
+	// Prepare outside Once: testing.Fatal exits its goroutine without returning an error.
+	sum, n := digestOf(t, cc)
+	root, grammar := fixtureRoot(t, name), fixtureGrammar(t, name)
 	buildMu.Lock()
-	defer buildMu.Unlock()
-	if b := buildCache[key]; b != nil {
-		return b
-	}
 	if buildWork == "" {
 		dir, err := os.MkdirTemp("", "tsgk-native-test-")
 		if err != nil {
+			buildMu.Unlock()
 			t.Fatal(err)
 		}
 		buildWork = dir
 	}
-	sum, n := digestOf(t, cc)
+	entry := fixtureBuildCache[key]
+	if entry == nil {
+		entry = &fixtureBuildEntry{}
+		fixtureBuildCache[key] = entry
+	}
+	work := buildWork
+	buildMu.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	req := testBuildRequest(buildWork, rt, fixtureRoot(t, name), fixtureGrammar(t, name), cc, kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n})
+	req := testBuildRequest(work, rt, root, grammar, cc, kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: n})
 	req.Symbol, req.Defines = "tree_sitter_tsgk_"+name, defines
-	b, err := NewBuild(ctx, req)
+	entry.once.Do(func() {
+		fixtureBuildSlots <- struct{}{}
+		defer func() { <-fixtureBuildSlots }()
+		entry.build, entry.err = NewBuild(ctx, req)
+	})
+	b, err := entry.build, entry.err
 	if err != nil {
 		if b != nil { // nil when the build was refused before any step ran
 			for _, s := range b.Steps {
@@ -110,8 +129,35 @@ func fixtureBuild(t *testing.T, name string, defines ...string) *Build {
 		}
 		t.Fatalf("build %s with compiler %s: %v", key, cc, err)
 	}
-	buildCache[key] = b
 	return b
+}
+
+func TestFixtureBuildConcurrent(t *testing.T) {
+	nativeTools(t)
+	var builds [8]*Build
+	t.Run("requests", func(t *testing.T) {
+		for i := range builds {
+			t.Run(string(rune('a'+i)), func(t *testing.T) {
+				t.Parallel()
+				var defines []string
+				if i%2 != 0 {
+					defines = []string{"TSGK_FAULT_OMIT_EDIT"}
+				}
+				builds[i] = fixtureBuild(t, "plain", defines...)
+			})
+		}
+	})
+	if builds[0] == nil || builds[1] == nil {
+		t.Fatal("missing concurrent build results")
+	}
+	for i, b := range builds {
+		if b != builds[i%2] {
+			t.Fatalf("request %d did not share its cached build", i)
+		}
+	}
+	if builds[0].Dir == builds[1].Dir || builds[0].Identity == builds[1].Identity {
+		t.Fatal("distinct defines shared an output directory or build identity")
+	}
 }
 
 func TestMain(m *testing.M) {
@@ -185,7 +231,6 @@ func TestMalformedThenRepair(t *testing.T) {
 // S05-A04 and A03: owned fault-control builds lose the incremental route or corrupt only
 // an intermediate step; the route and comparison checks detect each one.
 func TestFaultControlsDetected(t *testing.T) {
-	edits := editsFor(plainSource, [3]any{4, 5, "g"}, [3]any{4, 5, "f"})
 	for _, tc := range []struct {
 		define, claim string
 		equality      string
@@ -196,6 +241,8 @@ func TestFaultControlsDetected(t *testing.T) {
 		{"TSGK_FAULT_STEP1_FLAG", "equality", ""},
 	} {
 		t.Run(tc.define, func(t *testing.T) {
+			t.Parallel() // The sequential parent bounds overlap to these four independent builds.
+			edits := editsFor(plainSource, [3]any{4, 5, "g"}, [3]any{4, 5, "f"})
 			b := fixtureBuild(t, "plain", tc.define)
 			r := runCase(t, b, "fault", kit.EncodingUTF8, plainSource, edits)
 			if r.Assessment != kit.AssessFail {

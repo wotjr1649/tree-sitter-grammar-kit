@@ -51,6 +51,7 @@ The current implementation consists of repository foundation checks, the Session
 | #197 선택적 logger 관측·source witness·기존 판정 유지 | [한국어](reports/issue-197-reuse-observation.md), [English](reports/issue-197-reuse-observation.en.md) |
 | #199 다음 source-only release의 API 변화·소비 검증·미완료 발행 준비 | [한국어](reports/issue-199-source-release.md) · [English](reports/issue-199-source-release.en.md) |
 | #205 Go 식별자 범주·Unicode 17 수정과 로컬 검증 | [한국어](reports/issue-205-go-identifiers.md), [English](reports/issue-205-go-identifiers.en.md) |
+| #210 Windows native suite 빌드 직렬화 비용과 300초 timeout | [한국어](reports/issue-210-native-suite-build-cost.md) · [English](reports/issue-210-native-suite-build-cost.en.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
