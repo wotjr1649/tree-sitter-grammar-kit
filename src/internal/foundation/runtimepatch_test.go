@@ -52,7 +52,7 @@ func TestRuntimePatch(t *testing.T) {
 			Bytes        int
 		}
 	}
-	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 3 || len(manifest.Files) != 83 || manifest.Commit != "659cda7c7f86ebe31cc825dc5da59e9add172dc7" {
+	if err := json.Unmarshal(read("src/drivers/native-c/runtime-manifest.json"), &manifest); err != nil || len(manifest.Patches) != 3 || len(manifest.Files) != 83 || manifest.Commit != "10eb5ac119eec9cb4267a8e035066473983f5f3a" {
 		t.Fatalf("runtime patch registration: %v", err)
 	}
 	var nodePin bool

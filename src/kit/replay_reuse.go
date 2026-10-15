@@ -33,12 +33,48 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 	return nil
 }
 
-func observationProducer(raw jsontext.Value) bool {
+// observationProducer returns the runtime manifest a recorded producer declared and whether
+// this policy reads observations bound to it.
+func observationProducer(raw jsontext.Value) (string, bool) {
 	var cap struct {
 		Policy                string `json:"policy"`
 		RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
 	}
-	return jsonv2.Unmarshal(raw, &cap, jsonv2.RejectUnknownMembers(true)) == nil && cap.Policy == reuseobs.Policy && cap.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256
+	ok := jsonv2.Unmarshal(raw, &cap, jsonv2.RejectUnknownMembers(true)) == nil && cap.Policy == reuseobs.Policy && reuseobs.VerifiedRuntimeManifest(cap.RuntimeManifestSHA256)
+	return cap.RuntimeManifestSHA256, ok
+}
+
+// recordManifest picks the runtime manifest a case's observations bind to: the one its
+// producer declared, or for a case without native parse (no producer) the one its first
+// host marker declared. declared reports a readable producer declaration; an unreadable one
+// fails the capability check, and an unverified marker manifest fails each binding.
+func recordManifest(c *rcCase) (manifest string, declared bool) {
+	if c.Producer != nil {
+		if m, ok := observationProducer(c.Producer.ReuseObservation); ok {
+			return m, true
+		}
+		return reuseobs.RuntimeManifestSHA256, false
+	}
+	for _, s := range c.Steps {
+		var markers []struct {
+			RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
+		}
+		if len(s.Observations) > 0 && jsonv2.Unmarshal(s.Observations, &markers) == nil && len(markers) > 0 {
+			if reuseobs.VerifiedRuntimeManifest(markers[0].RuntimeManifestSHA256) {
+				return markers[0].RuntimeManifestSHA256, false
+			}
+			break
+		}
+	}
+	return reuseobs.RuntimeManifestSHA256, false
+}
+
+// responseManifest is the readable manifest a raw response declared, or "" if none.
+func responseManifest(raw jsontext.Value) string {
+	if m, ok := observationProducer(raw); ok {
+		return m
+	}
+	return ""
 }
 
 func decodeObservations(raw jsontext.Value, b reuseobs.Binding, native bool) ([]reuseobs.Observation, error) {
@@ -83,6 +119,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	if top.Build != nil {
 		build = top.Build.Identity
 	}
+	manifest, declared := recordManifest(c)
 	var all []reuseobs.Observation
 	groups := map[int][]observationStep{}
 	previous := ""
@@ -147,7 +184,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 				continue
 			}
 		}
-		b := reuseobs.Binding{RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256, RequestID: c.ID,
+		b := reuseobs.Binding{RuntimeManifestSHA256: manifest, RequestID: c.ID,
 			HistoryStart: uint64(start),
 			RunID:        top.ObservationRunID, ProducerSHA256: build, Step: uint64(local),
 			SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes, PreviousSourceSHA256: previous}
@@ -168,7 +205,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	var claim string
 	g.check(len(c.ReuseObservationClaim) > 0 && c.ReuseObservationClaim[0] == '"' && jsonv2.Unmarshal(c.ReuseObservationClaim, &claim) == nil && claim == reuseobs.Judge(all), c.ID, "OBSERVATION_CLAIM_MISMATCH", "관측 판정이 별도 축의 재계산과 다르다")
 	if len(groups) > 0 {
-		g.check(c.Producer != nil && observationProducer(c.Producer.ReuseObservation), c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
+		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
 	for _, start := range slices.Sorted(maps.Keys(groups)) {
 		steps := groups[start]
@@ -176,7 +213,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		if len(c.Segments) > 0 {
 			path = fmt.Sprintf("responses/%05d-%s-segment-%05d.json", index, c.ID, start)
 		}
-		if e := x.compareObservationResponse(path, c.ID, steps, top); e != nil {
+		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest); e != nil {
 			return e
 		}
 	}
@@ -185,7 +222,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 
 // Only the versioned observation projection is decoded here; native trees are still
 // judged from the recorded public trees by the existing twelve-field comparator.
-func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult) *Error {
+func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest string) *Error {
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
 		g.fail(id, "OBSERVATION_RESPONSE_MISSING", "관측 원 응답이 등록되지 않았다")
@@ -227,7 +264,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 			g.fail(id, "OBSERVATION_PROJECTION_MISMATCH", "원 응답에 추가 관측 step이 있다")
 			return nil
 		}
-		b := reuseobs.Binding{RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256, RequestID: id, RunID: top.ObservationRunID,
+		b := reuseobs.Binding{RuntimeManifestSHA256: manifest, RequestID: id, RunID: top.ObservationRunID,
 			HistoryStart:   want[i].observations[0].HistoryStart,
 			ProducerSHA256: top.Build.Identity, Step: uint64(i), SourceSHA256: step.SourceSHA256, SourceBytes: step.SourceBytes}
 		if i > 0 {
@@ -240,7 +277,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 	if e != nil {
 		return e
 	}
-	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && wire.StepsCompleted != nil && *wire.StepsCompleted == uint64(count) && wire.Protocol == "tsgk-native/r3" && wire.ID == id && observationProducer(wire.Producer.ReuseObservation), id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
+	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && wire.StepsCompleted != nil && *wire.StepsCompleted == uint64(count) && wire.Protocol == "tsgk-native/r3" && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
 }

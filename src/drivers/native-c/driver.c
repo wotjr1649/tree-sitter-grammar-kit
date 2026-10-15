@@ -1435,10 +1435,10 @@ static void map_tree(Req *r, TSTree *t, IdMap *m, bool all) {
 typedef struct { uint32_t match, pattern, capture; TSNode node; } CapRow;
 typedef struct { CapRow *rows; uint32_t n, cap, matches; const char *code; uint64_t ms; } QRun;
 typedef struct { uint64_t start, limit; bool timed_out; } QClock;
-/* The pinned runtime does not keep a cancellation: next_capture calls the cursor again
- * while an earlier match is unfinished, so a cancelled query can run on. The first expiry
- * cancels (the loop below then stops and keeps its captures as partial); a callback after
- * that means the runtime continued, and the process ends with a typed QUERY_TIME_LIMIT. */
+/* The first expiry cancels (the loop below then stops and keeps its captures as partial).
+ * The pinned v0.27.1 runtime halts the cursor on cancellation; runtimes before it (such as
+ * 659cda7) ran on while an earlier match was unfinished. A callback after the cancellation
+ * therefore means the runtime continued, and the process ends with a typed QUERY_TIME_LIMIT. */
 static bool qprogress(TSQueryCursorState *s) {
   QClock *c = s->payload;
   if (now_ms() - c->start <= c->limit) return false;
@@ -1468,7 +1468,7 @@ static void run_query(Req *r, const TSQuery *q, TSNode root, QRun *run) {
   TSQueryMatch m;
   uint32_t ci;
   for (;;) {
-    /* the runtime does not keep a cancellation: the loop stops on the flag itself */
+    /* the loop stops on the flag itself, not on the runtime honouring the cancellation */
     if (clock.timed_out) { run->code = "QUERY_TIME_LIMIT"; break; }
     if (!ts_query_cursor_next_capture(qc, &m, &ci)) {
       if (clock.timed_out) run->code = "QUERY_TIME_LIMIT";
