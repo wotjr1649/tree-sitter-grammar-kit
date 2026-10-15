@@ -42,6 +42,8 @@ Actions의 공식 release·manifest·입력과 실행 효과를 검토했으며 
 
 PREPARE owned fixture는 기존 Tree-sitter CLI 0.27.0(ABI15), UCRT64 GCC16.2.0, 별도 고정 runtime commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`(header 허용 ABI13~15)을 사용한다. 이 runtime commit을 v0.27.0 release라고 부르지 않는다. CLI v0.27.0 tag object는 `3e719425fc48f5b4cdb25c580e44023882f5e2a7`, peeled commit은 `6070dbfefd326bd735e5683eb128cc1b57dad0c0`이며 runtime 후보와 unicode/header 관련 변경이 있다. 각 identity와 실제 build/parse 결과를 따로 기록한다. 원본 checkout은 변경하지 않고 승인한 새 scratch의 복사본에서 검사한다.
 
+현재 native runtime pin([#213](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/213))은 release tag `v0.27.1`(lightweight tag, commit `10eb5ac119eec9cb4267a8e035066473983f5f3a`)이다. PREPARE와 그 이전 native 근거는 위 `659cda7`을 사용했다. 두 commit 사이에서 [runtime manifest](../../src/drivers/native-c/runtime-manifest.json)의 83개 파일 중 `lib/include/tree_sitter/api.h`(query 진행 callback 동작 주석), `lib/src/parser.c`(error recovery의 shifted stack version 확인), `lib/src/query.c`(진행 callback 중단 시 cursor 정지, 방문 상태의 작업량 계산, capture list 획득), `lib/src/subtree.c`·`subtree.h`(column dependency 보존)가 바뀌었다. local patch 대상 `lib/src/node.c`의 upstream bytes는 같아 세 patch의 before/after 값은 그대로다. header ABI 범위는 13~15로 같다. generator는 별도 pin(CLI 0.27.0)을 유지한다.
+
 언어별 SDK·DB server·전역 tool·새 Go dependency는 추가하지 않는다. maintainer README의 지원 문구와 release 여부는 출처 관측이며 full conformance나 법적 license 검토로 확대하지 않는다. [준비 보고서](../reports/campaign-01-2026-09-29-preparation.md)가 실제 미해결 입력과 준비 상태를 연결한다.
 
 ## Native runtime의 field 조회 patch (#105)

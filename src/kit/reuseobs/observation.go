@@ -12,12 +12,19 @@ import (
 const (
 	Schema                = "tsgk-reuse-observation/r1"
 	Policy                = "tsgk-reuse-log/r1"
-	RuntimeManifestSHA256 = "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+	RuntimeManifestSHA256 = "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541"
 	MaxEvents             = 16384
 	MaxBytes              = 1048576
 	MaxMessageBytes       = 1024
 	MaxRecordBytes        = 4096
 )
+
+// VerifiedRuntimeManifest reports whether recorded observations bound to this runtime
+// manifest are read under this policy: the current RuntimeManifestSHA256 (v0.27.1), which
+// live runs must declare, and 659cda7's, whose parser log formats were checked identical (#213).
+func VerifiedRuntimeManifest(sha string) bool {
+	return sha == RuntimeManifestSHA256 || sha == "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+}
 
 // Counts contains only recognized parse events, never logger text or node addresses.
 type Counts struct {
@@ -143,7 +150,7 @@ func Decode(raw []byte, b Binding) (Observation, error) {
 
 func validate(o Observation, b Binding) (Observation, error) {
 	if o.Schema != Schema || o.Policy != Policy ||
-		b.RuntimeManifestSHA256 != RuntimeManifestSHA256 || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
+		!VerifiedRuntimeManifest(b.RuntimeManifestSHA256) || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
 		!hash(b.SourceSHA256) || o.SourceSHA256 != b.SourceSHA256 ||
 		o.SourceBytes != b.SourceBytes || len(b.RequestID) == 0 || len(b.RequestID) > 128 ||
 		len(b.RunID) == 0 || len(b.RunID) > 128 || o.RunID != b.RunID ||

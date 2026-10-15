@@ -1,9 +1,9 @@
 {
  "schema": "tsgk-native-runtime/r1",
  "repository": "tree-sitter/tree-sitter",
- "commit": "659cda7c7f86ebe31cc825dc5da59e9add172dc7",
- "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/659cda7c7f86ebe31cc825dc5da59e9add172dc7",
- "note": "Pinned Tree-sitter runtime source for the S05 driver build (same identity as the PREPARE runtime, ABI 13..15); a runtime directory must contain exactly these files with these hashes.",
+ "commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a",
+ "url": "https://codeload.github.com/tree-sitter/tree-sitter/tar.gz/10eb5ac119eec9cb4267a8e035066473983f5f3a",
+ "note": "Pinned Tree-sitter runtime source for the S05 driver build (release tag v0.27.1, ABI 13..15; PREPARE used commit 659cda7c7f86ebe31cc825dc5da59e9add172dc7); a runtime directory must contain exactly these files with these hashes.",
  "patches": [
   {
    "subject": "src/drivers/native-c/runtime-field-lookup.patch.json",
@@ -56,8 +56,8 @@
   },
   {
    "path": "lib/include/tree_sitter/api.h",
-   "sha256": "efe63c187bb941be6e36dfb0597846bfe1976a0917c04a16e3edf6ee7cf6f9b7",
-   "bytes": 49952
+   "sha256": "f8480415ae20cb5e0fd519ba44c84268c5acb4c918106238fc1d328d91431783",
+   "bytes": 50349
   },
   {
    "path": "lib/src/alloc.c",
@@ -136,8 +136,8 @@
   },
   {
    "path": "lib/src/parser.c",
-   "sha256": "97a49276242294bc1b1a22908671a202f92d2a213a872edbe467a9e121822615",
-   "bytes": 79954
+   "sha256": "450cb5196ffb74ffd8ba16fcb770b995f000348ac054542afb9f547bd86ab611",
+   "bytes": 80095
   },
   {
    "path": "lib/src/parser.h",
@@ -161,8 +161,8 @@
   },
   {
    "path": "lib/src/query.c",
-   "sha256": "f7e9b04c50f9d5bae3c01cf5860fd45d24d89b2d2e5748de758b0a39bc146c83",
-   "bytes": 171255
+   "sha256": "d5424d95c92fbb95b39f64d4fbec19d53d3d51bfd30bf34b0030679547dd59fc",
+   "bytes": 171693
   },
   {
    "path": "lib/src/reduce_action.h",
@@ -186,13 +186,13 @@
   },
   {
    "path": "lib/src/subtree.c",
-   "sha256": "ec4d623ca1c290f6c1fb8a9dcfc08dcc5fc2a452fa1b27587b9a73c1a74438b0",
-   "bytes": 36750
+   "sha256": "6b8737764405898a2941df6951f548d73131ada230eec906ee062ca453a2bb80",
+   "bytes": 36832
   },
   {
    "path": "lib/src/subtree.h",
-   "sha256": "552633ba7b8be2d266031bb04776c17ba7bc5fe270d1afd5203eb4889e8b7f09",
-   "bytes": 12548
+   "sha256": "290ac499f1cdd03d2100de98e12c3fccfe806b663337d648eaf4744348bfb2d5",
+   "bytes": 12614
   },
   {
    "path": "lib/src/tree.c",
