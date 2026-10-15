@@ -3,8 +3,10 @@
 # (src/contracts/native-routes.json) and the pinned runtime under -Destination.
 # Upstream files come from the pinned commit archive (codeload) or, locally, from an
 # S01-bound source tree; every route with a regeneration record regenerates parser.c with
-# `tsgk reproduce` (tree-sitter 0.27.0 + Node 24.21.0, registered digests) unless
-# -ReuseGenerated points at already verified outputs. Adopted routes first apply the
+# `tsgk reproduce` (the registered tree-sitter and Node digests of reproduction-routes) unless
+# -ReuseGenerated points at already verified outputs. -RecordOutputs (local only, for a
+# generator change) regenerates with output reference ABSENT, requires generator_ran and
+# deterministic PASS, and records the observed outputs in prepared.json instead of checking them. Adopted routes first apply the
 # registered literal patch chain and check every file it patches against its adoption hash
 # (language-sources adoption); the other routes have an empty chain (C2-REGENERATE-r1). A
 # route with C2 patches (C2-PATCH-r1, steps of src/dev/c2-patches/) applies them after that
@@ -17,6 +19,7 @@ param(
   [string]$LocalSources = '',                     # S01 layout: <dir>/<any>/<repo>-<commit>/...
   [string]$LocalRuntime = '',                     # directory holding LICENSE and lib/
   [string]$ReuseGenerated = '',                   # <dir>/<route>/workspace-a/out (local only)
+  [switch]$RecordOutputs,                         # local only: record regenerated outputs (see above)
   [string]$TreeSitterExe = '',                    # local verified copy (hash-checked)
   [string]$NodeExe = '',                          # local verified copy (hash-checked)
   [string]$CgroupParent = '',
@@ -26,6 +29,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+if ($RecordOutputs -and $ReuseGenerated) { throw '-RecordOutputs regenerates; it cannot reuse outputs' }
 if (Test-Path -LiteralPath $Destination) { throw 'destination exists' }
 New-Item -ItemType Directory -Path $Destination | Out-Null
 $Destination = (Resolve-Path $Destination).Path
@@ -33,7 +37,7 @@ $registry = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/native-rout
 $repro = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/reproduction-routes.json') -Raw | ConvertFrom-Json
 $sources = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/language-sources.json') -Raw | ConvertFrom-Json
 $runtimeManifest = Get-Content -LiteralPath (Join-Path $repo 'src/drivers/native-c/runtime-manifest.json') -Raw | ConvertFrom-Json
-$stats = [ordered]@{ downloads = @(); downloaded_bytes = 0; regenerated = @(); reused = @(); routes = @() }
+$stats = [ordered]@{ downloads = @(); downloaded_bytes = 0; regenerated = @(); reused = @(); recorded = @(); routes = @() }
 
 function Get-Sha([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Assert-File([string]$Path, [string]$Sha, [long]$Bytes, [string]$What) {
@@ -157,6 +161,15 @@ function Set-RuntimePatches([string]$Path, [string]$Target, $Manifest) {
 
 # A created C2 file starts from empty text: it must not be an npm input, exist at the pinned
 # commit, or be patched by an adoption step.
+# A -RecordOutputs run is accepted only when it completed, both workspaces produced every
+# registered output equally, and the only gap is the absent reference (no resource or cleanup failure).
+function Test-RecordedRun($Rep) {
+  if ($Rep.execution_status -ne 'COMPLETED' -or $Rep.assessment -ne 'BLOCKED') { return $false }
+  if ($Rep.claims.generator_ran -ne 'PASS' -or $Rep.claims.deterministic -ne 'PASS' -or $Rep.claims.reference_match -ne 'NOT_CLAIMED') { return $false }
+  if (@($Rep.findings | Where-Object { $_.code -eq 'UNREGISTERED_OUTPUT' }).Count) { return $false }
+  $comparisons = @($Rep.comparisons)
+  return $comparisons.Count -gt 0 -and @($comparisons | Where-Object { $_.across_runs -ne 'EQUAL' -or $_.reference -ne 'REFERENCE_ABSENT' }).Count -eq 0
+}
 function Assert-Creatable([string]$Route, [string]$Path, [bool]$Exists, $OwnSteps) {
   if ($Path.StartsWith('node_modules/')) { throw "$Route C2 patch creates $Path, an npm input file" }
   if ($Exists) { throw "$Route C2 patch creates $Path, which exists at the pinned commit" }
@@ -289,7 +302,7 @@ foreach ($r in $registry.routes) {
       }
       $tsId = [ordered]@{ name = 'tree-sitter'; version = $repro.generator.version; sha256 = (Get-Sha $tools.ts); bytes = (Get-Item -LiteralPath $tools.ts).Length }
       $nodeId = [ordered]@{ name = 'node'; version = $repro.js_runtime.version; sha256 = (Get-Sha $tools.node); bytes = (Get-Item -LiteralPath $tools.node).Length }
-      $outputs = @($r.regeneration.outputs | ForEach-Object { [ordered]@{ path = $_.path; reference = 'PRESENT'; sha256 = $_.sha256; bytes = $_.bytes } })
+      $outputs = @($r.regeneration.outputs | ForEach-Object { if ($RecordOutputs) { [ordered]@{ path = $_.path; reference = 'ABSENT' } } else { [ordered]@{ path = $_.path; reference = 'PRESENT'; sha256 = $_.sha256; bytes = $_.bytes } } })
       $profile = [ordered]@{ schema = 'tsgk-reproduce/r1'; id = "s05-$($r.route)-regen"; route = $r.route; mode = 'js'; generator = $tsId; js_runtime = $nodeId
         abi = $r.regeneration.abi; optimize = $r.regeneration.optimize; grammar = $r.regeneration.grammar; inputs = $inputs; outputs = $outputs
         limits = [ordered]@{ wall_seconds = 300; output_bytes = 8388608; storage_bytes = 536870912; memory_bytes = $r.regeneration.memory_bytes; input_files = 64; input_bytes = 67108864; file_bytes = 16777216 } }
@@ -307,14 +320,17 @@ foreach ($r in $registry.routes) {
       $rep = $line | ConvertFrom-Json
       $stats.regenerated += [ordered]@{ route = $r.route; exit = $code; assessment = $rep.assessment; claims = $rep.claims; wall_ms = @($rep.runs | ForEach-Object { $_.process.wall_ms }) }
       Write-Output ("regenerate {0}: exit={1} assessment={2} claims={3}" -f $r.route, $code, $rep.assessment, ($rep.claims | ConvertTo-Json -Compress))
-      if ($code -ne 0 -or $rep.assessment -ne 'PASS') { throw "regeneration of $($r.route) did not reproduce the registered outputs" }
       $outDir = Join-Path $rout 'workspace-a/out'
+      if ($RecordOutputs) {
+        if (-not (Test-RecordedRun $rep)) { throw "recording $($r.route): the run did not complete deterministically with only the reference absent" }
+        $stats.recorded += [ordered]@{ route = $r.route; outputs = @($r.regeneration.outputs | ForEach-Object { $o = Join-Path $outDir $_.path; [ordered]@{ path = $_.path; sha256 = (Get-Sha $o); bytes = (Get-Item -LiteralPath $o).Length } }) }
+      } elseif ($code -ne 0 -or $rep.assessment -ne 'PASS') { throw "regeneration of $($r.route) did not reproduce the registered outputs" }
     }
     foreach ($o in $r.regeneration.outputs) {
       if ($o.path -in @('grammar.json', 'node-types.json')) { continue }
       $to = Join-Path $root ($prefix + 'src/' + $o.path)
       Copy-Into (Join-Path $outDir $o.path) $to
-      Assert-File $to $o.sha256 $o.bytes 'generated output'
+      if (-not $RecordOutputs) { Assert-File $to $o.sha256 $o.bytes 'generated output' }
     }
   }
   foreach ($f in $r.files) {
