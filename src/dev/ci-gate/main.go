@@ -231,8 +231,8 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 func main() { os.Exit(run(os.Args[1:], os.Stderr)) }
 
 func run(args []string, stderr io.Writer) int {
-	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify"}, args[0]) {
-		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack or verify")
+	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify", "config", "margin-discover", "margin-plan", "margin"}, args[0]) {
+		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack, verify, config, margin-discover, margin-plan or margin")
 		return 2
 	}
 	fs := flag.NewFlagSet("ci-gate", flag.ContinueOnError)
@@ -243,8 +243,21 @@ func run(args []string, stderr io.Writer) int {
 	out := fs.String("out", "", "new verification result outside evidence")
 	metadata := fs.String("metadata", "", "original bounded GitHub metadata directory")
 	plan := fs.String("plan", "", "workflow-owned download plan outside evidence")
+	history := fs.String("history", "", "bounded margin metadata and ZIP root")
+	core := fs.String("core", "", "successful current-run core result")
+	compiler := fs.String("compiler", "", "selected producer compiler")
 	if fs.Parse(args[1:]) != nil || fs.NArg() != 0 || *expectPath == "" {
 		return 2
+	}
+	if args[0] == "config" {
+		if *out == "" {
+			return 2
+		}
+		if err := saveMarginConfig(*expectPath, *compiler, *out); err != nil {
+			fmt.Fprintln(stderr, "ci-gate:", err)
+			return 1
+		}
+		return 0
 	}
 	expected, err := expectedIdentity(*expectPath)
 	if err != nil {
@@ -253,7 +266,30 @@ func run(args []string, stderr io.Writer) int {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 365*time.Second)
 	defer cancel()
-	if args[0] == "plan" {
+	if args[0] == "margin-discover" || args[0] == "margin-plan" {
+		if *metadata == "" || *history == "" || *out == "" || !outside(*out, *metadata) || !outside(*out, *history) {
+			return 2
+		}
+		if args[0] == "margin-discover" {
+			var runs []marginRun
+			runs, err = marginRuns(expected, *metadata, *history)
+			if err == nil {
+				err = writeNewJSON(*out, runs, 65536)
+			}
+		} else {
+			var result marginPlan
+			result, err = makeMarginPlan(expected, *metadata, *history)
+			if err == nil {
+				err = writeNewJSON(*out, result, 131072)
+			}
+		}
+	} else if args[0] == "margin" {
+		if *metadata == "" || *history == "" || *root == "" || *core == "" || *out == "" ||
+			!outside(*out, *root) || !outside(*out, *metadata) || !outside(*out, *history) {
+			return 2
+		}
+		err = verifyMargins(ctx, expected, *root, *metadata, *history, *core, *out)
+	} else if args[0] == "plan" {
 		if *metadata == "" || *out == "" || !outside(*out, *metadata) {
 			return 2
 		}

@@ -198,6 +198,19 @@ jobs:
             $cgroup = "$base/jobs"
           }
           & src/dev/s04-reproduce/ci-owned.ps1 -Destination $dest -Platform $env:PLATFORM -CgroupParent $cgroup
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-foundation-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-foundation-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify clean validation output
         run: |
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
@@ -487,6 +500,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-native-prepare-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-native-prepare-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
@@ -666,6 +692,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-native-routes-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-native-routes-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
@@ -737,6 +776,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-large-api-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
@@ -814,6 +866,19 @@ jobs:
           path: ${{ runner.temp }}/qualification-${{ github.run_id }}-${{ github.run_attempt }}/qualification.json
           if-no-files-found: error
           retention-days: 7
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-qualification-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-qualification-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
@@ -886,3 +951,17 @@ jobs:
             ${{ runner.temp }}/integration-gate-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
           if-no-files-found: error
           retention-days: 7
+      - name: 시간 여유 및 동일 구성 표본 판정
+        id: margin
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & (Join-Path $work 'ci-gate') margin -expected (Join-Path $work 'run-identity.json') -artifacts (Join-Path $work 'artifacts') -metadata (Join-Path $work 'metadata') -history (Join-Path $work 'margin') -core (Join-Path $work 'result.json') -out (Join-Path $work 'margin.json')
+          if ($LASTEXITCODE -ne 0) { throw 'CI margin failed' }
+      - name: Margin 현재 표본과 판정 보관
+        if: ${{ always() && steps.margin.outcome != 'skipped' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-margin-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/integration-gate-${{ github.run_id }}-${{ github.run_attempt }}/margin.json
+          if-no-files-found: error
+          retention-days: 30
