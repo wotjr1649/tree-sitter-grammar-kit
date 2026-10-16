@@ -5,6 +5,9 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 18 * * *'
 
 permissions:
   contents: read
@@ -206,8 +209,8 @@ jobs:
     # CGO-free foundation gate above stays the required core check and is not relaxed.
     # Diagnostics wait for native/large validation and qualification; their width is 3.
     name: race diagnostic (${{ matrix.os }})
-    needs: [native-routes, large-api, qualification]
-    if: ${{ !cancelled() }}
+    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -303,12 +306,23 @@ jobs:
           path: ${{ runner.temp }}/race-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}/*.json
           if-no-files-found: error
           retention-days: 7
+      - name: 진단 실패 전파
+        if: always()
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          MODULES_OUTCOME: ${{ steps.modules.outcome }}
+          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
+        run: |
+          foreach ($outcome in @($env:CHECKOUT_OUTCOME, $env:SETUP_OUTCOME, $env:MODULES_OUTCOME, $env:DIAGNOSTIC_OUTCOME)) {
+            if ($outcome -ne 'success') { throw 'race diagnostic did not succeed' }
+          }
 
   macos-regenerate:
     # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
     name: regenerate diagnostic (macos-15)
-    needs: [native-routes, large-api, qualification]
-    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
+    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
     runs-on: macos-15
     timeout-minutes: 30
     defaults:
@@ -392,6 +406,18 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
+      - name: 진단 실패 전파
+        if: always()
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          MODULES_OUTCOME: ${{ steps.modules.outcome }}
+          INPUT_OUTCOME: ${{ steps.input.outcome }}
+          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
+        run: |
+          foreach ($outcome in @($env:CHECKOUT_OUTCOME, $env:SETUP_OUTCOME, $env:MODULES_OUTCOME, $env:INPUT_OUTCOME, $env:DIAGNOSTIC_OUTCOME)) {
+            if ($outcome -ne 'success') { throw 'regeneration diagnostic did not succeed' }
+          }
 
   native-prepare:
     # S05: one Linux job fetches the 26 pinned route sources, applies the patch chains of
@@ -791,3 +817,72 @@ jobs:
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+
+  integration-gate:
+    name: integration gate
+    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 module 및 gate 준비
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PRODUCER_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          $sha = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $sha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          go mod download -json
+          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+          $env:GOPROXY = 'off'
+          $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $work | Out-Null
+          & src/dev/s08-qualify/run-identity.ps1 -Destination $work -HeadSHA $env:PR_HEAD_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'gate identity failed' }
+          [IO.File]::WriteAllText((Join-Path $work 'needs.json'), $env:PRODUCER_RESULTS, [Text.UTF8Encoding]::new($false))
+          go build -o (Join-Path $work 'ci-gate') ./src/dev/ci-gate
+          if ($LASTEXITCODE -ne 0) { throw 'gate build failed' }
+      - name: 공식 digest를 확인한 현재 run artifact 받기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & src/dev/ci-gate/fetch.ps1 -Gate (Join-Path $work 'ci-gate') -Expected (Join-Path $work 'run-identity.json') -Work $work
+          if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }
+      - name: 필수 producer와 raw 78칸 및 large 근거 확인
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & (Join-Path $work 'ci-gate') verify -expected (Join-Path $work 'run-identity.json') -artifacts (Join-Path $work 'artifacts') -needs (Join-Path $work 'needs.json') -out (Join-Path $work 'result.json')
+          if ($LASTEXITCODE -ne 0) { throw 'integration gate failed' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+      - name: 통합 gate 근거 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: integration-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/integration-gate-${{ github.run_id }}-${{ github.run_attempt }}/result.json
+            ${{ runner.temp }}/integration-gate-${{ github.run_id }}-${{ github.run_attempt }}/run-identity.json
+          if-no-files-found: error
+          retention-days: 7

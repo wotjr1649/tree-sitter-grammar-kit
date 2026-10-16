@@ -3,7 +3,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -15,125 +14,28 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/largeaudit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-type receipt struct {
-	Schema          string  `json:"schema"`
-	ID              string  `json:"id"`
-	SourceSHA       string  `json:"source_sha256"`
-	SourceBytes     uint64  `json:"source_bytes"`
-	Nodes           uint64  `json:"nodes"`
-	Start           uint64  `json:"range_start"`
-	End             uint64  `json:"range_end"`
-	Depth           uint64  `json:"depth"`
-	Fields          uint64  `json:"field_count"`
-	Checks          uint64  `json:"checks"`
-	ChildFields     uint64  `json:"child_fields"`
-	FieldLookups    uint64  `json:"field_lookups"`
-	PointChecks     uint64  `json:"point_checks"`
-	Differences     uint64  `json:"differences"`
-	Divergences     uint64  `json:"position_navigation_divergences"`
-	FirstDivergence []int64 `json:"first_position_divergence"`
-	First           []int64 `json:"first_difference"`
-	ExpectedSHA     string  `json:"expected_sha256"`
-	ObservedSHA     string  `json:"observed_sha256"`
-	Complete        bool    `json:"complete"`
-}
+type receipt = largeaudit.Receipt
+type fixture = largeaudit.Fixture
+type fixtureInventory = largeaudit.Inventory
 
-// This is the existing registered three-fixture inventory, not a caller-selected
-// replacement workload. Updating it requires an explicit contract change.
-const fixtureInventorySHA = "b9febb20fc2f6ba1e5b8d6d4b71b30f391b9cb32bf71eb1c4a68a8bd6f2f89f3"
+const fixtureInventorySHA = largeaudit.FixtureInventorySHA
 
-type fixture struct {
-	ID     string            `json:"id"`
-	Header string            `json:"header"`
-	Block  string            `json:"block"`
-	Footer string            `json:"footer"`
-	SHA256 string            `json:"sha256"`
-	Repeat int               `json:"repeat"`
-	Bytes  uint64            `json:"bytes"`
-	Points []kit.NativePoint `json:"points"`
-	Expect []json.RawMessage `json:"expect"`
-}
-type fixtureInventory struct {
-	Schema    string    `json:"schema"`
-	Route     string    `json:"route"`
-	Operation string    `json:"operation"`
-	Note      string    `json:"note"`
-	Fixtures  []fixture `json:"fixtures"`
-}
-
-func loadFixtures(data []byte) (fixtureInventory, error) {
-	var x fixtureInventory
-	if digest(data) != fixtureInventorySHA {
-		return x, errors.New("registered fixture inventory identity mismatch")
-	}
-	if e := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); e != nil {
-		return x, e
-	}
-	if x.Schema != "tsgk-native-large-fixtures/r1" || x.Route != "csharp" || len(x.Fixtures) != 3 {
-		return x, errors.New("fixture inventory invalid")
-	}
-	seen := map[string]bool{}
-	for _, f := range x.Fixtures {
-		if seen[f.ID] {
-			return x, errors.New("duplicate fixture id")
-		}
-		seen[f.ID] = true
-	}
-	return x, nil
-}
-
-func digest(data []byte) string { x := sha256.Sum256(data); return hex.EncodeToString(x[:]) }
+func loadFixtures(data []byte) (fixtureInventory, error) { return largeaudit.LoadFixtures(data) }
+func digest(data []byte) string                          { x := sha256.Sum256(data); return hex.EncodeToString(x[:]) }
 func decode(data []byte, req native.Request, start, end, expectedNodes uint64) (receipt, error) {
-	var r receipt
 	payload, err := native.SplitFrame(data)
 	if err != nil {
-		return r, err
+		return receipt{}, err
 	}
-	if err = jsonv2.Unmarshal(payload, &r, jsonv2.RejectUnknownMembers(true)); err != nil {
-		return r, err
-	}
-	for _, s := range []string{r.SourceSHA, r.ExpectedSHA, r.ObservedSHA} {
-		x, e := hex.DecodeString(s)
-		if e != nil || len(x) != 32 || strings.ToLower(s) != s {
-			return r, errors.New("audit digest invalid")
-		}
-	}
-	if r.Schema != "tsgk-large-api-audit/r1" || r.ID != req.ID || r.SourceBytes != uint64(len(req.Source)) || r.SourceSHA != digest(req.Source) || !r.Complete || r.Nodes == 0 || r.Nodes > req.Limits.Nodes || r.Depth == 0 || r.Depth > req.Limits.Depth || r.Fields > 65535 || len(r.First) != 4 || len(r.FirstDivergence) != 4 {
-		return r, errors.New("audit identity or completion invalid")
-	}
-	if (expectedNodes != 0 && r.Nodes != expectedNodes) || r.Start != start || r.End != min(end, r.Nodes) || r.End <= r.Start || r.ChildFields > r.Nodes-1 || (r.Start == 0 && r.End == r.Nodes && r.ChildFields != r.Nodes-1) || r.FieldLookups != 2*(r.End-r.Start)*r.Fields || r.PointChecks != 3*uint64(len(req.Points)+2) || r.Checks != 13*(r.End-r.Start)+r.ChildFields+r.FieldLookups+r.PointChecks {
-		return r, errors.New("audit coverage counts invalid")
-	}
-	if (r.Differences == 0) != (r.ExpectedSHA == r.ObservedSHA) || r.Differences > r.Checks || r.Divergences > 4*r.Nodes {
-		return r, errors.New("audit comparison invalid")
-	}
-	if r.Differences == 0 {
-		for _, v := range r.First {
-			if v != 0 {
-				return r, errors.New("unexpected first difference")
-			}
-		}
-	} else if !((r.First[1] >= 0 && uint64(r.First[1]) < 13+r.ChildFields) || (r.First[1] >= 1000002 && uint64(r.First[1]) <= 1000001+2*r.Fields) || (r.First[1] >= 2000000 && r.First[1] <= 2000002)) || r.First[2] == r.First[3] || r.First[0] < 0 || r.First[1] < 0 || (r.First[1] < 2000000 && (uint64(r.First[0]) < r.Start || uint64(r.First[0]) >= r.End)) || (r.First[1] >= 2000000 && (r.First[1] > 2000002 || uint64(r.First[0]) >= uint64(len(req.Points)+2))) {
-		return r, errors.New("missing first difference")
-	}
-	if r.Divergences == 0 {
-		for _, v := range r.FirstDivergence {
-			if v != 0 {
-				return r, errors.New("unexpected positional divergence")
-			}
-		}
-	} else if r.FirstDivergence[0] < 0 || uint64(r.FirstDivergence[0]) < r.Start || uint64(r.FirstDivergence[0]) >= r.End || r.FirstDivergence[1] < 1 || r.FirstDivergence[1] > 4 || r.FirstDivergence[2] == r.FirstDivergence[3] {
-		return r, errors.New("positional divergence coordinates invalid")
-	}
-	return r, nil
+	return largeaudit.Decode(payload, req, start, end, expectedNodes)
 }
 
 func compile(ctx context.Context, b *native.Build, cc, source, define string) (string, []native.BuildStep, error) {
@@ -349,7 +251,7 @@ func execute() error {
 	}
 	completedFixtures := 0
 	op := kit.NativeOperations()["native-query-large"]
-	small := []string{"    class C { int M(int a) { return a + 1; } }\n", "class C { int M(int a) { return a + ; } }\n", "class C { void M() { F(1; } }\n", "class C { int M() { return 1 } }\n"}
+	small := largeaudit.SmallSources()
 	var first native.Request
 	var firstNodes uint64
 	var zero native.Request
@@ -427,16 +329,11 @@ func execute() error {
 			return e
 		}
 		for _, f := range fixtures.Fixtures {
-			var source bytes.Buffer
-			source.WriteString(f.Header)
-			for n := 0; n < f.Repeat; n++ {
-				source.WriteString(strings.ReplaceAll(f.Block, "{N}", fmt.Sprint(n)))
+			source, e := largeaudit.Source(f)
+			if e != nil {
+				return e
 			}
-			source.WriteString(f.Footer)
-			if uint64(source.Len()) != f.Bytes || digest(source.Bytes()) != f.SHA256 {
-				return errors.New("registered fixture identity mismatch")
-			}
-			req := native.Request{ID: f.ID, Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(op), Source: source.Bytes(), Points: f.Points}
+			req := native.Request{ID: f.ID, Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(op), Source: source, Points: f.Points}
 			baseline := b.RunCase(ctx, native.Context{Op: op, Route: "csharp", Output: kit.OutputAuto}, kit.IncrementalCase{ID: req.ID, Encoding: kit.EncodingUTF8, Points: req.Points}, req.Source)
 			result.LargeBaseline = append(result.LargeBaseline, baseline)
 			if baseline.ExecutionStatus != kit.StatusCompleted || len(baseline.Steps) != 1 || baseline.Steps[0].Incremental == nil || baseline.Steps[0].Incremental.Status != kit.StatusCompleted {

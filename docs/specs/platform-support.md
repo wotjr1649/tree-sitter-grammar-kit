@@ -73,7 +73,7 @@ Windows backend의 Job Object와 POSIX process group/rlimit는 같은 강도의 
 
 semantic 비교는 source/input/profile/protocol/comparator가 같은 결정적 필드에만 exact 적용한다. timing cancellation trigger, peak memory, latency, host path/clock은 별도 observation이다. normalization allowlist를 실행 전 고정하고 원 raw를 보존한다. mismatch 이후 필드를 지워 PASS로 만들지 않는다. 다른 host의 절대 latency 동일성은 주장하지 않는다.
 
-CI 집계는 repo/workflow/candidate/run attempt/input identity와 모든 필수 OS artifact를 확인한다. missing/skip/cancel은 PASS가 아니다. cross-build는 native 실행으로 기록하지 않는다. race 검사는 CGO가 필요한 별도 diagnostic lane(`race diagnostic (<os>)`, Linux·macOS 비필수)이며 CGO-free core gate와 분리한다.
+CI 집계는 repo/workflow/candidate/run attempt/input identity와 모든 필수 OS artifact를 확인한다. missing/skip/cancel은 PASS가 아니다. cross-build는 native 실행으로 기록하지 않는다. race 검사는 CGO가 필요한 별도 diagnostic lane(`race diagnostic (<os>)`, Linux·macOS 비필수)이며 CGO-free core gate와 분리한다. 진단은 push·nightly schedule·workflow_dispatch에서만 실행하며 PR에서는 실행하지 않는다. 필수 producer 다섯 개가 모두 끝난 뒤 시작하고, 준비·진단 실패는 근거 수집 뒤 job에 전파한다. `integration gate`는 원본 세 host의 78칸과 전체 obligation, large API의 연속 page·fault·resource control을 같은 run/attempt/SHA로 검증한다. 원격 required check 등록 상태와 실제 후보의 성공은 별도로 확인한다([validation](../validation/validation.md#ci-and-evidence)).
 
 compiler·executable·OS image는 host별 identity를 유지한다. 같은 runtime/header compatibility를 사용해도 동일한 빌드 bytes를 요구하지 않는다. 보조 언어 parser 대조는 등록된 모호·최신·불일치 case에 한해 필요한 환경에서 수행하며 다른 OS native 실행을 대체하지 않는다. 세 OS runner label/architecture는 [기계 정의](../../src/contracts/campaign-01.json)에 있고 실제 image와 tool은 run receipt에 기록한다.
 
