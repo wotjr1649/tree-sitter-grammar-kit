@@ -178,6 +178,58 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 	}
 }
 
+func TestMarginSecondResolutionTimestamps(t *testing.T) {
+	// GitHub reported the successful Linux bind-mount step at 05:22:12Z twice.
+	s := marginStep{Status: "completed", Conclusion: "success", Start: "2026-10-16T05:22:12Z", End: "2026-10-16T05:22:12Z"}
+	if ms, err := elapsed(s); err != nil || ms != 0 {
+		t.Fatalf("valid second-resolution observation rejected: %d %v", ms, err)
+	}
+	for name, mutate := range map[string]func(*marginStep){
+		"missing-start": func(s *marginStep) { s.Start = "" },
+		"missing-end":   func(s *marginStep) { s.End = "" },
+		"invalid":       func(s *marginStep) { s.End = "invalid" },
+		"reversed":      func(s *marginStep) { s.End = "2026-10-16T05:22:11Z" },
+		"skipped":       func(s *marginStep) { s.Conclusion = "skipped" },
+		"unfinished":    func(s *marginStep) { s.Status = "in_progress" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			bad := s
+			mutate(&bad)
+			if _, err := elapsed(bad); err == nil {
+				t.Fatal("invalid timestamp observation accepted")
+			}
+		})
+	}
+	r, jobs, core := marginFixture(t, "900")
+	var api struct {
+		Total int            `json:"total_count"`
+		Jobs  []marginAPIJob `json:"jobs"`
+	}
+	if err := json.Unmarshal(jobs, &api); err != nil {
+		t.Fatal(err)
+	}
+	name := "isolated bind-mount output boundary (#196)"
+	for i := range api.Jobs {
+		if api.Jobs[i].Name == "foundation (ubuntu-24.04)" {
+			for j := range api.Jobs[i].Steps {
+				if api.Jobs[i].Steps[j].Name == name {
+					api.Jobs[i].Steps[j].End = api.Jobs[i].Steps[j].Start
+				}
+			}
+		}
+	}
+	metrics, err := currentMargins(r.Run, r.Configs, encoded(t, api), core)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range metrics {
+		if m.ID == "foundation/linux/step/"+name && m.Used == 0 {
+			return
+		}
+	}
+	t.Fatal("zero-duration successful step metric absent")
+}
+
 func TestMarginSourceIdentity(t *testing.T) {
 	t.Chdir(t.TempDir())
 	for _, name := range []string{"src/p.go", "go.mod", "go.sum", ".github/workflows/foundation.yml", "docs/note.md"} {

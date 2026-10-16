@@ -212,7 +212,7 @@ type marginAPIJob struct {
 func elapsed(s marginStep) (int64, error) {
 	start, e1 := time.Parse(time.RFC3339, s.Start)
 	end, e2 := time.Parse(time.RFC3339, s.End)
-	if e1 != nil || e2 != nil || s.Status != "completed" || s.Conclusion != "success" || !end.After(start) {
+	if e1 != nil || e2 != nil || s.Status != "completed" || s.Conclusion != "success" || end.Before(start) {
 		return 0, errors.New("margin observation incomplete or invalid")
 	}
 	ms := end.Sub(start).Milliseconds()
