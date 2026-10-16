@@ -7,7 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'http.ps1')
-if ($env:GITHUB_REPOSITORY -cne 'wotjr1649/tree-sitter-grammar-kit' -or $env:GITHUB_RUN_ID -cnotmatch '^[1-9][0-9]{0,19}$') { throw 'workflow identity invalid' }
+. (Join-Path $PSScriptRoot 'margin-fetch.ps1')
+if ($env:GITHUB_REPOSITORY -cne 'wotjr1649/tree-sitter-grammar-kit' -or $env:GITHUB_RUN_ID -cnotmatch '^[1-9][0-9]{0,19}$' -or $env:GITHUB_RUN_ATTEMPT -cnotmatch '^[1-9][0-9]{0,19}$') { throw 'workflow identity invalid' }
 $metadata = Join-Path $Work 'metadata'
 $planPath = Join-Path $Work 'plan.json'
 $destination = Join-Path $Work 'artifacts'
@@ -46,10 +47,14 @@ try {
     if ($id -cnotmatch '^[1-9][0-9]{0,19}$' -or $name -cnotmatch '^(s05-routes-(windows|linux|darwin)|s08-qualification|large-api)-[1-9][0-9]{0,19}-[1-9][0-9]{0,19}$' -or $size -le 0 -or $size -gt 104857600) { throw 'validated plan changed' }
     Get-CIGateFile -Client $client -Uri "https://api.github.com/repos/wotjr1649/tree-sitter-grammar-kit/actions/artifacts/$id/zip" -Out (Join-Path $destination "$name.zip") -Limit $size -Cancellation $deadline.Token -Token $token
   }
+  & $Gate unpack -expected $Expected -plan $planPath -artifacts $destination
+  if ($LASTEXITCODE -ne 0) { throw 'artifact digest/extraction failed' }
+  $marginDeadline = [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(120))
+  try {
+    Get-CIMarginEvidence -Client $client -Cancellation $marginDeadline.Token -Token $token -Gate $Gate -Expected $Expected -Work $Work
+  } finally { $marginDeadline.Dispose() }
 } finally {
   $deadline.Dispose()
   $client.Dispose()
   $token = $null
 }
-& $Gate unpack -expected $Expected -plan $planPath -artifacts $destination
-if ($LASTEXITCODE -ne 0) { throw 'artifact digest/extraction failed' }
