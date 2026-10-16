@@ -63,9 +63,11 @@ func TestReceiptRejectsTampering(t *testing.T) {
 		})
 	}
 	for name, bad := range map[string][]byte{
-		"duplicate": bytes.Replace(good, []byte(`"complete":true`), []byte(`"complete":false,"complete":true`), 1),
-		"unknown":   bytes.Replace(good, []byte(`"complete":true`), []byte(`"unknown":1,"complete":true`), 1),
-		"trailing":  append(append([]byte{}, good...), []byte(`{}`)...),
+		"duplicate":    bytes.Replace(good, []byte(`"complete":true`), []byte(`"complete":false,"complete":true`), 1),
+		"unknown":      bytes.Replace(good, []byte(`"complete":true`), []byte(`"unknown":1,"complete":true`), 1),
+		"trailing":     append(append([]byte{}, good...), []byte(`{}`)...),
+		"missing-zero": bytes.Replace(good, []byte(`"differences":0,`), nil, 1),
+		"null-zero":    bytes.Replace(good, []byte(`"range_start":0`), []byte(`"range_start":null`), 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := decode(native.Frame(bad), req, 0, 2, 2); err == nil {
