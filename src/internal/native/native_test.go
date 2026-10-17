@@ -231,6 +231,7 @@ func TestMalformedThenRepair(t *testing.T) {
 // S05-A04 and A03: owned fault-control builds lose the incremental route or corrupt only
 // an intermediate step; the route and comparison checks detect each one.
 func TestFaultControlsDetected(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		define, claim string
 		equality      string
@@ -241,7 +242,7 @@ func TestFaultControlsDetected(t *testing.T) {
 		{"TSGK_FAULT_STEP1_FLAG", "equality", ""},
 	} {
 		t.Run(tc.define, func(t *testing.T) {
-			t.Parallel() // The sequential parent bounds overlap to these four independent builds.
+			t.Parallel()
 			edits := editsFor(plainSource, [3]any{4, 5, "g"}, [3]any{4, 5, "f"})
 			b := fixtureBuild(t, "plain", tc.define)
 			r := runCase(t, b, "fault", kit.EncodingUTF8, plainSource, edits)
@@ -267,6 +268,7 @@ const heredoc = "abc def;\n<<EOT\none\ntwo\nEOT\nghi;\n"
 // S05-A08: an owned stateful external scanner keeps its delimiter across an incremental
 // reparse inside the heredoc; the deliberate serialization defect is detected.
 func TestStatefulScanner(t *testing.T) {
+	t.Parallel()
 	edits := editsFor(heredoc, [3]any{19, 22, "tw0x"}, [3]any{19, 23, "two"})
 	exp := []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR", Contains: []string{"statement", "heredoc", "heredoc_line", "heredoc_end"}}, {Step: 1, Syntax: "NO_ERROR"}}
 	good := runCase(t, fixtureBuild(t, "stateful"), "a08", kit.EncodingUTF8, heredoc, edits, exp...)

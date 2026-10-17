@@ -406,6 +406,7 @@ func TestRevisions(t *testing.T) {
 // S06-A08: a producer that does not declare the query capability blocks a query case
 // before any capture is read.
 func TestCapabilityMissing(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain", "TSGK_FAULT_NO_QUERY")
 	r := runOracleCase(t, b, oracleContext(false, "(identifier) @i"), "a = 1;", nil)
 	if r.ExecutionStatus != kit.StatusNotRun || r.Assessment != kit.AssessBlocked || r.Code != "QUERY_CAPABILITY_MISSING" || len(r.Steps) != 0 {

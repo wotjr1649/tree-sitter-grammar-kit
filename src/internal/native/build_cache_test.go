@@ -15,6 +15,7 @@ import (
 )
 
 func TestBuildCache(t *testing.T) {
+	t.Parallel()
 	rt, cc := nativeTools(t)
 	sum, size := digestOf(t, cc)
 	req := testBuildRequest(t.TempDir(), rt, fixtureRoot(t, "plain"), fixtureGrammar(t, "plain"), cc, kit.ToolIdentity{Name: "cc", Version: "test", SHA256: sum, Bytes: size})
@@ -88,7 +89,7 @@ func TestBuildCache(t *testing.T) {
 	if err := second.Remove(); err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("same-run owned grammar: cold=%s warm=%s compiler processes=%d -> 0 (n=1, not a performance guarantee)", cold, warm, len(first.Steps))
+	t.Logf("same-run owned grammar: cold=%s warm=%s compiler processes=%d -> 0 (parallel functional phase, includes contention; n=1, not a performance guarantee)", cold, warm, len(first.Steps))
 
 	entry := filepath.Join(req.CacheDir, first.Reuse.Key)
 	recordPath, exePath := filepath.Join(entry, "build.json"), filepath.Join(entry, exeName())

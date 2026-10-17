@@ -10,6 +10,8 @@
 
 `TestNativeAuditSharedParser`는 Windows/amd64의 runtime-only foundation 입력과 owned plain grammar로 독립 audit와 corpus-page wrapper를 실제 compile·실행한다. 두 caller는 driver의 공용 parse 함수를 포함하므로 인자 변경의 회귀 범위다. audit는 legacy native r1/r2만 소비하고 logger r3는 exit 2로 거부한다. 시험은 r1/r2 receipt, corpus page와 같은 입력의 유효한 native r3/unsupported audit 대조를 확인하며, 전체 등록 대용량 audit를 대신하지 않는다. 다른 host에서는 Windows audit backend의 scope로 NOT_RUN/skip을 기록한다.
 
+`TestRegisteredAnchors`는 #214에서 같은 production `Convert-Cases`와 세 보조 함수를 process마다 한 번 로드하고, 등록된 모든 anchored file을 최대 네 파일씩 묶어 순서대로 변환한다. 파일별 output root를 분리하며 input에서 정한 case ID·개수·expectation 개수/step·source bytes와 실제 출력 파일을 결속한 뒤 독립 Go reference/inventory의 anchor 전체와 비교한다. 빈 결과·누락·중복·순서 변경은 통과하지 않는다. 기존 13개 잘못된 anchor는 실제 `Resolve-Anchor`의 명시적 거부로만 인정하고 timeout·출력 초과·AST/IO·비도메인 오류를 기대 거부로 처리하지 않는다. 한 process의 90초/남은 package 예산과 stream별 1MiB 출력 경계를 적용하고, parent 종료 예산 5초를 남긴다. singleton·같은 ID의 서로 다른 source/output 격리·양방향 및 다음 묶음 거부·coverage 변조·`io.Copy` 출력 경계 대조를 유지한다. 이 변경은 시험 harness 범위이며 production script·cold native 검증·package/job 제한은 바꾸지 않는다.
+
 Only Go 1.27.1, Git, and PowerShell 7 are required. Core checks do not require Node, Python, a C compiler, or WSL. Run from the repository root with PowerShell 7. Check each native command's exit status; do not use global `go env -w` settings.
 
 ```powershell
@@ -143,9 +145,11 @@ Code, product-contract, CI, validation-policy, and semantic development-instruct
 
 #196의 CLI 경로 검사는 foundation의 세 OS에서 실제 handle-derived directory identity, 내부/외부 경로, 미확인 거절과 기존 no-clobber 검사를 실행한다. Linux foundation은 `TestBindMountMembership` binary를 별도 private mount namespace에서 실행하여 root 하위 directory를 외부 위치에 bind한 반례를 확인한다. 먼저 같은 binary에 flag만 주고 parent와 같은 mount namespace에서 실행하여 mount 전 거절되는 negative control을 확인한다. 정상 fixture는 parent와 다른 mount namespace, private propagation, 최소 환경, 유한 timeout을 사용하며 unmount 뒤 임시 fixture를 제거한다. 실패·timeout·skip은 이 CI 검사의 PASS가 아니다. Windows 실제 `subst` mapping 생성은 이 검사에 포함되지 않는다.
 
-## Native fixture 빌드 스케줄 (#210)
+## Native fixture 빌드 스케줄 (#210, #214)
 
-테스트 fixture는 key별 실제 빌드 결과와 오류를 공유하고, 서로 다른 key는 독립 directory에서 최대 4개까지 컴파일한다. fault·reuse 관측 그룹은 순차 부모 안의 독립 child만 병렬 실행하여 다른 순차 timing 검사와 겹치지 않는다. 제품 빌드·컴파일 flags·판정·기존 process/package/job 제한을 유지한다. 단계 시간은 warm cache 이동과 전체 package 시간을 구분하고, CI timeout 실패나 downstream skip을 PASS로 바꾸지 않는다. [측정과 범위](../reports/issue-210-native-suite-build-cost.md)를 참조한다.
+테스트 fixture는 key별 실제 빌드 결과와 오류를 공유하고, 서로 다른 key는 독립 directory에서 최대 4개까지 컴파일한다. #214의 batch·build identity/cache·scanner·capability·fault·reuse 기능 시험은 최상위 `t.Parallel`로 모든 순차 시험이 끝난 뒤 병렬 구간에서 실행한다. fault·reuse의 독립 child도 병렬을 유지한다. 취소·parse timeout 등 순차 timing 검사는 이 구간과 겹치지 않으며 cache record를 순서대로 변조하는 내부 subtest는 직렬로 유지한다. fixture slot 4개는 직접 `NewBuild` 호출이나 전체 native process 수의 상한이 아니다.
+
+제품 빌드·컴파일 flags·cold build·판정·기존 process/package/job 제한을 유지한다. cache cold/warm wall은 병렬 경합이 포함된 기능 진단값이며 단독 성능 표본으로 비교하지 않는다. 단계 시간은 warm cache 이동과 전체 package 시간을 구분하고, CI timeout 실패나 downstream skip을 PASS로 바꾸지 않는다. [#210의 과거 측정과 범위](../reports/issue-210-native-suite-build-cost.md)를 보존하며 후속 스케줄의 시간 여유는 해당 후보의 전체 실행과 실제 main으로 따로 검증한다.
 
 ## Integration into main and Git transaction
 
