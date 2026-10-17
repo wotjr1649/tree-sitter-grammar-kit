@@ -168,6 +168,7 @@ func TestSvcSegmentsPreserveEveryExpectation(t *testing.T) {
 }
 
 func TestSvcSegmentsRetainNativeFailures(t *testing.T) {
+	t.Parallel()
 	x := testContext("native-parse-edit")
 	x.Format = kit.SvcFormat
 	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\nz = [1, 2];\na = f(1);"
@@ -184,6 +185,7 @@ func TestSvcSegmentsRetainNativeFailures(t *testing.T) {
 }
 
 func TestSvcSegmentFailureCodeOverridesBlocked(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
 	x := testContext("native-parse-edit")
 	x.Format = kit.SvcFormat
@@ -318,6 +320,7 @@ func TestSvcNativeEncodingCoordinates(t *testing.T) {
 }
 
 func TestSvcSegmentTerminalStatusClearsWholeClaims(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
 	x := oracleContext(true)
 	x.Format = kit.SvcFormat
@@ -339,6 +342,7 @@ func TestSvcSegmentTerminalStatusClearsWholeClaims(t *testing.T) {
 }
 
 func TestSvcSegmentFirstFailureSurvivesLaterBlocked(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_OLD_TREE")
 	x := testContext("native-parse-edit")
 	x.Format = kit.SvcFormat
