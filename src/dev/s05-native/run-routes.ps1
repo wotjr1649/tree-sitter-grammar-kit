@@ -92,8 +92,23 @@ if ($ccItem.LinkTarget) { $ccItem = $ccItem.ResolveLinkTarget($true) }
 $compilerId = [ordered]@{ name = 'cc'; version = 'host'; sha256 = (Get-Sha $ccItem.FullName); bytes = $ccItem.Length }
 $work = Join-Path $Destination 'work'
 New-Item -ItemType Directory -Path $work | Out-Null
+$buildCache = Join-Path $work 'build-cache'
+New-Item -ItemType Directory -Path $buildCache | Out-Null
 $summary = [ordered]@{ schema = 'tsgk-s05-route-run/r1'; platform = $Platform; compiler = [ordered]@{ path = $Compiler; version_line = $ccVersion; sha256 = $compilerId.sha256; bytes = $compilerId.bytes }
+  build_reuse = [ordered]@{ requests = 0; hits = 0; compiler_processes = 0; compiler_wall_ms = 0 }
   started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); api_findings = @(); requirement_results = @(); failures = @() }
+
+function Add-BuildObservation($Result) {
+  if (-not $Result.build) { return }
+  $summary.build_reuse.requests++
+  if ($Result.build.PSObject.Properties['reuse'] -and $Result.build.reuse.hit) { $summary.build_reuse.hits++ }
+  foreach ($step in @($Result.build.steps)) {
+    if ($step.executed) {
+      $summary.build_reuse.compiler_processes++
+      $summary.build_reuse.compiler_wall_ms += $step.result.wall_ms
+    }
+  }
+}
 
 function Get-Declarations([string]$Route) {
   $m = $facts.routes | Where-Object { $_.route -eq $Route } | Select-Object -First 1
@@ -130,11 +145,12 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   $out = Join-Path $Destination "results/$Id"
   New-Item -ItemType Directory -Force -Path (Join-Path $Destination 'results') | Out-Null
   $cliArgs = @('incremental', '--root', $Root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
-    '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE')
+    '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache)
   if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
   $line = & $cli @cliArgs
   $code = $LASTEXITCODE
   $res = $line | ConvertFrom-Json
+  Add-BuildObservation $res
   return @{ code = $code; res = $res }
 }
 
@@ -246,12 +262,14 @@ function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [stri
   $out = Join-Path $Destination "records/$Id"
   New-Item -ItemType Directory -Force -Path (Join-Path $Destination 'records') | Out-Null
   $cliArgs = @('oracle', 'record', '--root', $Root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
-    '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE')
+    '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache)
   if ($UsePack) { $cliArgs += @('--fact-pack', $packFile) }
   if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
   $line = & $cli @cliArgs
   $code = $LASTEXITCODE
-  return @{ code = $code; res = ($line | ConvertFrom-Json); out = $out }
+  $res = $line | ConvertFrom-Json
+  Add-BuildObservation $res
+  return @{ code = $code; res = $res; out = $out }
 }
 
 # Adds the empty S06 expectations to converted S05 cases.
@@ -458,6 +476,9 @@ if ($Large -and -not $IsWindows) {
   }
 }
 $summary.finished_at = (Get-Date).ToUniversalTime().ToString('o')
+if ((Get-Item -LiteralPath $buildCache).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'cache root became a reparse point' }
+if (@(Get-ChildItem -LiteralPath $buildCache -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) { throw 'cache contains a reparse point' }
+Remove-Item -LiteralPath $buildCache -Recurse -Force
 $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $Destination 'summary.json') -Encoding utf8NoBOM
 if (Test-Path -LiteralPath (Join-Path $Destination 'roots')) { Remove-Item -LiteralPath (Join-Path $Destination 'roots') -Recurse -Force }
 Write-Output ("routes={0} failures={1}" -f $summary.routes.Count, $summary.failures.Count)

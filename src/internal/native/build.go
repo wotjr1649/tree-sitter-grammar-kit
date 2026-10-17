@@ -93,6 +93,7 @@ type BuildRequest struct {
 	Defines      []string // owned fault controls for the kit's tests only; recorded in the closure
 	Sanitize     bool     // diagnostic build with AddressSanitizer/UBSan (gcc/clang on Linux and macOS)
 	CgroupParent string
+	CacheDir     string // optional existing, trusted directory private to this orchestration run
 }
 
 // ClosureFile is one input of the build closure.
@@ -128,6 +129,7 @@ type Build struct {
 	EnvNames         []string         `json:"env_names"`
 	Closure          []ClosureFile    `json:"closure"`
 	Steps            []BuildStep      `json:"steps"`
+	Reuse            *BuildReuse      `json:"reuse,omitempty"`
 	env              []string
 	cgroup           string
 }
@@ -367,6 +369,22 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 	}
 	idsum := sha256.Sum256([]byte(text.String()))
 	b.Identity = hex.EncodeToString(idsum[:])
+	if req.CacheDir != "" {
+		if err := ctx.Err(); err != nil {
+			return b, refuse(kit.KindCancelled, "CANCELLED", err)
+		}
+		var plan []BuildStep
+		for _, step := range steps {
+			plan = append(plan, BuildStep{Name: step.name, Argv: step.argv})
+		}
+		hit, err := b.reuseBuild(req, plan)
+		if err != nil {
+			return fail("BUILD_CACHE_INVALID", err)
+		}
+		if hit {
+			return b, nil
+		}
+	}
 	for _, s := range steps {
 		spec := runner.Spec{Path: req.Compiler, Args: s.argv, Dir: dir, Env: b.env, StdoutBytes: buildOutput, StderrBytes: buildOutput,
 			Wall: buildWall, Grace: buildGrace, Memory: runner.Memory{Bytes: buildMemory, Hard: runtime.GOOS != "darwin"}, CgroupParent: req.CgroupParent}
@@ -397,6 +415,11 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 	b.Executable = filepath.Join(dir, exeName())
 	if b.ExecutableSHA256, b.ExecutableBytes, err = fileDigest(b.Executable); err != nil {
 		return fail("EXECUTABLE_MISSING", err)
+	}
+	if req.CacheDir != "" {
+		if err := b.saveBuild(req.CacheDir); err != nil {
+			return fail("BUILD_CACHE_INVALID", err)
+		}
 	}
 	return b, nil
 }

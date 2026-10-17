@@ -87,6 +87,7 @@ var required = []string{
 	"src/dev/ci-gate/margin.go", "src/dev/ci-gate/margin_fetch.go", "src/dev/ci-gate/config.ps1", "src/dev/ci-gate/margin-fetch.ps1",
 	"docs/reports/issue-214-resource-offline-verification.md",
 	"src/dev/large-api/main.go", "src/internal/runner/runner.go", "src/internal/native/protocol.go",
+	"src/internal/native/build_cache.go",
 	"src/contracts/qualification-c1.json", "docs/reports/session-08-qualification.md", "src/dev/s08-qualify/run-identity.ps1", "src/dev/s08-qualify/gate.ps1",
 	"src/contracts/feature-alternatives.json", "src/testdata/native/samples/NOTICE.md",
 }
