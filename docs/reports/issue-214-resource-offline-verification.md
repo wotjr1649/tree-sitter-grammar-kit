@@ -1,6 +1,6 @@
 # #214 resource control의 offline 검증 범위와 개선 제안
 
-이 문서는 #214/PR #225에서 확인한 과거 r1의 한계와 #226의 bounded resource capture/replay 구현 범위를 기록한다. 새 구현은 과거 결과를 승격하지 않는다. 현재 owning 계약은 [validation](../validation/validation.md#ci-and-evidence)이다.
+이 문서는 #214/PR #225에서 확인한 과거 r1의 한계와 #226의 bounded resource capture/replay 구현 범위를 기록한다. 새 구현은 과거 결과를 승격하지 않는다. 형식의 owning 계약은 [tree/protocol](../specs/tree-and-adapter-protocol.md), CI 집계·artifact 계약은 [validation](../validation/validation.md#ci-and-evidence)이다.
 
 ## 기존 r1에서도 offline으로 검사한 것
 
