@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/largeaudit"
@@ -43,23 +44,29 @@ func compile(ctx context.Context, b *native.Build, cc, source, define string) (s
 	if e != nil || digest(compilerBytes) != b.Compiler.SHA256 {
 		return "", nil, errors.New("compiler identity changed")
 	}
-	exe := filepath.Join(b.Dir, "api-audit"+define)
-	if runtime.GOOS == "windows" {
-		exe += ".exe"
+	sourceName := filepath.Base(source)
+	if filepath.Clean(source) != filepath.Join(b.Dir, sourceName) {
+		return "", nil, errors.New("audit source outside private build directory")
 	}
-	args := []string{"-c", "-O2", "-std=gnu11", "-I", b.Dir, "-I", filepath.Join(b.Dir, "runtime/lib/include"), "-I", filepath.Join(b.Dir, "driver"), source, "-o", filepath.Join(b.Dir, "audit.o")}
+	exeName := "api-" + strings.TrimSuffix(sourceName, ".c") + define
+	if runtime.GOOS == "windows" {
+		exeName += ".exe"
+	}
+	exe := filepath.Join(b.Dir, exeName)
+	args := []string{"-c", "-O2", "-std=gnu11", "-I", ".", "-I", "runtime/lib/include", "-I", "driver", sourceName, "-o", "audit.o"}
 	if define != "" {
 		args = append(args, "-DTSGK_AUDIT_FAULT_"+define)
 	}
-	link := []string{filepath.Join(b.Dir, "lib.o"), filepath.Join(b.Dir, "parser.o")}
-	for i := 0; ; i++ {
-		p := filepath.Join(b.Dir, fmt.Sprintf("scanner%d.o", i))
-		if _, e := os.Stat(p); os.IsNotExist(e) {
-			break
+	link := []string{"lib.o", "parser.o"}
+	scanner := 0
+	for _, file := range b.Closure {
+		if file.Role == "grammar-scanner" {
+			link = append(link, fmt.Sprintf("scanner%d.o", scanner))
+			scanner++
 		}
-		link = append(link, p)
 	}
-	link = append(link, filepath.Join(b.Dir, "audit.o"), filepath.Join(b.Dir, "shim.o"), "-o", exe)
+
+	link = append(link, "audit.o", "shim.o", "-o", exeName)
 	tmp := filepath.Join(b.Dir, "tmp")
 	env := []string{"PATH=" + filepath.Dir(cc), "TMP=" + tmp, "TEMP=" + tmp, "TMPDIR=" + tmp}
 	for _, n := range []string{"SystemRoot", "WINDIR", "ProgramData", "ProgramFiles", "ProgramFiles(x86)", "PROCESSOR_ARCHITECTURE"} {
@@ -87,6 +94,7 @@ type observation struct {
 	Error         string                      `json:"error,omitempty"`
 	ExpectedFault bool                        `json:"expected_fault"`
 	Resource      *largeaudit.ResourceCapture `json:"resource_capture,omitempty"`
+	Raw           []byte                      `json:"raw_frame,omitempty"`
 }
 
 func run(ctx context.Context, exe, expectedSHA, dir string, req native.Request, start, end, expectedNodes uint64) observation {
@@ -125,6 +133,11 @@ func run(ctx context.Context, exe, expectedSHA, dir string, req native.Request, 
 		}
 		return out
 	}
+	if len(r.Stdout) > largeaudit.SessionPageLimit+4 {
+		out.Error = "AUDIT_RECEIPT_TOO_LARGE"
+		return out
+	}
+	out.Raw = r.Stdout
 	out.Receipt, err = decode(r.Stdout, req, start, end, expectedNodes)
 	if err != nil {
 		out.Error = err.Error()
@@ -142,11 +155,15 @@ func execute() error {
 	work := flag.String("work", "", "new task-owned build directory")
 	out := flag.String("out", "", "new receipt file")
 	controlsOnly := flag.Bool("controls-only", false, "small controls and faults only")
+	sessionEvaluate := flag.Bool("session-evaluate", false, "compare one parse session with every legacy large audit page")
 	corpusPlan := flag.String("corpus-plan", "", "local-only pinned corpus page plan (separate evidence mode)")
 	corpusRoot := flag.String("corpus-root", "", "read-only original corpus root")
 	corpusReplay := flag.String("corpus-replay", "", "local page evidence root to verify without native execution")
 	corpusRegistration := flag.String("corpus-registration", "", "caller-trusted pins outside the replay root")
 	flag.Parse()
+	if *sessionEvaluate && (*controlsOnly || *corpusPlan != "" || *corpusReplay != "") {
+		return errors.New("session evaluation requires all registered large fixtures")
+	}
 	if *corpusReplay != "" {
 		return replayCorpus(*corpusReplay, *corpusRoot, *corpusPlan, *corpusRegistration, *out)
 	}
@@ -236,25 +253,51 @@ func execute() error {
 		return e
 	}
 	result := struct {
-		Schema              string              `json:"schema"`
-		Mode                string              `json:"mode"`
-		LargeComplete       bool                `json:"large_complete"`
-		FixtureInventorySHA string              `json:"fixture_inventory_sha256"`
-		RouteRegistrySHA    string              `json:"route_registry_sha256"`
-		AuditSHA            string              `json:"audit_source_sha256"`
-		ExecutableSHA       string              `json:"audit_executable_sha256"`
-		Build               *native.Build       `json:"base_build"`
-		Compile             []native.BuildStep  `json:"audit_compile"`
-		Observations        []observation       `json:"observations"`
-		SmallOracle         []native.CaseResult `json:"small_full_oracle"`
-		ResourceControls    []observation       `json:"resource_controls"`
-		LargeBaseline       []native.CaseResult `json:"large_baseline"`
-		Faults              []observation       `json:"faults"`
-		Pass                bool                `json:"pass"`
+		Schema              string               `json:"schema"`
+		Mode                string               `json:"mode"`
+		LargeComplete       bool                 `json:"large_complete"`
+		FixtureInventorySHA string               `json:"fixture_inventory_sha256"`
+		RouteRegistrySHA    string               `json:"route_registry_sha256"`
+		AuditSHA            string               `json:"audit_source_sha256"`
+		ExecutableSHA       string               `json:"audit_executable_sha256"`
+		Build               *native.Build        `json:"base_build"`
+		Compile             []native.BuildStep   `json:"audit_compile"`
+		Observations        []observation        `json:"observations"`
+		SmallOracle         []native.CaseResult  `json:"small_full_oracle"`
+		ResourceControls    []observation        `json:"resource_controls"`
+		LargeBaseline       []native.CaseResult  `json:"large_baseline"`
+		Faults              []observation        `json:"faults"`
+		Pass                bool                 `json:"pass"`
+		SessionSource       string               `json:"session_source_sha256,omitempty"`
+		SessionExecutable   string               `json:"session_executable_sha256,omitempty"`
+		SessionCompile      []native.BuildStep   `json:"session_compile,omitempty"`
+		Sessions            []largeaudit.Session `json:"session_evaluation,omitempty"`
 	}{Mode: "REGISTERED_LARGE_ALL_NODES", FixtureInventorySHA: fixtureInventorySHA, RouteRegistrySHA: registrySHA, Schema: "tsgk-large-api-validation/r2", AuditSHA: digest(auditSource), ExecutableSHA: digest(executable), Build: b, Compile: steps, Pass: true}
 	if *controlsOnly {
 		result.Schema = "tsgk-large-api-controls/r2"
 		result.Mode = "SMALL_CONTROLS"
+	}
+	var sessionExe string
+	if *sessionEvaluate {
+		result.Schema = "tsgk-large-api-validation/r3"
+		sessionSource, err := os.ReadFile("src/dev/large-api/session-audit.c")
+		if err != nil {
+			return err
+		}
+		result.SessionSource = digest(sessionSource)
+		name := filepath.Join(b.Dir, "session-audit.c")
+		if err := os.WriteFile(name, sessionSource, 0o600); err != nil {
+			return err
+		}
+		sessionExe, result.SessionCompile, err = compile(ctx, b, *cc, name, "")
+		if err != nil {
+			return err
+		}
+		binary, err := os.ReadFile(sessionExe)
+		if err != nil {
+			return err
+		}
+		result.SessionExecutable = digest(binary)
 	}
 	completedFixtures := 0
 	op := kit.NativeOperations()["native-query-large"]
@@ -348,6 +391,7 @@ func execute() error {
 			}
 			expectedNodes := baseline.Steps[0].Incremental.DescendantCount
 			var covered, nodes, children uint64
+			var legacyPages [][]byte
 			for {
 				o := run(ctx, exe, result.ExecutableSHA, b.Dir, req, covered, min(covered+1000000, op.Nodes), expectedNodes)
 				result.Observations = append(result.Observations, o)
@@ -359,12 +403,27 @@ func execute() error {
 				nodes = o.Receipt.Nodes
 				children += o.Receipt.ChildFields
 				covered = o.Receipt.End
+				payload, err := native.SplitFrame(o.Raw)
+				if err != nil {
+					result.Pass = false
+					break
+				}
+				legacyPages = append(legacyPages, payload)
 				if covered == nodes {
 					if children != nodes-1 {
 						result.Pass = false
 					} else {
 						completedFixtures++
 					}
+					break
+				}
+			}
+			if *sessionEvaluate && result.Pass {
+				s, err := runSession(ctx, sessionExe, result.SessionExecutable, b.Dir, req, expectedNodes, 1000000, legacyPages)
+				result.Sessions = append(result.Sessions, s)
+				if err != nil {
+					result.Pass = false
+					fmt.Printf("session %s incomplete: %s\n", f.ID, err)
 					break
 				}
 			}

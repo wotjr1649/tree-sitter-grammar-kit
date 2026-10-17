@@ -61,7 +61,7 @@ func TestNativeAuditSharedParser(t *testing.T) {
 		t.Fatal(err)
 	}
 	op := kit.NativeOperations()["native-query-large"]
-	req := native.Request{ID: "shared-audit", Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(op), Source: []byte("a")}
+	req := native.Request{ID: "shared-audit", Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(op), Source: []byte("a=f(1,[2,3]);")}
 	baseline := b.RunCase(ctx, native.Context{Op: kit.NativeOperations()["native-parse-edit"], Output: kit.OutputTree}, kit.IncrementalCase{ID: req.ID, Encoding: kit.EncodingUTF8}, req.Source)
 	if baseline.ExecutionStatus != kit.StatusCompleted || len(baseline.Steps) != 1 || baseline.Steps[0].Incremental == nil {
 		t.Fatalf("baseline: %+v", baseline)
@@ -131,4 +131,6 @@ func TestNativeAuditSharedParser(t *testing.T) {
 			}
 		}
 	}
+	testNativeSession(t, ctx, b, cc, req, nodes)
+
 }

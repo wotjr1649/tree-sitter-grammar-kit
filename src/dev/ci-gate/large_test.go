@@ -19,9 +19,9 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 		t.Fatal(e)
 	}
 	op := kit.NativeOperations()["native-query-large"]
-	process := runner.Result{Status: runner.StatusCompleted, Cleanup: runner.Cleanup{Verified: true}, Memory: runner.MemoryObservation{Limit: op.MemoryBytes, Enforcement: "HARD", PeakKnown: true, Peak: 100}, WallMillis: 10}
+	process := runner.Result{Status: runner.StatusCompleted, Reason: runner.ReasonExited, Cleanup: runner.Cleanup{Verified: true}, Memory: runner.MemoryObservation{Limit: op.MemoryBytes, Enforcement: "HARD", PeakKnown: true, Peak: 100}, WallMillis: 10}
 	build := []native.BuildStep{{Executed: true, Result: process}}
-	result := largeResult{Schema: "tsgk-large-api-validation/r2", Mode: "REGISTERED_LARGE_ALL_NODES", Complete: true, Pass: true, Inventory: largeaudit.FixtureInventorySHA, Registry: strings.Repeat("b", 64), Source: strings.Repeat("c", 64), Executable: strings.Repeat("d", 64), Compile: build, Build: &native.Build{Identity: strings.Repeat("a", 64), Runtime: runtime.Commit, Symbol: "tree_sitter_c_sharp", Steps: build}}
+	result := largeResult{Schema: "tsgk-large-api-validation/r3", SessionSource: strings.Repeat("e", 64), SessionExecutable: strings.Repeat("f", 64), SessionCompile: []native.BuildStep{{Name: "audit", Executed: true, Result: process, Argv: []string{"-c", "-O2", "-std=gnu11", "-I", ".", "-I", "runtime/lib/include", "-I", "driver", "session-audit.c", "-o", "audit.o"}}, {Name: "audit", Executed: true, Result: process, Argv: []string{"lib.o", "parser.o", "scanner0.o", "audit.o", "shim.o", "-o", "api-session-audit.exe"}}}, Mode: "REGISTERED_LARGE_ALL_NODES", Complete: true, Pass: true, Inventory: largeaudit.FixtureInventorySHA, Registry: strings.Repeat("b", 64), Source: strings.Repeat("c", 64), Executable: strings.Repeat("d", 64), Compile: build, Build: &native.Build{Identity: strings.Repeat("a", 64), Runtime: runtime.Commit, Symbol: "tree_sitter_c_sharp", Steps: build}}
 	var inv largeaudit.Inventory
 	makeCase := func(id, source string, n uint64, full bool) native.CaseResult {
 		inc := &native.TreeOut{Status: kit.StatusCompleted, DescendantCount: n}
@@ -43,7 +43,10 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 		lookups := 2 * (end - start) * fields
 		pc := 3 * uint64(points+2)
 		r := largeaudit.Receipt{Schema: "tsgk-large-api-audit/r1", ID: id, SourceSHA: digest([]byte(source)), SourceBytes: uint64(len(source)), Nodes: n, Start: start, End: end, Depth: 1, Fields: fields, ChildFields: children, FieldLookups: lookups, PointChecks: pc, Checks: 13*(end-start) + children + lookups + pc, First: []int64{0, 0, 0, 0}, FirstDivergence: []int64{0, 0, 0, 0}, ExpectedSHA: strings.Repeat("a", 64), ObservedSHA: strings.Repeat("a", 64), Complete: true}
-		return auditObservation{Executable: result.Executable, Receipt: encoded(t, r), Process: encoded(t, process)}
+		raw := native.Frame(encoded(t, r))
+		p := process
+		p.StdoutBytes = int64(len(raw))
+		return auditObservation{Executable: result.Executable, Receipt: encoded(t, r), Raw: raw, Process: encoded(t, p)}
 	}
 	for i, s := range largeaudit.SmallSources() {
 		id := fmt.Sprintf("small-%d", i)
@@ -59,6 +62,11 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 			n = 1000001
 		}
 		result.Baseline = append(result.Baseline, makeCase(id, s, n, false))
+		session := largeaudit.Session{Schema: largeaudit.SessionSchema, ID: id, Session: strings.Repeat("0", 32), Nodes: n, PageSize: 1000000, Complete: true}
+		req := native.Request{ID: id, Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(op), Source: []byte(s)}
+		session.RequestSHA = digest(native.Frame(req.Encode()))
+		session.Batch.Process = process
+
 		for start := uint64(0); start < n; {
 			end := min(start+1000000, n)
 			children := uint64(0)
@@ -66,8 +74,16 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 				children = n - 1
 			}
 			result.Observations = append(result.Observations, observation(id, s, n, start, end, children, 0))
+			page := largeaudit.SessionPage{Schema: largeaudit.SessionPageSchema, Session: session.Session, Index: uint64(len(session.RawPages)), Parses: 1, SessionComplete: end == n, Receipt: result.Observations[len(result.Observations)-1].Receipt, Complete: true}
+			payload := encoded(t, page)
+			session.RawPages = append(session.RawPages, payload)
+			session.Batch.Frames = append(session.Batch.Frames, runner.FrameResult{ID: fmt.Sprintf("page-%d", len(session.Batch.Frames)), Status: runner.FrameCompleted, WallMillis: 1})
+			session.Batch.Process.StdoutBytes += int64(4 + len(payload))
+
 			start = end
 		}
+		session.BudgetMillis = int64(len(session.RawPages)) * op.ParseWall.Milliseconds()
+		result.Sessions = append(result.Sessions, session)
 	}
 	for i, f := range []string{"PARENT", "SIBLING", "COUNT", "CURSOR", "FIELD_NAME", "FIELD_LOOKUP", "POINT", "POSITIVE_SKIP", "ZERO_SKIP"} {
 		o := result.Observations[0]
@@ -117,7 +133,7 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 
 func TestAuditProcessLimits(t *testing.T) {
 	op := kit.NativeOperations()["native-query-large"]
-	good := runner.Result{Status: runner.StatusCompleted, Cleanup: runner.Cleanup{Verified: true}, Memory: runner.MemoryObservation{Limit: op.MemoryBytes, Enforcement: "HARD", PeakKnown: true}, WallMillis: 10}
+	good := runner.Result{Status: runner.StatusCompleted, Reason: runner.ReasonExited, Cleanup: runner.Cleanup{Verified: true}, Memory: runner.MemoryObservation{Limit: op.MemoryBytes, Enforcement: "HARD", PeakKnown: true}, WallMillis: 10}
 	if _, e := processResult(encoded(t, good), runner.StatusCompleted, 0); e != nil {
 		t.Fatal(e)
 	}
@@ -143,23 +159,40 @@ func TestAuditProcessLimits(t *testing.T) {
 func TestLargeGateCoverageAndControls(t *testing.T) {
 	good, inv := largeFixture(t)
 	data := encoded(t, good)
-	if _, e := checkLarge(data, inv, good.Registry, good.Source); e != nil {
+	if _, e := checkLarge(data, inv, good.Registry, good.Source, good.SessionSource); e != nil {
 		t.Fatal(e)
 	}
 	controls := map[string]func(*largeResult){
-		"drop":                   func(r *largeResult) { r.Observations = r.Observations[:len(r.Observations)-1] },
-		"duplicate":              func(r *largeResult) { r.Observations = append(r.Observations, r.Observations[4]) },
-		"reorder":                func(r *largeResult) { r.Observations[4], r.Observations[5] = r.Observations[5], r.Observations[4] },
-		"missing-small":          func(r *largeResult) { r.Observations = r.Observations[1:] },
-		"incomplete":             func(r *largeResult) { r.Complete = false },
-		"foreign-source":         func(r *largeResult) { r.Source = strings.Repeat("f", 64) },
-		"missing-fault":          func(r *largeResult) { r.Faults = r.Faults[1:] },
-		"duplicate-fault":        func(r *largeResult) { r.Faults[0] = r.Faults[1] },
-		"missing-resource":       func(r *largeResult) { r.Resources = nil },
-		"historical-r1":          func(r *largeResult) { r.Schema = "tsgk-large-api-validation/r1" },
-		"missing-resource-frame": func(r *largeResult) { r.Resources[0].Resource = nil },
-		"resource-request-sha":   func(r *largeResult) { r.Resources[0].Resource.RequestSHA = strings.Repeat("e", 64) },
-		"resource-stdout-sha":    func(r *largeResult) { r.Resources[0].Resource.StdoutSHA = strings.Repeat("e", 64) },
+		"missing-session":   func(r *largeResult) { r.Sessions = r.Sessions[:2] },
+		"duplicate-session": func(r *largeResult) { r.Sessions[0] = r.Sessions[1] },
+		"session-source":    func(r *largeResult) { r.SessionSource = strings.Repeat("a", 64) },
+		"session-fault-compile": func(r *largeResult) {
+			r.SessionCompile[0].Argv = append(r.SessionCompile[0].Argv, "-DTSGK_AUDIT_FAULT_PARENT")
+		},
+		"session-preprocessor-escape": func(r *largeResult) {
+			r.SessionCompile[0].Argv = append(r.SessionCompile[0].Argv, "-Wp,-DTSGK_AUDIT_FAULT_PARENT")
+		},
+		"session-response-file":    func(r *largeResult) { r.SessionCompile[0].Argv = append(r.SessionCompile[0].Argv, "@extra-options") },
+		"session-foreign-source":   func(r *largeResult) { r.SessionCompile[0].Argv[9] = "elsewhere/session-audit.c" },
+		"session-foreign-object":   func(r *largeResult) { r.SessionCompile[1].Argv[3] = "other.o" },
+		"session-wrong-output":     func(r *largeResult) { r.SessionCompile[1].Argv[6] = "other.exe" },
+		"session-no-output-option": func(r *largeResult) { r.SessionCompile[1].Argv[5] = "api-session-audit.exe" },
+		"session-incomplete":       func(r *largeResult) { r.Sessions[0].Complete = false },
+		"missing-actual-frame":     func(r *largeResult) { r.Observations[0].Raw = nil },
+		"actual-frame-mismatch":    func(r *largeResult) { r.Observations[0].Raw = r.Observations[1].Raw },
+		"drop":                     func(r *largeResult) { r.Observations = r.Observations[:len(r.Observations)-1] },
+		"duplicate":                func(r *largeResult) { r.Observations = append(r.Observations, r.Observations[4]) },
+		"reorder":                  func(r *largeResult) { r.Observations[4], r.Observations[5] = r.Observations[5], r.Observations[4] },
+		"missing-small":            func(r *largeResult) { r.Observations = r.Observations[1:] },
+		"incomplete":               func(r *largeResult) { r.Complete = false },
+		"foreign-source":           func(r *largeResult) { r.Source = strings.Repeat("f", 64) },
+		"missing-fault":            func(r *largeResult) { r.Faults = r.Faults[1:] },
+		"duplicate-fault":          func(r *largeResult) { r.Faults[0] = r.Faults[1] },
+		"missing-resource":         func(r *largeResult) { r.Resources = nil },
+		"historical-r1":            func(r *largeResult) { r.Schema = "tsgk-large-api-validation/r1" },
+		"missing-resource-frame":   func(r *largeResult) { r.Resources[0].Resource = nil },
+		"resource-request-sha":     func(r *largeResult) { r.Resources[0].Resource.RequestSHA = strings.Repeat("e", 64) },
+		"resource-stdout-sha":      func(r *largeResult) { r.Resources[0].Resource.StdoutSHA = strings.Repeat("e", 64) },
 		"resource-producer": func(r *largeResult) {
 			c := r.Resources[0].Resource
 			c.Stdout = native.Frame([]byte(strings.Replace(string(c.Stdout[4:]), `"language_version":15`, `"language_version":14`, 1)))
@@ -210,7 +243,7 @@ func TestLargeGateCoverageAndControls(t *testing.T) {
 				t.Fatal(e)
 			}
 			change(&bad)
-			if _, e := checkLarge(encoded(t, bad), inv, good.Registry, good.Source); e == nil {
+			if _, e := checkLarge(encoded(t, bad), inv, good.Registry, good.Source, good.SessionSource); e == nil {
 				t.Fatal("invalid large API gate accepted")
 			}
 		})
@@ -223,7 +256,7 @@ func TestLargeGateCoverageAndControls(t *testing.T) {
 		"truncated": data[:len(data)-1],
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, e := checkLarge(bad, inv, good.Registry, good.Source); e == nil {
+			if _, e := checkLarge(bad, inv, good.Registry, good.Source, good.SessionSource); e == nil {
 				t.Fatal("malformed audit accepted")
 			}
 		})

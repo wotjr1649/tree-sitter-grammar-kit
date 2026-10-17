@@ -107,6 +107,9 @@ func TestFrameWatchdogRealTimer(t *testing.T) {
 		r.Frames[0].Status != FrameResourceLimit || r.Frames[1].Status != FrameRequeued {
 		t.Fatalf("real watchdog: %v %+v", err, r)
 	}
+	if r.Frames[0].WallMillis < (pol.FrameWall+pol.FrameGrace).Milliseconds() || r.Frames[1].WallMillis != 0 {
+		t.Fatalf("frame elapsed time missing or assigned to unsent frame: %+v", r.Frames)
+	}
 }
 
 // R1-06: a frame hung while an escaped descendant holds stdout still ends within the

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 )
 
 type auditObservation struct {
+	Raw           []byte                      `json:"raw_frame,omitempty"`
 	Fault         string                      `json:"fault"`
 	Executable    string                      `json:"executable_sha256"`
 	Receipt       json.RawMessage             `json:"receipt"`
@@ -25,21 +27,25 @@ type auditObservation struct {
 	Resource      *largeaudit.ResourceCapture `json:"resource_capture,omitempty"`
 }
 type largeResult struct {
-	Schema       string              `json:"schema"`
-	Mode         string              `json:"mode"`
-	Complete     bool                `json:"large_complete"`
-	Pass         bool                `json:"pass"`
-	Inventory    string              `json:"fixture_inventory_sha256"`
-	Registry     string              `json:"route_registry_sha256"`
-	Source       string              `json:"audit_source_sha256"`
-	Executable   string              `json:"audit_executable_sha256"`
-	Build        *native.Build       `json:"base_build"`
-	Compile      []native.BuildStep  `json:"audit_compile"`
-	Observations []auditObservation  `json:"observations"`
-	Small        []native.CaseResult `json:"small_full_oracle"`
-	Baseline     []native.CaseResult `json:"large_baseline"`
-	Faults       []auditObservation  `json:"faults"`
-	Resources    []auditObservation  `json:"resource_controls"`
+	SessionSource     string               `json:"session_source_sha256"`
+	SessionExecutable string               `json:"session_executable_sha256"`
+	SessionCompile    []native.BuildStep   `json:"session_compile"`
+	Sessions          []largeaudit.Session `json:"session_evaluation"`
+	Schema            string               `json:"schema"`
+	Mode              string               `json:"mode"`
+	Complete          bool                 `json:"large_complete"`
+	Pass              bool                 `json:"pass"`
+	Inventory         string               `json:"fixture_inventory_sha256"`
+	Registry          string               `json:"route_registry_sha256"`
+	Source            string               `json:"audit_source_sha256"`
+	Executable        string               `json:"audit_executable_sha256"`
+	Build             *native.Build        `json:"base_build"`
+	Compile           []native.BuildStep   `json:"audit_compile"`
+	Observations      []auditObservation   `json:"observations"`
+	Small             []native.CaseResult  `json:"small_full_oracle"`
+	Baseline          []native.CaseResult  `json:"large_baseline"`
+	Faults            []auditObservation   `json:"faults"`
+	Resources         []auditObservation   `json:"resource_controls"`
 }
 
 func requiredFields(data []byte, keys ...string) error {
@@ -126,10 +132,14 @@ func verifyLarge(root string, expected kit.RunIdentity) (map[string]any, error) 
 	if err != nil {
 		return nil, err
 	}
-	return checkLarge(data, fixtures, digest(registry), digest(source))
+	sessionSource, err := readFile("src/dev/large-api/session-audit.c", 1048576)
+	if err != nil {
+		return nil, err
+	}
+	return checkLarge(data, fixtures, digest(registry), digest(source), digest(sessionSource))
 }
 
-func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceSHA string) (map[string]any, error) {
+func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceSHA, sessionSourceSHA string) (map[string]any, error) {
 	var result largeResult
 	if decode(data, &result) != nil {
 		return nil, errors.New("large API JSON invalid")
@@ -153,13 +163,26 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if err != nil {
 		return nil, errors.New("runtime manifest unavailable")
 	}
-	if result.Schema != "tsgk-large-api-validation/r2" || result.Mode != "REGISTERED_LARGE_ALL_NODES" || !result.Pass || !result.Complete ||
+	if result.Schema != "tsgk-large-api-validation/r3" || result.Mode != "REGISTERED_LARGE_ALL_NODES" || !result.Pass || !result.Complete ||
+		result.SessionSource != sessionSourceSHA || !hex64.MatchString(result.SessionExecutable) || result.SessionExecutable == result.Executable || !compiled(result.SessionCompile) || len(result.SessionCompile) != 2 || len(result.Sessions) != 3 ||
 		result.Inventory != largeaudit.FixtureInventorySHA || result.Registry != registrySHA || result.Source != sourceSHA || !hex64.MatchString(result.Executable) ||
 		result.Build == nil || !hex64.MatchString(result.Build.Identity) || result.Build.Runtime != runtime.Commit || result.Build.Symbol != "tree_sitter_c_sharp" ||
 		len(result.Build.Defines) != 0 || result.Build.Sanitize || !compiled(result.Build.Steps) || !compiled(result.Compile) ||
 		len(result.Small) != 4 || len(result.Baseline) != 3 || len(fixtures.Fixtures) != 3 || len(result.Faults) != 9 || len(result.Resources) != 1 {
 		return nil, errors.New("large API gate incomplete or unsuccessful")
 	}
+	// C# has one registered scanner. Relative argv bind both steps to the private
+	// build directory on the producer, independent of the offline verifier's OS.
+	plan := [][]string{
+		{"-c", "-O2", "-std=gnu11", "-I", ".", "-I", "runtime/lib/include", "-I", "driver", "session-audit.c", "-o", "audit.o"},
+		{"lib.o", "parser.o", "scanner0.o", "audit.o", "shim.o", "-o", "api-session-audit.exe"},
+	}
+	for i, step := range result.SessionCompile {
+		if step.Name != "audit" || !slices.Equal(step.Argv, plan[i]) {
+			return nil, errors.New("session compile plan differs")
+		}
+	}
+
 	op := kit.NativeOperations()["native-query-large"]
 	requests := map[string]native.Request{}
 	nodes := map[string]uint64{}
@@ -212,6 +235,7 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	var wall int64
 	var memory uint64
 	pages := 0
+	legacyPages := map[string][][]byte{}
 	for _, o := range result.Observations {
 		var header struct {
 			ID string `json:"id"`
@@ -233,13 +257,19 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 		if e != nil || r.Differences != 0 || r.Divergences != 0 {
 			return nil, errors.New("audit page invalid or differs")
 		}
+		payload, frameErr := native.SplitFrame(o.Raw)
+		actual, receiptErr := largeaudit.Decode(payload, req, start, end, nodes[req.ID])
+		if frameErr != nil || receiptErr != nil || len(o.Raw) > largeaudit.SessionPageLimit+4 || !reflect.DeepEqual(actual, r) {
+			return nil, errors.New("actual legacy frame missing or differs from receipt")
+		}
 		p, e := processResult(o.Process, runner.StatusCompleted, 0)
-		if e != nil || p.WallMillis > op.ParseWall.Milliseconds() || p.Memory.Limit != op.MemoryBytes {
+		if e != nil || p.StdoutBytes != int64(len(o.Raw)) || p.WallMillis > op.ParseWall.Milliseconds() || p.Memory.Limit != op.MemoryBytes {
 			return nil, errors.New("audit page process outside limits")
 		}
 		if r.Fields != uint64(*result.Small[0].Producer.FieldCount) || strings.HasPrefix(req.ID, "small-") && r.Fields != uint64(*result.Small[int(req.ID[len(req.ID)-1]-'0')].Producer.FieldCount) {
 			return nil, errors.New("audit field inventory mismatch")
 		}
+		legacyPages[req.ID] = append(legacyPages[req.ID], payload)
 		seen[req.ID]++
 		covered[req.ID] = r.End
 		children[req.ID] += r.ChildFields
@@ -251,8 +281,17 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 			return nil, errors.New("audit page coverage incomplete")
 		}
 	}
+	var sessionWall int64
+	for i, f := range fixtures.Fixtures {
+		session := result.Sessions[i]
+		if session.ID != f.ID || session.Nodes != nodes[f.ID] || session.PageSize != 1000000 || largeaudit.CheckSession(session, requests[f.ID], legacyPages[f.ID]) != nil {
+			return nil, errors.New("session comparison incomplete or differs")
+		}
+		sessionWall = max(sessionWall, session.Batch.Process.WallMillis)
+		memory = max(memory, session.Batch.Process.Memory.Peak)
+	}
 	faults := map[string]bool{}
-	executables := map[string]bool{result.Executable: true}
+	executables := map[string]bool{result.Executable: true, result.SessionExecutable: true}
 	for _, o := range result.Faults {
 		if !slices.Contains([]string{"PARENT", "SIBLING", "COUNT", "CURSOR", "FIELD_NAME", "FIELD_LOOKUP", "POINT", "POSITIVE_SKIP", "ZERO_SKIP"}, o.Fault) || faults[o.Fault] || !o.ExpectedFault || o.Error != "" || !hex64.MatchString(o.Executable) || executables[o.Executable] || !compiled(o.Compile) {
 			return nil, errors.New("fault control identity invalid")
@@ -312,5 +351,5 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if e != nil || responseProducer.LanguageVersion != producer.LanguageVersion || responseProducer.RuntimeLanguageVersion != producer.RuntimeLanguageVersion || responseProducer.RuntimeMinCompatible != producer.RuntimeMinCompatible {
 		return nil, errors.New("resource frame or producer mismatch")
 	}
-	return map[string]any{"pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory}, nil
+	return map[string]any{"session_fixtures": len(result.Sessions), "max_session_wall_ms": sessionWall, "pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory}, nil
 }

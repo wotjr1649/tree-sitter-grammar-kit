@@ -756,7 +756,7 @@ jobs:
           $cc = & src/dev/s05-native/select-compiler.ps1
           $work = Join-Path $env:RUNNER_TEMP "large-api-work-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $receipt = Join-Path $env:RUNNER_TEMP "large-api-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
-          go run ./src/dev/large-api -prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -cc $cc -work $work -out $receipt
+          go run ./src/dev/large-api -session-evaluate -prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -cc $cc -work $work -out $receipt
           $auditExit = $LASTEXITCODE
           $identity = Join-Path $env:RUNNER_TEMP "large-api-identity-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           New-Item -ItemType Directory -Path $identity | Out-Null
