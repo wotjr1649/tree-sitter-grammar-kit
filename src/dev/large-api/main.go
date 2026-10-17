@@ -79,13 +79,14 @@ func compile(ctx context.Context, b *native.Build, cc, source, define string) (s
 }
 
 type observation struct {
-	Fault         string             `json:"fault,omitempty"`
-	ExecutableSHA string             `json:"executable_sha256"`
-	Compile       []native.BuildStep `json:"compile,omitempty"`
-	Receipt       receipt            `json:"receipt"`
-	Process       runner.Result      `json:"process"`
-	Error         string             `json:"error,omitempty"`
-	ExpectedFault bool               `json:"expected_fault"`
+	Fault         string                      `json:"fault,omitempty"`
+	ExecutableSHA string                      `json:"executable_sha256"`
+	Compile       []native.BuildStep          `json:"compile,omitempty"`
+	Receipt       receipt                     `json:"receipt"`
+	Process       runner.Result               `json:"process"`
+	Error         string                      `json:"error,omitempty"`
+	ExpectedFault bool                        `json:"expected_fault"`
+	Resource      *largeaudit.ResourceCapture `json:"resource_capture,omitempty"`
 }
 
 func run(ctx context.Context, exe, expectedSHA, dir string, req native.Request, start, end, expectedNodes uint64) observation {
@@ -94,7 +95,12 @@ func run(ctx context.Context, exe, expectedSHA, dir string, req native.Request, 
 		return observation{Error: "EXECUTABLE_IDENTITY_MISMATCH"}
 	}
 	op := kit.NativeOperations()["native-query-large"]
-	r, err := runner.Run(ctx, runner.Spec{Path: exe, Args: []string{fmt.Sprint(start), fmt.Sprint(end)}, Dir: dir, Stdin: native.Frame(req.Encode()), StdoutBytes: int64(op.OutputBytes) + 4, StderrBytes: 65536, Wall: op.ParseWall, Grace: 5 * time.Second, Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: true}})
+	stdin := native.Frame(req.Encode())
+	stdoutLimit := int64(op.OutputBytes) + 4
+	if req.Limits.MemoryBytes == 1 {
+		stdoutLimit = largeaudit.ResourceFrameLimit
+	}
+	r, err := runner.Run(ctx, runner.Spec{Path: exe, Args: []string{fmt.Sprint(start), fmt.Sprint(end)}, Dir: dir, Stdin: stdin, StdoutBytes: stdoutLimit, StderrBytes: 65536, Wall: op.ParseWall, Grace: 5 * time.Second, Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: true}})
 	out := observation{Process: r}
 	if executable, e := os.ReadFile(exe); e == nil {
 		out.ExecutableSHA = digest(executable)
@@ -110,16 +116,17 @@ func run(ctx context.Context, exe, expectedSHA, dir string, req native.Request, 
 		out.Error = "RUN_REFUSED"
 		return out
 	}
+	if req.Limits.MemoryBytes == 1 {
+		out.Resource, err = largeaudit.CaptureResource(req, stdin, r.Stdout, r)
+		if err != nil {
+			out.Error = err.Error()
+		} else {
+			out.Error = "RESOURCE_LIMIT:ALLOCATION_LIMIT"
+		}
+		return out
+	}
 	out.Receipt, err = decode(r.Stdout, req, start, end, expectedNodes)
 	if err != nil {
-		if payload, e := native.SplitFrame(r.Stdout); e == nil {
-			if failure, e := native.DecodeResponse(payload); e == nil && failure.Status == kit.StatusResourceLimit && failure.Code == "ALLOCATION_LIMIT" && r.Cleanup.Verified && !r.StdoutTruncated && !r.StderrTruncated && r.Memory.Enforcement == runner.MemoryHard {
-				if _, e = native.Check(failure, req, [][]byte{req.Source}, nil, r.ExitCode); e == nil && failure.StepsCompleted == 0 {
-					out.Error = "RESOURCE_LIMIT:ALLOCATION_LIMIT"
-					return out
-				}
-			}
-		}
 		out.Error = err.Error()
 		return out
 	}
@@ -244,9 +251,9 @@ func execute() error {
 		LargeBaseline       []native.CaseResult `json:"large_baseline"`
 		Faults              []observation       `json:"faults"`
 		Pass                bool                `json:"pass"`
-	}{Mode: "REGISTERED_LARGE_ALL_NODES", FixtureInventorySHA: fixtureInventorySHA, RouteRegistrySHA: registrySHA, Schema: "tsgk-large-api-validation/r1", AuditSHA: digest(auditSource), ExecutableSHA: digest(executable), Build: b, Compile: steps, Pass: true}
+	}{Mode: "REGISTERED_LARGE_ALL_NODES", FixtureInventorySHA: fixtureInventorySHA, RouteRegistrySHA: registrySHA, Schema: "tsgk-large-api-validation/r2", AuditSHA: digest(auditSource), ExecutableSHA: digest(executable), Build: b, Compile: steps, Pass: true}
 	if *controlsOnly {
-		result.Schema = "tsgk-large-api-controls/r1"
+		result.Schema = "tsgk-large-api-controls/r2"
 		result.Mode = "SMALL_CONTROLS"
 	}
 	completedFixtures := 0
@@ -312,8 +319,7 @@ func execute() error {
 			result.Pass = false
 		}
 	}
-	resource := first
-	resource.Limits.MemoryBytes = 1
+	resource := largeaudit.ResourceRequest()
 	limited := run(ctx, exe, result.ExecutableSHA, b.Dir, resource, 0, op.Nodes, firstNodes)
 	result.ResourceControls = append(result.ResourceControls, limited)
 	if limited.Error != "RESOURCE_LIMIT:ALLOCATION_LIMIT" {

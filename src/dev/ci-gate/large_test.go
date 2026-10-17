@@ -21,7 +21,7 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 	op := kit.NativeOperations()["native-query-large"]
 	process := runner.Result{Status: runner.StatusCompleted, Cleanup: runner.Cleanup{Verified: true}, Memory: runner.MemoryObservation{Limit: op.MemoryBytes, Enforcement: "HARD", PeakKnown: true, Peak: 100}, WallMillis: 10}
 	build := []native.BuildStep{{Executed: true, Result: process}}
-	result := largeResult{Schema: "tsgk-large-api-validation/r1", Mode: "REGISTERED_LARGE_ALL_NODES", Complete: true, Pass: true, Inventory: largeaudit.FixtureInventorySHA, Registry: strings.Repeat("b", 64), Source: strings.Repeat("c", 64), Executable: strings.Repeat("d", 64), Compile: build, Build: &native.Build{Identity: strings.Repeat("a", 64), Runtime: runtime.Commit, Symbol: "tree_sitter_c_sharp", Steps: build}}
+	result := largeResult{Schema: "tsgk-large-api-validation/r2", Mode: "REGISTERED_LARGE_ALL_NODES", Complete: true, Pass: true, Inventory: largeaudit.FixtureInventorySHA, Registry: strings.Repeat("b", 64), Source: strings.Repeat("c", 64), Executable: strings.Repeat("d", 64), Compile: build, Build: &native.Build{Identity: strings.Repeat("a", 64), Runtime: runtime.Commit, Symbol: "tree_sitter_c_sharp", Steps: build}}
 	var inv largeaudit.Inventory
 	makeCase := func(id, source string, n uint64, full bool) native.CaseResult {
 		inc := &native.TreeOut{Status: kit.StatusCompleted, DescendantCount: n}
@@ -103,7 +103,15 @@ func largeFixture(t *testing.T) (largeResult, largeaudit.Inventory) {
 	p := process
 	p.Status = runner.StatusFailed
 	p.ExitCode = 3
-	result.Resources = []auditObservation{{Executable: result.Executable, Error: "RESOURCE_LIMIT:ALLOCATION_LIMIT", Process: encoded(t, p), Receipt: encoded(t, largeaudit.Receipt{})}}
+	p.Reason = runner.ReasonExited
+	req := largeaudit.ResourceRequest()
+	frame := native.Frame([]byte(fmt.Sprintf(`{"protocol":"tsgk-native/r1","id":"small-0","status":"RESOURCE_LIMIT","code":"ALLOCATION_LIMIT","producer":{"language_version":15,"runtime_language_version":15,"runtime_min_compatible":13,"query":"UNSUPPORTED"},"source_bytes":%d,"steps_completed":0,"steps":[],"complete":true}`, len(req.Source))))
+	p.StdoutBytes = int64(len(frame))
+	capture, e := largeaudit.CaptureResource(req, native.Frame(req.Encode()), frame, p)
+	if e != nil {
+		t.Fatal(e)
+	}
+	result.Resources = []auditObservation{{Executable: result.Executable, Error: "RESOURCE_LIMIT:ALLOCATION_LIMIT", Process: encoded(t, p), Receipt: encoded(t, largeaudit.Receipt{}), Resource: capture}}
 	return result, inv
 }
 
@@ -148,6 +156,15 @@ func TestLargeGateCoverageAndControls(t *testing.T) {
 		"missing-fault":          func(r *largeResult) { r.Faults = r.Faults[1:] },
 		"duplicate-fault":        func(r *largeResult) { r.Faults[0] = r.Faults[1] },
 		"missing-resource":       func(r *largeResult) { r.Resources = nil },
+		"historical-r1":          func(r *largeResult) { r.Schema = "tsgk-large-api-validation/r1" },
+		"missing-resource-frame": func(r *largeResult) { r.Resources[0].Resource = nil },
+		"resource-request-sha":   func(r *largeResult) { r.Resources[0].Resource.RequestSHA = strings.Repeat("e", 64) },
+		"resource-stdout-sha":    func(r *largeResult) { r.Resources[0].Resource.StdoutSHA = strings.Repeat("e", 64) },
+		"resource-producer": func(r *largeResult) {
+			c := r.Resources[0].Resource
+			c.Stdout = native.Frame([]byte(strings.Replace(string(c.Stdout[4:]), `"language_version":15`, `"language_version":14`, 1)))
+			c.StdoutSHA = digest(c.Stdout)
+		},
 		"resource-empty-object":  func(r *largeResult) { r.Resources[0].Receipt = []byte(`{}`) },
 		"resource-wrong-receipt": func(r *largeResult) { r.Resources[0].Receipt = r.Observations[0].Receipt },
 		"resource-null-scalar": func(r *largeResult) {
