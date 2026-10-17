@@ -216,6 +216,51 @@ static void audit_tree(Req *r, TSTree *tree, Checks *checks, uint32_t *count, ui
   t_free(first); idmap_free(&a.map); t_free(a.nodes);
 }
 
+static Buf render_audit(Req *r, TSTree *tree, uint32_t start, uint32_t end, uint64_t *differences) {
+  Checks checks = {0}; sha_init(&checks.expected.sha); sha_init(&checks.observed.sha);
+  uint32_t count, depth; audit_tree(r,tree,&checks,&count,&depth,start,&end);
+  char expected[65], observed[65], source_sha[65];
+  flush_stream(&checks.expected); flush_stream(&checks.observed);
+  sha_hex(&checks.expected.sha,expected); sha_hex(&checks.observed.sha,observed);
+  Sha source_hash; sha_init(&source_hash); sha_update(&source_hash,r->source,r->source_len); sha_hex(&source_hash,source_sha);
+  Buf out = {0}; out.limit = r->output_bytes;
+#ifdef TSGK_CORPUS_CST
+  puts_(&out,"{\"schema\":\"tsgk-corpus-cst-api-page/r1\",\"id\":");
+#else
+  puts_(&out,"{\"schema\":\"tsgk-large-api-audit/r1\",\"id\":");
+#endif
+  putstr(&out,r->id);
+  puts_(&out,",\"source_sha256\":"); putstr(&out,source_sha);
+  puts_(&out,",\"source_bytes\":"); putu(&out,r->source_len);
+  puts_(&out,",\"nodes\":"); putu(&out,count);
+  puts_(&out,",\"range_start\":"); putu(&out,start);
+  puts_(&out,",\"range_end\":"); putu(&out,end);
+  puts_(&out,",\"depth\":"); putu(&out,depth);
+  puts_(&out,",\"field_count\":"); putu(&out,ts_language_field_count(ts_tree_language(tree)));
+  puts_(&out,",\"checks\":"); putu(&out,checks.checks);
+  puts_(&out,",\"child_fields\":"); putu(&out,checks.child_fields);
+  puts_(&out,",\"field_lookups\":"); putu(&out,checks.field_lookups);
+  puts_(&out,",\"point_checks\":"); putu(&out,checks.points);
+  puts_(&out,",\"differences\":"); putu(&out,checks.differences);
+  puts_(&out,",\"position_navigation_divergences\":"); putu(&out,checks.divergences);
+  puts_(&out,",\"first_position_divergence\":["); putu(&out,checks.divergence_node); put(&out,",",1); putu(&out,checks.divergence_column); put(&out,",",1); puti(&out,checks.divergence_expected); put(&out,",",1); puti(&out,checks.divergence_observed); puts_(&out,"]");
+  puts_(&out,",\"first_difference\":["); putu(&out,checks.first_node); put(&out,",",1); putu(&out,checks.first_column); put(&out,",",1); puti(&out,checks.first_expected); put(&out,",",1); puti(&out,checks.first_observed); puts_(&out,"]");
+  puts_(&out,",\"expected_sha256\":"); putstr(&out,expected);
+  puts_(&out,",\"observed_sha256\":"); putstr(&out,observed);
+#ifdef TSGK_CORPUS_CST
+  puts_(&out,",\"cst_page\":{\"types\":"); names_put(&out,&cst_page.types);
+  puts_(&out,",\"fields\":"); names_put(&out,&cst_page.fields);
+  puts_(&out,",\"nodes\":["); put(&out,cst_page.nodes.data,cst_page.nodes.len);
+  const char *encodings[] = {"UTF-8", "UTF-16LE", "UTF-16BE", "CP949"};
+  puts_(&out,"]},\"encoding\":"); putstr(&out,encodings[r->enc]);
+  puts_(&out,",\"has_error\":"); puts_(&out,ts_node_has_error(ts_tree_root_node(tree)) ? "true" : "false");
+#endif
+  puts_(&out,",\"complete\":true}");
+  *differences = checks.differences;
+  return out;
+}
+
+#ifndef TSGK_AUDIT_LIBRARY
 int main(int argc, char **argv) {
   uint32_t start=0,end=MAX_NODES;
   if (argc!=3) return 2;
@@ -249,50 +294,15 @@ int main(int argc, char **argv) {
   Src source = {0}; source.s = r.source; source.n = r.source_len;
   uint64_t millis; TSTree *tree = parse(parser,NULL,NULL,&source,r.enc,r.parse_ms,&error,&millis,NULL);
   if (!tree) return 3;
-  Checks checks = {0}; sha_init(&checks.expected.sha); sha_init(&checks.observed.sha);
-  uint32_t count, depth; audit_tree(&r,tree,&checks,&count,&depth,start,&end);
-  char expected[65], observed[65], source_sha[65];
-  flush_stream(&checks.expected); flush_stream(&checks.observed);
-  sha_hex(&checks.expected.sha,expected); sha_hex(&checks.observed.sha,observed);
-  Sha source_hash; sha_init(&source_hash); sha_update(&source_hash,r.source,r.source_len); sha_hex(&source_hash,source_sha);
-  Buf out = {0}; out.limit = r.output_bytes;
-#ifdef TSGK_CORPUS_CST
-  puts_(&out,"{\"schema\":\"tsgk-corpus-cst-api-page/r1\",\"id\":");
-#else
-  puts_(&out,"{\"schema\":\"tsgk-large-api-audit/r1\",\"id\":");
-#endif
-  putstr(&out,r.id);
-  puts_(&out,",\"source_sha256\":"); putstr(&out,source_sha);
-  puts_(&out,",\"source_bytes\":"); putu(&out,r.source_len);
-  puts_(&out,",\"nodes\":"); putu(&out,count);
-  puts_(&out,",\"range_start\":"); putu(&out,start);
-  puts_(&out,",\"range_end\":"); putu(&out,end);
-  puts_(&out,",\"depth\":"); putu(&out,depth);
-  puts_(&out,",\"field_count\":"); putu(&out,ts_language_field_count(ts_tree_language(tree)));
-  puts_(&out,",\"checks\":"); putu(&out,checks.checks);
-  puts_(&out,",\"child_fields\":"); putu(&out,checks.child_fields);
-  puts_(&out,",\"field_lookups\":"); putu(&out,checks.field_lookups);
-  puts_(&out,",\"point_checks\":"); putu(&out,checks.points);
-  puts_(&out,",\"differences\":"); putu(&out,checks.differences);
-  puts_(&out,",\"position_navigation_divergences\":"); putu(&out,checks.divergences);
-  puts_(&out,",\"first_position_divergence\":["); putu(&out,checks.divergence_node); put(&out,",",1); putu(&out,checks.divergence_column); put(&out,",",1); puti(&out,checks.divergence_expected); put(&out,",",1); puti(&out,checks.divergence_observed); puts_(&out,"]");
-  puts_(&out,",\"first_difference\":["); putu(&out,checks.first_node); put(&out,",",1); putu(&out,checks.first_column); put(&out,",",1); puti(&out,checks.first_expected); put(&out,",",1); puti(&out,checks.first_observed); puts_(&out,"]");
-  puts_(&out,",\"expected_sha256\":"); putstr(&out,expected);
-  puts_(&out,",\"observed_sha256\":"); putstr(&out,observed);
-#ifdef TSGK_CORPUS_CST
-  puts_(&out,",\"cst_page\":{\"types\":"); names_put(&out,&cst_page.types);
-  puts_(&out,",\"fields\":"); names_put(&out,&cst_page.fields);
-  puts_(&out,",\"nodes\":["); put(&out,cst_page.nodes.data,cst_page.nodes.len);
-  const char *encodings[] = {"UTF-8", "UTF-16LE", "UTF-16BE", "CP949"};
-  puts_(&out,"]},\"encoding\":"); putstr(&out,encodings[r.enc]);
-  puts_(&out,",\"has_error\":"); puts_(&out,ts_node_has_error(ts_tree_root_node(tree)) ? "true" : "false");
-#endif
-  puts_(&out,",\"complete\":true}");
+  uint64_t differences;
+  Buf out = render_audit(&r,tree,start,end,&differences);
   if (out.over) return 3;
   write_frame(out.data,out.len);
   ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input); buf_free(&out);
 #ifdef TSGK_CORPUS_CST
   names_free(&cst_page.types); names_free(&cst_page.fields); buf_free(&cst_page.nodes);
 #endif
-  return checks.differences ? 1 : 0;
+  return differences ? 1 : 0;
 }
+
+#endif

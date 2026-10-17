@@ -89,10 +89,11 @@ type Frame struct {
 
 // FrameResult is the outcome of one frame.
 type FrameResult struct {
-	ID       string `json:"id"`
-	Status   string `json:"status"`
-	Detail   string `json:"detail,omitempty"`
-	Response []byte `json:"-"`
+	ID         string `json:"id"`
+	Status     string `json:"status"`
+	Detail     string `json:"detail,omitempty"`
+	Response   []byte `json:"-"`
+	WallMillis int64  `json:"wall_ms"` // elapsed request write through complete response read
 }
 
 // BatchResult keeps every frame outcome and the supervised process result.
@@ -136,11 +137,13 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 			continue
 		}
 		inflight = i
+		started := time.Now()
 		resp, err := exchange(p, pol, f.Request)
+		out.Frames[i].WallMillis = time.Since(started).Milliseconds()
 		if err != nil {
 			break
 		}
-		out.Frames[i] = FrameResult{ID: f.ID, Status: FrameCompleted, Response: resp}
+		out.Frames[i].Status, out.Frames[i].Detail, out.Frames[i].Response = FrameCompleted, "", resp
 		inflight = -1
 	}
 	// A process that neither exits nor stops writing after its last frame is ended.
