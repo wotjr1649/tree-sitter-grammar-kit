@@ -41,6 +41,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	rt := fs.String("runtime", "", "pinned Tree-sitter runtime source directory")
 	out := fs.String("out", "", "new result directory outside the root (no clobber)")
 	work := fs.String("work", "", "existing caller-owned build directory outside the root")
+	buildCache := fs.String("build-cache", "", "existing trusted cache directory private to this orchestration run")
 	cgroup := fs.String("cgroup-parent", "", "delegated cgroup v2 directory (Linux hard memory cap)")
 	runWall := fs.Int("run-wall", 0, "seconds; narrows the operation run wall (0 keeps it)")
 	var reuseObservation bool
@@ -71,6 +72,14 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		return exitUsage
 	}
 	abs := map[string]string{}
+	if *buildCache != "" {
+		a, err := filepath.Abs(*buildCache)
+		if err != nil {
+			fmt.Fprintln(stderr, "tsgk: USAGE: invalid --build-cache")
+			return exitUsage
+		}
+		abs["build-cache"] = a
+	}
 	if *groot == "" {
 		*groot = *root
 	}
@@ -82,7 +91,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		}
 		abs[k] = a
 	}
-	for k, code := range map[string]string{"work": "WORK_INSIDE_INPUT", "out": "OUTPUT_INSIDE_INPUT"} {
+	paths := map[string]string{"work": "WORK_INSIDE_INPUT", "out": "OUTPUT_INSIDE_INPUT"}
+	if *buildCache != "" {
+		paths["build-cache"] = "CACHE_INSIDE_INPUT"
+	}
+	for k, code := range paths {
 		dir := abs[k]
 		if k == "out" {
 			dir = filepath.Dir(dir)
@@ -139,11 +152,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			}
 		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
 		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
 		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
 	}
 	line, merr := json.Marshal(res)

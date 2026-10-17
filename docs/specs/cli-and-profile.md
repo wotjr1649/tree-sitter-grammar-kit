@@ -144,6 +144,16 @@ r1 profile(`tsgk-incremental/r1`, `anchors` 없음)도 이전 근거를 replay�
 
 사례 결과는 `execution_status`, `assessment`, `code`(첫 실패 사유; 실패가 없으면 오류 tree에서 관측할 수 없는 첫 route step의 `INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_<n>`), claim 세 개(`incremental_equality`, `incremental_route`, `expectations`; `PASS`·`FAIL`·`BLOCKED`·`NOT_CLAIMED`), driver status·code·producer, runner 결과, step별 source bytes·sha256, edit와 point, route 계측과 `proven`, 비교(`equal`, `first_difference`), 공개 `tsgk-tree/r1`·`tsgk-tree-summary/r1` envelope, 기대값 결과다. 판정은 [tree/protocol](tree-and-adapter-protocol.md) `S05 구현`의 비교 projection을 따른다. exit: 모든 사례가 완료되고 PASS면 0, FAIL 1, BLOCKED·`RESOURCE_LIMIT` 3, 실행 전 거부 2, 실패(FAILED·cleanup·결과 쓰기) 4, 취소 130이다.
 
+### `incremental` / `oracle record --build-cache DIR` (#214)
+
+기존 caller-owned 실행 전용 directory를 지정하면 같은 orchestration run의 native executable만 재사용한다. 생략하면 매 호출 compile한다. cache는 case·grammar root 밖이어야 하며 내부 경로는 `CACHE_INSIDE_INPUT`, 미확인은 `INPUT_PATH_UNVERIFIED`로 거부한다. 호출자는 run마다 새 cache를 만들고 그 run의 순차 호출에만 전달한다. `run-routes.ps1`은 배타적으로 만든 Destination의 work 아래 새 cache를 사용하고 정상 종료 때 제거한다. 과거 run이나 PR prepared cache를 가져오지 않는다.
+
+매 호출 compiler·runtime·grammar·driver 입력을 검증하고 기존 build identity를 재계산한 뒤 조회한다. cache key는 identity와 실제 compiler 경로, TMP·TEMP·TMPDIR 항목을 제외한 compiler 환경 값, cgroup 및 compile 한도를 추가 결속한다. identity와 compile argv가 다른 결과는 재사용하지 않는다. 항목 부재만 miss다. 잘못된 기록·불완전 게시·실행 파일 누락/변조·동시 게시 충돌은 `BUILD_CACHE_INVALID`로 실패하며 자동 재컴파일하거나 덮어쓰지 않는다. cache 상한은 64항목, 항목별 record 1 MiB·executable 128 MiB다. runtime·grammar·embedded driver·compile argv·정상/fault define와 sanitizer 차이를 기존 identity가 결속한다.
+
+재사용한 executable은 이번 호출의 새 build directory로 hash를 대조하며 복사하고 매 launch 직전 기존 `Build.Verify`도 수행한다. 따라서 기존 build 삭제·결과 publication·native process 한도와 모든 case의 `NEW_RUN`을 유지한다. 결과 build의 선택적 `reuse`는 key·hit·`source_steps`다. miss의 `steps`는 이번 compilation이고 source_steps는 빈 배열이다. hit의 `steps`는 빈 배열이며 source_steps는 해당 cache key를 게시한 원래 compilation 기록이다. 재사용한 compilation을 이번 process 실행으로 기록하지 않는다.
+
+cache record는 caller-owned 비적대적 directory 안의 신뢰 기준이다. hash는 전달 무결성·일관성 검사이며 executable과 record의 동시 위조나 hostile namespace 교체를 막는 서명이 아니다. cache record와 executable을 함께 변경할 수 있는 환경은 지원 신뢰 경계 밖이다. public offline Go API와 native wire revision은 바꾸지 않는다.
+
 ### `incremental --reuse-observation` (#197)
 
 이 boolean flag는 incremental에서만 허용한다. 생략하면 기존 `tsgk-incremental-result/r1`과 native r1을 그대로 사용한다. 지정하면 native r3를 요청하고 `tsgk-incremental-result/r2`를 기록한다. workload profile revision과 기존 실행 권한·경로·한도는 바꾸지 않는다. oracle record는 이 flag를 usage error로 거부한다.

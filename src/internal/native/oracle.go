@@ -53,6 +53,7 @@ type OracleRequest struct {
 	Runtime      string
 	Compiler     string
 	Work         string
+	BuildCache   string
 	Out          string
 	Allow        []string
 	CgroupParent string
@@ -197,7 +198,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		groot = req.Root
 	}
 	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, Grammar: n.Grammar, Symbol: n.Symbol,
-		Compiler: req.Compiler, CompilerID: n.Compiler, CgroupParent: req.CgroupParent})
+		Compiler: req.Compiler, CompilerID: n.Compiler, CgroupParent: req.CgroupParent, CacheDir: req.BuildCache})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
 	policy := PolicyRef(op, n.Output)

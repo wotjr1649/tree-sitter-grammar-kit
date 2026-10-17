@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
@@ -32,6 +33,7 @@ func TestIncrementalCLI(t *testing.T) {
 	}
 	t.Run("batch-observation", func(t *testing.T) { testIncrementalCLI(t, true, "batch") })
 	t.Run("svc-observation", func(t *testing.T) { testIncrementalCLI(t, true, "svc") })
+	t.Run("build-cache", func(t *testing.T) { testIncrementalCLI(t, false, "cache") })
 }
 
 func testIncrementalCLI(t *testing.T, observe bool, mode string) {
@@ -136,6 +138,13 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 	os.MkdirAll(work, 0o755)
 	out := filepath.Join(base, "out")
 	args := []string{"incremental", "--root", root, "--profile", pf, "--runtime", rt, "--tool", "cc=" + cc, "--work", work, "--out", out}
+	if mode == "cache" {
+		cache := filepath.Join(base, "run-cache")
+		if err := os.Mkdir(cache, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		args = append(args, "--build-cache", cache)
+	}
 	if observe {
 		args = append(args, "--reuse-observation")
 	}
@@ -179,6 +188,33 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 	}
 	if observe {
 		testCLIReuseReplay(t, out, data, published, []byte(source))
+	}
+	if mode == "cache" {
+		var cold, warm native.Result
+		if err := json.Unmarshal(published, &cold); err != nil || cold.Build == nil || cold.Build.Reuse == nil || cold.Build.Reuse.Hit || len(cold.Build.Steps) == 0 {
+			t.Fatalf("cold build evidence: %v", err)
+		}
+		warmArgs := append([]string(nil), args...)
+		for i := range warmArgs {
+			if warmArgs[i] == "--out" {
+				warmArgs[i+1] = filepath.Join(base, "warm-output")
+			}
+		}
+		code, text, stderr := cli(t, ctx, warmArgs...)
+		if code != 0 || json.Unmarshal([]byte(text), &warm) != nil || warm.Build == nil || warm.Build.Reuse == nil || !warm.Build.Reuse.Hit || len(warm.Build.Steps) != 0 ||
+			warm.Build.Identity != cold.Build.Identity || warm.Build.ExecutableSHA256 != cold.Build.ExecutableSHA256 || warm.EvidenceMode != kit.ModeNewRun || warm.BuildRemoved != "REMOVED" ||
+			len(warm.Cases) != 1 || warm.Cases[0].Process == nil || warm.Cases[0].Steps[0].Incremental.Digest != cold.Cases[0].Steps[0].Incremental.Digest {
+			t.Fatalf("cross-process warm build: exit=%d %s", code, stderr)
+		}
+		// Cache is another execution destination: it cannot be an input directory.
+		for i := range warmArgs {
+			if warmArgs[i] == "--build-cache" {
+				warmArgs[i+1] = root
+			}
+		}
+		if code, _, stderr := cli(t, ctx, warmArgs...); code != 2 || !strings.Contains(stderr, "CACHE_INSIDE_INPUT") {
+			t.Fatalf("cache inside input: %d %s", code, stderr)
+		}
 	}
 	if entries, _ := os.ReadDir(work); len(entries) != 0 {
 		t.Fatalf("build directory left behind: %v", entries)

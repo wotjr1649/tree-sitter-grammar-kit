@@ -37,6 +37,7 @@ type IncrementalRequest struct {
 	Runtime          string
 	Compiler         string
 	Work             string
+	BuildCache       string
 	Out              string
 	Allow            []string
 	CgroupParent     string
@@ -187,7 +188,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		groot = req.Root
 	}
 	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, Grammar: prof.Grammar, Symbol: prof.Symbol,
-		Compiler: req.Compiler, CompilerID: prof.Compiler, CgroupParent: req.CgroupParent})
+		Compiler: req.Compiler, CompilerID: prof.Compiler, CgroupParent: req.CgroupParent, CacheDir: req.BuildCache})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
 	policy := PolicyRef(op, prof.Output)
