@@ -15,13 +15,14 @@ import (
 )
 
 type auditObservation struct {
-	Fault         string             `json:"fault"`
-	Executable    string             `json:"executable_sha256"`
-	Receipt       json.RawMessage    `json:"receipt"`
-	Process       json.RawMessage    `json:"process"`
-	Compile       []native.BuildStep `json:"compile"`
-	Error         string             `json:"error"`
-	ExpectedFault bool               `json:"expected_fault"`
+	Fault         string                      `json:"fault"`
+	Executable    string                      `json:"executable_sha256"`
+	Receipt       json.RawMessage             `json:"receipt"`
+	Process       json.RawMessage             `json:"process"`
+	Compile       []native.BuildStep          `json:"compile"`
+	Error         string                      `json:"error"`
+	ExpectedFault bool                        `json:"expected_fault"`
+	Resource      *largeaudit.ResourceCapture `json:"resource_capture,omitempty"`
 }
 type largeResult struct {
 	Schema       string              `json:"schema"`
@@ -152,7 +153,7 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if err != nil {
 		return nil, errors.New("runtime manifest unavailable")
 	}
-	if result.Schema != "tsgk-large-api-validation/r1" || result.Mode != "REGISTERED_LARGE_ALL_NODES" || !result.Pass || !result.Complete ||
+	if result.Schema != "tsgk-large-api-validation/r2" || result.Mode != "REGISTERED_LARGE_ALL_NODES" || !result.Pass || !result.Complete ||
 		result.Inventory != largeaudit.FixtureInventorySHA || result.Registry != registrySHA || result.Source != sourceSHA || !hex64.MatchString(result.Executable) ||
 		result.Build == nil || !hex64.MatchString(result.Build.Identity) || result.Build.Runtime != runtime.Commit || result.Build.Symbol != "tree_sitter_c_sharp" ||
 		len(result.Build.Defines) != 0 || result.Build.Sanitize || !compiled(result.Build.Steps) || !compiled(result.Compile) ||
@@ -292,8 +293,7 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if resource.Executable != result.Executable || resource.Error != "RESOURCE_LIMIT:ALLOCATION_LIMIT" || resource.ExpectedFault || resource.Fault != "" {
 		return nil, errors.New("resource control absent")
 	}
-	// Live capture validates the typed native failure, then retains an empty audit
-	// receipt; the native failure frame itself is not part of this artifact schema.
+	// The empty audit receipt accompanies a separately preserved native failure frame.
 	var resourceRaw, expectedEmpty map[string]json.RawMessage
 	zero, _ := json.Marshal(largeaudit.Receipt{})
 	if decode(resource.Receipt, &resourceRaw) != nil || decode(zero, &expectedEmpty) != nil || len(resourceRaw) != len(expectedEmpty) {
@@ -304,8 +304,13 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 			return nil, errors.New("resource receipt must be complete empty audit result")
 		}
 	}
-	if _, e := processResult(resource.Process, runner.StatusFailed, 3); e != nil {
+	p, e := processResult(resource.Process, runner.StatusFailed, 3)
+	if e != nil {
 		return nil, e
+	}
+	responseProducer, e := largeaudit.CheckResource(resource.Resource, p)
+	if e != nil || responseProducer.LanguageVersion != producer.LanguageVersion || responseProducer.RuntimeLanguageVersion != producer.RuntimeLanguageVersion || responseProducer.RuntimeMinCompatible != producer.RuntimeMinCompatible {
+		return nil, errors.New("resource frame or producer mismatch")
 	}
 	return map[string]any{"pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory}, nil
 }

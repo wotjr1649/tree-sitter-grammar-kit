@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/largeaudit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
@@ -90,6 +92,26 @@ func TestNativeAuditSharedParser(t *testing.T) {
 				t.Fatal(err)
 			}
 		} else {
+			resource := largeaudit.ResourceRequest()
+			limited := run(ctx, exe, digest(data), b.Dir, resource, 0, op.Nodes, nodes)
+			if limited.Error != "RESOURCE_LIMIT:ALLOCATION_LIMIT" || limited.Resource == nil {
+				t.Fatalf("actual resource capture: error=%s", limited.Error)
+			}
+			encoded, err := json.Marshal(limited)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var replay observation
+			if err = json.Unmarshal(encoded, &replay); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = largeaudit.CheckResource(replay.Resource, replay.Process); err != nil {
+				t.Fatal(err)
+			}
+			replay.Resource.Stdout[4] ^= 1
+			if _, err = largeaudit.CheckResource(replay.Resource, replay.Process); err == nil {
+				t.Fatal("actual resource frame tampering accepted")
+			}
 			for _, protocol := range []string{native.Protocol, native.ProtocolR2} {
 				req.Protocol = protocol
 				result := run(ctx, exe, digest(data), b.Dir, req, 0, 100, nodes)

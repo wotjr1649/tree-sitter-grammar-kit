@@ -83,7 +83,7 @@ var required = []string{
 	"src/dev/s05-native/select-compiler.ps1", "src/dev/s05-native/run-corpus.ps1", "docs/reports/session-05-incremental.md",
 	"src/contracts/fact-query-pack.json", "docs/reports/session-06-native-oracle.md",
 	"src/contracts/examples/replay-r1.json", "src/contracts/examples/evidence-policy-r1.json", "docs/reports/session-07-evidence-replay.md",
-	"src/dev/ci-gate/main.go", "src/dev/ci-gate/large.go", "src/internal/largeaudit/receipt.go",
+	"src/dev/ci-gate/main.go", "src/dev/ci-gate/large.go", "src/internal/largeaudit/receipt.go", "src/internal/largeaudit/resource.go",
 	"src/dev/ci-gate/margin.go", "src/dev/ci-gate/margin_fetch.go", "src/dev/ci-gate/config.ps1", "src/dev/ci-gate/margin-fetch.ps1",
 	"docs/reports/issue-214-resource-offline-verification.md",
 	"src/dev/large-api/main.go", "src/internal/runner/runner.go", "src/internal/native/protocol.go",
