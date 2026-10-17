@@ -155,14 +155,15 @@ func execute() error {
 	work := flag.String("work", "", "new task-owned build directory")
 	out := flag.String("out", "", "new receipt file")
 	controlsOnly := flag.Bool("controls-only", false, "small controls and faults only")
+	sessionOnly := flag.Bool("session", false, "audit all registered large nodes in one parse session per fixture")
 	sessionEvaluate := flag.Bool("session-evaluate", false, "compare one parse session with every legacy large audit page")
 	corpusPlan := flag.String("corpus-plan", "", "local-only pinned corpus page plan (separate evidence mode)")
 	corpusRoot := flag.String("corpus-root", "", "read-only original corpus root")
 	corpusReplay := flag.String("corpus-replay", "", "local page evidence root to verify without native execution")
 	corpusRegistration := flag.String("corpus-registration", "", "caller-trusted pins outside the replay root")
 	flag.Parse()
-	if *sessionEvaluate && (*controlsOnly || *corpusPlan != "" || *corpusReplay != "") {
-		return errors.New("session evaluation requires all registered large fixtures")
+	if (*sessionEvaluate && *sessionOnly) || ((*sessionEvaluate || *sessionOnly) && (*controlsOnly || *corpusPlan != "" || *corpusReplay != "")) {
+		return errors.New("session modes cannot be combined with each other or controls/corpus modes")
 	}
 	if *corpusReplay != "" {
 		return replayCorpus(*corpusReplay, *corpusRoot, *corpusPlan, *corpusRegistration, *out)
@@ -278,8 +279,13 @@ func execute() error {
 		result.Mode = "SMALL_CONTROLS"
 	}
 	var sessionExe string
-	if *sessionEvaluate {
-		result.Schema = "tsgk-large-api-validation/r3"
+	if *sessionEvaluate || *sessionOnly {
+		result.Schema = "tsgk-large-api-validation/r4"
+		result.Mode = "REGISTERED_LARGE_SINGLE_SESSION"
+		if *sessionEvaluate {
+			result.Schema = "tsgk-large-api-validation/r3"
+			result.Mode = "REGISTERED_LARGE_ALL_NODES"
+		}
 		sessionSource, err := os.ReadFile("src/dev/large-api/session-audit.c")
 		if err != nil {
 			return err
@@ -392,7 +398,7 @@ func execute() error {
 			expectedNodes := baseline.Steps[0].Incremental.DescendantCount
 			var covered, nodes, children uint64
 			var legacyPages [][]byte
-			for {
+			for !*sessionOnly {
 				o := run(ctx, exe, result.ExecutableSHA, b.Dir, req, covered, min(covered+1000000, op.Nodes), expectedNodes)
 				result.Observations = append(result.Observations, o)
 				fmt.Printf("audit %s: range=%d..%d nodes=%d differences=%d status=%s\n", f.ID, o.Receipt.Start, o.Receipt.End, o.Receipt.Nodes, o.Receipt.Differences, o.Process.Status)
@@ -418,13 +424,22 @@ func execute() error {
 					break
 				}
 			}
-			if *sessionEvaluate && result.Pass {
-				s, err := runSession(ctx, sessionExe, result.SessionExecutable, b.Dir, req, expectedNodes, 1000000, legacyPages)
+			if (*sessionEvaluate || *sessionOnly) && result.Pass {
+				s, err := runSession(ctx, sessionExe, result.SessionExecutable, b.Dir, req, expectedNodes, 1000000, result.Observations[0].Receipt.Fields)
+				if err == nil && *sessionEvaluate {
+					err = largeaudit.CheckSession(s, req, legacyPages)
+				}
+				if err != nil {
+					s.Complete = false
+				}
 				result.Sessions = append(result.Sessions, s)
 				if err != nil {
 					result.Pass = false
 					fmt.Printf("session %s incomplete: %s\n", f.ID, err)
 					break
+				}
+				if *sessionOnly {
+					completedFixtures++
 				}
 			}
 		}

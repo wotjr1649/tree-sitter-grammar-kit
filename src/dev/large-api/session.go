@@ -31,7 +31,7 @@ func sessionFrames(req native.Request, nodes, pageSize uint64) ([]runner.Frame, 
 	return frames, nil
 }
 
-func runSession(ctx context.Context, exe, executableSHA, dir string, req native.Request, nodes, pageSize uint64, expected [][]byte) (largeaudit.Session, error) {
+func runSession(ctx context.Context, exe, executableSHA, dir string, req native.Request, nodes, pageSize, fields uint64) (largeaudit.Session, error) {
 	s := largeaudit.Session{Schema: largeaudit.SessionSchema, ID: req.ID, RequestSHA: digest(native.Frame(req.Encode())), Nodes: nodes, PageSize: pageSize, RawPages: [][]byte{}}
 	frames, err := sessionFrames(req, nodes, pageSize)
 	if err != nil {
@@ -69,7 +69,7 @@ func runSession(ctx context.Context, exe, executableSHA, dir string, req native.
 		return s, errors.New("session executable changed")
 	}
 	s.Complete = true
-	if err := largeaudit.CheckSession(s, req, expected); err != nil {
+	if _, err := largeaudit.ValidateSession(s, req, nodes, fields); err != nil {
 		s.Complete = false
 		return s, err
 	}

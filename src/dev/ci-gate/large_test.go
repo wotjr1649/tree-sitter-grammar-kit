@@ -159,7 +159,7 @@ func TestAuditProcessLimits(t *testing.T) {
 func TestLargeGateCoverageAndControls(t *testing.T) {
 	good, inv := largeFixture(t)
 	data := encoded(t, good)
-	if _, e := checkLarge(data, inv, good.Registry, good.Source, good.SessionSource); e != nil {
+	if _, e := checkLarge(data, inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r3"); e != nil {
 		t.Fatal(e)
 	}
 	controls := map[string]func(*largeResult){
@@ -243,7 +243,7 @@ func TestLargeGateCoverageAndControls(t *testing.T) {
 				t.Fatal(e)
 			}
 			change(&bad)
-			if _, e := checkLarge(encoded(t, bad), inv, good.Registry, good.Source, good.SessionSource); e == nil {
+			if _, e := checkLarge(encoded(t, bad), inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r3"); e == nil {
 				t.Fatal("invalid large API gate accepted")
 			}
 		})
@@ -256,8 +256,107 @@ func TestLargeGateCoverageAndControls(t *testing.T) {
 		"truncated": data[:len(data)-1],
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, e := checkLarge(bad, inv, good.Registry, good.Source, good.SessionSource); e == nil {
+			if _, e := checkLarge(bad, inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r3"); e == nil {
 				t.Fatal("malformed audit accepted")
+			}
+		})
+	}
+}
+
+func TestLargeSessionGate(t *testing.T) {
+	good, inv := largeFixture(t)
+	good.Schema = "tsgk-large-api-validation/r4"
+	good.Mode = "REGISTERED_LARGE_SINGLE_SESSION"
+	good.Observations = good.Observations[:4]
+	data := encoded(t, good)
+	checked, err := checkLarge(data, inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r4")
+	if err != nil || checked["pages"] != 4 || checked["session_fixtures"] != 3 {
+		t.Fatalf("promoted gate: %v %v", checked, err)
+	}
+	for name, change := range map[string]func(*largeResult){
+		"historical-evaluation-fallback": func(r *largeResult) { r.Schema = "tsgk-large-api-validation/r3"; r.Mode = "REGISTERED_LARGE_ALL_NODES" },
+		"missing-session":                func(r *largeResult) { r.Sessions = r.Sessions[:2] },
+		"missing-page":                   func(r *largeResult) { r.Sessions[0].RawPages = r.Sessions[0].RawPages[:1] },
+		"reordered-pages":                func(r *largeResult) { s := &r.Sessions[0]; s.RawPages[0], s.RawPages[1] = s.RawPages[1], s.RawPages[0] },
+		"duplicate-session":              func(r *largeResult) { r.Sessions[0] = r.Sessions[1] },
+		"incomplete":                     func(r *largeResult) { r.Sessions[0].Complete = false },
+		"bad-exit-after-receipt": func(r *largeResult) {
+			r.Sessions[0].Batch.Process.Status = runner.StatusFailed
+			r.Sessions[0].Batch.Process.ExitCode = 2
+		},
+		"cleanup":             func(r *largeResult) { r.Sessions[0].Batch.Process.Cleanup.Verified = false },
+		"memory":              func(r *largeResult) { r.Sessions[0].Batch.Process.Memory.LimitHit = true },
+		"wall":                func(r *largeResult) { r.Sessions[0].Batch.Frames[0].WallMillis = 90001 },
+		"trailing":            func(r *largeResult) { r.Sessions[0].Batch.TrailingBytes = 1 },
+		"missing-small":       func(r *largeResult) { r.Small = r.Small[:3] },
+		"missing-fault":       func(r *largeResult) { r.Faults = r.Faults[:8] },
+		"missing-resource":    func(r *largeResult) { r.Resources = nil },
+		"copied-page-process": func(r *largeResult) { r.Observations = append(r.Observations, r.Observations[0]) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			var bad largeResult
+			if err := json.Unmarshal(data, &bad); err != nil {
+				t.Fatal(err)
+			}
+			change(&bad)
+			if _, err := checkLarge(encoded(t, bad), inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r4"); err == nil {
+				t.Fatal("invalid promoted gate accepted")
+			}
+		})
+	}
+	for _, kind := range []string{"nodes", "fields"} {
+		t.Run("self-consistent-fake-"+kind, func(t *testing.T) {
+			var bad largeResult
+			if err := json.Unmarshal(data, &bad); err != nil {
+				t.Fatal(err)
+			}
+			session := &bad.Sessions[0]
+			if kind == "nodes" {
+				session.Nodes++
+			}
+			for i, raw := range session.RawPages {
+				var page largeaudit.SessionPage
+				if err := json.Unmarshal(raw, &page); err != nil {
+					t.Fatal(err)
+				}
+				var receipt largeaudit.Receipt
+				if err := json.Unmarshal(page.Receipt, &receipt); err != nil {
+					t.Fatal(err)
+				}
+				if kind == "nodes" {
+					receipt.Nodes++
+					if i == 0 {
+						receipt.ChildFields++
+					}
+					if i == len(session.RawPages)-1 {
+						receipt.End++
+					}
+				} else {
+					receipt.Fields++
+				}
+				receipt.FieldLookups = 2 * (receipt.End - receipt.Start) * receipt.Fields
+				receipt.Checks = 13*(receipt.End-receipt.Start) + receipt.ChildFields + receipt.FieldLookups + receipt.PointChecks
+				page.Receipt = encoded(t, receipt)
+				payload := encoded(t, page)
+				session.Batch.Process.StdoutBytes += int64(len(payload) - len(raw))
+				session.RawPages[i] = payload
+			}
+			f := inv.Fixtures[0]
+			source, err := largeaudit.Source(f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req := native.Request{ID: f.ID, Encoding: kit.EncodingUTF8, Output: kit.OutputAuto, Limits: native.LimitsFor(kit.NativeOperations()["native-query-large"]), Source: source, Points: f.Points}
+			claimedFields := uint64(1)
+			if kind == "fields" {
+				claimedFields = 2
+			}
+			// The altered packet is internally consistent, but disagrees with independent evidence.
+			if _, err := largeaudit.ValidateSession(*session, req, session.Nodes, claimedFields); err != nil {
+				t.Fatalf("fake control malformed: %v", err)
+			}
+			if _, err := checkLarge(encoded(t, bad), inv, good.Registry, good.Source, good.SessionSource, "tsgk-large-api-validation/r4"); err == nil {
+				t.Fatal("self-consistent claim replaced independent baseline/field inventory")
 			}
 		})
 	}

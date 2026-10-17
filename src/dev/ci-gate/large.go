@@ -136,10 +136,17 @@ func verifyLarge(root string, expected kit.RunIdentity) (map[string]any, error) 
 	if err != nil {
 		return nil, err
 	}
-	return checkLarge(data, fixtures, digest(registry), digest(source), digest(sessionSource))
+	return checkLarge(data, fixtures, digest(registry), digest(source), digest(sessionSource), "tsgk-large-api-validation/r4")
 }
 
-func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceSHA, sessionSourceSHA string) (map[string]any, error) {
+func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceSHA, sessionSourceSHA, schema string) (map[string]any, error) {
+	evaluation := schema == "tsgk-large-api-validation/r3"
+	mode := "REGISTERED_LARGE_SINGLE_SESSION"
+	if evaluation {
+		mode = "REGISTERED_LARGE_ALL_NODES"
+	} else if schema != "tsgk-large-api-validation/r4" {
+		return nil, errors.New("large API expected schema invalid")
+	}
 	var result largeResult
 	if decode(data, &result) != nil {
 		return nil, errors.New("large API JSON invalid")
@@ -163,12 +170,12 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if err != nil {
 		return nil, errors.New("runtime manifest unavailable")
 	}
-	if result.Schema != "tsgk-large-api-validation/r3" || result.Mode != "REGISTERED_LARGE_ALL_NODES" || !result.Pass || !result.Complete ||
+	if result.Schema != schema || result.Mode != mode || !result.Pass || !result.Complete ||
 		result.SessionSource != sessionSourceSHA || !hex64.MatchString(result.SessionExecutable) || result.SessionExecutable == result.Executable || !compiled(result.SessionCompile) || len(result.SessionCompile) != 2 || len(result.Sessions) != 3 ||
 		result.Inventory != largeaudit.FixtureInventorySHA || result.Registry != registrySHA || result.Source != sourceSHA || !hex64.MatchString(result.Executable) ||
 		result.Build == nil || !hex64.MatchString(result.Build.Identity) || result.Build.Runtime != runtime.Commit || result.Build.Symbol != "tree_sitter_c_sharp" ||
 		len(result.Build.Defines) != 0 || result.Build.Sanitize || !compiled(result.Build.Steps) || !compiled(result.Compile) ||
-		len(result.Small) != 4 || len(result.Baseline) != 3 || len(fixtures.Fixtures) != 3 || len(result.Faults) != 9 || len(result.Resources) != 1 {
+		(!evaluation && len(result.Observations) != 4) || len(result.Small) != 4 || len(result.Baseline) != 3 || len(fixtures.Fixtures) != 3 || len(result.Faults) != 9 || len(result.Resources) != 1 {
 		return nil, errors.New("large API gate incomplete or unsuccessful")
 	}
 	// C# has one registered scanner. Relative argv bind both steps to the private
@@ -244,7 +251,7 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 			return nil, errors.New("audit receipt unavailable")
 		}
 		req, ok := requests[header.ID]
-		if !ok || o.ExpectedFault || o.Fault != "" || o.Executable != result.Executable || o.Error != "" {
+		if !ok || (!evaluation && !strings.HasPrefix(req.ID, "small-")) || o.ExpectedFault || o.Fault != "" || o.Executable != result.Executable || o.Error != "" {
 			return nil, errors.New("unexpected audit observation")
 		}
 		start, end := uint64(0), nodes[req.ID]
@@ -277,15 +284,34 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 		memory = max(memory, p.Memory.Peak)
 	}
 	for id, n := range nodes {
+		if !evaluation && !strings.HasPrefix(id, "small-") {
+			continue
+		}
 		if covered[id] != n || children[id] != n-1 || seen[id] == 0 || strings.HasPrefix(id, "small-") && seen[id] != 1 {
 			return nil, errors.New("audit page coverage incomplete")
 		}
 	}
 	var sessionWall int64
+	if !evaluation {
+		wall = 0
+	}
 	for i, f := range fixtures.Fixtures {
 		session := result.Sessions[i]
-		if session.ID != f.ID || session.Nodes != nodes[f.ID] || session.PageSize != 1000000 || largeaudit.CheckSession(session, requests[f.ID], legacyPages[f.ID]) != nil {
+		if session.ID != f.ID || session.Nodes != nodes[f.ID] || session.PageSize != 1000000 {
 			return nil, errors.New("session comparison incomplete or differs")
+		}
+		if _, err := largeaudit.ValidateSession(session, requests[f.ID], nodes[f.ID], uint64(fields)); err != nil {
+			return nil, err
+		}
+		if evaluation {
+			if err := largeaudit.CheckSession(session, requests[f.ID], legacyPages[f.ID]); err != nil {
+				return nil, err
+			}
+		} else {
+			pages += len(session.Batch.Frames)
+			for _, frame := range session.Batch.Frames {
+				wall = max(wall, frame.WallMillis)
+			}
 		}
 		sessionWall = max(sessionWall, session.Batch.Process.WallMillis)
 		memory = max(memory, session.Batch.Process.Memory.Peak)

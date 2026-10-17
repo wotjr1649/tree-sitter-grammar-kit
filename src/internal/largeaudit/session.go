@@ -12,7 +12,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-const SessionSchema = "tsgk-large-api-session-evaluation/r1"
+const SessionSchema = "tsgk-large-api-session/r1"
 const SessionPageSchema = "tsgk-large-api-session-page/r1"
 
 // Fixed scalar receipt fields, three hashes and the driver's 128-byte ID fit
@@ -98,62 +98,88 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// CheckSession compares every actual payload with an independently executed legacy page.
-func CheckSession(s Session, req native.Request, expected [][]byte) error {
+// ValidateSession binds fresh session receipts to independent baseline metadata.
+func ValidateSession(s Session, req native.Request, nodes, fields uint64) ([][]byte, error) {
 	op := kit.NativeOperations()["native-query-large"]
 	if s.Schema != SessionSchema || s.ID != req.ID || len(s.Session) != 32 || s.RequestSHA != digest(native.Frame(req.Encode())) ||
-		!s.Complete || s.Nodes == 0 || s.Nodes > req.Limits.Nodes || s.PageSize == 0 || s.PageSize > 1000000 {
-		return errors.New("session identity or completion invalid")
+		!s.Complete || nodes == 0 || nodes > req.Limits.Nodes || fields > 65535 || s.Nodes != nodes || s.PageSize == 0 || s.PageSize > 1000000 {
+		return nil, errors.New("session identity or completion invalid")
 	}
 	for _, c := range s.Session {
 		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
-			return errors.New("session identifier invalid")
+			return nil, errors.New("session identifier invalid")
 		}
 	}
 	count64 := 1 + (s.Nodes-1)/s.PageSize
 	if count64 > SessionPages {
-		return errors.New("session page count exceeds limit")
+		return nil, errors.New("session page count exceeds limit")
 	}
 	count := int(count64)
-	if len(s.RawPages) != count || len(expected) != count || len(s.Batch.Frames) != count || s.Batch.TrailingBytes != 0 ||
+	if len(s.RawPages) != count || len(s.Batch.Frames) != count || s.Batch.TrailingBytes != 0 ||
 		s.BudgetMillis <= 0 || s.BudgetMillis > int64(count)*op.ParseWall.Milliseconds() {
-		return errors.New("session page count or budget invalid")
+		return nil, errors.New("session page count or budget invalid")
 	}
 	p := s.Batch.Process
 	if !p.Succeeded() || p.Reason != runner.ReasonExited || !p.Cleanup.Verified || p.Cleanup.ResidualAfterExit != 0 ||
 		p.StdoutTruncated || p.StderrTruncated || p.WallMillis < 0 || p.WallMillis > s.BudgetMillis || p.StderrBytes < 0 || p.StderrBytes > 65536 ||
 		p.Memory.Enforcement != runner.MemoryHard || p.Memory.Limit != op.MemoryBytes || !p.Memory.PeakKnown || p.Memory.LimitHit || p.Memory.Peak > p.Memory.Limit {
-		return errors.New("session process incomplete or outside limits")
+		return nil, errors.New("session process incomplete or outside limits")
 	}
 	var stdout int64
 	var wall int64
 	var children uint64
+	var receipts [][]byte
 	for i, payload := range s.RawPages {
 		frame := s.Batch.Frames[i]
 		if frame.ID != fmt.Sprintf("page-%d", i) || frame.Status != runner.FrameCompleted || frame.Detail != "" || frame.WallMillis < 0 || frame.WallMillis > op.ParseWall.Milliseconds() || len(payload) == 0 || len(payload) > SessionPageLimit {
-			return errors.New("session frame incomplete or outside limits")
+			return nil, errors.New("session frame incomplete or outside limits")
 		}
 		if _, err := required(payload, "schema", "session", "index", "parse_count", "session_complete", "receipt", "complete"); err != nil {
-			return err
+			return nil, err
 		}
 		var page SessionPage
 		if err := jsonv2.Unmarshal(payload, &page, jsonv2.RejectUnknownMembers(true)); err != nil {
-			return err
+			return nil, err
 		}
-		if page.Schema != SessionPageSchema || page.Session != s.Session || page.Index != uint64(i) || page.Parses != 1 || !page.Complete || page.SessionComplete != (i == count-1) || !bytes.Equal(page.Receipt, expected[i]) {
-			return errors.New("session page binding or legacy payload differs")
+		if page.Schema != SessionPageSchema || page.Session != s.Session || page.Index != uint64(i) || page.Parses != 1 || !page.Complete || page.SessionComplete != (i == count-1) {
+			return nil, errors.New("session page binding invalid")
 		}
 		start := uint64(i) * s.PageSize
 		r, err := Decode(page.Receipt, req, start, min(start+s.PageSize, s.Nodes), s.Nodes)
-		if err != nil || r.Differences != 0 || r.Divergences != 0 {
-			return errors.New("session audit differs or is incomplete")
+		if err != nil || r.Differences != 0 || r.Divergences != 0 || r.Fields != fields {
+			return nil, errors.New("session audit differs or is incomplete")
 		}
+		receipts = append(receipts, page.Receipt)
 		children += r.ChildFields
 		stdout += int64(4 + len(payload))
 		wall += frame.WallMillis
 	}
 	if children != s.Nodes-1 || stdout != p.StdoutBytes || stdout > int64(op.OutputBytes) || wall > p.WallMillis {
-		return errors.New("session cumulative evidence invalid")
+		return nil, errors.New("session cumulative evidence invalid")
+	}
+	return receipts, nil
+}
+
+// CheckSession adds the evaluation-only comparison with independently executed legacy pages.
+func CheckSession(s Session, req native.Request, expected [][]byte) error {
+	if len(expected) == 0 {
+		return errors.New("legacy comparison pages absent")
+	}
+	first, err := Decode(expected[0], req, 0, s.PageSize, 0)
+	if err != nil {
+		return err
+	}
+	receipts, err := ValidateSession(s, req, first.Nodes, first.Fields)
+	if err != nil {
+		return err
+	}
+	if len(receipts) != len(expected) {
+		return errors.New("legacy comparison page count differs")
+	}
+	for i, payload := range receipts {
+		if !bytes.Equal(payload, expected[i]) {
+			return errors.New("legacy comparison payload differs")
+		}
 	}
 	return nil
 }
