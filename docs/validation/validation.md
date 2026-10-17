@@ -147,7 +147,7 @@ Code, product-contract, CI, validation-policy, and semantic development-instruct
 
 ## Native fixture 빌드 스케줄 (#210, #214)
 
-테스트 fixture는 key별 실제 빌드 결과와 오류를 공유하고, 서로 다른 key는 독립 directory에서 최대 4개까지 컴파일한다. #214의 batch·build identity/cache·scanner·capability·fault·reuse 기능 시험은 최상위 `t.Parallel`로 모든 순차 시험이 끝난 뒤 병렬 구간에서 실행한다. fault·reuse의 독립 child도 병렬을 유지한다. 취소·parse timeout 등 순차 timing 검사는 이 구간과 겹치지 않으며 cache record를 순서대로 변조하는 내부 subtest는 직렬로 유지한다. fixture slot 4개는 직접 `NewBuild` 호출이나 전체 native process 수의 상한이 아니다.
+테스트 fixture는 key별 실제 빌드 결과와 오류를 공유하고, 서로 다른 key는 독립 directory에서 최대 4개까지 컴파일한다. #214의 batch·build identity/cache·scanner·capability·fault·reuse 기능 시험과 native failure·BLOCKED 우선순위·terminal claim을 검사하는 SVC segment 네 시험은 최상위 `t.Parallel`로 모든 순차 시험이 끝난 뒤 병렬 구간에서 실행한다. fault·reuse의 독립 child도 병렬을 유지한다. 취소·parse timeout 등 순차 timing 검사는 이 구간과 겹치지 않으며 cache record를 순서대로 변조하는 내부 subtest는 직렬로 유지한다. fixture slot 4개는 직접 `NewBuild` 호출이나 전체 native process 수의 상한이 아니다.
 
 제품 빌드·컴파일 flags·cold build·판정·기존 process/package/job 제한을 유지한다. cache cold/warm wall은 병렬 경합이 포함된 기능 진단값이며 단독 성능 표본으로 비교하지 않는다. 단계 시간은 warm cache 이동과 전체 package 시간을 구분하고, CI timeout 실패나 downstream skip을 PASS로 바꾸지 않는다. [#210의 과거 측정과 범위](../reports/issue-210-native-suite-build-cost.md)를 보존하며 후속 스케줄의 시간 여유는 해당 후보의 전체 실행과 실제 main으로 따로 검증한다.
 
