@@ -17,6 +17,7 @@ import (
 // keeps only retained records (status, has_error, digest, capped errors), refuses a file
 // whose bytes fail its encoding before any frame, and leaves nothing NOT_RUN.
 func TestBatchRecords(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain")
 	root := t.TempDir()
 	var cases []kit.IncrementalCase
@@ -64,6 +65,7 @@ func TestBatchRecords(t *testing.T) {
 
 // S05-A09: bytes after the last batch response make every frame of that batch unaccepted.
 func TestBatchTrailingBytes(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain", "TSGK_FAULT_TRAILING")
 	root := t.TempDir()
 	data := []byte("x = 1;\n")

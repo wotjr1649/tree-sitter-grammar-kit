@@ -8,6 +8,7 @@ import (
 )
 
 func TestNativeReuseObservations(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct{ name, define, status, reason string }{
 		{"normal", "", "COMPLETE", ""},
 		{"omit-old", "TSGK_FAULT_OMIT_OLD_TREE", "COMPLETE", ""},
@@ -21,7 +22,7 @@ func TestNativeReuseObservations(t *testing.T) {
 		{"message-limit", "TSGK_FAULT_REUSE_MESSAGE_LIMIT", "TRUNCATED", "MESSAGE_LIMIT"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel() // The sequential parent keeps timing-sensitive tests separate.
+			t.Parallel()
 			source := "a = 1; b = 2;"
 			req := baseRequest(source, "native-parse-edit")
 			req.Protocol = ProtocolR3

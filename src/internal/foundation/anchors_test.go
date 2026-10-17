@@ -1,14 +1,21 @@
 package foundation
 
 import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
@@ -85,48 +92,219 @@ func referenceAnchors(src string, edits []struct{ Find, Replace string }, step i
 
 // convertedCase is the part of a Convert-Cases case the comparison reads.
 type convertedCase struct {
+	Input  kit.NativeInput       `json:"input"`
 	ID     string                `json:"id"`
 	Edits  []kit.Edit            `json:"edits"`
 	Expect []kit.StepExpectation `json:"expect"`
 }
 
-// psConvert is the pwsh harness: it defines run-routes.ps1's conversion functions from the
-// script's own AST (the script itself runs a whole route build) and prints Convert-Cases.
-const psConvert = `param([string]$Script, [string]$CaseFile, [string]$Root)
+// Only shape and source are decoded here; malformed anchors must reach PowerShell.
+type conversionInput struct {
+	Cases []struct {
+		ID     string `json:"id"`
+		Source string `json:"source_utf8"`
+		Expect []struct {
+			Step int `json:"step"`
+		} `json:"expect"`
+	} `json:"cases"`
+}
+
+type convertedFile struct {
+	Cases []convertedCase `json:"cases"`
+}
+
+var errAnchorRefused = errors.New("Resolve-Anchor refused the anchor")
+
+const convertOutputLimit = 1 << 20
+
+type conversionOutput struct {
+	buf      bytes.Buffer
+	cancel   context.CancelFunc
+	exceeded bool
+}
+
+func (b *conversionOutput) Write(p []byte) (int, error) {
+	if b.exceeded || len(p) > convertOutputLimit-b.buf.Len() {
+		b.exceeded = true
+		if b.cancel != nil {
+			b.cancel()
+		}
+		return 0, errors.New("conversion output limit exceeded")
+	}
+	return b.buf.Write(p)
+}
+
+// psConvert loads the production functions once and retains a separate root per input.
+const psConvert = `param([string]$Script, [string]$Manifest, [string]$Root)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $utf8 = [Text.UTF8Encoding]::new($false, $true)
-$ast = [Management.Automation.Language.Parser]::ParseFile($Script, [ref]$null, [ref]$null)
+$parseErrors = $null
+$ast = [Management.Automation.Language.Parser]::ParseFile($Script, [ref]$null, [ref]$parseErrors)
+if ($parseErrors) { throw 'conversion source has parse errors' }
 $defs = $ast.FindAll({ param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] }, $true)
-foreach ($f in $defs) {
-  if ($f.Name -in @('Get-ShaBytes', 'Find-Bytes', 'Resolve-Anchor', 'Convert-Cases')) { . ([scriptblock]::Create($f.Extent.Text)) }
+foreach ($name in @('Get-ShaBytes', 'Find-Bytes', 'Resolve-Anchor', 'Convert-Cases')) {
+  $functionMatches = @($defs | Where-Object { $_.Name -ceq $name })
+  if ($functionMatches.Count -ne 1) { throw "conversion function $name is not unique" }
+  . ([scriptblock]::Create($functionMatches[0].Extent.Text))
 }
-ConvertTo-Json -InputObject @(Convert-Cases $CaseFile $Root) -Depth 12 -Compress
+$caseFiles = @(Get-Content -LiteralPath $Manifest -Raw | ConvertFrom-Json)
+$convertedFiles = [Collections.Generic.List[object]]::new()
+for ($caseIndex = 0; $caseIndex -lt $caseFiles.Count; $caseIndex++) {
+  try {
+    $convertedCases = @(Convert-Cases $caseFiles[$caseIndex] (Join-Path $Root ([string]$caseIndex)))
+  } catch {
+    if ($_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::OperationStopped -and $_.Exception.WasThrownFromThrowStatement -and ($_.ScriptStackTrace -split '\r?\n', 2)[0] -match '(?<![A-Za-z0-9_-])Resolve-Anchor(?![A-Za-z0-9_-])') {
+      [Console]::Error.Write('TSGK_ANCHOR_REFUSED')
+      exit 2
+    }
+    throw
+  }
+  $convertedFiles.Add([pscustomobject]@{ cases = $convertedCases })
+}
+ConvertTo-Json -InputObject @($convertedFiles.ToArray()) -Depth 12 -Compress
 `
 
-// runConvertCases runs run-routes.ps1's Convert-Cases on a case file; ok is false when pwsh
-// is not installed.
+func validateConvertedFiles(got []convertedFile, inputs []conversionInput, root string) error {
+	if len(got) != len(inputs) || len(inputs) == 0 {
+		return errors.New("conversion file count differs")
+	}
+	for i, f := range got {
+		if len(f.Cases) != len(inputs[i].Cases) || len(f.Cases) == 0 {
+			return fmt.Errorf("file %d: conversion case count differs", i)
+		}
+		for j, c := range f.Cases {
+			want := inputs[i].Cases[j]
+			if c.ID != want.ID || len(c.Expect) != len(want.Expect) {
+				return fmt.Errorf("file %d case %d: conversion identity or expectation count differs", i, j)
+			}
+			for k, e := range c.Expect {
+				if e.Step != want.Expect[k].Step {
+					return fmt.Errorf("file %d case %s: expectation step differs", i, c.ID)
+				}
+			}
+			rel := "cases/" + want.ID + ".txt"
+			src := []byte(want.Source)
+			sum := sha256.Sum256(src)
+			if c.Input.Path != rel || c.Input.Role != "case" || c.Input.Bytes != uint64(len(src)) || c.Input.SHA256 != hex.EncodeToString(sum[:]) {
+				return fmt.Errorf("file %d case %s: source identity differs", i, c.ID)
+			}
+			data, err := os.ReadFile(filepath.Join(root, strconv.Itoa(i), filepath.FromSlash(rel)))
+			if err != nil || !bytes.Equal(data, src) {
+				return fmt.Errorf("file %d case %s: isolated output bytes differ: %v", i, c.ID, err)
+			}
+		}
+	}
+	return nil
+}
+
+// runConvertCases keeps the single-file negative controls on the production converter.
 func runConvertCases(t *testing.T, root, caseFile string) ([]convertedCase, bool, error) {
 	t.Helper()
+	files, ok, err := runConvertCaseFiles(t, root, []string{caseFile})
+	if err != nil || !ok {
+		return nil, ok, err
+	}
+	return files[0].Cases, true, nil
+}
+
+func runConvertCaseFiles(t *testing.T, root string, caseFiles []string) ([]convertedFile, bool, error) {
+	t.Helper()
+	if len(caseFiles) == 0 {
+		return nil, true, errors.New("empty case file batch")
+	}
 	pwsh, err := exec.LookPath("pwsh")
 	if err != nil {
 		return nil, false, nil
 	}
+	var files []convertedFile
+	for paths := range slices.Chunk(caseFiles, 4) {
+		batch, err := runConvertCaseBatch(t, root, pwsh, paths)
+		if err != nil {
+			return nil, true, err
+		}
+		files = append(files, batch...)
+	}
+	return files, true, nil
+}
+
+func runConvertCaseBatch(t *testing.T, root, pwsh string, caseFiles []string) ([]convertedFile, error) {
+	t.Helper()
+	inputs := make([]conversionInput, len(caseFiles))
+	for i, p := range caseFiles {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(data, &inputs[i]); err != nil {
+			return nil, err
+		}
+		if len(inputs[i].Cases) == 0 {
+			return nil, errors.New("empty case file")
+		}
+		seen := map[string]bool{}
+		for _, c := range inputs[i].Cases {
+			if c.ID == "" || strings.ContainsAny(c.ID, `/\`) || !filepath.IsLocal(c.ID+".txt") || seen[c.ID] {
+				return nil, errors.New("unsafe or duplicate case id")
+			}
+			seen[c.ID] = true
+		}
+	}
 	dir := t.TempDir()
 	harness := filepath.Join(dir, "convert.ps1")
-	if err := os.WriteFile(harness, []byte(psConvert), 0o644); err != nil {
+	manifest := filepath.Join(dir, "files.json")
+	outputRoot := filepath.Join(dir, "root")
+	if err := os.WriteFile(harness, []byte(psConvert), 0600); err != nil {
 		t.Fatal(err)
 	}
-	script := filepath.Join(root, "src", "dev", "s05-native", "run-routes.ps1")
-	out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-File", harness, "-Script", script, "-CaseFile", caseFile, "-Root", filepath.Join(dir, "root")).CombinedOutput()
+	data, err := json.Marshal(caseFiles)
 	if err != nil {
-		return nil, true, fmt.Errorf("%v: %s", err, out)
+		t.Fatal(err)
 	}
-	var cs []convertedCase
-	if err := json.Unmarshal(out, &cs); err != nil {
-		t.Fatalf("Convert-Cases output: %v\n%s", err, out)
+	if err := os.WriteFile(manifest, data, 0600); err != nil {
+		t.Fatal(err)
 	}
-	return cs, true, nil
+	wall := 90 * time.Second
+	if deadline, ok := t.Deadline(); ok {
+		wall = min(wall, time.Until(deadline)-5*time.Second)
+	}
+	if wall <= 0 {
+		return nil, errors.New("conversion cleanup budget unavailable")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), wall)
+	defer cancel()
+	stdout, stderr := conversionOutput{cancel: cancel}, conversionOutput{cancel: cancel}
+	script := filepath.Join(root, "src", "dev", "s05-native", "run-routes.ps1")
+	cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-File", harness, "-Script", script, "-Manifest", manifest, "-Root", outputRoot)
+	cmd.WaitDelay = 5 * time.Second
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if stdout.exceeded || stderr.exceeded {
+		return nil, errors.New("conversion output limit exceeded")
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	if err != nil {
+		var exit *exec.ExitError
+		if errors.As(err, &exit) && exit.ExitCode() == 2 && stderr.buf.String() == "TSGK_ANCHOR_REFUSED" && stdout.buf.Len() == 0 {
+			return nil, errAnchorRefused
+		}
+		return nil, fmt.Errorf("conversion process: %v: %s", err, stderr.buf.Bytes())
+	}
+	if stderr.buf.Len() != 0 {
+		return nil, fmt.Errorf("conversion stderr: %s", stderr.buf.Bytes())
+	}
+	var files []convertedFile
+	if err := json.Unmarshal(stdout.buf.Bytes(), &files); err != nil {
+		return nil, fmt.Errorf("conversion JSON: %w", err)
+	}
+	if err := validateConvertedFiles(files, inputs, outputRoot); err != nil {
+		return nil, err
+	}
+	t.Logf("Convert-Cases: files=%d stdout_bytes=%d", len(files), stdout.buf.Len())
+	return files, nil
 }
 
 // TestAnchorConversion: the fixture's hand-computed ranges are what the inventory
@@ -208,8 +386,8 @@ func TestAnchorConversion(t *testing.T) {
 			if err := os.WriteFile(p, []byte(doc), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			if _, _, err := runConvertCases(t, root, p); err == nil {
-				t.Errorf("%s: run-routes.ps1 accepted the anchor", name)
+			if _, _, err := runConvertCases(t, root, p); !errors.Is(err, errAnchorRefused) {
+				t.Errorf("%s: expected Resolve-Anchor refusal, got %v", name, err)
 			}
 		}
 	}
@@ -254,6 +432,7 @@ func TestRegisteredAnchors(t *testing.T) {
 		}
 	}
 	anchored := 0
+	var caseFiles []string
 	for _, kind := range []string{"routes", "gaps", "n461"} {
 		files, err := filepath.Glob(filepath.Join(root, "src", "testdata", "native", kind, "*.json"))
 		if err != nil {
@@ -282,7 +461,13 @@ func TestRegisteredAnchors(t *testing.T) {
 						t.Fatalf("%s: case %s not in the inventory", p, id)
 					}
 					for _, c := range cs {
+						if len(c.Expect) != len(want) {
+							t.Fatalf("%s: inventory expectation count differs", id)
+						}
 						for i, e := range c.Expect {
+							if e.Step != sc.expect[i].Step {
+								t.Fatalf("%s: inventory expectation step differs", id)
+							}
 							if !slices.Equal(e.Anchors, want[i]) {
 								t.Fatalf("%s: inventory expect %d anchors %v, reference %v", id, i, e.Anchors, want[i])
 							}
@@ -296,22 +481,31 @@ func TestRegisteredAnchors(t *testing.T) {
 			if !has {
 				continue
 			}
-			ps, ok, err := runConvertCases(t, root, p)
-			if !ok {
-				continue
-			}
-			if err != nil {
-				t.Fatalf("%s: %v", p, err)
-			}
-			for _, c := range ps {
+			caseFiles = append(caseFiles, p)
+		}
+	}
+	if anchored == 0 || len(caseFiles) == 0 {
+		t.Fatal("no registered anchored cases")
+	}
+	files, ok, err := runConvertCaseFiles(t, root, caseFiles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		for _, f := range files {
+			for _, c := range f.Cases {
 				reg := registered[c.ID]
+				if len(reg) == 0 || len(c.Expect) != len(reg[0].Expect) {
+					t.Fatalf("%s: converted inventory coverage differs", c.ID)
+				}
 				for i, e := range c.Expect {
-					if !slices.Equal(e.Anchors, reg[0].Expect[i].Anchors) {
+					if e.Step != reg[0].Expect[i].Step || !slices.Equal(e.Anchors, reg[0].Expect[i].Anchors) {
 						t.Fatalf("%s: run-routes.ps1 expect %d anchors %v, inventory %v", c.ID, i, e.Anchors, reg[0].Expect[i].Anchors)
 					}
 				}
 			}
 		}
+		t.Logf("registered anchor conversion: %d files in groups of at most four per pwsh process", len(caseFiles))
 	}
 	t.Logf("anchored registered expectations: %d", anchored)
 }

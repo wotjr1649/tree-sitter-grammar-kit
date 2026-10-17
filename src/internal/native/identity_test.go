@@ -44,6 +44,7 @@ func codeOf(err error) string {
 // S05-A11: a changed parser, define set, runtime, compiler identity or source gives a new
 // build identity or a refusal, and a modified executable is never run.
 func TestBuildIdentity(t *testing.T) {
+	t.Parallel()
 	rt, cc := nativeTools(t)
 	base := fixtureBuild(t, "plain")
 	if fault := fixtureBuild(t, "plain", "TSGK_FAULT_OMIT_EDIT"); fault.Identity == base.Identity {
