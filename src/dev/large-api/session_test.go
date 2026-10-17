@@ -56,7 +56,11 @@ func testNativeSession(t *testing.T, ctx context.Context, b *native.Build, cc st
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := runSession(ctx, exe, digest(binaryBytes), b.Dir, req, nodes, pageSize, expected)
+	firstReceipt, err := largeaudit.Decode(expected[0], req, 0, pageSize, nodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := runSession(ctx, exe, digest(binaryBytes), b.Dir, req, nodes, pageSize, firstReceipt.Fields)
 	if err != nil {
 		t.Fatalf("actual session: %v %+v", err, s.Batch)
 	}

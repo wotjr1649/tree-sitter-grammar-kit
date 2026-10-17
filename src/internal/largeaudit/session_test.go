@@ -77,6 +77,9 @@ func TestSessionOfflineBinding(t *testing.T) {
 				t.Fatal(err)
 			}
 			change(&bad)
+			if _, err := ValidateSession(bad, req, good.Nodes, 1); err == nil {
+				t.Fatal("invalid common session accepted")
+			}
 			if CheckSession(bad, req, expected) == nil {
 				t.Fatal("invalid session accepted")
 			}
@@ -104,6 +107,9 @@ func TestSessionOfflineBinding(t *testing.T) {
 			}
 			bad.Batch.Process.StdoutBytes += int64(len(payload) - len(bad.RawPages[0]))
 			bad.RawPages[0] = payload
+			if _, err := ValidateSession(bad, req, good.Nodes, 1); err == nil {
+				t.Fatal("invalid common page accepted")
+			}
 			if CheckSession(bad, req, expected) == nil {
 				t.Fatal("invalid page accepted")
 			}
@@ -160,12 +166,45 @@ func TestSessionDecodeBounds(t *testing.T) {
 }
 
 func TestSessionPageCountOverflow(t *testing.T) {
-	s, req, expected := sessionFixture(t)
+	s, req, _ := sessionFixture(t)
 	s.Nodes = math.MaxUint64
 	s.PageSize = 2
 	req.Limits.Nodes = math.MaxUint64
 	s.RequestSHA = digest(native.Frame(req.Encode()))
-	if CheckSession(s, req, expected) == nil {
+	if _, err := ValidateSession(s, req, math.MaxUint64, 1); err == nil {
 		t.Fatal("overflowed page count accepted")
+	}
+}
+
+func TestSessionIndependentMetadata(t *testing.T) {
+	s, req, legacy := sessionFixture(t)
+	payloads, err := ValidateSession(s, req, 2, 1)
+	if err != nil || len(payloads) != 2 {
+		t.Fatalf("common session: %v", err)
+	}
+	if _, err := ValidateSession(s, req, 3, 1); err == nil {
+		t.Fatal("node baseline mismatch accepted")
+	}
+	if _, err := ValidateSession(s, req, 2, 2); err == nil {
+		t.Fatal("field baseline mismatch accepted")
+	}
+	if CheckSession(s, req, nil) == nil {
+		t.Fatal("evaluation silently skipped legacy comparison")
+	}
+	var receipt Receipt
+	if err := json.Unmarshal(legacy[0], &receipt); err != nil {
+		t.Fatal(err)
+	}
+	receipt.ExpectedSHA = strings.Repeat("c", 64)
+	receipt.ObservedSHA = receipt.ExpectedSHA
+	legacy[0], err = json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Decode(legacy[0], req, 0, 1, 2); err != nil {
+		t.Fatalf("legacy mismatch control malformed: %v", err)
+	}
+	if CheckSession(s, req, legacy) == nil {
+		t.Fatal("evaluation accepted valid but different independent legacy result")
 	}
 }
