@@ -193,6 +193,85 @@ func TestQueryWitnessMissingEvidenceAndFailPrecedence(t *testing.T) {
 	}
 }
 
+func TestQueryWitnessReviewChecksUnrequiredFullTrees(t *testing.T) {
+	for _, kind := range []string{"intact", "raw-nodes", "projection-nodes", "projection-only"} {
+		t.Run(kind, func(t *testing.T) {
+			req, reg, raw, projection := witnessFixture(t)
+			reg["required"] = reg["required"].([]any)[:1]
+			if kind == "raw-nodes" {
+				raw["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["nodes"].([][]int64)[1][2] = -2
+			}
+			if kind == "projection-nodes" || kind == "projection-only" {
+				projection["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["tree"].(map[string]any)["nodes"].([]TreeNode)[1].Type = "FORGED"
+			}
+			req = marshalWitness(t, req, reg, raw, projection)
+			if kind == "projection-only" {
+				req.Raw = nil
+			}
+			want := AssessFail
+			if kind == "intact" {
+				want = AssessPass
+			}
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			if err != nil || res.Assessment != want || res.Required != 1 {
+				t.Fatalf("unrequired full tree: %+v %v", res, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewProjectionEncodingProvenance(t *testing.T) {
+	for _, value := range []any{SourceDeclaration, "", "FORGED", nil} {
+		req, reg, raw, projection := witnessFixture(t)
+		projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)["input"].(map[string]any)["encoding_source"] = value
+		res, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, projection))
+		want := AssessFail
+		if value == SourceDeclaration {
+			want = AssessPass
+		}
+		if err != nil || res.Assessment != want {
+			t.Fatalf("encoding_source=%v: %+v %v", value, res, err)
+		}
+	}
+}
+
+func TestQueryWitnessReviewMissingRawRejectsFailedCode(t *testing.T) {
+	req, reg, raw, projection := witnessFixture(t)
+	q := projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+	q["status"], q["code"], q["evaluation"], q["captures"] = StatusFailed, "FORGED", "UNSUPPORTED", nil
+	req = marshalWitness(t, req, reg, raw, projection)
+	req.Raw = nil
+	res, err := VerifyQueryWitness(ctxT(t), req)
+	if err != nil || res.Assessment != AssessFail {
+		t.Fatalf("missing raw hid invalid failed code: %+v %v", res, err)
+	}
+}
+
+func TestQueryWitnessReviewMissingSourceChecksStepPairs(t *testing.T) {
+	for _, field := range []string{"source_sha256", "edit-point"} {
+		req, reg, raw, projection := witnessFixture(t)
+		step := projection["steps"].([]any)[1].(map[string]any)
+		if field == "source_sha256" {
+			step[field] = fxPolicy
+		} else {
+			point := step["edit"].(map[string]any)
+			// Copy: the fixture shares this edit object with raw.
+			copy := map[string]any{}
+			for key, value := range point {
+				copy[key] = value
+			}
+			copy["start_point"] = []int{1, 0}
+			step["edit"] = copy
+		}
+		req = marshalWitness(t, req, reg, raw, projection)
+		req.Source = nil
+		res, err := VerifyQueryWitness(ctxT(t), req)
+		if err != nil || res.Assessment != AssessFail {
+			t.Fatalf("missing source hid %s contradiction: %+v %v", field, res, err)
+		}
+	}
+}
+
 func TestQueryWitnessRegistrationAndCancellation(t *testing.T) {
 	req, reg, raw, p := witnessFixture(t)
 	reg["required"] = append(reg["required"].([]any), reg["required"].([]any)[0])

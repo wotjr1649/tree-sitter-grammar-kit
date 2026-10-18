@@ -260,6 +260,8 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 	var raw witnessRaw
 	var projection witnessProjection
 	rawQueries := map[*witnessRawTree][]querywire.Query{}
+	rawNodes := map[*witnessRawTree][]TreeNode{}
+	badProjectionTrees := map[*witnessTreeProjection]bool{}
 	haveRaw, haveProjection := req.Raw != nil, req.Projection != nil
 	if haveRaw {
 		if e := decodeWitnessDocument("raw", req.Raw, &raw, false, r); e != nil {
@@ -286,7 +288,30 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				if tree != nil && !witnessRawTreeHeader(*tree) {
 					bad("QUERY_WITNESS_TREE_INVALID", fmt.Sprintf("raw/steps/%d", i))
 				} else if tree != nil && tree.Status == StatusCompleted {
-					qs, qe := querywire.DecodeSummary(tree.Queries, sources, s.Bytes, tree.Count)
+					var qs []querywire.Query
+					var qe *querywire.Error
+					if *tree.Form == "full" {
+						var source []byte
+						sourceBytes := s.Bytes
+						if i < len(versions) {
+							source, sourceBytes = versions[i], uint64(len(versions[i]))
+						}
+						nodes, code := witnessNodes(*tree, reg.Encoding, source, sourceBytes, r)
+						if e := r.check(); e != nil {
+							return res, e
+						}
+						if code != "" {
+							bad(code, fmt.Sprintf("raw/steps/%d", i))
+							continue
+						}
+						rawNodes[tree] = nodes
+						qs, qe = querywire.DecodeFull(tree.Queries, sources, sourceBytes, uint64(len(nodes)), func(q querywire.Query, row []int64) bool {
+							c, n := witnessCapture(q, row), nodes[row[3]]
+							return c.Type == n.Type && c.Named == n.Named && c.Extra == n.Extra && c.IsError == n.IsError && c.HasError == n.HasError && c.IsMissing == n.IsMissing && c.StartByte == n.StartByte && c.EndByte == n.EndByte && c.StartPoint == n.StartPoint && c.EndPoint == n.EndPoint
+						})
+					} else {
+						qs, qe = querywire.DecodeSummary(tree.Queries, sources, s.Bytes, tree.Count)
+					}
 					if qe != nil {
 						bad(qe.Code, fmt.Sprintf("raw/steps/%d", i))
 					} else {
@@ -331,12 +356,35 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 	}
 	// Check every available binding before requiring source bytes or a full CST.
 	for i, step := range projection.Steps {
+		if i < len(raw.Steps) {
+			s := raw.Steps[i]
+			if step.Step != s.Step || step.Bytes != s.Bytes || step.SHA256 != s.SHA256 || !reflect.DeepEqual(step.Edit, s.Edit) {
+				bad("QUERY_WITNESS_STEP_PAIR_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+				badSteps[i] = true
+			}
+		}
 		for role, tree := range []*witnessTreeProjection{step.Incremental, step.Fresh} {
 			if tree == nil {
 				continue
 			}
 			if !witnessProjectionTreeHeader(*tree) {
 				bad("QUERY_WITNESS_TREE_PROJECTION_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				badProjectionTrees[tree] = true
+			}
+			if full := tree.Tree; full != nil {
+				if tree.Form != "full" || full.Schema != TreeSchema || full.Status != StatusCompleted || full.Input.Encoding != reg.Encoding || full.Input.Bytes != step.Bytes || full.Input.SHA256 != step.SHA256 ||
+					len(full.Nodes) == 0 || uint64(len(full.Nodes)) != tree.Count || ValidateTree(full.Nodes, step.Bytes) != nil || full.Nodes[0].HasError != tree.HasError || TreeDigest(full.Nodes) != tree.Digest {
+					bad("QUERY_WITNESS_TREE_PROJECTION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+					badProjectionTrees[tree] = true
+				} else if i < len(versions) {
+					if code := witnessPoints(full.Nodes, reg.Encoding, versions[i], r); code != "" {
+						bad(code, fmt.Sprintf("projection/steps/%d", i))
+						badProjectionTrees[tree] = true
+					}
+					if e := r.check(); e != nil {
+						return res, e
+					}
+				}
 			}
 			if len(tree.Queries) != len(reg.Queries) {
 				bad("QUERY_WITNESS_QUERY_SET_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
@@ -346,6 +394,11 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				rawTree := raw.Steps[i].Incremental
 				if role == 1 {
 					rawTree = raw.Steps[i].Fresh
+				}
+				if rawTree != nil && (tree.Status != rawTree.Status || tree.Code != rawTree.Code || tree.Count != rawTree.Count || tree.HasError != rawTree.HasError || tree.Digest != rawTree.Digest ||
+					(rawTree.Form != nil && tree.Form != *rawTree.Form) || (tree.Tree != nil && rawNodes[rawTree] != nil && CompareTrees(rawNodes[rawTree], tree.Tree.Nodes) != nil)) {
+					bad("QUERY_WITNESS_TREE_PROJECTION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+					badProjectionTrees[tree] = true
 				}
 				if qs, ok := rawQueries[rawTree]; ok && len(qs) == len(tree.Queries) {
 					for qi, q := range qs {
@@ -414,25 +467,11 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			continue
 		}
 		var source []byte
-		sourceBytes := raw.Steps[step].Bytes
 		if len(versions) != 0 {
-			source, sourceBytes = versions[step], uint64(len(versions[step]))
+			source = versions[step]
 		}
-		nodes, code := witnessNodes(*tree, reg.Encoding, source, sourceBytes, r)
-		if e := r.check(); e != nil {
-			return res, e
-		}
-		if code != "" {
-			bad(code, path)
-			continue
-		}
-		queries, qe := querywire.DecodeFull(tree.Queries, sources, sourceBytes, uint64(len(nodes)), func(q querywire.Query, row []int64) bool {
-			c := witnessCapture(q, row)
-			n := nodes[row[3]]
-			return c.Type == n.Type && c.Named == n.Named && c.Extra == n.Extra && c.IsError == n.IsError && c.HasError == n.HasError && c.IsMissing == n.IsMissing && c.StartByte == n.StartByte && c.EndByte == n.EndByte && c.StartPoint == n.StartPoint && c.EndPoint == n.EndPoint
-		})
-		if qe != nil {
-			bad(qe.Code, path)
+		queries, ok := rawQueries[tree]
+		if !ok || rawNodes[tree] == nil {
 			continue
 		}
 		q := queries[qi]
@@ -454,10 +493,6 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		} else if p.Tree == nil || p.Form != "full" {
 			blocked("QUERY_WITNESS_FULL_TREE_MISSING", path)
 		} else {
-			if p.Status != tree.Status || p.Code != tree.Code || p.Count != tree.Count || p.HasError != tree.HasError || p.Digest != tree.Digest || p.Tree.Schema != TreeSchema || p.Tree.Status != StatusCompleted ||
-				p.Tree.Input.Encoding != reg.Encoding || p.Tree.Input.Bytes != sourceBytes || p.Tree.Input.SHA256 != raw.Steps[step].SHA256 || CompareTrees(nodes, p.Tree.Nodes) != nil {
-				bad("QUERY_WITNESS_TREE_PROJECTION_MISMATCH", path)
-			}
 			if len(p.Queries) != len(queries) || qi >= len(p.Queries) {
 				bad("QUERY_WITNESS_QUERY_SET_MISMATCH", path)
 			}
@@ -509,7 +544,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		}
 		if status != StatusCompleted || q.Partial || evaluated == nil {
 			blocked("QUERY_WITNESS_QUERY_INELIGIBLE", path)
-		} else if caseBound && !badSteps[step] && contradictions == contradictionsBefore && meta != nil && tuple.Structural != nil && tuple.Expected != nil && projectionOK {
+		} else if caseBound && !badSteps[step] && !badProjectionTrees[p] && contradictions == contradictionsBefore && meta != nil && tuple.Structural != nil && tuple.Expected != nil && projectionOK {
 			res.Verified++
 			if evaluation == "EVALUATED" {
 				res.Evaluated++
@@ -587,7 +622,8 @@ func witnessProjectionQueryHeader(q witnessQueryProjection, encoding string) boo
 		return slices.Contains([]string{"QUERY_TIME_LIMIT", "MATCH_LIMIT", "CAPTURE_LIMIT", "QUERY_MATCH_OVERFLOW"}, q.Code) && q.Error == nil && q.Partial &&
 			((len(q.Predicates) == 0 && q.Evaluation == "STRUCTURAL" && q.Captures != nil) || (len(q.Predicates) != 0 && q.Evaluation == "UNSUPPORTED" && q.Captures == nil))
 	case StatusFailed:
-		return q.Code != "" && q.Error == nil && !q.Partial && q.Captures == nil && slices.Contains([]string{"", "UNSUPPORTED"}, q.Evaluation)
+		return q.Error == nil && !q.Partial && q.Captures == nil && ((q.Code == "CAPTURE_NODE_UNMAPPED" && q.Evaluation == "") ||
+			(slices.Contains([]string{querypolicy.InvalidMetadata, querypolicy.InvalidCapture, querypolicy.AbsentCapture, querypolicy.AmbiguousCapture}, q.Code) && q.Evaluation == "UNSUPPORTED"))
 	case "INVALID_QUERY":
 		return q.Error != nil && q.Code == "QUERY_"+q.Error.Type && !q.Partial && q.Captures == nil && q.Evaluation == "" && q.Patterns == 0
 	case StatusNotRun:
@@ -672,6 +708,10 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	if source == nil {
 		return nodes, ""
 	}
+	return nodes, witnessPoints(nodes, encoding, source, r)
+}
+
+func witnessPoints(nodes []TreeNode, encoding string, source []byte, r *run) string {
 	offsets := make([]uint32, 0, len(nodes)*2)
 	for _, n := range nodes {
 		offsets = append(offsets, n.StartByte, n.EndByte)
@@ -682,10 +722,13 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	previous, position := uint32(0), (Point{})
 	for i, offset := range offsets {
 		if i%1024 == 0 && r.check() != nil {
-			return nil, ""
+			return ""
 		}
 		if (encoding == EncodingUTF16LE || encoding == EncodingUTF16BE) && offset%2 != 0 {
-			return nil, "QUERY_WITNESS_TREE_POINTS"
+			return "QUERY_WITNESS_TREE_POINTS"
+		}
+		if uint64(offset) > uint64(len(source)) {
+			return "QUERY_WITNESS_TREE_POINTS"
 		}
 		part := PointAt(encoding, source[previous:offset], int(offset-previous))
 		position.Row += part.Row
@@ -698,10 +741,10 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	}
 	for _, n := range nodes {
 		if positions[n.StartByte] != n.StartPoint || positions[n.EndByte] != n.EndPoint {
-			return nil, "QUERY_WITNESS_TREE_POINTS"
+			return "QUERY_WITNESS_TREE_POINTS"
 		}
 	}
-	return nodes, ""
+	return ""
 }
 
 func witnessCapture(q querywire.Query, row []int64) Capture {
@@ -808,6 +851,9 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 			}
 			if e := witnessShape(t, v.vals[i], f.Type, exact, allowNull, budget); e != nil {
 				return e
+			}
+			if name == "encoding_source" && v.vals[i].s != SourceDeclaration {
+				return t.bad("JSON_SHAPE", v.vals[i])
 			}
 		}
 		for name, f := range fields {
