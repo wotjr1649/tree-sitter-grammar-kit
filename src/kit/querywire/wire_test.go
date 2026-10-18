@@ -239,3 +239,24 @@ func TestMatchAccounting(t *testing.T) {
 		t.Fatal("invalid callback/count accepted")
 	}
 }
+
+func TestFilteredMatchAccounting(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		matches uint64
+		rows    [][2]int64
+		valid   bool
+	}{
+		{"all-rejected", 4, nil, true}, {"gaps", 4, [][2]int64{{1, 0}, {3, 1}}, true}, {"interleaved", 4, [][2]int64{{1, 0}, {3, 1}, {1, 0}}, true},
+		{"pattern", 4, [][2]int64{{1, 0}, {1, 1}}, false}, {"first-order", 4, [][2]int64{{3, 1}, {1, 0}}, false}, {"range", 3, [][2]int64{{3, 0}}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := FilteredMatchAccounting(tc.matches, len(tc.rows), func(i int) (int64, int64) { return tc.rows[i][0], tc.rows[i][1] }); got != tc.valid {
+				t.Fatalf("filtered accounting %v want %v", got, tc.valid)
+			}
+		})
+	}
+	if FilteredMatchAccounting(0, 0, nil) || FilteredMatchAccounting(0, -1, func(int) (int64, int64) { panic("negative count reached callback") }) {
+		t.Fatal("invalid callback/count accepted")
+	}
+}

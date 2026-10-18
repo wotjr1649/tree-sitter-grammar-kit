@@ -232,23 +232,37 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 // MatchAccounting checks an unfiltered structural stream without reordering captures.
 // Caller bounds count and supplies match/pattern pairs; evaluated streams may have gaps.
 func MatchAccounting(matches uint64, count int, at func(int) (int64, int64)) bool {
-	if count < 0 || at == nil || matches > uint64(count) {
+	return matchAccounting(matches, count, at, false)
+}
+
+// FilteredMatchAccounting permits rejected matches but preserves first appearance
+// order and the one pattern per surviving match contract, including interleaving.
+func FilteredMatchAccounting(matches uint64, count int, at func(int) (int64, int64)) bool {
+	return matchAccounting(matches, count, at, true)
+}
+
+func matchAccounting(matches uint64, count int, at func(int) (int64, int64), filtered bool) bool {
+	if count < 0 || at == nil || !filtered && matches > uint64(count) {
 		return false
 	}
 	seen := int64(-1)
 	patterns := map[int64]int64{}
 	for index := 0; index < count; index++ {
 		match, pattern := at(index)
-		if match < 0 || pattern < 0 || match > seen+1 || uint64(match) >= matches {
+		if match < 0 || pattern < 0 || uint64(match) >= matches {
 			return false
 		}
-		if previous, ok := patterns[match]; ok && previous != pattern {
+		if previous, ok := patterns[match]; ok {
+			if previous != pattern {
+				return false
+			}
+		} else if match <= seen || !filtered && match != seen+1 {
 			return false
 		}
 		patterns[match] = pattern
 		seen = max(seen, match)
 	}
-	return matches == uint64(seen+1)
+	return filtered || matches == uint64(seen+1)
 }
 
 // Typed JSON decoding accepts null as a scalar zero value. Only nullable schema

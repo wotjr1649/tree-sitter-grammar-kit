@@ -286,3 +286,5 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 `TestEvidenceSnapshotPreservesVerification`은 reference 연결 준비 경로와 공개 `VerifyEvidence`의 결과·오류가 같음을 확인한다. 요청 밖 파일 변조·축 모순·외부 policy를 그대로 둔 graph/member 동시 재해시, per-file·total·replay-result record 한도와 취소를 검사한다. 요청 member와 graph는 한 번만 열고, 정상 빈 bytes와 누락·손상·이전 snapshot은 구분해야 한다. 일반 member의 보관에 record 한도를 추가해 기존 검증을 좁혀서는 안 된다. 이 회귀는 reference 자격·전체 CST 차등 검증의 완료 근거가 아니다.
 
 `TestQueryWitnessReviewIncompleteTreeEmptySummary`는 raw/projection 양쪽 요약을 같은 값으로 변조한 미완료 tree와 원래 비어 있어야 하는 table을 거부한다. `TestQueryWitnessReviewUnmappedCaptureMetadataWithoutRaw`는 raw 없이도 CAPTURE_NODE_UNMAPPED의 보존된 compiled metadata 변조를 거부하고 정상 실패는 BLOCKED로 유지한다.
+
+추가 witness 회귀는 projection 없는 raw summary/record point 변조, raw 없는 EVALUATED stream의 match pattern·최초 순서 변조(정상 공백·interleaving 보존), CANCELLED code, INVALID_QUERY raw의 비어 있어야 하는 필드(legacy null 보존), 미지원 predicate partial의 잘못된 RESOURCE_LIMIT 상태를 검사한다. FilteredMatchAccounting의 빈 결과·공백·interleaving·pattern·순서·범위·잘못된 callback 대조는 공유 helper 자체도 검사한다.
