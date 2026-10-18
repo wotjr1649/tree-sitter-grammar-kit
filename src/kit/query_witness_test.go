@@ -1342,7 +1342,7 @@ func TestQueryWitnessReviewUTF16RegistrationWithoutSource(t *testing.T) {
 
 func TestQueryWitnessReviewSummaryPredicateEvaluation(t *testing.T) {
 	for _, form := range []string{"summary", "record"} {
-		for _, mutation := range []string{"intact", "evaluated", "raw-point", "projection-point", "projection-name", "projection-range"} {
+		for _, mutation := range []string{"intact", "evaluated", "raw-point", "projection-point", "projection-name", "projection-range", "no-source-intact", "no-source-range", "no-source-reversed"} {
 			req, reg, raw, p := witnessFixture(t)
 			reg["required"] = reg["required"].([]any)[1:]
 			for _, value := range raw["steps"].([]any) {
@@ -1376,16 +1376,21 @@ func TestQueryWitnessReviewSummaryPredicateEvaluation(t *testing.T) {
 				}
 			case "projection-name":
 				capture.Name = "forged"
-			case "projection-range":
+			case "projection-range", "no-source-range":
 				capture.EndByte = 2
+			case "no-source-reversed":
+				capture.StartByte, capture.EndByte = 1, 0
 			}
 			req = marshalWitness(t, req, reg, raw, p)
 			if strings.HasPrefix(mutation, "projection-") {
 				req.Raw = nil
 			}
+			if strings.HasPrefix(mutation, "no-source-") {
+				req.Source, req.Raw = nil, nil
+			}
 			got, err := VerifyQueryWitness(ctxT(t), req)
 			want := AssessBlocked
-			if mutation != "intact" {
+			if mutation != "intact" && mutation != "no-source-intact" {
 				want = AssessFail
 			}
 			if err != nil || got.Assessment != want || mutation == "evaluated" && !slices.Contains(codes(got.Findings), "QUERY_WITNESS_QUERY_PROJECTION_MISMATCH") {

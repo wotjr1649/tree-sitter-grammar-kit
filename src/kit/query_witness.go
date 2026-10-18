@@ -511,6 +511,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				for _, c := range q.Captures {
 					if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
 						c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || c.Node < 0 || uint64(c.Node) >= tree.Count ||
+						c.StartByte > c.EndByte || uint64(c.EndByte) > step.Bytes ||
 						(tree.Tree != nil && !witnessCaptureNode(c, tree.Tree.Nodes)) {
 						bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 						break
