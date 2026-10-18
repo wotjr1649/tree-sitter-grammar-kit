@@ -2,6 +2,7 @@
 package querywire
 
 import (
+	"bytes"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"errors"
@@ -49,7 +50,7 @@ type Error struct {
 func (e *Error) Error() string                { return e.Code + ": " + e.Cause.Error() }
 func (e *Error) Unwrap() error                { return e.Cause }
 func invalid(code string, cause error) *Error { return &Error{Code: code, Cause: cause} }
-func isNull(v jsontext.Value) bool            { return string(v) == "null" }
+func isNull(v jsontext.Value) bool            { return bytes.Equal(bytes.Trim(v, " \t\r\n"), []byte("null")) }
 
 // RequireMembers rejects missing members before typed decoding supplies zero values.
 func RequireMembers(raw jsontext.Value, array bool, names ...string) *Error {
@@ -144,12 +145,22 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 	if err := jsonv2.Unmarshal(raw, &queries, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return nil, invalid("RESPONSE_MALFORMED", err)
 	}
+	if err := rejectNullPrimitives(raw); err != nil {
+		return nil, invalid("RESPONSE_MALFORMED", err)
+	}
 	if len(queries) != len(sources) {
 		return nil, bad(len(queries), "count")
 	}
 	for i, q := range queries {
 		if q.ID != sources[i].ID {
 			return nil, bad(i, "id")
+		}
+		for _, p := range q.Predicates {
+			for _, st := range p.Steps {
+				if (st.Kind != "capture" || st.Quantifier == nil) && (st.Kind != "string" || st.Quantifier != nil) {
+					return nil, bad(i, "predicate step")
+				}
+			}
 		}
 		switch q.Status {
 		case "COMPLETED":
@@ -176,11 +187,6 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		for _, p := range q.Predicates {
 			if p.Pattern >= q.Patterns || len(p.Steps) == 0 {
 				return nil, bad(i, "predicate")
-			}
-			for _, st := range p.Steps {
-				if (st.Kind != "capture" || st.Quantifier == nil) && (st.Kind != "string" || st.Quantifier != nil) {
-					return nil, bad(i, "predicate step")
-				}
 			}
 		}
 		seen := int64(-1)
@@ -218,4 +224,48 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		}
 	}
 	return queries, nil
+}
+
+// Typed JSON decoding accepts null as a scalar zero value. Only nullable schema
+// members may contain it; typed decoding above already fixes their object locations.
+func rejectNullPrimitives(raw jsontext.Value) error {
+	d := jsontext.NewDecoder(bytes.NewReader(raw))
+	var walk func(bool) error
+	walk = func(nullable bool) error {
+		token, err := d.ReadToken()
+		if err != nil {
+			return err
+		}
+		switch token.Kind() {
+		case 'n':
+			if !nullable {
+				return errors.New("null primitive in query response")
+			}
+		case '[':
+			for d.PeekKind() != ']' {
+				if err := walk(false); err != nil {
+					return err
+				}
+			}
+			_, err = d.ReadToken()
+		case '{':
+			for d.PeekKind() != '}' {
+				name, e := d.ReadToken()
+				if e != nil {
+					return e
+				}
+				allowNull := false
+				switch name.String() {
+				case "error", "capture_names", "predicates", "types", "captures", "quantifier":
+					allowNull = true
+				}
+				if err := walk(allowNull); err != nil {
+					return err
+				}
+			}
+			_, err = d.ReadToken()
+		}
+		return err
+	}
+	return walk(false)
 }
