@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querywire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
@@ -41,10 +42,7 @@ func LimitsFor(op kit.NativeOperation) Limits {
 }
 
 // QuerySource is one r2 query: its id and UTF-8 source.
-type QuerySource struct {
-	ID     string
-	Source []byte
-}
+type QuerySource = querywire.Source
 
 // Request is one driver request.
 type Request struct {
@@ -227,28 +225,10 @@ type WireTree struct {
 }
 
 // WireQuery is one r2 query result on one tree.
-type WireQuery struct {
-	ID           string          `json:"id"`
-	Status       string          `json:"status"`
-	Code         string          `json:"code"`
-	QueryMillis  uint64          `json:"query_ms"`
-	Error        *QueryError     `json:"error"`
-	Patterns     uint32          `json:"patterns"`
-	CaptureNames []string        `json:"capture_names"`
-	Predicates   []WirePredicate `json:"predicates"`
-	Matches      uint64          `json:"matches"`
-	Partial      bool            `json:"partial"`
-	Types        []string        `json:"types"`
-	Captures     [][]int64       `json:"captures"`
-}
+type WireQuery = querywire.Query
 
-// QueryError is the runtime's rejection of a query: class, byte offset and point in the
-// query source.
-type QueryError struct {
-	Type   string    `json:"type"`
-	Offset uint32    `json:"offset"`
-	Point  [2]uint32 `json:"point"`
-}
+// QueryError is the runtime's query rejection class, byte offset and point.
+type QueryError = querywire.CompileError
 
 // WirePredicate is one predicate of a pattern as the runtime lists it.
 type WirePredicate = querypolicy.Predicate
@@ -409,24 +389,8 @@ func isNull(v jsontext.Value) bool { return string(v) == "null" }
 // strict decoder would otherwise leave an absent member at its zero value, and an absent
 // predicate list must never read as "no predicates".
 func requireMembers(raw jsontext.Value, array bool, names ...string) error {
-	var objs []map[string]jsontext.Value
-	if array {
-		if err := jsonv2.Unmarshal(raw, &objs); err != nil {
-			return invalid("RESPONSE_MALFORMED", err)
-		}
-	} else {
-		var one map[string]jsontext.Value
-		if err := jsonv2.Unmarshal(raw, &one); err != nil {
-			return invalid("RESPONSE_MALFORMED", err)
-		}
-		objs = append(objs, one)
-	}
-	for i, o := range objs {
-		for _, n := range names {
-			if _, ok := o[n]; !ok {
-				return invalid("RESPONSE_INVALID", fmt.Errorf("object %d lacks %s", i, n))
-			}
-		}
+	if err := querywire.RequireMembers(raw, array, names...); err != nil {
+		return invalid(err.Code, err.Cause)
 	}
 	return nil
 }
@@ -519,138 +483,28 @@ func checkTree(w WireTree, sourceBytes uint64, nodes uint64, req Request) (Tree,
 	return t, nil
 }
 
-var queryLimitCodes = map[string]bool{"QUERY_TIME_LIMIT": true, "MATCH_LIMIT": true, "CAPTURE_LIMIT": true, "QUERY_MATCH_OVERFLOW": true}
-
-// checkQueries validates the query results of a completed r2 tree: one per requested query
-// in order, a consistent status, and every capture row inside the query's tables, the
-// source and the tree; on a full tree the linked node must be the captured node.
+// checkQueries retains the full-node link check while sharing strict wire validation.
 func (t *Tree) checkQueries(req Request, sourceBytes uint64) error {
-	bad := func(i int, what string) error {
-		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
+	t.Queries = nil
+	var queries []WireQuery
+	var err *querywire.Error
+	if t.Nodes != nil {
+		queries, err = querywire.DecodeFull(t.Wire.Queries, req.Queries, sourceBytes, t.Wire.DescendantCount, func(q WireQuery, row []int64) bool {
+			if row[3] < 0 || row[3] >= int64(len(t.Nodes)) {
+				return false
+			}
+			n := t.Nodes[row[3]]
+			c := captureOf(q, row)
+			return n.Type == c.Type && n.Named == c.Named && n.Extra == c.Extra && n.IsError == c.IsError && n.HasError == c.HasError && n.IsMissing == c.IsMissing &&
+				n.StartByte == c.StartByte && n.EndByte == c.EndByte && n.StartPoint == c.StartPoint && n.EndPoint == c.EndPoint
+		})
+	} else {
+		queries, err = querywire.DecodeSummary(t.Wire.Queries, req.Queries, sourceBytes, t.Wire.DescendantCount)
 	}
-	if isNull(t.Wire.Queries) {
-		if len(req.Queries) != 0 {
-			return bad(0, "missing")
-		}
-		return nil
+	if err != nil {
+		return invalid(err.Code, err.Cause)
 	}
-	if err := requireMembers(t.Wire.Queries, true, "id", "status", "code", "query_ms", "error", "patterns", "capture_names", "predicates", "matches", "partial", "types", "captures"); err != nil {
-		return err
-	}
-	// the nested objects too: a predicate without its pattern or a step without its kind
-	// must not default to pattern 0 or an empty step
-	var nested []struct {
-		Error      jsontext.Value `json:"error"`
-		Predicates jsontext.Value `json:"predicates"`
-	}
-	if err := jsonv2.Unmarshal(t.Wire.Queries, &nested); err != nil {
-		return invalid("RESPONSE_MALFORMED", err)
-	}
-	for _, q := range nested {
-		if !isNull(q.Error) {
-			if err := requireMembers(q.Error, false, "type", "offset", "point"); err != nil {
-				return err
-			}
-		}
-		if isNull(q.Predicates) {
-			continue
-		}
-		if err := requireMembers(q.Predicates, true, "pattern", "steps"); err != nil {
-			return err
-		}
-		var preds []struct {
-			Steps jsontext.Value `json:"steps"`
-		}
-		if err := jsonv2.Unmarshal(q.Predicates, &preds); err != nil {
-			return invalid("RESPONSE_MALFORMED", err)
-		}
-		for _, p := range preds {
-			if err := requireMembers(p.Steps, true, "kind", "value", "quantifier"); err != nil {
-				return err
-			}
-		}
-	}
-	if err := jsonv2.Unmarshal(t.Wire.Queries, &t.Queries, jsonv2.RejectUnknownMembers(true)); err != nil {
-		return invalid("RESPONSE_MALFORMED", err)
-	}
-	if len(t.Queries) != len(req.Queries) {
-		return bad(len(t.Queries), "count")
-	}
-	for i, q := range t.Queries {
-		if q.ID != req.Queries[i].ID {
-			return bad(i, "id")
-		}
-		switch q.Status {
-		case kit.StatusCompleted:
-			if q.Code != "" || q.Error != nil || q.Captures == nil || q.Partial || q.Predicates == nil || q.CaptureNames == nil || q.Types == nil {
-				return bad(i, "completed shape")
-			}
-		case kit.StatusResourceLimit:
-			if !queryLimitCodes[q.Code] || q.Error != nil || q.Captures == nil || !q.Partial || q.Predicates == nil || q.CaptureNames == nil || q.Types == nil {
-				return bad(i, "limit shape")
-			}
-		case kit.StatusFailed:
-			if q.Code != "CAPTURE_NODE_UNMAPPED" || q.Error != nil || q.Captures != nil || q.Partial {
-				return bad(i, "failed shape")
-			}
-			continue
-		case "INVALID_QUERY":
-			if q.Error == nil || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial || uint64(q.Error.Offset) > uint64(len(req.Queries[i].Source)) {
-				return bad(i, "invalid shape")
-			}
-			continue
-		default:
-			return bad(i, "status "+strconv.Quote(q.Status))
-		}
-		for _, p := range q.Predicates {
-			if p.Pattern >= q.Patterns || len(p.Steps) == 0 {
-				return bad(i, "predicate")
-			}
-			for _, st := range p.Steps {
-				if (st.Kind != "capture" || st.Quantifier == nil) && (st.Kind != "string" || st.Quantifier != nil) {
-					return bad(i, "predicate step")
-				}
-			}
-		}
-		seen := int64(-1)
-		patternOf := map[int64]int64{}
-		for k, row := range q.Captures {
-			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
-				row[3] < 0 || uint64(row[3]) >= t.Wire.DescendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
-				return bad(i, fmt.Sprintf("capture %d indices", k))
-			}
-			for _, v := range row[6:] {
-				if v < 0 || v > 0xffffffff {
-					return bad(i, fmt.Sprintf("capture %d range", k))
-				}
-			}
-			if row[6] > row[7] || uint64(row[7]) > sourceBytes {
-				return bad(i, fmt.Sprintf("capture %d range", k))
-			}
-			// the runtime numbers a match when it first returns one of its captures
-			if row[0] > seen+1 {
-				return bad(i, fmt.Sprintf("capture %d match order", k))
-			}
-			seen = max(seen, row[0])
-			// one match belongs to one pattern
-			if p, ok := patternOf[row[0]]; ok && p != row[1] {
-				return bad(i, fmt.Sprintf("capture %d pattern of match", k))
-			}
-			patternOf[row[0]] = row[1]
-			if t.Nodes != nil {
-				n := t.Nodes[row[3]]
-				c := captureOf(q, row)
-				if n.Type != c.Type || n.Named != c.Named || n.Extra != c.Extra || n.IsError != c.IsError || n.HasError != c.HasError || n.IsMissing != c.IsMissing ||
-					n.StartByte != c.StartByte || n.EndByte != c.EndByte || n.StartPoint != c.StartPoint || n.EndPoint != c.EndPoint {
-					return invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
-				}
-			}
-		}
-		// the match count is the number of matches the stream returned
-		if q.Matches != uint64(seen+1) {
-			return bad(i, "match count")
-		}
-	}
+	t.Queries = queries
 	return nil
 }
 
