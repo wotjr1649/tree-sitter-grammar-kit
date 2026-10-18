@@ -272,3 +272,9 @@ Use FOUNDATION_READY only when all are observed; READY_FOR_MERGE when only merge
 SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKED 구간 순서를 모두 검증하고 전체 step code를 확인한다. 앞 구간 완료 뒤 NODE_LIMIT이 발생하는 실제 process 대조는 부분 segment 증거와 terminal 상태를 보존하면서 전체 API claim을 제거하는지 검사한다. r1/r2·네 encoding의 관측 전용 edit 증거, r2 edit의 여섯 byte/point 필드 누락·변조, segment process가 최상위 process보다 작거나 크거나 최상위가 없는 경우의 host 최댓값 및 의미 비교 제외도 검사한다. 잘못 등록된 segment에 대한 mechanism FAIL은 유지한다.
 
 #216 query witness 회귀는 required 밖의 평가 capture 누락, raw 없는 완료 projection의 하위 tree·query 상태 모순, capture-node 연결과 INVALID_QUERY class·LF point 변조를 FAIL로 요구한다. 정상 empty·invalid-query 관측·host predicate 실패·capability 거부는 각 기존 상태를 보존한다. Full raw·source가 있으면 모든 query 평가를 대조하며 필수 tuple만 anchor와 완료 수의 분모로 사용한다.
+
+## #216 명시 source witness
+
+`TestOracleSourceWitnessSet`·`TestOracleSourceWitnessEmptyAndOmitted`는 source 파일 교체와 hash 재결속, record와 다른 입력 identity·case·status, 누락·중복·목록 밖 파일·크기 한도, r1에 source 삽입 및 legacy decoder의 r2 거부를 검사한다. `TestOracleSourceWitness`는 실제 native 실행의 최초 source·record·step 0 binding, source 보관 직후 원 파일이 바뀌어도 동일 buffer로 native 실행, 정상 빈 source, build 실패·source 읽기·쓰기 실패 때 manifest 부재를 검사한다. 기본 query 없는 oracle set은 r1과 source 미보관을 유지한다. SVC는 출력 생성 전 거부하고 CLI flag는 oracle record에서만 받는다. 이 단계는 source 보관만 추가하며 query_semantics·SVC·대형 full CST·3-host reference 완료를 주장하지 않는다.
+
+`TestVerifyOracleSetBoundsActualReads`는 manifest·record·raw가 무한 bytes를 내는 가상 filesystem을 사용해 상한+1에서 읽기를 멈추고 handle을 닫는지 검사한다. Source opt-in과 무관하게 기존 set 검증에도 적용하는 메모리 경계 회귀다.

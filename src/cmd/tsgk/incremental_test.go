@@ -34,6 +34,7 @@ func TestIncrementalCLI(t *testing.T) {
 	t.Run("batch-observation", func(t *testing.T) { testIncrementalCLI(t, true, "batch") })
 	t.Run("svc-observation", func(t *testing.T) { testIncrementalCLI(t, true, "svc") })
 	t.Run("build-cache", func(t *testing.T) { testIncrementalCLI(t, false, "cache") })
+	t.Run("source-witness", func(t *testing.T) { testIncrementalCLI(t, false, "source-witness") })
 }
 
 func testIncrementalCLI(t *testing.T, observe bool, mode string) {
@@ -131,6 +132,12 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 		}
 		c["expect"] = []any{map[string]any{"step": 0, "syntax": "NO_ERROR", "contains": []any{}, "declarations": ""}, map[string]any{"step": 1, "syntax": "ERROR", "contains": []any{}, "declarations": ""}, map[string]any{"step": 2, "syntax": "NO_ERROR", "contains": []any{}, "declarations": ""}}
 	}
+	if mode == "source-witness" {
+		profile["schema"], profile["operation"] = kit.OracleSchema, "native-query"
+		profile["queries"], profile["fact_pack"], profile["api"] = []any{}, nil, false
+		c := profile["cases"].([]any)[0].(map[string]any)
+		c["query_expect"], c["dynamic_sql_expect"] = []any{}, nil
+	}
 	data, _ := json.Marshal(profile)
 	pf := filepath.Join(base, "profile.json")
 	os.WriteFile(pf, data, 0o644)
@@ -138,6 +145,9 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 	os.MkdirAll(work, 0o755)
 	out := filepath.Join(base, "out")
 	args := []string{"incremental", "--root", root, "--profile", pf, "--runtime", rt, "--tool", "cc=" + cc, "--work", work, "--out", out}
+	if mode == "source-witness" {
+		args = append([]string{"oracle", "record", "--source-witness"}, args[1:]...)
+	}
 	if mode == "cache" {
 		cache := filepath.Join(base, "run-cache")
 		if err := os.Mkdir(cache, 0o700); err != nil {
@@ -162,6 +172,22 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 	code, stdout, stderr := cli(t, ctx, args...)
 	if code != 0 {
 		t.Fatalf("exit %d %s %s", code, stderr, stdout)
+	}
+	if mode == "source-witness" {
+		var result native.OracleResult
+		if err := json.Unmarshal([]byte(stdout), &result); err != nil || result.Set == nil || !result.Set.Valid {
+			t.Fatalf("source witness CLI: %v %s", err, stdout)
+		}
+		got, err := os.ReadFile(filepath.Join(out, "source", "00000-one.bin"))
+		if err != nil || string(got) != source {
+			t.Fatalf("CLI did not retain original source: %v", err)
+		}
+		data, err := os.ReadFile(filepath.Join(out, "manifest.json"))
+		var m kit.OracleManifest
+		if err != nil || json.Unmarshal(data, &m) != nil || m.Schema != kit.OracleSourceManifestSchema {
+			t.Fatalf("CLI witness manifest: %v", err)
+		}
+		return
 	}
 	var res struct {
 		ExecutionStatus string `json:"execution_status"`
@@ -404,5 +430,16 @@ func TestOracleRejectsReuseObservationFlag(t *testing.T) {
 	code, _, stderr := cli(t, context.Background(), "oracle", "record", "--reuse-observation")
 	if code != 2 || !strings.Contains(stderr, "flag provided but not defined") {
 		t.Fatalf("oracle flag: %d %s", code, stderr)
+	}
+}
+
+func TestSourceWitnessFlagScope(t *testing.T) {
+	code, _, stderr := cli(t, context.Background(), "incremental", "--source-witness")
+	if code != 2 || !strings.Contains(stderr, "flag provided but not defined") {
+		t.Fatalf("incremental accepted source witness: %d %s", code, stderr)
+	}
+	code, _, stderr = cli(t, context.Background(), "oracle", "record", "--source-witness")
+	if code != 2 || strings.Contains(stderr, "flag provided but not defined") || !strings.Contains(stderr, "USAGE") {
+		t.Fatalf("oracle source witness flag: %d %s", code, stderr)
 	}
 }

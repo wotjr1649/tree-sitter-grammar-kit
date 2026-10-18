@@ -238,6 +238,12 @@ API byte 조회의 root start는 0으로 가정하지 않는다. BOM이나 앞�
 
 manifest의 `queries` identity 목록은 항상 배열이며, 요청 query가 없으면 `[]`로 기록한다. 응답 tree의 unrequested `queries: null`과 구별하며 strict null 거부를 완화하지 않는다.
 
+**명시 source witness (#216).** `oracle record --source-witness`만 `tsgk-oracle-manifest/r2`를 발행한다. Manifest의 기존 필드와 record/native protocol은 유지하며, 모든 `cases` 사례에 `source/<순번 5자리>-<사례>.bin` member(`role: source`)가 정확히 하나 추가된다. Native 요청에 전달할 동일 초기 source buffer를 RunCase 전에 보관하며 원 파일을 다시 읽지 않는다. Source member의 bytes·sha256은 자체 파일, member 입력 identity, 해당 record의 입력 identity·실행 상태와 일치해야 한다. 빈 source는 실제 0 byte 파일과 그 hash로 보관하며 누락과 구분한다. Source는 member마다 32 MiB 상한으로 읽는다. 기본 실행은 기존 r1을 유지하고 source directory를 만들지 않는다.
+
+r2에서 source를 읽거나 쓰지 못하면 manifest를 발행하지 않고 FAILED로 남긴다. 실행 전 입력 검증 거부·실행 실패 사례도 source를 읽었다면 그 bytes를 보관한다. Build 실패로 사례를 시작하지 못했으면 r2 manifest를 발행하지 않는다. r2 set에 사례가 0개이면 CASE_SOURCE_EMPTY로 거부한다. Source 보관은 parser 실행 성공이나 query 의미 검증의 증명이 아니다. `VerifyOracleSet`만 새 revision의 무결성을 검사하며 기존 oracle-set replay와 qualification은 r2를 `SCHEMA_UNSUPPORTED`로 거부한다. 새 reducer·qualification revision에서 명시 연결하기 전 기존 claim으로 승격하지 않는다.
+
+현재 opt-in은 SVC format/context를 build·출력 생성 전에 `SOURCE_WITNESS_SVC_UNSUPPORTED`/BLOCKED로 거부한다. SVC의 원 좌표 included range·분할 native history·별도 codebehind 입력을 함께 보관하는 후속 계약이 필요하다. 대형 입력의 source 보관만으로 summary CST를 full CST로 만들지 않으며 기존 full witness·reference 한도는 유지한다.
+
 `kit.VerifyOracleSet`(offline)은 manifest가 strict decode되고 `complete: true`로 끝나는지 본다(`SET_INCOMPLETE`, footer가 없으면 `JSON_MISSING_FIELD`, 잘렸으면 JSON 오류 code). 이어 모든 member가 기록한 bytes·sha256으로 있는지(`MEMBER_MISSING`, `MEMBER_MISMATCH`), 목록에 없는 파일이 없는지(`MEMBER_UNLISTED`), record 수가 맞는지(`RECORD_COUNT_MISMATCH`) 확인한다. 사례 목록의 사례마다 record가 정확히 하나인지(`CASE_RECORD_MISMATCH`), manifest 값의 형식이 맞는지(`JSON_TYPE` 등)도 본다. record마다 schema·`complete`·사례 id·입력 identity·step 0의 source identity가 member와 같은지(`RECORD_INCOMPLETE`, `RECORD_IDENTITY_MISMATCH`, `RECORD_INPUT_MISMATCH`, `RECORD_STATUS_MISMATCH`, `RECORD_STEP_MISMATCH`)도 확인한다. finding이 하나라도 있으면 set 전체가 무효이며 고치지 않는다. `valid`는 set이 완결되고 손상되지 않았다는 뜻일 뿐이다. 실행 결과는 검증 결과의 `execution_status`·`assessment`가 따로 말한다. 실패한 실행의 valid set은 그 실패의 완결된 기록이지 통과 결과의 reference가 아니다. 의미 비교에서는 host 경로를 제외한다. host 관측(시간, process 결과, executable hash)은 record에 남지만 의미 identity가 아니다.
 
 **사실 query 세트 `fact-queries-r1`.** [`fact-query-pack.json`](../../src/contracts/fact-query-pack.json)(`tsgk-fact-query-pack/r1`)은 route별 query다. C#·T-SQL·PostgreSQL은 `facts.declarations`, C#·T-SQL은 `facts.dynamic_sql`, XML은 `facts.xml_structure`를 가진다. profile은 pack revision·sha256·route로 결속하고 고른 pack query를 같은 id·source로 담는다(다르면 실행 전 `FACT_PACK_MISMATCH`). 담지 않은 pack query의 사실은 도출하지 않는다.
@@ -319,3 +325,5 @@ SVC r2의 완료된 모든 step은 등록 source edit에서 byte offset과 LF �
 전체 corpus는 caller-pinned cohort plan의 expected 합집합이 원래 expected 집합과 일대일 일치해야 한다. 각 plan의 optional `storage_limit`·`wall_seconds`는 단일 실행의 32GiB·3600초 상한을 낮출 수만 있으며 실제 값을 result/policy에 결속한다. #188에서 채택한 전체 실행 budget은 pilot을 포함해 최대6시간·증거 총32GiB다. Caller는 cohort budget의 합과 누적 비용을 제한하고 source·plan·결과 등록, 누락·중복·미완료를 검사한다. 단일 cohort PASS나 예산 소진에 따른 중단을 전체 완료로 세지 않는다.
 
 Replay producer 검증은 caller-trusted registration의 producer 선택과 저장된 전체 producer record hash/route를 신뢰 경계로 삼는다. Compile/build 의미를 오프라인에서 새로 실행하거나 증명하지 않는다. Replay 자체의 운영 wall 상한은1시간이며 native plan의 낮춘 wall과 별개다. Caller의 전체6시간 budget에는 native·replay 실제 경과를 모두 포함한다.
+
+`VerifyOracleSet`의 실제 파일 읽기는 manifest 16 MiB, record/raw member 64 MiB, source member 32 MiB 상한으로 제한한다. Member는 선언한 bytes+1까지만 읽으며, 거짓 크기 선언으로 큰 실제 파일을 전부 메모리에 적재하지 않는다. 초과는 MANIFEST_BYTES_LIMIT·MEMBER_BYTES_LIMIT·SOURCE_BYTES_LIMIT finding이며 열린 파일을 닫는다. Source 무결성 검사도 이 읽기 경계를 공유한다.
