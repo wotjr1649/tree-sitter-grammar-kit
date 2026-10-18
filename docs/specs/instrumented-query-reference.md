@@ -59,7 +59,7 @@ Caller는 승인 member에 정확히 결속하는 witness 등록 원문도 필�
 
 각 observation은 `(query, step)`과 독립 source bytes/hash를 고정한 fresh reference다. Witness 등록의 `required`가 판정 분모이며 observation 수로 줄이지 않는다. 같은 source version의 response를 incremental/fresh 양쪽에 사용해도 각 tuple을 별도로 센다. 다른 version 재사용은 source identity 불일치다. 기존 native witness 재계산, reference의 독립 full CST 구조·source point·capture/node 연결·match 번호와 runtime mapping, 완료/cursor/한도, 전체 compiled metadata·ordered structural/evaluated stream·독립 manual anchors를 대조한다. Evaluated stream은 structural의 전체 match만 순서를 보존해 선택할 수 있고 중복 occurrence를 삭제하거나 더할 수 없다. Capture가 없는 node도 전체 CST 비교에 포함한다.
 
-기존 graph/policy가 선언한 member가 없거나 hash·identity·context·완료 상태가 모순이면 FAIL이다. 유효한 graph에 아직 관측 node/member가 선언되지 않았거나 일관된 producer 실패·native full CST 부재는 BLOCKED다. 누락이 있어도 확보한 다른 response의 모순 검사는 계속한다. 유효한 두 full CST의 차이는 `REFERENCE_CST_INELIGIBLE`/BLOCKED이며 field를 보충하지 않는다. Native와 reference metadata의 확인 가능한 모순은 이 부적격 판정으로 가리지 않는다.
+기존 graph/policy가 선언한 member가 없거나 hash·identity·context·완료 상태가 모순이면 FAIL이다. 유효한 graph에 아직 관측 node/member가 선언되지 않았거나 일관된 producer 실패·native full CST 부재는 BLOCKED다. 실패 response의 code는 고정된 emitter가 실제 직렬화하는 오류 집합에 속해야 하며, 알 수 없는 code는 `REFERENCE_FAILURE_CODE_INVALID`/FAIL이다. 알려진 code라는 사실은 그 실패 원인의 실제 발생을 입증하지 않는다. 누락이 있어도 확보한 다른 response의 모순 검사는 계속한다. 유효한 두 full CST의 차이는 `REFERENCE_CST_INELIGIBLE`/BLOCKED이며 field를 보충하지 않는다. Native와 reference metadata의 확인 가능한 모순은 이 부적격 판정으로 가리지 않는다.
 
 PASS는 외부 승인 기준에 연결한 저장 데이터의 일관성만 뜻한다. 복사한 승인 header를 붙인 fabricated response의 실제 실행 진위는 증명하지 못한다. Manifest의 전체 selected-tree/tool/source/vendor receipt closure 재검증, 독립 실행 진위, qualification eligibility·claim/reducer/inventory/fan-in은 별도 미완료 영역이다. Stock CLI full-field parity의 BLOCKED와 #215의 생성 순간 소유권 공백도 유지한다.
 

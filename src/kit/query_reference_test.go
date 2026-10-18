@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"testing"
 )
@@ -346,7 +347,7 @@ func TestQueryReferenceConnectionMissingAndIneligible(t *testing.T) {
 			delete(f.files, "source.txt")
 		}},
 		{"producer-failed", "REFERENCE_RESPONSE_INCOMPLETE", func(f *referenceFixture) {
-			f.responses["reference-0.json"] = map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": "NODE_LIMIT", "complete": false}
+			f.responses["reference-0.json"] = map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": "CST_LIMIT", "complete": false}
 			f.approve(t, "reference-0.json")
 		}},
 		{"uncaptured-cst", "REFERENCE_CST_INELIGIBLE", func(f *referenceFixture) {
@@ -364,6 +365,49 @@ func TestQueryReferenceConnectionMissingAndIneligible(t *testing.T) {
 				t.Fatalf("%s: %+v %v", tc.code, r, e)
 			}
 		})
+	}
+}
+
+func TestQueryReferenceConnectionReferenceFailureCodes(t *testing.T) {
+	for _, code := range []string{"CST_LIMIT", "QUERY_COMPILE", "PREDICATE_OUTSIDE_REFERENCE_SUBSET", "FORGED", "NODE_LIMIT", " "} {
+		t.Run(code, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			f.responses["reference-0.json"] = map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": code, "complete": false}
+			f.approve(t, "reference-0.json")
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			want := AssessBlocked
+			if code == "FORGED" || code == "NODE_LIMIT" || code == " " {
+				want = AssessFail
+			}
+			if e != nil || r.Assessment != want {
+				t.Fatalf("failure code %q: %+v %v", code, r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceEmitterFailureCodeContract(t *testing.T) {
+	data, e := os.ReadFile("../dev/query-reference/main.rs")
+	if e != nil {
+		t.Fatal(e)
+	}
+	// This fixed emitter converts every failure to a literal before serialization.
+	pattern := regexp.MustCompile(`(?:Err\(|ok_or\(|map_err\(\|_\| )"([A-Z][A-Z_0-9]+)"`)
+	known := map[string]bool{}
+	for _, match := range pattern.FindAllSubmatch(data, -1) {
+		known[string(match[1])] = true
+	}
+	if len(known) != 46 {
+		t.Fatalf("pinned emitter failure contract changed: %d codes", len(known))
+	}
+	for code := range known {
+		f := newReferenceFixture(t)
+		f.responses["reference-0.json"] = map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": code, "complete": false}
+		f.approve(t, "reference-0.json")
+		r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+		if e != nil || r.Assessment != AssessBlocked {
+			t.Fatalf("pinned emitter code %s rejected: %+v %v", code, r, e)
+		}
 	}
 }
 
