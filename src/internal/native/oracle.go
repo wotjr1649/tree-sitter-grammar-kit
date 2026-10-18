@@ -46,20 +46,21 @@ type DeclFacts struct {
 
 // OracleRequest is one `tsgk oracle record` run. Paths are absolute.
 type OracleRequest struct {
-	Root         string
-	GrammarRoot  string
-	Profile      []byte
-	FactPack     []byte // the pack file when the profile binds one
-	Runtime      string
-	Compiler     string
-	Work         string
-	BuildCache   string
-	Out          string
-	OutTarget    *OutputTarget // optional caller-held target; Out is then display-only
-	Inputs       *InputRoots   // optional caller-held source roots
-	Allow        []string
-	CgroupParent string
-	RunWall      time.Duration
+	Root          string
+	GrammarRoot   string
+	Profile       []byte
+	FactPack      []byte // the pack file when the profile binds one
+	Runtime       string
+	Compiler      string
+	Work          string
+	BuildCache    string
+	Out           string
+	OutTarget     *OutputTarget // optional caller-held target; Out is then display-only
+	Inputs        *InputRoots   // optional caller-held source roots
+	Allow         []string
+	CgroupParent  string
+	RunWall       time.Duration
+	SourceWitness bool // explicit opt-in: retain exact initial source in manifest r2
 }
 
 // OracleResult is the stdout result of a record run.
@@ -142,6 +143,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return stop(refuse(ke.Kind, ke.Code, ke))
 	}
 	n := prof.Native
+	if req.SourceWitness && (n.Format == kit.SvcFormat || n.Format == kit.SvcLegacyFormat || n.SvcContext != nil) {
+		return stop(refuse(kit.KindUnsupported, "SOURCE_WITNESS_SVC_UNSUPPORTED", nil))
+	}
 	op := kit.NativeOperations()[n.Operation]
 	res.ProfileID, res.Route, res.Operation, res.ProfileSHA256 = n.ID, n.Route, op, n.SHA256
 	if f, err := platformScope(op); err != nil {
@@ -180,7 +184,11 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	}
 	defer closeOutput(output, &res.Report, &resultErr)
 	memberRoots := map[string]*os.Root{".": output.Root}
-	for _, d := range []string{"records", "raw"} {
+	directories := []string{"records", "raw"}
+	if req.SourceWitness {
+		directories = append(directories, "source")
+	}
+	for _, d := range directories {
 		child, err := createOutputDirectory(output.Root, d)
 		if err != nil {
 			return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
@@ -222,6 +230,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return true
 	}
 	if berr != nil {
+		if req.SourceWitness {
+			writeFailed = true
+			res.Findings = append(res.Findings, finding("SOURCE_WITNESS_UNAVAILABLE", "error", "", "build 실패로 source witness set을 완결할 수 없다"))
+		}
 		var ne *Error
 		errors.As(berr, &ne)
 		res.ExecutionStatus, res.Assessment = kit.StatusFailed, kit.AssessNotAssessed
@@ -248,11 +260,24 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		for i, oc := range prof.OracleCases {
 			c := oc.IncrementalCase
 			var cr CaseResult
+			var sourceMember *kit.OracleMember
 			src, err := readCase(req.Root, c.Input, caseHandle)
 			if err != nil {
+				if req.SourceWitness {
+					writeFailed = true // No complete source-witness set may omit a case's source.
+					res.Findings = append(res.Findings, finding("SOURCE_WITNESS_UNAVAILABLE", "error", c.ID, "source를 읽지 못해 witness set을 완결할 수 없다"))
+				}
 				cr = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
 					Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
 			} else {
+				if req.SourceWitness && !writeFailed {
+					path := fmt.Sprintf("source/%05d-%s.bin", i, c.ID)
+					// Freeze bytes before RunCase; publication never rereads the input path.
+					if write(path, src) {
+						sourceMember = &kit.OracleMember{Path: path, Role: "source", Case: c.ID, Bytes: uint64(len(src)), SHA256: sha(src),
+							InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256}
+					}
+				}
 				var found bool
 				cr, found = refs[c.ID]
 				if !found {
@@ -263,6 +288,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			}
 			cases = append(cases, cr)
 			name := fmt.Sprintf("%05d-%s.json", i, c.ID)
+			if sourceMember != nil {
+				sourceMember.ExecutionStatus = cr.ExecutionStatus
+				members = append(members, *sourceMember)
+			}
 			if cr.Raw != nil && !writeFailed {
 				if write("raw/"+name, cr.Raw) {
 					members = append(members, kit.OracleMember{Path: "raw/" + name, Role: "raw", Case: c.ID, Bytes: uint64(len(cr.Raw)), SHA256: sha(cr.Raw),
@@ -303,6 +332,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			Comparators: []string{kit.TreeDigestScheme, kit.CaptureCompareScheme, APICapability, PredicatePolicy},
 			Workload:    map[string]string{"profile_id": n.ID, "profile_sha256": n.SHA256, "route": n.Route, "operation": n.Operation, "output": n.Output},
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
+		if req.SourceWitness {
+			m.Schema = kit.OracleSourceManifestSchema
+		}
 		if m.Members == nil {
 			m.Members = []kit.OracleMember{}
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -88,6 +89,105 @@ func TestOracleRecordSetWithoutQueries(t *testing.T) {
 	var manifest map[string]json.RawMessage
 	if err != nil || json.Unmarshal(data, &manifest) != nil || string(manifest["queries"]) != "[]" {
 		t.Fatalf("empty query identities: %v %s", err, manifest["queries"])
+	}
+	if string(manifest["schema"]) != `"`+kit.OracleManifestSchema+`"` {
+		t.Fatalf("default manifest revision changed: %s", manifest["schema"])
+	}
+	if _, err := os.Stat(filepath.Join(out, "source")); !os.IsNotExist(err) {
+		t.Fatalf("default retained source: %v", err)
+	}
+}
+
+func TestOracleSourceWitness(t *testing.T) {
+	for _, mode := range []string{"exact-buffer", "missing-source", "write-failure", "build-failure"} {
+		t.Run(mode, func(t *testing.T) {
+			profile, root := oracleProfile(t, nil, "a = f(1);\n", "")
+			out := filepath.Join(t.TempDir(), "set")
+			req := oracleRequest(t, profile, root, out)
+			req.SourceWitness = true
+			if mode == "build-failure" {
+				var p map[string]any
+				if err := json.Unmarshal(req.Profile, &p); err != nil {
+					t.Fatal(err)
+				}
+				p["compiler"].(map[string]any)["sha256"] = strings.Repeat("0", 64)
+				req.Profile, _ = json.Marshal(p)
+			}
+			if mode == "missing-source" {
+				if err := os.Remove(filepath.Join(root, "casea.txt")); err != nil {
+					t.Fatal(err)
+				}
+			}
+			original := createExclusive
+			defer func() { createExclusive = original }()
+			createExclusive = func(dir *os.Root, path string, data []byte) error {
+				if strings.HasSuffix(path, ".bin") {
+					if mode == "write-failure" {
+						return errors.New("injected source write failure")
+					}
+					if mode == "exact-buffer" {
+						if err := os.WriteFile(filepath.Join(root, "casea.txt"), []byte("changed after execution"), 0600); err != nil {
+							return err
+						}
+					}
+				}
+				return original(dir, path, data)
+			}
+			res, err := runOracle(t, req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if mode != "exact-buffer" {
+				if res.ExecutionStatus != kit.StatusFailed || res.Set != nil {
+					t.Fatalf("incomplete witness set accepted: %+v", res)
+				}
+				if _, err := os.Stat(filepath.Join(out, "manifest.json")); !os.IsNotExist(err) {
+					t.Fatalf("failure published manifest: %v", err)
+				}
+				return
+			}
+			if res.Set == nil || !res.Set.Valid || res.ExecutionStatus != kit.StatusCompleted {
+				t.Fatalf("witness set: %+v", res)
+			}
+			for index, want := range []string{"a = f(1);\n", ""} {
+				name := fmt.Sprintf("%05d-c%c", index, 'a'+index)
+				source, err := os.ReadFile(filepath.Join(out, "source", name+".bin"))
+				if err != nil || string(source) != want {
+					t.Fatalf("source buffer changed: %v", err)
+				}
+				var rec OracleRecord
+				data, err := os.ReadFile(filepath.Join(out, "records", name+".json"))
+				if err != nil || json.Unmarshal(data, &rec) != nil || rec.Input.SHA256 != sha(source) || rec.Steps[0].SourceSHA256 != sha(source) {
+					t.Fatalf("source/record/driver binding: %v", err)
+				}
+			}
+			data, err := os.ReadFile(filepath.Join(out, "manifest.json"))
+			var m kit.OracleManifest
+			if err != nil || json.Unmarshal(data, &m) != nil || m.Schema != kit.OracleSourceManifestSchema {
+				t.Fatalf("witness revision: %v", err)
+			}
+		})
+	}
+}
+
+func TestOracleSourceWitnessSvcRefusedBeforeOutput(t *testing.T) {
+	profile, root := oracleProfile(t, nil, "a = 1;\n")
+	var p map[string]any
+	if err := json.Unmarshal(profile, &p); err != nil {
+		t.Fatal(err)
+	}
+	p["symbol"], p["format"] = "tree_sitter_c_sharp", kit.SvcLegacyFormat
+	profile, _ = json.Marshal(p)
+	out := filepath.Join(t.TempDir(), "set")
+	req := oracleRequest(t, profile, root, out)
+	req.SourceWitness = true
+	res, err := runOracle(t, req)
+	var ne *Error
+	if !errors.As(err, &ne) || ne.Code != "SOURCE_WITNESS_SVC_UNSUPPORTED" || res.Build != nil || res.Assessment != kit.AssessBlocked {
+		t.Fatalf("SVC witness refusal: %+v %v", res, err)
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Fatalf("SVC refusal created output: %v", err)
 	}
 }
 

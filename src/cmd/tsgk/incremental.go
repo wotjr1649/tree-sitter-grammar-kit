@@ -27,7 +27,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 // incremental, with r2 queries and API observations and a published record set.
 func runOracle(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] != "record" {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE")
+		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE")
 		return exitUsage
 	}
 	return runNative(ctx, "oracle", args[1:], stdout, stderr)
@@ -50,8 +50,10 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		fs.BoolVar(&reuseObservation, "reuse-observation", false, "record bounded public logger observations (result r2)")
 	}
 	var pack *string
+	var sourceWitness bool
 	if kind == "oracle" {
 		pack = fs.String("fact-pack", "", "fact query pack the profile binds (outside the root)")
+		fs.BoolVar(&sourceWitness, "source-witness", false, "retain exact initial case source in a manifest r2 set")
 	}
 	var tools, allow multi
 	fs.Var(&tools, "tool", "cc=PATH compiler executable")
@@ -61,7 +63,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	usage := "tsgk: USAGE: tsgk incremental --root PATH [--grammar-root PATH] --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 	if kind == "oracle" {
-		usage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+		usage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 	}
 	if fs.NArg() != 0 || *root == "" || *profile == "" || *rt == "" || *out == "" || *work == "" || len(tools) != 1 {
 		fmt.Fprintln(stderr, usage)
@@ -199,7 +201,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			}
 		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, SourceWitness: sourceWitness})
 		res, report, rerr = &r, &r.Report, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],

@@ -264,3 +264,9 @@ All gates are required: G00-01 target/authority; 02 pinned references; 03 src/mo
 Use FOUNDATION_READY only when all are observed; READY_FOR_MERGE when only merge remains; BLOCKED_EXTERNAL when a mandatory external gate is unavailable; HOLD_FOR_CORRECTION for unresolved design, validation, or findings. Never declare all gates PASS in advance. The [workload matrix](workload-matrix.md) owns feature-specific gates.
 
 SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKED 구간 순서를 모두 검증하고 전체 step code를 확인한다. 앞 구간 완료 뒤 NODE_LIMIT이 발생하는 실제 process 대조는 부분 segment 증거와 terminal 상태를 보존하면서 전체 API claim을 제거하는지 검사한다. r1/r2·네 encoding의 관측 전용 edit 증거, r2 edit의 여섯 byte/point 필드 누락·변조, segment process가 최상위 process보다 작거나 크거나 최상위가 없는 경우의 host 최댓값 및 의미 비교 제외도 검사한다. 잘못 등록된 segment에 대한 mechanism FAIL은 유지한다.
+
+## #216 명시 source witness
+
+`TestOracleSourceWitnessSet`·`TestOracleSourceWitnessEmptyAndOmitted`는 source 파일 교체와 hash 재결속, record와 다른 입력 identity·case·status, 누락·중복·목록 밖 파일·크기 한도, r1에 source 삽입 및 legacy decoder의 r2 거부를 검사한다. `TestOracleSourceWitness`는 실제 native 실행의 최초 source·record·step 0 binding, source 보관 직후 원 파일이 바뀌어도 동일 buffer로 native 실행, 정상 빈 source, build 실패·source 읽기·쓰기 실패 때 manifest 부재를 검사한다. 기본 query 없는 oracle set은 r1과 source 미보관을 유지한다. SVC는 출력 생성 전 거부하고 CLI flag는 oracle record에서만 받는다. 이 단계는 source 보관만 추가하며 query_semantics·SVC·대형 full CST·3-host reference 완료를 주장하지 않는다.
+
+`TestVerifyOracleSetBoundsActualReads`는 manifest·record·raw가 무한 bytes를 내는 가상 filesystem을 사용해 상한+1에서 읽기를 멈추고 handle을 닫는지 검사한다. Source opt-in과 무관하게 기존 set 검증에도 적용하는 메모리 경계 회귀다.
