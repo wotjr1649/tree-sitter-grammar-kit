@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             tool, env = self.fault_tool(directory)
-            for mode in ('control', 'rust-ten', 'rust-suffix', 'cargo-ten', 'cargo-suffix', 'source', 'vendor'):
+            for mode in ('control', 'rust-ten', 'rust-suffix', 'cargo-ten', 'cargo-suffix', 'source', 'vendor', 'archive-swap'):
                 with self.subTest(mode=mode):
                     case = root / mode
                     case.mkdir()
@@ -89,7 +89,26 @@ int main(int argc, char **argv) {
                         shutil.copyfile(tool, case/(name+suffix))
                         (case/(name+suffix)).chmod(0o700)
                     work = case/'build'
-                    argv = [sys.executable, '-B', str(Path(__file__).with_name('build.py')), '--archive', os.environ['TSGK_REFERENCE_ARCHIVE'],
+                    entry = Path(__file__).with_name('build.py')
+                    archive = Path(os.environ['TSGK_REFERENCE_ARCHIVE'])
+                    prefix = [sys.executable, '-B', str(entry)]
+                    if mode == 'archive-swap':
+                        archive = case/'archive.tar'
+                        shutil.copyfile(os.environ['TSGK_REFERENCE_ARCHIVE'], archive)
+                        wrapper = case/'swap.py'
+                        wrapper.write_text('''import sys, tarfile, runpy
+from pathlib import Path
+entry = sys.argv.pop(1)
+sys.path.insert(0, str(Path(entry).parent))
+original = tarfile.open
+def swap(*args, **kwargs):
+    Path(sys.argv[sys.argv.index('--archive')+1]).write_bytes(b'changed archive')
+    return original(*args, **kwargs)
+tarfile.open = swap
+runpy.run_path(entry, run_name='__main__')
+''', encoding='utf-8')
+                        prefix = [sys.executable, '-B', str(wrapper), str(entry)]
+                    argv = prefix + ['--archive', str(archive),
                             '--vendor', str(case/'vendor'), '--cargo', str(case/('cargo'+suffix)), '--rustc', str(case/('rustc'+suffix)),
                             '--cc', os.environ['TSGK_REFERENCE_CC'], '--ar', os.environ['TSGK_REFERENCE_AR'], '--git', os.environ['TSGK_REFERENCE_GIT'],
                             '--supervisor', os.environ['TSGK_REFERENCE_SUPERVISOR'], '--work', str(work), '--target', {'win32':'x86_64-pc-windows-gnu','darwin':'aarch64-apple-darwin'}.get(sys.platform,'x86_64-unknown-linux-gnu')]
@@ -98,7 +117,7 @@ int main(int argc, char **argv) {
                     result = subprocess.run(argv, env=env, capture_output=True, timeout=60)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertFalse((work/'identity.json').exists())
-                    if mode == 'control':
+                    if mode in ('control', 'archive-swap'):
                         self.assertTrue((case/'later-stage-reached').exists(), result.stderr)
                         self.assertTrue((work/'build-request.json').exists())
                     else:

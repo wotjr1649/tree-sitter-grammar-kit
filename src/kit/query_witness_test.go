@@ -1231,3 +1231,166 @@ func TestQueryWitnessRegisteredEditPointDeltas(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryWitnessReviewDroppedStatusPair(t *testing.T) {
+	for _, code := range []string{"OUTPUT_LIMIT", "ALLOCATION_LIMIT", "LANGUAGE_INCOMPATIBLE"} {
+		for _, status := range []string{StatusResourceLimit, StatusFailed} {
+			req, reg, raw, p := witnessFixture(t)
+			raw["status"], raw["code"], raw["steps"], raw["steps_completed"] = status, code, []any{}, 0
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Projection = nil
+			got, err := VerifyQueryWitness(ctxT(t), req)
+			want := AssessFail
+			if (code == "LANGUAGE_INCOMPATIBLE") == (status == StatusFailed) {
+				want = AssessBlocked
+			}
+			if err != nil || got.Assessment != want {
+				t.Fatalf("%s/%s: %s %v", status, code, got.Assessment, err)
+			}
+		}
+	}
+}
+
+func TestQueryWitnessImpossibleStartPoint(t *testing.T) {
+	for _, tc := range []struct {
+		encoding string
+		start    uint32
+		point    [2]uint32
+		payload  []byte
+	}{
+		{EncodingUTF8, 2, [2]uint32{0, 0}, []byte("x")},
+		{EncodingUTF16LE, 2, [2]uint32{2, 0}, []byte{'x', 0}},
+		{EncodingUTF16BE, 4, [2]uint32{1, 1}, []byte{0, 'x'}},
+	} {
+		e := Edit{StartByte: tc.start, OldEndByte: tc.start + uint32(len(tc.payload)), NewEndByte: tc.start + uint32(len(tc.payload)), Old: tc.payload, New: tc.payload}
+		reg := QueryWitnessRegistration{Encoding: tc.encoding, Input: NativeInput{Bytes: 16}, Edits: []Edit{e}}
+		end := tc.point
+		end[1] += uint32(len(tc.payload))
+		edit := &witnessEdit{StartByte: e.StartByte, OldEndByte: e.OldEndByte, NewEndByte: e.NewEndByte, StartPoint: tc.point, OldEndPoint: end, NewEndPoint: end}
+		if witnessRegisteredStep(1, 1, 16, strings.Repeat("0", 64), edit, reg) {
+			t.Fatalf("impossible %s start point accepted: %v at %d", tc.encoding, tc.point, tc.start)
+		}
+	}
+}
+
+func TestQueryWitnessReviewIncompleteTreeCodes(t *testing.T) {
+	for _, code := range []string{"PARSE_TIME_LIMIT", "NODE_LIMIT", "DEPTH_LIMIT", "PARSE_NULL", "DESCENDANT_COUNT_MISMATCH", "FORGED"} {
+		for _, status := range []string{StatusResourceLimit, StatusFailed} {
+			for _, keep := range []string{"both", "raw", "projection"} {
+				req, reg, raw, p := witnessTreeLimitFixture(t)
+				raw["status"], raw["code"], p["execution_status"], p["code"] = status, code, status, code
+				for _, doc := range []map[string]any{raw, p} {
+					tree := doc["steps"].([]any)[1].(map[string]any)["incremental"].(map[string]any)
+					tree["status"], tree["code"] = status, code
+				}
+				req = marshalWitness(t, req, reg, raw, p)
+				if keep == "raw" {
+					req.Projection = nil
+				} else if keep == "projection" {
+					req.Raw = nil
+				}
+				got, err := VerifyQueryWitness(ctxT(t), req)
+				want := AssessFail
+				resource := slices.Contains([]string{"PARSE_TIME_LIMIT", "NODE_LIMIT", "DEPTH_LIMIT"}, code)
+				failed := slices.Contains([]string{"PARSE_NULL", "DESCENDANT_COUNT_MISMATCH"}, code)
+				if status == StatusResourceLimit && resource || status == StatusFailed && failed {
+					want = AssessBlocked
+				}
+				if err != nil || got.Assessment != want {
+					t.Fatalf("%s %s/%s: %s %v", keep, status, code, got.Assessment, err)
+				}
+			}
+		}
+	}
+}
+
+func TestQueryWitnessReviewUTF16RegistrationWithoutSource(t *testing.T) {
+	for _, encoding := range []string{EncodingUTF16LE, EncodingUTF16BE} {
+		for _, mutation := range []string{"initial-size", "start", "old-end", "new-end", "old-null", "new-surrogate"} {
+			req, reg, raw, p := witnessFixture(t)
+			reg["encoding"] = encoding
+			input := reg["input"].(NativeInput)
+			input.Bytes = 4
+			e := Edit{StartByte: 0, OldEndByte: 2, NewEndByte: 2, Old: []byte{0, 'a'}, New: []byte{0, 'b'}}
+			switch mutation {
+			case "initial-size":
+				input.Bytes = 3
+			case "start":
+				e.StartByte, e.OldEndByte, e.NewEndByte = 1, 3, 3
+			case "old-end":
+				e.OldEndByte, e.Old = 1, []byte{'a'}
+			case "new-end":
+				e.NewEndByte, e.New = 1, []byte{'b'}
+			case "old-null":
+				e.Old = []byte{0, 0}
+			case "new-surrogate":
+				e.New = []byte{0, 0xd8}
+				if encoding == EncodingUTF16BE {
+					e.New = []byte{0xd8, 0}
+				}
+			}
+			reg["input"], reg["edits"] = input, []Edit{e}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Source = nil
+			_, err := VerifyQueryWitness(ctxT(t), req)
+			if e, ok := err.(*Error); !ok || e.Kind != KindInvalidInput {
+				t.Fatalf("%s/%s registration: %v", encoding, mutation, err)
+			}
+		}
+	}
+}
+
+func TestQueryWitnessReviewSummaryPredicateEvaluation(t *testing.T) {
+	for _, form := range []string{"summary", "record"} {
+		for _, mutation := range []string{"intact", "evaluated", "raw-point", "projection-point", "projection-name", "projection-range"} {
+			req, reg, raw, p := witnessFixture(t)
+			reg["required"] = reg["required"].([]any)[1:]
+			for _, value := range raw["steps"].([]any) {
+				for _, role := range []string{"incremental", "fresh"} {
+					if tree, ok := value.(map[string]any)[role].(map[string]any); ok {
+						tree["form"] = form
+						delete(tree, "nodes")
+						delete(tree, "types")
+						delete(tree, "fields")
+					}
+				}
+			}
+			for _, value := range p["steps"].([]any) {
+				for _, role := range []string{"incremental", "fresh"} {
+					if tree, ok := value.(map[string]any)[role].(map[string]any); ok {
+						tree["form"] = form
+						delete(tree, "tree")
+					}
+				}
+			}
+			query := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+			capture := &query["captures"].([]Capture)[0]
+			switch mutation {
+			case "evaluated":
+				query["captures"] = []Capture{}
+			case "raw-point", "projection-point":
+				capture.StartPoint = Point{Row: 1}
+				if mutation == "raw-point" {
+					row := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)["captures"].([][]int64)[0]
+					row[8], row[9] = 1, 0
+				}
+			case "projection-name":
+				capture.Name = "forged"
+			case "projection-range":
+				capture.EndByte = 2
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			if strings.HasPrefix(mutation, "projection-") {
+				req.Raw = nil
+			}
+			got, err := VerifyQueryWitness(ctxT(t), req)
+			want := AssessBlocked
+			if mutation != "intact" {
+				want = AssessFail
+			}
+			if err != nil || got.Assessment != want || mutation == "evaluated" && !slices.Contains(codes(got.Findings), "QUERY_WITNESS_QUERY_PROJECTION_MISMATCH") {
+				t.Fatalf("%s %s: %s %v %v", form, mutation, got.Assessment, err, codes(got.Findings))
+			}
+		}
+	}
+}

@@ -12,7 +12,7 @@ Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f
 
 ## 결과와 완료 조건
 
-Emitter 인자는 절대 library path, symbol, source path, query path, query ID, 사전 등록 library SHA-256이다. Source는 UTF-8 32 MiB 이하, query는 UTF-8 64 KiB 이하, library는 64 MiB 이하의 regular file이다. Source·query는 읽은 bytes에서 hash와 결과를 계산한다. Library는 실행 전 예상 hash와 비교하고 실행 후 다시 비교한다. 이 검사는 악의적인 동시 파일 교체나 native code 자체를 격리한다는 보장이 아니다. 검토·고정한 생성 grammar만 별도 process에서 실행한다. 출력 소유권의 #215 미완료 보장을 이 경로의 hash 검사로 대체하지 않는다.
+Emitter 인자는 절대 library path, symbol, source path, query path, query ID, 사전 등록 library SHA-256이다. Source는 UTF-8 32 MiB 이하, query는 UTF-8 64 KiB 이하, library는 64 MiB 이하의 regular file이다. Source·query는 읽은 bytes에서 hash와 결과를 계산한다. Library는 실행 전 예상 hash와 비교하고 실행 후 다시 비교한다. 이 검사는 악의적인 동시 파일 교체나 native code 자체를 격리한다는 보장이 아니다. Build archive는 128 MiB 상한의 단일 buffer로 읽어 pinned SHA-256을 확인하고 동일 bytes에서만 tar를 해석한다. 완료 identity 직전 원 archive 경로도 다시 hash하여 남아 있는 변경을 거부한다. 검토·고정한 생성 grammar만 별도 process에서 실행한다. 출력 소유권의 #215 미완료 보장을 이 경로의 hash 검사로 대체하지 않는다.
 
 `tsgk-instrumented-query-reference/r1`은 다음을 제공한다.
 

@@ -1,6 +1,7 @@
 """Build the pinned reference from reviewed local inputs, without downloading or installing."""
 import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -41,7 +42,8 @@ def main():
         assert path.is_absolute(), name
         if name != "work":
             assert path.exists() and not path.is_symlink(), name
-    assert args.archive.stat().st_size <= 128 * 1024**2 and sha(args.archive) == ARCHIVE
+    archive_bytes = read_bounded(args.archive, 128 * 1024**2)
+    assert hashlib.sha256(archive_bytes).hexdigest() == ARCHIVE
     args.work.mkdir(exist_ok=False)
     source = args.work / "source"
     source.mkdir()
@@ -72,7 +74,7 @@ def main():
         return receipt["stdout"]
 
     total = count = 0
-    with tarfile.open(args.archive, "r:") as archive:
+    with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:") as archive:
         for member in archive:
             path = PurePosixPath(member.name)
             assert not path.is_absolute() and ".." not in path.parts and all(":" not in part and "\\" not in part for part in path.parts)
@@ -138,6 +140,7 @@ def main():
     for name, data in snapshot_bytes.items():
         unchanged_bytes(args.work / name, data)
     assert sha(source / "lib/binding_rust/lib.rs") == BINDING
+    assert sha(args.archive) == ARCHIVE, "REFERENCE_ARCHIVE_CHANGED"
     identity = {"schema": "tsgk-instrumented-reference-build/r1", "upstream_commit": UPSTREAM, "archive_sha256": ARCHIVE, "binding_sha256": BINDING, "target": args.target,
         "binary_sha256": sha(binary), "lock_sha256": sha(source / "Cargo.lock"), "metadata_sha256": hashlib.sha256(metadata.encode()).hexdigest(), "versions": versions,
         "inputs": input_hashes, "tools": tool_hashes, "tool_paths": {name: str(path) for name, path in tools.items()},

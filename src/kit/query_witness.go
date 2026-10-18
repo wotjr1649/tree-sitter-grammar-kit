@@ -300,6 +300,17 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						var source []byte
 						sourceBytes := s.Bytes
 						if i < len(versions) {
+							if rawNodes[tree] == nil {
+								var captures []Capture
+								for _, q := range qs {
+									for _, row := range q.Captures {
+										captures = append(captures, witnessCapture(q, row))
+									}
+								}
+								if code := witnessCapturePoints(captures, reg.Encoding, versions[i], r); code != "" {
+									bad(code, fmt.Sprintf("raw/steps/%d", i))
+								}
+							}
 							source, sourceBytes = versions[i], uint64(len(versions[i]))
 						}
 						nodes, code := witnessNodes(*tree, reg.Encoding, source, sourceBytes, r)
@@ -321,7 +332,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						bad(qe.Code, fmt.Sprintf("raw/steps/%d", i))
 					} else {
 						rawQueries[tree] = qs
-						if rawNodes[tree] != nil && i < len(versions) {
+						if i < len(versions) {
 							values := make([]witnessEvaluation, len(qs))
 							for qi, q := range qs {
 								value, err := witnessEvaluate(r, q, reg.Encoding, versions[i])
@@ -353,7 +364,8 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			}
 		}
 		if (len(raw.Steps) > 0 && (raw.StepsCompleted != completed || (raw.Status != StatusCompleted && completed == uint64(len(raw.Steps))))) ||
-			(len(raw.Steps) == 0 && raw.Status != StatusCompleted && !slices.Contains([]string{"OUTPUT_LIMIT", "ALLOCATION_LIMIT", "LANGUAGE_INCOMPATIBLE"}, raw.Code) &&
+			(len(raw.Steps) == 0 && raw.Status != StatusCompleted && !(raw.Status == StatusResourceLimit && slices.Contains([]string{"OUTPUT_LIMIT", "ALLOCATION_LIMIT"}, raw.Code)) &&
+				!(raw.Status == StatusFailed && raw.Code == "LANGUAGE_INCOMPATIBLE") &&
 				!(raw.Code == "QUERY_TIME_LIMIT" && raw.Status == StatusResourceLimit && len(reg.Queries) > 0)) {
 			bad("QUERY_WITNESS_RAW_COMPLETION_MISMATCH", "raw")
 			caseBound = false
@@ -496,13 +508,17 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				}) {
 					bad("QUERY_WITNESS_MATCH_ACCOUNTING_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				}
-				if tree.Tree != nil {
-					for _, c := range q.Captures {
-						if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
-							c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || !witnessCaptureNode(c, tree.Tree.Nodes) {
-							bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
-							break
-						}
+				for _, c := range q.Captures {
+					if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
+						c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || c.Node < 0 || uint64(c.Node) >= tree.Count ||
+						(tree.Tree != nil && !witnessCaptureNode(c, tree.Tree.Nodes)) {
+						bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+						break
+					}
+				}
+				if tree.Tree == nil && i < len(versions) {
+					if code := witnessCapturePoints(q.Captures, reg.Encoding, versions[i], r); code != "" {
+						bad(code, fmt.Sprintf("projection/steps/%d", i))
 					}
 				}
 				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || (q.Status == StatusFailed && q.Evaluation == "UNSUPPORTED")) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
@@ -700,10 +716,15 @@ func witnessRawTreeHeader(t witnessRawTree) bool {
 	case StatusCompleted:
 		return t.Code == "" && t.Form != nil && slices.Contains([]string{"full", "summary", "record"}, *t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return t.Code != "" && t.Form == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
 	default:
 		return false
 	}
+}
+
+func witnessTreeFailure(status, code string) bool {
+	return status == StatusResourceLimit && slices.Contains([]string{"PARSE_TIME_LIMIT", "NODE_LIMIT", "DEPTH_LIMIT"}, code) ||
+		status == StatusFailed && slices.Contains([]string{"PARSE_NULL", "DESCENDANT_COUNT_MISMATCH"}, code)
 }
 
 // Native completion counts trees and queries; an invalid query is a completed observation.
@@ -754,7 +775,7 @@ func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
 	case StatusCompleted:
 		return t.Code == "" && slices.Contains([]string{"full", "summary", "record"}, t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return t.Code != "" && t.Form == "" && t.Tree == nil
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == "" && t.Tree == nil
 	default:
 		return false
 	}
@@ -808,6 +829,13 @@ func witnessRegisteredStep(index int, step uint32, size uint64, sha string, edit
 	e := reg.Edits[index-1]
 	if edit == nil || edit.StartByte != e.StartByte || edit.OldEndByte != e.OldEndByte || edit.NewEndByte != e.NewEndByte ||
 		uint64(edit.StartPoint[0])+uint64(edit.StartPoint[1]) > uint64(edit.StartByte) {
+		return false
+	}
+	if edit.StartPoint[0] == 0 && edit.StartPoint[1] != edit.StartByte {
+		return false
+	}
+	if (reg.Encoding == EncodingUTF16LE || reg.Encoding == EncodingUTF16BE) &&
+		(edit.StartPoint[1]%2 != 0 || 2*uint64(edit.StartPoint[0])+uint64(edit.StartPoint[1]) > uint64(edit.StartByte)) {
 		return false
 	}
 	endMatches := func(payload []byte, end [2]uint32) bool {
@@ -877,6 +905,17 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	return nodes, witnessPoints(nodes, encoding, source, r)
 }
 
+func witnessCapturePoints(captures []Capture, encoding string, source []byte, r *run) string {
+	nodes := make([]TreeNode, 0, len(captures))
+	for _, c := range captures {
+		if c.StartByte > c.EndByte || uint64(c.EndByte) > uint64(len(source)) {
+			return "QUERY_WITNESS_CAPTURE_POINTS_MISMATCH"
+		}
+		nodes = append(nodes, TreeNode{StartByte: c.StartByte, EndByte: c.EndByte, StartPoint: c.StartPoint, EndPoint: c.EndPoint})
+	}
+	return witnessPoints(nodes, encoding, source, r)
+}
+
 func witnessPoints(nodes []TreeNode, encoding string, source []byte, r *run) string {
 	offsets := make([]uint32, 0, len(nodes)*2)
 	for _, n := range nodes {
@@ -941,9 +980,15 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 	if size > limit {
 		return reg, fail(KindResourceLimit, "INPUT_TOO_LARGE", "query-registration", nil)
 	}
+	utf16 := reg.Encoding == EncodingUTF16LE || reg.Encoding == EncodingUTF16BE
+	if utf16 && size%2 != 0 {
+		return bad("QUERY_REGISTRATION_ENCODING_INVALID")
+	}
 	for _, edit := range reg.Edits {
 		if edit.StartByte > edit.OldEndByte || uint64(edit.OldEndByte) > size || edit.NewEndByte < edit.StartByte ||
 			len(edit.Old) == 0 && len(edit.New) == 0 ||
+			utf16 && (edit.StartByte%2 != 0 || edit.OldEndByte%2 != 0 || edit.NewEndByte%2 != 0) ||
+			utf16 && (!SourceEncodingValid(reg.Encoding, edit.Old) || !SourceEncodingValid(reg.Encoding, edit.New)) ||
 			uint64(edit.OldEndByte-edit.StartByte) != uint64(len(edit.Old)) || uint64(edit.NewEndByte-edit.StartByte) != uint64(len(edit.New)) {
 			return bad("QUERY_REGISTRATION_EDIT_INVALID")
 		}
