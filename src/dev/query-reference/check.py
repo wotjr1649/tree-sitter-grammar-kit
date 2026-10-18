@@ -65,7 +65,7 @@ assert snapshot(grammar) == grammar_inputs
 library = dest / ('plain.dll' if os.name == 'nt' else 'plain.dylib' if sys.platform == 'darwin' else 'plain.so')
 code, receipt = execute('compile', args.cc, ['-dynamiclib' if sys.platform == 'darwin' else '-shared', '-fPIC', '-O2', '-I', grammar, grammar / 'parser.c', '-o', library], wall=30)
 assert code == 0, receipt
-library_sha = sha(library.read_bytes())
+library_sha = file_sha(library, 64 * 1024**2)
 
 def node(kind, parent, start, end, start_point, end_point, named=True):
     return {'type': kind, 'parent': parent, 'field': None, 'named': named, 'extra': False, 'is_error': False, 'has_error': False, 'is_missing': False, 'start_byte': start, 'end_byte': end, 'start_point': dict(zip(['row', 'column'], start_point)), 'end_point': dict(zip(['row', 'column'], end_point))}

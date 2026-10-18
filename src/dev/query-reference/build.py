@@ -16,6 +16,17 @@ BINDING = "3a350f2c4735d3a07a0892547afff9f34cabe1e63f962e2d4f26e1b7db8836c2"
 TARGETS = ("x86_64-pc-windows-gnu", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin")
 
 
+
+def pinned_release(output):
+    releases = []
+    for line in output.splitlines():
+        key, separator, value = line.partition(":")
+        if separator and key.strip() == "release":
+            releases.append(value.strip())
+    if releases != ["1.97.1"]:
+        raise RuntimeError("REFERENCE_TOOL_VERSION")
+
+
 def main():
     if sys.flags.optimize:
         raise RuntimeError("assertions must be enabled")
@@ -99,19 +110,22 @@ def main():
     config.write_text(config.read_text(encoding="utf-8") + '\n[source.crates-io]\nreplace-with = "tsgk-vendored"\n[source.tsgk-vendored]\ndirectory = ' + json.dumps(str(args.vendor)) + "\n", encoding="utf-8", newline="")
     original_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
     versions = {"rustc": execute("rustc-version", args.rustc, ["-vV"]), "cargo": execute("cargo-version", args.cargo, ["-vV"]), "cc": execute("cc-version", args.cc, ["--version"]), "python": sys.version}
-    assert "release: 1.97.1" in versions["rustc"] and "cargo 1.97.1 " in versions["cargo"]
+    for name in ("rustc", "cargo"):
+        pinned_release(versions[name])
     metadata = execute("metadata", args.cargo, ["metadata", "--offline", "--format-version", "1", "--filter-platform", args.target])
     effective_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
     before = {(p["name"], p["version"]): p for p in original_lock["package"]}
     after = {(p["name"], p["version"]): p for p in effective_lock["package"]}
     assert set(after) - set(before) == {("tsgk-query-reference", "0.1.0")} and all(after.get(key) == value for key, value in before.items())
-    execute("selected-tree", args.cargo, ["tree", "--offline", "--frozen", "--package", "tsgk-query-reference", "--target", args.target, "--edges", "normal,build", "--prefix", "none", "--format", "{p}|{f}"])
-    selected_tree = read_bounded(args.work / "selected-tree.json", 4 * 1024**2)
     source_snapshot, vendor_snapshot = snapshot(source), snapshot(args.vendor)
     snapshot_bytes = {"source-snapshot.json": json.dumps(source_snapshot, sort_keys=True).encode(),
         "vendor-snapshot.json": json.dumps(vendor_snapshot, sort_keys=True).encode()}
     for name, data in snapshot_bytes.items():
         (args.work / name).write_bytes(data)
+    execute("selected-tree", args.cargo, ["tree", "--offline", "--frozen", "--package", "tsgk-query-reference", "--target", args.target, "--edges", "normal,build", "--prefix", "none", "--format", "{p}|{f}"])
+    unchanged(source, source_snapshot)
+    unchanged(args.vendor, vendor_snapshot)
+    selected_tree = read_bounded(args.work / "selected-tree.json", 4 * 1024**2)
     execute("build", args.cargo, ["build", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2"], wall=900)
     unit(execute("unit", args.cargo, ["test", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2", "--bin", "tsgk-query-reference", "--", "--exact", "tests::capture_occurrences_are_complete_and_unique"], wall=120))
     binary = args.work / "target" / args.target / "release" / ("tsgk-query-reference.exe" if os.name == "nt" else "tsgk-query-reference")

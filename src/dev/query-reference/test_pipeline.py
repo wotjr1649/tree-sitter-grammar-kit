@@ -1,16 +1,138 @@
 """Focused integrity regressions; fault processes use the real reference supervisor."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+import shutil
 
 from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity
 
 
 class IntegrityTests(unittest.TestCase):
+    def fault_tool(self, directory):
+        root = Path(directory)
+        source = root / 'tool.c'
+        source.write_text(r'''
+#include <stdio.h>
+#include <string.h>
+int main(int argc, char **argv) {
+  char root[4096], path[8192], mode[128] = "control";
+  if (argc < 2 || strlen(argv[0]) >= sizeof root) return 20;
+  strcpy(root, argv[0]);
+  char *last = strrchr(root, '/'), *back = strrchr(root, '\\');
+  if (back && (!last || back > last)) last = back;
+  if (!last) return 21;
+  *last = 0;
+  snprintf(path, sizeof path, "%s/mode.txt", root);
+  FILE *f = fopen(path, "r");
+  if (f) { if (!fgets(mode, sizeof mode, f)) return 22; fclose(f); }
+  if (!strcmp(argv[1], "-vV")) {
+    int rust = strstr(argv[0], "rustc") != NULL;
+    const char *release = !strcmp(mode, rust ? "rust-suffix" : "cargo-suffix") ? "1.97.1-custom" :
+                          !strcmp(mode, rust ? "rust-ten" : "cargo-ten") ? "1.97.10" : "1.97.1";
+    printf("%s 1.97.1 (fixture)\nrelease: %s\n", rust ? "rustc" : "cargo", release);
+    return 0;
+  }
+  if (!strcmp(argv[1], "metadata")) {
+    f = fopen("Cargo.lock", "ab"); if (!f) return 23;
+    fputs("\n[[package]]\nname = \"tsgk-query-reference\"\nversion = \"0.1.0\"\n", f);
+    fclose(f); puts("{}"); return 0;
+  }
+  if (!strcmp(argv[1], "tree")) {
+    if (!strcmp(mode, "source")) strcpy(path, "README.md");
+    else if (!strcmp(mode, "vendor")) snprintf(path, sizeof path, "%s/vendor/probe.txt", root);
+    else { puts("fixture selected tree"); return 0; }
+    f = fopen(path, "ab"); if (!f) return 24;
+    fputs("changed", f); fclose(f); puts("fixture selected tree"); return 0;
+  }
+  if (!strcmp(mode, "oversize")) {
+    for (int i = 1; i + 1 < argc; i++) if (!strcmp(argv[i], "-o")) {
+      f = fopen(argv[i+1], "wb"); if (!f) return 25;
+      if (fseek(f, 64L * 1024 * 1024, SEEK_SET) || fputc(0, f) == EOF) return 26;
+      fclose(f); return 0;
+    }
+  }
+  snprintf(path, sizeof path, "%s/later-stage-reached", root);
+  f = fopen(path, "wb"); if (!f) return 27; fclose(f); return 9;
+}
+''', encoding='utf-8')
+        binary = root / ('tool.exe' if os.name == 'nt' else 'tool')
+        env = {key: os.environ[key] for key in ('SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT') if key in os.environ}
+        env.update(PATH=str(Path(os.environ['TSGK_REFERENCE_CC']).parent) + os.pathsep + ('C:/Windows/System32;C:/Windows' if os.name == 'nt' else '/usr/bin:/bin'), TEMP=directory, TMP=directory, TMPDIR=directory)
+        spec = {'Path': os.environ['TSGK_REFERENCE_CC'], 'Args': [str(source), '-o', str(binary)], 'Dir': directory,
+                'Env': [key+'='+value for key,value in env.items()], 'StdoutBytes': 1024**2, 'StderrBytes': 1024**2,
+                'Wall': 30*10**9, 'Grace': 2*10**9, 'Memory': {'Bytes': 1024**3, 'Hard': sys.platform != 'darwin'},
+                'CgroupParent': os.environ.get('TSGK_REFERENCE_CGROUP_PARENT', '')}
+        process = subprocess.run([os.environ['TSGK_REFERENCE_SUPERVISOR']], input=json.dumps(spec).encode(), env=env, capture_output=True, timeout=40)
+        self.assertEqual(process.returncode, 0, process.stderr)
+        execution(json.loads(process.stdout), 0)
+        return binary, env
+
+    @unittest.skipUnless(all(os.environ.get('TSGK_REFERENCE_'+name) for name in ('SUPERVISOR','CC','AR','GIT','ARCHIVE')), 'orchestration tools not supplied')
+    def test_actual_build_rejects_tool_versions_and_tree_input_mutation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tool, env = self.fault_tool(directory)
+            for mode in ('control', 'rust-ten', 'rust-suffix', 'cargo-ten', 'cargo-suffix', 'source', 'vendor'):
+                with self.subTest(mode=mode):
+                    case = root / mode
+                    case.mkdir()
+                    (case/'vendor').mkdir()
+                    (case/'vendor/probe.txt').write_bytes(b'original')
+                    (case/'mode.txt').write_text(mode, encoding='ascii')
+                    suffix = '.exe' if os.name == 'nt' else ''
+                    for name in ('cargo','rustc'):
+                        shutil.copyfile(tool, case/(name+suffix))
+                        (case/(name+suffix)).chmod(0o700)
+                    work = case/'build'
+                    argv = [sys.executable, '-B', str(Path(__file__).with_name('build.py')), '--archive', os.environ['TSGK_REFERENCE_ARCHIVE'],
+                            '--vendor', str(case/'vendor'), '--cargo', str(case/('cargo'+suffix)), '--rustc', str(case/('rustc'+suffix)),
+                            '--cc', os.environ['TSGK_REFERENCE_CC'], '--ar', os.environ['TSGK_REFERENCE_AR'], '--git', os.environ['TSGK_REFERENCE_GIT'],
+                            '--supervisor', os.environ['TSGK_REFERENCE_SUPERVISOR'], '--work', str(work), '--target', {'win32':'x86_64-pc-windows-gnu','darwin':'aarch64-apple-darwin'}.get(sys.platform,'x86_64-unknown-linux-gnu')]
+                    if os.environ.get('TSGK_REFERENCE_CGROUP_PARENT'):
+                        argv += ['--cgroup-parent', os.environ['TSGK_REFERENCE_CGROUP_PARENT']]
+                    result = subprocess.run(argv, env=env, capture_output=True, timeout=60)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse((work/'identity.json').exists())
+                    if mode == 'control':
+                        self.assertTrue((case/'later-stage-reached').exists(), result.stderr)
+                        self.assertTrue((work/'build-request.json').exists())
+                    else:
+                        expected = b'REFERENCE_INPUT_CHANGED' if mode in ('source','vendor') else b'REFERENCE_TOOL_VERSION'
+                        self.assertIn(expected, result.stderr)
+                        self.assertFalse((case/'later-stage-reached').exists())
+                        self.assertFalse((work/('build-request.json' if mode in ('source','vendor') else 'metadata-request.json')).exists())
+
+    @unittest.skipUnless(all(os.environ.get('TSGK_REFERENCE_'+name) for name in ('SUPERVISOR','CC')), 'orchestration tools not supplied')
+    def test_actual_controls_bound_compiler_library_before_reference(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tool, env = self.fault_tool(directory)
+            (root/'mode.txt').write_text('oversize', encoding='ascii')
+            selected = root/'selected-tree.json'
+            selected.write_bytes(b'{}')
+            here = Path(__file__).resolve().parent
+            sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+            identity = {'schema':'tsgk-instrumented-reference-build/r1','complete':True,'binary_sha256':sha(tool),
+                        'upstream_commit':'10eb5ac119eec9cb4267a8e035066473983f5f3a', 'selected_tree_sha256':sha(selected),
+                        'inputs':{name:sha(here/name) for name in ('Cargo.toml','main.rs','instrumentation.patch','build.py','checks.py')}}
+            identity_path = root/'identity.json'
+            identity_path.write_text(json.dumps(identity), encoding='utf-8')
+            work = root/'controls'
+            argv = [sys.executable, '-B', str(here/'check.py'), '--reference', str(tool), '--identity', str(identity_path),
+                    '--supervisor', os.environ['TSGK_REFERENCE_SUPERVISOR'], '--cc', str(tool), '--work', str(work)]
+            if os.environ.get('TSGK_REFERENCE_CGROUP_PARENT'):
+                argv += ['--cgroup-parent', os.environ['TSGK_REFERENCE_CGROUP_PARENT']]
+            result = subprocess.run(argv, env=env, capture_output=True, timeout=60)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(b'REFERENCE_FILE_LIMIT_OR_TYPE', result.stderr)
+            self.assertFalse((work/'structural-0.json').exists())
+            self.assertFalse((root/'later-stage-reached').exists())
+
     def test_input_files_are_bounded_before_reading(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'oversized'
