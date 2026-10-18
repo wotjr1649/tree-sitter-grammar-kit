@@ -3,10 +3,14 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
-    env, fs,
+    env,
+    ffi::OsString,
+    fs,
     io::{Read, Write},
     ops::ControlFlow,
     path::{Path, PathBuf},
+    sync::{Arc, Condvar, Mutex},
+    thread,
     time::{Duration, Instant},
 };
 use tree_sitter::{
@@ -20,6 +24,77 @@ const MAX_CAPTURES: usize = 50_000;
 const MAX_GROUP_CAPTURES: usize = 200_000;
 const MATCH_LIMIT: u32 = 100_000;
 const WALL_MS: u64 = 3_000;
+const MAX_QUERIES: usize = 16;
+
+struct Watchdog {
+    state: Arc<(Mutex<Option<Instant>>, Condvar)>,
+    thread: Option<thread::JoinHandle<()>>,
+}
+
+impl Watchdog {
+    fn new(deadline: Instant) -> Self {
+        let state = Arc::new((Mutex::new(Some(deadline)), Condvar::new()));
+        let shared = Arc::clone(&state);
+        let thread = thread::spawn(move || {
+            let (lock, wake) = &*shared;
+            let mut state = lock.lock().unwrap_or_else(|_| std::process::exit(2));
+            while let Some(deadline) = *state {
+                let now = Instant::now();
+                if now >= deadline {
+                    std::process::exit(2);
+                }
+                (state, _) = wake
+                    .wait_timeout(state, deadline - now)
+                    .unwrap_or_else(|_| std::process::exit(2));
+            }
+        });
+        Self {
+            state,
+            thread: Some(thread),
+        }
+    }
+
+    fn check(&self) {
+        let state = self
+            .state
+            .0
+            .lock()
+            .unwrap_or_else(|_| std::process::exit(2));
+        if state.is_none_or(|deadline| Instant::now() >= deadline) {
+            std::process::exit(2);
+        }
+    }
+
+    fn arm(&mut self, deadline: Instant) {
+        let mut state = self
+            .state
+            .0
+            .lock()
+            .unwrap_or_else(|_| std::process::exit(2));
+        let now = Instant::now();
+        if state.is_none_or(|old| now >= old) || now >= deadline {
+            std::process::exit(2);
+        }
+        *state = Some(deadline);
+        self.state.1.notify_one();
+    }
+}
+
+impl Drop for Watchdog {
+    fn drop(&mut self) {
+        *self
+            .state
+            .0
+            .lock()
+            .unwrap_or_else(|_| std::process::exit(2)) = None;
+        self.state.1.notify_one();
+        if let Some(thread) = self.thread.take() {
+            if thread.join().is_err() {
+                std::process::exit(2);
+            }
+        }
+    }
+}
 
 struct MatchGroup {
     index: usize,
@@ -209,29 +284,77 @@ unsafe fn load(path: &Path) -> Result<Library, String> {
     unsafe { Library::new(path) }.map_err(|_| "LIBRARY_LOAD".into())
 }
 
-fn run() -> Result<Value, String> {
-    let args = env::args_os().skip(1).collect::<Vec<_>>();
+fn requests(args: Vec<OsString>) -> Result<Vec<Vec<OsString>>, String> {
+    if args.first().is_some_and(|a| a == "--batch") {
+        if args.len() < 7 || (args.len() - 5) % 2 != 0 || (args.len() - 5) / 2 > MAX_QUERIES {
+            return Err("USAGE_LIBRARY_SYMBOL_SOURCE_QUERY_QUERY_ID_LIBRARY_SHA256".into());
+        }
+        return Ok(args[5..]
+            .chunks_exact(2)
+            .map(|q| {
+                vec![
+                    args[1].clone(),
+                    args[2].clone(),
+                    args[3].clone(),
+                    q[1].clone(),
+                    q[0].clone(),
+                    args[4].clone(),
+                ]
+            })
+            .collect());
+    }
     if args.len() != 6 {
         return Err("USAGE_LIBRARY_SYMBOL_SOURCE_QUERY_QUERY_ID_LIBRARY_SHA256".into());
     }
+    Ok(vec![args])
+}
+
+fn query_deadline(started: Instant, common: Duration, count: usize, now: Instant) -> Instant {
+    let wall = Duration::from_millis(WALL_MS);
+    if count == 1 {
+        started + wall
+    } else {
+        (now + wall.saturating_sub(common)).min(started + wall * count as u32)
+    }
+}
+
+fn run(
+    requests: &[Vec<OsString>],
+    emit: &mut impl FnMut(Value),
+    completed: &mut usize,
+    ids: &mut Vec<String>,
+) -> Result<Watchdog, String> {
+    let args = &requests[0];
     let library_path = PathBuf::from(&args[0]);
     let symbol = args[1].to_str().ok_or("SYMBOL_UTF8")?;
-    let query_id = args[4].to_str().ok_or("QUERY_ID_UTF8")?;
     if !symbol.starts_with("tree_sitter_")
         || symbol.len() > 128
         || !symbol
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || b == b'_')
-        || query_id.is_empty()
-        || query_id.len() > 128
-        || !query_id
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
     {
         return Err("IDENTIFIER_INVALID".into());
     }
+    for request in requests {
+        let id = request[4].to_str().ok_or("QUERY_ID_UTF8")?;
+        if id.is_empty()
+            || id.len() > 128
+            || !id
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
+            || ids.iter().any(|prior| prior == id)
+        {
+            return Err("IDENTIFIER_INVALID".into());
+        }
+        ids.push(id.to_owned());
+    }
     let source = read(Path::new(&args[2]), 32 * 1024 * 1024)?;
-    let query_bytes = read(Path::new(&args[3]), 65_536)?;
+    let mut query_inputs = Vec::new();
+    for request in requests {
+        let id = request[4].to_str().ok_or("QUERY_ID_UTF8")?;
+        let bytes = read(Path::new(&request[3]), 65_536)?;
+        query_inputs.push((id, bytes));
+    }
     let grammar = read(&library_path, 64 * 1024 * 1024)?;
     let expected_library = args[5].to_str().ok_or("LIBRARY_SHA256_UTF8")?;
     if expected_library.len() != 64
@@ -243,8 +366,12 @@ fn run() -> Result<Value, String> {
         return Err("LIBRARY_SHA256_MISMATCH".into());
     }
     std::str::from_utf8(&source).map_err(|_| "SOURCE_UTF8")?;
-    let query_source = std::str::from_utf8(&query_bytes).map_err(|_| "QUERY_UTF8")?;
-    let deadline = Instant::now() + Duration::from_millis(WALL_MS);
+    for (_, bytes) in &query_inputs {
+        std::str::from_utf8(bytes).map_err(|_| "QUERY_UTF8")?;
+    }
+    let started = Instant::now();
+    let deadline = started + Duration::from_millis(WALL_MS);
+    let mut watchdog = Watchdog::new(deadline);
     // The handle is declared first and outlives all grammar-dependent objects.
     let library = unsafe { load(&library_path)? };
     let constructor =
@@ -309,119 +436,228 @@ fn run() -> Result<Value, String> {
             parents.pop();
         }
     }
-    let query = Query::new(&language, query_source).map_err(|_| "QUERY_COMPILE")?;
-    let metadata = predicates(&query)?;
-    let mut query_cursor = QueryCursor::new();
-    query_cursor.set_match_limit(MATCH_LIMIT);
-    let mut raw = Vec::<Value>::new();
-    let mut evaluated = Vec::<Value>::new();
-    let mut match_ids = Vec::<Value>::new();
-    let mut groups = HashMap::<u32, MatchGroup>::new();
-    let mut group_captures = 0usize;
-    let mut query_limited = false;
-    {
-        let mut progress = |_: &tree_sitter::QueryCursorState| {
-            if Instant::now() >= deadline {
-                query_limited = true;
-                ControlFlow::Break(())
-            } else {
-                ControlFlow::Continue(())
-            }
-        };
-        let mut captures = query_cursor.captures_raw_with_options(
-            &query,
-            tree.root_node(),
-            source.as_slice(),
-            QueryCursorOptions::new().progress_callback(&mut progress),
-        );
-        let mut buffer1 = Vec::new();
-        let mut buffer2 = Vec::new();
-        let mut text = source.as_slice();
-        while let Some((m, at)) = captures.next() {
-            if raw.len() >= MAX_CAPTURES || Instant::now() >= deadline {
-                return Err("CAPTURE_LIMIT".into());
-            }
-            if m.captures().len() > MAX_GROUP_CAPTURES {
-                return Err("MATCH_GROUP_LIMIT".into());
-            }
-            let signature = m
-                .captures()
-                .iter()
-                .map(|c| {
-                    indices
-                        .get(&c.node.id())
-                        .map(|index| (c.index, *index))
-                        .ok_or("CAPTURE_NODE_UNMAPPED".to_string())
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            // Evaluate the original complete QueryMatch before advancing the raw cursor.
-            let keep = m.satisfies_text_predicates(&query, &mut buffer1, &mut buffer2, &mut text);
-            let match_id = if let Some(group) = groups.get_mut(&m.id()) {
-                if group.pattern != m.pattern_index
-                    || group.signature != signature
-                    || group.keep != keep
-                {
-                    return Err("MATCH_GROUP_CHANGED".into());
+    let common_elapsed = started.elapsed();
+    for (query_id, query_bytes) in query_inputs {
+        // Charge common parsing and CST export to every query's original wall budget.
+        let remaining = Duration::from_millis(WALL_MS).saturating_sub(common_elapsed);
+        let deadline = query_deadline(started, common_elapsed, requests.len(), Instant::now());
+        if remaining.is_zero() || Instant::now() >= deadline {
+            return Err("QUERY_INCOMPLETE".into());
+        }
+        watchdog.arm(deadline);
+        let query_source = std::str::from_utf8(&query_bytes).map_err(|_| "QUERY_UTF8")?;
+        let query = Query::new(&language, query_source).map_err(|_| "QUERY_COMPILE")?;
+        let metadata = predicates(&query)?;
+        let mut query_cursor = QueryCursor::new();
+        query_cursor.set_match_limit(MATCH_LIMIT);
+        let mut raw = Vec::<Value>::new();
+        let mut evaluated = Vec::<Value>::new();
+        let mut match_ids = Vec::<Value>::new();
+        let mut groups = HashMap::<u32, MatchGroup>::new();
+        let mut group_captures = 0usize;
+        let mut query_limited = false;
+        {
+            let mut progress = |_: &tree_sitter::QueryCursorState| {
+                if Instant::now() >= deadline {
+                    query_limited = true;
+                    ControlFlow::Break(())
+                } else {
+                    ControlFlow::Continue(())
                 }
-                group.observe(*at)?;
-                group.index
-            } else {
-                group_captures += signature.len();
-                if groups.len() >= MATCH_LIMIT as usize || group_captures > MAX_GROUP_CAPTURES {
+            };
+            let mut captures = query_cursor.captures_raw_with_options(
+                &query,
+                tree.root_node(),
+                source.as_slice(),
+                QueryCursorOptions::new().progress_callback(&mut progress),
+            );
+            let mut buffer1 = Vec::new();
+            let mut buffer2 = Vec::new();
+            let mut text = source.as_slice();
+            while let Some((m, at)) = captures.next() {
+                if raw.len() >= MAX_CAPTURES || Instant::now() >= deadline {
+                    return Err("CAPTURE_LIMIT".into());
+                }
+                if m.captures().len() > MAX_GROUP_CAPTURES {
                     return Err("MATCH_GROUP_LIMIT".into());
                 }
-                let index = groups.len();
-                let mut group = MatchGroup {
-                    index,
-                    pattern: m.pattern_index,
-                    seen: vec![false; signature.len()],
-                    signature,
-                    keep,
+                let signature = m
+                    .captures()
+                    .iter()
+                    .map(|c| {
+                        indices
+                            .get(&c.node.id())
+                            .map(|index| (c.index, *index))
+                            .ok_or("CAPTURE_NODE_UNMAPPED".to_string())
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                // Evaluate the original complete QueryMatch before advancing the raw cursor.
+                let keep =
+                    m.satisfies_text_predicates(&query, &mut buffer1, &mut buffer2, &mut text);
+                let match_id = if let Some(group) = groups.get_mut(&m.id()) {
+                    if group.pattern != m.pattern_index
+                        || group.signature != signature
+                        || group.keep != keep
+                    {
+                        return Err("MATCH_GROUP_CHANGED".into());
+                    }
+                    group.observe(*at)?;
+                    group.index
+                } else {
+                    group_captures += signature.len();
+                    if groups.len() >= MATCH_LIMIT as usize || group_captures > MAX_GROUP_CAPTURES {
+                        return Err("MATCH_GROUP_LIMIT".into());
+                    }
+                    let index = groups.len();
+                    let mut group = MatchGroup {
+                        index,
+                        pattern: m.pattern_index,
+                        seen: vec![false; signature.len()],
+                        signature,
+                        keep,
+                    };
+                    group.observe(*at)?;
+                    groups.insert(m.id(), group);
+                    match_ids.push(json!({"match":index,"runtime_id":m.id()}));
+                    index
                 };
-                group.observe(*at)?;
-                groups.insert(m.id(), group);
-                match_ids.push(json!({"match":index,"runtime_id":m.id()}));
-                index
-            };
-            let c = m.captures().get(*at).ok_or("CAPTURE_INDEX")?;
-            let value = capture_doc(
-                &query,
-                c.node,
-                c.index,
-                match_id,
-                m.pattern_index,
-                &indices,
-                &nodes,
-            )?;
-            if keep {
-                evaluated.push(value.clone());
+                let c = m.captures().get(*at).ok_or("CAPTURE_INDEX")?;
+                let value = capture_doc(
+                    &query,
+                    c.node,
+                    c.index,
+                    match_id,
+                    m.pattern_index,
+                    &indices,
+                    &nodes,
+                )?;
+                if keep {
+                    evaluated.push(value.clone());
+                }
+                raw.push(value);
             }
-            raw.push(value);
         }
-    }
-    if query_limited || query_cursor.did_exceed_match_limit() || Instant::now() >= deadline {
-        return Err("QUERY_INCOMPLETE".into());
-    }
-    for group in groups.values() {
-        group.finish()?;
-    }
-    if hash(&read(&library_path, 64 * 1024 * 1024)?) != hash(&grammar) {
-        return Err("LIBRARY_CHANGED".into());
-    }
-    Ok(
-        json!({"schema":"tsgk-instrumented-query-reference/r1", "status":"COMPLETED", "code":"", "upstream_commit":UPSTREAM,
+        if query_limited || query_cursor.did_exceed_match_limit() || Instant::now() >= deadline {
+            return Err("QUERY_INCOMPLETE".into());
+        }
+        for group in groups.values() {
+            group.finish()?;
+        }
+        if hash(&read(&library_path, 64 * 1024 * 1024)?) != hash(&grammar) {
+            return Err("LIBRARY_CHANGED".into());
+        }
+        let response = json!({"schema":"tsgk-instrumented-query-reference/r1", "status":"COMPLETED", "code":"", "upstream_commit":UPSTREAM,
         "input":{"encoding":"UTF-8","bytes":source.len(),"sha256":hash(&source)},
         "grammar":{"library_sha256":hash(&grammar),"symbol":symbol},
         "tree":{"nodes":nodes}, "query":{"id":query_id,"sha256":hash(&query_bytes),"patterns":query.pattern_count(),"capture_names":query.capture_names(),
             "predicates":metadata,"matches":groups.len(),"match_mapping":match_ids,"structural":raw,"evaluated":evaluated},
         "limits":{"nodes":MAX_NODES,"captures":MAX_CAPTURES,"group_captures":MAX_GROUP_CAPTURES,"matches":MATCH_LIMIT,"wall_ms":WALL_MS},
-        "cursor_exhausted":true,"did_exceed_match_limit":false,"complete":true}),
-    )
+        "cursor_exhausted":true,"did_exceed_match_limit":false,"complete":true});
+        watchdog.check();
+        emit(response);
+        watchdog.check();
+        *completed += 1;
+    }
+    Ok(watchdog)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn watchdog_exits_during_blocking_work_and_expired_rearm() {
+        if let Ok(mode) = env::var("TSGK_REFERENCE_WATCHDOG_TEST") {
+            let mut watchdog = Watchdog::new(Instant::now() + Duration::from_millis(50));
+            if mode == "delayed" {
+                watchdog.arm(Instant::now() + Duration::from_secs(2));
+                {
+                    let _locked = watchdog.state.0.lock().unwrap();
+                    thread::sleep(Duration::from_millis(100));
+                }
+                watchdog.check();
+                return;
+            }
+            if mode == "expired" {
+                watchdog.arm(Instant::now() - Duration::from_millis(1));
+            }
+            thread::sleep(Duration::from_millis(300));
+            return;
+        }
+        for mode in ["blocked", "expired", "delayed"] {
+            let output = std::process::Command::new(env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "tests::watchdog_exits_during_blocking_work_and_expired_rearm",
+                ])
+                .env("TSGK_REFERENCE_WATCHDOG_TEST", mode)
+                .output()
+                .unwrap();
+            assert_eq!(
+                output.status.code(),
+                Some(if mode == "delayed" { 0 } else { 2 }),
+                "{mode}: {output:?}"
+            );
+        }
+        let mut watchdog = Watchdog::new(Instant::now() + Duration::from_secs(5));
+        watchdog.arm(Instant::now() + Duration::from_secs(5));
+        watchdog.check();
+        drop(watchdog);
+    }
+
+    #[test]
+    fn batch_requests_preserve_order_and_bounds() {
+        let values = |args: &[&str]| -> Vec<OsString> {
+            args.iter().map(|arg| OsString::from(*arg)).collect()
+        };
+        let single = values(&["library", "symbol", "source", "query", "q", "hash"]);
+        assert_eq!(requests(single.clone()).unwrap(), vec![single]);
+        let batch = requests(values(&[
+            "--batch", "library", "symbol", "source", "hash", "q1", "query1", "q2", "query2",
+        ]))
+        .unwrap();
+        assert_eq!(
+            batch,
+            vec![
+                values(&["library", "symbol", "source", "query1", "q1", "hash"]),
+                values(&["library", "symbol", "source", "query2", "q2", "hash"])
+            ]
+        );
+        for bad in [
+            values(&[]),
+            values(&["--batch", "library", "symbol", "source", "hash"]),
+            values(&["--batch", "library", "symbol", "source", "hash", "q"]),
+        ] {
+            assert!(requests(bad).is_err());
+        }
+        let mut limit = values(&["--batch", "library", "symbol", "source", "hash"]);
+        for _ in 0..MAX_QUERIES {
+            limit.extend(values(&["q", "query"]));
+        }
+        assert_eq!(requests(limit.clone()).unwrap().len(), MAX_QUERIES);
+        limit.extend(values(&["q", "query"]));
+        assert!(requests(limit).is_err());
+    }
+
+    #[test]
+    fn batch_budget_charges_common_work_and_caps_total_wall() {
+        let started = Instant::now();
+        let common = Duration::from_secs(1);
+        let now = started + common;
+        assert_eq!(
+            query_deadline(started, common, 1, now),
+            started + Duration::from_secs(3)
+        );
+        assert_eq!(
+            query_deadline(started, common, 16, now),
+            now + Duration::from_secs(2)
+        );
+        assert_eq!(
+            query_deadline(started, common, 16, started + Duration::from_secs(47)),
+            started + Duration::from_secs(48)
+        );
+        assert!(query_deadline(started, Duration::from_secs(4), 16, now) <= now);
+    }
 
     #[test]
     fn capture_occurrences_are_complete_and_unique() {
@@ -445,25 +681,44 @@ mod tests {
 }
 
 fn main() {
-    let (value, code) = match run() {
-        Ok(value) => (value, 0),
-        Err(code) => (
-            json!({"schema":"tsgk-instrumented-query-reference/r1","status":"FAILED","code":code,"complete":false}),
-            1,
-        ),
-    };
-    match serde_json::to_vec(&value) {
-        Ok(bytes) if bytes.len() < 64 * 1024 * 1024 => {
-            let mut output = std::io::stdout().lock();
-            if output
-                .write_all(&bytes)
-                .and_then(|_| output.write_all(b"\n"))
-                .is_err()
-            {
-                std::process::exit(2);
-            }
+    let args = env::args_os().skip(1).collect::<Vec<_>>();
+    let batch = args.first().is_some_and(|a| a == "--batch");
+    let mut total_bytes = 0usize;
+    let mut output = std::io::stdout().lock();
+    let mut emit = |value| {
+        let bytes = serde_json::to_vec(&value).unwrap_or_else(|_| std::process::exit(2));
+        if bytes.len() >= 64 * 1024 * 1024 || total_bytes + bytes.len() + 1 > 64 * 1024 * 1024 {
+            std::process::exit(2);
         }
-        _ => std::process::exit(2),
+        total_bytes += bytes.len() + 1;
+        if output
+            .write_all(&bytes)
+            .and_then(|_| output.write_all(b"\n"))
+            .is_err()
+        {
+            std::process::exit(2);
+        }
+    };
+    let mut completed = 0;
+    let mut ids = Vec::new();
+    let result =
+        requests(args).and_then(|requests| run(&requests, &mut emit, &mut completed, &mut ids));
+    if let Err(code) = &result {
+        emit(
+            json!({"schema":"tsgk-instrumented-query-reference/r1","status":"FAILED","code":code,"complete":false}),
+        );
     }
-    std::process::exit(code);
+    if batch {
+        emit(
+            json!({"schema":"tsgk-instrumented-query-reference-batch/r1","status":if result.is_ok() {"COMPLETED"} else {"FAILED"},
+            "complete":result.is_ok(),"queries":ids,"responses_completed":completed}),
+        );
+    }
+    if output.flush().is_err() {
+        std::process::exit(2);
+    }
+    if let Ok(watchdog) = &result {
+        watchdog.check();
+    }
+    std::process::exit(if result.is_ok() { 0 } else { 1 });
 }

@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, json, os, subprocess
 import argparse
 import sys
-from checks import execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity
+from checks import execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
 if sys.flags.optimize:
     raise RuntimeError('assertions must be enabled')
 parser = argparse.ArgumentParser(description=__doc__)
@@ -42,6 +42,7 @@ def sha(data):
 
 def execute(name, path, argv, wall=10, memory=1024 ** 3, expected_exit=0):
     spec = {'Path': str(path), 'Args': list(map(str, argv)), 'Dir': str(dest), 'Env': [k + '=' + v for k, v in sorted(env.items())], 'StdoutBytes': 64 * 1024 ** 2, 'StderrBytes': 1024 ** 2, 'Wall': wall * 10 ** 9, 'Grace': 2 * 10 ** 9, 'Memory': {'Bytes': memory, 'Hard': sys.platform != 'darwin'}, 'CgroupParent': args.cgroup_parent}
+    (dest / (name + '-request.json')).write_text(json.dumps(spec), encoding='utf-8', newline='\n')
     with (dest / (name + '.json')).open('xb') as out, (dest / (name + '.stderr')).open('xb') as err:
         p = subprocess.run([str(runner)], input=json.dumps(spec).encode(), env=env, stdout=out, stderr=err, timeout=wall + 15)
     receipt = json.loads((dest / (name + '.json')).read_bytes())
@@ -152,6 +153,69 @@ code, receipt = execute('wrong-library-sha', binary, [library, 'tree_sitter_tsgk
 r = json.loads(receipt['stdout'])
 assert code != 0 and r['code'] == 'LIBRARY_SHA256_MISMATCH' and (not r['complete'])
 passed.append('wrong-library-sha-rejected')
+batch_source = dest / 'batch.txt'
+batch_source.write_bytes(b'x;\n1;\n')
+interleaved = dest / 'interleaved.scm'
+interleaved.write_bytes(b'(source_file (expression_statement (identifier) @x) @statement)\n(identifier) @x')
+query_paths = [dest/'structural.scm', dest/'eq.scm', dest/'duplicate-captures.scm', interleaved]
+ids, pairs, singles = [], [], []
+for i in range(16):
+    query_id, query_path = f'b{i}', query_paths[i % len(query_paths)]
+    ids.append(query_id)
+    pairs.extend([query_id, query_path])
+    _, receipt = execute(f'batch-single-{i}', binary, [library, 'tree_sitter_tsgk_plain', batch_source, query_path, query_id, library_sha])
+    result = json.loads(receipt['stdout'])
+    assert result['tree']['nodes'] == nodes and result['complete'] is True
+    singles.append(result)
+prefix = ['--batch', library, 'tree_sitter_tsgk_plain', batch_source, library_sha]
+_, receipt = execute('batch-sixteen', binary, prefix+pairs, wall=50)
+assert batch(receipt['stdout'], ids) == singles
+passed.append('batch-sixteen-full-field-single-parity')
+_, receipt = execute('batch-one', binary, prefix+pairs[:2])
+assert batch(receipt['stdout'], ids[:1]) == singles[:1]
+passed.append('batch-one-full-field-single-parity')
+invalid = dest / 'invalid.scm'
+invalid.write_bytes(b'(')
+_, receipt = execute('batch-middle-failure', binary, prefix+['first',query_paths[0],'bad',invalid,'later',query_paths[1]], expected_exit=1)
+rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+assert len(rows) == 3 and rows[0]['complete'] is True and rows[0]['query']['id'] == 'first'
+assert rows[1] == {'schema':'tsgk-instrumented-query-reference/r1','status':'FAILED','code':'QUERY_COMPILE','complete':False}
+assert rows[2] == {'schema':'tsgk-instrumented-query-reference-batch/r1','status':'FAILED','complete':False,'queries':['first','bad','later'],'responses_completed':1}
+try:
+    batch(receipt['stdout'], ['first','bad','later'])
+except RuntimeError:
+    pass
+else:
+    raise AssertionError('incomplete batch accepted')
+passed.append('batch-middle-failure-no-later-result')
+usage = 'USAGE_LIBRARY_SYMBOL_SOURCE_QUERY_QUERY_ID_LIBRARY_SHA256'
+oversized = dest / 'oversized.scm'
+oversized.write_bytes(b' ' * 65537)
+for label, arguments, expected_code in [
+        ('zero', prefix, usage), ('pair', prefix+['orphan'], usage),
+        ('seventeen', prefix+pairs+['b16',query_paths[0]], usage),
+        ('duplicate', prefix+['same',query_paths[0],'same',query_paths[1]], 'IDENTIFIER_INVALID'),
+        ('oversized-query', prefix+['q',oversized], 'INPUT_LIMIT')]:
+    _, receipt = execute('batch-reject-'+label, binary, arguments, expected_exit=1)
+    rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+    assert len(rows) == 2 and rows[0]['code'] == expected_code and rows[0]['complete'] is False
+    assert rows[-1]['complete'] is False and rows[-1]['responses_completed'] == 0
+    passed.append('batch-reject-'+label)
+spec = json.loads((dest/'batch-sixteen-request.json').read_bytes())
+spec['StdoutBytes'] = 1024
+with (dest/'batch-truncated.json').open('xb') as out, (dest/'batch-truncated.stderr').open('xb') as err:
+    process = subprocess.run([str(runner)], input=json.dumps(spec).encode(), env=env, stdout=out, stderr=err, timeout=65)
+receipt = json.loads((dest/'batch-truncated.json').read_bytes())
+assert process.returncode == 1 and receipt['execution']['stdout_truncated']
+assert receipt['execution']['cleanup']['verified'] and receipt['execution']['cleanup']['residual_after_exit'] == 0
+for check in (lambda: execution(receipt, 0), lambda: batch(receipt['stdout'], ids)):
+    try:
+        check()
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError('truncated batch accepted')
+passed.append('batch-supervisor-output-limit-cleanup-rejected')
 unchanged(grammar, grammar_inputs)
 assert file_sha(binary, 64 * 1024**2) == binary_sha and file_sha(library, 64 * 1024**2) == library_sha
 unchanged_bytes(args.identity, identity_bytes)
