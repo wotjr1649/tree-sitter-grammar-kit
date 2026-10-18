@@ -363,4 +363,3 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 `SvcObservation.HasDirectivePrefix(encoding, source)`는 같은 source의 관측에서 ServiceHost 앞이 공백/BOM뿐인지 판정한다. UTF-8·UTF-16·CP949를 같은 decoder로 처리한다. 일반 C# 문자열의 directive marker와 host source를 구별하는 참조 guard이며 C# 구문 검증은 별도 parser가 수행한다. 별도로 CodeBehind의 같은 case 자기 참조는 prefix와 무관하게 거부한다.
 
 `VerifyOracleSet`의 실제 파일 읽기는 manifest 16 MiB, record/raw member 64 MiB, source member 32 MiB 상한으로 제한한다. Member는 선언한 bytes+1까지만 읽으며, 거짓 크기 선언으로 큰 실제 파일을 전부 메모리에 적재하지 않는다. 초과는 MANIFEST_BYTES_LIMIT·MEMBER_BYTES_LIMIT·SOURCE_BYTES_LIMIT finding이며 열린 파일을 닫는다. Source 무결성 검사도 이 읽기 경계를 공유한다.
-
