@@ -267,7 +267,7 @@ func TestVerifyEvidence(t *testing.T) {
 	g.nodes[0]["files"] = []any{map[string]any{"path": "../raw/old.json", "role": "raw", "bytes": 12, "sha256": fxExe}}
 	evidenceFails(t, g, nil, "FILE_INVALID")
 	// review r2 N1: a replay node's result file is bound to the graph
-	rr, _ := json.Marshal(map[string]any{"result_schema": ReplayResultSchema, "evidence_mode": "REPLAYED_RAW", "assessment": "PASS", "subject": map[string]any{"run": "10", "attempt": 1}})
+	rr, _ := json.Marshal(map[string]any{"result_schema": ReplayResultSchema, "evidence_mode": "REPLAYED_RAW", "assessment": "PASS", "subject": map[string]any{"run": "10", "attempt": 1, "platform": "windows/amd64"}})
 	g = newFxGraph()
 	g.files["replay/result.json"] = rr
 	g.nodes[2]["files"] = []any{map[string]any{"path": "replay/result.json", "role": "replay-result", "bytes": len(rr), "sha256": sum(rr)}}

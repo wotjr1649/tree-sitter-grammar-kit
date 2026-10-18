@@ -433,8 +433,9 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			EvidenceMode string `json:"evidence_mode"`
 			Assessment   string `json:"assessment"`
 			Subject      struct {
-				Run     string `json:"run"`
-				Attempt uint64 `json:"attempt"`
+				Run      string `json:"run"`
+				Attempt  uint64 `json:"attempt"`
+				Platform string `json:"platform"`
 			} `json:"subject"`
 		}
 		if err := jsonv2.Unmarshal(data, &rr); err != nil || rr.ResultSchema != ReplayResultSchema {
@@ -444,8 +445,8 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 		if rr.EvidenceMode != n.EvidenceMode || rr.Assessment != n.Assessment {
 			add("REPLAY_RESULT_MISMATCH", n.ID, "replay 결과의 evidence mode·판정이 graph와 다르다")
 		}
-		if rr.Subject.Run != subject.Identities["run"] || strconv.FormatUint(rr.Subject.Attempt, 10) != subject.Identities["attempt"] {
-			add("REPLAY_RESULT_MISMATCH", n.ID, "replay 결과의 subject run이 graph의 subject와 다르다")
+		if rr.Subject.Run != subject.Identities["run"] || strconv.FormatUint(rr.Subject.Attempt, 10) != subject.Identities["attempt"] || rr.Subject.Platform == "" || rr.Subject.Platform != subject.Identities["platform"] {
+			add("REPLAY_RESULT_MISMATCH", n.ID, "replay 결과의 subject run·attempt·platform이 graph의 subject와 다르다")
 		}
 	}
 }
