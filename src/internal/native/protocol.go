@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
@@ -250,17 +251,10 @@ type QueryError struct {
 }
 
 // WirePredicate is one predicate of a pattern as the runtime lists it.
-type WirePredicate struct {
-	Pattern uint32     `json:"pattern"`
-	Steps   []PredStep `json:"steps"`
-}
+type WirePredicate = querypolicy.Predicate
 
 // PredStep is one predicate step: kind capture (with its quantifier) or string.
-type PredStep struct {
-	Kind       string  `json:"kind"`
-	Value      string  `json:"value"`
-	Quantifier *string `json:"quantifier"`
-}
+type PredStep = querypolicy.Step
 
 // WireAPI is the tsgk-api/r1 observation of one full tree.
 type WireAPI struct {
