@@ -87,3 +87,55 @@ func TestReplayCLI(t *testing.T) {
 		t.Fatalf("evidence verify duplicate key: %d %s", code, errb.String())
 	}
 }
+
+func TestEvidenceReplayPlatformCLI(t *testing.T) {
+	for _, platform := range []string{"windows/amd64", "linux/amd64"} {
+		t.Run(platform, func(t *testing.T) {
+			root := t.TempDir()
+			write := func(path string, value any) []byte {
+				t.Helper()
+				data, err := json.Marshal(value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, data, 0o644); err != nil {
+					t.Fatal(err)
+				}
+				return data
+			}
+			hash := func(data []byte) string { h := sha256.Sum256(data); return hex.EncodeToString(h[:]) }
+			report := write(filepath.Join(root, "replay.json"), map[string]any{
+				"result_schema": kit.ReplayResultSchema, "evidence_mode": kit.ModeReplayedRaw, "assessment": kit.AssessFail,
+				"subject": map[string]any{"run": "10", "attempt": 1, "platform": platform},
+			})
+			node := func(id, kind, mode, runID string) kit.EvidenceNode {
+				ids := map[string]string{}
+				for _, role := range kit.EvidenceRoles {
+					ids[role] = role
+				}
+				ids["run"], ids["attempt"], ids["platform"] = runID, "1", "windows/amd64"
+				return kit.EvidenceNode{ID: id, Kind: kind, ExecutionStatus: kit.StatusCompleted, EvidenceMode: mode, Assessment: kit.AssessFail, Identities: ids}
+			}
+			subject := node("subject", "run", kit.ModeNewRun, "10")
+			replay := node("replay", "replay", kit.ModeReplayedRaw, "11")
+			replay.Refs = []kit.EvidenceRef{{Relation: "subject", Node: "subject"}}
+			replay.Files = []kit.ReplayMember{{Path: "replay.json", Role: "replay-result", Bytes: uint64(len(report)), SHA256: hash(report)}}
+			graph := write(filepath.Join(root, "evidence.json"), map[string]any{"schema": kit.EvidenceSchema, "nodes": []kit.EvidenceNode{subject, replay}})
+			policy := filepath.Join(t.TempDir(), "policy.json")
+			write(policy, map[string]any{"schema": kit.EvidencePolicySchema, "id": "cli-platform", "evidence_sha256": hash(graph)})
+			var out, errb bytes.Buffer
+			code := run(context.Background(), []string{"evidence", "verify", "--input", root, "--profile", policy}, &out, &errb)
+			var result kit.EvidenceResult
+			if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+				t.Fatalf("exit %d, stderr %s: %v", code, errb.String(), err)
+			}
+			if platform == "windows/amd64" {
+				if code != exitOK || result.Assessment != kit.AssessPass {
+					t.Fatalf("matching FAIL report is valid evidence: %d %s", code, out.String())
+				}
+			} else if code != exitFail || result.Assessment != kit.AssessFail || len(result.Findings) != 1 || result.Findings[0].Code != "REPLAY_RESULT_MISMATCH" {
+				t.Fatalf("cross-platform report accepted: %d %s", code, out.String())
+			}
+		})
+	}
+}
