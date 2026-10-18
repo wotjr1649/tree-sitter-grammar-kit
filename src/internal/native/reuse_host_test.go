@@ -80,7 +80,7 @@ func TestNativeReuseBatchProjection(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer responses.Close()
-	results, batches := runBatches(ctx, b, x, root, cases, responses)
+	results, batches := runBatches(ctx, b, x, root, cases, responses, nil)
 	if len(results) != 2 || len(batches) != 1 {
 		t.Fatalf("batch accounting %d/%d", len(results), len(batches))
 	}
@@ -108,7 +108,7 @@ func TestNativeReuseBatchProjection(t *testing.T) {
 	if err := unavailable.Close(); err != nil {
 		t.Fatal(err)
 	}
-	failed, _ := runBatches(ctx, b, x, root, cases, unavailable)
+	failed, _ := runBatches(ctx, b, x, root, cases, unavailable, nil)
 	for _, c := range failed {
 		if c.ExecutionStatus != kit.StatusFailed || c.Code != "EVIDENCE_WRITE_FAILED" {
 			t.Fatalf("raw write failure hidden: %s %s", c.ExecutionStatus, c.Code)

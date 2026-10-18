@@ -120,7 +120,7 @@ publication: `--out`은 새로 만들어야 하며 있으면 실행 전 `OUTPUT_
 
 ## S05 구현 — incremental, incremental profile r2
 
-`incremental`·`oracle record`의 CLI는 검사한 output parent handle과 basename을 native 생성까지 전달한다. parent pathname이 교체되거나 target이 닫히면 다른 경로로 재개방하지 않는다. case·grammar root handle도 호출 동안 유지하지만 native 입력 읽기의 root identity 결속은 [trust 계약](trust-and-execution.md)의 미완료 항목이다. native가 저장한 report 이후 CLI handle 종료·stdout 쓰기가 실패할 수 있으므로 성공 채택에는 완전한 stdout JSON과 exit 0을 함께 요구한다. stdout Write 오류·short write는 `OUTPUT_WRITE_FAILED`, exit 4다.
+`incremental`·`oracle record`의 CLI는 검사한 output parent handle과 basename을 native 생성까지 전달한다. parent pathname이 교체되거나 target이 닫히면 다른 경로로 재개방하지 않는다. case·grammar 읽기도 검사한 각 root handle을 사용하며 non-nil binding의 누락·종료는 output 생성 전 `INPUT_ROOT_UNAVAILABLE`로 거부한다. link·special 및 동시 교체 검사의 범위와 남은 생성 공백은 [trust 계약](trust-and-execution.md)을 따른다. native가 저장한 report 이후 CLI handle 종료·stdout 쓰기가 실패할 수 있으므로 성공 채택에는 완전한 stdout JSON과 exit 0을 함께 요구한다. stdout Write 오류·short write는 `OUTPUT_WRITE_FAILED`, exit 4다.
 
 ```text
 tsgk incremental --root PATH [--grammar-root PATH] --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE [--cgroup-parent DIR] [--run-wall SECONDS]

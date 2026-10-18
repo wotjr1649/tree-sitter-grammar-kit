@@ -83,17 +83,18 @@ func LoadRuntimeManifest() (RuntimeManifest, error) {
 // BuildRequest describes one driver build. Paths are absolute; Work is an existing
 // caller-owned directory where a new build directory is created.
 type BuildRequest struct {
-	Work         string
-	Runtime      string // runtime root holding the manifest files (LICENSE, lib/...)
-	GrammarRoot  string
-	Grammar      []kit.NativeInput
-	Symbol       string
-	Compiler     string
-	CompilerID   kit.ToolIdentity
-	Defines      []string // owned fault controls for the kit's tests only; recorded in the closure
-	Sanitize     bool     // diagnostic build with AddressSanitizer/UBSan (gcc/clang on Linux and macOS)
-	CgroupParent string
-	CacheDir     string // optional existing, trusted directory private to this orchestration run
+	Work          string
+	Runtime       string // runtime root holding the manifest files (LICENSE, lib/...)
+	GrammarRoot   string
+	GrammarHandle *os.Root // optional borrowed root; never reopened by pathname
+	Grammar       []kit.NativeInput
+	Symbol        string
+	Compiler      string
+	CompilerID    kit.ToolIdentity
+	Defines       []string // owned fault controls for the kit's tests only; recorded in the closure
+	Sanitize      bool     // diagnostic build with AddressSanitizer/UBSan (gcc/clang on Linux and macOS)
+	CgroupParent  string
+	CacheDir      string // optional existing, trusted directory private to this orchestration run
 }
 
 // ClosureFile is one input of the build closure.
@@ -157,21 +158,30 @@ func fileDigest(p string) (string, int64, error) {
 
 // copyVerified copies root/rel to dst after rejecting links in every component and
 // checking the declared identity of the bytes actually copied.
-func copyVerified(root, rel, dst, sha string, size int64) error {
-	cur := root
-	for _, seg := range strings.Split(rel, "/") {
-		cur = filepath.Join(cur, seg)
-		info, err := os.Lstat(cur)
+func copyVerified(root, rel, dst, sha string, size int64, binding *os.Root) error {
+	var data []byte
+	var err error
+	if binding != nil {
+		data, err = readBoundSource(binding, rel, size)
 		if err != nil {
 			return err
 		}
-		if info.Mode()&os.ModeSymlink != 0 || (info.Mode()&os.ModeType != 0 && !info.IsDir()) {
-			return errors.New("link or special file in path")
+	} else {
+		cur := root
+		for _, seg := range strings.Split(rel, "/") {
+			cur = filepath.Join(cur, seg)
+			info, err := os.Lstat(cur)
+			if err != nil {
+				return err
+			}
+			if info.Mode()&os.ModeSymlink != 0 || (info.Mode()&os.ModeType != 0 && !info.IsDir()) {
+				return errors.New("link or special file in path")
+			}
 		}
-	}
-	data, err := os.ReadFile(cur)
-	if err != nil {
-		return err
+		data, err = os.ReadFile(cur)
+		if err != nil {
+			return err
+		}
 	}
 	sum := sha256.Sum256(data)
 	if hex.EncodeToString(sum[:]) != sha || int64(len(data)) != size {
@@ -252,7 +262,7 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 		return b, refuse(kit.KindIO, code, cause)
 	}
 	for _, f := range man.Files {
-		if err := copyVerified(req.Runtime, f.Path, filepath.Join(dir, "runtime", filepath.FromSlash(f.Path)), f.SHA256, f.Bytes); err != nil {
+		if err := copyVerified(req.Runtime, f.Path, filepath.Join(dir, "runtime", filepath.FromSlash(f.Path)), f.SHA256, f.Bytes, nil); err != nil {
 			return b, refuse(kit.KindInvalidInput, "RUNTIME_MISMATCH", fmt.Errorf("%s: %w", f.Path, err))
 		}
 		b.Closure = append(b.Closure, ClosureFile{"runtime", f.Path, f.SHA256, f.Bytes})
@@ -260,7 +270,7 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 	var parser string
 	var scanners []string
 	for _, g := range req.Grammar {
-		if err := copyVerified(req.GrammarRoot, g.Path, filepath.Join(dir, "grammar", filepath.FromSlash(g.Path)), g.SHA256, int64(g.Bytes)); err != nil {
+		if err := copyVerified(req.GrammarRoot, g.Path, filepath.Join(dir, "grammar", filepath.FromSlash(g.Path)), g.SHA256, int64(g.Bytes), req.GrammarHandle); err != nil {
 			return b, refuse(kit.KindInvalidInput, "SOURCE_MISMATCH", fmt.Errorf("%s: %w", g.Path, err))
 		}
 		b.Closure = append(b.Closure, ClosureFile{"grammar-" + g.Role, g.Path, g.SHA256, int64(g.Bytes)})

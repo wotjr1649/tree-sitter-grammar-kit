@@ -32,6 +32,10 @@ Windows `TestPublishRetainsTemporaryLeafIdentity`는 게시 직전 temp leaf 교
 
 최종 후보는 세 OS PR CI와 actual main을 별도로 검증한다. 로컬 Windows handle 시험은 Linux·macOS, 모든 filesystem/ACL 또는 hosted subst 성공의 대체 근거가 아니다. 전체 #215 완료는 [trust 계약의 미완료 경계](../specs/trust-and-execution.md)까지 해결한 뒤 판단한다.
 
+## #216 raw query 공통 검증
+
+`src/internal/querywire`의 경계 시험은 required/nested member 누락, unknown·duplicate·type·정수 오류, null과 정상 empty, query 수·ID·status, 12열 row·table·flag·source 범위, 최초 match 순서·같은 match의 pattern을 검사한다. interleaved capture와 중복은 정렬·제거하지 않는다. 잘못된 row는 full-node 대조 함수에 도달하지 않아야 하며, full의 nil 대조 함수는 빈 stream에서도 거부한다. `TestQueryNodeLinkFields`는 각 type·다섯 flag·byte·point 변조가 wire-only 검증에는 유효하지만 실제 native full-node 대조에는 실패하는지와 실패 후 이전 query 목록 부재를 확인한다. `TestNullPrimitiveIsNotZeroValue`·`TestNullNestedPrimitiveIsNotZeroValue`는 scalar·12열 row·문자열 table 원소·predicate·compile error의 null을 검사하고 full-node 대조 전 거부를 요구한다. 정상 0·빈 문자열·허용된 null error/list/string quantifier는 보존한다. 기존 실제 native query·API·predicate·edit·limit 시험을 함께 실행한다. 이 추출은 offline의 새 witness·claim·분모·qualification 완료 근거가 아니다.
+
 ## Local foundation checks
 
 `TestSummaryGate`는 대형 owned tree의 full/summary digest 일치와 full 응답의 독립 Go `TreeDigest` 재계산을 검사한다. #208의 native 숫자 포맷팅 변경은 r1 digest bytes와 기존 wall·parse·memory 제한을 유지한다. kernel 측정은 함수 비용 근거이며 전체 parser 성능이나 세 플랫폼 지원 판정을 대신하지 않는다.
