@@ -106,6 +106,24 @@ for label, source in [('two-captures-kept', b'x;\n1;\n'), ('two-captures-rejecte
     assert r['query']['predicates'] == metadata['eq'] and r['query']['capture_names'] == ['x', 'y']
     assert r['query']['structural'] == [anchor, second] and r['query']['evaluated'] == ([anchor, second] if source.startswith(b'x') else [])
     passed.append(label)
+for op in ['eq?', 'not-eq?']:
+    for equal in [True, False]:
+        label = 'distinct-captures-' + op[:-1] + ('-equal' if equal else '-different')
+        q = dest / (label + '.scm')
+        q.write_bytes(('(source_file (expression_statement (identifier) @x) (expression_statement (identifier) @y) (#' + op + ' @x @y))').encode())
+        s = dest / (label + '.txt')
+        s.write_bytes(b'x;\nx;\n' if equal else b'x;\ny;\n')
+        code, receipt = execute(label, binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
+        r = json.loads(receipt['stdout'])
+        expected_nodes = [dict(n) for n in nodes]
+        expected_nodes[5]['type'] = 'identifier'
+        second = dict(anchor, capture=1, name='y', node=5, start_byte=3, end_byte=4, start_point={'row': 1, 'column': 0}, end_point={'row': 1, 'column': 1})
+        expected = [anchor, second]
+        keep = equal if op == 'eq?' else not equal
+        assert code == 0 and r['complete'] and r['tree']['nodes'] == expected_nodes
+        assert r['query']['predicates'] == [predicate(op, [operand('y')])] and r['query']['capture_names'] == ['x', 'y']
+        assert r['query']['structural'] == expected and r['query']['evaluated'] == (expected if keep else [])
+        passed.append(label)
 q = dest / 'duplicate-captures.scm'
 q.write_bytes(b'(identifier) @x @x')
 s = dest / 'duplicate-captures.txt'
