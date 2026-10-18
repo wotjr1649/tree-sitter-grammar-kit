@@ -36,6 +36,16 @@ root를 포함해 최대 10000 entries, root 기준 directory depth 64, destinat
 
 archive inspection은 extraction과 분리한다. 절대·상위·중복·case collision·file/directory 겹침·link·비정상 metadata·압축/해제 size 한도 초과를 거부하고 실제 읽은 bytes에도 한도를 적용한다. extraction은 필요할 때만 새 caller-owned 빈 directory에서 수행하고 멤버별 no-follow/open 경계를 검증한다. 이름 정규화만으로 TOCTOU를 해결했다고 하지 않는다. 다른 process가 workspace를 적대적으로 변경하는 상황을 지원하려면 OS별 안전한 접근을 별도로 증명해야 한다.
 
+### #215 출력 handle 결속과 미완료 경계
+
+완료 report의 CLI publication은 output parent와 모든 input root를 `os.Root`로 열고, 검사부터 임시 파일의 배타 생성·동기화·no-clobber `Link`·임시 파일 정리까지 유지한다. `qualify`는 첫 host뿐 아니라 모든 host root를 최종 검사한다. directory 탐색의 child lookup도 해당 root handle 상대 연산을 사용하며, 검사와 열기 사이의 identity 변경이나 관측된 alias를 거부한다. Windows의 irregular entry는 pathname `FindFirstFile` fallback 없이 parent handle 상대 reparse-tag 조회로 분류한다. 이 변경은 입력 내용 읽기 전체를 namespace snapshot으로 만드는 기능이 아니다.
+
+native `incremental`·`oracle record`는 output과 고정 child directory를 배타 생성하고, 획득한 directory handle에서 member를 `O_CREATE|O_EXCL`로 쓴다. 기존 output을 수용하는 `MkdirAll`과 member truncate를 사용하지 않는다. Windows는 `NtCreateFile(FILE_DIRECTORY_FILE, FILE_CREATE)`의 생성 handle을 delete sharing 없이 유지하면서 `os.Root`와 immediate `File.Stat` identity를 대조한다. 이 보호는 해당 handle로 directory를 list/read-attributes 할 권한도 요구하며, 권한 오류를 약한 생성 방식이나 ACL 변경으로 우회하지 않는다. member 기록 후 offline set 검사는 output root에 결속한다.
+
+`incremental`은 최종 `result.json`의 배타 file handle을 먼저 확보하고 child·output directory를 모두 닫은 뒤, 그 종료 결과를 직렬화하여 확보한 file handle로 기록한다. directory 종료 실패는 저장·반환 report 모두 `FAILED`와 `OUTPUT_CLOSE_FAILED`를 가지며 기존 `PASS` assessment는 `NOT_ASSESSED`가 된다. 최종 file의 write·close 실패는 `EVIDENCE_WRITE_FAILED`와 반환 I/O 오류이며, 이미 기록한 bytes에 마지막 close 실패를 사후 반영한다고 주장하지 않는다. 호출자는 반환 오류·CLI 종료 상태까지 확인해야 하며 파일 존재나 내부 `PASS`만으로 실행 전체의 성공을 채택하지 않는다. 이 마지막 쓰기 동안 directory 이름이 고정된다는 보장은 없고, 쓰기는 이미 확보한 file 객체에 결속한다. `oracle record`의 set 구조 유효성도 호출 전체의 정상 종료와 구분한다.
+
+**#215는 이 부분 구현만으로 완료되지 않는다.** Linux·macOS의 `Mkdir` 성공부터 첫 `OpenRoot`까지 원래 생성한 directory임을 증명하는 공백은 남는다. random staging·추가 stat·협조하지 않는 process에 대한 lockfile을 해결 근거로 삼지 않는다. namespace 전체의 원자적 snapshot, 임시 file basename 자체의 교체에 대한 객체 지정 cleanup, native CLI 사전 containment와 생성 사이의 종단 결속도 이 변경만으로 증명하지 않는다. 기존 보장 기준을 유지하며 이 경계는 미완료로 남긴다. `os.Root`는 bind mount 자체를 차단하지 않고, 열린 directory의 input 아래 이동·쓰기 뒤 이동·동일 UID 적대자나 mount 권한자를 격리하지 않는다. 이 한계를 넓은 동시 변경 안전성 주장으로 대체하지 않는다.
+
 ### S02 구현 — archive profile `zip-r1`과 이름 정책 `portable-names-r1`
 
 `kit.Verify`/`tsgk verify --archive`는 ZIP을 풀지 않고 직접 읽는다. 지원 범위(`zip-r1`)는 단일 디스크, 압축 방식 0(stored)·8(deflate), data descriptor(general purpose bit 3)다. ZIP64, 다중 디스크, 암호화·strong encryption·masked header, 다른 압축 방식은 `UNSUPPORTED`(`ZIP64_UNSUPPORTED`, `ZIP_MULTIDISK_UNSUPPORTED`, `ZIP_ENCRYPTED_UNSUPPORTED`, `ZIP_METHOD_UNSUPPORTED`)로 끝나며 건너뛰지 않는다. tar·gzip 같은 다른 형식은 EOCD가 없어 `ZIP_EOCD_MISSING`이다.

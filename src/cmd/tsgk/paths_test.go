@@ -36,12 +36,12 @@ func TestDirectoryMembership(t *testing.T) {
 		t.Fatal(err)
 	}
 	check := func(parents []os.FileInfo, depth, entries int, deadline time.Time) (bool, error) {
-		f, err := os.Open(root)
+		f, err := os.OpenRoot(root)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer f.Close()
-		return containsDirectory(f, root, parents, depth, &entries, deadline)
+		return containsDirectory(f, parents, depth, &entries, deadline)
 	}
 	if found, err := check([]os.FileInfo{info}, 0, 1, time.Now().Add(pathWall)); !found || err != nil {
 		t.Fatalf("descendant identity missed: %v %v", found, err)
@@ -55,13 +55,13 @@ func TestDirectoryMembership(t *testing.T) {
 		}
 	}
 	t.Run("closed-identity", func(t *testing.T) {
-		f, err := os.Open(root)
+		f, err := os.OpenRoot(root)
 		if err != nil {
 			t.Fatal(err)
 		}
 		f.Close()
 		n := 1
-		if found, err := containsDirectory(f, root, nil, 0, &n, time.Now().Add(pathWall)); found || err == nil {
+		if found, err := containsDirectory(f, nil, 0, &n, time.Now().Add(pathWall)); found || err == nil {
 			t.Fatal("unavailable identity accepted")
 		}
 	})

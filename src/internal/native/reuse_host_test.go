@@ -75,7 +75,12 @@ func TestNativeReuseBatchProjection(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(outDir, "responses"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	results, batches := runBatches(ctx, b, x, root, cases, outDir)
+	responses, err := os.OpenRoot(filepath.Join(outDir, "responses"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer responses.Close()
+	results, batches := runBatches(ctx, b, x, root, cases, responses)
 	if len(results) != 2 || len(batches) != 1 {
 		t.Fatalf("batch accounting %d/%d", len(results), len(batches))
 	}
@@ -96,7 +101,14 @@ func TestNativeReuseBatchProjection(t *testing.T) {
 			t.Fatalf("batch payload isolation: %+v", o)
 		}
 	}
-	failed, _ := runBatches(ctx, b, x, root, cases, filepath.Join(outDir, "missing"))
+	unavailable, err := os.OpenRoot(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unavailable.Close(); err != nil {
+		t.Fatal(err)
+	}
+	failed, _ := runBatches(ctx, b, x, root, cases, unavailable)
 	for _, c := range failed {
 		if c.ExecutionStatus != kit.StatusFailed || c.Code != "EVIDENCE_WRITE_FAILED" {
 			t.Fatalf("raw write failure hidden: %s %s", c.ExecutionStatus, c.Code)

@@ -155,11 +155,11 @@ func TestOracleRecordSet(t *testing.T) {
 		out := filepath.Join(base, "fail")
 		orig := createExclusive
 		defer func() { createExclusive = orig }()
-		createExclusive = func(path string, data []byte) error {
+		createExclusive = func(root *os.Root, path string, data []byte) error {
 			if strings.Contains(path, "00001-cb") {
 				return errors.New("injected write failure")
 			}
-			return orig(path, data)
+			return orig(root, path, data)
 		}
 		res, err := runOracle(t, oracleRequest(t, profile, root, out))
 		if err != nil || res.ExecutionStatus != kit.StatusFailed || res.Set != nil {

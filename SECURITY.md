@@ -6,6 +6,8 @@
 
 [trust와 실행 계약](docs/specs/trust-and-execution.md)이 offline 데이터 처리와 opt-in generator/native 실행의 경계를 소유한다. 구현 범위와 아직 계획 단계인 기능은 문서 map에서 구분한다. 환경 정리, private cache와 resource cap만으로 악성 native 코드를 격리할 수 없다. source/tool identity와 보존 evidence는 추적 근거이며, 자체 생성 fingerprint는 입력 출처를 인증하지 않는다.
 
+CLI report publication과 native output의 일부 handle 결속 보호 및 아직 남은 생성·namespace·cleanup 경계는 [trust 계약의 #215 절](docs/specs/trust-and-execution.md)에 구분한다. 이 부분 구현은 namespace 전체에 대한 동시 변경 안전성이나 임의 native 코드 격리를 보증하지 않는다.
+
 ## Reporting a concern
 
 Report non-sensitive defects through [GitHub Issues](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues). Include:

@@ -12,6 +12,18 @@
 
 기록에는 실제 base/head, dirty 입력과 실행 문맥, 명령·선택 범위·결과를 남긴다. 미선택 범위는 `NOT_RUN`이며 과거 PASS는 원래 commit·문맥·run/attempt가 있는 역사적 근거로만 참조한다. 계획 출력·변경 없음·테스트 없는 package의 build를 새 테스트 PASS로 표시하지 않는다. `-count=1`을 유지해 테스트 결과 캐시로 새 실행을 대신하지 않고, 계산 재사용은 build identity와 cold 검사를 보존하는 범위에서 검토한다.
 
+## #215 출력 소유권 검증
+
+`TestPublishKeepsParentIdentity`는 검사 후 `Link` 전 output parent pathname을 다른 directory로 교체하는 결정적 barrier를 사용한다. 보관한 parent에만 게시·정리하고 대체 directory의 기존 bytes를 보존해야 한다. Windows에서 열린 handle이 rename을 거부한 경우에도 그 실제 거부를 확인한다. `TestDirectoryReplacementDuringScan`은 child lookup 사이의 보통 directory·내부 alias·외부 alias 교체를 거부한다. `TestQualifyRechecksEveryHostBeforePublish`는 분석 후 2·3번째 host pathname을 바꾸어 최종 검사가 모든 host에 적용되는지 확인한다. cleanup 실패는 성공한 publication 사실을 보존하면서 오류로 보고해야 한다.
+
+native의 두 process가 같은 output을 동시에 선점하는 시험은 하나만 directory와 member를 만들고 다른 하나는 `OUTPUT_EXISTS`에 해당하는 충돌로 종료해야 한다. 기존 output·member bytes와 배타 child 생성을 검사하고, 획득한 output handle 뒤의 pathname 교체가 member 쓰기를 대체 directory로 돌리지 못하는지 확인한다. Windows 생성 handle은 native 생성과 Go root 연결 구간에 유지하며, reserved/ADS 이름·기존 alias와의 충돌을 거부한다. `Mkdir`와 첫 handle 획득 사이의 Linux·macOS 공백은 별도 미완료 항목이며 이 시험의 PASS로 해결했다고 기록하지 않는다.
+
+Windows foundation의 별도 `hosted Windows subst output boundary (#215)` step만 `TSGK_HOSTED_SUBST_TEST=1`로 `TestHostedSubstMembership`을 실행한다. GitHub-hosted Windows 문맥을 확인하기 전에 mapping을 만들지 않으며, 개발 host 거부는 별도 subprocess negative control로 확인한다. unused drive의 실제 `subst.exe` mapping과 target을 확인하고 input 하위 mapping 거부·outside mapping 허용·원 bytes 보존·partial 부재·mapping 제거를 검사한다. 제거에는 예상 target에 대한 `DefineDosDevice` exact-match removal을 사용하고 다른 target을 주면 기존 mapping이 보존되는 대조도 실행한다. mapping 소유권이나 제거를 확인하지 못하면 fixture를 보존하고 후속 mapping을 중단하여 실패한다. workflow는 정확한 test의 Go JSON pass와 inside·outside·두 제거·두 다른-target 보존 witness를 요구한다. `TestHostedSubstEvidenceGuard`는 이 event 검사 자체를 정상·skip·무선택·실패·witness 누락 fixture로 검사하며 실제 mapping 근거로 세지 않는다. skip·mapping 생성 실패·timeout은 실제 subst 검증 PASS가 아니다. 개발 host에서는 실제 mapping을 실행하지 않는다. 기존 isolated Linux bind-mount 검사는 유지한다.
+
+`TestIncrementalOutputFinalization`은 실제 `Incremental` 호출에서 Windows creation guard의 종료 오류를 주어 저장·반환 report와 반환 I/O 오류를 함께 확인한다. directory 종료 뒤 rename 가능한 host에서는 최종 file handle이 원래 객체에 계속 쓰고 대체 namespace의 파일을 보존하는지 검사한다. Windows에서 열린 최종 file이 rename을 거부하면 그 거부와 정상 결과를 확인하며, 실제 교체가 실행된 근거로 합산하지 않는다.
+
+최종 후보는 세 OS PR CI와 actual main을 별도로 검증한다. 로컬 Windows handle 시험은 Linux·macOS, 모든 filesystem/ACL 또는 hosted subst 성공의 대체 근거가 아니다. 전체 #215 완료는 [trust 계약의 미완료 경계](../specs/trust-and-execution.md)까지 해결한 뒤 판단한다.
+
 ## Local foundation checks
 
 `TestSummaryGate`는 대형 owned tree의 full/summary digest 일치와 full 응답의 독립 Go `TreeDigest` 재계산을 검사한다. #208의 native 숫자 포맷팅 변경은 r1 digest bytes와 기존 wall·parse·memory 제한을 유지한다. kernel 측정은 함수 비용 근거이며 전체 parser 성능이나 세 플랫폼 지원 판정을 대신하지 않는다.
