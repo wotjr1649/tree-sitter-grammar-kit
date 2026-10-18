@@ -271,7 +271,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			bad("QUERY_WITNESS_RAW_INVALID", "raw")
 			return res, nil
 		}
-		if raw.Protocol != "tsgk-native/r2" || raw.ID != reg.Case || raw.Bytes != reg.Input.Bytes || !raw.Complete || raw.StepsCompleted != uint64(len(raw.Steps)) || len(raw.Steps) > len(reg.Edits)+1 ||
+		if raw.Protocol != "tsgk-native/r2" || raw.ID != reg.Case || raw.Bytes != reg.Input.Bytes || !raw.Complete || raw.StepsCompleted > uint64(len(reg.Edits)+1) || len(raw.Steps) > len(reg.Edits)+1 ||
 			(raw.Status == StatusCompleted && (raw.Code != "" || len(raw.Steps) != len(reg.Edits)+1)) || !slices.Contains([]string{StatusCompleted, StatusFailed, StatusResourceLimit}, raw.Status) {
 			bad("QUERY_WITNESS_RAW_ENVELOPE", "raw")
 			caseBound = false
@@ -279,7 +279,12 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		if raw.Status != StatusCompleted {
 			blocked("QUERY_WITNESS_RAW_INCOMPLETE", "raw")
 		}
+		completed := uint64(0)
 		for i, s := range raw.Steps {
+			if s.Incremental == nil || (i == 0 && s.Fresh != nil) {
+				bad("QUERY_WITNESS_TREE_ROLE_INVALID", fmt.Sprintf("raw/steps/%d", i))
+				badSteps[i] = true
+			}
 			if !witnessRegisteredStep(i, s.Step, s.Bytes, s.SHA256, s.Edit, reg) || (len(versions) != 0 && !witnessStepBinding(i, s.Step, s.Bytes, s.SHA256, s.Edit, versions, points, reg.Edits)) {
 				bad("QUERY_WITNESS_STEP_MISMATCH", fmt.Sprintf("raw/steps/%d", i))
 				badSteps[i] = true
@@ -325,6 +330,22 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 					}
 				}
 			}
+			status, code, incomplete := witnessRawIncomplete(s.Incremental, rawQueries[s.Incremental])
+			if !incomplete && i > 0 {
+				status, code, incomplete = witnessRawIncomplete(s.Fresh, rawQueries[s.Fresh])
+			}
+			if !incomplete {
+				completed++
+			} else if i != len(raw.Steps)-1 || raw.Status == StatusCompleted || status != raw.Status || code != raw.Code {
+				bad("QUERY_WITNESS_RAW_COMPLETION_MISMATCH", fmt.Sprintf("raw/steps/%d", i))
+				caseBound = false
+			}
+		}
+		if (len(raw.Steps) > 0 && (raw.StepsCompleted != completed || (raw.Status != StatusCompleted && completed == uint64(len(raw.Steps))))) ||
+			(len(raw.Steps) == 0 && raw.Status != StatusCompleted && !slices.Contains([]string{"OUTPUT_LIMIT", "ALLOCATION_LIMIT", "LANGUAGE_INCOMPATIBLE"}, raw.Code) &&
+				!(raw.Code == "QUERY_TIME_LIMIT" && raw.Status == StatusResourceLimit && len(reg.Queries) > 0)) {
+			bad("QUERY_WITNESS_RAW_COMPLETION_MISMATCH", "raw")
+			caseBound = false
 		}
 	} else {
 		blocked("QUERY_WITNESS_RAW_MISSING", "raw")
@@ -345,7 +366,18 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		if projection.Status != StatusCompleted {
 			blocked("QUERY_WITNESS_PROJECTION_INCOMPLETE", "projection")
 		}
+		// Capability refusal precedes projection; missing producer capability fields cannot prove its cause.
+		capabilityRefusal := raw.Status == StatusCompleted && projection.Status == StatusNotRun && len(projection.Steps) == 0 &&
+			slices.Contains([]string{"QUERY_CAPABILITY_MISSING", "API_CAPABILITY_MISSING"}, projection.Code)
+		if haveRaw && !capabilityRefusal && (projection.Status != raw.Status || (raw.Status != StatusCompleted && projection.Code != raw.Code)) {
+			bad("QUERY_WITNESS_CASE_STATUS_MISMATCH", "projection")
+			caseBound = false
+		}
 		for i, s := range projection.Steps {
+			if (i == 0 && s.Fresh != nil) || (i > 0 && projection.Status == StatusCompleted && s.Incremental != nil && s.Fresh == nil) {
+				bad("QUERY_WITNESS_TREE_ROLE_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				badSteps[i] = true
+			}
 			if !witnessRegisteredStep(i, s.Step, s.Bytes, s.SHA256, s.Edit, reg) || (len(versions) != 0 && !witnessStepBinding(i, s.Step, s.Bytes, s.SHA256, s.Edit, versions, points, reg.Edits)) {
 				bad("QUERY_WITNESS_STEP_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				badSteps[i] = true
@@ -597,6 +629,22 @@ func witnessRawTreeHeader(t witnessRawTree) bool {
 	default:
 		return false
 	}
+}
+
+// Native completion counts trees and queries; an invalid query is a completed observation.
+func witnessRawIncomplete(tree *witnessRawTree, queries []querywire.Query) (string, string, bool) {
+	if tree == nil {
+		return "", "", true
+	}
+	if tree.Status != StatusCompleted {
+		return tree.Status, tree.Code, true
+	}
+	for _, q := range queries {
+		if q.Status == StatusResourceLimit || q.Status == StatusFailed {
+			return q.Status, q.Code, true
+		}
+	}
+	return "", "", false
 }
 
 func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
@@ -857,7 +905,21 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 			}
 		}
 		for name, f := range fields {
-			if jvMember(v, name) == nil && !slices.Contains([]string{"encoding_source"}, name) && f.Tag.Get("json") != "-" {
+			optional := name == "encoding_source"
+			if typ == reflect.TypeFor[witnessTreeProjection]() && name == "tree" {
+				status, form := jvMember(v, "status"), jvMember(v, "form")
+				optional = (status != nil && slices.Contains([]string{StatusFailed, StatusResourceLimit}, status.s)) ||
+					(form != nil && slices.Contains([]string{"summary", "record"}, form.s))
+			}
+			if typ == reflect.TypeFor[witnessRawTree]() {
+				status, form := jvMember(v, "status"), jvMember(v, "form")
+				if status != nil && slices.Contains([]string{StatusFailed, StatusResourceLimit}, status.s) {
+					optional = slices.Contains([]string{"descendant_count", "has_error", "digest", "types", "fields", "nodes"}, name)
+				} else if form != nil && slices.Contains([]string{"summary", "record"}, form.s) {
+					optional = slices.Contains([]string{"types", "fields", "nodes"}, name)
+				}
+			}
+			if jvMember(v, name) == nil && !optional && f.Tag.Get("json") != "-" {
 				return fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.cptr()+"/"+name, nil)
 			}
 		}

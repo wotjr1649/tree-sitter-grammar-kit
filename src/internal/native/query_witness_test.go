@@ -76,6 +76,55 @@ func TestNativeStoredQueryWitness(t *testing.T) {
 			}
 		})
 	}
+	for _, limit := range []string{"capture-limit", "tree-limit", "summary"} {
+		t.Run(limit, func(t *testing.T) {
+			source := []byte("x;\n")
+			query := "(identifier) @x"
+			c := kit.IncrementalCase{ID: "limited", Encoding: kit.EncodingUTF8,
+				Input: kit.NativeInput{Path: "case.txt", Role: "case", Bytes: uint64(len(source)), SHA256: sha(source)},
+				Edits: []kit.Edit{{StartByte: 3, OldEndByte: 3, NewEndByte: 6, Old: []byte{}, New: []byte("y;\n")}}}
+			x := oracleContext(false, query)
+			if limit == "capture-limit" {
+				x.Op.Captures = 1
+			} else if limit == "summary" {
+				x.Output, x.Op.FullNodes = kit.OutputAuto, 1
+				c.Edits = []kit.Edit{}
+			} else {
+				x.Op.Nodes, x.Op.FullNodes = 4, 4
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			result := b.RunCase(ctx, x, c, source)
+			response, err := DecodeResponse(result.Raw)
+			status, completed, verified := kit.StatusResourceLimit, uint64(1), 1
+			if limit == "summary" {
+				status, completed, verified = kit.StatusCompleted, 1, 0
+			}
+			if err != nil || result.ExecutionStatus != status || len(response.Steps) != len(c.Edits)+1 || response.StepsCompleted != completed {
+				t.Fatalf("real retained incomplete step: %+v %v", response, err)
+			}
+			projection, err := json.Marshal(result)
+			if err != nil {
+				t.Fatal(err)
+			}
+			anchor := kit.Capture{Match: 0, Pattern: 0, Capture: 0, Name: "x", Node: 2, Type: "identifier", Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}
+			required := []kit.QueryWitnessTuple{{Query: "q0", TreeRole: "incremental", Structural: []kit.Capture{anchor}, Expected: []kit.Capture{anchor}}}
+			if len(c.Edits) != 0 {
+				required = append(required, kit.QueryWitnessTuple{Query: "q0", Step: 1, TreeRole: "incremental"}, kit.QueryWitnessTuple{Query: "q0", Step: 1, TreeRole: "fresh"})
+			}
+			registration, err := json.Marshal(kit.QueryWitnessRegistration{Schema: kit.QueryWitnessRegistrationSchema, Policy: PredicatePolicy, Case: c.ID,
+				Route: "owned-plain", Platform: runtime.GOOS + "/" + runtime.GOARCH, Role: "owned", Encoding: c.Encoding, Input: c.Input, Edits: c.Edits,
+				Queries:  []kit.QueryWitnessQuery{{ID: "q0", Source: query, Metadata: &kit.QueryWitnessMetadata{Patterns: 1, CaptureNames: []string{"x"}, Predicates: []kit.QueryPredicate{}}}},
+				Required: required})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := kit.VerifyQueryWitness(ctx, kit.QueryWitnessRequest{Registration: registration, Source: source, Raw: result.Raw, Projection: projection})
+			if err != nil || got.Assessment != kit.AssessBlocked || got.Verified != verified {
+				t.Fatalf("real incomplete witness: %+v %v", got, err)
+			}
+		})
+	}
 	t.Run("empty-source", func(t *testing.T) {
 		source := []byte{}
 		query := "(source_file) @x"
