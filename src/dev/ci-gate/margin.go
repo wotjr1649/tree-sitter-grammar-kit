@@ -59,7 +59,7 @@ var marginJobs = []marginJob{
 	{"native prepare (ubuntu-24.04)", "native-prepare", "linux", "amd64", 30, false},
 	{"native routes (windows-2025)", "native-routes", "windows", "amd64", 60, true},
 	{"native routes (ubuntu-24.04)", "native-routes", "linux", "amd64", 60, true},
-	{"native routes (macos-15)", "native-routes", "darwin", "arm64", 60, true},
+	{"native routes (macos-15)", "native-routes-macos", "darwin", "arm64", 60, true},
 	{"large API (windows-2025)", "large-api", "windows", "amd64", 60, true},
 	{"qualification (ubuntu-24.04)", "qualification", "linux", "amd64", 15, false},
 }
@@ -320,7 +320,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 	return metrics, nil
 }
 
-func validateMarginReport(r marginReport) error {
+func validateMarginReport(r marginReport, historical bool) error {
 	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) {
 		return errors.New("margin report shape")
 	}
@@ -328,6 +328,10 @@ func validateMarginReport(r marginReport) error {
 	limits := map[string]int64{}
 	for i, j := range marginJobs {
 		c := r.Configs[i]
+		// Historical r1 reports retain the former Mac matrix job and its exact keys.
+		if historical && j.job == "native-routes-macos" && c.Run.Job == "native-routes" {
+			j.job = "native-routes"
+		}
 		if checkMarginConfig(c, j, r.Run) != nil || c.Source != r.Configs[0].Source {
 			return errors.New("margin report configuration")
 		}
@@ -359,7 +363,7 @@ func validateMarginReport(r marginReport) error {
 }
 
 func evaluateMargins(current *marginReport, history []marginReport) (bool, error) {
-	if err := validateMarginReport(*current); err != nil {
+	if err := validateMarginReport(*current, false); err != nil {
 		return false, err
 	}
 	seen := map[string]bool{current.Run.RunID: true}
@@ -369,8 +373,13 @@ func evaluateMargins(current *marginReport, history []marginReport) (bool, error
 			return false, errors.New("margin duplicate run sample")
 		}
 		seen[r.Run.RunID] = true
-		if err := validateMarginReport(r); err != nil {
+		if err := validateMarginReport(r, true); err != nil {
 			return false, err
+		}
+		for _, c := range r.Configs {
+			if c.Run.Job == "native-routes" && c.Run.GOOS == "darwin" && c.Source == current.Configs[0].Source {
+				return false, errors.New("legacy margin identity claims current configuration")
+			}
 		}
 		for _, m := range r.Metrics {
 			counts[m.Config]++
@@ -395,7 +404,7 @@ func evaluateMargins(current *marginReport, history []marginReport) (bool, error
 
 func bindMarginHost(c marginConfig, root string, expected kit.RunIdentity) error {
 	var path string
-	if c.Run.Job == "native-routes" {
+	if c.Run.Job == "native-routes" || c.Run.Job == "native-routes-macos" {
 		path = filepath.Join(root, "s05-routes-"+c.Run.GOOS+"-"+expected.RunID+"-"+expected.RunAttempt, "run-identity.json")
 	} else if c.Run.Job == "large-api" {
 		path = filepath.Join(root, "large-api-"+expected.RunID+"-"+expected.RunAttempt, "large-api-identity-"+expected.RunID+"-"+expected.RunAttempt, "run-identity.json")
@@ -417,7 +426,7 @@ func bindMarginHost(c marginConfig, root string, expected kit.RunIdentity) error
 			return errors.New("margin audit compiler differs from verified evidence")
 		}
 	}
-	if c.Run.Job == "native-routes" {
+	if c.Run.Job == "native-routes" || c.Run.Job == "native-routes-macos" {
 		b, err := readFile(filepath.Join(root, "s05-routes-"+c.Run.GOOS+"-"+expected.RunID+"-"+expected.RunAttempt, "summary.json"), 16777216)
 		var summary struct {
 			Compiler fileDigest `json:"compiler"`

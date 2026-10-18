@@ -43,10 +43,10 @@ func workflowPeak(text string) (int, error) {
 			needs[i] = strings.FieldsFunc(m[1], func(r rune) bool { return r == '[' || r == ']' || r == ',' || r == ' ' })
 		}
 	}
-	if len(names) != 8 {
+	if len(names) != 9 {
 		return 0, fmt.Errorf("review newly added or missing jobs")
 	}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification", "race", "macos-regenerate", "integration-gate"} {
+	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification", "race", "macos-regenerate", "integration-gate"} {
 		if _, ok := names[name]; !ok {
 			return 0, fmt.Errorf("missing job: %s", name)
 		}
@@ -96,13 +96,14 @@ func TestWorkflowSharedHeavyLane(t *testing.T) {
 		t.Fatalf("shared heavy lane peak=%d: %v", peak, err)
 	}
 	// Scope the mutation to native-routes; the race matrix also has width 2.
-	marker := "      # Two route hosts plus the independent large-api job share the width-3 lane.\n      max-parallel: 2\n"
+	marker := "      # Windows/Linux share the width-3 lane with Mac, then large-api after Mac.\n      max-parallel: 2\n"
 	if strings.Count(text, marker) != 1 {
 		t.Fatal("native route control scope is not unique")
 	}
 	controls := map[string]string{
-		"three_routes_plus_large": strings.Replace(text, marker, strings.Replace(marker, "max-parallel: 2", "max-parallel: 3", 1), 1),
-		"early_diagnostics":       strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, large-api, qualification]", "needs: native-routes"),
+		"excess_route_width": strings.Replace(text, marker, strings.Replace(marker, "max-parallel: 2", "max-parallel: 3", 1), 1),
+		"early_large":        strings.Replace(text, "needs: [native-prepare, native-routes-macos]", "needs: native-prepare", 1),
+		"early_diagnostics":  strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]", "needs: native-routes"),
 	}
 	for name, broken := range controls {
 		if broken == text {
@@ -125,8 +126,68 @@ func workflowJobBody(text, name string) string {
 	return body
 }
 
+func routeSchedulePolicy(text string) error {
+	matrices := map[string]string{
+		"native-routes":       "          - os: windows-2025\n            goos: windows\n            goarch: amd64\n          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n",
+		"native-routes-macos": "          - os: macos-15\n            goos: darwin\n            goarch: arm64\n",
+	}
+	for name, matrix := range matrices {
+		body := workflowJobBody(text, name)
+		_, actual, ok := strings.Cut(body, "      matrix:\n        include:\n")
+		actual, _, _ = strings.Cut(actual, "    runs-on:")
+		if !ok || actual != matrix {
+			return fmt.Errorf("route platform coverage: %s", name)
+		}
+		for _, required := range []string{"    name: native routes (${{ matrix.os }})\n", "    needs: native-prepare\n", "      fail-fast: false\n", "    runs-on: ${{ matrix.os }}\n", "    timeout-minutes: 60\n", "    defaults:\n      run:\n        shell: pwsh\n"} {
+			if !strings.Contains(body, required) {
+				return fmt.Errorf("route execution contract: %s", name)
+			}
+		}
+		if strings.Contains(body, "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
+			return fmt.Errorf("route job override: %s", name)
+		}
+	}
+	if strings.Count(text, "    steps: &native-route-steps\n") != 1 ||
+		!strings.Contains(workflowJobBody(text, "native-routes"), "    steps: &native-route-steps\n") ||
+		!strings.HasSuffix(strings.TrimSpace(workflowJobBody(text, "native-routes-macos")), "steps: *native-route-steps") {
+		return fmt.Errorf("route steps must share one definition")
+	}
+	large := workflowJobBody(text, "large-api")
+	if !strings.Contains(large, "    needs: [native-prepare, native-routes-macos]\n") || regexp.MustCompile(`(?m)^    if:`).MatchString(large) {
+		return fmt.Errorf("large audit must wait for successful preparation and Mac")
+	}
+	qualification := workflowJobBody(text, "qualification")
+	if !strings.Contains(qualification, "    needs: [native-routes, native-routes-macos]\n") ||
+		!strings.Contains(qualification, "    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' && needs.native-routes-macos.result != 'skipped' }}\n") {
+		return fmt.Errorf("qualification must wait for all route hosts")
+	}
+	return nil
+}
+
+func TestWorkflowRouteSchedulePolicy(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := routeSchedulePolicy(text); err != nil {
+		t.Fatal(err)
+	}
+	mac := workflowJobBody(text, "native-routes-macos")
+	for name, broken := range map[string]string{
+		"missing-linux":         strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
+		"duplicate-mac":         strings.Replace(text, mac, strings.Replace(mac, "os: macos-15\n            goos: darwin\n            goarch: arm64", "os: windows-2025\n            goos: windows\n            goarch: amd64", 1), 1),
+		"wrong-alias":           strings.Replace(text, "steps: *native-route-steps", "steps: *other-steps", 1),
+		"early-large":           strings.Replace(text, "needs: [native-prepare, native-routes-macos]", "needs: native-prepare", 1),
+		"partial-qualification": strings.Replace(text, "needs: [native-routes, native-routes-macos]", "needs: native-routes", 1),
+		"conditional-large":     strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || routeSchedulePolicy(broken) == nil {
+				t.Fatal("route scheduling/coverage control not rejected")
+			}
+		})
+	}
+}
+
 func integrationPolicy(text string) error {
-	needs := "    needs: [foundation, native-prepare, native-routes, large-api, qualification]\n"
+	needs := "    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]\n"
 	eventRule := `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}` + "\n"
 	for _, name := range []string{"race", "macos-regenerate"} {
 		body := workflowJobBody(text, name)
@@ -160,10 +221,12 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 	for name, broken := range map[string]string{
 		"PR-diagnostic":            strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request","push","schedule","workflow_dispatch"]`),
 		"PR-target-diagnostic":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
-		"missing-large-dependency": strings.ReplaceAll(text, "native-routes, large-api, qualification]", "native-routes, qualification]"),
+		"missing-large-dependency": strings.ReplaceAll(text, "native-routes-macos, large-api, qualification]", "native-routes-macos, qualification]"),
+		"missing-Mac-dependency":   strings.ReplaceAll(text, "native-routes, native-routes-macos, large-api", "native-routes, large-api"),
 		"gate-not-always":          strings.Replace(text, "    if: ${{ always() }}\n", "    if: ${{ success() }}\n", 1),
 		"swallowed-fetch":          strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "Write-Warning 'download failed'", 1),
 		"swallowed-diagnostic":     strings.ReplaceAll(text, "if ($outcome -ne 'success') { throw '", "if ($outcome -ne 'success') { Write-Warning '"),
+		"diagnostics-success-only": strings.ReplaceAll(text, "!cancelled() && contains", "success() && contains"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text {

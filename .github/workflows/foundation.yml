@@ -222,7 +222,7 @@ jobs:
     # CGO-free foundation gate above stays the required core check and is not relaxed.
     # Diagnostics wait for native/large validation and qualification; their width is 3.
     name: race diagnostic (${{ matrix.os }})
-    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
     if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
     strategy:
       fail-fast: false
@@ -334,7 +334,7 @@ jobs:
   macos-regenerate:
     # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
     name: regenerate diagnostic (macos-15)
-    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
     if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
     runs-on: macos-15
     timeout-minutes: 30
@@ -527,7 +527,7 @@ jobs:
     needs: native-prepare
     strategy:
       fail-fast: false
-      # Two route hosts plus the independent large-api job share the width-3 lane.
+      # Windows/Linux share the width-3 lane with Mac, then large-api after Mac.
       max-parallel: 2
       matrix:
         include:
@@ -537,15 +537,12 @@ jobs:
           - os: ubuntu-24.04
             goos: linux
             goarch: amd64
-          - os: macos-15
-            goos: darwin
-            goarch: arm64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     defaults:
       run:
         shell: pwsh
-    steps:
+    steps: &native-route-steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -701,18 +698,36 @@ jobs:
       - name: Margin 실행 구성 보관
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ci-config-native-routes-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-config-native-routes-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          name: ci-config-${{ github.job }}-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-${{ github.job }}-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
           if-no-files-found: error
           retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
 
+  native-routes-macos:
+    name: native routes (${{ matrix.os }})
+    needs: native-prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - os: macos-15
+            goos: darwin
+            goarch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps: *native-route-steps
+
   large-api:
     # #147: independent workloads keep their existing limits and complete evidence.
     name: large API (windows-2025)
-    needs: native-prepare
+    needs: [native-prepare, native-routes-macos]
     runs-on: windows-2025
     timeout-minutes: 60
     defaults:
@@ -799,8 +814,8 @@ jobs:
     # tool-free; it fails on the kit gate (completeness, cohort, eligibility, mechanism,
     # cross-platform comparison) and records grammar requirement results for disposition.
     name: qualification (ubuntu-24.04)
-    needs: native-routes
-    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
+    needs: [native-routes, native-routes-macos]
+    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' && needs.native-routes-macos.result != 'skipped' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
@@ -885,7 +900,7 @@ jobs:
 
   integration-gate:
     name: integration gate
-    needs: [foundation, native-prepare, native-routes, large-api, qualification]
+    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
