@@ -270,3 +270,5 @@ All gates are required: G00-01 target/authority; 02 pinned references; 03 src/mo
 Use FOUNDATION_READY only when all are observed; READY_FOR_MERGE when only merge remains; BLOCKED_EXTERNAL when a mandatory external gate is unavailable; HOLD_FOR_CORRECTION for unresolved design, validation, or findings. Never declare all gates PASS in advance. The [workload matrix](workload-matrix.md) owns feature-specific gates.
 
 SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKED 구간 순서를 모두 검증하고 전체 step code를 확인한다. 앞 구간 완료 뒤 NODE_LIMIT이 발생하는 실제 process 대조는 부분 segment 증거와 terminal 상태를 보존하면서 전체 API claim을 제거하는지 검사한다. r1/r2·네 encoding의 관측 전용 edit 증거, r2 edit의 여섯 byte/point 필드 누락·변조, segment process가 최상위 process보다 작거나 크거나 최상위가 없는 경우의 host 최댓값 및 의미 비교 제외도 검사한다. 잘못 등록된 segment에 대한 mechanism FAIL은 유지한다.
+
+#216 query witness 회귀는 required 밖의 평가 capture 누락, raw 없는 완료 projection의 하위 tree·query 상태 모순, capture-node 연결과 INVALID_QUERY class·LF point 변조를 FAIL로 요구한다. 정상 empty·invalid-query 관측·host predicate 실패·capability 거부는 각 기존 상태를 보존한다. Full raw·source가 있으면 모든 query 평가를 대조하며 필수 tuple만 anchor와 완료 수의 분모로 사용한다.

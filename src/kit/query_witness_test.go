@@ -396,6 +396,114 @@ func TestQueryWitnessReviewDroppedQueryTimeout(t *testing.T) {
 	}
 }
 
+func TestQueryWitnessReviewCompletedProjectionTrees(t *testing.T) {
+	for _, step := range []int{0, 1} {
+		req, reg, raw, p := witnessFixture(t)
+		if step == 0 {
+			reg["required"] = reg["required"].([]any)[1:]
+		} else {
+			reg["required"] = reg["required"].([]any)[:1]
+		}
+		s := p["steps"].([]any)[step].(map[string]any)
+		s["incremental"], s["fresh"] = nil, nil
+		res, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+		if err != nil || res.Assessment != AssessFail {
+			t.Fatalf("completed projection omitted step %d trees: %+v %v", step, res, err)
+		}
+	}
+}
+
+func TestQueryWitnessReviewProjectionCaptureLinksWithoutRaw(t *testing.T) {
+	for _, field := range []string{"intact", "node-negative", "node-range", "capture", "pattern", "name", "type", "flag", "byte", "point"} {
+		t.Run(field, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			reg["required"] = reg["required"].([]any)[1:]
+			q := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+			c := &q["captures"].([]Capture)[0]
+			switch field {
+			case "node-negative":
+				c.Node = -1
+			case "node-range":
+				c.Node = 2
+			case "capture":
+				c.Capture = 1
+			case "pattern":
+				c.Pattern = 1
+			case "name":
+				c.Name = "other"
+			case "type":
+				c.Type = "other"
+			case "flag":
+				c.Named = false
+			case "byte":
+				c.EndByte = 2
+			case "point":
+				c.EndPoint.Column = 2
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			want := AssessFail
+			if field == "intact" {
+				want = AssessBlocked
+			}
+			if err != nil || res.Assessment != want {
+				t.Fatalf("unrequired projection capture %s: %+v %v", field, res, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewInvalidQueryError(t *testing.T) {
+	for _, mutation := range []string{"intact", "class", "point", "projection-only"} {
+		t.Run(mutation, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			query := "\n(bogus)"
+			reg["queries"] = append(reg["queries"].([]any), map[string]any{"id": "broken", "source": query, "metadata": nil})
+			kind, point := "NODE_TYPE", [2]uint32{1, 1}
+			if mutation == "class" {
+				kind = "FORGED"
+			}
+			if mutation == "point" || mutation == "projection-only" {
+				point = [2]uint32{9, 9}
+			}
+			for i, value := range raw["steps"].([]any) {
+				step := value.(map[string]any)
+				projected := p["steps"].([]any)[i].(map[string]any)
+				for _, role := range []string{"incremental", "fresh"} {
+					if step[role] == nil {
+						continue
+					}
+					q := map[string]any{"id": "broken", "status": "INVALID_QUERY", "code": "QUERY_" + kind, "query_ms": 0, "error": map[string]any{"type": kind, "offset": 2, "point": point}, "patterns": 0, "capture_names": []string{}, "predicates": []any{}, "matches": 0, "partial": false, "types": []string{}, "captures": nil}
+					tree := step[role].(map[string]any)
+					tree["queries"] = append(tree["queries"].([]any), q)
+					pq := map[string]any{}
+					for key, value := range q {
+						if key != "types" {
+							pq[key] = value
+						}
+					}
+					pq["sha256"], pq["evaluation"] = sum([]byte(query)), ""
+					pt := projected[role].(map[string]any)
+					pt["queries"] = append(pt["queries"].([]any), pq)
+				}
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			if mutation == "projection-only" {
+				req.Raw = nil
+			}
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			want := AssessFail
+			if mutation == "intact" {
+				want = AssessPass
+			}
+			if err != nil || res.Assessment != want {
+				t.Fatalf("invalid query %s: %+v %v", mutation, res, err)
+			}
+		})
+	}
+}
+
 func TestQueryWitnessRegistrationAndCancellation(t *testing.T) {
 	req, reg, raw, p := witnessFixture(t)
 	reg["required"] = append(reg["required"].([]any), reg["required"].([]any)[0])
@@ -758,5 +866,156 @@ func TestQueryWitnessEmptyCaptureNamesAreNotNull(t *testing.T) {
 	r, err = VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
 	if err != nil || r.Assessment != AssessFail || r.Verified != 2 {
 		t.Fatalf("null capture names accepted or counted: %+v %v", r, err)
+	}
+}
+
+func TestQueryWitnessReviewUnrequiredEvaluation(t *testing.T) {
+	req, reg, raw, p := witnessFixture(t)
+	reg["required"] = reg["required"].([]any)[1:]
+	p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)["captures"] = []Capture{}
+	res, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+	if err != nil || res.Assessment != AssessFail {
+		t.Fatalf("unrequired evaluated captures omitted: %+v %v", res, err)
+	}
+}
+
+func TestQueryWitnessReviewCompletedProjectionChildStatusWithoutRaw(t *testing.T) {
+	for _, status := range []string{StatusFailed, StatusResourceLimit} {
+		t.Run(status, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["status"], tree["code"], tree["form"], tree["tree"] = status, "NODE_LIMIT", "", nil
+			tree["descendant_count"], tree["digest"], tree["has_error"] = 0, "", false
+			q := tree["queries"].([]any)[0].(map[string]any)
+			q["status"], q["code"], q["evaluation"], q["captures"] = StatusNotRun, "TREE_NOT_COMPLETED", "", nil
+			q["patterns"], q["capture_names"], q["predicates"], q["matches"] = 0, []string{}, []any{}, 0
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			if err != nil || res.Assessment != AssessFail {
+				t.Fatalf("completed parent with %s child: %+v %v", status, res, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewCompletedProjectionQueryStatusWithoutRaw(t *testing.T) {
+	for _, status := range []string{StatusNotRun, StatusResourceLimit, StatusFailed} {
+		t.Run(status, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			q := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+			q["status"], q["captures"] = status, nil
+			switch status {
+			case StatusNotRun:
+				q["code"], q["evaluation"], q["patterns"] = "TREE_NOT_COMPLETED", "", 0
+				q["capture_names"], q["predicates"], q["matches"] = []string{}, []any{}, 0
+			case StatusResourceLimit:
+				q["code"], q["evaluation"], q["partial"] = "CAPTURE_LIMIT", "UNSUPPORTED", true
+			case StatusFailed:
+				q["code"], q["evaluation"], q["patterns"] = "CAPTURE_NODE_UNMAPPED", "", 0
+				q["capture_names"], q["predicates"], q["matches"] = nil, []any{}, 0
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			if err != nil || res.Assessment != AssessFail {
+				t.Fatalf("completed parent with %s query: %+v %v", status, res, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewProjectionCompletionWithoutRaw(t *testing.T) {
+	for _, kind := range []string{"all-completed", "partial-unsupported-valid", "partial-unsupported-completed", "partial-unsupported-wrong-code"} {
+		t.Run(kind, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			p["execution_status"], p["code"] = StatusResourceLimit, "NODE_LIMIT"
+			if kind != "all-completed" {
+				query := reg["queries"].([]any)[0].(map[string]any)
+				source := `((word) @x (#match? @x "a"))`
+				query["source"] = source
+				predicate := query["metadata"].(map[string]any)["predicates"].([]any)[0].(map[string]any)
+				predicate["steps"].([]any)[0].(map[string]any)["value"] = "match?"
+				for _, value := range p["steps"].([]any) {
+					step := value.(map[string]any)
+					for _, role := range []string{"incremental", "fresh"} {
+						if step[role] == nil {
+							continue
+						}
+						q := step[role].(map[string]any)["queries"].([]any)[0].(map[string]any)
+						q["sha256"], q["status"], q["code"], q["evaluation"], q["captures"] = sum([]byte(source)), "UNSUPPORTED", "QUERY_PREDICATE_UNSUPPORTED:match?", "UNSUPPORTED", nil
+					}
+				}
+				p["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["queries"].([]any)[0].(map[string]any)["partial"] = true
+				p["code"] = "CAPTURE_LIMIT"
+				if kind == "partial-unsupported-completed" {
+					p["execution_status"], p["code"] = StatusCompleted, ""
+				}
+				if kind == "partial-unsupported-wrong-code" {
+					p["code"] = "NODE_LIMIT"
+				}
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			want := AssessFail
+			if kind == "partial-unsupported-valid" {
+				want = AssessBlocked
+			}
+			if err != nil || res.Assessment != want {
+				t.Fatalf("%s: %+v %v", kind, res, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewProjectionMetadataWithoutRaw(t *testing.T) {
+	for _, kind := range []string{"unsupported", "host-failed", "resource-limit"} {
+		for _, tamper := range []bool{false, true} {
+			t.Run(kind+map[bool]string{false: "/intact", true: "/tampered"}[tamper], func(t *testing.T) {
+				req, reg, raw, p := witnessFixture(t)
+				if kind == "unsupported" {
+					meta := reg["queries"].([]any)[0].(map[string]any)["metadata"].(map[string]any)
+					meta["predicates"].([]any)[0].(map[string]any)["steps"].([]any)[0].(map[string]any)["value"] = "match?"
+				}
+				for _, value := range p["steps"].([]any) {
+					step := value.(map[string]any)
+					for _, role := range []string{"incremental", "fresh"} {
+						if step[role] == nil {
+							continue
+						}
+						q := step[role].(map[string]any)["queries"].([]any)[0].(map[string]any)
+						q["captures"], q["evaluation"] = nil, "UNSUPPORTED"
+						switch kind {
+						case "unsupported":
+							q["status"], q["code"] = "UNSUPPORTED", "QUERY_PREDICATE_UNSUPPORTED:match?"
+						case "host-failed":
+							q["status"], q["code"] = StatusFailed, "QUERY_PREDICATE_CAPTURE_ABSENT"
+						}
+					}
+				}
+				if kind == "resource-limit" {
+					// Keep previous steps completed; only the last fresh query reaches its cap.
+					req, reg, raw, p = witnessFixture(t)
+					q := p["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+					q["status"], q["code"], q["partial"], q["captures"], q["evaluation"] = StatusResourceLimit, "CAPTURE_LIMIT", true, nil, "UNSUPPORTED"
+					p["execution_status"], p["code"] = StatusResourceLimit, "CAPTURE_LIMIT"
+				}
+				q := p["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+				if tamper {
+					q["capture_names"] = []string{"different"}
+				}
+				req = marshalWitness(t, req, reg, raw, p)
+				req.Raw = nil
+				res, err := VerifyQueryWitness(ctxT(t), req)
+				want := AssessBlocked
+				if tamper {
+					want = AssessFail
+				}
+				if err != nil || res.Assessment != want {
+					t.Fatalf("%s tamper=%v: %+v %v", kind, tamper, res, err)
+				}
+			})
+		}
 	}
 }

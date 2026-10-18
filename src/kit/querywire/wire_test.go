@@ -162,7 +162,7 @@ func TestStatusAndStreamContracts(t *testing.T) {
 		{"invalid", func(q *Query) {
 			q.Status = "INVALID_QUERY"
 			q.Code = "QUERY_SYNTAX"
-			q.Error = &CompileError{Type: "SYNTAX", Offset: 1}
+			q.Error = &CompileError{Type: "SYNTAX", Offset: 1, Point: [2]uint32{0, 1}}
 			q.Patterns = 0
 			q.Captures = nil
 		}, true},
@@ -197,5 +197,20 @@ func TestStatusAndStreamContracts(t *testing.T) {
 				t.Fatalf("invalid stream adopted: %+v %v", got, err)
 			}
 		})
+	}
+}
+
+func TestCompileErrorSourceBinding(t *testing.T) {
+	for _, kind := range []string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE", "NONE", "FORGED"} {
+		for _, point := range [][2]uint32{{1, 1}, {0, 2}, {1, 2}} {
+			q := fixture()
+			q.Status, q.Code, q.Patterns, q.Captures = "INVALID_QUERY", "QUERY_"+kind, 0, nil
+			q.Error = &CompileError{Type: kind, Offset: 2, Point: point}
+			_, err := DecodeSummary(encode(t, q), []Source{{ID: "q", Source: []byte("\n(x)")}}, 1, 1)
+			valid := kind != "NONE" && kind != "FORGED" && point == [2]uint32{1, 1}
+			if (err == nil) != valid {
+				t.Fatalf("class=%s point=%v: %v", kind, point, err)
+			}
+		}
 	}
 }

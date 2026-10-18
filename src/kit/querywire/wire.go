@@ -7,6 +7,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
@@ -40,6 +41,15 @@ type CompileError struct {
 	Type   string    `json:"type"`
 	Offset uint32    `json:"offset"`
 	Point  [2]uint32 `json:"point"`
+}
+
+// ValidCompileError binds a runtime rejection class and byte point to its query source.
+func ValidCompileError(e *CompileError, source []byte) bool {
+	if e == nil || !slices.Contains([]string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE"}, e.Type) || uint64(e.Offset) > uint64(len(source)) {
+		return false
+	}
+	prefix := source[:e.Offset]
+	return e.Point == [2]uint32{uint32(bytes.Count(prefix, []byte{'\n'})), uint32(len(prefix) - bytes.LastIndexByte(prefix, '\n') - 1)}
 }
 
 type Error struct {
@@ -177,7 +187,7 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			}
 			continue
 		case "INVALID_QUERY":
-			if q.Error == nil || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial || uint64(q.Error.Offset) > uint64(len(sources[i].Source)) {
+			if !ValidCompileError(q.Error, sources[i].Source) || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial {
 				return nil, bad(i, "invalid shape")
 			}
 			continue

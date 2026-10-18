@@ -261,6 +261,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 	var projection witnessProjection
 	rawQueries := map[*witnessRawTree][]querywire.Query{}
 	rawNodes := map[*witnessRawTree][]TreeNode{}
+	rawEvaluations := map[*witnessRawTree][]witnessEvaluation{}
 	badProjectionTrees := map[*witnessTreeProjection]bool{}
 	haveRaw, haveProjection := req.Raw != nil, req.Projection != nil
 	if haveRaw {
@@ -311,8 +312,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						}
 						rawNodes[tree] = nodes
 						qs, qe = querywire.DecodeFull(tree.Queries, sources, sourceBytes, uint64(len(nodes)), func(q querywire.Query, row []int64) bool {
-							c, n := witnessCapture(q, row), nodes[row[3]]
-							return c.Type == n.Type && c.Named == n.Named && c.Extra == n.Extra && c.IsError == n.IsError && c.HasError == n.HasError && c.IsMissing == n.IsMissing && c.StartByte == n.StartByte && c.EndByte == n.EndByte && c.StartPoint == n.StartPoint && c.EndPoint == n.EndPoint
+							return witnessCaptureNode(witnessCapture(q, row), nodes)
 						})
 					} else {
 						qs, qe = querywire.DecodeSummary(tree.Queries, sources, s.Bytes, tree.Count)
@@ -321,6 +321,17 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						bad(qe.Code, fmt.Sprintf("raw/steps/%d", i))
 					} else {
 						rawQueries[tree] = qs
+						if rawNodes[tree] != nil && i < len(versions) {
+							values := make([]witnessEvaluation, len(qs))
+							for qi, q := range qs {
+								value, err := witnessEvaluate(r, q, reg.Encoding, versions[i])
+								if err != nil {
+									return res, err
+								}
+								values[qi] = value
+							}
+							rawEvaluations[tree] = values
+						}
 						for qi, q := range qs {
 							meta := reg.Queries[qi].Metadata
 							if meta != nil && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
@@ -374,12 +385,23 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			caseBound = false
 		}
 		for i, s := range projection.Steps {
-			if (i == 0 && s.Fresh != nil) || (i > 0 && projection.Status == StatusCompleted && s.Incremental != nil && s.Fresh == nil) {
+			if (i == 0 && s.Fresh != nil) || (projection.Status == StatusCompleted && (s.Incremental == nil || (i > 0 && s.Fresh == nil))) {
 				bad("QUERY_WITNESS_TREE_ROLE_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				badSteps[i] = true
 			}
 			if !witnessRegisteredStep(i, s.Step, s.Bytes, s.SHA256, s.Edit, reg) || (len(versions) != 0 && !witnessStepBinding(i, s.Step, s.Bytes, s.SHA256, s.Edit, versions, points, reg.Edits)) {
 				bad("QUERY_WITNESS_STEP_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+				badSteps[i] = true
+			}
+			status, code, incomplete := witnessProjectionIncomplete(s.Incremental)
+			if !incomplete && i > 0 {
+				status, code, incomplete = witnessProjectionIncomplete(s.Fresh)
+			}
+			if (incomplete && (i != len(projection.Steps)-1 || projection.Status != status ||
+				(code != "" && projection.Code != code) ||
+				(code == "" && !slices.Contains([]string{"QUERY_TIME_LIMIT", "MATCH_LIMIT", "CAPTURE_LIMIT", "QUERY_MATCH_OVERFLOW"}, projection.Code)))) ||
+				(!incomplete && i == len(projection.Steps)-1 && projection.Status != StatusCompleted) {
+				bad("QUERY_WITNESS_PROJECTION_COMPLETION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				badSteps[i] = true
 			}
 		}
@@ -398,6 +420,10 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		for role, tree := range []*witnessTreeProjection{step.Incremental, step.Fresh} {
 			if tree == nil {
 				continue
+			}
+			if projection.Status == StatusCompleted && tree.Status != StatusCompleted {
+				bad("QUERY_WITNESS_PROJECTION_COMPLETION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+				badProjectionTrees[tree] = true
 			}
 			if !witnessProjectionTreeHeader(*tree) {
 				bad("QUERY_WITNESS_TREE_PROJECTION_INVALID", fmt.Sprintf("projection/steps/%d", i))
@@ -437,10 +463,19 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						if !witnessQueryPassthrough(tree.Queries[qi], q, reg.Encoding) {
 							bad("QUERY_WITNESS_QUERY_PASSTHROUGH_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 						}
+						if values, ok := rawEvaluations[rawTree]; ok && !values[qi].matches(tree.Queries[qi]) {
+							bad("QUERY_WITNESS_QUERY_PROJECTION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+						}
 					}
 				}
 			}
 			for qi, q := range tree.Queries {
+				if (tree.Status == StatusCompleted && q.Status == StatusNotRun) ||
+					(tree.Status != StatusCompleted && q.Status != StatusNotRun) ||
+					(projection.Status == StatusCompleted && (q.Partial || q.Status == StatusResourceLimit || (q.Status == StatusFailed && q.Code == "CAPTURE_NODE_UNMAPPED"))) {
+					bad("QUERY_WITNESS_PROJECTION_COMPLETION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+					badProjectionTrees[tree] = true
+				}
 				if q.ID != reg.Queries[qi].ID || q.SHA256 != digestHex([]byte(reg.Queries[qi].Source)) {
 					bad("QUERY_WITNESS_QUERY_IDENTITY_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				}
@@ -448,7 +483,19 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				if !witnessProjectionQueryHeader(q, reg.Encoding) {
 					bad("QUERY_WITNESS_QUERY_PROJECTION_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				}
-				if meta != nil && q.Status == StatusCompleted && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
+				if q.Status == "INVALID_QUERY" && !querywire.ValidCompileError(q.Error, sources[qi].Source) {
+					bad("QUERY_WITNESS_QUERY_ERROR_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				}
+				if tree.Tree != nil {
+					for _, c := range q.Captures {
+						if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
+							c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || !witnessCaptureNode(c, tree.Tree.Nodes) {
+							bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
+							break
+						}
+					}
+				}
+				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || (q.Status == StatusFailed && q.Evaluation == "UNSUPPORTED")) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
 					bad("QUERY_WITNESS_METADATA_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				}
 			}
@@ -511,11 +558,8 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			bad("QUERY_WITNESS_METADATA_MISMATCH", path)
 		}
 		structural := make([]Capture, 0, len(q.Captures))
-		views := make([]querypolicy.Capture, 0, len(q.Captures))
 		for _, row := range q.Captures {
-			c := witnessCapture(q, row)
-			structural = append(structural, c)
-			views = append(views, querypolicy.Capture{Match: c.Match, Pattern: c.Pattern, Name: c.Name, StartByte: c.StartByte, EndByte: c.EndByte})
+			structural = append(structural, witnessCapture(q, row))
 		}
 		if q.Status == StatusCompleted && !q.Partial && tuple.Structural != nil && CompareCaptures(structural, tuple.Structural) != nil {
 			bad("QUERY_WITNESS_STRUCTURAL_MISMATCH", path)
@@ -533,43 +577,15 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			blocked("QUERY_WITNESS_SOURCE_MISSING", path)
 			continue
 		}
-		indices, reason, filterErr := querypolicy.FilterChecked(func() error {
-			if e := r.check(); e != nil {
-				return e
-			}
-			return nil
-		}, q.Patterns, q.Predicates, views, reg.Encoding, source)
-		if filterErr != nil {
-			return res, filterErr
-		}
-		status, evaluation, evaluationCode := q.Status, "STRUCTURAL", q.Code
-		var evaluated []Capture
-		switch {
-		case q.Captures == nil:
-			evaluation = ""
-		case reason != "" && reason != querypolicy.AbsentCapture && reason != querypolicy.AmbiguousCapture && reason != querypolicy.InvalidCapture && reason != querypolicy.InvalidMetadata:
-			status, evaluation, evaluationCode = "UNSUPPORTED", "UNSUPPORTED", reason
-		case len(q.Predicates) > 0 && q.Partial:
-			evaluation = "UNSUPPORTED"
-		case reason != "":
-			status, evaluation, evaluationCode = StatusFailed, "UNSUPPORTED", reason
-		default:
-			evaluated = make([]Capture, 0, len(indices))
-			for _, index := range indices {
-				evaluated = append(evaluated, structural[index])
-			}
-			if len(q.Predicates) > 0 {
-				evaluation = "EVALUATED"
-			}
-		}
+		value := rawEvaluations[tree][qi]
+		status, evaluation, evaluated := value.status, value.evaluation, value.captures
 		if q.Status == StatusCompleted && !q.Partial && tuple.Expected != nil && evaluated != nil && CompareCaptures(evaluated, tuple.Expected) != nil {
 			bad("QUERY_WITNESS_EXPECTED_MISMATCH", path)
 		}
 		projectionOK := false
 		if p != nil && p.Tree != nil && p.Form == "full" && len(p.Queries) == len(queries) && qi < len(p.Queries) {
 			v := p.Queries[qi]
-			projectionOK = witnessProjectionQueryHeader(v, reg.Encoding) && witnessQueryPassthrough(v, q, reg.Encoding) && v.SHA256 == digestHex([]byte(registeredQuery.Source)) && v.Status == status && v.Code == evaluationCode && v.Evaluation == evaluation &&
-				(v.Captures == nil) == (evaluated == nil) && CompareCaptures(v.Captures, evaluated) == nil
+			projectionOK = witnessProjectionQueryHeader(v, reg.Encoding) && witnessQueryPassthrough(v, q, reg.Encoding) && v.SHA256 == digestHex([]byte(registeredQuery.Source)) && value.matches(v)
 			if !projectionOK {
 				bad("QUERY_WITNESS_QUERY_PROJECTION_MISMATCH", path)
 			}
@@ -587,6 +603,55 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		return res, e
 	}
 	return res, nil
+}
+
+type witnessEvaluation struct {
+	status, evaluation, code string
+	captures                 []Capture
+}
+
+func (v witnessEvaluation) matches(q witnessQueryProjection) bool {
+	return q.Status == v.status && q.Code == v.code && q.Evaluation == v.evaluation &&
+		(q.Captures == nil) == (v.captures == nil) && CompareCaptures(q.Captures, v.captures) == nil
+}
+
+func witnessEvaluate(r *run, q querywire.Query, encoding string, source []byte) (witnessEvaluation, error) {
+	structural := make([]Capture, 0, len(q.Captures))
+	views := make([]querypolicy.Capture, 0, len(q.Captures))
+	for _, row := range q.Captures {
+		c := witnessCapture(q, row)
+		structural = append(structural, c)
+		views = append(views, querypolicy.Capture{Match: c.Match, Pattern: c.Pattern, Name: c.Name, StartByte: c.StartByte, EndByte: c.EndByte})
+	}
+	indices, reason, err := querypolicy.FilterChecked(func() error {
+		if e := r.check(); e != nil {
+			return e
+		}
+		return nil
+	}, q.Patterns, q.Predicates, views, encoding, source)
+	if err != nil {
+		return witnessEvaluation{}, err
+	}
+	value := witnessEvaluation{status: q.Status, evaluation: "STRUCTURAL", code: q.Code}
+	switch {
+	case q.Captures == nil:
+		value.evaluation = ""
+	case reason != "" && reason != querypolicy.AbsentCapture && reason != querypolicy.AmbiguousCapture && reason != querypolicy.InvalidCapture && reason != querypolicy.InvalidMetadata:
+		value.status, value.evaluation, value.code = "UNSUPPORTED", "UNSUPPORTED", reason
+	case len(q.Predicates) > 0 && q.Partial:
+		value.evaluation = "UNSUPPORTED"
+	case reason != "":
+		value.status, value.evaluation, value.code = StatusFailed, "UNSUPPORTED", reason
+	default:
+		value.captures = make([]Capture, 0, len(indices))
+		for _, index := range indices {
+			value.captures = append(value.captures, structural[index])
+		}
+		if len(q.Predicates) > 0 {
+			value.evaluation = "EVALUATED"
+		}
+	}
+	return value, nil
 }
 
 // Native query projection copies these fields without evaluating source text.
@@ -645,6 +710,33 @@ func witnessRawIncomplete(tree *witnessRawTree, queries []querywire.Query) (stri
 		}
 	}
 	return "", "", false
+}
+
+// Host predicate failures do not change native completion; unsupported partials hide its exact limit code.
+func witnessProjectionIncomplete(tree *witnessTreeProjection) (string, string, bool) {
+	if tree == nil {
+		return "", "", true
+	}
+	if tree.Status != StatusCompleted {
+		return tree.Status, tree.Code, true
+	}
+	for _, q := range tree.Queries {
+		if q.Status == StatusResourceLimit || (q.Status == StatusFailed && q.Code == "CAPTURE_NODE_UNMAPPED") {
+			return q.Status, q.Code, true
+		}
+		if q.Partial {
+			return StatusResourceLimit, "", true
+		}
+	}
+	return "", "", false
+}
+
+func witnessCaptureNode(c Capture, nodes []TreeNode) bool {
+	if c.Node < 0 || uint64(c.Node) >= uint64(len(nodes)) {
+		return false
+	}
+	n := nodes[c.Node]
+	return c.Type == n.Type && c.Named == n.Named && c.Extra == n.Extra && c.IsError == n.IsError && c.HasError == n.HasError && c.IsMissing == n.IsMissing && c.StartByte == n.StartByte && c.EndByte == n.EndByte && c.StartPoint == n.StartPoint && c.EndPoint == n.EndPoint
 }
 
 func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
