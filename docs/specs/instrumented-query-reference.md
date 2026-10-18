@@ -49,7 +49,19 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 
 Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지면 **INELIGIBLE/BLOCKED**로 별도 집계한다. Kit 값으로 reference의 필드를 채우거나 stock CLI와 같다는 이유로 kit 계약을 완화하지 않는다. 전체 26 route × 3 host와 등록된 추가 role, producer의 opt-in source 보관, 새 claim/reducer/inventory/fan-in 연결 및 실제 main 검증은 후속 완료 조건이다. 이 도구나 owned 대조 하나로 해당 조건을 충족한 것으로 처리하지 않는다.
 
-후속 연결 검증의 내부 준비 경로는 기존 `VerifyEvidence`가 해석한 graph와 동일 guard 읽기에서 hash가 확인된 요청 member bytes만 보관한다. 보관 대상을 골라도 다른 member·graph·policy·한도·취소 검사는 그대로 실행하며, 일반 member에 replay-result용 record 한도를 추가하지 않는다. 빈 member는 누락과 구분하고 실패한 member의 bytes나 이전 호출의 snapshot을 재사용하지 않는다. 이 내부 준비만으로 reference eligibility API나 qualification 연결이 구현된 것은 아니다.
+연결 검증은 기존 `VerifyEvidence`가 해석한 graph와 동일 guard 읽기에서 hash가 확인된 요청 member bytes만 사용한다. 보관 대상을 골라도 다른 member·graph·policy·한도·취소 검사는 그대로 실행하며, 일반 member에 replay-result용 record 한도를 추가하지 않는다. 빈 member는 누락과 구분하고 실패한 member의 bytes나 이전 호출의 snapshot을 재사용하지 않는다.
+
+## 저장 데이터 연결 API
+
+`VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 전체 11-role identity, witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.
+
+Caller는 승인 member에 정확히 결속하는 witness 등록 원문도 필수 입력으로 제공한다. 이 원문을 먼저 strict 해석·크기/hash 대조한 뒤 공유 native witness 검증기를 항상 적용하며, graph의 witness member가 없어도 등록 분모와 확보한 source·raw·projection·reference의 검사는 유지한다. Caller 원문이 누락·malformed·pin 불일치이면 `KindInvalidInput`이고, 한도·취소 분류는 기존 계약을 유지한다. Graph member의 undeclared 누락은 BLOCKED이며 declared 파일 부재·owner·bytes 불일치는 FAIL이다. Caller 입력으로 graph 누락을 채우거나 완료 tuple을 늘리지 않는다.
+
+각 observation은 `(query, step)`과 독립 source bytes/hash를 고정한 fresh reference다. Witness 등록의 `required`가 판정 분모이며 observation 수로 줄이지 않는다. 같은 source version의 response를 incremental/fresh 양쪽에 사용해도 각 tuple을 별도로 센다. 다른 version 재사용은 source identity 불일치다. 기존 native witness 재계산, reference의 독립 full CST 구조·source point·capture/node 연결·match 번호와 runtime mapping, 완료/cursor/한도, 전체 compiled metadata·ordered structural/evaluated stream·독립 manual anchors를 대조한다. Evaluated stream은 structural의 전체 match만 순서를 보존해 선택할 수 있고 중복 occurrence를 삭제하거나 더할 수 없다. Capture가 없는 node도 전체 CST 비교에 포함한다.
+
+기존 graph/policy가 선언한 member가 없거나 hash·identity·context·완료 상태가 모순이면 FAIL이다. 유효한 graph에 아직 관측 node/member가 선언되지 않았거나 일관된 producer 실패·native full CST 부재는 BLOCKED다. 누락이 있어도 확보한 다른 response의 모순 검사는 계속한다. 유효한 두 full CST의 차이는 `REFERENCE_CST_INELIGIBLE`/BLOCKED이며 field를 보충하지 않는다. Native와 reference metadata의 확인 가능한 모순은 이 부적격 판정으로 가리지 않는다.
+
+PASS는 외부 승인 기준에 연결한 저장 데이터의 일관성만 뜻한다. 복사한 승인 header를 붙인 fabricated response의 실제 실행 진위는 증명하지 못한다. Manifest의 전체 selected-tree/tool/source/vendor receipt closure 재검증, 독립 실행 진위, qualification eligibility·claim/reducer/inventory/fan-in은 별도 미완료 영역이다. Stock CLI full-field parity의 BLOCKED와 #215의 생성 순간 소유권 공백도 유지한다.
 
 입력 identity JSON은 1 MiB, reference binary는 64 MiB 한도를 파일 열기 전 stat과 열린 regular file의 fstat에서 확인한다. JSON은 상한+1까지만 읽고 binary는 스트리밍 hash를 사용한다. 실행 중 파일 크기가 늘어나도 상한을 넘으면 거부한다. `complete`는 JSON boolean `true`만 허용하며 truthy 문자열·숫자로 완료를 대신하지 않는다. Owned control은 identity가 결속한 selected-tree receipt도 직접 확인하고 종료 직전 보존 bytes를 재확인한다. `test_pipeline.py`는 1 GiB sparse 입력의 사전 거부와 완료 값 타입 반례를 포함한다.
 

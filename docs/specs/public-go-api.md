@@ -317,6 +317,16 @@ anchor의 `null`은 근거 부재이고 `[]`는 완료된 빈 기대값이다. �
 
 신뢰 registration의 형식 오류는 `KindInvalidInput`, 저장 raw/projection의 형식·의미 불일치는 완료된 FAIL이다. caller 취소는 CANCELLED, 120초 wall 및 크기·값 개수 한도 초과는 RESOURCE_LIMIT이다. 각 JSON 문서는 16 MiB·depth32·2,000,000 values, 초기 source는 32 MiB, edit는4개, query는16개·각64 KiB, required tuple은1,000개, finding은최대1,000개다. 긴 shape/node/predicate scan에서 취소와 wall을 확인한다. CLI replay 경로에는 기존 16 MiB member 한도가 추가로 적용된다. core의 CGO·process·network 금지는 유지한다.
 
+## 저장 reference 연결 함수 (#216, experimental)
+
+```go
+func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConnectionRequest) (QueryReferenceConnectionResult, error)
+```
+
+`QueryReferenceConnectionRequest{Evidence EvidenceRequest, Registration []byte, WitnessRegistration []byte}`는 caller가 승인한 `QueryReferenceRegistration` JSON, 필수 witness 등록 원문과 evidence root를 받는다. Witness 원문은 strict 형식·한도와 승인 member의 bytes/SHA-256을 먼저 확인하며 누락·불일치는 `KindInvalidInput`이다. 이 입력으로 항상 기존 `VerifyQueryWitness`의 전체 검증을 재사용한다. 등록 형식·신뢰 경계·비교·분류는 [계측 reference 계약](instrumented-query-reference.md)의 `저장 데이터 연결 API`가 소유한다. 모든 member는 기존 evidence guard가 검증하며, 이후 동일 bytes만 해석한다. Process·network·native dependency를 추가하지 않는다. Caller deadline, 기존 evidence-replay의 파일·총량 및 120초 wall과 JSON당 16 MiB/depth32/2,000,000 value 한도를 적용한다. 등록 observation은 최대1,000개다. Source도 evidence member이므로 이 경로에서는 16 MiB member 한도를 적용한다.
+
+결과는 E0에 `result_schema: tsgk-query-reference-connection-result/r1`, `registration_sha256`, `required`, `verified`, nullable `native_witness`를 더한다. `required`는 caller가 필수 입력으로 제공한 승인 witness 등록의 필수 tuple 수다. Graph의 witness member가 없더라도 분모는 유지한다. Caller 원문은 graph member를 대신하지 않으며, graph에 undeclared이면 BLOCKED·declared 파일이 없거나 owner/hash가 다르면 FAIL이고 `verified`를 늘리지 않는다. `verified`는 완료 build·native witness와 reference 비교를 통과한 tuple 수다. 한 tuple의 실패는 다른 tuple의 완료 수를 지우지 않으며 전체 판정은 FAIL 우선이다. 이 카운터는 전체 지원 inventory 분모가 아니다. 잘못된 신뢰 등록은 `KindInvalidInput`, 검사 가능한 저장 근거의 모순은 완료된 FAIL, 누락·부적격은 BLOCKED다. 한도·취소·I/O 오류는 기존 `*Error`와 실패 report를 반환한다. 실제 reference 실행 진위나 전체 receipt closure·qualification 자격은 결과에 포함하지 않는다.
+
 ## S07 함수 — replay, reducer 등록부, 수치 비교, evidence graph
 
 ```go
