@@ -88,6 +88,73 @@ func TestReplayCLI(t *testing.T) {
 	}
 }
 
+func TestQueryWitnessReplayCLI(t *testing.T) {
+	for _, blocked := range []bool{false, true} {
+		t.Run(map[bool]string{false: "complete", true: "missing-anchor"}[blocked], func(t *testing.T) {
+			data, err := os.ReadFile("../../testdata/query-witness.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fixture struct {
+				Registration kit.QueryWitnessRegistration `json:"registration"`
+				Source       string                       `json:"source"`
+				Raw          json.RawMessage              `json:"raw"`
+				Projection   json.RawMessage              `json:"projection"`
+			}
+			if err := json.Unmarshal(data, &fixture); err != nil {
+				t.Fatal(err)
+			}
+			if blocked {
+				fixture.Registration.Required[0].Expected = nil
+			}
+			regBytes, err := json.Marshal(fixture.Registration)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root, outside := t.TempDir(), t.TempDir()
+			sum := func(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+			files := map[string][]byte{"registration.json": regBytes, "source.txt": []byte(fixture.Source), "raw.json": fixture.Raw, "projection.json": fixture.Projection}
+			roles := map[string]string{"registration.json": "query-registration", "source.txt": "case-source", "raw.json": "raw", "projection.json": "projection"}
+			members := []kit.ReplayMember{}
+			for _, name := range []string{"registration.json", "source.txt", "raw.json", "projection.json"} {
+				if err := os.WriteFile(filepath.Join(root, name), files[name], 0644); err != nil {
+					t.Fatal(err)
+				}
+				members = append(members, kit.ReplayMember{Path: name, Role: roles[name], Bytes: uint64(len(files[name])), SHA256: sum(files[name])})
+			}
+			profile, err := json.Marshal(map[string]any{"schema": kit.ReplaySchema, "id": "cli-query-witness", "reducer": "query-witness-r1", "operation": "evidence-replay",
+				"subject":    kit.ReplaySubject{Run: "1", Attempt: 1, Platform: "windows/amd64", Commit: "", EvidenceMode: kit.ModeNewRun, ExecutionStatus: kit.StatusCompleted, Assessment: kit.AssessPass},
+				"identities": map[string]string{"registration": sum(regBytes), "source": sum(files["source.txt"]), "route": fixture.Registration.Route, "platform": fixture.Registration.Platform, "role": fixture.Registration.Role, "policy": fixture.Registration.Policy},
+				"records":    []string{fixture.Registration.Case}, "members": members})
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(outside, "replay.json")
+			if err := os.WriteFile(path, profile, 0644); err != nil {
+				t.Fatal(err)
+			}
+			code, stdout, stderr := cli(t, context.Background(), "replay", "--input", root, "--profile", path)
+			wantCode := exitOK
+			if blocked {
+				wantCode = exitBlocked
+			}
+			if code != wantCode {
+				t.Fatalf("exit=%d want=%d: %s %s", code, wantCode, stdout, stderr)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			api, err := kit.Replay(ctx, kit.ReplayRequest{Root: root, Profile: profile})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want, err := json.Marshal(api)
+			if err != nil || strings.TrimSuffix(stdout, "\n") != string(want) {
+				t.Fatalf("CLI/API mismatch: %v", err)
+			}
+		})
+	}
+}
+
 func TestEvidenceReplayPlatformCLI(t *testing.T) {
 	for _, platform := range []string{"windows/amd64", "linux/amd64"} {
 		t.Run(platform, func(t *testing.T) {

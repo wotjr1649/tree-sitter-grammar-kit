@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 // Query capability and host policy revisions (tree-and-adapter-protocol.md "S06 구현").

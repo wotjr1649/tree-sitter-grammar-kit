@@ -295,6 +295,12 @@ type reducer struct {
 
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
+		"query-witness-r1": {ReducerInfo{ID: "query-witness-r1", Revision: "r1", Operation: "evidence-replay",
+			Inputs:      []string{"tsgk-query-witness-registration/r1", "initial case source", "tsgk-native/r2 response", "saved full case projection"},
+			Roles:       []string{"query-registration", "case-source", "raw", "projection", "retained"},
+			Gates:       []string{"stored-query-witness"},
+			Recorded:    []string{"producer execution", "reference eligibility", "full query_semantics qualification"},
+			Description: "Stored query witness only: source/edit reconstruction, full CST/node links and ordered raw/evaluated captures compared to independently registered metadata and anchors; no execution or reference qualification claim"}, replayQueryWitness},
 		"native-result-r1": {ReducerInfo{ID: "native-result-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-incremental-result/r1 result.json", "tsgk-incremental/r2 or r1 workload profile", "responses/ members"},
 			Roles:       []string{"workload-profile", "result", "response", "retained"},

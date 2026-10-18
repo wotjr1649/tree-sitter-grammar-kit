@@ -3,7 +3,6 @@ package querypolicy
 
 import (
 	"bytes"
-	"slices"
 )
 
 const (
@@ -97,29 +96,50 @@ func Support(patterns uint32, predicates []Predicate, encoding string) string {
 // Filter returns original indices without sorting or renumbering. Invalid evidence
 // returns no indices; a completed empty stream returns a non-nil empty slice.
 func Filter(patterns uint32, predicates []Predicate, captures []Capture, encoding string, source []byte) ([]int, string) {
+	indices, code, _ := FilterChecked(nil, patterns, predicates, captures, encoding, source)
+	return indices, code
+}
+
+// FilterChecked preserves Filter's policy and original indices, with cancellation
+// checks inside match/predicate scans rather than only between complete queries.
+func FilterChecked(checkpoint func() error, patterns uint32, predicates []Predicate, captures []Capture, encoding string, source []byte) ([]int, string, error) {
+	work := 0
+	check := func() error {
+		work++
+		if checkpoint != nil && (work%1024 == 0 || work == 1) {
+			return checkpoint()
+		}
+		return nil
+	}
+	if err := check(); err != nil {
+		return nil, "", err
+	}
 	reason := Support(patterns, predicates, encoding)
 	if reason == InvalidMetadata {
-		return nil, reason
+		return nil, reason, nil
 	}
 	if captures == nil {
-		return nil, InvalidCapture
+		return nil, InvalidCapture, nil
 	}
 	matches := map[uint32][]Capture{}
 	order := []uint32{}
 	for _, capture := range captures {
+		if err := check(); err != nil {
+			return nil, "", err
+		}
 		if capture.Pattern >= patterns || capture.Name == "" || capture.StartByte > capture.EndByte || uint64(capture.EndByte) > uint64(len(source)) {
-			return nil, InvalidCapture
+			return nil, InvalidCapture, nil
 		}
 		group := matches[capture.Match]
 		if len(group) == 0 {
 			order = append(order, capture.Match)
 		} else if group[0].Pattern != capture.Pattern {
-			return nil, InvalidCapture
+			return nil, InvalidCapture, nil
 		}
 		matches[capture.Match] = append(group, capture)
 	}
 	if reason != "" {
-		return nil, reason
+		return nil, reason, nil
 	}
 	byPattern := map[uint32][]Predicate{}
 	for _, p := range predicates {
@@ -128,43 +148,64 @@ func Filter(patterns uint32, predicates []Predicate, captures []Capture, encodin
 	keep := map[uint32]bool{}
 	for _, id := range order {
 		group := matches[id]
-		text := func(name string) ([]byte, string) {
+		text := func(name string) ([]byte, string, error) {
 			var value []byte
 			found := false
 			for _, c := range group {
+				if err := check(); err != nil {
+					return nil, "", err
+				}
 				if c.Name != name {
 					continue
 				}
 				if found {
-					return nil, AmbiguousCapture
+					return nil, AmbiguousCapture, nil
 				}
 				found, value = true, source[c.StartByte:c.EndByte]
 			}
 			if !found {
-				return nil, AbsentCapture
+				return nil, AbsentCapture, nil
 			}
-			return value, ""
+			return value, "", nil
 		}
 		ok := true
 		for _, p := range byPattern[group[0].Pattern] {
+			if err := check(); err != nil {
+				return nil, "", err
+			}
 			op, args := p.Steps[0].Value, p.Steps[1:]
-			left, code := text(args[0].Value)
+			left, code, err := text(args[0].Value)
+			if err != nil {
+				return nil, "", err
+			}
 			if code != "" {
-				return nil, code
+				return nil, code, nil
 			}
 			var result bool
 			switch op {
 			case "eq?", "not-eq?":
 				right := []byte(args[1].Value)
 				if args[1].Kind == "capture" {
-					right, code = text(args[1].Value)
+					right, code, err = text(args[1].Value)
+					if err != nil {
+						return nil, "", err
+					}
 					if code != "" {
-						return nil, code
+						return nil, code, nil
 					}
 				}
 				result = bytes.Equal(left, right) == (op == "eq?")
 			default:
-				member := slices.ContainsFunc(args[1:], func(a Step) bool { return a.Value == string(left) })
+				member := false
+				for _, a := range args[1:] {
+					if err := check(); err != nil {
+						return nil, "", err
+					}
+					if a.Value == string(left) {
+						member = true
+						break
+					}
+				}
 				result = member == (op == "any-of?")
 			}
 			ok = ok && result
@@ -173,9 +214,17 @@ func Filter(patterns uint32, predicates []Predicate, captures []Capture, encodin
 	}
 	indices := []int{}
 	for i, c := range captures {
+		if err := check(); err != nil {
+			return nil, "", err
+		}
 		if keep[c.Match] {
 			indices = append(indices, i)
 		}
 	}
-	return indices, ""
+	if checkpoint != nil {
+		if err := checkpoint(); err != nil {
+			return nil, "", err
+		}
+	}
+	return indices, "", nil
 }

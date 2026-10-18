@@ -4,6 +4,8 @@ root `go.mod` 하나와 `src/` 제품·검증 경계를 사용한다. 현재 Go 
 
 ## 책임과 데이터 흐름
 
+`src/kit/querypolicy`와 `src/kit/querywire`는 offline core 아래의 data-only 지원 package다. native producer와 공개 witness/replay가 같은 predicate 정책과 strict wire 검증을 사용하며, source 읽기·실행·network·runner에 의존하지 않는다. 기존 internal 구현을 이 책임에 따라 옮겼고, core에서 `src/internal/` 및 process·network capability를 거부하는 `TestOfflineClosure`는 그대로 유지한다. `querypolicy.FilterChecked`는 같은 정책에 caller/wall checkpoint를 추가하며 기존 `Filter`의 결과와 번호를 보존한다. 이 package의 노출은 별도 reference/qualification 보장을 추가하지 않는다.
+
 CLI/API → 공유 offline operation의 OS 중립 계산으로 의존한다. CLI는 인자·표현·exit mapping만 담당하고 API가 CLI를 subprocess로 호출하지 않는다. profile과 pathguard는 입력 경계를 소유한다. 외부 실행이 필요한 orchestration만 runner/toolchain/reproduce/incremental/oracle로 연결한다. runner는 OS backend를 선택하며 offline package에서 runner/network를 import하지 않는다. package는 실제 책임이 생길 때 만들며 범용 utils/common/model이나 plugin registry를 먼저 만들지 않는다.
 
 `DISCOVER → VALIDATE_PROFILE → SNAPSHOT → PLAN → CHECK_CAPABILITIES → EXECUTE → COMPARE → WRITE_EVIDENCE`가 실행형 작업의 상태다. 읽기 전용 작업은 EXECUTE를 생략하고 자체 계산만 한다. profile/identity/capability 검증 실패는 외부 실행 전에 끝난다. source snapshot은 불변이며 output은 선택 입력 집합 밖 새 workspace에만 쓴다.

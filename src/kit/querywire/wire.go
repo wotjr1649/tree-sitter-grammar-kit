@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 // Source is the caller-selected query identity and bytes.

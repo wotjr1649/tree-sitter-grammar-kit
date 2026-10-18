@@ -293,6 +293,26 @@ func CaptureText(src []byte, c Capture) (string, error)
 
 `DeriveDynamicSQLChecked`는 모든 capture의 `0 ≤ start_byte ≤ end_byte ≤ len(src)`를 먼저 검증하고 위반하면 `INVALID_INPUT/CAPTURE_RANGE_INVALID`와 무효 zero value를 반환한다. 정상 입력의 결과는 기존 함수와 같고 원문 범위를 유지한다. 기존 `DeriveDynamicSQL` 시그니처는 유지하며 같은 검증 실패에서 panic 대신 zero value(`Mapping == ""`, nil 목록)를 반환한다. 정상적인 빈 결과는 `Mapping == "dynamic-sql-r1"`이므로 구분된다. 오류 원인이 필요한 소비자는 checked 함수를 사용한다. native oracle은 checked 오류를 `BLOCKED`로 처리하며 사실이나 성공 claim을 만들지 않는다.
 
+## 저장 query witness API (#216)
+
+공용 data-only 지원 package는 `src/kit/querypolicy`(고정 predicate metadata·support·filter)와 `src/kit/querywire`(native query wire validation)다. 기존 native caller와 이 API는 각각 같은 구현을 사용한다. `FilterChecked`는 checkpoint 오류를 별도로 반환하며 중도 취소 결과를 정상 빈 capture로 바꾸지 않는다. 두 package 모두 실행 capability를 갖지 않으며 `kit`을 경유하지 않고 호출할 경우에도 source·문서 크기·full CST의 선행 validation 책임은 해당 함수 주석을 따른다.
+
+```go
+func VerifyQueryWitness(ctx context.Context, req QueryWitnessRequest) (QueryWitnessResult, error)
+```
+
+`QueryWitnessRequest`는 `Registration`, 초기 `Source`, native r2 원 응답 `Raw`, 저장된 case `Projection` bytes만 받는다. 파일·process·network를 사용하지 않으며 caller deadline이 필요하다. `tsgk-query-witness-registration/r1`은 caller가 evidence 밖에서 독립적으로 선택하는 신뢰 입력이다. registration 파일을 evidence 안에 저장하더라도 그 파일의 hash와 선택 근거는 evidence에서 유도해서는 안 된다. 자체 hash는 독립성이나 진위를 증명하지 않는다.
+
+registration은 `schema`, 고정 `policy: tsgk-predicates/r1`, `case`, `route`, `platform`, `role`, `encoding`, 초기 `input`, `edits`, `queries`, `required`를 요구한다. 각 query는 정확한 `id`·`source`와 독립 compiled `metadata`(`patterns`, `capture_names`, `predicates`)를 결속한다. `QueryPredicate`·`QueryPredicateStep`은 공유 data-only 정책의 공개 metadata type이다. `required`의 각 tuple은 `query`, `step`, `tree_role`(`incremental` 또는 edit 이후 `fresh`), 전체 raw `structural` capture와 평가 후 `expected` capture를 등록한다. 탈락한 match도 structural anchor에 포함한다. 순서와 match/capture/node 번호 및 모든 capture 필드를 보존하고 정렬·중복 제거·사후 번호 보정을 하지 않는다.
+
+anchor의 `null`은 근거 부재이고 `[]`는 완료된 빈 기대값이다. 공개 tuple의 `MarshalJSON`은 두 JSON API에서 이 구분을 유지한다. `metadata: null`이나 필수 tuple 0개도 PASS 근거가 아니다. 필수 tuple의 분모는 결과를 읽기 전에 독립 등록으로 정하며, 실제 결과의 개수로 축소하지 않는다. 이 API는 caller가 선택한 분모를 검사하며 전체 지원 범위의 분모를 자동 생성하지 않는다.
+
+검증은 초기 source의 hash·길이와 실제 edit history를 재적용하고, 각 step의 source·edit·point 결속, full raw CST의 type·field table·preorder node·flag·범위·point·digest, capture의 실제 node 연결, 독립 compiled metadata, 전체 structural stream, 공유 predicate 정책의 평가 결과, 독립 expected stream 및 저장 projection을 대조한다. 전체 stream 동등 비교는 완료된 query에만 적용한다. 일관된 partial·unsupported·missing 근거는 BLOCKED이며, 확인 가능한 변조·모순은 다른 근거 부재보다 우선하는 FAIL이다. source/raw가 없어도 제공된 document의 shape·case·query identity 등 독립적으로 검사 가능한 결속은 검사한다.
+
+결과는 E0에 `result_schema: tsgk-query-witness-result/r1`, 정확한 registration bytes의 `registration_sha256`, `required`, `verified`, `evaluated`를 더한다. `verified`는 모든 해당 tuple 검사를 통과한 수, `evaluated`는 그중 predicate를 실제 평가한 수다. 일부 tuple이 실패해도 다른 tuple의 완료 수는 보존한다. PASS는 등록된 저장 capture 검증만 뜻한다. producer 실행, 임의 입력의 parser 완전성, stock CLI parity, 계측 reference eligibility 또는 전체 `query_semantics` qualification을 증명하지 않는다. source/CST/reference를 kit의 결과로 채워 독립 기대값을 만드는 것도 허용하지 않는다.
+
+신뢰 registration의 형식 오류는 `KindInvalidInput`, 저장 raw/projection의 형식·의미 불일치는 완료된 FAIL이다. caller 취소는 CANCELLED, 120초 wall 및 크기·값 개수 한도 초과는 RESOURCE_LIMIT이다. 각 JSON 문서는 16 MiB·depth32·2,000,000 values, 초기 source는 32 MiB, edit는4개, query는16개·각64 KiB, required tuple은1,000개, finding은최대1,000개다. 긴 shape/node/predicate scan에서 취소와 wall을 확인한다. CLI replay 경로에는 기존 16 MiB member 한도가 추가로 적용된다. core의 CGO·process·network 금지는 유지한다.
+
 ## S07 함수 — replay, reducer 등록부, 수치 비교, evidence graph
 
 ```go

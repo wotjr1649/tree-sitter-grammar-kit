@@ -1,0 +1,869 @@
+{
+  "projection": {
+    "code": "",
+    "encoding": "UTF-8",
+    "execution_status": "COMPLETED",
+    "id": "c1",
+    "input": {
+      "path": "case.txt",
+      "role": "case",
+      "sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+      "bytes": 1
+    },
+    "steps": [
+      {
+        "edit": null,
+        "fresh": null,
+        "incremental": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "form": "full",
+          "has_error": false,
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [
+                {
+                  "match": 0,
+                  "pattern": 0,
+                  "capture": 0,
+                  "name": "x",
+                  "node": 1,
+                  "type": "word",
+                  "named": true,
+                  "extra": false,
+                  "is_error": false,
+                  "has_error": false,
+                  "is_missing": false,
+                  "start_byte": 0,
+                  "end_byte": 1,
+                  "start_point": {
+                    "row": 0,
+                    "column": 0
+                  },
+                  "end_point": {
+                    "row": 0,
+                    "column": 1
+                  }
+                }
+              ],
+              "code": "",
+              "error": null,
+              "evaluation": "EVALUATED",
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "sha256": "707a562e70e42df356ed74e1224002ea70f7fd6859875042cafdb6e4d239916a",
+              "status": "COMPLETED"
+            }
+          ],
+          "status": "COMPLETED",
+          "tree": {
+            "input": {
+              "bytes": 1,
+              "encoding": "UTF-8",
+              "sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+            },
+            "nodes": [
+              {
+                "parent": -1,
+                "type": "doc",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              },
+              {
+                "parent": 0,
+                "type": "word",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              }
+            ],
+            "schema": "tsgk-tree/r1",
+            "status": "COMPLETED"
+          }
+        },
+        "source_bytes": 1,
+        "source_sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+        "step": 0
+      },
+      {
+        "edit": {
+          "new_end_byte": 1,
+          "new_end_point": [
+            0,
+            1
+          ],
+          "old_end_byte": 1,
+          "old_end_point": [
+            0,
+            1
+          ],
+          "start_byte": 0,
+          "start_point": [
+            0,
+            0
+          ]
+        },
+        "fresh": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "form": "full",
+          "has_error": false,
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [],
+              "code": "",
+              "error": null,
+              "evaluation": "EVALUATED",
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "sha256": "707a562e70e42df356ed74e1224002ea70f7fd6859875042cafdb6e4d239916a",
+              "status": "COMPLETED"
+            }
+          ],
+          "status": "COMPLETED",
+          "tree": {
+            "input": {
+              "bytes": 1,
+              "encoding": "UTF-8",
+              "sha256": "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d"
+            },
+            "nodes": [
+              {
+                "parent": -1,
+                "type": "doc",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              },
+              {
+                "parent": 0,
+                "type": "word",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              }
+            ],
+            "schema": "tsgk-tree/r1",
+            "status": "COMPLETED"
+          }
+        },
+        "incremental": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "form": "full",
+          "has_error": false,
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [],
+              "code": "",
+              "error": null,
+              "evaluation": "EVALUATED",
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "sha256": "707a562e70e42df356ed74e1224002ea70f7fd6859875042cafdb6e4d239916a",
+              "status": "COMPLETED"
+            }
+          ],
+          "status": "COMPLETED",
+          "tree": {
+            "input": {
+              "bytes": 1,
+              "encoding": "UTF-8",
+              "sha256": "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d"
+            },
+            "nodes": [
+              {
+                "parent": -1,
+                "type": "doc",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              },
+              {
+                "parent": 0,
+                "type": "word",
+                "field": null,
+                "named": true,
+                "extra": false,
+                "is_error": false,
+                "has_error": false,
+                "is_missing": false,
+                "start_byte": 0,
+                "end_byte": 1,
+                "start_point": {
+                  "row": 0,
+                  "column": 0
+                },
+                "end_point": {
+                  "row": 0,
+                  "column": 1
+                }
+              }
+            ],
+            "schema": "tsgk-tree/r1",
+            "status": "COMPLETED"
+          }
+        },
+        "source_bytes": 1,
+        "source_sha256": "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d",
+        "step": 1
+      }
+    ]
+  },
+  "raw": {
+    "code": "",
+    "complete": true,
+    "id": "c1",
+    "protocol": "tsgk-native/r2",
+    "source_bytes": 1,
+    "status": "COMPLETED",
+    "steps": [
+      {
+        "edit": null,
+        "fresh": null,
+        "incremental": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "fields": [],
+          "form": "full",
+          "has_error": false,
+          "nodes": [
+            [
+              -1,
+              0,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "code": "",
+              "error": null,
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "status": "COMPLETED",
+              "types": [
+                "word"
+              ]
+            }
+          ],
+          "status": "COMPLETED",
+          "types": [
+            "doc",
+            "word"
+          ]
+        },
+        "source_bytes": 1,
+        "source_sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+        "step": 0
+      },
+      {
+        "edit": {
+          "new_end_byte": 1,
+          "new_end_point": [
+            0,
+            1
+          ],
+          "old_end_byte": 1,
+          "old_end_point": [
+            0,
+            1
+          ],
+          "start_byte": 0,
+          "start_point": [
+            0,
+            0
+          ]
+        },
+        "fresh": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "fields": [],
+          "form": "full",
+          "has_error": false,
+          "nodes": [
+            [
+              -1,
+              0,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "code": "",
+              "error": null,
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "status": "COMPLETED",
+              "types": [
+                "word"
+              ]
+            }
+          ],
+          "status": "COMPLETED",
+          "types": [
+            "doc",
+            "word"
+          ]
+        },
+        "incremental": {
+          "code": "",
+          "descendant_count": 2,
+          "digest": "ece17963b265c2cbb3c7cba428aba14d167270f20e76fa4ff6f05eef93e82bc2",
+          "fields": [],
+          "form": "full",
+          "has_error": false,
+          "nodes": [
+            [
+              -1,
+              0,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              -1,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "queries": [
+            {
+              "capture_names": [
+                "x"
+              ],
+              "captures": [
+                [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "code": "",
+              "error": null,
+              "id": "q",
+              "matches": 1,
+              "partial": false,
+              "patterns": 1,
+              "predicates": [
+                {
+                  "pattern": 0,
+                  "steps": [
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "eq?"
+                    },
+                    {
+                      "kind": "capture",
+                      "quantifier": "ONE",
+                      "value": "x"
+                    },
+                    {
+                      "kind": "string",
+                      "quantifier": null,
+                      "value": "a"
+                    }
+                  ]
+                }
+              ],
+              "query_ms": 0,
+              "status": "COMPLETED",
+              "types": [
+                "word"
+              ]
+            }
+          ],
+          "status": "COMPLETED",
+          "types": [
+            "doc",
+            "word"
+          ]
+        },
+        "source_bytes": 1,
+        "source_sha256": "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d",
+        "step": 1
+      }
+    ],
+    "steps_completed": 2
+  },
+  "registration": {
+    "case": "c1",
+    "edits": [
+      {
+        "start_byte": 0,
+        "old_end_byte": 1,
+        "new_end_byte": 1,
+        "old": "YQ==",
+        "new": "Yg=="
+      }
+    ],
+    "encoding": "UTF-8",
+    "input": {
+      "path": "case.txt",
+      "role": "case",
+      "sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+      "bytes": 1
+    },
+    "platform": "windows/amd64",
+    "policy": "tsgk-predicates/r1",
+    "queries": [
+      {
+        "id": "q",
+        "metadata": {
+          "capture_names": [
+            "x"
+          ],
+          "patterns": 1,
+          "predicates": [
+            {
+              "pattern": 0,
+              "steps": [
+                {
+                  "kind": "string",
+                  "quantifier": null,
+                  "value": "eq?"
+                },
+                {
+                  "kind": "capture",
+                  "quantifier": "ONE",
+                  "value": "x"
+                },
+                {
+                  "kind": "string",
+                  "quantifier": null,
+                  "value": "a"
+                }
+              ]
+            }
+          ]
+        },
+        "source": "((word) @x (#eq? @x \"a\"))"
+      }
+    ],
+    "required": [
+      {
+        "expected": [
+          {
+            "match": 0,
+            "pattern": 0,
+            "capture": 0,
+            "name": "x",
+            "node": 1,
+            "type": "word",
+            "named": true,
+            "extra": false,
+            "is_error": false,
+            "has_error": false,
+            "is_missing": false,
+            "start_byte": 0,
+            "end_byte": 1,
+            "start_point": {
+              "row": 0,
+              "column": 0
+            },
+            "end_point": {
+              "row": 0,
+              "column": 1
+            }
+          }
+        ],
+        "query": "q",
+        "step": 0,
+        "structural": [
+          {
+            "match": 0,
+            "pattern": 0,
+            "capture": 0,
+            "name": "x",
+            "node": 1,
+            "type": "word",
+            "named": true,
+            "extra": false,
+            "is_error": false,
+            "has_error": false,
+            "is_missing": false,
+            "start_byte": 0,
+            "end_byte": 1,
+            "start_point": {
+              "row": 0,
+              "column": 0
+            },
+            "end_point": {
+              "row": 0,
+              "column": 1
+            }
+          }
+        ],
+        "tree_role": "incremental"
+      },
+      {
+        "expected": [],
+        "query": "q",
+        "step": 1,
+        "structural": [
+          {
+            "match": 0,
+            "pattern": 0,
+            "capture": 0,
+            "name": "x",
+            "node": 1,
+            "type": "word",
+            "named": true,
+            "extra": false,
+            "is_error": false,
+            "has_error": false,
+            "is_missing": false,
+            "start_byte": 0,
+            "end_byte": 1,
+            "start_point": {
+              "row": 0,
+              "column": 0
+            },
+            "end_point": {
+              "row": 0,
+              "column": 1
+            }
+          }
+        ],
+        "tree_role": "incremental"
+      },
+      {
+        "expected": [],
+        "query": "q",
+        "step": 1,
+        "structural": [
+          {
+            "match": 0,
+            "pattern": 0,
+            "capture": 0,
+            "name": "x",
+            "node": 1,
+            "type": "word",
+            "named": true,
+            "extra": false,
+            "is_error": false,
+            "has_error": false,
+            "is_missing": false,
+            "start_byte": 0,
+            "end_byte": 1,
+            "start_point": {
+              "row": 0,
+              "column": 0
+            },
+            "end_point": {
+              "row": 0,
+              "column": 1
+            }
+          }
+        ],
+        "tree_role": "fresh"
+      }
+    ],
+    "role": "owned",
+    "route": "owned-plain",
+    "schema": "tsgk-query-witness-registration/r1"
+  },
+  "source": "a"
+}

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 var requested = []Source{{ID: "q", Source: []byte("(identifier) @x")}}

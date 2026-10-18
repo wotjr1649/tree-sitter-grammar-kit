@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 func TestNullPrimitiveIsNotZeroValue(t *testing.T) {

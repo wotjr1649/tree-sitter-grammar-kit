@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querywire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 

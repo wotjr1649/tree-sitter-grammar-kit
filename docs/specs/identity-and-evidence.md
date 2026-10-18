@@ -82,6 +82,10 @@ S07은 E0를 확장하고 새 report 체계를 만들지 않는다. `tsgk-replay
 
 ### 등록 reducer
 
+`query-witness-r1`은 `evidence-replay` 연산의 별도 opt-in reducer다. `query-registration`, `case-source`, `raw`, `projection` member를 각각 정확히 하나 요구하며 `retained`만 검증 외 보관물로 허용한다. caller-trusted replay profile은 모든 member의 정확한 bytes·hash를 결속하고 evidence root 밖에서 선택한다. `identities`는 `registration`(registration bytes SHA-256), `source`(초기 source SHA-256), `route`, `platform`, `role`, `policy`를 정확히 등록한다. subject platform도 query registration과 같아야 한다. `records`를 명시하면 등록 case 하나와 정확히 같아야 한다.
+
+`stored-query-witness` gate는 [공개 witness API](public-go-api.md#저장-query-witness-api-216)와 같은 구현·caller/wall budget으로 source/edit, raw full CST 및 전체 capture·독립 anchor·저장 projection을 재검증한다. legacy oracle reducer의 record-only claim을 승격하거나 기존 reducer를 자동 대체하지 않는다. 결과의 `recorded`는 replay subject에 등록한 과거 판정을 보존하고 `recomputed`는 이 저장 witness의 새 판정이다. `consumption`은 등록 case 하나의 처리 수이며 tuple별 완료 수는 직접 API 결과에서 제공한다. missing anchor는 BLOCKED이고 손상된 member·모순·미등록 파일·identity 불일치는 FAIL이다. 이 gate의 PASS를 reference eligibility나 전체 query qualification의 근거로 쓰지 않는다.
+
 reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reducers`). 각 reducer는 다시 계산하는 gate와 다시 계산하지 않는 기록을 선언한다.
 
 | reducer | 입력 | 다시 계산하는 gate | 기록으로 남는 것 |
