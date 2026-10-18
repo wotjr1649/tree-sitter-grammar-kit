@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"unicode/utf8"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
@@ -159,17 +160,20 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			res.Findings = append(res.Findings, Finding{Severity: severity, Code: code, Path: path, Message: "저장 reference 연결이 승인된 문맥과 일치하지 않거나 필수 근거가 없다"})
 		}
 	}
+	contextBound := true
 	if digestHex(req.Evidence.Policy) != reg.EvidencePolicySHA256 {
+		contextBound = false
 		add("REFERENCE_POLICY_MISMATCH", "policy", true)
 	}
 	if reg.Native.Identities["platform"] != reg.Reference.Identities["platform"] {
+		contextBound = false
 		add("REFERENCE_PLATFORM_MISMATCH", "registration", true)
 	}
 	wanted := map[string]bool{}
 	for _, m := range referenceMembers(reg) {
 		wanted[m.Path] = true
 	}
-	snapshot := &evidenceSnapshot{wanted: wanted}
+	snapshot := &evidenceSnapshot{wanted: wanted, wantedNodes: map[string]bool{reg.Native.ID: true, reg.Reference.ID: true}}
 	evidenceContext, cancelEvidence := context.WithCancel(r.caller)
 	stopWall := context.AfterFunc(r.wall, cancelEvidence)
 	defer stopWall()
@@ -182,6 +186,9 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		return res, err
 	}
 	res.Findings = append(res.Findings, evidence.Findings...)
+	if !snapshot.graphBound || snapshot.invalidNodes[reg.Native.ID] || snapshot.invalidNodes[reg.Reference.ID] {
+		contextBound = false
+	}
 	if evidence.Assessment == AssessFail {
 		res.Assessment = AssessFail
 	} else if evidence.Assessment != AssessPass {
@@ -191,32 +198,47 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		return res, e
 	}
 	nodes := map[string]EvidenceNode{}
+	nodeCounts := map[string]int{}
 	owners := map[string]string{}
+	fileCounts := map[string]int{}
 	for _, node := range snapshot.nodes {
+		nodeCounts[node.ID]++
 		nodes[node.ID] = node
 		for _, m := range node.Files {
+			fileCounts[m.Path]++
 			owners[m.Path] = node.ID
 		}
 	}
 	bindNode := func(binding QueryReferenceNode) {
 		n, ok := nodes[binding.ID]
 		if !ok {
+			contextBound = false
 			add("REFERENCE_NODE_MISSING", binding.ID, false)
 			return
 		}
+		if nodeCounts[binding.ID] != 1 {
+			contextBound = false
+			add("REFERENCE_NODE_AMBIGUOUS", binding.ID, true)
+		}
 		if !reflect.DeepEqual(n.Identities, binding.Identities) {
+			contextBound = false
 			add("REFERENCE_IDENTITY_MISMATCH", binding.ID, true)
 		}
 		if n.Assessment == AssessFail {
 			add("REFERENCE_NODE_FAILED", binding.ID, true)
 		}
-		if n.Kind != "run" || n.EvidenceMode != ModeNewRun || n.ExecutionStatus != StatusCompleted || n.Assessment != AssessPass {
+		if n.Kind != "run" || n.EvidenceMode != ModeNewRun || n.ExecutionStatus != StatusCompleted || n.Assessment != AssessPass || n.RecordedAssessment != "" {
+			contextBound = false
 			add("REFERENCE_NODE_INCOMPLETE", binding.ID, false)
 		}
 	}
 	bindNode(reg.Native)
 	bindNode(reg.Reference)
 	member := func(nodeID string, m ReplayMember) []byte {
+		if fileCounts[m.Path] > 1 {
+			add("REFERENCE_MEMBER_AMBIGUOUS", m.Path, true)
+			return nil
+		}
 		if owner, declared := owners[m.Path]; declared && owner != nodeID {
 			add("REFERENCE_MEMBER_OWNER_MISMATCH", m.Path, true)
 			return nil
@@ -282,6 +304,7 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		add("REFERENCE_ENCODING_INELIGIBLE", reg.WitnessRegistration.Path, false)
 	}
 	if witnessReg.Platform != reg.Native.Identities["platform"] || witnessReg.Platform != reg.Reference.Identities["platform"] {
+		contextBound = false
 		add("REFERENCE_PLATFORM_MISMATCH", "registration", true)
 	}
 	if witnessBytes != nil && !slices.Equal(witnessBytes, req.WitnessRegistration) {
@@ -338,17 +361,38 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			add("REFERENCE_NATIVE_CASE_MISMATCH", reg.Projection.Path, true)
 		}
 	}
+	nativeEOF := map[*witnessRawTree]bool{}
+	for _, step := range native.Steps {
+		for _, tree := range []*witnessRawTree{step.Incremental, step.Fresh} {
+			if tree == nil || tree.Status != StatusCompleted || tree.Form == nil || *tree.Form != "full" {
+				continue
+			}
+			valid := len(tree.Nodes) > 0 && len(tree.Nodes[0]) == 10 && tree.Nodes[0][5] >= 0 && uint64(tree.Nodes[0][5]) == step.Bytes
+			nativeEOF[tree] = valid
+			if !valid {
+				add("REFERENCE_NATIVE_TREE_EOF_MISMATCH", reg.Raw.Path, true)
+			}
+		}
+	}
+	for _, step := range saved.Steps {
+		for _, tree := range []*witnessTreeProjection{step.Incremental, step.Fresh} {
+			if tree != nil && tree.Status == StatusCompleted && tree.Form == "full" && tree.Tree != nil && (len(tree.Tree.Nodes) == 0 || uint64(tree.Tree.Nodes[0].EndByte) != step.Bytes) {
+				add("REFERENCE_PROJECTION_TREE_EOF_MISMATCH", reg.Projection.Path, true)
+			}
+		}
+	}
 	type versionIdentity struct {
 		size uint64
 		sha  string
 	}
 	versionPins := map[uint32]versionIdentity{0: {reg.Source.Bytes, reg.Source.SHA256}}
-	bindVersion := func(step uint32, size uint64, sha, path string) {
+	bindVersion := func(step uint32, size uint64, sha, path string) bool {
 		if previous, ok := versionPins[step]; ok && (previous.size != size || previous.sha != sha) {
 			add("REFERENCE_SOURCE_VERSION_MISMATCH", path, true)
-		} else {
-			versionPins[step] = versionIdentity{size, sha}
+			return false
 		}
+		versionPins[step] = versionIdentity{size, sha}
+		return true
 	}
 	for _, s := range native.Steps {
 		bindVersion(s.Step, s.Bytes, s.SHA256, reg.Raw.Path)
@@ -361,15 +405,18 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		if e := r.check(); e != nil {
 			return res, e
 		}
-		bindVersion(obs.Step, obs.SourceBytes, obs.SourceSHA256, obs.Response.Path)
+		observationBound := bindVersion(obs.Step, obs.SourceBytes, obs.SourceSHA256, obs.Response.Path)
 		q, queryKnown := queries[obs.Query]
 		if !queryKnown || int(obs.Step) > len(witnessReg.Edits) {
+			observationBound = false
 			add("REFERENCE_OBSERVATION_UNREGISTERED", obs.Response.Path, true)
 		}
 		if int(obs.Step) < len(versions) && (uint64(len(versions[obs.Step])) != obs.SourceBytes || digestHex(versions[obs.Step]) != obs.SourceSHA256) {
+			observationBound = false
 			add("REFERENCE_SOURCE_VERSION_MISMATCH", obs.Response.Path, true)
 		}
 		if obs.Step == 0 && (obs.SourceBytes != witnessReg.Input.Bytes || obs.SourceSHA256 != witnessReg.Input.SHA256) {
+			observationBound = false
 			add("REFERENCE_SOURCE_VERSION_MISMATCH", obs.Response.Path, true)
 		}
 		if queryKnown && int(obs.Step) <= len(witnessReg.Edits) {
@@ -378,6 +425,7 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 				size = size - uint64(len(edit.Old)) + uint64(len(edit.New))
 			}
 			if obs.SourceBytes != size {
+				observationBound = false
 				add("REFERENCE_SOURCE_VERSION_MISMATCH", obs.Response.Path, true)
 			}
 		}
@@ -401,7 +449,9 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			add("REFERENCE_METADATA_MISMATCH", obs.Response.Path, true)
 			continue
 		}
-		observed[referenceKey(obs.Query, obs.Step)] = ref
+		if observationBound {
+			observed[referenceKey(obs.Query, obs.Step)] = ref
+		}
 	}
 	for i, tuple := range witnessReg.Required {
 		if e := r.check(); e != nil {
@@ -424,6 +474,10 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			}
 			return ready
 		}
+		identityMismatch := tuple.Structural != nil && referenceAnchorIdentityMismatch(tuple.Structural, ref.Query.Structural) || tuple.Expected != nil && referenceAnchorIdentityMismatch(tuple.Expected, ref.Query.Evaluated)
+		if identityMismatch {
+			add("REFERENCE_CAPTURE_MISMATCH", path, true)
+		}
 		var tree *witnessRawTree
 		if int(tuple.Step) < len(native.Steps) {
 			step := native.Steps[tuple.Step]
@@ -436,6 +490,9 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		if tree == nil || tree.Status != StatusCompleted || tree.Form == nil || *tree.Form != "full" {
 			checkAnchors()
 			add("REFERENCE_NATIVE_FULL_TREE_MISSING", path, false)
+			continue
+		}
+		if !nativeEOF[tree] {
 			continue
 		}
 		var src []byte
@@ -459,10 +516,10 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			add("REFERENCE_CST_INELIGIBLE", path, false)
 			continue
 		}
-		if !checkAnchors() {
+		if identityMismatch || !checkAnchors() {
 			continue
 		}
-		if witnessBound && nativeVerified[i] && buildReady && witnessReg.Encoding == EncodingUTF8 && q.Metadata != nil && tuple.Structural != nil && tuple.Expected != nil {
+		if contextBound && witnessBound && nativeVerified[i] && buildReady && witnessReg.Encoding == EncodingUTF8 && q.Metadata != nil && tuple.Structural != nil && tuple.Expected != nil {
 			res.Verified++
 		}
 	}
@@ -473,6 +530,20 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		return res, e
 	}
 	return res, nil
+}
+
+// Before CST equivalence, only query identity and stream cardinality are comparable.
+func referenceAnchorIdentityMismatch(expected, actual []Capture) bool {
+	if len(expected) != len(actual) {
+		return true
+	}
+	for i, x := range expected {
+		y := actual[i]
+		if x.Match != y.Match || x.Pattern != y.Pattern || x.Capture != y.Capture || x.Name != y.Name {
+			return true
+		}
+	}
+	return false
 }
 
 func referenceKey(query string, step uint32) string { return fmt.Sprintf("%s/%d", query, step) }
@@ -561,6 +632,9 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 	if ref.Status != StatusCompleted || ref.Code != "" || !ref.Complete || !ref.CursorExhausted || ref.DidExceedMatchLimit {
 		return nil, "REFERENCE_COMPLETION_INVALID", false, nil
 	}
+	if int(obs.Step) < len(versions) && !utf8.Valid(versions[obs.Step]) {
+		return nil, "REFERENCE_SOURCE_ENCODING_INVALID", false, nil
+	}
 	if ref.Upstream != instrumentedReferenceCommit || ref.Input.Encoding != EncodingUTF8 || ref.Input.Bytes != obs.SourceBytes || ref.Input.SHA256 != obs.SourceSHA256 || ref.Grammar.LibrarySHA256 != reg.LibrarySHA256 || ref.Grammar.Symbol != reg.Symbol || ref.Query.ID != obs.Query || !hex64.MatchString(ref.Query.SHA256) || queryKnown && ref.Query.SHA256 != digestHex([]byte(q.Source)) {
 		return nil, "REFERENCE_CONTEXT_MISMATCH", false, nil
 	}
@@ -570,6 +644,10 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 	}
 	if ref.Tree.Nodes == nil || ref.Query.CaptureNames == nil || ref.Query.Predicates == nil || ref.Query.Structural == nil || ref.Query.Evaluated == nil || ref.Query.MatchMapping == nil || ValidateTree(ref.Tree.Nodes, ref.Input.Bytes) != nil {
 		return nil, "REFERENCE_TREE_INVALID", false, nil
+	}
+	// A full parse ends at EOF; its root may start after legal leading padding.
+	if len(ref.Tree.Nodes) == 0 || uint64(ref.Tree.Nodes[0].EndByte) != ref.Input.Bytes {
+		return nil, "REFERENCE_TREE_EOF_MISMATCH", false, nil
 	}
 	if querypolicy.Support(ref.Query.Patterns, ref.Query.Predicates, EncodingUTF8) != "" {
 		return nil, "REFERENCE_METADATA_INVALID", false, nil

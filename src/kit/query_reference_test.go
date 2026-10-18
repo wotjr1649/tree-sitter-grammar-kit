@@ -349,8 +349,181 @@ func TestQueryReferenceConnectionEveryIdentityRole(t *testing.T) {
 			ids[role] += "changed"
 			f.nodes[1].Identities = ids
 			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
-			if e != nil || r.Assessment != AssessFail || !slices.Contains(codes(r.Findings), "REFERENCE_IDENTITY_MISMATCH") {
+			if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 0 || !slices.Contains(codes(r.Findings), "REFERENCE_IDENTITY_MISMATCH") {
 				t.Fatalf("%s: %+v %v", role, r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionSharedContextCounts(t *testing.T) {
+	for _, kind := range []string{"policy", "native-identity", "reference-identity", "native-mode", "reference-mode", "native-status", "reference-status", "native-assessment", "reference-assessment", "witness-platform", "graph-anchor", "native-duplicate", "reference-duplicate", "native-recorded", "reference-recorded"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			index := 0
+			if kind == "reference-identity" || kind == "reference-mode" || kind == "reference-status" || kind == "reference-assessment" || kind == "reference-duplicate" || kind == "reference-recorded" {
+				index = 1
+			}
+			switch kind {
+			case "native-identity", "reference-identity":
+				ids := map[string]string{}
+				for k, v := range f.nodes[index].Identities {
+					ids[k] = v
+				}
+				ids["policy"] += "changed"
+				f.nodes[index].Identities = ids
+			case "native-mode", "reference-mode":
+				f.nodes[index].EvidenceMode = ModeReplayedRaw
+			case "native-status", "reference-status":
+				f.nodes[index].ExecutionStatus = StatusCancelled
+			case "native-assessment", "reference-assessment":
+				f.nodes[index].Assessment = AssessBlocked
+			case "native-duplicate", "reference-duplicate":
+				f.nodes = append(f.nodes, f.nodes[index])
+			case "native-recorded", "reference-recorded":
+				f.nodes[index].RecordedAssessment = AssessPass
+			case "witness-platform":
+				f.witness["platform"] = "linux/amd64"
+				f.approve(t, "witness.json")
+			}
+			req := f.request(t)
+			if kind == "policy" {
+				f.registration.EvidencePolicySHA256 = sum([]byte("other-policy"))
+				req.Registration = mustJSON(t, f.registration)
+			}
+			if kind == "graph-anchor" {
+				req.Evidence.Policy = mustJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": "connection-policy", "evidence_sha256": sum([]byte("other-graph")), "required": []any{}, "carry_forward": []any{}, "eligibility": nil})
+				f.registration.EvidencePolicySHA256 = sum(req.Evidence.Policy)
+				req.Registration = mustJSON(t, f.registration)
+			}
+			r, e := VerifyQueryReferenceConnection(ctxT(t), req)
+			if e != nil || r.Assessment == AssessPass || r.Required != 3 || r.Verified != 0 || r.NativeWitness == nil {
+				t.Fatalf("unbound shared context counted: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionMemberFailureKeepsOtherCounts(t *testing.T) {
+	f := newReferenceFixture(t)
+	req := f.request(t)
+	if e := os.Remove(filepath.Join(req.Evidence.Root, "reference-0.json")); e != nil {
+		t.Fatal(e)
+	}
+	r, e := VerifyQueryReferenceConnection(ctxT(t), req)
+	if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 2 || r.NativeWitness == nil || r.NativeWitness.Verified != 3 {
+		t.Fatalf("member failure erased other tuples: %+v %v", r, e)
+	}
+}
+
+func TestQueryReferenceConnectionDuplicateResponseKeepsOtherCounts(t *testing.T) {
+	for index, name := range []string{"native", "reference"} {
+		t.Run(name, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			f.nodes[index].Files = append(f.nodes[index].Files, f.registration.Observations[0].Response)
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 2 {
+				t.Fatalf("ambiguous response counted: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionUnrelatedNodeFailureKeepsCounts(t *testing.T) {
+	f := newReferenceFixture(t)
+	n := EvidenceNode{ID: "unrelated", Kind: "run", ExecutionStatus: StatusCancelled, EvidenceMode: ModeNewRun, Assessment: AssessPass, Identities: ident("other", "other"), Files: []ReplayMember{}, Refs: []EvidenceRef{}}
+	f.nodes = append(f.nodes, n)
+	r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+	if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 3 {
+		t.Fatalf("unrelated node erased counts: %+v %v", r, e)
+	}
+}
+
+func TestQueryReferenceConnectionSourceIdentityKeepsOtherCounts(t *testing.T) {
+	for index, path := range []string{"reference-0.json", "reference-1.json"} {
+		t.Run(path, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			sha := sum([]byte("other-version"))
+			f.registration.Observations[index].SourceSHA256 = sha
+			f.responses[path]["input"].(map[string]any)["sha256"] = sha
+			f.approve(t, path)
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 2-index || r.NativeWitness == nil || r.NativeWitness.Verified != 3 || !slices.Contains(codes(r.Findings), "REFERENCE_SOURCE_VERSION_MISMATCH") {
+				t.Fatalf("wrong source identity counted: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionCanonicalNodeConstraints(t *testing.T) {
+	for _, kind := range []string{"policy-identity", "policy-kind", "policy-eligibility", "run-duplicate", "unresolved-ref", "selected-cycle", "two-cycles", "unrelated-cycle", "missing-node-unrelated-cycle", "capped-policy", "capped-run"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			want := 0
+			switch kind {
+			case "run-duplicate":
+				for _, role := range []string{"run", "attempt", "platform"} {
+					f.nodes[1].Identities[role] = f.nodes[0].Identities[role]
+				}
+			case "unresolved-ref":
+				f.nodes[0].Refs = []EvidenceRef{{Relation: "supersedes", Node: "missing"}}
+			case "selected-cycle", "two-cycles":
+				f.nodes[0].Refs = []EvidenceRef{{Relation: "supersedes", Node: "reference"}}
+				f.nodes[1].Refs = []EvidenceRef{{Relation: "supersedes", Node: "native"}}
+				if kind == "two-cycles" {
+					for _, pair := range [][2]string{{"a", "b"}, {"b", "a"}} {
+						f.nodes = append(f.nodes, EvidenceNode{ID: pair[0], Kind: "run", ExecutionStatus: StatusCompleted, EvidenceMode: ModeNewRun, Assessment: AssessPass, Identities: ident(pair[0], pair[0]), Files: []ReplayMember{}, Refs: []EvidenceRef{{Relation: "supersedes", Node: pair[1]}}})
+					}
+				}
+			case "unrelated-cycle", "missing-node-unrelated-cycle":
+				for _, pair := range [][2]string{{"a", "b"}, {"b", "a"}} {
+					f.nodes = append(f.nodes, EvidenceNode{ID: pair[0], Kind: "run", ExecutionStatus: StatusCompleted, EvidenceMode: ModeNewRun, Assessment: AssessPass, Identities: ident(pair[0], pair[0]), Files: []ReplayMember{}, Refs: []EvidenceRef{{Relation: "supersedes", Node: pair[1]}}})
+				}
+				want = 3
+				if kind == "missing-node-unrelated-cycle" {
+					f.nodes = f.nodes[1:]
+					want = 0
+				}
+			case "capped-policy", "capped-run":
+				n := EvidenceNode{ID: "unrelated", Kind: "run", ExecutionStatus: StatusCompleted, EvidenceMode: ModeNewRun, Assessment: AssessPass, Identities: ident("other", "other"), Refs: []EvidenceRef{}}
+				for range 1001 {
+					n.Files = append(n.Files, ReplayMember{Path: "bad", SHA256: "invalid"})
+				}
+				f.nodes = append(f.nodes, n)
+				if kind == "capped-run" {
+					for _, role := range []string{"run", "attempt", "platform"} {
+						f.nodes[1].Identities[role] = f.nodes[0].Identities[role]
+					}
+				}
+			}
+			req := f.request(t)
+			if kind == "policy-identity" || kind == "policy-kind" || kind == "policy-eligibility" || kind == "capped-policy" {
+				graph, err := os.ReadFile(filepath.Join(req.Evidence.Root, "evidence.json"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				policy := map[string]any{"schema": EvidencePolicySchema, "id": "connection-policy", "evidence_sha256": sum(graph), "required": []any{}, "carry_forward": []any{}, "eligibility": nil}
+				switch kind {
+				case "policy-kind":
+					policy["required"] = []any{map[string]any{"node": "native", "kind": "record", "identities": map[string]string{}}}
+				case "policy-eligibility":
+					policy["eligibility"] = map[string]any{"nodes": []string{"native"}, "modes": []string{ModeReplayedRaw}}
+				default:
+					policy["required"] = []any{map[string]any{"node": "native", "kind": "run", "identities": map[string]string{"policy": "other-policy"}}}
+				}
+				req.Evidence.Policy = mustJSON(t, policy)
+				f.registration.EvidencePolicySHA256 = sum(req.Evidence.Policy)
+				req.Registration = mustJSON(t, f.registration)
+			}
+			r, e := VerifyQueryReferenceConnection(ctxT(t), req)
+			if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != want {
+				t.Fatalf("canonical node constraint lost: assessment=%s required=%d verified=%d findings=%d error=%v", r.Assessment, r.Required, r.Verified, len(r.Findings), e)
+			}
+			if kind == "capped-policy" && slices.Contains(codes(r.Findings), "IDENTITY_MISMATCH") {
+				t.Fatal("control did not exhaust the finding budget")
+			}
+			if kind == "capped-run" && slices.Contains(codes(r.Findings), "RUN_IDENTITY_DUPLICATE") {
+				t.Fatal("control did not exhaust the finding budget")
 			}
 		})
 	}
@@ -702,5 +875,269 @@ func TestQueryReferenceConnectionSourceWithoutWitnessRegistration(t *testing.T) 
 	r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
 	if e != nil || r.Assessment != AssessFail || !slices.Contains(codes(r.Findings), "REFERENCE_TREE_POINTS") {
 		t.Fatalf("known initial source: %+v %v", r, e)
+	}
+}
+
+func TestQueryReferenceConnectionActualUTF8(t *testing.T) {
+	for _, kind := range []string{"initial", "edited", "source-utf8-failure"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			index := 0
+			if kind == "edited" {
+				index = 1
+			}
+			source := []byte{0xff}
+			sha := sum(source)
+			edits := f.witness["edits"].([]Edit)
+			if index == 0 {
+				f.files["source.txt"] = source
+				input := f.witness["input"].(NativeInput)
+				input.SHA256 = sha
+				f.witness["input"] = input
+				f.projection["input"] = input
+				edits[0].Old = source
+				f.witness["required"].([]any)[0].(map[string]any)["expected"] = []Capture{}
+				f.approve(t, "source.txt")
+			} else {
+				edits[0].New = source
+			}
+			rawStep := f.raw["steps"].([]any)[index].(map[string]any)
+			rawStep["source_sha256"] = sha
+			step := f.projection["steps"].([]any)[index].(map[string]any)
+			step["source_sha256"] = sha
+			for _, role := range []string{"incremental", "fresh"} {
+				if step[role] == nil {
+					continue
+				}
+				tree := step[role].(map[string]any)
+				tree["tree"].(map[string]any)["input"].(map[string]any)["sha256"] = sha
+				tree["queries"].([]any)[0].(map[string]any)["captures"] = []Capture{}
+			}
+			obs := &f.registration.Observations[index]
+			obs.SourceSHA256 = sha
+			ref := f.responses[obs.Response.Path]
+			ref["input"].(map[string]any)["sha256"] = sha
+			ref["query"].(map[string]any)["evaluated"] = []Capture{}
+			want, verified, code := AssessFail, 2-index, "REFERENCE_SOURCE_ENCODING_INVALID"
+			if kind == "source-utf8-failure" {
+				f.responses[obs.Response.Path] = map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": "SOURCE_UTF8", "complete": false}
+				want, code = AssessBlocked, "REFERENCE_RESPONSE_INCOMPLETE"
+			}
+			for _, path := range []string{"witness.json", "raw.json", "projection.json", obs.Response.Path} {
+				f.approve(t, path)
+			}
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != want || r.Verified != verified || r.NativeWitness == nil || r.NativeWitness.Verified != 3 || !slices.Contains(codes(r.Findings), code) {
+				t.Fatalf("actual UTF8: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionCSTIndependentAnchors(t *testing.T) {
+	for _, kind := range []string{"empty-stream", "node-index-only"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			ref := f.responses["reference-0.json"]
+			nodes := ref["tree"].(map[string]any)["nodes"].([]TreeNode)
+			q := ref["query"].(map[string]any)
+			want := AssessFail
+			if kind == "empty-stream" {
+				nodes[0].Type = "other"
+				q["matches"], q["match_mapping"] = 0, []any{}
+				q["structural"], q["evaluated"] = []Capture{}, []Capture{}
+			} else {
+				// The extra uncaptured node changes preorder indexes, not capture identity.
+				nodes = append(nodes[:1:1], append([]TreeNode{{Parent: 0, Type: "empty", Named: true}}, nodes[1:]...)...)
+				for _, key := range []string{"structural", "evaluated"} {
+					cs := slices.Clone(q[key].([]Capture))
+					cs[0].Node = 2
+					q[key] = cs
+				}
+				want = AssessBlocked
+			}
+			ref["tree"].(map[string]any)["nodes"] = nodes
+			f.approve(t, "reference-0.json")
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != want || r.Verified != 2 || !slices.Contains(codes(r.Findings), "REFERENCE_CST_INELIGIBLE") || (kind == "empty-stream") != slices.Contains(codes(r.Findings), "REFERENCE_CAPTURE_MISMATCH") {
+				t.Fatalf("independent anchors: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionFullInputEOF(t *testing.T) {
+	for _, kind := range []string{"all-agree-truncated", "unrequired-truncated"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			nodes := []TreeNode{{Parent: -1, Type: "doc", Named: true}}
+			digest := TreeDigest(nodes)
+			for i, v := range f.raw["steps"].([]any) {
+				rawStep := v.(map[string]any)
+				savedStep := f.projection["steps"].([]any)[i].(map[string]any)
+				for _, role := range []string{"incremental", "fresh"} {
+					if rawStep[role] == nil || kind == "unrequired-truncated" && (i != 1 || role != "fresh") {
+						continue
+					}
+					raw := rawStep[role].(map[string]any)
+					raw["descendant_count"], raw["digest"], raw["types"] = 1, digest, []string{"doc"}
+					raw["nodes"] = [][]int64{{-1, 0, -1, 1, 0, 0, 0, 0, 0, 0}}
+					q := raw["queries"].([]any)[0].(map[string]any)
+					q["matches"], q["types"], q["captures"] = 0, []string{}, [][]int64{}
+					projected := savedStep[role].(map[string]any)
+					projected["descendant_count"], projected["digest"] = 1, digest
+					projected["tree"].(map[string]any)["nodes"] = nodes
+					pq := projected["queries"].([]any)[0].(map[string]any)
+					pq["matches"], pq["captures"] = 0, []Capture{}
+				}
+			}
+			want := 0
+			if kind == "unrequired-truncated" {
+				f.witness["required"] = f.witness["required"].([]any)[:1]
+				want = 1
+			} else {
+				for _, v := range f.witness["required"].([]any) {
+					tuple := v.(map[string]any)
+					tuple["structural"], tuple["expected"] = []Capture{}, []Capture{}
+				}
+				for path, ref := range f.responses {
+					ref["tree"].(map[string]any)["nodes"] = nodes
+					q := ref["query"].(map[string]any)
+					q["matches"], q["match_mapping"] = 0, []any{}
+					q["structural"], q["evaluated"] = []Capture{}, []Capture{}
+					f.approve(t, path)
+				}
+			}
+			for _, path := range []string{"witness.json", "raw.json", "projection.json"} {
+				f.approve(t, path)
+			}
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != AssessFail || r.Verified != want || !slices.Contains(codes(r.Findings), "REFERENCE_NATIVE_TREE_EOF_MISMATCH") {
+				t.Fatalf("full input EOF: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+// Exact build9 emitter responses retain legal leading padding and error recovery.
+func TestQueryReferenceStoredRootBoundaries(t *testing.T) {
+	for _, tc := range []struct {
+		name, source, sha string
+		start             uint32
+		hasError          bool
+	}{
+		{"leading", "  x;\n", "e9a5d1e2477d3da252d8ac78651e75189a0f22ad5f816aa5bd9aadc3a2344db6", 2, false},
+		{"trailing", "x;  \n", "f8dabc2b33c1bc7f7ec5cbd89fa1e38017f6e163baaa0bfe90804c6b3b6b2ecb", 0, false},
+		{"space", "  \n", "b33b4e0bbf5e21b529b13b383e1e645aa185bf63d97943c203930a09942b0811", 3, false},
+		{"empty", "", "95d31fdc8a75d337fc5007691889fe20bb86fe339e054b23e1a58a248e43be13", 0, false},
+		{"recovery", "x( ;\n", "d6e5920af74f6a4feb670b8076264b92c4c2994f63fa1c63123a3034aee85640", 0, true},
+		{"longer", "long_name;\n", "cec00df368b669d78a53fbed0256aac9aa0a48a8d5392fc9ddc29a3978041522", 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join("..", "testdata", "query-reference", tc.name+"-root.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if sum(data) != tc.sha {
+				t.Fatal("stored emitter output changed")
+			}
+			r, e := startRun(ctxT(t), ReplayOperations()["evidence-replay"].Wall)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			source := []byte(tc.source)
+			reg := QueryReferenceRegistration{LibrarySHA256: "b806af908560b44e9da1ee5434c796f42c3e2cae1c969c2a85752b64c620f657", Symbol: "tree_sitter_tsgk_plain"}
+			// A later source version may have a different length from the initial input.
+			obs := QueryReferenceObservation{Query: "root", Step: 1, SourceBytes: uint64(len(source)), SourceSHA256: sum(source)}
+			ref, code, complete, e := decodeReferenceResponse(data, obs, reg, QueryWitnessQuery{Source: "(source_file) @x"}, true, [][]byte{[]byte("old;"), source}, r)
+			if e != nil || code != "" || !complete || ref == nil {
+				t.Fatalf("root boundary: %s %v", code, e)
+			}
+			root := ref.Tree.Nodes[0]
+			if root.StartByte != tc.start || root.EndByte != uint32(len(source)) || root.HasError != tc.hasError {
+				t.Fatalf("root: %+v", root)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionIndividualEOF(t *testing.T) {
+	for _, kind := range []string{"raw", "projection", "reference", "projection-without-raw"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			code, verified := "REFERENCE_NATIVE_TREE_EOF_MISMATCH", 2
+			switch kind {
+			case "raw":
+				f.raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"].([][]int64)[0][5] = 0
+				f.approve(t, "raw.json")
+			case "projection", "projection-without-raw":
+				nodes := f.projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)["nodes"].([]TreeNode)
+				nodes[0].EndByte = 0
+				f.approve(t, "projection.json")
+				code = "REFERENCE_PROJECTION_TREE_EOF_MISMATCH"
+				if kind == "projection-without-raw" {
+					delete(f.files, "raw.json")
+					f.nodes[0].Files = append(f.nodes[0].Files[:2:2], f.nodes[0].Files[3:]...)
+					verified = 0
+				}
+			case "reference":
+				// A locally valid empty prefix must still end at this version's EOF.
+				ref := f.responses["reference-0.json"]
+				ref["tree"].(map[string]any)["nodes"] = []TreeNode{{Parent: -1, Type: "doc", Named: true}}
+				q := ref["query"].(map[string]any)
+				q["matches"], q["match_mapping"] = 0, []any{}
+				q["structural"], q["evaluated"] = []Capture{}, []Capture{}
+				f.approve(t, "reference-0.json")
+				code = "REFERENCE_TREE_EOF_MISMATCH"
+			}
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != AssessFail || r.Verified != verified || !slices.Contains(codes(r.Findings), code) {
+				t.Fatalf("individual EOF: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionPartialAnchorsKeepContradictions(t *testing.T) {
+	for _, kind := range []string{"missing-full-tree", "missing-other-anchor"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			// Keep the reference internally valid but contradict a manual node attribute.
+			ref := f.responses["reference-0.json"]
+			ref["tree"].(map[string]any)["nodes"].([]TreeNode)[1].Extra = true
+			for _, stream := range []string{"structural", "evaluated"} {
+				cs := slices.Clone(ref["query"].(map[string]any)[stream].([]Capture))
+				cs[0].Extra = true
+				ref["query"].(map[string]any)[stream] = cs
+			}
+			if kind == "missing-full-tree" {
+				delete(f.files, "raw.json")
+				f.nodes[0].Files = append(f.nodes[0].Files[:2:2], f.nodes[0].Files[3:]...)
+			} else {
+				f.witness["required"].([]any)[0].(map[string]any)["structural"] = nil
+				// Keep the two CSTs equal so the remaining expected anchor is comparable.
+				tree := f.raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+				tree["nodes"].([][]int64)[1][3] = 3
+				nodes := f.projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)["nodes"].([]TreeNode)
+				nodes[1].Extra = true
+				tree["digest"] = TreeDigest(nodes)
+				f.projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = TreeDigest(nodes)
+				// Raw/projection also repeat capture flags; keep them internally consistent.
+				tree["queries"].([]any)[0].(map[string]any)["captures"].([][]int64)[0][5] = 3
+				pq := f.projection["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+				caps := slices.Clone(pq["captures"].([]Capture))
+				caps[0].Extra = true
+				pq["captures"] = caps
+				for _, path := range []string{"raw.json", "projection.json", "witness.json"} {
+					f.approve(t, path)
+				}
+			}
+			f.approve(t, "reference-0.json")
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != AssessFail || !slices.Contains(codes(r.Findings), "REFERENCE_CAPTURE_MISMATCH") {
+				t.Fatalf("partial anchor hid contradiction: %+v %v", r, e)
+			}
+		})
 	}
 }
