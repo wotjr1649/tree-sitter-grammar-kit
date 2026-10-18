@@ -385,7 +385,20 @@ func TestMarginWorkflowLimitsAndCollection(t *testing.T) {
 		if len(m) != 2 || m[1] != strconv.FormatInt(j.minutes, 10) {
 			t.Fatalf("job limit drift %s", j.name)
 		}
-		if !strings.Contains(s, "& src/dev/ci-gate/config.ps1") || !strings.Contains(s, "name: ci-config-"+j.job+"-") {
+		if j.job == "native-routes-macos" {
+			if !strings.Contains(s, "    steps: *native-route-steps\n") {
+				t.Fatal("Mac route step alias missing")
+			}
+			s = body("native-routes")
+		}
+		configName := "name: ci-config-" + j.job + "-"
+		if j.job == "native-routes" || j.job == "native-routes-macos" {
+			configName = "name: ci-config-${{ github.job }}-"
+			if !strings.Contains(s, "path: ${{ runner.temp }}/ci-config-${{ github.job }}-${{ runner.os }}-") {
+				t.Fatal("route configuration path lost actual job identity")
+			}
+		}
+		if !strings.Contains(s, "& src/dev/ci-gate/config.ps1") || !strings.Contains(s, configName) {
 			t.Fatalf("configuration capture missing %s", j.name)
 		}
 		for name, minutes := range marginStepLimits(j) {
@@ -468,7 +481,7 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				j := marginJobs[i]
 				z := zipBytes(t, zipEntry{"config.json", string(encoded(t, c)), 0600})
 				rows = append(rows, makeArtifact(uint64(i+10), configName(j, current.Run), current.Run, z))
-				if j.job == "native-routes" {
+				if j.job == "native-routes" || j.job == "native-routes-macos" {
 					dir := filepath.Join(root, "s05-routes-"+j.goos+"-900-2")
 					put(filepath.Join(dir, "run-identity.json"), encoded(t, c.Run))
 					put(filepath.Join(dir, "summary.json"), encoded(t, map[string]any{"compiler": c.Compiler}))

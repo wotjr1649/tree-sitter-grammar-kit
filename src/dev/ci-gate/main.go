@@ -99,10 +99,10 @@ func checkNeeds(data []byte) error {
 		Result  string            `json:"result"`
 		Outputs map[string]string `json:"outputs"`
 	}
-	if decode(data, &needs) != nil || len(needs) != 5 {
+	if decode(data, &needs) != nil || len(needs) != 6 {
 		return errors.New("required producer results unavailable")
 	}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
+	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification"} {
 		if needs[name].Result != "success" {
 			return errors.New("required producer did not succeed")
 		}

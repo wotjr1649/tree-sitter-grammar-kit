@@ -39,7 +39,7 @@ function Get-CIMarginEvidence {
     $id = [string]$artifact.id
     $name = [string]$artifact.name
     $size = $artifact.size_in_bytes
-    if ($id -cnotmatch '^[1-9][0-9]{0,19}$' -or $name -cnotmatch '^ci-(margin|config-(foundation|native-prepare|native-routes|large-api|qualification)-(windows|linux|darwin))-[1-9][0-9]{0,19}-[1-9][0-9]{0,19}$' -or $size -le 0 -or $size -gt 262144) { throw 'margin download plan changed' }
+    if ($id -cnotmatch '^[1-9][0-9]{0,19}$' -or $name -cnotmatch '^ci-(margin|config-(foundation|native-prepare|native-routes|native-routes-macos|large-api|qualification)-(windows|linux|darwin))-[1-9][0-9]{0,19}-[1-9][0-9]{0,19}$' -or $size -le 0 -or $size -gt 262144) { throw 'margin download plan changed' }
     Get-CIGateFile -Client $Client -Uri "$endpoint/artifacts/$id/zip" -Out (Join-Path $zips "$name.zip") -Limit $size -Cancellation $Cancellation -Token $Token
   }
 }

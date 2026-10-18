@@ -37,25 +37,36 @@ func TestStrictJSON(t *testing.T) {
 
 func TestNeedsFailClosed(t *testing.T) {
 	good := map[string]any{}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
+	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification"} {
 		good[name] = map[string]any{"result": "success", "outputs": map[string]string{}}
 	}
 	if e := checkNeeds(encoded(t, good)); e != nil {
 		t.Fatal(e)
 	}
-	for _, status := range []any{"failure", "skipped", "cancelled", "", nil, true, "unknown"} {
+	for producer := range good {
+		for _, status := range []any{"failure", "skipped", "cancelled", "", nil, true, "unknown"} {
+			bad := map[string]any{}
+			for k, v := range good {
+				bad[k] = v
+			}
+			bad[producer] = map[string]any{"result": status}
+			if checkNeeds(encoded(t, bad)) == nil {
+				t.Fatalf("%s status %v accepted", producer, status)
+			}
+		}
 		bad := map[string]any{}
 		for k, v := range good {
-			bad[k] = v
+			if k != producer {
+				bad[k] = v
+			}
 		}
-		bad["native-routes"] = map[string]any{"result": status}
 		if checkNeeds(encoded(t, bad)) == nil {
-			t.Fatalf("status %v accepted", status)
+			t.Fatalf("missing %s accepted", producer)
 		}
 	}
-	delete(good, "large-api")
+	good["unexpected"] = map[string]any{"result": "success"}
 	if checkNeeds(encoded(t, good)) == nil || checkNeeds([]byte(`{}`)) == nil {
-		t.Fatal("missing producer accepted")
+		t.Fatal("unexpected or empty producer set accepted")
 	}
 }
 
