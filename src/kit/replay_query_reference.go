@@ -178,6 +178,9 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 		if n.Schema != ReportSchema || n.ResultSchema != QueryWitnessResultSchema || !executionStatuses[n.ExecutionStatus] || !assessmentValues[n.Assessment] || !evidenceModes[n.EvidenceMode] || n.Required < 0 || n.Verified < 0 || n.Verified > n.Required {
 			return false
 		}
+		if n.Required > 0 && !hex64.MatchString(n.RegistrationSHA256) {
+			return false
+		}
 		if n.RegistrationSHA256 != "" && (!hex64.MatchString(n.RegistrationSHA256) || n.RegistrationSHA256 != rr.Observed["witness"]) {
 			return false
 		}

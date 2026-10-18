@@ -631,3 +631,47 @@ func TestReplayQueryReferencePartialSubject(t *testing.T) {
 		})
 	}
 }
+
+func TestReplayQueryReferencePartialNativeRegistration(t *testing.T) {
+	for _, state := range []string{"verified", "verified-empty", "required-empty", "early-error"} {
+		t.Run(state, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			_, root, prof := referenceReplayFixture(t, f)
+			res := runReg(t, root, prof)
+			res.Gates = nil
+			res.QueryReference.Verified = 0
+			res.QueryReference.ExecutionStatus, res.ExecutionStatus = StatusResourceLimit, StatusResourceLimit
+			res.QueryReference.Assessment, res.Assessment = AssessBlocked, AssessBlocked
+			res.Recomputed, res.Consumption = Verdict{}, Consumption{}
+			n := res.QueryReference.NativeWitness
+			n.ExecutionStatus, n.Assessment = StatusResourceLimit, AssessBlocked
+			n.Verified = 1
+			wantValid := state == "verified" || state == "early-error"
+			if strings.HasSuffix(state, "-empty") {
+				n.RegistrationSHA256 = ""
+			}
+			if state == "required-empty" {
+				n.Verified = 0
+			}
+			if state == "early-error" {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				early, err := VerifyQueryWitness(ctx, QueryWitnessRequest{})
+				if err == nil || early.Required != 0 || early.Verified != 0 || early.RegistrationSHA256 != "" {
+					t.Fatalf("early native failure fixture: %+v %v", early, err)
+				}
+				res.QueryReference.NativeWitness = &early
+			}
+			if validReferenceReplayResult(res) != wantValid {
+				t.Fatalf("partial native registration %s: %+v", state, res)
+			}
+			node := &EvidenceNode{ID: "replay", EvidenceMode: res.EvidenceMode, Assessment: res.Assessment, Files: []ReplayMember{{Path: "result.json", Role: "replay-result"}}}
+			subj := &EvidenceNode{Identities: map[string]string{"run": res.Subject.Run, "attempt": "1", "platform": res.Subject.Platform}}
+			env := &replayEnv{}
+			env.checkReplayFile(node, subj, map[string][]byte{"result.json": mustJSON(t, res)}, func(code, path, msg string) { env.finding(code, path, msg) })
+			if (len(env.findings) == 0) != wantValid {
+				t.Fatalf("reader partial native %s: %+v", state, env.findings)
+			}
+		})
+	}
+}
