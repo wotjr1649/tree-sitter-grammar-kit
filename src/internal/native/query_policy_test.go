@@ -167,7 +167,7 @@ func TestPredicatePolicyIncompleteAndEmptyStreams(t *testing.T) {
 	})
 	t.Run("evaluated-empty", func(t *testing.T) {
 		q := policyWire(predicate)
-		q.Matches, q.Captures = 0, [][]int64{}
+		q.Matches, q.Types, q.Captures = 0, []string{}, [][]int64{}
 		out := policyOut(t, q, kit.EncodingUTF8)
 		if out.Status != kit.StatusCompleted || out.Evaluation != EvalEvaluated || out.Captures == nil || len(out.Captures) != 0 {
 			t.Fatalf("completed empty confused with absent: %+v", out)

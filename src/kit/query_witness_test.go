@@ -658,7 +658,7 @@ func TestQueryWitnessPartialIsIneligible(t *testing.T) {
 	raw["steps"], p["steps"] = raw["steps"].([]any)[:1], p["steps"].([]any)[:1]
 	q := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
 	q["status"], q["code"], q["partial"] = StatusResourceLimit, "CAPTURE_LIMIT", true
-	q["captures"], q["matches"] = [][]int64{}, 0
+	q["captures"], q["matches"], q["types"] = [][]int64{}, 0, []string{}
 	pq := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
 	pq["status"], pq["code"], pq["partial"] = StatusResourceLimit, "CAPTURE_LIMIT", true
 	pq["evaluation"], pq["captures"], pq["matches"] = "UNSUPPORTED", nil, 0
@@ -886,6 +886,27 @@ func TestQueryWitnessEmptyCaptureNamesAreNotNull(t *testing.T) {
 	r, err = VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
 	if err != nil || r.Assessment != AssessFail || r.Verified != 2 {
 		t.Fatalf("null capture names accepted or counted: %+v %v", r, err)
+	}
+}
+
+func TestQueryWitnessRejectsImpossibleCaptureNameTables(t *testing.T) {
+	for _, names := range [][]string{{"x", "x"}, {"x", ""}} {
+		req, reg, raw, p := witnessFixture(t)
+		reg["queries"].([]any)[0].(map[string]any)["metadata"].(map[string]any)["capture_names"] = names
+		for _, document := range []map[string]any{raw, p} {
+			for _, step := range document["steps"].([]any) {
+				for _, role := range []string{"incremental", "fresh"} {
+					if tree, ok := step.(map[string]any)[role].(map[string]any); ok {
+						tree["queries"].([]any)[0].(map[string]any)["capture_names"] = names
+					}
+				}
+			}
+		}
+		r, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+		e, ok := err.(*Error)
+		if !ok || e.Kind != KindInvalidInput || e.Code != "QUERY_REGISTRATION_QUERY_INVALID" || r.Assessment == AssessPass || r.Verified != 0 {
+			t.Fatalf("capture names %q adopted: %+v %v", names, r, err)
+		}
 	}
 }
 

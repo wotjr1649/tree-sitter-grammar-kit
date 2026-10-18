@@ -1013,6 +1013,16 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 		if !validID(q.ID) || queries[q.ID] || q.Source == "" || len(q.Source) > MaxQueryBytes {
 			return bad("QUERY_REGISTRATION_QUERY_INVALID")
 		}
+		// a compiled query names each capture ID once, so no producer emits such a table
+		if q.Metadata != nil {
+			names := map[string]bool{}
+			for _, name := range q.Metadata.CaptureNames {
+				if name == "" || names[name] {
+					return bad("QUERY_REGISTRATION_QUERY_INVALID")
+				}
+				names[name] = true
+			}
+		}
 		queries[q.ID] = true
 	}
 	seen := map[string]bool{}

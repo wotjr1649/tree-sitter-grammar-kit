@@ -208,6 +208,8 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		}) {
 			return nil, bad(i, "match accounting")
 		}
+		// the producer interns each emitted capture's type in first-use order
+		types := map[string]bool{}
 		for k, row := range q.Captures {
 			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
 				row[3] < 0 || uint64(row[3]) >= descendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
@@ -221,9 +223,20 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			if row[6] > row[7] || uint64(row[7]) > sourceBytes {
 				return nil, bad(i, fmt.Sprintf("capture %d range", k))
 			}
+			if row[4] == int64(len(types)) {
+				if types[q.Types[row[4]]] {
+					return nil, bad(i, fmt.Sprintf("capture %d type table", k))
+				}
+				types[q.Types[row[4]]] = true
+			} else if row[4] > int64(len(types)) {
+				return nil, bad(i, fmt.Sprintf("capture %d type table", k))
+			}
 			if link != nil && !link(q, row) {
 				return nil, invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
 			}
+		}
+		if len(types) != len(q.Types) {
+			return nil, bad(i, "type table")
 		}
 	}
 	return queries, nil

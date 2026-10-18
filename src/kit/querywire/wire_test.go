@@ -54,9 +54,46 @@ func TestFullAndSummaryBoundaries(t *testing.T) {
 			t.Fatalf("unrequested query result=%+v err=%v", got, err)
 		}
 	}
-	q.Matches, q.Captures = 0, [][]int64{}
+	q.Matches, q.Types, q.Captures = 0, []string{}, [][]int64{}
 	if got, err := DecodeSummary(encode(t, q), requested, 1, 1); err != nil || got[0].Captures == nil {
 		t.Fatalf("completed empty stream lost: %+v %v", got, err)
+	}
+}
+
+func TestTypeTableMatchesCaptureStream(t *testing.T) {
+	row := func(typ int64) []int64 { return []int64{0, 0, 0, 0, typ, 1, 0, 1, 0, 0, 0, 1} }
+	for _, tc := range []struct {
+		name  string
+		types []string
+		rows  [][]int64
+		ok    bool
+	}{
+		{"empty", []string{}, [][]int64{}, true},
+		{"repeated", []string{"identifier"}, [][]int64{row(0), row(0)}, true},
+		{"first-use", []string{"a", "b"}, [][]int64{row(0), row(1), row(0)}, true},
+		{"unused-without-captures", []string{"forged"}, [][]int64{}, false},
+		{"unused-trailing", []string{"identifier", "forged"}, [][]int64{row(0)}, false},
+		{"duplicate", []string{"identifier", "identifier"}, [][]int64{row(0), row(1)}, false},
+		{"order", []string{"a", "b"}, [][]int64{row(1), row(0)}, false},
+	} {
+		for _, limit := range []bool{false, true} {
+			q := fixture()
+			q.Types, q.Captures = tc.types, tc.rows
+			if len(tc.rows) == 0 {
+				q.Matches = 0
+			}
+			if limit {
+				q.Status, q.Code, q.Partial = "RESOURCE_LIMIT", "MATCH_LIMIT", true
+			}
+			raw := encode(t, q)
+			_, full := DecodeFull(raw, requested, 1, 1, func(Query, []int64) bool { return true })
+			_, summary := DecodeSummary(raw, requested, 1, 1)
+			for _, err := range []*Error{full, summary} {
+				if tc.ok != (err == nil) || err != nil && err.Code != "RESPONSE_INVALID" {
+					t.Fatalf("%s limit=%v: %v", tc.name, limit, err)
+				}
+			}
+		}
 	}
 }
 
