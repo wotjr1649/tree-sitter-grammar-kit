@@ -125,7 +125,7 @@ func TestSvcExplicitReferenceAndSelfRejection(t *testing.T) {
 		}
 		c := kit.IncrementalCase{ID: "ref", Encoding: enc, Input: kit.NativeInput{Path: "ref.txt", Role: "case", SHA256: fmt.Sprintf("%x", sha256.Sum256(source)), Bytes: uint64(len(source))}, Expect: []kit.StepExpectation{{Syntax: "NO_ERROR"}}}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		refs := b.runSvcReferences(ctx, x, []kit.IncrementalCase{c}, root)
+		refs := b.runSvcReferences(ctx, x, []kit.IncrementalCase{c}, root, nil)
 		cancel()
 		r := refs[c.ID]
 		if self {

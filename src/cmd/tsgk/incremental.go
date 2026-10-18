@@ -109,6 +109,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		}
 	}()
 	var target *native.OutputTarget
+	inputs := &native.InputRoots{}
 	if *buildCache != "" {
 		paths["build-cache"] = "CACHE_INSIDE_INPUT"
 	}
@@ -131,7 +132,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			held = append(held, parent)
 			target = &native.OutputTarget{Parent: parent, Name: filepath.Base(abs["out"])}
 		}
-		for _, subject := range []string{abs["root"], abs["grammar-root"]} {
+		for subjectIndex, subject := range []string{abs["root"], abs["grammar-root"]} {
 			var contained bool
 			if k == "out" {
 				input, openErr := os.OpenRoot(subject)
@@ -139,6 +140,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 					err = openErr
 				} else {
 					held = append(held, input)
+					if subjectIndex == 0 {
+						inputs.Cases = input
+					} else {
+						inputs.Grammar = input
+					}
 					contained, err = insideRoots(target.Parent, input)
 				}
 			} else {
@@ -193,11 +199,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			}
 		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall})
 		res, report, rerr = &r, &r.Report, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
 		res, report, rerr = &r, &r.Report, e
 	}
 	if err := closePaths(); err != nil {

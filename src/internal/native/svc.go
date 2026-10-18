@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"strings"
 
@@ -20,7 +21,7 @@ type SvcReferenceResult struct {
 	HasError        bool            `json:"has_error"`
 }
 
-func (b *Build) runSvcReferences(ctx context.Context, x Context, cases []kit.IncrementalCase, root string) map[string]CaseResult {
+func (b *Build) runSvcReferences(ctx context.Context, x Context, cases []kit.IncrementalCase, root string, binding *os.Root) map[string]CaseResult {
 	out := map[string]CaseResult{}
 	if x.SvcContext == nil {
 		return out
@@ -37,7 +38,7 @@ func (b *Build) runSvcReferences(ctx context.Context, x Context, cases []kit.Inc
 			if c.ID != r.Case {
 				continue
 			}
-			src, err := readCase(root, c.Input)
+			src, err := readCase(root, c.Input, binding)
 			if err != nil {
 				out[c.ID] = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessBlocked, Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}}
 				break

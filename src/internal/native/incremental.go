@@ -42,6 +42,7 @@ type IncrementalRequest struct {
 	BuildCache       string
 	Out              string
 	OutTarget        *OutputTarget // optional caller-held target; Out is then display-only
+	Inputs           *InputRoots   // optional caller-held source roots
 	Allow            []string
 	CgroupParent     string
 	RunWall          time.Duration // optional, at most the operation's run wall
@@ -107,21 +108,36 @@ func finding(code, severity, path, msg string) kit.Finding {
 }
 
 // readCase reads one declared case input below root, rejecting links and identity drift.
-func readCase(root string, in kit.NativeInput) ([]byte, error) {
-	cur := root
-	for _, seg := range strings.Split(in.Path, "/") {
-		cur = filepath.Join(cur, seg)
-		info, err := os.Lstat(cur)
+func readCase(root string, in kit.NativeInput, binding *os.Root) ([]byte, error) {
+	var data []byte
+	var err error
+	if binding != nil {
+		data, err = readBoundSource(binding, in.Path, int64(in.Bytes))
 		if err != nil {
-			return nil, refuse(kit.KindInvalidInput, "SOURCE_MISSING", err)
+			if errors.Is(err, errSourceLink) {
+				return nil, refuse(kit.KindInvalidInput, "SOURCE_LINK_REJECTED", err)
+			}
+			if errors.Is(err, os.ErrNotExist) {
+				return nil, refuse(kit.KindInvalidInput, "SOURCE_MISSING", err)
+			}
+			return nil, refuse(kit.KindIO, "SOURCE_UNREADABLE", err)
 		}
-		if info.Mode()&os.ModeSymlink != 0 || (info.Mode()&os.ModeType != 0 && !info.IsDir()) {
-			return nil, refuse(kit.KindInvalidInput, "SOURCE_LINK_REJECTED", nil)
+	} else {
+		cur := root
+		for _, seg := range strings.Split(in.Path, "/") {
+			cur = filepath.Join(cur, seg)
+			info, err := os.Lstat(cur)
+			if err != nil {
+				return nil, refuse(kit.KindInvalidInput, "SOURCE_MISSING", err)
+			}
+			if info.Mode()&os.ModeSymlink != 0 || (info.Mode()&os.ModeType != 0 && !info.IsDir()) {
+				return nil, refuse(kit.KindInvalidInput, "SOURCE_LINK_REJECTED", nil)
+			}
 		}
-	}
-	data, err := os.ReadFile(cur)
-	if err != nil {
-		return nil, refuse(kit.KindIO, "SOURCE_UNREADABLE", err)
+		data, err = os.ReadFile(cur)
+		if err != nil {
+			return nil, refuse(kit.KindIO, "SOURCE_UNREADABLE", err)
+		}
 	}
 	sum := sha256.Sum256(data)
 	if hex.EncodeToString(sum[:]) != in.SHA256 || uint64(len(data)) != in.Bytes {
@@ -167,10 +183,17 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		res.Assessment = kit.AssessBlocked
 		return res, err
 	}
+	if err := req.Inputs.validate(); err != nil {
+		return stop(refuse(kit.KindInvalidInput, "INPUT_ROOT_UNAVAILABLE", err))
+	}
 	probe := runner.Probe(runner.Spec{Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: req.CgroupParent})
 	res.Capabilities = probe
 	if runtime.GOOS != "darwin" && probe.Memory != runner.MemoryHard {
 		return stop(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", nil))
+	}
+	var caseHandle, grammarHandle *os.Root
+	if req.Inputs != nil {
+		caseHandle, grammarHandle = req.Inputs.Cases, req.Inputs.Grammar
 	}
 	output, err := newOutputDirectory(req.Out, req.OutTarget)
 	if err != nil {
@@ -210,7 +233,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 	if groot == "" {
 		groot = req.Root
 	}
-	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, Grammar: prof.Grammar, Symbol: prof.Symbol,
+	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, GrammarHandle: grammarHandle, Grammar: prof.Grammar, Symbol: prof.Symbol,
 		Compiler: req.Compiler, CompilerID: prof.Compiler, CgroupParent: req.CgroupParent, CacheDir: req.BuildCache})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
@@ -230,12 +253,12 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		if req.ReuseObservation {
 			x.Protocol, x.ObservationRunID, x.ObservationProducerSHA256 = ProtocolR3, res.ObservationRunID, b.Identity
 		}
-		refs := b.runSvcReferences(runCtx, x, prof.Cases, req.Root)
+		refs := b.runSvcReferences(runCtx, x, prof.Cases, req.Root, caseHandle)
 		if op.Batch {
-			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases, responses.Root)
+			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases, responses.Root, caseHandle)
 		} else {
 			for _, c := range prof.Cases {
-				src, err := readCase(req.Root, c.Input)
+				src, err := readCase(req.Root, c.Input, caseHandle)
 				if err != nil {
 					res.Cases = append(res.Cases, CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
 						Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}})
@@ -380,7 +403,7 @@ func summarize(cases []CaseResult, batches []BatchRecord) Summary {
 // cases or BatchBytes input bytes per driver process. Frames a batch-level limit or a
 // fatal frame left unanswered are re-queued into a new process (not a retry); a crash
 // mid-frame is FAILED; files never reached before the run wall are NOT_RUN.
-func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase, responses *os.Root) ([]CaseResult, []BatchRecord) {
+func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase, responses *os.Root, binding *os.Root) ([]CaseResult, []BatchRecord) {
 	x.ObservationProducerSHA256 = b.Identity
 	out := make([]CaseResult, len(cases))
 	for i, c := range cases {
@@ -406,7 +429,7 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 			}
 			queue = queue[1:]
 			c := cases[i]
-			src, err := readCase(root, c.Input)
+			src, err := readCase(root, c.Input, binding)
 			if err == nil {
 				if _, _, e := kit.ApplyEdits(c.Encoding, src, nil, x.Op.InputBytes); e != nil {
 					var ke *kit.Error

@@ -56,6 +56,7 @@ type OracleRequest struct {
 	BuildCache   string
 	Out          string
 	OutTarget    *OutputTarget // optional caller-held target; Out is then display-only
+	Inputs       *InputRoots   // optional caller-held source roots
 	Allow        []string
 	CgroupParent string
 	RunWall      time.Duration
@@ -156,12 +157,19 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		}
 		pack = &p
 	}
+	if err := req.Inputs.validate(); err != nil {
+		return stop(refuse(kit.KindInvalidInput, "INPUT_ROOT_UNAVAILABLE", err))
+	}
 	probe := runner.Probe(runner.Spec{Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: req.CgroupParent})
 	if runtime.GOOS != "darwin" && probe.Memory != runner.MemoryHard {
 		return stop(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", nil))
 	}
 	// the exclusive directory is the only collision guard: an existing output or a
 	// concurrent run that created it first makes this run stop before writing anything
+	var caseHandle, grammarHandle *os.Root
+	if req.Inputs != nil {
+		caseHandle, grammarHandle = req.Inputs.Cases, req.Inputs.Grammar
+	}
 	output, err := newOutputDirectory(req.Out, req.OutTarget)
 	if err != nil {
 		code := "OUTPUT_FAILED"
@@ -190,7 +198,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	if groot == "" {
 		groot = req.Root
 	}
-	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, Grammar: n.Grammar, Symbol: n.Symbol,
+	b, berr := NewBuild(runCtx, BuildRequest{Work: req.Work, Runtime: req.Runtime, GrammarRoot: groot, GrammarHandle: grammarHandle, Grammar: n.Grammar, Symbol: n.Symbol,
 		Compiler: req.Compiler, CompilerID: n.Compiler, CgroupParent: req.CgroupParent, CacheDir: req.BuildCache})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
@@ -225,10 +233,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
 		x := Context{Op: op, Route: n.Route, Output: n.Output, Declarations: n.Declarations, Format: n.Format, SvcContext: n.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy,
 			Protocol: ProtocolR2, Queries: queries, API: prof.API}
-		refs := b.runSvcReferences(runCtx, x, n.Cases, req.Root)
+		refs := b.runSvcReferences(runCtx, x, n.Cases, req.Root, caseHandle)
 		for _, oc := range prof.OracleCases {
 			if ref, found := refs[oc.ID]; found && ref.ExecutionStatus == kit.StatusCompleted {
-				src, err := readCase(req.Root, oc.Input)
+				src, err := readCase(req.Root, oc.Input, caseHandle)
 				if err != nil {
 					ref.ExecutionStatus, ref.Assessment, ref.Code = kit.StatusNotRun, kit.AssessBlocked, err.(*Error).Code
 				} else {
@@ -240,7 +248,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		for i, oc := range prof.OracleCases {
 			c := oc.IncrementalCase
 			var cr CaseResult
-			src, err := readCase(req.Root, c.Input)
+			src, err := readCase(req.Root, c.Input, caseHandle)
 			if err != nil {
 				cr = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
 					Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
