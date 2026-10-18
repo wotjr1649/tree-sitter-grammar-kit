@@ -1109,6 +1109,18 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 				return fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.cptr()+"/"+name, nil)
 			}
 		}
+	case reflect.Map:
+		if typ.Key().Kind() != reflect.String {
+			return t.bad("JSON_SHAPE", v)
+		}
+		if e := t.want(v, '{'); e != nil {
+			return e
+		}
+		for _, item := range v.vals {
+			if e := witnessShape(t, item, typ.Elem(), exact, false, budget); e != nil {
+				return e
+			}
+		}
 	case reflect.Slice:
 		if typ.Elem().Kind() == reflect.Uint8 {
 			return t.want(v, '"')

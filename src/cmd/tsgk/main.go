@@ -71,8 +71,11 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return runQualify(ctx, args[1:], stdout, stderr)
 	}
 	if cmd == "evidence" {
+		if len(args) >= 2 && args[1] == "query-reference" {
+			return runQueryReference(ctx, args[2:], stdout, stderr)
+		}
 		if len(args) < 2 || args[1] != "verify" {
-			fmt.Fprintln(stderr, "tsgk: USAGE: tsgk evidence verify --input DIR --profile FILE [--out PATH]")
+			fmt.Fprintln(stderr, "tsgk: USAGE: tsgk evidence <verify|query-reference> --input DIR --profile FILE [--out PATH]")
 			return exitUsage
 		}
 		return runReplay(ctx, "evidence verify", args[2:], stdout, stderr)
@@ -413,6 +416,8 @@ func finish(result any, err error, out, publishRoot string, stdout, stderr io.Wr
 	case kit.ReplayResult:
 		code = replayExit(v.Assessment)
 	case kit.EvidenceResult:
+		code = replayExit(v.Assessment)
+	case kit.QueryReferenceConnectionResult:
 		code = replayExit(v.Assessment)
 	case kit.QualificationResult:
 		code = replayExit(v.Assessment)

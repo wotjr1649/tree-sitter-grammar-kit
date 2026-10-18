@@ -6,6 +6,8 @@
 
 ## 편집 중 선택 검사와 후보 검증
 
+`TestQueryReferenceConnection*`는 외부 승인한 policy/member/build/11-role identity와 동일 guard bytes를 사용하는 저장 연결을 검사한다. 초기·edit 이후 incremental/fresh의 세 tuple, source version 재사용 거부, uncaptured CST 차이의 부적격, metadata 모순의 FAIL 우선, match/runtime mapping·capture node·evaluated occurrence·cursor/완료/type 변조, optional observation 부재와 graph가 선언한 file 부재의 구분, 다른 tuple 누락과 모순의 동시 존재, deadline·취소를 검사한다. 이 회귀는 synthetic stored data의 좁은 연결 검증이며 실제 reference 실행·3-host 자격·전체 receipt closure의 근거가 아니다. 필수 caller witness 원문의 누락·malformed·pin 불일치·크기 초과와 graph witness member의 undeclared/declared 누락을 구분하고, caller bytes가 graph 근거를 대신하지 않으며 누락 중에도 required 분모가 유지되는지 검사한다. 기존 witness·evidence·native 필수 회귀를 대체하지 않는다. `TestQueryReferenceCLI*`는 API와 동일 JSON·PASS/FAIL/BLOCKED exit·누락 중 FAIL 우선·graph witness 누락, 필수 flag/등록 문서·pin·크기 한도, 취소, 신뢰 문서 세 개의 내부 경로·leaf alias 거부와 기존 --out 보존을 검사한다. 실제 외부 문서 승인은 caller의 책임이며 경로 검사 자체가 승인 증거는 아니다.
+
 작은 편집을 반복하는 동안에는 변경한 package와 호출자, fixture·script에 해당하는 검사를 명시적으로 골라 먼저 실행한다. Go import 역관계만으로 범위를 확정하지 않는다. 소스 직접 읽기, subprocess 실행, embed, testdata, build tag·host 조건과 공용 계약의 영향을 확인하고 불명확하면 아래 전체 local foundation 및 해당 native/통합 검사로 확대한다. 자동 path-filter로 필수 CI를 생략하지 않는다.
 
 예를 들어 scheduler 정책만 편집하는 첫 단계는 `go test ./src/internal/foundation -run '^TestWorkflow' -count=1 -v -timeout 300s`로 시작할 수 있다. producer·margin 계약까지 바뀌면 `go test ./src/dev/ci-gate -count=1 -v -timeout 300s`와 관련 호출자 검사를 추가한다. 이는 개발 중 빠른 피드백이며 최종 후보의 foundation·native·qualification을 대체하지 않는다. 같은 입력에서 완료된 검사를 새 변경이나 실패 근거 없이 반복하지 않되, 최종 PR 후보와 actual main의 기존 필수 검사는 모두 실행한다. 작은 수정마다 push하는 대신 검토 가능한 변경 단위를 완성한 뒤 PR CI를 실행한다.
