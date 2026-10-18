@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -588,44 +587,7 @@ func publish(out, root string, data []byte, additionalRoots ...string) (code str
 			return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside an input root")
 		}
 	}
-	name := ".tsgk-out-" + rand.Text() + ".tmp"
-	tmp, err := destination.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
-	if err != nil {
-		return "OUTPUT_PUBLISH_FAILED", err
-	}
-	linked := false
-	defer func() {
-		if err := destination.Remove(name); err != nil {
-			if linked {
-				err = fmt.Errorf("output was published; temporary cleanup failed: %w", err)
-			}
-			resultErr = errors.Join(resultErr, err)
-			code = "OUTPUT_CLEANUP_FAILED"
-		}
-	}()
-	if _, err := tmp.Write(data); err != nil {
-		return "OUTPUT_PUBLISH_FAILED", errors.Join(err, tmp.Close())
-	}
-	if err := tmp.Sync(); err != nil {
-		return "OUTPUT_PUBLISH_FAILED", errors.Join(err, tmp.Close())
-	}
-	if err := tmp.Close(); err != nil {
-		return "OUTPUT_PUBLISH_FAILED", err
-	}
-	if testHookBeforeLink != nil {
-		testHookBeforeLink()
-	}
-	if err := destination.Link(name, filepath.Base(abs)); err != nil {
-		if errors.Is(err, os.ErrExist) {
-			return "OUTPUT_EXISTS", err
-		}
-		return "OUTPUT_PUBLISH_FAILED", err
-	}
-	linked = true
-	if testHookAfterLink != nil {
-		testHookAfterLink()
-	}
-	return "", nil
+	return publishOutput(destination, filepath.Base(abs), data)
 }
 
 // testHookBeforeLink lets tests create a concurrent destination before the final link.
@@ -633,7 +595,7 @@ var testHookBeforeLink func()
 
 var testHookBeforePublish func()
 
-var testHookAfterLink func()
+var testHookAfterLink func(*os.File)
 
 // unresolvedAlias reports a directory component that EvalSymlinks left in place (Windows
 // junctions and volume mount points); its target cannot be compared with the root.

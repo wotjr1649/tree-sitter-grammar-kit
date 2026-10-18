@@ -14,13 +14,19 @@
 
 ## #215 출력 소유권 검증
 
-`TestPublishKeepsParentIdentity`는 검사 후 `Link` 전 output parent pathname을 다른 directory로 교체하는 결정적 barrier를 사용한다. 보관한 parent에만 게시·정리하고 대체 directory의 기존 bytes를 보존해야 한다. Windows에서 열린 handle이 rename을 거부한 경우에도 그 실제 거부를 확인한다. `TestDirectoryReplacementDuringScan`은 child lookup 사이의 보통 directory·내부 alias·외부 alias 교체를 거부한다. `TestQualifyRechecksEveryHostBeforePublish`는 분석 후 2·3번째 host pathname을 바꾸어 최종 검사가 모든 host에 적용되는지 확인한다. cleanup 실패는 성공한 publication 사실을 보존하면서 오류로 보고해야 한다.
+`TestPublishKeepsParentIdentity`는 검사 후 최종 게시 전 output parent pathname을 다른 directory로 교체하는 결정적 barrier를 사용한다. 보관한 parent에만 게시·정리하고 대체 directory의 기존 bytes를 보존해야 한다. Windows에서 열린 handle이 rename을 거부한 경우에도 그 실제 거부를 확인한다. `TestDirectoryReplacementDuringScan`은 child lookup 사이의 보통 directory·내부 alias·외부 alias 교체를 거부한다. `TestQualifyRechecksEveryHostBeforePublish`는 분석 후 2·3번째 host pathname을 바꾸어 최종 검사가 모든 host에 적용되는지 확인한다. cleanup 실패는 성공한 publication 사실을 보존하면서 오류로 보고해야 한다.
 
 native의 두 process가 같은 output을 동시에 선점하는 시험은 하나만 directory와 member를 만들고 다른 하나는 `OUTPUT_EXISTS`에 해당하는 충돌로 종료해야 한다. 기존 output·member bytes와 배타 child 생성을 검사하고, 획득한 output handle 뒤의 pathname 교체가 member 쓰기를 대체 directory로 돌리지 못하는지 확인한다. Windows 생성 handle은 native 생성과 Go root 연결 구간에 유지하며, reserved/ADS 이름·기존 alias와의 충돌을 거부한다. `Mkdir`와 첫 handle 획득 사이의 Linux·macOS 공백은 별도 미완료 항목이며 이 시험의 PASS로 해결했다고 기록하지 않는다.
 
 Windows foundation의 별도 `hosted Windows subst output boundary (#215)` step만 `TSGK_HOSTED_SUBST_TEST=1`로 `TestHostedSubstMembership`을 실행한다. GitHub-hosted Windows 문맥을 확인하기 전에 mapping을 만들지 않으며, 개발 host 거부는 별도 subprocess negative control로 확인한다. unused drive의 실제 `subst.exe` mapping과 target을 확인하고 input 하위 mapping 거부·outside mapping 허용·원 bytes 보존·partial 부재·mapping 제거를 검사한다. 제거에는 예상 target에 대한 `DefineDosDevice` exact-match removal을 사용하고 다른 target을 주면 기존 mapping이 보존되는 대조도 실행한다. mapping 소유권이나 제거를 확인하지 못하면 fixture를 보존하고 후속 mapping을 중단하여 실패한다. workflow는 정확한 test의 Go JSON pass와 inside·outside·두 제거·두 다른-target 보존 witness를 요구한다. `TestHostedSubstEvidenceGuard`는 이 event 검사 자체를 정상·skip·무선택·실패·witness 누락 fixture로 검사하며 실제 mapping 근거로 세지 않는다. skip·mapping 생성 실패·timeout은 실제 subst 검증 PASS가 아니다. 개발 host에서는 실제 mapping을 실행하지 않는다. 기존 isolated Linux bind-mount 검사는 유지한다.
 
 `TestIncrementalOutputFinalization`은 실제 `Incremental` 호출에서 Windows creation guard의 종료 오류를 주어 저장·반환 report와 반환 I/O 오류를 함께 확인한다. directory 종료 뒤 rename 가능한 host에서는 최종 file handle이 원래 객체에 계속 쓰고 대체 namespace의 파일을 보존하는지 검사한다. Windows에서 열린 최종 file이 rename을 거부하면 그 거부와 정상 결과를 확인하며, 실제 교체가 실행된 근거로 합산하지 않는다.
+
+이 finalization 시험의 사례들은 같은 task 전용 검증된 build cache를 공유해 첫 compile 뒤 계산을 재사용한다. 각 사례의 parse·종료 오류·namespace·report 검사는 계속 실행하고 `-count=1`을 유지한다. 기존 cold build·cache 변조·fault·전체 route 검사를 생략하거나 그 결과로 대체하지 않는다.
+
+Windows `TestPublishRetainsTemporaryLeafIdentity`는 게시 직전 temp leaf 교체 반례를 재현하며, 생성 handle의 이름 교체 거부·게시 bytes·비ASCII 이름·guard 해제 후 rename 허용·임시 entry 부재를 확인한다. 기존 output collision 대조는 승자 bytes와 temp 정리를 확인한다. `TestPublishReportsFinalizationFailureAfterPublication`은 Windows 게시 후 실제 file Close 오류를 주어 최종 파일 보존과 게시 사실·실패 반환을 검사하고, Linux·macOS에서는 기존 temp cleanup 실패 경로를 검사한다. Windows write 오류 대조는 이미 닫힌 file에 대한 실제 Write와 handle cleanup 실패를 보존하고 pathname 삭제로 보완하지 않음을 확인한다.
+
+`TestPublishWindowsShortAliasFinal`은 volume 설정을 바꾸지 않고 실제 긴 파일의 8.3 alias를 생성·확인한 뒤 그 alias를 최종 이름으로 사용한다. source는 별도 short alias가 없는 8.3 이름이어야 하며 최종 이름은 쓰기·게시 전 존재하지 않아야 한다. alias fixture가 없으면 성공으로 세지 않고 실패한다. short-name 생성이 비활성인 개발 환경은 설정을 변경하지 않은 채 이 검사의 미확보 근거를 기록하고, 활성화된 검증 host에서 실행해야 한다.
 
 최종 후보는 세 OS PR CI와 actual main을 별도로 검증한다. 로컬 Windows handle 시험은 Linux·macOS, 모든 filesystem/ACL 또는 hosted subst 성공의 대체 근거가 아니다. 전체 #215 완료는 [trust 계약의 미완료 경계](../specs/trust-and-execution.md)까지 해결한 뒤 판단한다.
 

@@ -23,7 +23,7 @@ func TestPublishKeepsParentIdentity(t *testing.T) {
 	blocked := false
 	testHookBeforeLink = func() {
 		entries, err := os.ReadDir(parent)
-		if err != nil || len(entries) != 1 || !strings.HasPrefix(entries[0].Name(), ".tsgk-out-") {
+		if err != nil || len(entries) != 1 || entries[0].IsDir() {
 			t.Fatalf("temporary publication fixture: %v %v", entries, err)
 		}
 		tempName = entries[0].Name()
@@ -86,9 +86,15 @@ func TestPublishChecksEveryRoot(t *testing.T) {
 	}
 }
 
-func TestPublishReportsCleanupFailureAfterPublication(t *testing.T) {
+func TestPublishReportsFinalizationFailureAfterPublication(t *testing.T) {
 	parent := t.TempDir()
-	testHookAfterLink = func() {
+	testHookAfterLink = func(file *os.File) {
+		if file != nil {
+			if err := file.Close(); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
 		entries, err := os.ReadDir(parent)
 		if err != nil {
 			t.Fatal(err)
@@ -113,7 +119,11 @@ func TestPublishReportsCleanupFailureAfterPublication(t *testing.T) {
 	}
 	defer func() { testHookAfterLink = nil }()
 	code, err := publish(filepath.Join(parent, "result.json"), t.TempDir(), []byte("complete"))
-	if code != "OUTPUT_CLEANUP_FAILED" || err == nil || !strings.Contains(err.Error(), "output was published") {
+	want := "OUTPUT_CLEANUP_FAILED"
+	if runtime.GOOS == "windows" {
+		want = "OUTPUT_CLOSE_FAILED"
+	}
+	if code != want || err == nil || !strings.Contains(err.Error(), "output was published") {
 		t.Fatalf("published cleanup failure hidden: %s %v", code, err)
 	}
 	if data, err := os.ReadFile(filepath.Join(parent, "result.json")); err != nil || string(data) != "complete" {

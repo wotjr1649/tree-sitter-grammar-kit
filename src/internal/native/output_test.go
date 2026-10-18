@@ -92,6 +92,7 @@ func TestIncrementalOutputFinalization(t *testing.T) {
 		t.Fatal(err)
 	}
 	rt, cc := nativeTools(t)
+	cache := t.TempDir() // These cases test output finalization, not repeated compilation.
 	for _, which := range []string{"output", "responses", "replacement"} {
 		t.Run(which, func(t *testing.T) {
 			if which != "replacement" && runtime.GOOS != "windows" {
@@ -139,7 +140,10 @@ func TestIncrementalOutputFinalization(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 			res, runErr := Incremental(ctx, IncrementalRequest{Root: root, GrammarRoot: fixtureRoot(t, "plain"), Profile: profile,
-				Runtime: rt, Compiler: cc, Work: t.TempDir(), Out: out, Allow: []string{AllowBuild, AllowExec}, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")})
+				Runtime: rt, Compiler: cc, Work: t.TempDir(), BuildCache: cache, Out: out, Allow: []string{AllowBuild, AllowExec}, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")})
+			if res.Build != nil && res.Build.Reuse != nil {
+				t.Logf("output-finalization build reuse: hit=%t", res.Build.Reuse.Hit)
+			}
 			owned := out
 			if replaced {
 				owned = moved
