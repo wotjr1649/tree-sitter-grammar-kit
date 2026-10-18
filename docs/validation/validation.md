@@ -282,3 +282,5 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 #216의 raw 없는 projection 회귀는 structural match 집계·최초 등장·pattern 변조와 INVALID_QUERY·NOT_RUN 고정 필드 변조를 거부하며 정상 interleaving·중복·empty를 보존한다. Raw의 보관 step을 projection에서 삭제하면 source 부재와 무관하게 FAIL이다. Source 없는 등록의 edit span/payload 길이·범위·빈 edit·중간 크기 모순은 KindInvalidInput이어야 하며, 초기 입력 한도 초과는 기존 KindResourceLimit을 유지한다. 공용 querywire.MatchAccounting으로 raw와 structural projection의 동일한 집계 기준을 사용한다.
 
 #216 추가 회귀는 steps 없는 raw의 code/status 조합, source 없는 UTF-16 초기 크기·edit offset, 불가능한 0행·UTF-16 시작 point를 검사한다. Summary·record의 required 밖 query도 source로 predicate를 재계산하며 projected capture 변조는 full CST 부재와 함께 있어도 FAIL이다. Reference pipeline의 archive-swap fault는 task-owned archive copy만 실제 교체하고 tar parser와 supervisor를 그대로 실행해 소비 bytes가 이미 hash한 buffer임을 확인한다.
+
+`TestEvidenceSnapshotPreservesVerification`은 reference 연결 준비 경로와 공개 `VerifyEvidence`의 결과·오류가 같음을 확인한다. 요청 밖 파일 변조·축 모순·외부 policy를 그대로 둔 graph/member 동시 재해시, per-file·total·replay-result record 한도와 취소를 검사한다. 요청 member와 graph는 한 번만 열고, 정상 빈 bytes와 누락·손상·이전 snapshot은 구분해야 한다. 일반 member의 보관에 record 한도를 추가해 기존 검증을 좁혀서는 안 된다. 이 회귀는 reference 자격·전체 CST 차등 검증의 완료 근거가 아니다.
