@@ -14,6 +14,13 @@ type outputDirectory struct {
 	guard *os.File
 }
 
+// OutputTarget binds a caller-checked parent and single basename. The caller
+// retains ownership of Parent; native output never reopens its pathname.
+type OutputTarget struct {
+	Parent *os.Root
+	Name   string
+}
+
 func (d *outputDirectory) Close() error {
 	err := d.Root.Close()
 	if d.guard != nil {
@@ -34,7 +41,13 @@ func closeOutput(d *outputDirectory, report *kit.Report, resultErr *error) {
 	}
 }
 
-func newOutputDirectory(path string) (directory *outputDirectory, resultErr error) {
+func newOutputDirectory(path string, target *OutputTarget) (directory *outputDirectory, resultErr error) {
+	if target != nil {
+		if target.Parent == nil || !filepath.IsLocal(target.Name) || filepath.Base(target.Name) != target.Name || target.Name == "." {
+			return nil, os.ErrInvalid
+		}
+		return createOutputDirectory(target.Parent, target.Name)
+	}
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err

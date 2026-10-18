@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func runOracle(ctx context.Context, args []string, stdout, stderr io.Writer) int
 	return runNative(ctx, "oracle", args[1:], stdout, stderr)
 }
 
-func runNative(ctx context.Context, kind string, args []string, stdout, stderr io.Writer) int {
+func runNative(ctx context.Context, kind string, args []string, stdout, stderr io.Writer) (exitCode int) {
 	fs := flag.NewFlagSet(kind, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := fs.String("root", "", "case root (read only)")
@@ -92,6 +93,22 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		abs[k] = a
 	}
 	paths := map[string]string{"work": "WORK_INSIDE_INPUT", "out": "OUTPUT_INSIDE_INPUT"}
+	var held []*os.Root
+	closePaths := func() error {
+		var err error
+		for i := len(held) - 1; i >= 0; i-- {
+			err = errors.Join(err, held[i].Close())
+		}
+		held = nil
+		return err
+	}
+	defer func() {
+		if err := closePaths(); err != nil {
+			fmt.Fprintln(stderr, "tsgk: IO: OUTPUT_CLOSE_FAILED")
+			exitCode = exitIO
+		}
+	}()
+	var target *native.OutputTarget
 	if *buildCache != "" {
 		paths["build-cache"] = "CACHE_INSIDE_INPUT"
 	}
@@ -105,8 +122,28 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
 			return exitUsage
 		}
+		if k == "out" {
+			parent, err := os.OpenRoot(real)
+			if err != nil {
+				fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 출력 parent를 열 수 없다")
+				return exitUsage
+			}
+			held = append(held, parent)
+			target = &native.OutputTarget{Parent: parent, Name: filepath.Base(abs["out"])}
+		}
 		for _, subject := range []string{abs["root"], abs["grammar-root"]} {
-			contained, err := inside(real, subject)
+			var contained bool
+			if k == "out" {
+				input, openErr := os.OpenRoot(subject)
+				if openErr != nil {
+					err = openErr
+				} else {
+					held = append(held, input)
+					contained, err = insideRoots(target.Parent, input)
+				}
+			} else {
+				contained, err = inside(real, subject)
+			}
 			if err != nil {
 				fmt.Fprintln(stderr, "tsgk: INPUT_PATH_UNVERIFIED: 실행 경로 위치를 확인할 수 없다")
 				return exitUsage
@@ -140,7 +177,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		return exitIO
 	}
 	wall := time.Duration(max(*runWall, 0)) * time.Second
+	if testHookBeforeNativeRun != nil {
+		testHookBeforeNativeRun(target)
+	}
 	var res any
+	var report *kit.Report
 	var status, assessment string
 	var rerr error
 	if kind == "oracle" {
@@ -152,19 +193,33 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			}
 		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall})
-		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Allow: allow, CgroupParent: *cgroup, RunWall: wall})
+		res, report, rerr = &r, &r.Report, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
-		res, status, assessment, rerr = r, r.ExecutionStatus, r.Assessment, e
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Allow: allow, CgroupParent: *cgroup, RunWall: wall, ReuseObservation: reuseObservation})
+		res, report, rerr = &r, &r.Report, e
 	}
+	if err := closePaths(); err != nil {
+		report.ExecutionStatus = kit.StatusFailed
+		if report.Assessment == kit.AssessPass {
+			report.Assessment = kit.AssessNotAssessed
+		}
+		report.Coverage.Observed = []string{}
+		report.Findings = append(report.Findings, kit.Finding{Code: "OUTPUT_CLOSE_FAILED", Severity: "error", Message: "CLI 경로 handle을 해제하지 못했다"})
+		rerr = errors.Join(&native.Error{Kind: kit.KindIO, Code: "OUTPUT_CLOSE_FAILED", Cause: err}, rerr)
+	}
+	status, assessment = report.ExecutionStatus, report.Assessment
 	line, merr := json.Marshal(res)
 	if merr != nil {
 		fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")
 		return exitIO
 	}
-	stdout.Write(append(line, '\n'))
+	line = append(line, '\n')
+	if n, err := stdout.Write(line); err != nil || n != len(line) {
+		fmt.Fprintln(stderr, "tsgk: IO: OUTPUT_WRITE_FAILED")
+		return exitIO
+	}
 	if rerr != nil {
 		var ne *native.Error
 		if errors.As(rerr, &ne) {
@@ -185,3 +240,5 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	return exitIO
 }
+
+var testHookBeforeNativeRun func(*native.OutputTarget)

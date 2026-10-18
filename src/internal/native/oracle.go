@@ -55,6 +55,7 @@ type OracleRequest struct {
 	Work         string
 	BuildCache   string
 	Out          string
+	OutTarget    *OutputTarget // optional caller-held target; Out is then display-only
 	Allow        []string
 	CgroupParent string
 	RunWall      time.Duration
@@ -161,7 +162,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	}
 	// the exclusive directory is the only collision guard: an existing output or a
 	// concurrent run that created it first makes this run stop before writing anything
-	output, err := newOutputDirectory(req.Out)
+	output, err := newOutputDirectory(req.Out, req.OutTarget)
 	if err != nil {
 		code := "OUTPUT_FAILED"
 		if errors.Is(err, os.ErrExist) {

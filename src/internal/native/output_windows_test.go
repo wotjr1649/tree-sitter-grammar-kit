@@ -34,7 +34,7 @@ func TestOutputDirectoryWindowsNamesAndAliases(t *testing.T) {
 }
 
 func TestOutputDirectoryWindowsDotPrefix(t *testing.T) {
-	d, err := newOutputDirectory(filepath.Join(t.TempDir(), ".output"))
+	d, err := newOutputDirectory(filepath.Join(t.TempDir(), ".output"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestOutputDirectoryWindowsDotPrefix(t *testing.T) {
 	if err := createExclusive(d.Root, "member.json", []byte("owned")); err != nil {
 		t.Fatal(err)
 	}
-	if duplicate, err := newOutputDirectory(d.Name()); duplicate != nil || !errors.Is(err, os.ErrExist) {
+	if duplicate, err := newOutputDirectory(d.Name(), nil); duplicate != nil || !errors.Is(err, os.ErrExist) {
 		if duplicate != nil {
 			duplicate.Close()
 		}

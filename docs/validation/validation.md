@@ -28,6 +28,8 @@ Windows `TestPublishRetainsTemporaryLeafIdentity`는 게시 직전 temp leaf 교
 
 `TestPublishWindowsShortAliasFinal`은 volume 설정을 바꾸지 않고 실제 긴 파일의 8.3 alias를 생성·확인한 뒤 그 alias를 최종 이름으로 사용한다. source는 별도 short alias가 없는 8.3 이름이어야 하며 최종 이름은 쓰기·게시 전 존재하지 않아야 한다. alias fixture가 없으면 성공으로 세지 않고 실패한다. short-name 생성이 비활성인 개발 환경은 설정을 변경하지 않은 채 이 검사의 미확보 근거를 기록하고, 활성화된 검증 host에서 실행해야 한다.
 
+`TestNativeRetainsCheckedOutputParent`는 두 실제 CLI entry point에서 최종 containment 뒤 parent 교체·닫힌 parent·basename 충돌을 검사한다. 정상 runtime closure를 일부러 제공하지 않아 output 획득 직후 실제 build validation이 `RUNTIME_MISMATCH`로 거부되고 compiler step이 0개임을 확인하므로, 컴파일 없이 namespace 반례를 검사한다. Windows의 열린 parent가 rename을 거부하면 그 거부와 호출 뒤 rename 허용을 확인하며 실제 교체 성공으로 세지 않는다. `TestNativeRejectsEveryInputRootOutput`은 별도 case·grammar root 하위 출력을 모두 거부하고, `TestOutputTargetDoesNotReopenPath`는 표시 경로·잘못된 basename·닫힌 target의 fallback 부재와 caller parent 보존을 검사한다. `TestNativeStdoutWriteFailure`는 두 CLI의 실행 전 거부 report를 실제 닫힌 file에 쓸 때 I/O 실패를 보존하는지 검사한다. `TestIncrementalCLI/build-cache`는 추가 warm run의 실제 실행·저장된 COMPLETED/PASS·build 재사용을 확인하면서 닫힌 stdout 때문에 exit 4를 반환하는지 검사한다. Go 1.27.2의 `os.Root.Close`는 syscall 종료 오류를 외부로 반환하지 않으므로 Root 종료 오류 자체를 주입한 실행 근거는 없으며, 이를 관측한 것으로 표시하지 않는다.
+
 최종 후보는 세 OS PR CI와 actual main을 별도로 검증한다. 로컬 Windows handle 시험은 Linux·macOS, 모든 filesystem/ACL 또는 hosted subst 성공의 대체 근거가 아니다. 전체 #215 완료는 [trust 계약의 미완료 경계](../specs/trust-and-execution.md)까지 해결한 뒤 판단한다.
 
 ## Local foundation checks

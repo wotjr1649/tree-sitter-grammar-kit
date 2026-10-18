@@ -41,6 +41,7 @@ type IncrementalRequest struct {
 	Work             string
 	BuildCache       string
 	Out              string
+	OutTarget        *OutputTarget // optional caller-held target; Out is then display-only
 	Allow            []string
 	CgroupParent     string
 	RunWall          time.Duration // optional, at most the operation's run wall
@@ -171,7 +172,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 	if runtime.GOOS != "darwin" && probe.Memory != runner.MemoryHard {
 		return stop(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", nil))
 	}
-	output, err := newOutputDirectory(req.Out)
+	output, err := newOutputDirectory(req.Out, req.OutTarget)
 	if err != nil {
 		code := "OUTPUT_FAILED"
 		kind := kit.KindIO

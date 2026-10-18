@@ -21,7 +21,7 @@ import (
 func TestOutputDirectoryAndMemberNoClobber(t *testing.T) {
 	base := t.TempDir()
 	out := filepath.Join(base, "output")
-	d, err := newOutputDirectory(out)
+	d, err := newOutputDirectory(out, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func TestOutputDirectoryAndMemberNoClobber(t *testing.T) {
 	if err := createExclusive(d.Root, "member.json", []byte("replacement")); !errors.Is(err, os.ErrExist) {
 		t.Fatalf("member collision: %v", err)
 	}
-	if other, err := newOutputDirectory(out); other != nil || !errors.Is(err, os.ErrExist) {
+	if other, err := newOutputDirectory(out, nil); other != nil || !errors.Is(err, os.ErrExist) {
 		t.Fatalf("directory collision: %v %v", other, err)
 	}
 	if data, err := d.ReadFile("member.json"); err != nil || string(data) != "original" {
@@ -49,7 +49,7 @@ func TestOutputDirectoryAndMemberNoClobber(t *testing.T) {
 }
 
 func TestOutputCloseFailureIsReported(t *testing.T) {
-	d, err := newOutputDirectory(filepath.Join(t.TempDir(), "output"))
+	d, err := newOutputDirectory(filepath.Join(t.TempDir(), "output"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestIncrementalOutputFinalization(t *testing.T) {
 func TestOutputDirectoryKeepsAcquiredIdentity(t *testing.T) {
 	base := t.TempDir()
 	out, moved := filepath.Join(base, "output"), filepath.Join(base, "moved")
-	d, err := newOutputDirectory(out)
+	d, err := newOutputDirectory(out, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +232,7 @@ func TestOutputClaimProcess(t *testing.T) {
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	d, err := newOutputDirectory(filepath.Join(base, "output"))
+	d, err := newOutputDirectory(filepath.Join(base, "output"), nil)
 	if errors.Is(err, os.ErrExist) {
 		fmt.Println("CLAIM_LOST", id)
 		return
@@ -303,5 +303,41 @@ func TestTwoProcessesClaimOneOutput(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(base, "output"))
 	if winners != 1 || losers != 1 || err != nil || len(entries) != 1 || entries[0].Name() != "winner.json" {
 		t.Fatalf("claim result: winners=%d losers=%d entries=%v err=%v", winners, losers, entries, err)
+	}
+}
+
+func TestOutputTargetDoesNotReopenPath(t *testing.T) {
+	parent, err := os.OpenRoot(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer parent.Close()
+	display := filepath.Join(t.TempDir(), "missing-parent", "unused")
+	d, err := newOutputDirectory(display, &OutputTarget{Parent: parent, Name: "owned"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := createExclusive(d.Root, "member", []byte("owned")); err != nil {
+		t.Fatal(err)
+	}
+	if err := d.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := parent.ReadFile("owned/member"); err != nil || string(data) != "owned" {
+		t.Fatalf("target or caller parent lost: %q %v", data, err)
+	}
+	if _, err := os.Lstat(filepath.Dir(display)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("display pathname used: %v", err)
+	}
+	for _, target := range []*OutputTarget{{Name: "out"}, {Parent: parent, Name: ""}, {Parent: parent, Name: "."}, {Parent: parent, Name: "../escape"}, {Parent: parent, Name: "a/b"}} {
+		if d, err := newOutputDirectory(display, target); d != nil || !errors.Is(err, os.ErrInvalid) {
+			t.Fatalf("invalid bound target: %v %v", d, err)
+		}
+	}
+	if err := parent.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if d, err := newOutputDirectory(display, &OutputTarget{Parent: parent, Name: "closed"}); d != nil || err == nil {
+		t.Fatalf("closed parent fallback: %v %v", d, err)
 	}
 }
