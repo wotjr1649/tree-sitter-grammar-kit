@@ -1,11 +1,11 @@
 package native
 
 import (
-	"bytes"
 	"fmt"
 	"slices"
 	"strconv"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
@@ -13,7 +13,7 @@ import (
 const (
 	QueryCapability = "tsgk-query/r1"
 	APICapability   = "tsgk-api/r1"
-	PredicatePolicy = "tsgk-predicates/r1"
+	PredicatePolicy = querypolicy.Revision
 )
 
 // Query result evaluation states: STRUCTURAL (no predicates; the runtime stream is the
@@ -46,95 +46,22 @@ type QueryOut struct {
 	structural   []kit.Capture   // the runtime stream before host evaluation
 }
 
-var supportedPredicates = map[string]bool{"eq?": true, "not-eq?": true, "any-of?": true, "not-any-of?": true}
-
-// predicateSupport returns "" when every predicate of q is in the host subset
-// tsgk-predicates/r1, else the reason: eq?/not-eq? between a single (ONE) capture and a
-// string or another single capture, any-of?/not-any-of? of a single capture against one or
-// more strings, compared by source bytes, and only for UTF-8 sources.
 func predicateSupport(q WireQuery, encoding string) string {
-	for _, p := range q.Predicates {
-		op := p.Steps[0]
-		if op.Kind != "string" || !supportedPredicates[op.Value] {
-			return "QUERY_PREDICATE_UNSUPPORTED:" + op.Value
-		}
-		args := p.Steps[1:]
-		single := func(s PredStep) bool { return s.Kind == "capture" && *s.Quantifier == "ONE" }
-		switch op.Value {
-		case "eq?", "not-eq?":
-			if len(args) != 2 || !single(args[0]) || (args[1].Kind == "capture" && !single(args[1])) {
-				return "QUERY_PREDICATE_UNSUPPORTED:" + op.Value
-			}
-		default:
-			if len(args) < 2 || !single(args[0]) {
-				return "QUERY_PREDICATE_UNSUPPORTED:" + op.Value
-			}
-			for _, a := range args[1:] {
-				if a.Kind != "string" {
-					return "QUERY_PREDICATE_UNSUPPORTED:" + op.Value
-				}
-			}
-		}
-		if encoding != kit.EncodingUTF8 {
-			return "QUERY_PREDICATE_ENCODING"
-		}
-	}
-	return ""
+	return querypolicy.Support(q.Patterns, q.Predicates, encoding)
 }
 
-// evaluatePredicates applies the host subset to a complete stream: a match whose pattern
-// has a failing predicate loses all its captures; the remaining captures keep their order.
-// A single capture named by a predicate but absent from its match makes the query FAILED
-// rather than guessing a value.
 func evaluatePredicates(q WireQuery, caps []kit.Capture, src []byte) ([]kit.Capture, string) {
-	byPattern := map[uint32][]WirePredicate{}
-	for _, p := range q.Predicates {
-		byPattern[p.Pattern] = append(byPattern[p.Pattern], p)
+	views := make([]querypolicy.Capture, len(caps))
+	for i, c := range caps {
+		views[i] = querypolicy.Capture{Match: c.Match, Pattern: c.Pattern, Name: c.Name, StartByte: c.StartByte, EndByte: c.EndByte}
 	}
-	matches := map[uint32][]kit.Capture{}
-	for _, c := range caps {
-		matches[c.Match] = append(matches[c.Match], c)
+	indices, code := querypolicy.Filter(q.Patterns, q.Predicates, views, kit.EncodingUTF8, src)
+	if code != "" {
+		return nil, code
 	}
-	keep := map[uint32]bool{}
-	for id, mc := range matches {
-		ok := true
-		text := func(name string) ([]byte, bool) {
-			for _, c := range mc {
-				if c.Name == name {
-					return src[c.StartByte:c.EndByte], true
-				}
-			}
-			return nil, false
-		}
-		for _, p := range byPattern[mc[0].Pattern] {
-			args := p.Steps[1:]
-			left, found := text(args[0].Value)
-			if !found {
-				return nil, "QUERY_PREDICATE_CAPTURE_ABSENT"
-			}
-			var r bool
-			switch p.Steps[0].Value {
-			case "eq?", "not-eq?":
-				right := []byte(args[1].Value)
-				if args[1].Kind == "capture" {
-					if right, found = text(args[1].Value); !found {
-						return nil, "QUERY_PREDICATE_CAPTURE_ABSENT"
-					}
-				}
-				r = bytes.Equal(left, right) == (p.Steps[0].Value == "eq?")
-			default:
-				in := slices.ContainsFunc(args[1:], func(a PredStep) bool { return a.Value == string(left) })
-				r = in == (p.Steps[0].Value == "any-of?")
-			}
-			ok = ok && r
-		}
-		keep[id] = ok
-	}
-	out := []kit.Capture{}
-	for _, c := range caps {
-		if keep[c.Match] {
-			out = append(out, c)
-		}
+	out := make([]kit.Capture, 0, len(indices))
+	for _, i := range indices {
+		out = append(out, caps[i])
 	}
 	return out, ""
 }

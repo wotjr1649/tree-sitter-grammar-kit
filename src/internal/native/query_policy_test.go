@@ -180,3 +180,11 @@ func TestPredicatePolicyIncompleteAndEmptyStreams(t *testing.T) {
 		}
 	})
 }
+
+func TestPredicateWireJSON(t *testing.T) {
+	got, err := jsonv2.Marshal(policyPredicate("eq?", policyCapture("x", "ONE"), policyString("a")))
+	want := `{"pattern":0,"steps":[{"kind":"string","value":"eq?","quantifier":null},{"kind":"capture","value":"x","quantifier":"ONE"},{"kind":"string","value":"a","quantifier":null}]}`
+	if err != nil || string(got) != want {
+		t.Fatalf("legacy predicate wire changed: %s %v", got, err)
+	}
+}
