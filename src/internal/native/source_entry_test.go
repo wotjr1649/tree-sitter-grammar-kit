@@ -79,3 +79,44 @@ func TestInputRootsRefuseBeforeOutput(t *testing.T) {
 		}
 	}
 }
+
+func TestOracleBoundInputsAndPredicates(t *testing.T) {
+	source := "a = 1;\nb = 2;\n"
+	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "filtered", Source: `((identifier) @x (#eq? @x "a"))`}}, source)
+	out := filepath.Join(t.TempDir(), "set")
+	req := oracleRequest(t, profile, root, out)
+	cases, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cases.Close()
+	grammar, err := os.OpenRoot(req.GrammarRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer grammar.Close()
+	req.Inputs = &InputRoots{Cases: cases, Grammar: grammar}
+	req.Root, req.GrammarRoot = t.TempDir(), t.TempDir() // Valid empty paths cannot supply either input.
+	result, err := runOracle(t, req)
+	if err != nil || result.ExecutionStatus != kit.StatusCompleted || result.Set == nil || !result.Set.Valid || result.Set.Records != 1 {
+		t.Fatalf("bound oracle did not complete: %v %+v", err, result)
+	}
+	var record OracleRecord
+	data, err := os.ReadFile(filepath.Join(out, "records", "00000-ca.json"))
+	if err != nil || json.Unmarshal(data, &record) != nil || !record.Complete || len(record.Steps) != 1 || record.Steps[0].Incremental == nil || len(record.Steps[0].Incremental.Queries) != 1 {
+		t.Fatalf("bound oracle record: %v %s", err, data)
+	}
+	query := record.Steps[0].Incremental.Queries[0]
+	if query.Status != kit.StatusCompleted || query.Evaluation != EvalEvaluated || len(query.Captures) != 1 {
+		t.Fatalf("bound predicate not evaluated: %+v", query)
+	}
+	got := query.Captures[0]
+	if got.Name != "x" || got.Type != "identifier" || got.StartByte != 0 || got.EndByte != 1 || source[got.StartByte:got.EndByte] != "a" || record.Steps[0].SourceSHA256 != record.Input.SHA256 {
+		t.Fatalf("bound capture/source changed: %+v", got)
+	}
+	for _, borrowed := range []*os.Root{cases, grammar} {
+		if _, err := borrowed.Stat("."); err != nil {
+			t.Fatalf("native closed caller input root: %v", err)
+		}
+	}
+}
