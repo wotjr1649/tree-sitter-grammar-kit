@@ -128,6 +128,42 @@ func TestQueryReferenceConnection(t *testing.T) {
 	}
 }
 
+func TestQueryReferenceConnectionPreservesNativeTupleCounts(t *testing.T) {
+	for _, kind := range []string{"missing-expected", "missing-structural", "wrong-expected"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			tuple := f.witness["required"].([]any)[0].(map[string]any)
+			want := AssessBlocked
+			switch kind {
+			case "missing-expected":
+				tuple["expected"] = nil
+			case "missing-structural":
+				tuple["structural"] = nil
+			case "wrong-expected":
+				tuple["expected"] = []Capture{}
+				want = AssessFail
+			}
+			f.approve(t, "witness.json")
+			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if e != nil || r.Assessment != want || r.Required != 3 || r.Verified != 2 || r.NativeWitness == nil || r.NativeWitness.Verified != 2 {
+				t.Fatalf("tuple completion lost: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionRequiresNativeTupleCompletion(t *testing.T) {
+	f := newReferenceFixture(t)
+	tree := f.projection["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)
+	query := tree["queries"].([]any)[0].(map[string]any)
+	query["captures"] = f.witness["required"].([]any)[0].(map[string]any)["expected"]
+	f.approve(t, "projection.json")
+	r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+	if e != nil || r.Assessment != AssessFail || r.Required != 3 || r.Verified != 2 || r.NativeWitness == nil || r.NativeWitness.Verified != 2 {
+		t.Fatalf("reference equality bypassed native tuple validation: %+v %v", r, e)
+	}
+}
+
 func TestQueryReferenceConnectionRequiredWitnessInput(t *testing.T) {
 	for _, kind := range []string{"missing", "malformed", "different-pin", "oversized"} {
 		t.Run(kind, func(t *testing.T) {

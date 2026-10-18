@@ -193,10 +193,11 @@ func VerifyQueryWitness(ctx context.Context, req QueryWitnessRequest) (QueryWitn
 		return res, e
 	}
 	defer r.cancel()
-	return verifyQueryWitness(r, req)
+	return verifyQueryWitness(r, req, nil)
 }
 
-func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult, resultErr error) {
+func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res QueryWitnessResult, resultErr error) {
+	clear(verified)
 	res = QueryWitnessResult{Report: newReport("query witness"), ResultSchema: QueryWitnessResultSchema}
 	defer func() {
 		if resultErr != nil {
@@ -626,6 +627,9 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			blocked("QUERY_WITNESS_QUERY_INELIGIBLE", path)
 		} else if caseBound && !badSteps[step] && !badProjectionTrees[p] && contradictions == contradictionsBefore && meta != nil && tuple.Structural != nil && tuple.Expected != nil && projectionOK {
 			res.Verified++
+			if i < len(verified) {
+				verified[i] = true
+			}
 			if evaluation == "EVALUATED" {
 				res.Evaluated++
 			}

@@ -45,7 +45,7 @@ func replayQueryWitness(x *replayEnv) *Error {
 	if x.prof.Records != nil && !slices.Equal(x.prof.Records, []string{reg.Case}) {
 		x.finding("RECORDS_WORKLOAD_MISMATCH", "", "등록 record 목록이 query registration과 다르다")
 	}
-	res, err := verifyQueryWitness(x.r, req)
+	res, err := verifyQueryWitness(x.r, req, nil)
 	if err != nil {
 		return asError(err)
 	}

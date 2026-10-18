@@ -266,7 +266,7 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 			}
 		}
 	}
-	witnessReady := false
+	witnessBound := witnessBytes != nil && slices.Equal(witnessBytes, req.WitnessRegistration)
 	var versions [][]byte
 	if source != nil {
 		if !SourceEncodingValid(EncodingUTF8, source) {
@@ -287,7 +287,8 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 	if witnessBytes != nil && !slices.Equal(witnessBytes, req.WitnessRegistration) {
 		add("REFERENCE_WITNESS_BYTES_MISMATCH", reg.WitnessRegistration.Path, true)
 	}
-	witness, witnessErr := verifyQueryWitness(r, QueryWitnessRequest{Registration: req.WitnessRegistration, Source: source, Raw: raw, Projection: projection})
+	nativeVerified := make([]bool, len(witnessReg.Required))
+	witness, witnessErr := verifyQueryWitness(r, QueryWitnessRequest{Registration: req.WitnessRegistration, Source: source, Raw: raw, Projection: projection}, nativeVerified)
 	res.NativeWitness = &witness
 	if witnessErr != nil {
 		return res, witnessErr
@@ -296,8 +297,6 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		add("REFERENCE_NATIVE_WITNESS_FAILED", "native", true)
 	} else if witness.Assessment != AssessPass {
 		add("REFERENCE_NATIVE_WITNESS_BLOCKED", "native", false)
-	} else {
-		witnessReady = witnessBytes != nil
 	}
 	if source != nil && uint64(len(source)) == witnessReg.Input.Bytes && digestHex(source) == witnessReg.Input.SHA256 {
 		edited, _, editErr := ApplyEdits(witnessReg.Encoding, source, witnessReg.Edits, NativeOperations()["native-query-large"].InputBytes)
@@ -404,7 +403,7 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		}
 		observed[referenceKey(obs.Query, obs.Step)] = ref
 	}
-	for _, tuple := range witnessReg.Required {
+	for i, tuple := range witnessReg.Required {
 		if e := r.check(); e != nil {
 			return res, e
 		}
@@ -463,7 +462,7 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 		if !checkAnchors() {
 			continue
 		}
-		if witnessReady && buildReady && witnessReg.Encoding == EncodingUTF8 && q.Metadata != nil && tuple.Structural != nil && tuple.Expected != nil {
+		if witnessBound && nativeVerified[i] && buildReady && witnessReg.Encoding == EncodingUTF8 && q.Metadata != nil && tuple.Structural != nil && tuple.Expected != nil {
 			res.Verified++
 		}
 	}
