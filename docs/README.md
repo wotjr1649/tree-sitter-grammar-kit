@@ -59,6 +59,8 @@ Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) 
 
 ## Task-specific development rules
 
+계측 query reference의 독립 identity·완료 조건·빌드·owned 대조와 전체 지원 대상 연결 기준은 [계측 query reference 계약](specs/instrumented-query-reference.md)을 따른다.
+
 Ordinary development, fixes, and reviews have no session-prompt prerequisite. The [validation contract](validation/validation.md) owns Issue, task-branch/worktree, and completion requirements. Read the affected code, callers, existing checks, and relevant contracts above. A review-only request ends with findings and evidence; it does not expand into modifications or PR creation.
 
 Use the [Issue template](../.github/ISSUE_TEMPLATE/task.md) to record change-work goals and acceptance criteria, and the [PR template](../.github/PULL_REQUEST_TEMPLATE.md) to identify the criteria satisfied by the actual diff and validation. A partial PR must identify remaining work rather than claim whole-Issue completion. Templates capture intent and evidence; they do not authorize remote posting or replace validation gates.
