@@ -49,6 +49,8 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 
 Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지면 **INELIGIBLE/BLOCKED**로 별도 집계한다. Kit 값으로 reference의 필드를 채우거나 stock CLI와 같다는 이유로 kit 계약을 완화하지 않는다. 전체 26 route × 3 host와 등록된 추가 role, producer의 opt-in source 보관, 새 claim/reducer/inventory/fan-in 연결 및 실제 main 검증은 후속 완료 조건이다. 이 도구나 owned 대조 하나로 해당 조건을 충족한 것으로 처리하지 않는다.
 
+후속 연결 검증의 내부 준비 경로는 기존 `VerifyEvidence`가 해석한 graph와 동일 guard 읽기에서 hash가 확인된 요청 member bytes만 보관한다. 보관 대상을 골라도 다른 member·graph·policy·한도·취소 검사는 그대로 실행하며, 일반 member에 replay-result용 record 한도를 추가하지 않는다. 빈 member는 누락과 구분하고 실패한 member의 bytes나 이전 호출의 snapshot을 재사용하지 않는다. 이 내부 준비만으로 reference eligibility API나 qualification 연결이 구현된 것은 아니다.
+
 입력 identity JSON은 1 MiB, reference binary는 64 MiB 한도를 파일 열기 전 stat과 열린 regular file의 fstat에서 확인한다. JSON은 상한+1까지만 읽고 binary는 스트리밍 hash를 사용한다. 실행 중 파일 크기가 늘어나도 상한을 넘으면 거부한다. `complete`는 JSON boolean `true`만 허용하며 truthy 문자열·숫자로 완료를 대신하지 않는다. Owned control은 identity가 결속한 selected-tree receipt도 직접 확인하고 종료 직전 보존 bytes를 재확인한다. `test_pipeline.py`는 1 GiB sparse 입력의 사전 거부와 완료 값 타입 반례를 포함한다.
 
 Owned control의 compiler 출력 library도 hash 계산 전에 64 MiB 한도와 regular-file 검사를 적용한다. 실제 build/check 진입점 fault 회귀는 `TSGK_REFERENCE_SUPERVISOR`·`TSGK_REFERENCE_CC`·`TSGK_REFERENCE_AR`·`TSGK_REFERENCE_GIT`·`TSGK_REFERENCE_ARCHIVE`가 모두 지정됐을 때 실행하며, 없으면 해당 회귀는 SKIP으로 기록한다. 고정 버전의 접미사·다른 patch 버전, selected-tree 중 source/vendor 변경, compiler의 상한 초과 library를 실제 supervisor로 실행해 후속 단계와 완료 identity 생성 전에 거부하는지 확인한다.

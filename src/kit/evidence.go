@@ -121,6 +121,20 @@ func decodeTyped(doc string, data []byte, v any) *Error {
 // accepts only the listed evidence modes. Integrity is not authenticity: hashes bind
 // bytes, not a publisher.
 func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, error) {
+	return verifyEvidence(ctx, req, nil)
+}
+
+// Requested bytes come from the same guarded pass that hashes every graph member.
+type evidenceSnapshot struct {
+	wanted map[string]bool
+	files  map[string][]byte
+	nodes  []EvidenceNode
+}
+
+func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot) (EvidenceResult, error) {
+	if snapshot != nil {
+		snapshot.files, snapshot.nodes = map[string][]byte{}, nil
+	}
 	res := EvidenceResult{Report: newReport("evidence verify"), ResultSchema: EvidenceResultSchema, Modes: map[string]int{}, Explanation: []string{}}
 	bad := func(e *Error) (EvidenceResult, error) {
 		failReport(&res.Report, e)
@@ -171,6 +185,9 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	}
 	if e := decodeTyped("evidence", data, &doc); e != nil {
 		return bad(e)
+	}
+	if snapshot != nil {
+		snapshot.nodes = doc.Nodes
 	}
 	add := func(code, path, msg string) { x.finding(code, path, msg) }
 	if st.sha256 != pol.EvidenceSHA256 {
@@ -232,6 +249,20 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 				var b []byte
 				if b, e = x.read(f.Path, f.Bytes, f.SHA256); e == nil {
 					kept[f.Path] = b
+					if snapshot != nil && snapshot.wanted[f.Path] {
+						if b == nil {
+							b = []byte{}
+						}
+						snapshot.files[f.Path] = b
+					}
+				}
+			} else if snapshot != nil && snapshot.wanted[f.Path] {
+				var b []byte
+				if b, e = x.verifyFileBytes(f.Path, f.Bytes, f.SHA256, true); e == nil {
+					if b == nil {
+						b = []byte{}
+					}
+					snapshot.files[f.Path] = b
 				}
 			} else {
 				e = x.verifyFile(f.Path, f.Bytes, f.SHA256)
