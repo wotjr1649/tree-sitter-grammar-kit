@@ -8,20 +8,12 @@ import subprocess
 import sys
 import tarfile
 import tomllib
-from checks import execution, snapshot, unchanged, unchanged_bytes, unit
+from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha as sha
 
 UPSTREAM = "10eb5ac119eec9cb4267a8e035066473983f5f3a"
 ARCHIVE = "6025ffd838c63bb011eeec9b259891ae0e051a3db9aa24c8812679f7462a50a9"
 BINDING = "3a350f2c4735d3a07a0892547afff9f34cabe1e63f962e2d4f26e1b7db8836c2"
 TARGETS = ("x86_64-pc-windows-gnu", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin")
-
-
-def sha(path):
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def main():
@@ -88,7 +80,9 @@ def main():
         assert not (parent / ".cargo/config").exists() and not (parent / ".cargo/config.toml").exists(), "ancestor Cargo configuration"
     here = Path(__file__).resolve().parent
     input_hashes = {name: sha(here / name) for name in ("Cargo.toml", "main.rs", "instrumentation.patch", "build.py", "checks.py")}
-    tool_hashes = {name: sha(getattr(args, name)) for name in ("cargo", "rustc", "cc", "ar", "git", "supervisor")}
+    tools = {name: getattr(args, name) for name in ("cargo", "rustc", "cc", "ar", "git", "supervisor")}
+    tools["python"] = Path(sys.executable).resolve(strict=True)
+    tool_hashes = {name: sha(path) for name, path in tools.items()}
     assert sha(source / "lib/binding_rust/lib.rs") == "1837935ea37e0d8bde7c4e6daab9e6020047b7d7af40fbc55eceb6c982403b7a"
     execute("patch-check", args.git, ["apply", "--unidiff-zero", "--check", here / "instrumentation.patch"])
     execute("patch", args.git, ["apply", "--unidiff-zero", here / "instrumentation.patch"])
@@ -104,7 +98,7 @@ def main():
     config = source / ".cargo/config.toml"
     config.write_text(config.read_text(encoding="utf-8") + '\n[source.crates-io]\nreplace-with = "tsgk-vendored"\n[source.tsgk-vendored]\ndirectory = ' + json.dumps(str(args.vendor)) + "\n", encoding="utf-8", newline="")
     original_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
-    versions = {"rustc": execute("rustc-version", args.rustc, ["-vV"]), "cargo": execute("cargo-version", args.cargo, ["-vV"]), "cc": execute("cc-version", args.cc, ["--version"])}
+    versions = {"rustc": execute("rustc-version", args.rustc, ["-vV"]), "cargo": execute("cargo-version", args.cargo, ["-vV"]), "cc": execute("cc-version", args.cc, ["--version"]), "python": sys.version}
     assert "release: 1.97.1" in versions["rustc"] and "cargo 1.97.1 " in versions["cargo"]
     metadata = execute("metadata", args.cargo, ["metadata", "--offline", "--format-version", "1", "--filter-platform", args.target])
     effective_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
@@ -112,6 +106,7 @@ def main():
     after = {(p["name"], p["version"]): p for p in effective_lock["package"]}
     assert set(after) - set(before) == {("tsgk-query-reference", "0.1.0")} and all(after.get(key) == value for key, value in before.items())
     execute("selected-tree", args.cargo, ["tree", "--offline", "--frozen", "--package", "tsgk-query-reference", "--target", args.target, "--edges", "normal,build", "--prefix", "none", "--format", "{p}|{f}"])
+    selected_tree = read_bounded(args.work / "selected-tree.json", 4 * 1024**2)
     source_snapshot, vendor_snapshot = snapshot(source), snapshot(args.vendor)
     snapshot_bytes = {"source-snapshot.json": json.dumps(source_snapshot, sort_keys=True).encode(),
         "vendor-snapshot.json": json.dumps(vendor_snapshot, sort_keys=True).encode()}
@@ -121,7 +116,8 @@ def main():
     unit(execute("unit", args.cargo, ["test", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2", "--bin", "tsgk-query-reference", "--", "--exact", "tests::capture_occurrences_are_complete_and_unique"], wall=120))
     binary = args.work / "target" / args.target / "release" / ("tsgk-query-reference.exe" if os.name == "nt" else "tsgk-query-reference")
     assert all(sha(here / name) == digest for name, digest in input_hashes.items()), "reference inputs changed during build"
-    assert all(sha(getattr(args, name)) == digest for name, digest in tool_hashes.items()), "tool changed during build"
+    assert all(sha(tools[name]) == digest for name, digest in tool_hashes.items()), "tool changed during build"
+    unchanged_bytes(args.work / "selected-tree.json", selected_tree)
     assert all(sha(package / name) == input_hashes[name] for name in ("Cargo.toml", "main.rs"))
     unchanged(source, source_snapshot)
     unchanged(args.vendor, vendor_snapshot)
@@ -130,7 +126,8 @@ def main():
     assert sha(source / "lib/binding_rust/lib.rs") == BINDING
     identity = {"schema": "tsgk-instrumented-reference-build/r1", "upstream_commit": UPSTREAM, "archive_sha256": ARCHIVE, "binding_sha256": BINDING, "target": args.target,
         "binary_sha256": sha(binary), "lock_sha256": sha(source / "Cargo.lock"), "metadata_sha256": hashlib.sha256(metadata.encode()).hexdigest(), "versions": versions,
-        "inputs": input_hashes, "tools": tool_hashes, "source_snapshot_sha256": hashlib.sha256(snapshot_bytes["source-snapshot.json"]).hexdigest(),
+        "inputs": input_hashes, "tools": tool_hashes, "tool_paths": {name: str(path) for name, path in tools.items()},
+        "selected_tree_sha256": hashlib.sha256(selected_tree).hexdigest(), "source_snapshot_sha256": hashlib.sha256(snapshot_bytes["source-snapshot.json"]).hexdigest(),
         "vendor_snapshot_sha256": hashlib.sha256(snapshot_bytes["vendor-snapshot.json"]).hexdigest(), "complete": True}
     (args.work / "identity.json").write_text(json.dumps(identity, indent=2), encoding="utf-8")
     print(json.dumps({"schema": identity["schema"], "binary_sha256": identity["binary_sha256"], "complete": True}))

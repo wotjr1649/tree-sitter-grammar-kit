@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, json, os, subprocess
 import argparse
 import sys
-from checks import execution, snapshot, unchanged, unchanged_bytes
+from checks import execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity
 if sys.flags.optimize:
     raise RuntimeError('assertions must be enabled')
 parser = argparse.ArgumentParser(description=__doc__)
@@ -19,18 +19,20 @@ dest.mkdir(exist_ok=False)
 (dest / 'tmp').mkdir()
 runner = args.supervisor
 binary = args.reference
-identity_bytes = args.identity.read_bytes()
-identity = json.loads(identity_bytes)
+identity_bytes = read_bounded(args.identity, 1024**2)
+identity = build_identity(identity_bytes)
 identity_sha = hashlib.sha256(identity_bytes).hexdigest()
-binary_sha = hashlib.sha256(binary.read_bytes()).hexdigest()
-assert identity['schema'] == 'tsgk-instrumented-reference-build/r1' and identity['complete']
+binary_sha = file_sha(binary, 64 * 1024**2)
+selected_tree_path = args.identity.parent / 'selected-tree.json'
+selected_tree_bytes = read_bounded(selected_tree_path, 4 * 1024**2)
+assert hashlib.sha256(selected_tree_bytes).hexdigest() == identity['selected_tree_sha256']
 assert binary_sha == identity['binary_sha256']
 assert identity['upstream_commit'] == '10eb5ac119eec9cb4267a8e035066473983f5f3a'
 for name, digest in identity['inputs'].items():
     assert name in ['Cargo.toml', 'main.rs', 'instrumentation.patch', 'build.py', 'checks.py']
     assert hashlib.sha256((Path(__file__).resolve().parent / name).read_bytes()).hexdigest() == digest
 assert set(identity['inputs']) == {'Cargo.toml', 'main.rs', 'instrumentation.patch', 'build.py', 'checks.py'}
-control_inputs = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in [('check.py', Path(__file__)), ('checks.py', Path(__file__).with_name('checks.py')), ('supervisor', runner), ('cc', args.cc)]}
+control_inputs = {name: file_sha(path) for name, path in [('check.py', Path(__file__)), ('checks.py', Path(__file__).with_name('checks.py')), ('supervisor', runner), ('cc', args.cc), ('python', Path(sys.executable).resolve(strict=True))]}
 env = {k: os.environ[k] for k in ['SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT'] if k in os.environ}
 base = 'C:/Windows/System32;C:/Windows' if os.name == 'nt' else '/usr/bin:/bin'
 env.update({'PATH': str(args.cc.parent) + os.pathsep + base, 'TEMP': str(dest / 'tmp'), 'TMP': str(dest / 'tmp'), 'TMPDIR': str(dest / 'tmp')})
@@ -151,9 +153,10 @@ r = json.loads(receipt['stdout'])
 assert code != 0 and r['code'] == 'LIBRARY_SHA256_MISMATCH' and (not r['complete'])
 passed.append('wrong-library-sha-rejected')
 unchanged(grammar, grammar_inputs)
-assert sha(binary.read_bytes()) == binary_sha and sha(library.read_bytes()) == library_sha
+assert file_sha(binary, 64 * 1024**2) == binary_sha and file_sha(library, 64 * 1024**2) == library_sha
 unchanged_bytes(args.identity, identity_bytes)
-for name, path in [('check.py', Path(__file__)), ('checks.py', Path(__file__).with_name('checks.py')), ('supervisor', runner), ('cc', args.cc)]:
-    assert sha(path.read_bytes()) == control_inputs[name]
+unchanged_bytes(selected_tree_path, selected_tree_bytes)
+for name, path in [('check.py', Path(__file__)), ('checks.py', Path(__file__).with_name('checks.py')), ('supervisor', runner), ('cc', args.cc), ('python', Path(sys.executable).resolve(strict=True))]:
+    assert file_sha(path) == control_inputs[name]
 (dest / 'summary.json').write_text(json.dumps({'kind': 'OWNED_MANUAL_CONTROLS_NOT_ALL_ROUTE_ELIGIBILITY', 'passed': passed, 'binary_sha256': binary_sha, 'library_sha256': library_sha, 'grammar_inputs': grammar_inputs, 'identity_sha256': identity_sha, 'control_inputs': control_inputs}, indent=2), encoding='utf-8')
 print(json.dumps({'passed': len(passed), 'kind': 'OWNED_MANUAL_CONTROLS_NOT_ALL_ROUTE_ELIGIBILITY'}))

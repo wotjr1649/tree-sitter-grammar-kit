@@ -7,10 +7,32 @@ import sys
 import tempfile
 import unittest
 
-from checks import execution, snapshot, unchanged, unchanged_bytes, unit
+from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity
 
 
 class IntegrityTests(unittest.TestCase):
+    def test_input_files_are_bounded_before_reading(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'oversized'
+            with path.open('wb') as stream:
+                stream.truncate(1024**3)
+            for operation in (read_bounded, file_sha):
+                with self.assertRaisesRegex(RuntimeError, 'FILE_LIMIT_OR_TYPE'):
+                    operation(path, 1024)
+                with self.assertRaisesRegex(RuntimeError, 'FILE_LIMIT_OR_TYPE'):
+                    operation(Path(directory), 1024)
+            path.write_bytes(b'abc')
+            self.assertEqual(read_bounded(path, 3), b'abc')
+            import hashlib
+            self.assertEqual(file_sha(path, 3), hashlib.sha256(b'abc').hexdigest())
+
+    def test_build_complete_is_exact_json_boolean(self):
+        for complete in ('false', 'true', 1, 0, False, None):
+            data = json.dumps({'schema': 'tsgk-instrumented-reference-build/r1', 'complete': complete})
+            with self.assertRaisesRegex(RuntimeError, 'BUILD_INCOMPLETE'):
+                build_identity(data)
+        self.assertIs(build_identity('{"schema":"tsgk-instrumented-reference-build/r1","complete":true}')['complete'], True)
+
     def test_selected_unit_must_run(self):
         unit("running 1 test\ntest tests::capture_occurrences_are_complete_and_unique ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n")
         for output in ("running 0 tests\ntest result: ok. 0 passed; 0 failed; 0 ignored;", "running 1 test\ntest tests::capture_occurrences_are_complete_and_unique ... ignored\ntest result: ok. 0 passed; 0 failed; 1 ignored;"):
@@ -45,7 +67,7 @@ class IntegrityTests(unittest.TestCase):
     def test_recorded_identity_and_snapshots_keep_validated_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for name in ('identity.json', 'source-snapshot.json', 'vendor-snapshot.json'):
+            for name in ('identity.json', 'source-snapshot.json', 'vendor-snapshot.json', 'selected-tree.json'):
                 path = root / name
                 original = b'{"validated":true}'
                 path.write_bytes(original)

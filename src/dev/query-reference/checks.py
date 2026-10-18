@@ -1,6 +1,47 @@
 """Fail-closed checks shared by reference preparation and owned controls."""
 import hashlib
+import json
+import os
 import re
+import stat
+
+
+def read_bounded(path, limit):
+    info = path.stat()
+    if path.is_symlink() or not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+        raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+    with path.open("rb") as source:
+        info = os.fstat(source.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+            raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+        data = source.read(limit + 1)
+    if len(data) > limit:
+        raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+    return data
+
+
+def file_sha(path, limit=128 * 1024**2):
+    info = path.stat()
+    if path.is_symlink() or not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+        raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+    digest, total = hashlib.sha256(), 0
+    with path.open("rb") as source:
+        info = os.fstat(source.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+            raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+        while chunk := source.read(min(1024**2, limit - total + 1)):
+            total += len(chunk)
+            if total > limit:
+                raise RuntimeError("REFERENCE_FILE_LIMIT_OR_TYPE")
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_identity(data):
+    value = json.loads(data)
+    if value["schema"] != "tsgk-instrumented-reference-build/r1" or value["complete"] is not True:
+        raise RuntimeError("REFERENCE_BUILD_INCOMPLETE")
+    return value
 
 
 def execution(receipt, expected_exit):
@@ -45,5 +86,5 @@ def unchanged(directory, expected):
 
 
 def unchanged_bytes(path, expected):
-    if path.read_bytes() != expected:
+    if read_bounded(path, len(expected)) != expected:
         raise RuntimeError("REFERENCE_INPUT_CHANGED")

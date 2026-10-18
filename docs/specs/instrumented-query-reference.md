@@ -6,7 +6,7 @@
 
 Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f3a`다. [instrumentation.patch](../../src/dev/query-reference/instrumentation.patch)는 Rust binding에 읽기 전용 query pointer와 별도 raw capture iterator만 추가한다. 기존 iterator의 기본값은 predicate 평가를 유지한다. 별도 iterator는 predicate 탈락 match를 제거하지 않으며, emitter가 변경하지 않은 upstream `QueryMatch::satisfies_text_predicates`에 원래 전체 match와 원 source를 넘긴다. Kit 평가기를 호출하거나 kit 결과를 읽지 않는다.
 
-원본 workspace·library manifest를 유지하고 emitter member 하나를 더한다. 원본 lock의 기존 package·version·checksum·dependency를 바꾸지 않는다. `build.py`는 새 package 하나만 추가됐는지 확인한 뒤 `--offline --frozen`으로 선택 package만 빌드한다. 전체 CLI·WASM·bindgen 빌드는 이 경로에 포함하지 않는다. 실제 selected dependency/features, metadata, 실행 요청·결과, 원본 archive·patch·emitter·manifest·lock·도구·binary hash를 별도로 보존한다. Cargo offline은 의존성 취득 방식이며 network sandbox를 뜻하지 않는다.
+원본 workspace·library manifest를 유지하고 emitter member 하나를 더한다. 원본 lock의 기존 package·version·checksum·dependency를 바꾸지 않는다. `build.py`는 새 package 하나만 추가됐는지 확인한 뒤 `--offline --frozen`으로 선택 package만 빌드한다. 전체 CLI·WASM·bindgen 빌드는 이 경로에 포함하지 않는다. 실제 selected dependency/features의 전체 `selected-tree.json` receipt hash와 종료 전 불변성, metadata, 실행 요청·결과, 원본 archive·patch·emitter·manifest·lock·도구·binary hash를 별도로 보존한다. Build 도구 목록은 실제 Python interpreter의 절대 경로·파일 hash·`sys.version`도 포함하며 build 전후 hash가 같아야 한다. Cargo offline은 의존성 취득 방식이며 network sandbox를 뜻하지 않는다.
 
 `tsgk-instrumented-reference-build/r1`의 `complete`는 빌드 절차 완료다. Caller가 독립적으로 선택한 upstream·도구 취득 근거 및 등록 hash와 연결해야 한다. Evidence가 자체 제출한 identity/hash만으로 reference 자격을 만들지 않는다. 공개 source, compiler/standard-library provenance, 실제 feature closure와 실행 문맥의 신뢰 검토는 자격 검증에 계속 필요하다.
 
@@ -48,3 +48,5 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 새 qualification은 등록된 필수 `(route, platform, role, case, query, step, tree_role)`를 결과 전에 고정해야 한다. 필수 tuple 0개·claim 누락·미실행·partial·reference 부적격·source witness 누락은 BLOCKED다. Raw/projection/reference·identity 모순이나 변조는 FAIL이다. Predicate 의미 PASS는 완료된 EVALUATED 결과, 독립 full CST·structural stream·metadata 일치, 수작업 anchor와 전체 evaluated capture 기대값, 저장 witness의 재계산을 모두 요구한다.
 
 Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지면 **INELIGIBLE/BLOCKED**로 별도 집계한다. Kit 값으로 reference의 필드를 채우거나 stock CLI와 같다는 이유로 kit 계약을 완화하지 않는다. 전체 26 route × 3 host와 등록된 추가 role, producer의 opt-in source 보관, 새 claim/reducer/inventory/fan-in 연결 및 실제 main 검증은 후속 완료 조건이다. 이 도구나 owned 대조 하나로 해당 조건을 충족한 것으로 처리하지 않는다.
+
+입력 identity JSON은 1 MiB, reference binary는 64 MiB 한도를 파일 열기 전 stat과 열린 regular file의 fstat에서 확인한다. JSON은 상한+1까지만 읽고 binary는 스트리밍 hash를 사용한다. 실행 중 파일 크기가 늘어나도 상한을 넘으면 거부한다. `complete`는 JSON boolean `true`만 허용하며 truthy 문자열·숫자로 완료를 대신하지 않는다. Owned control은 identity가 결속한 selected-tree receipt도 직접 확인하고 종료 직전 보존 bytes를 재확인한다. `test_pipeline.py`는 1 GiB sparse 입력의 사전 거부와 완료 값 타입 반례를 포함한다.
