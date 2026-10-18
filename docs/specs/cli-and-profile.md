@@ -23,6 +23,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `oracle record --root PATH --profile FILE [--fact-pack FILE] [--source-witness] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
+| `evidence query-reference --input DIR --profile FILE --registration FILE --witness-registration FILE` | 별도 승인된 저장 reference 연결 | READ_DATA, experimental |
 | `qualify --inventory FILE --candidate SHA --host PLATFORM=DIR ...` | 한 후보의 host 실행 기록을 등록 칸(26 route × 3 OS)과 추가 역할 행으로 집계, 세 host 의미 비교 | READ_DATA, 08 |
 
 명령은 network·tool 설치를 묵시적으로 하지 않는다. `--allow CAPABILITY`를 반복 지정해 실행 권한을 전달하되 profile 요청과 실제 backend가 모두 충족되어야 한다. fetch 준비는 별도 명시 절차이고 위 offline 명령에 자동 fetch 옵션을 숨기지 않는다. `--git-provenance` 같은 외부 Git 호출은 S01에서 별도 opt-in 계약·권한을 먼저 확정하기 전 구현하지 않는다.
@@ -192,6 +193,16 @@ query 열은 query 실행 하나의 시간 예산이며 process wall 안에 들�
 사례 결과는 `S05 구현`의 모든 필드에 다음을 더한다. tree마다 `queries`(query마다 `id`, `sha256`, status·code, `evaluation`, 오류, pattern 수, capture 이름, predicate 단계, match 수, `partial`, 평가된 `captures`)를 둔다. 완료되지 않은 tree에는 모든 query를 `NOT_RUN`/`TREE_NOT_COMPLETED`로 둔다. full tree에는 S05 선언 항목(`declarations`)과 API 판정(`api{revision, consistent, first_difference, position_navigation_divergences, first_divergence}`)도 둔다. edit step에는 incremental/fresh query 비교(`query_comparison`)를 둔다. replay는 full/summary/record form에 대응하는 envelope 유무를 필수로 검사한다. full은 tree만, summary는 summary만, record는 둘 다 없이 기록한다. full/summary envelope의 schema·완료 status·입력 bytes/hash/encoding도 실제 step과 대조한다. API를 등록한 완료 full tree의 qualification은 다섯 API 필드와 사례 claim을 필수로 검사한다. 누락·null 관측, false consistent, 첫 차이, positional divergence가 있는 PASS 주장을 거부한다. 완료 SVC observation-only는 API NOT_CLAIMED, summary/record만 있는 case는 API BLOCKED를 요구한다. full tree와 summary/record를 혼합한 case는 BLOCKED이며, 관측된 full tree의 실제 차이로 FAIL이 우선될 수 있다. 이 NOT_CLAIMED와 BLOCKED는 full tree API 성공 근거가 아니다. 사례 수준에는 S06 claim 다섯 개(`oracle_claims`), query 기대값 결과(`query_expectations`), pack 사실(`facts`: 재현한 선언 항목과 S05 일치 여부, 동적 SQL 사실과 known miss, XML 구조 capture 수, 첫 차이)를 둔다. full tree envelope의 `capabilities`는 producer의 `query`·`api` 값이고 `captures`는 `null`이다(capture는 query identity와 함께 query마다 있다). 판정은 S05 claim과 S06 claim 중 가장 나쁜 값이다.
 
 Oracle 기대값의 정수는 uint32로 포화 변환하지 않는다. query `error.offset`은 해당 query의 UTF-8 source 길이 이하(EOF 포함)여야 하며 위반은 `EXPECT_QUERY_OFFSET_INVALID`다. `dynamic_sql_expect`의 fact·known miss span은 uint32의 `0 ≤ start ≤ end ≤ input.bytes`(step 0)를 만족해야 하며 위반은 `EXPECT_DYNAMIC_RANGE_INVALID`다. fact point의 row·column은 uint32이고 각각 input.bytes 이하이며 시작 point가 끝 point보다 뒤일 수 없다(`EXPECT_DYNAMIC_POINT_INVALID`). 실제 byte/point 대응은 native 관측과 기대값 대조가 판정한다.
+
+## 저장 reference 연결 CLI (#216, experimental)
+
+```text
+tsgk evidence query-reference --input DIR --profile POLICY --registration CONNECTION --witness-registration WITNESS [--out PATH]
+```
+
+세 JSON 문서는 caller가 evidence와 별도로 승인하며 모두 input 밖에 있어야 한다. 외부 경로라는 사실만으로 독립 승인이 입증되지는 않는다. CLI는 원본 bytes를 `VerifyQueryReferenceConnection`에 전달하며, evidence 내부 등록 파일이나 자체 제출 hash로 승인 입력을 만들지 않는다. 원래 문서의 부모와 resolved leaf의 위치를 기존 경로 guard로 확인하므로 외부 symlink가 내부 문서를 가리키는 경우도 거부한다. 신뢰 문서 경로의 확인 불능은 exit2이며, 실제 읽기 실패는 exit4다. 기존 bounded `readDocument`, API deadline·취소, 출력 no-clobber 규칙을 재사용한다. 필수 witness 입력은 graph member의 누락을 채우지 않는다.
+
+API의 `tsgk-query-reference-connection-result/r1`을 그대로 출력해 required/verified/native_witness를 보존한다. PASS만 exit0, FAIL은1, BLOCKED·자원 한도는3, 잘못된 등록은2, I/O는4, 취소는130이다. 오류 report는 stdout에만 출력하고 `--out`은 생성하지 않는다. 완료된 FAIL/BLOCKED report는 정상 완료 결과로 저장할 수 있다. Process·native 도구는 실행하지 않는다. [공개 API](public-go-api.md)와 [계측 reference 계약](instrumented-query-reference.md)이 비교·입력 한도·신뢰 범위를 소유한다. 이 명령은 저장 데이터 연결 검사이며 기존 replay r1의 결과 형식을 변경하거나 query_semantics qualification을 추가하지 않는다.
 
 ## S07 구현 — replay, evidence verify
 
