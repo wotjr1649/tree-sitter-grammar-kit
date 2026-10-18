@@ -86,6 +86,16 @@ S07은 E0를 확장하고 새 report 체계를 만들지 않는다. `tsgk-replay
 
 `stored-query-witness` gate는 [공개 witness API](public-go-api.md#저장-query-witness-api-216)와 같은 구현·caller/wall budget으로 source/edit, raw full CST 및 전체 capture·독립 anchor·저장 projection을 재검증한다. legacy oracle reducer의 record-only claim을 승격하거나 기존 reducer를 자동 대체하지 않는다. 결과의 `recorded`는 replay subject에 등록한 과거 판정을 보존하고 `recomputed`는 이 저장 witness의 새 판정이다. `consumption`은 등록 case 하나의 처리 수이며 tuple별 완료 수는 직접 API 결과에서 제공한다. missing anchor는 BLOCKED이고 손상된 member·모순·미등록 파일·identity 불일치는 FAIL이다. 이 gate의 PASS를 reference eligibility나 전체 query qualification의 근거로 쓰지 않는다.
 
+`query-reference-connection-r1`은 [저장 reference 연결 계약](instrumented-query-reference.md)을 재사용하는 별도 data-only reducer다. `tsgk-replay/r1` 입력은 유지하며 caller-trusted profile이 `reference-registration`·`query-registration`·`reference-policy` member를 각각 하나, 정확한 bytes/hash로 독립 승인한다. 세 문서는 고정 하위 root `evidence/` 밖에 두고 그 안의 graph·모든 파일은 `reference-evidence` 역할로 등록한다. `retained`는 그 밖의 동반 파일만 허용한다. 대소문자만 바꾼 root prefix로 경계를 우회할 수 없다. Graph witness member가 없으면 외부 query-registration 사본으로 대신하지 않는다.
+
+Nested graph와 outer inventory는 같은 guarded read의 실제 bytes에 함께 결속한다. Outer/inner pin이 다르면 해당 member의 bytes를 연결 검증에 사용하지 않는다. Graph pin 모순은 공유 문맥 전체의 집계를 차단하고 개별 response pin 모순은 그 tuple만 제외한다. 실제 검증에 성공한 member만 outer 소비·검증 상태로 전달하며 정상 경로에서 다시 읽지 않는다. 재검사할 파일은 실제 추가 읽기도 같은 누적 예산에 넣는다. Held parent의 `OpenRoot("evidence")`로 child를 열고 전후 plain directory identity를 대조하며, 같은 run의 caller/wall/read 예산을 빌린다. pathname을 다시 열거나 중첩 wall/read 예산을 새로 부여하지 않는다.
+
+Outer `identities`는 `registration`·`witness`·`evidence-policy`(각 승인 원문 hash), `source`(초기 source hash), `route`, `platform`, `role`, `policy`(predicate policy)를 정확히 결속한다. Subject의 run/attempt/platform은 선택 native identity와 같아야 한다. Subject의 evidence mode와 기록 판정도 같은 graph pass에서 얻은 native 기록과 대조한다. Subject commit은 독립 등록의 역사적 선언이며 실행 진위의 증거가 아니다. 명시 `records`는 witness case 하나와 같아야 한다.
+
+이 reducer만 `tsgk-replay-result/r2`를 내며 `query_reference`에 전체 `QueryReferenceConnectionResult`를 보존한다. `required`·`verified`·`native_witness`·전체 판정/findings를 gate나 case 수로 축약하지 않는다. `stored-reference-connection` gate와 case 소비 수1은 tuple 분모와 별개다. Core 완료 결과에는 full payload·native 분모 동일성·reference verified≤native verified·gate/재계산 판정의 일관성을 요구한다. 이미 확정된 payload/native registration hash는 outer 관측 identity와 같아야 한다. 양수 reference verified에는 완료된 native witness가 필요하며, 완료 native FAIL은 payload FAIL로, payload FAIL은 outer FAIL로 전파한다. PASS는 양수 required 전체 완료다. 기존 reducer는 r1과 기존 JSON을 유지하고 r1에 새 payload/reducer를 끼운 결과는 reader가 거부한다. 이 gate의 PASS는 실행 진위·receipt closure·query_semantics qualification이나 전체 지원 검증이 아니다.
+
+Core 전 실패는 payload 없이 같은 r2의 실패 결과를 내며 재계산 gate·tuple 성공을 주장하지 않는다. Core 오류는 실제 부분 payload와 확정한 counter만 보존하며, 없는 native witness나 미확정 분모를 0/0 성공으로 만들지 않는다. Reader는 이 상태들을 정상 producer 결과로 구분하고 완료 core에만 전체 동등성 조건을 적용한다. Core 완료 뒤 outer 오류가 나도 이미 얻은 payload·case 수·재계산 판정은 유지한다. 확인한 모순 뒤 budget/wall 오류가 나면 실행 상태·오류 종류는 유지하되 assessment FAIL과 모순 진단을 보존한다. Error 결과는 전체 검증 완료나 qualification 자격이 아니다. Generic evidence reader의 revision 해석은 schema/상태 일관성 및 기존 subject/축 결속 검사이며 실행 인증이나 결과 재실행을 대신하지 않는다.
+
 reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reducers`). 각 reducer는 다시 계산하는 gate와 다시 계산하지 않는 기록을 선언한다.
 
 | reducer | 입력 | 다시 계산하는 gate | 기록으로 남는 것 |

@@ -18,8 +18,9 @@ import (
 
 // Replay schemas and the evidence modes and assessments S07 adds to E0.
 const (
-	ReplaySchema       = "tsgk-replay/r1"
-	ReplayResultSchema = "tsgk-replay-result/r1"
+	ReplaySchema                = "tsgk-replay/r1"
+	ReplayResultSchema          = "tsgk-replay-result/r1"
+	ReplayReferenceResultSchema = "tsgk-replay-result/r2"
 
 	ModeReplayedRaw           = "REPLAYED_RAW"
 	ModeCarriedForward        = "CARRIED_FORWARD"
@@ -123,22 +124,23 @@ type Consumption struct {
 // gates, the consumption account and Korean explanation lines.
 type ReplayResult struct {
 	Report
-	ResultSchema  string            `json:"result_schema"`
-	ProfileID     string            `json:"profile_id"`
-	Reducer       ReducerInfo       `json:"reducer"`
-	Operation     string            `json:"operation"`
-	Limits        ReplayLimits      `json:"limits"`
-	Subject       ReplaySubject     `json:"subject"`
-	Recorded      Verdict           `json:"recorded"`
-	Recomputed    Verdict           `json:"recomputed"`
-	EvidenceValid bool              `json:"evidence_valid"`
-	Observed      map[string]string `json:"observed_identities"`
-	Gates         []ReplayGate      `json:"gates"`
-	Consumption   Consumption       `json:"consumption"`
-	Members       int               `json:"members"`
-	Retained      int               `json:"retained_members"` // registered and hashed, not evidence of this reducer
-	BytesRead     uint64            `json:"bytes_read"`
-	Explanation   []string          `json:"explanation"`
+	ResultSchema   string                          `json:"result_schema"`
+	ProfileID      string                          `json:"profile_id"`
+	Reducer        ReducerInfo                     `json:"reducer"`
+	Operation      string                          `json:"operation"`
+	Limits         ReplayLimits                    `json:"limits"`
+	Subject        ReplaySubject                   `json:"subject"`
+	Recorded       Verdict                         `json:"recorded"`
+	Recomputed     Verdict                         `json:"recomputed"`
+	EvidenceValid  bool                            `json:"evidence_valid"`
+	Observed       map[string]string               `json:"observed_identities"`
+	Gates          []ReplayGate                    `json:"gates"`
+	Consumption    Consumption                     `json:"consumption"`
+	Members        int                             `json:"members"`
+	Retained       int                             `json:"retained_members"` // registered and hashed, not evidence of this reducer
+	BytesRead      uint64                          `json:"bytes_read"`
+	Explanation    []string                        `json:"explanation"`
+	QueryReference *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
 }
 
 // ReplayRequest names the evidence set root and the replay registration bytes.
@@ -295,6 +297,12 @@ type reducer struct {
 
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
+		"query-reference-connection-r1": {ReducerInfo{ID: "query-reference-connection-r1", Revision: "r1", Operation: "evidence-replay",
+			Inputs:      []string{"caller-approved reference registration, witness registration and evidence policy", "evidence/ closed graph and pinned members"},
+			Roles:       []string{"reference-registration", "query-registration", "reference-policy", "reference-evidence", "retained"},
+			Gates:       []string{"stored-reference-connection"},
+			Recorded:    []string{"execution authenticity", "receipt closure", "full query_semantics qualification"},
+			Description: "Stored reference data connections with complete tuple counters; no execution authenticity or qualification claim"}, replayQueryReferenceConnection},
 		"query-witness-r1": {ReducerInfo{ID: "query-witness-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-query-witness-registration/r1", "initial case source", "tsgk-native/r2 response", "saved full case projection"},
 			Roles:       []string{"query-registration", "case-source", "raw", "projection", "retained"},
@@ -412,6 +420,7 @@ type replayEnv struct {
 	nativeInputBytes     uint64
 	reuseObservation     bool
 	observationResponses map[string]bool
+	queryReference       *QueryReferenceConnectionResult
 }
 
 func (x *replayEnv) finding(code, path, msg string) {
@@ -696,8 +705,30 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	res := ReplayResult{Report: newReport("replay"), ResultSchema: ReplayResultSchema, Gates: []ReplayGate{}, Observed: map[string]string{}, Explanation: []string{}}
 	res.EvidenceMode = ModeReplayedRaw
 	res.Assessment = AssessNotAssessed
+	var partial *replayEnv
+	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
+		if res.ResultSchema == ReplayReferenceResultSchema && partial != nil {
+			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
+			res.Observed, res.BytesRead = partial.actual, partial.r.totalRead
+			if !partialFindingsCopied {
+				res.Findings = append(res.Findings, partial.findings...)
+			}
+			knownFailure := len(partial.findings) > 0 || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail
+			for _, g := range partial.gates {
+				knownFailure = knownFailure || g.Failed > 0
+			}
+			if knownFailure {
+				res.Assessment = AssessFail
+			}
+			if len(res.Gates) == 0 {
+				for _, g := range partial.gates {
+					g.finish()
+					res.Gates = append(res.Gates, *g)
+				}
+			}
+		}
 		res.Explanation = append(res.Explanation, explainFailure(e))
 		return res, e
 	}
@@ -713,6 +744,9 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		return bad(fail(KindUnsupported, "REDUCER_UNSUPPORTED", "replay#/reducer", nil))
 	}
 	res.Reducer = red.info
+	if red.info.ID == "query-reference-connection-r1" {
+		res.ResultSchema = ReplayReferenceResultSchema
+	}
 	lim, ok := ReplayOperations()[prof.Operation]
 	if !ok {
 		return bad(fail(KindUnsupported, "OPERATION_UNSUPPORTED", "replay#/operation", nil))
@@ -740,6 +774,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	defer root.Close()
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
 		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+	partial = x
 	for _, m := range prof.Members {
 		x.members[m.Path] = m
 	}
@@ -747,7 +782,15 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
 	}
-	if e := red.run(x); e != nil {
+	reduceErr := red.run(x)
+	res.QueryReference = x.queryReference
+	if res.ResultSchema == ReplayReferenceResultSchema && x.recorded.ExecutionStatus != "" {
+		if x.recorded != res.Recorded {
+			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
+		}
+		res.Recorded = x.recorded
+	}
+	if e := reduceErr; e != nil {
 		switch {
 		case e.Kind == KindResourceLimit && x.over:
 			x.needOver = true
@@ -845,6 +888,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		x.finding("CONSUMPTION_INCOMPLETE", c.First, "expected record의 누락·중복·미사용·순서 오류가 있다")
 	}
 	res.Findings = append(res.Findings, x.findings...)
+	partialFindingsCopied = true
 	if x.over {
 		res.Findings = append(res.Findings, Finding{Code: "RAW_OVER_LIMIT", Severity: "warning", Path: x.overAt, Message: "raw가 연산 한도를 넘어 읽지 않았다. 다시 계산하지 않고 기록 판정만 보존한다"})
 	}
