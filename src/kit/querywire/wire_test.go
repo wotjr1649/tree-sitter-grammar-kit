@@ -214,3 +214,28 @@ func TestCompileErrorSourceBinding(t *testing.T) {
 		}
 	}
 }
+
+func TestMatchAccounting(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		matches uint64
+		rows    [][2]int64
+		valid   bool
+	}{
+		{"empty", 0, nil, true}, {"duplicate", 1, [][2]int64{{0, 0}, {0, 0}}, true},
+		{"interleaved", 2, [][2]int64{{0, 0}, {1, 1}, {0, 0}}, true},
+		{"count", 2, [][2]int64{{0, 0}}, false}, {"skip", 2, [][2]int64{{1, 0}}, false},
+		{"pattern", 1, [][2]int64{{0, 0}, {0, 1}}, false}, {"negative-match", 1, [][2]int64{{-1, 0}}, false},
+		{"negative-pattern", 1, [][2]int64{{0, -1}}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := MatchAccounting(tc.matches, len(tc.rows), func(index int) (int64, int64) { return tc.rows[index][0], tc.rows[index][1] })
+			if got != tc.valid {
+				t.Fatalf("match accounting %v want %v", got, tc.valid)
+			}
+		})
+	}
+	if MatchAccounting(0, 0, nil) || MatchAccounting(0, -1, func(int) (int64, int64) { panic("negative count reached callback") }) {
+		t.Fatal("invalid callback/count accepted")
+	}
+}

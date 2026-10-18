@@ -380,6 +380,10 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 		// Capability refusal precedes projection; missing producer capability fields cannot prove its cause.
 		capabilityRefusal := raw.Status == StatusCompleted && projection.Status == StatusNotRun && len(projection.Steps) == 0 &&
 			slices.Contains([]string{"QUERY_CAPABILITY_MISSING", "API_CAPABILITY_MISSING"}, projection.Code)
+		if haveRaw && !capabilityRefusal && len(projection.Steps) != len(raw.Steps) {
+			bad("QUERY_WITNESS_STEP_COUNT_MISMATCH", "projection")
+			caseBound = false
+		}
 		if haveRaw && !capabilityRefusal && (projection.Status != raw.Status || (raw.Status != StatusCompleted && projection.Code != raw.Code)) {
 			bad("QUERY_WITNESS_CASE_STATUS_MISMATCH", "projection")
 			caseBound = false
@@ -485,6 +489,12 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				}
 				if q.Status == "INVALID_QUERY" && !querywire.ValidCompileError(q.Error, sources[qi].Source) {
 					bad("QUERY_WITNESS_QUERY_ERROR_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				}
+				if q.Evaluation == "STRUCTURAL" && q.Captures != nil && !querywire.MatchAccounting(q.Matches, len(q.Captures), func(index int) (int64, int64) {
+					c := q.Captures[index]
+					return int64(c.Match), int64(c.Pattern)
+				}) {
+					bad("QUERY_WITNESS_MATCH_ACCOUNTING_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				}
 				if tree.Tree != nil {
 					for _, c := range q.Captures {
@@ -765,12 +775,16 @@ func witnessProjectionQueryHeader(q witnessQueryProjection, encoding string) boo
 		return q.Error == nil && !q.Partial && q.Captures == nil && ((q.Code == "CAPTURE_NODE_UNMAPPED" && q.Evaluation == "") ||
 			(slices.Contains([]string{querypolicy.InvalidMetadata, querypolicy.InvalidCapture, querypolicy.AbsentCapture, querypolicy.AmbiguousCapture}, q.Code) && q.Evaluation == "UNSUPPORTED"))
 	case "INVALID_QUERY":
-		return q.Error != nil && q.Code == "QUERY_"+q.Error.Type && !q.Partial && q.Captures == nil && q.Evaluation == "" && q.Patterns == 0
+		return q.Error != nil && q.Code == "QUERY_"+q.Error.Type && !q.Partial && q.Captures == nil && q.Evaluation == "" && witnessEmptyQueryFields(q)
 	case StatusNotRun:
-		return q.Code == "TREE_NOT_COMPLETED" && q.Error == nil && !q.Partial && q.Captures == nil && q.Evaluation == "" && q.Patterns == 0
+		return q.Code == "TREE_NOT_COMPLETED" && q.Error == nil && !q.Partial && q.Captures == nil && q.Evaluation == "" && witnessEmptyQueryFields(q)
 	default:
 		return false
 	}
+}
+
+func witnessEmptyQueryFields(q witnessQueryProjection) bool {
+	return q.Patterns == 0 && q.QueryMillis == 0 && q.Matches == 0 && q.CaptureNames != nil && len(q.CaptureNames) == 0 && q.Predicates != nil && len(q.Predicates) == 0
 }
 
 // Byte counts, initial identity and edit byte ranges are known before source replay.
@@ -792,7 +806,19 @@ func witnessRegisteredStep(index int, step uint32, size uint64, sha string, edit
 		return sha == reg.Input.SHA256 && edit == nil
 	}
 	e := reg.Edits[index-1]
-	return edit != nil && edit.StartByte == e.StartByte && edit.OldEndByte == e.OldEndByte && edit.NewEndByte == e.NewEndByte
+	if edit == nil || edit.StartByte != e.StartByte || edit.OldEndByte != e.OldEndByte || edit.NewEndByte != e.NewEndByte ||
+		uint64(edit.StartPoint[0])+uint64(edit.StartPoint[1]) > uint64(edit.StartByte) {
+		return false
+	}
+	endMatches := func(payload []byte, end [2]uint32) bool {
+		delta := PointAt(reg.Encoding, payload, len(payload))
+		row, column := uint64(edit.StartPoint[0])+uint64(delta.Row), uint64(delta.Column)
+		if delta.Row == 0 {
+			column += uint64(edit.StartPoint[1])
+		}
+		return row == uint64(end[0]) && column == uint64(end[1])
+	}
+	return endMatches(e.Old, edit.OldEndPoint) && endMatches(e.New, edit.NewEndPoint)
 }
 
 func witnessStepBinding(index int, step uint32, size uint64, sha string, edit *witnessEdit, versions [][]byte, points []EditPoints, edits []Edit) bool {
@@ -909,6 +935,22 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 	}
 	if !validID(reg.Case) || !validID(reg.Route) || !validID(reg.Role) || !slices.Contains([]string{"windows/amd64", "linux/amd64", "darwin/arm64"}, reg.Platform) || !portable(reg.Input.Path, false) || !hex64.MatchString(reg.Input.SHA256) || !encodingNames[reg.Encoding] || len(reg.Edits) > 4 || len(reg.Queries) > MaxQueries || len(reg.Required) > 1000 {
 		return bad("QUERY_REGISTRATION_INVALID")
+	}
+	size := reg.Input.Bytes
+	limit := NativeOperations()["native-query-large"].InputBytes
+	if size > limit {
+		return reg, fail(KindResourceLimit, "INPUT_TOO_LARGE", "query-registration", nil)
+	}
+	for _, edit := range reg.Edits {
+		if edit.StartByte > edit.OldEndByte || uint64(edit.OldEndByte) > size || edit.NewEndByte < edit.StartByte ||
+			len(edit.Old) == 0 && len(edit.New) == 0 ||
+			uint64(edit.OldEndByte-edit.StartByte) != uint64(len(edit.Old)) || uint64(edit.NewEndByte-edit.StartByte) != uint64(len(edit.New)) {
+			return bad("QUERY_REGISTRATION_EDIT_INVALID")
+		}
+		size = size - uint64(len(edit.Old)) + uint64(len(edit.New))
+		if size > limit {
+			return bad("QUERY_REGISTRATION_EDIT_INVALID")
+		}
 	}
 	queries := map[string]bool{}
 	for _, q := range reg.Queries {

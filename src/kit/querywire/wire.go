@@ -199,8 +199,15 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 				return nil, bad(i, "predicate")
 			}
 		}
-		seen := int64(-1)
-		patternOf := map[int64]int64{}
+		if !MatchAccounting(q.Matches, len(q.Captures), func(index int) (int64, int64) {
+			row := q.Captures[index]
+			if len(row) != 12 {
+				return -1, -1
+			}
+			return row[0], row[1]
+		}) {
+			return nil, bad(i, "match accounting")
+		}
 		for k, row := range q.Captures {
 			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
 				row[3] < 0 || uint64(row[3]) >= descendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
@@ -214,26 +221,34 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			if row[6] > row[7] || uint64(row[7]) > sourceBytes {
 				return nil, bad(i, fmt.Sprintf("capture %d range", k))
 			}
-			// the runtime numbers a match when it first returns one of its captures
-			if row[0] > seen+1 {
-				return nil, bad(i, fmt.Sprintf("capture %d match order", k))
-			}
-			seen = max(seen, row[0])
-			// one match belongs to one pattern
-			if p, ok := patternOf[row[0]]; ok && p != row[1] {
-				return nil, bad(i, fmt.Sprintf("capture %d pattern of match", k))
-			}
-			patternOf[row[0]] = row[1]
 			if link != nil && !link(q, row) {
 				return nil, invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
 			}
 		}
-		// the match count is the number of matches the stream returned
-		if q.Matches != uint64(seen+1) {
-			return nil, bad(i, "match count")
-		}
 	}
 	return queries, nil
+}
+
+// MatchAccounting checks an unfiltered structural stream without reordering captures.
+// Caller bounds count and supplies match/pattern pairs; evaluated streams may have gaps.
+func MatchAccounting(matches uint64, count int, at func(int) (int64, int64)) bool {
+	if count < 0 || at == nil || matches > uint64(count) {
+		return false
+	}
+	seen := int64(-1)
+	patterns := map[int64]int64{}
+	for index := 0; index < count; index++ {
+		match, pattern := at(index)
+		if match < 0 || pattern < 0 || match > seen+1 || uint64(match) >= matches {
+			return false
+		}
+		if previous, ok := patterns[match]; ok && previous != pattern {
+			return false
+		}
+		patterns[match] = pattern
+		seen = max(seen, match)
+	}
+	return matches == uint64(seen+1)
 }
 
 // Typed JSON decoding accepts null as a scalar zero value. Only nullable schema

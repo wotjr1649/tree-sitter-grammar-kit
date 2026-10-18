@@ -3,6 +3,9 @@ package native
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -149,4 +152,102 @@ func TestNativeStoredQueryWitness(t *testing.T) {
 			t.Fatalf("present empty source: %+v %v; captures %+v; nodes %+v", got, err, result.Steps[0].Incremental.Queries[0].Captures, result.Steps[0].Incremental.Tree.Nodes)
 		}
 	})
+}
+
+// The producer's stored bytes feed the verifier; metadata and anchors stay literal.
+func TestOracleSourceWitnessStoredQuery(t *testing.T) {
+	query := `((identifier) @x (#eq? @x "x"))`
+	originals := []string{"x;\n1;\n", "y;\n1;\n", ""}
+	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "q0", Source: query}}, originals...)
+	edit := kit.Edit{StartByte: 0, OldEndByte: 1, NewEndByte: 1, Old: []byte("x"), New: []byte("y")}
+	var document map[string]any
+	if err := json.Unmarshal(profile, &document); err != nil {
+		t.Fatal(err)
+	}
+	document["cases"].([]any)[0].(map[string]any)["edits"] = []kit.Edit{edit}
+	profile, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "source-query-set")
+	req := oracleRequest(t, profile, root, out)
+	req.SourceWitness = true
+	result, err := runOracle(t, req)
+	if err != nil || result.ExecutionStatus != kit.StatusCompleted || result.Set == nil || !result.Set.Valid {
+		t.Fatalf("source/query producer: %+v %v", result, err)
+	}
+	one := "ONE"
+	predicates := []kit.QueryPredicate{{Steps: []kit.QueryPredicateStep{{Kind: "string", Value: "eq?"}, {Kind: "capture", Value: "x", Quantifier: &one}, {Kind: "string", Value: "x"}}}}
+	anchor := kit.Capture{Match: 0, Pattern: 0, Capture: 0, Name: "x", Node: 2, Type: "identifier", Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for i, original := range originals {
+		id := "c" + string(rune('a'+i))
+		stem := fmt.Sprintf("%05d-%s", i, id)
+		source, err := os.ReadFile(filepath.Join(out, "source", stem+".bin"))
+		if err != nil || string(source) != original {
+			t.Fatalf("stored source %s: %v", id, err)
+		}
+		raw, err := os.ReadFile(filepath.Join(out, "raw", stem+".json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		projection, err := os.ReadFile(filepath.Join(out, "records", stem+".json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		registration := kit.QueryWitnessRegistration{Schema: kit.QueryWitnessRegistrationSchema, Policy: PredicatePolicy, Case: id, Route: "owned", Platform: runtime.GOOS + "/" + runtime.GOARCH, Role: "owned", Encoding: kit.EncodingUTF8,
+			Input: kit.NativeInput{Path: "case" + string(rune('a'+i)) + ".txt", Role: "case", Bytes: uint64(len(original)), SHA256: sha([]byte(original))}, Edits: []kit.Edit{},
+			Queries: []kit.QueryWitnessQuery{{ID: "q0", Source: query, Metadata: &kit.QueryWitnessMetadata{Patterns: 1, CaptureNames: []string{"x"}, Predicates: predicates}}}, Required: []kit.QueryWitnessTuple{}}
+		if i == 0 {
+			registration.Edits = []kit.Edit{edit}
+		}
+		tuples := []struct {
+			step uint32
+			role string
+		}{{0, "incremental"}}
+		if i == 0 {
+			tuples = append(tuples, struct {
+				step uint32
+				role string
+			}{1, "incremental"}, struct {
+				step uint32
+				role string
+			}{1, "fresh"})
+		}
+		for _, tuple := range tuples {
+			structural, expected := []kit.Capture{}, []kit.Capture{}
+			if original != "" {
+				structural = append(structural, anchor)
+			}
+			if i == 0 && tuple.step == 0 {
+				expected = append(expected, anchor)
+			}
+			registration.Required = append(registration.Required, kit.QueryWitnessTuple{Query: "q0", Step: tuple.step, TreeRole: tuple.role, Structural: structural, Expected: expected})
+		}
+		registered, err := json.Marshal(registration)
+		if err != nil {
+			t.Fatal(err)
+		}
+		request := kit.QueryWitnessRequest{Registration: registered, Source: source, Raw: raw, Projection: projection}
+		got, err := kit.VerifyQueryWitness(ctx, request)
+		if err != nil || got.Assessment != kit.AssessPass || got.Verified != len(tuples) || got.Evaluated != len(tuples) {
+			t.Fatalf("stored query %s: %+v %v", id, got, err)
+		}
+		request.Source = nil
+		got, err = kit.VerifyQueryWitness(ctx, request)
+		if err != nil || got.Assessment != kit.AssessBlocked {
+			t.Fatalf("missing stored source: %+v %v", got, err)
+		}
+		request.Source = append([]byte{}, source...)
+		if len(source) > 0 {
+			request.Source[0] = 'z'
+		} else {
+			request.Source = []byte("z")
+		}
+		got, err = kit.VerifyQueryWitness(ctx, request)
+		if err != nil || got.Assessment != kit.AssessFail {
+			t.Fatalf("changed stored source: %+v %v", got, err)
+		}
+	}
 }
