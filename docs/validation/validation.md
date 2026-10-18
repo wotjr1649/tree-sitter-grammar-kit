@@ -275,7 +275,7 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 ## #216 명시 source witness
 
-`TestOracleSourceWitnessSet`·`TestOracleSourceWitnessEmptyAndOmitted`는 source 파일 교체와 hash 재결속, record와 다른 입력 identity·case·status, 누락·중복·목록 밖 파일·크기 한도, r1에 source 삽입 및 legacy decoder의 r2 거부를 검사한다. `TestOracleSourceWitness`는 실제 native 실행의 최초 source·record·step 0 binding, source 보관 직후 원 파일이 바뀌어도 동일 buffer로 native 실행, 정상 빈 source, build 실패·source 읽기·쓰기 실패 때 manifest 부재를 검사한다. 기본 query 없는 oracle set은 r1과 source 미보관을 유지한다. SVC는 출력 생성 전 거부하고 CLI flag는 oracle record에서만 받는다. 이 단계는 source 보관만 추가하며 query_semantics·SVC·대형 full CST·3-host reference 완료를 주장하지 않는다. `TestOracleSourceWitnessStoredQuery`는 producer가 저장한 source/raw/record를 독립 수작업 metadata·capture anchor와 연결한다. 정상·편집 후 탈락·빈 source의 witness 재계산은 PASS, source 누락은 BLOCKED, source 변조는 FAIL을 요구한다. 이 연결도 reference eligibility를 주장하지 않는다.
+`TestOracleSourceWitnessSet`·`TestOracleSourceWitnessEmptyAndOmitted`는 source basename의 manifest case 순번·이름 결속, source 파일 교체와 hash 재결속, record와 다른 입력 identity·case·status, 누락·중복·목록 밖 파일·크기 한도, r1에 source 삽입 및 legacy decoder의 r2 거부를 검사한다. `TestOracleSourceWitness`는 실제 native 실행의 최초 source·record·step 0 binding, source 보관 직후 원 파일이 바뀌어도 동일 buffer로 native 실행, 정상 빈 source, build 실패·source 읽기·쓰기 실패 때 manifest 부재를 검사한다. 기본 query 없는 oracle set은 r1과 source 미보관을 유지한다. SVC는 출력 생성 전 거부하고 CLI flag는 oracle record에서만 받는다. 이 단계는 source 보관만 추가하며 query_semantics·SVC·대형 full CST·3-host reference 완료를 주장하지 않는다. `TestOracleSourceWitnessStoredQuery`는 producer가 저장한 source/raw/record를 독립 수작업 metadata·capture anchor와 연결한다. 정상·편집 후 탈락·빈 source의 witness 재계산은 PASS, source 누락은 BLOCKED, source 변조는 FAIL을 요구한다. 이 연결도 reference eligibility를 주장하지 않는다.
 
 `TestVerifyOracleSetBoundsActualReads`는 manifest·record·raw가 무한 bytes를 내는 가상 filesystem을 사용해 상한+1에서 읽기를 멈추고 handle을 닫는지 검사한다. Source opt-in과 무관하게 기존 set 검증에도 적용하는 메모리 경계 회귀다.
 
@@ -284,3 +284,5 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 #216 추가 회귀는 steps 없는 raw의 code/status 조합, source 없는 UTF-16 초기 크기·edit offset, 불가능한 0행·UTF-16 시작 point를 검사한다. Summary·record의 required 밖 query도 source로 predicate를 재계산하며 projected capture 변조는 full CST 부재와 함께 있어도 FAIL이다. Reference pipeline의 archive-swap fault는 task-owned archive copy만 실제 교체하고 tar parser와 supervisor를 그대로 실행해 소비 bytes가 이미 hash한 buffer임을 확인한다.
 
 `TestEvidenceSnapshotPreservesVerification`은 reference 연결 준비 경로와 공개 `VerifyEvidence`의 결과·오류가 같음을 확인한다. 요청 밖 파일 변조·축 모순·외부 policy를 그대로 둔 graph/member 동시 재해시, per-file·total·replay-result record 한도와 취소를 검사한다. 요청 member와 graph는 한 번만 열고, 정상 빈 bytes와 누락·손상·이전 snapshot은 구분해야 한다. 일반 member의 보관에 record 한도를 추가해 기존 검증을 좁혀서는 안 된다. 이 회귀는 reference 자격·전체 CST 차등 검증의 완료 근거가 아니다.
+
+`TestQueryWitnessReviewIncompleteTreeEmptySummary`는 raw/projection 양쪽 요약을 같은 값으로 변조한 미완료 tree와 원래 비어 있어야 하는 table을 거부한다. `TestQueryWitnessReviewUnmappedCaptureMetadataWithoutRaw`는 raw 없이도 CAPTURE_NODE_UNMAPPED의 보존된 compiled metadata 변조를 거부하고 정상 실패는 BLOCKED로 유지한다.

@@ -1045,6 +1045,69 @@ func witnessTreeLimitFixture(t *testing.T) (QueryWitnessRequest, map[string]any,
 	return req, reg, raw, p
 }
 
+func TestQueryWitnessReviewIncompleteTreeEmptySummary(t *testing.T) {
+	for _, field := range []string{"intact", "descendant_count", "has_error", "digest", "types", "fields"} {
+		t.Run(field, func(t *testing.T) {
+			req, reg, raw, p := witnessTreeLimitFixture(t)
+			rt := raw["steps"].([]any)[1].(map[string]any)["incremental"].(map[string]any)
+			pt := p["steps"].([]any)[1].(map[string]any)["incremental"].(map[string]any)
+			switch field {
+			case "descendant_count":
+				rt[field], pt[field] = 1, 1
+			case "has_error":
+				rt[field], pt[field] = true, true
+			case "digest":
+				rt[field], pt[field] = sum([]byte("forged")), sum([]byte("forged"))
+			case "types", "fields":
+				rt[field] = []string{"forged"}
+			}
+			res, e := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+			want := AssessFail
+			if field == "intact" {
+				want = AssessBlocked
+			}
+			if e != nil || res.Assessment != want {
+				t.Fatalf("%s: %+v %v", field, res, e)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessReviewUnmappedCaptureMetadataWithoutRaw(t *testing.T) {
+	for _, field := range []string{"intact", "patterns", "capture_names", "predicates", "null-capture-names", "null-predicates"} {
+		t.Run(field, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			p["execution_status"], p["code"] = StatusFailed, "CAPTURE_NODE_UNMAPPED"
+			step := p["steps"].([]any)[1].(map[string]any)
+			step["fresh"] = nil
+			q := step["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
+			q["status"], q["code"], q["evaluation"], q["captures"] = StatusFailed, "CAPTURE_NODE_UNMAPPED", "", nil
+			switch field {
+			case "patterns":
+				q[field] = 2
+			case "capture_names":
+				q[field] = []string{"other"}
+			case "predicates":
+				q[field] = []any{}
+			case "null-capture-names":
+				q["capture_names"] = nil
+			case "null-predicates":
+				q["predicates"] = nil
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, e := VerifyQueryWitness(ctxT(t), req)
+			want := AssessFail
+			if field == "intact" {
+				want = AssessBlocked
+			}
+			if e != nil || res.Assessment != want {
+				t.Fatalf("%s: %+v %v", field, res, e)
+			}
+		})
+	}
+}
+
 func TestQueryWitnessReviewStructuralMatchAccountingWithoutRaw(t *testing.T) {
 	for _, kind := range []string{"intact", "interleaved", "count", "skip", "mixed-pattern"} {
 		t.Run(kind, func(t *testing.T) {

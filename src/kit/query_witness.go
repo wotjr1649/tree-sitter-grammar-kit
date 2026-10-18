@@ -522,7 +522,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						bad(code, fmt.Sprintf("projection/steps/%d", i))
 					}
 				}
-				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || (q.Status == StatusFailed && q.Evaluation == "UNSUPPORTED")) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
+				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || q.Status == StatusFailed) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
 					bad("QUERY_WITNESS_METADATA_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				}
 			}
@@ -717,7 +717,7 @@ func witnessRawTreeHeader(t witnessRawTree) bool {
 	case StatusCompleted:
 		return t.Code == "" && t.Form != nil && slices.Contains([]string{"full", "summary", "record"}, *t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Count == 0 && !t.HasError && t.Digest == "" && t.Types == nil && t.Fields == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
 	default:
 		return false
 	}
@@ -776,7 +776,7 @@ func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
 	case StatusCompleted:
 		return t.Code == "" && slices.Contains([]string{"full", "summary", "record"}, t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return witnessTreeFailure(t.Status, t.Code) && t.Form == "" && t.Tree == nil
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == "" && t.Count == 0 && !t.HasError && t.Digest == "" && t.Tree == nil
 	default:
 		return false
 	}
