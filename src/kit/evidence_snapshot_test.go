@@ -85,13 +85,20 @@ func TestEvidenceSnapshotPreservesVerification(t *testing.T) {
 			plain, plainErr := VerifyEvidence(ctx, req)
 			opens := map[string]int{}
 			testHookOpen = func(path string) { opens[path]++ }
-			snapshot := &evidenceSnapshot{wanted: map[string]bool{"raw/old.json": true, "replay/result.json": true, "missing.json": true}, files: map[string][]byte{"stale": []byte("stale")}, nodes: []EvidenceNode{{ID: "stale"}}}
+			selected := g.nodes[1]["id"].(string)
+			snapshot := &evidenceSnapshot{wanted: map[string]bool{"raw/old.json": true, "replay/result.json": true, "missing.json": true}, wantedNodes: map[string]bool{selected: true}, files: map[string][]byte{"stale": []byte("stale")}, nodes: []EvidenceNode{{ID: "stale"}}, graphBound: true, invalidNodes: map[string]bool{"stale": true}}
 			got, gotErr := verifyEvidence(ctx, req, snapshot)
 			if !reflect.DeepEqual(got, plain) || !reflect.DeepEqual(gotErr, plainErr) {
 				t.Fatalf("snapshot changed result: %s/%v versus %s/%v", got.Assessment, gotErr, plain.Assessment, plainErr)
 			}
 			if _, ok := snapshot.files["stale"]; ok {
 				t.Fatal("stale bytes survived")
+			}
+			if snapshot.invalidNodes["stale"] {
+				t.Fatal("stale node validity survived")
+			}
+			if gotErr == nil && (snapshot.graphBound != (mutation != "rehashed-graph") || snapshot.invalidNodes[selected] != (mutation == "axis")) {
+				t.Fatalf("scoped binding: graph=%t nodes=%v", snapshot.graphBound, snapshot.invalidNodes)
 			}
 			if _, ok := snapshot.files["raw/other.json"]; ok {
 				t.Fatal("unrequested member retained")
