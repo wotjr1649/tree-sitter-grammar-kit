@@ -238,7 +238,7 @@ API byte 조회의 root start는 0으로 가정하지 않는다. BOM이나 앞�
 
 manifest의 `queries` identity 목록은 항상 배열이며, 요청 query가 없으면 `[]`로 기록한다. 응답 tree의 unrequested `queries: null`과 구별하며 strict null 거부를 완화하지 않는다.
 
-**명시 source witness (#216).** `oracle record --source-witness`만 `tsgk-oracle-manifest/r2`를 발행한다. Manifest의 기존 필드와 record/native protocol은 유지하며, 모든 `cases` 사례에 `source/<순번 5자리>-<사례>.bin` member(`role: source`)가 정확히 하나 추가된다. Native 요청에 전달할 동일 초기 source buffer를 RunCase 전에 보관하며 원 파일을 다시 읽지 않는다. Source member의 bytes·sha256은 자체 파일, member 입력 identity, 해당 record의 입력 identity·실행 상태와 일치해야 한다. 빈 source는 실제 0 byte 파일과 그 hash로 보관하며 누락과 구분한다. Source는 member마다 32 MiB 상한으로 읽는다. 기본 실행은 기존 r1을 유지하고 source directory를 만들지 않는다.
+**명시 source witness (#216).** `oracle record --source-witness`만 `tsgk-oracle-manifest/r2`를 발행한다. Manifest의 기존 필드와 record/native protocol은 유지하며, 모든 `cases` 사례에 `source/<순번 5자리>-<사례>.bin` member(`role: source`)가 정확히 하나 추가된다. Source basename의 0-based 순번과 사례 이름은 manifest `cases`의 같은 위치·ID와 정확히 일치해야 한다. Native 요청에 전달할 동일 초기 source buffer를 RunCase 전에 보관하며 원 파일을 다시 읽지 않는다. Source member의 bytes·sha256은 자체 파일, member 입력 identity, 해당 record의 입력 identity·실행 상태와 일치해야 한다. 빈 source는 실제 0 byte 파일과 그 hash로 보관하며 누락과 구분한다. Source는 member마다 32 MiB 상한으로 읽는다. 기본 실행은 기존 r1을 유지하고 source directory를 만들지 않는다.
 
 r2에서 source를 읽거나 쓰지 못하면 manifest를 발행하지 않고 FAILED로 남긴다. 실행 전 입력 검증 거부·실행 실패 사례도 source를 읽었다면 그 bytes를 보관한다. Build 실패로 사례를 시작하지 못했으면 r2 manifest를 발행하지 않는다. r2 set에 사례가 0개이면 CASE_SOURCE_EMPTY로 거부한다. Source 보관은 parser 실행 성공이나 query 의미 검증의 증명이 아니다. `VerifyOracleSet`만 새 revision의 무결성을 검사하며 기존 oracle-set replay와 qualification은 r2를 `SCHEMA_UNSUPPORTED`로 거부한다. 새 reducer·qualification revision에서 명시 연결하기 전 기존 claim으로 승격하지 않는다.
 

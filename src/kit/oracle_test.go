@@ -86,7 +86,7 @@ func manifestBytes(t *testing.T, m OracleManifest) []byte {
 }
 
 func TestOracleSourceWitnessSet(t *testing.T) {
-	for _, mutation := range []string{"intact", "missing", "duplicate", "source-swap", "input-rebind", "case-swap", "status-swap", "unlisted", "legacy", "oversize"} {
+	for _, mutation := range []string{"intact", "missing", "duplicate", "source-swap", "input-rebind", "case-swap", "status-swap", "unlisted", "legacy", "oversize", "wrong-index", "wrong-case-path"} {
 		t.Run(mutation, func(t *testing.T) {
 			files, m := oracleSet(t)
 			m.Schema = OracleSourceManifestSchema
@@ -118,6 +118,15 @@ func TestOracleSourceWitnessSet(t *testing.T) {
 				m.Schema = OracleManifestSchema
 			case "oversize":
 				mem.Bytes = MaxOracleSourceBytes + 1
+			case "wrong-index", "wrong-case-path":
+				old := mem.Path
+				if mutation == "wrong-index" {
+					mem.Path = "source/99999-c1.bin"
+				} else {
+					mem.Path = "source/00000-other.bin"
+				}
+				files[mem.Path] = files[old]
+				delete(files, old)
 			}
 			m.Members = append(m.Members, mem)
 			files["manifest.json"].Data = manifestBytes(t, m)

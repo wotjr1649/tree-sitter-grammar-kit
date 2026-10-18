@@ -300,17 +300,6 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						var source []byte
 						sourceBytes := s.Bytes
 						if i < len(versions) {
-							if rawNodes[tree] == nil {
-								var captures []Capture
-								for _, q := range qs {
-									for _, row := range q.Captures {
-										captures = append(captures, witnessCapture(q, row))
-									}
-								}
-								if code := witnessCapturePoints(captures, reg.Encoding, versions[i], r); code != "" {
-									bad(code, fmt.Sprintf("raw/steps/%d", i))
-								}
-							}
 							source, sourceBytes = versions[i], uint64(len(versions[i]))
 						}
 						nodes, code := witnessNodes(*tree, reg.Encoding, source, sourceBytes, r)
@@ -335,6 +324,15 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						if i < len(versions) {
 							values := make([]witnessEvaluation, len(qs))
 							for qi, q := range qs {
+								if *tree.Form != "full" {
+									captures := make([]Capture, 0, len(q.Captures))
+									for _, row := range q.Captures {
+										captures = append(captures, witnessCapture(q, row))
+									}
+									if code := witnessCapturePoints(captures, reg.Encoding, versions[i], r); code != "" {
+										bad(code, fmt.Sprintf("raw/steps/%d", i))
+									}
+								}
 								value, err := witnessEvaluate(r, q, reg.Encoding, versions[i])
 								if err != nil {
 									return res, err
@@ -344,6 +342,9 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 							rawEvaluations[tree] = values
 						}
 						for qi, q := range qs {
+							if q.Status == "INVALID_QUERY" && (q.QueryMillis != 0 || q.Matches != 0 || len(q.CaptureNames) != 0 || len(q.Predicates) != 0 || len(q.Types) != 0) {
+								bad("QUERY_WITNESS_INVALID_QUERY_FIELDS", fmt.Sprintf("raw/steps/%d", i))
+							}
 							meta := reg.Queries[qi].Metadata
 							if meta != nil && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
 								bad("QUERY_WITNESS_METADATA_MISMATCH", fmt.Sprintf("raw/steps/%d", i))
@@ -382,6 +383,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 			return res, nil
 		}
 		if projection.ID != reg.Case || projection.Input != reg.Input || projection.Encoding != reg.Encoding || len(projection.Steps) > len(reg.Edits)+1 ||
+			(projection.Status == StatusCancelled && projection.Code != "CANCELLED") ||
 			(projection.Status == StatusCompleted && len(projection.Steps) != len(reg.Edits)+1) || !slices.Contains([]string{StatusCompleted, StatusFailed, StatusResourceLimit, StatusNotRun, StatusCancelled}, projection.Status) {
 			bad("QUERY_WITNESS_PROJECTION_ENVELOPE", "projection")
 			caseBound = false
@@ -508,6 +510,9 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 				}) {
 					bad("QUERY_WITNESS_MATCH_ACCOUNTING_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				}
+				if q.Evaluation == "EVALUATED" && q.Captures != nil && !querywire.FilteredMatchAccounting(q.Matches, len(q.Captures), func(index int) (int64, int64) { c := q.Captures[index]; return int64(c.Match), int64(c.Pattern) }) {
+					bad("QUERY_WITNESS_MATCH_ACCOUNTING_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				}
 				for _, c := range q.Captures {
 					if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
 						c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || c.Node < 0 || uint64(c.Node) >= tree.Count ||
@@ -522,7 +527,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest) (res QueryWitnessResult
 						bad(code, fmt.Sprintf("projection/steps/%d", i))
 					}
 				}
-				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || (q.Status == StatusFailed && q.Evaluation == "UNSUPPORTED")) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
+				if meta != nil && (q.Status == StatusCompleted || q.Status == StatusResourceLimit || q.Status == "UNSUPPORTED" || q.Status == StatusFailed) && (q.Patterns != meta.Patterns || !slices.Equal(q.CaptureNames, meta.CaptureNames) || !reflect.DeepEqual(q.Predicates, meta.Predicates)) {
 					bad("QUERY_WITNESS_METADATA_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				}
 			}
@@ -717,7 +722,7 @@ func witnessRawTreeHeader(t witnessRawTree) bool {
 	case StatusCompleted:
 		return t.Code == "" && t.Form != nil && slices.Contains([]string{"full", "summary", "record"}, *t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Count == 0 && !t.HasError && t.Digest == "" && t.Types == nil && t.Fields == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
 	default:
 		return false
 	}
@@ -776,7 +781,7 @@ func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
 	case StatusCompleted:
 		return t.Code == "" && slices.Contains([]string{"full", "summary", "record"}, t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
-		return witnessTreeFailure(t.Status, t.Code) && t.Form == "" && t.Tree == nil
+		return witnessTreeFailure(t.Status, t.Code) && t.Form == "" && t.Count == 0 && !t.HasError && t.Digest == "" && t.Tree == nil
 	default:
 		return false
 	}
@@ -792,6 +797,7 @@ func witnessProjectionQueryHeader(q witnessQueryProjection, encoding string) boo
 		return reason != "" && q.Code == reason && q.Error == nil && q.Captures == nil && q.Evaluation == "UNSUPPORTED"
 	case StatusResourceLimit:
 		return slices.Contains([]string{"QUERY_TIME_LIMIT", "MATCH_LIMIT", "CAPTURE_LIMIT", "QUERY_MATCH_OVERFLOW"}, q.Code) && q.Error == nil && q.Partial &&
+			querypolicy.Support(q.Patterns, q.Predicates, encoding) == "" &&
 			((len(q.Predicates) == 0 && q.Evaluation == "STRUCTURAL" && q.Captures != nil) || (len(q.Predicates) != 0 && q.Evaluation == "UNSUPPORTED" && q.Captures == nil))
 	case StatusFailed:
 		return q.Error == nil && !q.Partial && q.Captures == nil && ((q.Code == "CAPTURE_NODE_UNMAPPED" && q.Evaluation == "") ||
