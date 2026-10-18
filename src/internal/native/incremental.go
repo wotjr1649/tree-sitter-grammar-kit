@@ -23,6 +23,8 @@ import (
 const ResultSchema = "tsgk-incremental-result/r1"
 const ObservationResultSchema = "tsgk-incremental-result/r2"
 
+var testHookOutputFinalization func(stage string, output, responses *outputDirectory)
+
 // Capabilities a caller must grant to `tsgk incremental`.
 const (
 	AllowBuild = "BUILD_NATIVE"
@@ -39,6 +41,7 @@ type IncrementalRequest struct {
 	Work             string
 	BuildCache       string
 	Out              string
+	OutTarget        *OutputTarget // optional caller-held target; Out is then display-only
 	Allow            []string
 	CgroupParent     string
 	RunWall          time.Duration // optional, at most the operation's run wall
@@ -129,9 +132,9 @@ func readCase(root string, in kit.NativeInput) ([]byte, error) {
 
 // Incremental builds the driver for the profile and runs every case. A refusal before
 // the build returns an error and creates nothing; later failures are recorded per case.
-func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
+func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resultErr error) {
 	start := time.Now()
-	res := Result{Report: kit.Report{Schema: kit.ReportSchema, Command: "incremental", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
+	res = Result{Report: kit.Report{Schema: kit.ReportSchema, Command: "incremental", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{"query"}}},
 		ResultSchema: ResultSchema, Cases: []CaseResult{}, Batches: []BatchRecord{}, Platform: runtime.GOOS + "/" + runtime.GOARCH, StartedAt: start.UTC().Format(time.RFC3339)}
 	if req.ReuseObservation {
@@ -164,17 +167,37 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		res.Assessment = kit.AssessBlocked
 		return res, err
 	}
-	if _, err := os.Lstat(req.Out); err == nil {
-		return stop(refuse(kit.KindInvalidInput, "OUTPUT_EXISTS", nil))
-	}
 	probe := runner.Probe(runner.Spec{Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: req.CgroupParent})
 	res.Capabilities = probe
 	if runtime.GOOS != "darwin" && probe.Memory != runner.MemoryHard {
 		return stop(refuse(kit.KindUnsupported, "MEMORY_HARD_CAP_UNSUPPORTED", nil))
 	}
-	if err := os.MkdirAll(filepath.Join(req.Out, "responses"), 0o755); err != nil {
+	output, err := newOutputDirectory(req.Out, req.OutTarget)
+	if err != nil {
+		code := "OUTPUT_FAILED"
+		kind := kit.KindIO
+		if errors.Is(err, os.ErrExist) {
+			code = "OUTPUT_EXISTS"
+			kind = kit.KindInvalidInput
+		}
+		return stop(refuse(kind, code, err))
+	}
+	outputClosed := false
+	defer func() {
+		if !outputClosed {
+			closeOutput(output, &res.Report, &resultErr)
+		}
+	}()
+	responses, err := createOutputDirectory(output.Root, "responses")
+	if err != nil {
 		return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
 	}
+	responsesClosed := false
+	defer func() {
+		if !responsesClosed {
+			closeOutput(responses, &res.Report, &resultErr)
+		}
+	}()
 	if req.RunWall > 0 && req.RunWall < op.RunWall {
 		op.RunWall = req.RunWall // a caller may only narrow the run wall; recorded in operation and policy
 		res.Operation = op
@@ -209,7 +232,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 		}
 		refs := b.runSvcReferences(runCtx, x, prof.Cases, req.Root)
 		if op.Batch {
-			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases, req.Out)
+			res.Cases, res.Batches = runBatches(runCtx, b, x, req.Root, prof.Cases, responses.Root)
 		} else {
 			for _, c := range prof.Cases {
 				src, err := readCase(req.Root, c.Input)
@@ -226,7 +249,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 				if cr.Raw != nil {
 					// The case order makes the name unique on case-insensitive filesystems too.
 					name := fmt.Sprintf("%05d-%s.json", len(res.Cases), c.ID)
-					if err := os.WriteFile(filepath.Join(req.Out, "responses", name), cr.Raw, 0o644); err != nil {
+					if err := createExclusive(responses.Root, name, cr.Raw); err != nil {
 						res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "원 응답을 보존하지 못했다"))
 						writeFailed = true
 					}
@@ -237,7 +260,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 							continue
 						}
 						name := fmt.Sprintf("%05d-%s-segment-%05d.json", len(res.Cases), c.ID, segment.StartStep)
-						if err := os.WriteFile(filepath.Join(req.Out, "responses", name), segment.Raw, 0o644); err != nil {
+						if err := createExclusive(responses.Root, name, segment.Raw); err != nil {
 							res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "segment 원 응답을 보존하지 못했다"))
 							writeFailed = true
 						}
@@ -275,15 +298,38 @@ func Incremental(ctx context.Context, req IncrementalRequest) (Result, error) {
 	if res.ExecutionStatus == kit.StatusCompleted {
 		res.Coverage.Observed = res.Coverage.Requested
 	}
-	data, err := json.Marshal(res)
-	if err == nil {
-		err = os.WriteFile(filepath.Join(req.Out, "result.json"), append(data, '\n'), 0o644)
-	}
+	f, err := output.OpenFile("result.json", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
 		res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", "", "결과를 쓰지 못했다"))
 		return res, refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", err)
 	}
-	return res, nil
+	defer func() {
+		if f != nil {
+			resultErr = errors.Join(resultErr, f.Close())
+		}
+	}()
+	if testHookOutputFinalization != nil {
+		testHookOutputFinalization("before-close", output, responses)
+	}
+	responsesClosed, outputClosed = true, true
+	closeOutput(responses, &res.Report, &resultErr)
+	closeOutput(output, &res.Report, &resultErr)
+	if testHookOutputFinalization != nil {
+		testHookOutputFinalization("after-close", output, responses)
+	}
+	// The final file is already owned; record directory-close failures without
+	// reopening its pathname after releasing directory handles.
+	data, err := json.Marshal(res)
+	if err == nil {
+		_, err = f.Write(append(data, '\n'))
+	}
+	err = errors.Join(err, f.Close())
+	f = nil
+	if err != nil {
+		res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", "", "결과를 쓰지 못했다"))
+		return res, errors.Join(resultErr, refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", err))
+	}
+	return res, resultErr
 }
 
 // aggregate: any case not run or not completed makes the run noncomplete; the
@@ -334,7 +380,7 @@ func summarize(cases []CaseResult, batches []BatchRecord) Summary {
 // cases or BatchBytes input bytes per driver process. Frames a batch-level limit or a
 // fatal frame left unanswered are re-queued into a new process (not a retry); a crash
 // mid-frame is FAILED; files never reached before the run wall are NOT_RUN.
-func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase, outDir string) ([]CaseResult, []BatchRecord) {
+func runBatches(ctx context.Context, b *Build, x Context, root string, cases []kit.IncrementalCase, responses *os.Root) ([]CaseResult, []BatchRecord) {
 	x.ObservationProducerSHA256 = b.Identity
 	out := make([]CaseResult, len(cases))
 	for i, c := range cases {
@@ -443,8 +489,8 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				if err == nil {
 					*c = recordResult(*c, resp, checked, x, b.Identity)
 					if x.Protocol == ProtocolR3 {
-						path := filepath.Join(outDir, "responses", fmt.Sprintf("%05d-%s.json", i, c.ID))
-						if err := os.WriteFile(path, fr.Response, 0o644); err != nil {
+						name := fmt.Sprintf("%05d-%s.json", i, c.ID)
+						if err := createExclusive(responses, name, fr.Response); err != nil {
 							c.ExecutionStatus, c.Assessment, c.Code = kit.StatusFailed, kit.AssessNotAssessed, "EVIDENCE_WRITE_FAILED"
 						}
 					}

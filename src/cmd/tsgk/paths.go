@@ -21,26 +21,48 @@ func inside(dir, root string) (bool, error) {
 	if root == "" {
 		return false, nil // file-only commands have no directory subject
 	}
-	deadline := time.Now().Add(pathWall)
 	real, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		return false, err
 	}
-	rf, err := os.Open(real)
+	rf, err := os.OpenRoot(real)
 	if err != nil {
 		return false, err
 	}
 	defer rf.Close()
-	rinfo, err := rf.Stat()
-	if err != nil || !rinfo.IsDir() {
+	df, err := os.OpenRoot(dir)
+	if err != nil {
+		return false, err
+	}
+	defer df.Close()
+	return insideRoots(df, rf)
+}
+
+// insideRoots always includes the actual destination handle in the comparison;
+// pathname ancestors are additional conservative checks, never its replacement.
+func insideRoots(dir, root *os.Root) (bool, error) {
+	deadline := time.Now().Add(pathWall)
+	rf, err := root.Open(".")
+	if err != nil {
+		return false, err
+	}
+	rinfo, serr := rf.Stat()
+	cerr := rf.Close()
+	if serr != nil || cerr != nil || !rinfo.IsDir() {
 		return false, errors.New("input directory identity is unavailable")
 	}
 	var parents []os.FileInfo
-	for p := dir; ; {
+	for p := dir.Name(); ; {
 		if len(parents) == pathParents || time.Now().After(deadline) {
 			return false, errors.New("directory identity check limit exceeded")
 		}
-		f, err := os.Open(p)
+		var f *os.File
+		var err error
+		if len(parents) == 0 {
+			f, err = dir.Open(".")
+		} else {
+			f, err = os.Open(p)
+		}
 		if err != nil {
 			return false, err
 		}
@@ -65,15 +87,20 @@ func inside(dir, root string) (bool, error) {
 		p = up
 	}
 	entries := 1 // the root directory
-	return containsDirectory(rf, real, parents, 0, &entries, deadline)
+	return containsDirectory(root, parents, 0, &entries, deadline)
 }
 
-// containsDirectory never reads file contents or follows an internal symlink/reparse alias.
+// containsDirectory never reads file contents; observed aliases and identity changes fail closed.
 // The deadline is cooperative; synchronous filesystem calls are not preempted.
-func containsDirectory(f *os.File, path string, parents []os.FileInfo, depth int, entries *int, deadline time.Time) (bool, error) {
+func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries *int, deadline time.Time) (bool, error) {
 	if depth > pathDepth || time.Now().After(deadline) {
 		return false, errors.New("directory identity check limit exceeded")
 	}
+	f, err := root.Open(".")
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.IsDir() {
 		return false, errors.New("input directory identity is unavailable")
@@ -102,23 +129,49 @@ func containsDirectory(f *os.File, path string, parents []os.FileInfo, depth int
 			if *entries > pathEntries || time.Now().After(deadline) {
 				return false, errors.New("directory identity check limit exceeded")
 			}
-			name := filepath.Join(path, entry.Name())
-			info, err := os.Lstat(name)
+			name := entry.Name()
+			info, err := root.Lstat(name)
 			if err != nil {
 				return false, err
 			}
-			if isAlias(name, info) {
+			alias, err := rootAlias(root, name, info)
+			if err != nil {
+				return false, err
+			}
+			if alias {
 				return false, errors.New("input contains an unresolved path alias")
 			}
 			if !info.IsDir() {
 				continue
 			}
-			child, err := os.Open(name)
+			if testHookBeforeChildOpen != nil {
+				testHookBeforeChildOpen(root, name)
+			}
+			child, err := root.OpenRoot(name)
 			if err != nil {
 				return false, err
 			}
-			found, err := containsDirectory(child, name, parents, depth+1, entries, deadline)
-			cerr := child.Close()
+			cf, err := child.Open(".")
+			if err != nil {
+				child.Close()
+				return false, err
+			}
+			opened, serr := cf.Stat()
+			cerr := cf.Close()
+			if serr != nil || cerr != nil || !os.SameFile(info, opened) {
+				child.Close()
+				return false, errors.New("input directory changed during identity check")
+			}
+			current, err := root.Lstat(name)
+			if err == nil {
+				alias, err = rootAlias(root, name, current)
+			}
+			if err != nil || alias || !os.SameFile(info, current) {
+				child.Close()
+				return false, errors.New("input directory entry changed during identity check")
+			}
+			found, err := containsDirectory(child, parents, depth+1, entries, deadline)
+			cerr = child.Close()
 			if err != nil {
 				return false, err
 			}
@@ -134,3 +187,5 @@ func containsDirectory(f *os.File, path string, parents []os.FileInfo, depth int
 		}
 	}
 }
+
+var testHookBeforeChildOpen func(*os.Root, string)

@@ -71,8 +71,12 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 	defer cancel()
 	res, qerr := kit.Qualify(cctx, req)
 	publishRoot := ""
+	var additionalRoots []string
 	if len(req.Hosts) > 0 {
 		publishRoot = req.Hosts[0].Root
+		for _, h := range req.Hosts[1:] {
+			additionalRoots = append(additionalRoots, h.Root)
+		}
 	}
-	return finish(res, qerr, *out, publishRoot, stdout, stderr)
+	return finish(res, qerr, *out, publishRoot, stdout, stderr, additionalRoots...)
 }

@@ -55,6 +55,7 @@ type OracleRequest struct {
 	Work         string
 	BuildCache   string
 	Out          string
+	OutTarget    *OutputTarget // optional caller-held target; Out is then display-only
 	Allow        []string
 	CgroupParent string
 	RunWall      time.Duration
@@ -109,28 +110,14 @@ func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
 		refuse(kit.KindUnsupported, "OPERATION_PLATFORM_SCOPE", nil)
 }
 
-// createExclusive is the single file-creation path of a record set: it never replaces an
-// existing file (a test may substitute it to inject a write failure).
-var createExclusive = func(path string, data []byte) error {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
-	if err != nil {
-		return err
-	}
-	if _, err = f.Write(data); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
-}
-
 // Oracle builds the driver for an oracle profile, records every case through the r2
 // protocol and publishes the record set: the output directory is created exclusively,
 // every member is created without replacement, and the manifest (whose last member marks
 // completeness) is written only after every member was written; the set is then verified
 // offline. A refusal before the build creates nothing.
-func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
+func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr error) {
 	start := time.Now()
-	res := OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
+	res = OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{}}},
 		ResultSchema: OracleResultSchema, Cases: []CaseLine{}, Platform: hostPlatform}
 	stop := func(err *Error) (OracleResult, error) {
@@ -175,17 +162,23 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	}
 	// the exclusive directory is the only collision guard: an existing output or a
 	// concurrent run that created it first makes this run stop before writing anything
-	if err := os.Mkdir(req.Out, 0o755); err != nil {
+	output, err := newOutputDirectory(req.Out, req.OutTarget)
+	if err != nil {
 		code := "OUTPUT_FAILED"
 		if errors.Is(err, os.ErrExist) {
 			code = "OUTPUT_EXISTS"
 		}
 		return stop(refuse(kit.KindInvalidInput, code, err))
 	}
+	defer closeOutput(output, &res.Report, &resultErr)
+	memberRoots := map[string]*os.Root{".": output.Root}
 	for _, d := range []string{"records", "raw"} {
-		if err := os.Mkdir(filepath.Join(req.Out, d), 0o755); err != nil {
+		child, err := createOutputDirectory(output.Root, d)
+		if err != nil {
 			return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
 		}
+		defer closeOutput(child, &res.Report, &resultErr)
+		memberRoots[d] = child.Root
 	}
 	if req.RunWall > 0 && req.RunWall < op.RunWall {
 		op.RunWall = req.RunWall
@@ -213,7 +206,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 	var members []kit.OracleMember
 	var cases []CaseResult
 	write := func(rel string, data []byte) bool {
-		if err := createExclusive(filepath.Join(req.Out, filepath.FromSlash(rel)), data); err != nil {
+		if err := createExclusive(memberRoots[filepath.Dir(filepath.FromSlash(rel))], filepath.Base(filepath.FromSlash(rel)), data); err != nil {
 			res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", rel, "record set member를 쓰지 못했다"))
 			writeFailed = true
 			return false
@@ -322,7 +315,7 @@ func Oracle(ctx context.Context, req OracleRequest) (OracleResult, error) {
 		}
 		data, err := json.Marshal(m)
 		if err == nil && write("manifest.json", append(data, '\n')) {
-			set := kit.VerifyOracleSet(os.DirFS(req.Out))
+			set := kit.VerifyOracleSet(output.FS())
 			res.Set = &set
 			if !set.Valid {
 				res.Findings = append(res.Findings, finding("REFERENCE_SET_INVALID", "error", "", "발행한 record set이 검증을 통과하지 못했다"))

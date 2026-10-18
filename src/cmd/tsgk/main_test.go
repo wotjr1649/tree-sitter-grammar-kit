@@ -203,6 +203,14 @@ func TestOutPublication(t *testing.T) {
 	})
 	t.Run("collision", func(t *testing.T) {
 		dest := filepath.Join(outDir, "race.json")
+		before, err := os.ReadDir(outDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected := map[string]bool{"race.json": true}
+		for _, entry := range before {
+			expected[entry.Name()] = true
+		}
 		testHookBeforeLink = func() { os.WriteFile(dest, []byte("winner"), 0o644) }
 		defer func() { testHookBeforeLink = nil }()
 		code, err := publish(dest, root, []byte("loser"))
@@ -212,10 +220,13 @@ func TestOutPublication(t *testing.T) {
 		if data, _ := os.ReadFile(dest); string(data) != "winner" {
 			t.Fatal("concurrently created output clobbered")
 		}
-		entries, _ := os.ReadDir(outDir)
+		entries, err := os.ReadDir(outDir)
+		if err != nil || len(entries) != len(expected) {
+			t.Fatalf("collision changed output entries: %v %v", entries, err)
+		}
 		for _, e := range entries {
-			if strings.HasPrefix(e.Name(), ".tsgk-out-") {
-				t.Fatalf("temporary file left: %s", e.Name())
+			if !expected[e.Name()] {
+				t.Fatalf("unexpected temporary entry left: %s", e.Name())
 			}
 		}
 	})

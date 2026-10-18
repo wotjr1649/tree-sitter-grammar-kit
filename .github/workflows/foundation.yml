@@ -143,6 +143,25 @@ jobs:
           # Private propagation confines mount changes to this finite child namespace.
           sudo -n timeout --kill-after=5s 40s unshare --mount --propagation private -- env -i PATH=/usr/bin:/bin TSGK_PRIVATE_MOUNT_TEST=1 $testBinary '-test.run' '^TestBindMountMembership$' '-test.v' '-test.timeout' 30s
           if ($LASTEXITCODE -ne 0) { throw 'isolated bind-mount boundary failed' }
+      - name: hosted Windows subst output boundary (#215)
+        if: runner.os == 'Windows'
+        timeout-minutes: 2
+        env:
+          TSGK_HOSTED_SUBST_TEST: '1'
+        run: |
+          $lines = @(go test ./src/cmd/tsgk -run '^TestHostedSubstMembership$' -count=1 -json -timeout 60s)
+          $testExit = $LASTEXITCODE
+          $lines | Write-Output
+          if ($testExit -ne 0) { throw 'hosted subst output boundary failed' }
+          $events = @($lines | ForEach-Object { $_ | ConvertFrom-Json -AsHashtable })
+          $completed = @($events | Where-Object { $_['Action'] -ceq 'pass' -and $_['Test'] -ceq 'TestHostedSubstMembership' })
+          if ($completed.Count -ne 1 -or @($events | Where-Object { $_['Action'] -in @('skip', 'fail') }).Count -ne 0) { throw 'hosted subst test was not executed successfully' }
+          $text = ($events | ForEach-Object { $_['Output'] }) -join ''
+          foreach ($marker in @('SUBST_INSIDE_REJECTED', 'SUBST_OUTSIDE_PUBLISHED')) {
+            if ([regex]::Matches($text, $marker).Count -ne 1) { throw 'subst boundary witness missing' }
+          }
+          if ([regex]::Matches($text, 'SUBST_REMOVED').Count -ne 2) { throw 'subst cleanup witness missing' }
+          if ([regex]::Matches($text, 'SUBST_DIFFERENT_TARGET_PRESERVED').Count -ne 2) { throw 'subst exact-removal witness missing' }
       - name: frame 상태와 native cancellation 반복 시험 (#65)
         timeout-minutes: 4
         run: |

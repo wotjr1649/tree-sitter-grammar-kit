@@ -27,6 +27,8 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 
 명령은 network·tool 설치를 묵시적으로 하지 않는다. `--allow CAPABILITY`를 반복 지정해 실행 권한을 전달하되 profile 요청과 실제 backend가 모두 충족되어야 한다. fetch 준비는 별도 명시 절차이고 위 offline 명령에 자동 fetch 옵션을 숨기지 않는다. `--git-provenance` 같은 외부 Git 호출은 S01에서 별도 opt-in 계약·권한을 먼저 확정하기 전 구현하지 않는다.
 
+CLI report publication의 임시 파일 정리 실패는 `OUTPUT_CLEANUP_FAILED`(exit 4)다. 최종 게시가 이미 성공했으면 진단에 `output was published`를 남기고 최종 파일을 rollback·삭제하지 않는다. 배타 temp 생성 자체가 실패한 경우 다른 소유자의 같은 이름을 cleanup하지 않는다. Windows CLI의 게시 후 file·parent handle 종료 실패는 `OUTPUT_CLOSE_FAILED`(exit 4)이며 게시 사실을 보존한다. native output directory handle 해제 실패도 `OUTPUT_CLOSE_FAILED`이며 실행 `FAILED`와 I/O 오류로 보존한다. `incremental`은 directory 종료 결과를 저장 report에도 반영하고 기존 `PASS`를 `NOT_ASSESSED`로 바꾼다. 마지막 report file의 write·close 실패는 `EVIDENCE_WRITE_FAILED`이며, 파일 존재나 내부 `PASS`만으로 성공을 채택하지 않고 반환 오류·CLI 종료 상태도 확인한다. output directory·member 소유권과 아직 해결하지 못한 동시 교체 경계는 [trust 계약의 #215 절](trust-and-execution.md)을 따른다.
+
 ## S01 구현
 
 ```text
@@ -41,7 +43,7 @@ tsgk corpus   --root PATH [--encoding-profile cp949|none] [--declare PATH=utf-8|
 * CLI 기본 한도는 offline-inspect의 files 10000, file_bytes 16777216, total_bytes 268435456, depth 64, output_bytes 16777216, wall 120초이고, corpus는 아래 private-corpus-local 값이다. CLI는 caller deadline을 wall+5초로 두므로 kit wall이 먼저 `RESOURCE_LIMIT`으로 끝나고, Ctrl-C 같은 caller 취소만 130이다.
 * 종료 코드: 완료 0, `INVALID_INPUT` 2, `RESOURCE_LIMIT`·`UNSUPPORTED` 3, `IO`와 publication 실패 4, `CANCELLED` 130. inspect/identity/corpus는 비교를 하지 않으므로 1을 쓰지 않는다. verify는 완료된 비교의 FAIL에만 1을 쓴다.
 * 출력: 성공 결과는 한 줄 JSON 문서와 줄바꿈이다. `--out`이 없으면 stdout, 있으면 그 파일에만 쓴다. 실패하면 실패 report(E0 축과 실패 finding)를 stdout에 쓰고 stderr에 `tsgk: KIND: CODE PATH`를 쓰며 `--out`에는 쓰지 않는다. exit 0과 완전한 JSON 문서가 함께 있을 때만 완전한 report다. 잘린 stdout이나 0이 아닌 exit의 출력은 성공으로 소비하지 않는다.
-* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 부모 디렉터리는 `EvalSymlinks`로 해석하고, 그래도 경로에 name-surrogate reparse point(junction·volume mount 및 unknown redirecting tag; cloud placeholder 같은 다른 reparse 디렉터리는 별칭이 아님)가 남아 대상을 root와 비교할 수 없으면 `OUTPUT_PARENT_ALIAS`로 거부한다. 해석한 부모 디렉터리나 그 조상이 root 또는 그 하위 directory와 같은 file identity이면(대소문자·symlink·junction으로 지정한 root 포함) 입력 안으로 보고 `OUTPUT_INSIDE_INPUT`으로 거부한다. 경로에 드러나지 않는 별칭도 [trust 계약](trust-and-execution.md)의 bounded subtree identity 검사로 대조한다. root 내부 symlink/name-surrogate reparse alias, 읽기/identity 오류, 탐색 한도 초과는 outside로 승인하지 않고 `OUTPUT_PATH_UNVERIFIED`다. filesystem이 정상 identity를 제공하는 caller-owned local tree와 고정 namespace가 전제이며 network filesystem·적대적 동시 교체의 안전성을 주장하지 않는다. 같은 디렉터리에 임시 파일을 완성·동기화한 뒤 hard link로 최종 이름에 놓아, 그 사이 다른 쓰기가 만든 대상도 덮어쓰지 않는다. 임시 파일은 항상 지운다. hard link를 지원하지 않는 filesystem은 publication 실패(exit 4)다.
+* `--out` publication: 대상이 이미 있으면(link 포함) 거부한다. 부모 디렉터리는 `EvalSymlinks`로 해석하고, 그래도 경로에 name-surrogate reparse point(junction·volume mount 및 unknown redirecting tag; cloud placeholder 같은 다른 reparse 디렉터리는 별칭이 아님)가 남아 대상을 root와 비교할 수 없으면 `OUTPUT_PARENT_ALIAS`로 거부한다. 해석한 부모 디렉터리나 그 조상이 root 또는 그 하위 directory와 같은 file identity이면(대소문자·symlink·junction으로 지정한 root 포함) 입력 안으로 보고 `OUTPUT_INSIDE_INPUT`으로 거부한다. 경로에 드러나지 않는 별칭도 [trust 계약](trust-and-execution.md)의 bounded subtree identity 검사로 대조한다. root 내부 symlink/name-surrogate reparse alias, 읽기/identity 오류, 탐색 한도 초과는 outside로 승인하지 않고 `OUTPUT_PATH_UNVERIFIED`다. filesystem이 정상 identity를 제공하는 caller-owned local tree와 고정 namespace가 전제이며 network filesystem·적대적 동시 교체의 안전성을 주장하지 않는다. 같은 디렉터리에서 완성·동기화한 임시 파일은 [trust 계약의 #215 절](trust-and-execution.md)의 플랫폼별 no-clobber 방식으로 게시하여 동시 생성된 대상을 덮어쓰지 않는다. 임시 파일 정리·종료 실패는 오류로 보존한다. 필요한 filesystem primitive를 지원하지 않으면 publication 실패(exit 4)이며 약한 방식으로 우회하지 않는다.
 
 ### discovery `known-paths-r1`
 
@@ -117,6 +119,8 @@ profile `tsgk-reproduce/r1`은 S02와 같은 strict decoder로 읽는다. 필수
 publication: `--out`은 새로 만들어야 하며 있으면 실행 전 `OUTPUT_EXISTS`다. `workspace-a|b/out/`에 생성물을, `stdout.log`·`stderr.log`에 원 출력을 두고 마지막에 `result.json`(`tsgk-reproduce-result/r1`)을 쓴다. 실패한 실행도 partial 생성물과 실패 report를 남긴다. 그 뒤 작업 공간과 도구 사본 디렉터리를 지우며 지우지 못하면 `WORKSPACE_CLEANUP_FAILED`·`TOOL_CLEANUP_FAILED`로 완료가 아니다. 실행이 완료되지 않은 결과(source 변경, 저장 용량 초과, cleanup·결과 쓰기 실패)는 assessment `PASS`를 갖지 않고(`NOT_ASSESSED`, 한도면 `BLOCKED`), `js_reproduction`·`json_regeneration`도 `PASS`로 남지 않는다(`NOT_CLAIMED`). 관측 claim(`generator_ran`, `deterministic`, `reference_match`)은 관측한 그대로 둔다. 저장 용량 초과는 다른 실패 원인과 함께 finding으로 남는다. 결과 쓰기 실패는 `EVIDENCE_WRITE_FAILED`(exit 4)다. stdout에는 같은 report 한 줄을 쓴다. exit: 완료 PASS 0, FAIL 1, BLOCKED 3, `RESOURCE_LIMIT` 3, 생성기·cleanup 실패 1, 취소 130.
 
 ## S05 구현 — incremental, incremental profile r2
+
+`incremental`·`oracle record`의 CLI는 검사한 output parent handle과 basename을 native 생성까지 전달한다. parent pathname이 교체되거나 target이 닫히면 다른 경로로 재개방하지 않는다. case·grammar root handle도 호출 동안 유지하지만 native 입력 읽기의 root identity 결속은 [trust 계약](trust-and-execution.md)의 미완료 항목이다. native가 저장한 report 이후 CLI handle 종료·stdout 쓰기가 실패할 수 있으므로 성공 채택에는 완전한 stdout JSON과 exit 0을 함께 요구한다. stdout Write 오류·short write는 `OUTPUT_WRITE_FAILED`, exit 4다.
 
 ```text
 tsgk incremental --root PATH [--grammar-root PATH] --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE [--cgroup-parent DIR] [--run-wall SECONDS]

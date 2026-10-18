@@ -206,6 +206,31 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 			len(warm.Cases) != 1 || warm.Cases[0].Process == nil || warm.Cases[0].Steps[0].Incremental.Digest != cold.Cases[0].Steps[0].Incremental.Digest {
 			t.Fatalf("cross-process warm build: exit=%d %s", code, stderr)
 		}
+		// Execute another real cached run; a successful saved result cannot hide stdout failure.
+		closedArgs := append([]string(nil), warmArgs...)
+		closedOut := filepath.Join(base, "closed-stdout-output")
+		for i := range closedArgs {
+			if closedArgs[i] == "--out" {
+				closedArgs[i+1] = closedOut
+			}
+		}
+		closed, err := os.CreateTemp(t.TempDir(), "closed-stdout")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := closed.Close(); err != nil {
+			t.Fatal(err)
+		}
+		var closedStderr strings.Builder
+		if code := run(ctx, closedArgs, closed, &closedStderr); code != exitIO || !strings.Contains(closedStderr.String(), "OUTPUT_WRITE_FAILED") {
+			t.Fatalf("successful native run hid stdout failure: %d %s", code, closedStderr.String())
+		}
+		savedBytes, err := os.ReadFile(filepath.Join(closedOut, "result.json"))
+		var saved native.Result
+		if err != nil || json.Unmarshal(savedBytes, &saved) != nil || saved.ExecutionStatus != kit.StatusCompleted || saved.Assessment != kit.AssessPass ||
+			saved.Build == nil || saved.Build.Reuse == nil || !saved.Build.Reuse.Hit || len(saved.Cases) != 1 || saved.Cases[0].Process == nil {
+			t.Fatalf("stdout failure did not follow successful native execution: %v", err)
+		}
 		// Cache is another execution destination: it cannot be an input directory.
 		for i := range warmArgs {
 			if warmArgs[i] == "--build-cache" {

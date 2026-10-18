@@ -37,7 +37,7 @@ func TestBatchRecords(t *testing.T) {
 	x.Declarations = &kit.Declarations{Mapping: "owned-r1", Items: []kit.NativeDeclaration{{Fact: "type_declaration", Node: "assignment", Name: "field:name"}}}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	out, batches := runBatches(ctx, b, x, root, cases, "")
+	out, batches := runBatches(ctx, b, x, root, cases, nil)
 	if len(batches) != 3 {
 		t.Fatalf("batches %d", len(batches))
 	}
@@ -76,7 +76,7 @@ func TestBatchTrailingBytes(t *testing.T) {
 	x.Output = kit.OutputRecord
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	out, batches := runBatches(ctx, b, x, root, cases, "")
+	out, batches := runBatches(ctx, b, x, root, cases, nil)
 	if len(batches) != 1 || batches[0].TrailingBytes != 4 || out[0].ExecutionStatus != kit.StatusFailed || out[0].Code != "RESPONSE_TRAILING_BYTES" {
 		t.Fatalf("trailing batch accepted: %+v %s %s", batches, out[0].ExecutionStatus, out[0].Code)
 	}
