@@ -93,7 +93,7 @@ func TestNullNestedPrimitiveIsNotZeroValue(t *testing.T) {
 	}
 	q.Status, q.Code, q.Captures, q.Patterns = "INVALID_QUERY", "QUERY_SYNTAX", nil, 0
 	q.Error = &CompileError{Type: "SYNTAX", Point: [2]uint32{0, 0}}
-	q.Predicates = nil
+	q.Predicates, q.CaptureNames = nil, nil
 	base = encode(t, q)
 	if got, err := DecodeSummary(base, requested, 1, 1); err != nil || len(got) != 1 {
 		t.Fatalf("valid rejection/null stream lost: %+v %v", got, err)

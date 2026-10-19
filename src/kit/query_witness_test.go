@@ -1019,6 +1019,34 @@ func TestQueryWitnessRejectsImpossibleRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestQueryWitnessReviewImpossibleProjectionQueryWithoutRaw(t *testing.T) {
+	for _, kind := range []string{"duplicate-names", "missing-without-error"} {
+		t.Run(kind, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			reg["queries"].([]any)[0].(map[string]any)["metadata"] = nil
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			q := tree["queries"].([]any)[0].(map[string]any)
+			if kind == "duplicate-names" {
+				q["capture_names"] = []string{"x", "x"}
+			} else {
+				// a summary projection has no CST, so only the capture flags can expose it; only
+				// a request without edits may yield one
+				reg["edits"], reg["required"], p["steps"] = []Edit{}, reg["required"].([]any)[:1], p["steps"].([]any)[:1]
+				tree["form"] = "summary"
+				delete(tree, "tree")
+				q["captures"].([]Capture)[0].IsMissing = true
+				tuple := reg["required"].([]any)[0].(map[string]any)
+				tuple["structural"].([]Capture)[0].IsMissing, tuple["expected"].([]Capture)[0].IsMissing = true, true
+			}
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			if res, err := VerifyQueryWitness(ctxT(t), req); err != nil || res.Assessment != AssessFail {
+				t.Fatalf("projection adopted: %+v %v", res, err)
+			}
+		})
+	}
+}
+
 func TestQueryWitnessRejectsNodeRowsOutsideFullForm(t *testing.T) {
 	for _, form := range []string{"summary", "record"} {
 		req, reg, raw, p := witnessFixture(t)

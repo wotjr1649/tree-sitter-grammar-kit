@@ -527,7 +527,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				for _, c := range q.Captures {
 					if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
 						c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || c.Node < 0 || uint64(c.Node) >= tree.Count ||
-						c.StartByte > c.EndByte || uint64(c.EndByte) > step.Bytes ||
+						c.StartByte > c.EndByte || uint64(c.EndByte) > step.Bytes || c.IsMissing && !c.HasError ||
 						(tree.Tree != nil && !witnessCaptureNode(c, tree.Tree.Nodes)) {
 						bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 						break
@@ -803,6 +803,9 @@ func witnessProjectionTreeHeader(t witnessTreeProjection) bool {
 }
 
 func witnessProjectionQueryHeader(q witnessQueryProjection, encoding string) bool {
+	if !querywire.ValidMetadata(q.Patterns, q.CaptureNames, q.Predicates) {
+		return false
+	}
 	switch q.Status {
 	case StatusCompleted:
 		return q.Code == "" && q.Error == nil && !q.Partial && q.Captures != nil && q.CaptureNames != nil && q.Predicates != nil && querypolicy.Support(q.Patterns, q.Predicates, encoding) == "" &&

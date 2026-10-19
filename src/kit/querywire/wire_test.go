@@ -211,14 +211,14 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Status = "INVALID_QUERY"
 			q.Code = "QUERY_SYNTAX"
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 1, Point: [2]uint32{0, 1}}
-			q.Patterns = 0
+			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
 		}, true},
 		{"invalid-offset", func(q *Query) {
 			q.Status = "INVALID_QUERY"
 			q.Code = "QUERY_SYNTAX"
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 999}
-			q.Patterns = 0
+			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
 		}, false},
 		{"pattern-of-match", func(q *Query) { q.Captures = append(q.Captures, []int64{0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}) }, false},
@@ -230,6 +230,7 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Captures = [][]int64{a, b, a, a}
 		}, true},
 		{"names-duplicate", func(q *Query) { q.CaptureNames = []string{"x", "x"} }, false},
+		{"names-without-pattern", func(q *Query) { q.Patterns, q.Captures, q.Matches, q.Types = 0, [][]int64{}, 0, []string{} }, false},
 		{"names-empty", func(q *Query) { q.CaptureNames = []string{"x", ""} }, false},
 		{"predicate-unknown-capture", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(0, "y")} }, false},
 		{"predicate-pattern-order", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(1, "x"), eqPredicate(0, "x")} }, false},
@@ -261,7 +262,7 @@ func TestCompileErrorSourceBinding(t *testing.T) {
 	for _, kind := range []string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE", "NONE", "FORGED"} {
 		for _, point := range [][2]uint32{{1, 1}, {0, 2}, {1, 2}} {
 			q := fixture()
-			q.Status, q.Code, q.Patterns, q.Captures = "INVALID_QUERY", "QUERY_"+kind, 0, nil
+			q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_"+kind, 0, nil, []string{}
 			q.Error = &CompileError{Type: kind, Offset: 2, Point: point}
 			_, err := DecodeSummary(encode(t, q), []Source{{ID: "q", Source: []byte("\n(x)")}}, 1, 1)
 			valid := kind != "NONE" && kind != "FORGED" && point == [2]uint32{1, 1}

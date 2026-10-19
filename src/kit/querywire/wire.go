@@ -244,6 +244,9 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 // ValidMetadata reports whether metadata is what a compiled query yields: unique non-empty
 // capture names, and predicates in pattern order whose captures name one of them.
 func ValidMetadata(patterns uint32, names []string, predicates []querypolicy.Predicate) bool {
+	if patterns == 0 && len(names) != 0 { // the runtime parses captures only inside a pattern
+		return false
+	}
 	seen := map[string]bool{}
 	for _, name := range names {
 		if name == "" || seen[name] {
