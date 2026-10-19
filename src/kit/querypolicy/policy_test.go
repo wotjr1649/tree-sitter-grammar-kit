@@ -1,9 +1,40 @@
 package querypolicy
 
 import (
+	"context"
+	"errors"
 	"slices"
 	"testing"
 )
+
+func TestFilterCancellationInsidePredicateScan(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	caps := make([]Capture, 1024)
+	for i := range caps {
+		caps[i] = Capture{Name: "unused", EndByte: 1}
+	}
+	caps[0].Name = "x"
+	preds := make([]Predicate, 128)
+	for i := range preds {
+		preds[i] = predicate("eq?", capture("x", "ONE"), text("a"))
+	}
+	checks := 0
+	indices, code, err := FilterChecked(func() error {
+		checks++
+		if checks == 4 {
+			cancel()
+		}
+		return ctx.Err()
+	}, 1, preds, caps, "UTF-8", []byte("a"))
+	if !errors.Is(err, context.Canceled) || code != "" || indices != nil || checks != 4 {
+		t.Fatalf("mid-filter cancellation: %v %q %v checks=%d", indices, code, err, checks)
+	}
+	indices, code = Filter(1, preds, caps, "UTF-8", []byte("a"))
+	if code != "" || len(indices) != len(caps) {
+		t.Fatalf("original policy changed: %v %q", indices, code)
+	}
+}
 
 func capture(name, quantifier string) Step {
 	return Step{Kind: "capture", Value: name, Quantifier: &quantifier}

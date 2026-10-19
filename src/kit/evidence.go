@@ -121,6 +121,24 @@ func decodeTyped(doc string, data []byte, v any) *Error {
 // accepts only the listed evidence modes. Integrity is not authenticity: hashes bind
 // bytes, not a publisher.
 func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, error) {
+	return verifyEvidence(ctx, req, nil)
+}
+
+// Requested bytes come from the same guarded pass that hashes every graph member.
+type evidenceSnapshot struct {
+	wanted       map[string]bool
+	wantedNodes  map[string]bool
+	files        map[string][]byte
+	nodes        []EvidenceNode
+	graphBound   bool
+	invalidNodes map[string]bool
+}
+
+func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot) (EvidenceResult, error) {
+	if snapshot != nil {
+		snapshot.files, snapshot.nodes = map[string][]byte{}, nil
+		snapshot.graphBound, snapshot.invalidNodes = false, map[string]bool{}
+	}
 	res := EvidenceResult{Report: newReport("evidence verify"), ResultSchema: EvidenceResultSchema, Modes: map[string]int{}, Explanation: []string{}}
 	bad := func(e *Error) (EvidenceResult, error) {
 		failReport(&res.Report, e)
@@ -172,7 +190,22 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	if e := decodeTyped("evidence", data, &doc); e != nil {
 		return bad(e)
 	}
+	if snapshot != nil {
+		snapshot.nodes = doc.Nodes
+	}
 	add := func(code, path, msg string) { x.finding(code, path, msg) }
+	markNode := func(id string) {
+		if snapshot != nil && snapshot.wantedNodes[id] {
+			snapshot.invalidNodes[id] = true
+		}
+	}
+	nodeBad := func(code, id, msg string) {
+		markNode(id)
+		add(code, id, msg)
+	}
+	if snapshot != nil {
+		snapshot.graphBound = st.sha256 == pol.EvidenceSHA256
+	}
 	if st.sha256 != pol.EvidenceSHA256 {
 		add("EVIDENCE_ANCHOR_MISMATCH", "evidence.json", "evidence 문서가 policy가 고정한 sha256과 다르다")
 	}
@@ -182,11 +215,11 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 	for i := range doc.Nodes {
 		n := &doc.Nodes[i]
 		if !validID(n.ID) {
-			add("NODE_ID_INVALID", n.ID, "node id 형식이 틀렸다")
+			nodeBad("NODE_ID_INVALID", n.ID, "node id 형식이 틀렸다")
 			continue
 		}
 		if nodes[n.ID] != nil {
-			add("NODE_DUPLICATE", n.ID, "같은 node id가 두 번 있다")
+			nodeBad("NODE_DUPLICATE", n.ID, "같은 node id가 두 번 있다")
 			continue
 		}
 		nodes[n.ID] = n
@@ -194,26 +227,26 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 		mode, known := nodeKinds[n.Kind]
 		switch {
 		case !known:
-			add("NODE_KIND_UNSUPPORTED", n.ID, "등록되지 않은 node 종류다")
+			nodeBad("NODE_KIND_UNSUPPORTED", n.ID, "등록되지 않은 node 종류다")
 		case n.EvidenceMode != mode || !executionStatuses[n.ExecutionStatus] || !assessmentValues[n.Assessment]:
-			add("AXIS_INVALID", n.ID, "node 종류와 실행 상태·evidence mode·판정이 맞지 않는다")
+			nodeBad("AXIS_INVALID", n.ID, "node 종류와 실행 상태·evidence mode·판정이 맞지 않는다")
 		case n.Kind == "record" && (n.Assessment != AssessUnresolved || !assessmentValues[n.RecordedAssessment] || n.RecordedAssessment == AssessUnresolved):
-			add("AXIS_INVALID", n.ID, "다시 계산하지 않은 기록은 현재 판정 UNRESOLVED와 원 판정을 따로 가진다")
+			nodeBad("AXIS_INVALID", n.ID, "다시 계산하지 않은 기록은 현재 판정 UNRESOLVED와 원 판정을 따로 가진다")
 		case n.Kind == "carry" && n.ExecutionStatus != StatusNotRun:
-			add("AXIS_INVALID", n.ID, "승계 결과의 현재 실행은 NOT_RUN이다")
+			nodeBad("AXIS_INVALID", n.ID, "승계 결과의 현재 실행은 NOT_RUN이다")
 		case n.Kind != "record" && n.RecordedAssessment != "":
-			add("AXIS_INVALID", n.ID, "recorded_assessment는 기록 node에만 있다")
+			nodeBad("AXIS_INVALID", n.ID, "recorded_assessment는 기록 node에만 있다")
 		case n.ExecutionStatus != StatusCompleted && n.Assessment == AssessPass && n.Kind != "carry":
-			add("AXIS_INVALID", n.ID, "완료되지 않은 실행은 PASS가 아니다")
+			nodeBad("AXIS_INVALID", n.ID, "완료되지 않은 실행은 PASS가 아니다")
 		}
 		for _, role := range sortedKeys(n.Identities) {
 			if !slices.Contains(EvidenceRoles, role) {
-				add("IDENTITY_ROLE_UNKNOWN", n.ID, "등록되지 않은 identity 역할이다: "+role)
+				nodeBad("IDENTITY_ROLE_UNKNOWN", n.ID, "등록되지 않은 identity 역할이다: "+role)
 			}
 		}
 		for _, role := range EvidenceRoles {
 			if _, ok := n.Identities[role]; !ok {
-				add("IDENTITY_ROLE_MISSING", n.ID, "identity 역할이 빠졌다: "+role)
+				nodeBad("IDENTITY_ROLE_MISSING", n.ID, "identity 역할이 빠졌다: "+role)
 			}
 		}
 		for _, f := range n.Files {
@@ -232,6 +265,20 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 				var b []byte
 				if b, e = x.read(f.Path, f.Bytes, f.SHA256); e == nil {
 					kept[f.Path] = b
+					if snapshot != nil && snapshot.wanted[f.Path] {
+						if b == nil {
+							b = []byte{}
+						}
+						snapshot.files[f.Path] = b
+					}
+				}
+			} else if snapshot != nil && snapshot.wanted[f.Path] {
+				var b []byte
+				if b, e = x.verifyFileBytes(f.Path, f.Bytes, f.SHA256, true); e == nil {
+					if b == nil {
+						b = []byte{}
+					}
+					snapshot.files[f.Path] = b
 				}
 			} else {
 				e = x.verifyFile(f.Path, f.Bytes, f.SHA256)
@@ -263,22 +310,29 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 			t := nodes[ref.Node]
 			switch {
 			case t == nil:
-				add("REF_UNRESOLVED", id, "참조한 node가 없다: "+ref.Node)
+				nodeBad("REF_UNRESOLVED", id, "참조한 node가 없다: "+ref.Node)
 			case !slices.Contains(allowed[n.Kind][ref.Relation], t.Kind):
-				add("REF_RELATION_INVALID", id, fmt.Sprintf("%s는 %s 관계로 %s를 참조할 수 없다", n.Kind, ref.Relation, t.Kind))
+				nodeBad("REF_RELATION_INVALID", id, fmt.Sprintf("%s는 %s 관계로 %s를 참조할 수 없다", n.Kind, ref.Relation, t.Kind))
 			default:
 				counts[ref.Relation]++
 			}
 		}
 		if n.Kind == "replay" && counts["subject"] != 1 {
-			add("REPLAY_SUBJECT_REQUIRED", id, "replay는 subject를 정확히 하나 참조한다")
+			nodeBad("REPLAY_SUBJECT_REQUIRED", id, "replay는 subject를 정확히 하나 참조한다")
 		}
 		if n.Kind == "carry" && counts["carries"] != 1 {
-			add("CARRY_ORIGIN_REQUIRED", id, "승계는 원 결과를 정확히 하나 참조한다")
+			nodeBad("CARRY_ORIGIN_REQUIRED", id, "승계는 원 결과를 정확히 하나 참조한다")
 		}
 	}
 	if cyc := findCycle(nodes); cyc != "" {
 		add("GRAPH_CYCLE", cyc, "참조가 순환한다")
+		if snapshot != nil {
+			for id := range snapshot.wantedNodes {
+				if findCycleFrom(nodes, []string{id}) != "" {
+					markNode(id)
+				}
+			}
+		}
 	}
 	sameRun := func(a, b *EvidenceNode) bool {
 		return a.Identities["run"] == b.Identities["run"] && a.Identities["attempt"] == b.Identities["attempt"] && a.Identities["platform"] == b.Identities["platform"]
@@ -290,6 +344,8 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 			// a run and a historical record of the same run identity are one execution
 			// labelled twice, as are two runs
 			if na.Kind != "replay" && na.Kind != "carry" && nb.Kind != "replay" && nb.Kind != "carry" && sameRun(na, nb) {
+				markNode(a)
+				markNode(b)
 				add("RUN_IDENTITY_DUPLICATE", a+","+b, "같은 run·attempt·platform이 두 결과로 기록됐다(relabel)")
 			}
 		}
@@ -304,20 +360,20 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 			switch ref.Relation {
 			case "supersedes":
 				if sameRun(n, t) {
-					add("RUN_RELABELED", id, "새 결과가 이전 결과와 같은 run identity로 그 결과를 대체한다")
+					nodeBad("RUN_RELABELED", id, "새 결과가 이전 결과와 같은 run identity로 그 결과를 대체한다")
 				}
 			case "subject":
 				if n.Identities["run"] == t.Identities["run"] && n.Identities["attempt"] == t.Identities["attempt"] {
-					add("REPLAY_RELABELS_SUBJECT", id, "replay가 subject run과 같은 실행 identity를 쓴다")
+					nodeBad("REPLAY_RELABELS_SUBJECT", id, "replay가 subject run과 같은 실행 identity를 쓴다")
 				}
 				for _, role := range []string{"source", "input", "workload", "platform"} {
 					if n.Identities[role] != t.Identities[role] {
-						add("REPLAY_SUBJECT_MISMATCH", id, "replay와 subject의 identity가 다르다: "+role)
+						nodeBad("REPLAY_SUBJECT_MISMATCH", id, "replay와 subject의 identity가 다르다: "+role)
 					}
 				}
 				x.checkReplayFile(n, t, kept, add)
 			case "carries":
-				x.checkCarry(n, t, pol, add)
+				x.checkCarry(n, t, pol, nodeBad)
 			}
 		}
 		if n.Kind == "carry" {
@@ -326,19 +382,19 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 				authorized = authorized || rule.Node == id
 			}
 			if !authorized {
-				add("CARRY_FORWARD_UNAUTHORIZED", id, "승계를 허가한 policy 규칙이 없다(기본 거부)")
+				nodeBad("CARRY_FORWARD_UNAUTHORIZED", id, "승계를 허가한 policy 규칙이 없다(기본 거부)")
 			}
 		}
 	}
 	for _, req := range pol.Required {
 		n := nodes[req.Node]
 		if n == nil || n.Kind != req.Kind {
-			add("REQUIRED_NODE_MISSING", req.Node, "필수 node가 없거나 종류가 다르다")
+			nodeBad("REQUIRED_NODE_MISSING", req.Node, "필수 node가 없거나 종류가 다르다")
 			continue
 		}
 		for _, role := range sortedKeys(req.Identities) {
 			if n.Identities[role] != req.Identities[role] {
-				add("IDENTITY_MISMATCH", req.Node, "필수 node의 identity가 policy와 다르다(stale 또는 혼합): "+role)
+				nodeBad("IDENTITY_MISMATCH", req.Node, "필수 node의 identity가 policy와 다르다(stale 또는 혼합): "+role)
 			}
 		}
 	}
@@ -346,9 +402,9 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 		for _, id := range el.Nodes {
 			n := nodes[id]
 			if n == nil {
-				add("ELIGIBILITY_NODE_MISSING", id, "자격 판정 대상 node가 없다")
+				nodeBad("ELIGIBILITY_NODE_MISSING", id, "자격 판정 대상 node가 없다")
 			} else if !slices.Contains(el.Modes, n.EvidenceMode) {
-				add("ELIGIBILITY_REJECTED", id, "이 자격은 "+fmt.Sprint(el.Modes)+" evidence만 받는다: "+n.EvidenceMode)
+				nodeBad("ELIGIBILITY_REJECTED", id, "이 자격은 "+fmt.Sprint(el.Modes)+" evidence만 받는다: "+n.EvidenceMode)
 			}
 		}
 	}
@@ -453,6 +509,10 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 
 // findCycle returns a node on a reference cycle, or "".
 func findCycle(nodes map[string]*EvidenceNode) string {
+	return findCycleFrom(nodes, sortedKeys(nodes))
+}
+
+func findCycleFrom(nodes map[string]*EvidenceNode, roots []string) string {
 	state := map[string]int{}
 	var visit func(id string) string
 	visit = func(id string) string {
@@ -475,7 +535,7 @@ func findCycle(nodes map[string]*EvidenceNode) string {
 		state[id] = 2
 		return ""
 	}
-	for _, id := range sortedKeys(nodes) {
+	for _, id := range roots {
 		if c := visit(id); c != "" {
 			return c
 		}

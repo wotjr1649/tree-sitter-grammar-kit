@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 func TestNullPrimitiveIsNotZeroValue(t *testing.T) {
@@ -93,7 +93,7 @@ func TestNullNestedPrimitiveIsNotZeroValue(t *testing.T) {
 	}
 	q.Status, q.Code, q.Captures, q.Patterns = "INVALID_QUERY", "QUERY_SYNTAX", nil, 0
 	q.Error = &CompileError{Type: "SYNTAX", Point: [2]uint32{0, 0}}
-	q.Predicates = nil
+	q.Predicates, q.CaptureNames = nil, nil
 	base = encode(t, q)
 	if got, err := DecodeSummary(base, requested, 1, 1); err != nil || len(got) != 1 {
 		t.Fatalf("valid rejection/null stream lost: %+v %v", got, err)
@@ -145,7 +145,7 @@ func TestNullCaptureQuantifierInRejectedQueries(t *testing.T) {
 			q.Captures = nil
 			q.Predicates = []querypolicy.Predicate{{Steps: []querypolicy.Step{{Kind: "capture", Value: "x"}}}}
 			if status == "FAILED" {
-				q.Code = "CAPTURE_NODE_UNMAPPED"
+				q.Code, q.Types = "CAPTURE_NODE_UNMAPPED", []string{}
 			} else {
 				q.Code = "QUERY_SYNTAX"
 				q.Patterns = 0
@@ -155,8 +155,10 @@ func TestNullCaptureQuantifierInRejectedQueries(t *testing.T) {
 				t.Fatalf("capture quantifier null adopted: %+v %v", got, err)
 			}
 			q.Predicates[0].Steps[0].Kind = "string"
-			if got, err := DecodeSummary(encode(t, q), requested, 1, 1); err != nil || len(got) != 1 {
-				t.Fatalf("string quantifier null lost: %+v %v", got, err)
+			got, err := DecodeSummary(encode(t, q), requested, 1, 1)
+			// an invalid query has no pattern, so the producer emits no predicate for it
+			if status == "INVALID_QUERY" && (err == nil || err.Code != "RESPONSE_INVALID") || status == "FAILED" && (err != nil || len(got) != 1) {
+				t.Fatalf("string quantifier null: %+v %v", got, err)
 			}
 		})
 	}

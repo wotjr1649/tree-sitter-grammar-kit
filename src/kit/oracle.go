@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"io/fs"
 	"regexp"
 	"slices"
@@ -17,6 +19,9 @@ const (
 	OracleSchema         = "tsgk-oracle/r2"
 	OracleRecordSchema   = "tsgk-oracle-record/r1"
 	OracleManifestSchema = "tsgk-oracle-manifest/r1"
+	// OracleSourceManifestSchema is an opt-in set retaining exact initial source bytes.
+	OracleSourceManifestSchema = "tsgk-oracle-manifest/r2"
+	MaxOracleSourceBytes       = 32 << 20
 )
 
 // oracleSchemaR1 is still decoded (without anchors) so earlier evidence replays.
@@ -364,7 +369,7 @@ func parseDynamicSQLExpect(t typed, v *jv, inputBytes uint64) (*DynamicSQLExpect
 // case, with its own identity and the case input identity it is bound to.
 type OracleMember struct {
 	Path            string `json:"path"`
-	Role            string `json:"role"` // record | raw
+	Role            string `json:"role"` // record | raw | source (manifest r2 only)
 	Case            string `json:"case"`
 	Bytes           uint64 `json:"bytes"`
 	SHA256          string `json:"sha256"`
@@ -404,6 +409,7 @@ type OracleSetReport struct {
 }
 
 var memberPath = regexp.MustCompile(`^(records|raw)/[0-9]{5}-[A-Za-z0-9._-]{1,128}\.json$`)
+var sourceMemberPath = regexp.MustCompile(`^source/[0-9]{5}-[A-Za-z0-9._-]{1,128}\.bin$`)
 
 // VerifyOracleSet verifies a published record set offline: the manifest decodes strictly
 // and ends with complete: true, every listed member exists with its recorded bytes and
@@ -412,16 +418,33 @@ var memberPath = regexp.MustCompile(`^(records|raw)/[0-9]{5}-[A-Za-z0-9._-]{1,12
 // finding makes the set invalid; nothing is repaired.
 func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	r := OracleSetReport{Findings: []Finding{}}
+	limitError := errors.New("oracle member bytes limit")
+	read := func(path string, limit int64) ([]byte, error) {
+		f, err := fsys.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		b, err := io.ReadAll(io.LimitReader(f, limit+1))
+		err = errors.Join(err, f.Close())
+		if int64(len(b)) > limit {
+			return nil, errors.Join(err, limitError)
+		}
+		return b, err
+	}
 	add := func(code, path, msg string) {
 		r.Findings = append(r.Findings, Finding{Code: code, Severity: "error", Path: path, Message: msg})
 	}
-	data, err := fs.ReadFile(fsys, "manifest.json")
+	data, err := read("manifest.json", MaxDocumentBytes)
 	if err != nil {
-		add("MANIFEST_MISSING", "manifest.json", "완결 표시인 manifest가 없다")
+		code := "MANIFEST_MISSING"
+		if errors.Is(err, limitError) {
+			code = "MANIFEST_BYTES_LIMIT"
+		}
+		add(code, "manifest.json", "완결 표시인 manifest를 제한 안에서 읽지 못했다")
 		return r
 	}
 	var m OracleManifest
-	if e := decodeOracleManifest(data, &m); e != nil {
+	if e := decodeOracleManifestVersion(data, &m, true); e != nil {
 		add(e.Code, e.Path, "manifest가 완결되지 않았거나 형식이 틀렸다")
 		return r
 	}
@@ -429,16 +452,48 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	listed := map[string]bool{"manifest.json": true}
 	records := 0
 	perCase := map[string]int{}
+	sources := map[string]int{}
+	recordInputs := map[string]OracleMember{}
+	caseOrdinals := map[string]int{}
+	for i, c := range m.Cases {
+		caseOrdinals[c] = i
+	}
 	for _, mem := range m.Members {
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
-		if !memberPath.MatchString(mem.Path) || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
+		validPath := memberPath.MatchString(mem.Path)
+		if m.Schema == OracleSourceManifestSchema {
+			// the producer names every member by its case's position in cases
+			ordinal, known := caseOrdinals[mem.Case]
+			if mem.Role == "source" {
+				dir, validPath = "source/", known && sourceMemberPath.MatchString(mem.Path) && mem.Path == fmt.Sprintf("source/%05d-%s.bin", ordinal, mem.Case)
+			} else {
+				validPath = validPath && known && mem.Path == fmt.Sprintf("%s%05d-%s.json", dir, ordinal, mem.Case)
+			}
+		}
+		if !validPath || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
 			add("MEMBER_INVALID", mem.Path, "member 경로·역할이 틀렸거나 중복이다")
 			continue
 		}
 		listed[mem.Path] = true
-		b, err := fs.ReadFile(fsys, mem.Path)
+		limit := uint64(MaxDocumentBytes * 4)
+		if mem.Role == "source" {
+			limit = MaxOracleSourceBytes
+			if mem.Bytes > MaxOracleSourceBytes {
+				add("SOURCE_BYTES_LIMIT", mem.Path, "source witness 크기 한도를 넘었다")
+				continue
+			}
+		}
+		if mem.Bytes > limit {
+			add("MEMBER_BYTES_LIMIT", mem.Path, "member 크기 한도를 넘었다")
+			continue
+		}
+		b, err := read(mem.Path, int64(mem.Bytes))
 		if err != nil {
-			add("MEMBER_MISSING", mem.Path, "member 파일이 없다")
+			code := "MEMBER_MISSING"
+			if errors.Is(err, limitError) {
+				code = "MEMBER_BYTES_LIMIT"
+			}
+			add(code, mem.Path, "member 파일을 제한 안에서 읽지 못했다")
 			continue
 		}
 		if uint64(len(b)) != mem.Bytes || digestHex(b) != mem.SHA256 {
@@ -448,8 +503,15 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if mem.Role == "record" {
 			records++
 			perCase[mem.Case]++
+			recordInputs[mem.Case] = mem
 			if code := checkRecord(b, mem); code != "" {
 				add(code, mem.Path, "record가 완결되지 않았거나 member identity와 다르다")
+			}
+		}
+		if mem.Role == "source" {
+			sources[mem.Case]++
+			if mem.Bytes != mem.InputBytes || mem.SHA256 != mem.InputSHA256 {
+				add("SOURCE_INPUT_MISMATCH", mem.Path, "source witness와 사례 입력 identity가 다르다")
 			}
 		}
 	}
@@ -459,6 +521,20 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	for _, c := range m.Cases {
 		if perCase[c] != 1 {
 			add("CASE_RECORD_MISMATCH", "manifest.json", "사례마다 record가 정확히 하나여야 한다: "+c)
+		}
+		if m.Schema == OracleSourceManifestSchema && sources[c] != 1 {
+			add("CASE_SOURCE_MISMATCH", "manifest.json", "사례마다 source witness가 정확히 하나여야 한다: "+c)
+		}
+	}
+	if m.Schema == OracleSourceManifestSchema {
+		if len(m.Cases) == 0 {
+			add("CASE_SOURCE_EMPTY", "manifest.json", "source witness set에 사례가 없다")
+		}
+		for _, mem := range m.Members {
+			rec, ok := recordInputs[mem.Case]
+			if !slices.Contains(m.Cases, mem.Case) || !ok || mem.InputBytes != rec.InputBytes || mem.InputSHA256 != rec.InputSHA256 || mem.ExecutionStatus != rec.ExecutionStatus {
+				add("CASE_MEMBER_MISMATCH", mem.Path, "member의 사례·입력·상태가 record와 다르다")
+			}
 		}
 	}
 	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
@@ -477,6 +553,11 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 }
 
 func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
+	// Legacy replay and qualification do not acquire source-witness semantics implicitly.
+	return decodeOracleManifestVersion(data, m, false)
+}
+
+func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowSource bool) *Error {
 	t := typed{doc: "manifest"}
 	v, e := decodeStrict(t.doc, data, MaxDocumentBytes)
 	if e != nil {
@@ -493,8 +574,10 @@ func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
 	}
 	if s, e := t.str(mm["schema"]); e != nil {
 		return e
-	} else if s != OracleManifestSchema {
+	} else if s != OracleManifestSchema && !(allowSource && s == OracleSourceManifestSchema) {
 		return t.bad("SCHEMA_UNSUPPORTED", mm["schema"])
+	} else {
+		m.Schema = s
 	}
 	for _, k := range []string{"workload", "producer"} {
 		obj, e := t.object(mm[k], mm[k].keys)

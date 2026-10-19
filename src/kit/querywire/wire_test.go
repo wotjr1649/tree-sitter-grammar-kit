@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 )
 
 var requested = []Source{{ID: "q", Source: []byte("(identifier) @x")}}
@@ -16,6 +16,11 @@ func fixture() Query {
 	return Query{ID: "q", Status: "COMPLETED", Patterns: 2,
 		CaptureNames: []string{"x"}, Predicates: []querypolicy.Predicate{}, Matches: 1,
 		Types: []string{"identifier"}, Captures: [][]int64{{0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}}}
+}
+
+func eqPredicate(pattern uint32, capture string) querypolicy.Predicate {
+	one := "ONE"
+	return querypolicy.Predicate{Pattern: pattern, Steps: []querypolicy.Step{{Kind: "string", Value: "eq?"}, {Kind: "capture", Value: capture, Quantifier: &one}, {Kind: "string", Value: "a"}}}
 }
 
 func encode(t *testing.T, q Query) jsontext.Value {
@@ -54,9 +59,46 @@ func TestFullAndSummaryBoundaries(t *testing.T) {
 			t.Fatalf("unrequested query result=%+v err=%v", got, err)
 		}
 	}
-	q.Matches, q.Captures = 0, [][]int64{}
+	q.Matches, q.Types, q.Captures = 0, []string{}, [][]int64{}
 	if got, err := DecodeSummary(encode(t, q), requested, 1, 1); err != nil || got[0].Captures == nil {
 		t.Fatalf("completed empty stream lost: %+v %v", got, err)
+	}
+}
+
+func TestTypeTableMatchesCaptureStream(t *testing.T) {
+	row := func(typ int64) []int64 { return []int64{0, 0, 0, 0, typ, 1, 0, 1, 0, 0, 0, 1} }
+	for _, tc := range []struct {
+		name  string
+		types []string
+		rows  [][]int64
+		ok    bool
+	}{
+		{"empty", []string{}, [][]int64{}, true},
+		{"repeated", []string{"identifier"}, [][]int64{row(0), row(0)}, true},
+		{"first-use", []string{"a", "b"}, [][]int64{row(0), row(1), row(0)}, true},
+		{"unused-without-captures", []string{"forged"}, [][]int64{}, false},
+		{"unused-trailing", []string{"identifier", "forged"}, [][]int64{row(0)}, false},
+		{"duplicate", []string{"identifier", "identifier"}, [][]int64{row(0), row(1)}, false},
+		{"order", []string{"a", "b"}, [][]int64{row(1), row(0)}, false},
+	} {
+		for _, limit := range []bool{false, true} {
+			q := fixture()
+			q.Types, q.Captures = tc.types, tc.rows
+			if len(tc.rows) == 0 {
+				q.Matches = 0
+			}
+			if limit {
+				q.Status, q.Code, q.Partial = "RESOURCE_LIMIT", "MATCH_LIMIT", true
+			}
+			raw := encode(t, q)
+			_, full := DecodeFull(raw, requested, 1, 1, func(Query, []int64) bool { return true })
+			_, summary := DecodeSummary(raw, requested, 1, 1)
+			for _, err := range []*Error{full, summary} {
+				if tc.ok != (err == nil) || err != nil && err.Code != "RESPONSE_INVALID" {
+					t.Fatalf("%s limit=%v: %v", tc.name, limit, err)
+				}
+			}
+		}
 	}
 }
 
@@ -157,20 +199,26 @@ func TestStatusAndStreamContracts(t *testing.T) {
 		{"limit", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "CAPTURE_LIMIT"; q.Partial = true }, true},
 		{"limit-complete", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "CAPTURE_LIMIT" }, false},
 		{"limit-code", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "OTHER"; q.Partial = true }, false},
-		{"failed", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures = nil }, true},
+		{"failed", func(q *Query) {
+			q.Status = "FAILED"
+			q.Code = "CAPTURE_NODE_UNMAPPED"
+			q.Captures, q.Types = nil, []string{}
+		}, true},
+		{"failed-types", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures = nil }, false},
+		{"failed-null-types", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures, q.Types = nil, nil }, false},
 		{"failed-stream", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED" }, false},
 		{"invalid", func(q *Query) {
 			q.Status = "INVALID_QUERY"
 			q.Code = "QUERY_SYNTAX"
-			q.Error = &CompileError{Type: "SYNTAX", Offset: 1}
-			q.Patterns = 0
+			q.Error = &CompileError{Type: "SYNTAX", Offset: 1, Point: [2]uint32{0, 1}}
+			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
 		}, true},
 		{"invalid-offset", func(q *Query) {
 			q.Status = "INVALID_QUERY"
 			q.Code = "QUERY_SYNTAX"
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 999}
-			q.Patterns = 0
+			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
 		}, false},
 		{"pattern-of-match", func(q *Query) { q.Captures = append(q.Captures, []int64{0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}) }, false},
@@ -181,6 +229,17 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Matches = 2
 			q.Captures = [][]int64{a, b, a, a}
 		}, true},
+		{"names-duplicate", func(q *Query) { q.CaptureNames = []string{"x", "x"} }, false},
+		{"names-without-pattern", func(q *Query) { q.Patterns, q.Captures, q.Matches, q.Types = 0, [][]int64{}, 0, []string{} }, false},
+		{"names-empty", func(q *Query) { q.CaptureNames = []string{"x", ""} }, false},
+		{"predicate-unknown-capture", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(0, "y")} }, false},
+		{"predicate-pattern-order", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(1, "x"), eqPredicate(0, "x")} }, false},
+		{"predicate-pattern-repeat", func(q *Query) {
+			q.Predicates = []querypolicy.Predicate{eqPredicate(0, "x"), eqPredicate(0, "x"), eqPredicate(1, "x")}
+		}, true},
+		{"missing-without-error", func(q *Query) { q.Captures[0][5] = 1 | 16 }, false},
+		{"missing-with-error", func(q *Query) { q.Captures[0][5] = 1 | 8 | 16 }, true},
+		{"type-empty-alias", func(q *Query) { q.Types[0] = "" }, true},
 		{"unsupported-wire-predicate", func(q *Query) {
 			q.Predicates = []querypolicy.Predicate{{Steps: []querypolicy.Step{{Kind: "string", Value: "match?"}}}}
 		}, true},
@@ -197,5 +256,66 @@ func TestStatusAndStreamContracts(t *testing.T) {
 				t.Fatalf("invalid stream adopted: %+v %v", got, err)
 			}
 		})
+	}
+}
+
+func TestCompileErrorSourceBinding(t *testing.T) {
+	for _, kind := range []string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE", "NONE", "FORGED"} {
+		for _, point := range [][2]uint32{{1, 1}, {0, 2}, {1, 2}} {
+			q := fixture()
+			q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_"+kind, 0, nil, []string{}
+			q.Error = &CompileError{Type: kind, Offset: 2, Point: point}
+			_, err := DecodeSummary(encode(t, q), []Source{{ID: "q", Source: []byte("\n(x)")}}, 1, 1)
+			valid := kind != "NONE" && kind != "FORGED" && point == [2]uint32{1, 1}
+			if (err == nil) != valid {
+				t.Fatalf("class=%s point=%v: %v", kind, point, err)
+			}
+		}
+	}
+}
+
+func TestMatchAccounting(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		matches uint64
+		rows    [][2]int64
+		valid   bool
+	}{
+		{"empty", 0, nil, true}, {"duplicate", 1, [][2]int64{{0, 0}, {0, 0}}, true},
+		{"interleaved", 2, [][2]int64{{0, 0}, {1, 1}, {0, 0}}, true},
+		{"count", 2, [][2]int64{{0, 0}}, false}, {"skip", 2, [][2]int64{{1, 0}}, false},
+		{"pattern", 1, [][2]int64{{0, 0}, {0, 1}}, false}, {"negative-match", 1, [][2]int64{{-1, 0}}, false},
+		{"negative-pattern", 1, [][2]int64{{0, -1}}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := MatchAccounting(tc.matches, len(tc.rows), func(index int) (int64, int64) { return tc.rows[index][0], tc.rows[index][1] })
+			if got != tc.valid {
+				t.Fatalf("match accounting %v want %v", got, tc.valid)
+			}
+		})
+	}
+	if MatchAccounting(0, 0, nil) || MatchAccounting(0, -1, func(int) (int64, int64) { panic("negative count reached callback") }) {
+		t.Fatal("invalid callback/count accepted")
+	}
+}
+
+func TestFilteredMatchAccounting(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		matches uint64
+		rows    [][2]int64
+		valid   bool
+	}{
+		{"all-rejected", 4, nil, true}, {"gaps", 4, [][2]int64{{1, 0}, {3, 1}}, true}, {"interleaved", 4, [][2]int64{{1, 0}, {3, 1}, {1, 0}}, true},
+		{"pattern", 4, [][2]int64{{1, 0}, {1, 1}}, false}, {"first-order", 4, [][2]int64{{3, 1}, {1, 0}}, false}, {"range", 3, [][2]int64{{3, 0}}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := FilteredMatchAccounting(tc.matches, len(tc.rows), func(i int) (int64, int64) { return tc.rows[i][0], tc.rows[i][1] }); got != tc.valid {
+				t.Fatalf("filtered accounting %v want %v", got, tc.valid)
+			}
+		})
+	}
+	if FilteredMatchAccounting(0, 0, nil) || FilteredMatchAccounting(0, -1, func(int) (int64, int64) { panic("negative count reached callback") }) {
+		t.Fatal("invalid callback/count accepted")
 	}
 }

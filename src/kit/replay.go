@@ -295,6 +295,12 @@ type reducer struct {
 
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
+		"query-witness-r1": {ReducerInfo{ID: "query-witness-r1", Revision: "r1", Operation: "evidence-replay",
+			Inputs:      []string{"tsgk-query-witness-registration/r1", "initial case source", "tsgk-native/r2 response", "saved full case projection"},
+			Roles:       []string{"query-registration", "case-source", "raw", "projection", "retained"},
+			Gates:       []string{"stored-query-witness"},
+			Recorded:    []string{"producer execution", "reference eligibility", "full query_semantics qualification"},
+			Description: "Stored query witness only: source/edit reconstruction, full CST/node links and ordered raw/evaluated captures compared to independently registered metadata and anchors; no execution or reference qualification claim"}, replayQueryWitness},
 		"native-result-r1": {ReducerInfo{ID: "native-result-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"tsgk-incremental-result/r1 result.json", "tsgk-incremental/r2 or r1 workload profile", "responses/ members"},
 			Roles:       []string{"workload-profile", "result", "response", "retained"},
@@ -488,26 +494,35 @@ func (x *replayEnv) member(path string) ([]byte, *Error) {
 // verifyFile hashes one walked file in a bounded stream against a trusted size and sha256
 // without keeping its bytes; only the per-file and total limits apply.
 func (x *replayEnv) verifyFile(path string, size uint64, sum string) *Error {
+	_, e := x.verifyFileBytes(path, size, sum, false)
+	return e
+}
+
+func (x *replayEnv) verifyFileBytes(path string, size uint64, sum string, keep bool) ([]byte, *Error) {
 	info := x.files[path]
 	if info == nil {
-		return fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
+		return nil, fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
 	}
 	if uint64(info.Size()) != size {
-		return fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	if size > x.lim.FileBytes {
 		x.over, x.overAt = true, path
-		return fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
+		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
-	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, 0)
+	var retained uint64
+	if keep {
+		retained = size + 1
+	}
+	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, retained)
 	if e != nil {
-		return e
+		return nil, e
 	}
 	if st.sha256 != sum {
-		return fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	x.verified[path] = true
-	return nil
+	return st.content, nil
 }
 
 // read reads one walked file whose identity comes from a trusted inventory.

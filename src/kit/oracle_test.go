@@ -3,9 +3,60 @@ package kit
 import (
 	"bytes"
 	"encoding/json"
+	"io/fs"
 	"testing"
 	"testing/fstest"
 )
+
+type oversizedOracleFS struct {
+	fs.FS
+	path         string
+	read, budget int
+	closed       bool
+}
+
+func (f *oversizedOracleFS) Open(path string) (fs.File, error) {
+	file, err := f.FS.Open(path)
+	if err != nil || path != f.path {
+		return file, err
+	}
+	return &oversizedOracleFile{File: file, owner: f}, nil
+}
+
+type oversizedOracleFile struct {
+	fs.File
+	owner *oversizedOracleFS
+}
+
+func (f *oversizedOracleFile) Read(p []byte) (int, error) {
+	f.owner.read += len(p)
+	if f.owner.read > f.owner.budget {
+		panic("oracle verifier read beyond allowed bytes")
+	}
+	clear(p)
+	return len(p), nil
+}
+
+func (f *oversizedOracleFile) Close() error {
+	f.owner.closed = true
+	return f.File.Close()
+}
+
+func TestVerifyOracleSetBoundsActualReads(t *testing.T) {
+	for _, path := range []string{"manifest.json", "records/00000-c1.json", "raw/00000-c1.json"} {
+		t.Run(path, func(t *testing.T) {
+			files, _ := oracleSet(t)
+			limit := len(files[path].Data)
+			if path == "manifest.json" {
+				limit = MaxDocumentBytes
+			}
+			input := &oversizedOracleFS{FS: files, path: path, budget: limit + 1}
+			if result := VerifyOracleSet(input); result.Valid || !input.closed || input.read != limit+1 {
+				t.Fatalf("unbounded read: %+v, read=%d closed=%v", result, input.read, input.closed)
+			}
+		})
+	}
+}
 
 // oracleSet builds a valid one-case record set: a record, its raw response and the manifest.
 func oracleSet(t *testing.T) (fstest.MapFS, OracleManifest) {
@@ -32,6 +83,101 @@ func manifestBytes(t *testing.T, m OracleManifest) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+func TestOracleSourceWitnessSet(t *testing.T) {
+	for _, mutation := range []string{"intact", "missing", "duplicate", "source-swap", "input-rebind", "case-swap", "status-swap", "unlisted", "legacy", "oversize", "wrong-index", "wrong-case-path", "raw-wrong-index", "record-wrong-case-path"} {
+		t.Run(mutation, func(t *testing.T) {
+			files, m := oracleSet(t)
+			m.Schema = OracleSourceManifestSchema
+			mem := m.Members[1]
+			mem.Path, mem.Role = "source/00000-c1.bin", "source"
+			mem.Bytes, mem.SHA256 = 6, digestHex([]byte("a = 1;"))
+			files[mem.Path] = &fstest.MapFile{Data: []byte("a = 1;")}
+			switch mutation {
+			case "missing":
+				delete(files, mem.Path)
+			case "duplicate":
+				second := mem
+				second.Path = "source/00001-c1.bin"
+				files[second.Path] = &fstest.MapFile{Data: []byte("a = 1;")}
+				m.Members = append(m.Members, second)
+			case "source-swap", "input-rebind":
+				files[mem.Path].Data = []byte("b = 2;")
+				mem.SHA256 = digestHex(files[mem.Path].Data)
+				if mutation == "input-rebind" {
+					mem.InputSHA256 = mem.SHA256
+				}
+			case "case-swap":
+				mem.Case = "other"
+			case "status-swap":
+				mem.ExecutionStatus = StatusNotRun
+			case "unlisted":
+				files["source/00001-extra.bin"] = &fstest.MapFile{Data: []byte{}}
+			case "legacy":
+				m.Schema = OracleManifestSchema
+			case "oversize":
+				mem.Bytes = MaxOracleSourceBytes + 1
+			case "raw-wrong-index", "record-wrong-case-path":
+				k, path := 0, "raw/99999-c1.json"
+				if mutation == "record-wrong-case-path" {
+					k, path = 1, "records/00000-other.json"
+				}
+				files[path] = files[m.Members[k].Path]
+				delete(files, m.Members[k].Path)
+				m.Members[k].Path = path
+			case "wrong-index", "wrong-case-path":
+				old := mem.Path
+				if mutation == "wrong-index" {
+					mem.Path = "source/99999-c1.bin"
+				} else {
+					mem.Path = "source/00000-other.bin"
+				}
+				files[mem.Path] = files[old]
+				delete(files, old)
+			}
+			m.Members = append(m.Members, mem)
+			files["manifest.json"].Data = manifestBytes(t, m)
+			result := VerifyOracleSet(files)
+			if result.Valid != (mutation == "intact") {
+				t.Fatalf("%s: %+v", mutation, result)
+			}
+			if mutation == "intact" {
+				var legacy OracleManifest
+				if e := decodeOracleManifest(files["manifest.json"].Data, &legacy); e == nil || e.Code != "SCHEMA_UNSUPPORTED" {
+					t.Fatalf("legacy replay/qualification decoder accepted r2: %v", e)
+				}
+			}
+		})
+	}
+}
+
+func TestOracleSourceWitnessEmptyAndOmitted(t *testing.T) {
+	files, m := oracleSet(t)
+	m.Schema = OracleSourceManifestSchema
+	m.ExecutionStatus, m.Assessment = StatusNotRun, AssessNotAssessed
+	in := digestHex(nil)
+	record := []byte(`{"schema":"tsgk-oracle-record/r1","case":"c1","input":{"sha256":"` + in + `","bytes":0},"execution_status":"NOT_RUN","steps":[],"complete":true}`)
+	m.Members = []OracleMember{{Path: "records/00000-c1.json", Role: "record", Case: "c1", Bytes: uint64(len(record)), SHA256: digestHex(record), InputSHA256: in, ExecutionStatus: StatusNotRun},
+		{Path: "source/00000-c1.bin", Role: "source", Case: "c1", SHA256: in, InputSHA256: in, ExecutionStatus: StatusNotRun}}
+	delete(files, "raw/00000-c1.json")
+	files["records/00000-c1.json"].Data = record
+	files["source/00000-c1.bin"] = &fstest.MapFile{Data: []byte{}}
+	files["manifest.json"].Data = manifestBytes(t, m)
+	if r := VerifyOracleSet(files); !r.Valid {
+		t.Fatalf("explicit empty source rejected: %+v", r)
+	}
+	m.Members = m.Members[:1]
+	delete(files, "source/00000-c1.bin")
+	files["manifest.json"].Data = manifestBytes(t, m)
+	if r := VerifyOracleSet(files); r.Valid {
+		t.Fatal("omitted empty source accepted")
+	}
+	m.Members, m.Cases, m.Records = []OracleMember{}, []string{}, 0
+	files = fstest.MapFS{"manifest.json": {Data: manifestBytes(t, m)}}
+	if r := VerifyOracleSet(files); r.Valid {
+		t.Fatal("zero-case source witness accepted")
+	}
 }
 
 // S06-A09: VerifyOracleSet accepts only a complete set and rejects a truncated member, a
