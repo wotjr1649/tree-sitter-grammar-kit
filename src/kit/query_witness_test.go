@@ -110,6 +110,30 @@ func TestQueryWitnessRejectsContradictions(t *testing.T) {
 		{"raw-field-index", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
 			raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"].([][]int64)[1][2] = -2
 		}},
+		{"raw-type-unused", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
+			raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["types"] = []string{"doc", "word", "unused"}
+		}},
+		{"raw-field-unused", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
+			raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["fields"] = []string{"unused"}
+		}},
+		{"raw-type-duplicate", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
+			tree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["types"] = []string{"doc", "word", "word"}
+			tree["nodes"].([][]int64)[1][1] = 2
+		}},
+		{"raw-type-order", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
+			tree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["types"] = []string{"word", "doc"}
+			tree["nodes"].([][]int64)[0][1], tree["nodes"].([][]int64)[1][1] = 1, 0
+		}},
+		{"child-outside-parent", func(_ *QueryWitnessRequest, _, raw, p map[string]any) {
+			nodes := fxTree("a", false)
+			nodes[0].EndByte, nodes[0].EndPoint = 0, Point{}
+			rawTree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			rawTree["nodes"].([][]int64)[0][5], rawTree["nodes"].([][]int64)[0][9], rawTree["digest"] = 0, 0, TreeDigest(nodes)
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["tree"].(map[string]any)["nodes"], tree["digest"] = nodes, TreeDigest(nodes)
+		}},
 		{"raw-empty-rejected-stream", func(_ *QueryWitnessRequest, _, raw, _ map[string]any) {
 			q := raw["steps"].([]any)[1].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
 			q["captures"], q["matches"] = [][]int64{}, 0
@@ -907,6 +931,38 @@ func TestQueryWitnessRejectsImpossibleCaptureNameTables(t *testing.T) {
 		if !ok || e.Kind != KindInvalidInput || e.Code != "QUERY_REGISTRATION_QUERY_INVALID" || r.Assessment == AssessPass || r.Verified != 0 {
 			t.Fatalf("capture names %q adopted: %+v %v", names, r, err)
 		}
+	}
+}
+
+func TestQueryWitnessRejectsUnknownPredicateCapture(t *testing.T) {
+	req, reg, raw, p := witnessFixture(t)
+	// every document shares the fixture's predicate maps
+	reg["queries"].([]any)[0].(map[string]any)["metadata"].(map[string]any)["predicates"].([]any)[0].(map[string]any)["steps"].([]any)[1].(map[string]any)["value"] = "y"
+	r, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+	e, ok := err.(*Error)
+	if !ok || e.Kind != KindInvalidInput || e.Code != "QUERY_REGISTRATION_QUERY_INVALID" || r.Assessment == AssessPass || r.Verified != 0 {
+		t.Fatalf("unknown predicate capture adopted: %+v %v", r, err)
+	}
+}
+
+func TestQueryWitnessRejectsImpossibleProjectionCSTWithoutRaw(t *testing.T) {
+	for name, mutate := range map[string]func([]TreeNode){
+		"empty-type":           func(nodes []TreeNode) { nodes[0].Type = "" },
+		"child-outside-parent": func(nodes []TreeNode) { nodes[0].EndByte, nodes[0].EndPoint = 0, Point{} },
+	} {
+		t.Run(name, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			nodes := fxTree("a", false)
+			mutate(nodes)
+			tree["tree"].(map[string]any)["nodes"], tree["digest"] = nodes, TreeDigest(nodes)
+			req = marshalWitness(t, req, reg, raw, p)
+			req.Raw = nil
+			res, err := VerifyQueryWitness(ctxT(t), req)
+			if err != nil || res.Assessment != AssessFail {
+				t.Fatalf("impossible projection CST: %+v %v", res, err)
+			}
+		})
 	}
 }
 

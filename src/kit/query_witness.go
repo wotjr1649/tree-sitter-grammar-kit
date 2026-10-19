@@ -450,7 +450,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 			}
 			if full := tree.Tree; full != nil {
 				if tree.Form != "full" || full.Schema != TreeSchema || full.Status != StatusCompleted || full.Input.Encoding != reg.Encoding || full.Input.Bytes != step.Bytes || full.Input.SHA256 != step.SHA256 ||
-					len(full.Nodes) == 0 || uint64(len(full.Nodes)) != tree.Count || ValidateTree(full.Nodes, step.Bytes) != nil || full.Nodes[0].HasError != tree.HasError || TreeDigest(full.Nodes) != tree.Digest {
+					len(full.Nodes) == 0 || uint64(len(full.Nodes)) != tree.Count || ValidateTree(full.Nodes, step.Bytes) != nil || !witnessCST(full.Nodes) || full.Nodes[0].HasError != tree.HasError || TreeDigest(full.Nodes) != tree.Digest {
 					bad("QUERY_WITNESS_TREE_PROJECTION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 					badProjectionTrees[tree] = true
 				} else if i < len(versions) {
@@ -883,12 +883,21 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 			return nil, "QUERY_WITNESS_TREE_INVALID"
 		}
 	}
+	// node_array interns both tables in preorder first use and emits only used entries
+	types, fields := map[string]bool{}, map[string]bool{}
+	use := func(seen map[string]bool, table []string, k int64) bool {
+		if k == int64(len(seen)) && !seen[table[k]] {
+			seen[table[k]] = true
+		}
+		return k < int64(len(seen))
+	}
 	nodes := make([]TreeNode, 0, len(t.Nodes))
 	for i, row := range t.Nodes {
 		if i%1024 == 0 && r.check() != nil {
 			return nil, ""
 		}
-		if len(row) != 10 || row[1] < 0 || row[1] >= int64(len(t.Types)) || row[2] < -1 || row[2] >= int64(len(t.Fields)) || row[3] < 0 || row[3] > 31 {
+		if len(row) != 10 || row[1] < 0 || row[1] >= int64(len(t.Types)) || row[2] < -1 || row[2] >= int64(len(t.Fields)) || row[3] < 0 || row[3] > 31 ||
+			!use(types, t.Types, row[1]) || row[2] >= 0 && !use(fields, t.Fields, row[2]) {
 			return nil, "QUERY_WITNESS_TREE_INVALID"
 		}
 		for _, v := range row[4:] {
@@ -907,13 +916,32 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 		}
 		nodes = append(nodes, n)
 	}
-	if ValidateTree(nodes, sourceBytes) != nil || nodes[0].HasError != t.HasError || TreeDigest(nodes) != t.Digest {
+	if len(types) != len(t.Types) || len(fields) != len(t.Fields) || ValidateTree(nodes, sourceBytes) != nil || !witnessCST(nodes) || nodes[0].HasError != t.HasError || TreeDigest(nodes) != t.Digest {
 		return nil, "QUERY_WITNESS_TREE_INVALID"
 	}
 	if source == nil {
 		return nodes, ""
 	}
 	return nodes, witnessPoints(nodes, encoding, source, r)
+}
+
+// witnessCST checks a ValidateTree-valid CST for what every tree-sitter tree has: named
+// types, and children inside the parent, which sums each child's padding and size.
+func witnessCST(nodes []TreeNode) bool {
+	before := func(a, b Point) bool { return a.Row < b.Row || a.Row == b.Row && a.Column < b.Column }
+	for i, n := range nodes {
+		if n.Type == "" {
+			return false
+		}
+		if i == 0 {
+			continue
+		}
+		p := nodes[n.Parent]
+		if n.StartByte < p.StartByte || n.EndByte > p.EndByte || before(n.StartPoint, p.StartPoint) || before(p.EndPoint, n.EndPoint) {
+			return false
+		}
+	}
+	return true
 }
 
 func witnessCapturePoints(captures []Capture, encoding string, source []byte, r *run) string {
@@ -1013,7 +1041,8 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 		if !validID(q.ID) || queries[q.ID] || q.Source == "" || len(q.Source) > MaxQueryBytes {
 			return bad("QUERY_REGISTRATION_QUERY_INVALID")
 		}
-		// a compiled query names each capture ID once, so no producer emits such a table
+		// a compiled query names each capture ID once and predicates refer to those IDs,
+		// so no producer emits such metadata
 		if q.Metadata != nil {
 			names := map[string]bool{}
 			for _, name := range q.Metadata.CaptureNames {
@@ -1021,6 +1050,13 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 					return bad("QUERY_REGISTRATION_QUERY_INVALID")
 				}
 				names[name] = true
+			}
+			for _, predicate := range q.Metadata.Predicates {
+				for _, step := range predicate.Steps {
+					if step.Kind == "capture" && !names[step.Value] {
+						return bad("QUERY_REGISTRATION_QUERY_INVALID")
+					}
+				}
 			}
 		}
 		queries[q.ID] = true
