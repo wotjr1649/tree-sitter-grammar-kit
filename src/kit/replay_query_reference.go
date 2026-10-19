@@ -167,11 +167,12 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 			return false
 		}
 	}
+	// Replay's over-limit policy keeps only the recorded verdict of an otherwise valid result
+	recordedOnly := rr.ExecutionStatus == StatusCompleted && rr.EvidenceValid && rr.EvidenceMode == ModeRecordedNotRecomputed && rr.Assessment == AssessUnresolved && rr.Recomputed == (Verdict{StatusNotRun, AssessUnresolved})
 	p := rr.QueryReference
 	if p == nil {
-		// before the core: an error leaves no verdict; an over-limit trust document leaves a recorded-only result
-		recordedOnly := rr.EvidenceValid && rr.Recomputed == (Verdict{StatusNotRun, AssessUnresolved})
-		return !complete && rr.Assessment != AssessPass && (recordedOnly || !rr.EvidenceValid && rr.Recomputed == (Verdict{})) && rr.Consumption == (Consumption{})
+		// before the core: an error leaves no verdict, an over-limit trust document a recorded-only result
+		return !complete && (recordedOnly || !rr.EvidenceValid && rr.Assessment != AssessPass && rr.Recomputed == (Verdict{})) && rr.Consumption == (Consumption{})
 	}
 	if p.Schema != ReportSchema || p.ResultSchema != QueryReferenceResultSchema || !executionStatuses[p.ExecutionStatus] || !assessmentValues[p.Assessment] || !evidenceModes[p.EvidenceMode] || p.Required < 0 || p.Verified < 0 || p.Verified > p.Required {
 		return false
@@ -201,6 +202,10 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 		if n.ExecutionStatus == StatusCompleted && n.Assessment == AssessFail && p.Assessment != AssessFail {
 			return false
 		}
+		// an unfinished witness never passes, and both cores take the denominator from one registration
+		if n.ExecutionStatus != StatusCompleted && n.Assessment == AssessPass || n.Required > 0 && n.Required != p.Required {
+			return false
+		}
 		if n.ExecutionStatus == StatusCompleted && (!hex64.MatchString(n.RegistrationSHA256) || n.Required != p.Required || p.Verified > n.Verified || n.EvidenceMode != ModeReplayedRaw || !slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, n.Assessment)) {
 			return false
 		}
@@ -208,7 +213,7 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 	if !complete {
 		return p.Assessment != AssessPass && rr.Assessment != AssessPass && rr.Recomputed == (Verdict{}) && !rr.EvidenceValid && rr.Consumption == (Consumption{})
 	}
-	if p.ExecutionStatus != StatusCompleted || p.EvidenceMode != ModeReplayedRaw || p.NativeWitness == nil || p.NativeWitness.ExecutionStatus != StatusCompleted || !hex64.MatchString(p.RegistrationSHA256) || rr.Recomputed != (Verdict{p.ExecutionStatus, p.Assessment}) || rr.Consumption != (Consumption{Expected: 1, Consumed: 1}) {
+	if p.ExecutionStatus != StatusCompleted || p.EvidenceMode != ModeReplayedRaw || p.NativeWitness == nil || p.NativeWitness.ExecutionStatus != StatusCompleted || !hex64.MatchString(p.RegistrationSHA256) || rr.Recomputed != (Verdict{p.ExecutionStatus, p.Assessment}) && !recordedOnly || rr.Consumption != (Consumption{Expected: 1, Consumed: 1}) {
 		return false
 	}
 	g := rr.Gates[0]
@@ -232,7 +237,7 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 		return !rr.EvidenceValid && rr.Assessment != AssessPass
 	}
 	if rr.EvidenceValid { // Replay clears it whenever a gate failed
-		return g.Failed == 0 && rr.Assessment == p.Assessment
+		return g.Failed == 0 && (recordedOnly || rr.Assessment == p.Assessment)
 	}
 	return rr.Assessment == AssessFail
 }

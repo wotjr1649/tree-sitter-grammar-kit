@@ -626,11 +626,47 @@ func TestReplayQueryReferenceTrustDocumentOverLimit(t *testing.T) {
 	if err != nil || res.QueryReference != nil || !res.EvidenceValid || res.Recomputed != (Verdict{StatusNotRun, AssessUnresolved}) || !validReferenceReplayResult(res) {
 		t.Fatalf("recorded-only result lost: %+v %v", res, err)
 	}
-	for _, forged := range []Verdict{{}, {StatusCompleted, AssessUnresolved}} {
-		res.Recomputed = forged
-		if validReferenceReplayResult(res) {
-			t.Fatalf("recorded-only result with %+v accepted", forged)
+	for name, forge := range map[string]func(*ReplayResult){
+		"no-verdict":    func(r *ReplayResult) { r.Recomputed = Verdict{} },
+		"completed":     func(r *ReplayResult) { r.Recomputed = Verdict{StatusCompleted, AssessUnresolved} },
+		"error-status":  func(r *ReplayResult) { r.ExecutionStatus, r.Assessment = StatusResourceLimit, AssessBlocked },
+		"assessment":    func(r *ReplayResult) { r.Assessment = AssessFail },
+		"evidence-mode": func(r *ReplayResult) { r.EvidenceMode = ModeReplayedRaw },
+	} {
+		forged := res
+		forge(&forged)
+		if validReferenceReplayResult(forged) {
+			t.Fatalf("recorded-only result with forged %s accepted: %+v", name, forged)
 		}
+	}
+}
+
+func TestReplayQueryReferenceRetainedOverLimitAfterCore(t *testing.T) {
+	for _, core := range []string{AssessPass, AssessBlocked} {
+		t.Run(core, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			if core == AssessBlocked {
+				f.witness["required"].([]any)[0].(map[string]any)["expected"] = nil
+				f.approve(t, "witness.json")
+			}
+			_, root, prof := referenceReplayFixture(t, f)
+			var largest uint64
+			for _, v := range prof["members"].([]any) {
+				largest = max(largest, uint64(v.(map[string]any)["bytes"].(int)))
+			}
+			// only the retained file exceeds the limit, after the core completed
+			tail := make([]byte, largest+1)
+			if err := os.WriteFile(filepath.Join(root, "tail.bin"), tail, 0600); err != nil {
+				t.Fatal(err)
+			}
+			prof["members"] = append(prof["members"].([]any), map[string]any{"path": "tail.bin", "role": "retained", "bytes": len(tail), "sha256": sum(tail)})
+			testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = largest; return l }
+			defer func() { testHookReplayLimits = nil }()
+			res, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
+			if err != nil || res.QueryReference == nil || res.QueryReference.Assessment != core || len(res.Gates) != 1 || res.EvidenceMode != ModeRecordedNotRecomputed || !validReferenceReplayResult(res) {
+				t.Fatalf("recorded-only result after the core lost: %+v %v", res, err)
+			}
+		})
 	}
 }
 
@@ -711,7 +747,7 @@ func TestReplayQueryReferencePartialSubject(t *testing.T) {
 }
 
 func TestReplayQueryReferencePartialNativeRegistration(t *testing.T) {
-	for _, state := range []string{"verified", "verified-empty", "required-empty", "early-error"} {
+	for _, state := range []string{"verified", "verified-empty", "required-empty", "early-error", "native-pass", "native-required"} {
 		t.Run(state, func(t *testing.T) {
 			f := newReferenceFixture(t)
 			_, root, prof := referenceReplayFixture(t, f)
@@ -730,6 +766,12 @@ func TestReplayQueryReferencePartialNativeRegistration(t *testing.T) {
 			}
 			if state == "required-empty" {
 				n.Verified = 0
+			}
+			if state == "native-pass" {
+				n.Assessment = AssessPass
+			}
+			if state == "native-required" {
+				n.Required++
 			}
 			if state == "early-error" {
 				ctx, cancel := context.WithCancel(context.Background())
