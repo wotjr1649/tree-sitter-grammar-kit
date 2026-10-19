@@ -584,8 +584,9 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 		if !validID(n.ID) || len(n.Identities) != 11 {
 			return bad()
 		}
+		// an empty value matches an equally empty evidence node, so it would bind no context
 		for _, role := range []string{"source", "tool", "input", "query", "policy", "comparator", "protocol", "workload", "platform", "run", "attempt"} {
-			if _, ok := n.Identities[role]; !ok {
+			if n.Identities[role] == "" {
 				return bad()
 			}
 		}
@@ -659,39 +660,15 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 	if l.Nodes != 100000 || l.Captures != 50000 || l.GroupCaptures != 200000 || l.Matches != 100000 || l.WallMillis != 3000 || uint64(len(ref.Tree.Nodes)) > l.Nodes || uint64(len(ref.Query.Structural)) > l.Captures || uint64(len(ref.Query.Evaluated)) > l.Captures || ref.Query.Matches > l.Matches || len(ref.Query.MatchMapping) != int(ref.Query.Matches) {
 		return nil, "REFERENCE_LIMITS_INVALID", false, nil
 	}
-	if ref.Tree.Nodes == nil || ref.Query.CaptureNames == nil || ref.Query.Predicates == nil || ref.Query.Structural == nil || ref.Query.Evaluated == nil || ref.Query.MatchMapping == nil || ValidateTree(ref.Tree.Nodes, ref.Input.Bytes) != nil {
+	if ref.Tree.Nodes == nil || ref.Query.CaptureNames == nil || ref.Query.Predicates == nil || ref.Query.Structural == nil || ref.Query.Evaluated == nil || ref.Query.MatchMapping == nil || ValidateTree(ref.Tree.Nodes, ref.Input.Bytes) != nil || !witnessCST(ref.Tree.Nodes) {
 		return nil, "REFERENCE_TREE_INVALID", false, nil
 	}
 	// A full parse ends at EOF; its root may start after legal leading padding.
 	if len(ref.Tree.Nodes) == 0 || uint64(ref.Tree.Nodes[0].EndByte) != ref.Input.Bytes {
 		return nil, "REFERENCE_TREE_EOF_MISMATCH", false, nil
 	}
-	if querypolicy.Support(ref.Query.Patterns, ref.Query.Predicates, EncodingUTF8) != "" {
+	if querypolicy.Support(ref.Query.Patterns, ref.Query.Predicates, EncodingUTF8) != "" || !querywire.ValidMetadata(ref.Query.Patterns, ref.Query.CaptureNames, ref.Query.Predicates) {
 		return nil, "REFERENCE_METADATA_INVALID", false, nil
-	}
-	names := map[string]bool{}
-	for _, name := range ref.Query.CaptureNames {
-		if name == "" || names[name] {
-			return nil, "REFERENCE_METADATA_INVALID", false, nil
-		}
-		names[name] = true
-	}
-	for _, predicate := range ref.Query.Predicates {
-		for _, step := range predicate.Steps {
-			if step.Kind == "capture" && !names[step.Value] {
-				return nil, "REFERENCE_METADATA_INVALID", false, nil
-			}
-		}
-	}
-	for i, n := range ref.Tree.Nodes {
-		if i%1024 == 0 {
-			if e := r.check(); e != nil {
-				return nil, "", false, e
-			}
-		}
-		if n.Type == "" {
-			return nil, "REFERENCE_TREE_INVALID", false, nil
-		}
 	}
 	if int(obs.Step) < len(versions) && witnessPoints(ref.Tree.Nodes, EncodingUTF8, versions[obs.Step], r) != "" {
 		return nil, "REFERENCE_TREE_POINTS", false, nil
@@ -769,17 +746,6 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 		if CompareCaptures(expected, ref.Query.Evaluated) != nil {
 			return nil, "REFERENCE_EVALUATION_MISMATCH", false, nil
 		}
-	}
-	if !slices.IsSortedFunc(ref.Query.Predicates, func(a, b QueryPredicate) int {
-		if a.Pattern < b.Pattern {
-			return -1
-		}
-		if a.Pattern > b.Pattern {
-			return 1
-		}
-		return 0
-	}) {
-		return nil, "REFERENCE_METADATA_INVALID", false, nil
 	}
 	return &ref, "", true, nil
 }

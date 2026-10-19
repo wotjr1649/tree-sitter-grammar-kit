@@ -65,7 +65,7 @@ Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지
 
 ## 저장 데이터 연결 API
 
-`VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 전체 11-role identity, witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.
+`VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 빈 값 없는 전체 11-role identity(빈 값은 `REFERENCE_REGISTRATION_INVALID`), witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.
 
 Caller는 승인 member에 정확히 결속하는 witness 등록 원문도 필수 입력으로 제공한다. 이 원문을 먼저 strict 해석·크기/hash 대조한 뒤 공유 native witness 검증기를 항상 적용하며, graph의 witness member가 없어도 등록 분모와 확보한 source·raw·projection·reference의 검사는 유지한다. Caller 원문이 누락·malformed·pin 불일치이면 `KindInvalidInput`이고, 한도·취소 분류는 기존 계약을 유지한다. Graph member의 undeclared 누락은 BLOCKED이며 declared 파일 부재·owner·bytes 불일치는 FAIL이다. Caller 입력으로 graph 누락을 채우거나 완료 tuple을 늘리지 않는다.
 
@@ -83,6 +83,6 @@ Owned control의 compiler 출력 library도 hash 계산 전에 64 MiB 한도와 
 
 `full-input-utf8/r1`의 완료 reference는 실제 초기·편집 source bytes가 있으면 `utf8.Valid`도 통과해야 한다. 일반 native UTF-8 byte 허용 정책은 바꾸지 않으며, 알려진 `FAILED/SOURCE_UTF8` 응답은 미완료 BLOCKED다. Source가 없으면 encoding을 추측하지 않는다.
 
-제공된 모든 완료 full native raw·projection 및 완료 reference CST의 root 끝은 해당 version의 input bytes와 같아야 한다. 필수 tuple 밖의 tree도 검사한다. Root 시작은 leading padding 이후일 수 있으며 공백 전용 입력의 `[input.bytes,input.bytes]`와 빈 입력을 허용한다. 이 끝점 검사는 실행 진위나 임의 prefix의 문법적 적합성을 증명하지 않는다.
+제공된 모든 완료 full native raw·projection 및 완료 reference CST의 root 끝은 해당 version의 input bytes와 같아야 한다. Reference CST도 native와 같은 CST 형태 규칙(MISSING의 has_error, 부모 안 자식 범위; 빈 alias type은 허용)을 만족해야 하며 위반은 `REFERENCE_TREE_INVALID`, reference metadata의 `querywire.ValidMetadata` 위반은 `REFERENCE_METADATA_INVALID`다. 필수 tuple 밖의 tree도 검사한다. Root 시작은 leading padding 이후일 수 있으며 공백 전용 입력의 `[input.bytes,input.bytes]`와 빈 입력을 허용한다. 이 끝점 검사는 실행 진위나 임의 prefix의 문법적 적합성을 증명하지 않는다.
 
 CST 비교 전에 독립 anchor의 capture 개수·순서별 match/pattern/capture/name을 대조한다. 확인된 모순은 CST 부적격과 함께 있어도 FAIL이다. Node preorder index·type·flags·range 등 전체 필드는 CST 동등성 확보 후 기존 comparator로 대조한다. Uncaptured node 차이로 index만 이동한 유효한 reference는 CST_INELIGIBLE/BLOCKED로 유지한다. Native full CST가 없을 때에는 기존 전체 anchor 대조를 유지하며, anchor 하나의 누락이 존재하는 다른 anchor의 대조를 생략하지 않는다.

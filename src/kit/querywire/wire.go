@@ -172,6 +172,9 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 				}
 			}
 		}
+		if !ValidMetadata(q.Patterns, q.CaptureNames, q.Predicates) {
+			return nil, bad(i, "predicate")
+		}
 		switch q.Status {
 		case "COMPLETED":
 			if q.Code != "" || q.Error != nil || q.Captures == nil || q.Partial || q.Predicates == nil || q.CaptureNames == nil || q.Types == nil {
@@ -182,7 +185,8 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 				return nil, bad(i, "limit shape")
 			}
 		case "FAILED":
-			if q.Code != "CAPTURE_NODE_UNMAPPED" || q.Error != nil || q.Captures != nil || q.Partial {
+			// the producer skips the capture rows, so it never interns a type
+			if q.Code != "CAPTURE_NODE_UNMAPPED" || q.Error != nil || q.Captures != nil || q.Partial || q.Types == nil || len(q.Types) != 0 {
 				return nil, bad(i, "failed shape")
 			}
 			continue
@@ -194,11 +198,6 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		default:
 			return nil, bad(i, "status "+strconv.Quote(q.Status))
 		}
-		for _, p := range q.Predicates {
-			if p.Pattern >= q.Patterns || len(p.Steps) == 0 {
-				return nil, bad(i, "predicate")
-			}
-		}
 		if !MatchAccounting(q.Matches, len(q.Captures), func(index int) (int64, int64) {
 			row := q.Captures[index]
 			if len(row) != 12 {
@@ -208,9 +207,11 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		}) {
 			return nil, bad(i, "match accounting")
 		}
+		// the producer interns each emitted capture's type in first-use order; a MISSING node always has an error
+		types := map[string]bool{}
 		for k, row := range q.Captures {
 			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
-				row[3] < 0 || uint64(row[3]) >= descendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 {
+				row[3] < 0 || uint64(row[3]) >= descendantCount || row[4] < 0 || row[4] >= int64(len(q.Types)) || row[5] < 0 || row[5] > 31 || row[5]&16 != 0 && row[5]&8 == 0 {
 				return nil, bad(i, fmt.Sprintf("capture %d indices", k))
 			}
 			for _, v := range row[6:] {
@@ -221,12 +222,49 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			if row[6] > row[7] || uint64(row[7]) > sourceBytes {
 				return nil, bad(i, fmt.Sprintf("capture %d range", k))
 			}
+			if row[4] == int64(len(types)) {
+				if types[q.Types[row[4]]] {
+					return nil, bad(i, fmt.Sprintf("capture %d type table", k))
+				}
+				types[q.Types[row[4]]] = true
+			} else if row[4] > int64(len(types)) {
+				return nil, bad(i, fmt.Sprintf("capture %d type table", k))
+			}
 			if link != nil && !link(q, row) {
 				return nil, invalid("CAPTURE_LINK_MISMATCH", fmt.Errorf("query %d capture %d node %d", i, k, row[3]))
 			}
 		}
+		if len(types) != len(q.Types) {
+			return nil, bad(i, "type table")
+		}
 	}
 	return queries, nil
+}
+
+// ValidMetadata reports whether metadata is what a compiled query yields: unique non-empty
+// capture names, and predicates in pattern order whose captures name one of them.
+func ValidMetadata(patterns uint32, names []string, predicates []querypolicy.Predicate) bool {
+	if patterns == 0 && len(names) != 0 { // the runtime parses captures only inside a pattern
+		return false
+	}
+	seen := map[string]bool{}
+	for _, name := range names {
+		if name == "" || seen[name] {
+			return false
+		}
+		seen[name] = true
+	}
+	for i, p := range predicates {
+		if i > 0 && p.Pattern < predicates[i-1].Pattern {
+			return false
+		}
+		for _, step := range p.Steps {
+			if step.Kind == "capture" && !seen[step.Value] {
+				return false
+			}
+		}
+	}
+	return querypolicy.Support(patterns, predicates, "UTF-8") != querypolicy.InvalidMetadata
 }
 
 // MatchAccounting checks an unfiltered structural stream without reordering captures.

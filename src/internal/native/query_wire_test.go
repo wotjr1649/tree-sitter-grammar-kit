@@ -17,7 +17,7 @@ func TestQueryNodeLinkFields(t *testing.T) {
 		{"extra", func(q *WireQuery) { q.Captures[0][5] ^= 2 }},
 		{"error", func(q *WireQuery) { q.Captures[0][5] ^= 4 }},
 		{"has-error", func(q *WireQuery) { q.Captures[0][5] ^= 8 }},
-		{"missing", func(q *WireQuery) { q.Captures[0][5] ^= 16 }},
+		{"missing", func(q *WireQuery) { q.Captures[0][5] ^= 16 | 8 }}, // a MISSING node always has an error
 		{"start-byte", func(q *WireQuery) { q.Captures[0][6] = 1 }},
 		{"end-byte", func(q *WireQuery) { q.Captures[0][7] = 0 }},
 		{"start-row", func(q *WireQuery) { q.Captures[0][8] = 1 }},
