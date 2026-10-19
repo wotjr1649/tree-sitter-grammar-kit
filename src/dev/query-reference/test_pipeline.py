@@ -208,7 +208,7 @@ runpy.run_path(entry, run_name='__main__')
                 batch(good, ids)
 
     def test_optimized_python_rejected_before_arguments_or_work(self):
-        for script in ("build.py", "check.py"):
+        for script in ("acquire.py", "build.py", "check.py"):
             for flags, optimize in ((["-O"], ""), ([], "1")):
                 with tempfile.TemporaryDirectory() as directory:
                     work = Path(directory) / "must-not-exist"

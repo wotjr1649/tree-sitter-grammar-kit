@@ -1,0 +1,146 @@
+name: Reference Linux
+
+# #216: owned execution of the pinned instrumented query reference on a hosted Linux runner.
+# Manual only; it records receipts and is not a required check. macOS stays deferred (#243).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tsgk-campaign-heavy
+  cancel-in-progress: false
+
+env:
+  CGO_ENABLED: '0'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOPROXY: 'off'
+  GOFLAGS: -mod=readonly
+
+jobs:
+  reference-linux:
+    name: instrumented reference (ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          set-safe-directory: false
+          clean: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: 고정 Go module 취득
+        env:
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          & src/dev/ci-gate/modules.ps1
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Verify clean validation input
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
+          if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
+          Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+      - name: 고정 upstream·locked crate 취득 (실행 없음)
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "reference-linux-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $upstream = Join-Path $work 'upstream'
+          $commit = '10eb5ac119eec9cb4267a8e035066473983f5f3a'
+          git init -q $upstream
+          if ($LASTEXITCODE -ne 0) { throw 'upstream init failed' }
+          git -C $upstream fetch -q --depth 1 https://github.com/tree-sitter/tree-sitter $commit
+          if ($LASTEXITCODE -ne 0) { throw 'upstream fetch failed' }
+          git -C $upstream checkout -q --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'upstream checkout failed' }
+          # acquire.py checks the commit, a pristine tree, the pinned archive sha256 and every crate checksum
+          python3 -B src/dev/query-reference/acquire.py --upstream $upstream --git (Get-Command git).Source --out (Join-Path $work 'inputs')
+          if ($LASTEXITCODE -ne 0) { throw 'reference acquisition failed' }
+      - name: 고정 Rust toolchain과 supervisor 준비
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "reference-linux-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          if ($LASTEXITCODE -ne 0) { throw 'pinned Rust toolchain install failed' }
+          $cargo = rustup which --toolchain 1.97.1 cargo
+          $rustc = rustup which --toolchain 1.97.1 rustc
+          if ($LASTEXITCODE -ne 0 -or -not $cargo -or -not $rustc) { throw 'pinned Rust toolchain missing' }
+          go build -o (Join-Path $work 'reference-run') ./src/dev/query-reference-run
+          if ($LASTEXITCODE -ne 0) { throw 'supervisor build failed' }
+          "REFERENCE_CARGO=$cargo" >> $env:GITHUB_ENV
+          "REFERENCE_RUSTC=$rustc" >> $env:GITHUB_ENV
+      - name: 고정 reference build·unit과 owned controls
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "reference-linux-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          # Delegate a cgroup v2 subtree for the supervisor's hard memory cap, as the foundation job does.
+          $base = "/sys/fs/cgroup/tsgk-reference-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          sudo mkdir -p "$base/supervisor" "$base/jobs"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+          sudo chown -R "$(id -u):$(id -g)" $base
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+          sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+          if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+          Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+          Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+          $parent = "$base/jobs"
+          $supervisor = Join-Path $work 'reference-run'
+          $inputs = Join-Path $work 'inputs'
+          $tools = @('--cc', '/usr/bin/gcc', '--ar', '/usr/bin/ar', '--git', (Get-Command git).Source)
+          python3 -B src/dev/query-reference/build.py --archive (Join-Path $inputs 'upstream.tar') --vendor (Join-Path $inputs 'vendor') --cargo $env:REFERENCE_CARGO --rustc $env:REFERENCE_RUSTC @tools --supervisor $supervisor --work (Join-Path $work 'build') --target x86_64-unknown-linux-gnu --cgroup-parent $parent
+          if ($LASTEXITCODE -ne 0) { throw 'pinned reference build or unit failed' }
+          # the same locked crates as the Windows build9-build12 inputs, not merely the same lock file
+          $identity = Get-Content -Raw -LiteralPath (Join-Path $work 'build/identity.json') | ConvertFrom-Json
+          if ($identity.vendor_snapshot_sha256 -cne '8fec9dcc2dc84590867a7add1b33ad36be98c0a1b58634f228a5ce3a2632171c') { throw 'vendor snapshot differs from the pinned reference inputs' }
+          $env:TSGK_REFERENCE_SUPERVISOR = $supervisor
+          $env:TSGK_REFERENCE_CC = '/usr/bin/gcc'
+          $env:TSGK_REFERENCE_AR = '/usr/bin/ar'
+          $env:TSGK_REFERENCE_GIT = (Get-Command git).Source
+          $env:TSGK_REFERENCE_ARCHIVE = Join-Path $inputs 'upstream.tar'
+          $env:TSGK_REFERENCE_CGROUP_PARENT = $parent
+          python3 -B src/dev/query-reference/test_pipeline.py -v *> (Join-Path $work 'pipeline.log')
+          $pipeline = $LASTEXITCODE
+          Get-Content -LiteralPath (Join-Path $work 'pipeline.log') -Tail 20
+          if ($pipeline -ne 0) { throw 'reference pipeline regressions failed' }
+          if (Select-String -LiteralPath (Join-Path $work 'pipeline.log') -Pattern 'skipped' -SimpleMatch -Quiet) { throw 'reference pipeline skipped a supervisor check' }
+          $binary = Join-Path $work 'build/target/x86_64-unknown-linux-gnu/release/tsgk-query-reference'
+          python3 -B src/dev/query-reference/check.py --reference $binary --identity (Join-Path $work 'build/identity.json') --supervisor $supervisor --cc /usr/bin/gcc --work (Join-Path $work 'controls') --cgroup-parent $parent
+          if ($LASTEXITCODE -ne 0) { throw 'owned reference controls failed' }
+      - name: 실행 receipt 정리
+        if: always()
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP "reference-linux-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $out = Join-Path $env:RUNNER_TEMP "reference-linux-receipts-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $out | Out-Null
+          if (Test-Path -LiteralPath (Join-Path $work 'inputs/acquisition.json')) { Copy-Item -LiteralPath (Join-Path $work 'inputs/acquisition.json') -Destination $out }
+          if (Test-Path -LiteralPath (Join-Path $work 'pipeline.log')) { Copy-Item -LiteralPath (Join-Path $work 'pipeline.log') -Destination $out }
+          foreach ($stage in @('build', 'controls')) {
+            $dir = Join-Path $work $stage
+            if (-not (Test-Path -LiteralPath $dir)) { continue }
+            $dest = Join-Path $out $stage
+            New-Item -ItemType Directory -Path $dest | Out-Null
+            # receipts only: request/result JSON and stderr, never sources, vendor, cargo home or targets
+            Get-ChildItem -LiteralPath $dir -File | Where-Object { $_.Extension -in '.json', '.stderr' } | Copy-Item -Destination $dest
+          }
+      - name: 실행 receipt 보관
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: reference-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/reference-linux-receipts-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify clean validation output
+        if: always()
+        run: |
+          if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
