@@ -461,9 +461,14 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	for _, mem := range m.Members {
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		validPath := memberPath.MatchString(mem.Path)
-		if m.Schema == OracleSourceManifestSchema && mem.Role == "source" {
+		if m.Schema == OracleSourceManifestSchema {
+			// the producer names every member by its case's position in cases
 			ordinal, known := caseOrdinals[mem.Case]
-			dir, validPath = "source/", known && sourceMemberPath.MatchString(mem.Path) && mem.Path == fmt.Sprintf("source/%05d-%s.bin", ordinal, mem.Case)
+			if mem.Role == "source" {
+				dir, validPath = "source/", known && sourceMemberPath.MatchString(mem.Path) && mem.Path == fmt.Sprintf("source/%05d-%s.bin", ordinal, mem.Case)
+			} else {
+				validPath = validPath && known && mem.Path == fmt.Sprintf("%s%05d-%s.json", dir, ordinal, mem.Case)
+			}
 		}
 		if !validPath || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
 			add("MEMBER_INVALID", mem.Path, "member 경로·역할이 틀렸거나 중복이다")

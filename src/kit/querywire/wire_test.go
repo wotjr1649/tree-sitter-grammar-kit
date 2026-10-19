@@ -239,6 +239,7 @@ func TestStatusAndStreamContracts(t *testing.T) {
 		}, true},
 		{"missing-without-error", func(q *Query) { q.Captures[0][5] = 1 | 16 }, false},
 		{"missing-with-error", func(q *Query) { q.Captures[0][5] = 1 | 8 | 16 }, true},
+		{"type-empty", func(q *Query) { q.Types[0] = "" }, false},
 		{"unsupported-wire-predicate", func(q *Query) {
 			q.Predicates = []querypolicy.Predicate{{Steps: []querypolicy.Step{{Kind: "string", Value: "match?"}}}}
 		}, true},
