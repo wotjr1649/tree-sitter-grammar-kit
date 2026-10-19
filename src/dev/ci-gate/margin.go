@@ -209,6 +209,40 @@ type marginAPIJob struct {
 	Steps []marginStep `json:"steps"`
 }
 
+// marginJobsSettled reports whether the jobs API already shows every measured job and timed
+// step as completed. The API can trail the finished jobs this gate needs, so the collector
+// fetches a new snapshot instead of relaxing currentMargins.
+func marginJobsSettled(jobsData []byte) bool {
+	var jobs struct {
+		Jobs []marginAPIJob `json:"jobs"`
+	}
+	if decode(jobsData, &jobs) != nil {
+		return false
+	}
+	settled := func(s marginStep) bool { return s.Status == "completed" && s.Start != "" && s.End != "" }
+	for _, j := range marginJobs {
+		found := false
+		for _, job := range jobs.Jobs {
+			if job.Name != j.name {
+				continue
+			}
+			found = true
+			if !settled(job.marginStep) {
+				return false
+			}
+			for name := range marginStepLimits(j) {
+				if !slices.ContainsFunc(job.Steps, func(s marginStep) bool { return s.Name == name && settled(s) }) {
+					return false
+				}
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
 func elapsed(s marginStep) (int64, error) {
 	start, e1 := time.Parse(time.RFC3339, s.Start)
 	end, e2 := time.Parse(time.RFC3339, s.End)

@@ -231,8 +231,8 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 func main() { os.Exit(run(os.Args[1:], os.Stderr)) }
 
 func run(args []string, stderr io.Writer) int {
-	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify", "config", "margin-discover", "margin-plan", "margin"}, args[0]) {
-		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack, verify, config, margin-discover, margin-plan or margin")
+	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify", "config", "margin-settled", "margin-discover", "margin-plan", "margin"}, args[0]) {
+		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack, verify, config, margin-settled, margin-discover, margin-plan or margin")
 		return 2
 	}
 	fs := flag.NewFlagSet("ci-gate", flag.ContinueOnError)
@@ -263,6 +263,21 @@ func run(args []string, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, "ci-gate:", err)
 		return 1
+	}
+	if args[0] == "margin-settled" {
+		if *history == "" {
+			return 2
+		}
+		jobs, err := readFile(filepath.Join(*history, "metadata/jobs.json"), 1048576)
+		if err != nil {
+			fmt.Fprintln(stderr, "ci-gate:", err)
+			return 1
+		}
+		if !marginJobsSettled(jobs) {
+			fmt.Fprintln(stderr, "ci-gate: jobs API still shows a measured job or step as running")
+			return 3
+		}
+		return 0
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 365*time.Second)
 	defer cancel()
