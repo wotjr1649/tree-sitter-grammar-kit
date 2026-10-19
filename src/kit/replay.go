@@ -711,6 +711,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		failReport(&res.Report, e)
 		if res.ResultSchema == ReplayReferenceResultSchema && partial != nil {
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
+			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
 			res.Observed, res.BytesRead = partial.actual, partial.r.totalRead
 			if !partialFindingsCopied {
 				res.Findings = append(res.Findings, partial.findings...)

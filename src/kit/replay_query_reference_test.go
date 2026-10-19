@@ -341,6 +341,9 @@ func TestReplayQueryReferenceSharedBudgets(t *testing.T) {
 			if !validReferenceReplayResult(res) {
 				t.Fatalf("producer error cannot round-trip: %+v", res)
 			}
+			if res.EvidenceValid = true; validReferenceReplayResult(res) {
+				t.Fatalf("error result claiming valid evidence accepted: %+v", res)
+			}
 		})
 	}
 }
@@ -611,9 +614,15 @@ func TestReplayQueryReferenceResultRevision(t *testing.T) {
 func TestReplayQueryReferenceTrustDocumentOverLimit(t *testing.T) {
 	f := newReferenceFixture(t)
 	_, root, prof := referenceReplayFixture(t, f)
+	// an output error after the recorded-only verdict still yields a producer-valid error result
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes, l.OutputBytes = 1, 1; return l }
+	res, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
+	if err == nil || asError(err).Code != "OUTPUT_LIMIT" || res.EvidenceValid || !validReferenceReplayResult(res) {
+		t.Fatalf("recorded-only output error: %+v %v", res, err)
+	}
 	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 1; return l }
 	defer func() { testHookReplayLimits = nil }()
-	res, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
+	res, err = Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
 	if err != nil || res.QueryReference != nil || !res.EvidenceValid || res.Recomputed != (Verdict{StatusNotRun, AssessUnresolved}) || !validReferenceReplayResult(res) {
 		t.Fatalf("recorded-only result lost: %+v %v", res, err)
 	}

@@ -229,7 +229,7 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 		return false
 	}
 	if rr.ExecutionStatus != StatusCompleted {
-		return rr.Assessment != AssessPass
+		return !rr.EvidenceValid && rr.Assessment != AssessPass
 	}
 	if rr.EvidenceValid { // Replay clears it whenever a gate failed
 		return g.Failed == 0 && rr.Assessment == p.Assessment
