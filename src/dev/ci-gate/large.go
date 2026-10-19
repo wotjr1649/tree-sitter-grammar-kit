@@ -241,6 +241,8 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	}
 	var wall int64
 	var memory uint64
+	var memorySource string
+	metrics := map[string]bool{} // peaks are comparable only under one memory metric
 	pages := 0
 	legacyPages := map[string][][]byte{}
 	for _, o := range result.Observations {
@@ -281,7 +283,10 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 		covered[req.ID] = r.End
 		children[req.ID] += r.ChildFields
 		wall = max(wall, p.WallMillis)
-		memory = max(memory, p.Memory.Peak)
+		if memorySource == "" || p.Memory.Peak > memory {
+			memory, memorySource = p.Memory.Peak, req.ID
+		}
+		metrics[p.Memory.Metric] = true
 	}
 	for id, n := range nodes {
 		if !evaluation && !strings.HasPrefix(id, "small-") {
@@ -314,7 +319,17 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 			}
 		}
 		sessionWall = max(sessionWall, session.Batch.Process.WallMillis)
-		memory = max(memory, session.Batch.Process.Memory.Peak)
+		if session.Batch.Process.Memory.Peak > memory {
+			memory, memorySource = session.Batch.Process.Memory.Peak, f.ID
+		}
+		metrics[session.Batch.Process.Memory.Metric] = true
+	}
+	if len(metrics) != 1 {
+		return nil, errors.New("large memory metrics differ")
+	}
+	var metric string
+	for m := range metrics {
+		metric = m
 	}
 	faults := map[string]bool{}
 	executables := map[string]bool{result.Executable: true, result.SessionExecutable: true}
@@ -377,5 +392,7 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 	if e != nil || responseProducer.LanguageVersion != producer.LanguageVersion || responseProducer.RuntimeLanguageVersion != producer.RuntimeLanguageVersion || responseProducer.RuntimeMinCompatible != producer.RuntimeMinCompatible {
 		return nil, errors.New("resource frame or producer mismatch")
 	}
-	return map[string]any{"session_fixtures": len(result.Sessions), "max_session_wall_ms": sessionWall, "pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory}, nil
+	return map[string]any{"session_fixtures": len(result.Sessions), "max_session_wall_ms": sessionWall, "pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory,
+		// observation only: memory has no margin gate; headroom is below the hard limit every process already met
+		"memory_metric": metric, "memory_peak_source": memorySource, "memory_limit_bytes": op.MemoryBytes, "memory_headroom_bytes": op.MemoryBytes - memory}, nil
 }

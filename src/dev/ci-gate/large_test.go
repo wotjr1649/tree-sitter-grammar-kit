@@ -273,6 +273,11 @@ func TestLargeSessionGate(t *testing.T) {
 	if err != nil || checked["pages"] != 4 || checked["session_fixtures"] != 3 {
 		t.Fatalf("promoted gate: %v %v", checked, err)
 	}
+	op := kit.NativeOperations()["native-query-large"]
+	peak := checked["max_memory_bytes"].(uint64)
+	if checked["memory_limit_bytes"] != op.MemoryBytes || checked["memory_headroom_bytes"] != op.MemoryBytes-peak || checked["memory_metric"] != "" || checked["memory_peak_source"] == "" {
+		t.Fatalf("memory observation: %v", checked)
+	}
 	for name, change := range map[string]func(*largeResult){
 		"historical-evaluation-fallback": func(r *largeResult) { r.Schema = "tsgk-large-api-validation/r3"; r.Mode = "REGISTERED_LARGE_ALL_NODES" },
 		"missing-session":                func(r *largeResult) { r.Sessions = r.Sessions[:2] },
@@ -286,6 +291,7 @@ func TestLargeSessionGate(t *testing.T) {
 		},
 		"cleanup":             func(r *largeResult) { r.Sessions[0].Batch.Process.Cleanup.Verified = false },
 		"memory":              func(r *largeResult) { r.Sessions[0].Batch.Process.Memory.LimitHit = true },
+		"mixed-memory-metric": func(r *largeResult) { r.Sessions[0].Batch.Process.Memory.Metric = "other" },
 		"wall":                func(r *largeResult) { r.Sessions[0].Batch.Frames[0].WallMillis = 90001 },
 		"trailing":            func(r *largeResult) { r.Sessions[0].Batch.TrailingBytes = 1 },
 		"missing-small":       func(r *largeResult) { r.Small = r.Small[:3] },
