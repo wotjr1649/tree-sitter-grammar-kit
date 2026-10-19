@@ -892,7 +892,7 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	if t.Code != "" || t.Types == nil || t.Fields == nil || t.Nodes == nil || t.Count != uint64(len(t.Nodes)) || len(t.Nodes) == 0 {
 		return nil, "QUERY_WITNESS_TREE_INVALID"
 	}
-	for _, name := range append(slices.Clone(t.Types), t.Fields...) {
+	for _, name := range t.Fields { // a type may be empty (alias(rule, "")), a field name may not
 		if name == "" {
 			return nil, "QUERY_WITNESS_TREE_INVALID"
 		}

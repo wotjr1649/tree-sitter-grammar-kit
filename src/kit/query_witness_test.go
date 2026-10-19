@@ -974,10 +974,12 @@ func TestQueryWitnessRejectsUnknownPredicateCapture(t *testing.T) {
 }
 
 func TestQueryWitnessRejectsImpossibleProjectionCSTWithoutRaw(t *testing.T) {
-	alias := fxTree("a", false)
+	alias, form := fxTree("a", false), "full"
 	alias[0].Type = "" // the generator accepts alias(rule, "")
-	if !witnessCST(alias) {
-		t.Fatal("empty alias type rejected")
+	tree := witnessRawTree{Status: StatusCompleted, Form: &form, Count: 2, Digest: TreeDigest(alias), Types: []string{"", "word"}, Fields: []string{},
+		Nodes: [][]int64{{-1, 0, -1, 1, 0, 1, 0, 0, 0, 1}, {0, 1, -1, 1, 0, 1, 0, 0, 0, 1}}}
+	if nodes, code := witnessNodes(tree, EncodingUTF8, []byte("a"), 1, &run{caller: ctxT(t), wall: ctxT(t)}); nodes == nil || code != "" || !witnessCST(nodes) {
+		t.Fatalf("empty alias type rejected: %q", code)
 	}
 	for name, mutate := range map[string]func([]TreeNode){
 		"child-outside-parent": func(nodes []TreeNode) { nodes[0].EndByte, nodes[0].EndPoint = 0, Point{} },
