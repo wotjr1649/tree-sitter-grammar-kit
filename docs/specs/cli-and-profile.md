@@ -215,6 +215,8 @@ tsgk evidence verify --input DIR --profile FILE [--out PATH]
 
 registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema`, `id`, `reducer`(등록된 reducer id, 그 밖은 `REDUCER_UNSUPPORTED`/BLOCKED), `operation`(아래 표, reducer의 연산과 같아야 함), `subject`(`run`, `attempt`, `platform`, `commit`, `evidence_mode`, `execution_status`, `assessment`: 기록된 subject run과 그 원 판정), `identities`(역할 → 값, reducer가 관측하는 역할을 빠짐없이 정확히 결속), `records`(`null`이면 reducer가 workload에서 expected record를 정하고, 목록이면 그 순서의 독립 expected 목록), `members`(`path`·`role`·`bytes`·`sha256`: 독립 inventory. 경로는 portable이고 대소문자만 다른 중복은 `MEMBER_DUPLICATE`, 역할은 reducer의 `member_roles` 또는 evidence가 아닌 동반 파일의 `retained`)다. 예시는 `src/contracts/examples/replay-r1.json`, 거부 예시는 `invalid/replay-*.json`이다.
 
+`query-reference-connection-r1`은 같은 `replay --input ROOT --profile FILE`을 쓰며 결과만 `tsgk-replay-result/r2`로 구분한다. 외부 profile은 세 신뢰 문서 역할과 `evidence/` 안의 `reference-evidence` 파일 전체를 정확히 승인한다. 전체 reference payload·tuple counter·early/partial error·동일 guard/read/wall 경계는 [identity/evidence](identity-and-evidence.md)의 등록 reducer 계약이 소유한다. CLI는 API와 같은 전체 JSON 및 기존 assessment/error exit 규칙을 사용한다. 새 revision은 기존 oracle/query-equality 결과를 승격하지 않는다.
+
 | `operation` | 파일 | 파일당 | 합계 | record 수 | record 하나 | 출력 | wall | host |
 |---|---|---|---|---|---|---|---|---|
 | `evidence-replay` | 10000 | 16777216 | 268435456 | 100000 | 16777216 | 16777216 | 120초 | 세 OS |

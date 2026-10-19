@@ -206,3 +206,74 @@ func TestEvidenceReplayPlatformCLI(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryReferenceReplayCLI(t *testing.T) {
+	for _, state := range []string{"pass", "blocked", "fail-blocked", "graph-witness-missing"} {
+		t.Run(state, func(t *testing.T) {
+			req, _ := queryReferenceCLISet(t, state)
+			root, outside := t.TempDir(), t.TempDir()
+			if err := os.Mkdir(filepath.Join(root, "evidence"), 0700); err != nil {
+				t.Fatal(err)
+			}
+			files := map[string][]byte{"connection.json": req.Registration, "query-registration.json": req.WitnessRegistration, "policy.json": req.Evidence.Policy}
+			entries, err := os.ReadDir(req.Evidence.Root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, entry := range entries {
+				b, err := os.ReadFile(filepath.Join(req.Evidence.Root, entry.Name()))
+				if err != nil {
+					t.Fatal(err)
+				}
+				files["evidence/"+entry.Name()] = b
+			}
+			sum := func(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+			members := []kit.ReplayMember{}
+			for name, data := range files {
+				role := "reference-evidence"
+				switch name {
+				case "connection.json":
+					role = "reference-registration"
+				case "query-registration.json":
+					role = "query-registration"
+				case "policy.json":
+					role = "reference-policy"
+				}
+				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(name)), data, 0600); err != nil {
+					t.Fatal(err)
+				}
+				members = append(members, kit.ReplayMember{Path: name, Role: role, Bytes: uint64(len(data)), SHA256: sum(data)})
+			}
+			var witness kit.QueryWitnessRegistration
+			if err := json.Unmarshal(req.WitnessRegistration, &witness); err != nil {
+				t.Fatal(err)
+			}
+			profile, err := json.Marshal(map[string]any{"schema": kit.ReplaySchema, "id": "cli-reference-replay", "reducer": "query-reference-connection-r1", "operation": "evidence-replay",
+				"subject":    kit.ReplaySubject{Run: "native-run", Attempt: 1, Platform: witness.Platform, Commit: "", EvidenceMode: kit.ModeNewRun, ExecutionStatus: kit.StatusCompleted, Assessment: kit.AssessPass},
+				"identities": map[string]string{"registration": sum(req.Registration), "witness": sum(req.WitnessRegistration), "evidence-policy": sum(req.Evidence.Policy), "source": witness.Input.SHA256, "route": witness.Route, "platform": witness.Platform, "role": witness.Role, "policy": witness.Policy},
+				"records":    []string{witness.Case}, "members": members})
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(outside, "replay.json")
+			if err := os.WriteFile(path, profile, 0600); err != nil {
+				t.Fatal(err)
+			}
+			code, out, errout := cli(t, context.Background(), "replay", "--input", root, "--profile", path)
+			want := map[string]int{"pass": exitOK, "blocked": exitBlocked, "fail-blocked": exitFail, "graph-witness-missing": exitBlocked}[state]
+			if code != want {
+				t.Fatalf("exit %d != %d: %s %s", code, want, out, errout)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			api, err := kit.Replay(ctx, kit.ReplayRequest{Root: root, Profile: profile})
+			if err != nil {
+				t.Fatal(err)
+			}
+			data, err := json.Marshal(api)
+			if err != nil || strings.TrimSuffix(out, "\n") != string(data) || api.ResultSchema != kit.ReplayReferenceResultSchema || api.QueryReference == nil {
+				t.Fatalf("r2 CLI/API mismatch: %v %s", err, out)
+			}
+		})
+	}
+}

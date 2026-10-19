@@ -5,6 +5,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"fmt"
 	"io/fs"
+	"os"
 	"slices"
 	"strconv"
 )
@@ -126,22 +127,36 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 
 // Requested bytes come from the same guarded pass that hashes every graph member.
 type evidenceSnapshot struct {
-	wanted       map[string]bool
-	wantedNodes  map[string]bool
-	files        map[string][]byte
-	nodes        []EvidenceNode
-	graphBound   bool
-	invalidNodes map[string]bool
+	wanted          map[string]bool
+	wantedNodes     map[string]bool
+	files           map[string][]byte
+	nodes           []EvidenceNode
+	graphBound      bool
+	invalidNodes    map[string]bool
+	approved        map[string]ReplayMember
+	verifiedMembers map[string]ReplayMember
+	walked          map[string]fs.FileInfo // the caller's walk of the same files; nil when none
 }
 
 func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot) (EvidenceResult, error) {
+	return verifyEvidenceInRun(ctx, req, snapshot, nil, nil)
+}
+
+// Borrowed state keeps nested verification under the caller's root and budgets.
+func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot, sharedRun *run, heldRoot *os.Root) (EvidenceResult, error) {
 	if snapshot != nil {
 		snapshot.files, snapshot.nodes = map[string][]byte{}, nil
 		snapshot.graphBound, snapshot.invalidNodes = false, map[string]bool{}
+		snapshot.verifiedMembers = map[string]ReplayMember{}
 	}
 	res := EvidenceResult{Report: newReport("evidence verify"), ResultSchema: EvidenceResultSchema, Modes: map[string]int{}, Explanation: []string{}}
+	var x *replayEnv
 	bad := func(e *Error) (EvidenceResult, error) {
 		failReport(&res.Report, e)
+		if snapshot != nil && snapshot.approved != nil && x != nil && len(x.findings) > 0 {
+			res.Findings = append(res.Findings, x.findings...)
+			res.Assessment = AssessFail
+		}
 		res.Explanation = append(res.Explanation, "evidence 검증을 끝내지 못했다: "+e.Code)
 		return res, e
 	}
@@ -155,20 +170,35 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 	if testHookReplayLimits != nil {
 		lim = testHookReplayLimits(lim)
 	}
-	r, e := startRun(ctx, lim.Wall)
-	if e != nil {
-		return bad(e)
+	r := sharedRun
+	if r == nil {
+		r, e = startRun(ctx, lim.Wall)
+		if e != nil {
+			return bad(e)
+		}
+		defer r.cancel()
 	}
-	defer r.cancel()
-	root, _, e := openRoot(req.Root)
-	if e != nil {
-		return bad(e)
+	root := heldRoot
+	if root == nil {
+		root, _, e = openRoot(req.Root)
+		if e != nil {
+			return bad(e)
+		}
+		defer root.Close()
 	}
-	defer root.Close()
-	x := &replayEnv{r: r, g: newGuard(root), lim: lim, files: map[string]fs.FileInfo{}, verified: map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+	x = &replayEnv{r: r, g: newGuard(root), lim: lim, files: map[string]fs.FileInfo{}, verified: map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
+	}
+	if snapshot != nil && snapshot.walked != nil {
+		// a file swapped between the caller's walk and this one must not inherit its verification
+		for p, inner := range x.files {
+			outer := snapshot.walked[p]
+			if outer == nil || !os.SameFile(outer, inner) || outer.Size() != inner.Size() || !outer.ModTime().Equal(inner.ModTime()) {
+				return bad(fail(KindIO, "SOURCE_CHANGED", p, nil))
+			}
+		}
 	}
 	info := x.files["evidence.json"]
 	if info == nil {
@@ -205,6 +235,13 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 	}
 	if snapshot != nil {
 		snapshot.graphBound = st.sha256 == pol.EvidenceSHA256
+		graph := ReplayMember{Path: "evidence.json", Bytes: st.size, SHA256: st.sha256}
+		if snapshot.approved != nil && !sameMemberBytes(snapshot.approved[graph.Path], graph) {
+			snapshot.graphBound = false
+			add("EVIDENCE_APPROVAL_MISMATCH", graph.Path, "graph bytes가 외부 replay 등록과 다르다")
+		} else {
+			snapshot.verifiedMembers[graph.Path] = graph
+		}
 	}
 	if st.sha256 != pol.EvidenceSHA256 {
 		add("EVIDENCE_ANCHOR_MISMATCH", "evidence.json", "evidence 문서가 policy가 고정한 sha256과 다르다")
@@ -259,6 +296,10 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 				continue
 			}
 			files[f.Path] = n.ID
+			if snapshot != nil && snapshot.approved != nil && !sameMemberBytes(snapshot.approved[f.Path], f) {
+				add("FILE_APPROVAL_MISMATCH", f.Path, "graph member가 외부 replay 등록과 다르다")
+				continue
+			}
 			var e *Error
 			if f.Role == "replay-result" {
 				// read once and kept for the replay binding below
@@ -288,6 +329,8 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 					return bad(e) // a file beyond the limits is a limit, not damaged evidence
 				}
 				add("FILE_"+e.Code, f.Path, "파일이 없거나 bytes·sha256이 다르다")
+			} else if snapshot != nil {
+				snapshot.verifiedMembers[f.Path] = f
 			}
 		}
 	}
@@ -488,14 +531,27 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			ResultSchema string `json:"result_schema"`
 			EvidenceMode string `json:"evidence_mode"`
 			Assessment   string `json:"assessment"`
-			Subject      struct {
+			Reducer      struct {
+				ID string `json:"id"`
+			} `json:"reducer"`
+			QueryReference *QueryReferenceConnectionResult `json:"query_reference"`
+			Subject        struct {
 				Run      string `json:"run"`
 				Attempt  uint64 `json:"attempt"`
 				Platform string `json:"platform"`
 			} `json:"subject"`
 		}
-		if err := jsonv2.Unmarshal(data, &rr); err != nil || rr.ResultSchema != ReplayResultSchema {
-			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 tsgk-replay-result/r1이 아니다")
+		if err := jsonv2.Unmarshal(data, &rr); err != nil {
+			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 올바르지 않다")
+			continue
+		}
+		valid := rr.ResultSchema == ReplayResultSchema && rr.QueryReference == nil && rr.Reducer.ID != "query-reference-connection-r1"
+		if rr.ResultSchema == ReplayReferenceResultSchema {
+			var full ReplayResult
+			valid = decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
+		}
+		if !valid {
+			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 revision과 payload가 일치하지 않는다")
 			continue
 		}
 		if rr.EvidenceMode != n.EvidenceMode || rr.Assessment != n.Assessment {

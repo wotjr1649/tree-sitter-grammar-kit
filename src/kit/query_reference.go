@@ -3,6 +3,7 @@ package kit
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"slices"
 	"unicode/utf8"
@@ -117,18 +118,28 @@ type instrumentedReference struct {
 
 // VerifyQueryReferenceConnection uses only the guarded bytes verified by VerifyEvidence.
 // Hash approval binds bytes; it never proves that a stored response was really executed.
-func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConnectionRequest) (res QueryReferenceConnectionResult, resultErr error) {
-	res = QueryReferenceConnectionResult{Report: newReport("query reference connection"), ResultSchema: QueryReferenceResultSchema}
-	defer func() {
-		if resultErr != nil {
-			failReport(&res.Report, asError(resultErr))
-		}
-	}()
+func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConnectionRequest) (QueryReferenceConnectionResult, error) {
 	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
 	if e != nil {
+		res := QueryReferenceConnectionResult{Report: newReport("query reference connection"), ResultSchema: QueryReferenceResultSchema}
+		failReport(&res.Report, e)
 		return res, e
 	}
 	defer r.cancel()
+	return verifyQueryReferenceConnection(r, req, nil)
+}
+
+func verifyQueryReferenceConnection(r *run, req QueryReferenceConnectionRequest, scope *referenceReplayScope) (res QueryReferenceConnectionResult, resultErr error) {
+	res = QueryReferenceConnectionResult{Report: newReport("query reference connection"), ResultSchema: QueryReferenceResultSchema}
+	defer func() {
+		if resultErr != nil {
+			knownFailure := scope != nil && res.Assessment == AssessFail
+			failReport(&res.Report, asError(resultErr))
+			if knownFailure {
+				res.Assessment = AssessFail
+			}
+		}
+	}()
 	var reg QueryReferenceRegistration
 	if e := decodeWitnessDocument("reference-registration", req.Registration, &reg, true, r); e != nil {
 		return res, e
@@ -173,13 +184,19 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 	for _, m := range referenceMembers(reg) {
 		wanted[m.Path] = true
 	}
-	snapshot := &evidenceSnapshot{wanted: wanted, wantedNodes: map[string]bool{reg.Native.ID: true, reg.Reference.ID: true}}
-	evidenceContext, cancelEvidence := context.WithCancel(r.caller)
-	stopWall := context.AfterFunc(r.wall, cancelEvidence)
-	defer stopWall()
-	defer cancelEvidence()
-	evidence, err := verifyEvidence(evidenceContext, req.Evidence, snapshot)
+	snapshot := &evidenceSnapshot{}
+	var root *os.Root
+	if scope != nil {
+		snapshot, root = scope.snapshot, scope.root
+		snapshot.approved = scope.pins
+	}
+	snapshot.wanted, snapshot.wantedNodes = wanted, map[string]bool{reg.Native.ID: true, reg.Reference.ID: true}
+	evidence, err := verifyEvidenceInRun(r.caller, req.Evidence, snapshot, r, root)
 	if err != nil {
+		if scope != nil && evidence.Assessment == AssessFail {
+			res.Findings = append(res.Findings, evidence.Findings...)
+			res.Assessment = AssessFail
+		}
 		if e := r.check(); e != nil {
 			return res, e
 		}
