@@ -228,6 +228,29 @@ func TestBoundSourceLeafReplacement(t *testing.T) {
 	}
 }
 
+func TestBoundSourceRejectsHardLinks(t *testing.T) {
+	base := t.TempDir()
+	if err := os.WriteFile(filepath.Join(base, "source"), []byte("original"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root, err := os.OpenRoot(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	if data, err := readBoundSource(root, "source", 8); err != nil || string(data) != "original" {
+		t.Fatalf("single-link source: %q %v", data, err)
+	}
+	if err := os.Link(filepath.Join(base, "source"), filepath.Join(base, "twin")); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"source", "twin"} {
+		if _, err := readBoundSource(root, name, 8); !errors.Is(err, errSourceLink) {
+			t.Fatalf("hard link %s accepted: %v", name, err)
+		}
+	}
+}
+
 func TestBoundSourceRejectsLinks(t *testing.T) {
 	base := t.TempDir()
 	if err := os.Mkdir(filepath.Join(base, "original"), 0o755); err != nil {
