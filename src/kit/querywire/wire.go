@@ -207,7 +207,7 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 		}) {
 			return nil, bad(i, "match accounting")
 		}
-		// the producer interns each emitted capture's non-empty type in first-use order; a MISSING node always has an error
+		// the producer interns each emitted capture's type in first-use order; a MISSING node always has an error
 		types := map[string]bool{}
 		for k, row := range q.Captures {
 			if len(row) != 12 || row[0] < 0 || uint64(row[0]) >= q.Matches || row[1] < 0 || row[1] >= int64(q.Patterns) || row[2] < 0 || row[2] >= int64(len(q.CaptureNames)) ||
@@ -223,7 +223,7 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 				return nil, bad(i, fmt.Sprintf("capture %d range", k))
 			}
 			if row[4] == int64(len(types)) {
-				if q.Types[row[4]] == "" || types[q.Types[row[4]]] {
+				if types[q.Types[row[4]]] {
 					return nil, bad(i, fmt.Sprintf("capture %d type table", k))
 				}
 				types[q.Types[row[4]]] = true

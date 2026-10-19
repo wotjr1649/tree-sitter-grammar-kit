@@ -527,7 +527,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				for _, c := range q.Captures {
 					if c.Pattern < 0 || uint64(c.Pattern) >= uint64(q.Patterns) || c.Capture < 0 || uint64(c.Capture) >= uint64(len(q.CaptureNames)) ||
 						c.Name != q.CaptureNames[c.Capture] || c.Match < 0 || uint64(c.Match) >= q.Matches || c.Node < 0 || uint64(c.Node) >= tree.Count ||
-						c.StartByte > c.EndByte || uint64(c.EndByte) > step.Bytes || c.Type == "" || c.IsMissing && !c.HasError ||
+						c.StartByte > c.EndByte || uint64(c.EndByte) > step.Bytes || c.IsMissing && !c.HasError ||
 						(tree.Tree != nil && !witnessCaptureNode(c, tree.Tree.Nodes)) {
 						bad("QUERY_WITNESS_CAPTURE_LINK_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 						break
@@ -939,13 +939,13 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 	return nodes, witnessPoints(nodes, encoding, source, r)
 }
 
-// witnessCST checks a ValidateTree-valid CST for what every tree-sitter tree has: named
-// types, an error under each MISSING node, and children inside the parent, which sums
-// each child's padding and size.
+// witnessCST checks a ValidateTree-valid CST for what every tree-sitter tree has: an error
+// under each MISSING node, and children inside the parent, which sums each child's padding
+// and size. A type may be empty: the generator accepts alias(rule, "").
 func witnessCST(nodes []TreeNode) bool {
 	before := func(a, b Point) bool { return a.Row < b.Row || a.Row == b.Row && a.Column < b.Column }
 	for i, n := range nodes {
-		if n.Type == "" || n.IsMissing && !n.HasError {
+		if n.IsMissing && !n.HasError {
 			return false
 		}
 		if i == 0 {
