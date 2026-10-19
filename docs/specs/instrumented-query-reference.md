@@ -53,7 +53,7 @@ Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지
 
 ## 저장 데이터 연결 API
 
-`VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 전체 11-role identity, witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.
+`VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 빈 값 없는 전체 11-role identity(빈 값은 `REFERENCE_REGISTRATION_INVALID`), witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.
 
 Caller는 승인 member에 정확히 결속하는 witness 등록 원문도 필수 입력으로 제공한다. 이 원문을 먼저 strict 해석·크기/hash 대조한 뒤 공유 native witness 검증기를 항상 적용하며, graph의 witness member가 없어도 등록 분모와 확보한 source·raw·projection·reference의 검사는 유지한다. Caller 원문이 누락·malformed·pin 불일치이면 `KindInvalidInput`이고, 한도·취소 분류는 기존 계약을 유지한다. Graph member의 undeclared 누락은 BLOCKED이며 declared 파일 부재·owner·bytes 불일치는 FAIL이다. Caller 입력으로 graph 누락을 채우거나 완료 tuple을 늘리지 않는다.
 

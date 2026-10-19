@@ -2,6 +2,7 @@ package kit
 
 import (
 	"context"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -29,6 +30,7 @@ func newReferenceFixture(t *testing.T) *referenceFixture {
 		return ReplayMember{Path: path, Role: role, Bytes: uint64(len(b)), SHA256: sum(b)}
 	}
 	ni, ri := ident("native-policy", "native-run"), ident("reference-policy", "reference-run")
+	ni["query"], ri["query"] = "q", "q"
 	f.registration = QueryReferenceRegistration{Schema: QueryReferenceRegistrationSchema, Context: "full-input-utf8/r1", Native: QueryReferenceNode{ID: "native", Identities: ni}, Reference: QueryReferenceNode{ID: "reference", Identities: ri}, BinarySHA256: sum([]byte("approved-binary")), LibrarySHA256: sum([]byte("approved-library")), Symbol: "tree_sitter_owned"}
 	f.registration.WitnessRegistration = member("witness.json", "registration")
 	f.registration.Source = member("source.txt", "source")
@@ -653,6 +655,16 @@ func TestQueryReferenceConnectionContextAndCancellation(t *testing.T) {
 	f.registration.Symbol = "not_a_language_symbol"
 	if _, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t)); e == nil || asError(e).Code != "REFERENCE_REGISTRATION_INVALID" {
 		t.Fatalf("symbol registration: %v", e)
+	}
+	for _, role := range []string{"source", "tool", "input", "query", "policy", "comparator", "protocol", "workload", "platform", "run", "attempt"} {
+		f = newReferenceFixture(t)
+		ids := maps.Clone(f.registration.Native.Identities)
+		ids[role] = ""
+		// the evidence node carries the same empty value, so only the registration check can reject it
+		f.registration.Native.Identities, f.nodes[0].Identities = ids, ids
+		if _, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t)); e == nil || asError(e).Code != "REFERENCE_REGISTRATION_INVALID" {
+			t.Fatalf("empty %s identity: %v", role, e)
+		}
 	}
 }
 

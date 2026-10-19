@@ -567,8 +567,9 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 		if !validID(n.ID) || len(n.Identities) != 11 {
 			return bad()
 		}
+		// an empty value matches an equally empty evidence node, so it would bind no context
 		for _, role := range []string{"source", "tool", "input", "query", "policy", "comparator", "protocol", "workload", "platform", "run", "attempt"} {
-			if _, ok := n.Identities[role]; !ok {
+			if n.Identities[role] == "" {
 				return bad()
 			}
 		}
