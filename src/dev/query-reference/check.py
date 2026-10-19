@@ -201,6 +201,21 @@ for label, arguments, expected_code in [
     assert len(rows) == 2 and rows[0]['code'] == expected_code and rows[0]['complete'] is False
     assert rows[-1]['complete'] is False and rows[-1]['responses_completed'] == 0
     passed.append('batch-reject-'+label)
+invalid_utf8 = dest / 'invalid-utf8.scm'
+invalid_utf8.write_bytes(b'(identifier) @\xff')
+for label, bad_path, expected_code in [('missing', dest/'missing.scm', 'INPUT_STAT'), ('oversized', oversized, 'INPUT_LIMIT'), ('utf8', invalid_utf8, 'QUERY_UTF8')]:
+    _, receipt = execute('batch-later-input-'+label, binary, prefix+['first',query_paths[0],'bad',bad_path,'later',query_paths[1]], expected_exit=1)
+    rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+    assert len(rows) == 3 and rows[0]['query']['id'] == 'first' and dict(rows[0], query=dict(rows[0]['query'], id='b0')) == singles[0]
+    assert rows[1] == {'schema':'tsgk-instrumented-query-reference/r1','status':'FAILED','code':expected_code,'complete':False}
+    assert rows[2] == {'schema':'tsgk-instrumented-query-reference-batch/r1','status':'FAILED','complete':False,'queries':['first','bad','later'],'responses_completed':1}
+    try:
+        batch(receipt['stdout'], ['first','bad','later'])
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError('incomplete batch accepted')
+    passed.append('batch-later-input-'+label+'-keeps-prefix')
 spec = json.loads((dest/'batch-sixteen-request.json').read_bytes())
 spec['StdoutBytes'] = 1024
 with (dest/'batch-truncated.json').open('xb') as out, (dest/'batch-truncated.stderr').open('xb') as err:
