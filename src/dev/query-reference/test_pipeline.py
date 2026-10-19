@@ -227,6 +227,10 @@ runpy.run_path(entry, run_name='__main__')
                 response.msg = 'fake'
                 return response
 
+            def http_open(self, req):
+                calls.append(req.full_url)
+                raise AssertionError('redirect followed to ' + req.full_url)
+
         package = {'name': 'demo', 'version': '1.0.0', 'checksum': '0' * 64, 'source': 'registry+https://github.com/rust-lang/crates.io-index'}
         saved = acquire.OPENER, acquire.TOTAL, acquire.DEADLINE
         try:
@@ -242,6 +246,11 @@ runpy.run_path(entry, run_name='__main__')
                     acquire.acquire(package, Path(directory))
                 self.assertEqual(acquire.TOTAL, 1000)
                 calls.clear()
+                acquire.TOTAL = acquire.LIMIT
+                with self.assertRaisesRegex(RuntimeError, 'total download bound'):
+                    acquire.acquire(package, Path(directory))
+                self.assertEqual(calls, [])
+                acquire.TOTAL = 0
                 acquire.DEADLINE = time.monotonic() - 1
                 with self.assertRaisesRegex(RuntimeError, 'size/time bound'):
                     acquire.acquire(package, Path(directory))

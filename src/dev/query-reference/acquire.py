@@ -17,6 +17,8 @@ import urllib.request
 from build import ARCHIVE, UPSTREAM
 
 DEADLINE = time.monotonic() + 900
+LIMIT = 256 * 1024**2
+CHUNK = 1024**2
 LOCK = threading.Lock()
 TOTAL = 0
 
@@ -31,13 +33,20 @@ class RefuseRedirect(urllib.request.HTTPRedirectHandler):
 OPENER = urllib.request.build_opener(RefuseRedirect)
 
 
-def spend(n):
-    # every byte read counts, including a response that later fails its checksum
+def reserve(n):
+    # every byte is reserved before it is read, including a response that later fails its
+    # checksum, so no worker reads past the shared budget
     global TOTAL
     with LOCK:
-        TOTAL += n
-        if TOTAL > 256 * 1024**2:
+        if TOTAL >= LIMIT or TOTAL + n > LIMIT:
             raise RuntimeError('total download bound')
+        TOTAL += n
+
+
+def refund(n):
+    global TOTAL
+    with LOCK:
+        TOTAL -= n
 
 
 def digest(data):
@@ -98,13 +107,18 @@ def acquire(package, vendor):
     url = f'https://static.crates.io/crates/{name}/{name}-{version}.crate'
     if time.monotonic() > DEADLINE:
         raise RuntimeError('download size/time bound')
+    reserve(0)  # an exhausted budget starts no new request
     chunks, length = [], 0
     with OPENER.open(url, timeout=30) as response:
         if response.geturl() != url:
             raise RuntimeError('unexpected dependency redirect')
-        while chunk := response.read(1024**2):
+        while True:
+            reserve(CHUNK)
+            chunk = response.read(CHUNK)
+            refund(CHUNK - len(chunk))
+            if not chunk:
+                break
             length += len(chunk)
-            spend(len(chunk))
             if length > 32 * 1024**2 or time.monotonic() > DEADLINE:
                 raise RuntimeError('download size/time bound')
             chunks.append(chunk)
