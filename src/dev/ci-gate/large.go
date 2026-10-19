@@ -393,6 +393,6 @@ func checkLarge(data []byte, fixtures largeaudit.Inventory, registrySHA, sourceS
 		return nil, errors.New("resource frame or producer mismatch")
 	}
 	return map[string]any{"session_fixtures": len(result.Sessions), "max_session_wall_ms": sessionWall, "pages": pages, "fixtures": 3, "faults": len(faults), "resource_controls": 1, "max_page_wall_ms": wall, "max_memory_bytes": memory,
-		// observation only: memory has no margin gate; headroom is below the hard limit every process already met
+		// observation only, no margin gate: the audit pages and sessions measured here all met this hard limit
 		"memory_metric": metric, "memory_peak_source": memorySource, "memory_limit_bytes": op.MemoryBytes, "memory_headroom_bytes": op.MemoryBytes - memory}, nil
 }
