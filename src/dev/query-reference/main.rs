@@ -323,7 +323,8 @@ fn run(
     emit: &mut impl FnMut(Value),
     completed: &mut usize,
     ids: &mut Vec<String>,
-) -> Result<Watchdog, String> {
+    watchdog: &mut Option<Watchdog>,
+) -> Result<(), String> {
     let args = &requests[0];
     let library_path = PathBuf::from(&args[0]);
     let symbol = args[1].to_str().ok_or("SYMBOL_UTF8")?;
@@ -349,12 +350,6 @@ fn run(
         ids.push(id.to_owned());
     }
     let source = read(Path::new(&args[2]), 32 * 1024 * 1024)?;
-    let mut query_inputs = Vec::new();
-    for request in requests {
-        let id = request[4].to_str().ok_or("QUERY_ID_UTF8")?;
-        let bytes = read(Path::new(&request[3]), 65_536)?;
-        query_inputs.push((id, bytes));
-    }
     let grammar = read(&library_path, 64 * 1024 * 1024)?;
     let expected_library = args[5].to_str().ok_or("LIBRARY_SHA256_UTF8")?;
     if expected_library.len() != 64
@@ -366,12 +361,10 @@ fn run(
         return Err("LIBRARY_SHA256_MISMATCH".into());
     }
     std::str::from_utf8(&source).map_err(|_| "SOURCE_UTF8")?;
-    for (_, bytes) in &query_inputs {
-        std::str::from_utf8(bytes).map_err(|_| "QUERY_UTF8")?;
-    }
     let started = Instant::now();
     let deadline = started + Duration::from_millis(WALL_MS);
-    let mut watchdog = Watchdog::new(deadline);
+    // The caller keeps the guard armed through failure output and the footer.
+    let watchdog = watchdog.insert(Watchdog::new(deadline));
     // The handle is declared first and outlives all grammar-dependent objects.
     let library = unsafe { load(&library_path)? };
     let constructor =
@@ -437,7 +430,7 @@ fn run(
         }
     }
     let common_elapsed = started.elapsed();
-    for (query_id, query_bytes) in query_inputs {
+    for (request, query_id) in requests.iter().zip(ids.iter()) {
         // Charge common parsing and CST export to every query's original wall budget.
         let remaining = Duration::from_millis(WALL_MS).saturating_sub(common_elapsed);
         let deadline = query_deadline(started, common_elapsed, requests.len(), Instant::now());
@@ -445,6 +438,7 @@ fn run(
             return Err("QUERY_INCOMPLETE".into());
         }
         watchdog.arm(deadline);
+        let query_bytes = read(Path::new(&request[3]), 65_536)?;
         let query_source = std::str::from_utf8(&query_bytes).map_err(|_| "QUERY_UTF8")?;
         let query = Query::new(&language, query_source).map_err(|_| "QUERY_COMPILE")?;
         let metadata = predicates(&query)?;
@@ -558,7 +552,7 @@ fn run(
         watchdog.check();
         *completed += 1;
     }
-    Ok(watchdog)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -568,6 +562,31 @@ mod tests {
     #[test]
     fn watchdog_exits_during_blocking_work_and_expired_rearm() {
         if let Ok(mode) = env::var("TSGK_REFERENCE_WATCHDOG_TEST") {
+            if mode == "failed" {
+                let dir = env::temp_dir().join(format!("tsgk-watchdog-{}", std::process::id()));
+                fs::create_dir_all(&dir).unwrap();
+                let library = dir.join("library.bin");
+                fs::write(&library, b"not a library").unwrap();
+                fs::write(dir.join("source.txt"), b"x").unwrap();
+                fs::write(dir.join("query.scm"), b"(x) @x").unwrap();
+                let request = [
+                    library.as_os_str(),
+                    "tree_sitter_x".as_ref(),
+                    dir.join("source.txt").as_os_str(),
+                    dir.join("query.scm").as_os_str(),
+                    "q".as_ref(),
+                    hash(b"not a library").as_ref(),
+                ]
+                .map(OsString::from)
+                .to_vec();
+                let mut slot = None;
+                let result = run(&[request], &mut |_| {}, &mut 0, &mut Vec::new(), &mut slot);
+                fs::remove_dir_all(&dir).unwrap();
+                assert_eq!(result.unwrap_err(), "LIBRARY_LOAD");
+                assert!(slot.is_some());
+                thread::sleep(Duration::from_millis(WALL_MS + 1_000));
+                return;
+            }
             let mut watchdog = Watchdog::new(Instant::now() + Duration::from_millis(50));
             if mode == "delayed" {
                 watchdog.arm(Instant::now() + Duration::from_secs(2));
@@ -584,7 +603,7 @@ mod tests {
             thread::sleep(Duration::from_millis(300));
             return;
         }
-        for mode in ["blocked", "expired", "delayed"] {
+        for mode in ["blocked", "expired", "delayed", "failed"] {
             let output = std::process::Command::new(env::current_exe().unwrap())
                 .args([
                     "--exact",
@@ -701,8 +720,16 @@ fn main() {
     };
     let mut completed = 0;
     let mut ids = Vec::new();
-    let result =
-        requests(args).and_then(|requests| run(&requests, &mut emit, &mut completed, &mut ids));
+    let mut watchdog = None;
+    let result = requests(args).and_then(|requests| {
+        run(
+            &requests,
+            &mut emit,
+            &mut completed,
+            &mut ids,
+            &mut watchdog,
+        )
+    });
     if let Err(code) = &result {
         emit(
             json!({"schema":"tsgk-instrumented-query-reference/r1","status":"FAILED","code":code,"complete":false}),
@@ -717,7 +744,7 @@ fn main() {
     if output.flush().is_err() {
         std::process::exit(2);
     }
-    if let Ok(watchdog) = &result {
+    if let Some(watchdog) = &watchdog {
         watchdog.check();
     }
     std::process::exit(if result.is_ok() { 0 } else { 1 });

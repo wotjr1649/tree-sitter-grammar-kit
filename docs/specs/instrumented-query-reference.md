@@ -30,13 +30,13 @@ Emitter 인자는 절대 library path, symbol, source path, query path, query ID
 
 기존 여섯 인자와 단일 r1 결과를 유지한다. 별도 `--batch LIBRARY SYMBOL SOURCE LIBRARY_SHA256 QUERY_ID QUERY_FILE ...`는 사전 등록한 서로 다른 ID의 query 1–16개를 받는다. Source·library·fresh CST를 한 번 준비하고 query마다 별도 compiled query·cursor·match/occurrence 상태를 사용한다. 같은 source version의 공통 계산만 재사용하며 query 검사·독립 기대값·전체 CST 비교를 생략하지 않는다. Source/query/library 크기 및 query별 node/capture/match 한도는 그대로다.
 
-출력은 query 순서의 기존 `tsgk-instrumented-query-reference/r1` NDJSON과 마지막 `tsgk-instrumented-query-reference-batch/r1` footer다. Footer는 정확한 `schema`, `status`, boolean `complete`, 순서 있는 `queries`, 정수 `responses_completed`만 갖는다. 전체 stdout은 newline 포함64 MiB 이하이며 query 하나가 실패하면 그 실패 r1과 실패 footer를 출력하고 이후 query를 실행하지 않는다. 앞서 완료한 prefix를 전체 batch 완료로 세지 않는다.
+출력은 query 순서의 기존 `tsgk-instrumented-query-reference/r1` NDJSON과 마지막 `tsgk-instrumented-query-reference-batch/r1` footer다. Footer는 정확한 `schema`, `status`, boolean `complete`, 순서 있는 `queries`, 정수 `responses_completed`만 갖는다. 전체 stdout은 newline 포함64 MiB 이하이며 Query file의 읽기·크기·UTF-8 검사는 그 query 차례에 수행하므로, query 하나가 이 검사나 compile·실행에서 실패하면 앞선 완료 r1을 유지한 채 그 실패 r1과 실패 footer를 출력하고 이후 query를 실행하지 않는다. 앞서 완료한 prefix를 전체 batch 완료로 세지 않는다.
 
 `checks.batch`는 사전 등록 ID·개수·순서, 모든 완료 response, 정확한 완료 footer·마지막 newline·중복 JSON key 부재를 확인한다. 호출자는 이 검사 전에 실제 supervisor의 exit0·EXITED·잘림 부재·cleanup과 요청한 자원 한도를 별도로 확인해야 한다. 이 helper는 전체 reference 자격·CST 의미·독립 anchor 검사를 대신하지 않는다. 각 r1 문서에는 기존 offline 연결 검사를 적용한다.
 
-Library load·공통 parse/CST export는3초에 포함하고 그 경과 시간을 각 query의3초에서 공제한다. Query deadline은 batch 시작부터 `3초 × query 수`도 넘지 않는다. 별도 watchdog thread는 공통 준비와 활성 query의 deadline을 감시하며 callback이 없는 query compile·predicate·library 재검증·직렬화·출력 중에도 만료하면 process를 exit2로 끝낸다. 성공 footer·flush까지 마지막 query deadline을 유지한다. Watchdog timeout이나 출력 실패는 정상 JSON 또는 footer를 보장하지 않으며 완료 결과가 아니다. 운영체제 scheduling과 native process 격리는 기존 supervisor의 별도 wall·memory·cleanup 검사를 계속 요구한다. Owned batch16 검사는1 GiB·50초 supervisor에서 실행하며 단일 query의 기존10초 supervisor 문맥을 변경하지 않는다.
+Library load·공통 parse/CST export는3초에 포함하고 그 경과 시간을 각 query의3초에서 공제한다. Query deadline은 batch 시작부터 `3초 × query 수`도 넘지 않는다. 별도 watchdog thread는 공통 준비와 활성 query의 deadline을 감시하며 callback이 없는 query compile·predicate·library 재검증·직렬화·출력 중에도 만료하면 process를 exit2로 끝낸다. Watchdog 시작 뒤에는 성공·실패 r1과 footer·flush까지 이미 시작한 마지막 deadline을 새 예산 없이 유지한다. Watchdog timeout이나 출력 실패는 정상 JSON 또는 footer를 보장하지 않으며 완료 결과가 아니다. 운영체제 scheduling과 native process 격리는 기존 supervisor의 별도 wall·memory·cleanup 검사를 계속 요구한다. Owned batch16 검사는1 GiB·50초 supervisor에서 실행하며 단일 query의 기존10초 supervisor 문맥을 변경하지 않는다.
 
-Owned 검사는 batch1/16의 전체 r1 결과가 각 단일 실행과 일치하는지 확인하고 공통7-node CST 및 기존 수작업 predicate·중복 anchor도 유지한다. 중간 compile 실패 뒤 미실행, 빈 batch·17개·짝 없는 인자·중복 ID·query 크기 초과를 거부하고 실제 supervisor stdout 제한 뒤 cleanup과 전체 완료 거부를 확인한다. 이는 batch 정합성 검사이며 전체 지원 workload·3-host qualification 또는 성능 개선 수치가 아니다.
+Owned 검사는 batch1/16의 전체 r1 결과가 각 단일 실행과 일치하는지 확인하고 공통7-node CST 및 기존 수작업 predicate·중복 anchor도 유지한다. 중간 compile 실패와 후속 query file 누락·크기 초과·UTF-8 실패에서 앞선 완료 prefix 보존과 이후 미실행, 빈 batch·17개·짝 없는 인자·중복 ID·query 크기 초과를 거부하고 실제 supervisor stdout 제한 뒤 cleanup과 전체 완료 거부를 확인한다. 이는 batch 정합성 검사이며 전체 지원 workload·3-host qualification 또는 성능 개선 수치가 아니다.
 
 ## 실행 및 검사
 
@@ -53,7 +53,7 @@ python src/dev/query-reference/check.py --reference <absolute-built-binary> --id
 
 Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 오류를 검사한다. `check.py`는 owned grammar의 전체 7-node CST와 전체 capture·metadata를 손으로 고정해 네 연산의 유지·탈락, capture 간 비교, 복수 predicate, structural, 두 capture의 유지·탈락, 정상 중복 보존, 빈 source, 미지원 연산 거부와 잘못된 library hash 거부를 확인한다. Capture 간 비교는 서로 다른 두 node의 값이 같을 때와 다를 때 `eq?`·`not-eq?`의 유지·탈락도 확인한다. 수정한 source는 별도 fresh parse다. Kit의 incremental/fresh 실행을 했다는 근거로 세지 않는다. 각 실행의 stdout·stderr·runner 결과와 최종 요약은 새 directory에 남는다.
 
-선택한 Rust unit은 기존 occurrence 검사와 batch 인자/예산·watchdog 자식 process 검사의 정확한4개 실행·4개 성공·미실행0개를 요구한다. Owned parser·header는 읽은 bytes와 hash를 고정한 task copy에서 컴파일하며 최종 copy·binary·identity·도구·검사 source를 재확인한다. 거부 대조도 정상 process 종료·정확한 exit1·잘림 없는 출력·정리 완료를 요구하므로, 오류 JSON을 먼저 출력한 timeout은 성공한 거부가 아니다. `python src/dev/query-reference/test_pipeline.py -v`는 최적화 실행·0개 unit·입력 변경을 검사한다. 실제 supervisor의 절대 경로를 `TSGK_REFERENCE_SUPERVISOR`로 지정하면 정상 exit1, 오류 출력 뒤 wall 초과, stderr 잘림을 별도 process로 검사하며, 미지정 시 그 시험은 SKIP으로 남는다. Linux에서는 `TSGK_REFERENCE_CGROUP_PARENT`도 필요하다.
+선택한 Rust unit은 기존 occurrence 검사와 batch 인자/예산·watchdog 자식 process(시작 뒤 실패 경로 포함) 검사의 정확한4개 실행·4개 성공·미실행0개를 요구한다. Owned parser·header는 읽은 bytes와 hash를 고정한 task copy에서 컴파일하며 최종 copy·binary·identity·도구·검사 source를 재확인한다. 거부 대조도 정상 process 종료·정확한 exit1·잘림 없는 출력·정리 완료를 요구하므로, 오류 JSON을 먼저 출력한 timeout은 성공한 거부가 아니다. `python src/dev/query-reference/test_pipeline.py -v`는 최적화 실행·0개 unit·입력 변경을 검사한다. 실제 supervisor의 절대 경로를 `TSGK_REFERENCE_SUPERVISOR`로 지정하면 정상 exit1, 오류 출력 뒤 wall 초과, stderr 잘림을 별도 process로 검사하며, 미지정 시 그 시험은 SKIP으로 남는다. Linux에서는 `TSGK_REFERENCE_CGROUP_PARENT`도 필요하다.
 
 ## 전체 지원 대상 연결의 자격 기준
 
