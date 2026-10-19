@@ -9,7 +9,7 @@ import tempfile
 import unittest
 import shutil
 
-from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity
+from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
 
 
 class IntegrityTests(unittest.TestCase):
@@ -175,10 +175,37 @@ runpy.run_path(entry, run_name='__main__')
         self.assertIs(build_identity('{"schema":"tsgk-instrumented-reference-build/r1","complete":true}')['complete'], True)
 
     def test_selected_unit_must_run(self):
-        unit("running 1 test\ntest tests::capture_occurrences_are_complete_and_unique ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n")
-        for output in ("running 0 tests\ntest result: ok. 0 passed; 0 failed; 0 ignored;", "running 1 test\ntest tests::capture_occurrences_are_complete_and_unique ... ignored\ntest result: ok. 0 passed; 0 failed; 1 ignored;"):
+        names = ("capture_occurrences_are_complete_and_unique", "batch_requests_preserve_order_and_bounds",
+                 "batch_budget_charges_common_work_and_caps_total_wall", "watchdog_exits_during_blocking_work_and_expired_rearm")
+        good = "running 4 tests\n" + "".join("test tests::"+name+" ... ok\n" for name in names) + "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+        unit(good)
+        for output in ("running 0 tests\ntest result: ok. 0 passed; 0 failed; 0 ignored;",
+                       good.replace(names[0], "other"), good.replace(" ... ok", " ... ignored", 1),
+                       good.replace("4 passed", "2 passed")):
             with self.assertRaisesRegex(RuntimeError, "UNIT_NOT_EXECUTED"):
                 unit(output)
+
+    def test_batch_requires_exact_complete_footer_and_order(self):
+        response = {'schema':'tsgk-instrumented-query-reference/r1', 'status':'COMPLETED',
+                    'complete':True, 'query':{'id':'q'}}
+        footer = {'schema':'tsgk-instrumented-query-reference-batch/r1', 'status':'COMPLETED',
+                  'complete':True, 'queries':['q'], 'responses_completed':1}
+        wire = lambda values: ''.join(json.dumps(value)+'\n' for value in values)
+        good = wire([response, footer])
+        self.assertEqual(batch(good, ['q']), [response])
+        for bad in (good[:-1], wire([response]), wire([response,footer,footer]),
+                    wire([response,dict(footer, complete=False)]),
+                    wire([response,dict(footer, responses_completed=True)]),
+                    wire([response,dict(footer, queries=['other'])]),
+                    wire([dict(response, query={'id':'other'}),footer]),
+                    wire([dict(response, status='FAILED'),footer]),
+                    wire([response,dict(footer, extra=0)]),
+                    good.replace('"complete": true', '"complete": false, "complete": true', 1)):
+            with self.subTest(bad=bad), self.assertRaisesRegex(RuntimeError, 'REFERENCE_BATCH_'):
+                batch(bad, ['q'])
+        for ids in ([], ['q','q'], ['q']*17):
+            with self.assertRaisesRegex(RuntimeError, 'REFERENCE_BATCH_'):
+                batch(good, ids)
 
     def test_optimized_python_rejected_before_arguments_or_work(self):
         for script in ("build.py", "check.py"):

@@ -129,7 +129,7 @@ def main():
     unchanged(args.vendor, vendor_snapshot)
     selected_tree = read_bounded(args.work / "selected-tree.json", 4 * 1024**2)
     execute("build", args.cargo, ["build", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2"], wall=900)
-    unit(execute("unit", args.cargo, ["test", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2", "--bin", "tsgk-query-reference", "--", "--exact", "tests::capture_occurrences_are_complete_and_unique"], wall=120))
+    unit(execute("unit", args.cargo, ["test", "--offline", "--frozen", "--release", "--package", "tsgk-query-reference", "--target", args.target, "--jobs", "2", "--bin", "tsgk-query-reference", "--", "--test-threads=1"], wall=120))
     binary = args.work / "target" / args.target / "release" / ("tsgk-query-reference.exe" if os.name == "nt" else "tsgk-query-reference")
     assert all(sha(here / name) == digest for name, digest in input_hashes.items()), "reference inputs changed during build"
     assert all(sha(tools[name]) == digest for name, digest in tool_hashes.items()), "tool changed during build"

@@ -54,10 +54,47 @@ def execution(receipt, expected_exit):
 
 
 def unit(stdout):
-    if (not re.search(r"^running 1 test$", stdout, re.M)
-            or not re.search(r"^test tests::capture_occurrences_are_complete_and_unique \.\.\. ok$", stdout, re.M)
-            or not re.search(r"^test result: ok\. 1 passed; 0 failed; 0 ignored;", stdout, re.M)):
+    names = ("capture_occurrences_are_complete_and_unique", "batch_requests_preserve_order_and_bounds",
+             "batch_budget_charges_common_work_and_caps_total_wall", "watchdog_exits_during_blocking_work_and_expired_rearm")
+    if (not re.search(r"^running 4 tests$", stdout, re.M)
+            or any(not re.search(r"^test tests::" + name + r" \.\.\. ok$", stdout, re.M) for name in names)
+            or not re.search(r"^test result: ok\. 4 passed; 0 failed; 0 ignored;", stdout, re.M)):
         raise RuntimeError("REFERENCE_UNIT_NOT_EXECUTED")
+
+
+def batch(stdout, expected_ids):
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise RuntimeError("REFERENCE_BATCH_INVALID")
+            value[key] = item
+        return value
+
+    if (not 1 <= len(expected_ids) <= 16 or len(set(expected_ids)) != len(expected_ids)
+            or len(stdout) > 64 * 1024**2 or len(stdout.encode('utf-8')) > 64 * 1024**2
+            or not stdout.endswith('\n')):
+        raise RuntimeError("REFERENCE_BATCH_INVALID")
+    lines = stdout[:-1].split('\n')
+    if len(lines) != len(expected_ids) + 1:
+        raise RuntimeError("REFERENCE_BATCH_INCOMPLETE")
+    try:
+        values = [json.loads(line, object_pairs_hook=unique) for line in lines]
+        footer = values[-1]
+        if (set(footer) != {'schema', 'status', 'complete', 'queries', 'responses_completed'}
+                or footer['schema'] != 'tsgk-instrumented-query-reference-batch/r1'
+                or footer['status'] != 'COMPLETED' or footer['complete'] is not True
+                or footer['queries'] != expected_ids or type(footer['responses_completed']) is not int
+                or footer['responses_completed'] != len(expected_ids)):
+            raise RuntimeError("REFERENCE_BATCH_INCOMPLETE")
+        for query_id, value in zip(expected_ids, values[:-1]):
+            if (value['schema'] != 'tsgk-instrumented-query-reference/r1'
+                    or value['status'] != 'COMPLETED' or value['complete'] is not True
+                    or value['query']['id'] != query_id):
+                raise RuntimeError("REFERENCE_BATCH_INCOMPLETE")
+    except (ValueError, KeyError, TypeError, RecursionError) as error:
+        raise RuntimeError("REFERENCE_BATCH_INVALID") from error
+    return values[:-1]
 
 
 def snapshot(directory):
