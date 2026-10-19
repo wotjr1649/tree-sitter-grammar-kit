@@ -54,6 +54,7 @@ jobs:
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
       - name: 고정 upstream·locked crate 취득 (실행 없음)
+        timeout-minutes: 15
         run: |
           $work = Join-Path $env:RUNNER_TEMP "reference-linux-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           New-Item -ItemType Directory -Path $work | Out-Null
@@ -96,16 +97,21 @@ jobs:
           $parent = "$base/jobs"
           $supervisor = Join-Path $work 'reference-run'
           $inputs = Join-Path $work 'inputs'
-          $tools = @('--cc', '/usr/bin/gcc', '--ar', '/usr/bin/ar', '--git', (Get-Command git).Source)
+          # build.py rejects symlinked tools: pass the files that actually run
+          $resolve = { param($path) $item = Get-Item -LiteralPath $path; if ($item.LinkTarget) { $item.ResolveLinkTarget($true).FullName } else { $item.FullName } }
+          $cc = & src/dev/s05-native/select-compiler.ps1
+          $ar = & $resolve '/usr/bin/ar'
+          $git = & $resolve (Get-Command git).Source
+          $tools = @('--cc', $cc, '--ar', $ar, '--git', $git)
           python3 -B src/dev/query-reference/build.py --archive (Join-Path $inputs 'upstream.tar') --vendor (Join-Path $inputs 'vendor') --cargo $env:REFERENCE_CARGO --rustc $env:REFERENCE_RUSTC @tools --supervisor $supervisor --work (Join-Path $work 'build') --target x86_64-unknown-linux-gnu --cgroup-parent $parent
           if ($LASTEXITCODE -ne 0) { throw 'pinned reference build or unit failed' }
           # the same locked crates as the Windows build9-build12 inputs, not merely the same lock file
           $identity = Get-Content -Raw -LiteralPath (Join-Path $work 'build/identity.json') | ConvertFrom-Json
           if ($identity.vendor_snapshot_sha256 -cne '8fec9dcc2dc84590867a7add1b33ad36be98c0a1b58634f228a5ce3a2632171c') { throw 'vendor snapshot differs from the pinned reference inputs' }
           $env:TSGK_REFERENCE_SUPERVISOR = $supervisor
-          $env:TSGK_REFERENCE_CC = '/usr/bin/gcc'
-          $env:TSGK_REFERENCE_AR = '/usr/bin/ar'
-          $env:TSGK_REFERENCE_GIT = (Get-Command git).Source
+          $env:TSGK_REFERENCE_CC = $cc
+          $env:TSGK_REFERENCE_AR = $ar
+          $env:TSGK_REFERENCE_GIT = $git
           $env:TSGK_REFERENCE_ARCHIVE = Join-Path $inputs 'upstream.tar'
           $env:TSGK_REFERENCE_CGROUP_PARENT = $parent
           python3 -B src/dev/query-reference/test_pipeline.py -v *> (Join-Path $work 'pipeline.log')
@@ -114,7 +120,7 @@ jobs:
           if ($pipeline -ne 0) { throw 'reference pipeline regressions failed' }
           if (Select-String -LiteralPath (Join-Path $work 'pipeline.log') -Pattern 'skipped' -SimpleMatch -Quiet) { throw 'reference pipeline skipped a supervisor check' }
           $binary = Join-Path $work 'build/target/x86_64-unknown-linux-gnu/release/tsgk-query-reference'
-          python3 -B src/dev/query-reference/check.py --reference $binary --identity (Join-Path $work 'build/identity.json') --supervisor $supervisor --cc /usr/bin/gcc --work (Join-Path $work 'controls') --cgroup-parent $parent
+          python3 -B src/dev/query-reference/check.py --reference $binary --identity (Join-Path $work 'build/identity.json') --supervisor $supervisor --cc $cc --work (Join-Path $work 'controls') --cgroup-parent $parent
           if ($LASTEXITCODE -ne 0) { throw 'owned reference controls failed' }
       - name: 실행 receipt 정리
         if: always()

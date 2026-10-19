@@ -21,6 +21,25 @@ LOCK = threading.Lock()
 TOTAL = 0
 
 
+class RefuseRedirect(urllib.request.HTTPRedirectHandler):
+    # refuse before a second request exists; the crate URL is fixed and must answer directly
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        fp.close()
+        raise RuntimeError('unexpected dependency redirect')
+
+
+OPENER = urllib.request.build_opener(RefuseRedirect)
+
+
+def spend(n):
+    # every byte read counts, including a response that later fails its checksum
+    global TOTAL
+    with LOCK:
+        TOTAL += n
+        if TOTAL > 256 * 1024**2:
+            raise RuntimeError('total download bound')
+
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -71,29 +90,27 @@ def unpack(data, destination, prefix=None):
 
 
 def acquire(package, vendor):
-    global TOTAL
     name, version, checksum = package['name'], package['version'], package['checksum']
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,100}', name) or not re.fullmatch(r'[0-9A-Za-z.+_-]{1,100}', version) or not re.fullmatch(r'[a-f0-9]{64}', checksum):
         raise RuntimeError('invalid locked package identity')
     if package['source'] != 'registry+https://github.com/rust-lang/crates.io-index':
         raise RuntimeError('unexpected dependency destination')
     url = f'https://static.crates.io/crates/{name}/{name}-{version}.crate'
+    if time.monotonic() > DEADLINE:
+        raise RuntimeError('download size/time bound')
     chunks, length = [], 0
-    with urllib.request.urlopen(url, timeout=30) as response:
+    with OPENER.open(url, timeout=30) as response:
         if response.geturl() != url:
             raise RuntimeError('unexpected dependency redirect')
         while chunk := response.read(1024**2):
             length += len(chunk)
+            spend(len(chunk))
             if length > 32 * 1024**2 or time.monotonic() > DEADLINE:
                 raise RuntimeError('download size/time bound')
             chunks.append(chunk)
     body = b''.join(chunks)
     if digest(body) != checksum:
         raise RuntimeError('crate checksum mismatch')
-    with LOCK:
-        TOTAL += len(body)
-        if TOTAL > 256 * 1024**2:
-            raise RuntimeError('total download bound')
     destination = vendor / f'{name}-{version}'
     destination.mkdir()
     hashes, unpacked = unpack(body, destination, f'{name}-{version}')
