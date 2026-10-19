@@ -376,6 +376,49 @@ func TestReplayQueryReferenceFileReplacement(t *testing.T) {
 	}
 }
 
+func TestReplayQueryReferenceSwapBeforeNestedWalk(t *testing.T) {
+	for _, swap := range []string{"member", "directory"} {
+		t.Run(swap, func(t *testing.T) {
+			f := newReferenceFixture(t)
+			_, root, prof := referenceReplayFixture(t, f)
+			keep := t.TempDir() // the originals stay alive, so a swapped file is a distinct object
+			swapped := false
+			testHookOpen = func(path string) {
+				if path != "connection.json" || swapped {
+					return
+				}
+				swapped = true
+				dir := filepath.Join(root, "evidence")
+				if swap == "directory" {
+					if err := os.Rename(dir, filepath.Join(keep, "evidence")); err != nil {
+						t.Fatal(err)
+					}
+					if err := os.CopyFS(dir, os.DirFS(filepath.Join(keep, "evidence"))); err != nil {
+						t.Fatal(err)
+					}
+					return
+				}
+				src := filepath.Join(dir, "reference-0.json")
+				data, err := os.ReadFile(src)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(src, filepath.Join(keep, "reference-0.json")); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(src, data, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			defer func() { testHookOpen = nil }()
+			r, e := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
+			if !swapped || e == nil || asError(e).Code != "SOURCE_CHANGED" || r.Assessment == AssessPass || !validReferenceReplayResult(r) {
+				t.Fatalf("swap before the nested walk accepted: %+v %v", r, e)
+			}
+		})
+	}
+}
+
 func TestReplayQueryReferenceHeldNestedRoot(t *testing.T) {
 	f := newReferenceFixture(t)
 	_, root, prof := referenceReplayFixture(t, f)
@@ -412,24 +455,24 @@ func TestReplayQueryReferenceHeldNestedRoot(t *testing.T) {
 }
 
 func TestReplayQueryReferenceResultRevision(t *testing.T) {
-	for _, kind := range []string{"complete", "blocked", "contradiction", "before-core", "core-error", "over-count", "missing-payload", "legacy-label", "wrong-reducer", "wrong-recomputed", "wrong-native-count", "native-overclaim", "gate-verdict", "case-counter", "partial-without-native", "partial-incomplete-native", "registration-mismatch", "native-registration-mismatch", "native-registration-empty", "partial-native-registration-empty", "partial-registration-empty", "partial-registration-mismatch", "partial-native-status", "partial-native-assessment", "partial-native-mode", "partial-fail-downgrade", "native-fail-downgrade"} {
+	for _, kind := range []string{"complete", "blocked", "contradiction", "before-core", "core-error", "over-count", "missing-payload", "legacy-label", "wrong-reducer", "wrong-recomputed", "wrong-native-count", "native-overclaim", "gate-verdict", "case-counter", "partial-without-native", "partial-incomplete-native", "registration-mismatch", "native-registration-mismatch", "native-registration-empty", "partial-native-registration-empty", "partial-registration-empty", "partial-registration-mismatch", "partial-native-status", "partial-native-assessment", "partial-native-mode", "partial-fail-downgrade", "native-fail-downgrade", "contradiction-evidence-valid", "subject-status", "subject-assessment", "subject-mode", "before-core-recomputed", "before-core-evidence-valid", "core-error-recomputed", "core-error-evidence-valid"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newReferenceFixture(t)
 			if kind == "blocked" {
 				f.witness["required"].([]any)[0].(map[string]any)["expected"] = nil
 				f.approve(t, "witness.json")
 			}
-			if kind == "contradiction" {
+			if strings.HasPrefix(kind, "contradiction") {
 				f.witness["required"].([]any)[0].(map[string]any)["expected"] = []Capture{}
 				f.approve(t, "witness.json")
 			}
 			_, root, prof := referenceReplayFixture(t, f)
-			if kind == "before-core" {
+			if strings.HasPrefix(kind, "before-core") {
 				if e := os.Remove(filepath.Join(root, "policy.json")); e != nil {
 					t.Fatal(e)
 				}
 			}
-			if kind == "core-error" {
+			if strings.HasPrefix(kind, "core-error") {
 				testHookOpen = func(path string) {
 					if path == "evidence.json" {
 						if e := os.Remove(filepath.Join(root, "evidence", path)); e != nil {
@@ -440,11 +483,20 @@ func TestReplayQueryReferenceResultRevision(t *testing.T) {
 				defer func() { testHookOpen = nil }()
 			}
 			res, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
-			if err != nil && kind != "core-error" {
+			if err != nil && !strings.HasPrefix(kind, "core-error") {
 				t.Fatal(err)
 			}
 			wantValid := true
 			switch kind {
+			case "contradiction-evidence-valid", "before-core-evidence-valid", "core-error-evidence-valid":
+				res.EvidenceValid = true
+				wantValid = false
+			case "before-core-recomputed", "core-error-recomputed":
+				res.Recomputed = Verdict{StatusCompleted, AssessBlocked}
+				wantValid = false
+			case "subject-status", "subject-assessment", "subject-mode":
+				*map[string]*string{"subject-status": &res.Subject.ExecutionStatus, "subject-assessment": &res.Subject.Assessment, "subject-mode": &res.Subject.EvidenceMode}[kind] = "FORGED"
+				wantValid = false
 			case "over-count":
 				res.QueryReference.Verified = res.QueryReference.Required + 1
 				wantValid = false
@@ -556,6 +608,23 @@ func TestReplayQueryReferenceResultRevision(t *testing.T) {
 	}
 }
 
+func TestReplayQueryReferenceTrustDocumentOverLimit(t *testing.T) {
+	f := newReferenceFixture(t)
+	_, root, prof := referenceReplayFixture(t, f)
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 1; return l }
+	defer func() { testHookReplayLimits = nil }()
+	res, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: mustJSON(t, prof)})
+	if err != nil || res.QueryReference != nil || !res.EvidenceValid || res.Recomputed != (Verdict{StatusNotRun, AssessUnresolved}) || !validReferenceReplayResult(res) {
+		t.Fatalf("recorded-only result lost: %+v %v", res, err)
+	}
+	for _, forged := range []Verdict{{}, {StatusCompleted, AssessUnresolved}} {
+		res.Recomputed = forged
+		if validReferenceReplayResult(res) {
+			t.Fatalf("recorded-only result with %+v accepted", forged)
+		}
+	}
+}
+
 func TestReplayQueryReferenceCumulativeKnownEvidenceFailure(t *testing.T) {
 	f := newReferenceFixture(t)
 	_, root, prof := referenceReplayFixture(t, f)
@@ -638,7 +707,7 @@ func TestReplayQueryReferencePartialNativeRegistration(t *testing.T) {
 			f := newReferenceFixture(t)
 			_, root, prof := referenceReplayFixture(t, f)
 			res := runReg(t, root, prof)
-			res.Gates = nil
+			res.Gates, res.EvidenceValid = nil, false // Replay sets evidence_valid only after the gate
 			res.QueryReference.Verified = 0
 			res.QueryReference.ExecutionStatus, res.ExecutionStatus = StatusResourceLimit, StatusResourceLimit
 			res.QueryReference.Assessment, res.Assessment = AssessBlocked, AssessBlocked

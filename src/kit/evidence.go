@@ -135,6 +135,7 @@ type evidenceSnapshot struct {
 	invalidNodes    map[string]bool
 	approved        map[string]ReplayMember
 	verifiedMembers map[string]ReplayMember
+	walked          map[string]fs.FileInfo // the caller's walk of the same files; nil when none
 }
 
 func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot) (EvidenceResult, error) {
@@ -189,6 +190,15 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
+	}
+	if snapshot != nil && snapshot.walked != nil {
+		// a file swapped between the caller's walk and this one must not inherit its verification
+		for p, inner := range x.files {
+			outer := snapshot.walked[p]
+			if outer == nil || !os.SameFile(outer, inner) || outer.Size() != inner.Size() || !outer.ModTime().Equal(inner.ModTime()) {
+				return bad(fail(KindIO, "SOURCE_CHANGED", p, nil))
+			}
+		}
 	}
 	info := x.files["evidence.json"]
 	if info == nil {

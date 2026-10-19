@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"io/fs"
 	"os"
 	"slices"
 	"strconv"
@@ -94,6 +95,12 @@ func replayQueryReferenceConnection(x *replayEnv) *Error {
 		return fail(KindIO, "SOURCE_CHANGED", "evidence", err)
 	}
 	scope.root = root
+	scope.snapshot.walked = map[string]fs.FileInfo{}
+	for p, info := range x.files {
+		if rel, ok := strings.CutPrefix(p, "evidence/"); ok {
+			scope.snapshot.walked[rel] = info
+		}
+	}
 	res, resultErr := verifyQueryReferenceConnection(x.r, req, scope)
 	x.queryReference = &res
 	for _, n := range scope.snapshot.nodes {
@@ -140,6 +147,11 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 	if rr.Schema != ReportSchema || rr.ResultSchema != ReplayReferenceResultSchema || rr.Reducer.ID != "query-reference-connection-r1" || rr.Reducer.Revision != "r1" || rr.Operation != "evidence-replay" || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] {
 		return false
 	}
+	// r2 is labelled only after parseReplay accepted the subject
+	s := rr.Subject
+	if s.Run == "" || len(s.Run) > 128 || !evidenceModes[s.EvidenceMode] || !executionStatuses[s.ExecutionStatus] || !assessmentValues[s.Assessment] {
+		return false
+	}
 	complete := len(rr.Gates) == 1
 	if len(rr.Gates) > 1 {
 		return false
@@ -157,7 +169,9 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 	}
 	p := rr.QueryReference
 	if p == nil {
-		return !complete && rr.Assessment != AssessPass && rr.Recomputed.Assessment != AssessPass && rr.Consumption == (Consumption{})
+		// before the core: an error leaves no verdict; an over-limit trust document leaves a recorded-only result
+		recordedOnly := rr.EvidenceValid && rr.Recomputed == (Verdict{StatusNotRun, AssessUnresolved})
+		return !complete && rr.Assessment != AssessPass && (recordedOnly || !rr.EvidenceValid && rr.Recomputed == (Verdict{})) && rr.Consumption == (Consumption{})
 	}
 	if p.Schema != ReportSchema || p.ResultSchema != QueryReferenceResultSchema || !executionStatuses[p.ExecutionStatus] || !assessmentValues[p.Assessment] || !evidenceModes[p.EvidenceMode] || p.Required < 0 || p.Verified < 0 || p.Verified > p.Required {
 		return false
@@ -192,7 +206,7 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 		}
 	}
 	if !complete {
-		return p.Assessment != AssessPass && rr.Assessment != AssessPass && rr.Recomputed.Assessment != AssessPass && rr.Consumption == (Consumption{})
+		return p.Assessment != AssessPass && rr.Assessment != AssessPass && rr.Recomputed == (Verdict{}) && !rr.EvidenceValid && rr.Consumption == (Consumption{})
 	}
 	if p.ExecutionStatus != StatusCompleted || p.EvidenceMode != ModeReplayedRaw || p.NativeWitness == nil || p.NativeWitness.ExecutionStatus != StatusCompleted || !hex64.MatchString(p.RegistrationSHA256) || rr.Recomputed != (Verdict{p.ExecutionStatus, p.Assessment}) || rr.Consumption != (Consumption{Expected: 1, Consumed: 1}) {
 		return false
@@ -217,8 +231,8 @@ func validReferenceReplayResult(rr ReplayResult) bool {
 	if rr.ExecutionStatus != StatusCompleted {
 		return rr.Assessment != AssessPass
 	}
-	if rr.EvidenceValid {
-		return rr.Assessment == p.Assessment
+	if rr.EvidenceValid { // Replay clears it whenever a gate failed
+		return g.Failed == 0 && rr.Assessment == p.Assessment
 	}
 	return rr.Assessment == AssessFail
 }
