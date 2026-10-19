@@ -140,7 +140,10 @@ func TestPredicatePolicyAbsentCapture(t *testing.T) {
 		policyPredicate("eq?", policyCapture("absent", "ONE"), policyString("a")),
 		policyPredicate("not-eq?", policyCapture("x", "ONE"), policyCapture("absent", "ONE")),
 	} {
-		out := policyOut(t, policyWire(predicate), kit.EncodingUTF8)
+		// a compiled query lists every predicate capture, though a match may lack it
+		q := policyWire(predicate)
+		q.CaptureNames = append(q.CaptureNames, "absent")
+		out := policyOut(t, q, kit.EncodingUTF8)
 		if out.Status != kit.StatusFailed || out.Code != "QUERY_PREDICATE_CAPTURE_ABSENT" || out.Evaluation != EvalUnsupported || out.Captures != nil {
 			t.Fatalf("absent capture adopted: %+v", out)
 		}

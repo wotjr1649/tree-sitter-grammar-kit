@@ -145,7 +145,7 @@ func TestNullCaptureQuantifierInRejectedQueries(t *testing.T) {
 			q.Captures = nil
 			q.Predicates = []querypolicy.Predicate{{Steps: []querypolicy.Step{{Kind: "capture", Value: "x"}}}}
 			if status == "FAILED" {
-				q.Code = "CAPTURE_NODE_UNMAPPED"
+				q.Code, q.Types = "CAPTURE_NODE_UNMAPPED", []string{}
 			} else {
 				q.Code = "QUERY_SYNTAX"
 				q.Patterns = 0
@@ -155,8 +155,10 @@ func TestNullCaptureQuantifierInRejectedQueries(t *testing.T) {
 				t.Fatalf("capture quantifier null adopted: %+v %v", got, err)
 			}
 			q.Predicates[0].Steps[0].Kind = "string"
-			if got, err := DecodeSummary(encode(t, q), requested, 1, 1); err != nil || len(got) != 1 {
-				t.Fatalf("string quantifier null lost: %+v %v", got, err)
+			got, err := DecodeSummary(encode(t, q), requested, 1, 1)
+			// an invalid query has no pattern, so the producer emits no predicate for it
+			if status == "INVALID_QUERY" && (err == nil || err.Code != "RESPONSE_INVALID") || status == "FAILED" && (err != nil || len(got) != 1) {
+				t.Fatalf("string quantifier null: %+v %v", got, err)
 			}
 		})
 	}

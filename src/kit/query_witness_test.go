@@ -126,6 +126,22 @@ func TestQueryWitnessRejectsContradictions(t *testing.T) {
 			tree["types"] = []string{"word", "doc"}
 			tree["nodes"].([][]int64)[0][1], tree["nodes"].([][]int64)[1][1] = 1, 0
 		}},
+		{"missing-without-error", func(_ *QueryWitnessRequest, _, raw, p map[string]any) {
+			nodes := fxTree("a", false)
+			nodes[0].IsMissing = true
+			rawTree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			rawTree["nodes"].([][]int64)[0][3], rawTree["digest"] = 1|16, TreeDigest(nodes)
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["tree"].(map[string]any)["nodes"], tree["digest"] = nodes, TreeDigest(nodes)
+		}},
+		{"edit-summary-tree", func(_ *QueryWitnessRequest, _, raw, p map[string]any) {
+			rawTree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			rawTree["form"] = "summary"
+			delete(rawTree, "nodes")
+			tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree["form"] = "summary"
+			delete(tree, "tree")
+		}},
 		{"child-outside-parent", func(_ *QueryWitnessRequest, _, raw, p map[string]any) {
 			nodes := fxTree("a", false)
 			nodes[0].EndByte, nodes[0].EndPoint = 0, Point{}
@@ -311,7 +327,7 @@ func TestQueryWitnessReviewIncompleteStepCount(t *testing.T) {
 			pq["captures"], pq["evaluation"] = nil, "UNSUPPORTED"
 			if kind == "query-failed" {
 				status, code = StatusFailed, "CAPTURE_NODE_UNMAPPED"
-				q["partial"], pq["partial"], q["captures"], pq["evaluation"] = false, false, nil, ""
+				q["partial"], pq["partial"], q["captures"], pq["evaluation"], q["types"] = false, false, nil, "", []string{}
 			}
 			q["status"], q["code"], pq["status"], pq["code"] = status, code, status, code
 			if kind == "tree-limit" {
@@ -326,10 +342,22 @@ func TestQueryWitnessReviewIncompleteStepCount(t *testing.T) {
 			}
 			raw["status"], raw["code"], raw["steps_completed"] = status, code, 1
 			p["execution_status"], p["code"] = status, code
+			rawFresh, fresh := rawStep["fresh"], step["fresh"]
 			rawStep["fresh"], step["fresh"] = nil, nil
 			res, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
 			if err != nil || res.Assessment != AssessBlocked || res.Verified != 1 {
 				t.Fatalf("consistent incomplete native step: %+v %v", res, err)
+			}
+			// the driver writes a null fresh tree after an incomplete incremental one
+			rawStep["fresh"], step["fresh"] = rawFresh, fresh
+			for _, withRaw := range []bool{true, false} {
+				req := marshalWitness(t, req, reg, raw, p)
+				if !withRaw {
+					req.Raw = nil
+				}
+				if res, err := VerifyQueryWitness(ctxT(t), req); err != nil || res.Assessment != AssessFail {
+					t.Fatalf("fresh after incomplete incremental (raw %v): %+v %v", withRaw, res, err)
+				}
 			}
 		})
 	}
@@ -624,7 +652,7 @@ func TestQueryWitnessFailedQueryMetadataNormalization(t *testing.T) {
 	reg["queries"].([]any)[0].(map[string]any)["metadata"] = nil
 	q := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
 	q["status"], q["code"], q["captures"], q["matches"] = StatusFailed, "CAPTURE_NODE_UNMAPPED", nil, 0
-	q["predicates"], q["capture_names"], q["patterns"], q["types"] = nil, nil, 0, nil
+	q["predicates"], q["capture_names"], q["patterns"], q["types"] = nil, nil, 0, []string{}
 	pq := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)
 	pq["status"], pq["code"], pq["captures"], pq["matches"] = StatusFailed, "CAPTURE_NODE_UNMAPPED", nil, 0
 	pq["predicates"], pq["capture_names"], pq["patterns"], pq["evaluation"] = []any{}, nil, 0, ""
@@ -963,6 +991,65 @@ func TestQueryWitnessRejectsImpossibleProjectionCSTWithoutRaw(t *testing.T) {
 				t.Fatalf("impossible projection CST: %+v %v", res, err)
 			}
 		})
+	}
+}
+
+func TestQueryWitnessRejectsImpossibleRegistrationMetadata(t *testing.T) {
+	pred := func(pattern int, steps []any) map[string]any {
+		return map[string]any{"pattern": pattern, "steps": steps}
+	}
+	eq := []any{map[string]any{"kind": "string", "value": "eq?", "quantifier": nil}, map[string]any{"kind": "capture", "value": "x", "quantifier": "ONE"}, map[string]any{"kind": "string", "value": "a", "quantifier": nil}}
+	for name, tc := range map[string]struct {
+		patterns   int
+		predicates []any
+	}{
+		"pattern-range": {1, []any{pred(1, eq)}},
+		"empty-steps":   {1, []any{pred(0, []any{})}},
+		"pattern-order": {2, []any{pred(1, eq), pred(0, eq)}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			req, reg, raw, p := witnessFixture(t)
+			reg["queries"].([]any)[0].(map[string]any)["metadata"] = map[string]any{"patterns": tc.patterns, "capture_names": []string{"x"}, "predicates": tc.predicates}
+			r, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+			e, ok := err.(*Error)
+			if !ok || e.Code != "QUERY_REGISTRATION_QUERY_INVALID" || r.Assessment == AssessPass {
+				t.Fatalf("impossible metadata adopted: %+v %v", r, err)
+			}
+		})
+	}
+}
+
+func TestQueryWitnessRejectsNodeRowsOutsideFullForm(t *testing.T) {
+	for _, form := range []string{"summary", "record"} {
+		req, reg, raw, p := witnessFixture(t)
+		// without edits the driver may serialize a non-full tree, which carries no node rows
+		reg["edits"], reg["required"] = []Edit{}, reg["required"].([]any)[:1]
+		raw["steps"], raw["steps_completed"], p["steps"] = raw["steps"].([]any)[:1], 1, p["steps"].([]any)[:1]
+		raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["form"] = form
+		tree := p["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+		tree["form"] = form
+		delete(tree, "tree")
+		res, err := VerifyQueryWitness(ctxT(t), marshalWitness(t, req, reg, raw, p))
+		if err != nil || res.Assessment != AssessFail {
+			t.Fatalf("%s node rows adopted: %+v %v", form, res, err)
+		}
+	}
+}
+
+func TestQueryWitnessReviewIncompleteProjectionCodeWithoutRaw(t *testing.T) {
+	for _, code := range []string{"START_FAILED", ""} {
+		req, reg, raw, p := witnessFixture(t)
+		p["execution_status"], p["code"], p["steps"] = StatusFailed, code, []any{}
+		req = marshalWitness(t, req, reg, raw, p)
+		req.Raw = nil
+		res, err := VerifyQueryWitness(ctxT(t), req)
+		want := AssessBlocked
+		if code == "" {
+			want = AssessFail // every incomplete host case records its cause
+		}
+		if err != nil || res.Assessment != want {
+			t.Fatalf("incomplete projection code %q: %+v %v", code, res, err)
+		}
 	}
 }
 
@@ -1494,7 +1581,9 @@ func TestQueryWitnessReviewSummaryPredicateEvaluation(t *testing.T) {
 	for _, form := range []string{"summary", "record"} {
 		for _, mutation := range []string{"intact", "evaluated", "raw-point", "raw-only-point", "projection-point", "projection-name", "projection-range", "no-source-intact", "no-source-range", "no-source-reversed"} {
 			req, reg, raw, p := witnessFixture(t)
-			reg["required"] = reg["required"].([]any)[1:]
+			// the driver serializes only full trees for a request with edits
+			reg["edits"], reg["required"] = []Edit{}, reg["required"].([]any)[:1]
+			raw["steps"], raw["steps_completed"], p["steps"] = raw["steps"].([]any)[:1], 1, p["steps"].([]any)[:1]
 			for _, value := range raw["steps"].([]any) {
 				for _, role := range []string{"incremental", "fresh"} {
 					if tree, ok := value.(map[string]any)[role].(map[string]any); ok {

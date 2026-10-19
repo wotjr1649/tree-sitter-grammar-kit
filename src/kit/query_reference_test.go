@@ -277,6 +277,11 @@ func TestQueryReferenceConnectionContradictions(t *testing.T) {
 			nodes[1].Parent = -1
 			f.approve(t, "reference-0.json")
 		}},
+		{"tree-nesting", "REFERENCE_TREE_INVALID", func(f *referenceFixture) {
+			nodes := f.responses["reference-0.json"]["tree"].(map[string]any)["nodes"].([]TreeNode)
+			nodes[0].StartByte, nodes[0].StartPoint = 1, Point{Column: 1}
+			f.approve(t, "reference-0.json")
+		}},
 		{"tree-point", "REFERENCE_TREE_POINTS", func(f *referenceFixture) {
 			nodes := f.responses["reference-0.json"]["tree"].(map[string]any)["nodes"].([]TreeNode)
 			nodes[0].EndPoint.Column = 2

@@ -292,7 +292,8 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				badSteps[i] = true
 			}
 			for _, tree := range []*witnessRawTree{s.Incremental, s.Fresh} {
-				if tree != nil && !witnessRawTreeHeader(*tree) {
+				// the driver serializes only full trees for a request with edits
+				if tree != nil && (!witnessRawTreeHeader(*tree) || len(reg.Edits) > 0 && tree.Status == StatusCompleted && *tree.Form != "full") {
 					bad("QUERY_WITNESS_TREE_INVALID", fmt.Sprintf("raw/steps/%d", i))
 				} else if tree != nil && tree.Status == StatusCompleted {
 					var qs []querywire.Query
@@ -355,6 +356,11 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				}
 			}
 			status, code, incomplete := witnessRawIncomplete(s.Incremental, rawQueries[s.Incremental])
+			// the driver writes a null fresh tree after an incomplete incremental one
+			if incomplete && s.Incremental != nil && s.Fresh != nil {
+				bad("QUERY_WITNESS_RAW_COMPLETION_MISMATCH", fmt.Sprintf("raw/steps/%d", i))
+				caseBound = false
+			}
 			if !incomplete && i > 0 {
 				status, code, incomplete = witnessRawIncomplete(s.Fresh, rawQueries[s.Fresh])
 			}
@@ -384,7 +390,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 			return res, nil
 		}
 		if projection.ID != reg.Case || projection.Input != reg.Input || projection.Encoding != reg.Encoding || len(projection.Steps) > len(reg.Edits)+1 ||
-			(projection.Status == StatusCancelled && projection.Code != "CANCELLED") ||
+			(projection.Status == StatusCancelled && projection.Code != "CANCELLED") || (projection.Status != StatusCompleted && projection.Code == "") ||
 			(projection.Status == StatusCompleted && len(projection.Steps) != len(reg.Edits)+1) || !slices.Contains([]string{StatusCompleted, StatusFailed, StatusResourceLimit, StatusNotRun, StatusCancelled}, projection.Status) {
 			bad("QUERY_WITNESS_PROJECTION_ENVELOPE", "projection")
 			caseBound = false
@@ -413,6 +419,10 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				badSteps[i] = true
 			}
 			status, code, incomplete := witnessProjectionIncomplete(s.Incremental)
+			if incomplete && s.Incremental != nil && s.Fresh != nil {
+				bad("QUERY_WITNESS_TREE_ROLE_INVALID", fmt.Sprintf("projection/steps/%d", i))
+				badSteps[i] = true
+			}
 			if !incomplete && i > 0 {
 				status, code, incomplete = witnessProjectionIncomplete(s.Fresh)
 			}
@@ -444,7 +454,7 @@ func verifyQueryWitness(r *run, req QueryWitnessRequest, verified []bool) (res Q
 				bad("QUERY_WITNESS_PROJECTION_COMPLETION_MISMATCH", fmt.Sprintf("projection/steps/%d", i))
 				badProjectionTrees[tree] = true
 			}
-			if !witnessProjectionTreeHeader(*tree) {
+			if !witnessProjectionTreeHeader(*tree) || len(reg.Edits) > 0 && tree.Status == StatusCompleted && tree.Form != "full" {
 				bad("QUERY_WITNESS_TREE_PROJECTION_INVALID", fmt.Sprintf("projection/steps/%d", i))
 				badProjectionTrees[tree] = true
 			}
@@ -724,7 +734,8 @@ func witnessQueryPassthrough(v witnessQueryProjection, q querywire.Query, encodi
 func witnessRawTreeHeader(t witnessRawTree) bool {
 	switch t.Status {
 	case StatusCompleted:
-		return t.Code == "" && t.Form != nil && slices.Contains([]string{"full", "summary", "record"}, *t.Form) && t.Count > 0 && hex64.MatchString(t.Digest)
+		// only the full form carries node rows
+		return t.Code == "" && t.Form != nil && slices.Contains([]string{"full", "summary", "record"}, *t.Form) && (*t.Form == "full") == (t.Nodes != nil) && t.Count > 0 && hex64.MatchString(t.Digest)
 	case StatusResourceLimit, StatusFailed:
 		return witnessTreeFailure(t.Status, t.Code) && t.Form == nil && t.Count == 0 && !t.HasError && t.Digest == "" && t.Types == nil && t.Fields == nil && t.Nodes == nil && t.Queries.Kind() == 'n'
 	default:
@@ -926,11 +937,12 @@ func witnessNodes(t witnessRawTree, encoding string, source []byte, sourceBytes 
 }
 
 // witnessCST checks a ValidateTree-valid CST for what every tree-sitter tree has: named
-// types, and children inside the parent, which sums each child's padding and size.
+// types, an error under each MISSING node, and children inside the parent, which sums
+// each child's padding and size.
 func witnessCST(nodes []TreeNode) bool {
 	before := func(a, b Point) bool { return a.Row < b.Row || a.Row == b.Row && a.Column < b.Column }
 	for i, n := range nodes {
-		if n.Type == "" {
+		if n.Type == "" || n.IsMissing && !n.HasError {
 			return false
 		}
 		if i == 0 {
@@ -1041,23 +1053,8 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 		if !validID(q.ID) || queries[q.ID] || q.Source == "" || len(q.Source) > MaxQueryBytes {
 			return bad("QUERY_REGISTRATION_QUERY_INVALID")
 		}
-		// a compiled query names each capture ID once and predicates refer to those IDs,
-		// so no producer emits such metadata
-		if q.Metadata != nil {
-			names := map[string]bool{}
-			for _, name := range q.Metadata.CaptureNames {
-				if name == "" || names[name] {
-					return bad("QUERY_REGISTRATION_QUERY_INVALID")
-				}
-				names[name] = true
-			}
-			for _, predicate := range q.Metadata.Predicates {
-				for _, step := range predicate.Steps {
-					if step.Kind == "capture" && !names[step.Value] {
-						return bad("QUERY_REGISTRATION_QUERY_INVALID")
-					}
-				}
-			}
+		if q.Metadata != nil && !querywire.ValidMetadata(q.Metadata.Patterns, q.Metadata.CaptureNames, q.Metadata.Predicates) {
+			return bad("QUERY_REGISTRATION_QUERY_INVALID")
 		}
 		queries[q.ID] = true
 	}

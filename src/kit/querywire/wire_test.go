@@ -18,6 +18,11 @@ func fixture() Query {
 		Types: []string{"identifier"}, Captures: [][]int64{{0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}}}
 }
 
+func eqPredicate(pattern uint32, capture string) querypolicy.Predicate {
+	one := "ONE"
+	return querypolicy.Predicate{Pattern: pattern, Steps: []querypolicy.Step{{Kind: "string", Value: "eq?"}, {Kind: "capture", Value: capture, Quantifier: &one}, {Kind: "string", Value: "a"}}}
+}
+
 func encode(t *testing.T, q Query) jsontext.Value {
 	t.Helper()
 	raw, err := jsonv2.Marshal([]Query{q}, jsonv2.FormatNilSliceAsNull(true))
@@ -194,7 +199,13 @@ func TestStatusAndStreamContracts(t *testing.T) {
 		{"limit", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "CAPTURE_LIMIT"; q.Partial = true }, true},
 		{"limit-complete", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "CAPTURE_LIMIT" }, false},
 		{"limit-code", func(q *Query) { q.Status = "RESOURCE_LIMIT"; q.Code = "OTHER"; q.Partial = true }, false},
-		{"failed", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures = nil }, true},
+		{"failed", func(q *Query) {
+			q.Status = "FAILED"
+			q.Code = "CAPTURE_NODE_UNMAPPED"
+			q.Captures, q.Types = nil, []string{}
+		}, true},
+		{"failed-types", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures = nil }, false},
+		{"failed-null-types", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED"; q.Captures, q.Types = nil, nil }, false},
 		{"failed-stream", func(q *Query) { q.Status = "FAILED"; q.Code = "CAPTURE_NODE_UNMAPPED" }, false},
 		{"invalid", func(q *Query) {
 			q.Status = "INVALID_QUERY"
@@ -218,6 +229,15 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Matches = 2
 			q.Captures = [][]int64{a, b, a, a}
 		}, true},
+		{"names-duplicate", func(q *Query) { q.CaptureNames = []string{"x", "x"} }, false},
+		{"names-empty", func(q *Query) { q.CaptureNames = []string{"x", ""} }, false},
+		{"predicate-unknown-capture", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(0, "y")} }, false},
+		{"predicate-pattern-order", func(q *Query) { q.Predicates = []querypolicy.Predicate{eqPredicate(1, "x"), eqPredicate(0, "x")} }, false},
+		{"predicate-pattern-repeat", func(q *Query) {
+			q.Predicates = []querypolicy.Predicate{eqPredicate(0, "x"), eqPredicate(0, "x"), eqPredicate(1, "x")}
+		}, true},
+		{"missing-without-error", func(q *Query) { q.Captures[0][5] = 1 | 16 }, false},
+		{"missing-with-error", func(q *Query) { q.Captures[0][5] = 1 | 8 | 16 }, true},
 		{"unsupported-wire-predicate", func(q *Query) {
 			q.Predicates = []querypolicy.Predicate{{Steps: []querypolicy.Step{{Kind: "string", Value: "match?"}}}}
 		}, true},
