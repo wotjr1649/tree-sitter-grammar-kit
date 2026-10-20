@@ -17,7 +17,24 @@ import (
 // corpusTestProfile writes beside the plan a corpus-mode profile of the registered route that
 // covers exactly the given cases, as executeCorpus requires, and returns its pin. The caller
 // runs from the repository root, where the route registry is read.
-func corpusTestProfile(t *testing.T, dir, name string, source []byte, edit func(map[string]any), cases ...corpusExpected) pinnedFile {
+// corpusTestCompiler is the compiler identity of the test profiles and producers.
+var corpusTestCompiler = kit.ToolIdentity{Name: "cc", Version: "host", SHA256: strings.Repeat("a", 64), Bytes: 1}
+
+// corpusTestProducer is the recorded csharp producer built from the test profile's symbol,
+// compiler and registered grammar files.
+func corpusTestProducer(t *testing.T) corpusProducer {
+	t.Helper()
+	symbol, files := corpusTestRoute(t)
+	b := &native.Build{Symbol: symbol, Compiler: corpusTestCompiler}
+	for _, f := range files {
+		b.Closure = append(b.Closure, native.ClosureFile{Role: "grammar-" + f.Role, Path: f.Path, SHA256: f.SHA256, Bytes: int64(f.Bytes)})
+	}
+	return corpusProducer{Route: "csharp", Build: b}
+}
+
+// corpusTestRoute reads the registered csharp symbol and sorted grammar files from the
+// repository root.
+func corpusTestRoute(t *testing.T) (string, []kit.NativeInput) {
 	t.Helper()
 	data, err := os.ReadFile("src/contracts/native-routes.json")
 	if err != nil {
@@ -42,12 +59,18 @@ func corpusTestProfile(t *testing.T, dir, name string, source []byte, edit func(
 	})
 	r := registry.Routes[i]
 	slices.SortFunc(r.Files, func(a, b kit.NativeInput) int { return strings.Compare(a.Path, b.Path) })
+	return r.Symbol, r.Files
+}
+
+func corpusTestProfile(t *testing.T, dir, name string, source []byte, edit func(map[string]any), cases ...corpusExpected) pinnedFile {
+	t.Helper()
+	symbol, files := corpusTestRoute(t)
 	var list []map[string]any
 	for _, c := range cases {
 		list = append(list, map[string]any{"id": c.ID, "input": c.Input, "edits": []any{}, "points": []any{}, "expect": []any{}, "query_expect": []any{}, "dynamic_sql_expect": nil})
 	}
-	doc := map[string]any{"schema": kit.OracleSchema, "id": "corpus", "route": r.Route, "operation": "native-query-large", "symbol": r.Symbol, "encoding": cases[0].Encoding, "output": kit.OutputAuto,
-		"compiler": kit.ToolIdentity{Name: "cc", Version: "host", SHA256: strings.Repeat("a", 64), Bytes: 1}, "grammar": r.Files, "declarations": nil,
+	doc := map[string]any{"schema": kit.OracleSchema, "id": "corpus", "route": "csharp", "operation": "native-query-large", "symbol": symbol, "encoding": cases[0].Encoding, "output": kit.OutputAuto,
+		"compiler": corpusTestCompiler, "grammar": files, "declarations": nil,
 		"queries": []any{}, "fact_pack": nil, "api": true, "cases": list}
 	if cases[0].Route == "svc" {
 		doc["format"] = kit.SvcFormat
@@ -71,7 +94,7 @@ func corpusTestProfile(t *testing.T, dir, name string, source []byte, edit func(
 // This is a data-only replay fixture, not an observation of native execution.
 func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 	t.Chdir("../../..")
-	for _, mutation := range []string{"none", "profile_missing", "profile_case", "profile_route", "profile_bytes", "source", "page", "duplicate", "missing", "producer", "policy", "encoding", "coherent_UTF16LE", "coherent_UTF16BE", "coherent_unknown", "coherent_surrogateLE", "coherent_surrogateBE", "coherent_NULLE", "coherent_NULBE", "coherent_CP949", "cleanup", "memory", "scope", "method", "detail", "backend", "escaped", "navigation", "CST_flag", "CST_point", "CST_type", "CST_field", "short_row"} {
+	for _, mutation := range []string{"none", "profile_missing", "profile_case", "profile_route", "profile_bytes", "producer_compiler", "producer_grammar", "producer_extra", "source", "page", "duplicate", "missing", "producer", "policy", "encoding", "coherent_UTF16LE", "coherent_UTF16BE", "coherent_unknown", "coherent_surrogateLE", "coherent_surrogateBE", "coherent_NULLE", "coherent_NULBE", "coherent_CP949", "cleanup", "memory", "scope", "method", "detail", "backend", "escaped", "navigation", "CST_flag", "CST_point", "CST_type", "CST_field", "short_row"} {
 		t.Run(mutation, func(t *testing.T) {
 			dir := t.TempDir()
 			dataDir := filepath.Join(dir, "data")
@@ -138,7 +161,13 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 			planBytes := marshal(plan)
 			planPath := filepath.Join(dir, "plan.json")
 			write(planPath, planBytes)
-			producer := corpusProducer{Route: "csharp"}
+			producer := corpusTestProducer(t)
+			switch mutation {
+			case "producer_compiler":
+				producer.Build.Compiler.Version = "other"
+			case "producer_grammar":
+				producer.Build.Closure = producer.Build.Closure[1:]
+			}
 			producerID := digest(marshal(producer))
 			if mutation == "navigation" {
 				p.Divergences = 1
@@ -192,7 +221,11 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 				bindings = nil
 			}
 			write(filepath.Join(dataDir, "bindings.jsonl"), bindings)
-			result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, Policy: corpusPolicySHA(corpusStorageBytes, 3600), HostSHA: strings.Repeat("a", 64), StorageLimit: corpusStorageBytes, WallLimit: 3600, Expected: 1, Completed: 1, API: 1, Nodes: 2, Pages: 1, Bytes: uint64(len(bindings) + len(page)), Checks: 37, Producers: map[string]corpusProducer{"csharp": producer}, BindingsSHA: digest(bindings), Complete: true}
+			producers := map[string]corpusProducer{"csharp": producer}
+			if mutation == "producer_extra" {
+				producers["xml"] = corpusProducer{Route: "xml"}
+			}
+			result := corpusResult{Schema: "tsgk-corpus-cst-api-result/r1", PlanSHA: digest(planBytes), Candidate: plan.Candidate, Policy: corpusPolicySHA(corpusStorageBytes, 3600), HostSHA: strings.Repeat("a", 64), StorageLimit: corpusStorageBytes, WallLimit: 3600, Expected: 1, Completed: 1, API: 1, Nodes: 2, Pages: 1, Bytes: uint64(len(bindings) + len(page)), Checks: 37, Producers: producers, BindingsSHA: digest(bindings), Complete: true}
 			resultBytes := marshal(result)
 			write(filepath.Join(dataDir, "result.json"), resultBytes)
 			registration := corpusRegistration{Schema: "tsgk-corpus-cst-api-registration/r1", PlanSHA: result.PlanSHA, HostSHA: result.HostSHA, Result: pinnedFile{Path: "result.json", SHA: digest(resultBytes), Bytes: uint64(len(resultBytes))}, Bindings: pinnedFile{Path: "bindings.jsonl", SHA: digest(bindings), Bytes: uint64(len(bindings))}}
@@ -208,7 +241,7 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 			if (err == nil) != (mutation == "none") {
 				t.Fatalf("mutation=%s err=%v", mutation, err)
 			}
-			if want, ok := map[string]string{"profile_missing": "CORPUS_REPLAY_PLAN_INVALID", "profile_case": "CORPUS_PROFILE_SET_MISMATCH", "profile_route": "CORPUS_PROFILE_SET_MISMATCH", "profile_bytes": "PINNED_INPUT_SIZE_MISMATCH"}[mutation]; ok && err.Error() != want {
+			if want, ok := map[string]string{"profile_missing": "CORPUS_REPLAY_PLAN_INVALID", "profile_case": "CORPUS_PROFILE_SET_MISMATCH", "profile_route": "CORPUS_PROFILE_SET_MISMATCH", "profile_bytes": "PINNED_INPUT_SIZE_MISMATCH", "producer_compiler": "CORPUS_REPLAY_PRODUCER_PROFILE_MISMATCH", "producer_grammar": "CORPUS_REPLAY_PRODUCER_PROFILE_MISMATCH", "producer_extra": "CORPUS_REPLAY_PRODUCER_PROFILE_MISMATCH"}[mutation]; ok && err.Error() != want {
 				t.Fatalf("mutation=%s err=%v, want %s", mutation, err, want)
 			}
 		})

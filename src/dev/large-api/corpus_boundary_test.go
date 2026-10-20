@@ -112,7 +112,7 @@ func TestCorpusSourceEncodingAndSvcReplayEligibility(t *testing.T) {
 			// Coherent pins and the real observation deliberately do not establish eligibility.
 			page := marshal(map[string]any{"case": e, "policy": policy, "api": "NOT_CLAIMED", "observation": kit.ObserveServiceHost(e.Encoding, b)})
 			write(filepath.Join(dataDir, "page.json"), page)
-			producer := corpusProducer{Route: "csharp"}
+			producer := corpusTestProducer(t)
 			binding := corpusBinding{ID: e.ID, Route: e.Route, Encoding: e.Encoding, Input: e.Input, Producer: digest(marshal(producer)), Policy: policy, Page: pinnedFile{Path: "page.json", SHA: digest(page), Bytes: uint64(len(page))}}
 			bindings := append(marshal(binding), '\n')
 			write(filepath.Join(dataDir, "bindings.jsonl"), bindings)

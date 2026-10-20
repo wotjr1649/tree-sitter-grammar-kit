@@ -169,8 +169,20 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 		return err
 	}
 	defer profileRoot.Close()
-	if _, err = corpusProfiles(profileRoot, plan, expected); err != nil {
+	profiles, err := corpusProfiles(profileRoot, plan, expected)
+	if err != nil {
 		return err
+	}
+	// each recorded producer is the build of exactly the plan's pinned producer for its route
+	routes := map[string]bool{}
+	for _, prof := range profiles {
+		routes[prof.Native.Route] = true
+		if !corpusProducerMatches(result.Producers[prof.Native.Route], prof.Native) {
+			return errors.New("CORPUS_REPLAY_PRODUCER_PROFILE_MISMATCH")
+		}
+	}
+	if len(routes) != len(result.Producers) {
+		return errors.New("CORPUS_REPLAY_PRODUCER_PROFILE_MISMATCH")
 	}
 	producers := map[string]string{}
 	for _, p := range result.Producers {
@@ -332,4 +344,22 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 	}
 	fmt.Printf("corpus replay cases=%d api=%d svc_not_claimed=%d nodes=%d pages=%d PASS\n", len(seen), api, svc, nodes, pages)
 	return nil
+}
+
+// corpusProducerMatches reports whether a recorded producer was built from the profile's
+// symbol, compiler identity and exactly its grammar files.
+func corpusProducerMatches(p corpusProducer, n kit.IncrementalProfile) bool {
+	if p.Build == nil || p.Route != n.Route || p.Build.Symbol != n.Symbol || p.Build.Compiler != n.Compiler {
+		return false
+	}
+	var grammar, want []native.ClosureFile
+	for _, f := range p.Build.Closure {
+		if strings.HasPrefix(f.Role, "grammar-") {
+			grammar = append(grammar, f)
+		}
+	}
+	for _, g := range n.Grammar {
+		want = append(want, native.ClosureFile{Role: "grammar-" + g.Role, Path: g.Path, SHA256: g.SHA256, Bytes: int64(g.Bytes)})
+	}
+	return slices.EqualFunc(grammar, want, func(a, b native.ClosureFile) bool { return a == b })
 }
