@@ -433,6 +433,7 @@ type replayEnv struct {
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
 	responseDir, observationWire string
+	observationQueries           bool // the set's workload registers queries
 	queryReference               *QueryReferenceConnectionResult
 }
 

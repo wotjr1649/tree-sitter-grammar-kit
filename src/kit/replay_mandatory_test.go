@@ -110,11 +110,12 @@ func TestReplayMandatoryObservationRevisions(t *testing.T) {
 // an early case whose trees all completed.
 func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	for _, tc := range []struct {
-		name                     string
-		early, unfinished, query bool
-		valid                    bool
-	}{{"resource-limit", true, true, false, true}, {"completed-short-count", false, false, false, false}, {"early-trees-complete", true, false, false, false},
-		{"r3-query-limit", true, false, true, false}} {
+		name              string
+		early, unfinished bool
+		forge             string // r3 carries no queries: a query limit forged on the "record", "raw" or "both" trees
+		valid             bool
+	}{{"resource-limit", true, true, "", true}, {"completed-short-count", false, false, "", false}, {"early-trees-complete", true, false, "", false},
+		{"r3-query-limit", true, false, "both", false}, {"r3-raw-query-limit", true, true, "raw", false}, {"r3-record-query-limit", true, true, "record", false}} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
 			c := f.cases[1]
@@ -133,9 +134,11 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 				step["incremental"].(map[string]any)["status"], step["fresh"] = StatusResourceLimit, nil
 				step["route"], step["comparison"] = nil, nil
 			}
-			if tc.query { // r3 carries no queries: a forged query limit does not open the last step
-				limited := []any{map[string]any{"id": "q", "status": StatusResourceLimit}}
-				step["incremental"].(map[string]any)["queries"] = limited
+			limited := []any{map[string]any{"id": "q", "status": StatusResourceLimit}}
+			if tc.forge == "record" || tc.forge == "both" { // a completed recorded tree that only a query opens
+				step["incremental"].(map[string]any)["status"], step["incremental"].(map[string]any)["queries"] = StatusCompleted, limited
+			}
+			if tc.forge == "raw" || tc.forge == "both" {
 				wire["steps"].([]any)[1].(map[string]any)["incremental"] = map[string]any{"status": StatusCompleted, "queries": limited}
 			}
 			if tc.early {

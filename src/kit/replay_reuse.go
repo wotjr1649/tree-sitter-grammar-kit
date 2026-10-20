@@ -273,8 +273,8 @@ func steplessEnds(c *rcCase, groups map[int][]observationStep, dir string, index
 }
 
 // steplessEnd reports whether live Check accepts a response without steps that ends with
-// status and code: an output, allocation or language limit, or a query time limit of a
-// revision with queries.
+// status and code: an output, allocation or language limit, or a query time limit of an
+// r4 request with registered queries.
 func steplessEnd(status, code string, queries bool) bool {
 	return (status == StatusResourceLimit || status == StatusFailed) &&
 		(code == "OUTPUT_LIMIT" || code == "ALLOCATION_LIMIT" || code == "LANGUAGE_INCOMPATIBLE" || queries && code == "QUERY_TIME_LIMIT" && status == StatusResourceLimit)
@@ -342,8 +342,10 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
 			if t != nil && rawOpen == "" {
 				var statuses []string
-				for _, q := range t.Queries { // a forged r3 query cannot open it: open ignores r3 queries
-					statuses = append(statuses, q.Status)
+				for _, q := range t.Queries {
+					if x.observationWire == "tsgk-native/r4" { // only r4 responses carry queries
+						statuses = append(statuses, q.Status)
+					}
 				}
 				rawOpen = openStatus(t.Status, statuses)
 			}
@@ -358,7 +360,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
 	if want == nil {
 		// live Check leaves steps_completed of a response that dropped its steps unconstrained
-		counted = wire.StepsCompleted != nil && [2]string{wire.Status, wire.Code} == end && steplessEnd(wire.Status, wire.Code, wire.Protocol == "tsgk-native/r4")
+		counted = wire.StepsCompleted != nil && [2]string{wire.Status, wire.Code} == end && steplessEnd(wire.Status, wire.Code, wire.Protocol == "tsgk-native/r4" && x.observationQueries)
 	}
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true

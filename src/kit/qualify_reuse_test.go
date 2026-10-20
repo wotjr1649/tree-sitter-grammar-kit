@@ -64,6 +64,10 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			early(r[0], "OUTPUT_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
 		}},
+		{"stepless-query-time-limit", func(r []map[string]any) { // the workload registers q.x
+			early(r[0], "QUERY_TIME_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newQfx(t)
@@ -87,6 +91,23 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			}
 		})
 	}
+	t.Run("stepless-query-time-limit-without-queries", func(t *testing.T) { // live Check needs a query
+		f := newQfx(t)
+		f.inv.ExtraRoles[0].Workloads[0].Queries = nil
+		f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
+			if set == "s06-fxh" {
+				early(records[0], "QUERY_TIME_LIMIT")
+				records[0]["steps"], records[0]["expectations"], records[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+			}
+		}}}))
+		row := roleRow(r, "fx-history", "windows-amd64")
+		if len(row.Sets) != 1 || !slices.ContainsFunc(row.Sets[0].Gates, func(g ReplayGate) bool {
+			return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+		}) {
+			t.Fatalf("query time limit without queries bound: %+v", row)
+		}
+	})
 	t.Run("record-beyond-limit", func(t *testing.T) {
 		f := newQfx(t)
 		limit := QualificationLimits().FileBytes
