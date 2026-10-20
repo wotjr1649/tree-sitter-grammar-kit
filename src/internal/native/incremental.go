@@ -515,7 +515,7 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				checked, err = Check(resp, reqs[k], [][]byte{reqs[k].Source}, nil, want[resp.Status])
 				if err == nil {
 					*c = recordResult(*c, resp, checked, x, b.Identity)
-					if x.Protocol == ProtocolR3 {
+					if x.observes() {
 						name := fmt.Sprintf("%05d-%s.json", i, c.ID)
 						if err := createExclusive(responses, name, fr.Response); err != nil {
 							c.ExecutionStatus, c.Assessment, c.Code = kit.StatusFailed, kit.AssessNotAssessed, "EVIDENCE_WRITE_FAILED"

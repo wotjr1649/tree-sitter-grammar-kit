@@ -6,6 +6,7 @@
 
 - `--out` 경로 별칭의 지원 경계와 문서 정합성을 정리했다(#196). 검출하지 못하는 별칭을 완전히 해결했다는 의미는 아니다.
 - 선택적 incremental logger 관측과 source witness를 추가했다(#197). 기존 판정과 관측 증거를 구분하며, 관측된 reuse를 속도 향상으로 환산하지 않는다.
+- 오류 tree route BLOCKED 전에 old-tree 전달 관측을 필수로 요구한다(#217). incremental 결과 r3·`native-result-r4`에 이어 oracle 기록은 `tsgk-native/r4`, qualification은 inventory·결과 r4로 관측을 kit 축에서 소비한다. 과거 r3 qualification 근거는 당시 revision의 기록이다.
 - Go/C#/C/C++/T-SQL의 고정 holdout 82개·SDK 문맥 관측168건·native CST102개를 비교했다(#198). 이 세 수를 하나의 정확도 분모로 합치지 않는다.
 - Go identifier의 category·Unicode17 수정과 회귀는 PR #207에서 로컬 검증됐다(#205). PR run `38616955169`/attempt 1의 세 OS CI·내부 증거 검증은 PASS다. 실제 main과 최종 release 검증은 별도 gate다.
 - 대형 native digest의 반복 숫자 포맷팅 비용을 줄였다(#208). 같은32 MiB C# 입력의 로컬 native wall은81,801→61,089 ms였고 digest·보존 의미가 같았다. parse 시간 차이·host 변동이 포함되므로 전체 parser 향상률이 아니며90초 wall·60초 parse·8 GiB와 새 CI 검증을 유지한다.

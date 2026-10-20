@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -61,6 +62,9 @@ type OracleRequest struct {
 	CgroupParent  string
 	RunWall       time.Duration
 	SourceWitness bool // explicit opt-in: retain exact initial source in manifest r2
+	// ReuseObservation records through tsgk-native/r4: the r2 queries and API with the
+	// bounded logger observations of every native parse on the same parse (#217).
+	ReuseObservation bool
 }
 
 // OracleResult is the stdout result of a record run.
@@ -78,6 +82,8 @@ type OracleResult struct {
 	Platform      string               `json:"platform"`
 	WallMillis    int64                `json:"wall_ms"`
 	ProfileSHA256 string               `json:"profile_sha256"`
+	// ObservationRunID binds the observations of a ReuseObservation run.
+	ObservationRunID string `json:"observation_run_id,omitempty"`
 }
 
 // CaseLine summarizes one case in the stdout result; the record holds the details.
@@ -88,6 +94,8 @@ type CaseLine struct {
 	Code            string        `json:"code"`
 	Claims          Claims        `json:"claims"`
 	Oracle          *OracleClaims `json:"oracle_claims"`
+	// ReuseObservationClaim is the case's mandatory observation claim in an r4 run.
+	ReuseObservationClaim string `json:"reuse_observation_claim,omitempty"`
 }
 
 // OracleRecord is one published case record; complete is its last member.
@@ -113,7 +121,7 @@ func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
 }
 
 // Oracle builds the driver for an oracle profile, records every case through the r2
-// protocol and publishes the record set: the output directory is created exclusively,
+// protocol (r4 with ReuseObservation) and publishes the record set: the output directory is created exclusively,
 // every member is created without replacement, and the manifest (whose last member marks
 // completeness) is written only after every member was written; the set is then verified
 // offline. A refusal before the build creates nothing.
@@ -148,6 +156,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	}
 	op := kit.NativeOperations()[n.Operation]
 	res.ProfileID, res.Route, res.Operation, res.ProfileSHA256 = n.ID, n.Route, op, n.SHA256
+	protocol := ProtocolR2
+	if req.ReuseObservation {
+		protocol, res.ObservationRunID = ProtocolR4, rand.Text()
+	}
 	if f, err := platformScope(op); err != nil {
 		res.Findings = append(res.Findings, f)
 		res.Assessment = kit.AssessBlocked
@@ -244,7 +256,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
 		x := Context{Op: op, Route: n.Route, Output: n.Output, Declarations: n.Declarations, Format: n.Format, SvcContext: n.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy,
-			Protocol: ProtocolR2, Queries: queries, API: prof.API}
+			Protocol: protocol, Queries: queries, API: prof.API}
+		if req.ReuseObservation {
+			x.ObservationRunID, x.ObservationProducerSHA256 = res.ObservationRunID, b.Identity
+		}
 		refs := b.runSvcReferences(runCtx, x, n.Cases, req.Root, caseHandle)
 		for _, oc := range prof.OracleCases {
 			if ref, found := refs[oc.ID]; found && ref.ExecutionStatus == kit.StatusCompleted {
@@ -253,6 +268,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 					ref.ExecutionStatus, ref.Assessment, ref.Code = kit.StatusNotRun, kit.AssessBlocked, err.(*Error).Code
 				} else {
 					judgeOracle(&ref, oc, prof, pack, x, src)
+					x.observeCase(&ref)
 				}
 				refs[oc.ID] = ref
 			}
@@ -284,6 +300,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 					cr = b.RunCase(runCtx, x, c, src)
 					linkSvcReferences(&cr, refs)
 					judgeOracle(&cr, oc, prof, pack, x, src)
+					x.observeCase(&cr)
 				}
 			}
 			cases = append(cases, cr)
@@ -298,6 +315,17 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
 				}
 			}
+			for _, segment := range cr.Segments {
+				// an r4 SVC case keeps each native segment's raw response beside its observations
+				if len(segment.Raw) == 0 || writeFailed {
+					continue
+				}
+				path := fmt.Sprintf("raw/%05d-%s-segment-%05d.json", i, c.ID, segment.StartStep)
+				if write(path, segment.Raw) {
+					members = append(members, kit.OracleMember{Path: path, Role: "raw", Case: c.ID, Bytes: uint64(len(segment.Raw)), SHA256: sha(segment.Raw),
+						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
+				}
+			}
 			if !writeFailed {
 				data, err := json.Marshal(OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true})
 				if err != nil {
@@ -308,7 +336,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
 				}
 			}
-			res.Cases = append(res.Cases, CaseLine{cr.ID, cr.ExecutionStatus, cr.Assessment, cr.Code, cr.Claims, cr.Oracle})
+			res.Cases = append(res.Cases, CaseLine{cr.ID, cr.ExecutionStatus, cr.Assessment, cr.Code, cr.Claims, cr.Oracle, cr.ReuseObservationClaim})
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(cases)
 	}
@@ -328,7 +356,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			res.Assessment = kit.AssessNotAssessed
 		}
 	} else {
-		m := kit.OracleManifest{Schema: kit.OracleManifestSchema, Policy: policy, Protocol: ProtocolR2, Queries: qids, FactPack: prof.FactPack, Cases: []string{},
+		m := kit.OracleManifest{Schema: kit.OracleManifestSchema, Policy: policy, Protocol: protocol, Queries: qids, FactPack: prof.FactPack, Cases: []string{},
 			Comparators: []string{kit.TreeDigestScheme, kit.CaptureCompareScheme, APICapability, PredicatePolicy},
 			Workload:    map[string]string{"profile_id": n.ID, "profile_sha256": n.SHA256, "route": n.Route, "operation": n.Operation, "output": n.Output},
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
@@ -337,6 +365,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		}
 		if m.Members == nil {
 			m.Members = []kit.OracleMember{}
+		}
+		if req.ReuseObservation {
+			m.Producer["observation_run_id"] = res.ObservationRunID
 		}
 		if b != nil {
 			m.Producer["build_identity"], m.Producer["executable_sha256"], m.Producer["runtime_commit"] = b.Identity, b.ExecutableSHA256, b.Runtime
@@ -552,8 +583,8 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 		assessment := cr.Assessment
 		foldAssessment(cr)
 		cr.Assessment = worse(assessment, cr.Assessment)
-		if cr.Assessment == kit.AssessFail && (cr.Code == "" || strings.HasPrefix(cr.Code, routeUnobservablePrefix)) {
-			// a blocked route code names the case only when nothing fails
+		if cr.Assessment == kit.AssessFail && (cr.Code == "" || strings.HasPrefix(cr.Code, routeUnobservablePrefix) || cr.Code == "REUSE_OBSERVATION_LIMIT") {
+			// a blocked route or observation code names the case only when nothing fails
 			cr.Code = "ORACLE_CLAIM_FAILED"
 		}
 	}

@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"cmp"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -218,9 +219,10 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	starts := slices.Sorted(maps.Keys(groups))
 	for i, start := range starts {
 		steps := groups[start]
-		path := fmt.Sprintf("responses/%05d-%s.json", index, c.ID)
+		dir := cmp.Or(x.responseDir, "responses/")
+		path := fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)
 		if len(c.Segments) > 0 {
-			path = fmt.Sprintf("responses/%05d-%s-segment-%05d.json", index, c.ID, start)
+			path = fmt.Sprintf("%s%05d-%s-segment-%05d.json", dir, index, c.ID, start)
 		}
 		open := "" // r4: the recorded unfinished last step of an early case, by its tree status
 		if x.mandatoryObservation && c.ExecutionStatus != StatusCompleted && i == len(starts)-1 && len(c.Steps) > 0 {
@@ -307,7 +309,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 		return e
 	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
-	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == "tsgk-native/r3" && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
+	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
 }

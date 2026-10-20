@@ -534,8 +534,9 @@ jobs:
 
   native-routes:
     # S05/S06: build the driver and run the registered edit/feature/gap cases of the 26
-    # routes (tsgk incremental, r1) and record them with the route query cases, the fact
-    # query pack and the dynamic SQL fixtures (tsgk oracle record, r2) on each host with its
+    # routes (tsgk incremental, observed result r3) and record them with the route query cases,
+    # the fact query pack and the dynamic SQL fixtures (tsgk oracle record, observed r4; the
+    # native-query-large sets stay r2, #217) on each host with its
     # existing compiler. The large C# fixtures (real-world-source-r3, native-query-large)
     # run on windows/amd64 only and are NOT_APPLICABLE elsewhere (C1-REAL-WORLD-SOURCE-WINDOWS-R3).
     name: native routes (${{ matrix.os }})

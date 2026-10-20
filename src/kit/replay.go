@@ -430,7 +430,10 @@ type replayEnv struct {
 	reuseObservation     bool
 	mandatoryObservation bool // r4: the observation claim is mandatory and folds into the verdict
 	observationResponses map[string]bool
-	queryReference       *QueryReferenceConnectionResult
+	// qualification of an r4 oracle set: the raw responses are under responseDir (default
+	// "responses/") and answer in observationWire (default tsgk-native/r3)
+	responseDir, observationWire string
+	queryReference               *QueryReferenceConnectionResult
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

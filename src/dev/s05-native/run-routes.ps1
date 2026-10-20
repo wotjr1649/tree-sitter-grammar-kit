@@ -4,14 +4,16 @@
 # (src/testdata/native/routes, gaps, n461) and, with -Large, the synthetic
 # real-world-source-r3 fixtures (src/contracts/native-large-fixtures.json; windows/amd64
 # only, NOT_APPLICABLE elsewhere). With -Oracle (S06) it also records every route through
-# `tsgk oracle record` (tsgk-native/r2): the same cases plus the route's query case
+# `tsgk oracle record` (tsgk-native/r4 with the mandatory reuse observation, #217; the
+# native-query-large cases stay r2): the same cases plus the route's query case
 # (src/testdata/native/queries), the fact query pack (src/contracts/fact-query-pack.json)
 # for its routes, the dynamic SQL fixtures, and with -Large the native-query-large cases.
 # Writes one result directory per run and summary.json under -Destination. Exit 1 (the kit
 # axis) when a build is refused or fails, a result has an error finding, a case does not
 # complete, a record set does not verify, an incremental equality claim is FAIL or BLOCKED,
 # an incremental route claim is FAIL, an incremental run lacks the mandatory reuse
-# observation (result r3, #217) or a case's observation claim is not PASS/NOT_CLAIMED, or a
+# observation (result r3, #217), an oracle record run lacks it (observation run id), or a
+# case's observation claim is not PASS/NOT_CLAIMED, or a
 # query equality, fact reproduction or dynamic SQL claim is FAIL or BLOCKED. Requirement-axis results do not fail the run: language
 # expectation failures, query expectation claims (judged by `tsgk qualify` as Q) and a
 # route BLOCKED on an error tree are recorded in requirement_results, API claims (the
@@ -256,7 +258,7 @@ function Add-Result([string]$Label, $Run) {
 
 # S06: an oracle profile is the incremental profile plus queries, the pack binding and the
 # API switch; every case carries its query and dynamic SQL expectations.
-function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, $Queries, [bool]$UsePack, [bool]$Api, [string]$Format = '', $SvcContext = $null) {
+function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, $Queries, [bool]$UsePack, [bool]$Api, [string]$Format = '', $SvcContext = $null, [bool]$Observe = $true) {
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
   $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
@@ -275,6 +277,7 @@ function Invoke-Oracle($r, [string]$Root, [string]$Id, [string]$Operation, [stri
     '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache)
   if ($UsePack) { $cliArgs += @('--fact-pack', $packFile) }
   if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
+  if ($Observe) { $cliArgs += '--reuse-observation' }
   $line = & $cli @cliArgs
   $code = $LASTEXITCODE
   $res = $line | ConvertFrom-Json
@@ -341,6 +344,9 @@ function Add-OracleResult([string]$Label, $Run) {
     set_valid = $(if ($res.set) { $res.set.valid } else { $null }); build = $(if ($res.build) { $res.build.identity } else { $null }); cases = @() }
   foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $script:summary.failures += "oracle ${Label}: $($f.code)" } }
   if (-not $res.set -or -not $res.set.valid) { $script:summary.failures += "oracle ${Label}: record set not verified" }
+  # #217: the qualification sets carry the mandatory observation (protocol r4), a kit axis
+  $runId = $(if ($res.PSObject.Properties['observation_run_id']) { $res.observation_run_id } else { $null })
+  if (-not $runId) { $script:summary.failures += "oracle ${Label}: record run without mandatory reuse observation" }
   $i = 0
   foreach ($c in @($res.cases)) {
     $record = Join-Path $Run.out ('records/{0:D5}-{1}.json' -f $i, $c.id)
@@ -358,6 +364,8 @@ function Add-OracleResult([string]$Label, $Run) {
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; oracle = $c.oracle_claims
       query_expectation_failures = $qfails; facts = $facts }
     if ($c.execution_status -ne 'COMPLETED') { $script:summary.failures += "oracle $Label/$($c.id): $($c.execution_status) $($c.code)" }
+    $observed = $(if ($c.PSObject.Properties['reuse_observation_claim']) { $c.reuse_observation_claim } else { $null })
+    if ($observed -notin @('PASS', 'NOT_CLAIMED')) { $script:summary.failures += "oracle $Label/$($c.id): reuse observation $observed $($c.code)" }
     $segments = @()
     if ($detail -and $detail.PSObject.Properties['segments']) { $segments = @($detail.segments) }
     Add-IncrementalResult "oracle $Label" $c $segments
@@ -460,13 +468,13 @@ if ($Large -and -not $IsWindows) {
     $ocases = @(Add-OracleFields $cases)
     # the declaration query alone: the dynamic SQL query's structural candidates (every
     # binary expression of the synthetic blocks) would exceed the output limit by design
-    $orun = Invoke-Oracle $r $root 's06-large' 'native-query-large' 'auto' $ocases (Get-Declarations $r.route) (Get-PackQueries 'csharp' 'declarations') $true $false
+    $orun = Invoke-Oracle $r $root 's06-large' 'native-query-large' 'auto' $ocases (Get-Declarations $r.route) (Get-PackQueries 'csharp' 'declarations') $true $false -Observe $false
     $over = @(Add-OracleFields @($cases | Where-Object { $_.id -eq 'cs-large-8m-errors' } | ForEach-Object {
           $x = [ordered]@{}
           foreach ($k in $_.Keys) { $x[$k] = $_[$k] }
           $x.id = 'cs-large-8m-over-captures'
           $x }))
-    $orun2 = Invoke-Oracle $r $root 's06-large-over' 'native-query-large' 'auto' $over (Get-Declarations $r.route) @([ordered]@{ id = 'all.nodes'; source = "_ @node`n" }) $false $false
+    $orun2 = Invoke-Oracle $r $root 's06-large-over' 'native-query-large' 'auto' $over (Get-Declarations $r.route) @([ordered]@{ id = 'all.nodes'; source = "_ @node`n" }) $false $false -Observe $false
     foreach ($pair in @(@($orun, $false), @($orun2, $true))) {
       $run, $isOver = $pair
       if (-not @($run.res.cases).Count) { $summary.failures += "oracle large: $($run.res.execution_status) build or refusal" }

@@ -532,9 +532,24 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	if man.Workload["route"] != w.Route || man.Workload["operation"] != w.Operation || man.Workload["output"] != w.Output {
 		add("ROUTE_MISMATCH", manPath, "set의 route·연산·출력이 등록 workload와 다르다")
 	}
-	if man.Protocol != "tsgk-native/r2" {
-		add("PROTOCOL_MISMATCH", manPath, "set protocol이 tsgk-native/r2가 아니다")
+	// #217: a workload whose operation admits edits is recorded through tsgk-native/r4 with
+	// the mandatory observation of every native parse; the large operation stays r2
+	observe := NativeOperations()[w.Operation].MaxEdits > 0
+	wantProtocol := "tsgk-native/r2"
+	if observe {
+		wantProtocol = "tsgk-native/r4"
 	}
+	if man.Protocol != wantProtocol {
+		add("PROTOCOL_MISMATCH", manPath, "set protocol이 "+wantProtocol+"가 아니다")
+	}
+	x.reuseObservation, x.mandatoryObservation = observe, observe
+	x.responseDir, x.observationWire, x.observationResponses = dir+"raw/", "tsgk-native/r4", map[string]bool{}
+	top := nativeResult{ObservationRunID: man.Producer["observation_run_id"], Build: &nativeBuild{Identity: man.Producer["build_identity"]}}
+	if observe && (top.ObservationRunID == "" || len(top.ObservationRunID) > 128) {
+		add("OBSERVATION_RUN_UNBOUND", manPath, "관측 set에 observation run id가 없다")
+	}
+	var responses []string // r4: raw responses, each read once by the observation comparison
+	overResponses := map[string]bool{}
 	ids := make([]string, len(w.Cases))
 	want := map[string]*QualCase{}
 	for i := range w.Cases {
@@ -563,6 +578,15 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	var maxWall int64
 	var maxPeak uint64
 	next := 0
+	if observe {
+		for _, mem := range man.Members {
+			if mem.Role == "raw" && memberPath.MatchString(mem.Path) && strings.HasPrefix(mem.Path, "raw/") {
+				if _, dup := x.members[dir+mem.Path]; !dup {
+					x.members[dir+mem.Path] = ReplayMember{Path: dir + mem.Path, Role: "response", Bytes: mem.Bytes, SHA256: mem.SHA256}
+				}
+			}
+		}
+	}
 	for i, mem := range man.Members {
 		rd := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		full := dir + mem.Path
@@ -572,6 +596,10 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 		listed[full] = true
 		h.used[full] = true
+		if mem.Role != "record" && observe {
+			responses = append(responses, full) // registered below, before any record reads it
+			continue
+		}
 		if mem.Role != "record" {
 			if e := x.verifyFile(full, mem.Bytes, mem.SHA256); e != nil {
 				if stop(e) {
@@ -635,6 +663,26 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			reg.Input.Path, reg.Input.Role = c.Input.Path, c.Input.Role
 		}
 		out := x.replayCase(&c, i, &reg, len(w.Queries) > 0)
+		if observe {
+			if e := x.replayObservations(&c, slices.Index(man.Cases, c.ID), top, &reg); e != nil {
+				if stop(e) {
+					return nil, e
+				}
+				if e.Code == "FILE_BYTES_LIMIT" {
+					over, overResponses[x.overAt] = true, true // not verified: BLOCKED, never unbound
+				} else {
+					add(e.Code, full, "관측 원 응답을 확인하지 못했다")
+				}
+			}
+			// the observation is a kit axis (#217): a failed one fails the set, a collection
+			// limit leaves it unverified (BLOCKED), apart from the requirement verdicts
+			switch claim, _ := mandatoryObservations(&c); claim {
+			case claimFail:
+				add("REUSE_OBSERVATION_FAILED", full, "필수 관측이 native parse의 old tree 전달을 확인하지 못했다")
+			case claimBlocked:
+				over = true
+			}
+		}
 		q.judgeCase(s, qc, errNodes, &c, &extra, out, x.nativeInputBytes, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
@@ -648,6 +696,11 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 		if e := x.r.check(); e != nil {
 			return nil, e
+		}
+	}
+	for _, path := range responses {
+		if !x.observationResponses[path] && !overResponses[path] {
+			add("RESPONSE_UNBOUND", path, "관측 원 응답이 case/segment와 결속되지 않았다")
 		}
 	}
 	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})

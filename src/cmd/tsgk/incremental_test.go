@@ -426,9 +426,10 @@ func testCLIReuseReplay(t *testing.T, out string, profile, published, source []b
 	}
 }
 
-func TestOracleRejectsReuseObservationFlag(t *testing.T) {
+// #217: oracle record takes the observation flag (protocol r4); alone it is still a usage error.
+func TestOracleReuseObservationFlag(t *testing.T) {
 	code, _, stderr := cli(t, context.Background(), "oracle", "record", "--reuse-observation")
-	if code != 2 || !strings.Contains(stderr, "flag provided but not defined") {
+	if code != 2 || strings.Contains(stderr, "flag provided but not defined") || !strings.Contains(stderr, "[--reuse-observation]") {
 		t.Fatalf("oracle flag: %d %s", code, stderr)
 	}
 }

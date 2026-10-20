@@ -13,8 +13,8 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r3"
-	QualificationResultSchema    = "tsgk-qualification-result/r3"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r4"
+	QualificationResultSchema    = "tsgk-qualification-result/r4"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered

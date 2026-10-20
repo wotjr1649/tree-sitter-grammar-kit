@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 const qfxCandidate = "0123456789abcdef0123456789abcdef01234567"
@@ -127,11 +129,59 @@ func qfxStep(i int, s string, fresh, query bool) map[string]any {
 		freshTree := fxTreeOut(s, false)
 		freshTree["api"] = qfxAPI()
 		m["fresh"] = freshTree
+		m["edit"] = map[string]any{"start_byte": 3, "old_end_byte": 4, "new_end_byte": 4, "start_point": []int{0, 3}, "old_end_point": []int{0, 4}, "new_end_point": []int{0, 4}}
 		m["route"] = map[string]any{"edit_has_changes": true, "edited_root_end_byte": len(s), "reused_nodes": 1, "fresh_reused_nodes": 0, "proven": true}
 		m["comparison"] = map[string]any{"equal": true, "first_difference": nil}
 		m["query_comparison"] = map[string]any{"equal": true}
 	}
 	return m
+}
+
+// qfxObserve adds the r4 observations (#217) of every native parse to a record: the producer
+// capability, each step's roles bound to run fx-run and the recomputed case claim.
+func qfxObserve(c map[string]any) {
+	c["producer"].(map[string]any)["reuse_observation"] = map[string]any{"policy": reuseobs.Policy, "runtime_manifest_sha256": reuseobs.RuntimeManifestSHA256}
+	var all []reuseobs.Step
+	previous := ""
+	for _, v := range c["steps"].([]any) {
+		s := v.(map[string]any)
+		k := s["step"].(int)
+		o := reuseobs.Observation{Schema: reuseobs.Schema, Policy: reuseobs.Policy, RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256,
+			RequestID: c["id"].(string), RunID: "fx-run", ProducerSHA256: fxProducer, Step: uint64(k), Role: "initial",
+			SourceSHA256: s["source_sha256"].(string), SourceBytes: uint64(s["source_bytes"].(int)), Status: "COMPLETE", Events: 2, Bytes: 30, Counts: &reuseobs.Counts{NewParse: 1, Done: 1}}
+		observations := []reuseobs.Observation{o}
+		if k > 0 {
+			inc, fresh := o, o
+			old := previous
+			inc.Role, inc.OldTree, inc.OldSourceSHA256, inc.Counts = "incremental", true, &old, &reuseobs.Counts{ParseAfterEdit: 1, Done: 1}
+			fresh.Role = "fresh"
+			observations = []reuseobs.Observation{inc, fresh}
+		}
+		s["observations"] = observations
+		all = append(all, reuseobs.Step{Native: true, Edit: k > 0, Observations: observations})
+		previous = o.SourceSHA256
+	}
+	c["reuse_observation_claim"] = reuseobs.CaseClaim(all, true)
+}
+
+// qfxRaw is a record's raw tsgk-native/r4 response, built from the (mutated) record: the
+// observation projection the qualification compares and each tree's status.
+func qfxRaw(c map[string]any) []byte {
+	var steps []any
+	for _, v := range c["steps"].([]any) {
+		s := v.(map[string]any)
+		status := func(t any) any {
+			if m, ok := t.(map[string]any); ok {
+				return map[string]any{"status": m["status"]}
+			}
+			return nil
+		}
+		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
+			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})
+	}
+	b, _ := json.Marshal(map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "producer": c["producer"], "steps": steps,
+		"steps_completed": len(steps), "complete": true})
+	return b
 }
 
 // host writes one platform's evidence directory for every workload of the inventory that
@@ -168,6 +218,7 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 		if m.skip != nil && m.skip(w.Set) {
 			continue
 		}
+		observe := NativeOperations()[w.Operation].MaxEdits > 0 // r4 (#217); the large operation stays r2
 		var pcases []any
 		for _, c := range w.Cases {
 			edits := []any{}
@@ -199,7 +250,11 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 		var recs []map[string]any
 		for _, c := range w.Cases {
 			src := map[string]string{"c1": "alpha", "c2": "beta", "q1": "alpha", "d1": "alpha", "s1": "alpha"}[c.ID]
-			recs = append(recs, qfxRecord(c.ID, src, len(c.Edits) > 0, len(c.QueryExpect) > 0))
+			rec := qfxRecord(c.ID, src, len(c.Edits) > 0, len(c.QueryExpect) > 0)
+			if observe {
+				qfxObserve(rec)
+			}
+			recs = append(recs, rec)
 		}
 		if m.record != nil {
 			m.record(w.Set, recs)
@@ -211,11 +266,18 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 			name := fmt.Sprintf("%05d-%s.json", i, c["id"])
 			rec := append(append([]byte(`{"schema":"tsgk-oracle-record/r1","case":"`+c["id"].(string)+`","workload":"`+w.Profile+`",`), body[1:len(body)-1]...), []byte(`,"complete":true}`)...)
 			raw := []byte(`{"response":` + fmt.Sprint(i) + `}`)
-			in := c["input"].(map[string]any)
-			for _, mm := range []struct {
+			files := []struct {
 				role string
 				b    []byte
-			}{{"record", rec}, {"raw", raw}} {
+			}{{"record", rec}, {"raw", raw}}
+			if observe {
+				files[1].b = qfxRaw(c)
+				if !slices.ContainsFunc(c["steps"].([]any), func(s any) bool { return s.(map[string]any)["incremental"] != nil }) {
+					files = files[:1] // no native parse: no driver response
+				}
+			}
+			in := c["input"].(map[string]any)
+			for _, mm := range files {
 				pth := map[string]string{"record": "records/", "raw": "raw/"}[mm.role] + name
 				write("records/"+w.Set+"/"+pth, mm.b)
 				members = append(members, OracleMember{Path: pth, Role: mm.role, Case: c["id"].(string), Bytes: uint64(len(mm.b)), SHA256: sum(mm.b),
@@ -230,6 +292,10 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 			"comparators": []string{"tsgk-tree-digest/r1", "tsgk-capture-compare/r1", "tsgk-api/r1", "tsgk-predicates/r1"},
 			"queries":     []IdentityRef{{"query:q.x", "tsgk-query-source/r1", sum([]byte(qfxQuery))}}, "fact_pack": nil, "execution_status": "COMPLETED", "assessment": "PASS",
 			"records": len(recs), "cases": ids, "members": members}
+		if observe {
+			man["protocol"] = "tsgk-native/r4"
+			man["producer"].(map[string]string)["observation_run_id"] = "fx-run"
+		}
 		if m.manifest != nil {
 			m.manifest(w.Set, man)
 		}
@@ -581,6 +647,9 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 							tr["tree"].(map[string]any)["identities"].([]IdentityRef)[0].SHA256 = build
 						}
 					}
+					for i := range st.(map[string]any)["observations"].([]reuseobs.Observation) {
+						st.(map[string]any)["observations"].([]reuseobs.Observation)[i].ProducerSHA256 = build // the run's own build
+					}
 				}
 			}
 			ids := func() []IdentityRef {
@@ -898,6 +967,13 @@ func qfxSvcObserved(set string, recs []map[string]any) {
 		"coverage":  SvcCoverage{Directive: "OBSERVED", CodeBehind: "ABSENT", Inline: "UNRESOLVED"}}
 	recs[0]["assessment"], recs[0]["code"] = AssessBlocked, "SVC_INLINE_UNRESOLVED"
 	recs[0]["oracle_claims"].(map[string]string)["api"] = "NOT_CLAIMED"
+	if observations, ok := st["observations"].([]reuseobs.Observation); ok {
+		// no native parse: the live run records the marker and no raw response (#217)
+		o := observations[0]
+		o.Status, o.Reason, o.Events, o.Bytes, o.Counts = "UNAVAILABLE", "NO_NATIVE_PARSE", 0, 0, &reuseobs.Counts{}
+		st["observations"] = []reuseobs.Observation{o}
+		recs[0]["reuse_observation_claim"] = reuseobs.CaseClaim([]reuseobs.Step{{Observations: []reuseobs.Observation{o}}}, true)
+	}
 }
 
 // #76 platform claims: a platform is SUPPORTED only with global evidence integrity, its

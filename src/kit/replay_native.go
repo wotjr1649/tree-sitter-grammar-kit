@@ -1123,6 +1123,16 @@ func (x *replayEnv) oneMember(role string) (ReplayMember, *Error) {
 	return ms[0], nil
 }
 
+// nativeBuild is the producer build of a native result.
+type nativeBuild struct {
+	Identity         string `json:"identity"`
+	ExecutableSHA256 string `json:"executable_sha256"`
+	RuntimeCommit    string `json:"runtime_commit"`
+	Compiler         struct {
+		SHA256 string `json:"sha256"`
+	} `json:"compiler"`
+}
+
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
 	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
@@ -1136,14 +1146,7 @@ type nativeResult struct {
 	Operation              struct {
 		Name string `json:"name"`
 	} `json:"operation"`
-	Build *struct {
-		Identity         string `json:"identity"`
-		ExecutableSHA256 string `json:"executable_sha256"`
-		RuntimeCommit    string `json:"runtime_commit"`
-		Compiler         struct {
-			SHA256 string `json:"sha256"`
-		} `json:"compiler"`
-	} `json:"build"`
+	Build   *nativeBuild `json:"build"`
 	Summary struct {
 		Cases       int            `json:"cases"`
 		Statuses    map[string]int `json:"execution_statuses"`
